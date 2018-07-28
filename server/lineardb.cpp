@@ -378,22 +378,13 @@ int LINEARDB_open(
             fclose( inDB->file );
             inDB->file = NULL;
             return 1;
-            }
-        
-        if( val32 < inDB->hashTableSizeA ) {
-            printf( "Requested lineardb hash table size of %u is larger than "
-                    "base size of %u in file header\n", 
-                    inDB->hashTableSizeA, val32 );
-            fclose( inDB->file );
-            inDB->file = NULL;
-            return 1;
-            }
+            }        
 
-        // can be bigger than what's been requested
+        // can vary in size from what's been requested
         inDB->hashTableSizeA = val32;
 
-
-
+        
+        // now read sizeB
         numRead = fread( &val32, sizeof(uint32_t), 1, inDB->file );
         
         if( numRead != 1 ) {
@@ -403,14 +394,6 @@ int LINEARDB_open(
             }
 
         
-        if( val32 < inDB->hashTableSizeB ) {
-            printf( "Requested lineardb hash table size of %u is larger than "
-                    "expanded size of %u in file header\n", 
-                    inDB->hashTableSizeB, val32 );
-            fclose( inDB->file );
-            inDB->file = NULL;
-            return 1;
-            }
 
         if( val32 < inDB->hashTableSizeA ) {
             printf( "lineardb hash table base size of %u is larger than "
@@ -431,7 +414,7 @@ int LINEARDB_open(
             return 1;
             }
 
-        // can be bigger than what's been requested
+        // can vary in size from what's been requested
         inDB->hashTableSizeB = val32;
         
 
