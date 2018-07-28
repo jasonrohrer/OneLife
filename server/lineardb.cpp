@@ -25,10 +25,13 @@ static uint64_t djb2( const void *inB, unsigned int inLen ) {
 
 // function used here must have the following signature:
 // static uint64_t LINEARDB_hash( const void *inB, unsigned int inLen );
-//#define LINEARDB_hash(inB, inLen) MurmurHash64( inB, inLen, 0xb9115a39 )
+// murmur2 seems to have equal performance on real world data
+// and it just feels safer than djb2, which must have done well on test
+// data for a weird reson
+#define LINEARDB_hash(inB, inLen) MurmurHash64( inB, inLen, 0xb9115a39 )
 
 // djb2 is resulting in way fewer collisions in test data
-#define LINEARDB_hash(inB, inLen) djb2( inB, inLen )
+//#define LINEARDB_hash(inB, inLen) djb2( inB, inLen )
 
 
 /*
