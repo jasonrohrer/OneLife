@@ -66,6 +66,14 @@ Server Fixes
   where biomes exist before looking in the biome database.
 
 
+--Switched over to new, custom-coded linearDB as a replacement for stackDB.
+  Huge performance gains.
+
+--Disabled nightly server map backup operation.  Map databases have gotten so
+  big that this operation, which must interrupt server activity for safety, now
+  takes 10 seconds on server1.  These map backups have never been needed and
+  take up substantial disk space.
+
 
 
 Version 126    2018-July-18

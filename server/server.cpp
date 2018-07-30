@@ -5267,7 +5267,7 @@ int main() {
     
 
     initLifeLog();
-    initBackup();
+    //initBackup();
     
     initPlayerStats();
     initLineageLog();
@@ -5372,7 +5372,7 @@ int main() {
         apocalypseStep();
         monumentStep();
         
-        checkBackup();
+        //checkBackup();
 
         stepFoodLog();
         stepFailureLog();
