@@ -140,7 +140,8 @@ unsigned char key[16];
 unsigned char value[4];
 
 
-void iterateValues() {
+// returns num values
+unsigned int iterateValues() {
     DB_Iterator dbi;
 
     double startTime = Time::getCurrentTime();
@@ -148,7 +149,7 @@ void iterateValues() {
     DB_Iterator_init( &db, &dbi );
     
     
-    int count = 0;
+    unsigned int count = 0;
     int checksum = 0;
     while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
         count++;
@@ -162,6 +163,8 @@ void iterateValues() {
 
 
     printf( "Max bin depth = %d\n", DB_maxStack );
+    
+    return count;
     }
 
 
@@ -457,15 +460,18 @@ int main() {
 
 
     
-    iterateValues();
+    unsigned int numValues = iterateValues();
 
 
 #ifdef USE_LINEARDB
 
-    int baseSize = db.hashTableSizeA;
-    
-    printf( "Base size of db is %d\n", baseSize );
+    printf( "Base size of db is %d\n", db.hashTableSizeA );
     printf( "Expanded size of db is %d\n", db.hashTableSizeB );
+
+    unsigned int shrinkSize = LINEARDB_getShrinkSize( &db, numValues );
+    
+    printf( "Optimal shrink size for %d values is %d\n", numValues,
+            shrinkSize );
     
 
     DB db2;
@@ -473,8 +479,7 @@ int main() {
     error = DB_open( &db2, 
                      "test2.db", 
                      KISSDB_OPEN_MODE_RWCREAT,
-                     //baseSize,
-                     baseSize / 2,
+                     shrinkSize,
                      //lrint( baseSize * 0.549382 ),
                      16, // four ints,  x_center, y_center, s, b
                      4 // one int

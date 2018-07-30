@@ -1019,6 +1019,43 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
 
 
 
+unsigned int LINEARDB_getShrinkSize( LINEARDB *inDB,
+                                     unsigned int inNewNumRecords ) {
+    
+    if( inNewNumRecords >= inDB->hashTableSizeA ) {
+        // can't shrink
+        return inDB->hashTableSizeA;
+        }
+    
+
+    unsigned int minSize = lrint( ceil( inNewNumRecords / inDB->maxLoad ) );
+    
+    unsigned int curSize = inDB->hashTableSizeA;
+
+    // power of 2 that divides curSize and produces new size that is 
+    // large enough for minSize
+    unsigned int divisor = 1;
+    
+    while( true ) {
+        unsigned int newDivisor = divisor * 2;
+        
+        if( curSize % newDivisor == 0 &&
+            curSize / newDivisor >= minSize ) {
+            
+            divisor = newDivisor;
+            }
+        else {
+            // divisor as large as it can be
+            break;
+            }
+        }
+    
+    return curSize / divisor;
+    }
+
+
+
+
 uint64_t LINEARDB_getMaxFileSize( unsigned int inTableStartSize,
                                   unsigned int inKeySize,
                                   unsigned int inValueSize,
