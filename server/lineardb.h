@@ -78,6 +78,8 @@ int LINEARDB_open(
     unsigned int inKeySize,
     unsigned int inValueSize );
 
+
+
 /**
  * Close database
  *
@@ -91,9 +93,27 @@ void LINEARDB_close( LINEARDB *inDB );
  * Sets max load, (number of elements)/(table size), before table starts
  * to expand incremntally.
  *
- * Defaults to 0.5.
+ * Defaults to 0.75, which is a good value for the underlying linear probing
+ * algorithm.  Higher load factors cause linear probing to degrade substantially
+ * while lower load factors increase performance of linear probing, but waste 
+ * more space and spread data out more, potentially resulting in slower
+ * disk operations.
+ *
+ * Note that in performance-critical situations, the optimial load factor
+ * may vary depending on hardware and other factors.  Since the linear probing
+ * portion of the operation happens entirely in RAM without touching the disk,
+ * the cost of random access on the disk (for the final lookup) matters,
+ * because a lower load factor will cause more spreading of data and more
+ * disk cache misses.
+ *
+ * Thus, when in doubt, it may be best to benchmark various load factors
+ * on your own hardware and with your own data.
+ *
+ * In development testing on both SSD and magnetic disks, 0.75 seemed
+ * to provide the highest performance.
  */
 void LINEARDB_setMaxLoad( LINEARDB *inDB, double inMaxLoad );
+
 
 
 /**
@@ -105,6 +125,8 @@ void LINEARDB_setMaxLoad( LINEARDB *inDB, double inMaxLoad );
  * @return -1 on I/O error, 0 on success, 1 on not found
  */
 int LINEARDB_get( LINEARDB *inDB, const void *inKey, void *outValue );
+
+
 
 /**
  * Put an entry (overwriting it if it already exists)
@@ -130,6 +152,8 @@ typedef struct {
         unsigned int currentRunLength;
 } LINEARDB_Iterator;
 
+
+
 /**
  * Initialize an iterator
  *
@@ -137,6 +161,8 @@ typedef struct {
  * @param i Iterator to initialize
  */
 void LINEARDB_Iterator_init( LINEARDB *inDB, LINEARDB_Iterator *inDBi );
+
+
 
 /**
  * Get the next entry
@@ -151,6 +177,37 @@ void LINEARDB_Iterator_init( LINEARDB *inDB, LINEARDB_Iterator *inDBi );
  */
 int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi, 
                             void *outKey, void *outValue );
+
+
+
+
+
+
+
+/**
+ * More advanced functions below.
+ *
+ * These can be ignored for most usages, which just need open, close,
+ * get, put, and iterators.
+ */
+
+
+
+
+/**
+ * Gets the optimal starting table size, based on an existing inDB, to house 
+ * inNewNumRecords.  Pays attention to inDB's set maxLoad.
+ * This is useful when iterating through one DB to insert items into a new, 
+ * smaller DB.
+ *
+ * Iteration happens in file order, and if an optimal shrunken database
+ * table size is used, the inserts will happen in file order as well.
+ *
+ * Return value can be used for inHashTableStartSize in LINEARDB_open.
+ */
+unsigned int LINEARDB_getShrinkSize( LINEARDB *inDB,
+                                     unsigned int inNewNumRecords );
+
 
 
 

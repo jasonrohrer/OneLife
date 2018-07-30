@@ -12,7 +12,7 @@
 #endif
 
 
-#define DEFAULT_MAX_LOAD 0.5
+#define DEFAULT_MAX_LOAD 0.75
 
 
 #include "murmurhash2_64.cpp"
