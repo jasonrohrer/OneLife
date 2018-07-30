@@ -458,6 +458,54 @@ int main() {
 
     
     iterateValues();
+
+
+#ifdef USE_LINEARDB
+
+    int baseSize = db.hashTableSizeA;
+    
+    printf( "Base size of db is %d\n", baseSize );
+    printf( "Expanded size of db is %d\n", db.hashTableSizeB );
+    
+
+    DB db2;
+    
+    error = DB_open( &db2, 
+                     "test2.db", 
+                     KISSDB_OPEN_MODE_RWCREAT,
+                     //baseSize,
+                     baseSize / 2,
+                     //lrint( baseSize * 0.549382 ),
+                     16, // four ints,  x_center, y_center, s, b
+                     4 // one int
+                     );
+
+    maybeFlush();
+    
+    startTime = Time::getCurrentTime();
+    
+    DB_Iterator dbi;
+
+    DB_Iterator_init( &db, &dbi );
+    
+    
+    int count = 0;
+    while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
+        count++;
+
+        DB_put_new( &db2, key, value );
+        }
+    
+    
+    printf( "Iterated through db and inserted %d values into db2, \n", count );
+
+    printf( "Iterating/inserting used %d bytes, took %f sec\n", 
+            getMallocDelta(),
+            Time::getCurrentTime() - startTime );
+    
+    DB_close( &db2 );
+#endif
+
     
     DB_close( &db );
 
