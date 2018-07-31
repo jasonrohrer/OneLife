@@ -1035,16 +1035,25 @@ unsigned int LINEARDB_getNumRecords( LINEARDB *inDB ) {
 
 unsigned int LINEARDB_getShrinkSize( LINEARDB *inDB,
                                      unsigned int inNewNumRecords ) {
+
+    unsigned int curSize = inDB->hashTableSizeA;
+    if( inDB->hashTableSizeA != inDB->hashTableSizeB ) {
+        // use doubled size as cur size
+        // it's big enough to contain current record load without
+        // violating max load factor
+        curSize *= 2;
+        }
     
-    if( inNewNumRecords >= inDB->hashTableSizeA ) {
+    
+    if( inNewNumRecords >= curSize ) {
         // can't shrink
-        return inDB->hashTableSizeA;
+        return curSize;
         }
     
 
     unsigned int minSize = lrint( ceil( inNewNumRecords / inDB->maxLoad ) );
     
-    unsigned int curSize = inDB->hashTableSizeA;
+    
 
     // power of 2 that divides curSize and produces new size that is 
     // large enough for minSize
