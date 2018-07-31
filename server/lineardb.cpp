@@ -1032,7 +1032,8 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
     
         inDBi->nextRecordLoc += db->recordSizeBytes;
 
-        if( db->recordBuffer[0] ) {
+        // present flag, not empty or deleted 
+        if( db->recordBuffer[0] == 1 ) {
             inDBi->currentRunLength++;
             
             if( inDBi->currentRunLength > db->maxProbeDepth ) {
@@ -1048,6 +1049,13 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
                     &( db->recordBuffer[1 + db->keySize] ), 
                     db->valueSize );
             return 1;
+            }
+        else if( db->recordBuffer[0] >= db->currentDeletedFlag ) {
+            // count as part of run
+            inDBi->currentRunLength ++;
+            if( inDBi->currentRunLength > db->maxProbeDepth ) {
+                db->maxProbeDepth = inDBi->currentRunLength;
+                }
             }
         else {
             // empty table cell, run broken
