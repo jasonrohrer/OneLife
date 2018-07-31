@@ -88,6 +88,10 @@ static const char *magicString = "Ldb";
 
 
 
+static unsigned int getExistenceMapSize( unsigned int inHashTableSizeA ) {
+    return ( ( inHashTableSizeA * 2 ) / 8 ) + 1;
+    }
+
 
 
 static void recreateMaps( LINEARDB *inDB, 
@@ -95,16 +99,19 @@ static void recreateMaps( LINEARDB *inDB,
     uint8_t *oldExistenceMap = inDB->existenceMap;
     
 
-    inDB->existenceMap = new uint8_t[ inDB->hashTableSizeA * 2 ];
+    inDB->existenceMap = 
+        new uint8_t[ getExistenceMapSize( inDB->hashTableSizeA ) ];
     
-    memset( inDB->existenceMap, 0, inDB->hashTableSizeA * 2 );
+    memset( inDB->existenceMap, 
+            0, getExistenceMapSize( inDB->hashTableSizeA ) );
     
 
     if( oldExistenceMap != NULL ) {
         if( inOldTableSizeA > 0 ) {
             memcpy( inDB->existenceMap,
                     oldExistenceMap,
-                    2 * inOldTableSizeA * sizeof( uint8_t ) );
+                    getExistenceMapSize( inOldTableSizeA ) * 
+                    sizeof( uint8_t ) );
             
             }
         
@@ -135,6 +142,30 @@ static void recreateMaps( LINEARDB *inDB,
 
 
 
+static char exists( LINEARDB *inDB, uint64_t inBinNumber ) {
+    return 
+        ( inDB->existenceMap[ inBinNumber / 8 ] >> ( inBinNumber % 8 ) ) 
+        & 0x01;
+    }
+
+
+
+
+static void setExists( LINEARDB *inDB, uint64_t inBinNumber ) {
+    
+    uint8_t presentFlag = 1 << ( inBinNumber % 8 );
+    
+    inDB->existenceMap[ inBinNumber / 8 ] |= presentFlag;
+    }
+
+
+static void setNotExists( LINEARDB *inDB, uint64_t inBinNumber ) {
+    
+    // bitwise inversion
+    uint8_t presentFlag = ~( 1 << ( inBinNumber % 8 ) );
+    
+    inDB->existenceMap[ inBinNumber / 8 ] &= presentFlag;
+    }
 
 
 
@@ -192,16 +223,6 @@ static int writeHeader( LINEARDB *inDB ) {
 
     return 0;
     }
-
-
-static void setDeletedFlagFromTableSize( LINEARDB *inDB ) {
-    inDB->currentDeletedFlag = 2;
-    
-    while( pow( 2, inDB->currentDeletedFlag - 2 ) < inDB->hashTableSizeA ) {
-        inDB->currentDeletedFlag ++;
-        }
-    }
-
 
 
 
@@ -317,8 +338,6 @@ int LINEARDB_open(
 
         // empty existence and fingerprint map
         recreateMaps( inDB );
-
-        setDeletedFlagFromTableSize( inDB );
         }
     else {
         // read header
@@ -464,9 +483,6 @@ int LINEARDB_open(
 
         recreateMaps( inDB );
         
-        setDeletedFlagFromTableSize( inDB );
-
-
         // now populate existence map and fingerprint map
         if( fseeko( inDB->file, LINEARDB_HEADER_SIZE, SEEK_SET ) ) {
             fclose( inDB->file );
@@ -484,7 +500,7 @@ int LINEARDB_open(
                 return 1;
                 }
 
-            uint8_t present = 0;
+            char present = 0;
             int numRead = fread( &present, 1, 1, inDB->file );
             
             if( numRead != 1 ) {
@@ -493,19 +509,12 @@ int LINEARDB_open(
                 inDB->file = NULL;
                 return 1;
                 }
-            
-            // present flag can be 0, 1, or:
-            // currentDeletedFlag 
-            // or
-            // currentDeletedFlag + 1
-            
-            inDB->existenceMap[i] = present;
-            
-            // but no record actually present unless flag == 1
-            if( present == 1 ) {
+            if( present ) {
                 
                 inDB->numRecords ++;
-    
+                
+                setExists( inDB, i );
+                
                 // now read key
                 numRead = fread( inDB->recordBuffer, 
                                  inDB->keySize, 1, inDB->file );
@@ -578,27 +587,24 @@ inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
     }
 
 
-// removes a segment of cells from the table, one by one,
+// removes a coniguous segment of cells from the table, one by one,
 // from left to right,
 // starting at inFirstBinNumber, and reinserts them
-// examines exactly inCellCount cells
+// examines at least inMinCellCount cells, but maybe more, if there
+// is a long run with no empty spots
 // returns 0 on success, -1 on failure
 static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber,
-                                uint64_t inCellCount ) {
+                                uint64_t inMinCellCount ) {
     
     uint64_t c = inFirstBinNumber;
     
     // don't infinite loop if table is 100% full
     uint64_t numCellsTouched = 0;
 
-    uint8_t deletedFlag = inDB->currentDeletedFlag;
-    
-
-    while( numCellsTouched < inDB->hashTableSizeB 
-           && 
-           numCellsTouched < inCellCount ) {
+    while( numCellsTouched < inDB->hashTableSizeB && 
+           ( numCellsTouched < inMinCellCount || exists( inDB, c )  ) ) {
         
-        if( inDB->existenceMap[ c ] == 1 ) {
+        if( exists( inDB, c ) ) {
             
             // a full cell is here
 
@@ -615,20 +621,22 @@ static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber,
                 return -1;
                 }
         
-            // now deal with present byte
+            // now clear present byte
             if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
                 return -1;
                 }
 
-            // write deleted flag there instead
-            int numWritten = fwrite( &deletedFlag, 1, 1, inDB->file );
+            // write not present flag
+            unsigned char presentFlag = 0;
+            
+            int numWritten = fwrite( &presentFlag, 1, 1, inDB->file );
         
             if( numWritten != 1 ) {
                 return -1;
                 }
         
         
-            inDB->existenceMap[c] = deletedFlag;
+            setNotExists( inDB, c );
         
             // decrease count before reinsert, which will increment count
             inDB->numRecords --;
@@ -691,9 +699,6 @@ static int expandTable( LINEARDB *inDB ) {
             
 
             recreateMaps( inDB, oldTableSizeA );
-            
-            // old deleted flags become stale and irrelevant now
-            inDB->currentDeletedFlag++;
             }
         }
     
@@ -705,12 +710,6 @@ static int expandTable( LINEARDB *inDB ) {
         }
     memset( inDB->recordBuffer, 0, inDB->recordSizeBytes );
 
-    // always leave NEXT deleted flag value in blank cells that we add to the
-    // end of the table
-    uint8_t present = inDB->currentDeletedFlag + 1;
-    inDB->recordBuffer[0] = present;
-    
-
     for( int c=0; c<numExpanded; c++ ) {    
         int numWritten = 
             fwrite( inDB->recordBuffer, inDB->recordSizeBytes, 1, inDB->file );
@@ -718,9 +717,6 @@ static int expandTable( LINEARDB *inDB ) {
         if( numWritten != 1 ) {
             return -1;
             }
-
-        // also leave flag in existenceMap
-        inDB->existenceMap[ c + inDB->hashTableSizeB - numExpanded ] = present;
         }
     
 
@@ -731,11 +727,27 @@ static int expandTable( LINEARDB *inDB ) {
 
 
 
-    // remove and re-insert all cells in the old region
+    // remove and re-insert all contiguous cells from the region
     // between the old and new split point
+    // we need to ensure there are no holes for future linear probes
     
 
     int result = reinsertCellSegment( inDB, oldSplitPoint, numExpanded );
+    if( result == -1 ) {
+        return -1;
+        }
+
+    
+    
+    
+    // do the same for first cell of table, which might have wraped-around
+    // cells in it due to linear probing, and there might be an empty cell
+    // at the end of the table now that we've expanded it
+    // there is no minimum number we must examine, if first cell is empty
+    // looking at just that cell is enough
+    result = reinsertCellSegment( inDB, 0, 1 );
+    
+
     if( result == -1 ) {
         return -1;
         }
@@ -789,30 +801,21 @@ static int locateValue( LINEARDB *inDB, const void *inKey,
         binNumberB = hashVal % (uint64_t)( inDB->hashTableSizeA * 2 );
         }
     
-    
-    uint64_t binNumberBStart = binNumberB;
-    
+
     
     uint16_t fingerprint = shortHash( inKey, inDB->keySize );
 
-    uint64_t binsExamined = 0;
     
     // linear prob after that
-    // watch for case where all empty bins have deleted flags
-    while( binsExamined < inDB->hashTableSizeB ) {
+    while( true ) {
 
         uint64_t binLoc = getBinLoc( inDB, binNumberB );
         
-        uint8_t present = inDB->existenceMap[ binNumberB ];
+        char present = exists( inDB, binNumberB );
         
-        binsExamined++;
-
-        // either a record present
-        // or a non-stale deleted record flag
-        if( present == 1 || present >= inDB->currentDeletedFlag ) {
+        if( present ) {
             
-            if( present == 1 &&
-                fingerprint == inDB->fingerprintMap[ binNumberB ] ) {
+            if( fingerprint == inDB->fingerprintMap[ binNumberB ] ) {
                 
                 // match in fingerprint, but might be false positive
                 
@@ -884,60 +887,15 @@ static int locateValue( LINEARDB *inDB, const void *inKey,
                 binNumberB -= inDB->hashTableSizeB;
                 }
             }
-        else {
-            // a truly empty bin hit, and we never found a matching record
-            // break out of the loop
-            break;
-            }
-        }
-    
-    if( ! inPut ) {
-        // not found on get
-        return 1;
-        }
-
-    
-
-    // else put mode, and not found
-
-    // we need to start back at the first bin examined, and try again
-    // because we want to insert at the first empty bin OR deleted flag
-    // that we encounter along the way
-    
-    binNumberB = binNumberBStart;
-    binsExamined = 0;
-    
-    // we should never examine too many bins, because table should never
-    // be 100% full.  Still, if user specifies a load factor that is 1.0 or 
-    // higher, we could get there, and then infinite loop here
-    while( binsExamined < inDB->hashTableSizeB ) {
-        uint64_t binLoc = getBinLoc( inDB, binNumberB );
-        
-        uint8_t present = inDB->existenceMap[ binNumberB ];
-        
-        binsExamined++;
-        
-
-        if( present == 1 ) {
-            // only skip truly present bins on insert
-            binNumberB++;
+        else if( inPut ) {
+            // empty bin, insert mode
             
-            // wrap around
-            if( binNumberB >= inDB->hashTableSizeB ) {
-                binNumberB -= inDB->hashTableSizeB;
-                }
-            }
-        else {
-            // found an empty bin (either truly empty or a deleted flag)
-            
-            // write inserted value there
-
             if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
                 return -1;
                 }
 
             // write present flag
-            uint8_t presentFlag = 1;
+            unsigned char presentFlag = 1;
             
             int numWritten = fwrite( &presentFlag, 1, 1, inDB->file );
             
@@ -959,7 +917,8 @@ static int locateValue( LINEARDB *inDB, const void *inKey,
                 return -1;
                 }
             
-            inDB->existenceMap[ binNumberB ] = presentFlag;
+            
+            setExists( inDB, binNumberB );
             
             inDB->fingerprintMap[ binNumberB ] = fingerprint;
 
@@ -973,10 +932,12 @@ static int locateValue( LINEARDB *inDB, const void *inKey,
             
             return 0;
             }
-        }    
+        else {
+            // empty bin hit, not insert mode
+            return 1;
+            }
+        }
     
-    // examined all bins without finding empty or deleted?
-    return -1;
     }
 
 
@@ -1032,8 +993,7 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
     
         inDBi->nextRecordLoc += db->recordSizeBytes;
 
-        // present flag, not empty or deleted 
-        if( db->recordBuffer[0] == 1 ) {
+        if( db->recordBuffer[0] ) {
             inDBi->currentRunLength++;
             
             if( inDBi->currentRunLength > db->maxProbeDepth ) {
@@ -1049,13 +1009,6 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
                     &( db->recordBuffer[1 + db->keySize] ), 
                     db->valueSize );
             return 1;
-            }
-        else if( db->recordBuffer[0] >= db->currentDeletedFlag ) {
-            // count as part of run
-            inDBi->currentRunLength ++;
-            if( inDBi->currentRunLength > db->maxProbeDepth ) {
-                db->maxProbeDepth = inDBi->currentRunLength;
-                }
             }
         else {
             // empty table cell, run broken

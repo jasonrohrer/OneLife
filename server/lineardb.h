@@ -35,17 +35,7 @@ typedef struct {
         uint8_t *recordBuffer;
         unsigned int maxProbeDepth;
 
-
-        // left behind in present map and on disk whenever a table
-        // cell is deleted
-        // incremented every time we finish splitting table to double size
-        // because tracking old deleted cells not needed after that
-        // always set to the smallest value such that 
-        //   2^(currentDeletedFlag-2) >= hashTableSizeA 
-        uint8_t currentDeletedFlag;
-        
-        
-        // sized to ( hashTableSizeA * 2 ) 8-bit values
+        // sized to ( hashTableSizeA * 2 ) / 8 + 1
         uint8_t *existenceMap;
 
         // 16 bit hash fingerprints of key in each spot in table
