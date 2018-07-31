@@ -35,6 +35,9 @@
 #define DB_Iterator_init  KISSDB_Iterator_init
 #define DB_Iterator_next  KISSDB_Iterator_next
 #define DB_maxStack (int)( db.num_hash_tables )
+// no support for shrinking
+#define DB_getShrinkSize( dbP, n )  dbP->hashTableSize
+#define DB_getCurrentSize( dbP )  dbP->hashTableSize
 */
 
 /*
@@ -49,6 +52,9 @@
 #define DB_Iterator_init  STACKDB_Iterator_init
 #define DB_Iterator_next  STACKDB_Iterator_next
 #define DB_maxStack db.maxStackDepth
+// no support for shrinking
+#define DB_getShrinkSize( dbP, n )  dbP->hashTableSize
+#define DB_getCurrentSize( dbP )  dbP->hashTableSize
 */
 
 
@@ -63,6 +69,8 @@
 #define DB_Iterator_init  LINEARDB_Iterator_init
 #define DB_Iterator_next  LINEARDB_Iterator_next
 #define DB_maxStack db.maxProbeDepth
+#define DB_getShrinkSize  LINEARDB_getShrinkSize
+#define DB_getCurrentSize  LINEARDB_getCurrentSize
 
 
 
@@ -1663,22 +1671,7 @@ int DB_open_timeShrunk(
         return error;
         }
 
-    DB tempDB;
     
-    error = DB_open( &tempDB, 
-                         dbTempName, 
-                         mode,
-                         hash_table_size,
-                         key_size,
-                         value_size );
-    if( error ) {
-        AppLog::errorF( "Failed to open DB file %s in DB_open_timeShrunk",
-                        dbTempName );
-        delete [] dbTempName;
-        DB_close( &oldDB );
-        return error;
-        }
-
 
     
 
@@ -1695,10 +1688,59 @@ int DB_open_timeShrunk(
     
     int total = 0;
     int stale = 0;
-
+    int nonStale = 0;
+    
+    // first, just count
     while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
         total++;
 
+        int x = valueToInt( key );
+        int y = valueToInt( &( key[4] ) );
+
+        if( dbLookTimeGet( x, y ) > 0 ) {
+            // keep
+            nonStale++;
+            }
+        else {
+            // stale
+            // ignore
+            stale++;
+            }
+        }
+
+
+
+    // optimial size for DB of remaining elements
+    unsigned int newSize = DB_getShrinkSize( &oldDB, nonStale );
+
+    AppLog::infoF( "Shrinking hash table in %s from %d down to %d", 
+                   path, 
+                   DB_getCurrentSize( &oldDB ), 
+                   newSize );
+
+
+    DB tempDB;
+    
+    error = DB_open( &tempDB, 
+                         dbTempName, 
+                         mode,
+                         newSize,
+                         key_size,
+                         value_size );
+    if( error ) {
+        AppLog::errorF( "Failed to open DB file %s in DB_open_timeShrunk",
+                        dbTempName );
+        delete [] dbTempName;
+        DB_close( &oldDB );
+        return error;
+        }
+
+
+    // now that we have new temp db properly sized,
+    // iterate again and insert, but don't count
+    DB_Iterator_init( &oldDB, &dbi );
+
+    while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
         int x = valueToInt( key );
         int y = valueToInt( &( key[4] ) );
 
@@ -1710,9 +1752,10 @@ int DB_open_timeShrunk(
         else {
             // stale
             // ignore
-            stale++;
             }
         }
+
+
     
     AppLog::infoF( "Cleaned %d / %d stale map cells from %s", stale, total,
                    path );
@@ -2286,21 +2329,6 @@ void initMap() {
                 }
         
 
-            error = DB_open( &lookTimeDB_temp, 
-                             lookTimeDBName_temp, 
-                             KISSDB_OPEN_MODE_RWCREAT,
-                             80000,
-                             8, // two 32-bit ints, xy
-                             8 // one 64-bit double, representing an ETA time
-                             // in whatever binary format and byte order
-                             // "double" on the server platform uses
-                             );
-    
-            if( error ) {
-                AppLog::errorF( 
-                    "Error %d opening look time temp KissDB", error );
-                return;
-                }
         
             DB_Iterator dbi;
         
@@ -2315,7 +2343,9 @@ void initMap() {
 
             int total = 0;
             int stale = 0;
-
+            int nonStale = 0;
+            
+            // first, just count them
             while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
                 total++;
 
@@ -2328,11 +2358,56 @@ void initMap() {
                     }
                 else {
                     // non-stale
+                    nonStale++;
+                    }
+                }
+
+            // optimial size for DB of remaining elements
+            unsigned int newSize = DB_getShrinkSize( &lookTimeDB_old,
+                                                     nonStale );
+            
+            AppLog::infoF( "Shrinking hash table for lookTimes from "
+                           "%d down to %d", 
+                           DB_getCurrentSize( &lookTimeDB_old ), 
+                           newSize );
+            
+
+            error = DB_open( &lookTimeDB_temp, 
+                             lookTimeDBName_temp, 
+                             KISSDB_OPEN_MODE_RWCREAT,
+                             newSize,
+                             8, // two 32-bit ints, xy
+                             8 // one 64-bit double, representing an ETA time
+                             // in whatever binary format and byte order
+                             // "double" on the server platform uses
+                             );
+    
+            if( error ) {
+                AppLog::errorF( 
+                    "Error %d opening look time temp KissDB", error );
+                return;
+                }
+            
+
+            // now that we have new temp db properly sized,
+            // iterate again and insert
+            DB_Iterator_init( &lookTimeDB_old, &dbi );
+        
+            while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
+                timeSec_t t = valueToTime( value );
+            
+                if( curTime - t >= staleSec ) {
+                    // stale cell
+                    // ignore
+                    }
+                else {
+                    // non-stale
                     // insert it in temp
                     DB_put_new( &lookTimeDB_temp, key, value );
                     }
                 }
-        
+
+
             AppLog::infoF( "Cleaned %d / %d stale look times", stale, total );
 
             printf( "\n" );

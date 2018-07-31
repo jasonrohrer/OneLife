@@ -17,7 +17,7 @@
 
 #include "murmurhash2_64.cpp"
 
-
+/*
 // djb2 hash function
 static uint64_t djb2( const void *inB, unsigned int inLen ) {
     uint64_t hash = 5381;
@@ -26,6 +26,7 @@ static uint64_t djb2( const void *inB, unsigned int inLen ) {
         }
     return hash;
     }
+*/
 
 // function used here must have the following signature:
 // static uint64_t LINEARDB_hash( const void *inB, unsigned int inLen );
@@ -1014,6 +1015,13 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
             inDBi->currentRunLength = 0;
             }
         }
+    }
+
+
+
+
+unsigned int LINEARDB_getCurrentSize( LINEARDB *inDB ) {
+    return inDB->hashTableSizeB;
     }
 
 

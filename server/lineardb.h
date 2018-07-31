@@ -194,6 +194,16 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
 
 
 
+
+/**
+ * Total number of cells in table, including those added through
+ * incremental expansion due to Linear Hashing algorithm.
+ */
+unsigned int LINEARDB_getCurrentSize( LINEARDB *inDB );
+
+
+
+
 /**
  * Gets the optimal starting table size, based on an existing inDB, to house 
  * inNewNumRecords.  Pays attention to inDB's set maxLoad.
