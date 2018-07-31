@@ -35,7 +35,7 @@ typedef struct {
         uint8_t *recordBuffer;
         unsigned int maxProbeDepth;
 
-        // sized to ( hashTableSizeA * 2 ) / 8 + 1
+        // sized to ( hashTableSizeA * 2 ) 8-bit values
         uint8_t *existenceMap;
 
         // 16 bit hash fingerprints of key in each spot in table

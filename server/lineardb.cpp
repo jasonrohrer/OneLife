@@ -88,10 +88,6 @@ static const char *magicString = "Ldb";
 
 
 
-static unsigned int getExistenceMapSize( unsigned int inHashTableSizeA ) {
-    return ( ( inHashTableSizeA * 2 ) / 8 ) + 1;
-    }
-
 
 
 static void recreateMaps( LINEARDB *inDB, 
@@ -99,19 +95,16 @@ static void recreateMaps( LINEARDB *inDB,
     uint8_t *oldExistenceMap = inDB->existenceMap;
     
 
-    inDB->existenceMap = 
-        new uint8_t[ getExistenceMapSize( inDB->hashTableSizeA ) ];
+    inDB->existenceMap = new uint8_t[ inDB->hashTableSizeA * 2 ];
     
-    memset( inDB->existenceMap, 
-            0, getExistenceMapSize( inDB->hashTableSizeA ) );
+    memset( inDB->existenceMap, 0, inDB->hashTableSizeA * 2 );
     
 
     if( oldExistenceMap != NULL ) {
         if( inOldTableSizeA > 0 ) {
             memcpy( inDB->existenceMap,
                     oldExistenceMap,
-                    getExistenceMapSize( inOldTableSizeA ) * 
-                    sizeof( uint8_t ) );
+                    2 * inOldTableSizeA * sizeof( uint8_t ) );
             
             }
         
@@ -142,30 +135,6 @@ static void recreateMaps( LINEARDB *inDB,
 
 
 
-static char exists( LINEARDB *inDB, uint64_t inBinNumber ) {
-    return 
-        ( inDB->existenceMap[ inBinNumber / 8 ] >> ( inBinNumber % 8 ) ) 
-        & 0x01;
-    }
-
-
-
-
-static void setExists( LINEARDB *inDB, uint64_t inBinNumber ) {
-    
-    uint8_t presentFlag = 1 << ( inBinNumber % 8 );
-    
-    inDB->existenceMap[ inBinNumber / 8 ] |= presentFlag;
-    }
-
-
-static void setNotExists( LINEARDB *inDB, uint64_t inBinNumber ) {
-    
-    // bitwise inversion
-    uint8_t presentFlag = ~( 1 << ( inBinNumber % 8 ) );
-    
-    inDB->existenceMap[ inBinNumber / 8 ] &= presentFlag;
-    }
 
 
 
@@ -500,7 +469,7 @@ int LINEARDB_open(
                 return 1;
                 }
 
-            char present = 0;
+            uint8_t present = 0;
             int numRead = fread( &present, 1, 1, inDB->file );
             
             if( numRead != 1 ) {
@@ -509,12 +478,13 @@ int LINEARDB_open(
                 inDB->file = NULL;
                 return 1;
                 }
-            if( present ) {
+
+            inDB->existenceMap[i] = present;
+            
+            if( present == 1 ) {
                 
                 inDB->numRecords ++;
-                
-                setExists( inDB, i );
-                
+    
                 // now read key
                 numRead = fread( inDB->recordBuffer, 
                                  inDB->keySize, 1, inDB->file );
@@ -601,10 +571,12 @@ static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber,
     // don't infinite loop if table is 100% full
     uint64_t numCellsTouched = 0;
 
-    while( numCellsTouched < inDB->hashTableSizeB && 
-           ( numCellsTouched < inMinCellCount || exists( inDB, c )  ) ) {
+    while( numCellsTouched < inDB->hashTableSizeB 
+           && 
+           ( numCellsTouched < inMinCellCount || 
+             inDB->existenceMap[c] == 1  ) ) {
         
-        if( exists( inDB, c ) ) {
+        if( inDB->existenceMap[ c ] == 1 ) {
             
             // a full cell is here
 
@@ -636,7 +608,7 @@ static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber,
                 }
         
         
-            setNotExists( inDB, c );
+            inDB->existenceMap[c] = 0;
         
             // decrease count before reinsert, which will increment count
             inDB->numRecords --;
@@ -811,9 +783,9 @@ static int locateValue( LINEARDB *inDB, const void *inKey,
 
         uint64_t binLoc = getBinLoc( inDB, binNumberB );
         
-        char present = exists( inDB, binNumberB );
+        uint8_t present = inDB->existenceMap[ binNumberB ];
         
-        if( present ) {
+        if( present == 1 ) {
             
             if( fingerprint == inDB->fingerprintMap[ binNumberB ] ) {
                 
@@ -895,7 +867,7 @@ static int locateValue( LINEARDB *inDB, const void *inKey,
                 }
 
             // write present flag
-            unsigned char presentFlag = 1;
+            uint8_t presentFlag = 1;
             
             int numWritten = fwrite( &presentFlag, 1, 1, inDB->file );
             
@@ -917,8 +889,7 @@ static int locateValue( LINEARDB *inDB, const void *inKey,
                 return -1;
                 }
             
-            
-            setExists( inDB, binNumberB );
+            inDB->existenceMap[ binNumberB ] = presentFlag;
             
             inDB->fingerprintMap[ binNumberB ] = fingerprint;
 
