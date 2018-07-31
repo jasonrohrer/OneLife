@@ -38,7 +38,10 @@
 // no support for shrinking
 #define DB_getShrinkSize( dbP, n )  dbP->hashTableSize
 #define DB_getCurrentSize( dbP )  dbP->hashTableSize
+// no support for counting records
+#define DB_getNumRecords( dbP ) 0
 */
+
 
 /*
 #define DB STACKDB
@@ -55,6 +58,8 @@
 // no support for shrinking
 #define DB_getShrinkSize( dbP, n )  dbP->hashTableSize
 #define DB_getCurrentSize( dbP )  dbP->hashTableSize
+// no support for counting records
+#define DB_getNumRecords( dbP ) 0
 */
 
 
@@ -71,7 +76,7 @@
 #define DB_maxStack db.maxProbeDepth
 #define DB_getShrinkSize  LINEARDB_getShrinkSize
 #define DB_getCurrentSize  LINEARDB_getCurrentSize
-
+#define DB_getNumRecords LINEARDB_getNumRecords
 
 
 

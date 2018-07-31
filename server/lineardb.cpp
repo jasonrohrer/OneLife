@@ -12,7 +12,7 @@
 #endif
 
 
-#define DEFAULT_MAX_LOAD 0.75
+#define DEFAULT_MAX_LOAD 0.5
 
 
 #include "murmurhash2_64.cpp"
@@ -1022,6 +1022,12 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
 
 unsigned int LINEARDB_getCurrentSize( LINEARDB *inDB ) {
     return inDB->hashTableSizeB;
+    }
+
+
+
+unsigned int LINEARDB_getNumRecords( LINEARDB *inDB ) {
+    return inDB->numRecords;
     }
 
 

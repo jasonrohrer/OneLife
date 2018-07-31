@@ -93,24 +93,20 @@ void LINEARDB_close( LINEARDB *inDB );
  * Sets max load, (number of elements)/(table size), before table starts
  * to expand incremntally.
  *
- * Defaults to 0.75, which is a good value for the underlying linear probing
- * algorithm.  Higher load factors cause linear probing to degrade substantially
- * while lower load factors increase performance of linear probing, but waste 
+ * Defaults to 0.5, which is a good value for the underlying linear probing
+ * and linear hashing algorithms.  Higher load factors cause linear probing to 
+ * degrade substantially (inserts become expensive due to linear hashing table
+ * expansion and the necessity to rehash long chains of cells), while lower
+ * load factors increase performance of linear probing, but waste 
  * more space and spread data out more, potentially resulting in slower
  * disk operations.
  *
  * Note that in performance-critical situations, the optimial load factor
- * may vary depending on hardware and other factors.  Since the linear probing
- * portion of the operation happens entirely in RAM without touching the disk,
- * the cost of random access on the disk (for the final lookup) matters,
- * because a lower load factor will cause more spreading of data and more
- * disk cache misses.
+ * may vary depending on hardware and other factors.
  *
  * Thus, when in doubt, it may be best to benchmark various load factors
- * on your own hardware and with your own data.
- *
- * In development testing on both SSD and magnetic disks, 0.75 seemed
- * to provide the highest performance.
+ * on your own hardware and with your own data and your own insert vs read
+ * ratio.
  */
 void LINEARDB_setMaxLoad( LINEARDB *inDB, double inMaxLoad );
 
@@ -200,6 +196,12 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
  * incremental expansion due to Linear Hashing algorithm.
  */
 unsigned int LINEARDB_getCurrentSize( LINEARDB *inDB );
+
+
+/**
+ * Number of records that have been inserted in the database.
+ */
+unsigned int LINEARDB_getNumRecords( LINEARDB *inDB );
 
 
 
