@@ -387,6 +387,18 @@ int LINEARDB2_open(
         inDB->overflowAreaSize = MIN_OVERFLOW_SIZE;
         inDB->overflowFingerprintBuckets = 
             new FingerprintBucket[ inDB->overflowAreaSize ];
+
+        
+        // write empty overflow file to match
+        memset( inDB->bucketBuffer, 0, inDB->bucketSizeBytes );
+
+        for( int i=0; i<inDB->overflowAreaSize; i++ ) {
+            int numWritten = fwrite( inDB->bucketBuffer, inDB->bucketSizeBytes,
+                                     1, inDB->overflowFile );
+            if( numWritten != 1 ) {
+                return 1;
+                }
+            }
         }
     else {
         // read header
@@ -458,7 +470,7 @@ int LINEARDB2_open(
         numRead = fread( &val32, sizeof(uint32_t), 1, inDB->file );
         
         if( numRead != 1 ) {
-            fclose( inDB->file );
+            return 1;
             }
         
         if( val32 != inKeySize ) {
@@ -815,7 +827,8 @@ static int makeNewOverflowBucket( LINEARDB2 *inDB, uint16_t inFingerprint,
         }
     
     // fingerprint
-    inDB->fingerprintMap[ foundIndex ].fingerprints[0] = inFingerprint;
+    inDB->overflowFingerprintBuckets[ foundIndex ].fingerprints[0] = 
+        inFingerprint;
     
     // write in file
     uint64_t fileRecPos = foundIndex * inDB->bucketSizeBytes;
