@@ -270,14 +270,16 @@ int main() {
         }
 
 #ifdef USE_LINEARDB
-    printf( "%llu cells read on average per table expand (%llu expands), "
-            "worst read = %llu\n",
-            db.cellsReadOnTableExpand / db.numTableExpands, 
-            db.numTableExpands, db.worstCellsReadOnTableExpand );
-    printf( "%llu cells moved on average per table expand (%llu expands), "
-            "worst moved = %llu\n",
-            db.cellsMovedOnTableExpand / db.numTableExpands, 
-            db.numTableExpands, db.worstCellsMovedOnTableExpand );
+    if( db.numTableExpands > 0 ) {
+        printf( "%llu cells read on average per table expand (%llu expands), "
+                "worst read = %llu\n",
+                db.cellsReadOnTableExpand / db.numTableExpands, 
+                db.numTableExpands, db.worstCellsReadOnTableExpand );
+        printf( "%llu cells moved on average per table expand (%llu expands), "
+                "worst moved = %llu\n",
+                db.cellsMovedOnTableExpand / db.numTableExpands, 
+                db.numTableExpands, db.worstCellsMovedOnTableExpand );
+        }
 #endif
     
     printf( "Inserted %d\n", insertCount );
