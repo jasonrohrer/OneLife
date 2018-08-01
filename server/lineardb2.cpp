@@ -291,7 +291,7 @@ int LINEARDB2_open(
             }
 
         char overflowPath[200];
-        sprintf( overflowPath, "%198s%s", inPath, "o" );
+        sprintf( overflowPath, "%.198s%s", inPath, "o" );
         
         inDB->overflowFile = fopen( overflowPath, "r+b" );
     
