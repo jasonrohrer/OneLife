@@ -3,6 +3,8 @@
 #include "kissdb.h"
 #include "stackdb.h"
 #include "lineardb.h"
+#include "lineardb2.h"
+
 #include "dbCommon.h"
 #include "minorGems/system/Time.h"
 
@@ -12,7 +14,8 @@
 #include "minorGems/util/random/CustomRandomSource.h"
 
 
-#define TABLE_SIZE 800000
+//#define TABLE_SIZE 800000
+#define TABLE_SIZE 100000
 
 //#define INSERT_SIZE 15000000
 //#define INSERT_SIZE 2000000
@@ -27,7 +30,8 @@
 
 //#define USE_KISSDB
 //#define USE_STACKDB
-#define USE_LINEARDB
+//#define USE_LINEARDB
+#define USE_LINEARDB2
 
 
 
@@ -79,6 +83,24 @@
 #define DB_Iterator_init  LINEARDB_Iterator_init
 #define DB_Iterator_next  LINEARDB_Iterator_next
 #define DB_maxStack db.maxProbeDepth
+
+#endif
+
+
+
+#ifdef USE_LINEARDB2
+
+#define DB LINEARDB2
+#define DB_open LINEARDB2_open
+#define DB_close LINEARDB2_close
+#define DB_get LINEARDB2_get
+#define DB_put LINEARDB2_put
+// linear db has no put_new
+#define DB_put_new LINEARDB2_put
+#define DB_Iterator  LINEARDB2_Iterator
+#define DB_Iterator_init  LINEARDB2_Iterator_init
+#define DB_Iterator_next  LINEARDB2_Iterator_next
+#define DB_maxStack db.maxOverflowDepth
 
 #endif
 

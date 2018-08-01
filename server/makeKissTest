@@ -1,7 +1,7 @@
 rm test.db 
 rm test2.db
  
-g++ -g -I../.. -o kissTest kissTest.cpp kissdb.cpp stackdb.cpp lineardb.cpp dbCommon.cpp ../../minorGems/system/unix/TimeUnix.cpp
+g++ -g -I../.. -o kissTest kissTest.cpp kissdb.cpp stackdb.cpp lineardb2.cpp dbCommon.cpp ../../minorGems/system/unix/TimeUnix.cpp
 
 time ./kissTest
 

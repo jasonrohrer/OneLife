@@ -893,10 +893,12 @@ int LINEARDB2_getOrPut( LINEARDB2 *inDB, const void *inKey, void *inOutValue,
                 uint8_t present = 1;
                 int numWritten = fwrite( &present, 1, 1, inDB->file );
                 
+                numWritten += fwrite( inKey, inDB->keySize, 1, inDB->file );
+                
                 numWritten += fwrite( inOutValue, inDB->valueSize, 1, 
                                       inDB->file );
                 
-                if( numWritten != 2 ) {
+                if( numWritten != 3 ) {
                     return -1;
                     }
                 return 0;
@@ -924,7 +926,12 @@ int LINEARDB2_getOrPut( LINEARDB2 *inDB, const void *inKey, void *inOutValue,
     
     while( !foundEmpty && thisBucket->overflow ) {
         // consider overflow
+        overflowDepth++;
 
+        if( overflowDepth > inDB->maxOverflowDepth ) {
+            inDB->maxOverflowDepth = overflowDepth;
+            }
+        
         
         thisBucketIndex = thisBucket->overflowIndex;
         
@@ -965,9 +972,12 @@ int LINEARDB2_getOrPut( LINEARDB2 *inDB, const void *inKey, void *inOutValue,
                     int numWritten = 
                         fwrite( &present, 1, 1, inDB->overflowFile );
                     
+                    numWritten += fwrite( inKey, inDB->keySize, 1,
+                                          inDB->overflowFile );
+                    
                     numWritten += fwrite( inOutValue, inDB->valueSize, 1,
                                           inDB->overflowFile );
-                    if( numWritten != 2 ) {
+                    if( numWritten != 3 ) {
                         return -1;
                         }
                     return 0;
@@ -999,6 +1009,13 @@ int LINEARDB2_getOrPut( LINEARDB2 *inDB, const void *inKey, void *inOutValue,
         // reached end of overflow chain without finding place to put value
         
         // need to make a new overflow bucket
+
+        overflowDepth++;
+
+        if( overflowDepth > inDB->maxOverflowDepth ) {
+            inDB->maxOverflowDepth = overflowDepth;
+            }
+        
 
         thisBucket->overflow = true;
 
@@ -1126,23 +1143,34 @@ int LINEARDB2_Iterator_next( LINEARDB2_Iterator *inDBi,
             return -1;
             }
 
-        int numRead = fread( outKey, 
-                             db->keySize, 1,
+        uint8_t present = 0;
+        
+        
+        int numRead = fread( &present, 
+                             1, 1,
                              inDBi->nextRecordFile );
         if( numRead != 1 ) {
             return -1;
             }
         
-        numRead = fread( outValue, 
-                         db->valueSize, 1,
-                         inDBi->nextRecordFile );
-        if( numRead != 1 ) {
-            return -1;
-            }
-        
         inDBi->nextRecordIndex ++;
+
+        if( present ) {
+            numRead = fread( outKey, 
+                             db->keySize, 1,
+                             inDBi->nextRecordFile );
+            if( numRead != 1 ) {
+                return -1;
+                }
         
-        return 1;
+            numRead = fread( outValue, 
+                             db->valueSize, 1,
+                             inDBi->nextRecordFile );
+            if( numRead != 1 ) {
+                return -1;
+                }
+            return 1;
+            }
         }
     }
 
