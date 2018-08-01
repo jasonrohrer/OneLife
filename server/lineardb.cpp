@@ -621,14 +621,111 @@ static uint64_t getDefaultBin( LINEARDB *inDB, const void *inKey ) {
 
 
 
+
+
+static inline void swapRecords( uint8_t *inRecords, int inRecordBytes,
+                                uint8_t *inTempRecord,
+                                unsigned int *inBinNumbers,
+                                int inI, int inJ ) {
+    memcpy( inTempRecord, 
+            &( inRecords[ inRecordBytes * inI ] ),
+            inRecordBytes );
+
+    memcpy( &( inRecords[ inRecordBytes * inI ] ),
+            &( inRecords[ inRecordBytes * inJ ] ),
+            inRecordBytes );
+
+    memcpy( &( inRecords[ inRecordBytes * inJ ] ),
+            inTempRecord,
+            inRecordBytes );
+
+    int tempBinNumber = inBinNumbers[inI];
+    inBinNumbers[inI] = inBinNumbers[inJ];
+    inBinNumbers[inJ] = tempBinNumber;
+    }
+
+
+
+static int partitionRecords( uint8_t *inRecords, int inRecordBytes,
+                             uint8_t *inTempRecord,
+                             unsigned int *inBinNumbers,
+                             int inLo, int inHi )  {
+    
+    unsigned int pivot = inBinNumbers[ inHi ];
+    int i = inLo - 1;
+    
+    for( int j= inLo; j< inHi; j++ ) {
+        
+        if( inBinNumbers[j] < pivot ) {
+            i++;
+            swapRecords( inRecords, inRecordBytes, inTempRecord,
+                         inBinNumbers, i, j );    
+            }
+
+        }
+    swapRecords( inRecords, inRecordBytes, inTempRecord,
+                 inBinNumbers, i+1, inHi );
+    return i + 1;
+    }
+
+
+
+static int quicksortRecords( uint8_t *inRecords, int inRecordBytes,
+                             uint8_t *inTempRecord,
+                             unsigned int *inBinNumbers,
+                             int inLo, int inHi ) {
+    
+    if( inLo < inHi ) {
+        
+        int p = partitionRecords( inRecords, inRecordBytes, inTempRecord, 
+                                  inBinNumbers, inLo, inHi );
+        
+        quicksortRecords( inRecords, inRecordBytes, inTempRecord,
+                          inBinNumbers, inLo, p - 1 );
+        quicksortRecords( inRecords, inRecordBytes, inTempRecord, 
+                          inBinNumbers, p + 1, inHi );
+        }
+    }
+
+
+
+// sorts records and corresponding bin numbers by bin number
+static void sortRecords( uint8_t *inRecords, int inRecordBytes,
+                         uint8_t *inTempRecord,
+                         unsigned int *inBinNumbers,
+                         int inNumRecords ) {
+    
+    quicksortRecords( inRecords, inRecordBytes, inTempRecord,
+                      inBinNumbers, 
+                      0, inNumRecords - 1 );
+    }
+
+/*
+algorithm quicksort(A, lo, hi) is
+    if lo < hi then
+        p := partition(A, lo, hi)
+        quicksort(A, lo, p - 1 )
+        quicksort(A, p + 1, hi)
+
+algorithm partition(A, lo, hi) is
+    pivot := A[hi]
+    i := lo - 1    
+    for j := lo to hi - 1 do
+        if A[j] < pivot then
+            i := i + 1
+            swap A[i] with A[j]
+    swap A[i + 1] with A[hi]
+    return i + 1
+*/
+
+
 // removes a coniguous segment of cells from the table, one by one,
 // from left to right,
 // starting at inFirstBinNumber, and reinserts them
-// examines at least inMinCellCount cells, but maybe more, if there
-// is a long run with no empty spots
+// examines exactly inCellCount cells
 // returns 0 on success, -1 on failure
 static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber,
-                                uint64_t inMinCellCount ) {
+                                uint64_t inCellCount ) {
     
     uint64_t c = inFirstBinNumber;
     
@@ -642,8 +739,116 @@ static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber,
     uint64_t numCellsRead = 0;
     
     
+    // read entire island into RAM in one read
+    unsigned int islandBytes = inDB->recordSizeBytes * inCellCount;
+    
+    uint8_t *islandCellBuffer = new uint8_t[ islandBytes ];
+    
+    uint64_t binLoc = getBinLoc( inDB, c );
+    
+    if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
+        return -1;
+        }
+    
+    int numRead = fread( islandCellBuffer, 
+                         islandBytes, 1, inDB->file );
+        
+    if( numRead != 1 ) {
+        return -1;
+        }
+    
+    // blank them all out with zeros
+    if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
+        return -1;
+        }
+    memset( inDB->recordBuffer, 0, inDB->recordSizeBytes );
+    for( int i=0; i<inCellCount; i++ ) {
+        int numWritten = 
+            fwrite( inDB->recordBuffer, inDB->recordSizeBytes, 1, inDB->file );
+        
+        if( numWritten != 1 ) {
+            return -1;
+            }
+        setNotExists( inDB, c + i );
+        }
+
+    /*
+    unsigned int *binNumbers = new unsigned int[ inCellCount ];
+    
+    for( int i=0; i<inCellCount; i++ ) {
+        binNumbers[i] = 
+            getDefaultBin( 
+                inDB, 
+                &( islandCellBuffer[ i * inDB->recordSizeBytes + 1 ] ) );
+               
+        if( inCellCount > 20 ) {
+            printf( "Bin %d = %d (%d %d)\n", i, binNumbers[i],
+                    islandCellBuffer[ i * inDB->recordSizeBytes + 5 ],
+                    islandCellBuffer[ i * inDB->recordSizeBytes + 6 ] );
+            }
+        
+        }
+    
+    uint8_t *tempRecord = new uint8_t[ inDB->recordSizeBytes ];
+
+    sortRecords( islandCellBuffer, inDB->recordSizeBytes,
+                 tempRecord,
+                 binNumbers,
+                 inCellCount );
+    
+    if( inCellCount > 20 ) {
+        printf( "After sorting:\n" );
+        for( int i=0; i<inCellCount; i++ ) {
+            printf( "Bin %d = %d (%d %d)\n", i, binNumbers[i],
+                    islandCellBuffer[ i * inDB->recordSizeBytes + 5 ],
+                    islandCellBuffer[ i * inDB->recordSizeBytes + 6 ] );
+            }
+        }
+    
+    delete [] tempRecord;
+    delete [] binNumbers;
+    */
+
+    // this will be incremented when they are inserted
+    inDB->numRecords -= inCellCount;
+        
+
+    // now re-insert them one by one
+    for( int i=0; i<inCellCount; i++ ) {
+        uint8_t *cell = &( islandCellBuffer[ i * inDB->recordSizeBytes ] );
+        
+        int putResult = 
+            LINEARDB_put( 
+                inDB,
+                // key
+                &( cell[ 1 ] ), 
+                // value
+                &( cell[ 1 + inDB->keySize ] ) );
+                
+        numCellsMoved ++;
+                
+        if( putResult != 0 ) {
+            return -1;
+            }
+        }
+    delete [] islandCellBuffer;
+    
+
+    inDB->cellsMovedOnTableExpand += numCellsMoved;
+    //inDB->cellsReadOnTableExpand += numCellsRead;
+    
+    if( numCellsMoved > inDB->worstCellsMovedOnTableExpand ) {
+        inDB->worstCellsMovedOnTableExpand = numCellsMoved;
+        }
+
+    return 0;
+
+
+    
+
+
     while( numCellsTouched < inDB->hashTableSizeB && 
-           ( numCellsTouched < inMinCellCount || exists( inDB, c )  ) ) {
+           ( numCellsTouched < inCellCount || exists( inDB, c )  ) ) {
         
         if( exists( inDB, c ) ) {
             
@@ -756,13 +961,19 @@ static int expandTable( LINEARDB *inDB ) {
     
 
     // expand table until we are back at or below maxLoad
+    // but keep expanding through entire island regardless
+    char inIsland = exists( inDB, oldSplitPoint );
+
     int numExpanded = 0;
     while( (double)( inDB->numRecords ) /
-           (double)( inDB->hashTableSizeB ) > inDB->maxLoad ) {
+           (double)( inDB->hashTableSizeB ) > inDB->maxLoad ||
+           inIsland ) {
 
         inDB->hashTableSizeB ++;
         numExpanded++;
         
+        inIsland = exists( inDB, oldSplitPoint + numExpanded );
+
         if( inDB->hashTableSizeB == inDB->hashTableSizeA * 2 ) {
             // full round of expansion is done.
         
@@ -772,6 +983,7 @@ static int expandTable( LINEARDB *inDB ) {
             
 
             recreateMaps( inDB, oldTableSizeA );
+            break;
             }
         }
     
@@ -792,10 +1004,49 @@ static int expandTable( LINEARDB *inDB ) {
             }
         }
     
+    
+    // don't move split point past end of oldTableSizeA
+    // BUT do keep expanding rehashed cells until end of island
+    
+    while( exists( inDB, oldSplitPoint + numExpanded ) ) {
+        numExpanded++;
+        
+        if( oldSplitPoint + numExpanded == inDB->hashTableSizeB ) {
+            // gone too far
+            numExpanded--;
+            break;
+            }   
+        }
+
+
 
 
     // existence and fingerprint maps already 0 for these extra cells
     // (they are big enough already to have room for it at the end)
+
+
+    // remove and reinsert island starting with first cell of table, 
+    // which might have wraped-around
+    // cells in it due to linear probing, and there might be an empty cell
+    // at the end of the table now that we've expanded it
+    
+    uint64_t startIslandSize = 0;
+    
+    while( exists( inDB, startIslandSize ) ) {
+        startIslandSize++;
+        }
+    
+
+    if( startIslandSize > 0 ) {
+        
+        int result = reinsertCellSegment( inDB, 0, startIslandSize );
+    
+
+        if( result == -1 ) {
+            return -1;
+            }
+        }
+    
 
 
 
@@ -813,17 +1064,6 @@ static int expandTable( LINEARDB *inDB ) {
     
     
     
-    // do the same for first cell of table, which might have wraped-around
-    // cells in it due to linear probing, and there might be an empty cell
-    // at the end of the table now that we've expanded it
-    // there is no minimum number we must examine, if first cell is empty
-    // looking at just that cell is enough
-    result = reinsertCellSegment( inDB, 0, 1 );
-    
-
-    if( result == -1 ) {
-        return -1;
-        }
 
     
     
