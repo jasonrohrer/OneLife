@@ -242,14 +242,6 @@ int LINEARDB_open(
     inDB->numRecords = 0;
     
     inDB->maxLoad = DEFAULT_MAX_LOAD;
-
-
-    inDB->numTableExpands = 0;
-    inDB->cellsMovedOnTableExpand = 0;
-    inDB->cellsReadOnTableExpand = 0;
-    
-    inDB->worstCellsMovedOnTableExpand = 0;
-    inDB->worstCellsReadOnTableExpand = 0;
     
 
     if( inPath != NULL ) {
@@ -595,127 +587,22 @@ inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
     }
 
 
-
-// where inKey lands in table, bin number
-static uint64_t getDefaultBin( LINEARDB *inDB, const void *inKey ) {
-    uint64_t hashVal = LINEARDB_hash( inKey, inDB->keySize );
-    
-    uint64_t binNumberA = hashVal % (uint64_t)( inDB->hashTableSizeA );
-    
-    uint64_t binNumberB = binNumberA;
-    
-
-
-    unsigned int splitPoint = inDB->hashTableSizeB - inDB->hashTableSizeA;
-    
-    
-    if( binNumberA < splitPoint ) {
-        // points before split can be mod'ed with double base table size
-
-        // binNumberB will always fit in hashTableSizeB, the expanded table
-        binNumberB = hashVal % (uint64_t)( inDB->hashTableSizeA * 2 );
-        }
-    
-    return binNumberB;
-    }
-
-
-
-
 // removes a coniguous segment of cells from the table, one by one,
 // from left to right,
 // starting at inFirstBinNumber, and reinserts them
-// examines exactly inCellCount cells
+// examines at least inMinCellCount cells, but maybe more, if there
+// is a long run with no empty spots
 // returns 0 on success, -1 on failure
 static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber,
-                                uint64_t inCellCount ) {
+                                uint64_t inMinCellCount ) {
     
     uint64_t c = inFirstBinNumber;
     
     // don't infinite loop if table is 100% full
-    uint64_t numCellsMoved = 0;
-
     uint64_t numCellsTouched = 0;
 
-    uint64_t numCellsNotMoved = 0;
-
-    uint64_t numCellsRead = 0;
-    
-    
-    // read entire island into RAM in one read
-    unsigned int islandBytes = inDB->recordSizeBytes * inCellCount;
-    
-    uint8_t *islandCellBuffer = new uint8_t[ islandBytes ];
-    
-    uint64_t binLoc = getBinLoc( inDB, c );
-    
-    if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
-        return -1;
-        }
-    
-    int numRead = fread( islandCellBuffer, 
-                         islandBytes, 1, inDB->file );
-        
-    if( numRead != 1 ) {
-        return -1;
-        }
-    
-    // blank them all out with zeros
-    if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
-        return -1;
-        }
-    memset( inDB->recordBuffer, 0, inDB->recordSizeBytes );
-    for( int i=0; i<inCellCount; i++ ) {
-        int numWritten = 
-            fwrite( inDB->recordBuffer, inDB->recordSizeBytes, 1, inDB->file );
-        
-        if( numWritten != 1 ) {
-            return -1;
-            }
-        setNotExists( inDB, c + i );
-        }
-
-
-    // this will be incremented when they are inserted
-    inDB->numRecords -= inCellCount;
-        
-
-    // now re-insert them one by one
-    for( int i=0; i<inCellCount; i++ ) {
-        uint8_t *cell = &( islandCellBuffer[ i * inDB->recordSizeBytes ] );
-        
-        int putResult = 
-            LINEARDB_put( 
-                inDB,
-                // key
-                &( cell[ 1 ] ), 
-                // value
-                &( cell[ 1 + inDB->keySize ] ) );
-                
-        numCellsMoved ++;
-                
-        if( putResult != 0 ) {
-            return -1;
-            }
-        }
-    delete [] islandCellBuffer;
-    
-
-    inDB->cellsMovedOnTableExpand += numCellsMoved;
-    //inDB->cellsReadOnTableExpand += numCellsRead;
-    
-    if( numCellsMoved > inDB->worstCellsMovedOnTableExpand ) {
-        inDB->worstCellsMovedOnTableExpand = numCellsMoved;
-        }
-
-    return 0;
-
-
-    
-
-
     while( numCellsTouched < inDB->hashTableSizeB && 
-           ( numCellsTouched < inCellCount || exists( inDB, c )  ) ) {
+           ( numCellsTouched < inMinCellCount || exists( inDB, c )  ) ) {
         
         if( exists( inDB, c ) ) {
             
@@ -733,58 +620,39 @@ static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber,
             if( numRead != 1 ) {
                 return -1;
                 }
-            
-            numCellsRead ++;
-            
-
-            // does this key still belong here?
-            if( getDefaultBin( inDB, &( inDB->recordBuffer[1] ) ) != c ) {
-                // needs to move
-
-                // clear present byte
-                if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
-                    return -1;
-                    }
-
-                // write not present flag
-                unsigned char presentFlag = 0;
-                
-                int numWritten = fwrite( &presentFlag, 1, 1, inDB->file );
-                
-                if( numWritten != 1 ) {
-                    return -1;
-                    }
-                
         
-                setNotExists( inDB, c );
-            
-                // decrease count before reinsert, which will increment count
-                inDB->numRecords --;
-        
-        
-                int putResult = 
-                    LINEARDB_put( 
-                        inDB,
-                        // key
-                        &( inDB->recordBuffer[ 1 ] ), 
-                        // value
-                        &( inDB->recordBuffer[ 1 + inDB->keySize ] ) );
-                
-                numCellsMoved ++;
-                
-                if( putResult != 0 ) {
-                    return -1;
-                    }
+            // now clear present byte
+            if( fseeko( inDB->file, binLoc, SEEK_SET ) ) {
+                return -1;
                 }
-            else {
-                numCellsNotMoved ++;
+
+            // write not present flag
+            unsigned char presentFlag = 0;
+            
+            int numWritten = fwrite( &presentFlag, 1, 1, inDB->file );
+        
+            if( numWritten != 1 ) {
+                return -1;
+                }
+        
+        
+            setNotExists( inDB, c );
+        
+            // decrease count before reinsert, which will increment count
+            inDB->numRecords --;
+        
+        
+            int putResult = 
+                LINEARDB_put( inDB,
+                              // key
+                              &( inDB->recordBuffer[ 1 ] ), 
+                              // value
+                              &( inDB->recordBuffer[ 1 + inDB->keySize ] ) );
+        
+            if( putResult != 0 ) {
+                return -1;
                 }
             }
-        else {
-            // empty cells don't move either
-            numCellsNotMoved ++;
-            }
-        
         
         c++;
 
@@ -792,21 +660,9 @@ static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber,
             c -= inDB->hashTableSizeB;
             }
         
-        numCellsTouched ++;
-        }
-
-    inDB->cellsMovedOnTableExpand += numCellsMoved;
-    inDB->cellsReadOnTableExpand += numCellsRead;
-    
-    if( numCellsMoved > inDB->worstCellsMovedOnTableExpand ) {
-        inDB->worstCellsMovedOnTableExpand = numCellsMoved;
+        numCellsTouched++;
         }
     
-    if( numCellsRead > inDB->worstCellsReadOnTableExpand ) {
-        inDB->worstCellsReadOnTableExpand = numCellsRead;
-        }
-    
-
     return 0;
     }
 
@@ -822,25 +678,18 @@ static int reinsertCellSegment( LINEARDB *inDB, uint64_t inFirstBinNumber,
 // This call may expand the table by more than one cell, until the table
 // is big enough that it's at or below the maxLoad
 static int expandTable( LINEARDB *inDB ) {
-    inDB->numTableExpands ++;
-    
+
     unsigned int oldSplitPoint = inDB->hashTableSizeB - inDB->hashTableSizeA;
     
 
     // expand table until we are back at or below maxLoad
-    // but keep expanding through entire island regardless
-    char inIsland = exists( inDB, oldSplitPoint );
-
     int numExpanded = 0;
     while( (double)( inDB->numRecords ) /
-           (double)( inDB->hashTableSizeB ) > inDB->maxLoad ||
-           inIsland ) {
+           (double)( inDB->hashTableSizeB ) > inDB->maxLoad ) {
 
         inDB->hashTableSizeB ++;
         numExpanded++;
         
-        inIsland = exists( inDB, oldSplitPoint + numExpanded );
-
         if( inDB->hashTableSizeB == inDB->hashTableSizeA * 2 ) {
             // full round of expansion is done.
         
@@ -850,7 +699,6 @@ static int expandTable( LINEARDB *inDB ) {
             
 
             recreateMaps( inDB, oldTableSizeA );
-            break;
             }
         }
     
@@ -871,49 +719,10 @@ static int expandTable( LINEARDB *inDB ) {
             }
         }
     
-    
-    // don't move split point past end of oldTableSizeA
-    // BUT do keep expanding rehashed cells until end of island
-    
-    while( exists( inDB, oldSplitPoint + numExpanded ) ) {
-        numExpanded++;
-        
-        if( oldSplitPoint + numExpanded == inDB->hashTableSizeB ) {
-            // gone too far
-            numExpanded--;
-            break;
-            }   
-        }
-
-
 
 
     // existence and fingerprint maps already 0 for these extra cells
     // (they are big enough already to have room for it at the end)
-
-
-    // remove and reinsert island starting with first cell of table, 
-    // which might have wraped-around
-    // cells in it due to linear probing, and there might be an empty cell
-    // at the end of the table now that we've expanded it
-    
-    uint64_t startIslandSize = 0;
-    
-    while( exists( inDB, startIslandSize ) ) {
-        startIslandSize++;
-        }
-    
-
-    if( startIslandSize > 0 ) {
-        
-        int result = reinsertCellSegment( inDB, 0, startIslandSize );
-    
-
-        if( result == -1 ) {
-            return -1;
-            }
-        }
-    
 
 
 
@@ -931,6 +740,17 @@ static int expandTable( LINEARDB *inDB ) {
     
     
     
+    // do the same for first cell of table, which might have wraped-around
+    // cells in it due to linear probing, and there might be an empty cell
+    // at the end of the table now that we've expanded it
+    // there is no minimum number we must examine, if first cell is empty
+    // looking at just that cell is enough
+    result = reinsertCellSegment( inDB, 0, 1 );
+    
+
+    if( result == -1 ) {
+        return -1;
+        }
 
     
     
@@ -962,7 +782,24 @@ static int locateValue( LINEARDB *inDB, const void *inKey,
     
     // hash to find first possible bin for inKey
 
-    uint64_t binNumberB = getDefaultBin( inDB, inKey );
+
+    uint64_t hashVal = LINEARDB_hash( inKey, inDB->keySize );
+    
+    uint64_t binNumberA = hashVal % (uint64_t)( inDB->hashTableSizeA );
+    
+    uint64_t binNumberB = binNumberA;
+    
+
+
+    unsigned int splitPoint = inDB->hashTableSizeB - inDB->hashTableSizeA;
+    
+    
+    if( binNumberA < splitPoint ) {
+        // points before split can be mod'ed with double base table size
+
+        // binNumberB will always fit in hashTableSizeB, the expanded table
+        binNumberB = hashVal % (uint64_t)( inDB->hashTableSizeA * 2 );
+        }
     
 
     

@@ -4,47 +4,69 @@
 #include <stdio.h>
 
 
+#define LDB2_RECORDS_PER_BUCKET 8
+
+
+typedef struct {
+        uint16_t fingerprints[ LDB2_RECORDS_PER_BUCKET ];
+        
+        // false if no overflow
+        char overflow;
+        // index of another FingerprintBucket in the overflow array
+        uint32_t overflowIndex;
+    } FingerprintBucket;
+
+    
+
+
 typedef struct {
         // load above this causes table to expand incrementally
         double maxLoad;
         
         // number of inserted records in database
-        unsigned int numRecords;
+        uint32_t numRecords;
         
 
         // for linear hashing table expansion
         // number of slots in base table
-        unsigned int hashTableSizeA;
+        uint32_t hashTableSizeA;
 
         // number of slots in expanded table
         // when this reaches hashTableSizeA * 2
         // hash table is done with a full round of expansion
         // and hashTableSizeA is set to hashTableSizeB at that point
-        unsigned int hashTableSizeB;
+        uint32_t hashTableSizeB;
         
 
         unsigned int keySize;
         unsigned int valueSize;
+
         FILE *file;
+        FILE *overflowFile;
         
         // size of fully expanded (hashTableSizeB) table in bytes
         // (size of all records together)
         uint64_t tableSizeBytes;
 
         unsigned int recordSizeBytes;
-        uint8_t *recordBuffer;
-        unsigned int maxProbeDepth;
-
-        // sized to ( hashTableSizeA * 2 ) / 8 + 1
-        uint8_t *existenceMap;
-
-        // 16 bit hash fingerprints of key in each spot in table
-        // we can verify matches (with false positives and no false negatives) 
-        // without touching the disk
-        // sized to ( hashTableSizeA * 2 ) 16-bit values
-        uint16_t *fingerprintMap;
         
-    } LINEARDB;
+
+        unsigned int bucketSizeBytes;
+        uint8_t *bucketBuffer;
+
+        unsigned int maxOverflowDepth;
+
+
+        // sized to ( hashTableSizeA * 2 ) buckets
+        FingerprintBucket *fingerprintMap;
+        
+        
+        // dynamically sized
+        uint32_t overflowAreaSize;
+        FingerprintBucket *overflowFingerprintBuckets;
+        
+
+    } LINEARDB2;
 
     
 
@@ -60,7 +82,8 @@ typedef struct {
  *
  * @param db Database struct
  * @param path Path to file, or NULL to use previously forced
- *   FILE * already set in db struct by previous forceFile call.
+ *   FILE * pointers already set in db struct by previous forceFile call.
+ *   If path specified, "o" is appended to create the name of the overflow file.
  * @param inMode is ignored, and always opened in RW-create mode
  *   (left for compatibility with KISSDB api)
  * @param inHashTableStartSize Size of hash table in entries
@@ -70,8 +93,8 @@ typedef struct {
  * @param value_size Size of values in bytes
  * @return 0 on success, nonzero on error
  */
-int LINEARDB_open(
-    LINEARDB *inDB,
+int LINEARDB2_open(
+    LINEARDB2 *inDB,
     const char *inPath,
     int inMode,
     unsigned int inHashTableStartSize,
@@ -85,7 +108,7 @@ int LINEARDB_open(
  *
  * @param db Database struct
  */
-void LINEARDB_close( LINEARDB *inDB );
+void LINEARDB2_close( LINEARDB2 *inDB );
 
 
 
@@ -108,7 +131,7 @@ void LINEARDB_close( LINEARDB *inDB );
  * on your own hardware and with your own data and your own insert vs read
  * ratio.
  */
-void LINEARDB_setMaxLoad( LINEARDB *inDB, double inMaxLoad );
+void LINEARDB2_setMaxLoad( LINEARDB2 *inDB, double inMaxLoad );
 
 
 
@@ -120,7 +143,7 @@ void LINEARDB_setMaxLoad( LINEARDB *inDB, double inMaxLoad );
  * @param vbuf Value buffer (value_size bytes capacity)
  * @return -1 on I/O error, 0 on success, 1 on not found
  */
-int LINEARDB_get( LINEARDB *inDB, const void *inKey, void *outValue );
+int LINEARDB2_get( LINEARDB2 *inDB, const void *inKey, void *outValue );
 
 
 
@@ -135,7 +158,7 @@ int LINEARDB_get( LINEARDB *inDB, const void *inKey, void *outValue );
  * @param value Value (value_size bytes)
  * @return -1 on I/O error, 0 on success
  */
-int LINEARDB_put( LINEARDB *inDB, const void *inKey, const void *inValue );
+int LINEARDB2_put( LINEARDB2 *inDB, const void *inKey, const void *inValue );
 
 
 
@@ -143,10 +166,13 @@ int LINEARDB_put( LINEARDB *inDB, const void *inKey, const void *inValue );
  * Cursor used for iterating over all entries in database
  */
 typedef struct {
-        LINEARDB *db;
-        uint64_t nextRecordLoc;
-        unsigned int currentRunLength;
-} LINEARDB_Iterator;
+        LINEARDB2 *db;
+        // first main file, then overflow
+        FILE *nextRecordFile;
+        uint32_t nextBucketIndex;
+        // index in bucket
+        int nextRecordIndex;
+} LINEARDB2_Iterator;
 
 
 
@@ -156,7 +182,7 @@ typedef struct {
  * @param db Database struct
  * @param i Iterator to initialize
  */
-void LINEARDB_Iterator_init( LINEARDB *inDB, LINEARDB_Iterator *inDBi );
+void LINEARDB2_Iterator_init( LINEARDB2 *inDB, LINEARDB2_Iterator *inDBi );
 
 
 
@@ -171,7 +197,7 @@ void LINEARDB_Iterator_init( LINEARDB *inDB, LINEARDB_Iterator *inDBi );
  * @param vbuf Buffer to fill with next value (value_size bytes)
  * @return 0 if there are no more entries, negative on error, positive if an kbuf/vbuf have been filled
  */
-int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi, 
+int LINEARDB2_Iterator_next( LINEARDB2_Iterator *inDBi, 
                             void *outKey, void *outValue );
 
 
@@ -195,13 +221,13 @@ int LINEARDB_Iterator_next( LINEARDB_Iterator *inDBi,
  * Total number of cells in table, including those added through
  * incremental expansion due to Linear Hashing algorithm.
  */
-unsigned int LINEARDB_getCurrentSize( LINEARDB *inDB );
+unsigned int LINEARDB2_getCurrentSize( LINEARDB2 *inDB );
 
 
 /**
  * Number of records that have been inserted in the database.
  */
-unsigned int LINEARDB_getNumRecords( LINEARDB *inDB );
+unsigned int LINEARDB2_getNumRecords( LINEARDB2 *inDB );
 
 
 
@@ -215,14 +241,16 @@ unsigned int LINEARDB_getNumRecords( LINEARDB *inDB );
  * Iteration happens in file order, and if an optimal shrunken database
  * table size is used, the inserts will happen in file order as well.
  *
- * Return value can be used for inHashTableStartSize in LINEARDB_open.
+ * Return value can be used for inHashTableStartSize in LINEARDB2_open.
  */
-unsigned int LINEARDB_getShrinkSize( LINEARDB *inDB,
-                                     unsigned int inNewNumRecords );
+unsigned int LINEARDB2_getShrinkSize( LINEARDB2 *inDB,
+                                      unsigned int inNewNumRecords );
 
 
 
 
+
+    
 
 /**
  * For the given maxLoad that is currently set, get the maximum
@@ -230,16 +258,16 @@ unsigned int LINEARDB_getShrinkSize( LINEARDB *inDB,
  *
  * If inMaxLoad is  0, default max load is used.
  */
-uint64_t LINEARDB_getMaxFileSize( unsigned int inTableStartSize,
-                                  unsigned int inKeySize,
-                                  unsigned int inValueSize,
-                                  uint64_t inNumRecords,
-                                  double inMaxLoad = 0 );
+uint64_t LINEARDB2_getMaxFileSize( unsigned int inTableStartSize,
+                                   unsigned int inKeySize,
+                                   unsigned int inValueSize,
+                                   uint32_t inNumRecords,
+                                   double inMaxLoad = 0 );
 
 
 
 /**
- * Force the file that will be used by the as-of-yet unopened database.
+ * Force the files that will be used by the as-of-yet unopened database.
  *
  * Pass NULL for inPath to open call to use the file thus forced.
  *
@@ -248,5 +276,6 @@ uint64_t LINEARDB_getMaxFileSize( unsigned int inTableStartSize,
  * Note that forced files are treated as empty and ready to be rewritten
  * with a new header and new data.
  */
-void LINEARDB_forceFile( LINEARDB *inDB,
-                         FILE *inFile );
+void LINEARDB2_forceFile( LINEARDB2 *inDB,
+                          FILE *inFile,
+                          FILE *inOverflowFile );
