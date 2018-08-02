@@ -387,7 +387,10 @@ int LINEARDB2_open(
         inDB->overflowAreaSize = MIN_OVERFLOW_SIZE;
         inDB->overflowFingerprintBuckets = 
             new FingerprintBucket[ inDB->overflowAreaSize ];
-
+        
+        memset( inDB->overflowFingerprintBuckets, 0, 
+                inDB->overflowAreaSize * sizeof( FingerprintBucket ) );
+        
         
         // write empty overflow file to match
         memset( inDB->bucketBuffer, 0, inDB->bucketSizeBytes );
