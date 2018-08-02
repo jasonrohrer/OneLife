@@ -1009,11 +1009,12 @@ int LINEARDB2_getOrPut( LINEARDB2 *inDB, const void *inKey, void *inOutValue,
                 
                 if( !emptyRec ) {
                     // read key to make sure it actually matches
-                    if( fseeko( inDB->file, filePosRec + 1, SEEK_SET ) ) {
+                    if( fseeko( inDB->overflowFile, 
+                                filePosRec + 1, SEEK_SET ) ) {
                         return -1;
                         }
                     int numRead = fread( inDB->bucketBuffer, inDB->keySize, 1,
-                                         inDB->file );
+                                         inDB->overflowFile );
                 
                     if( numRead != 1 ) {
                         return -1;
