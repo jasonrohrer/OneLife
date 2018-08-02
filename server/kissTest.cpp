@@ -248,8 +248,12 @@ int main() {
     
     intQuadToKey( testX, testY, 0, 0, key );
 
-    DB_put_new( &db, key, value );
+    error = DB_put_new( &db, key, value );
 
+    if( error != 0 ) {
+        printf( "DB_put_new failed\n" );
+        return 1;
+        }
 
     int result = DB_get( &db, key, value );
     if( result == 0 ) {
@@ -273,10 +277,10 @@ int main() {
 
 
     int insertCount = 0;
-    for( int x=0; x<num; x++ ) {
-        for( int y=0; y<num; y++ ) {
-            for( int s=0; s<num; s++ ) {
-                for( int b=0; b<num; b++ ) {
+    for( int x=0; x<num && insertCount < INSERT_SIZE; x++ ) {
+        for( int y=0; y<num && insertCount < INSERT_SIZE; y++ ) {
+            for( int s=0; s<num && insertCount < INSERT_SIZE; s++ ) {
+                for( int b=0; b<num && insertCount < INSERT_SIZE; b++ ) {
             
                     insertCount++;
             
@@ -285,7 +289,11 @@ int main() {
                     
                     //printf( "Inserting %d,%d\n", x, y );
             
-                    DB_put_new( &db, key, value );
+                    error = DB_put_new( &db, key, value );
+                    if( error != 0 ) {
+                        printf( "DB_put_new failed\n" );
+                        return 1;
+                        }
                     }
                 }
             }
@@ -308,7 +316,8 @@ int main() {
 
     printf( "Inserts used %d bytes, took %f sec\n", getMallocDelta(),
             Time::getCurrentTime() - startTime );
-
+    printf( "After insert, max stack depth = %d\n", DB_maxStack );
+    
 
     maybeFlush();
     
@@ -338,6 +347,10 @@ int main() {
                 int v = valueToInt( value );
                 checksum += v;
                 numHits++;
+                }
+            else if( result == -1 ) {
+                printf( "DB_get failed\n" );
+                return 1;
                 }
             }
         }
@@ -378,6 +391,10 @@ int main() {
                             checksum += v;
                             numHits++;
                             }
+                        else if( result == -1 ) {
+                            printf( "DB_get failed\n" );
+                            return 1;
+                            }
                         }
                     }
                 }
@@ -416,6 +433,10 @@ int main() {
             if( result == 0 ) {
                 numHits++;
                 }
+            else if( result == -1 ) {
+                printf( "DB_get failed\n" );
+                return 1;
+                }
             }
         }
     
@@ -450,6 +471,10 @@ int main() {
             if( result == 0 ) {
                 numHits++;
                 }
+            else if( result == -1 ) {
+                printf( "DB_get failed\n" );
+                return 1;
+                }
             }
         }
     
@@ -473,13 +498,18 @@ int main() {
 
         for( int i=0; i<lookupCount; i++ ) {
             // these don't exist
-            int x = runSource.getRandomBoundedInt( num + 10, num + num );
+            int x = runSource.getRandomBoundedInt( num, num + num );
             int y = runSource.getRandomBoundedInt( 0, num-1 );
             int s = runSource.getRandomBoundedInt( 0, num-1 );
             int b = runSource.getRandomBoundedInt( 0, num-1 );
             intQuadToKey( x, y, s, b, key );
             intToValue( x + y + s + b, value );
-            DB_put( &db, key, value );
+            int error = DB_put( &db, key, value );
+            
+            if( error == -1 ) {
+                printf( "DB_put failed\n" );
+                return 1;
+                }
             }
         }
     
@@ -533,7 +563,12 @@ int main() {
     while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
         count++;
 
-        DB_put_new( &db2, key, value );
+        error = DB_put_new( &db2, key, value );
+
+        if( error == -1 ) {
+            printf( "DB_put_new failed\n" );
+            return 1;
+            }
         }
     
     
