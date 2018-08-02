@@ -873,8 +873,11 @@ int LINEARDB2_getOrPut( LINEARDB2 *inDB, const void *inKey, void *inOutValue,
     for( int i=0; i<LDB2_RECORDS_PER_BUCKET; i++ ) {
         uint16_t binFP = inDB->fingerprintMap[ binNumber ].fingerprints[ i ];
         
+        char emptyRec = false;
+        
         if( binFP == 0 ) {
-
+            emptyRec = true;
+            
             if( inPut ) {
                 // set fingerprint for insert
                 binFP = fingerprint;
@@ -898,6 +901,26 @@ int LINEARDB2_getOrPut( LINEARDB2 *inDB, const void *inKey, void *inOutValue,
                 LINEARDB2_HEADER_SIZE 
                 + binNumber * inDB->bucketSizeBytes
                 + i * inDB->recordSizeBytes;
+
+
+            if( !emptyRec ) {
+                // read key to make sure it actually matches
+                if( fseeko( inDB->file, filePosRec + 1, SEEK_SET ) ) {
+                    return -1;
+                    }
+                int numRead = fread( inDB->bucketBuffer, inDB->keySize, 1,
+                                     inDB->file );
+                
+                if( numRead != 1 ) {
+                    return -1;
+                    }
+                if( ! keyComp( inDB->keySize, inDB->bucketBuffer, inKey ) ) {
+                    // false match on non-empty rec because of fingerprint
+                    // collision
+                    continue;
+                    }
+                }
+
             
             if( inPut ) {
                 if( fseeko( inDB->file, filePosRec, SEEK_SET ) ) {
@@ -955,8 +978,11 @@ int LINEARDB2_getOrPut( LINEARDB2 *inDB, const void *inKey, void *inOutValue,
 
         for( int i=0; i<LDB2_RECORDS_PER_BUCKET; i++ ) {
             uint16_t binFP = thisBucket->fingerprints[ i ];
-        
+            
+            char emptyRec = false;
             if( binFP == 0 ) {
+                emptyRec = true;
+                
                 if( inPut ) {
                     // set fingerprint for insert
                     binFP = fingerprint;
@@ -976,7 +1002,27 @@ int LINEARDB2_getOrPut( LINEARDB2 *inDB, const void *inKey, void *inOutValue,
                 uint64_t filePosRec = 
                     thisBucketIndex * inDB->bucketSizeBytes
                     + i * inDB->recordSizeBytes;
-            
+                
+                
+                if( !emptyRec ) {
+                    // read key to make sure it actually matches
+                    if( fseeko( inDB->file, filePosRec + 1, SEEK_SET ) ) {
+                        return -1;
+                        }
+                    int numRead = fread( inDB->bucketBuffer, inDB->keySize, 1,
+                                         inDB->file );
+                
+                    if( numRead != 1 ) {
+                        return -1;
+                        }
+                    if( ! keyComp( inDB->keySize, 
+                                   inDB->bucketBuffer, inKey ) ) {
+                        // false match on non-empty rec because of fingerprint
+                        // collision
+                        continue;
+                        }
+                    }
+
                 if( inPut ) {
                     if( fseeko( inDB->overflowFile, filePosRec, SEEK_SET ) ) {
                         return -1;
