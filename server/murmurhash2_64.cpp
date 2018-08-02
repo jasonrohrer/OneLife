@@ -81,7 +81,7 @@ typedef unsigned __int64 uint64_t;
 
 // 64-bit hash for 64-bit platforms
 
-uint64_t MurmurHash64A ( const void * key, int len, uint64_t seed )
+static uint64_t MurmurHash64A ( const void * key, int len, uint64_t seed )
 {
   const uint64_t m = BIG_CONSTANT(0xc6a4a7935bd1e995);
   const int r = 47;
@@ -127,7 +127,7 @@ uint64_t MurmurHash64A ( const void * key, int len, uint64_t seed )
 
 // 64-bit hash for 32-bit platforms
 
-uint64_t MurmurHash64B ( const void * key, int len, uint64_t seed )
+static uint64_t MurmurHash64B ( const void * key, int len, uint64_t seed )
 {
   const uint32_t m = 0x5bd1e995;
   const int r = 24;
