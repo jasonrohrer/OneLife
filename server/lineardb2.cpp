@@ -1076,14 +1076,27 @@ int LINEARDB2_getOrPut( LINEARDB2 *inDB, const void *inKey, void *inOutValue,
             }
         
 
-        thisBucket->overflow = true;
-
+        uint32_t overflowIndex;
+        
         int result = makeNewOverflowBucket( inDB, fingerprint, 
                                             inKey, inOutValue,
-                                            &( thisBucket->overflowIndex ) );
+                                            &overflowIndex );
         if( result == -1 ) {
             return -1;
             }
+
+        if( thisBucketIsOverflow ) {
+            // makeNewOverflowBucket may re-allocate, invalidating our
+            // pointer
+            // get a new pointer
+            thisBucket = 
+                &( inDB->overflowFingerprintBuckets[ thisBucketIndex ] );
+            }
+
+        thisBucket->overflowIndex = overflowIndex;
+        
+        thisBucket->overflow = true;
+
         
         if( thisBucketIsOverflow ) {
             // seek to overflow index
