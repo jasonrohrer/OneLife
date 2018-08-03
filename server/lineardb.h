@@ -44,14 +44,6 @@ typedef struct {
         // sized to ( hashTableSizeA * 2 ) 16-bit values
         uint16_t *fingerprintMap;
         
-
-        uint64_t numTableExpands;
-        uint64_t cellsReadOnTableExpand;
-        uint64_t cellsMovedOnTableExpand;
-        
-        uint64_t worstCellsMovedOnTableExpand;
-        uint64_t worstCellsReadOnTableExpand;
-
     } LINEARDB;
 
     
