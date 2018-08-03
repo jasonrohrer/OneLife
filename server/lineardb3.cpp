@@ -600,102 +600,190 @@ inline char keyComp( int inKeySize, const void *inKeyA, const void *inKeyB ) {
 
 
 
+static uint64_t getBinNumber( LINEARDB3 *inDB, uint32_t inFingerprint );
 
 
-/*
+
+typedef struct {
+        FingerprintBucket *nextBucket;
+        int nextRecord;
+    } BucketIterator;
+
+    
+
+
+// Repeated calls to this function will insert a series of records
+// into an empty bucket and any necessary overflow chain buckets
+//
+// Assumes bucket/record pointed to by iterator is empty and at end of
+// chain (assumes this is a fresh series of inserts using an iterator
+// that started with an empty bucket).
+//
+// Updates iterator
+static void insertIntoBucket( LINEARDB3 *inDB,
+                              BucketIterator *inBucketIterator,
+                              uint32_t inFingerprint,
+                              uint32_t inFileIndex ) {
+    
+    if( inBucketIterator->nextRecord == RECORDS_PER_BUCKET ) {
+        inBucketIterator->nextBucket->overflowIndex = 
+            getFirstEmptyBucketIndex( inDB->overflowBuckets );
+        
+        inBucketIterator->nextRecord = 0;
+        inBucketIterator->nextBucket = 
+            getBucket( inDB->overflowBuckets, 
+                       inBucketIterator->nextBucket->overflowIndex );
+        }
+    inBucketIterator->nextBucket->
+        fingerprints[ inBucketIterator->nextRecord ] = inFingerprint;
+    
+    inBucketIterator->nextBucket->
+        fileIndex[ inBucketIterator->nextRecord ] = inFileIndex;
+    
+    inBucketIterator->nextRecord++;
+    }
+
+                                            
+
+
 // uses method described here:
 // https://en.wikipedia.org/wiki/Linear_hashing
-// But adds support for linear probing by potentially rehashing
-// all cells hit by a linear probe from the split point
+//
 // returns 0 on success, -1 on failure
 //
 // This call may expand the table by more than one cell, until the table
 // is big enough that it's at or below the maxLoad
 static int expandTable( LINEARDB3 *inDB ) {
-
-    unsigned int oldSplitPoint = inDB->hashTableSizeB - inDB->hashTableSizeA;
     
+    uint32_t oldSize = inDB->hashTableSizeB;
 
-    // expand table until we are back at or below maxLoad
-    int numExpanded = 0;
+    // expand table one cell at a time until we are back at or below maxLoad
     while( (double)( inDB->numRecords ) /
-           (double)( inDB->hashTableSizeB ) > inDB->maxLoad ) {
+           (double)( inDB->hashTableSizeB * RECORDS_PER_BUCKET ) 
+           > inDB->maxLoad ) {
+
+
+        uint32_t oldSplitPoint = 
+            inDB->hashTableSizeB - inDB->hashTableSizeA;
+
+
+        // we only need to redistribute records from this bucket
+        FingerprintBucket *oldBucket =
+            getBucket( inDB->hashTable, oldSplitPoint );
+
+        // add one bucket to end of of table
+        FingerprintBucket *newBucket = addBucket( inDB->hashTable );
+
+        uint32_t oldBucketIndex = oldSplitPoint;
+        uint32_t newBucketIndex = inDB->hashTableSizeB;
 
         inDB->hashTableSizeB ++;
-        numExpanded++;
+
+
+        BucketIterator oldIter = { oldBucket, 0 };
+        BucketIterator newIter = { newBucket, 0 };
+        
+
+        // re-hash all cells at old split point, all the way down any
+        // overflow chain that's there
+        
+        FingerprintBucket *nextOldBucket = oldBucket;
+        
+        while( nextOldBucket != NULL ) {
+            // make a working copy 
+            FingerprintBucket tempBucket;
+            memcpy( &tempBucket, nextOldBucket, sizeof( FingerprintBucket ) );
+            
+            // clear the real bucket to make room for new inserts
+            // this clears the overflow index as well
+            memset( nextOldBucket, 0, sizeof( FingerprintBucket ) );
+            
+
+            for( int r=0; r<RECORDS_PER_BUCKET; r++ ) {
+                uint32_t fingerprint = tempBucket.fingerprints[ r ];
+                
+                if( fingerprint == 0 ) {
+                    // stop at first empty spot hit
+                    // remaining records empty too
+                    break;
+                    }
+                uint32_t fileIndex = tempBucket.fileIndex[ r ];
+                
+                uint64_t newBinNum = getBinNumber( inDB, fingerprint );
+                
+                BucketIterator *insertIterator;
+                
+                if( newBinNum == oldBucketIndex ) {
+                    insertIterator = &oldIter;
+                    }
+                else if( newBinNum == newBucketIndex ) {
+                    insertIterator = &newIter;
+                    }
+                else {
+                    // rehash doesn't hit either bucket?
+                    // should never happen
+                    return -1;
+                    }
+                
+                insertIntoBucket( inDB, insertIterator, 
+                                  fingerprint, fileIndex );
+                }
+            
+            if( tempBucket.overflowIndex != 0 ) {
+                // process next in overflow chain, reinserting those
+                // records next
+                nextOldBucket = getBucket( inDB->overflowBuckets, 
+                                           tempBucket.overflowIndex );
+                }
+            else {
+                // end of chain
+                nextOldBucket = NULL;
+                }
+            }
+
         
         if( inDB->hashTableSizeB == inDB->hashTableSizeA * 2 ) {
             // full round of expansion is done.
         
             unsigned int oldTableSizeA = inDB->hashTableSizeA;
         
-            inDB->hashTableSizeA = inDB->hashTableSizeB;
-            
+            inDB->hashTableSizeA = inDB->hashTableSizeB;            
             }
         }
     
-
-
-    // add extra cells at end of the file
-    if( fseeko( inDB->file, 0, SEEK_END ) ) {
-        return -1;
-        }
-    memset( inDB->recordBuffer, 0, inDB->recordSizeBytes );
-
-    for( int c=0; c<numExpanded; c++ ) {    
-        int numWritten = 
-            fwrite( inDB->recordBuffer, inDB->recordSizeBytes, 1, inDB->file );
-        
-        if( numWritten != 1 ) {
-            return -1;
-            }
-        }
-    
-
-
-    // existence and fingerprint maps already 0 for these extra cells
-    // (they are big enough already to have room for it at the end)
-
-
-
-
-    // remove and re-insert all contiguous cells from the region
-    // between the old and new split point
-    // we need to ensure there are no holes for future linear probes
-    
-
-    int result = reinsertCellSegment( inDB, oldSplitPoint, numExpanded );
-    if( result == -1 ) {
-        return -1;
-        }
-
-    
-    
-    
-    // do the same for first cell of table, which might have wraped-around
-    // cells in it due to linear probing, and there might be an empty cell
-    // at the end of the table now that we've expanded it
-    // there is no minimum number we must examine, if first cell is empty
-    // looking at just that cell is enough
-    result = reinsertCellSegment( inDB, 0, 1 );
-    
-
-    if( result == -1 ) {
-        return -1;
-        }
-
-    
-    
-
-    inDB->tableSizeBytes = 
-        (uint64_t)( inDB->recordSizeBytes ) * 
-        (uint64_t)( inDB->hashTableSizeB );
-
-    // write latest sizes into header
-    return writeHeader( inDB );
+    return 0;
     }
-*/
 
+
+
+
+static uint64_t getBinNumberFromHash( LINEARDB3 *inDB, uint64_t inHashVal ) {
+
+    uint64_t binNumberA = inHashVal % (uint64_t)( inDB->hashTableSizeA );
+    
+    uint64_t binNumberB = binNumberA;
+    
+
+
+    unsigned int splitPoint = inDB->hashTableSizeB - inDB->hashTableSizeA;
+    
+    
+    if( binNumberA < splitPoint ) {
+        // points before split can be mod'ed with double base table size
+
+        // binNumberB will always fit in hashTableSizeB, the expanded table
+        binNumberB = inHashVal % (uint64_t)( inDB->hashTableSizeA * 2 );
+        }
+    return binNumberB;
+    }
+
+
+
+static uint64_t getBinNumber( LINEARDB3 *inDB, uint32_t inFingerprint ) {
+    // fingerprint is such that it will always land in the same bin as
+    // full hash val
+    return getBinNumberFromHash( inDB, inFingerprint );
+    }
 
 
 
@@ -725,24 +813,7 @@ static uint64_t getBinNumber( LINEARDB3 *inDB, const void *inKey,
         }
     
     
-    
-
-    uint64_t binNumberA = hashVal % (uint64_t)( inDB->hashTableSizeA );
-    
-    uint64_t binNumberB = binNumberA;
-    
-
-
-    unsigned int splitPoint = inDB->hashTableSizeB - inDB->hashTableSizeA;
-    
-    
-    if( binNumberA < splitPoint ) {
-        // points before split can be mod'ed with double base table size
-
-        // binNumberB will always fit in hashTableSizeB, the expanded table
-        binNumberB = hashVal % (uint64_t)( inDB->hashTableSizeA * 2 );
-        }
-    return binNumberB;
+    return getBinNumberFromHash( inDB, hashVal );
     }
 
 
@@ -1008,8 +1079,18 @@ int LINEARDB3_get( LINEARDB3 *inDB, const void *inKey, void *outValue ) {
 
 
 int LINEARDB3_put( LINEARDB3 *inDB, const void *inKey, const void *inValue ) {
-    return LINEARDB3_getOrPut( inDB, inKey, (void *)inValue, true, true );
-    // fixme... if over load limit, expand table
+    int result = LINEARDB3_getOrPut( inDB, inKey, (void *)inValue, true, true );
+
+    if( result == -1 ) {
+        return result;
+        }
+
+    if( inDB->numRecords > 
+        ( inDB->hashTableSizeB * RECORDS_PER_BUCKET ) * inDB->maxLoad ) {
+        
+        result = expandTable( inDB );
+        }
+    return result;
     }
 
 
