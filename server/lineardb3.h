@@ -23,7 +23,7 @@ typedef struct {
         // size to find the current bin number (rehashing without
         // actually rehashing the full key)
         uint32_t fingerprints[ LDB3_RECORDS_PER_BUCKET ];
-    } FingerprintBucket;
+    } FingerprintBucket3;
 
     
 
@@ -66,12 +66,12 @@ typedef struct {
 
 
         // sized to ( hashTableSizeA * 2 ) buckets
-        FingerprintBucket *fingerprintMap;
+        FingerprintBucket3 *fingerprintMap;
         
         
         // dynamically sized
         uint32_t overflowAreaSize;
-        FingerprintBucket *overflowFingerprintBuckets;
+        FingerprintBucket3 *overflowFingerprintBuckets;
         
 
     } LINEARDB3;

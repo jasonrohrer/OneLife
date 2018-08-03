@@ -105,19 +105,19 @@ static void recreateMaps( LINEARDB3 *inDB,
     
 
 
-    FingerprintBucket *oldFingerprintMap = inDB->fingerprintMap;
+    FingerprintBucket3 *oldFingerprintMap = inDB->fingerprintMap;
     
-    inDB->fingerprintMap = new FingerprintBucket[ inDB->hashTableSizeA * 2 ];
+    inDB->fingerprintMap = new FingerprintBucket3[ inDB->hashTableSizeA * 2 ];
     
     memset( inDB->fingerprintMap, 0, 
-            inDB->hashTableSizeA * 2 * sizeof( FingerprintBucket ) );
+            inDB->hashTableSizeA * 2 * sizeof( FingerprintBucket3 ) );
 
 
     if( oldFingerprintMap != NULL ) {
         if( inOldTableSizeA > 0 ) {
             memcpy( inDB->fingerprintMap,
                     oldFingerprintMap,
-                    inOldTableSizeA * 2 * sizeof( FingerprintBucket ) );
+                    inOldTableSizeA * 2 * sizeof( FingerprintBucket3 ) );
             }
         
         delete [] oldFingerprintMap;
@@ -269,10 +269,10 @@ int LINEARDB3_open(
     // empty overflow area
     inDB->overflowAreaSize = MIN_OVERFLOW_SIZE;
     inDB->overflowFingerprintBuckets = 
-        new FingerprintBucket[ inDB->overflowAreaSize ];
+        new FingerprintBucket3[ inDB->overflowAreaSize ];
     
     memset( inDB->overflowFingerprintBuckets, 0, 
-            inDB->overflowAreaSize * sizeof( FingerprintBucket ) );
+            inDB->overflowAreaSize * sizeof( FingerprintBucket3 ) );
     
     
     
@@ -646,14 +646,17 @@ static uint64_t getBinNumber( LINEARDB3 *inDB, const void *inKey,
 
 
 
-
+// NEVER uses overflow index 0
+// always leaves it empty (so that index 0 can be used to signify no
+// overflow pointer)
 static int makeNewOverflowBucket( LINEARDB3 *inDB, uint32_t inFingerprint,
                                   uint32_t inDataFileIndex,
                                   uint32_t *outOverflowIndex ) {
     char found = false;
     uint32_t foundIndex = 0;
     
-    for( uint32_t i=0; i<inDB->overflowAreaSize; i++ ) {
+    // skip 0
+    for( uint32_t i=1; i<inDB->overflowAreaSize; i++ ) {
         
         // only need to look at first bin to detect empty slot
         if( inDB->overflowFingerprintBuckets[ i ].fingerprints[0] == 0 ) {
@@ -668,19 +671,19 @@ static int makeNewOverflowBucket( LINEARDB3 *inDB, uint32_t inFingerprint,
         // entire overflow area is full
         // double it
         uint32_t oldSize = inDB->overflowAreaSize;
-        FingerprintBucket *oldOverflow = inDB->overflowFingerprintBuckets;
+        FingerprintBucket3 *oldOverflow = inDB->overflowFingerprintBuckets;
         
         inDB->overflowAreaSize *= 2;
         
         inDB->overflowFingerprintBuckets = 
-            new FingerprintBucket[ inDB->overflowAreaSize ];
+            new FingerprintBucket3[ inDB->overflowAreaSize ];
         
         // zero new space
         memset( inDB->overflowFingerprintBuckets, 0,
-                inDB->overflowAreaSize * sizeof( FingerprintBucket ) );
+                inDB->overflowAreaSize * sizeof( FingerprintBucket3 ) );
 
         memcpy( inDB->overflowFingerprintBuckets,
-                oldOverflow, oldSize * sizeof( FingerprintBucket ) );
+                oldOverflow, oldSize * sizeof( FingerprintBucket3 ) );
         
         delete [] oldOverflow;
 
@@ -709,11 +712,14 @@ static int makeNewOverflowBucket( LINEARDB3 *inDB, uint32_t inFingerprint,
 // returns -1 on error
 // returns 1 if guaranteed not found
 // returns 2 if bucket full and not found 
-static LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB, 
-                                            const void *inKey, void *inOutValue,
-                                            char inPut, char inWriteDataFile,
-                                            FingerprintBucket *inBucket,
-                                            int inRecIndex ) {       
+static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB, 
+                                                const void *inKey, 
+                                                void *inOutValue,
+                                                uint32_t inFingerprint,
+                                                char inPut, 
+                                                char inWriteDataFile,
+                                                FingerprintBucket3 *inBucket,
+                                                int inRecIndex ) {       
     int i = inRecIndex;
     
     uint32_t binFP = inBucket->fingerprints[ i ];
@@ -725,8 +731,8 @@ static LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
             
         if( inPut ) {
             // set fingerprint and file pos for insert
-            binFP = fingerprint;
-            inBucket->fingerprints[ i ] = fingerprint;
+            binFP = inFingerprint;
+            inBucket->fingerprints[ i ] = inFingerprint;
                 
             // will go at end of file
             inBucket->fileIndex[ i ] = inDB->numRecords;
@@ -739,7 +745,7 @@ static LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
             }
         }
         
-    if( binFP == fingerprint ) {
+    if( binFP == inFingerprint ) {
         // hit
             
         uint64_t filePosRec = 
@@ -840,6 +846,7 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
 
         int result = LINEARDB3_considerFingerprintBucket(
             inDB, inKey, inOutValue,
+            fingerprint,
             inPut, inWriteDataFile,
             &( inDB->fingerprintMap[ binNumber ] ), 
             i );
@@ -851,11 +858,11 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
         }
 
     
-    FingerprintBucket *thisBucket = &( inDB->fingerprintMap[ binNumber ] );
+    FingerprintBucket3 *thisBucket = &( inDB->fingerprintMap[ binNumber ] );
     char thisBucketIsOverflow = false;
     uint32_t thisBucketIndex = 0;
     
-    while( thisBucket->overflow ) {
+    while( thisBucket->overflowIndex > 0 ) {
         // consider overflow
         overflowDepth++;
 
@@ -876,6 +883,7 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
 
             int result = LINEARDB3_considerFingerprintBucket(
                 inDB, inKey, inOutValue,
+                fingerprint,
                 inPut, inWriteDataFile,
                 thisBucket, 
                 i );
@@ -889,7 +897,7 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
 
     
     if( inPut && 
-        ! thisBucket->overflow ) {
+        thisBucket->overflowIndex == 0 ) {
             
         // reached end of overflow chain without finding place to put value
         
@@ -920,8 +928,6 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
             }
 
         thisBucket->overflowIndex = overflowIndex;
-        
-        thisBucket->overflow = true;
 
         inDB->numRecords++;
         

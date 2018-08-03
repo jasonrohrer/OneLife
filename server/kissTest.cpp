@@ -4,6 +4,7 @@
 #include "stackdb.h"
 #include "lineardb.h"
 #include "lineardb2.h"
+#include "lineardb3.h"
 
 #include "dbCommon.h"
 #include "minorGems/system/Time.h"
@@ -31,7 +32,8 @@
 //#define USE_KISSDB
 //#define USE_STACKDB
 //#define USE_LINEARDB
-#define USE_LINEARDB2
+//#define USE_LINEARDB2
+#define USE_LINEARDB3
 
 
 
@@ -100,6 +102,24 @@
 #define DB_Iterator  LINEARDB2_Iterator
 #define DB_Iterator_init  LINEARDB2_Iterator_init
 #define DB_Iterator_next  LINEARDB2_Iterator_next
+#define DB_maxStack db.maxOverflowDepth
+
+#endif
+
+
+
+#ifdef USE_LINEARDB3
+
+#define DB LINEARDB3
+#define DB_open LINEARDB3_open
+#define DB_close LINEARDB3_close
+#define DB_get LINEARDB3_get
+#define DB_put LINEARDB3_put
+// linear db has no put_new
+#define DB_put_new LINEARDB3_put
+#define DB_Iterator  LINEARDB3_Iterator
+#define DB_Iterator_init  LINEARDB3_Iterator_init
+#define DB_Iterator_next  LINEARDB3_Iterator_next
 #define DB_maxStack db.maxOverflowDepth
 
 #endif
