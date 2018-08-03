@@ -599,7 +599,7 @@ static uint64_t getBinNumber( LINEARDB3 *inDB, const void *inKey,
     
     uint64_t hashVal = LINEARDB3_hash( inKey, inDB->keySize );
 
-    *outFingerprint = hashVal & inDB->fingerprintMod;
+    *outFingerprint = hashVal % inDB->fingerprintMod;
 
 
 
@@ -616,7 +616,7 @@ static uint64_t getBinNumber( LINEARDB3 *inDB, const void *inKey,
             hashVal--;
             }
         
-        *outFingerprint = hashVal & inDB->fingerprintMod;
+        *outFingerprint = hashVal % inDB->fingerprintMod;
         }
     
     
