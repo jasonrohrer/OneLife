@@ -355,8 +355,11 @@ static void recomputeFingerprintMod( LINEARDB3 *inDB ) {
 
 
 
+// if inIgnoreDataFile (which only applies if inPut is true), we completely
+// ignore the data file and don't touch it, updating the RAM hash table only,
+// and assuming all unique values on collision
 int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
-                        char inPut, char inWriteDataFile = true );
+                        char inPut, char inIgnoreDataFile = false );
 
 
 
@@ -544,11 +547,18 @@ int LINEARDB3_open(
                 }
 
             // put only in RAM part of table
+            // note that this assumes that each key in the file is unique
+            // (it should be, because we generated the file on a previous run)
             int result = 
                 LINEARDB3_getOrPut( inDB,
                                     &( inDB->recordBuffer[0] ),
                                     &( inDB->recordBuffer[inDB->keySize] ),
-                                    true, false );
+                                    true, 
+                                    // ignore data file
+                                    // update ram only
+                                    // don't even verify keys in data file
+                                    // this preserves our fread position
+                                    true );
             if( result != 0 ) {
                 printf( "Putting lineardb3 record in RAM hash table failed\n" );
                 return 1;
@@ -838,7 +848,7 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
                                                 void *inOutValue,
                                                 uint32_t inFingerprint,
                                                 char inPut, 
-                                                char inWriteDataFile,
+                                                char inIgnoreDataFile,
                                                 FingerprintBucket *inBucket,
                                                 int inRecIndex ) {       
     int i = inRecIndex;
@@ -860,6 +870,11 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
                 
 
             inDB->numRecords++;
+
+            if( inIgnoreDataFile ) {
+                // finished non-file insert
+                return 0;
+                }
             }
         else {
             return 1;
@@ -868,6 +883,12 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
         
     if( binFP == inFingerprint ) {
         // hit
+
+        if( inIgnoreDataFile ) {
+            // treat any fingerprint match as a collision
+            // assume all unique data if we're ignoring the data file
+            return 2;
+            }
             
         uint64_t filePosRec = 
             LINEARDB3_HEADER_SIZE +
@@ -895,38 +916,36 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
 
             
         if( inPut ) {
-            if( inWriteDataFile ) {
-                if( emptyRec ) {
-                    // no seeking done yet
-                    // go to end of file
-                    if( fseeko( inDB->file, 0, SEEK_END ) ) {
-                        return -1;
-                        }
+            if( emptyRec ) {
+                // no seeking done yet
+                // go to end of file
+                if( fseeko( inDB->file, 0, SEEK_END ) ) {
+                    return -1;
+                    }
 
-                    // make sure it matches where we've documented that
-                    // the record should go
-                    if( ftello( inDB->file ) != filePosRec ) {
-                        return -1;
-                        }
-                
-                    int numWritten = 
-                        fwrite( inKey, inDB->keySize, 1, inDB->file );
-                    if( numWritten != 1 ) {
-                        return -1;
-                        }
+                // make sure it matches where we've documented that
+                // the record should go
+                if( ftello( inDB->file ) != filePosRec ) {
+                    return -1;
                     }
                 
-                // else already seeked and read key of non-empty record
-                // ready to write value
-                int numWritten = fwrite( inOutValue, inDB->valueSize, 1, 
-                                         inDB->file );
-                
+                int numWritten = 
+                    fwrite( inKey, inDB->keySize, 1, inDB->file );
                 if( numWritten != 1 ) {
                     return -1;
                     }
                 }
+                
+            // else already seeked and read key of non-empty record
+            // ready to write value
+            int numWritten = fwrite( inOutValue, inDB->valueSize, 1, 
+                                     inDB->file );
+                
+            if( numWritten != 1 ) {
+                return -1;
+                }
             
-            // successful put, whether or not written to file    
+            // successful put    
             return 0;
             }
         else {
@@ -954,7 +973,7 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
 
 
 int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
-                        char inPut, char inWriteDataFile ) {
+                        char inPut, char inIgnoreDataFile ) {
 
     uint32_t fingerprint;
 
@@ -970,7 +989,7 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
         int result = LINEARDB3_considerFingerprintBucket(
             inDB, inKey, inOutValue,
             fingerprint,
-            inPut, inWriteDataFile,
+            inPut, inIgnoreDataFile,
             thisBucket, 
             i );
         
@@ -1004,7 +1023,7 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
             int result = LINEARDB3_considerFingerprintBucket(
                 inDB, inKey, inOutValue,
                 fingerprint,
-                inPut, inWriteDataFile,
+                inPut, inIgnoreDataFile,
                 thisBucket, 
                 i );
         
@@ -1043,7 +1062,7 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
         
         inDB->numRecords++;
         
-        if( inWriteDataFile ) {
+        if( ! inIgnoreDataFile ) {
 
             uint64_t filePosRec = 
                 LINEARDB3_HEADER_SIZE +
@@ -1090,7 +1109,8 @@ int LINEARDB3_get( LINEARDB3 *inDB, const void *inKey, void *outValue ) {
 
 
 int LINEARDB3_put( LINEARDB3 *inDB, const void *inKey, const void *inValue ) {
-    int result = LINEARDB3_getOrPut( inDB, inKey, (void *)inValue, true, true );
+    int result = LINEARDB3_getOrPut( inDB, inKey, (void *)inValue, 
+                                     true, false );
 
     if( result == -1 ) {
         return result;
