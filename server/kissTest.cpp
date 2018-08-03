@@ -39,6 +39,7 @@
 
 #ifdef USE_KISSDB
 
+#define DB_name "KissDB"
 #define DB KISSDB
 #define DB_open KISSDB_open
 #define DB_close KISSDB_close
@@ -56,6 +57,7 @@
 
 #ifdef USE_STACKDB
 
+#define DB_name "StackDB"
 #define DB STACKDB
 #define DB_open STACKDB_open
 #define DB_close STACKDB_close
@@ -74,6 +76,7 @@
 
 #ifdef USE_LINEARDB
 
+#define DB_name "LinearDB"
 #define DB LINEARDB
 #define DB_open LINEARDB_open
 #define DB_close LINEARDB_close
@@ -92,6 +95,7 @@
 
 #ifdef USE_LINEARDB2
 
+#define DB_name "LinearDB2"
 #define DB LINEARDB2
 #define DB_open LINEARDB2_open
 #define DB_close LINEARDB2_close
@@ -110,6 +114,7 @@
 
 #ifdef USE_LINEARDB3
 
+#define DB_name "LinearDB3"
 #define DB LINEARDB3
 #define DB_open LINEARDB3_open
 #define DB_close LINEARDB3_close
@@ -214,7 +219,10 @@ unsigned int iterateValues() {
 
 
 int main() {
-
+    printf( "Starting test for database %s\n", DB_name );
+    printf( "TableSize: %d, InsertSize: %d, RunSize: %d\n", 
+            TABLE_SIZE, INSERT_SIZE, NUM_RUNS );
+    
     getMallocDelta();
     
     double startTime = Time::getCurrentTime();
