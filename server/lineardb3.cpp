@@ -239,6 +239,13 @@ static uint32_t getFirstEmptyBucketIndex( PageManager *inPM ) {
             if( inPM->pages[p]->buckets[b].fingerprints[0] == 0 ) {
                 uint32_t index = p * BUCKETS_PER_PAGE + b; 
                 
+                if( index >= inPM->numBuckets ) {
+                    // off end of official list of buckets that we know
+                    // about
+                    // keep track of this
+                    inPM->numBuckets ++;
+                    }
+
                 // ignore index 0
                 if( index != 0 ) {    
                     return index;
@@ -248,7 +255,7 @@ static uint32_t getFirstEmptyBucketIndex( PageManager *inPM ) {
             }
         }
     
-    // none empty
+    // none empty in existing pages
     // create new one off end
     uint32_t newIndex = inPM->numBuckets;
     addBucket( inPM );
