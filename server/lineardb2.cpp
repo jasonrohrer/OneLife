@@ -798,6 +798,10 @@ static int makeNewOverflowBucket( LINEARDB2 *inDB, uint16_t inFingerprint,
         inDB->overflowFingerprintBuckets = 
             new FingerprintBucket[ inDB->overflowAreaSize ];
         
+        // zero new space
+        memset( inDB->overflowFingerprintBuckets, 0,
+                inDB->overflowAreaSize * sizeof( FingerprintBucket ) );
+        
         memcpy( inDB->overflowFingerprintBuckets,
                 oldOverflow, oldSize * sizeof( FingerprintBucket ) );
         
