@@ -7,7 +7,8 @@
 // larger values here reduce RAM overhead per record slightly
 // and may speed up lookup in over-full tables, but might slow
 // down lookup in less full tables.
-#define LDB3_RECORDS_PER_BUCKET 8
+#define LINEARDB3_RECORDS_PER_BUCKET 8
+
 
 
 typedef struct {
@@ -16,14 +17,39 @@ typedef struct {
         uint32_t overflowIndex;
 
         // record number in the data file
-        uint32_t fileIndex[ LDB3_RECORDS_PER_BUCKET ];
+        uint32_t fileIndex[ LINEARDB3_RECORDS_PER_BUCKET ];
 
         // fingerprint mini-hash, mod the largest possible table size
         // in the 32-bit space.  We can mod this with our current table
         // size to find the current bin number (rehashing without
         // actually rehashing the full key)
-        uint32_t fingerprints[ LDB3_RECORDS_PER_BUCKET ];
-    } FingerprintBucket3;
+        uint32_t fingerprints[ LINEARDB3_RECORDS_PER_BUCKET ];
+    } LINEARDB3_FingerprintBucket;
+
+
+
+#define LINEARDB3_BUCKETS_PER_PAGE 4096
+
+typedef struct {
+        LINEARDB3_FingerprintBucket buckets[ LINEARDB3_BUCKETS_PER_PAGE ];
+    } LINEARDB3_BucketPage;
+
+
+
+typedef struct {
+        uint32_t numBuckets;
+        
+        // number of allocated pages
+        uint32_t numPages;
+        
+        // number of slots in pages pointer array
+        // beyond numPages, there are NULL pointers
+        uint32_t pageAreaSize;
+        LINEARDB3_BucketPage **pages;
+
+    } LINEARDB3_PageManager;
+    
+    
 
     
 
@@ -65,13 +91,11 @@ typedef struct {
         unsigned int maxOverflowDepth;
 
 
-        // sized to ( hashTableSizeA * 2 ) buckets
-        FingerprintBucket3 *fingerprintMap;
         
-        
-        // dynamically sized
-        uint32_t overflowAreaSize;
-        FingerprintBucket3 *overflowFingerprintBuckets;
+        // sized to hashTableSizeB buckets
+        LINEARDB3_PageManager *hashTable;
+
+        LINEARDB3_PageManager *overflowBuckets;
         
 
     } LINEARDB3;
@@ -115,29 +139,6 @@ int LINEARDB3_open(
  * @param db Database struct
  */
 void LINEARDB3_close( LINEARDB3 *inDB );
-
-
-
-/**
- * Sets max load, (number of elements)/(table size), before table starts
- * to expand incremntally.
- *
- * Defaults to 0.5, which is a good value for the underlying linear probing
- * and linear hashing algorithms.  Higher load factors cause linear probing to 
- * degrade substantially (inserts become expensive due to linear hashing table
- * expansion and the necessity to rehash long chains of cells), while lower
- * load factors increase performance of linear probing, but waste 
- * more space and spread data out more, potentially resulting in slower
- * disk operations.
- *
- * Note that in performance-critical situations, the optimial load factor
- * may vary depending on hardware and other factors.
- *
- * Thus, when in doubt, it may be best to benchmark various load factors
- * on your own hardware and with your own data and your own insert vs read
- * ratio.
- */
-void LINEARDB3_setMaxLoad( LINEARDB3 *inDB, double inMaxLoad );
 
 
 
@@ -197,7 +198,8 @@ void LINEARDB3_Iterator_init( LINEARDB3 *inDB, LINEARDB3_Iterator *inDBi );
  * @param Database iterator
  * @param kbuf Buffer to fill with next key (key_size bytes)
  * @param vbuf Buffer to fill with next value (value_size bytes)
- * @return 0 if there are no more entries, negative on error, positive if an kbuf/vbuf have been filled
+ * @return 0 if there are no more entries, negative on error, 
+ *         positive if an kbuf/vbuf have been filled
  */
 int LINEARDB3_Iterator_next( LINEARDB3_Iterator *inDBi, 
                             void *outKey, void *outValue );

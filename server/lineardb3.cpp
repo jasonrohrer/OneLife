@@ -12,10 +12,20 @@
 #endif
 
 
+
+// shorten names for internal code
+#define FingerprintBucket LINEARDB3_FingerprintBucket
+#define BucketPage LINEARDB3_BucketPage
+#define PageManager LINEARDB3_PageManager
+
+#define BUCKETS_PER_PAGE LINEARDB3_BUCKETS_PER_PAGE
+#define RECORDS_PER_BUCKET LINEARDB3_RECORDS_PER_BUCKET
+
+
+
 #define DEFAULT_MAX_LOAD 0.5
 
 
-#define MIN_OVERFLOW_SIZE 128
 
 
 #include "murmurhash2_64.cpp"
@@ -89,42 +99,189 @@ static uint16_t shortHash( const void *inB, unsigned int inLen ) {
 
 
 
+
+
+// prototypes for page manager
+// listed separately for readability
+
+static void initPageManager( PageManager *inPM, uint32_t inNumStartingBuckets );
+
+
+static void freePageManager( PageManager *inPM );
+
+
+//  returns pointer to newly created bucket
+static FingerprintBucket *addBucket( PageManager *inPM );
+
+// no bounds checking
+static FingerprintBucket *getBucket( PageManager *inPM, 
+                                     uint32_t inBucketIndex );
+
+
+static uint32_t getNumBuckets( PageManager *inPM );
+
+// always skips bucket at index 0
+// assuming that this call is used for overflowBuckets only, where
+// index 0 is used to mark buckets with no further overflow
+static uint32_t getFirstEmptyBucketIndex( PageManager *inPM );
+
+
+
+
+
+
+static void initPageManager( PageManager *inPM, 
+                             uint32_t inNumStartingBuckets ) {
+    inPM->numPages = 1 + inNumStartingBuckets / BUCKETS_PER_PAGE;
+
+    inPM->pageAreaSize = 2 * inPM->numPages;
+    
+    inPM->pages = new BucketPage*[ inPM->pageAreaSize ];
+    
+    for( int i=0; i<inPM->pageAreaSize; i++ ) {
+        inPM->pages[i] = NULL;
+        }
+    
+    
+    for( int i=0; i<inPM->numPages; i++ ) {
+        inPM->pages[i] = new BucketPage;
+        
+        memset( inPM->pages[i], 0, sizeof( BucketPage ) );
+        }
+    
+    inPM->numBuckets = inNumStartingBuckets;
+    }
+
+
+
+static void freePageManager( PageManager *inPM ) {
+    for( int i=0; i<inPM->numPages; i++ ) {
+        delete inPM->pages[i];
+        }
+    delete [] inPM->pages;
+
+    inPM->pageAreaSize = 0;
+    inPM->numPages = 0;
+    inPM->numBuckets = 0;
+    }
+
+
+
+static FingerprintBucket *addBucket( PageManager *inPM ) {
+    if( inPM->numPages * BUCKETS_PER_PAGE == inPM->numBuckets ) {
+        // need to allocate a new page
+
+        // first make sure there's room    
+        if( inPM->numPages == inPM->pageAreaSize ) {
+    
+            // enlarge page area
+            
+            uint32_t oldSize = inPM->pageAreaSize;
+            
+            BucketPage **oldArea = inPM->pages;
+            
+            
+            // double it
+            inPM->pageAreaSize = 2 * oldSize;
+            
+            inPM->pages = new BucketPage*[ inPM->pageAreaSize ];
+            
+            // NULL just the new slots
+            for( int i=oldSize; i<inPM->pageAreaSize; i++ ) {
+                inPM->pages[i] = NULL;
+                }
+            
+            memcpy( inPM->pages, oldArea, oldSize * sizeof( BucketPage* ) );
+            
+            delete [] oldArea;
+            }
+        
+        // stick new page at end
+
+        inPM->pages[ inPM->numPages ] = new BucketPage;
+        
+        memset( inPM->pages[ inPM->numPages ], 0, sizeof( BucketPage ) );
+        
+        inPM->numPages++;
+        }
+
+
+    // room exists, return the empty bucket at end
+    FingerprintBucket *newBucket = getBucket( inPM, inPM->numBuckets );
+    
+    inPM->numBuckets++;
+    
+    return newBucket;
+    }
+
+
+
+static FingerprintBucket *getBucket( PageManager *inPM, 
+                                     uint32_t inBucketIndex ) {
+    uint32_t pageNumber = inBucketIndex / BUCKETS_PER_PAGE;
+    uint32_t bucketNumber = inBucketIndex % BUCKETS_PER_PAGE;
+    
+    return &( inPM->pages[ pageNumber ]->buckets[ bucketNumber ] );
+    }
+
+
+
+static uint32_t getNumBuckets( PageManager *inPM ) {
+    return inPM->numBuckets;
+    }
+
+
+
+static uint32_t getFirstEmptyBucketIndex( PageManager *inPM ) {
+    for( int p=0; p<inPM->numPages; p++ ) {
+        for( int b=0; b<BUCKETS_PER_PAGE; b++ ) {
+            
+            if( inPM->pages[p]->buckets[b].fingerprints[0] == 0 ) {
+                uint32_t index = p * BUCKETS_PER_PAGE + b; 
+                
+                // ignore index 0
+                if( index != 0 ) {    
+                    return index;
+                    }
+                
+                }
+            }
+        }
+    
+    // none empty
+    // create new one off end
+    uint32_t newIndex = inPM->numBuckets;
+    addBucket( inPM );
+    
+    return newIndex;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 static const char *magicString = "Ld2";
 
 // Ld2 magic characters plus
-// four 32-bit ints
-#define LINEARDB3_HEADER_SIZE 19
-
-
-
-
-
-
-static void recreateMaps( LINEARDB3 *inDB, 
-                          unsigned int inOldTableSizeA = 0 ) {
-    
-
-
-    FingerprintBucket3 *oldFingerprintMap = inDB->fingerprintMap;
-    
-    inDB->fingerprintMap = new FingerprintBucket3[ inDB->hashTableSizeA * 2 ];
-    
-    memset( inDB->fingerprintMap, 0, 
-            inDB->hashTableSizeA * 2 * sizeof( FingerprintBucket3 ) );
-
-
-    if( oldFingerprintMap != NULL ) {
-        if( inOldTableSizeA > 0 ) {
-            memcpy( inDB->fingerprintMap,
-                    oldFingerprintMap,
-                    inOldTableSizeA * 2 * sizeof( FingerprintBucket3 ) );
-            }
-        
-        delete [] oldFingerprintMap;
-        }
-
-    }
-
+// two 32-bit ints
+#define LINEARDB3_HEADER_SIZE 11
 
 
 
@@ -147,21 +304,6 @@ static int writeHeader( LINEARDB3 *inDB ) {
 
     uint32_t val32;
 
-    val32 = inDB->hashTableSizeA;
-    
-    numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
-    if( numWritten != 1 ) {
-        return -1;
-        }
-        
-    val32 = inDB->hashTableSizeB;
-    
-    numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
-    if( numWritten != 1 ) {
-        return -1;
-        }
-
-    
     val32 = inDB->keySize;
     
     numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
@@ -221,7 +363,6 @@ int LINEARDB3_open(
     unsigned int inValueSize ) {
     
     inDB->recordBuffer = NULL;
-    inDB->fingerprintMap = NULL;
     inDB->maxOverflowDepth = 0;
 
     inDB->numRecords = 0;
@@ -254,6 +395,9 @@ int LINEARDB3_open(
 
 
     recomputeFingerprintMod( inDB );
+
+    inDB->hashTable = new PageManager;
+    inDB->overflowBuckets = new PageManager;
     
 
     // does the file already contain a header
@@ -263,16 +407,6 @@ int LINEARDB3_open(
     if( fseeko( inDB->file, 0, SEEK_END ) ) {
         return 1;
         }
-
-    
-
-    // empty overflow area
-    inDB->overflowAreaSize = MIN_OVERFLOW_SIZE;
-    inDB->overflowFingerprintBuckets = 
-        new FingerprintBucket3[ inDB->overflowAreaSize ];
-    
-    memset( inDB->overflowFingerprintBuckets, 0, 
-            inDB->overflowAreaSize * sizeof( FingerprintBucket3 ) );
     
     
     
@@ -289,8 +423,8 @@ int LINEARDB3_open(
             }
 
         
-        // empty fingerprint map
-        recreateMaps( inDB );
+        initPageManager( inDB->hashTable, inDB->hashTableSizeA );
+        initPageManager( inDB->overflowBuckets, 2 );
         }
     else {
         // read header
@@ -319,45 +453,6 @@ int LINEARDB3_open(
         
 
         uint32_t val32;
-
-        numRead = fread( &val32, sizeof(uint32_t), 1, inDB->file );
-        
-        if( numRead != 1 ) {
-            return 1;
-            }        
-
-        // can vary in size from what's been requested
-        inDB->hashTableSizeA = val32;
-
-        
-        // now read sizeB
-        numRead = fread( &val32, sizeof(uint32_t), 1, inDB->file );
-        
-        if( numRead != 1 ) {
-            return 1;
-            }
-
-        
-
-        if( val32 < inDB->hashTableSizeA ) {
-            printf( "lineardb3 hash table base size of %u is larger than "
-                    "expanded size of %u in file header\n", 
-                    inDB->hashTableSizeA, val32 );
-            return 1;
-            }
-
-
-        if( val32 >= inDB->hashTableSizeA * 2 ) {
-            printf( "lineardb3 hash table expanded size of %u is 2x or more "
-                    "larger than base size of %u in file header\n", 
-                    val32, inDB->hashTableSizeA );
-            return 1;
-            }
-
-        // can vary in size from what's been requested
-        inDB->hashTableSizeB = val32;
-        
-
         
         numRead = fread( &val32, sizeof(uint32_t), 1, inDB->file );
         
@@ -397,7 +492,6 @@ int LINEARDB3_open(
         uint64_t fileSize = ftello( inDB->file );
 
 
-        recreateMaps( inDB );
         recomputeFingerprintMod( inDB );
 
         uint64_t numRecordsInFile = 
@@ -413,6 +507,20 @@ int LINEARDB3_open(
         
         
         // now populate hash table
+        
+        uint32_t minTableRecords = 
+            (uint32_t)ceil( numRecordsInFile / inDB->maxLoad );
+        
+        uint32_t minTableBuckets = 
+            (uint32_t)ceil( (double)minTableRecords / 
+                            (double)RECORDS_PER_BUCKET );
+        
+        inDB->hashTableSizeA = minTableBuckets;
+        inDB->hashTableSizeB = minTableBuckets;
+        
+        initPageManager( inDB->hashTable, inDB->hashTableSizeA );
+        initPageManager( inDB->overflowBuckets, 2 );
+
 
         if( fseeko( inDB->file, LINEARDB3_HEADER_SIZE, SEEK_SET ) ) {
             return 1;
@@ -457,10 +565,12 @@ void LINEARDB3_close( LINEARDB3 *inDB ) {
         }    
 
 
-    if( inDB->fingerprintMap != NULL ) {
-        delete [] inDB->fingerprintMap;
-        inDB->fingerprintMap = NULL;
-        }    
+    freePageManager( inDB->hashTable );
+    freePageManager( inDB->overflowBuckets );
+    
+    delete inDB->hashTable;
+    delete inDB->overflowBuckets;
+    
 
     if( inDB->file != NULL ) {
         fclose( inDB->file );
@@ -471,9 +581,6 @@ void LINEARDB3_close( LINEARDB3 *inDB ) {
 
 
 
-void LINEARDB3_setMaxLoad( LINEARDB3 *inDB, double inMaxLoad ) {
-    inDB->maxLoad = inMaxLoad;
-    }
 
 
 
@@ -524,8 +631,6 @@ static int expandTable( LINEARDB3 *inDB ) {
         
             inDB->hashTableSizeA = inDB->hashTableSizeB;
             
-
-            recreateMaps( inDB, oldTableSizeA );
             }
         }
     
@@ -643,69 +748,6 @@ static uint64_t getBinNumber( LINEARDB3 *inDB, const void *inKey,
 
 
 
-
-
-
-// NEVER uses overflow index 0
-// always leaves it empty (so that index 0 can be used to signify no
-// overflow pointer)
-static int makeNewOverflowBucket( LINEARDB3 *inDB, uint32_t inFingerprint,
-                                  uint32_t inDataFileIndex,
-                                  uint32_t *outOverflowIndex ) {
-    char found = false;
-    uint32_t foundIndex = 0;
-    
-    // skip 0
-    for( uint32_t i=1; i<inDB->overflowAreaSize; i++ ) {
-        
-        // only need to look at first bin to detect empty slot
-        if( inDB->overflowFingerprintBuckets[ i ].fingerprints[0] == 0 ) {
-            found = true;
-            foundIndex = i;
-            break;
-            }
-        }
-
-    
-    if( !found ) {
-        // entire overflow area is full
-        // double it
-        uint32_t oldSize = inDB->overflowAreaSize;
-        FingerprintBucket3 *oldOverflow = inDB->overflowFingerprintBuckets;
-        
-        inDB->overflowAreaSize *= 2;
-        
-        inDB->overflowFingerprintBuckets = 
-            new FingerprintBucket3[ inDB->overflowAreaSize ];
-        
-        // zero new space
-        memset( inDB->overflowFingerprintBuckets, 0,
-                inDB->overflowAreaSize * sizeof( FingerprintBucket3 ) );
-
-        memcpy( inDB->overflowFingerprintBuckets,
-                oldOverflow, oldSize * sizeof( FingerprintBucket3 ) );
-        
-        delete [] oldOverflow;
-
-        // first bin in extended area
-        found = true;
-        foundIndex = oldSize;
-        }
-    
-    // fingerprint
-    inDB->overflowFingerprintBuckets[ foundIndex ].fingerprints[0] = 
-        inFingerprint;
-
-    inDB->overflowFingerprintBuckets[ foundIndex ].fileIndex[0] = 
-        inDataFileIndex;
-
-    
-    *outOverflowIndex = foundIndex;
-    return 0;
-    }
-
-
-
 // Consider getting/putting from inBucket at inRecIndex
 //
 // returns 0 if handled and done
@@ -718,7 +760,7 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
                                                 uint32_t inFingerprint,
                                                 char inPut, 
                                                 char inWriteDataFile,
-                                                FingerprintBucket3 *inBucket,
+                                                FingerprintBucket *inBucket,
                                                 int inRecIndex ) {       
     int i = inRecIndex;
     
@@ -837,18 +879,17 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
     uint64_t binNumber = getBinNumber( inDB, inKey, &fingerprint );
 
     
-    uint32_t nextFileIndex = inDB->numRecords;
-    
     int overflowDepth = 0;
 
-
-    for( int i=0; i<LDB3_RECORDS_PER_BUCKET; i++ ) {
+    FingerprintBucket *thisBucket = getBucket( inDB->hashTable, binNumber );
+    
+    for( int i=0; i<RECORDS_PER_BUCKET; i++ ) {
 
         int result = LINEARDB3_considerFingerprintBucket(
             inDB, inKey, inOutValue,
             fingerprint,
             inPut, inWriteDataFile,
-            &( inDB->fingerprintMap[ binNumber ] ), 
+            thisBucket, 
             i );
         
         if( result < 2 ) {
@@ -858,7 +899,6 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
         }
 
     
-    FingerprintBucket3 *thisBucket = &( inDB->fingerprintMap[ binNumber ] );
     char thisBucketIsOverflow = false;
     uint32_t thisBucketIndex = 0;
     
@@ -873,13 +913,11 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
         
         thisBucketIndex = thisBucket->overflowIndex;
         
-        thisBucket = 
-            &( inDB->overflowFingerprintBuckets[ thisBucketIndex ] );
+        thisBucket = getBucket( inDB->overflowBuckets, thisBucketIndex );
         
         thisBucketIsOverflow = true;
 
-        for( int i=0; i<LDB3_RECORDS_PER_BUCKET; i++ ) {
-
+        for( int i=0; i<RECORDS_PER_BUCKET; i++ ) {
 
             int result = LINEARDB3_considerFingerprintBucket(
                 inDB, inKey, inOutValue,
@@ -910,32 +948,24 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
             }
         
 
-        uint32_t overflowIndex;
+        thisBucket->overflowIndex = 
+            getFirstEmptyBucketIndex( inDB->overflowBuckets );
+
+        FingerprintBucket *newBucket = getBucket( inDB->overflowBuckets,
+                                                  thisBucket->overflowIndex );
+        newBucket->fingerprints[0] = fingerprint;
+
+        // will go at end of file
+        newBucket->fileIndex[0] = inDB->numRecords;
         
-        int result = makeNewOverflowBucket( inDB, fingerprint, 
-                                            nextFileIndex,
-                                            &overflowIndex );
-        if( result == -1 ) {
-            return -1;
-            }
-
-        if( thisBucketIsOverflow ) {
-            // makeNewOverflowBucket may re-allocate, invalidating our
-            // pointer
-            // get a new pointer
-            thisBucket = 
-                &( inDB->overflowFingerprintBuckets[ thisBucketIndex ] );
-            }
-
-        thisBucket->overflowIndex = overflowIndex;
-
+        
         inDB->numRecords++;
         
         if( inWriteDataFile ) {
 
             uint64_t filePosRec = 
                 LINEARDB3_HEADER_SIZE +
-                nextFileIndex * 
+                newBucket->fileIndex[0] * 
                 inDB->recordSizeBytes;
 
             // go to end of file
