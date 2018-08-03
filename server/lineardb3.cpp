@@ -499,8 +499,6 @@ int LINEARDB3_open(
         uint64_t fileSize = ftello( inDB->file );
 
 
-        recomputeFingerprintMod( inDB );
-
         uint64_t numRecordsInFile = 
             ( fileSize - LINEARDB3_HEADER_SIZE ) / inDB->recordSizeBytes;
         
@@ -525,6 +523,9 @@ int LINEARDB3_open(
         inDB->hashTableSizeA = minTableBuckets;
         inDB->hashTableSizeB = minTableBuckets;
         
+        
+        recomputeFingerprintMod( inDB );
+
         initPageManager( inDB->hashTable, inDB->hashTableSizeA );
         initPageManager( inDB->overflowBuckets, 2 );
 
@@ -893,36 +894,39 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
             }
 
             
-        if( inPut && inWriteDataFile ) {
-                
-            if( emptyRec ) {
-                // no seeking done yet
-                // go to end of file
-                if( fseeko( inDB->file, 0, SEEK_END ) ) {
-                    return -1;
-                    }
+        if( inPut ) {
+            if( inWriteDataFile ) {
+                if( emptyRec ) {
+                    // no seeking done yet
+                    // go to end of file
+                    if( fseeko( inDB->file, 0, SEEK_END ) ) {
+                        return -1;
+                        }
 
-                // make sure it matches where we've documented that
-                // the record should go
-                if( ftello( inDB->file ) != filePosRec ) {
-                    return -1;
+                    // make sure it matches where we've documented that
+                    // the record should go
+                    if( ftello( inDB->file ) != filePosRec ) {
+                        return -1;
+                        }
+                
+                    int numWritten = 
+                        fwrite( inKey, inDB->keySize, 1, inDB->file );
+                    if( numWritten != 1 ) {
+                        return -1;
+                        }
                     }
                 
-                int numWritten = 
-                    fwrite( inKey, inDB->keySize, 1, inDB->file );
+                // else already seeked and read key of non-empty record
+                // ready to write value
+                int numWritten = fwrite( inOutValue, inDB->valueSize, 1, 
+                                         inDB->file );
+                
                 if( numWritten != 1 ) {
                     return -1;
                     }
                 }
-                
-            // else already seeked and read key of non-empty record
-            // ready to write value
-            int numWritten = fwrite( inOutValue, inDB->valueSize, 1, 
-                                     inDB->file );
-                
-            if( numWritten != 1 ) {
-                return -1;
-                }
+            
+            // successful put, whether or not written to file    
             return 0;
             }
         else {
