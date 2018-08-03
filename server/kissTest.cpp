@@ -327,6 +327,7 @@ int main() {
             }
         }
 
+    /*
 #ifdef USE_LINEARDB
     if( db.numTableExpands > 0 ) {
         printf( "%llu cells read on average per table expand (%llu expands), "
@@ -339,7 +340,7 @@ int main() {
                 db.numTableExpands, db.worstCellsMovedOnTableExpand );
         }
 #endif
-    
+    */
     printf( "Inserted %d\n", insertCount );
 
     printf( "Inserts used %d bytes, took %f sec\n", getMallocDelta(),
