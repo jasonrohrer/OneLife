@@ -979,7 +979,15 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
     unsigned int overflowDepth = 0;
 
     FingerprintBucket *thisBucket = getBucket( inDB->hashTable, binNumber );
+
+
+    char skipToOverflow = false;
+
+    if( inPut && inIgnoreDataFile ) {
+        skipToOverflow = true;
+        }
     
+    if( !skipToOverflow || thisBucket->overflowIndex == 0 )
     for( int i=0; i<RECORDS_PER_BUCKET; i++ ) {
 
         int result = LINEARDB3_considerFingerprintBucket(
@@ -1011,6 +1019,7 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
         
         thisBucket = getBucket( inDB->overflowBuckets, thisBucketIndex );
 
+        if( !skipToOverflow || thisBucket->overflowIndex == 0 )
         for( int i=0; i<RECORDS_PER_BUCKET; i++ ) {
 
             int result = LINEARDB3_considerFingerprintBucket(
