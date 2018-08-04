@@ -1159,15 +1159,21 @@ int LINEARDB3_Iterator_next( LINEARDB3_Iterator *inDBi,
 
         // fseek is needed here to make iterator safe to interleave
         // with other calls
-        // If iterator calls are not interleaved, this seek should have
-        // little impact on performance (seek to current location between
-        // reads).
-        if( fseeko( db->file, 
-                    LINEARDB3_HEADER_SIZE + 
-                    inDBi->nextRecordIndex * db->recordSizeBytes, 
-                    SEEK_SET ) ) {
-            return -1;
+        
+        // BUT, don't seek unless we have to
+        // even seeking to current location has a performance hit
+        
+        uint64_t fileRecPos = 
+            LINEARDB3_HEADER_SIZE + 
+            inDBi->nextRecordIndex * db->recordSizeBytes;
+        
+                    
+        if( ftello( db->file ) != (signed)fileRecPos ) {    
+            if( fseeko( db->file, fileRecPos, SEEK_SET ) ) {
+                return -1;
+                }
             }
+        
 
         int numRead = fread( outKey, 
                              db->keySize, 1,
