@@ -20,7 +20,8 @@
 
 #include "kissdb.h"
 //#include "stackdb.h"
-#include "lineardb.h"
+//#include "lineardb.h"
+#include "lineardb3.h"
 
 
 /*
@@ -62,7 +63,7 @@
 #define DB_getNumRecords( dbP ) 0
 */
 
-
+/*
 #define DB LINEARDB
 #define DB_open LINEARDB_open
 #define DB_close LINEARDB_close
@@ -77,7 +78,23 @@
 #define DB_getShrinkSize  LINEARDB_getShrinkSize
 #define DB_getCurrentSize  LINEARDB_getCurrentSize
 #define DB_getNumRecords LINEARDB_getNumRecords
+*/
 
+
+#define DB LINEARDB3
+#define DB_open LINEARDB3_open
+#define DB_close LINEARDB3_close
+#define DB_get LINEARDB3_get
+#define DB_put LINEARDB3_put
+// no distinction between put and put_new in lineardb3
+#define DB_put_new LINEARDB3_put
+#define DB_Iterator  LINEARDB3_Iterator
+#define DB_Iterator_init  LINEARDB3_Iterator_init
+#define DB_Iterator_next  LINEARDB3_Iterator_next
+#define DB_maxStack db.maxOverflowDepth
+#define DB_getShrinkSize  LINEARDB3_getShrinkSize
+#define DB_getCurrentSize  LINEARDB3_getCurrentSize
+#define DB_getNumRecords LINEARDB3_getNumRecords
 
 
 
@@ -6024,6 +6041,8 @@ void mapEveDeath( char *inEmail, double inAge ) {
 
 
 char loadTutorial( const char *inMapFileName, int inX, int inY ) {
+    double startTime = Time::getCurrentTime();
+    
     File tutorialFolder( NULL, "tutorialMaps" );
     
     char returnVal = false;
@@ -6047,6 +6066,9 @@ char loadTutorial( const char *inMapFileName, int inX, int inY ) {
             }
         delete mapFile;
         }
+    
+    printf( "Loading tutorial took %f sec\n", 
+            Time::getCurrentTime() - startTime );
     
     return returnVal;
     }

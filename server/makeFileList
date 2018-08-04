@@ -34,8 +34,7 @@ map.cpp \
 ../gameSource/SoundUsage.cpp \
 ../commonSource/fractalNoise.cpp \
 kissdb.cpp \
-stackdb.cpp \
-lineardb.cpp \
+lineardb3.cpp \
 lifeLog.cpp \
 foodLog.cpp \
 backup.cpp \
