@@ -117,9 +117,6 @@ static FingerprintBucket *addBucket( PageManager *inPM );
 static FingerprintBucket *getBucket( PageManager *inPM, 
                                      uint32_t inBucketIndex );
 
-
-static uint32_t getNumBuckets( PageManager *inPM );
-
 // always skips bucket at index 0
 // assuming that this call is used for overflowBuckets only, where
 // index 0 is used to mark buckets with no further overflow
@@ -138,12 +135,12 @@ static void initPageManager( PageManager *inPM,
     
     inPM->pages = new BucketPage*[ inPM->pageAreaSize ];
     
-    for( int i=0; i<inPM->pageAreaSize; i++ ) {
+    for( uint32_t i=0; i<inPM->pageAreaSize; i++ ) {
         inPM->pages[i] = NULL;
         }
     
     
-    for( int i=0; i<inPM->numPages; i++ ) {
+    for( uint32_t i=0; i<inPM->numPages; i++ ) {
         inPM->pages[i] = new BucketPage;
         
         memset( inPM->pages[i], 0, sizeof( BucketPage ) );
@@ -155,7 +152,7 @@ static void initPageManager( PageManager *inPM,
 
 
 static void freePageManager( PageManager *inPM ) {
-    for( int i=0; i<inPM->numPages; i++ ) {
+    for( uint32_t i=0; i<inPM->numPages; i++ ) {
         delete inPM->pages[i];
         }
     delete [] inPM->pages;
@@ -187,7 +184,7 @@ static FingerprintBucket *addBucket( PageManager *inPM ) {
             inPM->pages = new BucketPage*[ inPM->pageAreaSize ];
             
             // NULL just the new slots
-            for( int i=oldSize; i<inPM->pageAreaSize; i++ ) {
+            for( uint32_t i=oldSize; i<inPM->pageAreaSize; i++ ) {
                 inPM->pages[i] = NULL;
                 }
             
@@ -226,14 +223,8 @@ static FingerprintBucket *getBucket( PageManager *inPM,
 
 
 
-static uint32_t getNumBuckets( PageManager *inPM ) {
-    return inPM->numBuckets;
-    }
-
-
-
 static uint32_t getFirstEmptyBucketIndex( PageManager *inPM ) {
-    for( int p=0; p<inPM->numPages; p++ ) {
+    for( uint32_t p=0; p<inPM->numPages; p++ ) {
         for( int b=0; b<BUCKETS_PER_PAGE; b++ ) {
             
             if( inPM->pages[p]->buckets[b].fingerprints[0] == 0 ) {
@@ -683,8 +674,6 @@ static void insertIntoBucket( LINEARDB3 *inDB,
 // is big enough that it's at or below the maxLoad
 static int expandTable( LINEARDB3 *inDB ) {
     
-    uint32_t oldSize = inDB->hashTableSizeB;
-
     // expand table one cell at a time until we are back at or below maxLoad
     while( (double)( inDB->numRecords ) /
            (double)( inDB->hashTableSizeB * RECORDS_PER_BUCKET ) 
@@ -772,9 +761,6 @@ static int expandTable( LINEARDB3 *inDB ) {
         
         if( inDB->hashTableSizeB == inDB->hashTableSizeA * 2 ) {
             // full round of expansion is done.
-        
-            unsigned int oldTableSizeA = inDB->hashTableSizeA;
-        
             inDB->hashTableSizeA = inDB->hashTableSizeB;            
             }
         }
@@ -935,7 +921,7 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
 
                 // make sure it matches where we've documented that
                 // the record should go
-                if( ftello( inDB->file ) != filePosRec ) {
+                if( ftello( inDB->file ) != (signed)filePosRec ) {
                     return -1;
                     }
                 
@@ -990,7 +976,7 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
     uint64_t binNumber = getBinNumber( inDB, inKey, &fingerprint );
 
     
-    int overflowDepth = 0;
+    unsigned int overflowDepth = 0;
 
     FingerprintBucket *thisBucket = getBucket( inDB->hashTable, binNumber );
     
@@ -1010,7 +996,6 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
         }
 
     
-    char thisBucketIsOverflow = false;
     uint32_t thisBucketIndex = 0;
     
     while( thisBucket->overflowIndex > 0 ) {
@@ -1025,8 +1010,6 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
         thisBucketIndex = thisBucket->overflowIndex;
         
         thisBucket = getBucket( inDB->overflowBuckets, thisBucketIndex );
-        
-        thisBucketIsOverflow = true;
 
         for( int i=0; i<RECORDS_PER_BUCKET; i++ ) {
 
@@ -1086,7 +1069,7 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
             
             // make sure it matches where we've documented that
             // the record should go
-            if( ftello( inDB->file ) != filePosRec ) {
+            if( ftello( inDB->file ) != (signed)filePosRec ) {
                 return -1;
                 }
                 
