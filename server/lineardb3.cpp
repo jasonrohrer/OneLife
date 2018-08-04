@@ -384,7 +384,9 @@ static void recomputeFingerprintMod( LINEARDB3 *inDB ) {
 
 
 
-static uint32_t getPerfectTableSize( double inMaxLoad, uint32_t inNumRecords ) {
+uint32_t LINEARDB3_getPerfectTableSize( double inMaxLoad, 
+                                        uint32_t inNumRecords ) {
+    
     uint32_t minTableRecords = (uint32_t)ceil( inNumRecords / inMaxLoad );
         
     uint32_t minTableBuckets =(uint32_t)ceil( (double)minTableRecords / 
@@ -564,8 +566,9 @@ int LINEARDB3_open(
         
         // now populate hash table
 
-        uint32_t minTableBuckets = getPerfectTableSize( inDB->maxLoad,
-                                                        numRecordsInFile );
+        uint32_t minTableBuckets = 
+            LINEARDB3_getPerfectTableSize( inDB->maxLoad,
+                                           numRecordsInFile );
 
         
         inDB->hashTableSizeA = minTableBuckets;
@@ -1263,8 +1266,8 @@ unsigned int LINEARDB3_getShrinkSize( LINEARDB3 *inDB,
 
     // perfect size to insert this many with no table expansion
     
-    uint32_t minTableBuckets = getPerfectTableSize( inDB->maxLoad,
-                                                    inNewNumRecords );
+    uint32_t minTableBuckets = 
+        LINEARDB3_getPerfectTableSize( inDB->maxLoad, inNewNumRecords );
 
     return minTableBuckets;
     }

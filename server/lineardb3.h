@@ -268,6 +268,16 @@ unsigned int LINEARDB3_getNumRecords( LINEARDB3 *inDB );
 
 
 /**
+ * Gets optimal starting table size for a given load and number of records.
+ *
+ * Return value can be used for inHashTableStartSize in LINEARDB3_open.
+ */
+uint32_t LINEARDB3_getPerfectTableSize( double inMaxLoad, 
+                                        uint32_t inNumRecords );
+
+
+
+/**
  * Gets the optimal starting table size, based on an existing inDB, to house 
  * inNewNumRecords.  Pays attention to inDB's set maxLoad.
  * This is useful when iterating through one DB to insert items into a new, 
