@@ -2314,6 +2314,8 @@ void initMap() {
                       "not cleaning databases based on stale look times." );
         }
 
+    LINEARDB3_setMaxLoad( 0.80 );
+    
     if( ! skipLookTimeCleanup ) {
         DB lookTimeDB_old;
         
