@@ -391,7 +391,10 @@ int LINEARDB3_open(
         return 1;
         }
     
-
+    if( inHashTableStartSize < 2 ) {
+        inHashTableStartSize = 2;
+        }
+    
     inDB->hashTableSizeA = inHashTableStartSize;
     inDB->hashTableSizeB = inHashTableStartSize;
     
@@ -522,6 +525,13 @@ int LINEARDB3_open(
         uint32_t minTableBuckets = 
             (uint32_t)ceil( (double)minTableRecords / 
                             (double)RECORDS_PER_BUCKET );
+
+        // even if file contains no inserted records
+        // use 2 buckets minimum
+        if( minTableBuckets < 2 ) {
+            minTableBuckets = 2;
+            }
+        
         
         inDB->hashTableSizeA = minTableBuckets;
         inDB->hashTableSizeB = minTableBuckets;

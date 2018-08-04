@@ -118,7 +118,7 @@ typedef struct {
  *   (left for compatibility with KISSDB api)
  * @param inHashTableStartSize Size of hash table in entries
  *   This is the starting size of the table, which will grow as the table
- *   becomes full.
+ *   becomes full.  If less than 2, will be automatically raised to 2.
  * @param key_size Size of keys in bytes
  * @param value_size Size of values in bytes
  * @return 0 on success, nonzero on error
