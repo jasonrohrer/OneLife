@@ -47,6 +47,8 @@ typedef struct {
         uint32_t pageAreaSize;
         LINEARDB3_BucketPage **pages;
 
+        uint32_t firstEmptyBucket;
+
     } LINEARDB3_PageManager;
     
     

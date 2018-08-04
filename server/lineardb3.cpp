@@ -123,6 +123,9 @@ static FingerprintBucket *getBucket( PageManager *inPM,
 static uint32_t getFirstEmptyBucketIndex( PageManager *inPM );
 
 
+static void markBucketEmpty( PageManager *inPM, uint32_t inBucketIndex );
+
+
 
 
 
@@ -147,6 +150,8 @@ static void initPageManager( PageManager *inPM,
         }
     
     inPM->numBuckets = inNumStartingBuckets;
+
+    inPM->firstEmptyBucket = 0;
     }
 
 
@@ -224,10 +229,19 @@ static FingerprintBucket *getBucket( PageManager *inPM,
 
 
 static uint32_t getFirstEmptyBucketIndex( PageManager *inPM ) {
-    for( uint32_t p=0; p<inPM->numPages; p++ ) {
-        for( int b=0; b<BUCKETS_PER_PAGE; b++ ) {
+    
+    uint32_t firstPage = inPM->firstEmptyBucket / BUCKETS_PER_PAGE;
+
+    uint32_t firstBucket = inPM->firstEmptyBucket % BUCKETS_PER_PAGE;
+
+
+    for( uint32_t p=firstPage; p<inPM->numPages; p++ ) {
+        
+        BucketPage *page = inPM->pages[p];
+
+        for( int b=firstBucket; b<BUCKETS_PER_PAGE; b++ ) {
             
-            if( inPM->pages[p]->buckets[b].fingerprints[0] == 0 ) {
+            if( page->buckets[b].fingerprints[0] == 0 ) {
                 uint32_t index = p * BUCKETS_PER_PAGE + b; 
                 
                 if( index >= inPM->numBuckets ) {
@@ -239,20 +253,38 @@ static uint32_t getFirstEmptyBucketIndex( PageManager *inPM ) {
 
                 // ignore index 0
                 if( index != 0 ) {    
+                    // remember for next time
+                    // to reduce how many we have to loop through next time
+                    inPM->firstEmptyBucket = index;
+                    
                     return index;
                     }
                 
                 }
             }
+
+        // ignore first bucket index after we pass first page
+        firstBucket = 0;
         }
     
     // none empty in existing pages
     // create new one off end
     uint32_t newIndex = inPM->numBuckets;
     addBucket( inPM );
+
+    inPM->firstEmptyBucket = newIndex;
     
     return newIndex;
     }
+
+
+
+static void markBucketEmpty( PageManager *inPM, uint32_t inBucketIndex ) {
+    if( inBucketIndex < inPM->firstEmptyBucket ) {
+        inPM->firstEmptyBucket = inBucketIndex;
+        }
+    }
+
 
 
 
@@ -751,6 +783,10 @@ static int expandTable( LINEARDB3 *inDB ) {
                 // records next
                 nextOldBucket = getBucket( inDB->overflowBuckets, 
                                            tempBucket.overflowIndex );
+                // we're going to clear it in next iteration of loop, 
+                // so report it as empty
+                markBucketEmpty( inDB->overflowBuckets,
+                                 tempBucket.overflowIndex );
                 }
             else {
                 // end of chain
