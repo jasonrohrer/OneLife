@@ -102,7 +102,36 @@ typedef struct {
 
     } LINEARDB3;
 
-    
+
+
+
+
+
+
+
+
+/**
+ * Set maximum table load for all subsequent callst to LINEARDB3_open.
+ *
+ * Defaults to 0.5.
+ *
+ * When this load is surpassed, hash table expansion occurs.
+ *
+ * Lower values waste more RAM on table space but result in slightly higher 
+ * performance.
+ *
+ *
+ * Note that a given DB remembers what maxLoad was set when it was opened,
+ * and ignores future calls to setMaxLoad.
+ *
+ * However, the max load is NOT written into the database file format.
+ *
+ * Thus, data can be loaded into a table with a different load by setting
+ * a differen maxLoad before re-opening the file.
+ */
+void LINEARDB3_setMaxLoad( double inMaxLoad );
+
+
 
 
 /**
@@ -243,10 +272,7 @@ unsigned int LINEARDB3_getNumRecords( LINEARDB3 *inDB );
  * inNewNumRecords.  Pays attention to inDB's set maxLoad.
  * This is useful when iterating through one DB to insert items into a new, 
  * smaller DB.
- *
- * Iteration happens in file order, and if an optimal shrunken database
- * table size is used, the inserts will happen in file order as well.
- *
+ * 
  * Return value can be used for inHashTableStartSize in LINEARDB3_open.
  */
 unsigned int LINEARDB3_getShrinkSize( LINEARDB3 *inDB,

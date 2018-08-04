@@ -23,7 +23,12 @@
 
 
 
-#define DEFAULT_MAX_LOAD 0.5
+static double maxLoadForOpenCalls = 0.5;
+
+
+void LINEARDB3_setMaxLoad( double inMaxLoad ) {
+    maxLoadForOpenCalls = inMaxLoad;
+    }
 
 
 
@@ -378,6 +383,23 @@ static void recomputeFingerprintMod( LINEARDB3 *inDB ) {
 
 
 
+
+static uint32_t getPerfectTableSize( double inMaxLoad, uint32_t inNumRecords ) {
+    uint32_t minTableRecords = (uint32_t)ceil( inNumRecords / inMaxLoad );
+        
+    uint32_t minTableBuckets =(uint32_t)ceil( (double)minTableRecords / 
+                                              (double)RECORDS_PER_BUCKET );
+
+    // even if file contains no inserted records
+    // use 2 buckets minimum
+    if( minTableBuckets < 2 ) {
+        minTableBuckets = 2;
+        }
+    return minTableBuckets;
+    }
+
+
+
 // if inIgnoreDataFile (which only applies if inPut is true), we completely
 // ignore the data file and don't touch it, updating the RAM hash table only,
 // and assuming all unique values on collision
@@ -400,7 +422,7 @@ int LINEARDB3_open(
 
     inDB->numRecords = 0;
     
-    inDB->maxLoad = DEFAULT_MAX_LOAD;
+    inDB->maxLoad = maxLoadForOpenCalls;
     
 
     inDB->file = fopen( inPath, "r+b" );
@@ -541,20 +563,10 @@ int LINEARDB3_open(
         
         
         // now populate hash table
-        
-        uint32_t minTableRecords = 
-            (uint32_t)ceil( numRecordsInFile / inDB->maxLoad );
-        
-        uint32_t minTableBuckets = 
-            (uint32_t)ceil( (double)minTableRecords / 
-                            (double)RECORDS_PER_BUCKET );
 
-        // even if file contains no inserted records
-        // use 2 buckets minimum
-        if( minTableBuckets < 2 ) {
-            minTableBuckets = 2;
-            }
-        
+        uint32_t minTableBuckets = getPerfectTableSize( inDB->maxLoad,
+                                                        numRecordsInFile );
+
         
         inDB->hashTableSizeA = minTableBuckets;
         inDB->hashTableSizeB = minTableBuckets;
@@ -1249,42 +1261,10 @@ unsigned int LINEARDB3_getNumRecords( LINEARDB3 *inDB ) {
 unsigned int LINEARDB3_getShrinkSize( LINEARDB3 *inDB,
                                       unsigned int inNewNumRecords ) {
 
-    unsigned int curSize = inDB->hashTableSizeA;
-    if( inDB->hashTableSizeA != inDB->hashTableSizeB ) {
-        // use doubled size as cur size
-        // it's big enough to contain current record load without
-        // violating max load factor
-        curSize *= 2;
-        }
+    // perfect size to insert this many with no table expansion
     
-    
-    if( inNewNumRecords >= curSize ) {
-        // can't shrink
-        return curSize;
-        }
-    
+    uint32_t minTableBuckets = getPerfectTableSize( inDB->maxLoad,
+                                                    inNewNumRecords );
 
-    unsigned int minSize = lrint( ceil( inNewNumRecords / inDB->maxLoad ) );
-    
-    
-
-    // power of 2 that divides curSize and produces new size that is 
-    // large enough for minSize
-    unsigned int divisor = 1;
-    
-    while( true ) {
-        unsigned int newDivisor = divisor * 2;
-        
-        if( curSize % newDivisor == 0 &&
-            curSize / newDivisor >= minSize ) {
-            
-            divisor = newDivisor;
-            }
-        else {
-            // divisor as large as it can be
-            break;
-            }
-        }
-    
-    return curSize / divisor;
+    return minTableBuckets;
     }
