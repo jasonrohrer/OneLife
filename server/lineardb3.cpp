@@ -913,17 +913,26 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
             
         if( inPut ) {
             if( emptyRec ) {
-                // no seeking done yet
-                // go to end of file
-                if( fseeko( inDB->file, 0, SEEK_END ) ) {
-                    return -1;
-                    }
 
-                // make sure it matches where we've documented that
-                // the record should go
+                // don't seek unless we have to
+                // if we're doing a series of fresh inserts,
+                // the file pos is already waiting at the end of the file
+                // for us
                 if( ftello( inDB->file ) != (signed)filePosRec ) {
-                    return -1;
+                    
+                    // no seeking done yet
+                    // go to end of file
+                    if( fseeko( inDB->file, 0, SEEK_END ) ) {
+                        return -1;
+                        }
+                    // make sure it matches where we've documented that
+                    // the record should go
+                    if( ftello( inDB->file ) != (signed)filePosRec ) {
+                        return -1;
+                        }
                     }
+                
+
                 
                 int numWritten = 
                     fwrite( inKey, inDB->keySize, 1, inDB->file );
