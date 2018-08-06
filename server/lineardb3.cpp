@@ -559,10 +559,9 @@ int LINEARDB3_open(
             != fileSize ) {
             
             printf( "Requested lineardb3 file does not contain a whole number "
-                    "of %d-byte records (file size=%llu, header size=%d).\n", 
-                    inDB->recordSizeBytes,
-                    fileSize, LINEARDB3_HEADER_SIZE );
-            return 1;
+                    "of %d-byte records.  "
+                    "Assuming final record is garbage and ignoring it.\n", 
+                    inDB->recordSizeBytes );
             }
         
         
