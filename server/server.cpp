@@ -5311,7 +5311,10 @@ int main() {
     initTriggers();
 
 
-    initMap();
+    if( initMap() != true ) {
+        // cannot continue after map init fails
+        return 1;
+        }
     
     
     int port = 

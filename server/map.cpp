@@ -2145,7 +2145,7 @@ static void loadIntoMapFromFile( FILE *inFile,
 
 
 
-void initMap() {
+char initMap() {
     initDBCaches();
     initBiomeCache();
 
@@ -2331,7 +2331,7 @@ void initMap() {
     
         if( error ) {
             AppLog::errorF( "Error %d opening look time KissDB", error );
-            return;
+            return false;
             }
     
 
@@ -2409,7 +2409,7 @@ void initMap() {
             if( error ) {
                 AppLog::errorF( 
                     "Error %d opening look time temp KissDB", error );
-                return;
+                return false;
                 }
             
 
@@ -2464,7 +2464,7 @@ void initMap() {
     
     if( error ) {
         AppLog::errorF( "Error %d opening look time KissDB", error );
-        return;
+        return false;
         }
     
     lookTimeDBOpen = true;
@@ -2509,7 +2509,7 @@ void initMap() {
     
     if( error ) {
         AppLog::errorF( "Error %d opening map KissDB", error );
-        return;
+        return false;
         }
     
     dbOpen = true;
@@ -2547,7 +2547,7 @@ void initMap() {
     
     if( error ) {
         AppLog::errorF( "Error %d opening map time KissDB", error );
-        return;
+        return false;
         }
     
     timeDBOpen = true;
@@ -2571,7 +2571,7 @@ void initMap() {
     
     if( error ) {
         AppLog::errorF( "Error %d opening biome KissDB", error );
-        return;
+        return false;
         }
     
     biomeDBOpen = true;
@@ -2625,7 +2625,7 @@ void initMap() {
     
     if( error ) {
         AppLog::errorF( "Error %d opening floor KissDB", error );
-        return;
+        return false;
         }
     
     floorDBOpen = true;
@@ -2644,7 +2644,7 @@ void initMap() {
     
     if( error ) {
         AppLog::errorF( "Error %d opening floor time KissDB", error );
-        return;
+        return false;
         }
     
     floorTimeDBOpen = true;
@@ -2668,7 +2668,7 @@ void initMap() {
     
     if( error ) {
         AppLog::errorF( "Error %d opening eve KissDB", error );
-        return;
+        return false;
         }
     
     eveDBOpen = true;
@@ -2821,6 +2821,8 @@ void initMap() {
     //outputMapImage();
 
     //outputBiomeFractals();
+
+    return true;
     }
 
 

@@ -30,7 +30,8 @@ typedef struct ChangePosition {
 
 
 
-void initMap();
+// returns true on success
+char initMap();
 
 
 void freeMap();
