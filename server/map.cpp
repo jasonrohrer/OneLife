@@ -2067,7 +2067,7 @@ static char skipTrackingMapChanges = false;
 static char loadIntoMapFromFile( FILE *inFile, 
                                  int inOffsetX = 0, 
                                  int inOffsetY = 0,
-                                 int inTimeLimitSec = 0 ) {
+                                 double inTimeLimitSec = 0 ) {
 
     skipTrackingMapChanges = true;
     
@@ -6085,8 +6085,7 @@ static unsigned int nextLoadID = 0;
 
 char loadTutorialStart( TutorialLoadProgress *inTutorialLoad, 
                         const char *inMapFileName, int inX, int inY ) {
-    double startTime = Time::getCurrentTime();
-    
+
     File tutorialFolder( NULL, "tutorialMaps" );
     
     char returnVal = false;
@@ -6116,9 +6115,6 @@ char loadTutorialStart( TutorialLoadProgress *inTutorialLoad,
             }
         delete mapFile;
         }
-    
-    printf( "Loading tutorial took %f sec\n", 
-            Time::getCurrentTime() - startTime );
     
     return returnVal;
     }

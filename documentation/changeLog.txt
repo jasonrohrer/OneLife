@@ -83,6 +83,11 @@ Server Fixes
   escaped tutorial player walks into a new player's tutorial area at the moment
   of loading, but there's going to be strange behavior there no matter what.
 
+--Split tutorial map loading up into 5-ms steps that are interleaved with other
+  server processing steps.  Server no longer stalls for 1+ second while a
+  tutorial map loads into a full database.  Tutorial players may have to wait
+  a tiny bit longer, but that's okay.
+
 
 
 Version 126    2018-July-18
