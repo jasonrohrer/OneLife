@@ -1430,7 +1430,14 @@ function ls_frontPage() {
         $filter = $emailFilter;
         }
     else if( $nameFilter != "" ) {
-        $filterClause = " WHERE lives.name LIKE '%$nameFilter%' ";
+        // name filter is used as prefix filter for speed
+        // there's no way to make a LIKE condition fast if there's a wild
+        // card as the first character of the pattern (the entire table
+        // needs to be scanned, and the index isn't used).
+        //
+        // A full-text index is another option, but probably overkill in
+        // this case.
+        $filterClause = " WHERE lives.name LIKE '$nameFilter%' ";
         $filter = $nameFilter;
         }
 

@@ -91,7 +91,10 @@ Server Fixes
 --Index added to name colum of lineage server lives database to make name
   searches faster.
 
-
+--Lineage server now only supports name prefixes in character name searches
+  (so 'Jon' matches 'Jonathan Lucky' but 'Lucky' does not match it).  Turned
+  out that full wildcard searches involved a full table scan and had gotten
+  intolerably slow, even after the index for names was added.
 
 
 Version 126    2018-July-18
