@@ -1023,9 +1023,14 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
         if( !emptyRec ) {
             
             // read key to make sure it actually matches
-            if( fseeko( inDB->file, filePosRec, SEEK_SET ) ) {
-                return -1;
+            
+            // never seek unless we have to
+            if( ftello( inDB->file ) != (signed)filePosRec ) {
+                if( fseeko( inDB->file, filePosRec, SEEK_SET ) ) {
+                    return -1;
+                    }
                 }
+            
             int numRead = fread( inDB->recordBuffer, inDB->keySize, 1,
                                  inDB->file );
                 
@@ -1209,16 +1214,21 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
                 newBucket->fileIndex[0] * 
                 inDB->recordSizeBytes;
 
-            // go to end of file
-            if( fseeko( inDB->file, 0, SEEK_END ) ) {
-                return -1;
+            // don't seek unless we have to
+            if( ftello( inDB->file ) != (signed)filePosRec ) {
+            
+                // go to end of file
+                if( fseeko( inDB->file, 0, SEEK_END ) ) {
+                    return -1;
+                    }
+            
+                // make sure it matches where we've documented that
+                // the record should go
+                if( ftello( inDB->file ) != (signed)filePosRec ) {
+                    return -1;
+                    }
                 }
             
-            // make sure it matches where we've documented that
-            // the record should go
-            if( ftello( inDB->file ) != (signed)filePosRec ) {
-                return -1;
-                }
                 
             int numWritten = fwrite( inKey, inDB->keySize, 1, inDB->file );
             
