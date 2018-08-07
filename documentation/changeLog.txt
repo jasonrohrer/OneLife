@@ -74,6 +74,15 @@ Server Fixes
   takes 10 seconds on server1.  These map backups have never been needed and
   take up substantial disk space.
 
+--LinearDB3 is in place.  Inserts are much faster.  Other operations are faster
+  than any previous database engine.
+
+--Profiler found 5M+ vector operations happening for each tutorial map insert
+  (because we're checking for map changes).  Disabled map change tracking
+  during tutorial map insert.  This could cause some strange behavior if an
+  escaped tutorial player walks into a new player's tutorial area at the moment
+  of loading, but there's going to be strange behavior there no matter what.
+
 
 
 Version 126    2018-July-18

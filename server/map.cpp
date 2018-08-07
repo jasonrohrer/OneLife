@@ -2053,9 +2053,18 @@ int cleanMap() {
 
 
 
+// for large inserts, like tutorial map loads, we don't want to 
+// track individual map changes.
+static char skipTrackingMapChanges = false;
+
+
+
 static void loadIntoMapFromFile( FILE *inFile, 
                           int inOffsetX = 0, 
                           int inOffsetY = 0 ) {
+
+    skipTrackingMapChanges = true;
+    
     // break out when read fails
     while( true ) {
         TestMapRecord r;
@@ -2140,6 +2149,8 @@ static void loadIntoMapFromFile( FILE *inFile,
             delete [] subContArray;
             }
         }
+
+    skipTrackingMapChanges = false;
     }
 
 
@@ -3237,28 +3248,31 @@ static void dbPut( int inX, int inY, int inSlot, int inValue,
         }
     
 
-    // count all slot changes as changes, because we're storing
-    // time in a separate database now (so we don't need to worry
-    // about time changes being reported as map changes)
-    
-    char found = false;
-    for( int i=0; i<mapChangePosSinceLastStep.size(); i++ ) {
-            
-        ChangePosition *p = mapChangePosSinceLastStep.getElement( i );
+    if( ! skipTrackingMapChanges ) {
         
-        if( p->x == inX && p->y == inY ) {
-            found = true;
+        // count all slot changes as changes, because we're storing
+        // time in a separate database now (so we don't need to worry
+        // about time changes being reported as map changes)
+        
+        char found = false;
+        for( int i=0; i<mapChangePosSinceLastStep.size(); i++ ) {
             
-            // update it
-            p->responsiblePlayerID = currentResponsiblePlayer;
-            break;
+            ChangePosition *p = mapChangePosSinceLastStep.getElement( i );
+            
+            if( p->x == inX && p->y == inY ) {
+                found = true;
+                
+                // update it
+                p->responsiblePlayerID = currentResponsiblePlayer;
+                break;
+                }
             }
-        }
         
-    if( ! found ) {
-        ChangePosition p = { inX, inY, false, currentResponsiblePlayer,
-                             0, 0, 0.0 };
-        mapChangePosSinceLastStep.push_back( p );
+        if( ! found ) {
+            ChangePosition p = { inX, inY, false, currentResponsiblePlayer,
+                                 0, 0, 0.0 };
+            mapChangePosSinceLastStep.push_back( p );
+            }
         }
     
     
@@ -3327,24 +3341,28 @@ static void dbTimePut( int inX, int inY, int inSlot, timeSec_t inTime,
 
 static void dbFloorPut( int inX, int inY, int inValue ) {
     
-    char found = false;
-    for( int i=0; i<mapChangePosSinceLastStep.size(); i++ ) {
+
+    if( ! skipTrackingMapChanges ) {
         
-        ChangePosition *p = mapChangePosSinceLastStep.getElement( i );
-        
-        if( p->x == inX && p->y == inY ) {
-            found = true;
+        char found = false;
+        for( int i=0; i<mapChangePosSinceLastStep.size(); i++ ) {
             
-            // update it
-            p->responsiblePlayerID = currentResponsiblePlayer;
-            break;
+            ChangePosition *p = mapChangePosSinceLastStep.getElement( i );
+            
+            if( p->x == inX && p->y == inY ) {
+                found = true;
+                
+                // update it
+                p->responsiblePlayerID = currentResponsiblePlayer;
+                break;
+                }
             }
-        }
         
-    if( ! found ) {
-        ChangePosition p = { inX, inY, false, currentResponsiblePlayer,
-                             0, 0, 0.0 };
-        mapChangePosSinceLastStep.push_back( p );
+        if( ! found ) {
+            ChangePosition p = { inX, inY, false, currentResponsiblePlayer,
+                                 0, 0, 0.0 };
+            mapChangePosSinceLastStep.push_back( p );
+            }
         }
     
     
