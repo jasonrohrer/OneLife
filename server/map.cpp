@@ -2059,14 +2059,28 @@ static char skipTrackingMapChanges = false;
 
 
 
-static void loadIntoMapFromFile( FILE *inFile, 
-                          int inOffsetX = 0, 
-                          int inOffsetY = 0 ) {
+
+// reads lines from inFile until EOF reached or inTimeLimitSec passes
+// leaves file pos at end of last line read, ready to read more lines
+// on future calls
+// returns true if there's more file to read, or false if end of file reached
+static char loadIntoMapFromFile( FILE *inFile, 
+                                 int inOffsetX = 0, 
+                                 int inOffsetY = 0,
+                                 int inTimeLimitSec = 0 ) {
 
     skipTrackingMapChanges = true;
     
+    
+    double startTime = Time::getCurrentTime();
+
+    char moreFileLeft = true;
+
     // break out when read fails
-    while( true ) {
+    // or if time limit passed
+    while( inTimeLimitSec == 0 || 
+           Time::getCurrentTime() < startTime + inTimeLimitSec ) {
+        
         TestMapRecord r;
                 
         char stringBuff[1000];
@@ -2077,6 +2091,7 @@ static void loadIntoMapFromFile( FILE *inFile,
                               stringBuff );
                 
         if( numRead != 5 ) {
+            moreFileLeft = false;
             break;
             }
         r.x += inOffsetX;
@@ -2151,6 +2166,8 @@ static void loadIntoMapFromFile( FILE *inFile,
         }
 
     skipTrackingMapChanges = false;
+
+    return moreFileLeft;
     }
 
 
@@ -6062,7 +6079,12 @@ void mapEveDeath( char *inEmail, double inAge ) {
 
 
 
-char loadTutorial( const char *inMapFileName, int inX, int inY ) {
+
+static unsigned int nextLoadID = 0;
+
+
+char loadTutorialStart( TutorialLoadProgress *inTutorialLoad, 
+                        const char *inMapFileName, int inX, int inY ) {
     double startTime = Time::getCurrentTime();
     
     File tutorialFolder( NULL, "tutorialMaps" );
@@ -6079,8 +6101,14 @@ char loadTutorial( const char *inMapFileName, int inX, int inY ) {
             FILE *file = fopen( fileName, "r" );
 
             if( file != NULL ) {
-                loadIntoMapFromFile( file, inX, inY );
-                fclose( file );
+                
+                inTutorialLoad->uniqueLoadID = nextLoadID++;
+                inTutorialLoad->file = file;
+                inTutorialLoad->x = inX;
+                inTutorialLoad->y = inY;
+                inTutorialLoad->startTime = Time::getCurrentTime();
+                inTutorialLoad->stepCount = 0;
+                
                 returnVal = true;
                 }
             
@@ -6095,5 +6123,29 @@ char loadTutorial( const char *inMapFileName, int inX, int inY ) {
     return returnVal;
     }
 
+
+
+
+char loadTutorialStep( TutorialLoadProgress *inTutorialLoad,
+                       double inTimeLimitSec ) {
+
+    if( inTutorialLoad->file == NULL ) {
+        // none left
+        return false;
+        }
+
+    char moreLeft = loadIntoMapFromFile( inTutorialLoad->file, 
+                                         inTutorialLoad->x, inTutorialLoad->y,
+                                         inTimeLimitSec );
+
+    inTutorialLoad->stepCount++;
+    
+
+    if( ! moreLeft ) {
+        fclose( inTutorialLoad->file );
+        inTutorialLoad->file = NULL;
+        }
+    return moreLeft;
+    }
 
 

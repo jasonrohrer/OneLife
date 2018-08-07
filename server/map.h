@@ -221,10 +221,28 @@ int getMapBiome( int inX, int inY );
 
 
 
+typedef struct {
+        unsigned int uniqueLoadID;
+        FILE *file;
+        int x, y;
+        double startTime;
+        int stepCount;
+    } TutorialLoadProgress;
+
+    
+
+
 // returns true on success
 // example:
-// loadTutorial( "tutorialA.txt", 10000, 10000 )
-char loadTutorial( const char *inMapFileName, int inX, int inY );
+// loadTutorial( newPlayer.tutorialLoad, "tutorialA.txt", 10000, 10000 )
+char loadTutorialStart( TutorialLoadProgress *inTutorialLoad,
+                        const char *inMapFileName, int inX, int inY );
+
+
+// returns true if more steps are needed
+// false if done
+char loadTutorialStep( TutorialLoadProgress *inTutorialLoad,
+                       double inTimeLimitSec );
 
 
 
