@@ -4028,8 +4028,17 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                            inConnection.tutorialNumber );
         
         
-        LiveObject *newPlayer = getLiveObject( newID );
+        LiveObject *newPlayer = NULL;
+
+        if( inConnection.tutorialNumber == 0 ) {
+            newPlayer = getLiveObject( newID );
+            }
+        else {
+            newPlayer = tutorialLoadingPlayers.getElement(
+                tutorialLoadingPlayers.size() - 1 );
+            }
         
+
         int parent = newPlayer->parentID;
         int displayID = newPlayer->displayID;
         GridPos playerPos = { newPlayer->xd, newPlayer->yd };
@@ -6166,7 +6175,6 @@ int main() {
             players.push_back( *nextPlayer );
 
             tutorialLoadingPlayers.deleteElement( i );
-            i--;
             
             LiveObject *twinPlayer = NULL;
             
@@ -6184,7 +6192,6 @@ int main() {
                 players.push_back( *twinPlayer );
 
                 tutorialLoadingPlayers.deleteElement( i );
-                i--;
                 
                 twinPlayer = NULL;
                 
@@ -6192,6 +6199,8 @@ int main() {
                     twinPlayer = tutorialLoadingPlayers.getElement( i );
                     }
                 }
+            break;
+            
             }
         
 
