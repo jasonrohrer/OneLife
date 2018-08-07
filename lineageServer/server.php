@@ -332,6 +332,7 @@ function ls_setupDatabase() {
             // age at time of death in years
             "age FLOAT UNSIGNED NOT NULL,".
             "name VARCHAR(254) NOT NULL,".
+            "INDEX( name ),".
             // 1 if male
             "male TINYINT UNSIGNED NOT NULL,".
             "last_words VARCHAR(63) NOT NULL,".

@@ -27,3 +27,10 @@ ALTER TABLE lineageServer_lives ADD deepest_descendant_generation INT NOT NULL A
 ALTER TABLE lineageServer_lives ADD deepest_descendant_life_id INT NOT NULL AFTER deepest_descendant_generation;
 
 UPDATE lineageServer_lives set deepest_descendant_generation = -1, deepest_descendant_life_id = -1;
+
+
+
+
+// add index for lives.name (so name search is faster)
+
+ALTER TABLE lineageServer_lives ADD INDEX name ( name );

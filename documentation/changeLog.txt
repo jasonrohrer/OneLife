@@ -88,6 +88,10 @@ Server Fixes
   tutorial map loads into a full database.  Tutorial players may have to wait
   a tiny bit longer, but that's okay.
 
+--Index added to name colum of lineage server lives database to make name
+  searches faster.
+
+
 
 
 Version 126    2018-July-18
