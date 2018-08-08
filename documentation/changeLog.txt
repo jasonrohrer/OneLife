@@ -96,6 +96,10 @@ Server Fixes
   out that full wildcard searches involved a full table scan and had gotten
   intolerably slow, even after the index for names was added.
 
+--Player cap up to 160 on all servers, preparing to roll out new lineardb3 to
+  all.
+
+
 
 Version 126    2018-July-18
 
