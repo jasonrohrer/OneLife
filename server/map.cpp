@@ -4531,7 +4531,7 @@ void lookAtRegion( int inXStart, int inYStart, int inXEnd, int inYEnd ) {
                         *oldLookTime = currentTime;
                         }            
 
-                    for( int s=s; s<= contRec->maxSubSlots; s++ ) {
+                    for( int s=1; s<= contRec->maxSubSlots; s++ ) {
                         
                         oldLookTime =
                             liveDecayRecordLastLookTimeHashTable.lookupPointer( 

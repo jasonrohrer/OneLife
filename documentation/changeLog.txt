@@ -99,6 +99,10 @@ Server Fixes
 --Player cap up to 200 on all servers, preparing to roll out new lineardb3 to
   all.
 
+--Fixed major high CPU spike issue due to uninitialized variable.
+  Thanks Jincheng L.
+
+
 
 
 Version 126    2018-July-18
