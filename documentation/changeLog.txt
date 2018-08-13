@@ -110,6 +110,7 @@ Server Fixes
 
 --Fixed server crash due to a typo.
 
+--Fixed bug in adding transitions with a move distance.
 
 
 

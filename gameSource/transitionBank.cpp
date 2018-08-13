@@ -2239,7 +2239,7 @@ void addTrans( int inActor, int inTarget,
         t->targetMinUseFraction = inTargetMinUseFraction;
         
         t->move = inMove;
-        t->desiredMoveDist = inMove;
+        t->desiredMoveDist = inDesiredMoveDist;
         
         t->actorChangeChance = inActorChangeChance;
         t->targetChangeChance = inTargetChangeChance;
