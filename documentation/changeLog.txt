@@ -108,6 +108,8 @@ Server Fixes
 --Fixed major high CPU spike issue due to uninitialized variable.
   Thanks Jincheng L.
 
+--Fixed server crash due to a typo.
+
 
 
 

@@ -10729,7 +10729,7 @@ int main() {
             char *email = newCurseTokenEmails.getElementDirect( i );
             
             for( int j=0; j<numLive; j++ ) {
-                LiveObject *nextPlayer = players.getElement(i);
+                LiveObject *nextPlayer = players.getElement(j);
                 
                 if( strcmp( nextPlayer->email, email ) == 0 ) {
                     
