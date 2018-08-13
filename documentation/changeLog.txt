@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 130    ???
+
+--Fixed GUI layout spacing in scene editor.
+
+
+
 Server Fixes
 
 --Added a few more MySQL indexes to speed up front page queries in lineage

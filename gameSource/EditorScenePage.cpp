@@ -84,7 +84,7 @@ EditorScenePage::EditorScenePage()
           mPersonAnimFreezeSlider( smallFont, 50, -340, 2,
                                    300, 20,
                                    -2, 2, "Person Time" ),
-          mCellSpriteVanishSlider( smallFont, -450, -300, 2,
+          mCellSpriteVanishSlider( smallFont, -450, -310, 2,
                                    100, 20,
                                    0, 1, "Use" ),
           mCellXOffsetSlider( smallFont, -450, -230, 2,
@@ -1696,7 +1696,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     delete [] posStringY;
 
     if( c->oID > 0 ) {
-        doublePair pos = { -500, -300 };
+        doublePair pos = { -500, -290 };
         
         char *s = autoSprintf( "oID=%d  %s", c->oID,
                                getObject( c->oID )->description );
