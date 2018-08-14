@@ -838,6 +838,13 @@ class LivingLifePage : public GamePage {
 
         SimpleVector<GraveInfo> mGraveInfo;
         
+
+        // end the move of an extra moving object and stick it back
+        // in the map at its destination.
+        // inExtraIndex is its index in the mMapExtraMovingObjects vectors
+        void endExtraObjectMove( int inExtraIndex );
+        
+
     };
 
 

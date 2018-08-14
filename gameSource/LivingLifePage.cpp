@@ -8187,7 +8187,46 @@ void LivingLifePage::sendBugReport( int inBugNumber ) {
         showBugMessage = true;
         }
     }
-    
+
+
+
+void LivingLifePage::endExtraObjectMove( int inExtraIndex ) {
+    int i = inExtraIndex;
+
+    ExtraMapObject *o = mMapExtraMovingObjects.getElement( i );
+    o->moveOffset.x = 0;
+    o->moveOffset.y = 0;
+    o->moveSpeed = 0;
+                
+    if( o->curAnimType != ground ) {
+                        
+        o->lastAnimType = o->curAnimType;
+        o->curAnimType = ground;
+        o->lastAnimFade = 1;
+                    
+        o->animationLastFrameCount = o->animationFrameCount;
+                    
+        o->animationFrameCount = 0;
+        }
+
+    GridPos worldPos = 
+        mMapExtraMovingObjectsDestWorldPos.getElementDirect( i );
+            
+    int mapI = getMapIndex( worldPos.x, worldPos.y );
+            
+    if( mapI != -1 ) {
+        // put it in dest
+        putInMap( mapI, o );
+        mMap[ mapI ] = 
+            mMapExtraMovingObjectsDestObjectIDs.getElementDirect( i );
+        }
+            
+    mMapExtraMovingObjects.deleteElement( i );
+    mMapExtraMovingObjectsDestWorldPos.deleteElement( i );
+    mMapExtraMovingObjectsDestObjectIDs.deleteElement( i );
+    }
+
+
 
 
         
@@ -8378,36 +8417,7 @@ void LivingLifePage::step() {
         if( length( delta ) < step ) {
             // reached dest
             
-            o->moveOffset.x = 0;
-            o->moveOffset.y = 0;
-            o->moveSpeed = 0;
-                
-            if( o->curAnimType != ground ) {
-                        
-                o->lastAnimType = o->curAnimType;
-                o->curAnimType = ground;
-                o->lastAnimFade = 1;
-                    
-                o->animationLastFrameCount = o->animationFrameCount;
-                    
-                o->animationFrameCount = 0;
-                }
-
-            GridPos worldPos = 
-                mMapExtraMovingObjectsDestWorldPos.getElementDirect( i );
-            
-            int mapI = getMapIndex( worldPos.x, worldPos.y );
-            
-            if( mapI != -1 ) {
-                // put it in dest
-                putInMap( mapI, o );
-                mMap[ mapI ] = 
-                    mMapExtraMovingObjectsDestObjectIDs.getElementDirect( i );
-                }
-            
-            mMapExtraMovingObjects.deleteElement( i );
-            mMapExtraMovingObjectsDestWorldPos.deleteElement( i );
-            mMapExtraMovingObjectsDestObjectIDs.deleteElement( i );
+            endExtraObjectMove( i );
             i--;
             }
         else {
@@ -10071,6 +10081,26 @@ void LivingLifePage::step() {
                             
                             applyReceiveOffset( &oldX, &oldY );
                             
+
+                            GridPos oldPos = { oldX, oldY };             
+
+                            // check if we have a move-to object "in the air"
+                            // that is supposed to end up at this location
+                            // if so, make it snap there
+                            for( int i=0; 
+                                 i<mMapExtraMovingObjects.size(); i++ ) {
+                                
+                                if( equal( 
+                                        mMapExtraMovingObjectsDestWorldPos.
+                                        getElementDirect( i ),
+                                        oldPos ) ) {
+                                    endExtraObjectMove( i );
+                                    break;
+                                    }
+                                }
+                            
+
+
                             int oldMapI = getMapIndex( oldX, oldY );
                             
                             int sourceObjID = 0;

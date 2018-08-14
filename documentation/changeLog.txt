@@ -8,6 +8,9 @@ Version 130    ???
 
 --Fixed GUI layout spacing in scene editor.
 
+--Fixed glitch in moving objects that consume destination object (visual
+  duplication of objects) if client falls behind server moves.
+
 
 
 Server Fixes
