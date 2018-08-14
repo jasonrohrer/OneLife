@@ -115,6 +115,9 @@ Server Fixes
 
 --Fixed bug in adding transitions with a move distance.
 
+--Objects that move N/S/E/W keep moving even when out of view, permitting
+  long-distance rails to function.
+
 
 
 Version 126    2018-July-18

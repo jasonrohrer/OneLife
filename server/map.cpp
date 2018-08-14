@@ -305,6 +305,14 @@ typedef struct LiveDecayRecord {
         // >0 indexs sub containers of object
         int subCont;
 
+        // the transition that will apply when this decay happens
+        // this allows us to avoid marking certain types of move decays
+        // as stale when not looked at in a while (all other types of decays
+        // go stale)
+        // Can be NULL if we don't care about the transition
+        // associated with this decay (for contained item decay, for example)
+        TransRecord *applicableTrans;
+
     } LiveDecayRecord;
 
 
@@ -3428,12 +3436,25 @@ void dbLookTimePut( int inX, int inY, timeSec_t inTime ) {
 
 
 
+// certain types of movement transitions should always be live
+// tracked, even when out of view (NSEW moves, for human-made traveling objects
+// for example)
+static char isDecayTransAlwaysLiveTracked( TransRecord *inTrans ) {
+    if( inTrans != NULL &&
+        inTrans->move >=4 && inTrans->move <= 7 ) {
+
+        return true;
+        }
+
+    return false;
+    }
 
 
 
 // slot is 0 for main map cell, or higher for container slots
 static void trackETA( int inX, int inY, int inSlot, timeSec_t inETA,
-                      int inSubCont = 0 ) {
+                      int inSubCont = 0, 
+                      TransRecord *inApplicableTrans = NULL ) {
     
     timeSec_t timeLeft = inETA - MAP_TIMESEC;
         
@@ -3444,7 +3465,8 @@ static void trackETA( int inX, int inY, int inSlot, timeSec_t inETA,
         // we'll deal with them when they ripen
         // (we check the true ETA stored in map before acting
         //   on one stored in this queue)
-        LiveDecayRecord r = { inX, inY, inSlot, inETA, inSubCont };
+        LiveDecayRecord r = { inX, inY, inSlot, inETA, inSubCont, 
+                              inApplicableTrans };
             
         char exists;
         timeSec_t existingETA =
@@ -4229,7 +4251,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     }
                 }            
 
-            setEtaDecay( newX, newY, mapETA );
+            setEtaDecay( newX, newY, mapETA, newDecayT );
             }
 
         }
@@ -4953,10 +4975,11 @@ void setMapObject( int inX, int inY, int inID ) {
 
 
 
-void setEtaDecay( int inX, int inY, timeSec_t inAbsoluteTimeInSeconds ) {
+void setEtaDecay( int inX, int inY, timeSec_t inAbsoluteTimeInSeconds,
+                  TransRecord *inApplicableTrans ) {
     dbTimePut( inX, inY, DECAY_SLOT, inAbsoluteTimeInSeconds );
     if( inAbsoluteTimeInSeconds != 0 ) {
-        trackETA( inX, inY, 0, inAbsoluteTimeInSeconds );
+        trackETA( inX, inY, 0, inAbsoluteTimeInSeconds, 0, inApplicableTrans );
         }
     }
 
@@ -5643,9 +5666,14 @@ void stepMap( SimpleVector<MapChangeRecord> *inMapChanges,
             if( storedFound ) {
 
                 if( MAP_TIMESEC - lastLookTime > 
-                    maxSecondsNoLookDecayTracking ) {
+                    maxSecondsNoLookDecayTracking 
+                    &&
+                    ! isDecayTransAlwaysLiveTracked( r.applicableTrans ) ) {
                     
                     // this cell or slot hasn't been looked at in too long
+                    // AND it's not a trans that's live tracked even when
+                    // not watched
+
                     // don't even apply this decay now
                     liveDecayRecordLastLookTimeHashTable.remove( 
                         r.x, r.y, r.slot, r.subCont );

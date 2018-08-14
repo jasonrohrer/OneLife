@@ -6,6 +6,7 @@
 #include "minorGems/system/Time.h"
 
 #include "../gameSource/GridPos.h"
+#include "../gameSource/transitionBank.h"
 
 
 
@@ -91,7 +92,8 @@ char isMapObjectInTransit( int inX, int inY );
 void setMapObject( int inX, int inY, int inID );
 
 
-void setEtaDecay( int inX, int inY, timeSec_t inAbsoluteTimeInSeconds );
+void setEtaDecay( int inX, int inY, timeSec_t inAbsoluteTimeInSeconds,
+                  TransRecord *inApplicableTrans = NULL );
 
 
 timeSec_t getEtaDecay( int inX, int inY );
