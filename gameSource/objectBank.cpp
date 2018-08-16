@@ -856,6 +856,21 @@ float initObjectBankStep() {
                     }
 
 
+                r->anySpritesBehindPlayer = false;
+                r->spriteBehindPlayer = NULL;
+
+                if( strstr( lines[next], "spritesDrawnBehind=" ) != NULL ) {
+                    r->anySpritesBehindPlayer = true;
+                    r->spriteBehindPlayer = new char[ r->numSprites ];
+                    memset( r->spriteBehindPlayer, false, r->numSprites );
+                    sparseCommaLineToBoolArray( "spritesDrawnBehind", 
+                                                lines[next],
+                                                r->spriteBehindPlayer, 
+                                                r->numSprites );
+                    next++;
+                    }
+                
+
 
                 sparseCommaLineToBoolArray( "headIndex", lines[next],
                                             r->spriteIsHead, r->numSprites );
@@ -1533,6 +1548,11 @@ static void freeObjectRecord( int inID ) {
             if( idMap[inID]->variableDummyIDs != NULL ) {
                 delete [] idMap[inID]->variableDummyIDs;
                 }
+            
+            if( idMap[inID]->spriteBehindPlayer != NULL ) {
+                delete [] idMap[inID]->spriteBehindPlayer;
+                }
+
 
             delete [] idMap[inID]->spriteSkipDrawing;
             
@@ -1604,6 +1624,10 @@ void freeObjectBank() {
             if( idMap[i]->variableDummyIDs != NULL ) {
                 delete [] idMap[i]->variableDummyIDs;
                 }
+            
+            if( idMap[i]->spriteBehindPlayer != NULL ) {
+                delete [] idMap[i]->spriteBehindPlayer;
+                }
 
             delete [] idMap[i]->spriteSkipDrawing;
 
@@ -1656,6 +1680,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->leftBlockingRadius,
                         inObject->rightBlockingRadius,
                         inObject->drawBehindPlayer,
+                        inObject->spriteBehindPlayer,
                         biomeString,
                         inObject->mapChance,
                         inObject->heatValue,
@@ -1921,6 +1946,7 @@ int addObject( const char *inDescription,
                char inBlocksWalking,
                int inLeftBlockingRadius, int inRightBlockingRadius,
                char inDrawBehindPlayer,
+               char *inSpriteBehindPlayer,
                char *inBiomes,
                float inMapChance,
                int inHeatValue,
@@ -1975,6 +2001,19 @@ int addObject( const char *inDescription,
     if( inSlotTimeStretch < 0.0001 ) {
         inSlotTimeStretch = 0.0001;
         }
+
+
+    SimpleVector<int> drawBehindIndicesList;
+    
+    if( inSpriteBehindPlayer != NULL ) {    
+        for( int i=0; i<inNumSprites; i++ ) {
+            if( inSpriteBehindPlayer[i] ) {
+                drawBehindIndicesList.push_back( i );
+                }
+            }
+        }
+    
+    
     
     int newID = inReplaceID;
     
@@ -2170,7 +2209,14 @@ int addObject( const char *inDescription,
             }
         
 
-        // FIXME
+
+        if( drawBehindIndicesList.size() > 0 ) {    
+            lines.push_back(
+                boolArrayToSparseCommaString( "spritesDrawnBehind",
+                                              inSpriteBehindPlayer, 
+                                              inNumSprites ) );
+            }
+        
 
         lines.push_back(
             boolArrayToSparseCommaString( "headIndex",
@@ -2308,6 +2354,17 @@ int addObject( const char *inDescription,
     r->leftBlockingRadius = inLeftBlockingRadius;
     r->rightBlockingRadius = inRightBlockingRadius;
     r->drawBehindPlayer = inDrawBehindPlayer;
+
+
+    r->anySpritesBehindPlayer = false;
+    r->spriteBehindPlayer = NULL;
+
+    if( drawBehindIndicesList.size() > 0 ) {    
+        r->anySpritesBehindPlayer = true;
+        r->spriteBehindPlayer = new char[ inNumSprites ];
+        memcpy( r->spriteBehindPlayer, inSpriteBehindPlayer, inNumSprites );
+        }
+    
     
     r->wide = ( r->leftBlockingRadius > 0 || r->rightBlockingRadius > 0 );
     

@@ -1710,7 +1710,8 @@ LivingLifePage::LivingLifePage()
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?!/ " ),
           mDeathReason( NULL ),
-          mShowHighlights( true ) {
+          mShowHighlights( true ),
+          mSkipDrawingWorkingArea( NULL ) {
 
     mYumSlipSprites[0] = loadSprite( "yumSlip1.tga", false );
     mYumSlipSprites[1] = loadSprite( "yumSlip2.tga", false );
@@ -2246,6 +2247,10 @@ LivingLifePage::~LivingLifePage() {
         delete [] mGraveInfo.getElement(i)->relationName;
         }
     mGraveInfo.deleteAll();
+
+    if( mSkipDrawingWorkingArea != NULL ) {
+        delete [] mSkipDrawingWorkingArea;
+        }
     }
 
 
@@ -4891,11 +4896,22 @@ void LivingLifePage::draw( doublePair inViewCenter,
             int screenX = CELL_D * worldX;
             
             if( mMap[ mapI ] > 0 && 
-                getObject( mMap[ mapI ] )->drawBehindPlayer &&
                 mMapMoveSpeeds[ mapI ] == 0 ) {
+               
+                ObjectRecord *o = getObject( mMap[ mapI ] );
+
+                if( o->drawBehindPlayer ) {
+                    drawMapCell( mapI, screenX, screenY );
+                    cellDrawn[mapI] = true;
+                    }
+                else if( o->anySpritesBehindPlayer ) {
+                    
+                    // draw only behind layers now
+                    prepareToSkipSprites( o, true );
+                    drawMapCell( mapI, screenX, screenY );
+                    restoreSkipDrawing( o );
+                    }
                 
-                drawMapCell( mapI, screenX, screenY );
-                cellDrawn[mapI] = true;
                 }
 
             
@@ -5229,8 +5245,18 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     ! o->floorHugging &&
                     o->permanent &&
                     mMapMoveSpeeds[ mapI ] == 0 ) {
-                
+                    
+                    if( o->anySpritesBehindPlayer ) {
+                        // draw only non-behind layers now
+                        prepareToSkipSprites( o, false );
+                        }                    
+
                     drawMapCell( mapI, screenX, screenY );
+
+                    if( o->anySpritesBehindPlayer ) {
+                        restoreSkipDrawing( o );
+                        }
+
                     cellDrawn[ mapI ] = true;
                     }
                 }
@@ -5255,8 +5281,18 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     ! o->floorHugging &&
                     ! o->permanent &&
                     mMapMoveSpeeds[ mapI ] == 0 ) {
-                
+                    
+                    if( o->anySpritesBehindPlayer ) {
+                        // draw only non-behind layers now
+                        prepareToSkipSprites( o, false );
+                        }                    
+
                     drawMapCell( mapI, screenX, screenY );
+
+                    if( o->anySpritesBehindPlayer ) {
+                        restoreSkipDrawing( o );
+                        }
+
                     cellDrawn[ mapI ] = true;
                     }
                 }
@@ -5290,7 +5326,17 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     o->permanent &&
                     mMapMoveSpeeds[ mapI ] == 0 ) {
                 
+                    if( o->anySpritesBehindPlayer ) {
+                        // draw only non-behind layers now
+                        prepareToSkipSprites( o, false );
+                        }                    
+
                     drawMapCell( mapI, screenX, screenY );
+
+                    if( o->anySpritesBehindPlayer ) {
+                        restoreSkipDrawing( o );
+                        }
+
                     cellDrawn[ mapI ] = true;
                     }
                 }
@@ -7259,6 +7305,48 @@ void dropPendingReceivedMessagesRegardingID( LiveObject *inPlayer,
             }
         }
     }
+
+
+
+
+void LivingLifePage::prepareToSkipSprites( ObjectRecord *inObject, 
+                                          char inDrawBehind ) {
+    if( mSkipDrawingWorkingArea != NULL ) {
+        if( mSkipDrawingWorkingAreaSize < inObject->numSprites ) {
+            delete [] mSkipDrawingWorkingArea;
+            mSkipDrawingWorkingArea = NULL;
+            
+            mSkipDrawingWorkingAreaSize = 0;
+            }
+        }
+    if( mSkipDrawingWorkingArea == NULL ) {
+        mSkipDrawingWorkingAreaSize = inObject->numSprites;
+        mSkipDrawingWorkingArea = new char[ mSkipDrawingWorkingAreaSize ];
+        }
+    
+    memcpy( mSkipDrawingWorkingArea, 
+            inObject->spriteSkipDrawing, inObject->numSprites );
+    
+    if( ! inDrawBehind ) {
+        for( int i=0; i< inObject->numSprites; i++ ) {
+            
+            if( inObject->spriteBehindPlayer[i] && ! inDrawBehind ) {
+                inObject->spriteSkipDrawing[i] = true;
+                }
+            else if( ! inObject->spriteBehindPlayer[i] && inDrawBehind ) {
+                inObject->spriteSkipDrawing[i] = true;
+                }
+            }
+        }
+    }
+
+    
+    
+void LivingLifePage::restoreSkipDrawing( ObjectRecord *inObject ) {
+    memcpy( inObject->spriteSkipDrawing, mSkipDrawingWorkingArea,
+            inObject->numSprites );
+    }
+
 
 
 

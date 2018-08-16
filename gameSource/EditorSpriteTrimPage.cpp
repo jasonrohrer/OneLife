@@ -385,6 +385,11 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             char *slotVert = new char[ 0 ];
             int *slotParent = new int[ 0 ];
 
+            char *spriteBehindPlayer = new char[ numSprites ];
+            
+            memset( spriteBehindPlayer, false, numSprites );
+            
+            
             addObject( objName,
                        false,
                        1,
@@ -396,6 +401,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        false,
                        0, 0,
                        false,
+                       spriteBehindPlayer,
                        (char*)"0",
                        0,
                        0,
@@ -445,6 +451,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        spriteUseVanish,
                        spriteUseAppear );
             
+            delete [] spriteBehindPlayer;
 
             delete [] spriteIDs;
             delete [] spritePos;

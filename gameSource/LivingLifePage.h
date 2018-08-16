@@ -839,6 +839,17 @@ class LivingLifePage : public GamePage {
         SimpleVector<GraveInfo> mGraveInfo;
         
 
+        // allocated space that we can use when temporarily manipulating
+        // an object's skipDrawing array
+        int mSkipDrawingWorkingAreaSize;
+        char *mSkipDrawingWorkingArea;
+        
+        // can prepare one at a time
+        void prepareToSkipSprites( ObjectRecord *inObject, char inDrawBehind );
+        
+        void restoreSkipDrawing( ObjectRecord *inObject );
+        
+
         // end the move of an extra moving object and stick it back
         // in the map at its destination.
         // inExtraIndex is its index in the mMapExtraMovingObjects vectors

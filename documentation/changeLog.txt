@@ -13,6 +13,8 @@ Version 130    ???
 
 --Editor support for inverting scanned sprites (for making white smoke).
 
+--Support for certain sprite layers being drawn behind player (example:
+  tracks under cart).
 
 
 Server Fixes
