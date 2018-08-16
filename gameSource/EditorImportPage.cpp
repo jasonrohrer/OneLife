@@ -79,6 +79,8 @@ EditorImportPage::EditorImportPage()
                            "Tag", NULL, " " ),
           mSaveSpriteButton( mainFont, 210, -260, "Save" ),
           mSaveOverlayButton( smallFont, 310, -260, "Save Overlay" ),
+          mInvertButton( smallFont, 210, -320, "Invert" ),
+          mInvertColors( false ),
           mSpritePicker( &spritePickable, -410, 90 ),
           mOverlayPicker( &overlayPickable, 410, 90 ),
           mSpriteTrimEditorButton( mainFont, -460, 260, "Trim" ),
@@ -133,6 +135,8 @@ EditorImportPage::EditorImportPage()
     addComponent( &mSpriteTagField );
     addComponent( &mSaveSpriteButton );
     addComponent( &mSaveOverlayButton );
+    addComponent( &mInvertButton );
+    
     addComponent( &mSpritePicker );
     addComponent( &mOverlayPicker );
 
@@ -165,6 +169,9 @@ EditorImportPage::EditorImportPage()
     mSaveSpriteButton.addActionListener( this );
     mSaveOverlayButton.addActionListener( this );
     
+    mInvertButton.addActionListener( this );
+    
+
     mSpriteTrimEditorButton.addActionListener( this );
     mObjectEditorButton.addActionListener( this );
     
@@ -179,6 +186,8 @@ EditorImportPage::EditorImportPage()
 
     mSaveSpriteButton.setVisible( false );
     mSaveOverlayButton.setVisible( false );
+
+    mInvertButton.setVisible( false );
 
     mClearRotButton.setVisible( false );
     mClearScaleButton.setVisible( false );
@@ -336,6 +345,8 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
 
         mSaveSpriteButton.setVisible( false );
         mSaveOverlayButton.setVisible( false );
+        
+        mInvertButton.setVisible( false );
 
         File *importFile = NULL;
         char loadedFromCache = false;
@@ -823,7 +834,8 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             mProcessedShadowSprite = NULL;
 
             mSaveSpriteButton.setVisible( false );
-            
+            mInvertButton.setVisible( false );
+
             mShowTagMessage = false;
             }
         else {
@@ -857,6 +869,10 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         
 
         delete [] tag;
+        }
+    else if( inTarget == &mInvertButton ) {
+        mInvertColors = ! mInvertColors;
+        processSelection();
         }
     else if( inTarget == &mClearRotButton ) {
         mClearRotButton.setVisible( false );
@@ -1275,6 +1291,7 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
         mSelectEnd.x = inX + 1;
         mSelectEnd.y = inY - 1;
         mSelect = true;
+        mInvertColors = false;
         }
     }
 
@@ -2486,6 +2503,21 @@ void EditorImportPage::processSelection() {
         freeSprite( mProcessedSelectionSprite );
         mProcessedSelectionSprite = NULL;
         }
+
+    if( mInvertColors ) {
+        int numPixels = mProcessedSelection->getWidth() * 
+            mProcessedSelection->getHeight();
+        
+        for( int c=0; c<3; c++ ) {
+            double *chan = mProcessedSelection->getChannel( c );
+            
+            for( int i=0; i<numPixels; i++ ) {
+                chan[i] = 1.0 - chan[i];
+                }
+            }
+        }
+    
+
     mProcessedSelectionSprite = fillSprite( mProcessedSelection, false );
     
     if( mProcessedShadowSprite != NULL ) {
@@ -2496,6 +2528,8 @@ void EditorImportPage::processSelection() {
     
 
     mSaveSpriteButton.setVisible( true );
+    mInvertButton.setVisible( true );
+    
     mSaveOverlayButton.setVisible( false );
     }
 
