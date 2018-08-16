@@ -17,6 +17,8 @@ Version 130    ???
   tracks under cart).
 
 
+
+
 Server Fixes
 
 --Added a few more MySQL indexes to speed up front page queries in lineage
@@ -121,6 +123,10 @@ Server Fixes
 
 --Objects that move N/S/E/W keep moving even when out of view, permitting
   long-distance rails to function.
+
+--Fixed potential c-standard violation in having same file fopen-ed multiple
+  times in parallel during tutorial map loading.
+
 
 
 

@@ -6114,37 +6114,21 @@ static unsigned int nextLoadID = 0;
 char loadTutorialStart( TutorialLoadProgress *inTutorialLoad, 
                         const char *inMapFileName, int inX, int inY ) {
 
-    File tutorialFolder( NULL, "tutorialMaps" );
+    // don't open file yet, because we don't want to have the same
+    // file open in parallel
     
-    char returnVal = false;
+    // save info to open file on first step, which is called one player at a 
+    // time
+    inTutorialLoad->uniqueLoadID = nextLoadID++;
+    inTutorialLoad->fileOpened = false;
+    inTutorialLoad->file = NULL;
+    inTutorialLoad->mapFileName = stringDuplicate( inMapFileName );
+    inTutorialLoad->x = inX;
+    inTutorialLoad->y = inY;
+    inTutorialLoad->startTime = Time::getCurrentTime();
+    inTutorialLoad->stepCount = 0;
 
-    if( tutorialFolder.exists() && tutorialFolder.isDirectory() ) {
-        
-        File *mapFile = tutorialFolder.getChildFile( inMapFileName );
-        
-        if( mapFile->exists() &&  ! mapFile->isDirectory() ) {
-            char *fileName = mapFile->getFullFileName();
-            
-            FILE *file = fopen( fileName, "r" );
-
-            if( file != NULL ) {
-                
-                inTutorialLoad->uniqueLoadID = nextLoadID++;
-                inTutorialLoad->file = file;
-                inTutorialLoad->x = inX;
-                inTutorialLoad->y = inY;
-                inTutorialLoad->startTime = Time::getCurrentTime();
-                inTutorialLoad->stepCount = 0;
-                
-                returnVal = true;
-                }
-            
-            delete [] fileName;
-            }
-        delete mapFile;
-        }
-    
-    return returnVal;
+    return true;
     }
 
 
@@ -6152,6 +6136,45 @@ char loadTutorialStart( TutorialLoadProgress *inTutorialLoad,
 
 char loadTutorialStep( TutorialLoadProgress *inTutorialLoad,
                        double inTimeLimitSec ) {
+
+    if( ! inTutorialLoad->fileOpened ) {
+        // first step, open file
+        
+        char returnVal = false;
+        
+        // only try opening it once
+        inTutorialLoad->fileOpened = true;
+        
+        File tutorialFolder( NULL, "tutorialMaps" );
+
+        if( tutorialFolder.exists() && tutorialFolder.isDirectory() ) {
+        
+            File *mapFile = tutorialFolder.getChildFile( 
+                inTutorialLoad->mapFileName );
+            
+            if( mapFile->exists() &&  ! mapFile->isDirectory() ) {
+                char *fileName = mapFile->getFullFileName();
+                
+                FILE *file = fopen( fileName, "r" );
+                
+                if( file != NULL ) {
+                    inTutorialLoad->file = file;
+                    
+                    returnVal = true;
+                    }
+                
+                delete [] fileName;
+                }
+            delete mapFile;
+            }
+        
+        delete [] inTutorialLoad->mapFileName;
+        
+        return returnVal;
+        }
+    
+
+    // else file already open
 
     if( inTutorialLoad->file == NULL ) {
         // none left

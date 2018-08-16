@@ -225,6 +225,8 @@ int getMapBiome( int inX, int inY );
 
 typedef struct {
         unsigned int uniqueLoadID;
+        char *mapFileName;
+        char fileOpened;
         FILE *file;
         int x, y;
         double startTime;
