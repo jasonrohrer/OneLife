@@ -4205,6 +4205,21 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             }
                         }
                     }
+                else {
+                    // failed to find a spot to move
+
+                    // default to applying bare-ground transition, if any
+                    TransRecord *trans = getPTrans( inID, -1 );
+                            
+                    if( trans == NULL ) {
+                        // does trans exist for newID applied to
+                        // bare ground
+                        trans = getPTrans( newID, -1 );
+                        }
+                    if( trans != NULL ) {
+                        newID = trans->newTarget;
+                        }
+                    }
                 }
             
                 

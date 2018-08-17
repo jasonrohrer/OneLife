@@ -129,6 +129,8 @@ Server Fixes
 
 --Fixed handling of transitions where object moves onto bare ground.
 
+--Apply bare ground transition, if any, when object blocked from moving.
+
 
 
 
