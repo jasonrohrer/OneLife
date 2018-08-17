@@ -2818,7 +2818,8 @@ void LivingLifePage::drawMapCell( int inMapI,
         
         ObjectRecord *obj = getObject( oID );
         if( obj->permanent && 
-            ( obj->blocksWalking || obj->drawBehindPlayer ) ) {
+            ( obj->blocksWalking || obj->drawBehindPlayer || 
+              obj->anySpritesBehindPlayer) ) {
             // permanent, blocking objects (e.g., walls) 
             // or permanent behind-player objects (e.g., roads) 
             // are never drawn flipped
