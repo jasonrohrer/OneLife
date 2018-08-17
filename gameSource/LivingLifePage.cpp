@@ -1077,6 +1077,49 @@ static double measurePathLength( LiveObject *inObject,
 
 
 
+double LivingLifePage::computePathSpeedMod( LiveObject *inObject,
+                                            int inPathLength ) {
+    
+    if( inPathLength < 1 ) {
+        return 1;
+        }    
+
+    GridPos lastPos = inObject->pathToDest[0];
+    
+    int mapI = getMapIndex( lastPos.x, lastPos.y );
+
+    if( mapI == -1 ) {
+        return 1;
+        }
+    int floor = mMapFloors[ mapI ];
+    
+    if( floor <= 0 ) {
+        return 1;
+        }
+    double speedMult = getObject( floor )->speedMult;
+    
+    if( speedMult == 1 ) {
+        return 1;
+        }
+
+    for( int i=1; i<inPathLength; i++ ) {
+        
+        GridPos thisPos = inObject->pathToDest[i];
+
+        mapI = getMapIndex( thisPos.x, thisPos.y );
+
+        if( mapI == -1 ) {
+            return 1;
+            }
+        int thisFloor = mMapFloors[ mapI ];
+    
+        if( floor != thisFloor ) {
+            return 1;
+            }
+        }
+    return speedMult;
+    }
+
 
 
 
@@ -17259,12 +17302,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
 
 
-        
+        double floorSpeedMod = computePathSpeedMod( ourLiveObject,
+                                                    ourLiveObject->pathLength );
         
 
         ourLiveObject->moveTotalTime = 
             measurePathLength( ourLiveObject, ourLiveObject->pathLength ) / 
-            ourLiveObject->lastSpeed;
+            ( ourLiveObject->lastSpeed * floorSpeedMod );
 
         ourLiveObject->moveEtaTime = game_getCurrentTime() +
             ourLiveObject->moveTotalTime;

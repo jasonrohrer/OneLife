@@ -16,6 +16,10 @@ Version 130    ???
 --Support for certain sprite layers being drawn behind player (example:
   tracks under cart).
 
+--Floors can have speed modifiers (roads make you move faster, for example),
+  but they are only applied by client and server if entire path is on the same
+  floor.
+
 
 
 

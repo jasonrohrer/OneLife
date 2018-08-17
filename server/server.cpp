@@ -757,6 +757,46 @@ static double measurePathLength( int inXS, int inYS,
 
 
 
+
+static double getPathSpeedModifier( GridPos *inPathPos, int inPathLength ) {
+    
+    if( inPathLength < 1 ) {
+        return 1;
+        }
+    
+
+    int floor = getMapFloor( inPathPos[0].x, inPathPos[0].y );
+
+    if( floor == 0 ) {
+        return 1;
+        }
+
+    double speedMult = getObject( floor )->speedMult;
+    
+    if( speedMult == 1 ) {
+        return 1;
+        }
+    
+
+    // else we have a speed mult for at least first step in path
+    // see if we have same floor for rest of path
+
+    for( int i=1; i<inPathLength; i++ ) {
+        
+        int thisFloor = getMapFloor( inPathPos[i].x, inPathPos[i].y );
+        
+        if( thisFloor != floor ) {
+            // not same floor whole way
+            return 1;
+            }
+        }
+    // same floor whole way
+    printf( "Speed modifier = %f\n", speedMult );
+    return speedMult;
+    }
+
+
+
 static int getLiveObjectIndex( int inID ) {
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *o = players.getElement( i );
@@ -2333,7 +2373,9 @@ void handleMapChangeToPaths(
                                                otherPlayer->pathToDest,
                                                c );
                             
-                        double moveSpeed = computeMoveSpeed( otherPlayer );
+                        double moveSpeed = computeMoveSpeed( otherPlayer ) *
+                            getPathSpeedModifier( otherPlayer->pathToDest,
+                                                  otherPlayer->pathLength );
 
                         otherPlayer->moveTotalSeconds 
                             = 
@@ -6980,7 +7022,10 @@ int main() {
                                                        startIndex );
                              
                                 double moveSpeed = computeMoveSpeed( 
-                                    nextPlayer );
+                                    nextPlayer ) *
+                                    getPathSpeedModifier( 
+                                        nextPlayer->pathToDest,
+                                        nextPlayer->pathLength );
                                 
                                 nextPlayer->moveTotalSeconds = dist / 
                                     moveSpeed;

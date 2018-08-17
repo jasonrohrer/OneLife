@@ -773,6 +773,9 @@ class LivingLifePage : public GamePage {
         double mPageStartTime;
 
         void computePathToDest( LiveObject *inObject );
+        
+        double computePathSpeedMod( LiveObject *inObject, int inPathLength );
+        
 
 
         LiveObject *getOurLiveObject();
