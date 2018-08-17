@@ -3898,11 +3898,25 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                 trans = getPTrans( newID, oID );
                                 }
                             }
-                        
+                        else if( oID == 0 ) {
+                            // check for bare ground trans
+                            trans = getPTrans( inID, -1 );
+                            
+                            if( trans == NULL ) {
+                                // does trans exist for newID applied to
+                                // bare ground
+                                trans = getPTrans( newID, -1 );
+                                }
+                            }
+                            
+
+
                         if( i >= tryDist && oID == 0 ) {
-                            // found a spot for it to move
+                            // found a bare ground spot for it to move
                             newX = testX;
                             newY = testY;
+                            // keep any bare ground transition (or NULL)
+                            destTrans = trans;
                             break;
                             }
                         else if( i >= tryDist && trans != NULL ) {

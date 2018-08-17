@@ -127,6 +127,8 @@ Server Fixes
 --Fixed potential c-standard violation in having same file fopen-ed multiple
   times in parallel during tutorial map loading.
 
+--Fixed handling of transitions where object moves onto bare ground.
+
 
 
 
