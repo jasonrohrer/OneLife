@@ -135,6 +135,10 @@ Server Fixes
 
 --Fixed a bug in the loop over possible spots to move to (don't need i=0).
 
+--Eve placement adjusted to bring Eves twice as close together as before.
+
+
+
 
 
 Version 126    2018-July-18
