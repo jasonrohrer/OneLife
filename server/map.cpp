@@ -3872,6 +3872,11 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 
                 int tryRadius = 4;
 
+                if( t->move > 3 ) {
+                    // NSEW moves never go beyond their intended distance
+                    tryRadius = 0;
+                    }
+
                 // try again and again with smaller distances until we
                 // find an empty spot
                 while( newX == inX && newY == inY && tryDist > 0 ) {
@@ -3879,7 +3884,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     // walk up to 4 steps past our dist in that direction,
                     // looking for non-blocking objects or an empty spot
                 
-                    for( int i=0; i<tryDist + tryRadius; i++ ) {
+                    for( int i=1; i<=tryDist + tryRadius; i++ ) {
                         int testX = lrint( inX + dir.x * i );
                         int testY = lrint( inY + dir.y * i );
                     
@@ -3934,9 +3939,12 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         }
                     
                     tryDist--;
-                    // 4 on first try, but then 1 on remaining tries to
-                    // avoid overlap with previous tries
-                    tryRadius = 1;
+                    
+                    if( tryRadius != 0 ) {
+                        // 4 on first try, but then 1 on remaining tries to
+                        // avoid overlap with previous tries
+                        tryRadius = 1;
+                        }
                     }
                 
                 

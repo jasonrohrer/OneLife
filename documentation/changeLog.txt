@@ -131,6 +131,9 @@ Server Fixes
 
 --Apply bare ground transition, if any, when object blocked from moving.
 
+--NSEW moves never move farther than specified, even if ground object present.
+
+--Fixed a bug in the loop over possible spots to move to (don't need i=0).
 
 
 
