@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 130    ???
+Version 130    2018-August-17
 
 --Fixed GUI layout spacing in scene editor.
 
