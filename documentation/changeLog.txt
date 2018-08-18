@@ -3,6 +3,11 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 132    ???
+
+--Fixed scene editor animation speed of people holding speedMult objects.
+
+
 
 Version 130    2018-August-17
 

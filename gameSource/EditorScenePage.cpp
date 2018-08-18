@@ -1255,6 +1255,11 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             thisFrameTime = frameTime + abs( thisFrameTime );
                             }
                         
+                        
+                        if( heldObject != NULL ) {
+                            thisFrameTime *= heldObject->speedMult;
+                            }
+                        
                         double frozenRotFrameTime = thisFrameTime;
                         
                         if( p->anim != moving ) {
