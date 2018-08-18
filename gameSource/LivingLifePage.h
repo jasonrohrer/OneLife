@@ -776,6 +776,12 @@ class LivingLifePage : public GamePage {
         
         double computePathSpeedMod( LiveObject *inObject, int inPathLength );
         
+        // check if same floor is present when we take a step in x or y
+        char isSameFloor( int inFloor, GridPos inFloorPos, int inDX, int inDY );
+        
+        // forces next pointerDown call to avoid everything but ground clicks
+        char mForceGroundClick;
+        
 
 
         LiveObject *getOurLiveObject();

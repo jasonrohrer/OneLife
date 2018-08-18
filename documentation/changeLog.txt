@@ -20,6 +20,8 @@ Version 130    ???
   but they are only applied by client and server if entire path is on the same
   floor.
 
+--Auto-follow rideable floors (aka roads).
+
 
 
 

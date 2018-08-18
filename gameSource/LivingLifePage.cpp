@@ -1756,6 +1756,8 @@ LivingLifePage::LivingLifePage()
           mShowHighlights( true ),
           mSkipDrawingWorkingArea( NULL ) {
 
+    mForceGroundClick = false;
+    
     mYumSlipSprites[0] = loadSprite( "yumSlip1.tga", false );
     mYumSlipSprites[1] = loadSprite( "yumSlip2.tga", false );
     mYumSlipSprites[2] = loadSprite( "yumSlip3.tga", false );
@@ -14694,6 +14696,124 @@ void LivingLifePage::step() {
                             }
                         }
                     }
+                else if( o->id == ourID && o->pathLength >= 2 &&
+                         nextActionMessageToSend == NULL &&
+                         distance( endPos, o->currentPos )
+                         < o->currentSpeed ) {
+
+                    // reached destination of bare-ground click
+
+                    // check for auto-walk on road
+
+                    GridPos prevStep = o->pathToDest[ o->pathLength - 2 ];
+                    GridPos finalStep = o->pathToDest[ o->pathLength - 1 ];
+                    
+                    int mapIP = getMapIndex( prevStep.x, prevStep.y );
+                    int mapIF = getMapIndex( finalStep.x, finalStep.y );
+                    
+                    if( mapIF != -1 && mapIP != -1 ) {
+                        int floor = mMapFloors[ mapIF ];
+                        
+                        if( floor > 0 && mMapFloors[ mapIP ] == floor && 
+                            getObject( floor )->rideable ) {
+                            
+                            // rideable floor is a road!
+                            
+                            int xDir = finalStep.x - prevStep.x;
+                            int yDir = finalStep.y - prevStep.y;
+                            
+                            GridPos nextStep = finalStep;
+                            nextStep.x += xDir;
+                            nextStep.y += yDir;
+                            
+                            int len = 0;
+
+                            if( isSameFloor( floor, finalStep, xDir, yDir ) ) {
+                                // floor continues in same direction
+                                // go as far as possible in that direction
+                                // with next click
+                                while( len < 5 && isSameFloor( floor, nextStep,
+                                                               xDir, yDir ) ) {
+                                    nextStep.x += xDir;
+                                    nextStep.y += yDir;
+                                    len ++;
+                                    }
+                                }
+                            else {
+                                nextStep = finalStep;
+                                char foundPerp = false;
+                                
+                                // first step in same dir goes off floor
+                                // try a perp move instead
+                                if( xDir != 0 && yDir == 0 ) {
+                                    xDir = 0;
+                                    yDir = 1;
+                                    
+                                    if( isSameFloor( floor, finalStep, xDir,
+                                                     yDir ) ) {
+                                        foundPerp = true;
+                                        }
+                                    else {
+                                        yDir = -1;
+                                        if( isSameFloor( floor, finalStep, xDir,
+                                                         yDir ) ) {
+                                            foundPerp = true;
+                                            }
+                                        }
+                                    }
+                                else if( xDir == 0 && yDir != 0 ) {
+                                    xDir = 1;
+                                    yDir = 0;
+                                    
+                                    if( isSameFloor( floor, finalStep, xDir,
+                                                     yDir ) ) {
+                                        foundPerp = true;
+                                        }
+                                    else {
+                                        xDir = -1;
+                                        if( isSameFloor( floor, finalStep, xDir,
+                                                         yDir ) ) {
+                                            foundPerp = true;
+                                            }
+                                        }
+                                    }
+
+                                if( foundPerp ) {
+                                    nextStep.x += xDir;
+                                    nextStep.y += yDir;
+                                    
+                                    while( len < 5 &&
+                                           isSameFloor( floor, nextStep,
+                                                        xDir, yDir ) ) {
+                                        nextStep.x += xDir;
+                                        nextStep.y += yDir;
+                                        len++;
+                                        }
+                                    }
+                                }
+
+                            if( ! equal( nextStep, finalStep ) ) {
+                                // found straight-line continue of road
+                                // auto-click there (but don't hold
+                                
+                                // avoid clicks on self and objects
+                                // when walking on road
+                                mForceGroundClick = true;
+                                pointerDown( nextStep.x * CELL_D, 
+                                             nextStep.y * CELL_D );
+                                
+                                pointerUp( nextStep.x * CELL_D, 
+                                           nextStep.y * CELL_D );
+                                
+                                mForceGroundClick = false;
+                                
+                                endPos.x = (double)( nextStep.x );
+                                endPos.y = (double)( nextStep.y );
+                                }
+                            }
+                        }
+                    }
+                
 
                 if( distance( endPos, o->currentPos )
                     < o->currentSpeed ) {
@@ -15100,6 +15220,23 @@ static void dummyFunctionA() {
 
 
 
+char LivingLifePage::isSameFloor( int inFloor, GridPos inFloorPos, 
+                                  int inDX, int inDY ) {    
+    GridPos nextStep = inFloorPos;
+    nextStep.x += inDX;
+    nextStep.y += inDY;
+                            
+    int nextMapI = getMapIndex( nextStep.x, nextStep.y );
+                            
+    if( nextMapI != -1 && 
+        mMapFloors[ nextMapI ] == inFloor ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
   
 void LivingLifePage::makeActive( char inFresh ) {
     // unhold E key
@@ -15352,6 +15489,9 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
     p->closestCellX = clickDestX;
     p->closestCellY = clickDestY;
 
+    if( mForceGroundClick ) {
+        return;
+        }
     
     int clickDestMapX = clickDestX - mMapOffsetX + mMapD / 2;
     int clickDestMapY = clickDestY - mMapOffsetY + mMapD / 2;
