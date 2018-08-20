@@ -9,6 +9,14 @@ Version 132    ???
 
 
 
+Server Fixes
+
+--Holding age restrictions now correctly apply to what you end up holding after
+  healing someone (babies can no longer remove arrows from wounded people).
+
+
+
+
 Version 130    2018-August-17
 
 --Fixed GUI layout spacing in scene editor.

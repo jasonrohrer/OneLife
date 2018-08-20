@@ -8524,7 +8524,22 @@ int main() {
                                     getTrans( nextPlayer->holdingID,
                                               targetPlayer->holdingID );
                                 
+                                char oldEnough = true;
+
                                 if( healTrans != NULL ) {
+                                    int healerWillHold = healTrans->newActor;
+                                    
+                                    if( healerWillHold > 0 ) {
+                                        if( computeAge( nextPlayer ) < 
+                                            getObject( healerWillHold )->
+                                            minPickupAge ) {
+                                            oldEnough = false;
+                                            }
+                                        }
+                                    }
+                                
+
+                                if( oldEnough && healTrans != NULL ) {
                                     targetPlayer->holdingID =
                                         healTrans->newTarget;
                                     
