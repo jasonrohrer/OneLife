@@ -1757,6 +1757,8 @@ TransRecord *getTrans( int inActor, int inTarget, char inLastUseActor,
     }
 
 
+#include "objectMetadata.h"
+
 
 #define NUM_CHANCE_RECORDS 100
 static int nextChanceRecord;
@@ -1771,6 +1773,16 @@ static CustomRandomSource randSource( randSeed );
 TransRecord *getPTrans( int inActor, int inTarget, 
                         char inLastUseActor,
                         char inLastUseTarget ) {
+    
+    int actorMeta = extractMetadataID( inActor );
+    int targetMeta = extractMetadataID( inTarget );
+
+    if( actorMeta != 0 )
+        inActor = extractObjectID( inActor );
+
+    if( targetMeta != 0 )
+        inTarget = extractObjectID( inTarget );
+
 
     TransRecord *r = getTrans( inActor, inTarget, 
                                inLastUseActor, inLastUseTarget );
@@ -1807,6 +1819,12 @@ TransRecord *getPTrans( int inActor, int inTarget,
             }
         }
     
+    if( actorMeta != 0 )
+        rStatic->newActor = packMetadataID( rStatic->newActor, actorMeta );
+
+    if( targetMeta != 0 )
+        rStatic->newTarget = packMetadataID( rStatic->newTarget, targetMeta );
+
     return rStatic;
     }
 

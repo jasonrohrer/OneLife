@@ -57,6 +57,7 @@ groundSprites.cpp \
 ../commonSource/fractalNoise.cpp \
 spellCheck.cpp \
 SoundUsage.cpp \
+objectMetadata.cpp \
 
 
 

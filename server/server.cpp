@@ -33,6 +33,7 @@
 #include "map.h"
 #include "../gameSource/transitionBank.h"
 #include "../gameSource/objectBank.h"
+#include "../gameSource/objectMetadata.h"
 #include "../gameSource/animationBank.h"
 #include "../gameSource/categoryBank.h"
 
@@ -2275,7 +2276,7 @@ static void setFreshEtaDecayForHeld( LiveObject *inPlayer ) {
         }
     
     // does newly-held object have a decay defined?
-    TransRecord *newDecayT = getTrans( -1, inPlayer->holdingID );
+    TransRecord *newDecayT = getMetaTrans( -1, inPlayer->holdingID );
                     
     if( newDecayT != NULL ) {
         inPlayer->holdingEtaDecay = 
@@ -4691,8 +4692,8 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
         // if they both decay to the same thing in the same time
         if( oldHolding > 0 && inNewHeldID > 0 ) {
             
-            TransRecord *oldDecayT = getTrans( -1, oldHolding );
-            TransRecord *newDecayT = getTrans( -1, inNewHeldID );
+            TransRecord *oldDecayT = getMetaTrans( -1, oldHolding );
+            TransRecord *newDecayT = getMetaTrans( -1, inNewHeldID );
             
             if( oldDecayT != NULL && newDecayT != NULL ) {
                 if( oldDecayT->autoDecaySeconds == newDecayT->autoDecaySeconds
@@ -7520,8 +7521,9 @@ int main() {
                                             else {
                                             
                                                 TransRecord *newDecayT = 
-                                                    getTrans( -1, 
-                                                              r->newTarget );
+                                                    getMetaTrans( 
+                                                        -1, 
+                                                        r->newTarget );
                     
                                                 if( newDecayT != NULL ) {
                                                     hitPlayer->
@@ -8521,8 +8523,8 @@ int main() {
                                 // try healing wound
                                     
                                 TransRecord *healTrans =
-                                    getTrans( nextPlayer->holdingID,
-                                              targetPlayer->holdingID );
+                                    getMetaTrans( nextPlayer->holdingID,
+                                                  targetPlayer->holdingID );
                                 
                                 char oldEnough = true;
 
@@ -9789,7 +9791,7 @@ int main() {
                                         slotTimeStretch;
                                     
                                     TransRecord *newDecayT = 
-                                        getTrans( -1, newID );
+                                        getMetaTrans( -1, newID );
                                 
                                     if( newDecayT != NULL ) {
                                         newDecay = 
@@ -9854,7 +9856,7 @@ int main() {
                                             slotTimeStretch;
                                     
                                         TransRecord *newSubDecayT = 
-                                            getTrans( -1, newSubID );
+                                            getMetaTrans( -1, newSubID );
                                 
                                         if( newSubDecayT != NULL ) {
                                             newSubDecay = 
@@ -9947,7 +9949,8 @@ int main() {
                             if( newID != 0 ) {
                                 newCObj = getObject( newID );
                                 
-                                TransRecord *newDecayT = getTrans( -1, newID );
+                                TransRecord *newDecayT = 
+                                    getMetaTrans( -1, newID );
                                 
                                 if( newDecayT != NULL ) {
                                     nextPlayer->clothingEtaDecay[c] = 
@@ -10125,7 +10128,7 @@ int main() {
                             
                                     if( newID != 0 ) {
                                         TransRecord *newDecayT = 
-                                            getTrans( -1, newID );
+                                            getMetaTrans( -1, newID );
                                         
                                         if( newDecayT != NULL ) {
                                             newDecay = 

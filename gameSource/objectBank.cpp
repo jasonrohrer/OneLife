@@ -1774,8 +1774,12 @@ void resaveAll() {
 
 
 
+#include "objectMetadata.h"
+
 
 ObjectRecord *getObject( int inID ) {
+    inID = extractObjectID( inID );
+    
     if( inID < mapSize ) {
         if( idMap[inID] != NULL ) {
             return idMap[inID];
@@ -4725,6 +4729,10 @@ int hideIDForClient( int inObjectID ) {
         if( o->isVariableDummy && o->isVariableHidden ) {
             // hide from client
             inObjectID = o->variableDummyParent;
+            }
+        else {
+            // this has any metadata stripped off
+            inObjectID = o->id;
             }
         }
     return inObjectID;

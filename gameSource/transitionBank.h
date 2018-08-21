@@ -110,6 +110,7 @@ TransRecord *getTrans( int inActor, int inTarget,
 // returned pointer managed internally
 // limit of 100 results that can be used by caller simultanously
 // (statically allocated internally)
+// metadata preserved across transition
 TransRecord *getPTrans( int inActor, int inTarget, 
                         char inLastUseActor = false,
                         char inLastUseTarget = false );

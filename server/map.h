@@ -250,4 +250,17 @@ char loadTutorialStep( TutorialLoadProgress *inTutorialLoad,
 
 
 
+
+#define MAP_METADATA_LENGTH 128
+
+// inBuffer must be at least MAP_METADATA_LENGTH bytes
+// returns true if metadata found
+char getMetadata( int inMapID, unsigned char *inBuffer );
+
+
+// returns full map ID with embedded metadata ID for new metadata record
+int addMetadata( int inObjectID, unsigned char *inBuffer );
+    
+
+
 #endif

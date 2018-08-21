@@ -62,6 +62,7 @@ RadioButtonSet.cpp \
 spellCheck.cpp \
 SoundUsage.cpp \
 TwinPage.cpp \
+objectMetadata.cpp \
 
 
 GAME_GRAPHICS = \

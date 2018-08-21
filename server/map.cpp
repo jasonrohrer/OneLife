@@ -98,6 +98,42 @@
 
 
 
+#include "../gameSource/objectMetadata.h"
+
+
+
+char getMetadata( int inMapID, unsigned char *inBuffer ) {
+    int metaID = extractMetadataID( inMapID );
+    
+    if( metaID == 0 ) {
+        return false;
+        }
+    
+    // FIXME
+    // look up in metadata DB
+
+    return true;
+    }
+
+    
+
+
+// returns full map ID with embedded metadata ID for new metadata record
+int addMetadata( int inObjectID, unsigned char *inBuffer ) {
+    int metaID = getNewMetadataID();
+    
+    int mapID = packMetadataID( inObjectID, metaID );
+    
+
+    // FIXME, insert
+    
+    return mapID;
+    }
+
+    
+
+
+    
 #include "dbCommon.h"
 
 
@@ -4100,7 +4136,8 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         
 
                         
-                        TransRecord *leftDecayT = getTrans( -1, leftBehindID );
+                        TransRecord *leftDecayT = 
+                            getMetaTrans( -1, leftBehindID );
 
                         double leftMapETA = 0;
                         
@@ -4239,7 +4276,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 }
             
                 
-            TransRecord *newDecayT = getTrans( -1, newID );
+            TransRecord *newDecayT = getMetaTrans( -1, newID );
 
             if( newDecayT != NULL ) {
 
@@ -4404,7 +4441,7 @@ void checkDecayContained( int inX, int inY, int inSubCont ) {
     
                 if( newID != 0 ) {
                     
-                    TransRecord *newDecayT = getTrans( -1, newID );
+                    TransRecord *newDecayT = getMetaTrans( -1, newID );
 
                     if( newDecayT != NULL ) {
                         
@@ -4944,7 +4981,7 @@ void setMapObject( int inX, int inY, int inID ) {
     // actually need to set decay here
     // otherwise, if we wait until getObject, it will assume that
     // this is a never-before-seen object and randomize the decay.
-    TransRecord *newDecayT = getTrans( -1, inID );
+    TransRecord *newDecayT = getMetaTrans( -1, inID );
     
     timeSec_t mapETA = 0;
     
@@ -5578,7 +5615,7 @@ void setMapFloor( int inX, int inY, int inID ) {
 
 
     // further decay from here
-    TransRecord *newT = getTrans( -1, inID );
+    TransRecord *newT = getMetaTrans( -1, inID );
 
     timeSec_t newEta = 0;
 
