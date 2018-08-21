@@ -4585,7 +4585,9 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                     removeContained( 
                         inContX, inContY, inSlotNumber,
                         &( inPlayer->holdingEtaDecay ) );
-                        
+                
+                holdingSomethingNew( inPlayer );
+                
                 setResponsiblePlayer( -1 );
 
                 if( inPlayer->holdingID < 0 ) {
