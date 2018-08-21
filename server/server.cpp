@@ -7351,6 +7351,8 @@ int main() {
                                 // and no metadata already on it
                                 ! getMetadata( nextPlayer->holdingID, 
                                                metaData ) ) {
+
+                                memset( metaData, 0, MAP_METADATA_LENGTH );
                                 memcpy( metaData, m.saidText, len + 1 );
                                 
                                 nextPlayer->holdingID = 
