@@ -98,37 +98,7 @@
 
 
 
-#include "../gameSource/objectMetadata.h"
 
-
-
-char getMetadata( int inMapID, unsigned char *inBuffer ) {
-    int metaID = extractMetadataID( inMapID );
-    
-    if( metaID == 0 ) {
-        return false;
-        }
-    
-    // FIXME
-    // look up in metadata DB
-
-    return true;
-    }
-
-    
-
-
-// returns full map ID with embedded metadata ID for new metadata record
-int addMetadata( int inObjectID, unsigned char *inBuffer ) {
-    int metaID = getNewMetadataID();
-    
-    int mapID = packMetadataID( inObjectID, metaID );
-    
-
-    // FIXME, insert
-    
-    return mapID;
-    }
 
     
 
@@ -148,6 +118,7 @@ int addMetadata( int inObjectID, unsigned char *inBuffer ) {
 #include "../gameSource/GridPos.h"
 
 #include "../gameSource/GridPos.h"
+#include "../gameSource/objectMetadata.h"
 
 
 
@@ -302,6 +273,8 @@ static DB eveDB;
 static char eveDBOpen = false;
 
 
+static DB metaDB;
+static char metaDBOpen = false;
 
 
 
@@ -2746,6 +2719,28 @@ char initMap() {
     eveDBOpen = true;
 
 
+
+
+    error = DB_open( &metaDB, 
+                     "meta.db", 
+                     KISSDB_OPEN_MODE_RWCREAT,
+                     // starting size doesn't matter here
+                     500,
+                     4, // one 32-bit int as key
+                     // data
+                     MAP_METADATA_LENGTH
+                     );
+    
+    if( error ) {
+        AppLog::errorF( "Error %d opening meta KissDB", error );
+        return false;
+        }
+    
+    metaDBOpen = true;
+
+
+
+
     if( lookTimeDBEmpty && cellsLookedAtToInit > 0 ) {
         printf( "Since lookTime db was empty, we initialized look times "
                 "for %d cells to now.\n\n", cellsLookedAtToInit );
@@ -3110,7 +3105,12 @@ void freeMap() {
     if( eveDBOpen ) {
         DB_close( &eveDB );
         }
+
+    if( metaDBOpen ) {
+        DB_close( &metaDB );
+        }
     
+
     writeEveRadius();
     writeRecentPlacements();
 
@@ -6270,3 +6270,45 @@ char loadTutorialStep( TutorialLoadProgress *inTutorialLoad,
     }
 
 
+
+
+
+
+
+
+char getMetadata( int inMapID, unsigned char *inBuffer ) {
+    int metaID = extractMetadataID( inMapID );
+    
+    if( metaID == 0 ) {
+        return false;
+        }
+
+    // look up in metadata DB
+    unsigned char key[4];    
+    intToValue( metaID, key );
+    int result = DB_get( &metaDB, key, inBuffer );
+
+    if( result == 0 ) {
+        return true;
+        }
+
+    return false;
+    }
+
+    
+
+
+// returns full map ID with embedded metadata ID for new metadata record
+int addMetadata( int inObjectID, unsigned char *inBuffer ) {
+    int metaID = getNewMetadataID();
+    
+    int mapID = packMetadataID( inObjectID, metaID );
+    
+    // insert into metadata DB
+    unsigned char key[4];    
+    intToValue( metaID, key );
+    DB_put( &metaDB, key, inBuffer );
+
+    
+    return mapID;
+    }

@@ -295,6 +295,15 @@ typedef struct ObjectRecord {
 
         char isVariableHidden;
 
+
+        // flags derived from various &flags in object description
+        char written;
+        char writable;
+
+        char mayHaveMetadata;
+        
+
+
     } ObjectRecord;
 
 

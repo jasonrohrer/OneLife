@@ -1,4 +1,5 @@
 #include "objectMetadata.h"
+#include "objectBank.h"
 
 // bottom 17 bits of map database item are object ID
 // enought for 131071 object
@@ -17,6 +18,9 @@ static int nextMetadataID = 1;
 
 
 int extractObjectID( int inMapID ) {
+    if( inMapID <= 0 ) {
+        return inMapID;
+        }
     return inMapID & objectIDMask;
     }
 
@@ -24,6 +28,9 @@ int extractObjectID( int inMapID ) {
 
 // extracts top portion of map ID as a metadata ID 
 int extractMetadataID( int inMapID ) {
+    if( inMapID <= 0 ) {
+        return 0;
+        }
     return inMapID >> metadataIDShift;
     }
 
@@ -94,11 +101,26 @@ TransRecord *getMetaTrans( int inActor, int inTarget,
     
     *rStatic = *r;
     
-    if( actorMeta != 0 )
-        rStatic->newActor = packMetadataID( rStatic->newActor, actorMeta );
 
-    if( targetMeta != 0 )
-        rStatic->newTarget = packMetadataID( rStatic->newTarget, targetMeta );
+    
+    int passThroughMeta = actorMeta;
+    
+    if( actorMeta == 0 ) {
+        passThroughMeta = targetMeta;
+        }
+
+    if( passThroughMeta != 0 ) {
+        if( rStatic->newActor > 0 &&
+            getObject( rStatic->newActor )->mayHaveMetadata ) {
+            rStatic->newActor = packMetadataID( rStatic->newActor, 
+                                                passThroughMeta );
+            }
+        else if( rStatic->newTarget > 0 &&
+                 getObject( rStatic->newTarget )->mayHaveMetadata ) {
+            rStatic->newTarget = packMetadataID( rStatic->newTarget, 
+                                                 passThroughMeta );
+            }
+        }
 
     return rStatic;
     }

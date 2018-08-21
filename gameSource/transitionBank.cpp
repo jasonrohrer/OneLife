@@ -1791,7 +1791,8 @@ TransRecord *getPTrans( int inActor, int inTarget,
         return r;
         }
     
-    if( r->actorChangeChance == 1.0f && r->targetChangeChance == 1.0f ) {
+    if( r->actorChangeChance == 1.0f && r->targetChangeChance == 1.0f &&
+        actorMeta == 0 && targetMeta == 0 ) {
         return r;
         }
     
@@ -1819,12 +1820,25 @@ TransRecord *getPTrans( int inActor, int inTarget,
             }
         }
     
-    if( actorMeta != 0 )
-        rStatic->newActor = packMetadataID( rStatic->newActor, actorMeta );
+    int passThroughMeta = actorMeta;
+    
+    if( actorMeta == 0 ) {
+        passThroughMeta = targetMeta;
+        }
 
-    if( targetMeta != 0 )
-        rStatic->newTarget = packMetadataID( rStatic->newTarget, targetMeta );
-
+    if( passThroughMeta != 0 ) {
+        if( rStatic->newActor > 0 &&
+            getObject( rStatic->newActor )->mayHaveMetadata ) {
+            rStatic->newActor = packMetadataID( rStatic->newActor, 
+                                                passThroughMeta );
+            }
+        else if( rStatic->newTarget > 0 &&
+                 getObject( rStatic->newTarget )->mayHaveMetadata ) {
+            rStatic->newTarget = packMetadataID( rStatic->newTarget, 
+                                                 passThroughMeta );
+            }
+        }
+    
     return rStatic;
     }
 
