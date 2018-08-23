@@ -16,6 +16,11 @@ Server Fixes
 
 --Support for writing attached to objects through new map metadata database.
 
+--Fixed a bunch of server cases that weren't calling hideIDForClient before
+  sending object ID to client, which was causing a client-side crash when
+  metadata IDs were not being stripped out.
+
+
 
 
 

@@ -3171,7 +3171,7 @@ static UpdateRecord getUpdateRecord(
             id = objectRecordToID( cObj );
             }
         
-        char *idString = autoSprintf( "%d", id );
+        char *idString = autoSprintf( "%d", hideIDForClient( id ) );
         
         clothingListBuffer.appendElementString( idString );
         delete [] idString;
@@ -3182,7 +3182,10 @@ static UpdateRecord getUpdateRecord(
                 char *contString = 
                     autoSprintf( 
                         ",%d", 
-                        inPlayer->clothingContained[c].getElementDirect( cc ) );
+                        hideIDForClient( 
+                            inPlayer->
+                            clothingContained[c].getElementDirect( cc ) ) );
+                
                 clothingListBuffer.appendElementString( contString );
                 delete [] contString;
                 }
@@ -3223,7 +3226,7 @@ static UpdateRecord getUpdateRecord(
         inPlayer->heldOriginValid,
         //inPlayer->heldOriginX - inRelativeToPos.x,
         //inPlayer->heldOriginY - inRelativeToPos.y,
-        inPlayer->heldTransitionSourceID,
+        hideIDForClient( inPlayer->heldTransitionSourceID ),
         inPlayer->heat,
         posString,
         computeAge( inPlayer ),
@@ -3231,7 +3234,7 @@ static UpdateRecord getUpdateRecord(
         computeMoveSpeed( inPlayer ),
         clothingList,
         inPlayer->justAte,
-        inPlayer->justAteID,
+        hideIDForClient( inPlayer->justAteID ),
         inPlayer->responsiblePlayerID,
         heldYum,
         deathReason );
@@ -5247,7 +5250,8 @@ void monumentStep() {
                                              nextPlayer->birthPos.x, 
                                              monumentCallY -
                                              nextPlayer->birthPos.y,
-                                             monumentCallID );
+                                             hideIDForClient( 
+                                                 monumentCallID ) );
                 int messageLength = strlen( message );
 
 
@@ -12283,7 +12287,7 @@ int main() {
                         "#",
                         nextPlayer->foodStore,
                         cap,
-                        nextPlayer->lastAteID,
+                        hideIDForClient( nextPlayer->lastAteID ),
                         nextPlayer->lastAteFillMax,
                         computeMoveSpeed( nextPlayer ),
                         nextPlayer->responsiblePlayerID,
