@@ -20,6 +20,7 @@ Server Fixes
   sending object ID to client, which was causing a client-side crash when
   metadata IDs were not being stripped out.
 
+--Say limit based on age only enforced when reading if you are < 10 years old.
 
 
 

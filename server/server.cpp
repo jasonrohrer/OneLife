@@ -2721,9 +2721,13 @@ static void holdingSomethingNew( LiveObject *inPlayer,
                 
                 unsigned int sayLimit = getSayLimit( inPlayer );
                         
-                if( strlen( metaData ) > sayLimit ) {
-                    // truncate
-                    metaData[ sayLimit ] = '\0';
+                if( computeAge( inPlayer ) < 10 &&
+                    strlen( metaData ) > sayLimit ) {
+                    // truncate with ...
+                    metaData[ sayLimit ] = '.';
+                    metaData[ sayLimit + 1 ] = '.';
+                    metaData[ sayLimit + 2 ] = '.';
+                    metaData[ sayLimit + 3 ] = '\0';
                     }
                 char *quotedPhrase = autoSprintf( ":%s", metaData );
                 makePlayerSay( inPlayer, quotedPhrase );
