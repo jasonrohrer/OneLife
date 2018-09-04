@@ -107,7 +107,7 @@ if( $rs_reviewCount > 0 ) {
    showPayLinks( true );
 ?>
 
-<center><iframe title="YouTube video player" width="640" height="390" src="http://www.youtube.com/embed/mT4JktcVQuE?rel=0" frameborder="0" allowfullscreen></iframe></center>
+<center><iframe title="YouTube video player" width="640" height="390" src="https://www.youtube.com/embed/mT4JktcVQuE?rel=0" frameborder="0" allowfullscreen></iframe></center>
 
 <br>
 
@@ -170,7 +170,7 @@ Sign up for release announcement emails: <input type="text" name="email" value="
 <br>
 -->
 
-<center><iframe title="YouTube video player" width="640" height="390" src="http://www.youtube.com/embed/riqu2eszsIg?rel=0" frameborder="0" allowfullscreen></iframe></center>
+<center><iframe title="YouTube video player" width="640" height="390" src="https://www.youtube.com/embed/riqu2eszsIg?rel=0" frameborder="0" allowfullscreen></iframe></center>
     
 <br><br>
     
