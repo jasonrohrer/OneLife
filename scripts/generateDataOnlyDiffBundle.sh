@@ -149,7 +149,7 @@ rm -rf ~/checkout/diffWorking/dataLast/.git*
 rm ~/checkout/diffWorking/dataLast/.hg*
 rm -rf ~/checkout/diffWorking/dataLast/soundsRaw
 rm -rf ~/checkout/diffWorking/dataLast/faces
-rm -rf ~/checkout/diffWorking/dataLatest/scenes
+rm -rf ~/checkout/diffWorking/dataLast/scenes
 rm -r ~/checkout/diffWorking/dataLast/*.sh ~/checkout/diffWorking/dataLast/working ~/checkout/diffWorking/dataLast/overlays
 
 

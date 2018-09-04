@@ -22,6 +22,8 @@ Server Fixes
 
 --Say limit based on age only enforced when reading if you are < 10 years old.
 
+--Fixed bug in dataBundle script that caused old scenes to be deleted every
+  update.
 
 
 
