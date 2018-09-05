@@ -5551,9 +5551,9 @@ int main() {
     
     
     
-    SocketServer server( port, 256 );
+    SocketServer *server = new SocketServer( port, 256 );
     
-    sockPoll.addSocketServer( &server );
+    sockPoll.addSocketServer( server );
     
     AppLog::infoF( "Listening for connection on port %d", port );
 
@@ -5795,7 +5795,7 @@ int main() {
         
         if( readySock != NULL && !readySock->isSocket ) {
             // server ready
-            Socket *sock = server.acceptConnection( 0 );
+            Socket *sock = server->acceptConnection( 0 );
 
             if( sock != NULL ) {
                 HostAddress *a = sock->getRemoteHostAddress();
@@ -12504,6 +12504,14 @@ int main() {
             }
         }
     
+    // stop listening on server socket immediately, before running
+    // cleanup steps.  Cleanup may take a while, and we don't want to leave
+    // server socket listening, because it will answer reflector and player
+    // connection requests but then just hang there.
+
+    // Closing the server socket makes these connection requests fail
+    // instantly (instead of relying on client timeouts).
+    delete server;
 
     quitCleanup();
     

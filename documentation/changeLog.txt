@@ -25,6 +25,13 @@ Server Fixes
 --Fixed bug in dataBundle script that caused old scenes to be deleted every
   update.
 
+--Server now closes server socket immediately at start of shutdown process.
+  Before, it would accept connections from clients and the reflector and then
+  just hang there.  Now these connections are insta-rejected if server is in
+  the process of shutting down.
+
+
+
 
 
 Version 130    2018-August-17
