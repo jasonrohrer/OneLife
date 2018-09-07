@@ -8064,10 +8064,12 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
             else {
                 // if the trans takes one of the elements to a deeper
                 // state, that's more important, starting with actor
-                if( getObjectDepth( newActor ) > getObjectDepth( actor ) ) {
+                if( actor > 0 && 
+                    getObjectDepth( newActor ) > getObjectDepth( actor ) ) {
                     result = newActor;
                     }
-                else if( getObjectDepth( newTarget ) > 
+                else if( target > 0 && 
+                         getObjectDepth( newTarget ) > 
                          getObjectDepth( target ) ) {
                     result = newTarget;
                     }

@@ -19,6 +19,8 @@ Version 132    ???
 
 --Bouncing forever bug catcher now asks users to send recorded game file too.
 
+--Fixed invalid memory read when generating hint for use-on-bare-ground
+  transition.
 
 
 
