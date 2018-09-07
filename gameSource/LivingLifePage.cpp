@@ -16289,16 +16289,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         // click from a held baby
 
         // only send once, even on multiple clicks
-        if( ! ourLiveObject->jumpOutOfArmsSent ) {    
-            // send dummy move message right away to make baby jump out of arms
-            
-            // we don't need to use baby's true position here... they are
-            // in arms
-            char *moveMessage = autoSprintf( "MOVE %d %d 1 0#",
-                                             ourLiveObject->xd,
-                                             ourLiveObject->yd );
-            sendToServerSocket( moveMessage );
-            delete [] moveMessage;
+        if( ! ourLiveObject->jumpOutOfArmsSent ) {
+            // send new JUMP message instead of ambigous MOVE message
+            sendToServerSocket( (char*)"JUMP 0 0#" );
             
             ourLiveObject->jumpOutOfArmsSent = true;
             }

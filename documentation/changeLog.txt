@@ -10,6 +10,11 @@ Version 132    ???
 --Fixed handling of leading/trailing spaces when typing spoken text.  A hidden
   leading space could spoil your baby naming phrase.  Thanks Jacek T.
 
+--Fixed a bouncing-forever bug that was caused by ambiguity of jump-out-of-arms
+  MOVE message (if messages are interleaved just right, the server can
+  interpret this MOVE as a real move instead of a jump-out-of-arms action).
+  Added new JUMP message to eliminate this ambiguity.  Thanks Jacek T.
+
 
 
 Server Fixes

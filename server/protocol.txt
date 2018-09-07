@@ -612,6 +612,7 @@ SREMV x y c i#
 DROP x y c#
 KILL x y#
 KILL x y id#
+JUMP x y#
 
 
 KA   is a keep-alive message used to keep the connection alive when the client
@@ -675,6 +676,13 @@ KILL is for using a deadly object on the target square.  Square can
      this specifies a specific person to kill, if more than one is
 	 close to the target tile.
 
+JUMP is used by a baby to jump out of its mother's arms.  The x and y 
+     coordinates are ignored.
+     MOVE can also be used to jump out of arms (it was the old way), but
+     it is less safe, because bad message interleavings server-side make
+     MOVE ambiguous in the case of jump-out (for example, if the baby
+     has already been dropped by the time the MOVE arrives, the server will
+     interpret it as a legitimate move attempt).
 
 
 This one is more complicated:

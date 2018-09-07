@@ -1087,6 +1087,7 @@ typedef enum messageType {
     DROP,
     KILL,
     SAY,
+    JUMP,
     MAP,
     TRIGGER,
     BUG,
@@ -1264,6 +1265,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
             }
         
         delete tokens;
+        }
+    else if( strcmp( nameBuffer, "JUMP" ) == 0 ) {
+        m.type = JUMP;
         }
     else if( strcmp( nameBuffer, "USE" ) == 0 ) {
         m.type = USE;
@@ -6716,10 +6720,13 @@ int main() {
                       nextPlayer->ys == nextPlayer->yd ) 
                     ||
                     m.type == MOVE ||
+                    m.type == JUMP || 
                     m.type == SAY ) {
                     
 
-                    if( m.type == MOVE && nextPlayer->heldByOther ) {
+                    if( ( m.type == MOVE || m.type == JUMP ) && 
+                        nextPlayer->heldByOther ) {
+                        
                         // baby wiggling out of parent's arms
                         handleForcedBabyDrop( 
                             nextPlayer,
