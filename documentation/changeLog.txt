@@ -17,6 +17,9 @@ Version 132    ???
 
 --Fixed a few major glitches in hold-mouse-to-keep-moving.  Thanks Jacek T.
 
+--Bouncing forever bug catcher now asks users to send recorded game file too.
+
+
 
 
 Server Fixes

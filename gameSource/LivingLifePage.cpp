@@ -102,7 +102,7 @@ static float lastMouseY = 0;
 static char teaserVideo = false;
 
 
-static char showBugMessage = false;
+static int showBugMessage = 0;
 static const char *bugEmail = "jason" "rohrer" "@" "fastmail.fm";
 
 
@@ -7227,8 +7227,18 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             messagePos.y += 200;
 
-            drawMessage( "bugMessage1", messagePos );
-
+            switch( showBugMessage ) {
+                case 1:
+                    drawMessage( "bugMessage1a", messagePos );
+                    break;
+                case 2:
+                    drawMessage( "bugMessage1b", messagePos );
+                    break;
+                case 3:
+                    drawMessage( "bugMessage1c", messagePos );
+                    break;
+                }
+            
             messagePos = lastScreenViewCenter;
 
 
@@ -8311,15 +8321,26 @@ void LivingLifePage::sendBugReport( int inBugNumber ) {
 
     FILE *f = fopen( "stdout.txt", "r" );
 
+    int recordGame = SettingsManager::getIntSetting( "recordGame", 0 );
+    
     if( f != NULL ) {
         // stdout.txt exists
         
-        printf( "Bug report sent, telling user to email stdout.txt to us.\n" );
+        printf( "Bug report sent, telling user to email files to us.\n" );
         
         fclose( f );
+
+        showBugMessage = 3;
         
-        showBugMessage = true;
+        if( recordGame ) {
+            showBugMessage = 2;
+            }
         }
+    else if( recordGame ) {
+        printf( "Bug report sent, telling user to email files to us.\n" );
+        showBugMessage = 1;
+        }
+    
     }
 
 
