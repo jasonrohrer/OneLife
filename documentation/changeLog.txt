@@ -7,6 +7,9 @@ Version 132    ???
 
 --Fixed scene editor animation speed of people holding speedMult objects.
 
+--Fixed handling of leading/trailing spaces when typing spoken text.  A hidden
+  leading space could spoil your baby naming phrase.  Thanks Jacek T.
+
 
 
 Server Fixes

@@ -17660,6 +17660,37 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             else {
                 char *typedText = mSayField.getText();
                 
+                
+                // tokenize and then recombine with single space
+                // between each.  This will get rid of any hidden
+                // lead/trailing spaces, which may confuse server
+                // for baby naming, etc.
+                // also eliminates all-space strings, which 
+                // end up in speech history, but are invisible
+                SimpleVector<char *> *tokens = 
+                    tokenizeString( typedText );
+                
+                if( tokens->size() > 0 ) {
+                    char *oldTypedText = typedText;
+                    
+                    char **strings = tokens->getElementArray();
+                    
+                    typedText = join( strings, tokens->size(), " " );
+
+                    delete [] oldTypedText;
+                    }
+                else {
+                    // string with nothing but spaces, or empty
+                    // force it empty
+                    delete [] typedText;
+                    typedText = stringDuplicate( "" );
+                    }
+                
+                tokens->deallocateStringElements();
+                delete tokens;
+                    
+                
+
                 if( strcmp( typedText, "" ) == 0 ) {
                     mSayField.unfocus();
                     }
