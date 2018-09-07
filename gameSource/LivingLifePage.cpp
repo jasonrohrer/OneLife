@@ -14655,8 +14655,9 @@ void LivingLifePage::step() {
                             ||
                             absY > CELL_D * 1 ) {
                             
-                            if( ( absX < CELL_D * 4 ||
-                                  absY < CELL_D * 4 ) 
+                            if( absX < CELL_D * 4 
+                                &&
+                                absY < CELL_D * 4 
                                 &&
                                 mouseDownFrames >  
                                 minMouseDownFrames / frameRateFactor ) {
@@ -14681,7 +14682,10 @@ void LivingLifePage::step() {
                                                             mouseVector );
                                 
                                 o->useWaypoint = true;
-                                o->maxWaypointPathLength = 5;
+                                // leave some wiggle room here
+                                // path through waypoint might get extended
+                                // if it involves obstacles
+                                o->maxWaypointPathLength = 10;
                                 
                                 o->waypointX = lrint( worldMouseX / CELL_D );
                                 o->waypointY = lrint( worldMouseY / CELL_D );

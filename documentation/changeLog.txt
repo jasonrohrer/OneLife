@@ -15,6 +15,8 @@ Version 132    ???
   interpret this MOVE as a real move instead of a jump-out-of-arms action).
   Added new JUMP message to eliminate this ambiguity.  Thanks Jacek T.
 
+--Fixed a few major glitches in hold-mouse-to-keep-moving.  Thanks Jacek T.
+
 
 
 Server Fixes
