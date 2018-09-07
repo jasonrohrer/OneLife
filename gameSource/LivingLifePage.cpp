@@ -17676,7 +17676,12 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                     char **strings = tokens->getElementArray();
                     
                     typedText = join( strings, tokens->size(), " " );
-
+                    
+                    for( int s=0; s<tokens->size(); s++ ) {
+                        delete [] strings[s];
+                        }
+                    delete [] strings;
+                    
                     delete [] oldTypedText;
                     }
                 else {
