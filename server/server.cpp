@@ -8877,8 +8877,13 @@ int main() {
                                     
                                     targetPlayer->foodUpdate = true;
                                     }
-                                else if( obj->clothing != 'n' ) {
-                                    // wearable
+                                else if( obj->clothing != 'n' &&
+                                         ( targetPlayer == nextPlayer
+                                           || 
+                                           computeAge( targetPlayer ) < 
+                                           babyAge) ) {
+                                    
+                                    // wearable, dress self or baby
                                     
                                     nextPlayer->holdingID = 0;
                                     timeSec_t oldEtaDecay = 

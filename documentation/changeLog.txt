@@ -52,6 +52,8 @@ Server Fixes
 --Fixed so that right-clicking worn backpack swaps held with bottom item in
   pack.  Works the same when worn or on the ground now.
 
+--Can no longer dress or swap clothing on elderly (was allowing theft of
+  elderly backpacks).
 
 
 
