@@ -4707,6 +4707,82 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
     }
 
 
+static void removeFromClothingContainerToHold( LiveObject *inPlayer,
+                                               int inC,
+                                               int inI = -1 ) {    
+    
+    ObjectRecord *cObj = 
+        clothingByIndex( inPlayer->clothing, 
+                         inC );
+                                
+    float stretch = 1.0f;
+    
+    if( cObj != NULL ) {
+        stretch = cObj->slotTimeStretch;
+        }
+    
+    int oldNumContained = 
+        inPlayer->clothingContained[inC].size();
+
+    int slotToRemove = inI;
+                                
+    if( slotToRemove < 0 ) {
+        slotToRemove = oldNumContained - 1;
+        }
+                                
+    int toRemoveID = -1;
+                                
+    if( oldNumContained > 0 &&
+        oldNumContained > slotToRemove &&
+        slotToRemove >= 0 ) {
+                                    
+        toRemoveID = 
+            inPlayer->clothingContained[inC].
+            getElementDirect( slotToRemove );
+        }
+
+    if( oldNumContained > 0 &&
+        oldNumContained > slotToRemove &&
+        slotToRemove >= 0 &&
+        // old enough to handle it
+        getObject( toRemoveID )->minPickupAge <= 
+        computeAge( inPlayer ) ) {
+                                    
+
+        inPlayer->holdingID = 
+            inPlayer->clothingContained[inC].
+            getElementDirect( slotToRemove );
+        holdingSomethingNew( inPlayer );
+
+        inPlayer->holdingEtaDecay = 
+            inPlayer->
+            clothingContainedEtaDecays[inC].
+            getElementDirect( slotToRemove );
+                                    
+        timeSec_t curTime = Time::timeSec();
+
+        if( inPlayer->holdingEtaDecay != 0 ) {
+                                        
+            timeSec_t offset = 
+                inPlayer->holdingEtaDecay
+                - curTime;
+            offset = offset * stretch;
+            inPlayer->holdingEtaDecay =
+                curTime + offset;
+            }
+
+        inPlayer->clothingContained[inC].
+            deleteElement( slotToRemove );
+        inPlayer->clothingContainedEtaDecays[inC].
+            deleteElement( slotToRemove );
+
+        inPlayer->heldOriginValid = 0;
+        inPlayer->heldOriginX = 0;
+        inPlayer->heldOriginY = 0;
+        inPlayer->heldTransitionSourceID = -1;
+        }
+    }
+
 
 // change held as the result of a transition
 static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
@@ -9135,8 +9211,40 @@ int main() {
                                          m.y == nextPlayer->yd  &&
                                          nextPlayer->holdingID > 0 ) {
                                     
+                                    // drop into clothing indicates right-click
+                                    // so swap
+                                    
+                                    int oldHeld = nextPlayer->holdingID;
+                                    
+                                    // first add to top of container
+                                    // if possible
                                     addHeldToClothingContainer( nextPlayer,
                                                                 m.c );
+                                    if( nextPlayer->holdingID == 0 ) {
+                                        // add to top worked
+
+                                        // now take off bottom to hold
+                                        // but keep looking to find something
+                                        // different than what we were
+                                        // holding before
+                                        for( int s=0; 
+                                             s < nextPlayer->
+                                                 clothingContained[m.c].size() 
+                                                 - 1;
+                                             s++ ) {
+                                            
+                                            if( nextPlayer->
+                                                 clothingContained[m.c].
+                                                getElementDirect( s ) != 
+                                                oldHeld ) {
+                                                
+                                              removeFromClothingContainerToHold(
+                                                    nextPlayer, m.c, s );
+                                                break;
+                                                }
+                                            }
+                                        }
+                                    
                                     }
                                 else if( nextPlayer->holdingID > 0 ) {
                                     // non-baby drop
@@ -9269,77 +9377,8 @@ int main() {
                             nextPlayer->actionTarget.y = m.y;
                             
                             if( m.c >= 0 && m.c < NUM_CLOTHING_PIECES ) {
-
-                                ObjectRecord *cObj = 
-                                    clothingByIndex( nextPlayer->clothing, 
-                                                     m.c );
-                                
-                                float stretch = 1.0f;
-                                
-                                if( cObj != NULL ) {
-                                    stretch = cObj->slotTimeStretch;
-                                    }
-
-                                int oldNumContained = 
-                                    nextPlayer->clothingContained[m.c].size();
-
-                                int slotToRemove = m.i;
-                                
-                                if( slotToRemove < 0 ) {
-                                    slotToRemove = oldNumContained - 1;
-                                    }
-                                
-                                int toRemoveID = -1;
-                                
-                                if( oldNumContained > 0 &&
-                                    oldNumContained > slotToRemove &&
-                                    slotToRemove >= 0 ) {
-                                    
-                                    toRemoveID = 
-                                        nextPlayer->clothingContained[m.c].
-                                        getElementDirect( slotToRemove );
-                                    }
-
-                                if( oldNumContained > 0 &&
-                                    oldNumContained > slotToRemove &&
-                                    slotToRemove >= 0 &&
-                                    // old enough to handle it
-                                    getObject( toRemoveID )->minPickupAge <= 
-                                    computeAge( nextPlayer ) ) {
-                                    
-
-                                    nextPlayer->holdingID = 
-                                        nextPlayer->clothingContained[m.c].
-                                        getElementDirect( slotToRemove );
-                                    holdingSomethingNew( nextPlayer );
-
-                                    nextPlayer->holdingEtaDecay = 
-                                        nextPlayer->
-                                        clothingContainedEtaDecays[m.c].
-                                        getElementDirect( slotToRemove );
-                                    
-                                    timeSec_t curTime = Time::timeSec();
-
-                                    if( nextPlayer->holdingEtaDecay != 0 ) {
-                                        
-                                        timeSec_t offset = 
-                                            nextPlayer->holdingEtaDecay
-                                            - curTime;
-                                        offset = offset * stretch;
-                                        nextPlayer->holdingEtaDecay =
-                                            curTime + offset;
-                                        }
-
-                                    nextPlayer->clothingContained[m.c].
-                                        deleteElement( slotToRemove );
-                                    nextPlayer->clothingContainedEtaDecays[m.c].
-                                        deleteElement( slotToRemove );
-
-                                    nextPlayer->heldOriginValid = 0;
-                                    nextPlayer->heldOriginX = 0;
-                                    nextPlayer->heldOriginY = 0;
-                                    nextPlayer->heldTransitionSourceID = -1;
-                                    }
+                                removeFromClothingContainerToHold(
+                                    nextPlayer, m.c, m.i );
                                 }
                             }
                         }

@@ -3,6 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
 Version 132    ???
 
 --Fixed scene editor animation speed of people holding speedMult objects.
@@ -21,6 +22,7 @@ Version 132    ???
 
 --Fixed invalid memory read when generating hint for use-on-bare-ground
   transition.
+
 
 
 
@@ -44,6 +46,9 @@ Server Fixes
   Before, it would accept connections from clients and the reflector and then
   just hang there.  Now these connections are insta-rejected if server is in
   the process of shutting down.
+
+--Fixed so that right-clicking worn backpack swaps held with bottom item in
+  pack.  Works the same when worn or on the ground now.
 
 
 
