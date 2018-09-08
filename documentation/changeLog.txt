@@ -23,6 +23,8 @@ Version 132    ???
 --Fixed invalid memory read when generating hint for use-on-bare-ground
   transition.
 
+--Fixed spelling of eighth cousin.  Thanks Trick.
+
 
 
 
