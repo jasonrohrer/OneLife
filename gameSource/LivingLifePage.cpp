@@ -3450,7 +3450,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
         heldObjectDrawPos = mult( heldObjectDrawPos, 1.0 / CELL_D );
         
-        if( inObj->heldPosOverride && 
+        if( inObj->currentSpeed == 0 &&
+            inObj->heldPosOverride && 
             ! inObj->heldPosOverrideAlmostOver &&
             ! equal( heldObjectDrawPos, inObj->heldObjectPos ) ) {
                         

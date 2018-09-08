@@ -25,6 +25,9 @@ Version 132    ???
 
 --Fixed spelling of eighth cousin.  Thanks Trick.
 
+--Flying object on pick-up now snaps into hand when you turn to walk away
+  (instead of floating behind you magically, trying to catch up with you).
+
 
 
 
