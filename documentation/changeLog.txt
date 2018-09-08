@@ -3,10 +3,11 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 137    ???
+Version 137    2018-September-8
 
 --Fixed a new double-free bug that causes a potential crash on chat.  Thanks
   Sophie Van L.
+
 
 
 
