@@ -4222,6 +4222,12 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             parent = -2;
             }
 
+        // save these out here, because newPlayer points into 
+        // tutorialLoadingPlayers, which may expand during this loop,
+        // invalidating that pointer
+        char isTutorial = newPlayer->isTutorial;
+        TutorialLoadProgress sharedTutorialLoad = newPlayer->tutorialLoad;
+
         for( int i=0; i<twinConnections.size(); i++ ) {
             FreshConnection *nextConnection = 
                 twinConnections.getElementDirect( i );
@@ -4240,9 +4246,9 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             LiveObject newTwinPlayer = 
                 players.getElementDirect( players.size() - 1 );
 
-            if( newPlayer->isTutorial ) {
+            if( isTutorial ) {
                 // force this one to wait for same tutorial map load
-                newTwinPlayer.tutorialLoad = newPlayer->tutorialLoad;
+                newTwinPlayer.tutorialLoad = sharedTutorialLoad;
 
                 players.deleteElement( players.size() - 1 );
                 
