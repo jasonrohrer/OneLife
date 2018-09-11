@@ -8818,8 +8818,22 @@ int main() {
                                 
                                 int cap = computeFoodCapacity( targetPlayer );
                                 
-                                if( obj->foodValue > 0 && 
-                                    targetPlayer->foodStore < cap ) {
+
+                                // first case:
+                                // player clicked on clothing
+                                // try adding held into clothing, but if
+                                // that fails go on to other cases
+                                if( targetPlayer == nextPlayer &&
+                                    m.i >= 0 && 
+                                    m.i < NUM_CLOTHING_PIECES &&
+                                    addHeldToClothingContainer( nextPlayer,
+                                                                m.i ) ) {
+                                    // worked!
+                                    }
+                                // next case, holding food
+                                // that couldn't be put into clicked clothing
+                                else if( obj->foodValue > 0 && 
+                                         targetPlayer->foodStore < cap ) {
                                     
                                     targetPlayer->justAte = true;
                                     targetPlayer->justAteID = 
@@ -8883,6 +8897,8 @@ int main() {
                                     
                                     targetPlayer->foodUpdate = true;
                                     }
+                                // final case, holding clothing that
+                                // we could put on
                                 else if( obj->clothing != 'n' &&
                                          ( targetPlayer == nextPlayer
                                            || 
@@ -9048,15 +9064,6 @@ int main() {
                                                     nextPlayer->numContained ];
                                             }
                                         }
-                                    }
-                                else if( targetPlayer == nextPlayer &&
-                                         m.i >= 0 && 
-                                         m.i < NUM_CLOTHING_PIECES ) {
-                                    // not wearable or food
-                                    // try dropping what we're holding
-                                    // into clothing
-                                    addHeldToClothingContainer( nextPlayer,
-                                                                m.i );
                                     }
                                 }         
                             else {

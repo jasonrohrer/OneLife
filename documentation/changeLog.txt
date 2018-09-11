@@ -8,6 +8,14 @@ Server Fixes
 --Fixed a potential server crash when triplets or quadruplets start the
   tutorial together.
 
+--Improved click UI when holding food.  Right-click on backpack swaps food
+  with bottom item in backpack.  Left-click puts food into backpack. 
+  Left-click self (not backpack) to consume food.  Same for other clothing
+  (like apron) with container slots.  This might make eating a bit harder in
+  some cases (when clothing with container slots covers most of your
+  character's body).
+
+
 
 
 Version 137    2018-September-8
