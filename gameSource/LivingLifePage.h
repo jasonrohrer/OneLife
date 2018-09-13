@@ -34,6 +34,15 @@
 
 #define NUM_YUM_SLIPS 4
 
+// FOVMOD NOTE:  Change 1/1 - Take these lines during the merge process
+// Some global constants to make the FOV mod work.  Scale can be any positive number.
+// Vanilla scale of 1 is 1280x720, 1.5 is 1920x1080, 2 is 2560x1440, 3 is 4k, 6 is 8k
+// Scales above 2 will have significantly more "edge screen popping"
+namespace fovmod {
+    const float scale = 1.5;
+    const int gui_offset_x = (int)(((1280 * scale) - 1280)/2);
+    const int gui_offset_y = (int)(((720 * scale) - 720)/2);
+}
 
 typedef struct LiveObject {
         int id;
@@ -863,7 +872,14 @@ class LivingLifePage : public GamePage {
         // in the map at its destination.
         // inExtraIndex is its index in the mMapExtraMovingObjects vectors
         void endExtraObjectMove( int inExtraIndex );
-        
+
+
+        // LINEAGEFERTILITYMOD NOTE:  Change 1/1 - Take these changes during the merge process
+		void lineageFertilityPanel( LiveObject* ourLiveObject, char displayPanel = true );
+        char* getFertilityStatus( LiveObject* targetObject );
+		// AGEMOD NOTE:  Change 1/1 - Take these changes during the merge process
+		void agePanel( LiveObject* ourLiveObject, char displayPanel = true );
+
 
     };
 

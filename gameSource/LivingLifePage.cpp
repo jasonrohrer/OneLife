@@ -114,6 +114,10 @@ static char savingSpeech = false;
 static char savingSpeechColor = false;
 static char savingSpeechMask = false;
 
+// LINEAGEFERTILITYMOD NOTE:  Change 1/4 - Take these lines during the merge process
+static char showFertilityPanel = true;
+// AGEMOD NOTE:  Change 1/3 - Take these lines during the merge process
+static char showAgePanel = true;
 
 
 
@@ -1825,17 +1829,18 @@ LivingLifePage::LivingLifePage()
     mSayField.unfocus();
     
     
-    mNotePaperHideOffset.x = -242;
-    mNotePaperHideOffset.y = -420;
+    // FOVMOD NOTE:  Change 1/15 - Take these lines during the merge process
+    mNotePaperHideOffset.x = -242;              
+    mNotePaperHideOffset.y = -420 - fovmod::gui_offset_y;
 
 
-    mHomeSlipHideOffset.x = 0;
-    mHomeSlipHideOffset.y = -360;
+    mHomeSlipHideOffset.x = 0;              
+    mHomeSlipHideOffset.y = -360 - fovmod::gui_offset_y;
 
 
     for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
         mYumSlipHideOffset[i].x = -600;
-        mYumSlipHideOffset[i].y = -330;
+        mYumSlipHideOffset[i].y = -330 - fovmod::gui_offset_y;
         }
     
     mYumSlipHideOffset[2].x += 70;
@@ -1848,11 +1853,12 @@ LivingLifePage::LivingLifePage()
     
 
     for( int i=0; i<3; i++ ) {    
-        mHungerSlipShowOffsets[i].x = -540;
-        mHungerSlipShowOffsets[i].y = -250;
-    
-        mHungerSlipHideOffsets[i].x = -540;
-        mHungerSlipHideOffsets[i].y = -370;
+        // FOVMOD NOTE:  Change 2/15 - Take these lines during the merge process
+        mHungerSlipShowOffsets[i].x = -540;         
+        mHungerSlipShowOffsets[i].y = -250 - fovmod::gui_offset_y;
+                    
+        mHungerSlipHideOffsets[i].x = -540;         
+        mHungerSlipHideOffsets[i].y = -370 - fovmod::gui_offset_y;
         
         mHungerSlipWiggleTime[i] = 0;
         mHungerSlipWiggleAmp[i] = 0;
@@ -1889,8 +1895,9 @@ LivingLifePage::LivingLifePage()
         mHintSheetSprites[i] = loadSprite( name, false );
         delete [] name;
         
-        mHintHideOffset[i].x = 900;
-        mHintHideOffset[i].y = -370;
+        // FOVMOD NOTE:  Change 3/15 - Take these lines during the merge process
+        mHintHideOffset[i].x = 900 + fovmod::gui_offset_x;
+        mHintHideOffset[i].y = -370 - fovmod::gui_offset_y;
         
         mHintTargetOffset[i] = mHintHideOffset[i];
         mHintPosOffset[i] = mHintHideOffset[i];
@@ -1940,7 +1947,8 @@ LivingLifePage::LivingLifePage()
             mTutorialFlips[i] = true;
             }
         
-        mTutorialHideOffset[i].y = 430;
+       // FOVMOD NOTE:  Change 4/15 - Take these lines during the merge process
+        mTutorialHideOffset[i].y = 430 + fovmod::gui_offset_y;
         
         mTutorialTargetOffset[i] = mTutorialHideOffset[i];
         mTutorialPosOffset[i] = mTutorialHideOffset[i];
@@ -3741,8 +3749,9 @@ void LivingLifePage::drawHungerMaxFillLine( doublePair inAteWordsPos,
     
     
     
+    // FOVMOD NOTE:  Change 5/15 - Take these lines during the merge process
     doublePair barPos = { lastScreenViewCenter.x - 590, 
-                          lastScreenViewCenter.y - 334 };
+                          lastScreenViewCenter.y - 334 - fovmod::gui_offset_y };
     barPos.x -= 12;
     barPos.y -= 10;
     
@@ -4019,13 +4028,18 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int gridCenterY = 
         lrintf( lastScreenViewCenter.y / CELL_D ) - mMapOffsetY + mMapD/2;
     
-    // more on left and right of screen to avoid wide object tops popping in
-    int xStart = gridCenterX - 7;
-    int xEnd = gridCenterX + 7;
+    // FOVMOD NOTE:  Change 6/15 - Take these lines during the merge process
+    // SIDE NOTE:  These 4 variables control how far items should be rendered, separately from biome drawing
 
-    // more on bottom of screen so that tall objects don't pop in
-    int yStart = gridCenterY - 6;
-    int yEnd = gridCenterY + 4;
+    // more on left and right of screen to avoid wide object tops popping in        
+    // SIDE NOTE:  x is scaled directly.  value * scale
+    int xStart = gridCenterX - (int)(ceil(7 * fovmod::scale));
+    int xEnd = gridCenterX + (int)(ceil(7 * fovmod::scale));
+
+    // more on bottom of screen so that tall objects don't pop in       
+    // SIDE NOTE:  y is scaled with offset.
+    int yStart = gridCenterY - (int)(ceil(5 * fovmod::scale) + 1);   // Default: 6  (5 * scale + 1)
+    int yEnd = gridCenterY + (int)(ceil(5 * fovmod::scale) - 1);     // Default: 4   (5 * scale - 1)
 
     if( xStart < 0 ) {
         xStart = 0;
@@ -4067,11 +4081,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
     // tiles drawn on top).  However, given that we're not drawing anything
     // else out there, this should be okay from a performance standpoint.
 
-    int yStartFloor = gridCenterY - 4;
-    int yEndFloor = gridCenterY + 3;
+    // FOVMOD NOTE:  Change 7/15 - Take these lines during the merge process
+    // SIDE NOTE:  These 4 variables control the ground (biome) display
+    int yStartFloor = gridCenterY - (int)(ceil(3 * fovmod::scale + 1));
+    int yEndFloor = gridCenterY + (int)(ceil(3 * fovmod::scale));
 
-    int xStartFloor = gridCenterX - 5;
-    int xEndFloor = gridCenterX + 6;
+    int xStartFloor = gridCenterX - (int)(ceil(5 * fovmod::scale));
+    int xEndFloor = gridCenterX + (int)(ceil(5 * fovmod::scale) + 1);
 
     
 
@@ -6773,11 +6789,26 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
-    
+    // LINEAGEFERTILITYMOD NOTE:  Change 2/4 - Take these lines during the merge process
+	lineageFertilityPanel(ourLiveObject, showFertilityPanel);
+	// AGEMOD NOTE:  Change 2/3 - Take these lines during the merge process
+	agePanel(ourLiveObject, showAgePanel);
+
+
+
     // info panel at bottom
     setDrawColor( 1, 1, 1, 1 );
     doublePair panelPos = lastScreenViewCenter;
-    panelPos.y -= 242 + 32 + 16 + 6;
+    // FOVMOD NOTE:  Change 8/15 - Take these lines during the merge process
+    panelPos.y -= 242 + 32 + 16 + 6 + fovmod::gui_offset_y;
+	// Ugly "hack" for hint [TAB] being cut off at the bottom.
+	if( fovmod::scale <= 2 ) {
+		panelPos.x -= 900;
+		drawSprite( mGuiPanelSprite, panelPos );
+		panelPos.x += 1810;
+		drawSprite( mGuiPanelSprite, panelPos );
+		panelPos.x -= 910;
+		}
     drawSprite( mGuiPanelSprite, panelPos );
 
     if( ourLiveObject != NULL &&
@@ -6806,8 +6837,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
 
         // show as a sigil to right of temp meter
-        doublePair curseTokenPos = { lastScreenViewCenter.x + 621, 
-                                     lastScreenViewCenter.y - 316 };
+        // FOVMOD NOTE:  Change 9/15 - Take these lines during the merge process
+        doublePair curseTokenPos = { lastScreenViewCenter.x + 621,
+                                     lastScreenViewCenter.y - 316 - fovmod::gui_offset_y };
         curseTokenFont->drawString( "C", curseTokenPos, alignCenter );
         curseTokenFont->drawString( "+", curseTokenPos, alignCenter );
         curseTokenPos.x += 6;
@@ -6820,8 +6852,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
         toggleMultiplicativeBlend( true );
 
         for( int i=0; i<ourLiveObject->foodCapacity; i++ ) {
+            // FOVMOD NOTE:  Change 10/15 - Take these lines during the merge process 
             doublePair pos = { lastScreenViewCenter.x - 590, 
-                               lastScreenViewCenter.y - 334 };
+                               lastScreenViewCenter.y - 334 - fovmod::gui_offset_y};
         
             pos.x += i * 30;
             drawSprite( 
@@ -6841,8 +6874,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         for( int i=ourLiveObject->foodCapacity; 
              i < ourLiveObject->maxFoodCapacity; i++ ) {
+            // FOVMOD NOTE:  Change 11/15 - Take these lines during the merge process
             doublePair pos = { lastScreenViewCenter.x - 590, 
-                               lastScreenViewCenter.y - 334 };
+                               lastScreenViewCenter.y - 334 - fovmod::gui_offset_y };
             
             pos.x += i * 30;
             drawSprite( 
@@ -6859,8 +6893,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
                 
         
+        // FOVMOD NOTE:  Change 12/15 - Take these lines during the merge process
         doublePair pos = { lastScreenViewCenter.x + 546, 
-                           lastScreenViewCenter.y - 319 };
+                           lastScreenViewCenter.y - 319 - fovmod::gui_offset_y};
 
         if( mCurrentArrowHeat != -1 ) {
             
@@ -6921,8 +6956,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
 
         for( int i=0; i<mOldDesStrings.size(); i++ ) {
+            // FOVMOD NOTE:  Change 13/15 - Take these lines during the merge process
             doublePair pos = { lastScreenViewCenter.x, 
-                               lastScreenViewCenter.y - 313 };
+                               lastScreenViewCenter.y - 313 - fovmod::gui_offset_y};
             float fade =
                 mOldDesFades.getElementDirect( i );
             
@@ -6931,8 +6967,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 mOldDesStrings.getElementDirect( i ), pos, alignCenter );
             }
 
+        // FOVMOD NOTE:  Test, not sure if required
         doublePair yumPos = { lastScreenViewCenter.x - 480, 
-                              lastScreenViewCenter.y - 313 };
+                              lastScreenViewCenter.y - 313 - fovmod::gui_offset_y };
         
         setDrawColor( 0, 0, 0, 1 );
         if( mYumBonus > 0 ) {    
@@ -6955,8 +6992,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
+        // FOVMOD NOTE:  Change 14/15 - Take these lines during the merge process
         doublePair atePos = { lastScreenViewCenter.x, 
-                              lastScreenViewCenter.y - 347 };
+                              lastScreenViewCenter.y - 347 - fovmod::gui_offset_y};
         
         int shortestFill = 100;
         
@@ -7040,8 +7078,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             
             
+            // FOVMOD NOTE:  Change 15/15 - Take these lines during the merge process
             doublePair pos = { lastScreenViewCenter.x, 
-                               lastScreenViewCenter.y - 313 };
+                               lastScreenViewCenter.y - 313 - fovmod::gui_offset_y};
 
             char *des = NULL;
             char *desToDelete = NULL;
@@ -17637,6 +17676,11 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         case 'E':
             mEKeyDown = true;
             break;
+        // LINEAGEFERTILITYMOD NOTE:  Change 3/4 - Take these lines during the merge process
+		case 'l':
+		case 'L':
+			if( ! mSayField.isFocused() ) hideFertilityPanel = !hideFertilityPanel;
+			break;
         case 9: // tab
             if( mCurrentHintObjectID != 0 ) {
                 
@@ -17965,4 +18009,118 @@ void LivingLifePage::putInMap( int inMapI, ExtraMapObject *inObj ) {
     mMapContainedStacks[ inMapI ] = inObj->containedStack;
     mMapSubContainedStacks[ inMapI ] = inObj->subContainedStack;
     }
+
+
+// AGEMOD NOTE:  Change 3/3 - Take these changes during the merge process
+void LivingLifePage::agePanel( LiveObject* ourLiveObject, char displayPanel ) {
+	if ( ! displayPanel ) return;
+	setDrawColor( 1, 1, 1, 1 );
+	doublePair agePos = { lastScreenViewCenter.x + 85, 
+						  lastScreenViewCenter.y - 300 - fovmod::gui_offset_y };
+	drawSprite( mYumSlipSprites[2], agePos, 1.4 );
+	setDrawColor( 0, 0, 0, 1 );
+	char *ageString = autoSprintf( "AGE: %d", (int)computeCurrentAge( ourLiveObject ) );
+	agePos.y += 18;
+	handwritingFont->drawString( ageString, agePos, alignCenter);
+}
+	
+	
+// LINEAGEFERTILITYMOD NOTE:  Change 4/4 - Take these lines during the merge process
+char* LivingLifePage::getFertilityStatus( LiveObject* targetObject ) {
+	char *fertilityStatus = autoSprintf("INCAPABLE");
+	char isTargetMale = getObject( targetObject->displayID )->male;
+	if( isTargetMale ) return fertilityStatus;
+	if( targetObject->finalAgeSet ) {
+		setDrawColor( 1, 0, 0, 1 );
+		fertilityStatus = autoSprintf( "DEAD" );
+	} else {
+		double targetAge = computeCurrentAge( targetObject );
+		if( targetAge < 14 ) {
+			setDrawColor( 0.93, 0.46, 0, 1 );
+			fertilityStatus = autoSprintf("TOO YOUNG");
+		} else if ( targetAge > 40 ) {
+			setDrawColor( 1, 0, 0, 1 );
+			fertilityStatus = autoSprintf("TOO OLD");
+		} else {
+			setDrawColor( 0, 0.39, 0, 1 );
+			fertilityStatus = autoSprintf("FERTILE");
+		}
+	}
+	return fertilityStatus;
+}
+
+
+void LivingLifePage::lineageFertilityPanel( LiveObject* ourLiveObject, char displayPanel ) {
+	if ( ! displayPanel ) return;
+	setDrawColor( 1, 1, 1, 1 );
+	doublePair fertPos = { lastScreenViewCenter.x + 685 + fovmod::gui_offset_x, 
+						   lastScreenViewCenter.y + 305 + fovmod::gui_offset_y };
+	drawSprite( mHintSheetSprites[2], fertPos );
+	setDrawColor( 0, 0, 0, 1);
+	char *fertStringA = autoSprintf( "MOTHER IS:  " );
+	doublePair fertTextPos = { fertPos.x -= 300, 
+							   fertPos.y += 28 };
+	handwritingFont->drawString( fertStringA, fertTextPos, alignLeft );
+	SimpleVector<int> ourLin = ourLiveObject->lineage;
+	int relatedYoungFemales = 0;
+	int relatedFertileFemales = 0;
+	char *fertStringB = autoSprintf( "" );
+	if( ourLin.size() > 0 ) {
+		char found = false;
+		for( int i=0; i<ourLin.size(); i++ ) {
+			LiveObject *thisRelative = getLiveObject(ourLin.getElementDirect(i));
+			if( thisRelative != NULL && ! getObject( thisRelative->displayID )->male ) {
+				if( stringCompareIgnoreCase(thisRelative->relationName, "YOUR MOTHER" ) == 0 ) {
+					found = true;
+					fertStringB = autoSprintf( "%s", getFertilityStatus( thisRelative ) );
+				}
+			}
+		}
+		if( ! found ) {
+			setDrawColor( 1, 0, 0, 1 );
+			fertStringB = autoSprintf( "DEAD" );
+		}
+	} else {
+		setDrawColor( 0, 0, 1, 1 );
+		fertStringB = autoSprintf("NONE (EVE)");
+	}
+	fertTextPos.x += handwritingFont->measureString( fertStringA );
+	handwritingFont->drawString( fertStringB, fertTextPos, alignLeft );
+	setDrawColor( 0, 0, 0, 1);
+	fertTextPos.x -= handwritingFont->measureString( fertStringA );
+	
+	fertStringA = autoSprintf( "PREGNANCY:  " );
+	fertTextPos.y -= 25;
+	handwritingFont->drawString( fertStringA, fertTextPos, alignLeft );
+	fertTextPos.x += handwritingFont->measureString( fertStringA );
+	fertStringB = autoSprintf( "%s", getFertilityStatus( ourLiveObject ) );
+	handwritingFont->drawString( fertStringB, fertTextPos, alignLeft );
+	fertTextPos.x -= handwritingFont->measureString( fertStringA );
+	setDrawColor( 0, 0, 0, 1);
+	
+	for( int i=0; i<gameObjects.size(); i++ ) {
+		LiveObject *thisPlayer = gameObjects.getElement( i );
+		if( thisPlayer != NULL ) {
+			char isPlayerMale = getObject( thisPlayer->displayID )->male;
+			if( ! isPlayerMale && thisPlayer->id != ourID && thisPlayer->relationName != NULL) {
+				if( stringCompareIgnoreCase(thisPlayer->relationName, "YOUR" ) > 0 ) {
+					if( thisPlayer->age < 14 ) {
+						relatedYoungFemales++;
+					}
+					if ( thisPlayer->age > 13 && thisPlayer->age < 40 ) {
+						relatedFertileFemales++;
+					}
+				}					
+			}
+		}
+	}
+	
+	fertStringA = autoSprintf( "RELATED GIRL KIDS:  %d", relatedYoungFemales );
+	fertTextPos.y -= 25;
+	handwritingFont->drawString( fertStringA, fertTextPos, alignLeft );
+	
+	fertStringA = autoSprintf( "FERTILE RELATIVES:  %d", relatedFertileFemales );
+	fertTextPos.y -= 25;
+	handwritingFont->drawString( fertStringA, fertTextPos, alignLeft );
+}
 
