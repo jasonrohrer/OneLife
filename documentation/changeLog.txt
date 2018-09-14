@@ -29,6 +29,16 @@ Server Fixes
   some cases (when clothing with container slots covers most of your
   character's body).
 
+--Curse timeout (when record discarded) increased from 48 to 96 hours.
+
+--Curse threshold (when you are born marked) lowered to 8 points.
+
+--Curse-marked players are now born into a distant location as an Eve or as the
+  baby of another curse-marked player.  Curse-marked players are exiled
+  together until they live-off their curse points.
+
+
+
 
 
 
