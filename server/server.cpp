@@ -177,7 +177,8 @@ typedef struct FreshConnection {
         char *email;
         
         int tutorialNumber;
-
+        char cursed;
+        
         char *twinCode;
         int twinCount;
 
@@ -1533,7 +1534,11 @@ int longestShutdownLine = -1;
 
 void handleShutdownDeath( LiveObject *inPlayer,
                           int inX, int inY ) {
-    if( inPlayer->parentChainLength > longestShutdownLine ) {
+    if( inPlayer->curseLevel == 0 &&
+        inPlayer->parentChainLength > longestShutdownLine ) {
+        
+        // never count a cursed player as a long line
+        
         longestShutdownLine = inPlayer->parentChainLength;
         
         FILE *f = fopen( "shutdownLongLineagePos.txt", "w" );
@@ -3414,6 +3419,7 @@ int processLoggedInPlayer( Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
                            int inTutorialNumber,
+                           char inCursed,
                            // set to -2 to force Eve
                            int inForceParentID = -1,
                            int inForceDisplayID = -1,
@@ -3562,7 +3568,13 @@ int processLoggedInPlayer( Socket *inSock,
                 }
             
             if( canHaveBaby ) {
-                parentChoices.push_back( player );
+                if( ( ! inCursed && player->curseLevel == 0 ) 
+                    || 
+                    ( inCursed && player->curseLevel > 0 ) ) {
+                    // cursed babies only born to cursed mothers
+                    // non-cursed babies never born to cursed mothers
+                    parentChoices.push_back( player );
+                    }
                 }
             }
         }
@@ -3611,7 +3623,7 @@ int processLoggedInPlayer( Socket *inSock,
         }
     
 
-    if( numOfAge == 0 ) {
+    if( numOfAge == 0 && !inCursed ) {
         // all existing babies are good spawn spot for Eve
                     
         for( int i=0; i<numPlayers; i++ ) {
@@ -3891,6 +3903,24 @@ int processLoggedInPlayer( Socket *inSock,
         int startX, startY;
         getEvePosition( newObject.email, &startX, &startY );
 
+        if( inCursed ) {
+            // keep cursed players away
+
+            // 20K away in X and 20K away in Y, pushing out away from 0
+            // in both directions
+
+            if( startX > 0 )
+                startX += 20000;
+            else
+                startX -= 20000;
+            
+            if( startY > 0 )
+                startY += 20000;
+            else
+                startY -= 20000;
+            }
+        
+
         if( SettingsManager::getIntSetting( "forceEveLocation", 0 ) ) {
 
             startX = 
@@ -4142,9 +4172,9 @@ int processLoggedInPlayer( Socket *inSock,
               players.size(),
               newObject.parentChainLength );
     
-    AppLog::infoF( "New player %s connected as player %d (tutorial=%d)",
+    AppLog::infoF( "New player %s connected as player %d (tutorial=%d) (%d,%d)",
                    newObject.email, newObject.id,
-                   inTutorialNumber );
+                   inTutorialNumber, newObject.xs, newObject.ys );
     
     return newObject.id;
     }
@@ -4158,6 +4188,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                    inConnection.twinCount );
     waitingForTwinConnections.push_back( inConnection );
     
+    char anyTwinCursed = inConnection.cursed;
     
 
     // count how many match twin code from inConnection
@@ -4183,6 +4214,9 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                 // don't count this connection itself
                 continue;
                 }
+
+            anyTwinCursed = anyTwinCursed || nextConnection->cursed;
+            
             twinConnections.push_back( nextConnection );
             }
         }
@@ -4194,7 +4228,8 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
         int newID = processLoggedInPlayer( inConnection.sock,
                                            inConnection.sockBuffer,
                                            inConnection.email,
-                                           inConnection.tutorialNumber );
+                                           inConnection.tutorialNumber,
+                                           anyTwinCursed );
         
         
         LiveObject *newPlayer = NULL;
@@ -4238,6 +4273,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                    // ignore tutorial number of all but
                                    // first player
                                    0,
+                                   anyTwinCursed,
                                    parent,
                                    displayID,
                                    forcedEvePos );
@@ -5908,7 +5944,8 @@ int main() {
                 newConnection.sequenceNumber = nextSequenceNumber;
                 
                 newConnection.tutorialNumber = 0;
-
+                newConnection.cursed = false;
+                
                 newConnection.twinCode = NULL;
                 newConnection.twinCount = 0;
                 
@@ -6087,7 +6124,8 @@ int main() {
                                     nextConnection->sock,
                                     nextConnection->sockBuffer,
                                     nextConnection->email,
-                                    nextConnection->tutorialNumber );
+                                    nextConnection->tutorialNumber,
+                                    nextConnection->cursed );
                                 }
                             
                             newConnections.deleteElement( i );
@@ -6177,6 +6215,16 @@ int main() {
                                     nextConnection->twinCount = maxCount;
                                     }
                                 }
+
+
+                            // FIXME EVENTUALLY:
+                            // can check whether email is cursed here
+                            // locally without blocking
+                            // in future, we'll be making a call to the global
+                            // curse server and waiting for the result
+                            nextConnection->cursed =
+                                ( getCurseLevel( nextConnection->email ) > 0 );
+                            
 
                             char emailAlreadyLoggedIn = false;
                             
@@ -6300,7 +6348,8 @@ int main() {
                                             nextConnection->sock,
                                             nextConnection->sockBuffer,
                                             nextConnection->email,
-                                            nextConnection->tutorialNumber );
+                                            nextConnection->tutorialNumber,
+                                            nextConnection->cursed );
                                         }
                                     newConnections.deleteElement( i );
                                     i--;

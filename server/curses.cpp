@@ -209,9 +209,9 @@ static void stepCurses() {
         if( ! r->alive )
         if( ( r->tokens == 1 && r->score == 0 )
             ||
-            curTime - r->lastBirthTime > 3600 * 48 ) {
+            curTime - r->lastBirthTime > 3600 * 96 ) {
             // nothing to track for this record
-            // or record stale by 48 hours
+            // or record stale by 96 hours
             
             // delete it
             delete [] r->email;
