@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 138    ???
+Version 138    2018-September-14
 
 --Fixed bug in pattern transition generation.  Pattern should only apply if one
   of actor or target have pattern apply (not in case where only newActor or
