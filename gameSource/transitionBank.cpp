@@ -495,7 +495,13 @@ void initTransBankFinish() {
                     }
                 }
             
-            if( numPatternsInTrans > 1 ) {
+            // pattern only applies if at least one of actor or target
+            // has pattern apply.
+            // (don't fill out pattern if only newActor or newTarget have
+            //  pattern apply, because this will just replace the master
+            //  transition with final element of the pattern list)
+            if( numPatternsInTrans > 1 && 
+                ( transCats[0] != NULL || transCats[1] != NULL ) ) {
                 
                 for( int p=0; p<patternSize; p++ ) {
                     int newTransIDs[4] = { tr->actor, tr->target, 

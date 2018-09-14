@@ -3,6 +3,20 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 138    ???
+
+--Fixed bug in pattern transition generation.  Pattern should only apply if one
+  of actor or target have pattern apply (not in case where only newActor or
+  newTarget have pattern apply).  Example:  last puppy taken from German
+  Shepherd with Puppies makes a German Shepherd.  German Shepherd is a pattern,
+  but German Shepherd with Puppies is not.  Thus, we shouldn't generate a
+  [German Shepherd with Puppies] -> [Adult Dog] transition for each adult dog
+  in the German Shepherd pattern (the result is a single transition to an
+  adult Chihuaha, the last adult dog on the pattern list). 
+
+
+
 Server Fixes
 
 --Fixed a potential server crash when triplets or quadruplets start the
