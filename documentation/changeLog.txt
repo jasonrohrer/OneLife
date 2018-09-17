@@ -3,6 +3,11 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 140    ???
+
+--Fixed bug in transition editor that was labeling produces trans as from
+  pattern by mistake.
+
 
 Server Fixes
 

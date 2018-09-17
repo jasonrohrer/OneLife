@@ -1160,7 +1160,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
                 setDrawColor( 1, 1, 0.5, 1 );
                 noteString = "From Category:";
                 }
-            else if( mProducedByType[i] == 2 ) {
+            else if( mProducesType[i] == 2 ) {
                 setDrawColor( 1, 0.75, 0.75, 1 );
                 noteString = "From Pattern:";
                 }
@@ -1183,7 +1183,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
             if( mProducesType[i] == 1 ) {
                 setDrawColor( 1, 1, 0.5, 1 );
                 }
-            else if( mProducedByType[i] == 2 ) {
+            else if( mProducesType[i] == 2 ) {
                 setDrawColor( 1, 0.75, 0.75, 1 );
                 }
             else {
