@@ -11,6 +11,9 @@ Version 140    ???
 --Added second object picker to transition editor for convenience (can
   juggle more than one search).
 
+--Patterns no longer can replace explicitly-authored transitions.
+
+
 
 Server Fixes
 
