@@ -8,6 +8,9 @@ Version 140    ???
 --Fixed bug in transition editor that was labeling produces trans as from
   pattern by mistake.
 
+--Added second object picker to transition editor for convenience (can
+  juggle more than one search).
+
 
 Server Fixes
 
