@@ -3,6 +3,24 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 140    2018-September-17
+
+--Fixed bug in transition editor that was labeling produces trans as from
+  pattern by mistake.
+
+--Added second object picker to transition editor for convenience (can
+  juggle more than one search).
+
+--Patterns no longer can replace explicitly-authored transitions.
+
+
+
+Server Fixes
+
+--Fixed curse-note exploit (reading a written phrase aloud no longer has same
+  effect as speaking it yourself directly, for naming or cursing).
+
+
 
 Version 138    2018-September-14
 

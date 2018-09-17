@@ -5056,9 +5056,10 @@ char *isNamingSay( char *inSaidString, SimpleVector<char*> *inPhraseList ) {
     char *saidString = inSaidString;
     
     if( saidString[0] == ':' ) {
-        // skip first :
-        // reading written phrase aloud has same effect as saying it
-        saidString = &( saidString[1] );
+        // first : indicates reading a written phrase.
+        // reading written phrase aloud does not have usual effects
+        // (block curse exploit)
+        return NULL;
         }
     
     for( int i=0; i<inPhraseList->size(); i++ ) {
