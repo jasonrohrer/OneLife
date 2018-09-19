@@ -153,9 +153,90 @@ doublePair lastScreenViewCenter = {0, 0 };
 
 
 // world width of one view
-// FOVMOD NOTE:  Change 1/1 - Take these lines during the merge process
-double viewWidth = 1280 * fovmod::scale;
-double viewHeight = 720 * fovmod::scale;
+// FOVMOD NOTE:  Change 1/3 - Take these lines during the merge process
+float fovmod::gui_fov_scale = SettingsManager::getFloatSetting( "fovScale", 1.0f );
+int fovmod::gui_fov_scale_hud = SettingsManager::getIntSetting( "fovScaleHUD", 0 );
+int fovmod::gui_fov_offset_x = (int)(((1280 * gui_fov_scale) - 1280)/2);
+int fovmod::gui_fov_offset_y = (int)(((720 * gui_fov_scale) - 720)/2);
+
+
+double viewWidth = 1280 * fovmod::gui_fov_scale;
+double viewHeight = 720 * fovmod::gui_fov_scale;
+
+
+void setFOVScale() {
+	FILE *fp = SettingsManager::getSettingsFile( "fovScale", "rb+" );
+	if( fp == NULL ) {
+		fp = SettingsManager::getSettingsFile( "fovScale", "wb" );
+		fclose( fp );
+	} else { fclose( fp ); }
+	fp = SettingsManager::getSettingsFile( "fovScaleHUD", "rb+" );
+	if( fp == NULL ) {
+		fp = SettingsManager::getSettingsFile( "fovScaleHUD", "wb" );
+		SettingsManager::setSetting( "fovScaleHUD", 0 );
+		fclose( fp );
+	} else { fclose( fp ); }
+	float fovScale = SettingsManager::getFloatSetting( "fovScale", 0.0f );
+	if( ! fovScale || fovScale < 1 ) {
+		SettingsManager::setSetting( "fovScale", 1.0f );
+	} else if ( fovScale > 6 ) {
+		SettingsManager::setSetting( "fovScale", 6.0f );
+	}
+	viewWidth = 1280 * fovScale;
+	viewHeight = 720 * fovScale;
+}
+
+
+// NAMEMOD NOTE:  Change 1/5 - Take these lines during the merge process
+char *firstNames = NULL;
+char *lastNames = NULL;
+int firstNamesLen;
+int lastNamesLen;
+
+
+static char *readNameFile( const char *inFileName, int *outLen ) {    
+    File nameFile( NULL, inFileName );
+    char *contents = nameFile.readFileContents();
+    if( contents == NULL ) {
+        AppLog::errorF( "Failed to open name file %s for reading", inFileName );
+        return NULL;
+    }
+    char *temp = contents;
+    contents = stringToUpperCase( temp );
+    delete [] temp;    
+    int len = strlen( contents );
+    for( int i=0; i<len; i++ ) {
+        if( contents[i] == '\n' ) {
+            contents[i] = '\0';
+        }
+    }
+    *outLen = len;    
+    return contents;
+}
+
+
+void initNames() {
+    firstNames = readNameFile( "nameLists/first/allFirstNames.txt", &firstNamesLen );
+    lastNames = readNameFile( "nameLists/last/allLastNames.txt", &lastNamesLen  );
+}
+
+
+void freeNames() {
+    if( firstNames != NULL ) {
+        delete [] firstNames;
+        firstNames = NULL;
+    }
+    if( lastNames != NULL ) {
+        delete [] lastNames;
+        lastNames = NULL;
+    }
+}
+
+
+void freeAndQuit() {
+	freeNames();
+	quitGame();
+}
 
 
 // this is the desired visible width
@@ -246,7 +327,8 @@ const char *getWindowTitle() {
 
 
 const char *getAppName() {
-    return "OneLife";
+    // NAMEMOD NOTE:  Change 2/5 - Take these lines during the merge process
+    return "OneLife+";
     }
 
 int getAppVersion() {
@@ -393,6 +475,10 @@ char *getHashSalt() {
 
 void initDrawString( int inWidth, int inHeight ) {
 
+	// FOVMOD NOTE:  Change 2/3 - Take these lines during the merge process
+	setFOVScale();
+    // NAMEMOD NOTE:  Change 3/5 - Take these lines during the merge process
+    initNames();
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
     toggleMipMapMinFilter( true );
@@ -498,18 +584,25 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     mainFontFixed->setMinimumPositionPrecision( 1 );
     numbersFontFixed->setMinimumPositionPrecision( 1 );
     
+	// FOVMOD NOTE:  Change 3/3 - Take these lines during the merge process
+	int shouldScaleHUD = fovmod::gui_fov_scale_hud;
+	float scaleHUD = fovmod::gui_fov_scale;
+	if( shouldScaleHUD > 0 ) {
+		scaleHUD = 1.0f;
+	}
+	
     handwritingFont = 
-        new Font( "font_handwriting_32_32.tga", 3, 6, false, 16 );
+        new Font( "font_handwriting_32_32.tga", 3, 6, false, 16 * scaleHUD );
 
     handwritingFont->setMinimumPositionPrecision( 1 );
 
     pencilFont = 
-        new Font( "font_pencil_32_32.tga", 3, 6, false, 16 );
+        new Font( "font_pencil_32_32.tga", 3, 6, false, 16 * scaleHUD );
 
     pencilFont->setMinimumPositionPrecision( 1 );
 
     pencilErasedFont = 
-        new Font( "font_pencil_erased_32_32.tga", 3, 6, false, 16 );
+        new Font( "font_pencil_erased_32_32.tga", 3, 6, false, 16 * scaleHUD );
 
     pencilErasedFont->setMinimumPositionPrecision( 1 );
 
@@ -1590,7 +1683,8 @@ void drawFrame( char inUpdate ) {
             }
         else if( currentGamePage == existingAccountPage ) {    
             if( existingAccountPage->checkSignal( "quit" ) ) {
-                quitGame();
+                // NAMEMOD NOTE:  Change 4/5 - Take these lines during the merge process
+                freeAndQuit();
                 }
             else if( existingAccountPage->checkSignal( "settings" ) ) {
                 currentGamePage = settingsPage;
@@ -1859,12 +1953,13 @@ void drawFrame( char inUpdate ) {
                 currentGamePage->base_makeActive( true );
                 }
             else if( rebirthChoicePage->checkSignal( "quit" ) ) {
-                quitGame();
+                // NAMEMOD NOTE:  Change 5/5 - Take these lines during the merge process
+                freeAndQuit();
                 }
             }
         else if( currentGamePage == finalMessagePage ) {
             if( finalMessagePage->checkSignal( "quit" ) ) {
-                quitGame();
+                freeAndQuit();
                 }
             }
         }

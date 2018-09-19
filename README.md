@@ -14,36 +14,26 @@ A lightly modified client for [One Hour One Life](http://onehouronelife.com), a 
       - Grab it from the download link provided when you [created your official lifetime account](https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=), or [compiled by Joriom](http://ohol.joriom.pl/download/OneLife_win32_latest) from the [official forums](https://onehouronelife.com/forums/viewtopic.php?id=1467).
    * Pre-compiled releases of this modified client are currently for Windows only.  Feel free to compile from source for Mac/Linux.
 
-# Installation & Usage
-Download the [latest release](https://github.com/Awbz/OneLife/releases/latest) and extract the zip file's contents into the folder where your game is installed.  That's it!  Now just launch the game with one of the executables that matches your desired resolution/FOV scale.
+# Installation
+Download the [latest release](https://github.com/Awbz/OneLife/releases/latest) and extract the zip file's contents into the folder where your game is installed.  That's it!  Now just launch the game with OneLife+.exe.
+
+# Usage
+Keybind | Description
+------- | -----------
+**Left Arrow ( &larr; )** | Decreases the FOV zoom scale by 0.5x.  Minimum of 1.0x scale.
+**Right Arrow ( &rarr; )** | Increases the FOV zoom scale by 0.5x.  Maximum of 6.0x scale.
+**Grave Key ( ` )** | Toggles HUD scaling.  HUD scales with zoom level or locks at 1.0x, separate from the game scene.
+**Backslash Key ( \\ )** | Toggles displaying of the Lineage Fertility panel.
+**Shift + DEL** | Gives up on life and allows you to instantly respawn.
+**Shift + Space** | Generate a random name.
+**Shift + a-z** | Generate a random name that begins with the corresponding letter that you press.
 
 # Added Features
-* **Age Display**
+* **In-Game Adjustable FOV Zoom**
 
-   - Adds your current character's age to the HUD's bottom information bar.
-
-<p align="center">
-    <img alt="Age Display" src="https://user-images.githubusercontent.com/24634429/45483575-344dc980-b706-11e8-9cd1-194da65c1965.png">
-</p>
-
-* **Lineage Fertility Panel**
-
-   - Shows the fertility status for you and your mother.  Statuses are:  Incapable (for males), Too Young, Fertile, Too Old, or Dead. 
-   - Also displays counts of any fertile living female relatives, not including yourself, separated by children and adults.
-   - Helpful for knowing if you or your mother can breed/feed, or determining the probability of survival for your family's lineage.
-   - Can be toggled on or off by using the **L** key.  
-
-<p align="center">
-    <img alt="Lineage Fertility Panel" src="https://user-images.githubusercontent.com/24634429/45483594-3ca60480-b706-11e8-9515-6dda2ef10c49.png">
-</p>
-
-* **FOV Zoom**
-
-   - Pre-compiled with multiple resolution choices to decrease the "zoom level" of the game, thus increasing one's field of view.
-   - 720p = Default FOV
-   - 1080p = 1.5x larger scaled FOV **(Recommended)**
-   - 1440p = 2x larger scaled FOV
-   - 4k = 3x larger scaled FOV
+   - Adds two new settings that control the FOV "zoom level" of the game, "fovScale" and "fovScaleHUD".
+   - "fovScale" controls your "zoom factor" and can be any value from 1.0 to 6.0.
+   - "fovScaleHUD" toggles locking your HUD at a 1.0x scale, separate from the game's FOV scale.
    - **NOTE:** Scales above 2x are likely to have significant amounts of "screen popping" around the edges.  This is due to the amount of data that the server sends to the client at any given time and cannot be avoided.  If this bothers you, try using a version with lower resolution.
 
 <p align="center">
@@ -52,6 +42,38 @@ Download the [latest release](https://github.com/Awbz/OneLife/releases/latest) a
     <img alt="1440p - 2x Zoom" width="20%" src="https://user-images.githubusercontent.com/24634429/45483650-6c550c80-b706-11e8-9226-51bac40c8acf.png">
     <img alt="4k - 3x Zoom" width="20%" src="https://user-images.githubusercontent.com/24634429/45483667-7971fb80-b706-11e8-9246-720bc9f15203.png">
 </p>
+
+* **Lineage Fertility Panel**
+
+   - Shows the fertility status for you and your mother.  Statuses are:  Incapable (for males), Too Young, Fertile, Too Old, or Dead. 
+   - Also displays counts of any fertile living female relatives, not including yourself, separated by children and adults.
+   - Helpful for knowing if you or your mother can breed/feed, or determining the probability of survival for your family's lineage.
+
+<p align="center">
+    <img alt="Lineage Fertility Panel" src="https://user-images.githubusercontent.com/24634429/45483594-3ca60480-b706-11e8-9515-6dda2ef10c49.png">
+</p>
+
+* **Age Display**
+
+   - Adds your current character's age to the HUD's bottom information bar.
+
+<p align="center">
+    <img alt="Age Display" src="https://user-images.githubusercontent.com/24634429/45483575-344dc980-b706-11e8-9cd1-194da65c1965.png">
+</p>
+
+* **Name Generator**
+
+   - Automatically generate a name that the server allows, as it uses the same first and last name lists.
+   - Auto-populates your chat with "YOU ARE <name>", or "I AM <name>" if you have not named yourself yet.
+   - Can generate names pseudo-randomly, or that beginning with a specified letter.
+
+* **Curse Level Display**
+   - Attempts to display your current curse level just below your curse token.
+   - Hovering over other players attempts to prefix their displayed information with their curse level. 
+
+* **Seppuku Respawn**
+   - Are you a player that prefers to respawn until you get to a desired area or family?  Tired of having to relaunch your client to respawn?  This can help!
+   - Assigns a hotkey combination to instantly kill yourself, allowing you to quickly respawn.  Give up on life 200% faster!
 
 # Credits
 Thanks to [Joriom](https://onehouronelife.com/forums/profile.php?id=607) for the [detailed guides](https://onehouronelife.com/forums/viewtopic.php?id=1438), [Bimble](https://onehouronelife.com/forums/profile.php?id=682) for the [VirtualBox image](https://onehouronelife.com/forums/viewtopic.php?id=498), and [Drakulon](https://onehouronelife.com/forums/profile.php?id=1165) for the [original FOV mod concept](https://onehouronelife.com/forums/viewtopic.php?id=1422).

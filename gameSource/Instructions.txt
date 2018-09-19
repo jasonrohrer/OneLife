@@ -1,0 +1,23 @@
+Copy ALL of these files into your main OneLife folder.
+
+
+
+Launch the game using the OneLife+.exe
+
+
+
+Use the left and right arrow keys to decrease or increase your FOV zoom.
+
+Use ` (Grave key) to toggle HUD scaling with the game, or fixed at 1x zoom.
+
+Use \ (Backslash key) to toggle displaying the Lineage Fertility panel.
+
+Use Shift + DEL to give up on life and respawn instantly.
+
+Use Shift + Space to generate a name.
+
+Use Shift + <a-z> to generate a name that begins with <a-z>
+
+
+
+Latest version always available at https://github.com/Awbz/OneLife/releases/latest
