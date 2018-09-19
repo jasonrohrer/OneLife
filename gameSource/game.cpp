@@ -216,8 +216,8 @@ static char *readNameFile( const char *inFileName, int *outLen ) {
 
 
 void initNames() {
-    firstNames = readNameFile( "nameLists/first/allFirstNames.txt", &firstNamesLen );
-    lastNames = readNameFile( "nameLists/last/allLastNames.txt", &lastNamesLen  );
+    firstNames = readNameFile( "firstNames.txt", &firstNamesLen );
+    lastNames = readNameFile( "lastNames.txt", &lastNamesLen  );
 }
 
 
