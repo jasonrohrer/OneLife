@@ -175,10 +175,6 @@ typedef struct FreshConnection {
         double connectionStartTimeSeconds;
 
         char *email;
-
-        // in case of multiple accounts on ticket server, which account
-        // is this?
-        int accountIndex;
         
         int tutorialNumber;
         char cursed;
@@ -198,10 +194,6 @@ SimpleVector<FreshConnection> waitingForTwinConnections;
 typedef struct LiveObject {
         char *email;
         
-        // in case of multiple accounts on ticket server, which account
-        // is this?
-        int accountIndex;
-
         int id;
         
         // object ID used to visually represent this player
@@ -3426,7 +3418,6 @@ static int tutorialCount = 0;
 int processLoggedInPlayer( Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
-                           int inAccountIndex,
                            int inTutorialNumber,
                            char inCursed,
                            // set to -2 to force Eve
@@ -3456,7 +3447,6 @@ int processLoggedInPlayer( Socket *inSock,
     LiveObject newObject;
 
     newObject.email = inEmail;
-    newObject.accountIndex = inAccountIndex;
     
     newObject.id = nextID;
     nextID++;
@@ -4182,9 +4172,8 @@ int processLoggedInPlayer( Socket *inSock,
               players.size(),
               newObject.parentChainLength );
     
-    AppLog::infoF( "New player %s (accIndx=%d) connected as player %d "
-                   "(tutorial=%d) (%d,%d)",
-                   newObject.email, newObject.accountIndex, newObject.id,
+    AppLog::infoF( "New player %s connected as player %d (tutorial=%d) (%d,%d)",
+                   newObject.email, newObject.id,
                    inTutorialNumber, newObject.xs, newObject.ys );
     
     return newObject.id;
@@ -4239,7 +4228,6 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
         int newID = processLoggedInPlayer( inConnection.sock,
                                            inConnection.sockBuffer,
                                            inConnection.email,
-                                           inConnection.accountIndex,
                                            inConnection.tutorialNumber,
                                            anyTwinCursed );
         
@@ -4282,7 +4270,6 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             processLoggedInPlayer( nextConnection->sock,
                                    nextConnection->sockBuffer,
                                    nextConnection->email,
-                                   nextConnection->accountIndex,
                                    // ignore tutorial number of all but
                                    // first player
                                    0,
@@ -6094,91 +6081,56 @@ int main() {
                         }
                     else if( strstr( webResult, "VALID" ) != NULL ) {
                         // correct!
-                        nextConnection->accountIndex = 0;
+
+
+                        const char *message = "ACCEPTED\n#";
+                        int messageLength = strlen( message );
+                
+                        int numSent = 
+                            nextConnection->sock->send( 
+                                (unsigned char*)message, 
+                                messageLength, 
+                                false, false );
                         
-                        sscanf( webResult, "VALID %d", 
-                                &( nextConnection->accountIndex ) );
 
-                        char emailAlreadyLoggedIn = false;
-
-                        for( int p=0; p<players.size(); p++ ) {
-                            LiveObject *o = players.getElement( p );
-
-                            if( strcmp( o->email, 
-                                        nextConnection->email ) == 0 &&
-                                o->accountIndex == 
-                                nextConnection->accountIndex) {
-                                emailAlreadyLoggedIn = true;
-                                break;
-                                }
-                            }
-
-                        if( emailAlreadyLoggedIn ) {
-                            AppLog::infoF( 
-                                "Another client already "
-                                "connected as %s with accountIndex %d, "
-                                "client rejected.",
-                                nextConnection->email,
-                                nextConnection->accountIndex );
-                            
+                        if( numSent != messageLength ) {
+                            AppLog::info( "Failed to write to client socket, "
+                                          "client rejected." );
                             nextConnection->error = true;
                             nextConnection->errorCauseString =
-                                "Duplicate email";
+                                "Socket write failed";
+
                             }
                         else {
+                            // ready to start normal message exchange
+                            // with client
                             
-                            const char *message = "ACCEPTED\n#";
-                            int messageLength = strlen( message );
-                
-                            int numSent = 
-                                nextConnection->sock->send( 
-                                    (unsigned char*)message, 
-                                    messageLength, 
-                                    false, false );
-                        
-
-                            if( numSent != messageLength ) {
-                                AppLog::info( 
-                                    "Failed to write to client socket, "
-                                    "client rejected." );
-                                nextConnection->error = true;
-                                nextConnection->errorCauseString =
-                                    "Socket write failed";
-
+                            AppLog::info( "Got new player logged in" );
+                            
+                            delete nextConnection->ticketServerRequest;
+                            nextConnection->ticketServerRequest = NULL;
+                            
+                            if( nextConnection->twinCode != NULL
+                                && 
+                                nextConnection->twinCount > 0 ) {
+                                processWaitingTwinConnection( *nextConnection );
                                 }
                             else {
-                                // ready to start normal message exchange
-                                // with client
-                            
-                                AppLog::info( "Got new player logged in" );
-                            
-                                delete nextConnection->ticketServerRequest;
-                                nextConnection->ticketServerRequest = NULL;
-                            
-                                if( nextConnection->twinCode != NULL
-                                    && 
-                                    nextConnection->twinCount > 0 ) {
-                                    processWaitingTwinConnection( 
-                                        *nextConnection );
+                                if( nextConnection->twinCode != NULL ) {
+                                    delete [] nextConnection->twinCode;
+                                    nextConnection->twinCode = NULL;
                                     }
-                                else {
-                                    if( nextConnection->twinCode != NULL ) {
-                                        delete [] nextConnection->twinCode;
-                                        nextConnection->twinCode = NULL;
-                                        }
                                 
-                                    processLoggedInPlayer( 
-                                        nextConnection->sock,
-                                        nextConnection->sockBuffer,
-                                        nextConnection->email,
-                                        nextConnection->accountIndex,
-                                        nextConnection->tutorialNumber,
-                                        nextConnection->cursed );
-                                    }
-                            
-                                newConnections.deleteElement( i );
-                                i--;
+                                processLoggedInPlayer( 
+                                    nextConnection->sock,
+                                    nextConnection->sockBuffer,
+                                    nextConnection->email,
+                                    nextConnection->tutorialNumber,
+                                    nextConnection->cursed );
                                 }
+                            
+                            newConnections.deleteElement( i );
+                            i--;
                             }
                         }
                     else {
@@ -6275,9 +6227,31 @@ int main() {
                                 ( getCurseLevel( nextConnection->email ) > 0 );
                             
 
+                            char emailAlreadyLoggedIn = false;
                             
 
-                            
+                            for( int p=0; p<players.size(); p++ ) {
+                                LiveObject *o = players.getElement( p );
+                                
+
+                                if( strcmp( o->email, 
+                                            nextConnection->email ) == 0 ) {
+                                    emailAlreadyLoggedIn = true;
+                                    break;
+                                    }
+                                }
+
+                            if( emailAlreadyLoggedIn ) {
+                                AppLog::infoF( 
+                                    "Another client already "
+                                    "connected as %s, "
+                                    "client rejected.",
+                                    nextConnection->email );
+                                
+                                nextConnection->error = true;
+                                nextConnection->errorCauseString =
+                                    "Duplicate email";
+                                }
 
                             if( requireClientPassword &&
                                 ! nextConnection->error  ) {
@@ -6375,7 +6349,6 @@ int main() {
                                             nextConnection->sock,
                                             nextConnection->sockBuffer,
                                             nextConnection->email,
-                                            nextConnection->accountIndex,
                                             nextConnection->tutorialNumber,
                                             nextConnection->cursed );
                                         }
