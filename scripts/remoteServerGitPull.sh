@@ -15,7 +15,7 @@ read
 while read user server port
 do
   echo "  Running git pull on $server"
-  ssh -n $user@$server 'cd ~/checkout/OneLife; git pull'
+  ssh -n $user@$server 'cd ~/checkout/OneLife; bash scripts/serverPull.sh'
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
