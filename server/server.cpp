@@ -3568,7 +3568,7 @@ int processLoggedInPlayer( Socket *inSock,
                 }
             
             if( canHaveBaby ) {
-                if( ( ! inCurseLevel == 0 && player->curseLevel == 0 ) 
+                if( ( inCurseLevel == 0 && player->curseLevel == 0 ) 
                     || 
                     ( inCurseLevel > 0 && player->curseLevel > 0 ) ) {
                     // cursed babies only born to cursed mothers
