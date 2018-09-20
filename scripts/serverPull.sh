@@ -8,6 +8,7 @@ git ls-files -om --exclude-standard settings | xargs -I '{}' mv '{}' settingsTem
 
 git pull --tags
 
+
 # mv custom settings back in place after pull
 mv settingsTemp/* settings
 rmdir settingsTemp/
