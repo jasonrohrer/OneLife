@@ -554,6 +554,9 @@ void removeObjectFromAllCategories( int inObjectID ) {
 
 
 
+// NOTE:
+// implementation not functional, because reverse records not stored on 
+// disk currently
 void moveCategoryUp( int inObjectID, int inParentID ) {
     ReverseCategoryRecord *rr = getReverseCategory( inObjectID );
         
@@ -578,6 +581,9 @@ void moveCategoryUp( int inObjectID, int inParentID ) {
 
 
 
+// NOTE:
+// implementation not functional, because reverse records not stored on 
+// disk currently
 void moveCategoryDown( int inObjectID, int inParentID ) {
     ReverseCategoryRecord *rr = getReverseCategory( inObjectID );
         
@@ -600,6 +606,57 @@ void moveCategoryDown( int inObjectID, int inParentID ) {
         }
     
     }
+
+
+
+
+
+void moveCategoryMemberUp( int inParentID, int inObjectID ) {
+
+    CategoryRecord *r = getCategory( inParentID );
+    
+    if( r != NULL ) {        
+        int index = r->objectIDSet.getElementIndex( inObjectID );
+        
+        if( index != -1 && index != 0 ) {
+            
+            int *id = r->objectIDSet.getElement( index );
+            int *idToSwapWith = r->objectIDSet.getElement( index - 1 );
+            
+            int temp = *idToSwapWith;
+            
+            *idToSwapWith = *id;
+            *id = temp;
+            saveCategoryToDisk( inParentID );
+            }
+        }
+    }
+
+
+
+
+void moveCategoryMemberDown( int inParentID, int inObjectID ) {
+
+    CategoryRecord *r = getCategory( inParentID );
+    
+    if( r != NULL ) {        
+        int index = r->objectIDSet.getElementIndex( inObjectID );
+        
+        if( index != -1 && 
+            index != r->objectIDSet.size() - 1 ) {
+            
+            int *id = r->objectIDSet.getElement( index );
+            int *idToSwapWith = r->objectIDSet.getElement( index + 1 );
+            
+            int temp = *idToSwapWith;
+            
+            *idToSwapWith = *id;
+            *id = temp;
+            saveCategoryToDisk( inParentID );
+            }
+        }
+    }
+
 
 
 

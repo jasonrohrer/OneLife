@@ -3,6 +3,22 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 142    ????
+
+--Moving categories up and down on a member object (to alter which category
+  takes precedence) was suppored in the editor, but not being saved to disk in
+  category bank.  Disabled this editor functionality for now (eventually, may
+  implement saving reverse category maps, with order, in the category bank, but
+   it's pretty complicated, and hasn't been needed so far.
+
+--Moving member objects up and down in a category IS actually useful (for
+  pattern categories, where order of members matter), and it's possible to save
+  this to disk in current category bank file structure, so added this
+  functionality to editor.
+
+
+
 Version 140    2018-September-17
 
 --Fixed bug in transition editor that was labeling produces trans as from
