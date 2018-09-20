@@ -44,8 +44,10 @@ cd ~/checkout/minorGems
 git pull --tags
 
 
+cd ~/checkout/OneLife/scripts/serverPull.sh
+
 cd ~/checkout/OneLife/server
-git pull --tags
+
 
 ./configure 1
 make
