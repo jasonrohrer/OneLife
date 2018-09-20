@@ -15,7 +15,7 @@ read
 while read user server port
 do
   echo "  Running pushing settings to $server"
-  scp ~/checkout/OneLife/server/settings/statsServerSharedSecret.ini ~/checkout/OneLife/server/settings/statsServerURL.ini ~/checkout/OneLife/server/settings/useStatsServer.ini ~/checkout/OneLife/server/settings/lineageServerSharedSecret.ini ~/checkout/OneLife/server/settings/lineageServerURL.ini ~/checkout/OneLife/server/settings/useLineageServer.ini ~/checkout/OneLife/server/settings/reflectorSharedSecret.ini $user@$server:checkout/OneLife/server/settings/
+  scp ~/checkout/OneLife/server/settings/statsServerSharedSecret.ini ~/checkout/OneLife/server/settings/statsServerURL.ini ~/checkout/OneLife/server/settings/useStatsServer.ini ~/checkout/OneLife/server/settings/lineageServerSharedSecret.ini ~/checkout/OneLife/server/settings/lineageServerURL.ini ~/checkout/OneLife/server/settings/useLineageServer.ini  ~/checkout/OneLife/server/settings/curseServerSharedSecret.ini ~/checkout/OneLife/server/settings/curseServerURL.ini ~/checkout/OneLife/server/settings/useCurseServer.ini ~/checkout/OneLife/server/settings/reflectorSharedSecret.ini $user@$server:checkout/OneLife/server/settings/
 
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
