@@ -665,7 +665,8 @@ function cs_curse() {
         $query = "INSERT INTO $tableNamePrefix". "users SET " .
             "email = '$email', ".
             "sequence_number = 1, ".
-            "curse_score = 1 ".
+            "curse_score = 1, ".
+            "extra_life_sec = 0 ".
             "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1, ".
             "curse_score = curse_score + 1;";
         }
@@ -743,7 +744,7 @@ function cs_liveTime() {
         $query = "INSERT INTO $tableNamePrefix". "users SET " .
             "email = '$email', ".
             "sequence_number = 1, ".
-            "curse_score = 0 ".
+            "curse_score = 0, ".
             // don't count lived time unless already cursed
             "extra_life_sec = 0 ".
             "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1;";
