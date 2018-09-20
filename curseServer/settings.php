@@ -34,6 +34,14 @@ $secondsPerCurseScoreDecrement = 3600;
 $curseThreshold = 8;
 
 
+// how long you have to live in a life before it "counts" toward
+// time served to decrement your curse score
+// shorter lives don't count, to prevent auto-clickers from serving time
+// by starving over and over.
+$minServedSecondsCount = 600;
+
+
+
 
 
 // secret shared with trusted game servers that allows them to post

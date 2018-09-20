@@ -739,6 +739,15 @@ function cs_liveTime() {
         return;
         }
 
+
+    global $minServedSecondsCount;
+    if( $seconds < $minServedSecondsCount ) {
+        // life is too short to count as time served.
+        echo "OK";
+        return;
+        }
+    
+    
     if( $trueSeq == 0 ) {
         // no record exists, add one
         $query = "INSERT INTO $tableNamePrefix". "users SET " .
