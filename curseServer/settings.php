@@ -28,6 +28,14 @@ $mainSiteURL = "http://localhost/jcr13/";
 // Adjust these to change the way the server  works.
 
 
+$secondsPerCurseScoreDecrement = 3600;
+
+// isCursed returns 1 if player has this curse score or higher
+$curseThreshold = 8;
+
+
+
+
 // secret shared with trusted game servers that allows them to post
 // game stats
 
