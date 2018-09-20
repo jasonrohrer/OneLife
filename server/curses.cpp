@@ -697,8 +697,9 @@ void stepCurseServerRequests() {
             if( r->sequenceNumber == -1 ) {
                 // result is sequence number
                 
-                sscanf( webResult, "%d", &( r->sequenceNumber ) );
-
+                sscanf( webResult, "%d", &( r->sequenceNumber ) );            
+                delete [] webResult;
+                
                 if( r->sequenceNumber == -1 ) {
                     AppLog::info( 
                         "Failed to get seq number from curse server." );
@@ -753,12 +754,13 @@ void stepCurseServerRequests() {
                 // result is from main action request
                 // this means we're done!
 
-                if( strstr( webResult, "OK" ) == NULL ) {
-                    
+                if( strstr( webResult, "OK" ) == NULL ) {                    
                     AppLog::infoF( 
                         "Failed to get expected result from curseServer, "
                         "got:  %s", webResult );
-                    }
+                    }            
+                delete [] webResult;
+
                 delete [] r->email;
                 delete [] r->actionString;
                 delete r->request;
