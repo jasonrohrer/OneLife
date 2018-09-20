@@ -19,6 +19,14 @@ Version 142    ????
 
 
 
+Server Fixes
+
+--Fixed grave detection code so that Murder Grave is counted as a grave, so
+  you can't insert things into it.
+
+
+
+
 Version 140    2018-September-17
 
 --Fixed bug in transition editor that was labeling produces trans as from

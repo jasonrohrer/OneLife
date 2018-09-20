@@ -2597,6 +2597,21 @@ char isGrave( int inObjectID ) {
     if( r->deathMarker ) {
         return true;
         }
+    
+    // first, see if this decays into a grave in one step
+
+    TransRecord *trans = getTrans( -1, inObjectID );
+    
+    if( trans != NULL && trans->newTarget > 0 ) {
+        
+        ObjectRecord *nextR = getObject( trans->newTarget );
+
+        if( nextR != NULL && nextR->deathMarker ) {
+            return true;
+            }
+        }
+    
+    
 
     SimpleVector<int> seenIDs;
     
