@@ -24,7 +24,9 @@ Server Fixes
 --Fixed grave detection code so that Murder Grave is counted as a grave, so
   you can't insert things into it.
 
---Server handles case of multiple accounts with same email address, only blocking duplicate email connection after receiving accountIndex from ticketServer (only blocks them if they have the same accountIndex).
+--Server handles case of multiple accounts with same email address, only
+  blocking duplicate email connection after receiving accountIndex from
+  ticketServer (only blocks them if they have the same accountIndex).
 
 
 
