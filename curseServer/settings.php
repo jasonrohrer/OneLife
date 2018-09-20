@@ -9,7 +9,7 @@ $databasePassword = "testPassword";
 $databaseName = "test";
 
 // The URL of to the server.php script.
-$fullServerURL = "http://localhost/jcr13/lineageServer/server.php";
+$fullServerURL = "http://localhost/jcr13/curseServer/server.php";
 
 
 

@@ -7,7 +7,7 @@ void freeCurses();
 
 
 void cursesLogBirth( char *inEmail );
-void cursesLogDeath( char *inEmail );
+void cursesLogDeath( char *inEmail, double inAge );
 
 
 
@@ -32,6 +32,7 @@ void logPlayerNameForCurses( char *inPlayerEmail, char *inPlayerName );
 
 
 // returns curse level, or 0 if not cursed
+// returns -1 if pending lookup on remote server
 int getCurseLevel( char *inPlayerEmail );
 
 
@@ -39,3 +40,5 @@ int getCurseLevel( char *inPlayerEmail );
 // true if name already exists in curse system
 char isNameDuplicateForCurses( char *inPlayerName );
 
+
+void stepCurseServerRequests();

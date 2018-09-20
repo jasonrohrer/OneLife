@@ -491,13 +491,15 @@ function cs_showData( $checkPassword = true ) {
     echo "<tr><td>".orderLink( "id", "ID" )."</td>\n";
     echo "<td>".orderLink( "email", "Email" )."</td>\n";
     echo "<td>".orderLink( "curse_score", "CurseScore" )."</td>\n";
+    echo "<td>ExtraSec</td>\n";
     echo "</tr>\n";
 
 
     for( $i=0; $i<$numRows; $i++ ) {
         $id = cs_mysqli_result( $result, $i, "id" );
         $email = cs_mysqli_result( $result, $i, "email" );
-        $curseScore = cs_mysqli_result( $result, $i, "curse_score" );
+        $curse_score = cs_mysqli_result( $result, $i, "curse_score" );
+        $extra_life_sec = cs_mysqli_result( $result, $i, "extra_life_sec" );
 
         $encodedEmail = urlencode( $email );
 
@@ -508,7 +510,8 @@ function cs_showData( $checkPassword = true ) {
         echo "<td>".
             "<a href=\"server.php?action=show_detail&email=$encodedEmail\">".
             "$email</a></td>\n";
-        echo "<td>$life_count</td>\n";
+        echo "<td>$curse_score</td>\n";
+        echo "<td>$extra_life_sec</td>\n";
         echo "</tr>\n";
         }
     echo "</table>";
@@ -684,7 +687,7 @@ function cs_curse() {
 
 
 
-function cs_live_time() {
+function cs_liveTime() {
     global $tableNamePrefix, $sharedGameServerSecret,
         $secondsPerCurseScoreDecrement;
 
@@ -708,8 +711,7 @@ function cs_live_time() {
     $hash_value = strtoupper( $hash_value );
 
 
-    if( $email == "" ||
-        $server == "" ) {
+    if( $email == "" ) {
 
         cs_log( "live_time denied for bad email or server name" );
         
@@ -751,7 +753,7 @@ function cs_live_time() {
 
         $query = "SELECT curse_score, extra_life_sec ".
             "FROM $tableNamePrefix"."users ".
-            "WHERE email = '$inEmail';";
+            "WHERE email = '$email';";
         $result = cs_queryDatabase( $query );
 
         $numRows = mysqli_num_rows( $result );
@@ -838,7 +840,7 @@ function cs_isCursed() {
 
     $query = "SELECT curse_score ".
             "FROM $tableNamePrefix"."users ".
-            "WHERE email = '$inEmail';";
+            "WHERE email = '$email';";
     $result = cs_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
