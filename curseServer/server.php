@@ -261,7 +261,8 @@ function cs_setupDatabase() {
             "UNIQUE KEY( email )," .
             "sequence_number INT NOT NULL," .
             "curse_score INT NOT NULL," .
-            "extra_life_sec FLOAT NOT NULL );";
+            "extra_life_sec FLOAT NOT NULL," .
+            "total_curse_score INT NOT NULL );";
 
         $result = cs_queryDatabase( $query );
 
@@ -490,7 +491,8 @@ function cs_showData( $checkPassword = true ) {
     echo "<tr>\n";    
     echo "<tr><td>".orderLink( "id", "ID" )."</td>\n";
     echo "<td>".orderLink( "email", "Email" )."</td>\n";
-    echo "<td>".orderLink( "curse_score", "CurseScore" )."</td>\n";
+    echo "<td>".orderLink( "curse_score", "Current Curse Score" )."</td>\n";
+    echo "<td>".orderLink( "total_curse_score", "Total Curse Score" )."</td>\n";
     echo "<td>ExtraSec</td>\n";
     echo "</tr>\n";
 
@@ -500,7 +502,9 @@ function cs_showData( $checkPassword = true ) {
         $email = cs_mysqli_result( $result, $i, "email" );
         $curse_score = cs_mysqli_result( $result, $i, "curse_score" );
         $extra_life_sec = cs_mysqli_result( $result, $i, "extra_life_sec" );
-
+        $total_curse_score =
+            cs_mysqli_result( $result, $i, "total_curse_score" );
+        
         $encodedEmail = urlencode( $email );
 
         
@@ -511,6 +515,7 @@ function cs_showData( $checkPassword = true ) {
             "<a href=\"server.php?action=show_detail&email=$encodedEmail\">".
             "$email</a></td>\n";
         echo "<td>$curse_score</td>\n";
+        echo "<td>$total_curse_score</td>\n";
         echo "<td>$extra_life_sec</td>\n";
         echo "</tr>\n";
         }
@@ -541,13 +546,14 @@ function cs_showDetail( $checkPassword = true ) {
 
     $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
             
-    $query = "SELECT id, curse_score, extra_life_sec ".
+    $query = "SELECT id, curse_score, total_curse_score, extra_life_sec ".
         "FROM $tableNamePrefix"."users ".
         "WHERE email = '$email';";
     $result = cs_queryDatabase( $query );
 
     $id = cs_mysqli_result( $result, 0, "id" );
     $curse_score = cs_mysqli_result( $result, 0, "curse_score" );
+    $total_curse_score = cs_mysqli_result( $result, 0, "total_curse_score" );
     $extra_life_sec = cs_mysqli_result( $result, 0, "extra_life_sec" );
 
     
@@ -556,7 +562,8 @@ function cs_showDetail( $checkPassword = true ) {
     
     echo "<b>ID:</b> $id<br><br>";
     echo "<b>Email:</b> $email<br><br>";
-    echo "<b>CurseScore:</b> $curse_score<br><br>";
+    echo "<b>Current Curse Score:</b> $curse_score<br><br>";
+    echo "<b>Total Curse Score:</b> $total_curse_score<br><br>";
     echo "<b>ExtraLifeSec:</b> $extra_life_sec<br><br>";
     echo "<br><br>";
     }
@@ -666,16 +673,19 @@ function cs_curse() {
             "email = '$email', ".
             "sequence_number = 1, ".
             "curse_score = 1, ".
+            "total_curse_score = 1, ".
             "extra_life_sec = 0 ".
             "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1, ".
-            "curse_score = curse_score + 1;";
+            "curse_score = curse_score + 1, ".
+            "total_curse_score = total_curse_score + 1;";
         }
     else {
         // update the existing one
         $query = "UPDATE $tableNamePrefix"."users SET " .
             // our values might be stale, increment values in table
             "sequence_number = sequence_number + 1, ".
-            "curse_score = curse_score + 1 " .
+            "curse_score = curse_score + 1, " .
+            "total_curse_score = total_curse_score + 1 " .
             "WHERE email = '$email'; ";
         
         }
@@ -754,6 +764,7 @@ function cs_liveTime() {
             "email = '$email', ".
             "sequence_number = 1, ".
             "curse_score = 0, ".
+            "total_curse_score = 0, ".
             // don't count lived time unless already cursed
             "extra_life_sec = 0 ".
             "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1;";
@@ -790,7 +801,9 @@ function cs_liveTime() {
                     $extra_life_sec = 0;
                     }
                 
-        
+
+                // never decrement total_curse_score
+                
                 $query = "UPDATE $tableNamePrefix"."users SET " .
                     // our values might be stale, increment values in table
                     "sequence_number = sequence_number + 1, ".
