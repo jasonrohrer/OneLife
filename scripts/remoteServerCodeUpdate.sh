@@ -35,7 +35,7 @@ git pull --tags
 
 
 
-cd ~/checkout/OneLife/scripts/serverPull.sh
+~/checkout/OneLife/scripts/serverPull.sh
 
 
 cd ~/checkout/OneLife/server
