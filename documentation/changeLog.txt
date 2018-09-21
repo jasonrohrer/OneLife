@@ -27,6 +27,8 @@ Server Fixes
 --Centralized curse-tracking server shared by all servers.  Getting cursed on
   one server means you are cursed on all servers.
 
+--Fixed a potential crash if numContained in map set > 0, but contained ID is 0.
+
 
 
 Version 140    2018-September-17

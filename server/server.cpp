@@ -4610,6 +4610,16 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                 subContain = true;
                 }
 
+            
+            if( toRemoveID == 0 ) {
+                // this should never happen, except due to map corruption
+                
+                // clear container, to be safe
+                clearAllContained( inContX, inContY );
+                return false;
+                }
+
+
             if( inPlayer->holdingID == 0 && 
                 numIn > 0 &&
                 // old enough to handle it
