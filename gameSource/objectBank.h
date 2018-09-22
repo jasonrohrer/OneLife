@@ -551,6 +551,9 @@ int getRandomFemalePersonObject();
 int *getRaces( int *outNumRaces );
 
 
+// number of people in race
+int getRaceSize( int inRace );
+
 // -1 if no person of this race exists
 int getRandomPersonObjectOfRace( int inRace );
 

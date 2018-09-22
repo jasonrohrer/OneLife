@@ -3294,6 +3294,15 @@ int *getRaces( int *outNumRaces ) {
 
 
 
+int getRaceSize( int inRace ) {
+    if( inRace > MAX_RACE ) {
+        return 0;
+        }
+    return racePersonObjectIDs[ inRace ].size();
+    }
+
+
+
 int getRandomPersonObjectOfRace( int inRace ) {
     if( inRace > MAX_RACE ) {
         inRace = MAX_RACE;

@@ -29,6 +29,11 @@ Server Fixes
 
 --Fixed a potential crash if numContained in map set > 0, but contained ID is 0.
 
+--Fixed so that red-head race isn't a attractor point.  Any race with less than
+  four members automatically has babies in a neighboring race.  For now, until
+  there are more red-heads, the red-head will not have red-headded babies.
+
+
 
 
 Version 140    2018-September-17

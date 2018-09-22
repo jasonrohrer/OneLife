@@ -3793,7 +3793,23 @@ int processLoggedInPlayer( Socket *inSock,
                 
                 int childRace = parentObject->race;
                 
-                if( randSource.getRandomDouble() > childSameRaceLikelihood ) {
+                char forceDifferentRace = false;
+
+                if( getRaceSize( parentObject->race ) < 4 ) {
+                    // no room in race for diverse family members
+                    
+                    // pick a different race for child to ensure village 
+                    // diversity
+                    // (otherwise, almost everyone is going to look the same)
+                    forceDifferentRace = true;
+                    }
+                
+                // everyone has a small chance of having a neighboring-race
+                // baby, even if not forced by parent's small race size
+                if( forceDifferentRace ||
+                    randSource.getRandomDouble() > 
+                    childSameRaceLikelihood ) {
+                    
                     // different race than parent
                     
                     int offset = 1;
@@ -3962,18 +3978,22 @@ int processLoggedInPlayer( Socket *inSock,
         }
     
 
-    int forceID = SettingsManager::getIntSetting( "forceEveObject", 0 );
     
-    if( forceID > 0 ) {
-        newObject.displayID = forceID;
-        }
+    if( parent == NULL ) {
+        // Eve
+        int forceID = SettingsManager::getIntSetting( "forceEveObject", 0 );
     
-    
-    float forceAge = SettingsManager::getFloatSetting( "forceEveAge", 0.0 );
-    
-    if( forceAge > 0 ) {
-        newObject.lifeStartTimeSeconds = 
-            Time::getCurrentTime() - forceAge * ( 1.0 / getAgeRate() );
+        if( forceID > 0 ) {
+            newObject.displayID = forceID;
+            }
+        
+        
+        float forceAge = SettingsManager::getFloatSetting( "forceEveAge", 0.0 );
+        
+        if( forceAge > 0 ) {
+            newObject.lifeStartTimeSeconds = 
+                Time::getCurrentTime() - forceAge * ( 1.0 / getAgeRate() );
+            }
         }
     
 
