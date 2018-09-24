@@ -142,11 +142,21 @@ timeSec_t fastTime() {
     }
 
 
+
+timeSec_t slowTime() {
+    if( startFastTime == -1 ) {
+        startFastTime = Time::timeSec();
+        }
+    return ( Time::timeSec() - startFastTime ) / 4 + startFastTime;
+    }
+
+
 // can replace with frozenTime to freeze time
 // or slowTime to slow it down
 #define MAP_TIMESEC Time::timeSec()
 //#define MAP_TIMESEC frozenTime()
 //#define MAP_TIMESEC fastTime()
+//#define MAP_TIMESEC slowTime()
 
 
 extern GridPos getClosestPlayerPos( int inX, int inY );
