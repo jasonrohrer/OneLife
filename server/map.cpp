@@ -3918,8 +3918,9 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 
                 int tryRadius = 4;
 
-                if( t->move > 3 ) {
-                    // NSEW moves never go beyond their intended distance
+                if( t->move > 3 && tryDist == 1 ) {
+                    // single-step NSEW moves never go beyond 
+                    // their intended distance
                     tryRadius = 0;
                     }
 

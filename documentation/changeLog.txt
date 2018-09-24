@@ -17,6 +17,14 @@ Version 142    ????
   this to disk in current category bank file structure, so added this
   functionality to editor.
 
+--Finally fixed the root cause of the goose-stump and bear cave bug.  NSEW
+  moves used to be fixed distance (instead of variable, looking for a possible
+  space to land).  This is necessary for carts and other fixed-movment things.
+  However, all of those things move a single step NSEW.  So, in that case, we
+  shouldn't try moving farther if our move is blocked.  However, we can make
+  the goose and bear move 2 steps south, and then the code can treat them
+  differently (searching for a free space for them to move to).
+
 
 
 Server Fixes
