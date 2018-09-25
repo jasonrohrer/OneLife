@@ -25,6 +25,12 @@ Version 142    ????
   the goose and bear move 2 steps south, and then the code can treat them
   differently (searching for a free space for them to move to).
 
+--More fixes for stump/cave bug.  Now any applicable transition is applied for
+  an object that is stuck and can't move, but was supposed to leave something
+  behind (bear-on-cave transition, or goose-on-stump transtion).  No more
+  disappearing stump or cave no matter what.
+
+
 
 
 Server Fixes

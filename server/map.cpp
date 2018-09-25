@@ -4274,6 +4274,27 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         }
                     if( trans != NULL ) {
                         newID = trans->newTarget;
+                        
+                        // what was SUPPOSED to be left behind on ground
+                        // that object moved away from?
+                        if( trans->newActor > 0 ) {
+                            
+                            // see if there's anything defined for when
+                            // the new object moves ONTO this thing
+                            
+                            // (object is standing still in same spot, 
+                            //  effectively on top of what it was supposed
+                            //  to leave behind)
+                            
+                            TransRecord *inPlaceTrans = 
+                                getPTrans( newID, trans->newActor );
+                            
+                            if( inPlaceTrans != NULL &&
+                                inPlaceTrans->newTarget > 0 ) {
+                                
+                                newID = inPlaceTrans->newTarget;
+                                }
+                            }
                         }
                     }
                 }
