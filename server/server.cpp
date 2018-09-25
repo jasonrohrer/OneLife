@@ -8315,20 +8315,50 @@ int main() {
                                     int nD = 
                                         getMapObject( nextPlayer->xd, 
                                                       nextPlayer->yd + 1 );
+
+                                    // diags too
+                                    int nE = 
+                                        getMapObject( nextPlayer->xd - 1, 
+                                                      nextPlayer->yd - 1 );
+                                    int nF = 
+                                        getMapObject( nextPlayer->xd + 1, 
+                                                      nextPlayer->yd + 1);
+                                    int nG = 
+                                        getMapObject( nextPlayer->xd + 1, 
+                                                      nextPlayer->yd - 1 );
+                                    int nH = 
+                                        getMapObject( nextPlayer->xd - 1, 
+                                                      nextPlayer->yd + 1 );
                                     
+                                    char perm = false;
+                                    
+                                    if( nextPlayer->holdingID > 0 &&
+                                        getObject( nextPlayer->holdingID )->
+                                        permanent ) {
+                                        perm = true;
+                                        }
+
                                     if( nA != 0 && nB != 0 && 
-                                        nC != 0 && nD != 0 
+                                        nC != 0 && nD != 0 && 
+                                        nE != 0 && nF != 0 && 
+                                        nG != 0 && nH != 0 
                                         &&
                                         getObject( nA )->blocksWalking &&
                                         getObject( nB )->blocksWalking &&
                                         getObject( nC )->blocksWalking &&
-                                        getObject( nD )->blocksWalking ) {
+                                        getObject( nD )->blocksWalking &&
+                                        getObject( nE )->blocksWalking &&
+                                        getObject( nF )->blocksWalking &&
+                                        getObject( nG )->blocksWalking &&
+                                        getObject( nH )->blocksWalking &&
+                                        ! perm ) {
                                         
 
                                         // surrounded with blocking
                                         // objects while holding
                                     
-                                        // throw held into nearest empty spot
+                                        // throw non-permanent 
+                                        // held into nearest empty spot
                                         
                                         handleDrop( 
                                             m.x, m.y, 

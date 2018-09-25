@@ -47,6 +47,15 @@ Server Fixes
   four members automatically has babies in a neighboring race.  For now, until
   there are more red-heads, the red-head will not have red-headded babies.
 
+--Old code that checked for whether you were surrouned by blocking objects
+  while holding something, which threw the object from your hand to give you a
+  chance to untrap yourself, did not handle permanent held objects, nor did it
+  account for diagonal walking when checking for surrounded status (only NSEW).
+  This is what enabled teleporters, and also a murder-weapon-dropping exploit.
+  This has all been fixed.  Teleportation will still happen, but only if you
+  are truly surrounded and not holding something permanent.
+
+
 
 
 
