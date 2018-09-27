@@ -244,6 +244,9 @@ float initSpriteBankStep() {
     return (float)( currentFile ) / (float)( cache.numFiles );
     }
 
+
+static char spriteBankLoaded = false;
+
  
 
 void initSpriteBankFinish() {    
@@ -274,6 +277,13 @@ void initSpriteBankFinish() {
         }
 
     printf( "Loaded %d tagged sprites from sprites folder\n", numRecords );
+    spriteBankLoaded = true;
+    }
+
+
+
+char isSpriteBankLoaded() {
+    return spriteBankLoaded;
     }
 
 
@@ -389,6 +399,8 @@ void freeSpriteBank() {
     if( blankSprite != NULL ) {
         freeSprite( blankSprite );
         }
+
+    spriteBankLoaded = false;
     }
 
 
@@ -560,6 +572,18 @@ SpriteRecord *getSpriteRecord( int inID ) {
     else {
         return NULL;
         }
+    }
+
+
+
+char *getSpriteTag( int inID ) {
+    SpriteRecord *r = getSpriteRecord( inID );
+    
+    if( r == NULL ) {
+        return NULL;
+        }
+    
+    return r->tag;
     }
 
 

@@ -286,6 +286,42 @@ static void fillObjectBiomeFromString( ObjectRecord *inRecord,
 
 
 
+static void setupEyesAndMouth( ObjectRecord *inR ) {
+    ObjectRecord *r = inR;
+    
+    r->spriteIsEyes = new char[ r->numSprites ];
+    r->spriteIsMouth = new char[ r->numSprites ];
+
+    memset( r->spriteIsEyes, false, r->numSprites );
+    memset( r->spriteIsMouth, false, r->numSprites );
+
+    r->mainEyesPos.x = 0;
+    r->mainEyesPos.y = 0;
+
+    if( r->person && isSpriteBankLoaded() ) {
+        
+        for( int i = 0; i < r->numSprites; i++ ) {
+            char *tag = getSpriteTag( r->sprites[i] );
+            
+            if( tag != NULL && strstr( tag, "Eyes" ) != NULL ) {
+                r->spriteIsEyes[ i ] = true;
+                }
+            if( tag != NULL && strstr( tag, "Mouth" ) != NULL ) {
+                r->spriteIsMouth[ i ] = true;
+                }
+
+            if( r->spriteIsEyes[i] && 
+                r->spriteAgeStart[i] < 30 && r->spriteAgeEnd[i] > 30 ) {
+                r->mainEyesPos = r->spritePos[i];
+                }
+            }
+        } 
+    }
+
+
+
+
+
 float initObjectBankStep() {
         
     if( currentFile == cache.numFiles ) {
@@ -873,7 +909,8 @@ float initObjectBankStep() {
                                 
                     next++;                        
                     }
-
+                
+                setupEyesAndMouth( r );
 
                 r->anySpritesBehindPlayer = false;
                 r->spriteBehindPlayer = NULL;
@@ -1557,6 +1594,9 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->spriteIsBackFoot;
             delete [] idMap[inID]->spriteIsFrontFoot;
 
+            delete [] idMap[inID]->spriteIsEyes;
+            delete [] idMap[inID]->spriteIsMouth;
+
             delete [] idMap[inID]->spriteUseVanish;
             delete [] idMap[inID]->spriteUseAppear;
             
@@ -1632,6 +1672,10 @@ void freeObjectBank() {
             delete [] idMap[i]->spriteIsBody;
             delete [] idMap[i]->spriteIsBackFoot;
             delete [] idMap[i]->spriteIsFrontFoot;
+
+            delete [] idMap[i]->spriteIsEyes;
+            delete [] idMap[i]->spriteIsMouth;
+
 
             delete [] idMap[i]->spriteUseVanish;
             delete [] idMap[i]->spriteUseAppear;
@@ -2565,6 +2609,10 @@ int addObject( const char *inDescription,
 
     memcpy( r->spriteIsFrontFoot, inSpriteIsFrontFoot, 
             inNumSprites * sizeof( char ) );
+
+
+    setupEyesAndMouth( r );
+    
 
 
     memcpy( r->spriteUseVanish, inSpriteUseVanish, 

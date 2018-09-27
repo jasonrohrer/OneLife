@@ -237,7 +237,22 @@ typedef struct ObjectRecord {
         char *spriteIsBody;
         char *spriteIsBackFoot;
         char *spriteIsFrontFoot;
+
+
+        // derrived automatically for person objects from sprite name
+        // tags (if they contain Eyes or Mouth)
+        // only filled in if sprite bank has been loaded before object bank
+        char *spriteIsEyes;
+        char *spriteIsMouth;
         
+        // position of eyes in main segment of life
+        // derrived automatically from whatever eyes are visible at age 30
+        // (old eyes may have wrinkles around them, so they end up
+        //  getting centered differently)
+        // only filled in if sprite bank has been loaded before object bank
+        doublePair mainEyesPos;
+        
+
         
         // number of times this object can be used before
         // something different happens
