@@ -1088,6 +1088,7 @@ typedef enum messageType {
     DROP,
     KILL,
     SAY,
+    EMOT,
     JUMP,
     MAP,
     TRIGGER,
@@ -1376,6 +1377,17 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
                     m.saidText = stringDuplicate( &( thirdSpace[1] ) );
                     }
                 }
+            }
+        }
+    else if( strcmp( nameBuffer, "EMOT" ) == 0 ) {
+        m.type = EMOT;
+
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.i ) );
+        
+        if( numRead != 4 ) {
+            m.type = UNKNOWN;
             }
         }
     else {
@@ -6590,6 +6602,9 @@ int main() {
         SimpleVector<GraveInfo> newGraves;
         SimpleVector<GraveMoveInfo> newGraveMoves;
 
+        SimpleVector<int> newEmotPlayerIDs;
+        SimpleVector<int> newEmotIndices;
+
 
         SimpleVector<UpdateRecord> newUpdates;
         SimpleVector<ChangePosition> newUpdatesPos;
@@ -9526,6 +9541,13 @@ int main() {
                                 }
                             }
                         }
+                    else if( m.type == EMOT ) {
+                        // send update even if action fails (to let them
+                        // know that action is over)
+                        newEmotPlayerIDs.push_back( nextPlayer->id );
+                        
+                        newEmotIndices.push_back( m.i );
+                        } 
                     
                     if( m.numExtraPos > 0 ) {
                         delete [] m.extraPos;
@@ -11399,6 +11421,52 @@ int main() {
                     }
                 }
             }
+
+
+
+
+        unsigned char *emotMessage = NULL;
+        int emotMessageLength = 0;
+        
+        if( newEmotPlayerIDs.size() > 0 ) {
+            SimpleVector<char> emotWorking;
+            emotWorking.appendElementString( "PE\n" );
+            
+            int numAdded = 0;
+            for( int i=0; i<newEmotPlayerIDs.size(); i++ ) {
+                
+                char *line = autoSprintf( 
+                    "%d %d\n", 
+                    newEmotPlayerIDs.getElementDirect( i ), 
+                    newEmotIndices.getElementDirect( i ) );
+
+                numAdded++;
+                emotWorking.appendElementString( line );
+                delete [] line;
+                }
+            
+            emotWorking.push_back( '#' );
+            
+            if( numAdded > 0 ) {
+
+                char *emotMessageText = emotWorking.getElementString();
+                
+                emotMessageLength = strlen( emotMessageText );
+                
+                if( emotMessageLength < maxUncompressedSize ) {
+                    emotMessage = (unsigned char*)emotMessageText;
+                    }
+                else {
+                    // compress for all players once here
+                    emotMessage = makeCompressedMessage( 
+                        emotMessageText, 
+                        emotMessageLength, &emotMessageLength );
+                    
+                    delete [] emotMessageText;
+                    }
+                }
+            }
+
         
         
         // send moves and updates to clients
@@ -11947,6 +12015,23 @@ int main() {
                         }
                     }
 
+
+                // EVERYONE gets info about emots           
+                if( emotMessage != NULL ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            emotMessage, 
+                            emotMessageLength, 
+                            false, false );
+                    
+                    if( numSent != emotMessageLength ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
+                        }
+                    }
 
                 
 
@@ -12607,6 +12692,9 @@ int main() {
         if( healingMessage != NULL ) {
             delete [] healingMessage;
             }
+        if( emotMessage != NULL ) {
+            delete [] emotMessage;
+            }
         
         
         // this one is global, so we must clear it every loop
@@ -12717,6 +12805,14 @@ int main() {
 
 void *getSprite( int ) {
     return NULL;
+    }
+
+char *getSpriteTag( int ) {
+    return NULL;
+    }
+
+char isSpriteBankLoaded() {
+    return false;
     }
 
 char markSpriteLive( int ) {

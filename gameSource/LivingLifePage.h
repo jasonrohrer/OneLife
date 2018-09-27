@@ -18,6 +18,7 @@
 #include "pathFind.h"
 
 #include "animationBank.h"
+#include "emotion.h"
 
 #include "TextField.h"
 
@@ -277,6 +278,12 @@ typedef struct LiveObject {
         // movement animation
         SimpleVector<char*> pendingReceivedMessages;
         char somePendingMessageIsMoreMovement;
+
+
+        // NULL if none
+        Emotion *currentEmot;
+        // wall clock time when emot clears
+        double emotClearETATime;
 
     } LiveObject;
 

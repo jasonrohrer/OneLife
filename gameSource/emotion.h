@@ -1,3 +1,5 @@
+#ifndef EMOTION_INCLUDED
+#define EMOTION_INCLUDED
 
 
 typedef struct Emotion {
@@ -41,3 +43,7 @@ Emotion *getEmotion( int inIndex );
 
 // keep emotions in live object set
 void markEmotionsLive();
+
+
+
+#endif
