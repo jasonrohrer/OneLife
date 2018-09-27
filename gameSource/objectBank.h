@@ -245,12 +245,12 @@ typedef struct ObjectRecord {
         char *spriteIsEyes;
         char *spriteIsMouth;
         
-        // position of eyes in main segment of life
+        // offset of eyes from head in main segment of life
         // derrived automatically from whatever eyes are visible at age 30
         // (old eyes may have wrinkles around them, so they end up
         //  getting centered differently)
         // only filled in if sprite bank has been loaded before object bank
-        doublePair mainEyesPos;
+        doublePair mainEyesOffset;
         
 
         
@@ -667,6 +667,11 @@ int getBackArmTopIndex( ObjectRecord *inObject, double inAge );
 
 void getAllLegIndices( ObjectRecord *inObject, double inAge, 
                        SimpleVector<int> *outList );
+
+
+int getEyesIndex( ObjectRecord *inObject, double inAge );
+
+int getMouthIndex( ObjectRecord *inObject, double inAge );
 
 
 

@@ -3415,6 +3415,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
         
 
 
+        setAnimationEmotion( inObj->currentEmot );
+        
         holdingPos =
             drawObjectAnim( inObj->displayID, 2, curType, 
                             timeVal,
@@ -3438,6 +3440,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             ! inObj->heldPosOverrideAlmostOver,
                             inObj->clothing,
                             inObj->clothingContained );
+        
+        setAnimationEmotion( NULL );
         }
     
         
@@ -3589,6 +3593,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
             personPos = add( personPos, inObj->ridingOffset );
 
+            setAnimationEmotion( inObj->currentEmot );
+            
             // rideable object
             holdingPos =
                 drawObjectAnim( inObj->displayID, 2, curType, 
@@ -3613,6 +3619,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                 ! inObj->heldPosOverrideAlmostOver,
                                 inObj->clothing,
                                 inObj->clothingContained );
+            
+            setAnimationEmotion( NULL );
             }
         
 
@@ -3656,6 +3664,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                     }
                 
 
+                setAnimationEmotion( babyO->currentEmot );
+                
                 returnPack =
                     drawObjectAnimPacked( 
                                 babyO->displayID, curHeldType, 
@@ -3679,6 +3689,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                 babyO->clothing,
                                 babyO->clothingContained,
                                 0, NULL, NULL );
+                
+                setAnimationEmotion( NULL );
 
                 if( babyO->currentSpeech != NULL ) {
                     
@@ -17614,6 +17626,21 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
 
     
     switch( inASCII ) {
+        /*
+        // useful for testing
+        case '+':
+            getOurLiveObject()->displayID = getRandomPersonObject();
+            break;
+        case '_':
+            getOurLiveObject()->age += 10;
+            break;
+        case '-':
+            getOurLiveObject()->age -= 5;
+            break;
+        case '~':
+            getOurLiveObject()->age -= 1;
+            break;
+        */
         case 'S':
             if( savingSpeechEnabled && 
                 ! mSayField.isFocused() ) {

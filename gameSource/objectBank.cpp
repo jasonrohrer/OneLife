@@ -295,11 +295,13 @@ static void setupEyesAndMouth( ObjectRecord *inR ) {
     memset( r->spriteIsEyes, false, r->numSprites );
     memset( r->spriteIsMouth, false, r->numSprites );
 
-    r->mainEyesPos.x = 0;
-    r->mainEyesPos.y = 0;
+    r->mainEyesOffset.x = 0;
+    r->mainEyesOffset.y = 0;
 
     if( r->person && isSpriteBankLoaded() ) {
         
+        int headIndex = getHeadIndex( r, 30 );
+
         for( int i = 0; i < r->numSprites; i++ ) {
             char *tag = getSpriteTag( r->sprites[i] );
             
@@ -312,7 +314,11 @@ static void setupEyesAndMouth( ObjectRecord *inR ) {
 
             if( r->spriteIsEyes[i] && 
                 r->spriteAgeStart[i] < 30 && r->spriteAgeEnd[i] > 30 ) {
-                r->mainEyesPos = r->spritePos[i];
+                
+                r->mainEyesOffset = 
+                    sub( r->spritePos[i], r->spritePos[ headIndex ] );
+                printf( "Main eyes offset = %f, %f\n", r->mainEyesOffset.x,
+                        r->mainEyesOffset.y );
                 }
             }
         } 
@@ -910,7 +916,6 @@ float initObjectBankStep() {
                     next++;                        
                     }
                 
-                setupEyesAndMouth( r );
 
                 r->anySpritesBehindPlayer = false;
                 r->spriteBehindPlayer = NULL;
@@ -948,6 +953,10 @@ float initObjectBankStep() {
                                             r->spriteIsFrontFoot, 
                                             r->numSprites );
                 next++;
+                
+                
+                setupEyesAndMouth( r );
+
 
                 if( next < numLines ) {
                     // info about num uses and vanish/appear sprites
@@ -4381,6 +4390,9 @@ char isSpriteVisibleAtAge( ObjectRecord *inObject,
 static int getBodyPartIndex( ObjectRecord *inObject,
                              char *inBodyPartFlagArray,
                              double inAge ) {
+    if( ! inObject->person ) {
+        return 0;
+        }
     
     for( int i=0; i< inObject->numSprites; i++ ) {
         if( inBodyPartFlagArray[i] ) {
@@ -4423,6 +4435,21 @@ int getFrontFootIndex( ObjectRecord *inObject,
                   double inAge ) {
     return getBodyPartIndex( inObject, inObject->spriteIsFrontFoot, inAge );
     }
+
+
+
+int getEyesIndex( ObjectRecord *inObject,
+                  double inAge ) {
+    return getBodyPartIndex( inObject, inObject->spriteIsEyes, inAge );
+    }
+
+
+
+int getMouthIndex( ObjectRecord *inObject,
+                   double inAge ) {
+    return getBodyPartIndex( inObject, inObject->spriteIsMouth, inAge );
+    }
+
 
 
 
