@@ -1943,6 +1943,7 @@ void EditorImportPage::processSelection() {
     double *gCopy = cutImage->copyChannel( 1 );
     double *bCopy = cutImage->copyChannel( 2 );    
 
+    if( !mSelectionMultiplicative )
     for( int i=0; i<numPixels; i++ ) {
         if( whiteMap[i] == 1 ) {
             
