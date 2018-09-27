@@ -1,4 +1,5 @@
 #include "emotion.h"
+#include "liveObjectSet.h"
 
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/SimpleVector.h"
@@ -100,3 +101,23 @@ Emotion *getEmotion( int inIndex ) {
     return emotions.getElement( inIndex );
     }
 
+
+
+void markEmotionsLive() {
+    for( int i=0; i<emotions.size(); i++ ) {
+
+        Emotion *e = emotions.getElement( i );
+
+        if( e->eyeEmot > 0 ) {    
+            addBaseObjectToLiveObjectSet( e->eyeEmot );
+            }
+        if( e->mouthEmot > 0 ) {    
+            addBaseObjectToLiveObjectSet( e->mouthEmot );
+            }
+        if( e->otherEmot > 0 ) {    
+            addBaseObjectToLiveObjectSet( e->otherEmot );
+            }
+        }
+    }
+
+        

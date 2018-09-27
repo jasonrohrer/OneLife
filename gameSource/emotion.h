@@ -36,3 +36,8 @@ int getEmotionIndex( const char *inSpeech );
 
 // returns NULL if index out of range
 Emotion *getEmotion( int inIndex );
+
+
+
+// keep emotions in live object set
+void markEmotionsLive();

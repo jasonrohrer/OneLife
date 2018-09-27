@@ -70,6 +70,8 @@ CustomRandomSource randSource( 34957197 );
 
 #include "groundSprites.h"
 
+#include "emotion.h"
+
 
 #include "FinalMessagePage.h"
 #include "LoadingPage.h"
@@ -718,6 +720,8 @@ void freeFrameDrawer() {
     freeSoundBank();
     
     freeMusicPlayer();
+    freeEmotion();
+
 
     if( reflectorURL != NULL ) {
         delete [] reflectorURL;
@@ -1538,6 +1542,9 @@ void drawFrame( char inUpdate ) {
                 default:
                     // NOW game engine can start measuring frame rate
                     loadingComplete();
+                    
+
+                    initEmotion();
                     
                     initMusicPlayer();
                     setMusicLoudness( musicLoudness );

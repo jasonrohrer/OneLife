@@ -15,6 +15,9 @@
 #include "ageControl.h"
 #include "musicPlayer.h"
 
+#include "emotion.h"
+
+
 #include "liveAnimationTriggers.h"
 
 #include "../commonSource/fractalNoise.h"
@@ -15225,6 +15228,9 @@ void LivingLifePage::step() {
                     }
                 }
 
+
+            markEmotionsLive();
+            
             finalizeLiveObjectSet();
             
             mStartedLoadingFirstObjectSet = true;

@@ -63,6 +63,7 @@ spellCheck.cpp \
 SoundUsage.cpp \
 TwinPage.cpp \
 objectMetadata.cpp \
+emotion.cpp \
 
 
 GAME_GRAPHICS = \
