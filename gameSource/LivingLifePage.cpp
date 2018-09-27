@@ -3414,8 +3414,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             }
         
 
-
-        setAnimationEmotion( inObj->currentEmot );
+        if( ! inObj->tempAgeOverrideSet )
+            setAnimationEmotion( inObj->currentEmot );
         
         holdingPos =
             drawObjectAnim( inObj->displayID, 2, curType, 
@@ -3593,7 +3593,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
             personPos = add( personPos, inObj->ridingOffset );
 
-            setAnimationEmotion( inObj->currentEmot );
+            if( ! inObj->tempAgeOverrideSet )
+                setAnimationEmotion( inObj->currentEmot );
             
             // rideable object
             holdingPos =
@@ -3663,8 +3664,9 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                              &hideAllLimbsBaby );
                     }
                 
-
-                setAnimationEmotion( babyO->currentEmot );
+                
+                if( ! babyO->tempAgeOverrideSet )
+                    setAnimationEmotion( babyO->currentEmot );
                 
                 returnPack =
                     drawObjectAnimPacked( 

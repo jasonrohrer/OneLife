@@ -30,6 +30,7 @@ Version 142    ????
   behind (bear-on-cave transition, or goose-on-stump transtion).  No more
   disappearing stump or cave no matter what.
 
+--Support for new emot protocol and emotion display in client.
 
 
 

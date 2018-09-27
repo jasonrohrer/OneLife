@@ -1586,6 +1586,15 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     if( drawWithEmot != NULL ) {
         eyesIndex = getEyesIndex( obj, inAge );
         mouthIndex = getMouthIndex( obj, inAge );
+        
+        // these are never bottom layer
+        // mark as non-existing instead
+        if( eyesIndex == 0 ) {
+            eyesIndex = -1;
+            }
+        if( mouthIndex == 0 ) {
+            mouthIndex = -1;
+            }
         }
 
     int topBackArmIndex = -1;
@@ -2591,8 +2600,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
 
         // mouth on top of head
+        // but only if there's a moth to be replaced
         if( i == headIndex && drawWithEmot != NULL &&
-            drawWithEmot->mouthEmot != 0 ) {
+            drawWithEmot->mouthEmot != 0 &&
+            mouthIndex != -1 ) {
             
             char used;
             drawObjectAnim( drawWithEmot->mouthEmot, 
