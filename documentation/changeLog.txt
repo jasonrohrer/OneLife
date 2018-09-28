@@ -8,6 +8,9 @@ Version 148    ???
 
 --Scene editor supports emotion displays.
 
+--Fixed so that clothing doesn't blush.
+
+
 
 
 Version 147    2018-September-28

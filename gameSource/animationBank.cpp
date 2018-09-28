@@ -2631,9 +2631,13 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             }
         
 
-        // other emot on top of head
+        // other emot on top of head (but make sure it only applies to people)
+        // other emote tests depend on eyes index or mouth index, which
+        // are forced to 0 for non-people (and become -1 above), but 
+        // this does not happen for headIndex
         if( i == headIndex && drawWithEmot != NULL &&
-            drawWithEmot->otherEmot != 0 ) {
+            drawWithEmot->otherEmot != 0 &&
+            obj->person ) {
             
             char used;
             drawObjectAnim( drawWithEmot->otherEmot, 
