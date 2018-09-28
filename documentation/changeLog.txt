@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 148    ???
+
+--Scene editor supports emotion displays.
+
+
+
 Version 147    2018-September-28
 
 --Moving categories up and down on a member object (to alter which category

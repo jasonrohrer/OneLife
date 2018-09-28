@@ -76,6 +76,7 @@ int accountHmacVersionNumber = 0;
 
 
 #include "ageControl.h"
+#include "emotion.h"
 
 #include "minorGems/io/file/File.h"
 #include "minorGems/system/Time.h"
@@ -570,6 +571,8 @@ void freeFrameDrawer() {
     freeAnimationBank();
 
     freeSoundBank();
+
+    freeEmotion();
 
     freeSoundUsagePrintBuffer();
     }
@@ -1346,6 +1349,8 @@ void drawFrame( char inUpdate ) {
                     }
                 default:
                     //printOrphanedSoundReport();
+                    initEmotion();
+                    
                     currentGamePage = importPage;
                     loadingComplete();
                     currentGamePage->base_makeActive( true );
@@ -1763,6 +1768,11 @@ void freeHintedBuffers() {
 // called by platform to get more samples
 void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
     // for now, do nothing (no sound)
+    }
+
+
+// implement a NULL version of this function to make emotion system happy
+void addBaseObjectToLiveObjectSet( int ) {
     }
 
 

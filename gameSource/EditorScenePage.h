@@ -39,6 +39,7 @@ typedef struct SceneCell {
         
         double heldAge;
         ClothingSet heldClothing;
+        Emotion *heldEmotion;
         
         double returnAge;
         double returnHeldAge;
@@ -70,6 +71,8 @@ typedef struct SceneCell {
         double moveStartTime;
 
         int graveID;
+        
+        Emotion *currentEmot;
 
     } SceneCell;
 
@@ -137,6 +140,7 @@ class EditorScenePage : public GamePage, public ActionListener {
         TextField mCellMoveDelayField;
         TextField mPersonMoveDelayField;
         
+        TextField mPersonEmotField;
 
         
         SpriteHandle mCellDestSprite;
