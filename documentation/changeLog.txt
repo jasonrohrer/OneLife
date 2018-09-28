@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 142    ????
+Version 147    2018-September-28
 
 --Moving categories up and down on a member object (to alter which category
   takes precedence) was suppored in the editor, but not being saved to disk in
