@@ -286,6 +286,48 @@ static void fillObjectBiomeFromString( ObjectRecord *inRecord,
 
 
 
+static void setupEyesAndMouth( ObjectRecord *inR ) {
+    ObjectRecord *r = inR;
+    
+    r->spriteIsEyes = new char[ r->numSprites ];
+    r->spriteIsMouth = new char[ r->numSprites ];
+
+    memset( r->spriteIsEyes, false, r->numSprites );
+    memset( r->spriteIsMouth, false, r->numSprites );
+
+    r->mainEyesOffset.x = 0;
+    r->mainEyesOffset.y = 0;
+
+    if( r->person && isSpriteBankLoaded() ) {
+        
+        int headIndex = getHeadIndex( r, 30 );
+
+        for( int i = 0; i < r->numSprites; i++ ) {
+            char *tag = getSpriteTag( r->sprites[i] );
+            
+            if( tag != NULL && strstr( tag, "Eyes" ) != NULL ) {
+                r->spriteIsEyes[ i ] = true;
+                }
+            if( tag != NULL && strstr( tag, "Mouth" ) != NULL ) {
+                r->spriteIsMouth[ i ] = true;
+                }
+
+            if( r->spriteIsEyes[i] && 
+                r->spriteAgeStart[i] < 30 && r->spriteAgeEnd[i] > 30 ) {
+                
+                r->mainEyesOffset = 
+                    sub( r->spritePos[i], r->spritePos[ headIndex ] );
+                printf( "Main eyes offset = %f, %f\n", r->mainEyesOffset.x,
+                        r->mainEyesOffset.y );
+                }
+            }
+        } 
+    }
+
+
+
+
+
 float initObjectBankStep() {
         
     if( currentFile == cache.numFiles ) {
@@ -873,7 +915,7 @@ float initObjectBankStep() {
                                 
                     next++;                        
                     }
-
+                
 
                 r->anySpritesBehindPlayer = false;
                 r->spriteBehindPlayer = NULL;
@@ -911,6 +953,10 @@ float initObjectBankStep() {
                                             r->spriteIsFrontFoot, 
                                             r->numSprites );
                 next++;
+                
+                
+                setupEyesAndMouth( r );
+
 
                 if( next < numLines ) {
                     // info about num uses and vanish/appear sprites
@@ -1557,6 +1603,9 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->spriteIsBackFoot;
             delete [] idMap[inID]->spriteIsFrontFoot;
 
+            delete [] idMap[inID]->spriteIsEyes;
+            delete [] idMap[inID]->spriteIsMouth;
+
             delete [] idMap[inID]->spriteUseVanish;
             delete [] idMap[inID]->spriteUseAppear;
             
@@ -1632,6 +1681,10 @@ void freeObjectBank() {
             delete [] idMap[i]->spriteIsBody;
             delete [] idMap[i]->spriteIsBackFoot;
             delete [] idMap[i]->spriteIsFrontFoot;
+
+            delete [] idMap[i]->spriteIsEyes;
+            delete [] idMap[i]->spriteIsMouth;
+
 
             delete [] idMap[i]->spriteUseVanish;
             delete [] idMap[i]->spriteUseAppear;
@@ -2567,6 +2620,10 @@ int addObject( const char *inDescription,
             inNumSprites * sizeof( char ) );
 
 
+    setupEyesAndMouth( r );
+    
+
+
     memcpy( r->spriteUseVanish, inSpriteUseVanish, 
             inNumSprites * sizeof( char ) );
     memcpy( r->spriteUseAppear, inSpriteUseAppear, 
@@ -3290,6 +3347,15 @@ int *getRaces( int *outNumRaces ) {
     *outNumRaces = raceList.size();
     
     return raceList.getElementArray();
+    }
+
+
+
+int getRaceSize( int inRace ) {
+    if( inRace > MAX_RACE ) {
+        return 0;
+        }
+    return racePersonObjectIDs[ inRace ].size();
     }
 
 
@@ -4324,6 +4390,9 @@ char isSpriteVisibleAtAge( ObjectRecord *inObject,
 static int getBodyPartIndex( ObjectRecord *inObject,
                              char *inBodyPartFlagArray,
                              double inAge ) {
+    if( ! inObject->person ) {
+        return 0;
+        }
     
     for( int i=0; i< inObject->numSprites; i++ ) {
         if( inBodyPartFlagArray[i] ) {
@@ -4366,6 +4435,21 @@ int getFrontFootIndex( ObjectRecord *inObject,
                   double inAge ) {
     return getBodyPartIndex( inObject, inObject->spriteIsFrontFoot, inAge );
     }
+
+
+
+int getEyesIndex( ObjectRecord *inObject,
+                  double inAge ) {
+    return getBodyPartIndex( inObject, inObject->spriteIsEyes, inAge );
+    }
+
+
+
+int getMouthIndex( ObjectRecord *inObject,
+                   double inAge ) {
+    return getBodyPartIndex( inObject, inObject->spriteIsMouth, inAge );
+    }
+
 
 
 

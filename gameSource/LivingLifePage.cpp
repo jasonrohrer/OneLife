@@ -15,6 +15,9 @@
 #include "ageControl.h"
 #include "musicPlayer.h"
 
+#include "emotion.h"
+
+
 #include "liveAnimationTriggers.h"
 
 #include "../commonSource/fractalNoise.h"
@@ -115,6 +118,8 @@ static char savingSpeech = false;
 static char savingSpeechColor = false;
 static char savingSpeechMask = false;
 
+
+static double emotDuration = 10;
 // LINEAGEFERTILITYMOD NOTE:  Change 1/4 - Take these lines during the merge process
 static char showFertilityPanel = true;
 // AGEMOD NOTE:  Change 1/3 - Take these lines during the merge process
@@ -738,6 +743,7 @@ typedef enum messageType {
     PLAYER_MOVES_START,
     PLAYER_OUT_OF_RANGE,
     PLAYER_SAYS,
+    PLAYER_EMOT,
     FOOD_CHANGE,
     LINEAGE,
     CURSED,
@@ -805,6 +811,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "PS" ) == 0 ) {
         returnValue = PLAYER_SAYS;
+        }
+    else if( strcmp( copy, "PE" ) == 0 ) {
+        returnValue = PLAYER_EMOT;
         }
     else if( strcmp( copy, "FX" ) == 0 ) {
         returnValue = FOOD_CHANGE;
@@ -1792,6 +1801,8 @@ LivingLifePage::LivingLifePage()
 
     mMapGlobalOffset.x = 0;
     mMapGlobalOffset.y = 0;
+
+    emotDuration = SettingsManager::getFloatSetting( "emotDuration", 10 );
           
     hideGuiPanel = SettingsManager::getIntSetting( "hideGameUI", 0 );
 
@@ -3443,7 +3454,9 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             }
         
 
-
+        if( ! inObj->tempAgeOverrideSet )
+            setAnimationEmotion( inObj->currentEmot );
+        
         holdingPos =
             drawObjectAnim( inObj->displayID, 2, curType, 
                             timeVal,
@@ -3467,6 +3480,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             ! inObj->heldPosOverrideAlmostOver,
                             inObj->clothing,
                             inObj->clothingContained );
+        
+        setAnimationEmotion( NULL );
         }
     
         
@@ -3618,6 +3633,9 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
             personPos = add( personPos, inObj->ridingOffset );
 
+            if( ! inObj->tempAgeOverrideSet )
+                setAnimationEmotion( inObj->currentEmot );
+            
             // rideable object
             holdingPos =
                 drawObjectAnim( inObj->displayID, 2, curType, 
@@ -3642,6 +3660,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                 ! inObj->heldPosOverrideAlmostOver,
                                 inObj->clothing,
                                 inObj->clothingContained );
+            
+            setAnimationEmotion( NULL );
             }
         
 
@@ -3684,7 +3704,10 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                              &hideAllLimbsBaby );
                     }
                 
-
+                
+                if( ! babyO->tempAgeOverrideSet )
+                    setAnimationEmotion( babyO->currentEmot );
+                
                 returnPack =
                     drawObjectAnimPacked( 
                                 babyO->displayID, curHeldType, 
@@ -3708,6 +3731,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                 babyO->clothing,
                                 babyO->clothingContained,
                                 0, NULL, NULL );
+                
+                setAnimationEmotion( NULL );
 
                 if( babyO->currentSpeech != NULL ) {
                     
@@ -11084,6 +11109,9 @@ void LivingLifePage::step() {
                 o.actionTargetTweakX = 0;
                 o.actionTargetTweakY = 0;
                 
+                o.currentEmot = NULL;
+                o.emotClearETATime = 0;
+                
 
                 int forced = 0;
                 int done_moving = 0;
@@ -13644,6 +13672,37 @@ void LivingLifePage::step() {
                 }
             delete [] lines;
             }
+        else if( type == PLAYER_EMOT ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }            
+            
+            for( int i=1; i<numLines; i++ ) {
+                int id, emotIndex;
+                int numRead = sscanf( lines[i], "%d %d",
+                                      &id, &emotIndex );
+
+                if( numRead == 2 ) {
+                    for( int j=0; j<gameObjects.size(); j++ ) {
+                        if( gameObjects.getElement(j)->id == id ) {
+                            
+                            LiveObject *existing = gameObjects.getElement(j);
+                            
+                            existing->currentEmot = getEmotion( emotIndex );
+                            
+                            existing->emotClearETATime = 
+                                game_getCurrentTime() + emotDuration;
+                            }
+                        }
+                    }
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
         else if( type == LINEAGE ) {
             int numLines;
             char **lines = split( message, "\n", &numLines );
@@ -14504,6 +14563,14 @@ void LivingLifePage::step() {
                     }
                 }
             }
+
+        
+        if( o->currentEmot != NULL ) {
+            if( game_getCurrentTime() > o->emotClearETATime ) {
+                o->currentEmot = NULL;
+                }
+            }
+
         
         double animSpeed = o->lastSpeed;
         
@@ -15363,6 +15430,9 @@ void LivingLifePage::step() {
                     }
                 }
 
+
+            markEmotionsLive();
+            
             finalizeLiveObjectSet();
             
             mStartedLoadingFirstObjectSet = true;
@@ -17713,6 +17783,21 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
     }
 	
     switch( inASCII ) {
+        /*
+        // useful for testing
+        case '+':
+            getOurLiveObject()->displayID = getRandomPersonObject();
+            break;
+        case '_':
+            getOurLiveObject()->age += 10;
+            break;
+        case '-':
+            getOurLiveObject()->age -= 5;
+            break;
+        case '~':
+            getOurLiveObject()->age -= 1;
+            break;
+        */
         case 'S':
             if( savingSpeechEnabled && 
                 ! mSayField.isFocused() ) {
@@ -17897,71 +17982,82 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 if( strcmp( typedText, "" ) == 0 ) {
                     mSayField.unfocus();
                     }
-                else if( strlen( typedText ) > 0 &&
+                else {
+                    
+                    if( strlen( typedText ) > 0 &&
                          typedText[0] == '/' ) {
                     
-                    // a command, don't send to server
-                    
-                    const char *filterCommand = "/";
-                    
-                    if( strstr( typedText, filterCommand ) == typedText ) {
-                        // starts with filter command
+                        // a command, don't send to server
                         
-                        char *filterString = 
-                            &( typedText[ strlen( filterCommand ) ] );
+                        const char *filterCommand = "/";
                         
-                        
-                        if( mHintFilterString != NULL ) {
-                            delete [] mHintFilterString;
-                            mHintFilterString = NULL;
+                        if( strstr( typedText, filterCommand ) == typedText ) {
+                            // starts with filter command
+
+                            int emotIndex = getEmotionIndex( typedText );
+                            
+                            if( emotIndex != -1 ) {
+                                char *message = 
+                                    autoSprintf( "EMOT 0 0 %d#", emotIndex );
+                                
+                                sendToServerSocket( message );
+                                delete [] message;
+                                }
+                            else {
+                                // filter hints
+                                char *filterString = 
+                                    &( typedText[ strlen( filterCommand ) ] );
+                                
+                                
+                                if( mHintFilterString != NULL ) {
+                                    delete [] mHintFilterString;
+                                    mHintFilterString = NULL;
+                                    }
+                                
+                                char *trimmedFilterString = 
+                                    trimWhitespace( filterString );
+                                
+                                int filterStringLen = 
+                                    strlen( trimmedFilterString );
+                            
+                                if( filterStringLen > 0 ) {
+                                    // not blank
+                                    mHintFilterString = 
+                                        stringDuplicate( trimmedFilterString );
+                                    }
+                            
+                                delete [] trimmedFilterString;
+                            
+                                mForceHintRefresh = true;
+                                mNextHintIndex = 0;
+                                }
                             }
-                        
-                        char *trimmedFilterString = 
-                            trimWhitespace( filterString );
-
-                        int filterStringLen = strlen( trimmedFilterString );
-
-                        if( filterStringLen > 0 ) {
-                            // not blank
-                            mHintFilterString = 
-                                stringDuplicate( trimmedFilterString );
-                            }
-
-                        delete [] trimmedFilterString;
-                        
-                        mForceHintRefresh = true;
-                        mNextHintIndex = 0;
                         }
-
-                    mSentChatPhrases.push_back( stringDuplicate( typedText ) );
+                    else {
+                        // send text to server
+                        char *message = 
+                            autoSprintf( "SAY 0 0 %s#",
+                                         typedText );
+                        sendToServerSocket( message );
+                        delete [] message;
+                        }
                     
-                    mSayField.setText( "" );
-                    mSayField.unfocus();
-                    }
-                else {
-                    // send text to server
-                    char *message = 
-                        autoSprintf( "SAY 0 0 %s#",
-                                     typedText );
                     for( int i=0; i<mSentChatPhrases.size(); i++ ) {
                         if( strcmp( 
                                 typedText, 
-                                mSentChatPhrases.getElementDirect(i) ) == 0 ) {
+                                mSentChatPhrases.getElementDirect(i) ) 
+                            == 0 ) {
+                            
                             delete [] mSentChatPhrases.getElementDirect(i);
                             mSentChatPhrases.deleteElement(i);
                             i--;
                             }
                         }
-                    mSentChatPhrases.push_back( stringDuplicate( typedText ) );
-                    
-                    sendToServerSocket( message );
-            
 
-                    
+                    mSentChatPhrases.push_back( stringDuplicate( typedText ) );
+
                     mSayField.setText( "" );
                     mSayField.unfocus();
-
-                    delete [] message;
                     }
                 
                 delete [] typedText;
@@ -18153,288 +18249,4 @@ void LivingLifePage::putInMap( int inMapI, ExtraMapObject *inObj ) {
     mMapContainedStacks[ inMapI ] = inObj->containedStack;
     mMapSubContainedStacks[ inMapI ] = inObj->subContainedStack;
     }
-
-
-int getRandomIndex( char *inNameList, int inListLen ) {
-	int limit = inListLen - 1;
-	int outIndex = randSource.getRandomBoundedInt( 0, inListLen + 1 );
-	while( outIndex < limit && inNameList[ outIndex ] != '\0' ) {
-		outIndex++;
-	}
-	if( outIndex == limit ) {
-		while( outIndex > 0 && inNameList[ outIndex ] != '\0' ) {
-			outIndex--;
-		}
-		if( outIndex == 0 ) {
-			return 0;
-		} else {
-			return outIndex + 1;
-		}
-	} else {
-		return outIndex + 1;
-	}
-}
-
-
-const char *findRandomName( char *inString, char *inNameList, int inListLen ) {
-	if( inNameList == NULL ) { return "WUTFACE"; }
-	char *tempString = stringToUpperCase( inString );
-	int randomIndex = getRandomIndex( inNameList, inListLen );
-	if( ! isalpha(tempString[0]) ) { 
-		return &(inNameList[ randomIndex ]);
-	}
-	char firstLetterMatches = false;
-	while( ! firstLetterMatches ) {
-		char *testString = &( inNameList[ randomIndex ] );
-		firstLetterMatches = stringStartsWith( testString, tempString );
-		if( ! firstLetterMatches ) {
-			randomIndex = getRandomIndex( inNameList, inListLen );
-		}
-	}
-	delete [] tempString;
-	return &(inNameList[ randomIndex ]);
-}
-
-
-const char *LivingLifePage::findRandomFirstName( char *inString ) {
-	return findRandomName( inString, firstNames, firstNamesLen );
-}
-
-const char *LivingLifePage::findRandomLastName( char *inString ) {
-	return findRandomName( inString, lastNames, lastNamesLen );
-}
-
-	
-// AGEMOD NOTE:  Change 3/3 - Take these changes during the merge process
-void LivingLifePage::agePanel( LiveObject* ourLiveObject, char displayPanel ) {
-	if ( ! displayPanel ) return;
-	setDrawColor( 1, 1, 1, 1 );
-	int shouldScaleHUD = SettingsManager::getIntSetting( "fovScaleHUD", 0 );
-	float scaleHUD = fovmod::gui_fov_scale;
-	doublePair agePos = { lastScreenViewCenter.x + ( 85 * scaleHUD ), 
-						  lastScreenViewCenter.y - ( 300 * scaleHUD ) };
-	if( shouldScaleHUD > 0 ) {
-		agePos.x = lastScreenViewCenter.x + 85;
-		agePos.y = lastScreenViewCenter.y - 300 - fovmod::gui_fov_offset_y;
-		scaleHUD = 1.0f;
-	}
-	drawSprite( mYumSlipSprites[2], agePos, 1.4 * scaleHUD );
-	setDrawColor( 0, 0, 0, 1 );
-	char *ageString = autoSprintf( "AGE: %d", (int)computeCurrentAge( ourLiveObject ) );
-	agePos.y += 18 * scaleHUD;
-	handwritingFont->drawString( ageString, agePos, alignCenter);
-}
-	
-	
-// LINEAGEFERTILITYMOD NOTE:  Change 4/4 - Take these lines during the merge process
-char* LivingLifePage::getFertilityStatus( LiveObject* targetObject ) {
-	char *fertilityStatus = autoSprintf("INCAPABLE");
-	char isTargetMale = getObject( targetObject->displayID )->male;
-	if( isTargetMale ) return fertilityStatus;
-	if( targetObject->finalAgeSet ) {
-		setDrawColor( 1, 0, 0, 1 );
-		fertilityStatus = autoSprintf( "DEAD" );
-	} else {
-		double targetAge = computeCurrentAge( targetObject );
-		if( targetAge < 14 ) {
-			setDrawColor( 0.93, 0.46, 0, 1 );
-			fertilityStatus = autoSprintf("TOO YOUNG");
-		} else if ( targetAge > 40 ) {
-			setDrawColor( 1, 0, 0, 1 );
-			fertilityStatus = autoSprintf("TOO OLD");
-		} else {
-			setDrawColor( 0, 0.39, 0, 1 );
-			fertilityStatus = autoSprintf("FERTILE");
-		}
-	}
-	return fertilityStatus;
-}
-
-
-void LivingLifePage::lineageFertilityPanel( LiveObject* ourLiveObject, char displayPanel ) {
-	if ( ! displayPanel ) return;
-	setDrawColor( 1, 1, 1, 1 );
-	doublePair fertPos = { lastScreenViewCenter.x + ( 685 * fovmod::gui_fov_scale ), 
-						   lastScreenViewCenter.y + ( 305 * fovmod::gui_fov_scale ) };
-	int shouldScaleHUD = SettingsManager::getIntSetting( "fovScaleHUD", 0 );
-	float scaleHUD = fovmod::gui_fov_scale;
-	if( shouldScaleHUD > 0 ) {
-		fertPos.x = lastScreenViewCenter.x + 685 + fovmod::gui_fov_offset_x;
-		fertPos.y = lastScreenViewCenter.y + 305 + fovmod::gui_fov_offset_y;
-		scaleHUD = 1.0f;
-	}
-	drawSprite( mHintSheetSprites[2], fertPos, scaleHUD );
-	setDrawColor( 0, 0, 0, 1);
-	char *fertStringA = autoSprintf( "MOTHER IS:  " );
-	doublePair fertTextPos = { fertPos.x -= ( 300 * scaleHUD ), 
-							   fertPos.y += ( 28 * scaleHUD ) };
-	if( shouldScaleHUD > 0 ) {
-		fertTextPos = fertPos;
-	}
-	handwritingFont->drawString( fertStringA, fertTextPos, alignLeft );
-	SimpleVector<int> ourLin = ourLiveObject->lineage;
-	int relatedYoungFemales = 0;
-	int relatedFertileFemales = 0;
-	char *fertStringB = autoSprintf( "" );
-	if( ourLin.size() > 0 ) {
-		char found = false;
-		for( int i=0; i<ourLin.size(); i++ ) {
-			LiveObject *thisRelative = getLiveObject(ourLin.getElementDirect(i));
-			if( thisRelative != NULL && ! getObject( thisRelative->displayID )->male ) {
-				if( stringCompareIgnoreCase(thisRelative->relationName, "YOUR MOTHER" ) == 0 ) {
-					found = true;
-					fertStringB = autoSprintf( "%s", getFertilityStatus( thisRelative ) );
-				}
-			}
-		}
-		if( ! found ) {
-			setDrawColor( 1, 0, 0, 1 );
-			fertStringB = autoSprintf( "DEAD" );
-		}
-	} else {
-		setDrawColor( 0, 0, 1, 1 );
-		fertStringB = autoSprintf("NONE (EVE)");
-	}
-	fertTextPos.x += handwritingFont->measureString( fertStringA );
-	handwritingFont->drawString( fertStringB, fertTextPos, alignLeft );
-	setDrawColor( 0, 0, 0, 1);
-	fertTextPos.x -= handwritingFont->measureString( fertStringA );
-	
-	fertStringA = autoSprintf( "PREGNANCY:  " );
-	fertTextPos.y -= handwritingFont->getFontHeight() / 1.25;
-	handwritingFont->drawString( fertStringA, fertTextPos, alignLeft );
-	fertTextPos.x += handwritingFont->measureString( fertStringA );
-	fertStringB = autoSprintf( "%s", getFertilityStatus( ourLiveObject ) );
-	handwritingFont->drawString( fertStringB, fertTextPos, alignLeft );
-	fertTextPos.x -= handwritingFont->measureString( fertStringA );
-	setDrawColor( 0, 0, 0, 1);
-	
-	for( int i=0; i<gameObjects.size(); i++ ) {
-		LiveObject *thisPlayer = gameObjects.getElement( i );
-		if( thisPlayer != NULL ) {
-			char isPlayerMale = getObject( thisPlayer->displayID )->male;
-			if( ! isPlayerMale && thisPlayer->id != ourID && thisPlayer->relationName != NULL) {
-				if( stringCompareIgnoreCase(thisPlayer->relationName, "YOUR" ) > 0 ) {
-					if( thisPlayer->age < 14 ) {
-						relatedYoungFemales++;
-					}
-					if ( thisPlayer->age > 13 && thisPlayer->age < 40 ) {
-						relatedFertileFemales++;
-					}
-				}					
-			}
-		}
-	}
-	
-	fertStringA = autoSprintf( "RELATED GIRL KIDS:  %d", relatedYoungFemales );
-	fertTextPos.y -= handwritingFont->getFontHeight() / 1.25;
-	handwritingFont->drawString( fertStringA, fertTextPos, alignLeft );
-	
-	fertStringA = autoSprintf( "FERTILE RELATIVES:  %d", relatedFertileFemales );
-	fertTextPos.y -= handwritingFont->getFontHeight() / 1.25;
-	handwritingFont->drawString( fertStringA, fertTextPos, alignLeft );
-}
-
-
-void LivingLifePage::changeHUDFOV( float newScale ) {
-	if( newScale < 1 ) {
-		newScale = 1.0f;
-	} else if ( newScale > 6 ) {
-		newScale = 6.0f;
-	}
-	if( fovmod::gui_fov_scale != newScale ) {
-		SettingsManager::setSetting( "fovScale", newScale );
-		fovmod::gui_fov_scale = newScale;
-	}
-	fovmod::gui_fov_offset_x = (int)(((1280 * newScale) - 1280)/2);
-	fovmod::gui_fov_offset_y = (int)(((720 * newScale) - 720)/2);
-	
-	int shouldScaleHUD = SettingsManager::getIntSetting( "fovScaleHUD", 0 );
-	float scaleHUD = newScale;
-	if( SettingsManager::getIntSetting( "fovScaleHUD", 0 ) ) {
-		scaleHUD = 1.0f;
-	}
-	
-	mNotePaperHideOffset.x = -242 * scaleHUD;
-	mNotePaperHideOffset.y = -420 - fovmod::gui_fov_offset_y;
-	mNotePaperPosOffset = mNotePaperHideOffset;
-	mNotePaperPosTargetOffset = mNotePaperPosOffset;
-	mErasedNoteCharOffsets.deleteAll();
-	
-	mHomeSlipHideOffset.y = (-360 * scaleHUD) + ((64 * scaleHUD) - 64);
-	if( shouldScaleHUD > 0 ) {
-		mHomeSlipHideOffset.y = -360 - fovmod::gui_fov_offset_y;
-	}
-	mHomeSlipPosOffset = mHomeSlipHideOffset;
-	mHomeSlipPosTargetOffset = mHomeSlipPosOffset;
-	for( int i=0; i<3; i++ ) {
-		mHungerSlipShowOffsets[i].x = -540 * scaleHUD;
-		mHungerSlipShowOffsets[i].y = -250 * scaleHUD;
-		mHungerSlipHideOffsets[i].x = -540 * scaleHUD;
-		mHungerSlipHideOffsets[i].y = -370 * scaleHUD;
-		if( shouldScaleHUD > 0 ) {
-			mHungerSlipShowOffsets[i].x = -540;
-			mHungerSlipShowOffsets[i].y = -250 - fovmod::gui_fov_offset_y;
-			mHungerSlipHideOffsets[i].x = -540;
-			mHungerSlipHideOffsets[i].y = -370 - fovmod::gui_fov_offset_y;
-		}
-		mHungerSlipPosOffset[i] = mHungerSlipHideOffsets[i];
-		mHungerSlipPosTargetOffset[i] = mHungerSlipPosOffset[i];
-	}
-	mHungerSlipShowOffsets[2].y += 20 * scaleHUD;
-	mHungerSlipHideOffsets[2].y -= 20 * scaleHUD;
-	mHungerSlipShowOffsets[2].y -= 50 * scaleHUD;
-	mHungerSlipShowOffsets[1].y -= 30 * scaleHUD;
-	mHungerSlipShowOffsets[0].y += 18 * scaleHUD;
-    for( int i=0; i<NUM_YUM_SLIPS; i++ ) {;
-		mYumSlipHideOffset[i].x = ( -600 * scaleHUD ) + ((64 * scaleHUD) - 64);
-		mYumSlipHideOffset[i].y = ( -330 * scaleHUD ) + ((32 * scaleHUD) - 32);
-		if( shouldScaleHUD > 0 ) {
-			mYumSlipHideOffset[i].x = -600;
-			mYumSlipHideOffset[i].y = -330 - fovmod::gui_fov_offset_y;
-		}
-	}
-	mYumSlipHideOffset[2].x += 70;
-    mYumSlipHideOffset[3].x += 80;
-	for( int i=0; i<NUM_YUM_SLIPS; i++ ) {
-		mYumSlipPosOffset[i] = mYumSlipHideOffset[i];
-		mYumSlipPosTargetOffset[i] = mYumSlipHideOffset[i];
-	}
-	int yumSlipIndex = 0;
-	for( int i=0; i<2; i++ ) {
-		if( mYumSlipNumberToShow[i] == mYumMultiplier ) {
-			yumSlipIndex = i;
-		}
-	}
-	mYumSlipPosTargetOffset[ yumSlipIndex ] = mYumSlipHideOffset[ yumSlipIndex ];
-	if( mYumMultiplier > 0 ) {
-		mYumSlipPosTargetOffset[ yumSlipIndex ].y += 36;
-	}
-	for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
-		mHintHideOffset[i].x = 900 * scaleHUD;
-		mHintHideOffset[i].y = (-370 * scaleHUD) + ((96 * scaleHUD) - 96);
-		mHintTargetOffset[i] = mHintHideOffset[i];
-		mHintPosOffset[i] = mHintHideOffset[i];
-		mTutorialHideOffset[i].x = -914 * scaleHUD;
-		mTutorialHideOffset[i].y = (430 * scaleHUD) + ((96 * scaleHUD) - 96);
-		mTutorialTargetOffset[i] = mTutorialHideOffset[i];
-		mTutorialPosOffset[i] = mTutorialHideOffset[i];
-		if( shouldScaleHUD > 0 ) {
-			mHintHideOffset[i].x = 900 + fovmod::gui_fov_offset_x;
-			mHintHideOffset[i].y = -370 - fovmod::gui_fov_offset_y;
-			mHintTargetOffset[i] = mHintHideOffset[i];
-			mHintPosOffset[i] = mHintHideOffset[i];
-		}
-	}
-	mForceHintRefresh = true;
-	
-	viewWidth = 1280 * newScale;
-	viewHeight = 720 * newScale;
-	setLetterbox( 1280 * newScale, 720 * newScale );
-	setViewSize( 1280 * newScale );
-	
-	handwritingFont = new Font( "font_handwriting_32_32.tga", 3, 6, false, 16 * scaleHUD );
-	pencilFont->copySpacing( handwritingFont );
-	pencilErasedFont->copySpacing( handwritingFont );
-}
 

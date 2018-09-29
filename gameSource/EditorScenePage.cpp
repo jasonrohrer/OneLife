@@ -105,6 +105,9 @@ EditorScenePage::EditorScenePage()
           mPersonMoveDelayField( smallFont, 200, -290, 4,
                                false, "Move Delay Sec",
                                "0123456789." ),
+          mPersonEmotField( smallFont, 400, -290, 10,
+                               true, "Emot",
+                               "/ABCDEFGHIJKLMNOPQRSTUVWXYZ" ),
           mCellDestSprite( loadSprite( "centerMark.tga" ) ),
           mPersonDestSprite( loadSprite( "internalPaperMark.tga" ) ),
           mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
@@ -216,6 +219,11 @@ EditorScenePage::EditorScenePage()
     addComponent( &mCellMoveDelayField );
     addComponent( &mPersonMoveDelayField );
     
+    addComponent( &mPersonEmotField );
+    mPersonEmotField.addActionListener( this );
+    mPersonEmotField.setVisible( false );
+    
+
     mCellMoveDelayField.setText( "0.0" );
     mPersonMoveDelayField.setText( "0.0" );
     
@@ -604,6 +612,11 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         p->moveDelayTime = mPersonMoveDelayField.getFloat();
         restartAllMoves();
         }
+    else if( inTarget == &mPersonEmotField ) {
+        char *text = mPersonEmotField.getText();
+        p->currentEmot = getEmotion( getEmotionIndex( text ) );
+        delete [] text;
+        }
     }
 
 
@@ -741,6 +754,7 @@ void EditorScenePage::checkVisible() {
     mCellMoveDelayField.setVisible( true );
     mPersonMoveDelayField.setVisible( true );
     
+    mPersonEmotField.setVisible( true );
 
 
 
@@ -813,6 +827,16 @@ void EditorScenePage::checkVisible() {
         
         mPersonXOffsetSlider.setValue( p->xOffset );
         mPersonYOffsetSlider.setValue( p->yOffset );
+        
+        
+        mPersonEmotField.setVisible( true );
+
+        if( p->currentEmot != NULL ) {
+            mPersonEmotField.setText( p->currentEmot->triggerWord );
+            }
+        else {
+            mPersonEmotField.setText( "" );
+            }
         }
     else {
         mPersonAgeSlider.setVisible( false );
@@ -821,6 +845,9 @@ void EditorScenePage::checkVisible() {
         
         mPersonXOffsetSlider.setVisible( false );
         mPersonYOffsetSlider.setVisible( false );
+
+        
+        mPersonEmotField.setVisible( false );
         }
     }
 
@@ -1312,6 +1339,8 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             }
                         else {
                             
+                            setAnimationEmotion( p->currentEmot );
+                            
                             holdingPos =
                             drawObjectAnim( p->oID, 2, p->anim, 
                                             thisFrameTime, 
@@ -1332,6 +1361,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                             false,
                                             p->clothing,
                                             NULL );
+                            setAnimationEmotion( NULL );
                             }
                     
                         if( heldObject != NULL ) {
@@ -1375,6 +1405,8 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             SimpleVector<int> *subContained = 
                                 p->subContained.getElementArray();
 
+                            setAnimationEmotion( p->heldEmotion );
+                            
                             drawObjectAnim( p->heldID,  
                                             heldAnimType, thisFrameTime,
                                             0, 
@@ -1394,6 +1426,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                             NULL,
                                             p->contained.size(), contained,
                                             subContained );
+                            setAnimationEmotion( NULL );
                             delete [] contained;
                             delete [] subContained;
                             }
@@ -2039,6 +2072,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
                 p->heldClothing = mCopyBuffer.clothing;
                 p->heldAge = mCopyBuffer.age;
                 p->returnHeldAge = p->heldAge;
+                p->heldEmotion = mCopyBuffer.currentEmot;
                 }
             }
         }
@@ -2100,6 +2134,8 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->clothing = getEmptyClothingSet();
     inCell->heldClothing = getEmptyClothingSet();
     
+    inCell->heldEmotion = NULL;
+    
     inCell->contained.deleteAll();
     inCell->subContained.deleteAll();    
     
@@ -2119,6 +2155,8 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->moveOffset.y = 0;
 
     inCell->moveDelayTime = 0;
+    
+    inCell->currentEmot = NULL;
     }
 
 

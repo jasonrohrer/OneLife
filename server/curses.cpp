@@ -1,11 +1,20 @@
-#include "curses.h"
+ #include "curses.h"
 #include "curseLog.h"
 
 
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/stringUtils.h"
 
+#include "minorGems/util/log/AppLog.h"
+
 #include "minorGems/system/Time.h"
+
+
+#include "minorGems/network/web/WebRequest.h"
+#include "minorGems/network/web/URLUtils.h"
+
+#include "minorGems/crypto/hashes/sha1.h"
+
 
 
 #include <stdlib.h>
@@ -34,6 +43,35 @@ typedef struct CurseRecord {
 static SimpleVector<CurseRecord> curseRecords;
 
 
+typedef struct RemoteUpdateRecord {
+        char *email;
+        
+        // used to compose final URL
+        // everything after url ? and before &email=
+        // for example:  "action=live_time&seconds=2092.4"
+        char *actionString;
+
+        // -1 if not fetched from server yet
+        int sequenceNumber;
+        WebRequest *request;
+    } RemoteUpdateRecord;
+
+    
+
+static SimpleVector<RemoteUpdateRecord> serverPendingUpdates;
+
+
+typedef struct RemoteCurseRecord {
+        char *email;
+        // -1 if we have no response yet
+        int curseStatus;
+        WebRequest *request;
+    } RemoteCurseRecord;
+    
+
+static SimpleVector<RemoteCurseRecord> serverRemoteRecords;
+
+
 
 
 typedef struct PlayerNameRecord {
@@ -55,6 +93,10 @@ static SimpleVector<PlayerNameRecord> playerNames;
 static SimpleVector<char*> newTokenEmails;
 
 
+
+static int useCurseServer = false;
+
+static char *curseServerURL = NULL;
 
 
 
@@ -98,7 +140,17 @@ void initCurses() {
             }
         fclose( f );
         }
+
+    useCurseServer = SettingsManager::getIntSetting( "useCurseServer", 0 );
+    
+    if( useCurseServer ) {
+        AppLog::info( "Using remote curse server." );
+        
+        curseServerURL = 
+            SettingsManager::getStringSetting( "curseServerURL", "" );
+        }
     }
+
 
 
 
@@ -140,6 +192,26 @@ void freeCurses() {
     newTokenEmails.deallocateStringElements();
     
     freeCurseLog();
+
+    if( curseServerURL != NULL ) {
+        delete [] curseServerURL;
+        curseServerURL = NULL;
+        }
+
+    for( int i=0; i<serverRemoteRecords.size(); i++ ) {
+        RemoteCurseRecord r = serverRemoteRecords.getElementDirect( i );
+        delete [] r.email;
+        delete r.request;
+        }
+    serverRemoteRecords.deleteAll();
+
+    for( int i=0; i<serverPendingUpdates.size(); i++ ) {
+        RemoteUpdateRecord r = serverPendingUpdates.getElementDirect( i );
+        delete [] r.email;
+        delete [] r.actionString;
+        delete r.request;
+        }
+    serverPendingUpdates.deleteAll();
     }
 
 
@@ -304,7 +376,7 @@ void cursesLogBirth( char *inEmail ) {
 
 
 
-void cursesLogDeath( char *inEmail ) {
+void cursesLogDeath( char *inEmail, double inAge ) {
     CurseRecord *r = findCurseRecord( inEmail );
     
     if( r->alive ) {
@@ -318,6 +390,21 @@ void cursesLogDeath( char *inEmail ) {
         
         r->livedTimeSinceTokenSpent += lifeTimeSinceToken;
         r->livedTimeSinceScoreDecrement += lifeTimeSinceScoreDecrement;
+        }
+
+    if( useCurseServer ) {
+        double sec = inAge * 60;
+        
+        RemoteUpdateRecord r = {
+            stringDuplicate( inEmail ),
+            autoSprintf( "action=live_time&seconds=%f", sec ),
+            -1,
+            NULL };
+        
+        
+        
+
+        serverPendingUpdates.push_back( r );
         }
     }
 
@@ -379,8 +466,9 @@ char cursePlayer( int inGiverID, char *inGiverEmail,
         return false;
         }
     
-    if( receiverRecord->bornCursed ) {
-        // already getting born cursed, leave them alone for now
+    if( !useCurseServer && receiverRecord->bornCursed ) {
+        // already getting born cursed, from local curses, 
+        // leave them alone for now
         return false;
         }
 
@@ -417,6 +505,18 @@ char cursePlayer( int inGiverID, char *inGiverEmail,
     logCurse( inGiverID, inGiverEmail, receiverRecord->email );
     
     logCurseScore( receiverRecord->email, receiverRecord->score );
+    
+
+    if( useCurseServer ) {
+
+        RemoteUpdateRecord r = {
+            stringDuplicate( receiverRecord->email ),
+            stringDuplicate( "action=curse" ),
+            -1,
+            NULL };
+        
+        serverPendingUpdates.push_back( r );
+        }
 
     return true;
     }
@@ -439,8 +539,66 @@ int getCurseLevel( char *inPlayerEmail ) {
     stepCurses();
     
     CurseRecord *r = findCurseRecord( inPlayerEmail );
+
+
+    if( ! useCurseServer ) {
+        return getCurseLevel( r );
+        }
+    else {
+        // see if record exists yet
+        for( int i=0; i<serverRemoteRecords.size(); i++ ) {
+            RemoteCurseRecord *r = serverRemoteRecords.getElement( i );
+            
+            if( strcmp( r->email, inPlayerEmail ) == 0 ) {
+                // hit
+                
+                int status = r->curseStatus;
+                
+                if( status != -1 ) {
+                    delete [] r->email;
+                    delete r->request;
+                    serverRemoteRecords.deleteElement( i );
+                    }
+                return status;
+                }
+            }
+
+        RemoteCurseRecord r = { stringDuplicate( inPlayerEmail ), -1, NULL };
+
+        char *curseServerSharedSecret = 
+            SettingsManager::getStringSetting( 
+                "curseServerSharedSecret", 
+                "secret_phrase" );
+        
+
+        char *hash = hmac_sha1( curseServerSharedSecret, inPlayerEmail );
+                    
+        delete [] curseServerSharedSecret;
+
+        char *encodedEmail = URLUtils::urlEncode( r.email );
+        
+        
+        char *url = autoSprintf( 
+                        "%s?action=is_cursed"
+                        "&email=%s"
+                        "&email_hash_value=%s",
+                        curseServerURL,
+                        encodedEmail,
+                        hash );
+                    
+        delete [] encodedEmail;
+        delete [] hash;
+
+        r.request = new WebRequest( "GET", url, NULL );
+        printf( "Starting new web request for %s\n", url );
+                    
+        delete [] url;
+        
+        serverRemoteRecords.push_back( r );
+
+        return -1;
+        }
     
-    return getCurseLevel( r );
     }
 
 
@@ -458,5 +616,158 @@ char isNameDuplicateForCurses( char *inPlayerName ) {
             }
         }
     return false;
+    }
+
+
+
+
+
+void stepCurseServerRequests() {
+    if( !useCurseServer ) {
+        return;
+        }
+    
+    
+    for( int i=0; i<serverRemoteRecords.size(); i++ ) {
+        RemoteCurseRecord *r = serverRemoteRecords.getElement( i );
+
+        if( r->curseStatus == -1 ) {
+
+            int result = r->request->step();
+            
+            
+            if( result == -1 ) {
+                AppLog::info( "Request to curse server failed." );
+                r->curseStatus = 0;
+                }
+            else if( result == 1 ) {
+                // done, have result   
+                char *webResult = r->request->getResult();
+                
+                int curseStatus = 0;
+                sscanf( webResult, "%d", &curseStatus );
+                
+                delete [] webResult;
+                
+                r->curseStatus = curseStatus;
+                }
+            }
+        }
+    
+    for( int i=0; i<serverPendingUpdates.size(); i++ ) {
+        RemoteUpdateRecord *r = serverPendingUpdates.getElement( i );
+        
+        if( r->sequenceNumber == -1 && r->request == NULL ) {
+            // haven't sent first sequence number request yet
+
+            char *encodedEmail = URLUtils::urlEncode( r->email );
+        
+        
+            char *url = autoSprintf( 
+                "%s?action=get_sequence_number"
+                "&email=%s",
+                curseServerURL,
+                encodedEmail );
+                    
+            delete [] encodedEmail;
+
+            r->request = new WebRequest( "GET", url, NULL );
+            printf( "Starting new web request for %s\n", url );
+            
+            delete [] url;
+            continue;
+            }
+        
+
+        int result = r->request->step();
+
+        if( result == -1 ) {
+            AppLog::info( "Request to curse server failed." );
+            
+            delete [] r->email;
+            delete [] r->actionString;
+            delete r->request;
+            serverPendingUpdates.deleteElement( i );
+            return;
+            }
+        else if( result == 1 ) {
+            // done, have result
+            char *webResult = r->request->getResult();
+
+            if( r->sequenceNumber == -1 ) {
+                // result is sequence number
+                
+                sscanf( webResult, "%d", &( r->sequenceNumber ) );            
+                delete [] webResult;
+                
+                if( r->sequenceNumber == -1 ) {
+                    AppLog::info( 
+                        "Failed to get seq number from curse server." );
+                    
+                    delete [] r->email;
+                    delete [] r->actionString;
+                    delete r->request;
+                    serverPendingUpdates.deleteElement( i );
+                    return;
+                    }
+                
+                delete r->request;
+
+
+                char *curseServerSharedSecret = 
+                    SettingsManager::getStringSetting( 
+                        "curseServerSharedSecret", 
+                        "secret_phrase" );
+        
+                char *seqString = autoSprintf( "%d", r->sequenceNumber );
+                
+                char *hash = hmac_sha1( curseServerSharedSecret, 
+                                        seqString );
+                delete [] seqString;
+                
+                    
+                delete [] curseServerSharedSecret;
+
+                char *encodedEmail = URLUtils::urlEncode( r->email );
+        
+        
+                char *url = autoSprintf( 
+                    "%s?%s"
+                    "&email=%s"
+                    "&sequence_number=%d"
+                    "&hash_value=%s",
+                    curseServerURL,
+                    r->actionString,
+                    encodedEmail,
+                    r->sequenceNumber,
+                    hash );
+                    
+                delete [] encodedEmail;
+                delete [] hash;
+
+                r->request = new WebRequest( "GET", url, NULL );
+                printf( "Starting new web request for %s\n", url );
+                    
+                delete [] url;
+                }
+            else {
+                // result is from main action request
+                // this means we're done!
+
+                if( strstr( webResult, "OK" ) == NULL ) {                    
+                    AppLog::infoF( 
+                        "Failed to get expected result from curseServer, "
+                        "got:  %s", webResult );
+                    }            
+                delete [] webResult;
+
+                delete [] r->email;
+                delete [] r->actionString;
+                delete r->request;
+                serverPendingUpdates.deleteElement( i );
+                return;
+                }
+            }
+        }
     }
 

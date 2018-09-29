@@ -7,6 +7,7 @@
 #include "minorGems/util/SimpleVector.h"
 
 #include "objectBank.h"
+#include "emotion.h"
 
 
 typedef enum AnimType {
@@ -267,6 +268,8 @@ typedef struct ObjectAnimPack {
         int *inContainedIDs;
         SimpleVector<int> *inSubContained;
         
+        Emotion *setEmot;
+
         // can be added by caller after this structure
         // is returned by drawObjectAnimPacked
         // set to 0 by default
@@ -435,6 +438,10 @@ void performLayerSwaps( int inObjectID,
 
 
 char isSoundUsedByAnim( int inSoundID );
+
+
+// sets emotion for subsequent drawObjectAnim calls, or NULL for no emotion
+void setAnimationEmotion( Emotion *inEmotion );
 
 
 

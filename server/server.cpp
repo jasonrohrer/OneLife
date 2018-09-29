@@ -177,7 +177,7 @@ typedef struct FreshConnection {
         char *email;
         
         int tutorialNumber;
-        char cursed;
+        int curseLevel;
         
         char *twinCode;
         int twinCount;
@@ -1088,6 +1088,7 @@ typedef enum messageType {
     DROP,
     KILL,
     SAY,
+    EMOT,
     JUMP,
     MAP,
     TRIGGER,
@@ -1376,6 +1377,17 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
                     m.saidText = stringDuplicate( &( thirdSpace[1] ) );
                     }
                 }
+            }
+        }
+    else if( strcmp( nameBuffer, "EMOT" ) == 0 ) {
+        m.type = EMOT;
+
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.i ) );
+        
+        if( numRead != 4 ) {
+            m.type = UNKNOWN;
             }
         }
     else {
@@ -3419,7 +3431,7 @@ int processLoggedInPlayer( Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
                            int inTutorialNumber,
-                           char inCursed,
+                           int inCurseLevel,
                            // set to -2 to force Eve
                            int inForceParentID = -1,
                            int inForceDisplayID = -1,
@@ -3568,9 +3580,9 @@ int processLoggedInPlayer( Socket *inSock,
                 }
             
             if( canHaveBaby ) {
-                if( ( ! inCursed && player->curseLevel == 0 ) 
+                if( ( inCurseLevel == 0 && player->curseLevel == 0 ) 
                     || 
-                    ( inCursed && player->curseLevel > 0 ) ) {
+                    ( inCurseLevel > 0 && player->curseLevel > 0 ) ) {
                     // cursed babies only born to cursed mothers
                     // non-cursed babies never born to cursed mothers
                     parentChoices.push_back( player );
@@ -3623,7 +3635,7 @@ int processLoggedInPlayer( Socket *inSock,
         }
     
 
-    if( numOfAge == 0 && !inCursed ) {
+    if( numOfAge == 0 && inCurseLevel == 0 ) {
         // all existing babies are good spawn spot for Eve
                     
         for( int i=0; i<numPlayers; i++ ) {
@@ -3793,7 +3805,23 @@ int processLoggedInPlayer( Socket *inSock,
                 
                 int childRace = parentObject->race;
                 
-                if( randSource.getRandomDouble() > childSameRaceLikelihood ) {
+                char forceDifferentRace = false;
+
+                if( getRaceSize( parentObject->race ) < 4 ) {
+                    // no room in race for diverse family members
+                    
+                    // pick a different race for child to ensure village 
+                    // diversity
+                    // (otherwise, almost everyone is going to look the same)
+                    forceDifferentRace = true;
+                    }
+                
+                // everyone has a small chance of having a neighboring-race
+                // baby, even if not forced by parent's small race size
+                if( forceDifferentRace ||
+                    randSource.getRandomDouble() > 
+                    childSameRaceLikelihood ) {
+                    
                     // different race than parent
                     
                     int offset = 1;
@@ -3903,7 +3931,7 @@ int processLoggedInPlayer( Socket *inSock,
         int startX, startY;
         getEvePosition( newObject.email, &startX, &startY );
 
-        if( inCursed ) {
+        if( inCurseLevel > 0 ) {
             // keep cursed players away
 
             // 20K away in X and 20K away in Y, pushing out away from 0
@@ -3962,18 +3990,22 @@ int processLoggedInPlayer( Socket *inSock,
         }
     
 
-    int forceID = SettingsManager::getIntSetting( "forceEveObject", 0 );
     
-    if( forceID > 0 ) {
-        newObject.displayID = forceID;
-        }
+    if( parent == NULL ) {
+        // Eve
+        int forceID = SettingsManager::getIntSetting( "forceEveObject", 0 );
     
-    
-    float forceAge = SettingsManager::getFloatSetting( "forceEveAge", 0.0 );
-    
-    if( forceAge > 0 ) {
-        newObject.lifeStartTimeSeconds = 
-            Time::getCurrentTime() - forceAge * ( 1.0 / getAgeRate() );
+        if( forceID > 0 ) {
+            newObject.displayID = forceID;
+            }
+        
+        
+        float forceAge = SettingsManager::getFloatSetting( "forceEveAge", 0.0 );
+        
+        if( forceAge > 0 ) {
+            newObject.lifeStartTimeSeconds = 
+                Time::getCurrentTime() - forceAge * ( 1.0 / getAgeRate() );
+            }
         }
     
 
@@ -4009,7 +4041,7 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.name = NULL;
     newObject.nameHasSuffix = false;
     newObject.lastSay = NULL;
-    newObject.curseLevel = 0;
+    newObject.curseLevel = inCurseLevel;
     
 
     if( hasCurseToken( inEmail ) ) {
@@ -4188,7 +4220,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                    inConnection.twinCount );
     waitingForTwinConnections.push_back( inConnection );
     
-    char anyTwinCursed = inConnection.cursed;
+    int anyTwinCurseLevel = inConnection.curseLevel;
     
 
     // count how many match twin code from inConnection
@@ -4215,7 +4247,9 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                 continue;
                 }
 
-            anyTwinCursed = anyTwinCursed || nextConnection->cursed;
+            if( nextConnection->curseLevel > anyTwinCurseLevel ) {
+                anyTwinCurseLevel = nextConnection->curseLevel;
+                }
             
             twinConnections.push_back( nextConnection );
             }
@@ -4229,7 +4263,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                            inConnection.sockBuffer,
                                            inConnection.email,
                                            inConnection.tutorialNumber,
-                                           anyTwinCursed );
+                                           anyTwinCurseLevel );
         
         
         LiveObject *newPlayer = NULL;
@@ -4273,7 +4307,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                    // ignore tutorial number of all but
                                    // first player
                                    0,
-                                   anyTwinCursed,
+                                   anyTwinCurseLevel,
                                    parent,
                                    displayID,
                                    forcedEvePos );
@@ -4607,6 +4641,16 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                 toRemoveID *= -1;
                 subContain = true;
                 }
+
+            
+            if( toRemoveID == 0 ) {
+                // this should never happen, except due to map corruption
+                
+                // clear container, to be safe
+                clearAllContained( inContX, inContY );
+                return false;
+                }
+
 
             if( inPlayer->holdingID == 0 && 
                 numIn > 0 &&
@@ -5731,6 +5775,7 @@ int main() {
         
         stepPlayerStats();
         stepLineageLog();
+        stepCurseServerRequests();
         
         
         int numLive = players.size();
@@ -5945,7 +5990,7 @@ int main() {
                 newConnection.sequenceNumber = nextSequenceNumber;
                 
                 newConnection.tutorialNumber = 0;
-                newConnection.cursed = false;
+                newConnection.curseLevel = 0;
                 
                 newConnection.twinCode = NULL;
                 newConnection.twinCount = 0;
@@ -6052,8 +6097,21 @@ int main() {
             
             FreshConnection *nextConnection = newConnections.getElement( i );
             
-
-            if( nextConnection->ticketServerRequest != NULL ) {
+            
+            if( nextConnection->email != NULL &&
+                nextConnection->curseLevel == -1 ) {
+                // keep checking if curse level has arrived from
+                // curse server
+                nextConnection->curseLevel =
+                    getCurseLevel( nextConnection->email );
+                if( nextConnection->curseLevel != -1 ) {
+                    AppLog::infoF( 
+                        "Got curse level for %s from curse server: %d",
+                        nextConnection->email,
+                        nextConnection->curseLevel );
+                    }
+                }
+            else if( nextConnection->ticketServerRequest != NULL ) {
                 
                 int result = nextConnection->ticketServerRequest->step();
                 
@@ -6126,7 +6184,7 @@ int main() {
                                     nextConnection->sockBuffer,
                                     nextConnection->email,
                                     nextConnection->tutorialNumber,
-                                    nextConnection->cursed );
+                                    nextConnection->curseLevel );
                                 }
                             
                             newConnections.deleteElement( i );
@@ -6216,15 +6274,6 @@ int main() {
                                     nextConnection->twinCount = maxCount;
                                     }
                                 }
-
-
-                            // FIXME EVENTUALLY:
-                            // can check whether email is cursed here
-                            // locally without blocking
-                            // in future, we'll be making a call to the global
-                            // curse server and waiting for the result
-                            nextConnection->cursed =
-                                ( getCurseLevel( nextConnection->email ) > 0 );
                             
 
                             char emailAlreadyLoggedIn = false;
@@ -6251,7 +6300,16 @@ int main() {
                                 nextConnection->error = true;
                                 nextConnection->errorCauseString =
                                     "Duplicate email";
+                                nextConnection->curseLevel = 0;
                                 }
+                            else {
+                                // this may return -1 if curse server
+                                // request is pending
+                                // we'll catch that case later above
+                                nextConnection->curseLevel =
+                                    getCurseLevel( nextConnection->email );
+                                }
+                            
 
                             if( requireClientPassword &&
                                 ! nextConnection->error  ) {
@@ -6350,7 +6408,7 @@ int main() {
                                             nextConnection->sockBuffer,
                                             nextConnection->email,
                                             nextConnection->tutorialNumber,
-                                            nextConnection->cursed );
+                                            nextConnection->curseLevel );
                                         }
                                     newConnections.deleteElement( i );
                                     i--;
@@ -6543,6 +6601,9 @@ int main() {
 
         SimpleVector<GraveInfo> newGraves;
         SimpleVector<GraveMoveInfo> newGraveMoves;
+
+        SimpleVector<int> newEmotPlayerIDs;
+        SimpleVector<int> newEmotIndices;
 
 
         SimpleVector<UpdateRecord> newUpdates;
@@ -8269,20 +8330,50 @@ int main() {
                                     int nD = 
                                         getMapObject( nextPlayer->xd, 
                                                       nextPlayer->yd + 1 );
+
+                                    // diags too
+                                    int nE = 
+                                        getMapObject( nextPlayer->xd - 1, 
+                                                      nextPlayer->yd - 1 );
+                                    int nF = 
+                                        getMapObject( nextPlayer->xd + 1, 
+                                                      nextPlayer->yd + 1);
+                                    int nG = 
+                                        getMapObject( nextPlayer->xd + 1, 
+                                                      nextPlayer->yd - 1 );
+                                    int nH = 
+                                        getMapObject( nextPlayer->xd - 1, 
+                                                      nextPlayer->yd + 1 );
                                     
+                                    char perm = false;
+                                    
+                                    if( nextPlayer->holdingID > 0 &&
+                                        getObject( nextPlayer->holdingID )->
+                                        permanent ) {
+                                        perm = true;
+                                        }
+
                                     if( nA != 0 && nB != 0 && 
-                                        nC != 0 && nD != 0 
+                                        nC != 0 && nD != 0 && 
+                                        nE != 0 && nF != 0 && 
+                                        nG != 0 && nH != 0 
                                         &&
                                         getObject( nA )->blocksWalking &&
                                         getObject( nB )->blocksWalking &&
                                         getObject( nC )->blocksWalking &&
-                                        getObject( nD )->blocksWalking ) {
+                                        getObject( nD )->blocksWalking &&
+                                        getObject( nE )->blocksWalking &&
+                                        getObject( nF )->blocksWalking &&
+                                        getObject( nG )->blocksWalking &&
+                                        getObject( nH )->blocksWalking &&
+                                        ! perm ) {
                                         
 
                                         // surrounded with blocking
                                         // objects while holding
                                     
-                                        // throw held into nearest empty spot
+                                        // throw non-permanent 
+                                        // held into nearest empty spot
                                         
                                         handleDrop( 
                                             m.x, m.y, 
@@ -9450,6 +9541,13 @@ int main() {
                                 }
                             }
                         }
+                    else if( m.type == EMOT ) {
+                        // send update even if action fails (to let them
+                        // know that action is over)
+                        newEmotPlayerIDs.push_back( nextPlayer->id );
+                        
+                        newEmotIndices.push_back( m.i );
+                        } 
                     
                     if( m.numExtraPos > 0 ) {
                         delete [] m.extraPos;
@@ -9515,8 +9613,6 @@ int main() {
                 playerIndicesToSendUpdatesAbout.push_back( i );
                 playerIndicesToSendLineageAbout.push_back( i );
                 
-                
-                nextPlayer->curseLevel = getCurseLevel( nextPlayer->email );
                 
                 if( nextPlayer->curseLevel > 0 ) {
                     playerIndicesToSendCursesAbout.push_back( i );
@@ -11325,6 +11421,52 @@ int main() {
                     }
                 }
             }
+
+
+
+
+        unsigned char *emotMessage = NULL;
+        int emotMessageLength = 0;
+        
+        if( newEmotPlayerIDs.size() > 0 ) {
+            SimpleVector<char> emotWorking;
+            emotWorking.appendElementString( "PE\n" );
+            
+            int numAdded = 0;
+            for( int i=0; i<newEmotPlayerIDs.size(); i++ ) {
+                
+                char *line = autoSprintf( 
+                    "%d %d\n", 
+                    newEmotPlayerIDs.getElementDirect( i ), 
+                    newEmotIndices.getElementDirect( i ) );
+
+                numAdded++;
+                emotWorking.appendElementString( line );
+                delete [] line;
+                }
+            
+            emotWorking.push_back( '#' );
+            
+            if( numAdded > 0 ) {
+
+                char *emotMessageText = emotWorking.getElementString();
+                
+                emotMessageLength = strlen( emotMessageText );
+                
+                if( emotMessageLength < maxUncompressedSize ) {
+                    emotMessage = (unsigned char*)emotMessageText;
+                    }
+                else {
+                    // compress for all players once here
+                    emotMessage = makeCompressedMessage( 
+                        emotMessageText, 
+                        emotMessageLength, &emotMessageLength );
+                    
+                    delete [] emotMessageText;
+                    }
+                }
+            }
+
         
         
         // send moves and updates to clients
@@ -11873,6 +12015,23 @@ int main() {
                         }
                     }
 
+
+                // EVERYONE gets info about emots           
+                if( emotMessage != NULL ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            emotMessage, 
+                            emotMessageLength, 
+                            false, false );
+                    
+                    if( numSent != emotMessageLength ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
+                        }
+                    }
 
                 
 
@@ -12533,6 +12692,9 @@ int main() {
         if( healingMessage != NULL ) {
             delete [] healingMessage;
             }
+        if( emotMessage != NULL ) {
+            delete [] emotMessage;
+            }
         
         
         // this one is global, so we must clear it every loop
@@ -12643,6 +12805,14 @@ int main() {
 
 void *getSprite( int ) {
     return NULL;
+    }
+
+char *getSpriteTag( int ) {
+    return NULL;
+    }
+
+char isSpriteBankLoaded() {
+    return false;
     }
 
 char markSpriteLive( int ) {

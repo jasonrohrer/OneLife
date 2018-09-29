@@ -512,6 +512,9 @@ void EditorCategoryPage::specialKeyDown( int inKeyCode ) {
             break;
             }
         case MG_KEY_PAGE_UP:
+            /*
+              the underlying implementation of this is not working
+              not written to disk
             if( mCurrentObject != -1 ) {
                 
                 int curCat = getCategoryForObject( mCurrentObject, 
@@ -525,9 +528,32 @@ void EditorCategoryPage::specialKeyDown( int inKeyCode ) {
                         mSelectionIndex = 0;
                         }
                     }
-                }    
+                }
+            */
+            if( mCurrentCategory != -1 ) {
+                
+                CategoryRecord *r = getCategory( mCurrentCategory );
+
+                if( r != NULL &&
+                    r->objectIDSet.size() > mSelectionIndex ) {
+                    
+                    int objID = 
+                        r->objectIDSet.getElementDirect( mSelectionIndex );
+                    
+                    for( int i=0; i<offset; i++ ) {
+                        mSelectionIndex --;
+                        moveCategoryMemberUp( mCurrentCategory, objID );
+                        }
+                    if( mSelectionIndex < 0 ) {
+                        mSelectionIndex = 0;
+                        }
+                    }
+                }
             break;
         case MG_KEY_PAGE_DOWN:
+            /*
+              the underlying implementation of this is not working
+              not written to disk
             if( mCurrentObject != -1 ) {
                 
                 int curCat = getCategoryForObject( mCurrentObject, 
@@ -542,6 +568,27 @@ void EditorCategoryPage::specialKeyDown( int inKeyCode ) {
                         
                         mSelectionIndex = 
                             getNumCategoriesForObject( mCurrentObject ) - 1;
+                        }
+                    }
+                }
+            */
+            if( mCurrentCategory != -1 ) {
+                
+                CategoryRecord *r = getCategory( mCurrentCategory );
+
+                if( r != NULL &&
+                    r->objectIDSet.size() > mSelectionIndex ) {
+                    
+                    int objID = 
+                        r->objectIDSet.getElementDirect( mSelectionIndex );
+                    
+                    for( int i=0; i<offset; i++ ) {
+                        mSelectionIndex ++;
+                        moveCategoryMemberDown( mCurrentCategory, objID );
+                        }
+                    if( mSelectionIndex > r->objectIDSet.size() - 1 ) {
+                        mSelectionIndex = 
+                            r->objectIDSet.size() - 1;
                         }
                     }
                 }

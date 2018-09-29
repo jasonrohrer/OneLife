@@ -142,11 +142,21 @@ timeSec_t fastTime() {
     }
 
 
+
+timeSec_t slowTime() {
+    if( startFastTime == -1 ) {
+        startFastTime = Time::timeSec();
+        }
+    return ( Time::timeSec() - startFastTime ) / 4 + startFastTime;
+    }
+
+
 // can replace with frozenTime to freeze time
 // or slowTime to slow it down
 #define MAP_TIMESEC Time::timeSec()
 //#define MAP_TIMESEC frozenTime()
 //#define MAP_TIMESEC fastTime()
+//#define MAP_TIMESEC slowTime()
 
 
 extern GridPos getClosestPlayerPos( int inX, int inY );
@@ -3908,8 +3918,9 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 
                 int tryRadius = 4;
 
-                if( t->move > 3 ) {
-                    // NSEW moves never go beyond their intended distance
+                if( t->move > 3 && tryDist == 1 ) {
+                    // single-step NSEW moves never go beyond 
+                    // their intended distance
                     tryRadius = 0;
                     }
 
@@ -4263,6 +4274,27 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         }
                     if( trans != NULL ) {
                         newID = trans->newTarget;
+                        
+                        // what was SUPPOSED to be left behind on ground
+                        // that object moved away from?
+                        if( trans->newActor > 0 ) {
+                            
+                            // see if there's anything defined for when
+                            // the new object moves ONTO this thing
+                            
+                            // (object is standing still in same spot, 
+                            //  effectively on top of what it was supposed
+                            //  to leave behind)
+                            
+                            TransRecord *inPlaceTrans = 
+                                getPTrans( newID, trans->newActor );
+                            
+                            if( inPlaceTrans != NULL &&
+                                inPlaceTrans->newTarget > 0 ) {
+                                
+                                newID = inPlaceTrans->newTarget;
+                                }
+                            }
                         }
                     }
                 }

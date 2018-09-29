@@ -62,8 +62,22 @@ void setCategoryIsPattern( int inParentID, char inIsPattern );
 
 void removeObjectFromAllCategories( int inObjectID );
 
+/**
+NOTE:
+These functions are currently not implemented in a useful way.
+They result in a change to RAM records only, and the result is not
+preserved on disk in the category folder.
+
+// move category up/down on object's category list (which categories object
+// is part of, and which take precedence)
 void moveCategoryUp( int inObjectID, int inParentID );
 void moveCategoryDown( int inObjectID, int inParentID );
+*/
+
+// move member object up/down in category's member list
+void moveCategoryMemberUp( int inParentID, int inObjectID );
+void moveCategoryMemberDown( int inParentID, int inObjectID );
+
 
 int getNumCategoriesForObject( int inObjectID );
 

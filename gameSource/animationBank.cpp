@@ -1170,6 +1170,12 @@ static char logicalXOR( char inA, char inB ) {
     }
 
 
+static Emotion *drawWithEmot = NULL;
+
+void setAnimationEmotion( Emotion *inEmotion ) {
+    drawWithEmot = inEmotion;
+    }
+
 
 
 ObjectAnimPack drawObjectAnimPacked( 
@@ -1219,7 +1225,8 @@ ObjectAnimPack drawObjectAnimPacked(
         inClothingContained,
         inNumContained,
         inContainedIDs,
-        inSubContained, 
+        inSubContained,
+        drawWithEmot,
         0 };
     
     return outPack;
@@ -1232,6 +1239,11 @@ void drawObjectAnim( ObjectAnimPack inPack ) {
     HoldingPos p;
     p.valid = false;
 
+    // set based on what's in pack, but restore main value afterward
+    Emotion *oldEmot = drawWithEmot;
+    
+    drawWithEmot = inPack.setEmot;
+    
     if( inPack.inContainedIDs == NULL ) {
         p = drawObjectAnim( 
             inPack.inObjectID,
@@ -1282,6 +1294,9 @@ void drawObjectAnim( ObjectAnimPack inPack ) {
             inPack.inContainedIDs,
             inPack.inSubContained );
         }
+    
+    drawWithEmot = oldEmot;
+    
 
     if( inPack.additionalHeldID > 0 && p.valid ) {
         doublePair holdPos;
@@ -1565,6 +1580,22 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     int backFootIndex = getBackFootIndex( obj, inAge );
     int frontFootIndex = getFrontFootIndex( obj, inAge );
 
+    int eyesIndex = -1;
+    int mouthIndex = -1;
+    
+    if( drawWithEmot != NULL ) {
+        eyesIndex = getEyesIndex( obj, inAge );
+        mouthIndex = getMouthIndex( obj, inAge );
+        
+        // these are never bottom layer
+        // mark as non-existing instead
+        if( eyesIndex == 0 ) {
+            eyesIndex = -1;
+            }
+        if( mouthIndex == 0 ) {
+            mouthIndex = -1;
+            }
+        }
 
     int topBackArmIndex = -1;
     
@@ -2113,7 +2144,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 skipSprite = true;
                 }
             }
-
+        
+        if( i == mouthIndex && drawWithEmot != NULL &&
+            drawWithEmot->mouthEmot != 0 ) {
+            skipSprite = true;
+            }
+        
 
         if( obj->clothing != 'n' &&
             obj->spriteInvisibleWhenWorn[i] != 0 ) {
@@ -2512,6 +2548,124 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 }
             
             }
+
+
+        // eye emot on top of eyes
+        if( i == eyesIndex && drawWithEmot != NULL &&
+            drawWithEmot->eyeEmot != 0 ) {
+            
+            doublePair offset = obj->mainEyesOffset;
+
+        
+            if( inFlipH ) {
+                offset.x *= -1;
+                }                
+        
+            if( animHeadRotDelta != 0 ) {
+                offset = rotate( offset, -2 * M_PI * animHeadRotDelta );
+                }
+        
+        
+            doublePair cPos = add( animHeadPos, offset );
+
+            cPos = add( cPos, inPos );
+
+            char used;
+            drawObjectAnim( drawWithEmot->eyeEmot, 
+                            clothingAnimType, 
+                            inFrameTime,
+                            inAnimFade, 
+                            clothingFadeTargetAnimType,
+                            inFadeTargetFrameTime,
+                            inFrozenRotFrameTime,
+                            &used,
+                            endAnimType,
+                            endAnimType,
+                            cPos,
+                            animHeadRotDelta,
+                            true,
+                            inFlipH,
+                            -1,
+                            0,
+                            false,
+                            false,
+                            emptyClothing,
+                            NULL,
+                            0, NULL,
+                            NULL );
+            }
+
+
+        
+
+
+        // mouth on top of head
+        // but only if there's a moth to be replaced
+        if( i == headIndex && drawWithEmot != NULL &&
+            drawWithEmot->mouthEmot != 0 &&
+            mouthIndex != -1 ) {
+            
+            char used;
+            drawObjectAnim( drawWithEmot->mouthEmot, 
+                            clothingAnimType, 
+                            inFrameTime,
+                            inAnimFade, 
+                            clothingFadeTargetAnimType,
+                            inFadeTargetFrameTime,
+                            inFrozenRotFrameTime,
+                            &used,
+                            endAnimType,
+                            endAnimType,
+                            add( animHeadPos, inPos ),
+                            animHeadRotDelta,
+                            true,
+                            inFlipH,
+                            -1,
+                            0,
+                            false,
+                            false,
+                            emptyClothing,
+                            NULL,
+                            0, NULL,
+                            NULL );
+            }
+        
+
+        // other emot on top of head (but make sure it only applies to people)
+        // other emote tests depend on eyes index or mouth index, which
+        // are forced to 0 for non-people (and become -1 above), but 
+        // this does not happen for headIndex
+        if( i == headIndex && drawWithEmot != NULL &&
+            drawWithEmot->otherEmot != 0 &&
+            obj->person ) {
+            
+            char used;
+            drawObjectAnim( drawWithEmot->otherEmot, 
+                            clothingAnimType, 
+                            inFrameTime,
+                            inAnimFade, 
+                            clothingFadeTargetAnimType,
+                            inFadeTargetFrameTime,
+                            inFrozenRotFrameTime,
+                            &used,
+                            endAnimType,
+                            endAnimType,
+                            add( animHeadPos, inPos ),
+                            animHeadRotDelta,
+                            true,
+                            inFlipH,
+                            -1,
+                            0,
+                            false,
+                            false,
+                            emptyClothing,
+                            NULL,
+                            0, NULL,
+                            NULL );
+            }
+
+
+
 
         // shoes on top of feet
         if( inClothing.backShoe != NULL && i == backFootIndex ) {

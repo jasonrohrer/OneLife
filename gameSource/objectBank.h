@@ -237,7 +237,22 @@ typedef struct ObjectRecord {
         char *spriteIsBody;
         char *spriteIsBackFoot;
         char *spriteIsFrontFoot;
+
+
+        // derrived automatically for person objects from sprite name
+        // tags (if they contain Eyes or Mouth)
+        // only filled in if sprite bank has been loaded before object bank
+        char *spriteIsEyes;
+        char *spriteIsMouth;
         
+        // offset of eyes from head in main segment of life
+        // derrived automatically from whatever eyes are visible at age 30
+        // (old eyes may have wrinkles around them, so they end up
+        //  getting centered differently)
+        // only filled in if sprite bank has been loaded before object bank
+        doublePair mainEyesOffset;
+        
+
         
         // number of times this object can be used before
         // something different happens
@@ -551,6 +566,9 @@ int getRandomFemalePersonObject();
 int *getRaces( int *outNumRaces );
 
 
+// number of people in race
+int getRaceSize( int inRace );
+
 // -1 if no person of this race exists
 int getRandomPersonObjectOfRace( int inRace );
 
@@ -649,6 +667,11 @@ int getBackArmTopIndex( ObjectRecord *inObject, double inAge );
 
 void getAllLegIndices( ObjectRecord *inObject, double inAge, 
                        SimpleVector<int> *outList );
+
+
+int getEyesIndex( ObjectRecord *inObject, double inAge );
+
+int getMouthIndex( ObjectRecord *inObject, double inAge );
 
 
 

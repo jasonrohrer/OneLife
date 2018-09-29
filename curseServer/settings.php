@@ -9,7 +9,7 @@ $databasePassword = "testPassword";
 $databaseName = "test";
 
 // The URL of to the server.php script.
-$fullServerURL = "http://localhost/jcr13/lineageServer/server.php";
+$fullServerURL = "http://localhost/jcr13/curseServer/server.php";
 
 
 
@@ -26,6 +26,22 @@ $mainSiteURL = "http://localhost/jcr13/";
 // Customization settings
 
 // Adjust these to change the way the server  works.
+
+
+$secondsPerCurseScoreDecrement = 3600;
+
+// isCursed returns 1 if player has this curse score or higher
+$curseThreshold = 8;
+
+
+// how long you have to live in a life before it "counts" toward
+// time served to decrement your curse score
+// shorter lives don't count, to prevent auto-clickers from serving time
+// by starving over and over.
+$minServedSecondsCount = 600;
+
+
+
 
 
 // secret shared with trusted game servers that allows them to post

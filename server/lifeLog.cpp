@@ -195,7 +195,12 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
                char inDisconnect, int inKillerID, 
                char *inKillerEmail ) {
     
-    cursesLogDeath( inPlayerEmail );
+    double yearsLived = inAge;
+    if( inEve ) {
+        yearsLived -= 14;
+        }
+
+    cursesLogDeath( inPlayerEmail, yearsLived );
 
     recordPlayerLifeStats( inPlayerEmail, inSecPlayed );
     

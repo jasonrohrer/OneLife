@@ -123,6 +123,8 @@ PLAYER_OUT_OF_RANGE (PO)
 
 PLAYER_SAYS (PS)
 
+PLAYER_EMOT (PE)
+
 MAP_CHANGE (MX)
 
 FOOD_CHANGE (FX)
@@ -379,6 +381,25 @@ PS
 
 
 
+PE
+p_id emot_index
+p_id emot_index
+p_id emot_index
+...
+p_id emot_index
+#
+
+
+Example:
+
+PE
+1432 4
+1501 6
+1448 1
+#
+
+
+
 
 
 
@@ -613,6 +634,7 @@ DROP x y c#
 KILL x y#
 KILL x y id#
 JUMP x y#
+EMOT x y e#
 
 
 KA   is a keep-alive message used to keep the connection alive when the client
@@ -683,6 +705,9 @@ JUMP is used by a baby to jump out of its mother's arms.  The x and y
      MOVE ambiguous in the case of jump-out (for example, if the baby
      has already been dropped by the time the MOVE arrives, the server will
      interpret it as a legitimate move attempt).
+
+EMOT is used to specify an emotion to display.  The x and y coordinates are
+     ignored.  e is the emotion index.
 
 
 This one is more complicated:

@@ -67,6 +67,9 @@ float initSpriteBankStep();
 void initSpriteBankFinish();
 
 
+char isSpriteBankLoaded();
+
+
 // can only be called after bank init is complete
 int getMaxSpriteID();
 
@@ -84,6 +87,9 @@ SpriteRecord *getSpriteRecord( int inID );
 
 
 char getUsesMultiplicativeBlending( int inID );
+
+// not destroyed by caller
+char *getSpriteTag( int inID );
 
 
 SpriteHandle getSprite( int inID );

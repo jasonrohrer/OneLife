@@ -3,6 +3,72 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 148    ???
+
+--Scene editor supports emotion displays.
+
+--Fixed so that clothing doesn't blush.
+
+
+
+
+Version 147    2018-September-28
+
+--Moving categories up and down on a member object (to alter which category
+  takes precedence) was suppored in the editor, but not being saved to disk in
+  category bank.  Disabled this editor functionality for now (eventually, may
+  implement saving reverse category maps, with order, in the category bank, but
+   it's pretty complicated, and hasn't been needed so far.
+
+--Moving member objects up and down in a category IS actually useful (for
+  pattern categories, where order of members matter), and it's possible to save
+  this to disk in current category bank file structure, so added this
+  functionality to editor.
+
+--Finally fixed the root cause of the goose-stump and bear cave bug.  NSEW
+  moves used to be fixed distance (instead of variable, looking for a possible
+  space to land).  This is necessary for carts and other fixed-movment things.
+  However, all of those things move a single step NSEW.  So, in that case, we
+  shouldn't try moving farther if our move is blocked.  However, we can make
+  the goose and bear move 2 steps south, and then the code can treat them
+  differently (searching for a free space for them to move to).
+
+--More fixes for stump/cave bug.  Now any applicable transition is applied for
+  an object that is stuck and can't move, but was supposed to leave something
+  behind (bear-on-cave transition, or goose-on-stump transtion).  No more
+  disappearing stump or cave no matter what.
+
+--Support for new emot protocol and emotion display in client.
+
+
+
+Server Fixes
+
+--Fixed grave detection code so that Murder Grave is counted as a grave, so
+  you can't insert things into it.
+
+--Centralized curse-tracking server shared by all servers.  Getting cursed on
+  one server means you are cursed on all servers.
+
+--Fixed a potential crash if numContained in map set > 0, but contained ID is 0.
+
+--Fixed so that red-head race isn't a attractor point.  Any race with less than
+  four members automatically has babies in a neighboring race.  For now, until
+  there are more red-heads, the red-head will not have red-headded babies.
+
+--Old code that checked for whether you were surrouned by blocking objects
+  while holding something, which threw the object from your hand to give you a
+  chance to untrap yourself, did not handle permanent held objects, nor did it
+  account for diagonal walking when checking for surrounded status (only NSEW).
+  This is what enabled teleporters, and also a murder-weapon-dropping exploit.
+  This has all been fixed.  Teleportation will still happen, but only if you
+  are truly surrounded and not holding something permanent.
+
+
+
+
+
 Version 140    2018-September-17
 
 --Fixed bug in transition editor that was labeling produces trans as from
