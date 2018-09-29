@@ -7,8 +7,6 @@
 #include "minorGems/ui/event/ActionListener.h"
 #include "minorGems/util/SimpleVector.h"
 
-// FOVMOD NOTE:  Change 1/3 - Take these lines during the merge process
-#include "minorGems/util/SettingsManager.h"
 
 #include "minorGems/game/game.h"
 
@@ -38,22 +36,6 @@
 
 #define NUM_YUM_SLIPS 4
 
-// FOVMOD NOTE:  Change 2/3 - Take these lines during the merge process
-// Some global constants to make the FOV mod work.  Scale can be anything from 1.0-6.0.
-// Vanilla scale of 1 is 1280x720, 1.5 is 1920x1080, 2 is 2560x1440, 3 is 4k, 6 is 8k
-// Scales above 2 will have significantly more "edge screen popping"
-namespace fovmod {
-    extern float gui_fov_scale;
-    extern int gui_fov_scale_hud;
-    extern int gui_fov_offset_x;
-    extern int gui_fov_offset_y;
-}
-
-// NAMEMOD NOTE:  Change 1/2 - Take these lines during the merge process
-extern char *firstNames;
-extern char *lastNames;
-extern int firstNamesLen;
-extern int lastNamesLen;
 
 typedef struct LiveObject {
         int id;
@@ -891,10 +873,10 @@ class LivingLifePage : public GamePage {
         void endExtraObjectMove( int inExtraIndex );
 
 		
-		// FOVMOD NOTE:  Change 3/3 - Take these changes during the merge process
-		void changeHUDFOV(float newScale = 1.0f);
+        // FOVMOD NOTE:  Change 1/1 - Take these changes during the merge process
+        void changeHUDFOV(float newScale = 1.0f);
 
-		// NAMEMOD NOTE:  Change 2/2 - Take these lines during the merge process
+        // NAMEMOD NOTE:  Change 1/1 - Take these lines during the merge process
         const char *findRandomFirstName( char *inString );
         const char *findRandomLastName( char *inString );
 

@@ -156,36 +156,55 @@ doublePair lastScreenViewCenter = {0, 0 };
 
 // world width of one view
 // FOVMOD NOTE:  Change 1/3 - Take these lines during the merge process
-float fovmod::gui_fov_scale = SettingsManager::getFloatSetting( "fovScale", 1.0f );
-int fovmod::gui_fov_scale_hud = SettingsManager::getIntSetting( "fovScaleHUD", 0 );
-int fovmod::gui_fov_offset_x = (int)(((1280 * gui_fov_scale) - 1280)/2);
-int fovmod::gui_fov_offset_y = (int)(((720 * gui_fov_scale) - 720)/2);
+float gui_fov_scale = 1.0f;
+int gui_fov_scale_hud = 0;
+float gui_fov_effective_scale = ( gui_fov_scale_hud ) ? 1.0f : gui_fov_scale;
+int gui_fov_offset_x = (int)(((1280 * gui_fov_scale) - 1280)/2);
+int gui_fov_offset_y = (int)(((720 * gui_fov_scale) - 720)/2);
 
 
-double viewWidth = 1280 * fovmod::gui_fov_scale;
-double viewHeight = 720 * fovmod::gui_fov_scale;
+double viewWidth = 1280 * gui_fov_scale;
+double viewHeight = 720 * gui_fov_scale;
+
+
+// this is the desired visible width
+// if our screen is wider than this (wider than 16:9 aspect ratio)
+// then we will put letterbox bars on the sides
+// Usually, if screen is not 16:9, it will be taller, not wider,
+// and we will put letterbox bars on the top and bottom 
+double visibleViewWidth = viewWidth;
+
+// fraction of viewWidth visible vertically (aspect ratio)
+double viewHeightFraction;
+
+int screenW, screenH;
 
 
 void setFOVScale() {
-	FILE *fp = SettingsManager::getSettingsFile( "fovScale", "rb+" );
+	FILE *fp = SettingsManager::getSettingsFile( "fovScale", "r" );
 	if( fp == NULL ) {
-		fp = SettingsManager::getSettingsFile( "fovScale", "wb" );
+		fp = SettingsManager::getSettingsFile( "fovScale", "w" );
 		fclose( fp );
 	} else { fclose( fp ); }
-	fp = SettingsManager::getSettingsFile( "fovScaleHUD", "rb+" );
+	fp = SettingsManager::getSettingsFile( "fovScaleHUD", "r" );
 	if( fp == NULL ) {
-		fp = SettingsManager::getSettingsFile( "fovScaleHUD", "wb" );
+		fp = SettingsManager::getSettingsFile( "fovScaleHUD", "w" );
 		SettingsManager::setSetting( "fovScaleHUD", 0 );
 		fclose( fp );
 	} else { fclose( fp ); }
-	float fovScale = SettingsManager::getFloatSetting( "fovScale", 0.0f );
-	if( ! fovScale || fovScale < 1 ) {
+	gui_fov_scale = SettingsManager::getFloatSetting( "fovScale", 1.0f );
+	if( ! gui_fov_scale || gui_fov_scale < 1 ) {
 		SettingsManager::setSetting( "fovScale", 1.0f );
-	} else if ( fovScale > 6 ) {
+	} else if ( gui_fov_scale > 6 ) {
 		SettingsManager::setSetting( "fovScale", 6.0f );
 	}
-	viewWidth = 1280 * fovScale;
-	viewHeight = 720 * fovScale;
+	gui_fov_scale_hud = SettingsManager::getIntSetting( "fovScaleHUD", 0 );
+	gui_fov_effective_scale = ( gui_fov_scale_hud ) ? 1.0f : gui_fov_scale;
+	gui_fov_offset_x = (int)(((1280 * gui_fov_scale) - 1280)/2);
+	gui_fov_offset_y = (int)(((720 * gui_fov_scale) - 720)/2);
+	viewWidth = 1280 * gui_fov_scale;
+	viewHeight = 720 * gui_fov_scale;
+	visibleViewWidth = viewWidth;
 }
 
 
@@ -241,19 +260,6 @@ void freeAndQuit() {
 }
 
 
-// this is the desired visible width
-// if our screen is wider than this (wider than 16:9 aspect ratio)
-// then we will put letterbox bars on the sides
-// Usually, if screen is not 16:9, it will be taller, not wider,
-// and we will put letterbox bars on the top and bottom 
-const double visibleViewWidth = viewWidth;
-
-
-
-// fraction of viewWidth visible vertically (aspect ratio)
-double viewHeightFraction;
-
-int screenW, screenH;
 
 char initDone = false;
 
@@ -477,8 +483,8 @@ char *getHashSalt() {
 
 void initDrawString( int inWidth, int inHeight ) {
 
-	// FOVMOD NOTE:  Change 2/3 - Take these lines during the merge process
-	setFOVScale();
+    // FOVMOD NOTE:  Change 2/3 - Take these lines during the merge process
+    setFOVScale();
     // NAMEMOD NOTE:  Change 3/5 - Take these lines during the merge process
     initNames();
     toggleLinearMagFilter( true );
@@ -586,12 +592,12 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     mainFontFixed->setMinimumPositionPrecision( 1 );
     numbersFontFixed->setMinimumPositionPrecision( 1 );
     
-	// FOVMOD NOTE:  Change 3/3 - Take these lines during the merge process
-	int shouldScaleHUD = fovmod::gui_fov_scale_hud;
-	float scaleHUD = fovmod::gui_fov_scale;
-	if( shouldScaleHUD > 0 ) {
-		scaleHUD = 1.0f;
-	}
+    // FOVMOD NOTE:  Change 3/3 - Take these lines during the merge process
+    int shouldScaleHUD = gui_fov_scale_hud;
+    float scaleHUD = gui_fov_scale;
+    if( shouldScaleHUD > 0 ) {
+        scaleHUD = 1.0f;
+    }
 	
     handwritingFont = 
         new Font( "font_handwriting_32_32.tga", 3, 6, false, 16 * scaleHUD );

@@ -65,11 +65,13 @@ Keybind | Description
 
    - Automatically generate a name that the server allows, as it uses the same first and last name lists.
    - Auto-populates your chat with "YOU ARE <name>", or "I AM <name>" if you have not named yourself yet.
-   - Can generate names pseudo-randomly, or that beginning with a specified letter.
+   - Can generate names pseudo-randomly, or that begin with a specified letter.
+   - You can customize the first and last name lists to only pick from your favorites!  Remember that names not already included on these lists will not be recognized by the server.
 
 * **Curse Level Display**
    - Attempts to display your current curse level just below your curse token.
    - Hovering over other players attempts to prefix their displayed information with their curse level. 
+   - **NOTE:** Curse level, in this context, is either 1 or 0 if a player is cursed or not.  Currently __does not__ show the number of times someone has been cursed.
 
 * **Seppuku Respawn**
    - Are you a player that prefers to respawn until you get to a desired area or family?  Tired of having to relaunch your client to respawn?  This can help!
