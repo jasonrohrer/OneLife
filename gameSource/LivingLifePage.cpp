@@ -741,6 +741,7 @@ typedef enum messageType {
     PLAYER_SAYS,
     PLAYER_EMOT,
     FOOD_CHANGE,
+    HEAT_CHANGE,
     LINEAGE,
     CURSED,
     CURSE_TOKEN_CHANGE,
@@ -813,6 +814,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "FX" ) == 0 ) {
         returnValue = FOOD_CHANGE;
+        }
+    else if( strcmp( copy, "HX" ) == 0 ) {
+        returnValue = HEAT_CHANGE;
         }
     else if( strcmp( copy, "LN" ) == 0 ) {
         returnValue = LINEAGE;
@@ -14154,6 +14158,16 @@ void LivingLifePage::step() {
                         }
                     
                     }
+                }
+            }
+        else if( type == HEAT_CHANGE ) {
+            
+            LiveObject *ourLiveObject = getOurLiveObject();
+            
+            if( ourLiveObject != NULL ) {
+                sscanf( message, "HX\n%f", 
+                        &( ourLiveObject->heat ) );
+                
                 }
             }
         

@@ -129,6 +129,8 @@ MAP_CHANGE (MX)
 
 FOOD_CHANGE (FX)
 
+HEAT_CHANGE (HX)
+
 LINEAGE (LN)
 
 NAME (NM)
@@ -464,6 +466,14 @@ yum_bonus is an integer indicating the current stored bonus food.
 
 yum_multiplier is an integer indicating how many yum bonus points are earned
 when the next yummy food is eaten.
+
+
+
+
+HX
+heat#
+
+Tells player about their current heat value.
 
 
 

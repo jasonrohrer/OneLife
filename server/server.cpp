@@ -366,12 +366,24 @@ typedef struct LiveObject {
         // their local temp
         float heatMap[ HEAT_MAP_D * HEAT_MAP_D ];
 
-        // heat of local object
+        // net heat of environment around player
         // map is tracked in heat units (each object produces an 
         // integer amount of heat)
         // it is mapped into 0..1 based on targetHeat to set this value here
+        float envHeat;
+
+        // heat of local player object
+        // their heat value gradually moves toward envHeat over time
         float heat;
         
+        // flags this player as needing to recieve a heat update
+        char heatUpdate;
+        
+        // wall clock time of last time this player was sent
+        // a heat update
+        double lastHeatUpdate;
+
+
         int foodStore;
         
         // wall clock time when we should decrement the food store
@@ -1763,7 +1775,17 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
 
 
 
-void recomputeHeatMap( LiveObject *inPlayer ) {
+// recompute heat for fixed number of players per step
+static int numPlayersRecomputeHeatPerStep = 10;
+static int lastPlayerIndexHeatRecomputed = -1;
+
+// how often the player's personal heat advances toward their environmental
+// heat value
+static double heatUpdateSeconds = 2;
+
+
+
+static void recomputeHeatMap( LiveObject *inPlayer ) {
             
     // what if we recompute it from scratch every time?
     for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
@@ -1773,12 +1795,16 @@ void recomputeHeatMap( LiveObject *inPlayer ) {
     float heatOutputGrid[ HEAT_MAP_D * HEAT_MAP_D ];
     float rGrid[ HEAT_MAP_D * HEAT_MAP_D ];
 
+
+    GridPos pos = getPlayerPos( inPlayer );
+
+
     for( int y=0; y<HEAT_MAP_D; y++ ) {
-        int mapY = inPlayer->ys + y - HEAT_MAP_D / 2;
+        int mapY = pos.y + y - HEAT_MAP_D / 2;
                 
         for( int x=0; x<HEAT_MAP_D; x++ ) {
                     
-            int mapX = inPlayer->xs + x - HEAT_MAP_D / 2;
+            int mapX = pos.x + x - HEAT_MAP_D / 2;
                     
             int j = y * HEAT_MAP_D + x;
             heatOutputGrid[j] = 0;
@@ -2108,12 +2134,12 @@ void recomputeHeatMap( LiveObject *inPlayer ) {
     // printf( "Player heat = %f\n", playerHeat );
             
     // convert into 0..1 range, where 0.5 represents targetHeat
-    inPlayer->heat = ( playerHeat / targetHeat ) / 2;
-    if( inPlayer->heat > 1 ) {
-        inPlayer->heat = 1;
+    inPlayer->envHeat = ( playerHeat / targetHeat ) / 2;
+    if( inPlayer->envHeat > 1 ) {
+        inPlayer->envHeat = 1;
         }
-    if( inPlayer->heat < 0 ) {
-        inPlayer->heat = 0;
+    if( inPlayer->envHeat < 0 ) {
+        inPlayer->envHeat = 0;
         }
 
     }
@@ -4031,8 +4057,11 @@ int processLoggedInPlayer( Socket *inSock,
         }
     
 
-
+    newObject.envHeat = 0.5;
     newObject.heat = 0.5;
+    newObject.heatUpdate = false;
+    newObject.lastHeatUpdate = Time::getCurrentTime();
+    
 
     newObject.foodDecrementETASeconds =
         Time::getCurrentTime() + 
@@ -11049,6 +11078,69 @@ int main() {
             }
         
 
+        // recompute heat map here for next players in line
+        int r = 0;
+        for( r=lastPlayerIndexHeatRecomputed+1; 
+             r < lastPlayerIndexHeatRecomputed + 1 + 
+                 numPlayersRecomputeHeatPerStep
+                 &&
+                 r < players.size(); r++ ) {
+                    
+            recomputeHeatMap( players.getElement( r ) );
+            }
+        
+        lastPlayerIndexHeatRecomputed = r - 1;
+        
+        if( r == players.size() ) {
+            // done updating for last player
+            // start over
+            lastPlayerIndexHeatRecomputed = -1;
+            }
+
+
+
+        // update personal heat value of any player that is due
+        // once every 2 seconds
+        double currentTime = Time::getCurrentTime();
+        for( int i=0; i< players.size(); i++ ) {
+            LiveObject *nextPlayer = players.getElement( i );
+            
+            if( nextPlayer->error || 
+                currentTime - nextPlayer->lastHeatUpdate < heatUpdateSeconds ||
+                nextPlayer->envHeat == nextPlayer->heat ) {
+                continue;
+                }
+            
+            // Purho easing
+            double delta = nextPlayer->envHeat - nextPlayer->heat;
+            
+            if( fabs( delta ) < 0.05 ) {
+                nextPlayer->heat = nextPlayer->envHeat;
+                }
+            else {
+                
+                double change = 0.2 * delta;
+                
+                if( fabs( change ) < 0.05 ) {
+                    // step is too small
+                    
+                    if( change > 0 ) {
+                        change = 0.05;
+                        }
+                    else {
+                        change = -0.05;
+                        }
+                    }
+                
+
+                nextPlayer->heat += change;
+                }
+            
+            nextPlayer->heatUpdate = true;
+            nextPlayer->lastHeatUpdate = currentTime;
+            }
+        
+
         
         for( int i=0; i<playerIndicesToSendUpdatesAbout.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement( 
@@ -11058,7 +11150,8 @@ int main() {
                 continue;
                 }
             
-
+            // also force-recompute heat maps for players that are getting
+            // updated
             recomputeHeatMap( nextPlayer );
             
             
@@ -12599,6 +12692,37 @@ int main() {
                     nextPlayer->foodUpdate = false;
                     nextPlayer->lastAteID = 0;
                     nextPlayer->lastAteFillMax = 0;
+                    }
+
+
+
+                if( nextPlayer->heatUpdate ) {
+                    // send this player a heat status change
+                    
+                    char *heatMessage = autoSprintf( 
+                        "HX\n"
+                        "%.2f#",
+                        nextPlayer->heat );
+                     
+                    int messageLength = strlen( heatMessage );
+                    
+                    int numSent = 
+                         nextPlayer->sock->send( 
+                             (unsigned char*)heatMessage, 
+                             messageLength,
+                             false, false );
+
+                    if( numSent != messageLength ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+                        
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
+                        }
+                    
+                    delete [] heatMessage;
+                    
+                    nextPlayer->heatUpdate = false;
                     }
 
 
