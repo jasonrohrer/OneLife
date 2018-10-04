@@ -10,6 +10,11 @@ Version 148    ???
 
 --Fixed so that clothing doesn't blush.
 
+--Fixed so that clicking face never accidently puts food in pocket of clothing,
+  even if clothing extends up under face.  Clicking face makes you eat (this
+  interaction was potentially very frustrating before, especially when young
+  and wearing an apron).
+
 
 
 
