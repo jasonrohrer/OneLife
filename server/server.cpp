@@ -3976,14 +3976,19 @@ int processLoggedInPlayer( Socket *inSock,
         }
 
 
+    char forceParentChoices = false;
+    
+
     if( inTutorialNumber > 0 ) {
         // Tutorial always played full-grown
         parentChoices.deleteAll();
+        forceParentChoices = true;
         }
 
     if( inForceParentID == -2 ) {
         // force eve
         parentChoices.deleteAll();
+        forceParentChoices = true;
         }
     else if( inForceParentID > -1 ) {
         // force parent choice
@@ -3993,6 +3998,7 @@ int processLoggedInPlayer( Socket *inSock,
         
         if( forcedParent != NULL ) {
             parentChoices.push_back( forcedParent );
+            forceParentChoices = true;
             }
         }
     
@@ -4019,7 +4025,8 @@ int processLoggedInPlayer( Socket *inSock,
         }
     
 
-    if( numOfAge == 0 && inCurseLevel == 0 ) {
+    if( !forceParentChoices && 
+        parentChoices.size() == 0 && numOfAge == 0 && inCurseLevel == 0 ) {
         // all existing babies are good spawn spot for Eve
                     
         for( int i=0; i<numPlayers; i++ ) {

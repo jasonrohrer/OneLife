@@ -33,6 +33,9 @@ Server Fixes
   players could potentially be treated as the longest line (thus putting the
   next Eve spawn location way out by the tutorial).  Thanks Christoffer Baar.
 
+--Fixed server crash when player joins tutorial while there are no fertile
+  mothers around but young babies around.
+
 
 
 
