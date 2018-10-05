@@ -21,6 +21,10 @@ Version 148    ???
   environmental heat value.  No more sudden jumps in temperature.  It should
   generally feel more intuitive than it used to.
 
+--Only past 20 recorded game files are kept by default, and rest are deleted,
+  freeing up disk space (put -1 in settings/keepPastRecordings.ini to keep them
+  all and override this new behavior).
+
 
 
 Version 147    2018-September-28
