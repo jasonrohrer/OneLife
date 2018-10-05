@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 148    ???
+Version 149    2018-October-5
 
 --Scene editor supports emotion displays.
 
