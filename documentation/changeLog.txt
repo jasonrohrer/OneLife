@@ -27,6 +27,15 @@ Version 148    ???
 
 
 
+Server Fixes
+
+--Fixed glitch in long-line-position saving at server shutdown, where tutorial
+  players could potentially be treated as the longest line (thus putting the
+  next Eve spawn location way out by the tutorial).  Thanks Christoffer Baar.
+
+
+
+
 Version 147    2018-September-28
 
 --Moving categories up and down on a member object (to alter which category

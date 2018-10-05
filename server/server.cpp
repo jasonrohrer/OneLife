@@ -4707,6 +4707,11 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                 // force this one to wait for same tutorial map load
                 newTwinPlayer.tutorialLoad = sharedTutorialLoad;
 
+                // flag them as a tutorial player too, so they can't have
+                // babies in the tutorial, and they won't be remembered
+                // as a long-lineage position at shutdown
+                newTwinPlayer.isTutorial = true;
+
                 players.deleteElement( players.size() - 1 );
                 
                 tutorialLoadingPlayers.push_back( newTwinPlayer );
@@ -9969,23 +9974,24 @@ int main() {
                 nextPlayer->error = true;
 
                 
-                if( ! nextPlayer->isTutorial )
-                logDeath( nextPlayer->id,
-                          nextPlayer->email,
-                          nextPlayer->isEve,
-                          computeAge( nextPlayer ),
-                          getSecondsPlayed( 
-                              nextPlayer ),
-                          ! getFemale( nextPlayer ),
-                          nextPlayer->xd, nextPlayer->yd,
-                          players.size() - 1,
-                          false,
-                          nextPlayer->murderPerpID,
-                          nextPlayer->murderPerpEmail );
+                if( ! nextPlayer->isTutorial ) {
+                    logDeath( nextPlayer->id,
+                              nextPlayer->email,
+                              nextPlayer->isEve,
+                              computeAge( nextPlayer ),
+                              getSecondsPlayed( 
+                                  nextPlayer ),
+                              ! getFemale( nextPlayer ),
+                              nextPlayer->xd, nextPlayer->yd,
+                              players.size() - 1,
+                              false,
+                              nextPlayer->murderPerpID,
+                              nextPlayer->murderPerpEmail );
                                             
-                if( shutdownMode ) {
-                    handleShutdownDeath( 
-                        nextPlayer, nextPlayer->xd, nextPlayer->yd );
+                    if( shutdownMode ) {
+                        handleShutdownDeath( 
+                            nextPlayer, nextPlayer->xd, nextPlayer->yd );
+                        }
                     }
                 
                 nextPlayer->deathLogged = true;
@@ -10119,19 +10125,21 @@ int main() {
                         disconnect = false;
                         }
                     
-                    if( ! nextPlayer->isTutorial )
-                    logDeath( nextPlayer->id,
-                              nextPlayer->email,
-                              nextPlayer->isEve,
-                              age,
-                              getSecondsPlayed( nextPlayer ),
-                              male,
-                              dropPos.x, dropPos.y,
-                              players.size() - 1,
-                              disconnect );
+                    if( ! nextPlayer->isTutorial ) {    
+                        logDeath( nextPlayer->id,
+                                  nextPlayer->email,
+                                  nextPlayer->isEve,
+                                  age,
+                                  getSecondsPlayed( nextPlayer ),
+                                  male,
+                                  dropPos.x, dropPos.y,
+                                  players.size() - 1,
+                                  disconnect );
                     
-                    if( shutdownMode ) {
-                        handleShutdownDeath( nextPlayer, dropPos.x, dropPos.y );
+                        if( shutdownMode ) {
+                            handleShutdownDeath( 
+                                nextPlayer, dropPos.x, dropPos.y );
+                            }
                         }
                     
                     nextPlayer->deathLogged = true;
@@ -11018,7 +11026,8 @@ int main() {
                                       false );
                             }
                         
-                        if( shutdownMode ) {
+                        if( shutdownMode &&
+                            ! decrementedPlayer->isTutorial ) {
                             handleShutdownDeath( decrementedPlayer,
                                                  deathPos.x, deathPos.y );
                             }
