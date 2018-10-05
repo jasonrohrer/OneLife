@@ -4,11 +4,37 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 148    ???
+Version 149    2018-October-5
 
 --Scene editor supports emotion displays.
 
 --Fixed so that clothing doesn't blush.
+
+--Fixed so that clicking face never accidently puts food in pocket of clothing,
+  even if clothing extends up under face.  Clicking face makes you eat (this
+  interaction was potentially very frustrating before, especially when young
+  and wearing an apron).
+
+--Major improvements to the heat system.  Now the heat simulation computes the
+  heat of the environment around you periodically, whether or not you are
+  walking around, and your personal temperature slowly advances toward this
+  environmental heat value.  No more sudden jumps in temperature.  It should
+  generally feel more intuitive than it used to.
+
+--Only past 20 recorded game files are kept by default, and rest are deleted,
+  freeing up disk space (put -1 in settings/keepPastRecordings.ini to keep them
+  all and override this new behavior).
+
+
+
+Server Fixes
+
+--Fixed glitch in long-line-position saving at server shutdown, where tutorial
+  players could potentially be treated as the longest line (thus putting the
+  next Eve spawn location way out by the tutorial).  Thanks Christoffer Baar.
+
+--Fixed server crash when player joins tutorial while there are no fertile
+  mothers around but young babies around.
 
 
 

@@ -366,12 +366,24 @@ typedef struct LiveObject {
         // their local temp
         float heatMap[ HEAT_MAP_D * HEAT_MAP_D ];
 
-        // heat of local object
+        // net heat of environment around player
         // map is tracked in heat units (each object produces an 
         // integer amount of heat)
         // it is mapped into 0..1 based on targetHeat to set this value here
+        float envHeat;
+
+        // heat of local player object
+        // their heat value gradually moves toward envHeat over time
         float heat;
         
+        // flags this player as needing to recieve a heat update
+        char heatUpdate;
+        
+        // wall clock time of last time this player was sent
+        // a heat update
+        double lastHeatUpdate;
+
+
         int foodStore;
         
         // wall clock time when we should decrement the food store
@@ -1760,6 +1772,378 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
         
     return speed;
     }
+
+
+
+// recompute heat for fixed number of players per step
+static int numPlayersRecomputeHeatPerStep = 10;
+static int lastPlayerIndexHeatRecomputed = -1;
+
+// how often the player's personal heat advances toward their environmental
+// heat value
+static double heatUpdateSeconds = 2;
+
+
+
+static void recomputeHeatMap( LiveObject *inPlayer ) {
+            
+    // what if we recompute it from scratch every time?
+    for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
+        inPlayer->heatMap[i] = 0;
+        }
+
+    float heatOutputGrid[ HEAT_MAP_D * HEAT_MAP_D ];
+    float rGrid[ HEAT_MAP_D * HEAT_MAP_D ];
+
+
+    GridPos pos = getPlayerPos( inPlayer );
+
+
+    for( int y=0; y<HEAT_MAP_D; y++ ) {
+        int mapY = pos.y + y - HEAT_MAP_D / 2;
+                
+        for( int x=0; x<HEAT_MAP_D; x++ ) {
+                    
+            int mapX = pos.x + x - HEAT_MAP_D / 2;
+                    
+            int j = y * HEAT_MAP_D + x;
+            heatOutputGrid[j] = 0;
+            rGrid[j] = 0;
+                    
+            heatOutputGrid[j] +=
+                getBiomeHeatValue( getMapBiome( mapX, mapY ) );
+
+
+            ObjectRecord *o = getObject( getMapObject( mapX, mapY ) );
+                    
+                    
+                    
+
+            if( o != NULL ) {
+                heatOutputGrid[j] += o->heatValue;
+                if( o->permanent ) {
+                    // loose objects sitting on ground don't
+                    // contribute to r-value (like dropped clothing)
+                    rGrid[j] = o->rValue;
+                    }
+
+
+                // skip checking for heat-producing contained items
+                // for now.  Consumes too many server-side resources
+                // can still check for heat produced by stuff in
+                // held container (below).
+                        
+                if( false && o->numSlots > 0 ) {
+                    // contained can produce heat shielded by container
+                    // r value
+                    double oRFactor = 1 - o->rValue;
+                            
+                    int numCont;
+                    int *cont = getContained( mapX, mapY, &numCont );
+                            
+                    if( cont != NULL ) {
+                                
+                        for( int c=0; c<numCont; c++ ) {
+                                    
+                            int cID = cont[c];
+                            char hasSub = false;
+                            if( cID < 0 ) {
+                                hasSub = true;
+                                cID = -cID;
+                                }
+
+                            ObjectRecord *cO = getObject( cID );
+                            heatOutputGrid[j] += 
+                                cO->heatValue * oRFactor;
+                                    
+                            if( hasSub ) {
+                                double cRFactor = 1 - cO->rValue;
+                                        
+                                int numSub;
+                                int *sub = getContained( mapX, mapY, 
+                                                         &numSub, 
+                                                         c + 1 );
+                                if( sub != NULL ) {
+                                    for( int s=0; s<numSub; s++ ) {
+                                        ObjectRecord *sO = 
+                                            getObject( sub[s] );
+                                                
+                                        heatOutputGrid[j] += 
+                                            sO->heatValue * 
+                                            cRFactor * 
+                                            oRFactor;
+                                        }
+                                    delete [] sub;
+                                    }
+                                }
+                            }
+                        delete [] cont;
+                        }
+                    }
+                }
+                    
+
+            // floor can insulate or produce heat too
+            ObjectRecord *fO = getObject( getMapFloor( mapX, mapY ) );
+                    
+            if( fO != NULL ) {
+                heatOutputGrid[j] += fO->heatValue;
+                rGrid[j] += fO->rValue;
+                }
+            }
+        }
+
+    // clothing is additive to R value at center spot
+
+    float headWeight = 0.25;
+    float chestWeight = 0.35;
+    float buttWeight = 0.2;
+    float eachFootWeigth = 0.1;
+            
+    float backWeight = 0.1;
+
+
+    float clothingR = 0;
+            
+    if( inPlayer->clothing.hat != NULL ) {
+        clothingR += headWeight *  inPlayer->clothing.hat->rValue;
+        }
+    if( inPlayer->clothing.tunic != NULL ) {
+        clothingR += chestWeight * inPlayer->clothing.tunic->rValue;
+        }
+    if( inPlayer->clothing.frontShoe != NULL ) {
+        clothingR += 
+            eachFootWeigth * inPlayer->clothing.frontShoe->rValue;
+        }
+    if( inPlayer->clothing.backShoe != NULL ) {
+        clothingR += eachFootWeigth * 
+            inPlayer->clothing.backShoe->rValue;
+        }
+    if( inPlayer->clothing.bottom != NULL ) {
+        clothingR += buttWeight * inPlayer->clothing.bottom->rValue;
+        }
+    if( inPlayer->clothing.backpack != NULL ) {
+        clothingR += backWeight * inPlayer->clothing.backpack->rValue;
+        }
+
+    //printf( "Clothing r = %f\n", clothingR );
+            
+            
+    int playerMapIndex = 
+        ( HEAT_MAP_D / 2 ) * HEAT_MAP_D +
+        ( HEAT_MAP_D / 2 );
+            
+
+    rGrid[ playerMapIndex ] += clothingR;
+            
+            
+    if( rGrid[ playerMapIndex ] > 1 ) {
+                
+        rGrid[ playerMapIndex ] = 1;
+        }
+            
+
+    // body itself produces 1 unit of heat
+    // (r value of clothing can hold this in
+    heatOutputGrid[ playerMapIndex ] += 1;
+            
+
+    // what player is holding can contribute heat
+    if( inPlayer->holdingID > 0 ) {
+        ObjectRecord *heldO = getObject( inPlayer->holdingID );
+                
+        heatOutputGrid[ playerMapIndex ] += heldO->heatValue;
+                
+        double heldRFactor = 1 - heldO->rValue;
+                
+        // contained can contribute too, but shielded by r-value
+        // of container
+        for( int c=0; c<inPlayer->numContained; c++ ) {
+                    
+            int cID = inPlayer->containedIDs[c];
+            char hasSub = false;
+                    
+            if( cID < 0 ) {
+                hasSub = true;
+                cID = -cID;
+                }
+
+            ObjectRecord *contO = getObject( cID );
+                    
+            heatOutputGrid[ playerMapIndex ] += 
+                contO->heatValue * heldRFactor;
+                    
+
+            if( hasSub ) {
+                // sub contained too, but shielded by both r-values
+                double contRFactor = 1 - contO->rValue;
+
+                for( int s=0; 
+                     s<inPlayer->subContainedIDs[c].size(); s++ ) {
+                        
+                    ObjectRecord *subO =
+                        getObject( inPlayer->subContainedIDs[c].
+                                   getElementDirect( s ) );
+                            
+                    heatOutputGrid[ playerMapIndex ] += 
+                        subO->heatValue * 
+                        contRFactor * heldRFactor;
+                    }
+                }
+            }
+        }
+            
+    // clothing can contribute heat
+    for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+                
+        ObjectRecord *cO = clothingByIndex( inPlayer->clothing, c );
+            
+        if( cO != NULL ) {
+            heatOutputGrid[playerMapIndex ] += cO->heatValue;
+
+            // contained items in clothing can contribute
+            // heat, shielded by clothing r-values
+            double cRFactor = 1 - cO->rValue;
+
+            for( int s=0; 
+                 s < inPlayer->clothingContained[c].size(); s++ ) {
+                        
+                ObjectRecord *sO = 
+                    getObject( inPlayer->clothingContained[c].
+                               getElementDirect( s ) );
+                        
+                heatOutputGrid[ playerMapIndex ] += 
+                    sO->heatValue * cRFactor;
+                }
+            }
+        }
+            
+
+            
+    //double startTime = Time::getCurrentTime();
+            
+    int numCycles = 8;
+            
+    int numNeighbors = 8;
+    int ndx[8] = { 0, 1,  0, -1,  1,  1, -1, -1 };
+    int ndy[8] = { 1, 0, -1,  0,  1, -1,  1, -1 };
+            
+    // found equation here:
+    // http://demonstrations.wolfram.com/
+    //        ACellularAutomatonBasedHeatEquation/
+    // diags have way less contact area
+    double nWeights[8] = { 4, 4, 4, 4, 1, 1, 1, 1 };
+            
+    double totalNWeight = 20;
+            
+            
+    //double startTime = Time::getCurrentTime();
+
+    for( int c=0; c<numCycles; c++ ) {
+                
+        float tempHeatGrid[ HEAT_MAP_D * HEAT_MAP_D ];
+        memcpy( tempHeatGrid, inPlayer->heatMap, 
+                HEAT_MAP_D * HEAT_MAP_D * sizeof( float ) );
+                
+        for( int y=1; y<HEAT_MAP_D-1; y++ ) {
+            for( int x=1; x<HEAT_MAP_D-1; x++ ) {
+                int j = y * HEAT_MAP_D + x;
+            
+                float heatDelta = 0;
+                
+                float centerLeak = 1 - rGrid[j];
+
+                float centerOldHeat = tempHeatGrid[j];
+
+                for( int n=0; n<numNeighbors; n++ ) {
+                
+                    int nx = x + ndx[n];
+                    int ny = y + ndy[n];
+                        
+                    int nj = ny * HEAT_MAP_D + nx;
+                        
+                    float nLeak = 1 - rGrid[ nj ];
+                    
+                    heatDelta += nWeights[n] * centerLeak * nLeak *
+                        ( tempHeatGrid[ nj ] - centerOldHeat );
+                    }
+                
+                inPlayer->heatMap[j] = 
+                    tempHeatGrid[j] + heatDelta / totalNWeight;
+                
+                inPlayer->heatMap[j] += heatOutputGrid[j];
+                }
+            }
+        } 
+            
+    //printf( "Computing %d cycles took %f ms\n",
+    //        numCycles, 
+    //        ( Time::getCurrentTime() - startTime ) * 1000 );
+    /*
+      printf( "Player heat map:\n" );
+            
+      for( int y=0; y<HEAT_MAP_D; y++ ) {
+                
+      for( int x=0; x<HEAT_MAP_D; x++ ) {                    
+      int j = y * HEAT_MAP_D + x;
+                    
+      printf( "%04.1f ", 
+      inPlayer->heatMap[ j ] );
+      //tempHeatGrid[ y * HEAT_MAP_D + x ] );
+      }
+      printf( "\n" );
+
+      char anyTags = false;
+      for( int x=0; x<HEAT_MAP_D; x++ ) {
+      int j = y * HEAT_MAP_D + x;
+                    
+      if( j == playerMapIndex ) {
+      anyTags = true;
+      break;
+      }
+      if( heatOutputGrid[ j ] > 0 ) {
+      anyTags = true;
+      break;
+      }
+      }
+                
+      if( anyTags ) {
+      for( int x=0; x<HEAT_MAP_D; x++ ) {                    
+      int j = y * HEAT_MAP_D + x;
+      if( j == playerMapIndex ) {
+      printf( "p" );
+      }
+      else printf( " " );
+                        
+      if( heatOutputGrid[j] > 0 ) {
+      printf( "H%d   ", 
+      heatOutputGrid[j] );
+      }
+      else {
+      printf( "    " );
+      }
+      }
+      printf( "\n" );
+      }
+      }
+    */
+
+    float playerHeat = 
+        inPlayer->heatMap[ playerMapIndex ];
+            
+    // printf( "Player heat = %f\n", playerHeat );
+            
+    // convert into 0..1 range, where 0.5 represents targetHeat
+    inPlayer->envHeat = ( playerHeat / targetHeat ) / 2;
+    if( inPlayer->envHeat > 1 ) {
+        inPlayer->envHeat = 1;
+        }
+    if( inPlayer->envHeat < 0 ) {
+        inPlayer->envHeat = 0;
+        }
+
+    }
+
 
 
 
@@ -3592,14 +3976,19 @@ int processLoggedInPlayer( Socket *inSock,
         }
 
 
+    char forceParentChoices = false;
+    
+
     if( inTutorialNumber > 0 ) {
         // Tutorial always played full-grown
         parentChoices.deleteAll();
+        forceParentChoices = true;
         }
 
     if( inForceParentID == -2 ) {
         // force eve
         parentChoices.deleteAll();
+        forceParentChoices = true;
         }
     else if( inForceParentID > -1 ) {
         // force parent choice
@@ -3609,6 +3998,7 @@ int processLoggedInPlayer( Socket *inSock,
         
         if( forcedParent != NULL ) {
             parentChoices.push_back( forcedParent );
+            forceParentChoices = true;
             }
         }
     
@@ -3635,7 +4025,8 @@ int processLoggedInPlayer( Socket *inSock,
         }
     
 
-    if( numOfAge == 0 && inCurseLevel == 0 ) {
+    if( !forceParentChoices && 
+        parentChoices.size() == 0 && numOfAge == 0 && inCurseLevel == 0 ) {
         // all existing babies are good spawn spot for Eve
                     
         for( int i=0; i<numPlayers; i++ ) {
@@ -3673,8 +4064,11 @@ int processLoggedInPlayer( Socket *inSock,
         }
     
 
-
+    newObject.envHeat = 0.5;
     newObject.heat = 0.5;
+    newObject.heatUpdate = false;
+    newObject.lastHeatUpdate = Time::getCurrentTime();
+    
 
     newObject.foodDecrementETASeconds =
         Time::getCurrentTime() + 
@@ -4319,6 +4713,11 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             if( isTutorial ) {
                 // force this one to wait for same tutorial map load
                 newTwinPlayer.tutorialLoad = sharedTutorialLoad;
+
+                // flag them as a tutorial player too, so they can't have
+                // babies in the tutorial, and they won't be remembered
+                // as a long-lineage position at shutdown
+                newTwinPlayer.isTutorial = true;
 
                 players.deleteElement( players.size() - 1 );
                 
@@ -9582,23 +9981,24 @@ int main() {
                 nextPlayer->error = true;
 
                 
-                if( ! nextPlayer->isTutorial )
-                logDeath( nextPlayer->id,
-                          nextPlayer->email,
-                          nextPlayer->isEve,
-                          computeAge( nextPlayer ),
-                          getSecondsPlayed( 
-                              nextPlayer ),
-                          ! getFemale( nextPlayer ),
-                          nextPlayer->xd, nextPlayer->yd,
-                          players.size() - 1,
-                          false,
-                          nextPlayer->murderPerpID,
-                          nextPlayer->murderPerpEmail );
+                if( ! nextPlayer->isTutorial ) {
+                    logDeath( nextPlayer->id,
+                              nextPlayer->email,
+                              nextPlayer->isEve,
+                              computeAge( nextPlayer ),
+                              getSecondsPlayed( 
+                                  nextPlayer ),
+                              ! getFemale( nextPlayer ),
+                              nextPlayer->xd, nextPlayer->yd,
+                              players.size() - 1,
+                              false,
+                              nextPlayer->murderPerpID,
+                              nextPlayer->murderPerpEmail );
                                             
-                if( shutdownMode ) {
-                    handleShutdownDeath( 
-                        nextPlayer, nextPlayer->xd, nextPlayer->yd );
+                    if( shutdownMode ) {
+                        handleShutdownDeath( 
+                            nextPlayer, nextPlayer->xd, nextPlayer->yd );
+                        }
                     }
                 
                 nextPlayer->deathLogged = true;
@@ -9732,19 +10132,21 @@ int main() {
                         disconnect = false;
                         }
                     
-                    if( ! nextPlayer->isTutorial )
-                    logDeath( nextPlayer->id,
-                              nextPlayer->email,
-                              nextPlayer->isEve,
-                              age,
-                              getSecondsPlayed( nextPlayer ),
-                              male,
-                              dropPos.x, dropPos.y,
-                              players.size() - 1,
-                              disconnect );
+                    if( ! nextPlayer->isTutorial ) {    
+                        logDeath( nextPlayer->id,
+                                  nextPlayer->email,
+                                  nextPlayer->isEve,
+                                  age,
+                                  getSecondsPlayed( nextPlayer ),
+                                  male,
+                                  dropPos.x, dropPos.y,
+                                  players.size() - 1,
+                                  disconnect );
                     
-                    if( shutdownMode ) {
-                        handleShutdownDeath( nextPlayer, dropPos.x, dropPos.y );
+                        if( shutdownMode ) {
+                            handleShutdownDeath( 
+                                nextPlayer, dropPos.x, dropPos.y );
+                            }
                         }
                     
                     nextPlayer->deathLogged = true;
@@ -10631,7 +11033,8 @@ int main() {
                                       false );
                             }
                         
-                        if( shutdownMode ) {
+                        if( shutdownMode &&
+                            ! decrementedPlayer->isTutorial ) {
                             handleShutdownDeath( decrementedPlayer,
                                                  deathPos.x, deathPos.y );
                             }
@@ -10691,6 +11094,69 @@ int main() {
             }
         
 
+        // recompute heat map here for next players in line
+        int r = 0;
+        for( r=lastPlayerIndexHeatRecomputed+1; 
+             r < lastPlayerIndexHeatRecomputed + 1 + 
+                 numPlayersRecomputeHeatPerStep
+                 &&
+                 r < players.size(); r++ ) {
+                    
+            recomputeHeatMap( players.getElement( r ) );
+            }
+        
+        lastPlayerIndexHeatRecomputed = r - 1;
+        
+        if( r == players.size() ) {
+            // done updating for last player
+            // start over
+            lastPlayerIndexHeatRecomputed = -1;
+            }
+
+
+
+        // update personal heat value of any player that is due
+        // once every 2 seconds
+        double currentTime = Time::getCurrentTime();
+        for( int i=0; i< players.size(); i++ ) {
+            LiveObject *nextPlayer = players.getElement( i );
+            
+            if( nextPlayer->error || 
+                currentTime - nextPlayer->lastHeatUpdate < heatUpdateSeconds ||
+                nextPlayer->envHeat == nextPlayer->heat ) {
+                continue;
+                }
+            
+            // Purho easing
+            double delta = nextPlayer->envHeat - nextPlayer->heat;
+            
+            if( fabs( delta ) < 0.05 ) {
+                nextPlayer->heat = nextPlayer->envHeat;
+                }
+            else {
+                
+                double change = 0.2 * delta;
+                
+                if( fabs( change ) < 0.05 ) {
+                    // step is too small
+                    
+                    if( change > 0 ) {
+                        change = 0.05;
+                        }
+                    else {
+                        change = -0.05;
+                        }
+                    }
+                
+
+                nextPlayer->heat += change;
+                }
+            
+            nextPlayer->heatUpdate = true;
+            nextPlayer->lastHeatUpdate = currentTime;
+            }
+        
+
         
         for( int i=0; i<playerIndicesToSendUpdatesAbout.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement( 
@@ -10700,361 +11166,11 @@ int main() {
                 continue;
                 }
             
-
-            // recompute heat map
+            // also force-recompute heat maps for players that are getting
+            // updated
+            recomputeHeatMap( nextPlayer );
             
             
-            // what if we recompute it from scratch every time?
-            for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
-                nextPlayer->heatMap[i] = 0;
-                }
-
-            float heatOutputGrid[ HEAT_MAP_D * HEAT_MAP_D ];
-            float rGrid[ HEAT_MAP_D * HEAT_MAP_D ];
-
-            for( int y=0; y<HEAT_MAP_D; y++ ) {
-                int mapY = nextPlayer->ys + y - HEAT_MAP_D / 2;
-                
-                for( int x=0; x<HEAT_MAP_D; x++ ) {
-                    
-                    int mapX = nextPlayer->xs + x - HEAT_MAP_D / 2;
-                    
-                    int j = y * HEAT_MAP_D + x;
-                    heatOutputGrid[j] = 0;
-                    rGrid[j] = 0;
-                    
-                    heatOutputGrid[j] +=
-                        getBiomeHeatValue( getMapBiome( mapX, mapY ) );
-
-
-                    ObjectRecord *o = getObject( getMapObject( mapX, mapY ) );
-                    
-                    
-                    
-
-                    if( o != NULL ) {
-                        heatOutputGrid[j] += o->heatValue;
-                        if( o->permanent ) {
-                            // loose objects sitting on ground don't
-                            // contribute to r-value (like dropped clothing)
-                            rGrid[j] = o->rValue;
-                            }
-
-
-                        // skip checking for heat-producing contained items
-                        // for now.  Consumes too many server-side resources
-                        // can still check for heat produced by stuff in
-                        // held container (below).
-                        
-                        if( false && o->numSlots > 0 ) {
-                            // contained can produce heat shielded by container
-                            // r value
-                            double oRFactor = 1 - o->rValue;
-                            
-                            int numCont;
-                            int *cont = getContained( mapX, mapY, &numCont );
-                            
-                            if( cont != NULL ) {
-                                
-                                for( int c=0; c<numCont; c++ ) {
-                                    
-                                    int cID = cont[c];
-                                    char hasSub = false;
-                                    if( cID < 0 ) {
-                                        hasSub = true;
-                                        cID = -cID;
-                                        }
-
-                                    ObjectRecord *cO = getObject( cID );
-                                    heatOutputGrid[j] += 
-                                        cO->heatValue * oRFactor;
-                                    
-                                    if( hasSub ) {
-                                        double cRFactor = 1 - cO->rValue;
-                                        
-                                        int numSub;
-                                        int *sub = getContained( mapX, mapY, 
-                                                                 &numSub, 
-                                                                 c + 1 );
-                                        if( sub != NULL ) {
-                                            for( int s=0; s<numSub; s++ ) {
-                                                ObjectRecord *sO = 
-                                                    getObject( sub[s] );
-                                                
-                                                heatOutputGrid[j] += 
-                                                    sO->heatValue * 
-                                                    cRFactor * 
-                                                    oRFactor;
-                                                }
-                                            delete [] sub;
-                                            }
-                                        }
-                                    }
-                                delete [] cont;
-                                }
-                            }
-                        }
-                    
-
-                    // floor can insulate or produce heat too
-                    ObjectRecord *fO = getObject( getMapFloor( mapX, mapY ) );
-                    
-                    if( fO != NULL ) {
-                        heatOutputGrid[j] += fO->heatValue;
-                        rGrid[j] += fO->rValue;
-                        }
-                    }
-                }
-
-            // clothing is additive to R value at center spot
-
-            float headWeight = 0.25;
-            float chestWeight = 0.35;
-            float buttWeight = 0.2;
-            float eachFootWeigth = 0.1;
-            
-            float backWeight = 0.1;
-
-
-            float clothingR = 0;
-            
-            if( nextPlayer->clothing.hat != NULL ) {
-                clothingR += headWeight *  nextPlayer->clothing.hat->rValue;
-                }
-            if( nextPlayer->clothing.tunic != NULL ) {
-                clothingR += chestWeight * nextPlayer->clothing.tunic->rValue;
-                }
-            if( nextPlayer->clothing.frontShoe != NULL ) {
-                clothingR += 
-                    eachFootWeigth * nextPlayer->clothing.frontShoe->rValue;
-                }
-            if( nextPlayer->clothing.backShoe != NULL ) {
-                clothingR += eachFootWeigth * 
-                    nextPlayer->clothing.backShoe->rValue;
-                }
-            if( nextPlayer->clothing.bottom != NULL ) {
-                clothingR += buttWeight * nextPlayer->clothing.bottom->rValue;
-                }
-            if( nextPlayer->clothing.backpack != NULL ) {
-                clothingR += backWeight * nextPlayer->clothing.backpack->rValue;
-                }
-
-            //printf( "Clothing r = %f\n", clothingR );
-            
-            
-            int playerMapIndex = 
-                ( HEAT_MAP_D / 2 ) * HEAT_MAP_D +
-                ( HEAT_MAP_D / 2 );
-            
-
-            rGrid[ playerMapIndex ] += clothingR;
-            
-            
-            if( rGrid[ playerMapIndex ] > 1 ) {
-                
-                rGrid[ playerMapIndex ] = 1;
-                }
-            
-
-            // body itself produces 1 unit of heat
-            // (r value of clothing can hold this in
-            heatOutputGrid[ playerMapIndex ] += 1;
-            
-
-            // what player is holding can contribute heat
-            if( nextPlayer->holdingID > 0 ) {
-                ObjectRecord *heldO = getObject( nextPlayer->holdingID );
-                
-                heatOutputGrid[ playerMapIndex ] += heldO->heatValue;
-                
-                double heldRFactor = 1 - heldO->rValue;
-                
-                // contained can contribute too, but shielded by r-value
-                // of container
-                for( int c=0; c<nextPlayer->numContained; c++ ) {
-                    
-                    int cID = nextPlayer->containedIDs[c];
-                    char hasSub = false;
-                    
-                    if( cID < 0 ) {
-                        hasSub = true;
-                        cID = -cID;
-                        }
-
-                    ObjectRecord *contO = getObject( cID );
-                    
-                    heatOutputGrid[ playerMapIndex ] += 
-                        contO->heatValue * heldRFactor;
-                    
-
-                    if( hasSub ) {
-                        // sub contained too, but shielded by both r-values
-                        double contRFactor = 1 - contO->rValue;
-
-                        for( int s=0; 
-                             s<nextPlayer->subContainedIDs[c].size(); s++ ) {
-                        
-                            ObjectRecord *subO =
-                                getObject( nextPlayer->subContainedIDs[c].
-                                       getElementDirect( s ) );
-                            
-                            heatOutputGrid[ playerMapIndex ] += 
-                                subO->heatValue * 
-                                contRFactor * heldRFactor;
-                            }
-                        }
-                    }
-                }
-            
-            // clothing can contribute heat
-            for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
-                
-                ObjectRecord *cO = clothingByIndex( nextPlayer->clothing, c );
-            
-                if( cO != NULL ) {
-                    heatOutputGrid[playerMapIndex ] += cO->heatValue;
-
-                    // contained items in clothing can contribute
-                    // heat, shielded by clothing r-values
-                    double cRFactor = 1 - cO->rValue;
-
-                    for( int s=0; 
-                         s < nextPlayer->clothingContained[c].size(); s++ ) {
-                        
-                        ObjectRecord *sO = 
-                            getObject( nextPlayer->clothingContained[c].
-                                       getElementDirect( s ) );
-                        
-                        heatOutputGrid[ playerMapIndex ] += 
-                            sO->heatValue * cRFactor;
-                        }
-                    }
-                }
-            
-
-            
-            //double startTime = Time::getCurrentTime();
-            
-            int numCycles = 8;
-            
-            int numNeighbors = 8;
-            int ndx[8] = { 0, 1,  0, -1,  1,  1, -1, -1 };
-            int ndy[8] = { 1, 0, -1,  0,  1, -1,  1, -1 };
-            
-            // found equation here:
-            // http://demonstrations.wolfram.com/
-            //        ACellularAutomatonBasedHeatEquation/
-            // diags have way less contact area
-            double nWeights[8] = { 4, 4, 4, 4, 1, 1, 1, 1 };
-            
-            double totalNWeight = 20;
-            
-            
-            //double startTime = Time::getCurrentTime();
-
-            for( int c=0; c<numCycles; c++ ) {
-                
-                float tempHeatGrid[ HEAT_MAP_D * HEAT_MAP_D ];
-                memcpy( tempHeatGrid, nextPlayer->heatMap, 
-                        HEAT_MAP_D * HEAT_MAP_D * sizeof( float ) );
-                
-                for( int y=1; y<HEAT_MAP_D-1; y++ ) {
-                    for( int x=1; x<HEAT_MAP_D-1; x++ ) {
-                        int j = y * HEAT_MAP_D + x;
-            
-                        float heatDelta = 0;
-                
-                        float centerLeak = 1 - rGrid[j];
-
-                        float centerOldHeat = tempHeatGrid[j];
-
-                        for( int n=0; n<numNeighbors; n++ ) {
-                
-                            int nx = x + ndx[n];
-                            int ny = y + ndy[n];
-                        
-                            int nj = ny * HEAT_MAP_D + nx;
-                        
-                            float nLeak = 1 - rGrid[ nj ];
-                    
-                            heatDelta += nWeights[n] * centerLeak * nLeak *
-                                ( tempHeatGrid[ nj ] - centerOldHeat );
-                            }
-                
-                        nextPlayer->heatMap[j] = 
-                            tempHeatGrid[j] + heatDelta / totalNWeight;
-                
-                        nextPlayer->heatMap[j] += heatOutputGrid[j];
-                        }
-                    }
-                } 
-            
-            //printf( "Computing %d cycles took %f ms\n",
-            //        numCycles, 
-            //        ( Time::getCurrentTime() - startTime ) * 1000 );
-            /*
-            printf( "Player heat map:\n" );
-            
-            for( int y=0; y<HEAT_MAP_D; y++ ) {
-                
-                for( int x=0; x<HEAT_MAP_D; x++ ) {                    
-                    int j = y * HEAT_MAP_D + x;
-                    
-                    printf( "%04.1f ", 
-                            nextPlayer->heatMap[ j ] );
-                            //tempHeatGrid[ y * HEAT_MAP_D + x ] );
-                    }
-                printf( "\n" );
-
-                char anyTags = false;
-                for( int x=0; x<HEAT_MAP_D; x++ ) {
-                    int j = y * HEAT_MAP_D + x;
-                    
-                    if( j == playerMapIndex ) {
-                        anyTags = true;
-                        break;
-                        }
-                    if( heatOutputGrid[ j ] > 0 ) {
-                        anyTags = true;
-                        break;
-                        }
-                    }
-                
-                if( anyTags ) {
-                    for( int x=0; x<HEAT_MAP_D; x++ ) {                    
-                        int j = y * HEAT_MAP_D + x;
-                        if( j == playerMapIndex ) {
-                            printf( "p" );
-                            }
-                        else printf( " " );
-                        
-                        if( heatOutputGrid[j] > 0 ) {
-                            printf( "H%d   ", 
-                                    heatOutputGrid[j] );
-                            }
-                        else {
-                            printf( "    " );
-                            }
-                        }
-                    printf( "\n" );
-                    }
-                }
-            */
-
-            float playerHeat = 
-                nextPlayer->heatMap[ playerMapIndex ];
-            
-            // printf( "Player heat = %f\n", playerHeat );
-            
-            // convert into 0..1 range, where 0.5 represents targetHeat
-            nextPlayer->heat = ( playerHeat / targetHeat ) / 2;
-            if( nextPlayer->heat > 1 ) {
-                nextPlayer->heat = 1;
-                }
-            if( nextPlayer->heat < 0 ) {
-                nextPlayer->heat = 0;
-                }
-
             
             newUpdates.push_back( getUpdateRecord( nextPlayer, false ) );
             
@@ -12592,6 +12708,37 @@ int main() {
                     nextPlayer->foodUpdate = false;
                     nextPlayer->lastAteID = 0;
                     nextPlayer->lastAteFillMax = 0;
+                    }
+
+
+
+                if( nextPlayer->heatUpdate ) {
+                    // send this player a heat status change
+                    
+                    char *heatMessage = autoSprintf( 
+                        "HX\n"
+                        "%.2f#",
+                        nextPlayer->heat );
+                     
+                    int messageLength = strlen( heatMessage );
+                    
+                    int numSent = 
+                         nextPlayer->sock->send( 
+                             (unsigned char*)heatMessage, 
+                             messageLength,
+                             false, false );
+
+                    if( numSent != messageLength ) {
+                        setDeathReason( nextPlayer, "disconnected" );
+                        
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Socket write failed";
+                        }
+                    
+                    delete [] heatMessage;
+                    
+                    nextPlayer->heatUpdate = false;
                     }
 
 
