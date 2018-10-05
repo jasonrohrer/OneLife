@@ -317,8 +317,6 @@ static void setupEyesAndMouth( ObjectRecord *inR ) {
                 
                 r->mainEyesOffset = 
                     sub( r->spritePos[i], r->spritePos[ headIndex ] );
-                printf( "Main eyes offset = %f, %f\n", r->mainEyesOffset.x,
-                        r->mainEyesOffset.y );
                 }
             }
         } 
