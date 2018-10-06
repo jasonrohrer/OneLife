@@ -1776,7 +1776,7 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
 
 
 // recompute heat for fixed number of players per step
-static int numPlayersRecomputeHeatPerStep = 10;
+static int numPlayersRecomputeHeatPerStep = 2;
 static int lastPlayerIndexHeatRecomputed = -1;
 
 // how often the player's personal heat advances toward their environmental
@@ -11168,7 +11168,9 @@ int main() {
             
             // also force-recompute heat maps for players that are getting
             // updated
-            recomputeHeatMap( nextPlayer );
+            // don't bother with this for now
+            // all players update on the same cycle
+            // recomputeHeatMap( nextPlayer );
             
             
             

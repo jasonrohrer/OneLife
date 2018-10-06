@@ -4,6 +4,20 @@ http://onehouronelife.com/updateLog.php
 
 
 
+
+Server Fixes
+
+--New constant heat-map computing code was causing high CPU.  We were
+  recomputing heat maps for 10 players per steps, but a quick sample of
+  server1's logs showed 30 server steps per second with an 80-player load.
+  Thus, we were recomputing heat maps for 300 players per second, which is way
+  too frequently.  Turned setting down to 2 players updated per step, or 30 per
+  second (all 80 players updated over the course of three seconds, which is
+  fine).  Also eliminated extra heat map recomputation for players that are
+  receiving a player update message.
+
+
+
 Version 149    2018-October-5
 
 --Scene editor supports emotion displays.
