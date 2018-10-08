@@ -1799,6 +1799,16 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     GridPos pos = getPlayerPos( inPlayer );
 
 
+    // held baby's pos matches parent pos
+    if( inPlayer->heldByOther ) {
+        LiveObject *parentObject = getLiveObject( inPlayer->heldByOtherID );
+        
+        if( parentObject != NULL ) {
+            pos = getPlayerPos( parentObject );
+            }
+        } 
+
+
     for( int y=0; y<HEAT_MAP_D; y++ ) {
         int mapY = pos.y + y - HEAT_MAP_D / 2;
                 

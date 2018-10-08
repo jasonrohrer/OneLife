@@ -16,6 +16,9 @@ Server Fixes
   fine).  Also eliminated extra heat map recomputation for players that are
   receiving a player update message.
 
+--Held baby's temp matches position of moving holding adult.
+
+
 
 
 Version 149    2018-October-5
