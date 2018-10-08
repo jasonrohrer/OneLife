@@ -4013,6 +4013,11 @@ int processLoggedInPlayer( Socket *inSock,
         }
     
     
+    if( SettingsManager::getIntSetting( "forceAllPlayersEve", 0 ) ) {
+        parentChoices.deleteAll();
+        forceParentChoices = true;
+        }
+    
 
 
     newObject.parentChainLength = 1;
