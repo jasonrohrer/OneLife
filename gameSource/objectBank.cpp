@@ -325,6 +325,25 @@ static void setupEyesAndMouth( ObjectRecord *inR ) {
 
 
 
+static void setupObjectWritingStatus( ObjectRecord *inR ) {
+    inR->mayHaveMetadata = false;
+                
+    inR->written = false;
+    inR->writable = false;
+                
+    if( strstr( inR->description, "&" ) != NULL ) {
+        // some flags in name
+        if( strstr( inR->description, "&written" ) != NULL ) {
+            inR->written = true;
+            inR->mayHaveMetadata = true;
+            }
+        if( strstr( inR->description, "&writable" ) != NULL ) {
+            inR->writable = true;
+            inR->mayHaveMetadata = true;
+            }
+        }
+    }
+
 
 float initObjectBankStep() {
         
@@ -370,22 +389,7 @@ float initObjectBankStep() {
                 r->description = stringDuplicate( lines[next] );
                          
 
-                r->mayHaveMetadata = false;
-                
-                r->written = false;
-                r->writable = false;
-                
-                if( strstr( r->description, "&" ) != NULL ) {
-                    // some flags in name
-                    if( strstr( r->description, "&written" ) != NULL ) {
-                        r->written = true;
-                        r->mayHaveMetadata = true;
-                        }
-                    if( strstr( r->description, "&writable" ) != NULL ) {
-                        r->writable = true;
-                        r->mayHaveMetadata = true;
-                        }
-                    }
+                setupObjectWritingStatus( r );
                 
 
                 next++;
@@ -2576,6 +2580,10 @@ int addObject( const char *inDescription,
     r->isVariableDummy = false;
     r->variableDummyParent = 0;
     r->isVariableHidden = false;
+
+
+    setupObjectWritingStatus( r );
+    
     
     memset( r->spriteSkipDrawing, false, inNumSprites );
     

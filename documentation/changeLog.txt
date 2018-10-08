@@ -31,6 +31,9 @@ Server Fixes
 
 --Server setting forceAllPlayersEve.ini for improved control when testing.
 
+--Fixed bug where partially used objects would get flaged as writable
+  (allowing you to leave written messages on them).
+
 
 
 
