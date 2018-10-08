@@ -82,6 +82,12 @@ void freeSpriteBank();
 void stepSpriteBank();
 
 
+// returns NULL if asynchronous loading process hasn't failed
+// returns internally-allocated string (destroyed internally) if
+//    loading process fails.  String is name of file that failed to load
+char *getSpriteBankLoadFailure();
+
+
 
 SpriteRecord *getSpriteRecord( int inID );
 

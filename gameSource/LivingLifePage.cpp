@@ -3929,6 +3929,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     if( stillWaitingBirth ) {
         
+        if( getSpriteBankLoadFailure() != NULL ||
+            getSoundBankLoadFailure() != NULL ) {    
+            setSignal( "loadFailure" );
+            }
+        
         // draw this to cover up utility text field, but not
         // waiting icon at top
         setDrawColor( 0, 0, 0, 1 );

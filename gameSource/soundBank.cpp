@@ -45,6 +45,9 @@ static SimpleVector<SoundLoadingRecord> loadingSounds;
 
 static SimpleVector<int> loadedSounds;
 
+static char *loadingFailureFileName = NULL;
+
+
 
 static int sampleRate = 44100;
 
@@ -600,6 +603,11 @@ static void freeSoundRecord( int inID ) {
 
 
 void freeSoundBank() {
+
+    if( loadingFailureFileName != NULL ) {
+        delete [] loadingFailureFileName;
+        }
+
     endMultiConvolution( &eqConvolution );
 
     for( int i=0; i<mapSize; i++ ) {
@@ -617,6 +625,21 @@ void freeSoundBank() {
         }
 
     delete [] idMap;
+    }
+
+
+
+static void setLoadingFailureFileName( char *inNewFileName ) {
+    if( loadingFailureFileName != NULL ) {
+        delete [] loadingFailureFileName;
+        }
+    loadingFailureFileName = inNewFileName;
+    }
+
+
+
+char *getSoundBankLoadFailure() {
+    return loadingFailureFileName;
     }
 
 
@@ -642,10 +665,17 @@ void stepSoundBank() {
             if( dataSound == NULL ) {
                 printf( "Reading sound data from file failed, sound ID %d\n",
                         loadingR->soundID );
+                
+                setLoadingFailureFileName(
+                        autoSprintf( "sounds/%d.aiff", loadingR->soundID ) );
                 }
             else if( dataReverb == NULL ) {
                 printf( "Reading reverb data from cache failed, sound ID %d\n",
                         loadingR->soundID );
+                
+                setLoadingFailureFileName(
+                    autoSprintf( "reverbCache/%d.aiff", 
+                                     loadingR->soundID ) );
                 }
             else {
                 

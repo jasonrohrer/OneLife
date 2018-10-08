@@ -1831,7 +1831,27 @@ void drawFrame( char inUpdate ) {
             else if( livingLifePage->checkSignal( "died" ) ) {
                 showDiedPage();
                 }
-            
+            else if( livingLifePage->checkSignal( "loadFailure" ) ) {
+                currentGamePage = finalMessagePage;
+                        
+                finalMessagePage->setMessageKey( "loadingMapFailedMessage" );
+                
+                char *failedFileName = getSpriteBankLoadFailure();
+                if( failedFileName == NULL ) {
+                    failedFileName = getSoundBankLoadFailure();
+                    }
+
+                if( failedFileName != NULL ) {
+                    
+                    char *detailMessage = 
+                        autoSprintf( translate( "loadingMapFailedSubMessage" ), 
+                                     failedFileName );
+                    finalMessagePage->setSubMessage( detailMessage );
+                    delete [] detailMessage;
+                    }
+
+                currentGamePage->base_makeActive( true );
+                }
             }
         else if( currentGamePage == extendedMessagePage ) {
             if( extendedMessagePage->checkSignal( "done" ) ) {
