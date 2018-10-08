@@ -18,6 +18,10 @@ Server Fixes
 
 --Held baby's temp matches position of moving holding adult.
 
+--Pattern code now applies to transitions that have only one pattern object, as
+  long as it's an actor or target in the transition.  The dog/puppy decay
+  patterns now work correctly.  Fixes jasonrohrer/OneLifeData7#20
+
 
 
 
