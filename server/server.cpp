@@ -3422,6 +3422,36 @@ void handleForcedBabyDrop(
 
 
 
+static void swapHeldWithGround( 
+    LiveObject *inPlayer, int inTargetID, 
+    int inMapX, int inMapY,
+    SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout) {
+
+    timeSec_t newHoldingEtaDecay = getEtaDecay( inMapX, inMapY );
+    
+    FullMapContained f = getFullMapContained( inMapX, inMapY );
+    
+    
+    clearAllContained( inMapX, inMapY );
+    setMapObject( inMapX, inMapY, 0 );
+    
+    handleDrop( inMapX, inMapY, inPlayer, inPlayerIndicesToSendUpdatesAbout );
+    
+    
+    inPlayer->holdingID = inTargetID;
+    holdingSomethingNew( inPlayer );
+    
+    inPlayer->holdingEtaDecay = newHoldingEtaDecay;
+    
+    setContained( inPlayer, f );
+
+    inPlayer->heldOriginValid = 1;
+    inPlayer->heldOriginX = inMapX;
+    inPlayer->heldOriginY = inMapY;
+    inPlayer->heldTransitionSourceID = -1;
+    }
+
+
 
 
 
@@ -8442,6 +8472,72 @@ int main() {
                                             target );
                                         }
                                     }
+
+
+                                if( target != 0 && r == NULL &&
+                                    nextPlayer->holdingID > 0 &&
+                                    getObject( nextPlayer->holdingID )->
+                                        permanent ) {
+                                    
+                                    // no transition applies
+                                    
+                                    // user may have a permanent object
+                                    // stuck in their hand with no place
+                                    // to drop it
+                                    
+                                    // need to check if a use-on-bare-ground
+                                    // transition applies.  If so, we
+                                    // can treat it like a swap
+
+                                    ObjectRecord *targetObj = 
+                                        getObject( target );
+                                    
+                                    if( ! targetObj->permanent ) {
+                                        // target can be picked up
+
+                                        // "set-down" type bare ground 
+                                        // trans exists?
+                                        r = getPTrans( nextPlayer->holdingID, 
+                                                       -1 );
+
+                                        if( r != NULL && 
+                                            r->newActor == 0 &&
+                                            r->newTarget > 0 ) {
+                                            
+                                            // only applies if the bare-ground
+                                            // trans leaves nothing in
+                                            // our hand
+                                            
+                                            // first, change what they
+                                            // are holding to this newTarget
+                                            handleHoldingChange( nextPlayer,
+                                                                 r->newTarget );
+                                            
+                                            // this will handle container
+                                            // size changes, etc.
+                                            // This is what should end up
+                                            // on the ground as the result
+                                            // of the use-on-bare-ground
+                                            // transition.
+
+                                            // now swap it with the 
+                                            // non-permanent object on the
+                                            // ground.
+
+                                            swapHeldWithGround( 
+                                             nextPlayer,
+                                             target,
+                                             m.x,
+                                             m.y,
+                                             &playerIndicesToSendUpdatesAbout );
+                                            }
+                                        }
+                                    
+                                    // clear this special-case trans
+                                    r = NULL;
+                                    }
+                                
+
                                 
                                 if( r != NULL && containmentTransfer ) {
                                     // special case contained items
@@ -9874,36 +9970,9 @@ int main() {
 
                                             // swap what we're holding for
                                             // target
-                                            
-                                            timeSec_t newHoldingEtaDecay = 
-                                                getEtaDecay( m.x, m.y );
-
-                                            FullMapContained f = 
-                                                getFullMapContained( m.x, m.y );
-                                            
-
-                                            clearAllContained( m.x, m.y );
-                                            setMapObject( m.x, m.y, 0 );
-                                    
-                                            handleDrop(
-                                             m.x, m.y, nextPlayer,
+                                            swapHeldWithGround( 
+                                             nextPlayer, target, m.x, m.y,
                                              &playerIndicesToSendUpdatesAbout );
-                                    
-                                            
-                                            nextPlayer->holdingID = target;
-                                            holdingSomethingNew( nextPlayer );
-                                            
-                                            nextPlayer->holdingEtaDecay =
-                                                newHoldingEtaDecay;
-
-                                            setContained( nextPlayer, f );
-                                            
-                                    
-                                            nextPlayer->heldOriginValid = 1;
-                                            nextPlayer->heldOriginX = m.x;
-                                            nextPlayer->heldOriginY = m.y;
-                                            nextPlayer->heldTransitionSourceID =
-                                                -1;
                                             }
                                         }
                                     else {

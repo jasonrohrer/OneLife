@@ -34,6 +34,10 @@ Server Fixes
 --Fixed bug where partially used objects would get flaged as writable
   (allowing you to leave written messages on them).
 
+--Fixed case of being trapped while holding a permanent object (like a tipped
+  horse cart) and surrounded.  Any permanent held object that has a use-on-
+  bare-ground transition defined for dropping it can now be swapped with a
+  non-permanent object on the ground.
 
 
 
