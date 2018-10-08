@@ -4,11 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 150    ???
+Version 151    2018-October-8
 
 --Loading Map process used to stall if a needed file was missing.  Now it
   displays an error message to the user.  This will hopefully help with the
   behavior described in jasonrohrer/OneLifeData7#22
+
 
 
 
