@@ -56,6 +56,10 @@ static SimpleVector<SpriteLoadingRecord> loadingSprites;
 static SimpleVector<int> loadedSprites;
 
 
+static char *loadingFailureFileName = NULL;
+
+
+
 
 int getMaxSpriteID() {
     return maxID;
@@ -377,6 +381,11 @@ static void freeSpriteRecord( int inID ) {
 
 void freeSpriteBank() {
     
+    if( loadingFailureFileName != NULL ) {
+        delete [] loadingFailureFileName;
+        }
+    
+
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {
             
@@ -405,6 +414,21 @@ void freeSpriteBank() {
 
 
 
+static void setLoadingFailureFileName( char *inNewFileName ) {
+    if( loadingFailureFileName != NULL ) {
+        delete [] loadingFailureFileName;
+        }
+    loadingFailureFileName = inNewFileName;
+    }
+
+
+
+char *getSpriteBankLoadFailure() {
+    return loadingFailureFileName;
+    }
+
+
+
 void stepSpriteBank() {
     for( int i=0; i<loadingSprites.size(); i++ ) {
         SpriteLoadingRecord *loadingR = loadingSprites.getElement( i );
@@ -420,6 +444,9 @@ void stepSpriteBank() {
             if( data == NULL ) {
                 printf( "Reading sprite data from file failed, sprite ID %d\n",
                         loadingR->spriteID );
+
+                setLoadingFailureFileName(
+                    autoSprintf( "sprites/%d.tga", loadingR->spriteID ) );
                 }
             else {
                 
@@ -433,6 +460,9 @@ void stepSpriteBank() {
                             loadingR->spriteID );
                     delete spriteImage;
                     spriteImage = NULL;
+                    
+                    setLoadingFailureFileName(
+                        autoSprintf( "sprites/%d.tga", loadingR->spriteID ) );
                     }
                             
                 if( spriteImage != NULL ) {
@@ -547,12 +577,16 @@ void stepSpriteBank() {
         if( r->numStepsUnused > 600 ) {
             // 10 seconds not drawn
             
-            freeSprite( r->sprite );
-            r->sprite = NULL;
+            if( r->sprite != NULL ) {    
+                freeSprite( r->sprite );
+                r->sprite = NULL;
+                }
             
-            delete [] r->hitMap;
-            r->hitMap = NULL;
-
+            if( r->hitMap != NULL ) {
+                delete [] r->hitMap;
+                r->hitMap = NULL;
+                }
+            
             r->loading = false;
 
             loadedSprites.deleteElement( i );

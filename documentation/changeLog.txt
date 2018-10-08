@@ -4,6 +4,44 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 151    2018-October-8
+
+--Loading Map process used to stall if a needed file was missing.  Now it
+  displays an error message to the user.  This will hopefully help with the
+  behavior described in jasonrohrer/OneLifeData7#22
+
+
+
+
+Server Fixes
+
+--New constant heat-map computing code was causing high CPU.  We were
+  recomputing heat maps for 10 players per steps, but a quick sample of
+  server1's logs showed 30 server steps per second with an 80-player load.
+  Thus, we were recomputing heat maps for 300 players per second, which is way
+  too frequently.  Turned setting down to 2 players updated per step, or 30 per
+  second (all 80 players updated over the course of three seconds, which is
+  fine).  Also eliminated extra heat map recomputation for players that are
+  receiving a player update message.
+
+--Held baby's temp matches position of moving holding adult.
+
+--Pattern code now applies to transitions that have only one pattern object, as
+  long as it's an actor or target in the transition.  The dog/puppy decay
+  patterns now work correctly.  Fixes jasonrohrer/OneLifeData7#20
+
+--Server setting forceAllPlayersEve.ini for improved control when testing.
+
+--Fixed bug where partially used objects would get flaged as writable
+  (allowing you to leave written messages on them).
+
+--Fixed case of being trapped while holding a permanent object (like a tipped
+  horse cart) and surrounded.  Any permanent held object that has a use-on-
+  bare-ground transition defined for dropping it can now be swapped with a
+  non-permanent object on the ground.
+
+
+
 Version 149    2018-October-5
 
 --Scene editor supports emotion displays.

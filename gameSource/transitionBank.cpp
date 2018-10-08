@@ -500,7 +500,22 @@ void initTransBankFinish() {
             // (don't fill out pattern if only newActor or newTarget have
             //  pattern apply, because this will just replace the master
             //  transition with final element of the pattern list)
-            if( numPatternsInTrans > 1 && 
+            
+            // is there any reason to require numPatternsInTrans >=2 ?
+            // That is what the original code did, but I'm not sure.
+            // As long as actor or target are a pattern, I think we're
+            // okay applying one-pattern transitions.
+
+            // for example, if a pink rose bush turns into a non-pattern object
+            // (like a dead rose bush), then this SHOULD apply to all 
+            // rose bushes that are part of the pattern.
+
+            // Not requiring numPatternsInTrans >=2 also fixes the problem
+            // with decay-to-nothing for dead dogs and puppies
+            // (That German Shepherd transition only has one pattern object
+            //  in it, because "nothing" is not a pattern.)
+            
+            if( numPatternsInTrans > 0 && 
                 ( transCats[0] != NULL || transCats[1] != NULL ) ) {
                 
                 for( int p=0; p<patternSize; p++ ) {

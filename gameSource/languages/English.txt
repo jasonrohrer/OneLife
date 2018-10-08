@@ -158,6 +158,11 @@ cancelWaitingFriends "PRESS [x] KEY TO CANCEL"
 loadingMap "LOADING MAP"
 
 
+loadingMapFailedMessage "FAILED TO LOAD THE MAP."
+
+loadingMapFailedSubMessage "THE FOLLOWING FILE IS MISSING OR CORRUPTED:##%s####REINSTALLING THE GAME SHOULD FIX THIS PROBLEM."
+
+
 lastAte "ATE"
 lastAtePermanent "ATE FROM"
 
