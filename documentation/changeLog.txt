@@ -4,6 +4,25 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 152    ???
+
+--FINALLY found an additional cause of the bouncing-forever bug (stale MOVE
+  messages from client that arrive at server after a forced-position PU has
+  been sent to the client).  Added a new FORCE ack protocol, where client
+  responds to the position forced by the server, and any intervening messages
+  received by the server are ignored.  This allows the client and the server
+  to get back in sync position-wise.
+
+****
+NOTE:  Rolling this out will require a special update process.
+    1.  Update servers to latest code, including the current 
+            requireClientForceAck.ini '0' setting.
+    2.  Update client.
+    3.  Check in requireClientForceAck.ini '1' setting for server.
+    4   Run remoteServerGitPull.sh
+****
+
+
 Server Fixes
 
 --The bit of code that was enabling teleporters was dealing with a very narrow

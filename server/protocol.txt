@@ -645,6 +645,7 @@ KILL x y#
 KILL x y id#
 JUMP x y#
 EMOT x y e#
+FORCE x y#
 
 
 KA   is a keep-alive message used to keep the connection alive when the client
@@ -718,6 +719,16 @@ JUMP is used by a baby to jump out of its mother's arms.  The x and y
 
 EMOT is used to specify an emotion to display.  The x and y coordinates are
      ignored.  e is the emotion index.
+
+FORCE  is used to acknowledge a forced-pos PU sent previously by the server.
+       The x and y coordinates must match the forced position in the PU.
+       Forced-pos PU's act like sync points.  After sending one to the client,
+       the server will ignore all position-sensitive moves and actions until
+       a FORCE arrives, demonstrating that the client is in sync with the forced
+       position, and that subsequent moves carry forward from that forced
+       position (otherwise, additional moves/actions sent by the client after
+       its move that was cut off by the forced-pos PU, but before the client
+       actually receive that PU, can be misinterpreted by the server).
 
 
 This one is more complicated:

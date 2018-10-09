@@ -264,6 +264,8 @@ typedef struct LiveObject {
         // as a forced position change
         char posForced;
         
+        char waitingForForceResponse;
+        
 
         int pathLength;
         GridPos *pathToDest;
@@ -1102,6 +1104,7 @@ typedef enum messageType {
     SAY,
     EMOT,
     JUMP,
+    FORCE,
     MAP,
     TRIGGER,
     BUG,
@@ -1282,6 +1285,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "JUMP" ) == 0 ) {
         m.type = JUMP;
+        }
+    else if( strcmp( nameBuffer, "FORCE" ) == 0 ) {
+        m.type = FORCE;
         }
     else if( strcmp( nameBuffer, "USE" ) == 0 ) {
         m.type = USE;
@@ -4551,6 +4557,8 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.newMove = false;
     
     newObject.posForced = false;
+    newObject.waitingForForceResponse = false;
+    
 
     newObject.needsUpdate = false;
     newObject.updateSent = false;
@@ -7350,6 +7358,26 @@ int main() {
                     if( areTriggersEnabled() ) {
                         trigger( m.trigger );
                         }
+                    }
+                else if( m.type == FORCE ) {
+                    if( m.x == nextPlayer->xd &&
+                        m.y == nextPlayer->yd ) {
+                        
+                        // player has ack'ed their forced pos correctly
+                        
+                        // stop ignoring their messages now
+                        nextPlayer->waitingForForceResponse = false;
+                        }
+                    }
+                else if( m.type != SAY &&
+                         nextPlayer->waitingForForceResponse ) {
+                    // if we're waiting for a FORCE response, ignore
+                    // all messages from player except SAY
+                    
+                    AppLog::infoF( "Ignoring client message because we're "
+                                   "waiting for FORCE ack message after a "
+                                   "forced-pos PU at (%d, %d)",
+                                   nextPlayer->xd, nextPlayer->yd );
                     }
                 // if player is still moving, ignore all actions
                 // except for move interrupts
@@ -11214,6 +11242,13 @@ int main() {
             newUpdatePlayerIDs.push_back( nextPlayer->id );
             
 
+            if( nextPlayer->posForced &&
+                SettingsManager::getIntSetting( "requireClientForceAck", 1 ) ) {
+                // block additional moves/actions from this player until
+                // we get a FORCE response, syncing them up with
+                // their forced position.
+                nextPlayer->waitingForForceResponse = true;
+                }
             nextPlayer->posForced = false;
 
 

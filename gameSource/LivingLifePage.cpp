@@ -12368,6 +12368,14 @@ void LivingLifePage::step() {
                                     delete [] nextActionMessageToSend;
                                     nextActionMessageToSend = NULL;
                                     }
+
+                                // immediately send ack message
+                                char *forceMessage = 
+                                    autoSprintf( "FORCE %d %d#",
+                                                 existing->xd,
+                                                 existing->yd );
+                                sendToServerSocket( forceMessage );
+                                delete [] forceMessage;
                                 }
                             }
                         
@@ -12956,11 +12964,15 @@ void LivingLifePage::step() {
                             double fractionPassed = 
                                 timePassed / o.moveTotalTime;
                             
-                            
-                            // stays in motion until we receive final
-                            // PLAYER_UPDATE from server telling us
-                            // that move is over
-                            existing->inMotion = true;
+                            if( existing->id != ourID ) {
+                                // stays in motion until we receive final
+                                // PLAYER_UPDATE from server telling us
+                                // that move is over
+                                
+                                // don't do this for our local object
+                                // we track our local inMotion status
+                                existing->inMotion = true;
+                                }
                             
                             int oldPathLength = 0;
                             GridPos oldCurrentPathPos;
