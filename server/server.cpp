@@ -8398,7 +8398,6 @@ int main() {
                                 ObjectRecord *targetObj = getObject( target );
                                 
                                 // try using object on this target 
-                                char transApplied = false;
                                 
                                 TransRecord *r = NULL;
                                 char defaultTrans = false;
@@ -8438,6 +8437,17 @@ int main() {
                                             heldCanBeUsed = true;
                                             }
                                         }
+
+                                    if( r == NULL ) {
+                                        // no transition applies for this
+                                        // held, whether full or empty
+                                        
+                                        // let it be used anyway, so
+                                        // that generic transition (below)
+                                        // might apply
+                                        heldCanBeUsed = true;
+                                        }
+                                    
                                     r = NULL;
                                     }
                                 
@@ -8450,8 +8460,6 @@ int main() {
                                     r = getPTrans( nextPlayer->holdingID,
                                                   target );
                                     
-                                    transApplied = true;
-                                    
                                     if( r == NULL && 
                                         ( nextPlayer->holdingID > 0 || 
                                           targetObj->permanent ) ) {
@@ -8461,6 +8469,24 @@ int main() {
                                         
                                         if( r != NULL ) {
                                             defaultTrans = true;
+                                            }
+                                        else {
+                                            // also consider bare-hand
+                                            // action that produces
+                                            // no new held item
+                                            
+                                            // treat this the same as
+                                            // default
+                                            r = getPTrans( 0, target );
+                                            
+                                            if( r != NULL && 
+                                                r->newActor == 0 ) {
+                                                
+                                                defaultTrans = true;
+                                                }
+                                            else {
+                                                r = NULL;
+                                                }
                                             }
                                         }
                                     
@@ -8707,7 +8733,6 @@ int main() {
                                     // this non-permanent target object
                                     
                                     // treat it like pick up
-                                    transApplied = true;
                                     
                                     nextPlayer->holdingEtaDecay = 
                                         getEtaDecay( m.x, m.y );
@@ -8747,7 +8772,7 @@ int main() {
                                     // try adding what we're holding to
                                     // target container
                                     
-                                    transApplied = addHeldToContainer(
+                                    addHeldToContainer(
                                         nextPlayer, target, m.x, m.y );
                                     }
                                 
@@ -8818,80 +8843,6 @@ int main() {
                                             nextPlayer );
                                     
                                     nextPlayer->foodUpdate = true;
-                                    }
-                                
-
-                                if( ! transApplied &&
-                                    nextPlayer->holdingID != 0 ) {
-                                    // no transition for what we're
-                                    // holding on target
-
-                                    // check if surrounded
-
-                                    int nA = 
-                                        getMapObject( nextPlayer->xd - 1, 
-                                                      nextPlayer->yd );
-                                    int nB = 
-                                        getMapObject( nextPlayer->xd + 1, 
-                                                      nextPlayer->yd );
-                                    int nC = 
-                                        getMapObject( nextPlayer->xd, 
-                                                      nextPlayer->yd - 1 );
-                                    int nD = 
-                                        getMapObject( nextPlayer->xd, 
-                                                      nextPlayer->yd + 1 );
-
-                                    // diags too
-                                    int nE = 
-                                        getMapObject( nextPlayer->xd - 1, 
-                                                      nextPlayer->yd - 1 );
-                                    int nF = 
-                                        getMapObject( nextPlayer->xd + 1, 
-                                                      nextPlayer->yd + 1);
-                                    int nG = 
-                                        getMapObject( nextPlayer->xd + 1, 
-                                                      nextPlayer->yd - 1 );
-                                    int nH = 
-                                        getMapObject( nextPlayer->xd - 1, 
-                                                      nextPlayer->yd + 1 );
-                                    
-                                    char perm = false;
-                                    
-                                    if( nextPlayer->holdingID > 0 &&
-                                        getObject( nextPlayer->holdingID )->
-                                        permanent ) {
-                                        perm = true;
-                                        }
-
-                                    if( nA != 0 && nB != 0 && 
-                                        nC != 0 && nD != 0 && 
-                                        nE != 0 && nF != 0 && 
-                                        nG != 0 && nH != 0 
-                                        &&
-                                        getObject( nA )->blocksWalking &&
-                                        getObject( nB )->blocksWalking &&
-                                        getObject( nC )->blocksWalking &&
-                                        getObject( nD )->blocksWalking &&
-                                        getObject( nE )->blocksWalking &&
-                                        getObject( nF )->blocksWalking &&
-                                        getObject( nG )->blocksWalking &&
-                                        getObject( nH )->blocksWalking &&
-                                        ! perm ) {
-                                        
-
-                                        // surrounded with blocking
-                                        // objects while holding
-                                    
-                                        // throw non-permanent 
-                                        // held into nearest empty spot
-                                        
-                                        handleDrop( 
-                                            m.x, m.y, 
-                                            nextPlayer,
-                                            &playerIndicesToSendUpdatesAbout );
-                                        }
-                                    
-                                    // action doesn't happen, just the drop
                                     }
                                 }
                             else if( nextPlayer->holdingID > 0 ) {

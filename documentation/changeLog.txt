@@ -4,6 +4,23 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--The bit of code that was enabling teleporters was dealing with a very narrow
+  edge case (completely surrounded by blocking objects in all eight
+  directions), and it threw the item from your hand in order to free you up to
+  potentially open a door.  However, this code did not help at all in larger
+  rooms with full floors (you'd still get trapped, unable to open the door),
+  and teleportation was an unintended consequence of this code.  Fixed by
+  allowing held-objects to trigger bare-hand transitions if no other transition
+  applies.  This means you can now open a door when your hands are full, which
+  means that we don't need to worry about you getting trapped in a room by a
+  closed door when your hands are full, which means that the code that caused
+  teleporation can be removed entirely.  Sorry Tarr.  Fixes #58
+
+
+
+
 Version 151    2018-October-8
 
 --Loading Map process used to stall if a needed file was missing.  Now it
