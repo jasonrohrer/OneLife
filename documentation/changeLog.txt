@@ -23,6 +23,7 @@ NOTE:  Rolling this out will require a special update process.
 ****
 
 
+
 Server Fixes
 
 --The bit of code that was enabling teleporters was dealing with a very narrow
@@ -36,6 +37,15 @@ Server Fixes
   means that we don't need to worry about you getting trapped in a room by a
   closed door when your hands are full, which means that the code that caused
   teleporation can be removed entirely.  Sorry Tarr.  Fixes #58
+
+--Fixed so that default use-on-bare-ground action for a permanent held object
+  (example:  horse cart), when attempted on a tile that has a swappable object
+  in it, only is triggered with an explicit DROP action (right-click on
+  swappable object).  Last fix (so that you weren't trapped by objects that
+  fell out of your tipped horse cart) was triggered even by regular-click on
+  the swappable object, which resulted in you getting off the horse
+  unintentionally whenever you clicked on a swappable object.  Now you have to
+  right-click.
 
 
 

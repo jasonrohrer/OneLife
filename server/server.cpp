@@ -8526,72 +8526,6 @@ int main() {
                                             target );
                                         }
                                     }
-
-
-                                if( target != 0 && r == NULL &&
-                                    nextPlayer->holdingID > 0 &&
-                                    getObject( nextPlayer->holdingID )->
-                                        permanent ) {
-                                    
-                                    // no transition applies
-                                    
-                                    // user may have a permanent object
-                                    // stuck in their hand with no place
-                                    // to drop it
-                                    
-                                    // need to check if a use-on-bare-ground
-                                    // transition applies.  If so, we
-                                    // can treat it like a swap
-
-                                    ObjectRecord *targetObj = 
-                                        getObject( target );
-                                    
-                                    if( ! targetObj->permanent ) {
-                                        // target can be picked up
-
-                                        // "set-down" type bare ground 
-                                        // trans exists?
-                                        r = getPTrans( nextPlayer->holdingID, 
-                                                       -1 );
-
-                                        if( r != NULL && 
-                                            r->newActor == 0 &&
-                                            r->newTarget > 0 ) {
-                                            
-                                            // only applies if the bare-ground
-                                            // trans leaves nothing in
-                                            // our hand
-                                            
-                                            // first, change what they
-                                            // are holding to this newTarget
-                                            handleHoldingChange( nextPlayer,
-                                                                 r->newTarget );
-                                            
-                                            // this will handle container
-                                            // size changes, etc.
-                                            // This is what should end up
-                                            // on the ground as the result
-                                            // of the use-on-bare-ground
-                                            // transition.
-
-                                            // now swap it with the 
-                                            // non-permanent object on the
-                                            // ground.
-
-                                            swapHeldWithGround( 
-                                             nextPlayer,
-                                             target,
-                                             m.x,
-                                             m.y,
-                                             &playerIndicesToSendUpdatesAbout );
-                                            }
-                                        }
-                                    
-                                    // clear this special-case trans
-                                    r = NULL;
-                                    }
-                                
-
                                 
                                 if( r != NULL && containmentTransfer ) {
                                     // special case contained items
@@ -9810,9 +9744,7 @@ int main() {
                             canDrop = false;
                             }
 
-                        if( canDrop 
-                            &&
-                            ( isGridAdjacent( m.x, m.y,
+                        if( ( isGridAdjacent( m.x, m.y,
                                               nextPlayer->xd, 
                                               nextPlayer->yd ) 
                               ||
@@ -9845,7 +9777,8 @@ int main() {
                                             &playerIndicesToSendUpdatesAbout );
                                         }    
                                     }
-                                else if( isMapSpotEmpty( m.x, m.y ) ) {
+                                else if( canDrop && 
+                                         isMapSpotEmpty( m.x, m.y ) ) {
                                 
                                     // empty spot to drop non-baby into
                                     
@@ -9853,7 +9786,8 @@ int main() {
                                         m.x, m.y, nextPlayer,
                                         &playerIndicesToSendUpdatesAbout );
                                     }
-                                else if( m.c >= 0 && 
+                                else if( canDrop &&
+                                         m.c >= 0 && 
                                          m.c < NUM_CLOTHING_PIECES &&
                                          m.x == nextPlayer->xd &&
                                          m.y == nextPlayer->yd  &&
@@ -9908,6 +9842,69 @@ int main() {
                                         ObjectRecord *targetObj =
                                             getObject( target );
                                         
+
+                                        if( !canDrop ) {
+                                            // user may have a permanent object
+                                            // stuck in their hand with no place
+                                            // to drop it
+                                            
+                                            // need to check if 
+                                            // a use-on-bare-ground
+                                            // transition applies.  If so, we
+                                            // can treat it like a swap
+
+                                    
+                                            if( ! targetObj->permanent ) {
+                                                // target can be picked up
+
+                                                // "set-down" type bare ground 
+                                                // trans exists?
+                                                TransRecord
+                                                *r = getPTrans( 
+                                                    nextPlayer->holdingID, 
+                                                    -1 );
+
+                                                if( r != NULL && 
+                                                    r->newActor == 0 &&
+                                                    r->newTarget > 0 ) {
+                                            
+                                                    // only applies if the 
+                                                    // bare-ground
+                                                    // trans leaves nothing in
+                                                    // our hand
+                                            
+                                                    // first, change what they
+                                                    // are holding to this 
+                                                    // newTarget
+                                                    handleHoldingChange( 
+                                                        nextPlayer,
+                                                        r->newTarget );
+                                            
+                                                    // this will handle 
+                                                    // container
+                                                    // size changes, etc.
+                                                    // This is what should 
+                                                    // end up
+                                                    // on the ground
+                                                    // as the result
+                                                    // of the use-on-bare-ground
+                                                    // transition.
+
+                                                    // now swap it with the 
+                                                    // non-permanent object
+                                                    // on the ground.
+
+                                                    swapHeldWithGround( 
+                                                        nextPlayer,
+                                                        target,
+                                                        m.x,
+                                                        m.y,
+                                            &playerIndicesToSendUpdatesAbout );
+                                                    }
+                                                }
+                                            }
+
+
                                         int targetSlots =
                                             targetObj->numSlots;
                                         
@@ -9920,7 +9917,8 @@ int main() {
                                         
                                         char canGoIn = false;
                                         
-                                        if( droppedObj->containable &&
+                                        if( canDrop &&
+                                            droppedObj->containable &&
                                             targetSlotSize >=
                                             droppedObj->containSize ) {
                                             canGoIn = true;
@@ -9931,14 +9929,16 @@ int main() {
                                         // DROP indicates they 
                                         // right-clicked on container
                                         // so use swap mode
-                                        if( canGoIn && 
+                                        if( canDrop && 
+                                            canGoIn && 
                                             addHeldToContainer( 
                                                 nextPlayer,
                                                 target,
                                                 m.x, m.y, true ) ) {
                                             // handled
                                             }
-                                        else if( ! canGoIn &&
+                                        else if( canDrop && 
+                                                 ! canGoIn &&
                                                  ! targetObj->permanent 
                                                  &&
                                                  targetObj->minPickupAge <=
@@ -9954,7 +9954,7 @@ int main() {
                                              &playerIndicesToSendUpdatesAbout );
                                             }
                                         }
-                                    else {
+                                    else if( canDrop ) {
                                         // no object here
                                         
                                         // maybe there's a person
