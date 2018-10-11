@@ -536,7 +536,15 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         checkNextPrevVisible();
         }
     else if( inTarget == &mNextSceneButton ) {
-        mSceneID++;
+        int jump = 1;
+        if( isCommandKeyDown() ) {
+            jump *= 5;
+            }
+        if( isShiftKeyDown() ) {
+            jump *= 5;
+            }
+
+        mSceneID += jump;
         while( mSceneID < mNextSceneNumber &&
                ! tryLoadScene( mSceneID ) ) {
             mSceneID++;
@@ -548,10 +556,18 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         restartAllMoves();
         }
     else if( inTarget == &mPrevSceneButton ) {
+        int jump = 1;
+        if( isCommandKeyDown() ) {
+            jump *= 5;
+            }
+        if( isShiftKeyDown() ) {
+            jump *= 5;
+            }
+        
         if( mSceneID == -1 ) {
             mSceneID = mNextSceneNumber;
             }
-        mSceneID--;
+        mSceneID -= jump;
         while( mSceneID >= 0 &&
                ! tryLoadScene( mSceneID ) ) {
             mSceneID--;
@@ -2601,6 +2617,7 @@ char EditorScenePage::tryLoadScene( int inSceneID ) {
     char r = false;
     
     if( f->exists() && ! f->isDirectory() ) {
+        printf( "Trying to load scene %d\n", inSceneID );
         
         
         char *fileText = f->readFileContents();

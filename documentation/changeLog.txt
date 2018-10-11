@@ -22,6 +22,8 @@ NOTE:  Rolling this out will require a special update process.
     4   Run remoteServerGitPull.sh
 ****
 
+--Scene editor allows bigger jumps when paging through scenes.
+
 
 
 Server Fixes
