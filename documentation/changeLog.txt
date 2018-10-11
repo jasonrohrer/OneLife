@@ -34,6 +34,7 @@ NOTE:  Rolling this out will require a special update process.
 
 
 
+
 Server Fixes
 
 --The bit of code that was enabling teleporters was dealing with a very narrow
@@ -56,6 +57,9 @@ Server Fixes
   the swappable object, which resulted in you getting off the horse
   unintentionally whenever you clicked on a swappable object.  Now you have to
   right-click.
+
+--Fixed leak of absolute birth location through invalid held origin coordinates.
+
 
 
 

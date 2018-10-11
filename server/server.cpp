@@ -3720,9 +3720,23 @@ static UpdateRecord getUpdateRecord(
         deathReason );
     
     r.absoluteActionTarget = inPlayer->actionTarget;
-    r.absoluteHeldOriginX = inPlayer->heldOriginX;
-    r.absoluteHeldOriginY = inPlayer->heldOriginY;
     
+    if( inPlayer->heldOriginValid ) {
+        r.absoluteHeldOriginX = inPlayer->heldOriginX;
+        r.absoluteHeldOriginY = inPlayer->heldOriginY;
+        }
+    else {
+        // we set 0,0 to clear held origins in many places in the code
+        // if we leave that as an absolute pos, our birth pos leaks through
+        // when we make it birth-pos relative
+        
+        // instead, substitute our birth pos for all invalid held pos coords
+        // to prevent this
+        r.absoluteHeldOriginX = inPlayer->birthPos.x;
+        r.absoluteHeldOriginY = inPlayer->birthPos.y;
+        }
+    
+        
 
     inPlayer->justAte = false;
     inPlayer->justAteID = 0;
