@@ -12380,7 +12380,20 @@ void LivingLifePage::step() {
                             }
                         
                         // in motion until update received, now done
-                        existing->inMotion = false;
+                        if( existing->id != ourID ) {
+                            existing->inMotion = false;
+                            }
+                        else {
+                            // only do this if our last requested move
+                            // really ended server-side
+                            if( done_moving == 
+                                existing->lastMoveSequenceNumber ) {
+                                
+                                existing->inMotion = false;
+                                }
+                            
+                            }
+                        
                         
                         existing->moveTotalTime = 0;
 
@@ -12466,6 +12479,7 @@ void LivingLifePage::step() {
                         o.hide = false;
                         
                         o.inMotion = false;
+                        o.lastMoveSequenceNumber = 1;
                         
                         o.holdingFlip = false;
                         
@@ -17531,11 +17545,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         SimpleVector<char> moveMessageBuffer;
         
         moveMessageBuffer.appendElementString( "MOVE" );
+        ourLiveObject->lastMoveSequenceNumber ++;
+        
         // start is absolute
         char *startString = 
-            autoSprintf( " %d %d", 
+            autoSprintf( " %d %d @%d", 
                          sendX( ourLiveObject->pathToDest[0].x ),
-                         sendY( ourLiveObject->pathToDest[0].y ) );
+                         sendY( ourLiveObject->pathToDest[0].y ),
+                         ourLiveObject->lastMoveSequenceNumber );
         moveMessageBuffer.appendElementString( startString );
         delete [] startString;
         

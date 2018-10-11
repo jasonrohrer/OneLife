@@ -238,6 +238,8 @@ typedef struct LiveObject {
         
         char inMotion;
         
+        int lastMoveSequenceNumber;
+
         char displayChar;
         
         int actionTargetX;

@@ -223,12 +223,12 @@ Check the code in map.cpp for details.
 
 
 PU
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
 ...
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
 #
 
 List of player ids with their display object ids, facing direction, action
@@ -238,7 +238,7 @@ whether held origin is valid (1 or 0), origin position on map of that held
 object (where it was picked up from), 
 transition source object id (or -1) if held object is result of a transition,
 player's current heat value, 
-done_moving flag (to signal destination reached), force flag (to signal
+done_moving_seqNum (to signal destination reached), force flag (to signal
 a move truncated unexpectedly), x,y grid positions of player,
 floating point age in "years", floating point aging rate in sec/year (how many
 seconds it takes the player to age 1 year), and
@@ -255,10 +255,10 @@ action flag is 1 if player is attempting an action, 0 otherwise;
 Heat is the player's warmth between 0 and 1, where 0 is coldest, 1 is hottest,
 and 0.5 is ideal.
 
-If done_moving is 1, this means the player is stationary at this position.
+If done_moving_seqNum is > 0, this means the player is stationary at this position (and this is the sequence number of their last move).
 Otherwise, player may still be in the middle of a move (for example, if what
 they are holding decays while they are moving, a PU will be sent with
-done_moving set to 0).
+done_moving_seqNum set to 0).
 
 force is usually 0 except in special cases of move truncation where it is 1.
 A player receiving force for itself must snap back to that location
@@ -733,7 +733,11 @@ FORCE  is used to acknowledge a forced-pos PU sent previously by the server.
 
 This one is more complicated:
 
-MOVE xs ys xdelt0 ydelt0 xdelt1 ydelt1 ... xdeltN ydeltN#
+MOVE xs ys @seq_num xdelt0 ydelt0 xdelt1 ydelt1 ... xdeltN ydeltN#
+
+
+seq_num is the sequence number of moves in this player's lifetime, starting
+        with 2 for their first move.
 
 xs,ys is the absolute world position the player thinks they're currently at
 

@@ -266,6 +266,8 @@ typedef struct LiveObject {
         
         char waitingForForceResponse;
         
+        int lastMoveSequenceNumber;
+        
 
         int pathLength;
         GridPos *pathToDest;
@@ -1133,6 +1135,9 @@ typedef struct ClientMessage {
         // null if type not BUG
         char *bugText;
 
+        // for MOVE messages
+        int sequenceNumber;
+
     } ClientMessage;
 
 
@@ -1155,6 +1160,8 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     m.extraPos = NULL;
     m.saidText = NULL;
     m.bugText = NULL;
+    m.sequenceNumber = -1;
+    
     // don't require # terminator here
     
     
@@ -1228,29 +1235,45 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
 
     if( strcmp( nameBuffer, "MOVE" ) == 0) {
         m.type = MOVE;
+        
+        char *atPos = strstr( inMessage, "@" );
+        
+        int offset = 3;
+        
+        if( atPos != NULL ) {
+            offset = 4;            
+            }
+        
 
         // in place, so we don't need to deallocate them
         SimpleVector<char *> *tokens =
             tokenizeStringInPlace( inMessage );
         
-        // require an odd number at least 5
-        if( tokens->size() < 5 || tokens->size() % 2 != 1 ) {
+        // require an even number of extra coords beyond offset
+        if( tokens->size() < offset + 2 || 
+            ( tokens->size() - offset ) %2 != 0 ) {
+            
             delete tokens;
             
             m.type = UNKNOWN;
             return m;
             }
         
+        if( atPos != NULL ) {
+            // skip @ symbol in token and parse int
+            m.sequenceNumber = atoi( &( tokens->getElementDirect( 3 )[1] ) );
+            }
+
         int numTokens = tokens->size();
         
-        m.numExtraPos = (numTokens - 3) / 2;
+        m.numExtraPos = (numTokens - offset) / 2;
         
         m.extraPos = new GridPos[ m.numExtraPos ];
 
         for( int e=0; e<m.numExtraPos; e++ ) {
             
-            char *xToken = tokens->getElementDirect( 3 + e * 2 );
-            char *yToken = tokens->getElementDirect( 3 + e * 2 + 1 );
+            char *xToken = tokens->getElementDirect( offset + e * 2 );
+            char *yToken = tokens->getElementDirect( offset + e * 2 + 1 );
             
             // profiler found sscanf is a bottleneck here
             // try atoi instead
@@ -3576,12 +3599,14 @@ static UpdateRecord getUpdateRecord(
 
     char *holdingString = getHoldingString( inPlayer );
     
+    // this is 0 if still in motion (mid-move update)
     int doneMoving = 0;
     
     if( inPlayer->xs == inPlayer->xd &&
         inPlayer->ys == inPlayer->yd &&
         ! inPlayer->heldByOther ) {
-        doneMoving = 1;
+        // not moving
+        doneMoving = inPlayer->lastMoveSequenceNumber;
         }
     
     UpdateRecord r;
@@ -3597,7 +3622,7 @@ static UpdateRecord getUpdateRecord(
 
         r.posUsed = true;
 
-        if( doneMoving || ! inPartial ) {
+        if( doneMoving > 0 || ! inPartial ) {
             x = inPlayer->xs;
             y = inPlayer->ys;
             }
@@ -4559,6 +4584,8 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.posForced = false;
     newObject.waitingForForceResponse = false;
     
+    // first move that player sends will be 2
+    newObject.lastMoveSequenceNumber = 1;
 
     newObject.needsUpdate = false;
     newObject.updateSent = false;
@@ -7387,7 +7414,11 @@ int main() {
                     m.type == MOVE ||
                     m.type == JUMP || 
                     m.type == SAY ) {
-                    
+
+                    if( m.type == MOVE &&
+                        m.sequenceNumber != -1 ) {
+                        nextPlayer->lastMoveSequenceNumber = m.sequenceNumber;
+                        }
 
                     if( ( m.type == MOVE || m.type == JUMP ) && 
                         nextPlayer->heldByOther ) {
@@ -10983,15 +11014,18 @@ int main() {
                     nextPlayer->yd != nextPlayer->ys ) {
                 
                     
-                    if( Time::getCurrentTime() - nextPlayer->moveStartTime
+                    // don't end new moves here (moves that 
+                    // other players haven't been told about)
+                    // even if they have come to an end time-wise
+                    // wait until after we've told everyone about them
+                    if( ! nextPlayer->newMove && 
+                        Time::getCurrentTime() - nextPlayer->moveStartTime
                         >
                         nextPlayer->moveTotalSeconds ) {
                         
                         // done
                         nextPlayer->xs = nextPlayer->xd;
-                        nextPlayer->ys = nextPlayer->yd;
-                        nextPlayer->newMove = false;
-                        
+                        nextPlayer->ys = nextPlayer->yd;                        
 
                         printf( "Player %d's move is done at %d,%d\n",
                                 nextPlayer->id,

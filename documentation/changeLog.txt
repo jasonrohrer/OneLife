@@ -24,6 +24,14 @@ NOTE:  Rolling this out will require a special update process.
 
 --Scene editor allows bigger jumps when paging through scenes.
 
+--Fixed another source of the bouncing-forever bug.  PU messages that end moves
+  weren't move-specific, so several moves that criss-crossed the same point
+  could all have ending PUs that end at the same spot.  With network latency,
+  an earlier PU could be misinterpreted as ending a later move, thus allowing a
+  post-move action to be sent to the server and ignored (because for the
+  server, the later move is still in-progress).  Fixed by adding a move
+  sequence number to the protocol, so we know which move a given PU is ending.
+
 
 
 Server Fixes
