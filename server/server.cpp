@@ -339,6 +339,11 @@ typedef struct LiveObject {
 
         Socket *sock;
         SimpleVector<char> *sockBuffer;
+        
+        // indicates that some messages were sent to this player this 
+        // frame, and they need a FRAME terminator message
+        char gotPartOfThisFrame;
+        
 
         char isNew;
         char firstMessageSent;
@@ -2587,6 +2592,7 @@ int sendMapChunkMessage( LiveObject *inO,
         }
     
     
+    inO->gotPartOfThisFrame = true;
                 
 
     if( numSent == messageLength ) {
@@ -4579,6 +4585,9 @@ int processLoggedInPlayer( Socket *inSock,
 
     newObject.sock = inSock;
     newObject.sockBuffer = inSockBuffer;
+    
+    newObject.gotPartOfThisFrame = false;
+    
     newObject.isNew = true;
     newObject.firstMessageSent = false;
     
@@ -5557,6 +5566,8 @@ static void sendMessageToPlayer( LiveObject *inPlayer,
         inPlayer->errorCauseString = "Socket write failed";
         }
 
+    inPlayer->gotPartOfThisFrame = true;
+    
     if( deleteMessage ) {
         delete [] message;
         }
@@ -5813,6 +5824,8 @@ void apocalypseStep() {
                             messageLength,
                             false, false );
                     
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != messageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
                         
@@ -5924,6 +5937,8 @@ void monumentStep() {
                         (unsigned char*)message, 
                         messageLength,
                         false, false );
+                
+                nextPlayer->gotPartOfThisFrame = true;
                 
                 delete [] message;
 
@@ -6247,6 +6262,8 @@ int main() {
                     (unsigned char*)shutdownMessage, 
                     messageLength,
                     false, false );
+                
+                nextPlayer->gotPartOfThisFrame = true;
                 
                 // don't worry about num sent
                 // it's the last message to this client anyway
@@ -7379,7 +7396,9 @@ int main() {
                             nextPlayer->sock->send( mapChunkMessage, 
                                                     length, 
                                                     false, false );
-                
+                        
+                        nextPlayer->gotPartOfThisFrame = true;
+                        
                         delete [] mapChunkMessage;
 
                         if( numSent != length ) {
@@ -12224,6 +12243,8 @@ int main() {
                             dyingMessageLength, 
                             false, false );
                     
+                    nextPlayer->gotPartOfThisFrame = true;
+
                     if( numSent != dyingMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
 
@@ -12242,6 +12263,8 @@ int main() {
                             healingMessageLength, 
                             false, false );
                     
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != healingMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
 
@@ -12259,6 +12282,8 @@ int main() {
                             emotMessage, 
                             emotMessageLength, 
                             false, false );
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != emotMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
@@ -12368,6 +12393,8 @@ int main() {
                                     updateMessageLength, 
                                     false, false );
                             
+                            nextPlayer->gotPartOfThisFrame = true;
+                            
                             delete [] updateMessage;
                             
                             if( numSent != updateMessageLength ) {
@@ -12431,6 +12458,8 @@ int main() {
                                 outOfRangeMessageLength, 
                                 false, false );
                         
+                        nextPlayer->gotPartOfThisFrame = true;
+
                         delete [] outOfRangeMessage;
 
                         if( numSent != outOfRangeMessageLength ) {
@@ -12511,6 +12540,8 @@ int main() {
                                     moveMessage, 
                                     moveMessageLength, 
                                     false, false );
+                            
+                            nextPlayer->gotPartOfThisFrame = true;
                             
                             delete [] moveMessage;
                             
@@ -12613,6 +12644,8 @@ int main() {
                                     mapChangeMessageLength, 
                                     false, false );
                             
+                            nextPlayer->gotPartOfThisFrame = true;
+                            
                             delete [] mapChangeMessage;
 
                             if( numSent != mapChangeMessageLength ) {
@@ -12647,6 +12680,8 @@ int main() {
                                 speechMessage, 
                                 speechMessageLength, 
                                 false, false );
+                        
+                        nextPlayer->gotPartOfThisFrame = true;
                         
                         if( numSent != speechMessageLength ) {
                             setDeathReason( nextPlayer, "disconnected" );
@@ -12712,6 +12747,8 @@ int main() {
                             deleteUpdateMessageLength, 
                             false, false );
                     
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     delete [] deleteUpdateMessage;
                     
                     if( numSent != deleteUpdateMessageLength ) {
@@ -12731,6 +12768,8 @@ int main() {
                             lineageMessageLength, 
                             false, false );
                     
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != lineageMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
 
@@ -12749,6 +12788,8 @@ int main() {
                             cursesMessageLength, 
                             false, false );
                     
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != cursesMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
 
@@ -12765,6 +12806,8 @@ int main() {
                             namesMessage, 
                             namesMessageLength, 
                             false, false );
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != namesMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
@@ -12814,7 +12857,9 @@ int main() {
                              (unsigned char*)foodMessage, 
                              messageLength,
                              false, false );
-
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != messageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
                         
@@ -12847,7 +12892,9 @@ int main() {
                              (unsigned char*)heatMessage, 
                              messageLength,
                              false, false );
-
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != messageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
                         
@@ -12878,6 +12925,8 @@ int main() {
                              messageLength,
                              false, false );
 
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != messageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
                         
@@ -12967,6 +13016,32 @@ int main() {
         // this one is global, so we must clear it every loop
         newSpeech.deleteAll();
         newSpeechPos.deleteAll();
+        
+
+        
+        // handle end-of-frame for all players that need it
+        const char *frameMessage = "FM\n#";
+        int frameMessageLength = strlen( frameMessage );
+        
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *nextPlayer = players.getElement(i);
+            
+            if( nextPlayer->gotPartOfThisFrame ) {
+                int numSent = 
+                    nextPlayer->sock->send( 
+                        (unsigned char*)frameMessage, 
+                        frameMessageLength,
+                        false, false );
+
+                if( numSent != frameMessageLength ) {
+                    setDeathReason( nextPlayer, "disconnected" );
+                    
+                    nextPlayer->error = true;
+                    nextPlayer->errorCauseString = "Socket write failed";
+                    }
+                }
+            nextPlayer->gotPartOfThisFrame = false;
+            }
         
 
         

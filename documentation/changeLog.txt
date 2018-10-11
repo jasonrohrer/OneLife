@@ -32,6 +32,14 @@ NOTE:  Rolling this out will require a special update process.
   server, the later move is still in-progress).  Fixed by adding a move
   sequence number to the protocol, so we know which move a given PU is ending.
 
+--Related messages sent by server are now grouped by a FRAME message, so that
+  they can be held by client and played together.  So, for example, in cases of
+  packet delay, a pick up player result will not be displayed before the
+  corresponding map change client-side.  Testing with artificial variable
+  packet latency was showing all kinds of weird behavior client-side, and all
+  of this is fixed now.
+
+
 
 
 

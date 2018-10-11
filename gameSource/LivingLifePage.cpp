@@ -886,17 +886,11 @@ static double lastServerMessageReceiveTime = 0;
 // This is an approximation of our outtage time.
 static double largestPendingMessageTimeGap = 0;
 
+static char waitForFrameMessages = false;
 
 
 // NULL if there's no full message available
-char *getNextServerMessage() {
-    
-    if( readyPendingReceivedMessages.size() > 0 ) {
-        char *message = readyPendingReceivedMessages.getElementDirect( 0 );
-        readyPendingReceivedMessages.deleteElement( 0 );
-        printf( "Playing a held pending message\n" );
-        return message;
-        }
+char *getNextServerMessageRaw() {        
 
     if( pendingMapChunkMessage != NULL ) {
         // wait for full binary data chunk to arrive completely
@@ -998,7 +992,7 @@ char *getNextServerMessage() {
                 &x, &y, &binarySize, &pendingCompressedChunkSize );
 
 
-        return getNextServerMessage();
+        return getNextServerMessageRaw();
         }
     else if( getMessageType( message ) == COMPRESSED_MESSAGE ) {
         pendingCMData = true;
@@ -1015,6 +1009,79 @@ char *getNextServerMessage() {
         return message;
         }
     }
+
+
+
+char serverFrameReady;
+static SimpleVector<char*> serverFrameMessages;
+
+
+// either returns a pending recieved message (one that was received earlier
+// or held back
+//
+// or receives the next message from the server socket (if we are not waiting
+// for full frames of messages)
+//
+// or returns NULL until a full frame of messages is available, and
+// then returns the first message from the frame
+char *getNextServerMessage() {
+    
+    if( readyPendingReceivedMessages.size() > 0 ) {
+        char *message = readyPendingReceivedMessages.getElementDirect( 0 );
+        readyPendingReceivedMessages.deleteElement( 0 );
+        printf( "Playing a held pending message\n" );
+        return message;
+        }
+    
+    if( !waitForFrameMessages ) {
+        return getNextServerMessageRaw();
+        }
+    else {
+        if( !serverFrameReady ) {
+            // read more and look for end of frame
+            
+            char *message = getNextServerMessageRaw();
+            
+            if( message != NULL ) {
+                if( strstr( message, "FM" ) == message ) {
+                    // end of frame, discard the marker message
+                    delete [] message;
+                    
+                    if( serverFrameMessages.size() > 0 ) {
+                        serverFrameReady = true;
+                        }
+                    }
+                else if( getMessageType( message ) == MAP_CHUNK ) {
+                    // map chunks are followed by compressed data
+                    // they cannot be queued
+                    return message;
+                    }
+                else {
+                    // some other message in the middle of the frame
+                    // keep it
+                    serverFrameMessages.push_back( message );
+                    }
+                }
+            }
+
+        if( serverFrameReady ) {
+            char *message = serverFrameMessages.getElementDirect( 0 );
+            
+            serverFrameMessages.deleteElement( 0 );
+
+            if( serverFrameMessages.size() == 0 ) {
+                serverFrameReady = false;
+                }
+            return message;
+            }
+        else {
+            return NULL;
+            }
+        }
+    }
+
+
+
 
 
 
@@ -2130,6 +2197,8 @@ LivingLifePage::~LivingLifePage() {
     freeLiveTriggers();
 
     readyPendingReceivedMessages.deallocateStringElements();
+
+    serverFrameMessages.deallocateStringElements();
     
     if( pendingMapChunkMessage != NULL ) {
         delete [] pendingMapChunkMessage;
@@ -9525,6 +9594,9 @@ void LivingLifePage::step() {
         else if( type == ACCEPTED ) {
             // logged in successfully, wait for next message
             
+            // subsequent messages should all be part of FRAME batches
+            waitForFrameMessages = true;
+
             SettingsManager::setSetting( "loginSuccess", 1 );
 
             delete [] message;
@@ -15419,6 +15491,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+    
+    waitForFrameMessages = false;
 
     serverSocketConnected = false;
     connectionMessageFade = 1.0f;
@@ -15576,6 +15650,7 @@ void LivingLifePage::makeActive( char inFresh ) {
     setWaiting( true, false );
 
     readyPendingReceivedMessages.deallocateStringElements();
+    serverFrameMessages.deallocateStringElements();
 
     if( pendingMapChunkMessage != NULL ) {
         delete [] pendingMapChunkMessage;

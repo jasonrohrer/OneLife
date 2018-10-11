@@ -153,9 +153,20 @@ CURSE_TOKEN_CHANGE (CX)
 
 FORCED_SHUTDOWN (SD)
 
+FRAME (FM)
+
 
 
 Client can expect to receive these at any time, and in any order.
+
+
+Each batch of messages from a single server time step will be terminated with
+a FRAME message.  This ensures that related messages can play at the same time
+on the client, regardless of network latency (for example, a player picking
+up an object results in a PLAYER_UPDATE and an MAP_CHANGE message, which only
+make sense if played together client-side).
+
+
 
 
 
@@ -612,6 +623,17 @@ SD
 Indicates that the server is undergoing a forced shutdown.  Gives client a
 chance to hear about this and close connection before connection is
 force-closed by server.
+
+
+
+
+FM
+#
+
+Indicates the end of a server frame.  All messages since the last FM message
+are part of the same batch and can be played back together on the client.
+
+
 
 
 
