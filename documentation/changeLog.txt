@@ -68,6 +68,9 @@ Server Fixes
 
 --Fixed leak of absolute birth location through invalid held origin coordinates.
 
+--Got rid of deprecated MOVE-to-jump-out-of-arms semantics.  Now only a real
+  JUMP message will cause a baby to jump out, clearing up an ambiguity with
+  wayward MOVE messages while held, which caused a bouncing-forever bug.
 
 
 

@@ -733,8 +733,8 @@ KILL is for using a deadly object on the target square.  Square can
 
 JUMP is used by a baby to jump out of its mother's arms.  The x and y 
      coordinates are ignored.
-     MOVE can also be used to jump out of arms (it was the old way), but
-     it is less safe, because bad message interleavings server-side make
+     MOVE can NO LONGER be used to jump out of arms (it was the old way).
+     It was less safe, because bad message interleavings server-side make
      MOVE ambiguous in the case of jump-out (for example, if the baby
      has already been dropped by the time the MOVE arrives, the server will
      interpret it as a legitimate move attempt).

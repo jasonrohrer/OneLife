@@ -7439,14 +7439,16 @@ int main() {
                                    "forced-pos PU at (%d, %d)",
                                    nextPlayer->xd, nextPlayer->yd );
                     }
-                // if player is still moving, ignore all actions
+                // if player is still moving (or held by an adult), 
+                // ignore all actions
                 // except for move interrupts
                 else if( ( nextPlayer->xs == nextPlayer->xd &&
-                      nextPlayer->ys == nextPlayer->yd ) 
-                    ||
-                    m.type == MOVE ||
-                    m.type == JUMP || 
-                    m.type == SAY ) {
+                           nextPlayer->ys == nextPlayer->yd &&
+                           ! nextPlayer->heldByOther )
+                         ||
+                         m.type == MOVE ||
+                         m.type == JUMP || 
+                         m.type == SAY ) {
 
                     if( m.type == MOVE &&
                         m.sequenceNumber != -1 ) {
@@ -7456,13 +7458,16 @@ int main() {
                     if( ( m.type == MOVE || m.type == JUMP ) && 
                         nextPlayer->heldByOther ) {
                         
-                        // baby wiggling out of parent's arms
-                        handleForcedBabyDrop( 
-                            nextPlayer,
-                            &playerIndicesToSendUpdatesAbout );
+                        // only JUMP actually makes them jump out
+                        if( m.type == JUMP ) {
+                            // baby wiggling out of parent's arms
+                            handleForcedBabyDrop( 
+                                nextPlayer,
+                                &playerIndicesToSendUpdatesAbout );
+                            }
                         
-                        // drop them and ignore rest of their move
-                        // request, until they click again
+                        // drop them and ignore their move requests while
+                        // in-arms, until they JUMP out
                         }
                     else if( m.type == MOVE && nextPlayer->holdingID > 0 &&
                              getObject( nextPlayer->holdingID )->
