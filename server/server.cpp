@@ -3009,58 +3009,19 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
 
 
 
+#include "spiral.h"
 
 GridPos findClosestEmptyMapSpot( int inX, int inY, int inMaxPointsToCheck,
                                  char *outFound ) {
-    // square spiral, found here:
 
-    // https://stackoverflow.com/questions/3706219/
-    //      algorithm-for-iterating-over-an-outward-spiral-on-a-
-    //      discrete-2d-grid-from-the-or
-    //
+    GridPos center = { inX, inY };
 
-    int layer = 1;
-    int leg = 0;
-    int x = 0;
-    int y = 0;
-    
-    int pointsChecked = 0;
-    
-    while( pointsChecked < inMaxPointsToCheck ) {
-        if( isMapSpotEmpty( inX + x, inY + y, false ) ) {    
-            GridPos p = { inX + x, inY + y };
+    for( int i=0; i<inMaxPointsToCheck; i++ ) {
+        GridPos p = getSpriralPoint( center, i );
+
+        if( isMapSpotEmpty( p.x, p.y, false ) ) {    
             *outFound = true;
             return p;
-            }
-        
-        pointsChecked++;
-        
-        switch( leg ) {
-            case 0: 
-                x++; 
-                if( x == layer ) {
-                    leg++;
-                    }
-                break;
-            case 1:
-                y++; 
-                if( y == layer ) {
-                    leg++;
-                    }
-                break;
-            case 2:
-                x--; 
-                if( -x == layer ) {
-                    leg++;
-                    }
-                break;
-            case 3:
-                y--; 
-                if( -y == layer ) { 
-                    leg = 0; 
-                    layer++;
-                    }   
-                break;
             }
         }
     
@@ -10307,34 +10268,17 @@ int main() {
                 
                 while( oldObject != 0 && n <= 4 ) {
                     
-                    if( isGrave( oldObject ) ) {
-                        int numContained;
-                        
-                        int *contained = getContained( dropPos.x, dropPos.y, 
-                                                       &numContained );
-                        
-                        timeSec_t *containedETA =
-                            getContainedEtaDecay( dropPos.x, dropPos.y, 
-                                                  &numContained );
-                        
-                        if( numContained > 0 ) {
-                            oldContained.appendArray( contained, numContained );
-                            
-                            oldContainedETADecay.appendArray(
-                                containedETA, numContained );
-
-                            delete [] contained;
-                            delete [] containedETA;
-                            }
-                        setMapObject( dropPos.x, dropPos.y,  0 );
-                        clearAllContained( dropPos.x, dropPos.y );
-                        oldObject = 0;
-                        }
-                    else {
+                    // don't combine graves
+                    if( ! isGrave( oldObject ) ) {
                         ObjectRecord *r = getObject( oldObject );
                         
                         if( r->numSlots == 0 && ! r->permanent 
                             && ! r->rideable ) {
+                            
+                            // found a containble object
+                            // we can empty this spot to make room
+                            // for a grave that can go here, and
+                            // put the old object into the new grave.
                             
                             oldContained.push_back( oldObject );
                             oldContainedETADecay.push_back(
