@@ -14,7 +14,7 @@
 	
 	// this is the location of the latest data as created by 
 	// generateDataOnlyDiffBundle
-	"ContentRoot"	"~/checkout/diffWorking/dataLatest"
+	"ContentRoot"	"/home/jcr15/checkout/diffWorking/dataLatest"
 
 	// include all files recursivley
   "FileMapping"
