@@ -5380,12 +5380,18 @@ void clearAllContained( int inX, int inY, int inSubCont ) {
 
 
 
+
+#include "spiral.h"
+
+
 void shrinkContainer( int inX, int inY, int inNumNewSlots, int inSubCont ) {
     int oldNum = getNumContained( inX, inY, inSubCont );
     
     if( oldNum > inNumNewSlots ) {
         
         // first, scatter extra contents into empty nearby spots.
+        int nextSprialIndex = 1;
+        
         for( int i=inNumNewSlots; i<oldNum; i++ ) {
             
             int contID = getContained( inX, inY, i, inSubCont );
@@ -5399,25 +5405,18 @@ void shrinkContainer( int inX, int inY, int inNumNewSlots, int inSubCont ) {
             
             int emptyX, emptyY;
             char foundEmpty = false;
-
-            int r = 1;
             
-            while( !foundEmpty && r < 3 ) {    
-                for( int y = inY - r; y <= inY + r; y++ ) {
-                    for( int x = inX - r; x <= inX + r; x++ ) {
-                        
-                        if( getMapObjectRaw( x, y ) == 0 ) {
-                            emptyX = x;
-                            emptyY = y;
-                            foundEmpty = true;
-                            break;
-                            }
-                        }
-                    if( foundEmpty ) {
-                        break;
-                        }
+            GridPos center = { inX, inY };
+
+            while( !foundEmpty ) {
+                GridPos sprialPoint = getSpriralPoint( center, 
+                                                       nextSprialIndex );
+                if( getMapObjectRaw( sprialPoint.x, sprialPoint.y ) == 0 ) {
+                    emptyX = sprialPoint.x;
+                    emptyY = sprialPoint.y;
+                    foundEmpty = true;
                     }
-                r++;
+                nextSprialIndex ++;
                 }
             
             if( foundEmpty ) {

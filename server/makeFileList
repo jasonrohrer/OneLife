@@ -49,6 +49,7 @@ monument.cpp \
 lineageLimit.cpp \
 curses.cpp \
 curseLog.cpp \
+spiral.cpp \
 
 
 

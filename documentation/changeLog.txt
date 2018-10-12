@@ -77,6 +77,12 @@ Server Fixes
   JUMP message will cause a baby to jump out, clearing up an ambiguity with
   wayward MOVE messages while held, which caused a bouncing-forever bug.
 
+--When a map container shrinks and contents needs to be scattered, a search is
+  conducted in an infinite square spiral until an empty spot is found for each
+  previously-contained item.  This new scanning code is also much more efficent
+  (minimum number of map look-ups) compared to old expanding-radius code (which
+  stopped after radius 2, causing remaining items to vanish).  Fixes #62
+
 
 
 
