@@ -9394,9 +9394,9 @@ void LivingLifePage::step() {
         ourObject != NULL && 
         curTime - lastServerMessageReceiveTime < 1 &&
         curTime - ourObject->pendingActionAnimationStartTime > 
-        10 + largestPendingMessageTimeGap ) {
+        5 + largestPendingMessageTimeGap ) {
         
-        // been bouncing for ten seconds with no answer from server
+        // been bouncing for five seconds with no answer from server
         // in the mean time, we have seen other messages arrive from server
         // (so any network outage is over)
 

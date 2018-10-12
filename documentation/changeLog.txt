@@ -42,6 +42,9 @@ NOTE:  Rolling this out will require a special update process.
 --Added reportWildBugToUser setting, so we can disable that easily for the
   Steam release.
 
+--Wild bug, if there are any remaining causes of it, is now caught and cleared
+  (or reported) in 5 seconds (10 was a long time to bounce).
+
 
 
 
