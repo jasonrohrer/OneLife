@@ -39,6 +39,8 @@ NOTE:  Rolling this out will require a special update process.
   packet latency was showing all kinds of weird behavior client-side, and all
   of this is fixed now.
 
+--Added reportWildBugToUser setting, so we can disable that easily for the
+  Steam release.
 
 
 

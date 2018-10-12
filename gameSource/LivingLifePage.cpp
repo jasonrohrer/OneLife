@@ -8424,6 +8424,10 @@ void LivingLifePage::sendBugReport( int inBugNumber ) {
 
     sendToServerSocket( bugMessage );
     delete [] bugMessage;
+    
+    if( ! SettingsManager::getIntSetting( "reportWildBugToUser", 1 ) ) {
+        return;
+        }
 
     FILE *f = fopen( "stdout.txt", "r" );
 
