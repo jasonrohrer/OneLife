@@ -2,7 +2,7 @@
 {
 	"appid"	"595690"
 
-	"desc" "Your build description here" // description for this build
+	"desc" "Replaced On Command Line" // description for this build
 
 	"buildoutput" "/home/jcr15/steamOutput" // build output folder for .log, .csm & .csd files, relative to location of this file
 
