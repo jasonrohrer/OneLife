@@ -133,6 +133,14 @@ fi
 cd ~/checkout/OneLifeData7Latest
 
 
+# remove any old, stale directories
+# this is what got us into trouble with the v152 update
+# (the diffWorking/dataLatest directory created manually to test Steam
+#  builds was in the way)
+rm -rf ~/checkout/diffWorking
+
+
+
 mkdir ~/checkout/diffWorking
 
 
