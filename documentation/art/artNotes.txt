@@ -40,3 +40,15 @@ Font process:
 5.  Merge 4 onto result of 2.
 
 6.  Invert.
+
+
+
+
+Sepia for Steam capsules:
+
+1.  Desaturate with luminostiy.
+
+
+2.  Colorize with these settings:
+  Hue, sat, lightness:
+  39,  38,  16

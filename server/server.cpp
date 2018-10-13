@@ -264,6 +264,10 @@ typedef struct LiveObject {
         // as a forced position change
         char posForced;
         
+        char waitingForForceResponse;
+        
+        int lastMoveSequenceNumber;
+        
 
         int pathLength;
         GridPos *pathToDest;
@@ -335,6 +339,11 @@ typedef struct LiveObject {
 
         Socket *sock;
         SimpleVector<char> *sockBuffer;
+        
+        // indicates that some messages were sent to this player this 
+        // frame, and they need a FRAME terminator message
+        char gotPartOfThisFrame;
+        
 
         char isNew;
         char firstMessageSent;
@@ -1102,6 +1111,7 @@ typedef enum messageType {
     SAY,
     EMOT,
     JUMP,
+    FORCE,
     MAP,
     TRIGGER,
     BUG,
@@ -1130,6 +1140,9 @@ typedef struct ClientMessage {
         // null if type not BUG
         char *bugText;
 
+        // for MOVE messages
+        int sequenceNumber;
+
     } ClientMessage;
 
 
@@ -1152,6 +1165,8 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     m.extraPos = NULL;
     m.saidText = NULL;
     m.bugText = NULL;
+    m.sequenceNumber = -1;
+    
     // don't require # terminator here
     
     
@@ -1225,29 +1240,45 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
 
     if( strcmp( nameBuffer, "MOVE" ) == 0) {
         m.type = MOVE;
+        
+        char *atPos = strstr( inMessage, "@" );
+        
+        int offset = 3;
+        
+        if( atPos != NULL ) {
+            offset = 4;            
+            }
+        
 
         // in place, so we don't need to deallocate them
         SimpleVector<char *> *tokens =
             tokenizeStringInPlace( inMessage );
         
-        // require an odd number at least 5
-        if( tokens->size() < 5 || tokens->size() % 2 != 1 ) {
+        // require an even number of extra coords beyond offset
+        if( tokens->size() < offset + 2 || 
+            ( tokens->size() - offset ) %2 != 0 ) {
+            
             delete tokens;
             
             m.type = UNKNOWN;
             return m;
             }
         
+        if( atPos != NULL ) {
+            // skip @ symbol in token and parse int
+            m.sequenceNumber = atoi( &( tokens->getElementDirect( 3 )[1] ) );
+            }
+
         int numTokens = tokens->size();
         
-        m.numExtraPos = (numTokens - 3) / 2;
+        m.numExtraPos = (numTokens - offset) / 2;
         
         m.extraPos = new GridPos[ m.numExtraPos ];
 
         for( int e=0; e<m.numExtraPos; e++ ) {
             
-            char *xToken = tokens->getElementDirect( 3 + e * 2 );
-            char *yToken = tokens->getElementDirect( 3 + e * 2 + 1 );
+            char *xToken = tokens->getElementDirect( offset + e * 2 );
+            char *yToken = tokens->getElementDirect( offset + e * 2 + 1 );
             
             // profiler found sscanf is a bottleneck here
             // try atoi instead
@@ -1282,6 +1313,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "JUMP" ) == 0 ) {
         m.type = JUMP;
+        }
+    else if( strcmp( nameBuffer, "FORCE" ) == 0 ) {
+        m.type = FORCE;
         }
     else if( strcmp( nameBuffer, "USE" ) == 0 ) {
         m.type = USE;
@@ -2558,6 +2592,7 @@ int sendMapChunkMessage( LiveObject *inO,
         }
     
     
+    inO->gotPartOfThisFrame = true;
                 
 
     if( numSent == messageLength ) {
@@ -2974,58 +3009,19 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
 
 
 
+#include "spiral.h"
 
 GridPos findClosestEmptyMapSpot( int inX, int inY, int inMaxPointsToCheck,
                                  char *outFound ) {
-    // square spiral, found here:
 
-    // https://stackoverflow.com/questions/3706219/
-    //      algorithm-for-iterating-over-an-outward-spiral-on-a-
-    //      discrete-2d-grid-from-the-or
-    //
+    GridPos center = { inX, inY };
 
-    int layer = 1;
-    int leg = 0;
-    int x = 0;
-    int y = 0;
-    
-    int pointsChecked = 0;
-    
-    while( pointsChecked < inMaxPointsToCheck ) {
-        if( isMapSpotEmpty( inX + x, inY + y, false ) ) {    
-            GridPos p = { inX + x, inY + y };
+    for( int i=0; i<inMaxPointsToCheck; i++ ) {
+        GridPos p = getSpriralPoint( center, i );
+
+        if( isMapSpotEmpty( p.x, p.y, false ) ) {    
             *outFound = true;
             return p;
-            }
-        
-        pointsChecked++;
-        
-        switch( leg ) {
-            case 0: 
-                x++; 
-                if( x == layer ) {
-                    leg++;
-                    }
-                break;
-            case 1:
-                y++; 
-                if( y == layer ) {
-                    leg++;
-                    }
-                break;
-            case 2:
-                x--; 
-                if( -x == layer ) {
-                    leg++;
-                    }
-                break;
-            case 3:
-                y--; 
-                if( -y == layer ) { 
-                    leg = 0; 
-                    layer++;
-                    }   
-                break;
             }
         }
     
@@ -3570,12 +3566,14 @@ static UpdateRecord getUpdateRecord(
 
     char *holdingString = getHoldingString( inPlayer );
     
+    // this is 0 if still in motion (mid-move update)
     int doneMoving = 0;
     
     if( inPlayer->xs == inPlayer->xd &&
         inPlayer->ys == inPlayer->yd &&
         ! inPlayer->heldByOther ) {
-        doneMoving = 1;
+        // not moving
+        doneMoving = inPlayer->lastMoveSequenceNumber;
         }
     
     UpdateRecord r;
@@ -3591,7 +3589,7 @@ static UpdateRecord getUpdateRecord(
 
         r.posUsed = true;
 
-        if( doneMoving || ! inPartial ) {
+        if( doneMoving > 0 || ! inPartial ) {
             x = inPlayer->xs;
             y = inPlayer->ys;
             }
@@ -3689,9 +3687,23 @@ static UpdateRecord getUpdateRecord(
         deathReason );
     
     r.absoluteActionTarget = inPlayer->actionTarget;
-    r.absoluteHeldOriginX = inPlayer->heldOriginX;
-    r.absoluteHeldOriginY = inPlayer->heldOriginY;
     
+    if( inPlayer->heldOriginValid ) {
+        r.absoluteHeldOriginX = inPlayer->heldOriginX;
+        r.absoluteHeldOriginY = inPlayer->heldOriginY;
+        }
+    else {
+        // we set 0,0 to clear held origins in many places in the code
+        // if we leave that as an absolute pos, our birth pos leaks through
+        // when we make it birth-pos relative
+        
+        // instead, substitute our birth pos for all invalid held pos coords
+        // to prevent this
+        r.absoluteHeldOriginX = inPlayer->birthPos.x;
+        r.absoluteHeldOriginY = inPlayer->birthPos.y;
+        }
+    
+        
 
     inPlayer->justAte = false;
     inPlayer->justAteID = 0;
@@ -4534,6 +4546,9 @@ int processLoggedInPlayer( Socket *inSock,
 
     newObject.sock = inSock;
     newObject.sockBuffer = inSockBuffer;
+    
+    newObject.gotPartOfThisFrame = false;
+    
     newObject.isNew = true;
     newObject.firstMessageSent = false;
     
@@ -4551,6 +4566,10 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.newMove = false;
     
     newObject.posForced = false;
+    newObject.waitingForForceResponse = false;
+    
+    // first move that player sends will be 2
+    newObject.lastMoveSequenceNumber = 1;
 
     newObject.needsUpdate = false;
     newObject.updateSent = false;
@@ -5508,6 +5527,8 @@ static void sendMessageToPlayer( LiveObject *inPlayer,
         inPlayer->errorCauseString = "Socket write failed";
         }
 
+    inPlayer->gotPartOfThisFrame = true;
+    
     if( deleteMessage ) {
         delete [] message;
         }
@@ -5764,6 +5785,8 @@ void apocalypseStep() {
                             messageLength,
                             false, false );
                     
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != messageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
                         
@@ -5875,6 +5898,8 @@ void monumentStep() {
                         (unsigned char*)message, 
                         messageLength,
                         false, false );
+                
+                nextPlayer->gotPartOfThisFrame = true;
                 
                 delete [] message;
 
@@ -6198,6 +6223,8 @@ int main() {
                     (unsigned char*)shutdownMessage, 
                     messageLength,
                     false, false );
+                
+                nextPlayer->gotPartOfThisFrame = true;
                 
                 // don't worry about num sent
                 // it's the last message to this client anyway
@@ -7330,7 +7357,9 @@ int main() {
                             nextPlayer->sock->send( mapChunkMessage, 
                                                     length, 
                                                     false, false );
-                
+                        
+                        nextPlayer->gotPartOfThisFrame = true;
+                        
                         delete [] mapChunkMessage;
 
                         if( numSent != length ) {
@@ -7351,26 +7380,55 @@ int main() {
                         trigger( m.trigger );
                         }
                     }
-                // if player is still moving, ignore all actions
+                else if( m.type == FORCE ) {
+                    if( m.x == nextPlayer->xd &&
+                        m.y == nextPlayer->yd ) {
+                        
+                        // player has ack'ed their forced pos correctly
+                        
+                        // stop ignoring their messages now
+                        nextPlayer->waitingForForceResponse = false;
+                        }
+                    }
+                else if( m.type != SAY &&
+                         nextPlayer->waitingForForceResponse ) {
+                    // if we're waiting for a FORCE response, ignore
+                    // all messages from player except SAY
+                    
+                    AppLog::infoF( "Ignoring client message because we're "
+                                   "waiting for FORCE ack message after a "
+                                   "forced-pos PU at (%d, %d)",
+                                   nextPlayer->xd, nextPlayer->yd );
+                    }
+                // if player is still moving (or held by an adult), 
+                // ignore all actions
                 // except for move interrupts
                 else if( ( nextPlayer->xs == nextPlayer->xd &&
-                      nextPlayer->ys == nextPlayer->yd ) 
-                    ||
-                    m.type == MOVE ||
-                    m.type == JUMP || 
-                    m.type == SAY ) {
-                    
+                           nextPlayer->ys == nextPlayer->yd &&
+                           ! nextPlayer->heldByOther )
+                         ||
+                         m.type == MOVE ||
+                         m.type == JUMP || 
+                         m.type == SAY ) {
+
+                    if( m.type == MOVE &&
+                        m.sequenceNumber != -1 ) {
+                        nextPlayer->lastMoveSequenceNumber = m.sequenceNumber;
+                        }
 
                     if( ( m.type == MOVE || m.type == JUMP ) && 
                         nextPlayer->heldByOther ) {
                         
-                        // baby wiggling out of parent's arms
-                        handleForcedBabyDrop( 
-                            nextPlayer,
-                            &playerIndicesToSendUpdatesAbout );
+                        // only JUMP actually makes them jump out
+                        if( m.type == JUMP ) {
+                            // baby wiggling out of parent's arms
+                            handleForcedBabyDrop( 
+                                nextPlayer,
+                                &playerIndicesToSendUpdatesAbout );
+                            }
                         
-                        // drop them and ignore rest of their move
-                        // request, until they click again
+                        // drop them and ignore their move requests while
+                        // in-arms, until they JUMP out
                         }
                     else if( m.type == MOVE && nextPlayer->holdingID > 0 &&
                              getObject( nextPlayer->holdingID )->
@@ -8398,7 +8456,6 @@ int main() {
                                 ObjectRecord *targetObj = getObject( target );
                                 
                                 // try using object on this target 
-                                char transApplied = false;
                                 
                                 TransRecord *r = NULL;
                                 char defaultTrans = false;
@@ -8438,6 +8495,17 @@ int main() {
                                             heldCanBeUsed = true;
                                             }
                                         }
+
+                                    if( r == NULL ) {
+                                        // no transition applies for this
+                                        // held, whether full or empty
+                                        
+                                        // let it be used anyway, so
+                                        // that generic transition (below)
+                                        // might apply
+                                        heldCanBeUsed = true;
+                                        }
+                                    
                                     r = NULL;
                                     }
                                 
@@ -8450,8 +8518,6 @@ int main() {
                                     r = getPTrans( nextPlayer->holdingID,
                                                   target );
                                     
-                                    transApplied = true;
-                                    
                                     if( r == NULL && 
                                         ( nextPlayer->holdingID > 0 || 
                                           targetObj->permanent ) ) {
@@ -8461,6 +8527,24 @@ int main() {
                                         
                                         if( r != NULL ) {
                                             defaultTrans = true;
+                                            }
+                                        else {
+                                            // also consider bare-hand
+                                            // action that produces
+                                            // no new held item
+                                            
+                                            // treat this the same as
+                                            // default
+                                            r = getPTrans( 0, target );
+                                            
+                                            if( r != NULL && 
+                                                r->newActor == 0 ) {
+                                                
+                                                defaultTrans = true;
+                                                }
+                                            else {
+                                                r = NULL;
+                                                }
                                             }
                                         }
                                     
@@ -8472,72 +8556,6 @@ int main() {
                                             target );
                                         }
                                     }
-
-
-                                if( target != 0 && r == NULL &&
-                                    nextPlayer->holdingID > 0 &&
-                                    getObject( nextPlayer->holdingID )->
-                                        permanent ) {
-                                    
-                                    // no transition applies
-                                    
-                                    // user may have a permanent object
-                                    // stuck in their hand with no place
-                                    // to drop it
-                                    
-                                    // need to check if a use-on-bare-ground
-                                    // transition applies.  If so, we
-                                    // can treat it like a swap
-
-                                    ObjectRecord *targetObj = 
-                                        getObject( target );
-                                    
-                                    if( ! targetObj->permanent ) {
-                                        // target can be picked up
-
-                                        // "set-down" type bare ground 
-                                        // trans exists?
-                                        r = getPTrans( nextPlayer->holdingID, 
-                                                       -1 );
-
-                                        if( r != NULL && 
-                                            r->newActor == 0 &&
-                                            r->newTarget > 0 ) {
-                                            
-                                            // only applies if the bare-ground
-                                            // trans leaves nothing in
-                                            // our hand
-                                            
-                                            // first, change what they
-                                            // are holding to this newTarget
-                                            handleHoldingChange( nextPlayer,
-                                                                 r->newTarget );
-                                            
-                                            // this will handle container
-                                            // size changes, etc.
-                                            // This is what should end up
-                                            // on the ground as the result
-                                            // of the use-on-bare-ground
-                                            // transition.
-
-                                            // now swap it with the 
-                                            // non-permanent object on the
-                                            // ground.
-
-                                            swapHeldWithGround( 
-                                             nextPlayer,
-                                             target,
-                                             m.x,
-                                             m.y,
-                                             &playerIndicesToSendUpdatesAbout );
-                                            }
-                                        }
-                                    
-                                    // clear this special-case trans
-                                    r = NULL;
-                                    }
-                                
-
                                 
                                 if( r != NULL && containmentTransfer ) {
                                     // special case contained items
@@ -8707,7 +8725,6 @@ int main() {
                                     // this non-permanent target object
                                     
                                     // treat it like pick up
-                                    transApplied = true;
                                     
                                     nextPlayer->holdingEtaDecay = 
                                         getEtaDecay( m.x, m.y );
@@ -8747,7 +8764,7 @@ int main() {
                                     // try adding what we're holding to
                                     // target container
                                     
-                                    transApplied = addHeldToContainer(
+                                    addHeldToContainer(
                                         nextPlayer, target, m.x, m.y );
                                     }
                                 
@@ -8818,80 +8835,6 @@ int main() {
                                             nextPlayer );
                                     
                                     nextPlayer->foodUpdate = true;
-                                    }
-                                
-
-                                if( ! transApplied &&
-                                    nextPlayer->holdingID != 0 ) {
-                                    // no transition for what we're
-                                    // holding on target
-
-                                    // check if surrounded
-
-                                    int nA = 
-                                        getMapObject( nextPlayer->xd - 1, 
-                                                      nextPlayer->yd );
-                                    int nB = 
-                                        getMapObject( nextPlayer->xd + 1, 
-                                                      nextPlayer->yd );
-                                    int nC = 
-                                        getMapObject( nextPlayer->xd, 
-                                                      nextPlayer->yd - 1 );
-                                    int nD = 
-                                        getMapObject( nextPlayer->xd, 
-                                                      nextPlayer->yd + 1 );
-
-                                    // diags too
-                                    int nE = 
-                                        getMapObject( nextPlayer->xd - 1, 
-                                                      nextPlayer->yd - 1 );
-                                    int nF = 
-                                        getMapObject( nextPlayer->xd + 1, 
-                                                      nextPlayer->yd + 1);
-                                    int nG = 
-                                        getMapObject( nextPlayer->xd + 1, 
-                                                      nextPlayer->yd - 1 );
-                                    int nH = 
-                                        getMapObject( nextPlayer->xd - 1, 
-                                                      nextPlayer->yd + 1 );
-                                    
-                                    char perm = false;
-                                    
-                                    if( nextPlayer->holdingID > 0 &&
-                                        getObject( nextPlayer->holdingID )->
-                                        permanent ) {
-                                        perm = true;
-                                        }
-
-                                    if( nA != 0 && nB != 0 && 
-                                        nC != 0 && nD != 0 && 
-                                        nE != 0 && nF != 0 && 
-                                        nG != 0 && nH != 0 
-                                        &&
-                                        getObject( nA )->blocksWalking &&
-                                        getObject( nB )->blocksWalking &&
-                                        getObject( nC )->blocksWalking &&
-                                        getObject( nD )->blocksWalking &&
-                                        getObject( nE )->blocksWalking &&
-                                        getObject( nF )->blocksWalking &&
-                                        getObject( nG )->blocksWalking &&
-                                        getObject( nH )->blocksWalking &&
-                                        ! perm ) {
-                                        
-
-                                        // surrounded with blocking
-                                        // objects while holding
-                                    
-                                        // throw non-permanent 
-                                        // held into nearest empty spot
-                                        
-                                        handleDrop( 
-                                            m.x, m.y, 
-                                            nextPlayer,
-                                            &playerIndicesToSendUpdatesAbout );
-                                        }
-                                    
-                                    // action doesn't happen, just the drop
                                     }
                                 }
                             else if( nextPlayer->holdingID > 0 ) {
@@ -9831,9 +9774,7 @@ int main() {
                             canDrop = false;
                             }
 
-                        if( canDrop 
-                            &&
-                            ( isGridAdjacent( m.x, m.y,
+                        if( ( isGridAdjacent( m.x, m.y,
                                               nextPlayer->xd, 
                                               nextPlayer->yd ) 
                               ||
@@ -9866,7 +9807,8 @@ int main() {
                                             &playerIndicesToSendUpdatesAbout );
                                         }    
                                     }
-                                else if( isMapSpotEmpty( m.x, m.y ) ) {
+                                else if( canDrop && 
+                                         isMapSpotEmpty( m.x, m.y ) ) {
                                 
                                     // empty spot to drop non-baby into
                                     
@@ -9874,7 +9816,8 @@ int main() {
                                         m.x, m.y, nextPlayer,
                                         &playerIndicesToSendUpdatesAbout );
                                     }
-                                else if( m.c >= 0 && 
+                                else if( canDrop &&
+                                         m.c >= 0 && 
                                          m.c < NUM_CLOTHING_PIECES &&
                                          m.x == nextPlayer->xd &&
                                          m.y == nextPlayer->yd  &&
@@ -9929,6 +9872,69 @@ int main() {
                                         ObjectRecord *targetObj =
                                             getObject( target );
                                         
+
+                                        if( !canDrop ) {
+                                            // user may have a permanent object
+                                            // stuck in their hand with no place
+                                            // to drop it
+                                            
+                                            // need to check if 
+                                            // a use-on-bare-ground
+                                            // transition applies.  If so, we
+                                            // can treat it like a swap
+
+                                    
+                                            if( ! targetObj->permanent ) {
+                                                // target can be picked up
+
+                                                // "set-down" type bare ground 
+                                                // trans exists?
+                                                TransRecord
+                                                *r = getPTrans( 
+                                                    nextPlayer->holdingID, 
+                                                    -1 );
+
+                                                if( r != NULL && 
+                                                    r->newActor == 0 &&
+                                                    r->newTarget > 0 ) {
+                                            
+                                                    // only applies if the 
+                                                    // bare-ground
+                                                    // trans leaves nothing in
+                                                    // our hand
+                                            
+                                                    // first, change what they
+                                                    // are holding to this 
+                                                    // newTarget
+                                                    handleHoldingChange( 
+                                                        nextPlayer,
+                                                        r->newTarget );
+                                            
+                                                    // this will handle 
+                                                    // container
+                                                    // size changes, etc.
+                                                    // This is what should 
+                                                    // end up
+                                                    // on the ground
+                                                    // as the result
+                                                    // of the use-on-bare-ground
+                                                    // transition.
+
+                                                    // now swap it with the 
+                                                    // non-permanent object
+                                                    // on the ground.
+
+                                                    swapHeldWithGround( 
+                                                        nextPlayer,
+                                                        target,
+                                                        m.x,
+                                                        m.y,
+                                            &playerIndicesToSendUpdatesAbout );
+                                                    }
+                                                }
+                                            }
+
+
                                         int targetSlots =
                                             targetObj->numSlots;
                                         
@@ -9941,7 +9947,8 @@ int main() {
                                         
                                         char canGoIn = false;
                                         
-                                        if( droppedObj->containable &&
+                                        if( canDrop &&
+                                            droppedObj->containable &&
                                             targetSlotSize >=
                                             droppedObj->containSize ) {
                                             canGoIn = true;
@@ -9952,14 +9959,16 @@ int main() {
                                         // DROP indicates they 
                                         // right-clicked on container
                                         // so use swap mode
-                                        if( canGoIn && 
+                                        if( canDrop && 
+                                            canGoIn && 
                                             addHeldToContainer( 
                                                 nextPlayer,
                                                 target,
                                                 m.x, m.y, true ) ) {
                                             // handled
                                             }
-                                        else if( ! canGoIn &&
+                                        else if( canDrop && 
+                                                 ! canGoIn &&
                                                  ! targetObj->permanent 
                                                  &&
                                                  targetObj->minPickupAge <=
@@ -9975,7 +9984,7 @@ int main() {
                                              &playerIndicesToSendUpdatesAbout );
                                             }
                                         }
-                                    else {
+                                    else if( canDrop ) {
                                         // no object here
                                         
                                         // maybe there's a person
@@ -10259,34 +10268,17 @@ int main() {
                 
                 while( oldObject != 0 && n <= 4 ) {
                     
-                    if( isGrave( oldObject ) ) {
-                        int numContained;
-                        
-                        int *contained = getContained( dropPos.x, dropPos.y, 
-                                                       &numContained );
-                        
-                        timeSec_t *containedETA =
-                            getContainedEtaDecay( dropPos.x, dropPos.y, 
-                                                  &numContained );
-                        
-                        if( numContained > 0 ) {
-                            oldContained.appendArray( contained, numContained );
-                            
-                            oldContainedETADecay.appendArray(
-                                containedETA, numContained );
-
-                            delete [] contained;
-                            delete [] containedETA;
-                            }
-                        setMapObject( dropPos.x, dropPos.y,  0 );
-                        clearAllContained( dropPos.x, dropPos.y );
-                        oldObject = 0;
-                        }
-                    else {
+                    // don't combine graves
+                    if( ! isGrave( oldObject ) ) {
                         ObjectRecord *r = getObject( oldObject );
                         
                         if( r->numSlots == 0 && ! r->permanent 
                             && ! r->rideable ) {
+                            
+                            // found a containble object
+                            // we can empty this spot to make room
+                            // for a grave that can go here, and
+                            // put the old object into the new grave.
                             
                             oldContained.push_back( oldObject );
                             oldContainedETADecay.push_back(
@@ -11004,15 +10996,18 @@ int main() {
                     nextPlayer->yd != nextPlayer->ys ) {
                 
                     
-                    if( Time::getCurrentTime() - nextPlayer->moveStartTime
+                    // don't end new moves here (moves that 
+                    // other players haven't been told about)
+                    // even if they have come to an end time-wise
+                    // wait until after we've told everyone about them
+                    if( ! nextPlayer->newMove && 
+                        Time::getCurrentTime() - nextPlayer->moveStartTime
                         >
                         nextPlayer->moveTotalSeconds ) {
                         
                         // done
                         nextPlayer->xs = nextPlayer->xd;
-                        nextPlayer->ys = nextPlayer->yd;
-                        nextPlayer->newMove = false;
-                        
+                        nextPlayer->ys = nextPlayer->yd;                        
 
                         printf( "Player %d's move is done at %d,%d\n",
                                 nextPlayer->id,
@@ -11263,6 +11258,13 @@ int main() {
             newUpdatePlayerIDs.push_back( nextPlayer->id );
             
 
+            if( nextPlayer->posForced &&
+                SettingsManager::getIntSetting( "requireClientForceAck", 1 ) ) {
+                // block additional moves/actions from this player until
+                // we get a FORCE response, syncing them up with
+                // their forced position.
+                nextPlayer->waitingForForceResponse = true;
+                }
             nextPlayer->posForced = false;
 
 
@@ -12190,6 +12192,8 @@ int main() {
                             dyingMessageLength, 
                             false, false );
                     
+                    nextPlayer->gotPartOfThisFrame = true;
+
                     if( numSent != dyingMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
 
@@ -12208,6 +12212,8 @@ int main() {
                             healingMessageLength, 
                             false, false );
                     
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != healingMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
 
@@ -12225,6 +12231,8 @@ int main() {
                             emotMessage, 
                             emotMessageLength, 
                             false, false );
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != emotMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
@@ -12334,6 +12342,8 @@ int main() {
                                     updateMessageLength, 
                                     false, false );
                             
+                            nextPlayer->gotPartOfThisFrame = true;
+                            
                             delete [] updateMessage;
                             
                             if( numSent != updateMessageLength ) {
@@ -12397,6 +12407,8 @@ int main() {
                                 outOfRangeMessageLength, 
                                 false, false );
                         
+                        nextPlayer->gotPartOfThisFrame = true;
+
                         delete [] outOfRangeMessage;
 
                         if( numSent != outOfRangeMessageLength ) {
@@ -12477,6 +12489,8 @@ int main() {
                                     moveMessage, 
                                     moveMessageLength, 
                                     false, false );
+                            
+                            nextPlayer->gotPartOfThisFrame = true;
                             
                             delete [] moveMessage;
                             
@@ -12579,6 +12593,8 @@ int main() {
                                     mapChangeMessageLength, 
                                     false, false );
                             
+                            nextPlayer->gotPartOfThisFrame = true;
+                            
                             delete [] mapChangeMessage;
 
                             if( numSent != mapChangeMessageLength ) {
@@ -12613,6 +12629,8 @@ int main() {
                                 speechMessage, 
                                 speechMessageLength, 
                                 false, false );
+                        
+                        nextPlayer->gotPartOfThisFrame = true;
                         
                         if( numSent != speechMessageLength ) {
                             setDeathReason( nextPlayer, "disconnected" );
@@ -12678,6 +12696,8 @@ int main() {
                             deleteUpdateMessageLength, 
                             false, false );
                     
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     delete [] deleteUpdateMessage;
                     
                     if( numSent != deleteUpdateMessageLength ) {
@@ -12697,6 +12717,8 @@ int main() {
                             lineageMessageLength, 
                             false, false );
                     
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != lineageMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
 
@@ -12715,6 +12737,8 @@ int main() {
                             cursesMessageLength, 
                             false, false );
                     
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != cursesMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
 
@@ -12731,6 +12755,8 @@ int main() {
                             namesMessage, 
                             namesMessageLength, 
                             false, false );
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != namesMessageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
@@ -12780,7 +12806,9 @@ int main() {
                              (unsigned char*)foodMessage, 
                              messageLength,
                              false, false );
-
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != messageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
                         
@@ -12813,7 +12841,9 @@ int main() {
                              (unsigned char*)heatMessage, 
                              messageLength,
                              false, false );
-
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != messageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
                         
@@ -12844,6 +12874,8 @@ int main() {
                              messageLength,
                              false, false );
 
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
                     if( numSent != messageLength ) {
                         setDeathReason( nextPlayer, "disconnected" );
                         
@@ -12933,6 +12965,32 @@ int main() {
         // this one is global, so we must clear it every loop
         newSpeech.deleteAll();
         newSpeechPos.deleteAll();
+        
+
+        
+        // handle end-of-frame for all players that need it
+        const char *frameMessage = "FM\n#";
+        int frameMessageLength = strlen( frameMessage );
+        
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *nextPlayer = players.getElement(i);
+            
+            if( nextPlayer->gotPartOfThisFrame ) {
+                int numSent = 
+                    nextPlayer->sock->send( 
+                        (unsigned char*)frameMessage, 
+                        frameMessageLength,
+                        false, false );
+
+                if( numSent != frameMessageLength ) {
+                    setDeathReason( nextPlayer, "disconnected" );
+                    
+                    nextPlayer->error = true;
+                    nextPlayer->errorCauseString = "Socket write failed";
+                    }
+                }
+            nextPlayer->gotPartOfThisFrame = false;
+            }
         
 
         

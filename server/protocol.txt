@@ -153,9 +153,20 @@ CURSE_TOKEN_CHANGE (CX)
 
 FORCED_SHUTDOWN (SD)
 
+FRAME (FM)
+
 
 
 Client can expect to receive these at any time, and in any order.
+
+
+Each batch of messages from a single server time step will be terminated with
+a FRAME message.  This ensures that related messages can play at the same time
+on the client, regardless of network latency (for example, a player picking
+up an object results in a PLAYER_UPDATE and an MAP_CHANGE message, which only
+make sense if played together client-side).
+
+
 
 
 
@@ -223,12 +234,12 @@ Check the code in map.cpp for details.
 
 
 PU
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
 ...
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
 #
 
 List of player ids with their display object ids, facing direction, action
@@ -238,7 +249,7 @@ whether held origin is valid (1 or 0), origin position on map of that held
 object (where it was picked up from), 
 transition source object id (or -1) if held object is result of a transition,
 player's current heat value, 
-done_moving flag (to signal destination reached), force flag (to signal
+done_moving_seqNum (to signal destination reached), force flag (to signal
 a move truncated unexpectedly), x,y grid positions of player,
 floating point age in "years", floating point aging rate in sec/year (how many
 seconds it takes the player to age 1 year), and
@@ -255,10 +266,10 @@ action flag is 1 if player is attempting an action, 0 otherwise;
 Heat is the player's warmth between 0 and 1, where 0 is coldest, 1 is hottest,
 and 0.5 is ideal.
 
-If done_moving is 1, this means the player is stationary at this position.
+If done_moving_seqNum is > 0, this means the player is stationary at this position (and this is the sequence number of their last move).
 Otherwise, player may still be in the middle of a move (for example, if what
 they are holding decays while they are moving, a PU will be sent with
-done_moving set to 0).
+done_moving_seqNum set to 0).
 
 force is usually 0 except in special cases of move truncation where it is 1.
 A player receiving force for itself must snap back to that location
@@ -616,6 +627,17 @@ force-closed by server.
 
 
 
+FM
+#
+
+Indicates the end of a server frame.  All messages since the last FM message
+are part of the same batch and can be played back together on the client.
+
+
+
+
+
+
 
 First message sent upon client new connection to server:
 
@@ -645,6 +667,7 @@ KILL x y#
 KILL x y id#
 JUMP x y#
 EMOT x y e#
+FORCE x y#
 
 
 KA   is a keep-alive message used to keep the connection alive when the client
@@ -710,8 +733,8 @@ KILL is for using a deadly object on the target square.  Square can
 
 JUMP is used by a baby to jump out of its mother's arms.  The x and y 
      coordinates are ignored.
-     MOVE can also be used to jump out of arms (it was the old way), but
-     it is less safe, because bad message interleavings server-side make
+     MOVE can NO LONGER be used to jump out of arms (it was the old way).
+     It was less safe, because bad message interleavings server-side make
      MOVE ambiguous in the case of jump-out (for example, if the baby
      has already been dropped by the time the MOVE arrives, the server will
      interpret it as a legitimate move attempt).
@@ -719,10 +742,24 @@ JUMP is used by a baby to jump out of its mother's arms.  The x and y
 EMOT is used to specify an emotion to display.  The x and y coordinates are
      ignored.  e is the emotion index.
 
+FORCE  is used to acknowledge a forced-pos PU sent previously by the server.
+       The x and y coordinates must match the forced position in the PU.
+       Forced-pos PU's act like sync points.  After sending one to the client,
+       the server will ignore all position-sensitive moves and actions until
+       a FORCE arrives, demonstrating that the client is in sync with the forced
+       position, and that subsequent moves carry forward from that forced
+       position (otherwise, additional moves/actions sent by the client after
+       its move that was cut off by the forced-pos PU, but before the client
+       actually receive that PU, can be misinterpreted by the server).
+
 
 This one is more complicated:
 
-MOVE xs ys xdelt0 ydelt0 xdelt1 ydelt1 ... xdeltN ydeltN#
+MOVE xs ys @seq_num xdelt0 ydelt0 xdelt1 ydelt1 ... xdeltN ydeltN#
+
+
+seq_num is the sequence number of moves in this player's lifetime, starting
+        with 2 for their first move.
 
 xs,ys is the absolute world position the player thinks they're currently at
 

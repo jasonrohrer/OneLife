@@ -906,17 +906,11 @@ static double lastServerMessageReceiveTime = 0;
 // This is an approximation of our outtage time.
 static double largestPendingMessageTimeGap = 0;
 
+static char waitForFrameMessages = false;
 
 
 // NULL if there's no full message available
-char *getNextServerMessage() {
-    
-    if( readyPendingReceivedMessages.size() > 0 ) {
-        char *message = readyPendingReceivedMessages.getElementDirect( 0 );
-        readyPendingReceivedMessages.deleteElement( 0 );
-        printf( "Playing a held pending message\n" );
-        return message;
-        }
+char *getNextServerMessageRaw() {        
 
     if( pendingMapChunkMessage != NULL ) {
         // wait for full binary data chunk to arrive completely
@@ -1018,7 +1012,7 @@ char *getNextServerMessage() {
                 &x, &y, &binarySize, &pendingCompressedChunkSize );
 
 
-        return getNextServerMessage();
+        return getNextServerMessageRaw();
         }
     else if( getMessageType( message ) == COMPRESSED_MESSAGE ) {
         pendingCMData = true;
@@ -1035,6 +1029,79 @@ char *getNextServerMessage() {
         return message;
         }
     }
+
+
+
+char serverFrameReady;
+static SimpleVector<char*> serverFrameMessages;
+
+
+// either returns a pending recieved message (one that was received earlier
+// or held back
+//
+// or receives the next message from the server socket (if we are not waiting
+// for full frames of messages)
+//
+// or returns NULL until a full frame of messages is available, and
+// then returns the first message from the frame
+char *getNextServerMessage() {
+    
+    if( readyPendingReceivedMessages.size() > 0 ) {
+        char *message = readyPendingReceivedMessages.getElementDirect( 0 );
+        readyPendingReceivedMessages.deleteElement( 0 );
+        printf( "Playing a held pending message\n" );
+        return message;
+        }
+    
+    if( !waitForFrameMessages ) {
+        return getNextServerMessageRaw();
+        }
+    else {
+        if( !serverFrameReady ) {
+            // read more and look for end of frame
+            
+            char *message = getNextServerMessageRaw();
+            
+            if( message != NULL ) {
+                if( strstr( message, "FM" ) == message ) {
+                    // end of frame, discard the marker message
+                    delete [] message;
+                    
+                    if( serverFrameMessages.size() > 0 ) {
+                        serverFrameReady = true;
+                        }
+                    }
+                else if( getMessageType( message ) == MAP_CHUNK ) {
+                    // map chunks are followed by compressed data
+                    // they cannot be queued
+                    return message;
+                    }
+                else {
+                    // some other message in the middle of the frame
+                    // keep it
+                    serverFrameMessages.push_back( message );
+                    }
+                }
+            }
+
+        if( serverFrameReady ) {
+            char *message = serverFrameMessages.getElementDirect( 0 );
+            
+            serverFrameMessages.deleteElement( 0 );
+
+            if( serverFrameMessages.size() == 0 ) {
+                serverFrameReady = false;
+                }
+            return message;
+            }
+        else {
+            return NULL;
+            }
+        }
+    }
+
+
+
 
 
 
@@ -2180,6 +2247,8 @@ LivingLifePage::~LivingLifePage() {
     freeLiveTriggers();
 
     readyPendingReceivedMessages.deallocateStringElements();
+
+    serverFrameMessages.deallocateStringElements();
     
     if( pendingMapChunkMessage != NULL ) {
         delete [] pendingMapChunkMessage;
@@ -8506,6 +8575,10 @@ void LivingLifePage::sendBugReport( int inBugNumber ) {
 
     sendToServerSocket( bugMessage );
     delete [] bugMessage;
+    
+    if( ! SettingsManager::getIntSetting( "reportWildBugToUser", 1 ) ) {
+        return;
+        }
 
     FILE *f = fopen( "stdout.txt", "r" );
 
@@ -9476,9 +9549,9 @@ void LivingLifePage::step() {
         ourObject != NULL && 
         curTime - lastServerMessageReceiveTime < 1 &&
         curTime - ourObject->pendingActionAnimationStartTime > 
-        10 + largestPendingMessageTimeGap ) {
+        5 + largestPendingMessageTimeGap ) {
         
-        // been bouncing for ten seconds with no answer from server
+        // been bouncing for five seconds with no answer from server
         // in the mean time, we have seen other messages arrive from server
         // (so any network outage is over)
 
@@ -9680,6 +9753,9 @@ void LivingLifePage::step() {
         else if( type == ACCEPTED ) {
             // logged in successfully, wait for next message
             
+            // subsequent messages should all be part of FRAME batches
+            waitForFrameMessages = true;
+
             SettingsManager::setSetting( "loginSuccess", 1 );
 
             delete [] message;
@@ -12136,7 +12212,7 @@ void LivingLifePage::step() {
                                                     heldTransitionSourceID );
                                             if( groundTrans != NULL &&
                                                 groundTrans->newTarget > 0 &&
-                                                groundTrans->newTarget ==
+                                                groundTrans->newActor ==
                                                 existing->holdingID ) {
                                                 if( shouldCreationSoundPlay(
                                                     groundTrans->target,
@@ -12523,11 +12599,32 @@ void LivingLifePage::step() {
                                     delete [] nextActionMessageToSend;
                                     nextActionMessageToSend = NULL;
                                     }
+
+                                // immediately send ack message
+                                char *forceMessage = 
+                                    autoSprintf( "FORCE %d %d#",
+                                                 existing->xd,
+                                                 existing->yd );
+                                sendToServerSocket( forceMessage );
+                                delete [] forceMessage;
                                 }
                             }
                         
                         // in motion until update received, now done
-                        existing->inMotion = false;
+                        if( existing->id != ourID ) {
+                            existing->inMotion = false;
+                            }
+                        else {
+                            // only do this if our last requested move
+                            // really ended server-side
+                            if( done_moving == 
+                                existing->lastMoveSequenceNumber ) {
+                                
+                                existing->inMotion = false;
+                                }
+                            
+                            }
+                        
                         
                         existing->moveTotalTime = 0;
 
@@ -12613,6 +12710,7 @@ void LivingLifePage::step() {
                         o.hide = false;
                         
                         o.inMotion = false;
+                        o.lastMoveSequenceNumber = 1;
                         
                         o.holdingFlip = false;
                         
@@ -13111,11 +13209,15 @@ void LivingLifePage::step() {
                             double fractionPassed = 
                                 timePassed / o.moveTotalTime;
                             
-                            
-                            // stays in motion until we receive final
-                            // PLAYER_UPDATE from server telling us
-                            // that move is over
-                            existing->inMotion = true;
+                            if( existing->id != ourID ) {
+                                // stays in motion until we receive final
+                                // PLAYER_UPDATE from server telling us
+                                // that move is over
+                                
+                                // don't do this for our local object
+                                // we track our local inMotion status
+                                existing->inMotion = true;
+                                }
                             
                             int oldPathLength = 0;
                             GridPos oldCurrentPathPos;
@@ -15548,6 +15650,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+    
+    waitForFrameMessages = false;
 
     serverSocketConnected = false;
     connectionMessageFade = 1.0f;
@@ -15705,6 +15809,7 @@ void LivingLifePage::makeActive( char inFresh ) {
     setWaiting( true, false );
 
     readyPendingReceivedMessages.deallocateStringElements();
+    serverFrameMessages.deallocateStringElements();
 
     if( pendingMapChunkMessage != NULL ) {
         delete [] pendingMapChunkMessage;
@@ -17674,11 +17779,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         SimpleVector<char> moveMessageBuffer;
         
         moveMessageBuffer.appendElementString( "MOVE" );
+        ourLiveObject->lastMoveSequenceNumber ++;
+        
         // start is absolute
         char *startString = 
-            autoSprintf( " %d %d", 
+            autoSprintf( " %d %d @%d", 
                          sendX( ourLiveObject->pathToDest[0].x ),
-                         sendY( ourLiveObject->pathToDest[0].y ) );
+                         sendY( ourLiveObject->pathToDest[0].y ),
+                         ourLiveObject->lastMoveSequenceNumber );
         moveMessageBuffer.appendElementString( startString );
         delete [] startString;
         

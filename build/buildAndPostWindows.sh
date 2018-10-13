@@ -60,6 +60,29 @@ cd windows
 scp $2_inc_win.dbz jcr15@onehouronelife.com:diffBundles/ 
 
 
+
+echo
+echo
+echo "Done with diff bundle build."
+echo "Next:  Steam depot build."
+
+
+rm -r steamLatest
+mkdir steamLatest
+cp -r OneLife_v$2/* steamLatest
+
+cd steamLatest
+rm -r animations categories ground groundTileCache music objects reverbCache sounds sprites transitions dataVersionNumber.txt
+
+#FIXME:  need to copy steamGate.exe in place int steamLatest
+
+/c/steamSDK/tools/ContentBuilder/builder/steamcmd.exe +login "jasonrohrergames" +run_app_build -desc OneLifeClient_Windows_v$2 /c/cpp/OneLife/build/steam/app_build_windows_595690.vdf +quit
+
+echo
+echo "Steam depot build is done."
+
+
+
 echo
 echo
 echo "Done."

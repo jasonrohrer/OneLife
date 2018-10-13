@@ -4,6 +4,96 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 153    2018-October-12
+
+--FINALLY found an additional cause of the bouncing-forever bug (stale MOVE
+  messages from client that arrive at server after a forced-position PU has
+  been sent to the client).  Added a new FORCE ack protocol, where client
+  responds to the position forced by the server, and any intervening messages
+  received by the server are ignored.  This allows the client and the server
+  to get back in sync position-wise.
+
+****
+NOTE:  Rolling this out will require a special update process.
+    1.  Update servers to latest code, including the current 
+            requireClientForceAck.ini '0' setting.
+    2.  Update client.
+    3.  Check in requireClientForceAck.ini '1' setting for server.
+    4   Run remoteServerGitPull.sh
+****
+
+--Scene editor allows bigger jumps when paging through scenes.
+
+--Fixed another source of the bouncing-forever bug.  PU messages that end moves
+  weren't move-specific, so several moves that criss-crossed the same point
+  could all have ending PUs that end at the same spot.  With network latency,
+  an earlier PU could be misinterpreted as ending a later move, thus allowing a
+  post-move action to be sent to the server and ignored (because for the
+  server, the later move is still in-progress).  Fixed by adding a move
+  sequence number to the protocol, so we know which move a given PU is ending.
+
+--Related messages sent by server are now grouped by a FRAME message, so that
+  they can be held by client and played together.  So, for example, in cases of
+  packet delay, a pick up player result will not be displayed before the
+  corresponding map change client-side.  Testing with artificial variable
+  packet latency was showing all kinds of weird behavior client-side, and all
+  of this is fixed now.
+
+--Added reportWildBugToUser setting, so we can disable that easily for the
+  Steam release.
+
+--Wild bug, if there are any remaining causes of it, is now caught and cleared
+  (or reported) in 5 seconds (10 was a long time to bounce).
+
+--Fixed bug that was causing double-sound play when both target and held
+  changed.
+
+
+
+
+Server Fixes
+
+--The bit of code that was enabling teleporters was dealing with a very narrow
+  edge case (completely surrounded by blocking objects in all eight
+  directions), and it threw the item from your hand in order to free you up to
+  potentially open a door.  However, this code did not help at all in larger
+  rooms with full floors (you'd still get trapped, unable to open the door),
+  and teleportation was an unintended consequence of this code.  Fixed by
+  allowing held-objects to trigger bare-hand transitions if no other transition
+  applies.  This means you can now open a door when your hands are full, which
+  means that we don't need to worry about you getting trapped in a room by a
+  closed door when your hands are full, which means that the code that caused
+  teleporation can be removed entirely.  Sorry Tarr.  Fixes #58
+
+--Fixed so that default use-on-bare-ground action for a permanent held object
+  (example:  horse cart), when attempted on a tile that has a swappable object
+  in it, only is triggered with an explicit DROP action (right-click on
+  swappable object).  Last fix (so that you weren't trapped by objects that
+  fell out of your tipped horse cart) was triggered even by regular-click on
+  the swappable object, which resulted in you getting off the horse
+  unintentionally whenever you clicked on a swappable object.  Now you have to
+  right-click.
+
+--Fixed leak of absolute birth location through invalid held origin coordinates.
+
+--Got rid of deprecated MOVE-to-jump-out-of-arms semantics.  Now only a real
+  JUMP message will cause a baby to jump out, clearing up an ambiguity with
+  wayward MOVE messages while held, which caused a bouncing-forever bug.
+
+--When a map container shrinks and contents needs to be scattered, a search is
+  conducted in an infinite square spiral until an empty spot is found for each
+  previously-contained item.  This new scanning code is also much more efficent
+  (minimum number of map look-ups) compared to old expanding-radius code (which
+  stopped after radius 2, causing remaining items to vanish).  Fixes #62
+
+--findClosestEmptyMapSpot now uses same centralized spiral code.  Got rid of
+  code that merges graves (if someone standing on an existing grave when they
+  die).  Now a dead person always makes a new grave (if there is an empty spot
+  in a 100-step spiral around the place where they died).
+
+
+
+
 Version 151    2018-October-8
 
 --Loading Map process used to stall if a needed file was missing.  Now it

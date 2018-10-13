@@ -193,6 +193,15 @@ cp -r ~/checkout/diffWorking/dataLatest/reverbCache ~/checkout/reverbCacheLastBu
 
 
 echo "" 
+echo "Building Steam Depot"
+echo ""
+
+
+steamcmd +login "jasonrohrergames" +run_app_build -desc OneLifeContent_v$newVersion ~/checkout/OneLifeWorking/build/steam/app_build_content_595690.vdf +quit
+
+
+
+echo "" 
 echo "Generating diff bundle"
 echo ""
 
