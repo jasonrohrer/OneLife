@@ -33,24 +33,25 @@ echo ""
 echo "Most recent Data git version is:  $lastTaggedDataVersion"
 echo ""
 
+baseDataVersion=$lastTaggedDataVersion
 
 
 if [ $# -eq 1 ]
 then
 	echo "" 
-	echo "Overriding base-version based on command line argument:  $1"
+	echo "Overriding base data version using command line argument:  $1"
 	echo "" 
-	lastTaggedDataVersion=$1
+	baseDataVersion=$1
 fi
 
 
 
 
-numNewChangsets=`git log OneLife_v$lastTaggedDataVersion..HEAD | grep commit | wc -l`
+numNewChangsets=`git log OneLife_v$basDataVersion..HEAD | grep commit | wc -l`
 
 
 echo "" 
-echo "Num git revisions since version:  $numNewChangsets"
+echo "Num git revisions since base data version:  $numNewChangsets"
 echo ""
 
 
@@ -112,13 +113,14 @@ echo ""
 
 
 
-# any argument means automation
-if [ $# -ne 1 ]
+# two arguments means automation
+if [ $# -ne 2 ]
 then
 	echo ""
 	echo ""
 	echo "Most recent code version $lastTaggedCodeVersion"
 	echo "Most recent data version $lastTaggedDataVersion"
+	echo "Base data version for diff bundle $lastTaggedDataVersion"
 	echo ""
 	echo "About to post and tag data with $newVersion"
 	echo ""
@@ -150,10 +152,10 @@ echo -n "$newVersion" > ~/checkout/diffWorking/dataLatest/dataVersionNumber.txt
 
 
 echo "" 
-echo "Exporting last tagged data for diffing"
+echo "Exporting base data for diffing"
 echo ""
 
-git checkout -q OneLife_v$lastTaggedDataVersion
+git checkout -q OneLife_v$baseDataVersion
 
 git clone . ~/checkout/diffWorking/dataLast
 rm -rf ~/checkout/diffWorking/dataLast/.git*
