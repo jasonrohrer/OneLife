@@ -35,6 +35,17 @@ echo ""
 
 
 
+if [ $# -eq 1 ]
+then
+	echo "" 
+	echo "Overriding base-version based on command line argument:  $1"
+	echo "" 
+	lastTaggedDataVersion=$1
+fi
+
+
+
+
 numNewChangsets=`git log OneLife_v$lastTaggedDataVersion..HEAD | grep commit | wc -l`
 
 
