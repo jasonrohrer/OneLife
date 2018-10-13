@@ -12057,7 +12057,7 @@ void LivingLifePage::step() {
                                                     heldTransitionSourceID );
                                             if( groundTrans != NULL &&
                                                 groundTrans->newTarget > 0 &&
-                                                groundTrans->newTarget ==
+                                                groundTrans->newActor ==
                                                 existing->holdingID ) {
                                                 if( shouldCreationSoundPlay(
                                                     groundTrans->target,
