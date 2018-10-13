@@ -47,7 +47,7 @@ fi
 
 
 
-numNewChangsets=`git log OneLife_v$basDataVersion..HEAD | grep commit | wc -l`
+numNewChangsets=`git log OneLife_v$baseDataVersion..HEAD | grep commit | wc -l`
 
 
 echo "" 
