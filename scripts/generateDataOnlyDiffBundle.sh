@@ -120,7 +120,7 @@ then
 	echo ""
 	echo "Most recent code version $lastTaggedCodeVersion"
 	echo "Most recent data version $lastTaggedDataVersion"
-	echo "Base data version for diff bundle $lastTaggedDataVersion"
+	echo "Base data version for diff bundle $baseDataVersion"
 	echo ""
 	echo "About to post and tag data with $newVersion"
 	echo ""
