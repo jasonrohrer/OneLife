@@ -20,6 +20,7 @@ NOTE:  Rolling this out will require a special update process.
     2.  Update client.
     3.  Check in requireClientForceAck.ini '1' setting for server.
     4   Run remoteServerGitPull.sh
+--SPECIAL UPDATE PROCESS COMPLETE--
 ****
 
 --Scene editor allows bigger jumps when paging through scenes.
