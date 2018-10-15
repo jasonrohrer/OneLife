@@ -8306,6 +8306,12 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
 
 // inNewID > 0
 static char shouldCreationSoundPlay( int inOldID, int inNewID ) {
+    if( inOldID == inNewID ) {
+        // no change
+        return false;
+        }
+    
+
     // make sure this is really a fresh creation
     // of newID, and not a cycling back around
     // for a reusable object

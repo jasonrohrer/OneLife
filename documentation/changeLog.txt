@@ -19,6 +19,9 @@ Server Fixes
   through a transition when picked up or set down, do not get stuck in their
   held state when swapped or put in a container.  Fixes #66
 
+--Whoops... fix for multiple sounds playing failed to check for case when
+  target object doesn't change (exmaple: cooking over hot coals).
+  Fixes #67,  Fixes #68
 
 
 
