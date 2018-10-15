@@ -7465,10 +7465,10 @@ int main() {
                         nextPlayer->waitingForForceResponse = false;
                         }
                     }
-                else if( m.type != SAY &&
+                else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
                     // if we're waiting for a FORCE response, ignore
-                    // all messages from player except SAY
+                    // all messages from player except SAY and EMOT
                     
                     AppLog::infoF( "Ignoring client message because we're "
                                    "waiting for FORCE ack message after a "
@@ -7484,7 +7484,8 @@ int main() {
                          ||
                          m.type == MOVE ||
                          m.type == JUMP || 
-                         m.type == SAY ) {
+                         m.type == SAY ||
+                         m.type == EMOT ) {
 
                     if( m.type == MOVE &&
                         m.sequenceNumber != -1 ) {
