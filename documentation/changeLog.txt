@@ -4,6 +4,16 @@ http://onehouronelife.com/updateLog.php
 
 
 
+
+Server Fixes
+
+--Default bare-hand action doesn't apply when holding something if the target
+  object is a container (we want to insert item into container in that case).
+  Fixes #64
+
+
+
+
 Version 153    2018-October-12
 
 --FINALLY found an additional cause of the bouncing-forever bug (stale MOVE

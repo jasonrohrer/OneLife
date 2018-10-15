@@ -8528,10 +8528,16 @@ int main() {
                                         if( r != NULL ) {
                                             defaultTrans = true;
                                             }
-                                        else {
+                                        else if( targetObj->numSlots == 0 ) {
                                             // also consider bare-hand
                                             // action that produces
                                             // no new held item
+
+                                            // but only on non-container
+                                            // objects (example:  we don't
+                                            // want to kick minecart into
+                                            // motion every time we try
+                                            // to add something to it)
                                             
                                             // treat this the same as
                                             // default
