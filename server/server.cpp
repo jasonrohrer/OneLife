@@ -3417,6 +3417,9 @@ void handleForcedBabyDrop(
 
 
 
+static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID );
+
+
 
 static void swapHeldWithGround( 
     LiveObject *inPlayer, int inTargetID, 
@@ -3435,12 +3438,36 @@ static void swapHeldWithGround(
     
     
     inPlayer->holdingID = inTargetID;
-    holdingSomethingNew( inPlayer );
-    
     inPlayer->holdingEtaDecay = newHoldingEtaDecay;
     
     setContained( inPlayer, f );
 
+
+    // does bare-hand action apply to this newly-held object
+    // one that results in something new in the hand and
+    // nothing on the ground?
+    
+    // if so, it is a pick-up action, and it should apply here
+    
+    TransRecord *pickupTrans = getPTrans( 0, inTargetID );
+
+    char newHandled = false;
+                
+    if( pickupTrans != NULL && pickupTrans->newActor > 0 &&
+        pickupTrans->newTarget == 0 ) {
+                    
+        int newTargetID = pickupTrans->newActor;
+        
+        if( newTargetID != inTargetID ) {
+            handleHoldingChange( inPlayer, newTargetID );
+            newHandled = true;
+            }
+        }
+    
+    if( ! newHandled ) {
+        holdingSomethingNew( inPlayer );
+        }
+    
     inPlayer->heldOriginValid = 1;
     inPlayer->heldOriginX = inMapX;
     inPlayer->heldOriginY = inMapY;
@@ -4924,6 +4951,38 @@ static char addHeldToContainer( LiveObject *inPlayer,
         setResponsiblePlayer( 
             inPlayer->id );
         
+
+        // adding something to a container acts like a drop
+        // but some non-permanent held objects are supposed to go through 
+        // a transition when they drop (example:  held wild piglet is
+        // non-permanent, so it can be containable, but it supposed to
+        // switch to a moving wild piglet when dropped.... we should
+        // switch to this other wild piglet when putting it into a container
+        // too)
+
+        // "set-down" type bare ground
+        // trans exists for what we're 
+        // holding?
+        TransRecord *r = getPTrans( inPlayer->holdingID, -1 );
+
+        if( r != NULL && r->newActor == 0 && r->newTarget > 0 ) {
+                                            
+            // only applies if the 
+            // bare-ground
+            // trans leaves nothing in
+            // our hand
+            
+            // first, change what they
+            // are holding to this 
+            // newTarget
+            
+
+            handleHoldingChange( 
+                inPlayer,
+                r->newTarget );
+            }
+
+
         int idToAdd = inPlayer->holdingID;
 
 
@@ -5158,7 +5217,23 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                         inContX, inContY, inSlotNumber,
                         &( inPlayer->holdingEtaDecay ) );
                 
-                holdingSomethingNew( inPlayer );
+
+                // does bare-hand action apply to this newly-held object
+                // one that results in something new in the hand and
+                // nothing on the ground?
+
+                // if so, it is a pick-up action, and it should apply here
+
+                TransRecord *pickupTrans = getPTrans( 0, inPlayer->holdingID );
+                
+                if( pickupTrans != NULL && pickupTrans->newActor > 0 &&
+                    pickupTrans->newTarget == 0 ) {
+                    
+                    handleHoldingChange( inPlayer, pickupTrans->newActor );
+                    }
+                else {
+                    holdingSomethingNew( inPlayer );
+                    }
                 
                 setResponsiblePlayer( -1 );
 
@@ -9985,6 +10060,33 @@ int main() {
 
                                             // swap what we're holding for
                                             // target
+
+                                            // "set-down" type bare ground 
+                                            // trans exists for what we're 
+                                            // holding?
+                                            TransRecord
+                                                *r = getPTrans( 
+                                                    nextPlayer->holdingID, 
+                                                    -1 );
+
+                                            if( r != NULL && 
+                                                r->newActor == 0 &&
+                                                r->newTarget > 0 ) {
+                                            
+                                                // only applies if the 
+                                                // bare-ground
+                                                // trans leaves nothing in
+                                                // our hand
+                                            
+                                                // first, change what they
+                                                // are holding to this 
+                                                // newTarget
+                                                handleHoldingChange( 
+                                                    nextPlayer,
+                                                    r->newTarget );
+                                                }
+                                            
+                                            // now swap
                                             swapHeldWithGround( 
                                              nextPlayer, target, m.x, m.y,
                                              &playerIndicesToSendUpdatesAbout );

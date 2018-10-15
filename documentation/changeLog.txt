@@ -11,6 +11,14 @@ Server Fixes
   object is a container (we want to insert item into container in that case).
   Fixes #64
 
+--Use-on-bare-ground action automatically applies when swapping held with item
+  on ground, inserting held into container, or swapping held with container.
+  Bare-hand pickup-style action automatically applies when removing item from a
+  container or obtaining something new as the result of a swap.  This means
+  that wild piglets and goose, which are containable, but still supposed to go
+  through a transition when picked up or set down, do not get stuck in their
+  held state when swapped or put in a container.  Fixes #66
+
 
 
 
