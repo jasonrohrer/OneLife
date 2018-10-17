@@ -126,7 +126,8 @@ EditorScenePage::EditorScenePage()
           mLittleDheld( false ),
           mBigDheld( false ),
           mScenesFolder( NULL, "scenes" ),
-          mNextFile( NULL ) {
+          mNextFile( NULL ),
+          mSkipDrawingWorkingArea( NULL ) {
     
     addComponent( &mAnimEditorButton );
     mAnimEditorButton.addActionListener( this );
@@ -313,6 +314,10 @@ EditorScenePage::~EditorScenePage() {
 
     if( mNextFile != NULL ) {
         delete mNextFile;
+        }
+
+    if( mSkipDrawingWorkingArea != NULL ) {
+        delete [] mSkipDrawingWorkingArea;
         }
     }
 
@@ -986,6 +991,47 @@ static void drawOutlineString( const char *inString,
 
 
 
+
+void EditorScenePage::prepareToSkipSprites( ObjectRecord *inObject, 
+                                            char inDrawBehind ) {
+    if( mSkipDrawingWorkingArea != NULL ) {
+        if( mSkipDrawingWorkingAreaSize < inObject->numSprites ) {
+            delete [] mSkipDrawingWorkingArea;
+            mSkipDrawingWorkingArea = NULL;
+            
+            mSkipDrawingWorkingAreaSize = 0;
+            }
+        }
+    if( mSkipDrawingWorkingArea == NULL ) {
+        mSkipDrawingWorkingAreaSize = inObject->numSprites;
+        mSkipDrawingWorkingArea = new char[ mSkipDrawingWorkingAreaSize ];
+        }
+    
+    memcpy( mSkipDrawingWorkingArea, 
+            inObject->spriteSkipDrawing, inObject->numSprites );
+    
+    if( ! inDrawBehind ) {
+        for( int i=0; i< inObject->numSprites; i++ ) {
+            
+            if( inObject->spriteBehindPlayer[i] && ! inDrawBehind ) {
+                inObject->spriteSkipDrawing[i] = true;
+                }
+            else if( ! inObject->spriteBehindPlayer[i] && inDrawBehind ) {
+                inObject->spriteSkipDrawing[i] = true;
+                }
+            }
+        }
+    }
+
+
+
+void EditorScenePage::restoreSkipDrawing( ObjectRecord *inObject ) {
+    memcpy( inObject->spriteSkipDrawing, mSkipDrawingWorkingArea,
+            inObject->numSprites );
+    }
+
+
+
 void EditorScenePage::drawUnderComponents( doublePair inViewCenter, 
                                            double inViewSize ) {
     
@@ -1472,7 +1518,8 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     
                     ObjectRecord *o = getObject( c->oID );
                     
-                    if( ( b == 0 && ! o->drawBehindPlayer ) 
+                    if( ( b == 0 && ! ( o->drawBehindPlayer || 
+                                        o->anySpritesBehindPlayer ) )
                         ||
                         ( b != 0 && o->drawBehindPlayer ) ) {
                         continue;
@@ -1480,7 +1527,8 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     if( ( b == 3 && ! o->floorHugging ) 
                         ||
                         ( b != 3 && o->floorHugging 
-                          && ! o->drawBehindPlayer) ) {
+                          && ! ( o->drawBehindPlayer || 
+                                 o->anySpritesBehindPlayer ) ) ) {
                         continue;
                         }
                     
@@ -1526,6 +1574,17 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     if( c->anim == moving ) {
                         frozenRotFrameTime = thisFrameTime;
                         }
+                    
+
+                    char skippingSome = false;
+                    if( b == 0 && cellO->anySpritesBehindPlayer ) {
+                        prepareToSkipSprites( cellO, true );
+                        skippingSome = true;
+                        }
+                    else if( b != 0 && cellO->anySpritesBehindPlayer ) {
+                        prepareToSkipSprites( cellO, false );
+                        skippingSome = true;
+                        }
 
                     drawObjectAnim( c->oID, c->anim, 
                                     thisFrameTime, 
@@ -1551,6 +1610,9 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     delete [] contained;
                     delete [] subContained;
 
+                    if( skippingSome ) {
+                        restoreSkipDrawing( cellO );
+                        }
                                         
                     // restore default sprite vanish
                     if( cellO->numUses > 1 ) {
