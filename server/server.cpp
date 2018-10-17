@@ -8593,50 +8593,51 @@ int main() {
                                     // (and no bare hand action available)
                                     r = getPTrans( nextPlayer->holdingID,
                                                   target );
+                                    }
+                                
+                                if( r == NULL && 
+                                    ( nextPlayer->holdingID != 0 || 
+                                      targetObj->permanent ) ) {
                                     
-                                    if( r == NULL && 
-                                        ( nextPlayer->holdingID > 0 || 
-                                          targetObj->permanent ) ) {
+                                    // search for default 
+                                    r = getPTrans( -2, target );
                                         
-                                        // search for default 
-                                        r = getPTrans( -2, target );
+                                    if( r != NULL ) {
+                                        defaultTrans = true;
+                                        }
+                                    else if( nextPlayer->holdingID <= 0 || 
+                                             targetObj->numSlots == 0 ) {
+                                        // also consider bare-hand
+                                        // action that produces
+                                        // no new held item
                                         
-                                        if( r != NULL ) {
+                                        // but only on non-container
+                                        // objects (example:  we don't
+                                        // want to kick minecart into
+                                        // motion every time we try
+                                        // to add something to it)
+                                        
+                                        // treat this the same as
+                                        // default
+                                        r = getPTrans( 0, target );
+                                        
+                                        if( r != NULL && 
+                                            r->newActor == 0 ) {
+                                            
                                             defaultTrans = true;
                                             }
-                                        else if( targetObj->numSlots == 0 ) {
-                                            // also consider bare-hand
-                                            // action that produces
-                                            // no new held item
-
-                                            // but only on non-container
-                                            // objects (example:  we don't
-                                            // want to kick minecart into
-                                            // motion every time we try
-                                            // to add something to it)
-                                            
-                                            // treat this the same as
-                                            // default
-                                            r = getPTrans( 0, target );
-                                            
-                                            if( r != NULL && 
-                                                r->newActor == 0 ) {
-                                                
-                                                defaultTrans = true;
-                                                }
-                                            else {
-                                                r = NULL;
-                                                }
+                                        else {
+                                            r = NULL;
                                             }
                                         }
+                                    }
+                                
+                                if( r == NULL && 
+                                    nextPlayer->holdingID > 0 ) {
                                     
-                                    if( r == NULL && 
-                                        nextPlayer->holdingID > 0 ) {
-                                        
-                                        logTransitionFailure( 
-                                            nextPlayer->holdingID,
-                                            target );
-                                        }
+                                    logTransitionFailure( 
+                                        nextPlayer->holdingID,
+                                        target );
                                     }
                                 
                                 if( r != NULL && containmentTransfer ) {

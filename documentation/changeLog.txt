@@ -34,6 +34,8 @@ Server Fixes
   while a player is moving or while held as a baby.
   Fixes jasonrohrer/OneLifeData7#23 
 
+--Held baby can now be used to open doors, trigger carts, etc.  Fixes #75
+
 
 
 
