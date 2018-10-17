@@ -10,6 +10,9 @@ Version 154    ???
 --Walls with container slots (sign walls) now drawn in front of other walls,
   so signs not covered up.  Fixes #74
 
+--Lowered the minimum height for objects that are mouse-through-able (that
+  allow hidden objects behind to be clicked).  Fixes #82
+
 
 
 Server Fixes
