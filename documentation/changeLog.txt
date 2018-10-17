@@ -7,6 +7,9 @@ Version 154    ???
 
 --Scene editor now displays behind-player sprite layers correctly.
 
+--Walls with container slots (sign walls) now drawn in front of other walls,
+  so signs not covered up.  Fixes #74
+
 
 
 Server Fixes
