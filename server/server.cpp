@@ -7464,6 +7464,13 @@ int main() {
                         // stop ignoring their messages now
                         nextPlayer->waitingForForceResponse = false;
                         }
+                    else {
+                        AppLog::infoF( 
+                            "FORCE message has unexpected "
+                            "absolute pos (%d,%d), expecting (%d,%d)",
+                            m.x, m.y,
+                            nextPlayer->xd, nextPlayer->yd );
+                        }
                     }
                 else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
@@ -7472,8 +7479,11 @@ int main() {
                     
                     AppLog::infoF( "Ignoring client message because we're "
                                    "waiting for FORCE ack message after a "
-                                   "forced-pos PU at (%d, %d)",
-                                   nextPlayer->xd, nextPlayer->yd );
+                                   "forced-pos PU at (%d, %d), "
+                                   "relative=(%d, %d)",
+                                   nextPlayer->xd, nextPlayer->yd,
+                                   nextPlayer->xd - nextPlayer->birthPos.x,
+                                   nextPlayer->yd - nextPlayer->birthPos.y );
                     }
                 // if player is still moving (or held by an adult), 
                 // ignore all actions

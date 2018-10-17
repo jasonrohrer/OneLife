@@ -36,6 +36,8 @@ Server Fixes
 
 --Held baby can now be used to open doors, trigger carts, etc.  Fixes #75
 
+--Improved logging around FORCE ack message failure.
+
 
 
 
