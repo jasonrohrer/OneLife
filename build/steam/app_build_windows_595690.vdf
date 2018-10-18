@@ -8,6 +8,10 @@
 
 	"contentroot" "C:\cpp\OneLife\build\windows\steamLatest" // root content folder, relative to location of this file
 
+	// NOT auto-setting this build to live with setlive public
+	// we need to make sure that all other platforms are built and ready
+	// to deploy, so we have to make this build live manually
+	
 	"setlive"	"" // branch to set live after successful build, non if empty
 
 	"preview" "0" // to enable preview builds
