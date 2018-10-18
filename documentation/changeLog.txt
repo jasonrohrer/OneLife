@@ -13,6 +13,9 @@ Version 154    ???
 --Lowered the minimum height for objects that are mouse-through-able (that
   allow hidden objects behind to be clicked).  Fixes #82
 
+--Fixed double sound play when use-on-bare-ground produces something new in
+  hand and on ground (example:  unroping calf).
+
 
 
 Server Fixes

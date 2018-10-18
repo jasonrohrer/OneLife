@@ -12053,6 +12053,14 @@ void LivingLifePage::step() {
                                             getTrans( oldHeld,
                                                       heldTransitionSourceID );
                                         
+                                        if( t == NULL &&
+                                            oldHeld == 
+                                            heldTransitionSourceID ) {
+                                            // see if use-on-bare-ground
+                                            // transition exists
+                                            t = getTrans( oldHeld, -1 );
+                                            }
+
                                         if( t != NULL &&
                                             t->target != t->newTarget &&
                                             t->newTarget > 0 ) {
@@ -12079,7 +12087,8 @@ void LivingLifePage::step() {
                                         }
                                     
                                     
-                                    if( ! clothingChanged &&
+                                    if( ! otherSoundPlayed && 
+                                        ! clothingChanged &&
                                         heldTransitionSourceID >= 0 &&
                                         heldObj->creationSound.numSubSounds 
                                         > 0 ) {
