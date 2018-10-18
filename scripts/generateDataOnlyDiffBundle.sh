@@ -225,12 +225,6 @@ rm -r ~/checkout/reverbCacheLastBundle
 cp -r ~/checkout/diffWorking/dataLatest/reverbCache ~/checkout/reverbCacheLastBundle
 
 
-echo "" 
-echo "Building Steam Depot"
-echo ""
-
-
-steamcmd +login "jasonrohrergames" +run_app_build -desc OneLifeContent_v$newVersion ~/checkout/OneLifeWorking/build/steam/app_build_content_595690.vdf +quit
 
 
 
@@ -279,7 +273,8 @@ done <  <( grep "" ~/diffBundles/remoteServerList.ini )
 # need to shutdown all servers first
 
 
-rm -r ~/checkout/diffWorking
+# do NOT remove diffWorking dir just yet
+# need it to build steam depot below
 
 
 
@@ -447,6 +442,51 @@ do
 	fi
 	i=$((i + 1))
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
+
+
+
+
+# Decision about when to build depot and make it live is tough
+# This depot build process could take a bit of time.
+# At this moment, Even servers are down, but ready to go
+# and Odd servers are still running the old version and accepting new players
+#
+# There's no way to do this without the possibility of someone slipping through
+# the cracks and connecting to a mis-matched-version server.
+#
+# Client should catch this and display an error message when it happens.
+#
+# So, all we can do is minimize the amount of time during which this can happen.
+#
+# Since the depot build can take a while, we do it here, while Odd servers are
+# still running, so everyone can keep playing during the build.
+#
+# The shutdown operation of Odd servers should be quick, and the startup
+# operation of Even servers should be quick as well.
+#
+# During that moment, some Steam users, who already have the new version,
+# will see a SERVERS UPDATING message, because they will connect to outdated
+# Odd servers that are still running.
+#
+# The worst thing that can ever happen to Non-Steam users is that they find
+# all servers shutdown (in the moment between Odd shutdown and Even startup).
+#
+
+
+echo "" 
+echo "Building Steam Depot and making it public/live"
+echo ""
+
+steamcmd +login "jasonrohrergames" +run_app_build -desc OneLifeContent_v$newVersion ~/checkout/OneLifeWorking/build/steam/app_build_content_595690.vdf +quit
+
+
+
+echo "" 
+echo "Deleting temporary diffWorking directory"
+echo ""
+
+rm -r ~/checkout/diffWorking
+
 
 
 
