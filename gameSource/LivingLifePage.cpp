@@ -9584,7 +9584,19 @@ void LivingLifePage::step() {
                 mServerSocket = -1;
 
                 setWaiting( false );
-                setSignal( "versionMismatch" );
+
+                if( ! usingCustomServer && 
+                    mRequiredVersion < dataVersionNumber ) {
+                    // we have a newer data version than the server
+                    // the servers must be in the process of updating, and
+                    // we connected at just the wrong time
+                    // Don't display a confusing version mismatch message here.
+                    setSignal( "serverUpdate" );
+                    }
+                else {
+                    setSignal( "versionMismatch" );
+                    }
+
                 delete [] message;
                 return;
                 }

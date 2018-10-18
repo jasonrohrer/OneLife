@@ -18,6 +18,12 @@ Version 154    ???
 
 --Support for displaying cursed player's excess curse score to them.
 
+--If we have a newer data version than the official servers, assume that
+  servers are in the process of updating, and display that message instead of
+  a confusing version missmatch message (Steam data update is pushed out before
+  the old-version Odd servers are shut down).
+
+
 
 
 Server Fixes

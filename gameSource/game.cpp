@@ -1813,6 +1813,21 @@ void drawFrame( char inUpdate ) {
 
                 currentGamePage->base_makeActive( true );
                 }
+            else if( livingLifePage->checkSignal( "serverUpdate" ) ) {
+                lastScreenViewCenter.x = 0;
+                lastScreenViewCenter.y = 0;
+
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                
+                currentGamePage = existingAccountPage;
+                
+                existingAccountPage->setStatus( "serverUpdate", true );
+
+                existingAccountPage->setStatusPositiion( true );
+
+                currentGamePage->base_makeActive( true );
+                }
             else if( livingLifePage->checkSignal( "serverFull" ) ) {
                 lastScreenViewCenter.x = 0;
                 lastScreenViewCenter.y = 0;
