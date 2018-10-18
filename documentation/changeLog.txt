@@ -16,6 +16,8 @@ Version 154    ???
 --Fixed double sound play when use-on-bare-ground produces something new in
   hand and on ground (example:  unroping calf).
 
+--Support for displaying cursed player's excess curse score to them.
+
 
 
 Server Fixes
@@ -44,6 +46,7 @@ Server Fixes
 
 --Improved logging around FORCE ack message failure.
 
+--Players born cursed in Donkey Town no longer get a cursed token to spend.
 
 
 

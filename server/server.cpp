@@ -177,7 +177,7 @@ typedef struct FreshConnection {
         char *email;
         
         int tutorialNumber;
-        int curseLevel;
+        CurseStatus curseStatus;
         
         char *twinCode;
         int twinCount;
@@ -204,7 +204,7 @@ typedef struct LiveObject {
         
         char *lastSay;
 
-        int curseLevel;
+        CurseStatus curseStatus;
         
         int curseTokenCount;
         char curseTokenUpdate;
@@ -1592,7 +1592,7 @@ int longestShutdownLine = -1;
 
 void handleShutdownDeath( LiveObject *inPlayer,
                           int inX, int inY ) {
-    if( inPlayer->curseLevel == 0 &&
+    if( inPlayer->curseStatus.curseLevel == 0 &&
         inPlayer->parentChainLength > longestShutdownLine ) {
         
         // never count a cursed player as a long line
@@ -3894,7 +3894,7 @@ int processLoggedInPlayer( Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
                            int inTutorialNumber,
-                           int inCurseLevel,
+                           CurseStatus inCurseStatus,
                            // set to -2 to force Eve
                            int inForceParentID = -1,
                            int inForceDisplayID = -1,
@@ -4043,9 +4043,11 @@ int processLoggedInPlayer( Socket *inSock,
                 }
             
             if( canHaveBaby ) {
-                if( ( inCurseLevel == 0 && player->curseLevel == 0 ) 
+                if( ( inCurseStatus.curseLevel == 0 && 
+                      player->curseStatus.curseLevel == 0 ) 
                     || 
-                    ( inCurseLevel > 0 && player->curseLevel > 0 ) ) {
+                    ( inCurseStatus.curseLevel > 0 && 
+                      player->curseStatus.curseLevel > 0 ) ) {
                     // cursed babies only born to cursed mothers
                     // non-cursed babies never born to cursed mothers
                     parentChoices.push_back( player );
@@ -4110,7 +4112,8 @@ int processLoggedInPlayer( Socket *inSock,
     
 
     if( !forceParentChoices && 
-        parentChoices.size() == 0 && numOfAge == 0 && inCurseLevel == 0 ) {
+        parentChoices.size() == 0 && numOfAge == 0 && 
+        inCurseStatus.curseLevel == 0 ) {
         // all existing babies are good spawn spot for Eve
                     
         for( int i=0; i<numPlayers; i++ ) {
@@ -4409,7 +4412,7 @@ int processLoggedInPlayer( Socket *inSock,
         int startX, startY;
         getEvePosition( newObject.email, &startX, &startY );
 
-        if( inCurseLevel > 0 ) {
+        if( inCurseStatus.curseLevel > 0 ) {
             // keep cursed players away
 
             // 20K away in X and 20K away in Y, pushing out away from 0
@@ -4519,10 +4522,11 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.name = NULL;
     newObject.nameHasSuffix = false;
     newObject.lastSay = NULL;
-    newObject.curseLevel = inCurseLevel;
+    newObject.curseStatus = inCurseStatus;
     
 
-    if( hasCurseToken( inEmail ) ) {
+    if( newObject.curseStatus.curseLevel == 0 &&
+        hasCurseToken( inEmail ) ) {
         newObject.curseTokenCount = 1;
         }
     else {
@@ -4705,7 +4709,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                    inConnection.twinCount );
     waitingForTwinConnections.push_back( inConnection );
     
-    int anyTwinCurseLevel = inConnection.curseLevel;
+    CurseStatus anyTwinCurseLevel = inConnection.curseStatus;
     
 
     // count how many match twin code from inConnection
@@ -4732,8 +4736,9 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                 continue;
                 }
 
-            if( nextConnection->curseLevel > anyTwinCurseLevel ) {
-                anyTwinCurseLevel = nextConnection->curseLevel;
+            if( nextConnection->curseStatus.curseLevel > 
+                anyTwinCurseLevel.curseLevel ) {
+                anyTwinCurseLevel = nextConnection->curseStatus;
                 }
             
             twinConnections.push_back( nextConnection );
@@ -6536,8 +6541,9 @@ int main() {
                 newConnection.sequenceNumber = nextSequenceNumber;
                 
                 newConnection.tutorialNumber = 0;
-                newConnection.curseLevel = 0;
-                
+                newConnection.curseStatus.curseLevel = 0;
+                newConnection.curseStatus.excessPoints = 0;
+
                 newConnection.twinCode = NULL;
                 newConnection.twinCount = 0;
                 
@@ -6645,16 +6651,18 @@ int main() {
             
             
             if( nextConnection->email != NULL &&
-                nextConnection->curseLevel == -1 ) {
+                nextConnection->curseStatus.curseLevel == -1 ) {
                 // keep checking if curse level has arrived from
                 // curse server
-                nextConnection->curseLevel =
+                nextConnection->curseStatus =
                     getCurseLevel( nextConnection->email );
-                if( nextConnection->curseLevel != -1 ) {
+                if( nextConnection->curseStatus.curseLevel != -1 ) {
                     AppLog::infoF( 
-                        "Got curse level for %s from curse server: %d",
+                        "Got curse level for %s from curse server: "
+                        "%d (excess %d)",
                         nextConnection->email,
-                        nextConnection->curseLevel );
+                        nextConnection->curseStatus.curseLevel,
+                        nextConnection->curseStatus.excessPoints );
                     }
                 }
             else if( nextConnection->ticketServerRequest != NULL ) {
@@ -6730,7 +6738,7 @@ int main() {
                                     nextConnection->sockBuffer,
                                     nextConnection->email,
                                     nextConnection->tutorialNumber,
-                                    nextConnection->curseLevel );
+                                    nextConnection->curseStatus );
                                 }
                             
                             newConnections.deleteElement( i );
@@ -6846,13 +6854,14 @@ int main() {
                                 nextConnection->error = true;
                                 nextConnection->errorCauseString =
                                     "Duplicate email";
-                                nextConnection->curseLevel = 0;
+                                nextConnection->curseStatus.curseLevel = 0;
+                                nextConnection->curseStatus.excessPoints = 0;
                                 }
                             else {
                                 // this may return -1 if curse server
                                 // request is pending
                                 // we'll catch that case later above
-                                nextConnection->curseLevel =
+                                nextConnection->curseStatus =
                                     getCurseLevel( nextConnection->email );
                                 }
                             
@@ -6954,7 +6963,7 @@ int main() {
                                             nextConnection->sockBuffer,
                                             nextConnection->email,
                                             nextConnection->tutorialNumber,
-                                            nextConnection->curseLevel );
+                                            nextConnection->curseStatus );
                                         }
                                     newConnections.deleteElement( i );
                                     i--;
@@ -10227,7 +10236,7 @@ int main() {
                 playerIndicesToSendLineageAbout.push_back( i );
                 
                 
-                if( nextPlayer->curseLevel > 0 ) {
+                if( nextPlayer->curseStatus.curseLevel > 0 ) {
                     playerIndicesToSendCursesAbout.push_back( i );
                     }
 
@@ -11574,7 +11583,7 @@ int main() {
                     }
 
                 char *line = autoSprintf( "%d %d\n", nextPlayer->id,
-                                         nextPlayer->curseLevel );
+                                         nextPlayer->curseStatus.curseLevel );
                 
                 curseWorking.appendElementString( line );
                 delete [] line;
@@ -11980,7 +11989,7 @@ int main() {
                         continue;
                         }
 
-                    int level = o->curseLevel;
+                    int level = o->curseStatus.curseLevel;
                     
                     if( level == 0 ) {
                         continue;
@@ -12005,7 +12014,22 @@ int main() {
                 
                     delete [] cursesMessage;
                     }
+                
 
+                if( nextPlayer->curseStatus.curseLevel > 0 ) {
+                    // send player their personal report about how
+                    // many excess curse points they have
+                    
+                    char *message = autoSprintf( 
+                        "CS\n%d#", 
+                        nextPlayer->curseStatus.excessPoints );
+
+                    sendMessageToPlayer( nextPlayer, message, 
+                                         strlen( message ) );
+                
+                    delete [] message;
+                    }
+                
 
 
 

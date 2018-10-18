@@ -870,17 +870,18 @@ function cs_isCursed() {
     
     if( $numRows = 0 ) {
         // player doesn't exist, they are automatically not cursed
-        echo "0";
+        echo "0 0";
         return;
         }
 
     $curse_score = cs_mysqli_result( $result, 0, "curse_score" );
 
     if( $curse_score >= $curseThreshold ) {
-        echo "1";
+        $excess = ( $curse_score - $curseThreshold ) + 1;
+        echo "1 $excess";
         return;
         }
-    echo "0";
+    echo "0 0";
     }
 
 

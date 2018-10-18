@@ -745,6 +745,7 @@ typedef enum messageType {
     LINEAGE,
     CURSED,
     CURSE_TOKEN_CHANGE,
+    CURSE_SCORE,
     NAMES,
     APOCALYPSE,
     DYING,
@@ -826,6 +827,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "CX" ) == 0 ) {
         returnValue = CURSE_TOKEN_CHANGE;
+        }
+    else if( strcmp( copy, "CS" ) == 0 ) {
+        returnValue = CURSE_SCORE;
         }
     else if( strcmp( copy, "NM" ) == 0 ) {
         returnValue = NAMES;
@@ -6953,8 +6957,21 @@ void LivingLifePage::draw( doublePair inViewCenter,
         curseTokenPos.x += 6;
         curseTokenFont->drawString( "X", curseTokenPos, alignCenter );
         
-
-
+        
+        // for now, we receive at most one update per life, so
+        // don't need to worry about showing erased version of this
+        if( ourLiveObject->excessCursePoints > 0 ) {
+            setDrawColor( 0, 0, 0, 1.0 );
+            doublePair pointsPos = curseTokenPos;
+            pointsPos.y -= 22;
+            pointsPos.x -= 3;
+            
+            char *pointString = autoSprintf( "%d", 
+                                             ourLiveObject->excessCursePoints );
+            pencilFont->drawString( pointString, pointsPos, alignCenter );
+            delete [] pointString;
+            }
+        
 
         setDrawColor( 1, 1, 1, 1 );
         toggleMultiplicativeBlend( true );
@@ -11051,6 +11068,7 @@ void LivingLifePage::step() {
                 o.relationName = NULL;
 
                 o.curseLevel = 0;
+                o.excessCursePoints = 0;
                 o.curseTokenCount = 0;
 
                 o.tempAgeOverrideSet = false;
@@ -13864,6 +13882,15 @@ void LivingLifePage::step() {
                 
                 sscanf( message, "CX\n%d", 
                         &( ourLiveObject->curseTokenCount ) );
+                }
+            }
+        else if( type == CURSE_SCORE ) {
+            LiveObject *ourLiveObject = getOurLiveObject();
+            
+            if( ourLiveObject != NULL ) {
+                
+                sscanf( message, "CS\n%d", 
+                        &( ourLiveObject->excessCursePoints ) );
                 }
             }
         else if( type == NAMES ) {

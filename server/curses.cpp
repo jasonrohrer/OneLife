@@ -65,6 +65,9 @@ typedef struct RemoteCurseRecord {
         char *email;
         // -1 if we have no response yet
         int curseStatus;
+        
+        int excessCursePoints;
+        
         WebRequest *request;
     } RemoteCurseRecord;
     
@@ -332,25 +335,32 @@ static CurseRecord *findCurseRecord( char *inEmail ) {
 
 
 
-static int getCurseLevel( CurseRecord *inRecord ) {
+static CurseStatus getCurseLevel( CurseRecord *inRecord ) {
+
+    CurseStatus returnRec = { 0, 0 };
+    
 
     if( inRecord == NULL ) {
-        return 0;
+        return returnRec;
         }
     
     int score = inRecord->score;
     
     if( score == 0 ) {
-        return 0;
+        return returnRec;
         }
     
     int thresh = SettingsManager::getIntSetting( "curseThreshold", 10 );
     
     if( score < thresh ) {
-        return 0;
+        return returnRec;
         }
+
     
-    return score / thresh;
+    returnRec.curseLevel = score / thresh;
+    returnRec.excessPoints = ( score - thresh ) + 1;
+
+    return returnRec;
     }
 
 
@@ -367,7 +377,7 @@ void cursesLogBirth( char *inEmail ) {
     
     r->alive = true;
     
-    r->bornCursed = ( getCurseLevel( r ) > 0 );
+    r->bornCursed = ( getCurseLevel( r ).curseLevel > 0 );
     r->aliveStartTimeSinceTokenSpent = curTime;
     r->aliveStartTimeSinceScoreDecrement = curTime;
     
@@ -535,7 +545,7 @@ void logPlayerNameForCurses( char *inPlayerEmail, char *inPlayerName ) {
 
 
 
-int getCurseLevel( char *inPlayerEmail ) {
+CurseStatus getCurseLevel( char *inPlayerEmail ) {
     stepCurses();
     
     CurseRecord *r = findCurseRecord( inPlayerEmail );
@@ -559,11 +569,12 @@ int getCurseLevel( char *inPlayerEmail ) {
                     delete r->request;
                     serverRemoteRecords.deleteElement( i );
                     }
-                return status;
+                CurseStatus returnRecord = { status, r->excessCursePoints };
+                return returnRecord;
                 }
             }
 
-        RemoteCurseRecord r = { stringDuplicate( inPlayerEmail ), -1, NULL };
+        RemoteCurseRecord r = { stringDuplicate( inPlayerEmail ), -1, 0, NULL };
 
         char *curseServerSharedSecret = 
             SettingsManager::getStringSetting( 
@@ -596,7 +607,8 @@ int getCurseLevel( char *inPlayerEmail ) {
         
         serverRemoteRecords.push_back( r );
 
-        return -1;
+        CurseStatus returnRecord = { -1, 0 }; 
+        return returnRecord;
         }
     
     }
@@ -645,11 +657,14 @@ void stepCurseServerRequests() {
                 char *webResult = r->request->getResult();
                 
                 int curseStatus = 0;
-                sscanf( webResult, "%d", &curseStatus );
+                int excessCursePoints = 0;
+                
+                sscanf( webResult, "%d %d", &curseStatus, &excessCursePoints );
                 
                 delete [] webResult;
                 
                 r->curseStatus = curseStatus;
+                r->excessCursePoints = excessCursePoints;
                 }
             }
         }

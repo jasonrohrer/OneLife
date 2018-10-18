@@ -31,9 +31,16 @@ void logPlayerNameForCurses( char *inPlayerEmail, char *inPlayerName );
 
 
 
-// returns curse level, or 0 if not cursed
-// returns -1 if pending lookup on remote server
-int getCurseLevel( char *inPlayerEmail );
+typedef struct CurseStatus {
+        int curseLevel;
+        int excessPoints;
+    } CurseStatus;
+
+
+// returns curse level in struct, or 0 if not cursed
+// if cursed, returned struct will also contain excessPoints
+// returns curse level of -1 if pending lookup on remote server
+CurseStatus getCurseLevel( char *inPlayerEmail );
 
 
 
