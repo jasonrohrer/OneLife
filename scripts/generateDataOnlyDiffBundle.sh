@@ -1,4 +1,16 @@
 
+
+# note that if we're running on cron-job automation, this might not work
+# in genral, we have never done cron-job automation for midnight updates
+# (because we are updating servers in batches) so it probably doesn't matter
+echo "" 
+echo "Logging in to steamcmd to make sure credentials are cached"
+echo ""
+
+steamcmd +login "jasonrohrergames" +quit
+
+
+
 echo "" 
 echo "Updating minorGems"
 echo ""
