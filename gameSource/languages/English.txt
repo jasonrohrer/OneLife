@@ -140,6 +140,9 @@ disableCustomServer "DISABLE CUSTOM SERVER"
 
 serverShutdown "SERVER HAS BEEN SHUT DOWN"
 
+serverUpdate "SERVERS ARE IN THE PROCESS OF UPDATING"
+
+
 serverFull "SERVER IS FULL"
 
 connectionFailed "CONNECTION FAILED"
