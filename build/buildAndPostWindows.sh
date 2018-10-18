@@ -77,6 +77,9 @@ rm -r animations categories ground groundTileCache music objects reverbCache sou
 # Steam users cannot access files to report wild bugs easily
 echo -n 0 > settings/reportWildBugToUser.ini
 
+# don't use internal updater
+echo -n 1 > settings/useSteamUpdate.ini
+
 
 #FIXME:  need to copy steamGate.exe in place int steamLatest
 

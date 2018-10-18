@@ -1669,30 +1669,39 @@ void drawFrame( char inUpdate ) {
                             "requiredVersionNumber" );
                     
                     if( versionNumber < requiredVersion ) {
-                        
-                        char *autoUpdateURL = 
-                            getServerAddressPage->getResponse( 
-                                "autoUpdateURL" );
 
-                    
-                        char updateStarted = 
-                            startUpdate( autoUpdateURL, versionNumber );
-                        
-                        delete [] autoUpdateURL;
-                        
-                        if( ! updateStarted ) {
+                        if( SettingsManager::getIntSetting( 
+                                "useSteamUpdate", 0 ) ) {
                             currentGamePage = finalMessagePage;
+                                
+                            finalMessagePage->setMessageKey( 
+                                "upgradeMessageSteam" );
                             
-                            finalMessagePage->setMessageKey( "upgradeMessage" );
-                            
-                            
-                            currentGamePage->base_makeActive( true );
+                            currentGamePage->base_makeActive( true );    
                             }
                         else {
-                            currentGamePage = autoUpdatePage;
-                            currentGamePage->base_makeActive( true );
-                            }
+                            char *autoUpdateURL = 
+                                getServerAddressPage->getResponse( 
+                                    "autoUpdateURL" );
+
+                            char updateStarted = 
+                                startUpdate( autoUpdateURL, versionNumber );
                         
+                            delete [] autoUpdateURL;
+                            
+                            if( ! updateStarted ) {
+                                currentGamePage = finalMessagePage;
+                                
+                                finalMessagePage->setMessageKey( 
+                                    "upgradeMessage" );
+                                
+                                currentGamePage->base_makeActive( true );
+                                }
+                            else {
+                                currentGamePage = autoUpdatePage;
+                                currentGamePage->base_makeActive( true );
+                                }
+                            }
                         }
                     else {
                         // up to date, okay to connect

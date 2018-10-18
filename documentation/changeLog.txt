@@ -23,6 +23,8 @@ Version 154    ???
   a confusing version missmatch message (Steam data update is pushed out before
   the old-version Odd servers are shut down).
 
+--useSteamUpdate setting bypasses internal updater and displays QUIT message to
+  user with instructions.
 
 
 
