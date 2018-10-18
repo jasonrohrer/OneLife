@@ -197,6 +197,16 @@ then
 fi
 
 
+echo ""
+echo "Updates pushed out to download servers."
+echo "About to make this new version $newVersion live and required."
+echo ""
+echo "This is a good time to manually make a corresponding Steam build live."
+echo ""
+echo -n "Hit [ENTER] when ready: "
+read
+
+
 
 echo ""
 echo "Telling update server and reflector about latest version."
