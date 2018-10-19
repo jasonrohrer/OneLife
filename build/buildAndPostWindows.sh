@@ -69,7 +69,10 @@ echo "Next:  Steam depot build."
 
 rm -r steamLatest
 mkdir steamLatest
-cp -r OneLife_v$2/* steamLatest
+cp -r OneLife_v$2/* steamLatest/
+
+cp ../steam/windows/steam_api.dll steamLatest/
+cp ../steam/windows/steamGateClient.exe steamLatest/
 
 cd steamLatest
 rm -r animations categories ground groundTileCache music objects reverbCache sounds sprites transitions dataVersionNumber.txt
