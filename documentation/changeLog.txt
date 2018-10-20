@@ -3,7 +3,8 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 154    ???
+
+Version 155    2018-October-19
 
 --Scene editor now displays behind-player sprite layers correctly.
 
@@ -29,6 +30,10 @@ Version 154    ???
 --Back to 10 seconds for wild bug reports.  5 is too short (sometimes there are
   5+ second network delays).
 
+--Whoops... fix for multiple sounds playing failed to check for case when
+  target object doesn't change (exmaple: cooking over hot coals).
+  Fixes #67,  Fixes #68
+
 
 
 Server Fixes
@@ -44,10 +49,6 @@ Server Fixes
   that wild piglets and goose, which are containable, but still supposed to go
   through a transition when picked up or set down, do not get stuck in their
   held state when swapped or put in a container.  Fixes #66
-
---Whoops... fix for multiple sounds playing failed to check for case when
-  target object doesn't change (exmaple: cooking over hot coals).
-  Fixes #67,  Fixes #68
 
 --Fixed so that client EMOT requests are processed (just like SAY requests)
   while a player is moving or while held as a baby.
