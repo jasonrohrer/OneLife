@@ -69,12 +69,21 @@ echo "Next:  Steam depot build."
 
 rm -r steamLatest
 mkdir steamLatest
-cp -r OneLife_v$2/* steamLatest
+cp -r OneLife_v$2/* steamLatest/
+
+cp ../steam/windows/steam_api.dll steamLatest/
+cp ../steam/windows/steamGateClient.exe steamLatest/
 
 cd steamLatest
 rm -r animations categories ground groundTileCache music objects reverbCache sounds sprites transitions dataVersionNumber.txt
 
-#FIXME:  need to copy steamGate.exe in place int steamLatest
+# Steam users cannot access files to report wild bugs easily
+echo -n 0 > settings/reportWildBugToUser.ini
+
+# don't use internal updater
+echo -n 1 > settings/useSteamUpdate.ini
+
+
 
 /c/steamSDK/tools/ContentBuilder/builder/steamcmd.exe +login "jasonrohrergames" +run_app_build -desc OneLifeClient_Windows_v$2 /c/cpp/OneLife/build/steam/app_build_windows_595690.vdf +quit
 

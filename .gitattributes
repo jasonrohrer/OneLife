@@ -12,11 +12,27 @@
 
 # QCad DXF files are being saved with CRLF
 # leave them alone.
+
 *.dxf    binary
 
+
+
 # some windows-specific files
+
 icon.rc                         binary
 makeWindowsExtractor_template   binary
+*.exe                           binary
+*.dll                           binary
+
+
+
+# image and sound files (probably handled via text=auto, just being safe)
+
+*.jpg   binary
+*.png   binary
+*.tga   binary
+*.aiff  binary
+
 
 
 # Note that source files and .ini files, etc. will be auto-converted to CRLF
