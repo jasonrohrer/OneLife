@@ -1,4 +1,5 @@
-# One Hour One Life+
+# One Hour One Life+ [![Github All Releases](https://img.shields.io/github/downloads/Awbz/OneLife/total.svg?style=plastic)](https://github.com/Awbz/OneLife/releases/latest) [![GitHub release](https://img.shields.io/github/release/Awbz/OneLife.svg?style=plastic)](https://github.com/Awbz/OneLife/releases/latest) [![Github Releases](https://img.shields.io/github/downloads/Awbz/OneLife/latest/total.svg?style=plastic)](https://github.com/Awbz/OneLife/releases/latest) [![GitHub Release Date](https://img.shields.io/github/release-date/Awbz/OneLife.svg?style=plastic)](https://github.com/Awbz/OneLife/releases/latest)
+
 A lightly modified client for [One Hour One Life](http://onehouronelife.com), a cross-platform and open-source multiplayer survival game of parenting and civilization building by [Jason Rohrer](http://hcsoftware.sf.net/jason-rohrer).
 
 <p align="center">
@@ -12,10 +13,10 @@ A lightly modified client for [One Hour One Life](http://onehouronelife.com), a 
 # Requirements
    * Requires the base game to already be installed.
       - Grab it from the download link provided when you [created your official lifetime account](https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=), or [compiled by Joriom](http://ohol.joriom.pl/download/OneLife_win32_latest) from the [official forums](https://onehouronelife.com/forums/viewtopic.php?id=1467).
-   * Pre-compiled releases of this modified client are currently for Windows only.  Feel free to compile from source for Mac/Linux.
+   * Pre-compiled releases of this modified client are available for Windows and macOS 10.5+.  Linux users, feel free to compile from source.
 
 # Installation
-Download the [latest release](https://github.com/Awbz/OneLife/releases/latest) and extract the zip file's contents into the folder where your game is installed.  That's it!  Now just launch the game with OneLife+.exe.
+Download the [latest release](https://github.com/Awbz/OneLife/releases/latest) and extract all of the zip file's contents into the folder where your game is installed.  That's it!  Now just launch the game with OneLife+.exe for Windows, or OneLife_v###+.app on macOS (where ### is the client version.)
 
 # Usage
 Keybind | Description
@@ -66,12 +67,10 @@ Keybind | Description
    - Automatically generate a name that the server allows, as it uses the same first and last name lists.
    - Auto-populates your chat with "YOU ARE <name>", or "I AM <name>" if you have not named yourself yet.
    - Can generate names pseudo-randomly, or that begin with a specified letter.
-   - You can customize the first and last name lists to only pick from your favorites!  Remember that names not already included on these lists will not be recognized by the server.
+   - **NOTE:** You can customize the first and last name lists to only pick from your favorites!  Remember that names not already included on these lists will not be recognized by the server.
 
-* **Curse Level Display**
-   - Attempts to display your current curse level just below your curse token.
-   - Hovering over other players attempts to prefix their displayed information with their curse level. 
-   - **NOTE:** Curse level, in this context, is either 1 or 0 if a player is cursed or not.  Currently __does not__ show the number of times someone has been cursed.
+* **Easy Chat**
+   - Auto-focuses the chat box when you start typing.  Never "lose" your chat by forgetting to press Enter first!
 
 * **Seppuku Respawn**
    - Are you a player that prefers to respawn until you get to a desired area or family?  Tired of having to relaunch your client to respawn?  This can help!
