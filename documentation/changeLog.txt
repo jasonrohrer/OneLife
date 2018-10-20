@@ -26,6 +26,9 @@ Version 154    ???
 --useSteamUpdate setting bypasses internal updater and displays QUIT message to
   user with instructions.
 
+--Back to 10 seconds for wild bug reports.  5 is too short (sometimes there are
+  5+ second network delays).
+
 
 
 Server Fixes
