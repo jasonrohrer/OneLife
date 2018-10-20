@@ -4,6 +4,64 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 155    2018-October-19
+
+--Scene editor now displays behind-player sprite layers correctly.
+
+--Walls with container slots (sign walls) now drawn in front of other walls,
+  so signs not covered up.  Fixes #74
+
+--Lowered the minimum height for objects that are mouse-through-able (that
+  allow hidden objects behind to be clicked).  Fixes #82
+
+--Fixed double sound play when use-on-bare-ground produces something new in
+  hand and on ground (example:  unroping calf).
+
+--Support for displaying cursed player's excess curse score to them.
+
+--If we have a newer data version than the official servers, assume that
+  servers are in the process of updating, and display that message instead of
+  a confusing version missmatch message (Steam data update is pushed out before
+  the old-version Odd servers are shut down).
+
+--useSteamUpdate setting bypasses internal updater and displays QUIT message to
+  user with instructions.
+
+--Back to 10 seconds for wild bug reports.  5 is too short (sometimes there are
+  5+ second network delays).
+
+--Whoops... fix for multiple sounds playing failed to check for case when
+  target object doesn't change (exmaple: cooking over hot coals).
+  Fixes #67,  Fixes #68
+
+
+
+Server Fixes
+
+--Default bare-hand action doesn't apply when holding something if the target
+  object is a container (we want to insert item into container in that case).
+  Fixes #64
+
+--Use-on-bare-ground action automatically applies when swapping held with item
+  on ground, inserting held into container, or swapping held with container.
+  Bare-hand pickup-style action automatically applies when removing item from a
+  container or obtaining something new as the result of a swap.  This means
+  that wild piglets and goose, which are containable, but still supposed to go
+  through a transition when picked up or set down, do not get stuck in their
+  held state when swapped or put in a container.  Fixes #66
+
+--Fixed so that client EMOT requests are processed (just like SAY requests)
+  while a player is moving or while held as a baby.
+  Fixes jasonrohrer/OneLifeData7#23 
+
+--Held baby can now be used to open doors, trigger carts, etc.  Fixes #75
+
+--Improved logging around FORCE ack message failure.
+
+--Players born cursed in Donkey Town no longer get a cursed token to spend.
+
+
+
 Version 153    2018-October-12
 
 --FINALLY found an additional cause of the bouncing-forever bug (stale MOVE
@@ -20,6 +78,7 @@ NOTE:  Rolling this out will require a special update process.
     2.  Update client.
     3.  Check in requireClientForceAck.ini '1' setting for server.
     4   Run remoteServerGitPull.sh
+--SPECIAL UPDATE PROCESS COMPLETE--
 ****
 
 --Scene editor allows bigger jumps when paging through scenes.

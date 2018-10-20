@@ -14,9 +14,9 @@ then
 		echo ""
 		echo "Data update scheduled.  Running it now."
 		
-		# pass one argument to indicate automation and skip interactive
+		# pass two arguments to indicate automation and skip interactive
 		# confirmation
-		~/checkout/OneLifeWorking/scripts/generateDataOnlyDiffBundle.sh -a
+		~/checkout/OneLifeWorking/scripts/generateDataOnlyDiffBundle.sh -a -a
 		
 		
 		echo "0" > $flagFile

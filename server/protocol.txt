@@ -151,6 +151,8 @@ CURSED (CU)
 
 CURSE_TOKEN_CHANGE (CX)
 
+CURSE_SCORE_CHANGE (CS)
+
 FORCED_SHUTDOWN (SD)
 
 FRAME (FM)
@@ -612,6 +614,13 @@ CX
 curse_token_count#
 
 Tells player about how many curse tokens they have
+
+
+
+CS
+excess_curse_points#
+
+Tells player about their curse score, if it is above the threshold.
 
 
 

@@ -84,13 +84,15 @@ server.php
 &email_hash_value=[hash value]
 
 Return:
-1    if cursed
+1 excess_points    if cursed
 -or-
-0    if not cursed
+0 0                if not cursed
 -or-
 DENIED
 
 Used by game servers to indicate that a given email's curse status.
+
+excess_points is how many points above the limit the user has.
 
 hash_value is computed on both ends with:
 
