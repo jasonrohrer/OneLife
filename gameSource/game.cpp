@@ -1672,6 +1672,21 @@ void drawFrame( char inUpdate ) {
 
                         if( SettingsManager::getIntSetting( 
                                 "useSteamUpdate", 0 ) ) {
+                            
+                            // flag SteamGate that app needs update
+                            FILE *f = fopen( "steamGateForceUpdate.txt", "w" );
+                            if( f != NULL ) {    
+                                fprintf( f, "1" );
+                                fclose( f );
+                                }
+                            
+                            // launch steamGateClient in parallel
+                            // it will tell Steam that the app is dirty
+                            // and needs to be updated.
+                            runSteamGateClient();
+                            
+
+                            
                             currentGamePage = finalMessagePage;
                                 
                             finalMessagePage->setMessageKey( 
