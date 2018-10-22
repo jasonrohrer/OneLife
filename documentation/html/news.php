@@ -120,10 +120,12 @@ for( $i=0; $i<$numToShow; $i++ ) {
         //echo "<pre>$messageHTML</pre>";
         
         if( $newsSummaryOnly ) {
-            $breakPos = strpos( $messageHTML, "<br />", 500 );
+            if( strlen( $messageHTML ) > 500 ) {
+                $breakPos = strpos( $messageHTML, "<br />", 500 );
 
-            if( $breakPos > 500 ) {    
-                $messageHTML = substr( $messageHTML, 0, $breakPos );
+                if( $breakPos > 500 ) {    
+                    $messageHTML = substr( $messageHTML, 0, $breakPos );
+                    }
                 }
             
             echo "$messageHTML<br>";
