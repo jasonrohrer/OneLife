@@ -1,0 +1,12 @@
+Old AAAA records:
+
+        2600:3c00::f03c:91ff:febc:2b12  Default
+mail    2600:3c00::f03c:91ff:febc:2b12  Default
+www     2600:3c00::f03c:91ff:febc:2b12  Default
+
+
+Decided to removed root record and www record, because people are connecting
+with ipv6, and it's causing problems (SteamAPI doesn't work with ipv6
+addresses).
+
+Leaving mail record in place for now.
