@@ -8,6 +8,8 @@ Steam-specific updates
 
 --Hide Post Review buttons on Steam version of client.
 
+--Shift-Tab to go back through hints doesn't work on Steam (shows overlay).
+  Z-tab instead.
 
 
 

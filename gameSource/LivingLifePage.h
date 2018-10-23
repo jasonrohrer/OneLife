@@ -876,6 +876,9 @@ class LivingLifePage : public GamePage {
         void endExtraObjectMove( int inExtraIndex );
         
 
+        char mUsingSteam;
+        char mZKeyDown;
+
     };
 
 

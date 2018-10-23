@@ -1838,7 +1838,14 @@ LivingLifePage::LivingLifePage()
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?!/ " ),
           mDeathReason( NULL ),
           mShowHighlights( true ),
-          mSkipDrawingWorkingArea( NULL ) {
+          mSkipDrawingWorkingArea( NULL ),
+          mUsingSteam( false ),
+          mZKeyDown( false ) {
+
+
+    if( SettingsManager::getIntSetting( "useSteamUpdate", 0 ) ) {
+        mUsingSteam = true;
+        }
 
     mForceGroundClick = false;
     
@@ -9273,8 +9280,17 @@ void LivingLifePage::step() {
 
             mLiveTutorialTriggerNumber = closestNumber;
             
-            char *transString = autoSprintf( "tutorial_%d", 
-                                             mLiveTutorialTriggerNumber );
+
+            char *transString;
+
+            if( mUsingSteam && mLiveTutorialTriggerNumber == 8 ) {
+                transString = autoSprintf( "tutorial_%d_steam", 
+                                           mLiveTutorialTriggerNumber );
+                }
+            else {    
+                transString = autoSprintf( "tutorial_%d", 
+                                           mLiveTutorialTriggerNumber );
+                }
             
             mTutorialMessage[ mLiveTutorialSheetIndex ] = 
                 translate( transString );
@@ -15551,6 +15567,7 @@ char LivingLifePage::isSameFloor( int inFloor, GridPos inFloorPos,
 void LivingLifePage::makeActive( char inFresh ) {
     // unhold E key
     mEKeyDown = false;
+    mZKeyDown = false;
     mouseDown = false;
     
     screenCenterPlayerOffsetX = 0;
@@ -17940,6 +17957,12 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         case 'E':
             mEKeyDown = true;
             break;
+        case 'z':
+        case 'Z':
+            if( mUsingSteam ) {
+                mZKeyDown = true;
+                }
+            break;
         case 9: // tab
             if( mCurrentHintObjectID != 0 ) {
                 
@@ -17947,7 +17970,10 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 
                 int skip = 1;
                 
-                if( isShiftKeyDown() ) {
+                if( !mUsingSteam && isShiftKeyDown() ) {
+                    skip = -1;
+                    }
+                else if( mUsingSteam && mZKeyDown ) {
                     skip = -1;
                     }
                 if( isCommandKeyDown() ) {
@@ -18233,6 +18259,10 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
         case 'e':
         case 'E':
             mEKeyDown = false;
+            break;
+        case 'z':
+        case 'Z':
+            mZKeyDown = false;
             break;
         }
 
