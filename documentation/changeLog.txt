@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Steam-specific updates
+
+--Hide Post Review buttons on Steam version of client.
+
+
+
+
 Version 155    2018-October-19
 
 --Scene editor now displays behind-player sprite layers correctly.
