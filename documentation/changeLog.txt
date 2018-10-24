@@ -17,6 +17,8 @@ Server Fixes
   them to reconnect later and resume their life, assuming that they don't die
   of in-game causes first.
 
+--Babies blocked from wiggling out of own mothers's arms until age 3.
+
 
 
 

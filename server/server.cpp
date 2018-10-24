@@ -7602,12 +7602,21 @@ int main() {
                         // only JUMP actually makes them jump out
                         if( m.type == JUMP ) {
                             // baby wiggling out of parent's arms
-                            handleForcedBabyDrop( 
-                                nextPlayer,
-                                &playerIndicesToSendUpdatesAbout );
+                            
+                            // block them from wiggling from their own 
+                            // mother's arms if they are under 3
+                            
+                            if( computeAge( nextPlayer ) >= 3  ||
+                                nextPlayer->heldByOtherID != 
+                                nextPlayer->parentID ) {
+                                
+                                handleForcedBabyDrop( 
+                                    nextPlayer,
+                                    &playerIndicesToSendUpdatesAbout );
+                                }
                             }
                         
-                        // drop them and ignore their move requests while
+                        // ignore their move requests while
                         // in-arms, until they JUMP out
                         }
                     else if( m.type == MOVE && nextPlayer->holdingID > 0 &&
