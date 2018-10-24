@@ -3943,7 +3943,26 @@ int processLoggedInPlayer( Socket *inSock,
             o->firstMessageSent = false;
             
             o->connected = true;
-
+            
+            if( o->heldByOther ) {
+                // they're held, so they may have moved far away from their
+                // original location
+                
+                // their first PU on reconnect should give an estimate of this
+                // new location
+                
+                LiveObject *holdingPlayer = 
+                    getLiveObject( o->heldByOtherID );
+                
+                if( holdingPlayer != NULL ) {
+                    o->xd = holdingPlayer->xd;
+                    o->yd = holdingPlayer->yd;
+                    
+                    o->xs = holdingPlayer->xs;
+                    o->ys = holdingPlayer->ys;
+                    }
+                }
+            
             AppLog::infoF( "Player %d (%s) has reconnected.",
                            o->id, o->email );
 
