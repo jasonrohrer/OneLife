@@ -159,6 +159,8 @@ waitingBirthFriends "WAITING TO BE BORN AS %s"
 
 cancelWaitingFriends "PRESS [x] KEY TO CANCEL"
 
+waitingReconnect "TRYING TO RECONNECT"
+
 
 loadingMap "LOADING MAP"
 
@@ -290,6 +292,12 @@ reasonOldAge "CAUSE:  OLD AGE"
 reasonUnknown "CAUSE:  UNKNOWN"
 
 reasonApocalypse "CAUSE:  THE APOCALYPSE"
+
+
+connectionLost "CONNECTION LOST"
+
+willTryReconnect "PRESS OK TO TRY RECONNECTING"
+
 
 
 okay "OK"

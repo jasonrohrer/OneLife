@@ -79,6 +79,8 @@ extern char *userEmail;
 extern char *userTwinCode;
 extern int userTwinCount;
 
+extern char userReconnect;
+
 
 extern float musicLoudness;
 
@@ -584,7 +586,7 @@ void LivingLifePage::sendToServerSocket( char *inMessage ) {
                 }
             mDeathReason = stringDuplicate( translate( "reasonDisconnected" ) );
             
-            handleOurDeath();
+            handleOurDeath( true );
             }
         else {
             setWaiting( false );
@@ -4061,6 +4063,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         if( ! serverSocketConnected ) {
             // don't draw waiting message, not connected yet
+            if( userReconnect ) {
+                drawMessage( "waitingReconnect", pos );
+                }
+            }
+        else if( userReconnect ) {
+            drawMessage( "waitingReconnect", pos );
             }
         else if( userTwinCode == NULL ) {
             drawMessage( "waitingBirth", pos );
@@ -7609,7 +7617,7 @@ char *LivingLifePage::getDeathReason() {
 
 
 
-void LivingLifePage::handleOurDeath() {
+void LivingLifePage::handleOurDeath( char inDisconnect ) {
     
     if( mDeathReason == NULL ) {
         mDeathReason = stringDuplicate( "" );
@@ -7636,8 +7644,14 @@ void LivingLifePage::handleOurDeath() {
     
 
     setWaiting( false );
-    setSignal( "died" );
 
+    if( inDisconnect ) {
+        setSignal( "disconnect" );
+        }
+    else {
+        setSignal( "died" );
+        }
+    
     instantStopMusic();
     // so sound tails are not still playing when we we get reborn
     fadeSoundSprites( 0.1 );
@@ -8668,7 +8682,7 @@ void LivingLifePage::step() {
                 }
             mDeathReason = stringDuplicate( translate( "reasonDisconnected" ) );
             
-            handleOurDeath();
+            handleOurDeath( true );
             }
         else {
             setWaiting( false );

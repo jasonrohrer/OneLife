@@ -111,6 +111,7 @@ char *userEmail = NULL;
 char *accountKey = NULL;
 char *userTwinCode = NULL;
 int userTwinCount = 0;
+char userReconnect = false;
 
 
 // these are needed by ServerActionPage, but we don't use them
@@ -1044,6 +1045,8 @@ void deleteCharFromUserTypedMessage() {
 
 
 static void startConnecting() {
+    userReconnect = false;
+    
     if( SettingsManager::getIntSetting( "useCustomServer", 0 ) ) {
         usingCustomServer = true;
         
@@ -1119,6 +1122,26 @@ void showDiedPage() {
     currentGamePage->base_makeActive( true );
     }
 
+
+
+void showReconnectPage() {
+    lastScreenViewCenter.x = 0;
+    lastScreenViewCenter.y = 0;
+    
+    setViewCenterPosition( lastScreenViewCenter.x, 
+                           lastScreenViewCenter.y );
+    
+    currentGamePage = extendedMessagePage;
+    
+    extendedMessagePage->setMessageKey( "connectionLost" );
+
+    extendedMessagePage->setSubMessage( translate( "willTryReconnect" ) );
+    
+    userReconnect = true;
+    
+    currentGamePage->base_makeActive( true );
+    }
+
     
 
 void drawFrame( char inUpdate ) {    
@@ -1184,7 +1207,12 @@ void drawFrame( char inUpdate ) {
             livingLifePage->checkSignal( "died" ) ) {
             showDiedPage();
             }
-
+        if( currentGamePage == livingLifePage &&
+            livingLifePage->checkSignal( "disconnect" ) ) {
+    
+            showReconnectPage();
+            }
+        
 
         return;
         }
@@ -1870,6 +1898,9 @@ void drawFrame( char inUpdate ) {
             else if( livingLifePage->checkSignal( "died" ) ) {
                 showDiedPage();
                 }
+            else if( livingLifePage->checkSignal( "disconnect" ) ) {
+                showReconnectPage();
+                }
             else if( livingLifePage->checkSignal( "loadFailure" ) ) {
                 currentGamePage = finalMessagePage;
                         
@@ -1897,8 +1928,12 @@ void drawFrame( char inUpdate ) {
                 
                 extendedMessagePage->setSubMessage( "" );
                 
-                currentGamePage = rebirthChoicePage;
-                
+                if( userReconnect ) {
+                    currentGamePage = livingLifePage;
+                    }
+                else {
+                    currentGamePage = rebirthChoicePage;
+                    }
                 currentGamePage->base_makeActive( true );
                 }
             }

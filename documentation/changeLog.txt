@@ -4,12 +4,30 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 157    ???
+
+--Client handles disconnection with better messaging (no longer describes it as
+  death), and attempts reconnection when the user is ready.
+
+
+
+Server Fixes
+
+--Server now keeps disconnected players alive instead of killing them, allowing
+  them to reconnect later and resume their life, assuming that they don't die
+  of in-game causes first.
+
+
+
+
 Steam-specific updates
 
 --Hide Post Review buttons on Steam version of client.
 
 --Shift-Tab to go back through hints doesn't work on Steam (shows overlay).
   Z-tab instead.
+
+--steamGateClient now waits for game to exit (fixes Steam playtime tracking).
 
 
 

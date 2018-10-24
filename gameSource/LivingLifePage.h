@@ -826,7 +826,7 @@ class LivingLifePage : public GamePage {
         
 
 
-        void handleOurDeath();
+        void handleOurDeath( char inDisconnect = false );
         
 
         char *mDeathReason;
