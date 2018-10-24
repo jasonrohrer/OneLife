@@ -2471,11 +2471,6 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
     AppLog::infoF( "Player %d (%s) marked as disconnected.",
                    inPlayer->id, inPlayer->email );
     inPlayer->connected = false;
-
-    // clear their socket buffer too, because we don't want to leave
-    // their final, partial message in there.
-    
-    inPlayer->sockBuffer->deleteAll();
     }
 
 
@@ -3928,6 +3923,37 @@ int processLoggedInPlayer( Socket *inSock,
                            int inForceDisplayID = -1,
                            GridPos *inForcePlayerPos = NULL ) {
     
+    // see if player was previously disconnected
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( ! o->error && ! o->connected &&
+            strcmp( o->email, inEmail ) == 0 ) {
+
+            
+            // give them this new socket and buffer
+            delete o->sock;
+            delete o->sockBuffer;
+            
+            o->sock = inSock;
+            o->sockBuffer = inSockBuffer;
+            
+            // they are connecting again, need to send them everything again
+            o->firstMapSent = false;
+            o->firstMessageSent = false;
+            
+            o->connected = true;
+
+            AppLog::infoF( "Player %d (%s) has reconnected.",
+                           o->id, o->email );
+
+            delete [] inEmail;
+            
+            return o->id;
+            }
+        }
+             
+
     // reload these settings every time someone new connects
     // thus, they can be changed without restarting the server
     minFoodDecrementSeconds = 
@@ -6880,7 +6906,9 @@ int main() {
                                 LiveObject *o = players.getElement( p );
                                 
 
-                                if( strcmp( o->email, 
+                                if( ! o->error && 
+                                    o->connected && 
+                                    strcmp( o->email, 
                                             nextConnection->email ) == 0 ) {
                                     emailAlreadyLoggedIn = true;
                                     break;
