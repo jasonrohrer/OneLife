@@ -352,6 +352,9 @@ typedef struct LiveObject {
         // wall clock time when they will be dead
         double dyingETA;
 
+        
+        char connected;
+        
         char error;
         const char *errorCauseString;
         
@@ -2455,10 +2458,24 @@ static int getMaxChunkDimension() {
 
 static void setPlayerDisconnected( LiveObject *inPlayer, 
                                    const char *inReason ) {    
+    /*
     setDeathReason( inPlayer, "disconnected" );
     
     inPlayer->error = true;
     inPlayer->errorCauseString = inReason;
+    */
+    // don't kill them
+    
+    // just mark them as not connected
+
+    AppLog::infoF( "Player %d (%s) marked as disconnected.",
+                   inPlayer->id, inPlayer->email );
+    inPlayer->connected = false;
+
+    // clear their socket buffer too, because we don't want to leave
+    // their final, partial message in there.
+    
+    inPlayer->sockBuffer->deleteAll();
     }
 
 
@@ -2470,6 +2487,11 @@ int sendMapChunkMessage( LiveObject *inO,
                          int inDestOverrideX = 0, 
                          int inDestOverrideY = 0 ) {
     
+    if( ! inO->connected ) {
+        // act like it was a successful send so we can move on until
+        // they reconnect later
+        return 1;
+        }
     
     int messageLength = 0;
 
@@ -4592,6 +4614,7 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.dying = false;
     newObject.dyingETA = 0;
     
+    newObject.connected = true;
     newObject.error = false;
     newObject.errorCauseString = "";
     
@@ -5590,6 +5613,11 @@ static int maxUncompressedSize = 256;
 
 static void sendMessageToPlayer( LiveObject *inPlayer, 
                                  char *inMessage, int inLength ) {
+    if( ! inPlayer->connected ) {
+        // stop sending messages to disconnected players
+        return;
+        }
+    
     
     unsigned char *message = (unsigned char*)inMessage;
     int len = inLength;
@@ -5860,7 +5888,7 @@ void apocalypseStep() {
             
             for( int i=0; i<players.size(); i++ ) {
                 LiveObject *nextPlayer = players.getElement( i );
-                if( !nextPlayer->error ) {
+                if( !nextPlayer->error && nextPlayer->connected ) {
                     
                     int numSent = 
                         nextPlayer->sock->send( 
@@ -5954,14 +5982,14 @@ void monumentStep() {
         // send to all players
         for( int i=0; i<players.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
-            if( !nextPlayer->error ) {
-                
-                // remember it to tell babies about it
-                nextPlayer->monumentPosSet = true;
-                nextPlayer->lastMonumentPos.x = monumentCallX;
-                nextPlayer->lastMonumentPos.y = monumentCallY;
-                nextPlayer->lastMonumentID = monumentCallID;
-                nextPlayer->monumentPosSent = true;
+            // remember it to tell babies about it
+            nextPlayer->monumentPosSet = true;
+            nextPlayer->lastMonumentPos.x = monumentCallX;
+            nextPlayer->lastMonumentPos.y = monumentCallY;
+            nextPlayer->lastMonumentID = monumentCallID;
+            nextPlayer->monumentPosSent = true;
+            
+            if( !nextPlayer->error && nextPlayer->connected ) {
                 
                 char *message = autoSprintf( "MN\n%d %d %d\n#", 
                                              monumentCallX -
@@ -6295,18 +6323,37 @@ int main() {
                     continue;
                     }
 
-                nextPlayer->sock->send( 
-                    (unsigned char*)shutdownMessage, 
-                    messageLength,
-                    false, false );
+                if( nextPlayer->connected ) {    
+                    nextPlayer->sock->send( 
+                        (unsigned char*)shutdownMessage, 
+                        messageLength,
+                        false, false );
                 
-                nextPlayer->gotPartOfThisFrame = true;
+                    nextPlayer->gotPartOfThisFrame = true;
+                    }
                 
                 // don't worry about num sent
                 // it's the last message to this client anyway
+                setDeathReason( nextPlayer, 
+                                "forced_shutdown" );
                 nextPlayer->error = true;
                 nextPlayer->errorCauseString =
                     "Forced server shutdown";
+                }
+            }
+        else if( shutdownMode ) {
+            // any disconnected players should be killed now
+            for( int i=0; i<players.size(); i++ ) {
+                LiveObject *nextPlayer = players.getElement( i );
+                if( ! nextPlayer->error && ! nextPlayer->connected ) {
+                    
+                    setDeathReason( nextPlayer, 
+                                    "disconnect_shutdown" );
+                    
+                    nextPlayer->error = true;
+                    nextPlayer->errorCauseString =
+                        "Disconnected during shutdown";
+                    }
                 }
             }
         
@@ -7322,13 +7369,15 @@ int main() {
                 nextPlayer->lastRegionLookTime = curLookTime;
                 }
 
+            if( nextPlayer->connected ) {    
+                char result = 
+                    readSocketFull( nextPlayer->sock, nextPlayer->sockBuffer );
             
-            char result = 
-                readSocketFull( nextPlayer->sock, nextPlayer->sockBuffer );
-            
-            if( ! result ) {
-                setPlayerDisconnected( nextPlayer, "Socket read failed" );
+                if( ! result ) {
+                    setPlayerDisconnected( nextPlayer, "Socket read failed" );
+                    }
                 }
+            
 
             char *message = getNextClientMessage( nextPlayer->sockBuffer );
             
@@ -7345,7 +7394,7 @@ int main() {
                 if( m.type == UNKNOWN ) {
                     AppLog::info( "Client error, unknown message type." );
                     
-                    setDeathReason( nextPlayer, "disconnected" );
+                    setDeathReason( nextPlayer, "unknown_message" );
 
                     nextPlayer->error = true;
                     nextPlayer->errorCauseString =
@@ -7419,7 +7468,7 @@ int main() {
                         }
                     
 
-                    if( allow ) {
+                    if( allow && nextPlayer->connected ) {
                         int length;
                         unsigned char *mapChunkMessage = 
                             getChunkMessage( m.x - chunkDimensionX / 2, 
@@ -12318,7 +12367,7 @@ int main() {
 
                 // do this first, so that PU messages about what they 
                 // are holding post-wound come later                
-                if( dyingMessage != NULL ) {
+                if( dyingMessage != NULL && nextPlayer->connected ) {
                     int numSent = 
                         nextPlayer->sock->send( 
                             dyingMessage, 
@@ -12335,7 +12384,7 @@ int main() {
 
 
                 // EVERYONE gets info about now-healed players           
-                if( healingMessage != NULL ) {
+                if( healingMessage != NULL && nextPlayer->connected ) {
                     int numSent = 
                         nextPlayer->sock->send( 
                             healingMessage, 
@@ -12352,7 +12401,7 @@ int main() {
 
 
                 // EVERYONE gets info about emots           
-                if( emotMessage != NULL ) {
+                if( emotMessage != NULL && nextPlayer->connected ) {
                     int numSent = 
                         nextPlayer->sock->send( 
                             emotMessage, 
@@ -12372,7 +12421,7 @@ int main() {
                 double maxDist = 32;
                 double maxDist2 = maxDist * 2;
 
-                if( newUpdates.size() > 0 ) {
+                if( newUpdates.size() > 0 && nextPlayer->connected ) {
 
                     double minUpdateDist = maxDist2 * 2;
                     
@@ -12542,7 +12591,7 @@ int main() {
 
 
 
-                if( moveList.size() > 0 ) {
+                if( moveList.size() > 0 && nextPlayer->connected ) {
                     
                     double minUpdateDist = 64;
                     
@@ -12622,7 +12671,7 @@ int main() {
 
 
                 
-                if( mapChanges.size() > 0 ) {
+                if( mapChanges.size() > 0 && nextPlayer->connected ) {
                     double minUpdateDist = 64;
                     
                     for( int u=0; u<mapChangesPos.size(); u++ ) {
@@ -12719,7 +12768,7 @@ int main() {
                             }
                         }
                     }
-                if( speechMessage != NULL ) {
+                if( speechMessage != NULL && nextPlayer->connected ) {
                     double minUpdateDist = 64;
                     
                     for( int u=0; u<newSpeechPos.size(); u++ ) {
@@ -12752,71 +12801,75 @@ int main() {
                     }
                 
 
-                // EVERYONE gets updates about deleted players
 
-                unsigned char *deleteUpdateMessage = NULL;
-                int deleteUpdateMessageLength = 0;
+                // EVERYONE gets updates about deleted players                
+                if( nextPlayer->connected ) {
+                    
+                    unsigned char *deleteUpdateMessage = NULL;
+                    int deleteUpdateMessageLength = 0;
         
-                SimpleVector<char> deleteUpdateChars;
+                    SimpleVector<char> deleteUpdateChars;
                 
-                for( int u=0; u<newDeleteUpdates.size(); u++ ) {
+                    for( int u=0; u<newDeleteUpdates.size(); u++ ) {
                     
-                    char *line = getUpdateLineFromRecord(
-                        newDeleteUpdates.getElement( u ),
-                        nextPlayer->birthPos );
+                        char *line = getUpdateLineFromRecord(
+                            newDeleteUpdates.getElement( u ),
+                            nextPlayer->birthPos );
                     
-                    deleteUpdateChars.appendElementString( line );
+                        deleteUpdateChars.appendElementString( line );
                     
-                    delete [] line;
-                    }
+                        delete [] line;
+                        }
                 
 
-                if( deleteUpdateChars.size() > 0 ) {
-                    deleteUpdateChars.push_back( '#' );
-                    char *temp = deleteUpdateChars.getElementString();
+                    if( deleteUpdateChars.size() > 0 ) {
+                        deleteUpdateChars.push_back( '#' );
+                        char *temp = deleteUpdateChars.getElementString();
                     
-                    char *deleteUpdateMessageText = concatonate( "PU\n", temp );
-                    delete [] temp;
+                        char *deleteUpdateMessageText = 
+                            concatonate( "PU\n", temp );
+                        delete [] temp;
                     
-                    deleteUpdateMessageLength = 
-                        strlen( deleteUpdateMessageText );
+                        deleteUpdateMessageLength = 
+                            strlen( deleteUpdateMessageText );
 
-                    if( deleteUpdateMessageLength < maxUncompressedSize ) {
-                        deleteUpdateMessage = 
-                            (unsigned char*)deleteUpdateMessageText;
-                        }
-                    else {
-                        // compress for all players once here
-                        deleteUpdateMessage = makeCompressedMessage( 
-                            deleteUpdateMessageText, 
-                            deleteUpdateMessageLength, 
-                            &deleteUpdateMessageLength );
+                        if( deleteUpdateMessageLength < maxUncompressedSize ) {
+                            deleteUpdateMessage = 
+                                (unsigned char*)deleteUpdateMessageText;
+                            }
+                        else {
+                            // compress for all players once here
+                            deleteUpdateMessage = makeCompressedMessage( 
+                                deleteUpdateMessageText, 
+                                deleteUpdateMessageLength, 
+                                &deleteUpdateMessageLength );
                 
-                        delete [] deleteUpdateMessageText;
+                            delete [] deleteUpdateMessageText;
+                            }
+                        }
+
+                    if( deleteUpdateMessage != NULL ) {
+                        int numSent = 
+                            nextPlayer->sock->send( 
+                                deleteUpdateMessage, 
+                                deleteUpdateMessageLength, 
+                                false, false );
+                    
+                        nextPlayer->gotPartOfThisFrame = true;
+                    
+                        delete [] deleteUpdateMessage;
+                    
+                        if( numSent != deleteUpdateMessageLength ) {
+                            setPlayerDisconnected( nextPlayer, 
+                                                   "Socket write failed" );
+                            }
                         }
                     }
 
 
-
-                if( deleteUpdateMessage != NULL ) {
-                    int numSent = 
-                        nextPlayer->sock->send( 
-                            deleteUpdateMessage, 
-                            deleteUpdateMessageLength, 
-                            false, false );
-                    
-                    nextPlayer->gotPartOfThisFrame = true;
-                    
-                    delete [] deleteUpdateMessage;
-                    
-                    if( numSent != deleteUpdateMessageLength ) {
-                        setPlayerDisconnected( nextPlayer, 
-                                               "Socket write failed" );
-                        }
-                    }
 
                 // EVERYONE gets lineage info for new babies
-                if( lineageMessage != NULL ) {
+                if( lineageMessage != NULL && nextPlayer->connected ) {
                     int numSent = 
                         nextPlayer->sock->send( 
                             lineageMessage, 
@@ -12833,7 +12886,7 @@ int main() {
 
 
                 // EVERYONE gets curse info for new babies
-                if( cursesMessage != NULL ) {
+                if( cursesMessage != NULL && nextPlayer->connected ) {
                     int numSent = 
                         nextPlayer->sock->send( 
                             cursesMessage, 
@@ -12849,7 +12902,7 @@ int main() {
                     }
 
                 // EVERYONE gets newly-given names
-                if( namesMessage != NULL ) {
+                if( namesMessage != NULL && nextPlayer->connected ) {
                     int numSent = 
                         nextPlayer->sock->send( 
                             namesMessage, 
@@ -12881,37 +12934,40 @@ int main() {
                     if( yumMult < 0 ) {
                         yumMult = 0;
                         }
-
-                    char *foodMessage = autoSprintf( 
-                        "FX\n"
-                        "%d %d %d %d %.2f %d "
-                        "%d %d\n"
-                        "#",
-                        nextPlayer->foodStore,
-                        cap,
-                        hideIDForClient( nextPlayer->lastAteID ),
-                        nextPlayer->lastAteFillMax,
-                        computeMoveSpeed( nextPlayer ),
-                        nextPlayer->responsiblePlayerID,
-                        nextPlayer->yummyBonusStore,
-                        yumMult );
-                     
-                    int messageLength = strlen( foodMessage );
                     
-                    int numSent = 
-                         nextPlayer->sock->send( 
-                             (unsigned char*)foodMessage, 
-                             messageLength,
-                             false, false );
-                    
-                    nextPlayer->gotPartOfThisFrame = true;
-                    
-                    if( numSent != messageLength ) {
-                        setPlayerDisconnected( nextPlayer, 
-                                               "Socket write failed" );
+                    if( nextPlayer->connected ) {
+                        
+                        char *foodMessage = autoSprintf( 
+                            "FX\n"
+                            "%d %d %d %d %.2f %d "
+                            "%d %d\n"
+                            "#",
+                            nextPlayer->foodStore,
+                            cap,
+                            hideIDForClient( nextPlayer->lastAteID ),
+                            nextPlayer->lastAteFillMax,
+                            computeMoveSpeed( nextPlayer ),
+                            nextPlayer->responsiblePlayerID,
+                            nextPlayer->yummyBonusStore,
+                            yumMult );
+                        
+                        int messageLength = strlen( foodMessage );
+                        
+                        int numSent = 
+                            nextPlayer->sock->send( 
+                                (unsigned char*)foodMessage, 
+                                messageLength,
+                                false, false );
+                        
+                        nextPlayer->gotPartOfThisFrame = true;
+                        
+                        if( numSent != messageLength ) {
+                            setPlayerDisconnected( nextPlayer, 
+                                                   "Socket write failed" );
+                            }
+                        
+                        delete [] foodMessage;
                         }
-                    
-                    delete [] foodMessage;
                     
                     nextPlayer->foodUpdate = false;
                     nextPlayer->lastAteID = 0;
@@ -12920,7 +12976,7 @@ int main() {
 
 
 
-                if( nextPlayer->heatUpdate ) {
+                if( nextPlayer->heatUpdate && nextPlayer->connected ) {
                     // send this player a heat status change
                     
                     char *heatMessage = autoSprintf( 
@@ -12944,12 +13000,12 @@ int main() {
                         }
                     
                     delete [] heatMessage;
-                    
-                    nextPlayer->heatUpdate = false;
                     }
+                nextPlayer->heatUpdate = false;
+                    
 
-
-                if( nextPlayer->curseTokenUpdate ) {
+                if( nextPlayer->curseTokenUpdate &&
+                    nextPlayer->connected ) {
                     // send this player a curse token status change
                     
                     char *tokenMessage = autoSprintf( 
@@ -12972,10 +13028,10 @@ int main() {
                                                "Socket write failed" );
                         }
                     
-                    delete [] tokenMessage;
-                    
-                    nextPlayer->curseTokenUpdate = false;
+                    delete [] tokenMessage;                    
                     }
+                nextPlayer->curseTokenUpdate = false;
+
                 }
             }
 
@@ -13063,7 +13119,7 @@ int main() {
         for( int i=0; i<players.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement(i);
             
-            if( nextPlayer->gotPartOfThisFrame ) {
+            if( nextPlayer->gotPartOfThisFrame && nextPlayer->connected ) {
                 int numSent = 
                     nextPlayer->sock->send( 
                         (unsigned char*)frameMessage, 
