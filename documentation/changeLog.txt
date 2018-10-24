@@ -9,6 +9,10 @@ Version 157    ???
 --Client handles disconnection with better messaging (no longer describes it as
   death), and attempts reconnection when the user is ready.
 
+--Instant local response to jump-out-of-arms attempt (baby wiggles a bit).
+  This makes it feel much more responsive when you are perma-held by your own
+  mother and click.
+
 
 
 Server Fixes

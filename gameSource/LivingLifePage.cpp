@@ -3754,6 +3754,24 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 if( ! babyO->tempAgeOverrideSet )
                     setAnimationEmotion( babyO->currentEmot );
                 
+                doublePair babyHeldPos = holdPos;
+                
+                if( babyO->babyWiggle ) {
+                    
+                    babyO->babyWiggleProgress += 0.04 * frameRateFactor;
+                    
+                    if( babyO->babyWiggleProgress > 1 ) {
+                        babyO->babyWiggle = false;
+                        }
+                    else {
+
+                        // cosine from pi to 3 pi has smooth start and finish
+                        babyHeldPos.x += 8 *
+                            ( cos( babyO->babyWiggleProgress * 2 * M_PI +
+                                   M_PI ) * 0.5 + 0.5 );
+                        }
+                    }
+
                 returnPack =
                     drawObjectAnimPacked( 
                                 babyO->displayID, curHeldType, 
@@ -3765,7 +3783,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                 &( inObj->heldFrozenRotFrameCountUsed ),
                                 endAnimType,
                                 endAnimType,
-                                holdPos,
+                                babyHeldPos,
                                 // never apply held rot to baby
                                 0,
                                 false,
@@ -11134,7 +11152,7 @@ void LivingLifePage::step() {
                 o.heldByDropOffset.y = 0;
                 
                 o.jumpOutOfArmsSent = false;
-                
+                o.babyWiggle = false;
 
                 o.ridingOffset.x = 0;
                 o.ridingOffset.y = 0;
@@ -16639,6 +16657,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             ourLiveObject->jumpOutOfArmsSent = true;
             }
+        
+        if( ! ourLiveObject->babyWiggle ) {
+            // start new wiggle
+            ourLiveObject->babyWiggle = true;
+            ourLiveObject->babyWiggleProgress = 0;
+            }
+        
         
         return;
         }

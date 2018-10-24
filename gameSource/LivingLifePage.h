@@ -105,6 +105,9 @@ typedef struct LiveObject {
         // jump
         char jumpOutOfArmsSent;
         
+        // true if locally-controlled baby is attempting to jump out of arms
+        char babyWiggle;
+        double babyWiggleProgress;
 
         
         // usually 0, but used to slide into and out of riding position
