@@ -2453,6 +2453,15 @@ static int getMaxChunkDimension() {
 
 
 
+static void setPlayerDisconnected( LiveObject *inPlayer, 
+                                   const char *inReason ) {    
+    setDeathReason( inPlayer, "disconnected" );
+    
+    inPlayer->error = true;
+    inPlayer->errorCauseString = inReason;
+    }
+
+
 
 // sets lastSentMap in inO if chunk goes through
 // returns result of send, auto-marks error in inO
@@ -2601,10 +2610,7 @@ int sendMapChunkMessage( LiveObject *inO,
         inO->lastSentMapY = yd;
         }
     else {
-        setDeathReason( inO, "disconnected" );
-        
-        inO->error = true;
-        inO->errorCauseString = "Socket write failed";
+        setPlayerDisconnected( inO, "Socket write failed" );
         }
     return numSent;
     }
@@ -5601,10 +5607,7 @@ static void sendMessageToPlayer( LiveObject *inPlayer,
                               false, false );
         
     if( numSent != len ) {
-        setDeathReason( inPlayer, "disconnected" );
-        
-        inPlayer->error = true;
-        inPlayer->errorCauseString = "Socket write failed";
+        setPlayerDisconnected( inPlayer, "Socket write failed" );
         }
 
     inPlayer->gotPartOfThisFrame = true;
@@ -5868,11 +5871,8 @@ void apocalypseStep() {
                     nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != messageLength ) {
-                        setDeathReason( nextPlayer, "disconnected" );
-                        
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Socket write failed";
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
                         }
                     }
                 }
@@ -5984,11 +5984,7 @@ void monumentStep() {
                 delete [] message;
 
                 if( numSent != messageLength ) {
-                    setDeathReason( nextPlayer, "disconnected" );
-                    
-                    nextPlayer->error = true;
-                    nextPlayer->errorCauseString =
-                        "Socket write failed";
+                    setPlayerDisconnected( nextPlayer, "Socket write failed" );
                     }
                 }
             }
@@ -7331,11 +7327,7 @@ int main() {
                 readSocketFull( nextPlayer->sock, nextPlayer->sockBuffer );
             
             if( ! result ) {
-                setDeathReason( nextPlayer, "disconnected" );
-                
-                nextPlayer->error = true;
-                nextPlayer->errorCauseString =
-                    "Socket read failed";
+                setPlayerDisconnected( nextPlayer, "Socket read failed" );
                 }
 
             char *message = getNextClientMessage( nextPlayer->sockBuffer );
@@ -7447,11 +7439,8 @@ int main() {
                         delete [] mapChunkMessage;
 
                         if( numSent != length ) {
-                            setDeathReason( nextPlayer, "disconnected" );
-
-                            nextPlayer->error = true;
-                            nextPlayer->errorCauseString =
-                                "Socket write failed";
+                            setPlayerDisconnected( nextPlayer, 
+                                                   "Socket write failed" );
                             }
                         }
                     else {
@@ -12339,11 +12328,8 @@ int main() {
                     nextPlayer->gotPartOfThisFrame = true;
 
                     if( numSent != dyingMessageLength ) {
-                        setDeathReason( nextPlayer, "disconnected" );
-
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Socket write failed";
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
                         }
                     }
 
@@ -12359,11 +12345,8 @@ int main() {
                     nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != healingMessageLength ) {
-                        setDeathReason( nextPlayer, "disconnected" );
-
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Socket write failed";
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
                         }
                     }
 
@@ -12379,11 +12362,8 @@ int main() {
                     nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != emotMessageLength ) {
-                        setDeathReason( nextPlayer, "disconnected" );
-
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Socket write failed";
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
                         }
                     }
 
@@ -12491,11 +12471,8 @@ int main() {
                             delete [] updateMessage;
                             
                             if( numSent != updateMessageLength ) {
-                                setDeathReason( nextPlayer, "disconnected" );
-                                
-                                nextPlayer->error = true;
-                                nextPlayer->errorCauseString =
-                                    "Socket write failed";
+                                setPlayerDisconnected( nextPlayer, 
+                                                       "Socket write failed" );
                                 }
                             }
                         }
@@ -12556,11 +12533,8 @@ int main() {
                         delete [] outOfRangeMessage;
 
                         if( numSent != outOfRangeMessageLength ) {
-                            setDeathReason( nextPlayer, "disconnected" );
-
-                            nextPlayer->error = true;
-                            nextPlayer->errorCauseString =
-                                "Socket write failed";
+                            setPlayerDisconnected( nextPlayer, 
+                                                   "Socket write failed" );
                             }
                         }
                     }
@@ -12639,11 +12613,8 @@ int main() {
                             delete [] moveMessage;
                             
                             if( numSent != moveMessageLength ) {
-                                setDeathReason( nextPlayer, "disconnected" );
-                                
-                                nextPlayer->error = true;
-                                nextPlayer->errorCauseString =
-                                    "Socket write failed";
+                                setPlayerDisconnected( nextPlayer, 
+                                                       "Socket write failed" );
                                 }
                             }
                         }
@@ -12742,11 +12713,8 @@ int main() {
                             delete [] mapChangeMessage;
 
                             if( numSent != mapChangeMessageLength ) {
-                                setDeathReason( nextPlayer, "disconnected" );
-                                
-                                nextPlayer->error = true;
-                                nextPlayer->errorCauseString =
-                                    "Socket write failed";
+                                setPlayerDisconnected( nextPlayer, 
+                                                       "Socket write failed" );
                                 }
                             }
                         }
@@ -12777,11 +12745,8 @@ int main() {
                         nextPlayer->gotPartOfThisFrame = true;
                         
                         if( numSent != speechMessageLength ) {
-                            setDeathReason( nextPlayer, "disconnected" );
-
-                            nextPlayer->error = true;
-                            nextPlayer->errorCauseString =
-                                "Socket write failed";
+                            setPlayerDisconnected( nextPlayer, 
+                                                   "Socket write failed" );
                             }
                         }
                     }
@@ -12845,11 +12810,8 @@ int main() {
                     delete [] deleteUpdateMessage;
                     
                     if( numSent != deleteUpdateMessageLength ) {
-                        setDeathReason( nextPlayer, "disconnected" );
-
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Socket write failed";
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
                         }
                     }
 
@@ -12864,11 +12826,8 @@ int main() {
                     nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != lineageMessageLength ) {
-                        setDeathReason( nextPlayer, "disconnected" );
-
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Socket write failed";
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
                         }
                     }
 
@@ -12884,11 +12843,8 @@ int main() {
                     nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != cursesMessageLength ) {
-                        setDeathReason( nextPlayer, "disconnected" );
-
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Socket write failed";
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
                         }
                     }
 
@@ -12903,11 +12859,8 @@ int main() {
                     nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != namesMessageLength ) {
-                        setDeathReason( nextPlayer, "disconnected" );
-
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Socket write failed";
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
                         }
                     }
 
@@ -12954,11 +12907,8 @@ int main() {
                     nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != messageLength ) {
-                        setDeathReason( nextPlayer, "disconnected" );
-                        
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Socket write failed";
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
                         }
                     
                     delete [] foodMessage;
@@ -12989,11 +12939,8 @@ int main() {
                     nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != messageLength ) {
-                        setDeathReason( nextPlayer, "disconnected" );
-                        
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Socket write failed";
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
                         }
                     
                     delete [] heatMessage;
@@ -13021,11 +12968,8 @@ int main() {
                     nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != messageLength ) {
-                        setDeathReason( nextPlayer, "disconnected" );
-                        
-                        nextPlayer->error = true;
-                        nextPlayer->errorCauseString =
-                            "Socket write failed";
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
                         }
                     
                     delete [] tokenMessage;
@@ -13127,10 +13071,7 @@ int main() {
                         false, false );
 
                 if( numSent != frameMessageLength ) {
-                    setDeathReason( nextPlayer, "disconnected" );
-                    
-                    nextPlayer->error = true;
-                    nextPlayer->errorCauseString = "Socket write failed";
+                    setPlayerDisconnected( nextPlayer, "Socket write failed" );
                     }
                 }
             nextPlayer->gotPartOfThisFrame = false;
