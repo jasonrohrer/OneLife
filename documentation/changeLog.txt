@@ -13,6 +13,12 @@ Version 157    ???
   This makes it feel much more responsive when you are perma-held by your own
   mother and click.
 
+--Import editor now allows shift and ctrl for bigger jumps when paging through
+  past imports.  Line layer accumulation is no longer the default (rarely used,
+  and it was a pain to delete line layers when trying to page through).
+  Instead, holding A key triggers adding a line layer, but replace is default
+  when importing or paging through old imports.
+
 
 
 Server Fixes
