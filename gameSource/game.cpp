@@ -1412,7 +1412,7 @@ void drawFrame( char inUpdate ) {
                         printf( "Finished loading animation bank in %f sec\n",
                                 Time::getCurrentTime() - 
                                 loadingPhaseStartTime );
-
+                        loadingPhaseStartTime = Time::getCurrentTime();
 
                         char rebuilding;
                         
@@ -1452,7 +1452,7 @@ void drawFrame( char inUpdate ) {
                         printf( "Finished loading object bank in %f sec\n",
                                 Time::getCurrentTime() - 
                                 loadingPhaseStartTime );
-
+                        loadingPhaseStartTime = Time::getCurrentTime();
 
                         char rebuilding;
                         
@@ -1492,7 +1492,7 @@ void drawFrame( char inUpdate ) {
                         printf( "Finished loading category bank in %f sec\n",
                                 Time::getCurrentTime() - 
                                 loadingPhaseStartTime );
-
+                        loadingPhaseStartTime = Time::getCurrentTime();
 
                         char rebuilding;
                         
@@ -1532,7 +1532,12 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initTransBankFinish();
+                        printf( "Finished loading transition bank in %f sec\n",
+                                Time::getCurrentTime() - 
+                                loadingPhaseStartTime );
                         
+                        loadingPhaseStartTime = Time::getCurrentTime();
+
                         loadingPage->setCurrentPhase( 
                             translate( "groundTextures" ) );
 
@@ -1556,6 +1561,12 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initGroundSpritesFinish();
+                        printf( "Finished loading ground sprites in %f sec\n",
+                                Time::getCurrentTime() - 
+                                loadingPhaseStartTime );
+                        
+                        loadingPhaseStartTime = Time::getCurrentTime();
+
                         
                         initLiveObjectSet();
 

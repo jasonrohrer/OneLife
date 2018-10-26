@@ -19,6 +19,13 @@ Version 157    2018-October-26
   Instead, holding A key triggers adding a line layer, but replace is default
   when importing or paging through old imports.
 
+--Dramatic speed up in object bank load by not counting live sound uses and
+  expanding animation bank in batches of 100 instead of 1.  Result is 3.4x
+  overall speed up in object bank loading, and 16x speed up for used object
+  generation, and 2x speed up for variable object generation.  Was wondering
+  why server startup was so much faster than client startup---it was because it
+  has no animation bank, so dynamic object generation didn't require
+  duplication of animation bank records.
 
 
 

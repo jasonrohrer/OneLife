@@ -157,7 +157,8 @@ typedef struct LayerSwapRecord {
 
 
 
-AnimationRecord *copyRecord( AnimationRecord *inRecord );
+AnimationRecord *copyRecord( AnimationRecord *inRecord, 
+                             char inCountLiveSoundUses = true );
 
 // should only be called on results of copyRecord and NOT
 // on results of getAnimation
@@ -165,7 +166,8 @@ void freeRecord( AnimationRecord *inRecord );
 
 
 
-SoundAnimationRecord copyRecord( SoundAnimationRecord inRecord );
+SoundAnimationRecord copyRecord( SoundAnimationRecord inRecord, 
+                                 char inCountLiveSoundUses = true );
 
 // takes pointer, but DOES NOT free on heap
 // meant to operate on pointer to a record on the stack or 
