@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 157    ???
+Version 157    2018-October-26
 
 --Client handles disconnection with better messaging (no longer describes it as
   death), and attempts reconnection when the user is ready.
@@ -21,6 +21,7 @@ Version 157    ???
 
 
 
+
 Server Fixes
 
 --Server now keeps disconnected players alive instead of killing them, allowing
@@ -28,6 +29,7 @@ Server Fixes
   of in-game causes first.
 
 --Babies blocked from wiggling out of own mothers's arms until age 3.
+
 
 
 
