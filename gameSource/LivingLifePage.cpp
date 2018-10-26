@@ -80,6 +80,8 @@ extern char *userEmail;
 extern char *userTwinCode;
 extern int userTwinCount;
 
+extern char userReconnect;
+
 
 extern float musicLoudness;
 
@@ -604,7 +606,7 @@ void LivingLifePage::sendToServerSocket( char *inMessage ) {
                 }
             mDeathReason = stringDuplicate( translate( "reasonDisconnected" ) );
             
-            handleOurDeath();
+            handleOurDeath( true );
             }
         else {
             setWaiting( false );
@@ -1858,7 +1860,14 @@ LivingLifePage::LivingLifePage()
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?!/ " ),
           mDeathReason( NULL ),
           mShowHighlights( true ),
-          mSkipDrawingWorkingArea( NULL ) {
+          mSkipDrawingWorkingArea( NULL ),
+          mUsingSteam( false ),
+          mZKeyDown( false ) {
+
+
+    if( SettingsManager::getIntSetting( "useSteamUpdate", 0 ) ) {
+        mUsingSteam = true;
+        }
 
     mForceGroundClick = false;
     
@@ -3801,6 +3810,24 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 if( ! babyO->tempAgeOverrideSet )
                     setAnimationEmotion( babyO->currentEmot );
                 
+                doublePair babyHeldPos = holdPos;
+                
+                if( babyO->babyWiggle ) {
+                    
+                    babyO->babyWiggleProgress += 0.04 * frameRateFactor;
+                    
+                    if( babyO->babyWiggleProgress > 1 ) {
+                        babyO->babyWiggle = false;
+                        }
+                    else {
+
+                        // cosine from pi to 3 pi has smooth start and finish
+                        babyHeldPos.x += 8 *
+                            ( cos( babyO->babyWiggleProgress * 2 * M_PI +
+                                   M_PI ) * 0.5 + 0.5 );
+                        }
+                    }
+
                 returnPack =
                     drawObjectAnimPacked( 
                                 babyO->displayID, curHeldType, 
@@ -3812,7 +3839,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                 &( inObj->heldFrozenRotFrameCountUsed ),
                                 endAnimType,
                                 endAnimType,
-                                holdPos,
+                                babyHeldPos,
                                 // never apply held rot to baby
                                 0,
                                 false,
@@ -4118,6 +4145,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         if( ! serverSocketConnected ) {
             // don't draw waiting message, not connected yet
+            if( userReconnect ) {
+                drawMessage( "waitingReconnect", pos );
+                }
+            }
+        else if( userReconnect ) {
+            drawMessage( "waitingReconnect", pos );
             }
         else if( userTwinCode == NULL ) {
             drawMessage( "waitingBirth", pos );
@@ -7744,7 +7777,7 @@ char *LivingLifePage::getDeathReason() {
 
 
 
-void LivingLifePage::handleOurDeath() {
+void LivingLifePage::handleOurDeath( char inDisconnect ) {
     
     if( mDeathReason == NULL ) {
         mDeathReason = stringDuplicate( "" );
@@ -7771,8 +7804,14 @@ void LivingLifePage::handleOurDeath() {
     
 
     setWaiting( false );
-    setSignal( "died" );
 
+    if( inDisconnect ) {
+        setSignal( "disconnect" );
+        }
+    else {
+        setSignal( "died" );
+        }
+    
     instantStopMusic();
     // so sound tails are not still playing when we we get reborn
     fadeSoundSprites( 0.1 );
@@ -8803,7 +8842,7 @@ void LivingLifePage::step() {
                 }
             mDeathReason = stringDuplicate( translate( "reasonDisconnected" ) );
             
-            handleOurDeath();
+            handleOurDeath( true );
             }
         else {
             setWaiting( false );
@@ -9419,8 +9458,17 @@ void LivingLifePage::step() {
 
             mLiveTutorialTriggerNumber = closestNumber;
             
-            char *transString = autoSprintf( "tutorial_%d", 
-                                             mLiveTutorialTriggerNumber );
+
+            char *transString;
+
+            if( mUsingSteam && mLiveTutorialTriggerNumber == 8 ) {
+                transString = autoSprintf( "tutorial_%d_steam", 
+                                           mLiveTutorialTriggerNumber );
+                }
+            else {    
+                transString = autoSprintf( "tutorial_%d", 
+                                           mLiveTutorialTriggerNumber );
+                }
             
             mTutorialMessage[ mLiveTutorialSheetIndex ] = 
                 translate( transString );
@@ -11250,7 +11298,7 @@ void LivingLifePage::step() {
                 o.heldByDropOffset.y = 0;
                 
                 o.jumpOutOfArmsSent = false;
-                
+                o.babyWiggle = false;
 
                 o.ridingOffset.x = 0;
                 o.ridingOffset.y = 0;
@@ -15697,6 +15745,7 @@ char LivingLifePage::isSameFloor( int inFloor, GridPos inFloorPos,
 void LivingLifePage::makeActive( char inFresh ) {
     // unhold E key
     mEKeyDown = false;
+    mZKeyDown = false;
     mouseDown = false;
     
     screenCenterPlayerOffsetX = 0;
@@ -16754,6 +16803,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             ourLiveObject->jumpOutOfArmsSent = true;
             }
+        
+        if( ! ourLiveObject->babyWiggle ) {
+            // start new wiggle
+            ourLiveObject->babyWiggle = true;
+            ourLiveObject->babyWiggleProgress = 0;
+            }
+        
         
         return;
         }
@@ -18103,6 +18159,12 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         case 'E':
             mEKeyDown = true;
             break;
+        case 'z':
+        case 'Z':
+            if( mUsingSteam ) {
+                mZKeyDown = true;
+                }
+            break;
         // LINEAGEFERTILITYMOD NOTE:  Change 3/4 - Take these lines during the merge process
         case 92:
             showFertilityPanel = !showFertilityPanel;
@@ -18116,18 +18178,6 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             changeHUDFOV( scaleHUD );
             }
             break;
-        case 127: { // del
-            if( isShiftKeyDown() ) {
-                closeSocket( mServerSocket );
-                mServerSocket = -1;
-                if( mDeathReason != NULL ) {
-                    delete [] mDeathReason;
-                }
-                mDeathReason = stringDuplicate( (char*)( "CAUSE:  GAVE UP ON LIFE" ) );
-                handleOurDeath();
-                }
-            }
-            break;
         case 9: // tab
             if( mCurrentHintObjectID != 0 ) {
                 
@@ -18135,7 +18185,10 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 
                 int skip = 1;
                 
-                if( isShiftKeyDown() ) {
+                if( !mUsingSteam && isShiftKeyDown() ) {
+                    skip = -1;
+                    }
+                else if( mUsingSteam && mZKeyDown ) {
                     skip = -1;
                     }
                 if( isCommandKeyDown() ) {
@@ -18429,6 +18482,10 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
         case 'e':
         case 'E':
             mEKeyDown = false;
+            break;
+        case 'z':
+        case 'Z':
+            mZKeyDown = false;
             break;
         }
 

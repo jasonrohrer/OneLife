@@ -16,3 +16,9 @@ sudo tc qdisc add dev lo root netem delay 2000ms 2000ms 0%
 Details here:
 
 https://calomel.org/network_loss_emulation.html
+
+
+
+Forcing connections to break:
+
+sudo tcpkill -i lo -9 port 8005

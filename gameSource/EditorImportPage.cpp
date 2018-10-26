@@ -92,7 +92,8 @@ EditorImportPage::EditorImportPage()
           mClearScaleButton( smallFont, -400, -240, "1 Scale" ),
           mFlipOverlayButton( smallFont, -330, -280, "Flip H" ),
           mClearOverlayButton( smallFont, -330, -240, "X Ovly" ),
-          mShowTagMessage( false ) {
+          mShowTagMessage( false ),
+          mAKeyDown( false ) {
 
 
     mCenterPoint.x = 0;
@@ -610,6 +611,20 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
                         
                         doublePair offset = { 0, 0 };
                         
+                        if( ! mAKeyDown ) {
+                            // A pressed to add lines
+                            // if not pressed, replace
+                            
+                            for( int i=0; i<mLinesOffset.size(); i++ ) {
+                                delete mLinesImages.getElementDirect( i );
+                                freeSprite( 
+                                    mLinesSprites.getElementDirect( i ) );
+                                }
+                            mLinesOffset.deleteAll();
+                            mLinesImages.deleteAll();
+                            mLinesSprites.deleteAll();
+                            }
+                        
                         mLinesOffset.push_back( offset );
                         mLinesImages.push_back( expanded );
                         mLinesSprites.push_back( sprite );
@@ -667,6 +682,21 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             increment = +1;
             }
         
+        int scale = 1;
+        
+        if( isCommandKeyDown() ) {
+            scale = 5;
+            }
+        if( isShiftKeyDown() ) {
+            scale = 10;
+            }
+        if( isCommandKeyDown() && isShiftKeyDown() ) {
+            scale = 20;
+            }
+
+        increment *= scale;
+        
+
         const char *cacheName = "spriteImportCache";
         int *currentIndex = &mCurrentSpriteImportCacheIndex;
 
@@ -1162,6 +1192,7 @@ void EditorImportPage::makeActive( char inFresh ) {
         return;
         }
 
+    mAKeyDown = false;
     mShowTagMessage = false;
 
     mSpritePicker.redoSearch( false );
@@ -1498,6 +1529,9 @@ void EditorImportPage::keyDown( unsigned char inASCII ) {
                 }            
             }
         }
+    else if( inASCII == 'A' || inASCII == 'a' ) {
+        mAKeyDown = true;
+        }
     }
 
 
@@ -1520,6 +1554,9 @@ void EditorImportPage::keyUp( unsigned char inASCII ) {
         }
     else if( inASCII == 'p' ) {
         mPlacingInternalPaper = false;
+        }
+    else if( inASCII == 'A' || inASCII == 'a' ) {
+        mAKeyDown = false;
         }
     }
 

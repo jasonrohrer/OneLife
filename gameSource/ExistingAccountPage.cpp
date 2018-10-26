@@ -216,6 +216,15 @@ void ExistingAccountPage::makeActive( char inFresh ) {
     else {
         mReviewButton.setLabelText( translate( "postReviewButton" ) );
         }
+
+
+    if( SettingsManager::getIntSetting( "useSteamUpdate", 0 ) ) {
+        // no review button on Steam
+        mReviewButton.setVisible( false );
+        }
+    else {
+        mReviewButton.setVisible( true );
+        }
     }
 
 

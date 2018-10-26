@@ -4,6 +4,54 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 157    2018-October-26
+
+--Client handles disconnection with better messaging (no longer describes it as
+  death), and attempts reconnection when the user is ready.
+
+--Instant local response to jump-out-of-arms attempt (baby wiggles a bit).
+  This makes it feel much more responsive when you are perma-held by your own
+  mother and click.
+
+--Import editor now allows shift and ctrl for bigger jumps when paging through
+  past imports.  Line layer accumulation is no longer the default (rarely used,
+  and it was a pain to delete line layers when trying to page through).
+  Instead, holding A key triggers adding a line layer, but replace is default
+  when importing or paging through old imports.
+
+--Dramatic speed up in object bank load by not counting live sound uses and
+  expanding animation bank in batches of 100 instead of 1.  Result is 3.4x
+  overall speed up in object bank loading, and 16x speed up for used object
+  generation, and 2x speed up for variable object generation.  Was wondering
+  why server startup was so much faster than client startup---it was because it
+  has no animation bank, so dynamic object generation didn't require
+  duplication of animation bank records.
+
+
+
+Server Fixes
+
+--Server now keeps disconnected players alive instead of killing them, allowing
+  them to reconnect later and resume their life, assuming that they don't die
+  of in-game causes first.
+
+--Babies blocked from wiggling out of own mothers's arms until age 3.
+
+
+
+
+
+Steam-specific updates
+
+--Hide Post Review buttons on Steam version of client.
+
+--Shift-Tab to go back through hints doesn't work on Steam (shows overlay).
+  Z-tab instead.
+
+--steamGateClient now waits for game to exit (fixes Steam playtime tracking).
+
+
+
 Version 155    2018-October-19
 
 --Scene editor now displays behind-player sprite layers correctly.

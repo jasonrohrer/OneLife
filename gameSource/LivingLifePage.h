@@ -106,6 +106,9 @@ typedef struct LiveObject {
         // jump
         char jumpOutOfArmsSent;
         
+        // true if locally-controlled baby is attempting to jump out of arms
+        char babyWiggle;
+        double babyWiggleProgress;
 
         
         // usually 0, but used to slide into and out of riding position
@@ -827,7 +830,7 @@ class LivingLifePage : public GamePage {
         
 
 
-        void handleOurDeath();
+        void handleOurDeath( char inDisconnect = false );
         
 
         char *mDeathReason;
@@ -891,6 +894,9 @@ class LivingLifePage : public GamePage {
         // AGEMOD NOTE:  Change 1/1 - Take these changes during the merge process
         void agePanel( LiveObject* ourLiveObject, char displayPanel = true );
 
+
+        char mUsingSteam;
+        char mZKeyDown;
 
     };
 

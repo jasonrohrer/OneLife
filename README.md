@@ -25,7 +25,6 @@ Keybind | Description
 **Right Arrow ( &rarr; )** | Increases the FOV zoom scale by 0.5x.  Maximum of 6.0x scale.
 **Grave Key ( ` )** | Toggles HUD scaling.  HUD scales with zoom level or locks at 1.0x, separate from the game scene.
 **Backslash Key ( \\ )** | Toggles displaying of the Lineage Fertility panel.
-**Shift + DEL** | Gives up on life and allows you to instantly respawn.
 **Shift + Space** | Generate a random name.
 **Shift + a-z** | Generate a random name that begins with the corresponding letter that you press.
 
@@ -71,10 +70,6 @@ Keybind | Description
 
 * **Easy Chat**
    - Auto-focuses the chat box when you start typing.  Never "lose" your chat by forgetting to press Enter first!
-
-* **Seppuku Respawn**
-   - Are you a player that prefers to respawn until you get to a desired area or family?  Tired of having to relaunch your client to respawn?  This can help!
-   - Assigns a hotkey combination to instantly kill yourself, allowing you to quickly respawn.  Give up on life 200% faster!
 
 # Credits
 Thanks to [Joriom](https://onehouronelife.com/forums/profile.php?id=607) for the [detailed guides](https://onehouronelife.com/forums/viewtopic.php?id=1438), [Bimble](https://onehouronelife.com/forums/profile.php?id=682) for the [VirtualBox image](https://onehouronelife.com/forums/viewtopic.php?id=498), and [Drakulon](https://onehouronelife.com/forums/profile.php?id=1165) for the [original FOV mod concept](https://onehouronelife.com/forums/viewtopic.php?id=1422).

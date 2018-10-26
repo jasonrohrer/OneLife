@@ -197,6 +197,8 @@ class EditorImportPage : public GamePage, public ActionListener {
         KeyLegend mOverlayKeyLegend;
         
         char mShowTagMessage;
+
+        char mAKeyDown;
     };
 
 

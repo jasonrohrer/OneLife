@@ -685,7 +685,21 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
     if( newID >= mapSize ) {
         // expand map
 
-        int newMapSize = newID + 1;        
+        // when expanding by one new record, expect that more are coming soon
+        // new objects/animations are added in batches during auto-generation
+        // phase of startup.
+        
+        // would be standard-practice to double newMapSize here, but
+        // will waste a lot of space (each spot in map is 6 32-bit pointers,
+        // or 24 bytes).
+
+        // Found map expansion to be a hot spot with profiler
+        // can speed it up by a factor of X by expanding it by X
+        // For now, just speed it up by a factor of 100
+        
+        // every time it needs to grow, grow it by 100.
+        // Worst case, this will waste 99 * 24 = 2376 bytes.
+        int newMapSize = newID + 100;        
 
         
         AnimationRecord ***newMap = new AnimationRecord**[newMapSize];
@@ -721,15 +735,15 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
         }
 
     
-    // copy to add it to memory bank    
+    // copy to add it to memory bank, but do NOT count live sound uses
     
     if( inRecord->type < endAnimType ) {
-        idMap[newID][inRecord->type] = copyRecord( inRecord );
+        idMap[newID][inRecord->type] = copyRecord( inRecord, false );
         }
     else {
         // extra
 
-        AnimationRecord *r = copyRecord( inRecord );
+        AnimationRecord *r = copyRecord( inRecord, false );
         
         // make sure index is set correctly
         r->extraIndex = extraIndex;
@@ -738,15 +752,9 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
         }
     
     
-    // copyRecord triggers counting a live use of sounds
-    // that is normally correct, but here, when stored in bank,
-    // these are not live
-    //
-    // uncount them
-    for( int i=0; i<inRecord->numSounds; i++ ) {
-        unCountLiveUse( inRecord->soundAnim[i].sound );
-        }
-
+    // unCountLiveUse no longer needed here, because we're telling copyRecord
+    // to not cound these as live uses above
+    
     
     
     if( ! inNoWriteToFile ) {
@@ -3269,7 +3277,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
 
 
-AnimationRecord *copyRecord( AnimationRecord *inRecord ) {
+AnimationRecord *copyRecord( AnimationRecord *inRecord,
+                             char inCountLiveSoundUses ) {
     AnimationRecord *newRecord = new AnimationRecord;
     
     newRecord->objectID = inRecord->objectID;
@@ -3284,7 +3293,8 @@ AnimationRecord *copyRecord( AnimationRecord *inRecord ) {
             sizeof( SoundAnimationRecord ) * newRecord->numSounds );
 
     for( int i=0; i<newRecord->numSounds; i++ ) {
-        newRecord->soundAnim[i] = copyRecord( inRecord->soundAnim[i] );
+        newRecord->soundAnim[i] = copyRecord( inRecord->soundAnim[i],
+                                              inCountLiveSoundUses );
         }
 
     newRecord->numSprites = inRecord->numSprites;
@@ -3316,13 +3326,16 @@ void freeRecord( AnimationRecord *inRecord ) {
 
 
 
-SoundAnimationRecord copyRecord( SoundAnimationRecord inRecord ) {
+SoundAnimationRecord copyRecord( SoundAnimationRecord inRecord,
+                                 char inCountLiveSoundUses ) {
     SoundAnimationRecord copy = inRecord;
     
     copy.sound = copyUsage( inRecord.sound );
     
-    countLiveUse( copy.sound );
-
+    if( inCountLiveSoundUses ) {
+        countLiveUse( copy.sound );
+        }
+    
     return copy;
     }
 
