@@ -2455,6 +2455,9 @@ static int getMaxChunkDimension() {
     }
 
 
+static SocketPoll sockPoll;
+
+
 
 static void setPlayerDisconnected( LiveObject *inPlayer, 
                                    const char *inReason ) {    
@@ -2471,6 +2474,10 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
     AppLog::infoF( "Player %d (%s) marked as disconnected.",
                    inPlayer->id, inPlayer->email );
     inPlayer->connected = false;
+
+    // also, stop polling their socket, which will trigger constant
+    // socket events from here on out, and cause us to busy-loop
+    sockPoll.removeSocket( inPlayer->sock );
     }
 
 
@@ -6332,9 +6339,6 @@ int main() {
         SettingsManager::getIntSetting( "port", 5077 );
     
     
-    SocketPoll sockPoll;
-    
-    
     
     SocketServer *server = new SocketServer( port, 256 );
     
@@ -7416,6 +7420,8 @@ int main() {
                 nextPlayer->lastRegionLookTime = curLookTime;
                 }
 
+            char *message = NULL;
+            
             if( nextPlayer->connected ) {    
                 char result = 
                     readSocketFull( nextPlayer->sock, nextPlayer->sockBuffer );
@@ -7423,10 +7429,13 @@ int main() {
                 if( ! result ) {
                     setPlayerDisconnected( nextPlayer, "Socket read failed" );
                     }
+                else {
+                    // don't even bother parsing message buffer for players
+                    // that are not currently connected
+                    message = getNextClientMessage( nextPlayer->sockBuffer );
+                    }
                 }
             
-
-            char *message = getNextClientMessage( nextPlayer->sockBuffer );
             
             if( message != NULL ) {
                 someClientMessageReceived = true;

@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Fixed busy-wait server-side, due to instant SocketPoll response on
+  disconnected sockets, by removing them from Poll as soon as they disconnect.
+  This was causing 100% CPU.
+
+
+
 
 Version 157    2018-October-26
 
