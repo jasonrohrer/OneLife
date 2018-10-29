@@ -11,6 +11,9 @@ Version 159    ???
 
 --Baby bones left in mother's arms after sudden infant death.
 
+--Pre-loading of all direct-from-death grave objects to avoid partial-sprite
+  pop-in.  Marked them all with fromDeath in description.
+
 
 
 Server Fixes

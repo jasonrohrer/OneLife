@@ -49,6 +49,11 @@ static SimpleVector<int> monumentCallObjectIDs;
 static SimpleVector<int> deathMarkerObjectIDs;
 
 
+// an extended list including special-case death markers 
+// (marked with fromDeath in description)
+static SimpleVector<int> allPossibleDeathMarkerIDs;
+
+
 
 // anything above race 100 is put in bin for race 100
 #define MAX_RACE 100
@@ -555,6 +560,11 @@ float initObjectBankStep() {
 
                 next++;
 
+                
+                if( strstr( r->description, "fromDeath" ) != NULL ) {
+                    allPossibleDeathMarkerIDs.push_back( r->id );
+                    }
+                
 
                 r->homeMarker = false;
                 
@@ -1639,6 +1649,7 @@ static void freeObjectRecord( int inID ) {
             femalePersonObjectIDs.deleteElementEqualTo( inID );
             monumentCallObjectIDs.deleteElementEqualTo( inID );
             deathMarkerObjectIDs.deleteElementEqualTo( inID );
+            allPossibleDeathMarkerIDs.deleteElementEqualTo( inID );
             
             if( race <= MAX_RACE ) {
                 racePersonObjectIDs[ race ].deleteElementEqualTo( inID );
@@ -1721,6 +1732,7 @@ void freeObjectBank() {
     femalePersonObjectIDs.deleteAll();
     monumentCallObjectIDs.deleteAll();
     deathMarkerObjectIDs.deleteAll();
+    allPossibleDeathMarkerIDs.deleteAll();
     
     for( int i=0; i<= MAX_RACE; i++ ) {
         racePersonObjectIDs[i].deleteAll();
@@ -2474,11 +2486,16 @@ int addObject( const char *inDescription,
     r->deathMarker = inDeathMarker;
     
     deathMarkerObjectIDs.deleteElementEqualTo( newID );
+    allPossibleDeathMarkerIDs.deleteElementEqualTo( newID );
     
     if( r->deathMarker ) {
         deathMarkerObjectIDs.push_back( newID );
         }
-
+    if( strstr( r->description, "fromDeath" ) != NULL ) {
+        allPossibleDeathMarkerIDs.push_back( newID );
+        }
+    
+    
     r->homeMarker = inHomeMarker;
     r->floor = inFloor;
     r->floorHugging = inFloorHugging;
@@ -3518,6 +3535,12 @@ int getRandomDeathMarker() {
     return deathMarkerObjectIDs.getElementDirect( 
         randSource.getRandomBoundedInt( 0, 
                                         deathMarkerObjectIDs.size() - 1  ) );
+    }
+
+
+
+SimpleVector<int> *getAllPossibleDeathIDs() {
+    return &allPossibleDeathMarkerIDs;
     }
 
 
