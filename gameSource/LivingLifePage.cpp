@@ -12794,6 +12794,10 @@ void LivingLifePage::step() {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonHunger" ) );
                             }
+                        else if( strcmp( reasonString, "SID" ) == 0 ) {
+                            mDeathReason = stringDuplicate( 
+                                translate( "reasonSID" ) );
+                            }
                         else if( strcmp( reasonString, "age" ) == 0 ) {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonOldAge" ) );
@@ -18102,6 +18106,16 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                             if( emotIndex != -1 ) {
                                 char *message = 
                                     autoSprintf( "EMOT 0 0 %d#", emotIndex );
+                                
+                                sendToServerSocket( message );
+                                delete [] message;
+                                }
+                            else if( strstr( typedText,
+                                             translate( "dieCommand" ) ) 
+                                     == typedText ) {
+                                // die command issued
+                                char *message = 
+                                    autoSprintf( "DIE 0 0#" );
                                 
                                 sendToServerSocket( message );
                                 delete [] message;

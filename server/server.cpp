@@ -334,7 +334,8 @@ typedef struct LiveObject {
         int deathSourceID;
         
         // true if this character landed a mortal wound on another player
-        char everKilledOther;
+        // or if this player chose death by sudden infant death
+        char everKilledAnyone;
 
 
         Socket *sock;
@@ -1114,6 +1115,7 @@ typedef enum messageType {
     SAY,
     EMOT,
     JUMP,
+    DIE,
     FORCE,
     MAP,
     TRIGGER,
@@ -1316,6 +1318,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "JUMP" ) == 0 ) {
         m.type = JUMP;
+        }
+    else if( strcmp( nameBuffer, "DIE" ) == 0 ) {
+        m.type = DIE;
         }
     else if( strcmp( nameBuffer, "FORCE" ) == 0 ) {
         m.type = FORCE;
@@ -4652,7 +4657,7 @@ int processLoggedInPlayer( Socket *inSock,
     
     newObject.deathSourceID = 0;
     
-    newObject.everKilledOther = false;
+    newObject.everKilledAnyone = false;
     
 
     newObject.sock = inSock;
@@ -7575,6 +7580,30 @@ int main() {
                             nextPlayer->xd, nextPlayer->yd );
                         }
                     }
+                else if( m.type == DIE ) {
+                    if( computeAge( nextPlayer ) < 1 &&
+                        nextPlayer->heldByOther &&
+                        nextPlayer->heldByOtherID == 
+                        nextPlayer->parentID ) {
+                        
+                        // killed self
+                        // SID triggers a lineage ban
+                        nextPlayer->everKilledAnyone = true;
+                        
+
+                        setDeathReason( nextPlayer, "SID" );
+
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString = "Baby suicide";
+                        LiveObject *parent = 
+                            getLiveObject( nextPlayer->heldByOtherID );
+                        
+                        if( parent != NULL ) {
+                            // mother can have another baby right away
+                            parent->birthCoolDown = 0;
+                            }
+                        }
+                    }
                 else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
                     // if we're waiting for a FORCE response, ignore
@@ -8368,7 +8397,7 @@ int main() {
                                             nextPlayer->id;
                                         
                                         // brand this player as a murderer
-                                        nextPlayer->everKilledOther = true;
+                                        nextPlayer->everKilledAnyone = true;
 
                                         if( hitPlayer->murderPerpEmail 
                                             != NULL ) {
@@ -10448,7 +10477,7 @@ int main() {
                                nextPlayer->lineageEveID,
                                yearsLived, 
                                ( killerID > 0 ),
-                               nextPlayer->everKilledOther );
+                               nextPlayer->everKilledAnyone );
         
                 if( ! nextPlayer->deathLogged ) {
                     char disconnect = true;

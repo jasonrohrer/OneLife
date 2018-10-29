@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 159    ???
+
+--/die command to trigger sudden infant death.  Triggered by baby player, but
+  only when under 1 year old and currently held by mother.  Causes a lineage
+  ban for the baby and instant reset of birth cooldown for the mother.
+
+
+
 Server Fixes
 
 --Fixed busy-wait server-side, due to instant SocketPoll response on
