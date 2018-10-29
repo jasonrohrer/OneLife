@@ -4852,6 +4852,25 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                 tutorialLoadingPlayers.size() - 1 );
             }
         
+        if( newPlayer == NULL ) {
+            // maybe new player reconnected AND asked for tutorial
+            // the fact that they asked for a twin code is irrelevant now
+            // they are not part of this waiting party
+
+            // take them out of waiting list too
+            for( int i=0; i<waitingForTwinConnections.size(); i++ ) {
+                if( waitingForTwinConnections.getElement( i )->sock ==
+                    inConnection.sock ) {
+                    // found
+                    
+                    waitingForTwinConnections.deleteElement( i );
+                    break;
+                    }
+                }
+            
+            return;
+            }
+
 
         int parent = newPlayer->parentID;
         int displayID = newPlayer->displayID;
