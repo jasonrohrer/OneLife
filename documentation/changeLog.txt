@@ -17,6 +17,7 @@ Version 159    ???
 --Fixed so that when trying to reconnect, client stops using twin code (was
   already born as a twin before, so want to reconnect to that life).
 
+--Fixed display of incorrect pattern-based transitions in transition editor.
 
 
 
