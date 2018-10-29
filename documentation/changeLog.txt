@@ -9,6 +9,8 @@ Version 159    ???
   only when under 1 year old and currently held by mother.  Causes a lineage
   ban for the baby and instant reset of birth cooldown for the mother.
 
+--Baby bones left in mother's arms after sudden infant death.
+
 
 
 Server Fixes

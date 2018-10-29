@@ -7595,13 +7595,48 @@ int main() {
 
                         nextPlayer->error = true;
                         nextPlayer->errorCauseString = "Baby suicide";
+                        int parentID = nextPlayer->heldByOtherID;
+                        
                         LiveObject *parent = 
-                            getLiveObject( nextPlayer->heldByOtherID );
+                            getLiveObject( parentID );
                         
                         if( parent != NULL ) {
                             // mother can have another baby right away
                             parent->birthCoolDown = 0;
+                            
+                            int babyBonesID = 
+                                SettingsManager::getIntSetting( 
+                                    "babyBones", -1 );
+
+                            if( babyBonesID != -1 ) {
+                                ObjectRecord *babyBonesO = 
+                                    getObject( babyBonesID );
+                                
+                                if( babyBonesO != NULL ) {
+                                    
+                                    // don't leave grave on ground just yet
+                                    nextPlayer->customGraveID = 0;
+                            
+                                    GridPos parentPos = 
+                                        computePartialMoveSpot( parent );
+
+                                    // put invisible grave there for now
+                                    GraveInfo graveInfo = { parentPos, 
+                                                            nextPlayer->id };
+                                    newGraves.push_back( graveInfo );
+                                    
+                                    parent->heldGraveOriginX = parentPos.x;
+                                    
+                                    parent->heldGraveOriginY = parentPos.y;
+                                 
+                                    playerIndicesToSendUpdatesAbout.push_back(
+                                        getLiveObjectIndex( parentID ) );
+                                    parent->holdingID = babyBonesID;
+                                    nextPlayer->heldByOther = false;
+                                    }
+                                }
                             }
+                        // else let normal grave appear for this dead baby
                         }
                     }
                 else if( m.type != SAY && m.type != EMOT &&
@@ -10588,7 +10623,7 @@ int main() {
                 if( isMapSpotEmpty( dropPos.x, dropPos.y, false ) ) {
                     int deathID = getRandomDeathMarker();
                     
-                    if( nextPlayer->customGraveID > 0 ) {
+                    if( nextPlayer->customGraveID > -1 ) {
                         deathID = nextPlayer->customGraveID;
                         }
 
