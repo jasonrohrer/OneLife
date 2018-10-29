@@ -7631,6 +7631,29 @@ int main() {
                                  
                                     playerIndicesToSendUpdatesAbout.push_back(
                                         getLiveObjectIndex( parentID ) );
+                                    
+                                    // what if baby wearing clothes?
+                                    for( int c=0; 
+                                         c < NUM_CLOTHING_PIECES; 
+                                         c++ ) {
+                                             
+                                        ObjectRecord *cObj = clothingByIndex(
+                                            nextPlayer->clothing, c );
+                                        
+                                        if( cObj != NULL ) {
+                                            // put clothing in parent's hand
+                                            // and then drop
+                                            parent->holdingID = cObj->id;
+                                            
+                                            handleDrop( 
+                                                parentPos.x, parentPos.y, 
+                                                parent,
+                                                NULL );
+                                            }
+                                        }
+                                    
+                                    // finally leave baby bones
+                                    // in their hands
                                     parent->holdingID = babyBonesID;
                                     
                                     // this works to force client to play
