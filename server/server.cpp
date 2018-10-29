@@ -7613,9 +7613,9 @@ int main() {
                             // baby wiggling out of parent's arms
                             
                             // block them from wiggling from their own 
-                            // mother's arms if they are under 3
+                            // mother's arms if they are under 1
                             
-                            if( computeAge( nextPlayer ) >= 3  ||
+                            if( computeAge( nextPlayer ) >= 1  ||
                                 nextPlayer->heldByOtherID != 
                                 nextPlayer->parentID ) {
                                 

@@ -9,6 +9,7 @@ Server Fixes
   disconnected sockets, by removing them from Poll as soon as they disconnect.
   This was causing 100% CPU.
 
+--Mother can only force-hold baby until age 1.
 
 
 
