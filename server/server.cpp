@@ -7632,6 +7632,12 @@ int main() {
                                     playerIndicesToSendUpdatesAbout.push_back(
                                         getLiveObjectIndex( parentID ) );
                                     parent->holdingID = babyBonesID;
+                                    
+                                    // this works to force client to play
+                                    // creation sound for baby bones.
+                                    parent->heldTransitionSourceID = 
+                                        nextPlayer->displayID;
+                                    
                                     nextPlayer->heldByOther = false;
                                     }
                                 }
