@@ -756,6 +756,7 @@ typedef enum messageType {
     GRAVE,
     GRAVE_MOVE,
     FORCED_SHUTDOWN,
+    PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
     } messageType;
@@ -853,6 +854,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "GM" ) == 0 ) {
         returnValue = GRAVE_MOVE;
+        }
+    else if( strcmp( copy, "PONG" ) == 0 ) {
+        returnValue = PONG;
         }
     else if( strcmp( copy, "SD" ) == 0 ) {
         returnValue = FORCED_SHUTDOWN;
@@ -1049,6 +1053,8 @@ char *getNextServerMessage() {
             char *message = getNextServerMessageRaw();
             
             if( message != NULL ) {
+                messageType t = getMessageType( message );
+                
                 if( strstr( message, "FM" ) == message ) {
                     // end of frame, discard the marker message
                     delete [] message;
@@ -1057,9 +1063,12 @@ char *getNextServerMessage() {
                         serverFrameReady = true;
                         }
                     }
-                else if( getMessageType( message ) == MAP_CHUNK ) {
+                else if( t == MAP_CHUNK ||
+                         t == PONG ) {
                     // map chunks are followed by compressed data
                     // they cannot be queued
+                    
+                    // PONG messages should be returned instantly
                     return message;
                     }
                 else {
@@ -1697,6 +1706,11 @@ static char nextActionDropping = false;
 static char playerActionPending = false;
 static int playerActionTargetX, playerActionTargetY;
 static char playerActionTargetNotAdjacent = false;
+
+
+static char waitingForPong = false;
+static int lastPingSent = 0;
+static int lastPongReceived = 0;
 
 
 int ourID;
@@ -9498,59 +9512,111 @@ void LivingLifePage::step() {
 
     double curTime = game_getCurrentTime();
 
+
+    // after 5 seconds of waiting, send PING
+    if( playerActionPending && 
+        ourObject != NULL && 
+        curTime - lastServerMessageReceiveTime < 1 &&
+        curTime - ourObject->pendingActionAnimationStartTime > 
+        5 + largestPendingMessageTimeGap &&
+        ! waitingForPong ) {
+
+        printf( "Been waiting for response to our action request "
+                "from server for %.2f seconds, and last server message "
+                "received %.2f sec ago, saw a message time gap along the way "
+                "of %.2f, sending PING request to server as sanity check.\n",
+                curTime - ourObject->pendingActionAnimationStartTime,
+                curTime - lastServerMessageReceiveTime,
+                largestPendingMessageTimeGap );
+
+        waitingForPong = true;
+        lastPingSent ++;
+        char *pingMessage = autoSprintf( "PING 0 0 %d#", lastPingSent );
+        
+        sendToServerSocket( pingMessage );
+        delete [] pingMessage;
+        }
+    
+
+    // after 10 seconds of waiting, if we HAVE received our PONG back
     if( playerActionPending && 
         ourObject != NULL && 
         curTime - lastServerMessageReceiveTime < 1 &&
         curTime - ourObject->pendingActionAnimationStartTime > 
         10 + largestPendingMessageTimeGap ) {
-        
+
         // been bouncing for five seconds with no answer from server
         // in the mean time, we have seen other messages arrive from server
         // (so any network outage is over)
 
-        printf( "Been waiting for response to our action request "
+        if( waitingForPong &&
+            lastPingSent == lastPongReceived ) {
+            
+            // and got PONG response, so server is hearing us
+            // tis is a real bug
+
+            printf( 
+                "Been waiting for response to our action request "
                 "from server for %.2f seconds, and last server message "
                 "received %.2f sec ago, saw a message time gap along the way "
-                "of %.2f, giving up\n",
+                "of %.2f, AND got PONG response to our PING, giving up\n",
                 curTime - ourObject->pendingActionAnimationStartTime,
                 curTime - lastServerMessageReceiveTime,
                 largestPendingMessageTimeGap );
 
-        sendBugReport( 1 );
+            sendBugReport( 1 );
 
-        // end it
-        ourObject->pendingActionAnimationProgress = 0;
-        ourObject->pendingActionAnimationTotalProgress = 0;
-        ourObject->pendingAction = false;
-                                
-        playerActionPending = false;
-        playerActionTargetNotAdjacent = false;
-
-        if( nextActionMessageToSend != NULL ) {
-            delete [] nextActionMessageToSend;
-            nextActionMessageToSend = NULL;
+            // end it
+            ourObject->pendingActionAnimationProgress = 0;
+            ourObject->pendingActionAnimationTotalProgress = 0;
+            ourObject->pendingAction = false;
+            
+            playerActionPending = false;
+            playerActionTargetNotAdjacent = false;
+            
+            if( nextActionMessageToSend != NULL ) {
+                delete [] nextActionMessageToSend;
+                nextActionMessageToSend = NULL;
+                }
+            
+            int goodX = ourObject->xServer;
+            int goodY = ourObject->yServer;
+            
+            printf( "   Jumping back to last-known server position of %d,%d\n",
+                    goodX, goodY );
+            
+            // jump to wherever server said we were before
+            ourObject->inMotion = false;
+            
+            ourObject->moveTotalTime = 0;
+            ourObject->currentSpeed = 0;
+            ourObject->currentGridSpeed = 0;
+            
+            
+            ourObject->currentPos.x = goodX;
+            ourObject->currentPos.y = goodY;
+            
+            ourObject->xd = goodX;
+            ourObject->yd = goodY;
+            ourObject->destTruncated = false;
             }
-        
-        int goodX = ourObject->xServer;
-        int goodY = ourObject->yServer;
+        else {
+            printf( 
+                "Been waiting for response to our action request "
+                "from server for %.2f seconds, and no response received "
+                "for our PING.  Declaring connection broken.\n",
+                curTime - ourObject->pendingActionAnimationStartTime );
+            
+            closeSocket( mServerSocket );
+            mServerSocket = -1;
 
-        printf( "   Jumping back to last-known server position of %d,%d\n",
-                goodX, goodY );
-
-        // jump to wherever server said we were before
-        ourObject->inMotion = false;
-                        
-        ourObject->moveTotalTime = 0;
-        ourObject->currentSpeed = 0;
-        ourObject->currentGridSpeed = 0;
-        
-
-        ourObject->currentPos.x = goodX;
-        ourObject->currentPos.y = goodY;
-        
-        ourObject->xd = goodX;
-        ourObject->yd = goodY;
-        ourObject->destTruncated = false;
+            if( mDeathReason != NULL ) {
+                delete [] mDeathReason;
+                }
+            mDeathReason = stringDuplicate( translate( "reasonDisconnected" ) );
+            
+            handleOurDeath( true );
+            }
         }
     
     
@@ -13957,6 +14023,10 @@ void LivingLifePage::step() {
                         &( ourLiveObject->excessCursePoints ) );
                 }
             }
+        else if( type == PONG ) {
+            sscanf( message, "PONG\n%d", 
+                    &( lastPongReceived ) );
+            }
         else if( type == NAMES ) {
             int numLines;
             char **lines = split( message, "\n", &numLines );
@@ -15827,6 +15897,11 @@ void LivingLifePage::makeActive( char inFresh ) {
 
     playerActionPending = false;
     
+    waitingForPong = false;
+    lastPingSent = 0;
+    lastPongReceived = 0;
+    
+
     serverSocketBuffer.deleteAll();
 
     if( nextActionMessageToSend != NULL ) {    

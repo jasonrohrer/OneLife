@@ -1122,6 +1122,7 @@ typedef enum messageType {
     MAP,
     TRIGGER,
     BUG,
+    PING,
     UNKNOWN
     } messageType;
 
@@ -1365,6 +1366,17 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         
         if( numRead != 4 ) {
             m.id = -1;
+            }
+        }
+    else if( strcmp( nameBuffer, "PING" ) == 0 ) {
+        m.type = PING;
+        // read unique id parameter
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.id ) );
+        
+        if( numRead != 4 ) {
+            m.id = 0;
             }
         }
     else if( strcmp( nameBuffer, "SREMV" ) == 0 ) {
@@ -7658,6 +7670,14 @@ int main() {
                             m.x, m.y,
                             nextPlayer->xd, nextPlayer->yd );
                         }
+                    }
+                else if( m.type == PING ) {
+                    // immediately send pong
+                    char *message = autoSprintf( "PONG\n%d#", m.id );
+
+                    sendMessageToPlayer( nextPlayer, message, 
+                                         strlen( message ) );
+                    delete [] message;
                     }
                 else if( m.type == DIE ) {
                     if( computeAge( nextPlayer ) < 1 &&

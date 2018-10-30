@@ -4,6 +4,17 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 162    ???
+
+--New PING message that client can use to verify server is receiving messages.
+  Sent before deciding whether to report a bouncing-forever bug.  At least some
+  of these are spuriously caused by connections that break in one direction
+  only.  It is only a true bug if we're receiving server responses to our
+  messages, but the expected response to our action was not received. 
+  PING/PONG lets us test this.
+
+
+
 Server Fixes
 
 --Server reports player's own id as killer id to lineage server in case of
