@@ -13,6 +13,7 @@ Version 162    ???
   messages, but the expected response to our action was not received. 
   PING/PONG lets us test this.
 
+--Scene Editor now displays saved scene number.
 
 
 Server Fixes
