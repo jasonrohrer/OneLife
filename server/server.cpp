@@ -6358,6 +6358,63 @@ int main() {
         return 1;
         }
     
+
+
+    if( false ) {
+        
+        printf( "Running map sampling\n" );
+    
+        int idA = 290;
+        int idB = 942;
+        
+        int totalCountA = 0;
+        int totalCountB = 0;
+        int numRuns = 2;
+
+        for( int i=0; i<numRuns; i++ ) {
+        
+        
+            int countA = 0;
+            int countB = 0;
+        
+            int x = randSource.getRandomBoundedInt( 10000, 300000 );
+            int y = randSource.getRandomBoundedInt( 10000, 300000 );
+        
+            printf( "Sampling at %d,%d\n", x, y );
+
+
+            for( int yd=y; yd<y + 1920; yd++ ) {
+                for( int xd=x; xd<x + 1920; xd++ ) {
+                    int oID = getMapObject( xd, yd );
+                
+                    if( oID == idA ) {
+                        countA ++;
+                        }
+                    else if( oID == idB ) {
+                        countB ++;
+                        }
+                    }
+                }
+            printf( "   Count at %d,%d is %d = %d, %d = %d\n",
+                    x, y, idA, countA, idB, countB );
+
+            totalCountA += countA;
+            totalCountB += countB;
+            }
+        printf( "Average count %d (%s) = %f,  %d (%s) = %f  over %d runs\n",
+                idA, getObject( idA )->description, 
+                totalCountA / (double)numRuns,
+                idB, getObject( idB )->description, 
+                totalCountB / (double)numRuns,
+                numRuns );
+        printf( "Press ENTER to continue:\n" );
+    
+        int readInt;
+        scanf( "%d", &readInt );
+        }
+    
+
+
     
     int port = 
         SettingsManager::getIntSetting( "port", 5077 );
