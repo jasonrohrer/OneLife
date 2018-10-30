@@ -1958,6 +1958,52 @@ static TransRecord **search( SimpleVector<TransRecord *> inMapToSearch[],
 
 
 
+// returns true if inCatID is NOT a pattern, too
+static char isTransPartOfPattern( int inCatID, TransRecord *inTrans ) {
+    CategoryRecord *catRec = getCategory( inCatID );
+    
+    if( catRec == NULL ) {
+        return true;
+        }
+    if( ! catRec->isPattern ) {
+        return true;
+        }
+
+    int patternSize = catRec->objectIDSet.size();
+    
+    CategoryRecord *actorCat = NULL;
+    CategoryRecord *targetCat = NULL;
+    
+    if( inTrans->actor > 0 ) {
+        actorCat = getCategory( inTrans->actor );
+        }
+    if( inTrans->target > 0 ) {
+        targetCat = getCategory( inTrans->target );
+        }
+    
+    char actorInPattern = false;
+    char targetInPattern = false;
+    
+    if( actorCat != NULL &&
+        actorCat->isPattern &&
+        actorCat->objectIDSet.size() == patternSize ) {
+        actorInPattern = true;
+        }
+    else if( targetCat != NULL &&
+             targetCat->isPattern &&
+             targetCat->objectIDSet.size() 
+             == patternSize ) {
+        targetInPattern = true;
+        }
+    
+    if( !actorInPattern && !targetInPattern ) {
+        return false;
+        }
+    return true;
+    }
+
+
+
 static TransRecord **searchWithCategories( 
     SimpleVector<TransRecord *> inMapToSearch[],
     int inID, 
@@ -1980,7 +2026,15 @@ static TransRecord **searchWithCategories(
         for( int i=0; i< catRec->categoryIDSet.size(); i++ ) {
             int catID = catRec->categoryIDSet.getElementDirect( i );
             if( catID < mapSize ) {
-                extraRecords += inMapToSearch[ catID ].size();
+                
+                for( int j=0; j<inMapToSearch[ catID ].size(); j++ ) {
+                    if( isTransPartOfPattern( 
+                            catID, 
+                            inMapToSearch[ catID ].getElementDirect( j ) ) ) {
+                        
+                        extraRecords ++;
+                        }
+                    }
                 }
             }
         }
@@ -2034,6 +2088,15 @@ static TransRecord **searchWithCategories(
                         &catNumResults, &catNumRemaining );
             if( catResult != NULL ) {
                 for( int r=0; r<catNumResults; r++ ) {
+                    
+                    // if cat is a pattern...
+                    // make sure at least one of actor or target 
+                    // is also part of pattern, else pattern does not apply
+                    if( ! isTransPartOfPattern( catID, catResult[r] ) ) {
+                        ( *outNumResults ) --;
+                        continue;
+                        }
+                    
                     results.push_back( catResult[r] );
                     }
                 delete [] catResult;

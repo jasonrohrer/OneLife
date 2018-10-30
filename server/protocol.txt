@@ -676,6 +676,7 @@ KILL x y#
 KILL x y id#
 JUMP x y#
 EMOT x y e#
+DIE x y#
 FORCE x y#
 
 
@@ -750,6 +751,11 @@ JUMP is used by a baby to jump out of its mother's arms.  The x and y
 
 EMOT is used to specify an emotion to display.  The x and y coordinates are
      ignored.  e is the emotion index.
+
+DIE  is used to trigger sudden infant death for a held baby.  The server
+     enforces various conditions that limit when this command can be effective.
+     (For example, age < 1 and held by mother).  The x and y coordinates are
+     ignored.
 
 FORCE  is used to acknowledge a forced-pos PU sent previously by the server.
        The x and y coordinates must match the forced position in the PU.

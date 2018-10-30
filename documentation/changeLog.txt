@@ -4,6 +4,37 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 160    2018-October-29
+
+--/die command to trigger sudden infant death.  Triggered by baby player, but
+  only when under 1 year old and currently held by mother.  Causes a lineage
+  ban for the baby and instant reset of birth cooldown for the mother.
+
+--Baby bones left in mother's arms after sudden infant death.
+
+--Pre-loading of all direct-from-death grave objects to avoid partial-sprite
+  pop-in.  Marked them all with fromDeath in description.
+
+--Fixed so that when trying to reconnect, client stops using twin code (was
+  already born as a twin before, so want to reconnect to that life).
+
+--Fixed display of incorrect pattern-based transitions in transition editor.
+
+
+
+Server Fixes
+
+--Fixed busy-wait server-side, due to instant SocketPoll response on
+  disconnected sockets, by removing them from Poll as soon as they disconnect.
+  This was causing 100% CPU.
+
+--Mother can only force-hold baby until age 1.
+
+--Fixed server crash when player reconnects but tries to join a twin game.
+
+
+
+
 Version 157    2018-October-26
 
 --Client handles disconnection with better messaging (no longer describes it as

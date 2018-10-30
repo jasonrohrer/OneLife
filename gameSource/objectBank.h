@@ -586,6 +586,11 @@ int getPrevPersonObject( int inCurrentPersonObjectID );
 int getRandomDeathMarker();
 
 
+// NOT destroyed or modified by caller
+SimpleVector<int> *getAllPossibleDeathIDs();
+
+
+
 // return array destroyed by caller
 ObjectRecord **getAllObjects( int *outNumResults );
 

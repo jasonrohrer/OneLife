@@ -211,9 +211,9 @@ char isLinePermitted( const char *inPlayerEmail, int inLineageEveID ) {
 
 void recordLineage( const char *inPlayerEmail, int inLineageEveID,
                     double inLivedYears, char inMurdered, 
-                    char inCommittedMurder ) {
+                    char inCommittedMurderOrSID ) {
 
-    if( inMurdered || inCommittedMurder ) {
+    if( inMurdered || inCommittedMurderOrSID ) {
         // push up over the limit no matter how long they have lived
         inLivedYears += oneLineMaxYears;
         }

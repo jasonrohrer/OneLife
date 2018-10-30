@@ -272,6 +272,9 @@ unrelated "NO RELATION"
 
 
 
+dieCommand "/DIE"
+
+
 youDied "YOU DIED"
 
 deathAgeOne "AGE:  1 YEAR"
@@ -288,6 +291,8 @@ reasonKilled "CAUSE:  KILLED BY "
 reasonKilledUnknown "CAUSE:  KILLED BY UNKNOWN WEAPON"
 
 reasonOldAge "CAUSE:  OLD AGE"
+
+reasonSID "CAUSE:  SUDDEN INFANT DEATH"
 
 reasonUnknown "CAUSE:  UNKNOWN"
 

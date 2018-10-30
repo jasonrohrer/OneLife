@@ -334,7 +334,8 @@ typedef struct LiveObject {
         int deathSourceID;
         
         // true if this character landed a mortal wound on another player
-        char everKilledOther;
+        // or if this player chose death by sudden infant death
+        char everKilledAnyone;
 
 
         Socket *sock;
@@ -1114,6 +1115,7 @@ typedef enum messageType {
     SAY,
     EMOT,
     JUMP,
+    DIE,
     FORCE,
     MAP,
     TRIGGER,
@@ -1316,6 +1318,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "JUMP" ) == 0 ) {
         m.type = JUMP;
+        }
+    else if( strcmp( nameBuffer, "DIE" ) == 0 ) {
+        m.type = DIE;
         }
     else if( strcmp( nameBuffer, "FORCE" ) == 0 ) {
         m.type = FORCE;
@@ -2455,6 +2460,9 @@ static int getMaxChunkDimension() {
     }
 
 
+static SocketPoll sockPoll;
+
+
 
 static void setPlayerDisconnected( LiveObject *inPlayer, 
                                    const char *inReason ) {    
@@ -2471,6 +2479,10 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
     AppLog::infoF( "Player %d (%s) marked as disconnected.",
                    inPlayer->id, inPlayer->email );
     inPlayer->connected = false;
+
+    // also, stop polling their socket, which will trigger constant
+    // socket events from here on out, and cause us to busy-loop
+    sockPoll.removeSocket( inPlayer->sock );
     }
 
 
@@ -4645,7 +4657,7 @@ int processLoggedInPlayer( Socket *inSock,
     
     newObject.deathSourceID = 0;
     
-    newObject.everKilledOther = false;
+    newObject.everKilledAnyone = false;
     
 
     newObject.sock = inSock;
@@ -4840,6 +4852,25 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                 tutorialLoadingPlayers.size() - 1 );
             }
         
+        if( newPlayer == NULL ) {
+            // maybe new player reconnected AND asked for tutorial
+            // the fact that they asked for a twin code is irrelevant now
+            // they are not part of this waiting party
+
+            // take them out of waiting list too
+            for( int i=0; i<waitingForTwinConnections.size(); i++ ) {
+                if( waitingForTwinConnections.getElement( i )->sock ==
+                    inConnection.sock ) {
+                    // found
+                    
+                    waitingForTwinConnections.deleteElement( i );
+                    break;
+                    }
+                }
+            
+            return;
+            }
+
 
         int parent = newPlayer->parentID;
         int displayID = newPlayer->displayID;
@@ -6327,12 +6358,66 @@ int main() {
         return 1;
         }
     
+
+
+    if( false ) {
+        
+        printf( "Running map sampling\n" );
+    
+        int idA = 290;
+        int idB = 942;
+        
+        int totalCountA = 0;
+        int totalCountB = 0;
+        int numRuns = 2;
+
+        for( int i=0; i<numRuns; i++ ) {
+        
+        
+            int countA = 0;
+            int countB = 0;
+        
+            int x = randSource.getRandomBoundedInt( 10000, 300000 );
+            int y = randSource.getRandomBoundedInt( 10000, 300000 );
+        
+            printf( "Sampling at %d,%d\n", x, y );
+
+
+            for( int yd=y; yd<y + 2400; yd++ ) {
+                for( int xd=x; xd<x + 2400; xd++ ) {
+                    int oID = getMapObject( xd, yd );
+                
+                    if( oID == idA ) {
+                        countA ++;
+                        }
+                    else if( oID == idB ) {
+                        countB ++;
+                        }
+                    }
+                }
+            printf( "   Count at %d,%d is %d = %d, %d = %d\n",
+                    x, y, idA, countA, idB, countB );
+
+            totalCountA += countA;
+            totalCountB += countB;
+            }
+        printf( "Average count %d (%s) = %f,  %d (%s) = %f  over %d runs\n",
+                idA, getObject( idA )->description, 
+                totalCountA / (double)numRuns,
+                idB, getObject( idB )->description, 
+                totalCountB / (double)numRuns,
+                numRuns );
+        printf( "Press ENTER to continue:\n" );
+    
+        int readInt;
+        scanf( "%d", &readInt );
+        }
+    
+
+
     
     int port = 
         SettingsManager::getIntSetting( "port", 5077 );
-    
-    
-    SocketPoll sockPoll;
     
     
     
@@ -7416,6 +7501,8 @@ int main() {
                 nextPlayer->lastRegionLookTime = curLookTime;
                 }
 
+            char *message = NULL;
+            
             if( nextPlayer->connected ) {    
                 char result = 
                     readSocketFull( nextPlayer->sock, nextPlayer->sockBuffer );
@@ -7423,10 +7510,13 @@ int main() {
                 if( ! result ) {
                     setPlayerDisconnected( nextPlayer, "Socket read failed" );
                     }
+                else {
+                    // don't even bother parsing message buffer for players
+                    // that are not currently connected
+                    message = getNextClientMessage( nextPlayer->sockBuffer );
+                    }
                 }
             
-
-            char *message = getNextClientMessage( nextPlayer->sockBuffer );
             
             if( message != NULL ) {
                 someClientMessageReceived = true;
@@ -7566,6 +7656,94 @@ int main() {
                             nextPlayer->xd, nextPlayer->yd );
                         }
                     }
+                else if( m.type == DIE ) {
+                    if( computeAge( nextPlayer ) < 1 &&
+                        nextPlayer->heldByOther &&
+                        nextPlayer->heldByOtherID == 
+                        nextPlayer->parentID ) {
+                        
+                        // killed self
+                        // SID triggers a lineage ban
+                        nextPlayer->everKilledAnyone = true;
+                        
+
+                        setDeathReason( nextPlayer, "SID" );
+
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString = "Baby suicide";
+                        int parentID = nextPlayer->heldByOtherID;
+                        
+                        LiveObject *parent = 
+                            getLiveObject( parentID );
+                        
+                        if( parent != NULL ) {
+                            // mother can have another baby right away
+                            parent->birthCoolDown = 0;
+                            
+                            int babyBonesID = 
+                                SettingsManager::getIntSetting( 
+                                    "babyBones", -1 );
+
+                            if( babyBonesID != -1 ) {
+                                ObjectRecord *babyBonesO = 
+                                    getObject( babyBonesID );
+                                
+                                if( babyBonesO != NULL ) {
+                                    
+                                    // don't leave grave on ground just yet
+                                    nextPlayer->customGraveID = 0;
+                            
+                                    GridPos parentPos = 
+                                        computePartialMoveSpot( parent );
+
+                                    // put invisible grave there for now
+                                    GraveInfo graveInfo = { parentPos, 
+                                                            nextPlayer->id };
+                                    newGraves.push_back( graveInfo );
+                                    
+                                    parent->heldGraveOriginX = parentPos.x;
+                                    
+                                    parent->heldGraveOriginY = parentPos.y;
+                                 
+                                    playerIndicesToSendUpdatesAbout.push_back(
+                                        getLiveObjectIndex( parentID ) );
+                                    
+                                    // what if baby wearing clothes?
+                                    for( int c=0; 
+                                         c < NUM_CLOTHING_PIECES; 
+                                         c++ ) {
+                                             
+                                        ObjectRecord *cObj = clothingByIndex(
+                                            nextPlayer->clothing, c );
+                                        
+                                        if( cObj != NULL ) {
+                                            // put clothing in parent's hand
+                                            // and then drop
+                                            parent->holdingID = cObj->id;
+                                            
+                                            handleDrop( 
+                                                parentPos.x, parentPos.y, 
+                                                parent,
+                                                NULL );
+                                            }
+                                        }
+                                    
+                                    // finally leave baby bones
+                                    // in their hands
+                                    parent->holdingID = babyBonesID;
+                                    
+                                    // this works to force client to play
+                                    // creation sound for baby bones.
+                                    parent->heldTransitionSourceID = 
+                                        nextPlayer->displayID;
+                                    
+                                    nextPlayer->heldByOther = false;
+                                    }
+                                }
+                            }
+                        // else let normal grave appear for this dead baby
+                        }
+                    }
                 else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
                     // if we're waiting for a FORCE response, ignore
@@ -7604,9 +7782,9 @@ int main() {
                             // baby wiggling out of parent's arms
                             
                             // block them from wiggling from their own 
-                            // mother's arms if they are under 3
+                            // mother's arms if they are under 1
                             
-                            if( computeAge( nextPlayer ) >= 3  ||
+                            if( computeAge( nextPlayer ) >= 1  ||
                                 nextPlayer->heldByOtherID != 
                                 nextPlayer->parentID ) {
                                 
@@ -8359,7 +8537,7 @@ int main() {
                                             nextPlayer->id;
                                         
                                         // brand this player as a murderer
-                                        nextPlayer->everKilledOther = true;
+                                        nextPlayer->everKilledAnyone = true;
 
                                         if( hitPlayer->murderPerpEmail 
                                             != NULL ) {
@@ -10439,7 +10617,7 @@ int main() {
                                nextPlayer->lineageEveID,
                                yearsLived, 
                                ( killerID > 0 ),
-                               nextPlayer->everKilledOther );
+                               nextPlayer->everKilledAnyone );
         
                 if( ! nextPlayer->deathLogged ) {
                     char disconnect = true;
@@ -10550,7 +10728,7 @@ int main() {
                 if( isMapSpotEmpty( dropPos.x, dropPos.y, false ) ) {
                     int deathID = getRandomDeathMarker();
                     
-                    if( nextPlayer->customGraveID > 0 ) {
+                    if( nextPlayer->customGraveID > -1 ) {
                         deathID = nextPlayer->customGraveID;
                         }
 

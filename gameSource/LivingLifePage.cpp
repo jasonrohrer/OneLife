@@ -12940,6 +12940,10 @@ void LivingLifePage::step() {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonHunger" ) );
                             }
+                        else if( strcmp( reasonString, "SID" ) == 0 ) {
+                            mDeathReason = stringDuplicate( 
+                                translate( "reasonSID" ) );
+                            }
                         else if( strcmp( reasonString, "age" ) == 0 ) {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonOldAge" ) );
@@ -15602,11 +15606,23 @@ void LivingLifePage::step() {
             
             clearLiveObjectSet();
             
-            // FIXME:
+            
             // push all objects from grid, live players, what they're holding
             // and wearing into live set
 
-            // first, players
+            // any direct-from-death graves
+            // we want these to pop in instantly whenever someone dies
+            SimpleVector<int> *allPossibleDeathMarkerIDs = 
+                getAllPossibleDeathIDs();
+            
+            for( int i=0; i<allPossibleDeathMarkerIDs->size(); i++ ) {
+                addBaseObjectToLiveObjectSet( 
+                    allPossibleDeathMarkerIDs->getElementDirect( i ) );
+                }
+            
+            
+            
+            // next, players
             for( int i=0; i<gameObjects.size(); i++ ) {
                 LiveObject *o = gameObjects.getElement( i );
                 
@@ -18278,6 +18294,16 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                             if( emotIndex != -1 ) {
                                 char *message = 
                                     autoSprintf( "EMOT 0 0 %d#", emotIndex );
+                                
+                                sendToServerSocket( message );
+                                delete [] message;
+                                }
+                            else if( strstr( typedText,
+                                             translate( "dieCommand" ) ) 
+                                     == typedText ) {
+                                // die command issued
+                                char *message = 
+                                    autoSprintf( "DIE 0 0#" );
                                 
                                 sendToServerSocket( message );
                                 delete [] message;

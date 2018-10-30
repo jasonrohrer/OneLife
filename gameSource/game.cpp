@@ -1,4 +1,4 @@
-int versionNumber = 157;
+int versionNumber = 160;
 int dataVersionNumber = 0;
 
 // NOTE that OneLife doesn't use account hmacs
@@ -1197,6 +1197,8 @@ static void startConnecting() {
 
 
 void showDiedPage() {
+    userReconnect = false;
+    
     lastScreenViewCenter.x = 0;
     lastScreenViewCenter.y = 0;
     
@@ -1238,6 +1240,13 @@ void showReconnectPage() {
     extendedMessagePage->setSubMessage( translate( "willTryReconnect" ) );
     
     userReconnect = true;
+    
+    // don't reconnect as twin
+    // that will cause them to wait for their party again.
+    if( userTwinCode != NULL ) {
+        delete [] userTwinCode;
+        userTwinCode = NULL;
+        }
     
     currentGamePage->base_makeActive( true );
     }
