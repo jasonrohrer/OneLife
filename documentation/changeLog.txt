@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--Server reports player's own id as killer id to lineage server in case of
+  /die, and lineage server displays Sudden Infant Death as cause of death.
+
+
+
 Version 160    2018-October-29
 
 --/die command to trigger sudden infant death.  Triggered by baby player, but

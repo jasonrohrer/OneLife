@@ -334,9 +334,11 @@ typedef struct LiveObject {
         int deathSourceID;
         
         // true if this character landed a mortal wound on another player
-        // or if this player chose death by sudden infant death
         char everKilledAnyone;
 
+        // true in case of sudden infant death
+        char suicide;
+        
 
         Socket *sock;
         SimpleVector<char> *sockBuffer;
@@ -4658,6 +4660,7 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.deathSourceID = 0;
     
     newObject.everKilledAnyone = false;
+    newObject.suicide = false;
     
 
     newObject.sock = inSock;
@@ -7664,8 +7667,7 @@ int main() {
                         
                         // killed self
                         // SID triggers a lineage ban
-                        nextPlayer->everKilledAnyone = true;
-                        
+                        nextPlayer->suicide = true;
 
                         setDeathReason( nextPlayer, "SID" );
 
@@ -10591,6 +10593,11 @@ int main() {
                     // include as negative of ID
                     killerID = - nextPlayer->deathSourceID;
                     }
+                else if( nextPlayer->suicide ) {
+                    // self id is killer
+                    killerID = nextPlayer->id;
+                    }
+                
                 
                 
                 char male = ! getFemale( nextPlayer );
