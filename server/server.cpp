@@ -6383,8 +6383,8 @@ int main() {
             printf( "Sampling at %d,%d\n", x, y );
 
 
-            for( int yd=y; yd<y + 1920; yd++ ) {
-                for( int xd=x; xd<x + 1920; xd++ ) {
+            for( int yd=y; yd<y + 2400; yd++ ) {
+                for( int xd=x; xd<x + 2400; xd++ ) {
                     int oID = getMapObject( xd, yd );
                 
                     if( oID == idA ) {
