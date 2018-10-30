@@ -212,16 +212,18 @@ char isLinePermitted( const char *inPlayerEmail, int inLineageEveID ) {
 void recordLineage( const char *inPlayerEmail, int inLineageEveID,
                     double inLivedYears, char inMurdered, 
                     char inCommittedMurderOrSID ) {
-
+    double livedInThisLineYears = inLivedYears;
+    
     if( inMurdered || inCommittedMurderOrSID ) {
-        // push up over the limit no matter how long they have lived
-        inLivedYears += oneLineMaxYears;
+        // push up over the limit with fake time
+        // no matter how long they have lived
+        livedInThisLineYears += oneLineMaxYears;
         }
 
     HashTableEntry *e = lookup( inPlayerEmail );
     
     if( e == NULL ) {
-        insert( inPlayerEmail, inLineageEveID, inLivedYears );
+        insert( inPlayerEmail, inLineageEveID, livedInThisLineYears );
         return;
         }
     
@@ -236,7 +238,7 @@ void recordLineage( const char *inPlayerEmail, int inLineageEveID,
         if( t->lineageEveID == inLineageEveID ) {
             // previously born in this lineage, adjust with new birth time
             t->lastBornTime = curTime;
-            t->totalLivedThisLine += inLivedYears;
+            t->totalLivedThisLine += livedInThisLineYears;
             
             // clear out count in other lines
             // that count only starts happening after we're done
@@ -246,13 +248,16 @@ void recordLineage( const char *inPlayerEmail, int inLineageEveID,
             found = true;
             }
         else {
+            // when counting "other line" time, don't include "fake"
+            // time that we may have added in above for murderers or murder
+            // victims
             t->totalLivedOtherLines += inLivedYears;
             }
         }
 
     if( !found ) {
         // not found, add new one
-        LineageTime t = { inLineageEveID, curTime, inLivedYears, 0 };
+        LineageTime t = { inLineageEveID, curTime, livedInThisLineYears, 0 };
         e->times->push_back( t );
         e->freshestTime = curTime;
         }

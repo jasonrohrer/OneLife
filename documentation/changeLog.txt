@@ -9,6 +9,9 @@ Server Fixes
 --Server reports player's own id as killer id to lineage server in case of
   /die, and lineage server displays Sudden Infant Death as cause of death.
 
+--Fixed lineage ban calcuation for /die babies and killers/victims.  Was
+  living extra time in other lines by accident.
+
 
 
 Version 160    2018-October-29
