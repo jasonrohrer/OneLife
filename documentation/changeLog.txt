@@ -34,6 +34,11 @@ Server Fixes
 
 --Fixed bug in way curse token status was being updated.
 
+--Finally fixed replacement of used objects and variable objects on server
+  restart.  Server now saves a mapDummyRecall file, and uses that to restore
+  the objects.  After server restart, partial stacks no longer become full,
+  berry bushes no longer replentish, and locks no longer become generic locks.
+
 
 
 Version 160    2018-October-29

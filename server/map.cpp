@@ -2842,6 +2842,60 @@ char initMap() {
     else {
         AppLog::info( "Skipping cleaning map of removed objects" );
         }
+
+    
+    FILE *dummyFile = fopen( "mapDummyRecall.txt", "r" );
+    
+    if( dummyFile != NULL ) {
+        AppLog::info( "Found mapDummyRecall.txt file, restoring dummy objects "
+                      "on map" );
+        
+        int numRead = 5;
+        
+        int numSet = 0;
+        
+        while( numRead == 5 ) {
+            
+            int x, y, parentID, dummyIndex;
+            
+            char marker;            
+            
+            numRead = fscanf( dummyFile, "(%d,%d) %c %d %d\n", 
+                              &x, &y, &marker, &parentID, &dummyIndex );
+            if( numRead == 5 ) {
+                
+                ObjectRecord *parent = getObject( parentID );
+                
+                int dummyID = -1;
+                
+                if( parent != NULL ) {
+                    
+                    if( marker == 'u' && parent->numUses-1 > dummyIndex ) {
+                        dummyID = parent->useDummyIDs[ dummyIndex ];
+                        }
+                    else if( marker == 'v' && 
+                             parent->numVariableDummyIDs > dummyIndex ) {
+                        dummyID = parent->variableDummyIDs[ dummyIndex ];
+                        }
+                    }
+                if( dummyID > 0 ) {
+                    setMapObject( x, y, dummyID );
+                    numSet = true;
+                    }
+                }
+            }
+        fclose( dummyFile );
+        
+        
+        AppLog::infoF( "Restored %d dummy objects to map", numSet );
+        
+        remove( "mapDummyRecall.txt" );
+        
+        printf( "\n" );
+        }
+    
+
+
     
     if( totalSetCount == 0 ) {
         // map has been cleared
@@ -2917,6 +2971,58 @@ void freeAndNullString( char **inStringPointer ) {
 
 
 
+static void rememberDummy( FILE *inFile, int inX, int inY, 
+                           ObjectRecord *inDummyO ) {
+    
+    if( inFile == NULL ) {
+        return;
+        }
+    
+    int parent = -1;
+    int dummyIndex = -1;
+
+    char marker = 'x';
+
+    if( inDummyO->isUseDummy ) {
+        marker = 'u';
+        
+        parent = inDummyO->useDummyParent;
+        ObjectRecord *parentO = getObject( parent );
+        
+        if( parentO != NULL ) {    
+            for( int i=0; i<parentO->numUses - 1; i++ ) {
+                if( parentO->useDummyIDs[i] == inDummyO->id ) {
+                    dummyIndex = i;
+                    break;
+                    }
+                }
+            }
+        }
+    else if( inDummyO->isVariableDummy ) {
+        marker = 'v';
+        
+        parent = inDummyO->variableDummyParent;
+        ObjectRecord *parentO = getObject( parent );
+        
+        if( parentO != NULL ) {    
+            for( int i=0; i<parentO->numVariableDummyIDs; i++ ) {
+                if( parentO->variableDummyIDs[i] == inDummyO->id ) {
+                    dummyIndex = i;
+                    break;
+                    }
+                }
+            }
+        }
+    
+    if( parent > 0 && dummyIndex >= 0 ) {
+        fprintf( inFile, "(%d,%d) %c %d %d\n", 
+                 inX, inY, 
+                 marker, parent, dummyIndex );
+        }
+    }
+
+
+
 void freeMap() {
     printf( "%d calls to getBaseMap\n", getBaseMapCallCount );
 
@@ -2966,49 +3072,62 @@ void freeMap() {
         
 
         
-        if( !skipUseDummyCleanup )
-        while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
-        
-            int s = valueToInt( &( key[8] ) );
-            int b = valueToInt( &( key[12] ) );
-       
-            if( s == 0 ) {
-                int id = valueToInt( value );
+        if( !skipUseDummyCleanup ) {    
             
-                if( id > 0 ) {
+            FILE *dummyFile = fopen( "mapDummyRecall.txt", "w" );
+            
+            while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
+        
+                int s = valueToInt( &( key[8] ) );
+                int b = valueToInt( &( key[12] ) );
+       
+                if( s == 0 ) {
+                    int id = valueToInt( value );
+            
+                    if( id > 0 ) {
                     
-                    ObjectRecord *mapO = getObject( id );
+                        ObjectRecord *mapO = getObject( id );
                     
                     
-                    if( mapO != NULL ) {
-                        if( mapO->isUseDummy ) {
-                            int x = valueToInt( key );
-                            int y = valueToInt( &( key[4] ) );
+                        if( mapO != NULL ) {
+                            if( mapO->isUseDummy ) {
+                                int x = valueToInt( key );
+                                int y = valueToInt( &( key[4] ) );
                     
-                            xToPlace.push_back( x );
-                            yToPlace.push_back( y );
-                            idToPlace.push_back( mapO->useDummyParent );
-                            }
-                        else if( mapO->isVariableDummy ) {
-                            int x = valueToInt( key );
-                            int y = valueToInt( &( key[4] ) );
+                                xToPlace.push_back( x );
+                                yToPlace.push_back( y );
+                                idToPlace.push_back( mapO->useDummyParent );
+                                
+                                rememberDummy( dummyFile, x, y, mapO );
+                                }
+                            else if( mapO->isVariableDummy ) {
+                                int x = valueToInt( key );
+                                int y = valueToInt( &( key[4] ) );
                             
-                            xToPlace.push_back( x );
-                            yToPlace.push_back( y );
-                            idToPlace.push_back( mapO->variableDummyParent );
+                                xToPlace.push_back( x );
+                                yToPlace.push_back( y );
+                                idToPlace.push_back( 
+                                    mapO->variableDummyParent );
+                                
+                                rememberDummy( dummyFile, x, y, mapO );
+                                }
                             }
                         }
                     }
-                }
-            else if( s == 2 ) {
-                int numSlots = valueToInt( value );
-                if( numSlots > 0 ) {
-                    int x = valueToInt( key );
-                    int y = valueToInt( &( key[4] ) );
-                    xContToCheck.push_back( x );
-                    yContToCheck.push_back( y );
-                    bContToCheck.push_back( b );
+                else if( s == 2 ) {
+                    int numSlots = valueToInt( value );
+                    if( numSlots > 0 ) {
+                        int x = valueToInt( key );
+                        int y = valueToInt( &( key[4] ) );
+                        xContToCheck.push_back( x );
+                        yContToCheck.push_back( y );
+                        bContToCheck.push_back( b );
+                        }
                     }
+                }
+            
+            if( dummyFile != NULL ) {
+                fclose( dummyFile );
                 }
             }
         
