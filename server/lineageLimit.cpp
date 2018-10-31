@@ -232,7 +232,8 @@ void recordLineage( const char *inPlayerEmail, int inLineageEveID,
     if( inMurdered ) {
         // actual murder victim
         // ban them from the line for longer
-        otherLineRequiredYearsThis *= 2;
+        // Actually, don't do this for now, but the option is there
+        //otherLineRequiredYearsThis *= 2;
         }
     
 

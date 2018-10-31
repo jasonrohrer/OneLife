@@ -26,8 +26,6 @@ Server Fixes
 --Fixed lineage ban calcuation for /die babies and killers/victims.  Was
   living extra time in other lines by accident.
 
---Murder victims now get 2x lineage ban.
-
 
 
 
