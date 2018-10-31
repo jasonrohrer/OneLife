@@ -20,6 +20,8 @@ show grid
 
 set xtics rotate by -45
 
+set xtics out
+
 set key off
 
 
@@ -35,15 +37,16 @@ set format x "%b/%d"
 #set timefmt "%m/%d/%y"
 
 #set xtics rotate by -45
-set xtics 345600
+set xtics 1296000
 
 #set decimal locale
 #set format y "%'g"
 
+#set yrange [0:0.06]	
 
 set style fill solid noborder
 
 set size 1, .8
 
 
-plot "murderRate.dat" using ($2 - ( 8 * 3600 ) ):($5/$4) with filledcurves y1=0 fillcolor rgb "#000000"
+plot "murderRate.dat" using ($2 - ( 8 * 3600 ) ):($4/$3) with filledcurves y1=0 fillcolor rgb "#000000"
