@@ -18,6 +18,7 @@ typedef struct LineageTime {
         double lastBornTime;
         double totalLivedThisLine;
         double totalLivedOtherLines;
+        double otherLineRequiredYears;
     } LineageTime;
     
 
@@ -141,14 +142,15 @@ static HashTableEntry *lookup( const char *inPlayerEmail ) {
 
 
 static void insert( const char *inPlayerEmail, int inLineageEveID,
-                    double inLivedYears ) {
+                    double inLivedYears, double inOtherLineRequiredYears ) {
     // new record saying player born in this line NOW
     
     double curTime = Time::getCurrentTime();
     
     SimpleVector<LineageTime> *tList = new SimpleVector<LineageTime>();
     
-    LineageTime tNew = { inLineageEveID, curTime, inLivedYears, 0 };
+    LineageTime tNew = { inLineageEveID, curTime, inLivedYears, 0,
+                         inOtherLineRequiredYears };
     
     tList->push_back( tNew );
 
@@ -190,13 +192,17 @@ char isLinePermitted( const char *inPlayerEmail, int inLineageEveID ) {
                 // we're allowed to live more in this line
                 return true;
                 }
-            else if( t->totalLivedOtherLines >= otherLineRequiredYears ) {
+            else if( t->totalLivedOtherLines >= t->otherLineRequiredYears ) {
                 // we've lived long enough in other lines
                 // clear our count in this line
                 t->totalLivedThisLine = 0;
                 return true;
                 }
-
+            printf( "Lived %f years in this line (over %f) and only "
+                    "lived %f years in other lines (%f required), blocked\n",
+                    t->totalLivedThisLine, oneLineMaxYears,
+                    t->totalLivedOtherLines, t->otherLineRequiredYears );
+            
             // else we've lived too long in this line, and not long enough
             // in other lines
             return false;
@@ -213,6 +219,9 @@ void recordLineage( const char *inPlayerEmail, int inLineageEveID,
                     double inLivedYears, char inMurdered, 
                     char inCommittedMurderOrSID ) {
     double livedInThisLineYears = inLivedYears;
+
+    double otherLineRequiredYearsThis = otherLineRequiredYears;
+
     
     if( inMurdered || inCommittedMurderOrSID ) {
         // push up over the limit with fake time
@@ -220,10 +229,18 @@ void recordLineage( const char *inPlayerEmail, int inLineageEveID,
         livedInThisLineYears += oneLineMaxYears;
         }
 
+    if( inMurdered ) {
+        // actual murder victim
+        // ban them from the line for longer
+        otherLineRequiredYearsThis *= 2;
+        }
+    
+
     HashTableEntry *e = lookup( inPlayerEmail );
     
     if( e == NULL ) {
-        insert( inPlayerEmail, inLineageEveID, livedInThisLineYears );
+        insert( inPlayerEmail, inLineageEveID, livedInThisLineYears,
+                otherLineRequiredYearsThis );
         return;
         }
     
@@ -245,6 +262,11 @@ void recordLineage( const char *inPlayerEmail, int inLineageEveID,
             // living in this line
             t->totalLivedOtherLines = 0;
             
+            if( t->otherLineRequiredYears < otherLineRequiredYearsThis ) {
+                // update with larger required value
+                t->otherLineRequiredYears = otherLineRequiredYearsThis;
+                }
+
             found = true;
             }
         else {
@@ -257,7 +279,8 @@ void recordLineage( const char *inPlayerEmail, int inLineageEveID,
 
     if( !found ) {
         // not found, add new one
-        LineageTime t = { inLineageEveID, curTime, livedInThisLineYears, 0 };
+        LineageTime t = { inLineageEveID, curTime, livedInThisLineYears, 0,
+                          otherLineRequiredYearsThis };
         e->times->push_back( t );
         e->freshestTime = curTime;
         }

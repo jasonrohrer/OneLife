@@ -10643,8 +10643,11 @@ int main() {
                 recordLineage( nextPlayer->email, 
                                nextPlayer->lineageEveID,
                                yearsLived, 
-                               ( killerID > 0 ),
-                               nextPlayer->everKilledAnyone );
+                               // count true murder victims here, not suicide
+                               ( killerID > 0 && killerID != nextPlayer->id ),
+                               // killed other or committed SID suicide
+                               nextPlayer->everKilledAnyone || 
+                               nextPlayer->suicide );
         
                 if( ! nextPlayer->deathLogged ) {
                     char disconnect = true;
