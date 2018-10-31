@@ -457,8 +457,23 @@ char hasCurseToken( char *inEmail ) {
 
 
 void getNewCurseTokenHolders( SimpleVector<char*> *inEmailList ) {
-    inEmailList->push_back_other( &newTokenEmails );
+    stepCurses();
     
+    // some of newTokenEmails might be stale now and no longer have
+    // curse points
+    for( int i=0; i<newTokenEmails.size(); i++ ) {
+        
+        char *email = newTokenEmails.getElementDirect( i );
+        
+        CurseRecord *r = findCurseRecord( email );
+
+        if( r != NULL && r->tokens > 0 ) {   
+            inEmailList->push_back( email );
+            }
+        else {
+            delete [] email;
+            }
+        }
     newTokenEmails.deleteAll();
     }
 

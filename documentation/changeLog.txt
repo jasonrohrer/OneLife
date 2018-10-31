@@ -32,6 +32,8 @@ Server Fixes
   worst repeat offenders will eventually be kept there for five hours every
   time.
 
+--Fixed bug in way curse token status was being updated.
+
 
 
 Version 160    2018-October-29
