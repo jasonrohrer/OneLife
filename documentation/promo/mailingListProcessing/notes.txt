@@ -1,0 +1,82 @@
+Extract full mailing list:
+
+mysql --auto-rehash -s -u jcr13_rlU -p jcr13_releaseList -e "select email from mailingList_recipients where confirmed=1" > ~/mailingList.txt
+
+
+
+Extract full list of existing owners:
+
+mysql --auto-rehash -s -u  jcr15_olTickUser -p  jcr15_olTicket -e "select email from ticketServer_tickets where tag != 'steam';" > ~/ownerEmails.txt
+
+
+
+Extract full list of Opt-In TCD owners:
+
+mysql --auto-rehash -s -u  jcr13_cdTickU -p  jcr13_cdTicket -e "select email from ticketServer_tickets where tag != 'steam' and email_opt_in=1;" > ~/tcdOwnersOptIn.txt
+
+
+Extract full list of Opt-Out TCD owners:
+
+mysql --auto-rehash -s -u  jcr13_cdTickU -p  jcr13_cdTicket -e "select email from ticketServer_tickets where tag != 'steam' and email_opt_in=0;" > ~/tcdOwnersOptOut.txt
+
+
+
+Extract full list of CM users:
+
+mysql --auto-rehash -s -u  jcr14_cmGameU -p  jcr14_cmGame -e "select email from minuetServer_users;" > ~/cmOwnerEmails.txt
+
+
+
+
+
+Extract full list of Opt-In SID owners:
+
+mysql --auto-rehash -s -u  jcr13_sidTicU -p  jcr13_sidTicket -e "select email from ticketServer_tickets where tag != 'steam' and email_opt_in=1;" > ~/sidOwnersOptIn.txt
+
+
+Extract full list of Opt-Out SID owners:
+
+mysql --auto-rehash -s -u  jcr13_sidTicU -p  jcr13_sidTicket -e "select email from ticketServer_tickets where tag != 'steam' and email_opt_in=0;" > ~/sidOwnersOptOut.txt
+
+
+
+
+Extract full list of Opt-In SFS owners:
+
+mysql --auto-rehash -s -u  jcr13_sfsTicU -p  jcr13_sfsTicket -e "select email from ticketServer_tickets where tag != 'steam' and email_opt_in=1;" > ~/sfsOwnersOptIn.txt
+
+
+Extract full list of Opt-Out SFS owners:
+
+mysql --auto-rehash -s -u  jcr13_sfsTicU -p  jcr13_sfsTicket -e "select email from ticketServer_tickets where tag != 'steam' and email_opt_in=0;" > ~/sfsOwnersOptOut.txt
+
+
+
+Results in:
+
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2  34880 Oct 30 15:27 cmOwnerEmails.txt
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 413165 Oct 30 15:05 mailingList2.txt
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 608654 Oct 30 15:13 ownerEmails.txt
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2  86936 Oct 30 15:33 sfsOwnersOptIn.txt
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2   4993 Oct 30 15:33 sfsOwnersOptOut.txt
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 173235 Oct 30 15:31 sidOwnersOptIn.txt
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 241108 Oct 30 15:31 sidOwnersOptOut.txt
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2 202343 Oct 30 15:20 tcdOwnersOptIn.txt
+-rw-rw-r-- 1 jasonrohrer2 jasonrohrer2  17149 Oct 30 15:20 tcdOwnersOptOut.txt
+
+
+cat cmOwnerEmails.txt mailingList2.txt *OptIn.txt | sort | uniq > emailsIn.txt
+
+cat ownerEmails.txt *OptOut.txt | sort | uniq > emailsOut.txt
+
+
+Find all lines in file1 that do not occur in file2. 
+
+grep -F -x -v -f file2 file1
+
+
+grep -F -x -v -f emailsOut.txt emailsIn.txt  > culledEmailList.txt
+
+
+
+

@@ -4,6 +4,43 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 162    ???
+
+--New PING message that client can use to verify server is receiving messages.
+  Sent before deciding whether to report a bouncing-forever bug.  At least some
+  of these are spuriously caused by connections that break in one direction
+  only.  It is only a true bug if we're receiving server responses to our
+  messages, but the expected response to our action was not received. 
+  PING/PONG lets us test this.
+
+--Scene Editor now displays saved scene number.
+
+
+
+
+Server Fixes
+
+--Server reports player's own id as killer id to lineage server in case of
+  /die, and lineage server displays Sudden Infant Death as cause of death.
+
+--Fixed lineage ban calcuation for /die babies and killers/victims.  Was
+  living extra time in other lines by accident.
+
+--Curse server now keeps people in Donkey Town for a fixed amount of time based
+  on the total number of curse points that they've earned in their lifetime as
+  a player.  First-time offenders are only kept there for 30 minutes.  The
+  worst repeat offenders will eventually be kept there for five hours every
+  time.
+
+--Fixed bug in way curse token status was being updated.
+
+--Finally fixed replacement of used objects and variable objects on server
+  restart.  Server now saves a mapDummyRecall file, and uses that to restore
+  the objects.  After server restart, partial stacks no longer become full,
+  berry bushes no longer replentish, and locks no longer become generic locks.
+
+
+
 Version 160    2018-October-29
 
 --/die command to trigger sudden infant death.  Triggered by baby player, but

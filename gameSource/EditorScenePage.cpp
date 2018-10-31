@@ -1901,6 +1901,20 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
         
         }
     
+    if( mReplaceButton.isVisible() ) {
+        
+        doublePair pos = mReplaceButton.getPosition();
+        
+        pos.y += 32;
+        pos.x -= 40;
+        
+        char *s = autoSprintf( "Scene %d", mSceneID );
+        
+        drawOutlineString( s, pos, alignLeft );
+        delete [] s;
+        }
+    
+
     }
 
 

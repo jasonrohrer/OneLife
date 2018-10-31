@@ -334,9 +334,11 @@ typedef struct LiveObject {
         int deathSourceID;
         
         // true if this character landed a mortal wound on another player
-        // or if this player chose death by sudden infant death
         char everKilledAnyone;
 
+        // true in case of sudden infant death
+        char suicide;
+        
 
         Socket *sock;
         SimpleVector<char> *sockBuffer;
@@ -1120,6 +1122,7 @@ typedef enum messageType {
     MAP,
     TRIGGER,
     BUG,
+    PING,
     UNKNOWN
     } messageType;
 
@@ -1363,6 +1366,17 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         
         if( numRead != 4 ) {
             m.id = -1;
+            }
+        }
+    else if( strcmp( nameBuffer, "PING" ) == 0 ) {
+        m.type = PING;
+        // read unique id parameter
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.id ) );
+        
+        if( numRead != 4 ) {
+            m.id = 0;
             }
         }
     else if( strcmp( nameBuffer, "SREMV" ) == 0 ) {
@@ -4658,6 +4672,7 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.deathSourceID = 0;
     
     newObject.everKilledAnyone = false;
+    newObject.suicide = false;
     
 
     newObject.sock = inSock;
@@ -7656,6 +7671,14 @@ int main() {
                             nextPlayer->xd, nextPlayer->yd );
                         }
                     }
+                else if( m.type == PING ) {
+                    // immediately send pong
+                    char *message = autoSprintf( "PONG\n%d#", m.id );
+
+                    sendMessageToPlayer( nextPlayer, message, 
+                                         strlen( message ) );
+                    delete [] message;
+                    }
                 else if( m.type == DIE ) {
                     if( computeAge( nextPlayer ) < 1 &&
                         nextPlayer->heldByOther &&
@@ -7664,8 +7687,7 @@ int main() {
                         
                         // killed self
                         // SID triggers a lineage ban
-                        nextPlayer->everKilledAnyone = true;
-                        
+                        nextPlayer->suicide = true;
 
                         setDeathReason( nextPlayer, "SID" );
 
@@ -10591,6 +10613,11 @@ int main() {
                     // include as negative of ID
                     killerID = - nextPlayer->deathSourceID;
                     }
+                else if( nextPlayer->suicide ) {
+                    // self id is killer
+                    killerID = nextPlayer->id;
+                    }
+                
                 
                 
                 char male = ! getFemale( nextPlayer );
@@ -10616,8 +10643,11 @@ int main() {
                 recordLineage( nextPlayer->email, 
                                nextPlayer->lineageEveID,
                                yearsLived, 
-                               ( killerID > 0 ),
-                               nextPlayer->everKilledAnyone );
+                               // count true murder victims here, not suicide
+                               ( killerID > 0 && killerID != nextPlayer->id ),
+                               // killed other or committed SID suicide
+                               nextPlayer->everKilledAnyone || 
+                               nextPlayer->suicide );
         
                 if( ! nextPlayer->deathLogged ) {
                     char disconnect = true;

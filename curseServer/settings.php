@@ -33,6 +33,11 @@ $secondsPerCurseScoreDecrement = 3600;
 // isCursed returns 1 if player has this curse score or higher
 $curseThreshold = 8;
 
+// people serve longer and longer times as "isCursed" as their
+// lifetime total curse score grows.
+// hours must be fraction < 1 or a whole number >= 1
+$lifetimeThresholds = array(   0, 15, 25, 55, 65, 75 );
+$hoursToServe =       array( 0.5,  1,  2,  3,  4,  5 );
 
 // how long you have to live in a life before it "counts" toward
 // time served to decrement your curse score

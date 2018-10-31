@@ -1449,13 +1449,20 @@ function ls_frontPage() {
 
     echo "<center>";
 
+    $filterToShow = $filter;
+    
+
+    if( ls_requestFilter( "hide_filter", "/[01]+/i", "0" ) ) {
+        $filterToShow = "-hidden-";
+        }
+    
     // form for searching
 ?>
             <FORM ACTION="server.php" METHOD="post">
     <INPUT TYPE="hidden" NAME="action" VALUE="front_page">
              Email or Character Name:
     <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="filter"
-             VALUE="<?php echo $filter;?>">
+             VALUE="<?php echo $filterToShow;?>">
     <INPUT TYPE="Submit" VALUE="Filter">
     </FORM>
   
@@ -2058,7 +2065,7 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
                 }
             }
 
-        $deathHTML = $deathCause;
+        $deathHTML = $death_cause;
 
         if( $deathHTML == "" ) {
             $deathHTML = ls_getDeathHTML( $inID, $inRelID );
@@ -2179,8 +2186,14 @@ function ls_getDeathHTML( $inID, $inRelID ) {
         $id = ls_mysqli_result( $result, 0, "id" );
         $name = ls_mysqli_result( $result, 0, "name" );        
 
-        return "Killed by <a href='server.php?action=character_page&".
-            "id=$id&rel_id=$inRelID'>$name</a>";
+        if( $id == $inID ) {
+            // killed self
+            return "Sudden Infant Death";
+            }
+        else {
+            return "Killed by <a href='server.php?action=character_page&".
+                "id=$id&rel_id=$inRelID'>$name</a>";
+            }
         }
     else if( $killer_id <= -1 ) {
 

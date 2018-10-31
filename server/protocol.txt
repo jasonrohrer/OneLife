@@ -157,6 +157,7 @@ FORCED_SHUTDOWN (SD)
 
 FRAME (FM)
 
+PONG
 
 
 Client can expect to receive these at any time, and in any order.
@@ -644,6 +645,11 @@ are part of the same batch and can be played back together on the client.
 
 
 
+PONG
+unique_id#
+
+Sent by server to client in response to PING request.  Server returns
+the unique ID sent by the client.
 
 
 
@@ -678,6 +684,7 @@ JUMP x y#
 EMOT x y e#
 DIE x y#
 FORCE x y#
+PING x y unique_id#
 
 
 KA   is a keep-alive message used to keep the connection alive when the client
@@ -766,6 +773,10 @@ FORCE  is used to acknowledge a forced-pos PU sent previously by the server.
        position (otherwise, additional moves/actions sent by the client after
        its move that was cut off by the forced-pos PU, but before the client
        actually receive that PU, can be misinterpreted by the server).
+
+PING is used to request a PONG response fromt the server.  The x and y 
+     coordinates are ignored.  The unique_id parameter will be returned
+     in the PONG response.
 
 
 This one is more complicated:
