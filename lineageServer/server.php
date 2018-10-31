@@ -1449,13 +1449,20 @@ function ls_frontPage() {
 
     echo "<center>";
 
+    $filterToShow = $filter;
+    
+
+    if( ls_requestFilter( "hide_filter", "/[01]+/i", "0" ) ) {
+        $filterToShow = "-hidden-";
+        }
+    
     // form for searching
 ?>
             <FORM ACTION="server.php" METHOD="post">
     <INPUT TYPE="hidden" NAME="action" VALUE="front_page">
              Email or Character Name:
     <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="filter"
-             VALUE="<?php echo $filter;?>">
+             VALUE="<?php echo $filterToShow;?>">
     <INPUT TYPE="Submit" VALUE="Filter">
     </FORM>
   
