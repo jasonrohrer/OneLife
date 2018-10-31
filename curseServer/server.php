@@ -616,6 +616,59 @@ function cs_getSequenceNumberForEmail( $inEmail ) {
 
 
 
+function cs_scaleCurseScore( $inEmail ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT curse_score, total_curse_score, extra_life_sec ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE email = '$inEmail';"; 
+
+    $result = cs_queryDatabase( $query );
+        
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 1 ) {
+        $curse_score = cs_mysqli_result( $result, 0, "curse_score" );
+        $total_curse_score =
+            cs_mysqli_result( $result, 0, "total_curse_score" );
+        $extra_life_sec = cs_mysqli_result( $result, 0, "extra_life_sec" );
+        
+        global $curseThreshold, $lifetimeThresholds, $hoursToServe;
+        
+        if( $curse_score >= $curseThreshold ) {
+
+            $hours = 0;
+
+            $index = 0;
+            foreach( $lifetimeThresholds as $thresh ) {
+                if( $total_curse_score >= $thresh ) {
+                    $hours = $hoursToServe[ $index ];
+                    }
+                $index++;
+                }
+
+            if( $hours > 0 && $hours < 1 ) {
+                $extra_life_sec += $hours * $secondsPerCurseScoreDecrement;
+
+                $hours = 1;
+                }
+            $hours = floor( $hours );
+            
+            // score encodes hours to serve
+            // one hour puts them right at the threshold
+            $curse_score = $curseThreshold + $hours - 1;
+
+            $query = "UPDATE $tableNamePrefix"."users SET " .
+                "curse_score = $curse_score, " .
+                "extra_life_sec = $extra_life_sec " .
+                "WHERE email = '$inEmail'; ";
+            
+            $result = cs_queryDatabase( $query );
+            }
+        }
+    }
+
+
 
 
 
@@ -676,6 +729,7 @@ function cs_curse() {
             "total_curse_score = 1, ".
             "extra_life_sec = 0 ".
             "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1, ".
+            "extra_life_sec = 0, ".
             "curse_score = curse_score + 1, ".
             "total_curse_score = total_curse_score + 1;";
         }
@@ -684,6 +738,9 @@ function cs_curse() {
         $query = "UPDATE $tableNamePrefix"."users SET " .
             // our values might be stale, increment values in table
             "sequence_number = sequence_number + 1, ".
+            // reset their accumulated lifetime counter when they
+            // get additional curse points.
+            "extra_life_sec = 0, ".
             "curse_score = curse_score + 1, " .
             "total_curse_score = total_curse_score + 1 " .
             "WHERE email = '$email'; ";
@@ -691,7 +748,9 @@ function cs_curse() {
         }
 
     cs_queryDatabase( $query );
-
+    
+    cs_scaleCurseScore( $email );    
+    
     echo "OK";
     }
 

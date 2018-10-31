@@ -26,6 +26,11 @@ Server Fixes
 --Fixed lineage ban calcuation for /die babies and killers/victims.  Was
   living extra time in other lines by accident.
 
+--Curse server now keeps people in Donkey Town for a fixed amount of time based
+  on the total number of curse points that they've earned in their lifetime as
+  a player.  First-time offenders are only kept there for 30 minutes.  The
+  worst repeat offenders will eventually be kept there for five hours every
+  time.
 
 
 
