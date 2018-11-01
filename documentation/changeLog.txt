@@ -39,6 +39,11 @@ Server Fixes
   the objects.  After server restart, partial stacks no longer become full,
   berry bushes no longer replentish, and locks no longer become generic locks.
 
+--FINALLY fixed the sliding-penguin ice-hole proliferation bug.  Turns out that
+  it was triggered by a biome boundary.  The penguin would find the ice hole,
+  start transitioning to go into it, but then notice that it was across a biome
+  bondary, and thus forbidden, but still keep the 'in ice-hole' transition.
+
 
 
 Version 160    2018-October-29
