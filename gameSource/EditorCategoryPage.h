@@ -62,6 +62,7 @@ class EditorCategoryPage : public GamePage, public ActionListener {
         TextButton mTransEditorButton;
         
         CheckboxButton mIsPatternCheckbox;
+        CheckboxButton mIsProbSetCheckbox;
 
         int mCurrentObject;
         
@@ -70,6 +71,7 @@ class EditorCategoryPage : public GamePage, public ActionListener {
         
 
         int mSelectionIndex;
+        int mCurrentWeightDigit;
         
         KeyLegend mKeyLegend;
 

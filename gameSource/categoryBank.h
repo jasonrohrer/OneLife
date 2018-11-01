@@ -14,11 +14,16 @@ typedef struct CategoryRecord {
         // other elements of a transition
         char isPattern;
         
+        // true if this category is a set of probability-weighted objects
+        char isProbabilitySet;
         
         // child objects that are in this category
         // none of these should themselves be parent objects
         SimpleVector<int> objectIDSet;
-                
+        
+        // for probability sets
+        SimpleVector<float> objectWeights;
+
     } CategoryRecord;
 
 
@@ -57,6 +62,7 @@ void removeCategoryFromObject( int inObjectID, int inParentID );
 
 
 void setCategoryIsPattern( int inParentID, char inIsPattern );
+void setCategoryIsProbabilitySet( int inParentID, char inIsProbabilitySet );
 
 
 
@@ -77,6 +83,8 @@ void moveCategoryDown( int inObjectID, int inParentID );
 // move member object up/down in category's member list
 void moveCategoryMemberUp( int inParentID, int inObjectID );
 void moveCategoryMemberDown( int inParentID, int inObjectID );
+
+void setMemberWeight( int inParentID, int inObjectID, float inWeight );
 
 
 int getNumCategoriesForObject( int inObjectID );
