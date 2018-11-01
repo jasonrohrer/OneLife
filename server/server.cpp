@@ -2494,6 +2494,10 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
                    inPlayer->id, inPlayer->email );
     inPlayer->connected = false;
 
+    // when player reconnects, they won't get a force PU message
+    // so we shouldn't be waiting for them to ack
+    inPlayer->waitingForForceResponse = false;
+
     // also, stop polling their socket, which will trigger constant
     // socket events from here on out, and cause us to busy-loop
     sockPoll.removeSocket( inPlayer->sock );
@@ -11690,10 +11694,13 @@ int main() {
             
 
             if( nextPlayer->posForced &&
+                nextPlayer->connected &&
                 SettingsManager::getIntSetting( "requireClientForceAck", 1 ) ) {
                 // block additional moves/actions from this player until
                 // we get a FORCE response, syncing them up with
                 // their forced position.
+                
+                // don't do this for disconnected players
                 nextPlayer->waitingForForceResponse = true;
                 }
             nextPlayer->posForced = false;

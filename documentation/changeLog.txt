@@ -44,6 +44,12 @@ Server Fixes
   start transitioning to go into it, but then notice that it was across a biome
   bondary, and thus forbidden, but still keep the 'in ice-hole' transition.
 
+--Fixed a bouncing-forever bug after reconnect.  If player is force-updated
+  while disconnected (like set down as a baby), then when they reconnect, the
+  server ignores their moves because they never sent their FORCE-ACK message.
+  Fixed this by no requiring FORCE-ACK for disconnected players.
+
+
 
 
 Version 160    2018-October-29
