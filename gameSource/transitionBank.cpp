@@ -285,8 +285,9 @@ void initTransBankFinish() {
 
                 CategoryRecord *parentCat = getCategory( parentID );
                 
-                if( parentCat->isPattern ) {
+                if( parentCat->isPattern || parentCat->isProbabilitySet ) {
                     // generate pattern transitions later
+                    // don't generate andy transitions for prob sets
                     continue;
                     }
                 
@@ -1824,8 +1825,12 @@ TransRecord *getPTrans( int inActor, int inTarget,
         return r;
         }
     
+    char actorProbSet = isProbabilitySet( r->newActor );
+    char targetProbSet = isProbabilitySet( r->newTarget );
+
     if( r->actorChangeChance == 1.0f && r->targetChangeChance == 1.0f &&
-        actorMeta == 0 && targetMeta == 0 ) {
+        actorMeta == 0 && targetMeta == 0 
+        && ! actorProbSet && ! targetProbSet ) {
         return r;
         }
     
@@ -1852,6 +1857,14 @@ TransRecord *getPTrans( int inActor, int inTarget,
             rStatic->newTarget = rStatic->newTargetNoChange;
             }
         }
+
+    if( actorProbSet ) {
+        rStatic->newActor = pickFromProbSet( rStatic->newActor );
+        }
+    if( targetProbSet ) {
+        rStatic->newTarget = pickFromProbSet( rStatic->newTarget );
+        }
+    
     
     int passThroughMeta = actorMeta;
     

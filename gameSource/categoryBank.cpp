@@ -6,10 +6,15 @@
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/stringUtils.h"
 
+#include "minorGems/util/random/CustomRandomSource.h"
+
 #include "minorGems/io/file/File.h"
 
 #include "folderCache.h"
 
+
+static int randSeed = 124567;
+static CustomRandomSource randSource( randSeed );
 
 
 static int mapSize;
@@ -888,4 +893,33 @@ char isObjectUsedInCategories( int inObjectID ) {
 
 
 
+
+int pickFromProbSet( int inParentID ) {
+    CategoryRecord *r = getCategory( inParentID );
+
+    float pick = randSource.getRandomFloat();
+    
+    float weightSum = 0;
+    
+    for( int i=0; i<  r->objectIDSet.size(); i++ ) {
+        weightSum += r->objectWeights.getElementDirect( i );
+        
+        if( weightSum >= pick ) {
+            return r->objectIDSet.getElementDirect( i );
+            }
+        }
+    
+    // weights didn't sum to 1?
+    return inParentID;
+    }
+
+
+
+char isProbabilitySet( int inParentID ) {
+    CategoryRecord *r = getCategory( inParentID );
+    if( r != NULL && r->isProbabilitySet ) { 
+        return true;
+        }
+    return false;
+    }
 

@@ -101,4 +101,11 @@ void deleteCategoryFromBank( int inID );
 char isObjectUsedInCategories( int inObjectID );
 
 
+
+int pickFromProbSet( int inParentID );
+
+
+char isProbabilitySet( int inParentID );
+
+
 #endif

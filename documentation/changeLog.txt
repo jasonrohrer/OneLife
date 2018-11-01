@@ -19,6 +19,8 @@ Version 162    ???
 
 --Limited filter string to 23 characters to avoid going off end of notepad.
 
+--Support for new probability set cateogries, which allow transitions to
+  produce a weighted set of random outcome objects.
 
 
 

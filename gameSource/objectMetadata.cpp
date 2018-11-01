@@ -1,5 +1,6 @@
 #include "objectMetadata.h"
 #include "objectBank.h"
+#include "categoryBank.h"
 
 // bottom 17 bits of map database item are object ID
 // enought for 131071 object
@@ -101,6 +102,13 @@ TransRecord *getMetaTrans( int inActor, int inTarget,
     
     *rStatic = *r;
     
+
+    if( isProbabilitySet( rStatic->newActor ) ) {
+        rStatic->newActor = pickFromProbSet( rStatic->newActor );
+        }
+    if( isProbabilitySet( rStatic->newTarget ) ) {
+        rStatic->newTarget = pickFromProbSet( rStatic->newTarget );
+        }
 
     
     int passThroughMeta = actorMeta;
