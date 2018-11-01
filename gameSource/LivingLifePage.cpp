@@ -14537,7 +14537,7 @@ void LivingLifePage::step() {
             // typing a filter
             // hard cap at 25, regardless of age
             // don't want them typing long filters that overflow the display
-            sayCap = 25;
+            sayCap = 23;
             }
         delete [] currentText;
 

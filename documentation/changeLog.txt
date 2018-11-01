@@ -15,6 +15,10 @@ Version 162    ???
 
 --Scene Editor now displays saved scene number.
 
+--NO MATCH might be confusing.  Changed to NO FILTER MATCH.
+
+--Limited filter string to 23 characters to avoid going off end of notepad.
+
 
 
 
