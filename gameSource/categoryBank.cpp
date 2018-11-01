@@ -370,6 +370,82 @@ void saveCategoryToDisk( int inParentID ) {
 
 
 
+static void autoAdjustWeights( int inParentID, int inHoldIndex = -1 ) {
+    
+    CategoryRecord *r = getCategory( inParentID );
+    if( r != NULL && r->isProbabilitySet ) {        
+        
+        float weightSum = 0;
+        
+        for( int i=0; i< r->objectWeights.size(); i++ ) {
+            
+            weightSum += r->objectWeights.getElementDirect( i );
+            }
+
+        int nextIndex = 0;
+        while( weightSum > 1 ) {
+            float extra = weightSum - 1;
+
+            if( nextIndex == inHoldIndex ) {
+                nextIndex++;
+                }
+
+            if( nextIndex >= r->objectWeights.size() ) {
+                break;
+                }
+            
+            float weight = r->objectWeights.getElementDirect( nextIndex );
+            
+            if( weight > extra ) {
+                weight -= extra;
+                weightSum -= extra;
+                }
+            else {
+                weightSum -= weight;
+                weight = 0;
+                }
+            
+            *( r->objectWeights.getElement( nextIndex ) ) = weight;
+
+            nextIndex ++;
+            
+            if( nextIndex >= r->objectWeights.size() ) {
+                break;
+                }
+            }
+        
+        nextIndex = 0;
+        while( weightSum < 1 ) {
+            float extra = 1 - weightSum;
+
+            if( nextIndex == inHoldIndex ) {
+                nextIndex++;
+                }
+            if( nextIndex >= r->objectWeights.size() ) {
+                break;
+                }
+            
+            float weight = r->objectWeights.getElementDirect( nextIndex );
+            
+            if( weight + extra <= 1 ) {
+                weight += extra;
+                weightSum += extra;
+                }
+            // else weird case that should never happen
+            
+            *( r->objectWeights.getElement( nextIndex ) ) = weight;
+
+            nextIndex ++;
+            
+            if( nextIndex >= r->objectWeights.size() ) {
+                break;
+                }
+            }
+        }    
+    }
+
+
+
 
 static void addCategory( int inParentID ) {
     
@@ -499,6 +575,7 @@ void addCategoryToObject( int inObjectID, int inParentID ) {
 
         r->objectIDSet.push_back( inObjectID );
         r->objectWeights.push_back( 0.0f );
+        autoAdjustWeights( inParentID );
         
         ReverseCategoryRecord *rr = getReverseCategory( inObjectID );
 
@@ -543,9 +620,16 @@ void setCategoryIsProbabilitySet( int inParentID, char inIsProbabilitySet ) {
     CategoryRecord *r = getCategory( inParentID );
     
     if( r != NULL ) {
+        char oldVal = r->isProbabilitySet;
         r->isProbabilitySet = inIsProbabilitySet;
         if( r->isProbabilitySet ) {
             r->isPattern = false;
+            if( !oldVal ) {
+                // all zero weights, fix it
+                if( r->objectWeights.size() > 0 ) {
+                    *( r->objectWeights.getElement( 0 ) ) = 1;
+                    }
+                }
             }
         else {
             // zero all weights
@@ -571,6 +655,9 @@ void removeCategoryFromObject( int inObjectID, int inParentID ) {
             r->objectIDSet.deleteElement( index );
             r->objectWeights.deleteElement( index );
             }
+
+        autoAdjustWeights( inParentID );
+        
 
         ReverseCategoryRecord *rr = getReverseCategory( inObjectID );
         
@@ -749,6 +836,7 @@ void setMemberWeight( int inParentID, int inObjectID, float inWeight ) {
         if( index != -1 ) {
             
             *( r->objectWeights.getElement( index ) ) = inWeight;
+            autoAdjustWeights( inParentID, index );
             }
         saveCategoryToDisk( inParentID );
         }
