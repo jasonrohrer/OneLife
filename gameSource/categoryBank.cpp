@@ -13,8 +13,7 @@
 #include "folderCache.h"
 
 
-static int randSeed = 124567;
-static CustomRandomSource randSource( randSeed );
+static CustomRandomSource randSource;
 
 
 static int mapSize;
