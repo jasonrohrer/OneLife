@@ -1110,7 +1110,7 @@ int bakeSprite( const char *inTag,
             
     
     for( int i=0; i<inNumSprites; i++ ) {
-        SpriteRecord *r = getSpriteRecord( inSpriteIDs[i] );
+        SpriteRecord *spriteRec = getSpriteRecord( inSpriteIDs[i] );
         
         char *fileNameTGA = autoSprintf( "%d.tga", inSpriteIDs[i] );
         
@@ -1133,8 +1133,8 @@ int bakeSprite( const char *inTag,
             int w = image->getWidth();
             int h = image->getHeight();
 
-            int centerX = w/2 + r->centerAnchorXOffset;
-            int centerY = h/2 + r->centerAnchorYOffset;
+            int centerX = w/2 + spriteRec->centerAnchorXOffset;
+            int centerY = h/2 + spriteRec->centerAnchorYOffset;
             
 
             double *chan[4];
@@ -1215,19 +1215,34 @@ int bakeSprite( const char *inTag,
                     int i = finalY * w + finalX;
                     
                     int baseI = baseY * baseW + baseX;
-                        
-                    for( int c=0; c<3; c++ ) {
-                        // blend dest and source using source alpha
-                        // as weight
-                        baseChan[c][baseI] = 
-                            (1 - chan[3][i] ) * baseChan[c][baseI] +
-                            chan[3][i] * chan[c][i];
-                        }
                     
-                    // add alphas
-                    baseChan[3][baseI] += chan[3][i];
-                    if( baseChan[3][baseI] > 1.0 ) {
-                        baseChan[3][baseI] = 1.0;
+                    if( ! spriteRec->multiplicativeBlend ) {
+                        
+                        for( int c=0; c<3; c++ ) {
+                            // blend dest and source using source alpha
+                            // as weight
+                            baseChan[c][baseI] = 
+                                (1 - chan[3][i] ) * baseChan[c][baseI] +
+                                chan[3][i] * chan[c][i];
+                            }
+                        
+                        // add alphas
+                        baseChan[3][baseI] += chan[3][i];
+                        if( baseChan[3][baseI] > 1.0 ) {
+                            baseChan[3][baseI] = 1.0;
+                            }
+                        }
+                    else {
+                        // multiplicative blend
+                        // ignore alphas
+
+                        // note that this will NOT work
+                        // if multiplicative sprite hangs out
+                        // beyond border of opaque non-multiplicative
+                        // parts below it.
+                        for( int c=0; c<3; c++ ) {
+                            baseChan[c][baseI] *= chan[c][i];
+                            }
                         }
                     }
                 }

@@ -4573,19 +4573,7 @@ void EditorObjectPage::pickedLayerChanged() {
         mBakeButton.setVisible( false );
 
         if( strcmp( des, "" ) != 0 ) {
-            char allLayersOpaque = true;
-            
-            for( int i=0; i<mCurrentObject.numSprites; i++ ) {
-                if( getUsesMultiplicativeBlending( 
-                        mCurrentObject.sprites[i] ) ) {
-                    
-                    allLayersOpaque = false;
-                    break;
-                    }
-                }
-            if( allLayersOpaque ) {
-                mBakeButton.setVisible( true );
-                }
+            mBakeButton.setVisible( true );
             }
         delete [] des;
         }

@@ -26,6 +26,10 @@ Version 162    ???
   ground that shouldn't make a sound, but what's left in hand should make a
   sound (example:  tongs setting down ore should play tong creation sound).
 
+--Multiplicative sprite layers now supported when baking object down into one
+  sprite.  Only works if multiplicative layer does not overhang past edge of
+  opaque areas of object.
+
 
 
 Server Fixes
