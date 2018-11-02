@@ -12219,8 +12219,14 @@ void LivingLifePage::step() {
                                                 creationSound.numSubSounds 
                                                 > 0 ) {
                                                 
+                                                int sourceID = t->target;
+                                                if( sourceID == -1 ) {
+                                                    // use on bare ground
+                                                    sourceID = oldHeld;
+                                                    }
+
                                                 if( shouldCreationSoundPlay(
-                                                        t->target,
+                                                        sourceID,
                                                         t->newTarget ) ) {
                                                     
                                                     // only make one sound
