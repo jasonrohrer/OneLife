@@ -93,6 +93,8 @@ class EditorObjectPage : public GamePage, public ActionListener {
         TextField mSlotTimeStretchField;
         CheckboxButton mSlotsLockedCheckbox;
         
+        CheckboxButton mNoFlipCheckbox;
+        
 
         TextField mDeadlyDistanceField;
         TextField mUseDistanceField;

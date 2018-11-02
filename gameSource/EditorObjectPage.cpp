@@ -97,6 +97,7 @@ EditorObjectPage::EditorObjectPage()
                                  false,
                                  "Tm Strch", "0123456789.", NULL ),
           mSlotsLockedCheckbox( -260, -200, 2 ),
+          mNoFlipCheckbox( 460, -260, 2 ),
           mDeadlyDistanceField( smallFont, 
                                 150,  -220, 4,
                                 false,
@@ -247,6 +248,8 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mSlotTimeStretchField );
     addComponent( &mSlotsLockedCheckbox );
     
+    addComponent( &mNoFlipCheckbox );
+
     addComponent( &mCreationSoundWidget );
     addComponent( &mUsingSoundWidget );
     addComponent( &mEatingSoundWidget );
@@ -1385,6 +1388,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mContainSizeField.getFloat(),
                    mCurrentObject.vertContainRotationOffset,
                    mCheckboxes[1]->getToggled(),
+                   mNoFlipCheckbox.getToggled(),
                    mMinPickupAgeField.getFloat(),
                    mHeldInHandCheckbox.getToggled(),
                    mRideableCheckbox.getToggled(),
@@ -1524,6 +1528,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mContainSizeField.getFloat(),
                    mCurrentObject.vertContainRotationOffset,
                    mCheckboxes[1]->getToggled(),
+                   mNoFlipCheckbox.getToggled(),
                    mMinPickupAgeField.getFloat(),
                    mHeldInHandCheckbox.getToggled(),
                    mRideableCheckbox.getToggled(),
@@ -2834,6 +2839,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCheckboxes[0]->setToggled( pickedRecord->containable );
             mCheckboxes[1]->setToggled( pickedRecord->permanent );
             mCheckboxes[2]->setToggled( pickedRecord->person );
+            
+            mNoFlipCheckbox.setToggled( pickedRecord->noFlip );
 
             if( mCheckboxes[0]->getToggled() ) {
                 showVertRotButtons();
@@ -3871,6 +3878,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         pos = mSlotsLockedCheckbox.getPosition();
         pos.x -= checkboxSep;
         smallFont->drawString( "Locked", pos, alignRight );
+        }
+
+    if( mNoFlipCheckbox.isVisible() ) {
+        pos = mNoFlipCheckbox.getPosition();
+        pos.x -= checkboxSep;
+        smallFont->drawString( "No Flip", pos, alignRight );
         }
 
     

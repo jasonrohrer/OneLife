@@ -47,10 +47,17 @@ char parentUnpickable( int inID ) {
     
     
 
-    if( getNumCategoriesForObject( inID ) > 0 ) {
-        // already a child, can't be a parent
-        return true;
+    int num = getNumCategoriesForObject( inID );
+    
+    for( int i=0; i<num; i++ ) {
+        if( ! 
+            getCategory( getCategoryForObject( inID, i ) )->isProbabilitySet ) {
+            
+            // already a child of a non-prob-set category, can't be a parent
+            return true;
+            }
         }
+    
     return false;
     }
 

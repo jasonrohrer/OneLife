@@ -2973,9 +2973,10 @@ void LivingLifePage::drawMapCell( int inMapI,
         char flip = mMapTileFlips[ inMapI ];
         
         ObjectRecord *obj = getObject( oID );
-        if( obj->permanent && 
-            ( obj->blocksWalking || obj->drawBehindPlayer || 
-              obj->anySpritesBehindPlayer) ) {
+        if( obj->noFlip ||
+            ( obj->permanent && 
+              ( obj->blocksWalking || obj->drawBehindPlayer || 
+                obj->anySpritesBehindPlayer) ) ) {
             // permanent, blocking objects (e.g., walls) 
             // or permanent behind-player objects (e.g., roads) 
             // are never drawn flipped
@@ -3735,7 +3736,15 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             heldTimeVal = frameRateFactor * 
                 inObj->lastHeldAnimationFrameCount / 60.0;
             }
-                        
+        
+        char heldFlip = inObj->holdingFlip;
+        
+
+        if( heldObject != NULL &&
+            heldObject->noFlip ) {
+            heldFlip = false;
+            }
+        
                     
         if( inObj->holdingID < 0 ) {
             // draw baby here
@@ -3801,7 +3810,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                 // never apply held rot to baby
                                 0,
                                 false,
-                                inObj->holdingFlip,
+                                heldFlip,
                                 computeCurrentAge( babyO ),
                                 hideClosestArmBaby,
                                 hideAllLimbsBaby,
@@ -3835,7 +3844,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             heldObjectDrawPos,
                             holdRot,
                             false,
-                            inObj->holdingFlip, -1, false, false, false,
+                            heldFlip, -1, false, false, false,
                             getEmptyClothingSet(), NULL,
                             0, NULL, NULL );
             }
@@ -3854,7 +3863,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             heldObjectDrawPos,
                             holdRot,
                             false,
-                            inObj->holdingFlip,
+                            heldFlip,
                             -1, false, false, false,
                             getEmptyClothingSet(),
                             NULL,
