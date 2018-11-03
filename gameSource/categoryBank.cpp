@@ -848,6 +848,23 @@ void setMemberWeight( int inParentID, int inObjectID, float inWeight ) {
 
 
 
+void makeWeightUniform( int inParentID ) {
+    CategoryRecord *r = getCategory( inParentID );
+    if( r != NULL && r->isProbabilitySet ) {        
+        
+        int num = r->objectWeights.size();
+        
+        float uniformWeight = 1.0f / num;
+        
+        for( int i=0; i<num; i++ ) {
+            *( r->objectWeights.getElement( i ) ) = uniformWeight;
+            }
+        saveCategoryToDisk( inParentID );
+        }
+    }
+
+
+
 
 int getNumCategoriesForObject( int inObjectID ) {
     ReverseCategoryRecord *rr = getReverseCategory( inObjectID );

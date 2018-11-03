@@ -80,7 +80,8 @@ EditorCategoryPage::EditorCategoryPage()
           mObjectChildPicker( &objectPickableChild, +410, 90 ),
           mTransEditorButton( mainFont, 0, 260, "Transitions" ),
           mIsPatternCheckbox( 220, 0, 2 ),
-          mIsProbSetCheckbox( 220, -20, 2 ) {
+          mIsProbSetCheckbox( 220, -20, 2 ),
+          mMakeUniformButton( smallFont, 220, -80, "Make Uniform" ) {
     
     mObjectChildPicker.addFilter( &childUnpickable );
     mObjectParentPicker.addFilter( &parentUnpickable );
@@ -91,6 +92,7 @@ EditorCategoryPage::EditorCategoryPage()
     addComponent( &mTransEditorButton );
     addComponent( &mIsPatternCheckbox );
     addComponent( &mIsProbSetCheckbox );
+    addComponent( &mMakeUniformButton );
     
 
     mObjectChildPicker.addActionListener( this );
@@ -101,9 +103,12 @@ EditorCategoryPage::EditorCategoryPage()
     mIsPatternCheckbox.addActionListener( this );
     mIsProbSetCheckbox.addActionListener( this );
     
+    mMakeUniformButton.addActionListener( this );
+
     mIsPatternCheckbox.setVisible( false );
     mIsProbSetCheckbox.setVisible( false );
     
+    mMakeUniformButton.setVisible( false );
 
     mCurrentObject = -1;
     mCurrentCategory = -1;
@@ -184,6 +189,7 @@ void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
             }
         if( set ) {
             mIsProbSetCheckbox.setToggled( false );
+            mMakeUniformButton.setVisible( false );
             }
         }
     else if( inTarget == &mIsProbSetCheckbox ) {
@@ -194,6 +200,12 @@ void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
             }
         if( set ) {
             mIsPatternCheckbox.setToggled( false );
+            }
+        mMakeUniformButton.setVisible( set && mCurrentCategory != -1);
+        }
+    else if( inTarget == &mMakeUniformButton ) {
+        if( mCurrentCategory != -1 ) {
+            makeWeightUniform( mCurrentCategory );
             }
         }
     }
@@ -443,6 +455,7 @@ void EditorCategoryPage::updateCheckbox() {
 
                 mIsProbSetCheckbox.setVisible( true );
                 mIsProbSetCheckbox.setToggled( cat->isProbabilitySet );
+                mMakeUniformButton.setVisible( cat->isProbabilitySet );
                 vis = true;
                 }
             else {
@@ -460,6 +473,7 @@ void EditorCategoryPage::updateCheckbox() {
         mIsPatternCheckbox.setToggled( false );
         mIsProbSetCheckbox.setVisible( false );
         mIsProbSetCheckbox.setToggled( false );
+        mMakeUniformButton.setVisible( false );
         }
     }
 

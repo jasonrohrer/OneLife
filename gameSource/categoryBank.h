@@ -86,6 +86,10 @@ void moveCategoryMemberDown( int inParentID, int inObjectID );
 
 void setMemberWeight( int inParentID, int inObjectID, float inWeight );
 
+// only works on prob sets
+void makeWeightUniform( int inParentID );
+
+
 
 int getNumCategoriesForObject( int inObjectID );
 

@@ -64,6 +64,8 @@ class EditorCategoryPage : public GamePage, public ActionListener {
         CheckboxButton mIsPatternCheckbox;
         CheckboxButton mIsProbSetCheckbox;
 
+        TextButton mMakeUniformButton;
+
         int mCurrentObject;
         
         // if no object selected, we can pick a category and view its members
