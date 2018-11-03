@@ -30,6 +30,11 @@ Version 162    ???
   sprite.  Only works if multiplicative layer does not overhang past edge of
   opaque areas of object.
 
+--Was blindly using a returned internal vector while calling addTrans, which
+  meant that the internal vector would become invalidated due to expansion.
+  Unbelievable that this never caused a crash before now.
+
+
 
 
 Server Fixes

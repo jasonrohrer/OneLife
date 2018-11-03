@@ -291,18 +291,25 @@ void initTransBankFinish() {
                     continue;
                     }
                 
-                
-                SimpleVector<TransRecord*> *parentTrans = 
+                SimpleVector<TransRecord*> *parentTransOrig = 
                     getAllUses( parentID );
 
-                if( parentTrans == NULL ) {
+                if( parentTransOrig == NULL ) {
                     continue;
                     }
                 
-                int numParentTrans = parentTrans->size(); 
+                // make copy of it
+                // we add transitions below, and it may cause 
+                // parentTrans to be reallocated internally
+                SimpleVector<TransRecord *> parentTrans;
+                
+                parentTrans.push_back_other( parentTransOrig );
+                
+                
+                int numParentTrans = parentTrans.size(); 
                 for( int t=0; t<numParentTrans; t++ ) {
                     
-                    TransRecord *tr = parentTrans->getElementDirect( t );
+                    TransRecord *tr = parentTrans.getElementDirect( t );
                     
                     // override transitions might exist for object
                     // concretely
