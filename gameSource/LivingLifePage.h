@@ -880,6 +880,10 @@ class LivingLifePage : public GamePage {
         void endExtraObjectMove( int inExtraIndex );
 
 		
+        char mUsingSteam;
+        char mZKeyDown;
+
+        
         // FOVMOD NOTE:  Change 1/1 - Take these changes during the merge process
         void changeHUDFOV(float newScale = 1.0f);
 
@@ -893,10 +897,6 @@ class LivingLifePage : public GamePage {
 
         // AGEMOD NOTE:  Change 1/1 - Take these changes during the merge process
         void agePanel( LiveObject* ourLiveObject, char displayPanel = true );
-
-
-        char mUsingSteam;
-        char mZKeyDown;
 
     };
 

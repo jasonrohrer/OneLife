@@ -23,18 +23,23 @@ Keybind | Description
 ------- | -----------
 **Left Arrow ( &larr; )** | Decreases the FOV zoom scale by 0.5x.  Minimum of 1.0x scale.
 **Right Arrow ( &rarr; )** | Increases the FOV zoom scale by 0.5x.  Maximum of 6.0x scale.
+**Shift + Left Arrow ( &larr; )** | Sets the FOV zoom scale to your preferred minimum.  Defaults to 1.5x scale.
+**Shift + Right Arrow ( &rarr; )** | Sets the FOV zoom scale to your preferred maximum.  Defaults to 3.0x scale.
 **Grave Key ( ` )** | Toggles HUD scaling.  HUD scales with zoom level or locks at 1.0x, separate from the game scene.
 **Backslash Key ( \\ )** | Toggles displaying of the Lineage Fertility panel.
 **Shift + Space** | Generate a random name.
 **Shift + a-z** | Generate a random name that begins with the corresponding letter that you press.
+**Shift + DEL** | Sudden Infant Death hotkey.  Only works if you are less than 1 year old & held by your parent.
+**F1 - F7 ( Function Keys )** | Hotkeys for triggering emotions.  The order used is the same as they appear in your emotionWords.ini settings file.
 
 # Added Features
 * **In-Game Adjustable FOV Zoom**
 
-   - Adds two new settings that control the FOV "zoom level" of the game, "fovScale" and "fovScaleHUD".
+   - Adds four new settings that control the FOV "zoom level" of the game, "fovScale", "fovScaleHUD", "fovPreferredMin", and "fovPreferredMax".
    - "fovScale" controls your "zoom factor" and can be any value from 1.0 to 6.0.
    - "fovScaleHUD" toggles locking your HUD at a 1.0x scale, separate from the game's FOV scale.
-   - **NOTE:** Scales above 2x are likely to have significant amounts of "screen popping" around the edges.  This is due to the amount of data that the server sends to the client at any given time and cannot be avoided.  If this bothers you, try using a version with lower resolution.
+   - "fovPreferredMin" and "fovPreferredMax" are presets that can you use to quickly switch between a minimum & maximum FOV scale.
+   - **NOTE:** Scales above 2x are likely to have significant amounts of "screen popping" around the edges.  This is due to the amount of data that the server sends to the client at any given time and cannot be avoided.  If this bothers you, then just don't zoom out that far!
 
 <p align="center">
     <img alt="720p - No Zoom" width="20%" src="https://user-images.githubusercontent.com/24634429/45483614-4c254d80-b706-11e8-91be-e14ba6d4e00e.png">
@@ -61,6 +66,11 @@ Keybind | Description
     <img alt="Age Display" src="https://user-images.githubusercontent.com/24634429/45483575-344dc980-b706-11e8-9cd1-194da65c1965.png">
 </p>
 
+* **Adjustable Lifespan**
+
+   - Adds a new setting that can be used to control the overall lifespan for clients & servers, "lifespanMultiplier".
+   - **NOTE** Settings must match on the client & server for it to properly work as expected.
+
 * **Name Generator**
 
    - Automatically generate a name that the server allows, as it uses the same first and last name lists.
@@ -70,9 +80,10 @@ Keybind | Description
 
 * **Easy Chat**
    - Auto-focuses the chat box when you start typing.  Never "lose" your chat by forgetting to press Enter first!
+   - Includes keybinds for triggering Emotes or Sudden Infant Death commands.
 
 # Credits
-Thanks to [Joriom](https://onehouronelife.com/forums/profile.php?id=607) for the [detailed guides](https://onehouronelife.com/forums/viewtopic.php?id=1438), [Bimble](https://onehouronelife.com/forums/profile.php?id=682) for the [VirtualBox image](https://onehouronelife.com/forums/viewtopic.php?id=498), and [Drakulon](https://onehouronelife.com/forums/profile.php?id=1165) for the [original FOV mod concept](https://onehouronelife.com/forums/viewtopic.php?id=1422).
+Thanks to [Joriom](https://onehouronelife.com/forums/profile.php?id=607) for the [detailed guides](https://onehouronelife.com/forums/viewtopic.php?id=1438), [Bimble](https://onehouronelife.com/forums/profile.php?id=682) for the [VirtualBox image](https://onehouronelife.com/forums/viewtopic.php?id=498), [Drakulon](https://onehouronelife.com/forums/profile.php?id=1165) for the [original FOV mod concept](https://onehouronelife.com/forums/viewtopic.php?id=1422), and [UncleGus](https://github.com/UncleGus) for the [original lifespan concept](https://github.com/UncleGus/OneLife/tree/lifespan).
 
 Special thanks to these awesome people!
 * [2LaughOr2Cry](https://www.twitch.tv/2laughor2cry)

@@ -1,6 +1,14 @@
 #include "minorGems/game/doublePair.h"
 
 
+extern float lifespan_multiplier;
+extern int age_baby;
+extern int age_fertile;
+extern int age_mature;
+extern int age_old;
+extern int age_death;
+
+
 void initAgeControl();
 
 

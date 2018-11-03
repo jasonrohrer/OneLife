@@ -1,5 +1,6 @@
 #include "minorGems/game/game.h"
 #include <math.h>
+#include "ageControl.h"
 
 
 
@@ -82,7 +83,7 @@ static int startNextAgeFileRead( double inAge ) {
     
     ageNextMusicDone = nextFiveBlock * 5;
 
-    if( ageNextMusicDone == 60 ) {
+    if( ageNextMusicDone == age_death ) {
         // special case, end of life
         // have music end 5 seconds after end of life
         // so there's an ubrupt cut off of the music with the YOU DIED
