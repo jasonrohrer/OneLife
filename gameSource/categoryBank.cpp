@@ -6,14 +6,14 @@
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/stringUtils.h"
 
-#include "minorGems/util/random/CustomRandomSource.h"
+#include "minorGems/util/random/JenkinsRandomSource.h"
 
 #include "minorGems/io/file/File.h"
 
 #include "folderCache.h"
 
 
-static CustomRandomSource randSource;
+static JenkinsRandomSource randSource;
 
 
 static int mapSize;
