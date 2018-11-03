@@ -34,6 +34,9 @@ Version 162    ???
   meant that the internal vector would become invalidated due to expansion.
   Unbelievable that this never caused a crash before now.
 
+--Client ignores mouse clicks if you are holding a 0-speed object.  Currently,
+  this is only used for fishing, while the line is in the water waiting.
+
 
 
 

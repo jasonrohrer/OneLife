@@ -16752,6 +16752,15 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
 
     LiveObject *ourLiveObject = getOurLiveObject();
+    
+    if( ourLiveObject->holdingID > 0 &&
+        getObject( ourLiveObject->holdingID )->speedMult == 0 ) {
+        // holding something that stops movement entirely, ignore click
+        
+        printf( "Skipping click, holding 0-speed object\n" );
+        return;
+        }
+    
 
     if( ourLiveObject->heldByAdultID != -1 ) {
         // click from a held baby
