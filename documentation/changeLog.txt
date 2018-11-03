@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 162    ???
+Version 161    2018-November-2
 
 --New PING message that client can use to verify server is receiving messages.
   Sent before deciding whether to report a bouncing-forever bug.  At least some
