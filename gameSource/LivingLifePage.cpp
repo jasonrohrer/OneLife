@@ -3021,9 +3021,10 @@ void LivingLifePage::drawMapCell( int inMapI,
         char flip = mMapTileFlips[ inMapI ];
         
         ObjectRecord *obj = getObject( oID );
-        if( obj->permanent && 
-            ( obj->blocksWalking || obj->drawBehindPlayer || 
-              obj->anySpritesBehindPlayer) ) {
+        if( obj->noFlip ||
+            ( obj->permanent && 
+              ( obj->blocksWalking || obj->drawBehindPlayer || 
+                obj->anySpritesBehindPlayer) ) ) {
             // permanent, blocking objects (e.g., walls) 
             // or permanent behind-player objects (e.g., roads) 
             // are never drawn flipped
@@ -3783,7 +3784,15 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             heldTimeVal = frameRateFactor * 
                 inObj->lastHeldAnimationFrameCount / 60.0;
             }
-                        
+        
+        char heldFlip = inObj->holdingFlip;
+        
+
+        if( heldObject != NULL &&
+            heldObject->noFlip ) {
+            heldFlip = false;
+            }
+        
                     
         if( inObj->holdingID < 0 ) {
             // draw baby here
@@ -3849,7 +3858,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                 // never apply held rot to baby
                                 0,
                                 false,
-                                inObj->holdingFlip,
+                                heldFlip,
                                 computeCurrentAge( babyO ),
                                 hideClosestArmBaby,
                                 hideAllLimbsBaby,
@@ -3883,7 +3892,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             heldObjectDrawPos,
                             holdRot,
                             false,
-                            inObj->holdingFlip, -1, false, false, false,
+                            heldFlip, -1, false, false, false,
                             getEmptyClothingSet(), NULL,
                             0, NULL, NULL );
             }
@@ -3902,7 +3911,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             heldObjectDrawPos,
                             holdRot,
                             false,
-                            inObj->holdingFlip,
+                            heldFlip,
                             -1, false, false, false,
                             getEmptyClothingSet(),
                             NULL,
@@ -12338,8 +12347,14 @@ void LivingLifePage::step() {
                                                 creationSound.numSubSounds 
                                                 > 0 ) {
                                                 
+                                                int sourceID = t->target;
+                                                if( sourceID == -1 ) {
+                                                    // use on bare ground
+                                                    sourceID = oldHeld;
+                                                    }
+
                                                 if( shouldCreationSoundPlay(
-                                                        t->target,
+                                                        sourceID,
                                                         t->newTarget ) ) {
                                                     
                                                     // only make one sound
@@ -14656,7 +14671,7 @@ void LivingLifePage::step() {
             // typing a filter
             // hard cap at 25, regardless of age
             // don't want them typing long filters that overflow the display
-            sayCap = 25;
+            sayCap = 23;
             }
         delete [] currentText;
 
@@ -16856,6 +16871,15 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
 
     LiveObject *ourLiveObject = getOurLiveObject();
+    
+    if( ourLiveObject->holdingID > 0 &&
+        getObject( ourLiveObject->holdingID )->speedMult == 0 ) {
+        // holding something that stops movement entirely, ignore click
+        
+        printf( "Skipping click, holding 0-speed object\n" );
+        return;
+        }
+    
 
     if( ourLiveObject->heldByAdultID != -1 ) {
         // click from a held baby
@@ -17567,7 +17591,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
         
         char canExecute = false;
+        char sideAccess = false;
         
+        if( destID > 0 && getObject( destID )->sideAccess ) {
+            sideAccess = true;
+            }
+        
+
         // direct click on adjacent cells or self cell?
         if( isGridAdjacent( clickDestX, clickDestY,
                             ourLiveObject->xd, ourLiveObject->yd )
@@ -17576,8 +17606,17 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
               clickDestY == ourLiveObject->yd ) ) {
             
             canExecute = true;
+            
+            if( sideAccess &&
+                ( clickDestY > ourLiveObject->yd ||
+                  clickDestY < ourLiveObject->yd ) ) {
+                // trying to access side-access object from N or S
+                canExecute = false;
+                }
             }
-        else {
+
+
+        if( ! canExecute ) {
             // need to move to empty adjacent first, if it exists
             
             
@@ -17589,8 +17628,15 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             int closestDist = 9999999;
 
             char oldPathExists = ( ourLiveObject->pathToDest != NULL );
+            
+            int nLimit = 4;
+            
+            if( sideAccess ) {
+                // don't consider N or S neighbors
+                nLimit = 2;
+                }
 
-            for( int n=0; n<4; n++ ) {
+            for( int n=0; n<nLimit; n++ ) {
                 int x = mapX + nDX[n];
                 int y = mapY + nDY[n];
 

@@ -40,6 +40,17 @@ typedef struct ObjectRecord {
         // can it not be picked up
         char permanent;
 
+        // true if this object should never be drawn flipped
+        // (objects that have text on them, for example)
+        // Note that some permanent objects are never drawn flipped 
+        // automatically (those that block walking or are drawn behind player)
+        char noFlip;
+        
+        // for objects that can only be accessed from the east and west
+        // (no actions triggered from north or south)
+        char sideAccess;
+        
+
         // age you have to be to to pick something up
         int minPickupAge;
         
@@ -420,6 +431,8 @@ int addObject( const char *inDescription,
                float inContainSize,
                double inVertContainRotationOffset,
                char inPermanent,
+               char inNoFlip,
+               char inSideAccess,
                int inMinPickupAge,
                char inHeldInHand,
                char inRideable,

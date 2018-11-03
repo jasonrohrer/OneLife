@@ -97,6 +97,8 @@ EditorObjectPage::EditorObjectPage()
                                  false,
                                  "Tm Strch", "0123456789.", NULL ),
           mSlotsLockedCheckbox( -260, -200, 2 ),
+          mNoFlipCheckbox( 460, -260, 2 ),
+          mSideAccessCheckbox( 460, -240, 2 ),
           mDeadlyDistanceField( smallFont, 
                                 150,  -220, 4,
                                 false,
@@ -247,6 +249,9 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mSlotTimeStretchField );
     addComponent( &mSlotsLockedCheckbox );
     
+    addComponent( &mNoFlipCheckbox );
+    addComponent( &mSideAccessCheckbox );
+
     addComponent( &mCreationSoundWidget );
     addComponent( &mUsingSoundWidget );
     addComponent( &mEatingSoundWidget );
@@ -1385,6 +1390,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mContainSizeField.getFloat(),
                    mCurrentObject.vertContainRotationOffset,
                    mCheckboxes[1]->getToggled(),
+                   mNoFlipCheckbox.getToggled(),
+                   mSideAccessCheckbox.getToggled(),
                    mMinPickupAgeField.getFloat(),
                    mHeldInHandCheckbox.getToggled(),
                    mRideableCheckbox.getToggled(),
@@ -1524,6 +1531,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mContainSizeField.getFloat(),
                    mCurrentObject.vertContainRotationOffset,
                    mCheckboxes[1]->getToggled(),
+                   mNoFlipCheckbox.getToggled(),
+                   mSideAccessCheckbox.getToggled(),
                    mMinPickupAgeField.getFloat(),
                    mHeldInHandCheckbox.getToggled(),
                    mRideableCheckbox.getToggled(),
@@ -2834,6 +2843,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCheckboxes[0]->setToggled( pickedRecord->containable );
             mCheckboxes[1]->setToggled( pickedRecord->permanent );
             mCheckboxes[2]->setToggled( pickedRecord->person );
+            
+            mNoFlipCheckbox.setToggled( pickedRecord->noFlip );
+            mSideAccessCheckbox.setToggled( pickedRecord->sideAccess );
 
             if( mCheckboxes[0]->getToggled() ) {
                 showVertRotButtons();
@@ -3873,6 +3885,17 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         smallFont->drawString( "Locked", pos, alignRight );
         }
 
+    if( mNoFlipCheckbox.isVisible() ) {
+        pos = mNoFlipCheckbox.getPosition();
+        pos.x -= checkboxSep;
+        smallFont->drawString( "No Flip", pos, alignRight );
+        }
+    if( mSideAccessCheckbox.isVisible() ) {
+        pos = mSideAccessCheckbox.getPosition();
+        pos.x -= checkboxSep;
+        smallFont->drawString( "Side Access", pos, alignRight );
+        }
+
     
     if( mAgingLayerCheckbox.isVisible() ) {
         pos = mAgingLayerCheckbox.getPosition();
@@ -4573,19 +4596,7 @@ void EditorObjectPage::pickedLayerChanged() {
         mBakeButton.setVisible( false );
 
         if( strcmp( des, "" ) != 0 ) {
-            char allLayersOpaque = true;
-            
-            for( int i=0; i<mCurrentObject.numSprites; i++ ) {
-                if( getUsesMultiplicativeBlending( 
-                        mCurrentObject.sprites[i] ) ) {
-                    
-                    allLayersOpaque = false;
-                    break;
-                    }
-                }
-            if( allLayersOpaque ) {
-                mBakeButton.setVisible( true );
-                }
+            mBakeButton.setVisible( true );
             }
         delete [] des;
         }

@@ -2496,6 +2496,10 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
                    inPlayer->id, inPlayer->email );
     inPlayer->connected = false;
 
+    // when player reconnects, they won't get a force PU message
+    // so we shouldn't be waiting for them to ack
+    inPlayer->waitingForForceResponse = false;
+
     // also, stop polling their socket, which will trigger constant
     // socket events from here on out, and cause us to busy-loop
     sockPoll.removeSocket( inPlayer->sock );
@@ -8859,7 +8863,30 @@ int main() {
                             
                             int oldHolding = nextPlayer->holdingID;
                             
-                            if( target != 0 ) {                                
+                            char wrongSide = false;
+                            
+                            if( target != 0 &&
+                                isGridAdjacent( m.x, m.y,
+                                                nextPlayer->xd, 
+                                                nextPlayer->yd ) ) {
+                                ObjectRecord *targetObj = getObject( target );
+
+                                if( targetObj->sideAccess ) {
+                                    
+                                    if( m.y > nextPlayer->yd ||
+                                        m.y < nextPlayer->yd ) {
+                                        // access from N or S
+                                        wrongSide = true;
+                                        }
+                                    }
+                                }
+                            
+
+                            
+                            if( wrongSide ) {
+                                // ignore action from wrong side
+                                }
+                            else if( target != 0 ) {
                                 ObjectRecord *targetObj = getObject( target );
                                 
                                 // try using object on this target 
@@ -11708,10 +11735,13 @@ int main() {
             
 
             if( nextPlayer->posForced &&
+                nextPlayer->connected &&
                 SettingsManager::getIntSetting( "requireClientForceAck", 1 ) ) {
                 // block additional moves/actions from this player until
                 // we get a FORCE response, syncing them up with
                 // their forced position.
+                
+                // don't do this for disconnected players
                 nextPlayer->waitingForForceResponse = true;
                 }
             nextPlayer->posForced = false;

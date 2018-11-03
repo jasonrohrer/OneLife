@@ -4125,6 +4125,12 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             // block move
                             newX = inX;
                             newY = inY;
+                            
+                            // forget about trans that we found above
+                            // it crosses biome boundary
+                            // (and this fixes the infamous sliding
+                            //  penguin ice-hole bug)
+                            destTrans = NULL;
                             }
                         }
                     }

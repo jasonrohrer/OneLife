@@ -428,6 +428,35 @@ float initObjectBankStep() {
 
 
 
+                r->noFlip = false;
+
+                if( strstr( lines[next], "noFlip=" ) != NULL ) {
+                    int noFlipRead = 0;
+                    
+                    sscanf( lines[next], "noFlip=%d", 
+                        &( noFlipRead ) );
+                            
+                    r->noFlip = noFlipRead;
+
+                    next++;
+                    }
+
+                r->sideAccess = false;
+
+                if( strstr( lines[next], "sideAccess=" ) != NULL ) {
+                    int sideAccessRead = 0;
+                    
+                    sscanf( lines[next], "sideAccess=%d", 
+                        &( sideAccessRead ) );
+                            
+                    r->sideAccess = sideAccessRead;
+
+                    next++;
+                    }
+                
+
+
+
                 int heldInHandRead = 0;                            
                 sscanf( lines[next], "heldInHand=%d", 
                         &( heldInHandRead ) );
@@ -1759,6 +1788,8 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->containSize,
                         inObject->vertContainRotationOffset,
                         inObject->permanent,
+                        inObject->noFlip,
+                        inObject->sideAccess,
                         inObject->minPickupAge,
                         inObject->heldInHand,
                         inObject->rideable,
@@ -2030,6 +2061,8 @@ int addObject( const char *inDescription,
                float inContainSize,
                double inVertContainRotationOffset,
                char inPermanent,
+               char inNoFlip,
+               char inSideAccess,
                int inMinPickupAge,
                char inHeldInHand,
                char inRideable,
@@ -2171,7 +2204,10 @@ int addObject( const char *inDescription,
                                       (int)inPermanent,
                                       inMinPickupAge ) );
         
-        
+        lines.push_back( autoSprintf( "noFlip=%d", (int)inNoFlip ) );
+        lines.push_back( autoSprintf( "sideAccess=%d", (int)inSideAccess ) );
+
+
         int heldInHandNumber = 0;
         
         if( inHeldInHand ) {
@@ -2432,6 +2468,9 @@ int addObject( const char *inDescription,
     r->vertContainRotationOffset = inVertContainRotationOffset;
     
     r->permanent = inPermanent;
+    r->noFlip = inNoFlip;
+    r->sideAccess = inSideAccess;
+    
     r->minPickupAge = inMinPickupAge;
     r->heldInHand = inHeldInHand;
     r->rideable = inRideable;

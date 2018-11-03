@@ -202,7 +202,7 @@ enterHint "[ENTER]"
 
 making "MAKING:"
 noneRelevant "(NONE RELEVANT)"
-noMatch "(NO MATCH)"
+noMatch "(NO FILTER MATCH)"
 
 
 your "YOUR"

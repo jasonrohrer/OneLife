@@ -285,23 +285,31 @@ void initTransBankFinish() {
 
                 CategoryRecord *parentCat = getCategory( parentID );
                 
-                if( parentCat->isPattern ) {
+                if( parentCat->isPattern || parentCat->isProbabilitySet ) {
                     // generate pattern transitions later
+                    // don't generate andy transitions for prob sets
                     continue;
                     }
                 
-                
-                SimpleVector<TransRecord*> *parentTrans = 
+                SimpleVector<TransRecord*> *parentTransOrig = 
                     getAllUses( parentID );
 
-                if( parentTrans == NULL ) {
+                if( parentTransOrig == NULL ) {
                     continue;
                     }
                 
-                int numParentTrans = parentTrans->size(); 
+                // make copy of it
+                // we add transitions below, and it may cause 
+                // parentTrans to be reallocated internally
+                SimpleVector<TransRecord *> parentTrans;
+                
+                parentTrans.push_back_other( parentTransOrig );
+                
+                
+                int numParentTrans = parentTrans.size(); 
                 for( int t=0; t<numParentTrans; t++ ) {
                     
-                    TransRecord *tr = parentTrans->getElementDirect( t );
+                    TransRecord *tr = parentTrans.getElementDirect( t );
                     
                     // override transitions might exist for object
                     // concretely
@@ -1824,8 +1832,12 @@ TransRecord *getPTrans( int inActor, int inTarget,
         return r;
         }
     
+    char actorProbSet = isProbabilitySet( r->newActor );
+    char targetProbSet = isProbabilitySet( r->newTarget );
+
     if( r->actorChangeChance == 1.0f && r->targetChangeChance == 1.0f &&
-        actorMeta == 0 && targetMeta == 0 ) {
+        actorMeta == 0 && targetMeta == 0 
+        && ! actorProbSet && ! targetProbSet ) {
         return r;
         }
     
@@ -1852,6 +1864,14 @@ TransRecord *getPTrans( int inActor, int inTarget,
             rStatic->newTarget = rStatic->newTargetNoChange;
             }
         }
+
+    if( actorProbSet ) {
+        rStatic->newActor = pickFromProbSet( rStatic->newActor );
+        }
+    if( targetProbSet ) {
+        rStatic->newTarget = pickFromProbSet( rStatic->newTarget );
+        }
+    
     
     int passThroughMeta = actorMeta;
     

@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 162    ???
+Version 161    2018-November-2
 
 --New PING message that client can use to verify server is receiving messages.
   Sent before deciding whether to report a bouncing-forever bug.  At least some
@@ -14,6 +14,31 @@ Version 162    ???
   PING/PONG lets us test this.
 
 --Scene Editor now displays saved scene number.
+
+--NO MATCH might be confusing.  Changed to NO FILTER MATCH.
+
+--Limited filter string to 23 characters to avoid going off end of notepad.
+
+--Support for new probability set cateogries, which allow transitions to
+  produce a weighted set of random outcome objects.
+
+--Fixed lack of sound played when use-on-bare-ground produces something on
+  ground that shouldn't make a sound, but what's left in hand should make a
+  sound (example:  tongs setting down ore should play tong creation sound).
+
+--Multiplicative sprite layers now supported when baking object down into one
+  sprite.  Only works if multiplicative layer does not overhang past edge of
+  opaque areas of object.
+
+--Was blindly using a returned internal vector while calling addTrans, which
+  meant that the internal vector would become invalidated due to expansion.
+  Unbelievable that this never caused a crash before now.
+
+--Client ignores mouse clicks if you are holding a 0-speed object.  Currently,
+  this is only used for fishing, while the line is in the water waiting.
+
+--Support for objects that are side-access only.  Made ice-hold side-access so
+  that fishing looks okay.
 
 
 
@@ -38,6 +63,17 @@ Server Fixes
   restart.  Server now saves a mapDummyRecall file, and uses that to restore
   the objects.  After server restart, partial stacks no longer become full,
   berry bushes no longer replentish, and locks no longer become generic locks.
+
+--FINALLY fixed the sliding-penguin ice-hole proliferation bug.  Turns out that
+  it was triggered by a biome boundary.  The penguin would find the ice hole,
+  start transitioning to go into it, but then notice that it was across a biome
+  bondary, and thus forbidden, but still keep the 'in ice-hole' transition.
+
+--Fixed a bouncing-forever bug after reconnect.  If player is force-updated
+  while disconnected (like set down as a baby), then when they reconnect, the
+  server ignores their moves because they never sent their FORCE-ACK message.
+  Fixed this by no requiring FORCE-ACK for disconnected players.
+
 
 
 
