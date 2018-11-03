@@ -98,6 +98,7 @@ EditorObjectPage::EditorObjectPage()
                                  "Tm Strch", "0123456789.", NULL ),
           mSlotsLockedCheckbox( -260, -200, 2 ),
           mNoFlipCheckbox( 460, -260, 2 ),
+          mSideAccessCheckbox( 460, -240, 2 ),
           mDeadlyDistanceField( smallFont, 
                                 150,  -220, 4,
                                 false,
@@ -249,6 +250,7 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mSlotsLockedCheckbox );
     
     addComponent( &mNoFlipCheckbox );
+    addComponent( &mSideAccessCheckbox );
 
     addComponent( &mCreationSoundWidget );
     addComponent( &mUsingSoundWidget );
@@ -1389,6 +1391,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.vertContainRotationOffset,
                    mCheckboxes[1]->getToggled(),
                    mNoFlipCheckbox.getToggled(),
+                   mSideAccessCheckbox.getToggled(),
                    mMinPickupAgeField.getFloat(),
                    mHeldInHandCheckbox.getToggled(),
                    mRideableCheckbox.getToggled(),
@@ -1529,6 +1532,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mCurrentObject.vertContainRotationOffset,
                    mCheckboxes[1]->getToggled(),
                    mNoFlipCheckbox.getToggled(),
+                   mSideAccessCheckbox.getToggled(),
                    mMinPickupAgeField.getFloat(),
                    mHeldInHandCheckbox.getToggled(),
                    mRideableCheckbox.getToggled(),
@@ -2841,6 +2845,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCheckboxes[2]->setToggled( pickedRecord->person );
             
             mNoFlipCheckbox.setToggled( pickedRecord->noFlip );
+            mSideAccessCheckbox.setToggled( pickedRecord->sideAccess );
 
             if( mCheckboxes[0]->getToggled() ) {
                 showVertRotButtons();
@@ -3884,6 +3889,11 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         pos = mNoFlipCheckbox.getPosition();
         pos.x -= checkboxSep;
         smallFont->drawString( "No Flip", pos, alignRight );
+        }
+    if( mSideAccessCheckbox.isVisible() ) {
+        pos = mSideAccessCheckbox.getPosition();
+        pos.x -= checkboxSep;
+        smallFont->drawString( "Side Access", pos, alignRight );
         }
 
     

@@ -8845,7 +8845,30 @@ int main() {
                             
                             int oldHolding = nextPlayer->holdingID;
                             
-                            if( target != 0 ) {                                
+                            char wrongSide = false;
+                            
+                            if( target != 0 &&
+                                isGridAdjacent( m.x, m.y,
+                                                nextPlayer->xd, 
+                                                nextPlayer->yd ) ) {
+                                ObjectRecord *targetObj = getObject( target );
+
+                                if( targetObj->sideAccess ) {
+                                    
+                                    if( m.y > nextPlayer->yd ||
+                                        m.y < nextPlayer->yd ) {
+                                        // access from N or S
+                                        wrongSide = true;
+                                        }
+                                    }
+                                }
+                            
+
+                            
+                            if( wrongSide ) {
+                                // ignore action from wrong side
+                                }
+                            else if( target != 0 ) {
                                 ObjectRecord *targetObj = getObject( target );
                                 
                                 // try using object on this target 

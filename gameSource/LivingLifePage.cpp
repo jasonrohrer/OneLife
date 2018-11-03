@@ -17472,7 +17472,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
         
         char canExecute = false;
+        char sideAccess = false;
         
+        if( destID > 0 && getObject( destID )->sideAccess ) {
+            sideAccess = true;
+            }
+        
+
         // direct click on adjacent cells or self cell?
         if( isGridAdjacent( clickDestX, clickDestY,
                             ourLiveObject->xd, ourLiveObject->yd )
@@ -17481,8 +17487,17 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
               clickDestY == ourLiveObject->yd ) ) {
             
             canExecute = true;
+            
+            if( sideAccess &&
+                ( clickDestY > ourLiveObject->yd ||
+                  clickDestY < ourLiveObject->yd ) ) {
+                // trying to access side-access object from N or S
+                canExecute = false;
+                }
             }
-        else {
+
+
+        if( ! canExecute ) {
             // need to move to empty adjacent first, if it exists
             
             
@@ -17494,8 +17509,15 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             int closestDist = 9999999;
 
             char oldPathExists = ( ourLiveObject->pathToDest != NULL );
+            
+            int nLimit = 4;
+            
+            if( sideAccess ) {
+                // don't consider N or S neighbors
+                nLimit = 2;
+                }
 
-            for( int n=0; n<4; n++ ) {
+            for( int n=0; n<nLimit; n++ ) {
                 int x = mapX + nDX[n];
                 int y = mapY + nDY[n];
 

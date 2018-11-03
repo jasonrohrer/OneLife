@@ -37,6 +37,9 @@ Version 162    ???
 --Client ignores mouse clicks if you are holding a 0-speed object.  Currently,
   this is only used for fishing, while the line is in the water waiting.
 
+--Support for objects that are side-access only.  Made ice-hold side-access so
+  that fishing looks okay.
+
 
 
 
