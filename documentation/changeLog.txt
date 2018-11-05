@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Bring center of Eve spiral back to 0,0 whenver either x or y exceeds 100,000.
+  Thus, coordinates won't keep growing boundlessly.
+
+
+
 
 Version 161    2018-November-2
 

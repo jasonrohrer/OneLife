@@ -6161,6 +6161,19 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
             // post-startup eve location has been used too many times
             // place eves on spiral instead
 
+            if( abs( eveLocToUse.x ) > 100000 ||
+                abs( eveLocToUse.y ) > 100000 ) {
+                // we've gotten to far away from center over time
+                
+                // re-center spiral on center to rein things in
+
+                // we'll end up saving a position on the arm of this new
+                // centered spiral for future start-ups, so the eve
+                // location can move out from here
+                eveLocToUse.x = 0;
+                eveLocToUse.y = 0;
+                }
+            
             int jump = SettingsManager::getIntSetting( "nextEveJump", 2000 );
             
             // advance eve angle along spiral
@@ -6180,6 +6193,8 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
             eveLocToUse.x += lrint( delta.x );
             eveLocToUse.y += lrint( delta.y );
             
+            
+
             // but do save it as a possible post-startup location for next time
             File eveLocFile( NULL, "lastEveLocation.txt" );
             char *locString = 
