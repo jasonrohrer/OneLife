@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 164    ???
+
+--Holding SPACE freezes camera on the current map area.  Useful when moving
+  back and forth between a small group of nearby objects (like when forging) so
+  that you can click things more quickly and precisely (camera movement
+  interferes with your efforts to position the mouse).
+
+
 Server Fixes
 
 --Bring center of Eve spiral back to 0,0 whenver either x or y exceeds 100,000.

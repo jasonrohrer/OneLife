@@ -66,6 +66,9 @@ static float pencilErasedFontExtraFade = 0.75;
 
 extern doublePair lastScreenViewCenter;
 
+static char shouldMoveCamera = true;
+
+
 extern double viewWidth;
 extern double viewHeight;
 
@@ -14680,6 +14683,10 @@ void LivingLifePage::step() {
         // whole pixels
         screenTargetPos.x = round( screenTargetPos.x );
         screenTargetPos.y = round( screenTargetPos.y );
+
+        if( !shouldMoveCamera ) {
+            screenTargetPos = lastScreenViewCenter;
+            }
         
 
         doublePair dir = sub( screenTargetPos, lastScreenViewCenter );
@@ -15702,6 +15709,7 @@ void LivingLifePage::makeActive( char inFresh ) {
     mEKeyDown = false;
     mZKeyDown = false;
     mouseDown = false;
+    shouldMoveCamera = true;
     
     screenCenterPlayerOffsetX = 0;
     screenCenterPlayerOffsetY = 0;
@@ -18131,12 +18139,19 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         */
         case 'e':
         case 'E':
-            mEKeyDown = true;
+            if( ! mSayField.isFocused() ) {
+                mEKeyDown = true;
+                }
             break;
         case 'z':
         case 'Z':
-            if( mUsingSteam ) {
+            if( mUsingSteam && ! mSayField.isFocused() ) {
                 mZKeyDown = true;
+                }
+            break;
+        case ' ':
+            if( ! mSayField.isFocused() ) {
+                shouldMoveCamera = false;
                 }
             break;
         case 9: // tab
@@ -18449,6 +18464,9 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
         case 'z':
         case 'Z':
             mZKeyDown = false;
+            break;
+        case ' ':
+            shouldMoveCamera = true;
             break;
         }
 
