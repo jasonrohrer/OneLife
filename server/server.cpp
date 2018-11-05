@@ -3726,11 +3726,15 @@ static UpdateRecord getUpdateRecord(
     char *clothingList = clothingListBuffer.getElementString();
 
 
-    const char *deathReason = "";
+    char *deathReason;
     
     if( inDelete && inPlayer->deathReason != NULL ) {
-        deathReason = inPlayer->deathReason;
+        deathReason = stringDuplicate( inPlayer->deathReason );
         }
+    else {
+        deathReason = stringDuplicate( "" );
+        }
+    
     
     int heldYum = 0;
     
@@ -3766,6 +3770,9 @@ static UpdateRecord getUpdateRecord(
         heldYum,
         deathReason );
     
+    delete [] deathReason;
+    
+
     r.absoluteActionTarget = inPlayer->actionTarget;
     
     if( inPlayer->heldOriginValid ) {

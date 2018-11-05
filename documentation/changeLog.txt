@@ -8,6 +8,8 @@ Server Fixes
 --Bring center of Eve spiral back to 0,0 whenver either x or y exceeds 100,000.
   Thus, coordinates won't keep growing boundlessly.
 
+--Fixed an invalid read when generating death update for player who died of old
+  age.
 
 
 
