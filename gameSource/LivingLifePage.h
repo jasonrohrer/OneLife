@@ -51,6 +51,7 @@ typedef struct PathMark {
         doublePair drawDir;
         doublePair drawPos;
         
+        float fade;
     } PathMark;
 
 

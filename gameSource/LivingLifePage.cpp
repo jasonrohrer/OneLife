@@ -4876,7 +4876,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         // will apply
                         PathMark mark = { ourLiveObject->pathToDest[i],
                                           i,
-                                          false, { 0, 0 }, { 0, 0 } };
+                                          false, { 0, 0 }, { 0, 0 }, 1.0f };
                         
                         ourLiveObject->markedPath.push_back( mark );
                         }
@@ -4944,6 +4944,27 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                     GridPos pathSpotB = mark->pos;
                     
+                    if( markedSize > 25 && p < markedSize - 25 ) {
+                        // older marks fade out
+                        if( mark->fade > 0 ) {
+                            mark->fade -= 0.02 * frameRateFactor;
+                            
+                            if( mark->fade < 0 ) {
+                                mark->fade = 0;
+                                }
+                            }
+                        }
+                    else {
+                        // new marks fade in
+                        if( mark->fade < 1 ) {
+                            mark->fade += 0.1 * frameRateFactor;
+                            
+                            if( mark->fade > 1 ) {
+                                mark->fade = 1;
+                                }
+                            }
+                        }
+                    
                     
                     doublePair nextPos;
                 
@@ -4980,7 +5001,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                       mult( curDir, 6 ) );
                         
                         setDrawColor( 0, 0, 0, 
-                                      ourLiveObject->pathMarkFade * endFade );
+                                      ourLiveObject->pathMarkFade * endFade *
+                                      mark->fade );
                         
 
                         if( numStepsSinceDrawn == 0 ) {
@@ -15213,6 +15235,8 @@ void LivingLifePage::step() {
                             o->shouldDrawPathMarks = true;
                             
                             if( o->pathToDest != NULL ) {
+                                int addNewPathFromIndex = 0;
+                                
                                 for( int p= o->markedPath.size() - 1; 
                                      p >= 0; p-- ) {
                                     if( equal( 
@@ -15220,11 +15244,30 @@ void LivingLifePage::step() {
                                             getElement( p )->pos,
                                             o->pathToDest[0] ) ) {
                                         // found start of new path
-                                     
+                                        
+                                        // keep going as long
+                                        // as there is overlap
+                                        
+                                        int deleteOldFromIndex = p;
+                                        for( int q=0;
+                                             q + p < o->markedPath.size() &&
+                                                 q < o->pathLength; q++ ) {
+                                            if( equal( 
+                                                    o->markedPath.
+                                                    getElement( q + p )->pos,
+                                                    o->pathToDest[ q ] ) ) {
+                                                addNewPathFromIndex ++;
+                                                deleteOldFromIndex ++;
+                                                }
+                                            else {
+                                                break;
+                                                }
+                                            }
+
                                         // clear old path forward
                                         // from this spot
                                         for( int q=o->markedPath.size()-1;
-                                             q >= p; q-- ) {
+                                             q >= deleteOldFromIndex; q-- ) {
                                             o->markedPath.deleteElement( q );
                                             }
                                         break;
@@ -15238,20 +15281,42 @@ void LivingLifePage::step() {
                                     index++;
                                     }
                                 
-                                for( int p=0; p<o->pathLength; p++ ) {
-                                    // extension marks have their own
-                                    // fade-in, starting at 0
+                                // delete mark records that have faded out
+                                for( int p=0; p<o->markedPath.size(); p++ ) {
+                                    if( o->markedPath.getElement( p )->fade == 
+                                        0 ) {
+                                        o->markedPath.deleteElement( p );
+                                        p--;
+                                        }
+                                    }
+                                
+                                // add our new path
+                                for( int p=addNewPathFromIndex; 
+                                     p<o->pathLength; p++ ) {
+                                    // start with fade 0 so 
+                                    // the path extension can fade in
                                     PathMark mark = { o->pathToDest[p],
                                                       index,
-                                                      false, {0,0}, {0,0} };
+                                                      false, {0,0}, {0,0},
+                                                      0.0f };
+                                    
+                                    // leave first few faded in somewhat
+                                    if( p == addNewPathFromIndex ) {
+                                        mark.fade = 1;
+                                        }
+                                    if( p == addNewPathFromIndex + 1 ) {
+                                        mark.fade = 0.5;
+                                        }
+                                    if( p == addNewPathFromIndex + 3 ) {
+                                        mark.fade = 0.25;
+                                        }
+                                    
+                                    
                                     index++;
                                     o->markedPath.push_back( mark );
                                     }
-                                // keep marked path buffer capped
-                                // at 25 grid steps
-                                while( o->markedPath.size() > 25 ) {
-                                    o->markedPath.deleteElement( 0 );
-                                    }
+
+                                
                                 }
                             }
                         }
