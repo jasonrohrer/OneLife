@@ -10,6 +10,15 @@ Version 164    ???
   that you can click things more quickly and precisely (camera movement
   interferes with your efforts to position the mouse).
 
+--Now showing dotted lines and X on path destination any time we're in
+  held-mouse long-travel mode, even if the path is in a straight line with no
+  detours.  This allows the user to predict and understand the behavior.
+
+--Fixed issue with auto-clicking during held-mouse travel when auto-click lands
+  on top of a tall object (was finding closest cell at base of tall object,
+  causing path to veer off course).
+
+
 
 Server Fixes
 

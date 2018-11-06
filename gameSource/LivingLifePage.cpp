@@ -15090,7 +15090,7 @@ void LivingLifePage::step() {
                 }
             else {
 
-                if( o->id == ourID && mouseDown ) {
+                if( o->id == ourID && mouseDown && shouldMoveCamera ) {
                     float worldMouseX, worldMouseY;
                     
                     screenToWorld( lastScreenMouseX,
@@ -16846,6 +16846,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         p.hitOurPlacement = false;
         p.hitAnObject = false;
         p.hitOtherPerson = false;
+        
+        
+        // also, use direct tile clicking
+        // (don't remap clicks on the top of tall objects down to the base tile)
+        p.closestCellX = lrintf( ( inX ) / CELL_D );
+    
+        p.closestCellY = lrintf( ( inY ) / CELL_D );
         }
     
     // clear mouse over cell
