@@ -4974,7 +4974,26 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             }
                         }
                     }
+
+
+                GridPos pathSpotEnd =
+                    ourLiveObject->pathToDest[ ourLiveObject->pathLength - 1 ];
                 
+                
+                doublePair nextPos;
+                
+                nextPos.x = pathSpotEnd.x * CELL_D;
+                nextPos.y = pathSpotEnd.y * CELL_D;
+
+                setDrawColor( 0, 0, 0, 
+                              ourLiveObject->pathMarkFade * endFade );        
+                
+                drawSprite( mPathMarkSprite, nextPos, 1.0,
+                            0.125 );
+                drawSprite( mPathMarkSprite, nextPos, 1.0,
+                            0.375 );
+                
+
                 if( ourLiveObject->pathMarkFade < 1 ) {
                     ourLiveObject->pathMarkFade += 0.1 * frameRateFactor;
                     
@@ -15144,6 +15163,8 @@ void LivingLifePage::step() {
                             else {
                                 pointerDown( worldMouseX, worldMouseY );
                                 }
+                            o->pathMarkFade = 0;
+                            o->shouldDrawPathMarks = true;
                             }
                         }
                     }
@@ -18014,7 +18035,8 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
         minMouseDownFrames / frameRateFactor ) {
         
         // treat the up as one final click
-        pointerDown( inX, inY );
+        // don't do this for now, because it's confusing
+        // pointerDown( inX, inY );
         }
 
     mouseDown = false;
