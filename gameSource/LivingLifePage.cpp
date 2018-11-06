@@ -4868,11 +4868,29 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                 JenkinsRandomSource pathRand( 340930281 );
                 
-                GridPos pathSpot = ourLiveObject->pathToDest[ 0 ];
+
+                if( ourLiveObject->markedPath.size() == 0 ) {
+                    // fill it with first path
+                    for( int i=0; i<ourLiveObject->pathLength; i++ ) {
+                        // start first marks at fade 1 so global fade
+                        // will apply
+                        PathMark mark = { ourLiveObject->pathToDest[i],
+                                          i,
+                                          false, { 0, 0 }, { 0, 0 } };
+                        
+                        ourLiveObject->markedPath.push_back( mark );
+                        }
+                    }
+                
+                PathMark *startMark = ourLiveObject->markedPath.getElement( 0 );
+                
+
+                GridPos pathSpot = startMark->pos;
                 
 
                 GridPos endGrid = 
-                    ourLiveObject->pathToDest[ ourLiveObject->pathLength - 1 ];
+                    ourLiveObject->markedPath.getElementDirect( 
+                        ourLiveObject->markedPath.size()- 1 ).pos;
                 
                 doublePair endPos;
                 endPos.x = endGrid.x * CELL_D;
@@ -4887,7 +4905,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 float endFade = 1.0f;
                 
 
-                if( distFromEnd < 2 * CELL_D ) {
+                if( distFromEnd < 2 * CELL_D && ! mouseDown ) {
                     endFade = distFromEnd / ( 2 * CELL_D );
                     }
 
@@ -4898,7 +4916,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 curPos.y = pathSpot.y * CELL_D;
 
 
-                GridPos pathSpotB = ourLiveObject->pathToDest[ 1 ];
+                GridPos pathSpotB = 
+                    ourLiveObject->markedPath.getElementDirect( 1 ).pos;
                     
 
                 doublePair nextPosB;
@@ -4909,19 +4928,23 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 doublePair curDir = normalize( sub( nextPosB, curPos ) );
                 
+                char firstMarkDrawn = false;
+
 
                 double turnFactor = .25;
                 
                 int numStepsSinceDrawn = 0;
                 int drawOnStep = 6;
                 
+                int markedSize = ourLiveObject->markedPath.size();
 
-                for( int p=1; p< ourLiveObject->pathLength; p++ ) {
+                for( int p=1; p< markedSize; p++ ) {
                 
-                    
-                    GridPos pathSpotB = ourLiveObject->pathToDest[ p ];
-                    
+                    PathMark *mark = ourLiveObject->markedPath.getElement( p );
 
+                    GridPos pathSpotB = mark->pos;
+                    
+                    
                     doublePair nextPos;
                 
                     nextPos.x = pathSpotB.x * CELL_D;
@@ -4929,7 +4952,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     int closeDist = 60;
                     
-                    if( p == ourLiveObject->pathLength - 1 ) {
+                    if( p == markedSize - 1 ) {
                         closeDist = 20;
                         }
                     
@@ -4960,11 +4983,30 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                       ourLiveObject->pathMarkFade * endFade );
                         
 
-                        doublePair drawPos = curPos;
-                        
                         if( numStepsSinceDrawn == 0 ) {
                             
-                            drawSprite( mPathMarkSprite, drawPos, 1.0, 
+                            if( ! firstMarkDrawn && mark->dirAndPosSet ) {
+                                // use cached starting pos
+                                curPos = mark->drawPos;
+                                curDir = mark->drawDir;
+                                firstMarkDrawn = true;
+                                }
+                    
+                            
+                            if( ! mark->dirAndPosSet ) {
+                                
+                                // remember it for future, in case we
+                                // need to use it as our first mark after
+                                // previous marks have been pruned
+                                mark->dirAndPosSet = true;
+                                mark->drawDir = curDir;
+                                mark->drawPos = curPos;
+                                // don't re-consider this as first mark
+                                // now that we've set it
+                                firstMarkDrawn = true;
+                                }
+
+                            drawSprite( mPathMarkSprite, curPos, 1.0, 
                                     -angle( curDir ) / ( 2 * M_PI ) + .25  );
                             }
                         
@@ -4976,8 +5018,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
 
 
-                GridPos pathSpotEnd =
-                    ourLiveObject->pathToDest[ ourLiveObject->pathLength - 1 ];
+                
+                PathMark *endMark = 
+                    ourLiveObject->markedPath.getElement( 
+                        ourLiveObject->markedPath.size() - 1 );
+                
+                GridPos pathSpotEnd = endMark->pos;
                 
                 
                 doublePair nextPos;
@@ -5005,6 +5051,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         else {
             ourLiveObject->pathMarkFade = 0;
+            ourLiveObject->markedPath.deleteAll();
             }
         }
     
@@ -15163,8 +15210,49 @@ void LivingLifePage::step() {
                             else {
                                 pointerDown( worldMouseX, worldMouseY );
                                 }
-                            o->pathMarkFade = 0;
                             o->shouldDrawPathMarks = true;
+                            
+                            if( o->pathToDest != NULL ) {
+                                for( int p= o->markedPath.size() - 1; 
+                                     p >= 0; p-- ) {
+                                    if( equal( 
+                                            o->markedPath.
+                                            getElement( p )->pos,
+                                            o->pathToDest[0] ) ) {
+                                        // found start of new path
+                                     
+                                        // clear old path forward
+                                        // from this spot
+                                        for( int q=o->markedPath.size()-1;
+                                             q >= p; q-- ) {
+                                            o->markedPath.deleteElement( q );
+                                            }
+                                        break;
+                                        }
+                                    }
+                                int index = 0;
+                                if( o->markedPath.size() > 0 ) {
+                                    index = o->markedPath.getElement(
+                                        o->markedPath.size() - 1 )->origIndex;
+                                    
+                                    index++;
+                                    }
+                                
+                                for( int p=0; p<o->pathLength; p++ ) {
+                                    // extension marks have their own
+                                    // fade-in, starting at 0
+                                    PathMark mark = { o->pathToDest[p],
+                                                      index,
+                                                      false, {0,0}, {0,0} };
+                                    index++;
+                                    o->markedPath.push_back( mark );
+                                    }
+                                // keep marked path buffer capped
+                                // at 25 grid steps
+                                while( o->markedPath.size() > 25 ) {
+                                    o->markedPath.deleteElement( 0 );
+                                    }
+                                }
                             }
                         }
                     }
