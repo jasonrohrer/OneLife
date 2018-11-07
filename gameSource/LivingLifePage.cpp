@@ -68,6 +68,8 @@ extern doublePair lastScreenViewCenter;
 
 static char shouldMoveCamera = true;
 
+static char wasAutoClick = false;
+
 
 extern double viewWidth;
 extern double viewHeight;
@@ -4863,6 +4865,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             if( ourLiveObject->pathToDest != NULL &&
                 ourLiveObject->shouldDrawPathMarks &&
+                // hide marked path for short auto-extended-paths
+                ( ! wasAutoClick || ourLiveObject->markedPath.size() > 5 ||
+                  ourLiveObject->pathLength > 5 ) &&
                 mShowHighlights ) {
                 // highlight path
 
@@ -15233,6 +15238,7 @@ void LivingLifePage::step() {
                                 pointerDown( worldMouseX, worldMouseY );
                                 }
                             o->shouldDrawPathMarks = true;
+                            wasAutoClick = true;
                             
                             if( o->pathToDest != NULL ) {
                                 int addNewPathFromIndex = 0;
@@ -15884,6 +15890,7 @@ void LivingLifePage::makeActive( char inFresh ) {
     mZKeyDown = false;
     mouseDown = false;
     shouldMoveCamera = true;
+    wasAutoClick = false;
     
     screenCenterPlayerOffsetX = 0;
     screenCenterPlayerOffsetY = 0;
@@ -18188,8 +18195,18 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
         return;
         }
 
+    LiveObject *ourLiveObject = getOurLiveObject();
+    
+    if( wasAutoClick && ourLiveObject->markedPath.size() <= 5 &&
+        ourLiveObject->pathLength <= 5 ) {
+        ourLiveObject->shouldDrawPathMarks = false;
+        }
+    
+    wasAutoClick = false;
+
+
     if( mouseDown && 
-        getOurLiveObject()->inMotion 
+        ourLiveObject->inMotion 
         &&
         mouseDownFrames >  
         minMouseDownFrames / frameRateFactor ) {
