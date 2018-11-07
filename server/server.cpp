@@ -10408,6 +10408,33 @@ int main() {
                                             }
                                         else if( canDrop && 
                                                  ! canGoIn &&
+                                                 targetObj->permanent &&
+                                                 nextPlayer->numContained 
+                                                 == 0 ) {
+                                            // try treating it like
+                                            // a USE action
+                                            
+                                            TransRecord *useTrans =
+                                                getPTrans( 
+                                                    nextPlayer->holdingID,
+                                                    target );
+                                            // handle simple case
+                                            // stacking containers
+                                            // client sends DROP for this
+                                            if( useTrans != NULL &&
+                                                useTrans->newActor == 0 ) {
+                                                
+                                                handleHoldingChange(
+                                                    nextPlayer,
+                                                    useTrans->newActor );
+                                                
+                                                setMapObject( 
+                                                    m.x, m.y,
+                                                    useTrans->newTarget );
+                                                }
+                                            }
+                                        else if( canDrop && 
+                                                 ! canGoIn &&
                                                  ! targetObj->permanent 
                                                  &&
                                                  targetObj->minPickupAge <=
@@ -10462,7 +10489,9 @@ int main() {
                                                     TransRecord *sameTrans
                                                         = getPTrans(
                                                             oldHeld, target );
-                                                    if( sameTrans != NULL ) {
+                                                    if( sameTrans != NULL &&
+                                                        sameTrans->newActor ==
+                                                        0 ) {
                                                         // keep it simple
                                                         // for now
                                                         // this is usually

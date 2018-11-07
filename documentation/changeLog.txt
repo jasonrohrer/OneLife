@@ -35,6 +35,10 @@ Server Fixes
 --Right-clicking object on its potential stack-mate (e.g., stone on stone) now
   starts a new stack.  Feels like a "drop".
 
+--Right clicking on a basket stack with a basket adds the basket to the stack
+  (feels like a drop).
+
+
 
 
 
