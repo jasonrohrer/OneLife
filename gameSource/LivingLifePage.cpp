@@ -17178,7 +17178,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 nextActionMessageToSend = NULL;
                 }
 
-            if( !modClick ) {
+            if( !modClick || p.hitClothingIndex == -1 ) {
                 
                 if( ourLiveObject->holdingID > 0 &&
                     getObject( ourLiveObject->holdingID )->foodValue > 0 ) {
@@ -17192,12 +17192,15 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 printf( "Use on self\n" );
                 }
             else {
+                // modclick on hit clothing
+
                 if( ourLiveObject->holdingID > 0 ) {
                     nextActionMessageToSend = 
                         autoSprintf( "DROP %d %d %d#",
                                      sendX( clickDestX ), sendY( clickDestY ), 
                                      p.hitClothingIndex  );
                     nextActionDropping = true;
+                    printf( "Add to own clothing container\n" );
                     }
                 else {
                     nextActionMessageToSend = 

@@ -72,6 +72,9 @@ Server Fixes
 --Support for groundOnly tag in object description to prevent object from being
   created on a floor.
 
+--Don't use DROP message when clicking on self unless actually clicked on
+  clothing.  Fixes #98
+
 
 
 
