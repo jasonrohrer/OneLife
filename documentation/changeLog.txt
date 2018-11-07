@@ -38,6 +38,8 @@ Server Fixes
 --Right clicking on a basket stack with a basket adds the basket to the stack
   (feels like a drop).
 
+--Right clicking basket stack with bare hand removes basket.
+
 
 
 

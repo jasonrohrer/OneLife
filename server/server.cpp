@@ -10560,6 +10560,32 @@ int main() {
                                     pickupToHold( nextPlayer, m.x, m.y, 
                                                   target );
                                     }
+                                else if( targetObj->permanent ) {
+                                    // consider bare-hand action
+                                    TransRecord *handTrans = getPTrans(
+                                        0, target );
+                                    
+                                    // handle only simplest case here
+                                    // (to avoid side-effects)
+                                    // REMV on container stack
+                                    // (make sure they have the same
+                                    //  use parent)
+                                    if( handTrans != NULL &&
+                                        handTrans->newTarget > 0 &&
+                                        getObject( handTrans->newTarget )->
+                                        numSlots == targetObj->numSlots &&
+                                        handTrans->newActor > 0 &&
+                                        getObject( handTrans->newActor )->
+                                        minPickupAge <= 
+                                        computeAge( nextPlayer ) ) {
+                                        
+                                        handleHoldingChange( 
+                                            nextPlayer,
+                                            handTrans->newActor );
+                                        setMapObject( m.x, m.y, 
+                                                      handTrans->newTarget );
+                                        }
+                                    }
                                 }
                             }
                         }                        
