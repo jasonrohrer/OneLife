@@ -17702,9 +17702,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         if( ! canExecute ) {
             // need to move to empty adjacent first, if it exists
             
+            // also consider spot itself in some cases
             
-            int nDX[4] = { -1, +1, 0, 0 };
-            int nDY[4] = { 0, 0, -1, +1 };
+            int nDX[5] = { 0, -1, +1, 0, 0 };
+            int nDY[5] = { 0, 0, 0, -1, +1 };
             
             char foundEmpty = false;
             
@@ -17712,14 +17713,49 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
             char oldPathExists = ( ourLiveObject->pathToDest != NULL );
             
-            int nLimit = 4;
+            // don't consider dest spot itself generally
+            int nStart = 1;
             
+            int nLimit = 5;
+            
+            ObjectRecord *destObject = getObject( destID );
+
             if( sideAccess ) {
                 // don't consider N or S neighbors
-                nLimit = 2;
+                nLimit = 3;
+                }
+            else if( ourLiveObject->holdingID == 0 && 
+                     destObject->permanent &&
+                     ! destObject->blocksWalking ) {
+                
+                TransRecord *handTrans = getTrans( 0, destID );
+                
+                if( handTrans == NULL ||
+                    ( handTrans->newActor != 0 &&
+                      getObject( handTrans->newActor )->foodValue > 0 &&
+                        handTrans->newTarget != 0 &&
+                      ! getObject( handTrans->newTarget )->blocksWalking ) ) {
+                    // walk to tile itself if target is permanent
+                    // and not blocking, and hand is empty
+                    // AND this will result in something still
+                    // on the ground (so it's not a transforming pick-up,
+                    // like pulling an onion).
+                    // and the new thing on the ground is not blocking
+                    // (so we're not closing a door)
+                    // and what you get in the hand is edible
+                    // (example:  picking berries from behind the bush)
+                    //
+                    // this is the main situation where you'd want to
+                    // click the same target and yourself
+                    // multiple times in a row, so having yourself
+                    // as close as possible to the target matters
+                    nStart = 0;
+                    }
                 }
 
-            for( int n=0; n<nLimit; n++ ) {
+
+
+            for( int n=nStart; n<nLimit; n++ ) {
                 int x = mapX + nDX[n];
                 int y = mapY + nDY[n];
 
@@ -17763,6 +17799,12 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         // restore our old dest
                         ourLiveObject->xd = oldXD;
                         ourLiveObject->yd = oldYD;    
+
+                        if( n == 0 && foundEmpty ) {
+                            // always prefer tile itself, if that's an option
+                            // based on logic above, even if further
+                            break;
+                            }
                         }
                     
                     }

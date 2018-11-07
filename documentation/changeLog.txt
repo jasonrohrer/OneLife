@@ -21,6 +21,13 @@ Version 164    ???
 --Moved biome tiles down and over by 32 pixels so that they line up with
   actual tile boundaries.
 
+--Added special case logic that makes you stand behind a berry bush (or other
+  permanent, non-blocking food source) when you walk to it from far away.  This
+  makes clicking and eating multiple berries easier, becasue your character is
+  closer.
+
+
+
 
 
 Server Fixes
