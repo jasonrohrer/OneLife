@@ -55,6 +55,9 @@ Server Fixes
 
 --Fixed disappearing ground object when baby issues /die command.  Fixes #121
 
+--Change to deadly on-ground object wasn't happening when riding over (example:
+  snake goes into attacking posture).
+
 
 
 

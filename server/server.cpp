@@ -7543,6 +7543,8 @@ int main() {
                         nextPlayer->heldTransitionSourceID = curOverID;
                         playerIndicesToSendUpdatesAbout.push_back( i );
 
+                        setMapObject( curPos.x, curPos.y, r->newTarget );
+
                         // it attacked their vehicle 
                         // put it on cooldown so it won't immediately
                         // attack them
