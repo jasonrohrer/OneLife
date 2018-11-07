@@ -4236,7 +4236,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     // else out there, this should be okay from a performance standpoint.
 
     int yStartFloor = gridCenterY - 4;
-    int yEndFloor = gridCenterY + 3;
+    int yEndFloor = gridCenterY + 4;
 
     int xStartFloor = gridCenterX - 6;
     int xEndFloor = gridCenterX + 6;
