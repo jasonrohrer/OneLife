@@ -28,6 +28,11 @@ Server Fixes
 --Fixed an invalid read when generating death update for player who died of old
   age.
 
+--Right-clicking an empty basket (or other non-permanent container) now picks
+  it up (to make it consistent with loose right-click semantics for other
+  objects).
+
+
 
 
 Version 161    2018-November-2

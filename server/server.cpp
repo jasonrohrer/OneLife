@@ -5467,6 +5467,37 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
     }
 
 
+
+
+static void pickupToHold( LiveObject *inPlayer, int inX, int inY, 
+                          int inTargetID ) {
+    inPlayer->holdingEtaDecay = 
+        getEtaDecay( inX, inY );
+    
+    FullMapContained f =
+        getFullMapContained( inX, inY );
+    
+    setContained( inPlayer, f );
+    
+    clearAllContained( inX, inY );
+    
+    setResponsiblePlayer( - inPlayer->id );
+    setMapObject( inX, inY, 0 );
+    setResponsiblePlayer( -1 );
+    
+    inPlayer->holdingID = inTargetID;
+    holdingSomethingNew( inPlayer );
+    
+    inPlayer->heldGraveOriginX = inX;
+    inPlayer->heldGraveOriginY = inY;
+    
+    inPlayer->heldOriginValid = 1;
+    inPlayer->heldOriginX = inX;
+    inPlayer->heldOriginY = inY;
+    inPlayer->heldTransitionSourceID = -1;
+    }
+
+
 static void removeFromClothingContainerToHold( LiveObject *inPlayer,
                                                int inC,
                                                int inI = -1 ) {    
@@ -9156,30 +9187,8 @@ int main() {
                                     
                                     // treat it like pick up
                                     
-                                    nextPlayer->holdingEtaDecay = 
-                                        getEtaDecay( m.x, m.y );
-                                    
-                                    FullMapContained f =
-                                        getFullMapContained( m.x, m.y );
-
-                                    setContained( nextPlayer, f );
-                                    
-                                    clearAllContained( m.x, m.y );
-                                    
-                                    setResponsiblePlayer( - nextPlayer->id );
-                                    setMapObject( m.x, m.y, 0 );
-                                    setResponsiblePlayer( -1 );
-                                    
-                                    nextPlayer->holdingID = target;
-                                    holdingSomethingNew( nextPlayer );
-                                    
-                                    nextPlayer->heldGraveOriginX = m.x;
-                                    nextPlayer->heldGraveOriginY = m.y;
-
-                                    nextPlayer->heldOriginValid = 1;
-                                    nextPlayer->heldOriginX = m.x;
-                                    nextPlayer->heldOriginY = m.y;
-                                    nextPlayer->heldTransitionSourceID = -1;
+                                    pickupToHold( nextPlayer, m.x, m.y,
+                                                  target );
                                     }
                                 else if( nextPlayer->holdingID == 0 &&
                                          targetObj->permanent ) {
@@ -10468,8 +10477,30 @@ int main() {
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
+                        char handEmpty = ( nextPlayer->holdingID == 0 );
+                        
                         removeFromContainerToHold( nextPlayer,
                                                    m.x, m.y, m.i );
+
+                        if( handEmpty &&
+                            nextPlayer->holdingID == 0 ) {
+                            // hand still empty?
+                            
+                            int target = getMapObject( m.x, m.y );
+
+                            if( target > 0 ) {
+                                ObjectRecord *targetObj = getObject( target );
+                                
+                                if( ! targetObj->permanent &&
+                                    targetObj->minPickupAge <= 
+                                    computeAge( nextPlayer ) ) {
+                                    
+                                    // treat it like pick up   
+                                    pickupToHold( nextPlayer, m.x, m.y, 
+                                                  target );
+                                    }
+                                }
+                            }
                         }                        
                     else if( m.type == SREMV ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
