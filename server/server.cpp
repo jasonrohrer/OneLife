@@ -9026,6 +9026,26 @@ int main() {
                                         }
                                     }
                                 
+
+                                if( r != NULL &&
+                                    r->newTarget > 0 &&
+                                    r->newTarget != target ) {
+                                    
+                                    // target would change here
+                                    if( getMapFloor( m.x, m.y ) != 0 ) {
+                                        // floor present
+                                        
+                                        // make sure new target allowed 
+                                        // to exist on floor
+                                        if( strstr( getObject( r->newTarget )->
+                                                    description, 
+                                                    "groundOnly" ) != NULL ) {
+                                            r = NULL;
+                                            }
+                                        }
+                                    }
+                                
+
                                 if( r == NULL && 
                                     nextPlayer->holdingID > 0 ) {
                                     
