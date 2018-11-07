@@ -8709,9 +8709,23 @@ int main() {
                                                     hitPlayer,
                                              &playerIndicesToSendUpdatesAbout );
                                                 }
-                                            hitPlayer->holdingID = 
-                                                woundHit->newTarget;
-                                            holdingSomethingNew( hitPlayer );
+
+                                            // give them a new wound
+                                            // if they don't already have
+                                            // one, but never replace their
+                                            // original wound.  That allows
+                                            // a healing exploit where you
+                                            // intentionally give someone
+                                            // an easier-to-treat wound
+                                            // to replace their hard-to-treat
+                                            // wound
+                                            if( ! hitPlayer->holdingWound ) {
+                                                hitPlayer->holdingID = 
+                                                    woundHit->newTarget;
+                                                holdingSomethingNew( 
+                                                    hitPlayer );
+                                                }
+                                            
                                             
                                             hitPlayer->holdingWound = true;
                                             

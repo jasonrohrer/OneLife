@@ -64,6 +64,11 @@ Server Fixes
 --Change to deadly on-ground object wasn't happening when riding over (example:
   snake goes into attacking posture).
 
+--Fixed wound-healing exploit where stab wound would replace snake bite.  Now
+  your first wound is the one that sticks with you and must be healed to save
+  you.  Each additional wound still halves your death stagger time, though.
+  Fixe #104.
+
 
 
 
