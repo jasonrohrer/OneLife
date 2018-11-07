@@ -12348,7 +12348,9 @@ void LivingLifePage::step() {
                                         }
                                     
                                     
-                                    if( ! otherSoundPlayed && 
+                                    if( ( ! otherSoundPlayed ||
+                                          heldObj->creationSoundForce )
+                                          && 
                                         ! clothingChanged &&
                                         heldTransitionSourceID >= 0 &&
                                         heldObj->creationSound.numSubSounds 
@@ -12381,7 +12383,9 @@ void LivingLifePage::step() {
                                             }
                                         
 
-                                        if( ! groundSoundPlayed &&
+                                        if( ( ! groundSoundPlayed ||
+                                              heldObj->creationSoundForce )
+                                            &&
                                             testAncestor > 0 ) {
                                             // new held object is result
                                             // of a transtion

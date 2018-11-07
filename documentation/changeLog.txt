@@ -30,6 +30,9 @@ Version 164    ???
   transition (fixes getting stuck with horsebitten snake).
   Fixes #117,  Fixes #102
 
+--Support for forced creation sounds that always play, even if other
+  same-trigger sounds are going to play in parallel (tipped horse cart sound
+  can play at same time as biting snake sound).
 
 
 
