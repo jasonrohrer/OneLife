@@ -10444,10 +10444,42 @@ int main() {
                                                     r->newTarget );
                                                 }
                                             
+                                            int oldHeld = 
+                                                nextPlayer->holdingID;
+                                            
                                             // now swap
                                             swapHeldWithGround( 
                                              nextPlayer, target, m.x, m.y,
                                              &playerIndicesToSendUpdatesAbout );
+                                            
+                                            if( oldHeld == 
+                                                nextPlayer->holdingID ) {
+                                                // no change
+                                                // are they the same object?
+                                                if( oldHeld == target ) {
+                                                    // try using held
+                                                    // on target
+                                                    TransRecord *sameTrans
+                                                        = getPTrans(
+                                                            oldHeld, target );
+                                                    if( sameTrans != NULL ) {
+                                                        // keep it simple
+                                                        // for now
+                                                        // this is usually
+                                                        // just about
+                                                        // stacking
+                                                        handleHoldingChange(
+                                                            nextPlayer,
+                                                            sameTrans->
+                                                            newActor );
+                                                        
+                                                        setMapObject(
+                                                            m.x, m.y,
+                                                            sameTrans->
+                                                            newTarget );
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     else if( canDrop ) {

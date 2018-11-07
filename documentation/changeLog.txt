@@ -32,6 +32,9 @@ Server Fixes
   it up (to make it consistent with loose right-click semantics for other
   objects).
 
+--Right-clicking object on its potential stack-mate (e.g., stone on stone) now
+  starts a new stack.  Feels like a "drop".
+
 
 
 
