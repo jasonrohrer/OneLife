@@ -16952,8 +16952,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         getObject( ourLiveObject->holdingID )->speedMult == 0 ) {
         // holding something that stops movement entirely, ignore click
         
-        printf( "Skipping click, holding 0-speed object\n" );
-        return;
+        TransRecord *groundTrans = getTrans( ourLiveObject->holdingID, -1 );
+        
+        if( groundTrans == NULL ) {
+
+            printf( "Skipping click, holding 0-speed object "
+                    "that can't be used on ground\n" );
+            return;
+            }
         }
     
 

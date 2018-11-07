@@ -26,6 +26,9 @@ Version 164    ???
   makes clicking and eating multiple berries easier, becasue your character is
   closer.
 
+--We only ignore clicks when holding speed-0 object if there's no bare-ground
+  transition (fixes getting stuck with horsebitten snake).
+  Fixes #117,  Fixes #102
 
 
 
