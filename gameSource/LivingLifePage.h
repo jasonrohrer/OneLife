@@ -123,7 +123,7 @@ typedef struct LiveObject {
         // track this so that we only send one jump message even if
         // the player clicks more than once before the server registers the
         // jump
-        char jumpOutOfArmsSent;
+        double jumpOutOfArmsSentTime;
         
         // true if locally-controlled baby is attempting to jump out of arms
         char babyWiggle;

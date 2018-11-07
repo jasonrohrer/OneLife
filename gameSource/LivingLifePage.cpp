@@ -3794,7 +3794,11 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                     else {
 
                         // cosine from pi to 3 pi has smooth start and finish
-                        babyHeldPos.x += 8 *
+                        int wiggleDir = 1;
+                        if( heldFlip ) {
+                            wiggleDir = -1;
+                            }
+                        babyHeldPos.x += wiggleDir * 8 *
                             ( cos( babyO->babyWiggleProgress * 2 * M_PI +
                                    M_PI ) * 0.5 + 0.5 );
                         }
@@ -11328,7 +11332,7 @@ void LivingLifePage::step() {
                 o.heldByDropOffset.x = 0;
                 o.heldByDropOffset.y = 0;
                 
-                o.jumpOutOfArmsSent = false;
+                o.jumpOutOfArmsSentTime = 0;
                 o.babyWiggle = false;
 
                 o.ridingOffset.x = 0;
@@ -13140,7 +13144,7 @@ void LivingLifePage::step() {
                         babyO->heldByAdultPendingID = -1;
                         }
                     
-                    babyO->jumpOutOfArmsSent = false;
+                    babyO->jumpOutOfArmsSentTime = 0;
                     
                     // stop crying when held
                     babyO->tempAgeOverrideSet = false;
@@ -16970,12 +16974,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     if( ourLiveObject->heldByAdultID != -1 ) {
         // click from a held baby
 
-        // only send once, even on multiple clicks
-        if( ! ourLiveObject->jumpOutOfArmsSent ) {
+        // only send once every 5 seconds, even on multiple clicks
+        double curTime = game_getCurrentTime();
+        
+        if( ourLiveObject->jumpOutOfArmsSentTime < curTime - 5 ) {
             // send new JUMP message instead of ambigous MOVE message
             sendToServerSocket( (char*)"JUMP 0 0#" );
             
-            ourLiveObject->jumpOutOfArmsSent = true;
+            ourLiveObject->jumpOutOfArmsSentTime = curTime;
             }
         
         if( ! ourLiveObject->babyWiggle ) {
@@ -17728,15 +17734,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             int nLimit = 5;
             
-            ObjectRecord *destObject = getObject( destID );
-
             if( sideAccess ) {
                 // don't consider N or S neighbors
                 nLimit = 3;
                 }
-            else if( ourLiveObject->holdingID == 0 && 
-                     destObject->permanent &&
-                     ! destObject->blocksWalking ) {
+            else if( destID > 0 &&
+                     ourLiveObject->holdingID == 0 && 
+                     getObject( destID )->permanent &&
+                     ! getObject( destID )->blocksWalking ) {
                 
                 TransRecord *handTrans = getTrans( 0, destID );
                 

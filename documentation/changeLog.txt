@@ -34,6 +34,9 @@ Version 164    ???
   same-trigger sounds are going to play in parallel (tipped horse cart sound
   can play at same time as biting snake sound).
 
+--Allow baby to send JUMP messages every five seconds, instead of just once.
+  Fixes #112.  Fixed baby wiggle direction when mother facing left.
+
 
 
 Server Fixes
