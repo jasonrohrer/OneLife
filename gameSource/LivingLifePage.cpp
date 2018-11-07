@@ -4238,7 +4238,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int yStartFloor = gridCenterY - 4;
     int yEndFloor = gridCenterY + 3;
 
-    int xStartFloor = gridCenterX - 5;
+    int xStartFloor = gridCenterX - 6;
     int xEndFloor = gridCenterX + 6;
 
     
@@ -4255,6 +4255,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         int tileY = -lrint( screenY / CELL_D );
 
+        // slight offset to compensate for tile overlaps and
+        // make biome tiles more centered on world tiles
+        screenY -= 32;
         
         for( int x=xStartFloor; x<=xEndFloor; x++ ) {
             int mapI = y * mMapD + x;
@@ -4269,6 +4272,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             int tileX = lrint( screenX / CELL_D );
 
+            // slight offset to compensate for tile overlaps and
+            // make biome tiles more centered on world tiles
+            screenX += 32;
             
             int b = -1;
             

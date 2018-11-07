@@ -18,6 +18,9 @@ Version 164    ???
   on top of a tall object (was finding closest cell at base of tall object,
   causing path to veer off course).
 
+--Moved biome tiles down and over by 32 pixels so that they line up with
+  actual tile boundaries.
+
 
 
 Server Fixes
