@@ -4944,7 +4944,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                     GridPos pathSpotB = mark->pos;
                     
-                    if( markedSize > 25 && p < markedSize - 25 ) {
+                    if( markedSize > 12 && p < markedSize - 12 ) {
                         // older marks fade out
                         if( mark->fade > 0 ) {
                             mark->fade -= 0.02 * frameRateFactor;
