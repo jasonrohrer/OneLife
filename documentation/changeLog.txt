@@ -604,6 +604,10 @@ Server Fixes
 --Can no longer dress or swap clothing on elderly (was allowing theft of
   elderly backpacks).
 
+--Fixed so that nextID in metaData ID space is preserved across server
+  restarts.  Was overwiting existing written notes after restart.  Fixes #118.
+
+
 
 
 
