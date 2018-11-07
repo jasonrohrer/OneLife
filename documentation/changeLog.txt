@@ -50,6 +50,7 @@ Server Fixes
 
 --Right clicking basket stack with bare hand removes basket.
 
+--Fixed disappearing ground object when baby issues /die command.  Fixes #121
 
 
 

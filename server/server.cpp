@@ -10837,54 +10837,63 @@ int main() {
                     }
                 nextPlayer->email = stringDuplicate( "email_cleared" );
 
+                int deathID = getRandomDeathMarker();
+                    
+                if( nextPlayer->customGraveID > -1 ) {
+                    deathID = nextPlayer->customGraveID;
+                    }
 
                 int oldObject = getMapObject( dropPos.x, dropPos.y );
                 
                 SimpleVector<int> oldContained;
                 SimpleVector<timeSec_t> oldContainedETADecay;
                 
-                int nX[4] = { -1, 1,  0, 0 };
-                int nY[4] = {  0, 0, -1, 1 };
-                
-                int n = 0;
-                GridPos centerDropPos = dropPos;
-                
-                while( oldObject != 0 && n <= 4 ) {
+                if( deathID != 0 ) {
                     
-                    // don't combine graves
-                    if( ! isGrave( oldObject ) ) {
-                        ObjectRecord *r = getObject( oldObject );
+                
+                    int nX[4] = { -1, 1,  0, 0 };
+                    int nY[4] = {  0, 0, -1, 1 };
+                    
+                    int n = 0;
+                    GridPos centerDropPos = dropPos;
+                    
+                    while( oldObject != 0 && n <= 4 ) {
                         
-                        if( r->numSlots == 0 && ! r->permanent 
-                            && ! r->rideable ) {
+                        // don't combine graves
+                        if( ! isGrave( oldObject ) ) {
+                            ObjectRecord *r = getObject( oldObject );
                             
-                            // found a containble object
-                            // we can empty this spot to make room
-                            // for a grave that can go here, and
-                            // put the old object into the new grave.
+                            if( r->numSlots == 0 && ! r->permanent 
+                                && ! r->rideable ) {
+                                
+                                // found a containble object
+                                // we can empty this spot to make room
+                                // for a grave that can go here, and
+                                // put the old object into the new grave.
+                                
+                                oldContained.push_back( oldObject );
+                                oldContainedETADecay.push_back(
+                                    getEtaDecay( dropPos.x, dropPos.y ) );
+                                
+                                setMapObject( dropPos.x, dropPos.y, 0 );
+                                oldObject = 0;
+                                }
+                            }
+                        
+                        oldObject = getMapObject( dropPos.x, dropPos.y );
+                        
+                        if( oldObject != 0 ) {
                             
-                            oldContained.push_back( oldObject );
-                            oldContainedETADecay.push_back(
-                                getEtaDecay( dropPos.x, dropPos.y ) );
+                            // try next neighbor
+                            dropPos.x = centerDropPos.x + nX[n];
+                            dropPos.y = centerDropPos.y + nY[n];
                             
-                            setMapObject( dropPos.x, dropPos.y, 0 );
-                            oldObject = 0;
+                            n++;
+                            oldObject = getMapObject( dropPos.x, dropPos.y );
                             }
                         }
-
-                    oldObject = getMapObject( dropPos.x, dropPos.y );
-                    
-                    if( oldObject != 0 ) {
-                        
-                        // try next neighbor
-                        dropPos.x = centerDropPos.x + nX[n];
-                        dropPos.y = centerDropPos.y + nY[n];
-                        
-                        n++;
-                        oldObject = getMapObject( dropPos.x, dropPos.y );
-                        }
                     }
-
+                
 
                 if( ! isMapSpotEmpty( dropPos.x, dropPos.y, false ) ) {
                     
@@ -10908,11 +10917,6 @@ int main() {
                 // assume death markes non-blocking, so it's safe
                 // to drop one even if other players standing here
                 if( isMapSpotEmpty( dropPos.x, dropPos.y, false ) ) {
-                    int deathID = getRandomDeathMarker();
-                    
-                    if( nextPlayer->customGraveID > -1 ) {
-                        deathID = nextPlayer->customGraveID;
-                        }
 
                     if( deathID > 0 ) {
                         
