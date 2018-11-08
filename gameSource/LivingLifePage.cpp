@@ -68,8 +68,6 @@ extern doublePair lastScreenViewCenter;
 
 static char shouldMoveCamera = true;
 
-static char wasAutoClick = false;
-
 
 extern double viewWidth;
 extern double viewHeight;
@@ -4875,37 +4873,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             if( ourLiveObject->pathToDest != NULL &&
                 ourLiveObject->shouldDrawPathMarks &&
-                // hide marked path for short auto-extended-paths
-                ( ! wasAutoClick || ourLiveObject->markedPath.size() > 5 ||
-                  ourLiveObject->pathLength > 5 ) &&
                 mShowHighlights ) {
                 // highlight path
 
                 JenkinsRandomSource pathRand( 340930281 );
                 
-
-                if( ourLiveObject->markedPath.size() == 0 ) {
-                    // fill it with first path
-                    for( int i=0; i<ourLiveObject->pathLength; i++ ) {
-                        // start first marks at fade 1 so global fade
-                        // will apply
-                        PathMark mark = { ourLiveObject->pathToDest[i],
-                                          i,
-                                          false, { 0, 0 }, { 0, 0 }, 1.0f };
-                        
-                        ourLiveObject->markedPath.push_back( mark );
-                        }
-                    }
-                
-                PathMark *startMark = ourLiveObject->markedPath.getElement( 0 );
-                
-
-                GridPos pathSpot = startMark->pos;
+                GridPos pathSpot = ourLiveObject->pathToDest[ 0 ];
                 
 
                 GridPos endGrid = 
-                    ourLiveObject->markedPath.getElementDirect( 
-                        ourLiveObject->markedPath.size()- 1 ).pos;
+                    ourLiveObject->pathToDest[ ourLiveObject->pathLength - 1 ];
                 
                 doublePair endPos;
                 endPos.x = endGrid.x * CELL_D;
@@ -4920,7 +4897,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 float endFade = 1.0f;
                 
 
-                if( distFromEnd < 2 * CELL_D && ! mouseDown ) {
+                if( distFromEnd < 2 * CELL_D ) {
                     endFade = distFromEnd / ( 2 * CELL_D );
                     }
 
@@ -4931,8 +4908,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 curPos.y = pathSpot.y * CELL_D;
 
 
-                GridPos pathSpotB = 
-                    ourLiveObject->markedPath.getElementDirect( 1 ).pos;
+                GridPos pathSpotB = ourLiveObject->pathToDest[ 1 ];
                     
 
                 doublePair nextPosB;
@@ -4943,44 +4919,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 doublePair curDir = normalize( sub( nextPosB, curPos ) );
                 
-                char firstMarkDrawn = false;
-
 
                 double turnFactor = .25;
                 
                 int numStepsSinceDrawn = 0;
                 int drawOnStep = 6;
                 
-                int markedSize = ourLiveObject->markedPath.size();
 
-                for( int p=1; p< markedSize; p++ ) {
+                for( int p=1; p< ourLiveObject->pathLength; p++ ) {
                 
-                    PathMark *mark = ourLiveObject->markedPath.getElement( p );
+                    
+                    GridPos pathSpotB = ourLiveObject->pathToDest[ p ];
+                    
 
-                    GridPos pathSpotB = mark->pos;
-                    
-                    if( mouseDown && markedSize > 12 && p < markedSize - 12 ) {
-                        // older marks fade out
-                        if( mark->fade > 0 ) {
-                            mark->fade -= 0.02 * frameRateFactor;
-                            
-                            if( mark->fade < 0 ) {
-                                mark->fade = 0;
-                                }
-                            }
-                        }
-                    else {
-                        // new marks fade in
-                        if( mark->fade < 1 ) {
-                            mark->fade += 0.1 * frameRateFactor;
-                            
-                            if( mark->fade > 1 ) {
-                                mark->fade = 1;
-                                }
-                            }
-                        }
-                    
-                    
                     doublePair nextPos;
                 
                     nextPos.x = pathSpotB.x * CELL_D;
@@ -4988,7 +4939,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     int closeDist = 60;
                     
-                    if( p == markedSize - 1 ) {
+                    if( p == ourLiveObject->pathLength - 1 ) {
                         closeDist = 20;
                         }
                     
@@ -5016,34 +4967,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                       mult( curDir, 6 ) );
                         
                         setDrawColor( 0, 0, 0, 
-                                      ourLiveObject->pathMarkFade * endFade *
-                                      mark->fade );
+                                      ourLiveObject->pathMarkFade * endFade );
                         
 
+                        doublePair drawPos = curPos;
+                        
                         if( numStepsSinceDrawn == 0 ) {
                             
-                            if( ! firstMarkDrawn && mark->dirAndPosSet ) {
-                                // use cached starting pos
-                                curPos = mark->drawPos;
-                                curDir = mark->drawDir;
-                                firstMarkDrawn = true;
-                                }
-                    
-                            
-                            if( ! mark->dirAndPosSet ) {
-                                
-                                // remember it for future, in case we
-                                // need to use it as our first mark after
-                                // previous marks have been pruned
-                                mark->dirAndPosSet = true;
-                                mark->drawDir = curDir;
-                                mark->drawPos = curPos;
-                                // don't re-consider this as first mark
-                                // now that we've set it
-                                firstMarkDrawn = true;
-                                }
-
-                            drawSprite( mPathMarkSprite, curPos, 1.0, 
+                            drawSprite( mPathMarkSprite, drawPos, 1.0, 
                                     -angle( curDir ) / ( 2 * M_PI ) + .25  );
                             }
                         
@@ -5053,30 +4984,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             }
                         }
                     }
-
-
                 
-                PathMark *endMark = 
-                    ourLiveObject->markedPath.getElement( 
-                        ourLiveObject->markedPath.size() - 1 );
-                
-                GridPos pathSpotEnd = endMark->pos;
-                
-                
-                doublePair nextPos;
-                
-                nextPos.x = pathSpotEnd.x * CELL_D;
-                nextPos.y = pathSpotEnd.y * CELL_D;
-
-                setDrawColor( 0, 0, 0, 
-                              ourLiveObject->pathMarkFade * endFade );        
-                
-                drawSprite( mPathMarkSprite, nextPos, 1.0,
-                            0.125 );
-                drawSprite( mPathMarkSprite, nextPos, 1.0,
-                            0.375 );
-                
-
                 if( ourLiveObject->pathMarkFade < 1 ) {
                     ourLiveObject->pathMarkFade += 0.1 * frameRateFactor;
                     
@@ -5088,7 +4996,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         else {
             ourLiveObject->pathMarkFade = 0;
-            ourLiveObject->markedPath.deleteAll();
             }
         }
     
@@ -15251,93 +15158,6 @@ void LivingLifePage::step() {
                             else {
                                 pointerDown( worldMouseX, worldMouseY );
                                 }
-                            o->shouldDrawPathMarks = true;
-                            wasAutoClick = true;
-                            
-                            if( o->pathToDest != NULL ) {
-                                int addNewPathFromIndex = 0;
-                                
-                                for( int p= o->markedPath.size() - 1; 
-                                     p >= 0; p-- ) {
-                                    if( equal( 
-                                            o->markedPath.
-                                            getElement( p )->pos,
-                                            o->pathToDest[0] ) ) {
-                                        // found start of new path
-                                        
-                                        // keep going as long
-                                        // as there is overlap
-                                        
-                                        int deleteOldFromIndex = p;
-                                        for( int q=0;
-                                             q + p < o->markedPath.size() &&
-                                                 q < o->pathLength; q++ ) {
-                                            if( equal( 
-                                                    o->markedPath.
-                                                    getElement( q + p )->pos,
-                                                    o->pathToDest[ q ] ) ) {
-                                                addNewPathFromIndex ++;
-                                                deleteOldFromIndex ++;
-                                                }
-                                            else {
-                                                break;
-                                                }
-                                            }
-
-                                        // clear old path forward
-                                        // from this spot
-                                        for( int q=o->markedPath.size()-1;
-                                             q >= deleteOldFromIndex; q-- ) {
-                                            o->markedPath.deleteElement( q );
-                                            }
-                                        break;
-                                        }
-                                    }
-                                int index = 0;
-                                if( o->markedPath.size() > 0 ) {
-                                    index = o->markedPath.getElement(
-                                        o->markedPath.size() - 1 )->origIndex;
-                                    
-                                    index++;
-                                    }
-                                
-                                // delete mark records that have faded out
-                                for( int p=0; p<o->markedPath.size(); p++ ) {
-                                    if( o->markedPath.getElement( p )->fade == 
-                                        0 ) {
-                                        o->markedPath.deleteElement( p );
-                                        p--;
-                                        }
-                                    }
-                                
-                                // add our new path
-                                for( int p=addNewPathFromIndex; 
-                                     p<o->pathLength; p++ ) {
-                                    // start with fade 0 so 
-                                    // the path extension can fade in
-                                    PathMark mark = { o->pathToDest[p],
-                                                      index,
-                                                      false, {0,0}, {0,0},
-                                                      0.0f };
-                                    
-                                    // leave first few faded in somewhat
-                                    if( p == addNewPathFromIndex ) {
-                                        mark.fade = 1;
-                                        }
-                                    if( p == addNewPathFromIndex + 1 ) {
-                                        mark.fade = 0.5;
-                                        }
-                                    if( p == addNewPathFromIndex + 3 ) {
-                                        mark.fade = 0.25;
-                                        }
-                                    
-                                    
-                                    index++;
-                                    o->markedPath.push_back( mark );
-                                    }
-
-                                
-                                }
                             }
                         }
                     }
@@ -15904,7 +15724,6 @@ void LivingLifePage::makeActive( char inFresh ) {
     mZKeyDown = false;
     mouseDown = false;
     shouldMoveCamera = true;
-    wasAutoClick = false;
     
     screenCenterPlayerOffsetX = 0;
     screenCenterPlayerOffsetY = 0;
@@ -18261,18 +18080,8 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
         return;
         }
 
-    LiveObject *ourLiveObject = getOurLiveObject();
-    
-    if( wasAutoClick && ourLiveObject->markedPath.size() <= 5 &&
-        ourLiveObject->pathLength <= 5 ) {
-        ourLiveObject->shouldDrawPathMarks = false;
-        }
-    
-    wasAutoClick = false;
-
-
     if( mouseDown && 
-        ourLiveObject->inMotion 
+        getOurLiveObject()->inMotion 
         &&
         mouseDownFrames >  
         minMouseDownFrames / frameRateFactor ) {

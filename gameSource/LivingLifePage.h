@@ -36,26 +36,6 @@
 #define NUM_YUM_SLIPS 4
 
 
-
-// a cell that has path marks on it
-typedef struct PathMark {
-        GridPos pos;
-        int origIndex;
-        
-        // remember dir and pos for first mark along this
-        // path step
-        
-        // this allows us to re-create exact positioning of marks
-        // after earlier cells get pruned
-        char dirAndPosSet;
-        doublePair drawDir;
-        doublePair drawPos;
-        
-        float fade;
-    } PathMark;
-
-
-
 typedef struct LiveObject {
         int id;
 
@@ -239,8 +219,6 @@ typedef struct LiveObject {
         int pathLength;
         GridPos *pathToDest;
 
-        SimpleVector <PathMark> markedPath;
-        
                 
         int closestDestIfPathFailedX;
         int closestDestIfPathFailedY;
