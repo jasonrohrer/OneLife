@@ -746,6 +746,22 @@ float initObjectBankStep() {
                     r->creationSoundInitialOnly = 0;
                     }
                 
+                if( strstr( lines[next], 
+                            "creationSoundForce=" ) != NULL ) {
+                    // flag present
+                    
+                    int flagRead = 0;                            
+                    sscanf( lines[next], "creationSoundForce=%d", 
+                            &( flagRead ) );
+                    
+                    r->creationSoundForce = flagRead;
+                            
+                    next++;
+                    }
+                else {
+                    r->creationSoundForce = 0;
+                    }
+
 
                 r->numSlots = 0;
                 r->slotTimeStretch = 1.0f;
@@ -1822,6 +1838,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->eatingSound,
                         inObject->decaySound,
                         inObject->creationSoundInitialOnly,
+                        inObject->creationSoundForce,
                         inObject->numSlots, 
                         inObject->slotSize, 
                         inObject->slotPos,
@@ -2094,6 +2111,7 @@ int addObject( const char *inDescription,
                SoundUsage inEatingSound,
                SoundUsage inDecaySound,
                char inCreationSoundInitialOnly,
+               char inCreationSoundForce,
                int inNumSlots, float inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
                int *inSlotParent,
@@ -2287,6 +2305,8 @@ int addObject( const char *inDescription,
 
         lines.push_back( autoSprintf( "creationSoundInitialOnly=%d", 
                                       (int)inCreationSoundInitialOnly ) );
+        lines.push_back( autoSprintf( "creationSoundForce=%d", 
+                                      (int)inCreationSoundForce ) );
         
         lines.push_back( autoSprintf( "numSlots=%d#timeStretch=%f", 
                                       inNumSlots, inSlotTimeStretch ) );
@@ -2550,6 +2570,7 @@ int addObject( const char *inDescription,
     r->eatingSound = copyUsage( inEatingSound );
     r->decaySound = copyUsage( inDecaySound );
     r->creationSoundInitialOnly = inCreationSoundInitialOnly;
+    r->creationSoundForce = inCreationSoundForce;
 
     r->numSlots = inNumSlots;
     r->slotSize = inSlotSize;
@@ -3120,12 +3141,14 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             }
         
         // shoes on top of feet
-        if( inClothing.backShoe != NULL && i == backFootIndex ) {
+        if( ! skipSprite && 
+            inClothing.backShoe != NULL && i == backFootIndex ) {
             drawObject( inClothing.backShoe, 2,
                         backShoePos, backShoeRot, true,
                         inFlipH, -1, 0, false, false, emptyClothing );
             }
-        else if( inClothing.frontShoe != NULL && i == frontFootIndex ) {
+        else if( ! skipSprite &&
+                 inClothing.frontShoe != NULL && i == frontFootIndex ) {
             drawObject( inClothing.frontShoe, 2,
                         frontShoePos, frontShoeRot, true,
                         inFlipH, -1, 0, false, false, emptyClothing );

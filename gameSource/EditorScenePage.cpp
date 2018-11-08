@@ -1061,7 +1061,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
             if( y > mCurY + 4 || 
                 y < mCurY -4 ||
                 x > mCurX + 7 || 
-                x < mCurX -6 ) {
+                x < mCurX -7 ) {
                 
                 continue;
                 }
@@ -1070,7 +1070,9 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
             pos.x += mShiftX * CELL_D;
             pos.y += mShiftY * CELL_D;
 
-
+            pos.x += 32;
+            pos.y -= 32;
+            
             SceneCell *c = &( mCells[y][x] );
             
             if( c->biome != -1 ) {

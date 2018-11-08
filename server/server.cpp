@@ -3246,6 +3246,33 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             setFreshEtaDecayForHeld( inDroppingPlayer );
             }
         }
+    else if( oldHoldingID > 0 &&
+             ! getObject( oldHoldingID )->permanent ) {
+        // what they are holding is NOT stuck in their
+        // hand
+
+        // see if a use-on-bare-ground drop 
+        // action applies (example:  getting wounded while holding a goose)
+                            
+        // do not consider doing this if use-on-bare-ground leaves something
+        // in the hand
+
+        TransRecord *bareTrans =
+            getPTrans( oldHoldingID, -1 );
+                            
+        if( bareTrans != NULL &&
+            bareTrans->newTarget > 0 &&
+            bareTrans->newActor == 0 ) {
+                            
+            oldHoldingID = bareTrans->newTarget;
+            
+            inDroppingPlayer->holdingID = 
+                bareTrans->newTarget;
+            holdingSomethingNew( inDroppingPlayer, oldHoldingID );
+
+            setFreshEtaDecayForHeld( inDroppingPlayer );
+            }
+        }
 
     int targetX = inX;
     int targetY = inY;
@@ -3728,11 +3755,15 @@ static UpdateRecord getUpdateRecord(
     char *clothingList = clothingListBuffer.getElementString();
 
 
-    const char *deathReason = "";
+    char *deathReason;
     
     if( inDelete && inPlayer->deathReason != NULL ) {
-        deathReason = inPlayer->deathReason;
+        deathReason = stringDuplicate( inPlayer->deathReason );
         }
+    else {
+        deathReason = stringDuplicate( "" );
+        }
+    
     
     int heldYum = 0;
     
@@ -3768,6 +3799,9 @@ static UpdateRecord getUpdateRecord(
         heldYum,
         deathReason );
     
+    delete [] deathReason;
+    
+
     r.absoluteActionTarget = inPlayer->actionTarget;
     
     if( inPlayer->heldOriginValid ) {
@@ -5459,6 +5493,37 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
         }
 
     return false;
+    }
+
+
+
+
+static void pickupToHold( LiveObject *inPlayer, int inX, int inY, 
+                          int inTargetID ) {
+    inPlayer->holdingEtaDecay = 
+        getEtaDecay( inX, inY );
+    
+    FullMapContained f =
+        getFullMapContained( inX, inY );
+    
+    setContained( inPlayer, f );
+    
+    clearAllContained( inX, inY );
+    
+    setResponsiblePlayer( - inPlayer->id );
+    setMapObject( inX, inY, 0 );
+    setResponsiblePlayer( -1 );
+    
+    inPlayer->holdingID = inTargetID;
+    holdingSomethingNew( inPlayer );
+    
+    inPlayer->heldGraveOriginX = inX;
+    inPlayer->heldGraveOriginY = inY;
+    
+    inPlayer->heldOriginValid = 1;
+    inPlayer->heldOriginX = inX;
+    inPlayer->heldOriginY = inY;
+    inPlayer->heldTransitionSourceID = -1;
     }
 
 
@@ -7523,6 +7588,8 @@ int main() {
                         nextPlayer->heldTransitionSourceID = curOverID;
                         playerIndicesToSendUpdatesAbout.push_back( i );
 
+                        setMapObject( curPos.x, curPos.y, r->newTarget );
+
                         // it attacked their vehicle 
                         // put it on cooldown so it won't immediately
                         // attack them
@@ -8687,9 +8754,23 @@ int main() {
                                                     hitPlayer,
                                              &playerIndicesToSendUpdatesAbout );
                                                 }
-                                            hitPlayer->holdingID = 
-                                                woundHit->newTarget;
-                                            holdingSomethingNew( hitPlayer );
+
+                                            // give them a new wound
+                                            // if they don't already have
+                                            // one, but never replace their
+                                            // original wound.  That allows
+                                            // a healing exploit where you
+                                            // intentionally give someone
+                                            // an easier-to-treat wound
+                                            // to replace their hard-to-treat
+                                            // wound
+                                            if( ! hitPlayer->holdingWound ) {
+                                                hitPlayer->holdingID = 
+                                                    woundHit->newTarget;
+                                                holdingSomethingNew( 
+                                                    hitPlayer );
+                                                }
+                                            
                                             
                                             hitPlayer->holdingWound = true;
                                             
@@ -8990,6 +9071,26 @@ int main() {
                                         }
                                     }
                                 
+
+                                if( r != NULL &&
+                                    r->newTarget > 0 &&
+                                    r->newTarget != target ) {
+                                    
+                                    // target would change here
+                                    if( getMapFloor( m.x, m.y ) != 0 ) {
+                                        // floor present
+                                        
+                                        // make sure new target allowed 
+                                        // to exist on floor
+                                        if( strstr( getObject( r->newTarget )->
+                                                    description, 
+                                                    "groundOnly" ) != NULL ) {
+                                            r = NULL;
+                                            }
+                                        }
+                                    }
+                                
+
                                 if( r == NULL && 
                                     nextPlayer->holdingID > 0 ) {
                                     
@@ -9167,30 +9268,8 @@ int main() {
                                     
                                     // treat it like pick up
                                     
-                                    nextPlayer->holdingEtaDecay = 
-                                        getEtaDecay( m.x, m.y );
-                                    
-                                    FullMapContained f =
-                                        getFullMapContained( m.x, m.y );
-
-                                    setContained( nextPlayer, f );
-                                    
-                                    clearAllContained( m.x, m.y );
-                                    
-                                    setResponsiblePlayer( - nextPlayer->id );
-                                    setMapObject( m.x, m.y, 0 );
-                                    setResponsiblePlayer( -1 );
-                                    
-                                    nextPlayer->holdingID = target;
-                                    holdingSomethingNew( nextPlayer );
-                                    
-                                    nextPlayer->heldGraveOriginX = m.x;
-                                    nextPlayer->heldGraveOriginY = m.y;
-
-                                    nextPlayer->heldOriginValid = 1;
-                                    nextPlayer->heldOriginX = m.x;
-                                    nextPlayer->heldOriginY = m.y;
-                                    nextPlayer->heldTransitionSourceID = -1;
+                                    pickupToHold( nextPlayer, m.x, m.y,
+                                                  target );
                                     }
                                 else if( nextPlayer->holdingID == 0 &&
                                          targetObj->permanent ) {
@@ -10410,6 +10489,33 @@ int main() {
                                             }
                                         else if( canDrop && 
                                                  ! canGoIn &&
+                                                 targetObj->permanent &&
+                                                 nextPlayer->numContained 
+                                                 == 0 ) {
+                                            // try treating it like
+                                            // a USE action
+                                            
+                                            TransRecord *useTrans =
+                                                getPTrans( 
+                                                    nextPlayer->holdingID,
+                                                    target );
+                                            // handle simple case
+                                            // stacking containers
+                                            // client sends DROP for this
+                                            if( useTrans != NULL &&
+                                                useTrans->newActor == 0 ) {
+                                                
+                                                handleHoldingChange(
+                                                    nextPlayer,
+                                                    useTrans->newActor );
+                                                
+                                                setMapObject( 
+                                                    m.x, m.y,
+                                                    useTrans->newTarget );
+                                                }
+                                            }
+                                        else if( canDrop && 
+                                                 ! canGoIn &&
                                                  ! targetObj->permanent 
                                                  &&
                                                  targetObj->minPickupAge <=
@@ -10446,10 +10552,44 @@ int main() {
                                                     r->newTarget );
                                                 }
                                             
+                                            int oldHeld = 
+                                                nextPlayer->holdingID;
+                                            
                                             // now swap
                                             swapHeldWithGround( 
                                              nextPlayer, target, m.x, m.y,
                                              &playerIndicesToSendUpdatesAbout );
+                                            
+                                            if( oldHeld == 
+                                                nextPlayer->holdingID ) {
+                                                // no change
+                                                // are they the same object?
+                                                if( oldHeld == target ) {
+                                                    // try using held
+                                                    // on target
+                                                    TransRecord *sameTrans
+                                                        = getPTrans(
+                                                            oldHeld, target );
+                                                    if( sameTrans != NULL &&
+                                                        sameTrans->newActor ==
+                                                        0 ) {
+                                                        // keep it simple
+                                                        // for now
+                                                        // this is usually
+                                                        // just about
+                                                        // stacking
+                                                        handleHoldingChange(
+                                                            nextPlayer,
+                                                            sameTrans->
+                                                            newActor );
+                                                        
+                                                        setMapObject(
+                                                            m.x, m.y,
+                                                            sameTrans->
+                                                            newTarget );
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     else if( canDrop ) {
@@ -10479,8 +10619,56 @@ int main() {
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
+                        char handEmpty = ( nextPlayer->holdingID == 0 );
+                        
                         removeFromContainerToHold( nextPlayer,
                                                    m.x, m.y, m.i );
+
+                        if( handEmpty &&
+                            nextPlayer->holdingID == 0 ) {
+                            // hand still empty?
+                            
+                            int target = getMapObject( m.x, m.y );
+
+                            if( target > 0 ) {
+                                ObjectRecord *targetObj = getObject( target );
+                                
+                                if( ! targetObj->permanent &&
+                                    targetObj->minPickupAge <= 
+                                    computeAge( nextPlayer ) ) {
+                                    
+                                    // treat it like pick up   
+                                    pickupToHold( nextPlayer, m.x, m.y, 
+                                                  target );
+                                    }
+                                else if( targetObj->permanent ) {
+                                    // consider bare-hand action
+                                    TransRecord *handTrans = getPTrans(
+                                        0, target );
+                                    
+                                    // handle only simplest case here
+                                    // (to avoid side-effects)
+                                    // REMV on container stack
+                                    // (make sure they have the same
+                                    //  use parent)
+                                    if( handTrans != NULL &&
+                                        handTrans->newTarget > 0 &&
+                                        getObject( handTrans->newTarget )->
+                                        numSlots == targetObj->numSlots &&
+                                        handTrans->newActor > 0 &&
+                                        getObject( handTrans->newActor )->
+                                        minPickupAge <= 
+                                        computeAge( nextPlayer ) ) {
+                                        
+                                        handleHoldingChange( 
+                                            nextPlayer,
+                                            handTrans->newActor );
+                                        setMapObject( m.x, m.y, 
+                                                      handTrans->newTarget );
+                                        }
+                                    }
+                                }
+                            }
                         }                        
                     else if( m.type == SREMV ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
@@ -10730,54 +10918,63 @@ int main() {
                     }
                 nextPlayer->email = stringDuplicate( "email_cleared" );
 
+                int deathID = getRandomDeathMarker();
+                    
+                if( nextPlayer->customGraveID > -1 ) {
+                    deathID = nextPlayer->customGraveID;
+                    }
 
                 int oldObject = getMapObject( dropPos.x, dropPos.y );
                 
                 SimpleVector<int> oldContained;
                 SimpleVector<timeSec_t> oldContainedETADecay;
                 
-                int nX[4] = { -1, 1,  0, 0 };
-                int nY[4] = {  0, 0, -1, 1 };
-                
-                int n = 0;
-                GridPos centerDropPos = dropPos;
-                
-                while( oldObject != 0 && n <= 4 ) {
+                if( deathID != 0 ) {
                     
-                    // don't combine graves
-                    if( ! isGrave( oldObject ) ) {
-                        ObjectRecord *r = getObject( oldObject );
+                
+                    int nX[4] = { -1, 1,  0, 0 };
+                    int nY[4] = {  0, 0, -1, 1 };
+                    
+                    int n = 0;
+                    GridPos centerDropPos = dropPos;
+                    
+                    while( oldObject != 0 && n <= 4 ) {
                         
-                        if( r->numSlots == 0 && ! r->permanent 
-                            && ! r->rideable ) {
+                        // don't combine graves
+                        if( ! isGrave( oldObject ) ) {
+                            ObjectRecord *r = getObject( oldObject );
                             
-                            // found a containble object
-                            // we can empty this spot to make room
-                            // for a grave that can go here, and
-                            // put the old object into the new grave.
+                            if( r->numSlots == 0 && ! r->permanent 
+                                && ! r->rideable ) {
+                                
+                                // found a containble object
+                                // we can empty this spot to make room
+                                // for a grave that can go here, and
+                                // put the old object into the new grave.
+                                
+                                oldContained.push_back( oldObject );
+                                oldContainedETADecay.push_back(
+                                    getEtaDecay( dropPos.x, dropPos.y ) );
+                                
+                                setMapObject( dropPos.x, dropPos.y, 0 );
+                                oldObject = 0;
+                                }
+                            }
+                        
+                        oldObject = getMapObject( dropPos.x, dropPos.y );
+                        
+                        if( oldObject != 0 ) {
                             
-                            oldContained.push_back( oldObject );
-                            oldContainedETADecay.push_back(
-                                getEtaDecay( dropPos.x, dropPos.y ) );
+                            // try next neighbor
+                            dropPos.x = centerDropPos.x + nX[n];
+                            dropPos.y = centerDropPos.y + nY[n];
                             
-                            setMapObject( dropPos.x, dropPos.y, 0 );
-                            oldObject = 0;
+                            n++;
+                            oldObject = getMapObject( dropPos.x, dropPos.y );
                             }
                         }
-
-                    oldObject = getMapObject( dropPos.x, dropPos.y );
-                    
-                    if( oldObject != 0 ) {
-                        
-                        // try next neighbor
-                        dropPos.x = centerDropPos.x + nX[n];
-                        dropPos.y = centerDropPos.y + nY[n];
-                        
-                        n++;
-                        oldObject = getMapObject( dropPos.x, dropPos.y );
-                        }
                     }
-
+                
 
                 if( ! isMapSpotEmpty( dropPos.x, dropPos.y, false ) ) {
                     
@@ -10801,11 +10998,6 @@ int main() {
                 // assume death markes non-blocking, so it's safe
                 // to drop one even if other players standing here
                 if( isMapSpotEmpty( dropPos.x, dropPos.y, false ) ) {
-                    int deathID = getRandomDeathMarker();
-                    
-                    if( nextPlayer->customGraveID > -1 ) {
-                        deathID = nextPlayer->customGraveID;
-                        }
 
                     if( deathID > 0 ) {
                         

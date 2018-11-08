@@ -30,8 +30,7 @@
 #include "minorGems/util/stringUtils.h"
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/random/JenkinsRandomSource.h"
-#include "minorGems/game/drawUtils.h"
-#include "minorGems/game/gameGraphics.h"
+#include "minorGems/game/drawUtils.h"#include "minorGems/game/gameGraphics.h"
 
 #include "minorGems/io/file/File.h"
 
@@ -66,6 +65,11 @@ static float pencilErasedFontExtraFade = 0.75;
 
 
 extern doublePair lastScreenViewCenter;
+
+static char shouldMoveCamera = true;
+
+static char wasAutoClick = false;
+
 
 extern double viewWidth;
 extern double viewHeight;
@@ -2654,8 +2658,7 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
 
     // with a fixed seed
     JenkinsRandomSource blotRandSource( 0 );
-    
-	
+        
     for( int i=0; i<lines->size(); i++ ) {
         char *line = lines->getElementDirect( i );
         
@@ -3837,7 +3840,11 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                     else {
 
                         // cosine from pi to 3 pi has smooth start and finish
-                        babyHeldPos.x += 8 *
+                        int wiggleDir = 1;
+                        if( heldFlip ) {
+                            wiggleDir = -1;
+                            }
+                        babyHeldPos.x += wiggleDir * 8 *
                             ( cos( babyO->babyWiggleProgress * 2 * M_PI +
                                    M_PI ) * 0.5 + 0.5 );
                         }
@@ -4310,6 +4317,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         int tileY = -lrint( screenY / CELL_D );
 
+        // slight offset to compensate for tile overlaps and
+        // make biome tiles more centered on world tiles
+        screenY -= 32;
         
         for( int x=xStartFloor; x<=xEndFloor; x++ ) {
             int mapI = y * mMapD + x;
@@ -4324,6 +4334,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             int tileX = lrint( screenX / CELL_D );
 
+            // slight offset to compensate for tile overlaps and
+            // make biome tiles more centered on world tiles
+            screenX += 32;
             
             int b = -1;
             
@@ -4920,16 +4933,37 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             if( ourLiveObject->pathToDest != NULL &&
                 ourLiveObject->shouldDrawPathMarks &&
+                // hide marked path for short auto-extended-paths
+                ( ! wasAutoClick || ourLiveObject->markedPath.size() > 5 ||
+                  ourLiveObject->pathLength > 5 ) &&
                 mShowHighlights ) {
                 // highlight path
 
                 JenkinsRandomSource pathRand( 340930281 );
                 
-                GridPos pathSpot = ourLiveObject->pathToDest[ 0 ];
+
+                if( ourLiveObject->markedPath.size() == 0 ) {
+                    // fill it with first path
+                    for( int i=0; i<ourLiveObject->pathLength; i++ ) {
+                        // start first marks at fade 1 so global fade
+                        // will apply
+                        PathMark mark = { ourLiveObject->pathToDest[i],
+                                          i,
+                                          false, { 0, 0 }, { 0, 0 }, 1.0f };
+                        
+                        ourLiveObject->markedPath.push_back( mark );
+                        }
+                    }
+                
+                PathMark *startMark = ourLiveObject->markedPath.getElement( 0 );
+                
+
+                GridPos pathSpot = startMark->pos;
                 
 
                 GridPos endGrid = 
-                    ourLiveObject->pathToDest[ ourLiveObject->pathLength - 1 ];
+                    ourLiveObject->markedPath.getElementDirect( 
+                        ourLiveObject->markedPath.size()- 1 ).pos;
                 
                 doublePair endPos;
                 endPos.x = endGrid.x * CELL_D;
@@ -4944,7 +4978,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 float endFade = 1.0f;
                 
 
-                if( distFromEnd < 2 * CELL_D ) {
+                if( distFromEnd < 2 * CELL_D && ! mouseDown ) {
                     endFade = distFromEnd / ( 2 * CELL_D );
                     }
 
@@ -4955,7 +4989,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 curPos.y = pathSpot.y * CELL_D;
 
 
-                GridPos pathSpotB = ourLiveObject->pathToDest[ 1 ];
+                GridPos pathSpotB = 
+                    ourLiveObject->markedPath.getElementDirect( 1 ).pos;
                     
 
                 doublePair nextPosB;
@@ -4966,19 +5001,44 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 doublePair curDir = normalize( sub( nextPosB, curPos ) );
                 
+                char firstMarkDrawn = false;
+
 
                 double turnFactor = .25;
                 
                 int numStepsSinceDrawn = 0;
                 int drawOnStep = 6;
                 
+                int markedSize = ourLiveObject->markedPath.size();
 
-                for( int p=1; p< ourLiveObject->pathLength; p++ ) {
+                for( int p=1; p< markedSize; p++ ) {
                 
-                    
-                    GridPos pathSpotB = ourLiveObject->pathToDest[ p ];
-                    
+                    PathMark *mark = ourLiveObject->markedPath.getElement( p );
 
+                    GridPos pathSpotB = mark->pos;
+                    
+                    if( mouseDown && markedSize > 12 && p < markedSize - 12 ) {
+                        // older marks fade out
+                        if( mark->fade > 0 ) {
+                            mark->fade -= 0.02 * frameRateFactor;
+                            
+                            if( mark->fade < 0 ) {
+                                mark->fade = 0;
+                                }
+                            }
+                        }
+                    else {
+                        // new marks fade in
+                        if( mark->fade < 1 ) {
+                            mark->fade += 0.1 * frameRateFactor;
+                            
+                            if( mark->fade > 1 ) {
+                                mark->fade = 1;
+                                }
+                            }
+                        }
+                    
+                    
                     doublePair nextPos;
                 
                     nextPos.x = pathSpotB.x * CELL_D;
@@ -4986,7 +5046,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     int closeDist = 60;
                     
-                    if( p == ourLiveObject->pathLength - 1 ) {
+                    if( p == markedSize - 1 ) {
                         closeDist = 20;
                         }
                     
@@ -5014,14 +5074,34 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                       mult( curDir, 6 ) );
                         
                         setDrawColor( 0, 0, 0, 
-                                      ourLiveObject->pathMarkFade * endFade );
+                                      ourLiveObject->pathMarkFade * endFade *
+                                      mark->fade );
                         
 
-                        doublePair drawPos = curPos;
-                        
                         if( numStepsSinceDrawn == 0 ) {
                             
-                            drawSprite( mPathMarkSprite, drawPos, 1.0, 
+                            if( ! firstMarkDrawn && mark->dirAndPosSet ) {
+                                // use cached starting pos
+                                curPos = mark->drawPos;
+                                curDir = mark->drawDir;
+                                firstMarkDrawn = true;
+                                }
+                    
+                            
+                            if( ! mark->dirAndPosSet ) {
+                                
+                                // remember it for future, in case we
+                                // need to use it as our first mark after
+                                // previous marks have been pruned
+                                mark->dirAndPosSet = true;
+                                mark->drawDir = curDir;
+                                mark->drawPos = curPos;
+                                // don't re-consider this as first mark
+                                // now that we've set it
+                                firstMarkDrawn = true;
+                                }
+
+                            drawSprite( mPathMarkSprite, curPos, 1.0, 
                                     -angle( curDir ) / ( 2 * M_PI ) + .25  );
                             }
                         
@@ -5031,7 +5111,30 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             }
                         }
                     }
+
+
                 
+                PathMark *endMark = 
+                    ourLiveObject->markedPath.getElement( 
+                        ourLiveObject->markedPath.size() - 1 );
+                
+                GridPos pathSpotEnd = endMark->pos;
+                
+                
+                doublePair nextPos;
+                
+                nextPos.x = pathSpotEnd.x * CELL_D;
+                nextPos.y = pathSpotEnd.y * CELL_D;
+
+                setDrawColor( 0, 0, 0, 
+                              ourLiveObject->pathMarkFade * endFade );        
+                
+                drawSprite( mPathMarkSprite, nextPos, 1.0,
+                            0.125 );
+                drawSprite( mPathMarkSprite, nextPos, 1.0,
+                            0.375 );
+                
+
                 if( ourLiveObject->pathMarkFade < 1 ) {
                     ourLiveObject->pathMarkFade += 0.1 * frameRateFactor;
                     
@@ -5043,6 +5146,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         else {
             ourLiveObject->pathMarkFade = 0;
+            ourLiveObject->markedPath.deleteAll();
             }
         }
     
@@ -6387,6 +6491,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
     doublePair slipPos = add( mHomeSlipPosOffset, lastScreenViewCenter );
+    
     if( ! equal( mHomeSlipPosOffset, mHomeSlipHideOffset ) ) {
         setDrawColor( 1, 1, 1, 1 );
         drawSprite( mHomeSlipSprite, slipPos, gui_fov_effective_scale );
@@ -12365,7 +12470,9 @@ void LivingLifePage::step() {
                                         }
                                     
                                     
-                                    if( ! otherSoundPlayed && 
+                                    if( ( ! otherSoundPlayed ||
+                                          heldObj->creationSoundForce )
+                                          && 
                                         ! clothingChanged &&
                                         heldTransitionSourceID >= 0 &&
                                         heldObj->creationSound.numSubSounds 
@@ -12398,7 +12505,9 @@ void LivingLifePage::step() {
                                             }
                                         
 
-                                        if( ! groundSoundPlayed &&
+                                        if( ( ! groundSoundPlayed ||
+                                              heldObj->creationSoundForce )
+                                            &&
                                             testAncestor > 0 ) {
                                             // new held object is result
                                             // of a transtion
@@ -13153,7 +13262,7 @@ void LivingLifePage::step() {
                         babyO->heldByAdultPendingID = -1;
                         }
                     
-                    babyO->jumpOutOfArmsSent = false;
+                    babyO->jumpOutOfArmsSentTime = 0;
                     
                     // stop crying when held
                     babyO->tempAgeOverrideSet = false;
@@ -14799,6 +14908,10 @@ void LivingLifePage::step() {
         // whole pixels
         screenTargetPos.x = round( screenTargetPos.x );
         screenTargetPos.y = round( screenTargetPos.y );
+
+        if( !shouldMoveCamera ) {
+            screenTargetPos = lastScreenViewCenter;
+            }
         
 
         doublePair dir = sub( screenTargetPos, lastScreenViewCenter );
@@ -15183,7 +15296,7 @@ void LivingLifePage::step() {
                 }
             else {
 
-                if( o->id == ourID && mouseDown ) {
+                if( o->id == ourID && mouseDown && shouldMoveCamera ) {
                     float worldMouseX, worldMouseY;
                     
                     screenToWorld( lastScreenMouseX,
@@ -15255,6 +15368,93 @@ void LivingLifePage::step() {
                                 }
                             else {
                                 pointerDown( worldMouseX, worldMouseY );
+                                }
+                            o->shouldDrawPathMarks = true;
+                            wasAutoClick = true;
+                            
+                            if( o->pathToDest != NULL ) {
+                                int addNewPathFromIndex = 0;
+                                
+                                for( int p= o->markedPath.size() - 1; 
+                                     p >= 0; p-- ) {
+                                    if( equal( 
+                                            o->markedPath.
+                                            getElement( p )->pos,
+                                            o->pathToDest[0] ) ) {
+                                        // found start of new path
+                                        
+                                        // keep going as long
+                                        // as there is overlap
+                                        
+                                        int deleteOldFromIndex = p;
+                                        for( int q=0;
+                                             q + p < o->markedPath.size() &&
+                                                 q < o->pathLength; q++ ) {
+                                            if( equal( 
+                                                    o->markedPath.
+                                                    getElement( q + p )->pos,
+                                                    o->pathToDest[ q ] ) ) {
+                                                addNewPathFromIndex ++;
+                                                deleteOldFromIndex ++;
+                                                }
+                                            else {
+                                                break;
+                                                }
+                                            }
+
+                                        // clear old path forward
+                                        // from this spot
+                                        for( int q=o->markedPath.size()-1;
+                                             q >= deleteOldFromIndex; q-- ) {
+                                            o->markedPath.deleteElement( q );
+                                            }
+                                        break;
+                                        }
+                                    }
+                                int index = 0;
+                                if( o->markedPath.size() > 0 ) {
+                                    index = o->markedPath.getElement(
+                                        o->markedPath.size() - 1 )->origIndex;
+                                    
+                                    index++;
+                                    }
+                                
+                                // delete mark records that have faded out
+                                for( int p=0; p<o->markedPath.size(); p++ ) {
+                                    if( o->markedPath.getElement( p )->fade == 
+                                        0 ) {
+                                        o->markedPath.deleteElement( p );
+                                        p--;
+                                        }
+                                    }
+                                
+                                // add our new path
+                                for( int p=addNewPathFromIndex; 
+                                     p<o->pathLength; p++ ) {
+                                    // start with fade 0 so 
+                                    // the path extension can fade in
+                                    PathMark mark = { o->pathToDest[p],
+                                                      index,
+                                                      false, {0,0}, {0,0},
+                                                      0.0f };
+                                    
+                                    // leave first few faded in somewhat
+                                    if( p == addNewPathFromIndex ) {
+                                        mark.fade = 1;
+                                        }
+                                    if( p == addNewPathFromIndex + 1 ) {
+                                        mark.fade = 0.5;
+                                        }
+                                    if( p == addNewPathFromIndex + 3 ) {
+                                        mark.fade = 0.25;
+                                        }
+                                    
+                                    
+                                    index++;
+                                    o->markedPath.push_back( mark );
+                                    }
+
+                                
                                 }
                             }
                         }
@@ -15821,6 +16021,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     mEKeyDown = false;
     mZKeyDown = false;
     mouseDown = false;
+    shouldMoveCamera = true;
+    wasAutoClick = false;
     
     screenCenterPlayerOffsetX = 0;
     screenCenterPlayerOffsetY = 0;
@@ -16876,20 +17078,28 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         getObject( ourLiveObject->holdingID )->speedMult == 0 ) {
         // holding something that stops movement entirely, ignore click
         
-        printf( "Skipping click, holding 0-speed object\n" );
-        return;
+        TransRecord *groundTrans = getTrans( ourLiveObject->holdingID, -1 );
+        
+        if( groundTrans == NULL ) {
+
+            printf( "Skipping click, holding 0-speed object "
+                    "that can't be used on ground\n" );
+            return;
+            }
         }
     
 
     if( ourLiveObject->heldByAdultID != -1 ) {
         // click from a held baby
 
-        // only send once, even on multiple clicks
-        if( ! ourLiveObject->jumpOutOfArmsSent ) {
+        // only send once every 5 seconds, even on multiple clicks
+        double curTime = game_getCurrentTime();
+        
+        if( ourLiveObject->jumpOutOfArmsSentTime < curTime - 5 ) {
             // send new JUMP message instead of ambigous MOVE message
             sendToServerSocket( (char*)"JUMP 0 0#" );
             
-            ourLiveObject->jumpOutOfArmsSent = true;
+            ourLiveObject->jumpOutOfArmsSentTime = curTime;
             }
         
         if( ! ourLiveObject->babyWiggle ) {
@@ -16936,6 +17146,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         p.hitOurPlacement = false;
         p.hitAnObject = false;
         p.hitOtherPerson = false;
+        
+        
+        // also, use direct tile clicking
+        // (don't remap clicks on the top of tall objects down to the base tile)
+        p.closestCellX = lrintf( ( inX ) / CELL_D );
+    
+        p.closestCellY = lrintf( ( inY ) / CELL_D );
         }
     
     // clear mouse over cell
@@ -17079,7 +17296,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 nextActionMessageToSend = NULL;
                 }
 
-            if( !modClick ) {
+            if( !modClick || p.hitClothingIndex == -1 ) {
                 
                 if( ourLiveObject->holdingID > 0 &&
                     getObject( ourLiveObject->holdingID )->foodValue > 0 ) {
@@ -17093,12 +17310,15 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 printf( "Use on self\n" );
                 }
             else {
+                // modclick on hit clothing
+
                 if( ourLiveObject->holdingID > 0 ) {
                     nextActionMessageToSend = 
                         autoSprintf( "DROP %d %d %d#",
                                      sendX( clickDestX ), sendY( clickDestY ), 
                                      p.hitClothingIndex  );
                     nextActionDropping = true;
+                    printf( "Add to own clothing container\n" );
                     }
                 else {
                     nextActionMessageToSend = 
@@ -17619,9 +17839,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         if( ! canExecute ) {
             // need to move to empty adjacent first, if it exists
             
+            // also consider spot itself in some cases
             
-            int nDX[4] = { -1, +1, 0, 0 };
-            int nDY[4] = { 0, 0, -1, +1 };
+            int nDX[5] = { 0, -1, +1, 0, 0 };
+            int nDY[5] = { 0, 0, 0, -1, +1 };
             
             char foundEmpty = false;
             
@@ -17629,14 +17850,48 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
             char oldPathExists = ( ourLiveObject->pathToDest != NULL );
             
-            int nLimit = 4;
+            // don't consider dest spot itself generally
+            int nStart = 1;
+            
+            int nLimit = 5;
             
             if( sideAccess ) {
                 // don't consider N or S neighbors
-                nLimit = 2;
+                nLimit = 3;
+                }
+            else if( destID > 0 &&
+                     ourLiveObject->holdingID == 0 && 
+                     getObject( destID )->permanent &&
+                     ! getObject( destID )->blocksWalking ) {
+                
+                TransRecord *handTrans = getTrans( 0, destID );
+                
+                if( handTrans == NULL ||
+                    ( handTrans->newActor != 0 &&
+                      getObject( handTrans->newActor )->foodValue > 0 &&
+                        handTrans->newTarget != 0 &&
+                      ! getObject( handTrans->newTarget )->blocksWalking ) ) {
+                    // walk to tile itself if target is permanent
+                    // and not blocking, and hand is empty
+                    // AND this will result in something still
+                    // on the ground (so it's not a transforming pick-up,
+                    // like pulling an onion).
+                    // and the new thing on the ground is not blocking
+                    // (so we're not closing a door)
+                    // and what you get in the hand is edible
+                    // (example:  picking berries from behind the bush)
+                    //
+                    // this is the main situation where you'd want to
+                    // click the same target and yourself
+                    // multiple times in a row, so having yourself
+                    // as close as possible to the target matters
+                    nStart = 0;
+                    }
                 }
 
-            for( int n=0; n<nLimit; n++ ) {
+
+
+            for( int n=nStart; n<nLimit; n++ ) {
                 int x = mapX + nDX[n];
                 int y = mapY + nDY[n];
 
@@ -17680,6 +17935,12 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         // restore our old dest
                         ourLiveObject->xd = oldXD;
                         ourLiveObject->yd = oldYD;    
+
+                        if( n == 0 && foundEmpty ) {
+                            // always prefer tile itself, if that's an option
+                            // based on logic above, even if further
+                            break;
+                            }
                         }
                     
                     }
@@ -18118,14 +18379,25 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
         return;
         }
 
+    LiveObject *ourLiveObject = getOurLiveObject();
+    
+    if( wasAutoClick && ourLiveObject->markedPath.size() <= 5 &&
+        ourLiveObject->pathLength <= 5 ) {
+        ourLiveObject->shouldDrawPathMarks = false;
+        }
+    
+    wasAutoClick = false;
+
+
     if( mouseDown && 
-        getOurLiveObject()->inMotion 
+        ourLiveObject->inMotion 
         &&
         mouseDownFrames >  
         minMouseDownFrames / frameRateFactor ) {
         
         // treat the up as one final click
-        pointerDown( inX, inY );
+        // don't do this for now, because it's confusing
+        // pointerDown( inX, inY );
         }
 
     mouseDown = false;
@@ -18267,12 +18539,19 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         */
         case 'e':
         case 'E':
-            mEKeyDown = true;
+            if( ! mSayField.isFocused() ) {
+                mEKeyDown = true;
+                }
             break;
         case 'z':
         case 'Z':
-            if( mUsingSteam ) {
+            if( mUsingSteam && ! mSayField.isFocused() ) {
                 mZKeyDown = true;
+                }
+            break;
+        case ' ':
+            if( ! mSayField.isFocused() ) {
+                shouldMoveCamera = false;
                 }
             break;
         // LINEAGEFERTILITYMOD NOTE:  Change 3/4 - Take these lines during the merge process
@@ -18645,6 +18924,9 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
         case 'z':
         case 'Z':
             mZKeyDown = false;
+            break;
+        case ' ':
+            shouldMoveCamera = true;
             break;
         }
 

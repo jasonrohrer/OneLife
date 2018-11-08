@@ -211,7 +211,8 @@ EditorObjectPage::EditorObjectPage()
           mUsingSoundWidget( smallFont, -50, -310 ),
           mEatingSoundWidget( smallFont, +200, -310 ),
           mDecaySoundWidget( smallFont, +450, -310 ),
-          mCreationSoundInitialOnlyCheckbox( -185, -285, 2 ),
+          mCreationSoundInitialOnlyCheckbox( -175, -285, 2 ),
+          mCreationSoundForceCheckbox( -280, -285, 2 ),
           mSlotPlaceholderSprite( loadSprite( "slotPlaceholder.tga" ) ),
           mFaceFrameSprite( loadSprite( "faceFrame.tga" ) ),
           mFaceFrameMaskSprite( loadSprite( "faceFrameMask.tga" ) ),
@@ -260,6 +261,10 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mCreationSoundInitialOnlyCheckbox );
     mCreationSoundInitialOnlyCheckbox.setVisible( false );
     mCreationSoundInitialOnlyCheckbox.addActionListener( this );
+
+    addComponent( &mCreationSoundForceCheckbox );
+    mCreationSoundForceCheckbox.setVisible( false );
+    mCreationSoundForceCheckbox.addActionListener( this );
 
 
     mContainSizeField.setVisible( false );
@@ -1378,10 +1383,15 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             }
         
         char creationSoundInitialOnly = false;
-        
         if( mCreationSoundWidget.getSoundUsage().numSubSounds > 0 ) {
             creationSoundInitialOnly = 
                 mCreationSoundInitialOnlyCheckbox.getToggled();
+            }
+
+        char creationSoundForce = false;        
+        if( mCreationSoundWidget.getSoundUsage().numSubSounds > 0 ) {
+            creationSoundForce = 
+                mCreationSoundForceCheckbox.getToggled();
             }
 
         int newID =
@@ -1424,6 +1434,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mEatingSoundWidget.getSoundUsage(),
                    mDecaySoundWidget.getSoundUsage(),
                    creationSoundInitialOnly,
+                   creationSoundForce,
                    mCurrentObject.numSlots,
                    mSlotSizeField.getFloat(),
                    mCurrentObject.slotPos,
@@ -1518,11 +1529,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] raceText;
             }
         
-        char creationSoundInitialOnly = false;
-        
+        char creationSoundInitialOnly = false;        
         if( mCreationSoundWidget.getSoundUsage().numSubSounds > 0 ) {
             creationSoundInitialOnly = 
                 mCreationSoundInitialOnlyCheckbox.getToggled();
+            }
+
+        char creationSoundForce = false;        
+        if( mCreationSoundWidget.getSoundUsage().numSubSounds > 0 ) {
+            creationSoundForce = 
+                mCreationSoundForceCheckbox.getToggled();
             }
 
 
@@ -1565,6 +1581,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mEatingSoundWidget.getSoundUsage(),
                    mDecaySoundWidget.getSoundUsage(),
                    creationSoundInitialOnly,
+                   creationSoundForce,
                    mCurrentObject.numSlots,
                    mSlotSizeField.getFloat(), 
                    mCurrentObject.slotPos,
@@ -2872,6 +2889,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCreationSoundInitialOnlyCheckbox.setVisible( 
                 mCreationSoundWidget.getSoundUsage().numSubSounds > 0 );
             
+            mCreationSoundForceCheckbox.setToggled( 
+                pickedRecord->creationSoundForce );
+
+            mCreationSoundForceCheckbox.setVisible( 
+                mCreationSoundWidget.getSoundUsage().numSubSounds > 0 );
+            
 
             mRaceField.setText( "A" );
             
@@ -4056,6 +4079,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         smallFont->drawString( "Initial Only", pos, alignRight );
         }
 
+    if( mCreationSoundForceCheckbox.isVisible() ) {
+        pos = mCreationSoundForceCheckbox.getPosition();
+        pos.x -= checkboxSep;
+        smallFont->drawString( "Force", pos, alignRight );
+        }
+
     
     if( mPickedObjectLayer != -1 ) {
         char *tag = getSpriteRecord( 
@@ -4262,10 +4291,12 @@ void EditorObjectPage::step() {
         ( mCreationSoundWidget.getSoundUsage().numSubSounds > 0 );
     
     mCreationSoundInitialOnlyCheckbox.setVisible( creationSoundPresent );
+    mCreationSoundForceCheckbox.setVisible( creationSoundPresent );
     
     if( ! creationSoundPresent ) {
         // un-toggle whenever sound cleared
         mCreationSoundInitialOnlyCheckbox.setToggled( false );
+        mCreationSoundForceCheckbox.setToggled( false );
         }
     
 
