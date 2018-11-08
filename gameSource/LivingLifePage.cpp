@@ -30,7 +30,9 @@
 #include "minorGems/util/stringUtils.h"
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/random/JenkinsRandomSource.h"
-#include "minorGems/game/drawUtils.h"#include "minorGems/game/gameGraphics.h"
+#include "minorGems/game/drawUtils.h"
+#include "minorGems/game/gameGraphics.h"
+#include "zoomView.h"
 
 #include "minorGems/io/file/File.h"
 
@@ -148,6 +150,7 @@ static double emotDuration = 10;
 static char showFertilityPanel = true;
 // AGEMOD NOTE:  Change 1/3 - Take these lines during the merge process
 static char showAgePanel = true;
+static char showCursorZoom = false;
 
 
 // most recent home at end
@@ -7144,6 +7147,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
+    if ( showCursorZoom ) {
+        doublePair zoomPos = { lastMouseX, lastMouseY };
+        drawZoomView( zoomPos, 16, 4, zoomPos );
+    }
     // info panel at bottom
     setDrawColor( 1, 1, 1, 1 );
     doublePair panelPos = lastScreenViewCenter;
@@ -11449,7 +11456,7 @@ void LivingLifePage::step() {
                 o.heldByDropOffset.x = 0;
                 o.heldByDropOffset.y = 0;
                 
-                o.jumpOutOfArmsSent = false;
+                o.jumpOutOfArmsSentTime = false;
                 o.babyWiggle = false;
 
                 o.ridingOffset.x = 0;
@@ -18553,6 +18560,11 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             if( ! mSayField.isFocused() ) {
                 shouldMoveCamera = false;
                 }
+            break;
+        case '?':
+            if ( ! mSayField.isFocused() ) {
+                showCursorZoom = !showCursorZoom;
+            }
             break;
         // LINEAGEFERTILITYMOD NOTE:  Change 3/4 - Take these lines during the merge process
         case 92: // backslash

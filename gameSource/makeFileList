@@ -46,6 +46,7 @@ AutoUpdatePage.cpp \
 soundBank.cpp \
 convolution.cpp \
 fft.cpp \
+zoomView.cpp \
 ogg.cpp \
 musicPlayer2.cpp \
 groundSprites.cpp \

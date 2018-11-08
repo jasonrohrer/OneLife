@@ -31,6 +31,7 @@ Keybind | Description
 **Shift + a-z** | Generate a random name that begins with the corresponding letter that you press.
 **Shift + DEL** | Sudden Infant Death hotkey.  Only works if you are less than 1 year old & held by your parent.
 **F1 - F7 ( Function Keys )** | Hotkeys for triggering emotions.  The order used is the same as they appear in your emotionWords.ini settings file.
+**? (Question Mark)** | Toggles a zoom-in viewer wherever the mouse cursor is located.
 
 # Added Features
 * **In-Game Adjustable FOV Zoom**
@@ -47,6 +48,10 @@ Keybind | Description
     <img alt="1440p - 2x Zoom" width="20%" src="https://user-images.githubusercontent.com/24634429/45483650-6c550c80-b706-11e8-9226-51bac40c8acf.png">
     <img alt="4k - 3x Zoom" width="20%" src="https://user-images.githubusercontent.com/24634429/45483667-7971fb80-b706-11e8-9246-720bc9f15203.png">
 </p>
+
+* **Zoom-IN Viewer**
+
+   - Toggle a small zoomed-in viewer, borrowed from the game's Editor.  Great for seeing tiny objects wherever you move your mouse!
 
 * **Lineage Fertility Panel**
 
