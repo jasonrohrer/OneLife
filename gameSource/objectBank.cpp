@@ -3141,12 +3141,14 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             }
         
         // shoes on top of feet
-        if( inClothing.backShoe != NULL && i == backFootIndex ) {
+        if( ! skipSprite && 
+            inClothing.backShoe != NULL && i == backFootIndex ) {
             drawObject( inClothing.backShoe, 2,
                         backShoePos, backShoeRot, true,
                         inFlipH, -1, 0, false, false, emptyClothing );
             }
-        else if( inClothing.frontShoe != NULL && i == frontFootIndex ) {
+        else if( ! skipSprite &&
+                 inClothing.frontShoe != NULL && i == frontFootIndex ) {
             drawObject( inClothing.frontShoe, 2,
                         frontShoePos, frontShoeRot, true,
                         inFlipH, -1, 0, false, false, emptyClothing );
