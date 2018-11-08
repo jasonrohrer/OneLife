@@ -37,6 +37,9 @@ Version 164    ???
 --Allow baby to send JUMP messages every five seconds, instead of just once.
   Fixes #112.  Fixed baby wiggle direction when mother facing left.
 
+--Don't use DROP message when clicking on self unless actually clicked on
+  clothing.  Fixes #98
+
 
 
 Server Fixes
@@ -72,8 +75,11 @@ Server Fixes
 --Support for groundOnly tag in object description to prevent object from being
   created on a floor.
 
---Don't use DROP message when clicking on self unless actually clicked on
-  clothing.  Fixes #98
+--Fixed case where non-permanent held object (like goose) force-dropped
+  (through death/wounding), where a ground transition applies.  No more stuck
+  goose or piglet after a force-drop.
+
+
 
 
 

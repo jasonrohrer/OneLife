@@ -3244,6 +3244,33 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             setFreshEtaDecayForHeld( inDroppingPlayer );
             }
         }
+    else if( oldHoldingID > 0 &&
+             ! getObject( oldHoldingID )->permanent ) {
+        // what they are holding is NOT stuck in their
+        // hand
+
+        // see if a use-on-bare-ground drop 
+        // action applies (example:  getting wounded while holding a goose)
+                            
+        // do not consider doing this if use-on-bare-ground leaves something
+        // in the hand
+
+        TransRecord *bareTrans =
+            getPTrans( oldHoldingID, -1 );
+                            
+        if( bareTrans != NULL &&
+            bareTrans->newTarget > 0 &&
+            bareTrans->newActor == 0 ) {
+                            
+            oldHoldingID = bareTrans->newTarget;
+            
+            inDroppingPlayer->holdingID = 
+                bareTrans->newTarget;
+            holdingSomethingNew( inDroppingPlayer, oldHoldingID );
+
+            setFreshEtaDecayForHeld( inDroppingPlayer );
+            }
+        }
 
     int targetX = inX;
     int targetY = inY;
