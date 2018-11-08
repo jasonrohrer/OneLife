@@ -11618,9 +11618,52 @@ void LivingLifePage::step() {
                         existing->id != ourID &&
                         existing->currentSpeed != 0 &&
                         ! forced ) {
+
                         // non-forced update about other player 
                         // while we're still playing their last movement
                         
+                        // sometimes this can mean a move truncation
+                        if( existing->pathToDest != NULL ) {
+
+                            GridPos pathEnd = 
+                                existing->pathToDest[ 
+                                    existing->pathLength - 1 ];
+
+                            if( o.xd == pathEnd.x &&
+                                o.yd == pathEnd.y ) {
+                                // PU destination matches our current path dest
+                                // no move truncation
+                                }
+                            else {
+                                // PU should be somewhere along our path
+                                // a truncated move
+                                
+                                // truncate our path there
+                                for( int p=existing->pathLength - 1;
+                                     p >= 0; p-- ) {
+                                    
+                                    GridPos thisStep = 
+                                        existing->pathToDest[ p ];
+                                    
+                                    if( thisStep.x == o.xd &&
+                                        thisStep.y == o.yd ) {
+                                        // found
+
+                                        // cut off
+                                        existing->pathLength = p + 1;
+                                        
+                                        // navigate there
+                                        if( p > 0 ) {
+                                            existing->currentPathStep = p - 1;
+                                            }
+                                        else {
+                                            existing->currentPathStep = p;
+                                            }
+                                        break;
+                                        }
+                                    }
+                                }
+                            }
 
                         // defer it until they're done moving
                         printf( "Holding PU message for "
@@ -18086,7 +18129,19 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
         mouseDownFrames >  
         minMouseDownFrames / frameRateFactor ) {
         
-        // treat the up as one final click
+        // treat the up as one final click (at closest next path position
+        // to where they currently are)
+        
+        LiveObject *o = getOurLiveObject();
+
+        if( o->pathToDest != NULL &&
+            o->currentPathStep < o->pathLength - 2 ) {
+            GridPos p = o->pathToDest[ o->currentPathStep + 1 ];
+        
+            pointerDown( p.x * CELL_D, p.y * CELL_D );
+            }
+        
+
         // don't do this for now, because it's confusing
         // pointerDown( inX, inY );
         }
