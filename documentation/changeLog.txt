@@ -3,6 +3,22 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 165    2018-November-8
+
+--Tore out the code that always shows the dotted line when held-mouse journey
+  pathing.  Not satisfied with how it looks, and hopefully other solutions will
+  emerge.
+
+--Releasing mouse on held-mouse journey now makes you stop exactly where your
+  character is standing upon release.
+
+--Fixed the way other clients handle PU that is not at end of current path.
+  Now correctly truncates current path so that character walks to that point.
+
+
+
+
 Version 163    2018-November-7
 
 --Holding SPACE freezes camera on the current map area.  Useful when moving
