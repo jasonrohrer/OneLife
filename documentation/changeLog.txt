@@ -40,6 +40,12 @@ Version 164    ???
 --Don't use DROP message when clicking on self unless actually clicked on
   clothing.  Fixes #98
 
+--Fixed shoes of rider appearing at (0,0) in world.
+  Fixes jasonrohrer/OneLifeData7#50
+
+--Moved some overlapping text up in transition editor.
+
+
 
 
 Server Fixes
