@@ -1,5 +1,7 @@
 int versionNumber = 163;
 int dataVersionNumber = 0;
+int clientVersionNumber = versionNumber;
+int expectedVersionNumber = 0;
 
 // NOTE that OneLife doesn't use account hmacs
 
@@ -442,6 +444,21 @@ static void updateDataVersionNumber() {
     }
 
 
+static void updateExpectedVersionNumber() {
+    File file( NULL, "binary.txt" );
+
+    if( file.exists() ) {
+        char *contents = file.readFileContents();
+        
+        if( contents != NULL ) {
+            sscanf( contents, "v%d", &expectedVersionNumber );
+            }
+
+            delete [] contents;
+        }
+    }
+
+
 
 
 #define SETTINGS_HASH_SALT "another_loss"
@@ -550,6 +567,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     initAgeControl();
     
     updateDataVersionNumber();
+    updateExpectedVersionNumber();
 
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
@@ -610,25 +628,19 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     mainFontFixed->setMinimumPositionPrecision( 1 );
     numbersFontFixed->setMinimumPositionPrecision( 1 );
     
-    // FOVMOD NOTE:  Change 3/3 - Take these lines during the merge process
-    int shouldScaleHUD = gui_fov_scale_hud;
-    float scaleHUD = gui_fov_scale;
-    if( shouldScaleHUD > 0 ) {
-        scaleHUD = 1.0f;
-    }
-	
+    // FOVMOD NOTE:  Change 3/3 - Take these lines during the merge process	
     handwritingFont = 
-        new Font( "font_handwriting_32_32.tga", 3, 6, false, 16 * scaleHUD );
+        new Font( "font_handwriting_32_32.tga", 3, 6, false, 16 * gui_fov_effective_scale );
 
     handwritingFont->setMinimumPositionPrecision( 1 );
 
     pencilFont = 
-        new Font( "font_pencil_32_32.tga", 3, 6, false, 16 * scaleHUD );
+        new Font( "font_pencil_32_32.tga", 3, 6, false, 16 * gui_fov_effective_scale );
 
     pencilFont->setMinimumPositionPrecision( 1 );
 
     pencilErasedFont = 
-        new Font( "font_pencil_erased_32_32.tga", 3, 6, false, 16 * scaleHUD );
+        new Font( "font_pencil_erased_32_32.tga", 3, 6, false, 16 * gui_fov_effective_scale );
 
     pencilErasedFont->setMinimumPositionPrecision( 1 );
 
@@ -1723,8 +1735,22 @@ void drawFrame( char inUpdate ) {
                         autoLogIn = false;
                         }
 
-                    currentGamePage = existingAccountPage;
-                    currentGamePage->base_makeActive( true );
+                    if( clientVersionNumber == expectedVersionNumber ) { 
+                        currentGamePage = existingAccountPage;
+                        currentGamePage->base_makeActive( true );
+                        }
+                    else if( clientVersionNumber > expectedVersionNumber ) {
+                        currentGamePage = finalMessagePage;                        
+                        finalMessagePage->setMessageKey( "upgradeMessage" );
+                        finalMessagePage->setSubMessage( "IT LOOKS LIKE YOU UPDATED THE MOD##BEFORE DOWNLOADING THE LATEST GAME UPDATE.####USE YOUR UN-MODDED CLIENT TO UPDATE FIRST.##(DON'T FORGET TO CLEAR ANY CUSTOM SERVER SETTINGS!)" );
+                        currentGamePage->base_makeActive( true );
+                        }
+                    else {
+                        currentGamePage = finalMessagePage;                        
+                        finalMessagePage->setMessageKey( "upgradeMessage" );
+                        finalMessagePage->setSubMessage( autoSprintf( "THIS VERSION OF THE MOD IS OUTDATED##(EXPECTING VERSION %d - RUNNING VERSION %d)##PLEASE DOWNLOAD A NEWER VERSION FROM:####HTTPS://GITHUB.COM/AWBZ/ONELIFE/RELEASES/LATEST", expectedVersionNumber, clientVersionNumber ) );
+                        currentGamePage->base_makeActive( true );
+                    }
                 }
             }
         else if( currentGamePage == settingsPage ) {

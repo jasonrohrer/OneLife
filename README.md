@@ -12,8 +12,8 @@ A lightly modified client for [One Hour One Life](http://onehouronelife.com), a 
 
 # Requirements
    * Requires the base game to already be installed.
-      - Grab it from the download link provided when you [created your official lifetime account](https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=), or [compiled by Joriom](http://ohol.joriom.pl/download/OneLife_win32_latest) from the [official forums](https://onehouronelife.com/forums/viewtopic.php?id=1467).
-   * Pre-compiled releases of this modified client are available for Windows and macOS 10.5+.  Linux users, feel free to compile from source.
+      - Grab it from the download link provided when you [created your official lifetime account](https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=), or from [Steam](https://store.steampowered.com/app/595690/One_Hour_One_Life/).
+   * Pre-compiled releases of this modified client are available for Windows, Linux and macOS 10.5+.
 
 # Installation
 Download the [latest release](https://github.com/Awbz/OneLife/releases/latest) and extract all of the zip file's contents into the folder where your game is installed.  That's it!  Now just launch the game with OneLife+.exe for Windows, or OneLife_v###+.app on macOS (where ### is the client version.)

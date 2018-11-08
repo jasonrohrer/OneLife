@@ -52,6 +52,8 @@
 
 extern int versionNumber;
 extern int dataVersionNumber;
+extern int clientVersionNumber;
+extern int expectedVersionNumber;
 
 extern double frameRateFactor;
 
@@ -18452,6 +18454,12 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             mSayField.focus();
         }
     }
+
+    if( inASCII == 63 ) { // Question Mark
+        if( ! mSayField.isFocused() ) {
+            showCursorZoom = !showCursorZoom;
+        }
+    }
 	
     switch( inASCII ) {
         /*
@@ -18560,11 +18568,6 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             if( ! mSayField.isFocused() ) {
                 shouldMoveCamera = false;
                 }
-            break;
-        case '?':
-            if ( ! mSayField.isFocused() ) {
-                showCursorZoom = !showCursorZoom;
-            }
             break;
         // LINEAGEFERTILITYMOD NOTE:  Change 3/4 - Take these lines during the merge process
         case 92: // backslash
