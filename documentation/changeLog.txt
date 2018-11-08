@@ -3,7 +3,8 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 165    ???
+
+Version 165    2018-November-8
 
 --Tore out the code that always shows the dotted line when held-mouse journey
   pathing.  Not satisfied with how it looks, and hopefully other solutions will
