@@ -11623,7 +11623,8 @@ void LivingLifePage::step() {
                         // while we're still playing their last movement
                         
                         // sometimes this can mean a move truncation
-                        if( existing->pathToDest != NULL ) {
+                        if( existing->pathToDest != NULL &&
+                            existing->pathLength > 0 ) {
 
                             GridPos pathEnd = 
                                 existing->pathToDest[ 
