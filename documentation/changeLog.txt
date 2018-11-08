@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 164    ???
+Version 163    2018-November-7
 
 --Holding SPACE freezes camera on the current map area.  Useful when moving
   back and forth between a small group of nearby objects (like when forging) so
