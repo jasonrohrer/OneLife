@@ -3,6 +3,92 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 163    2018-November-7
+
+--Holding SPACE freezes camera on the current map area.  Useful when moving
+  back and forth between a small group of nearby objects (like when forging) so
+  that you can click things more quickly and precisely (camera movement
+  interferes with your efforts to position the mouse).
+
+--Now showing dotted lines and X on path destination any time we're in
+  held-mouse long-travel mode, even if the path is in a straight line with no
+  detours.  This allows the user to predict and understand the behavior.
+
+--Fixed issue with auto-clicking during held-mouse travel when auto-click lands
+  on top of a tall object (was finding closest cell at base of tall object,
+  causing path to veer off course).
+
+--Moved biome tiles down and over by 32 pixels so that they line up with
+  actual tile boundaries.
+
+--Added special case logic that makes you stand behind a berry bush (or other
+  permanent, non-blocking food source) when you walk to it from far away.  This
+  makes clicking and eating multiple berries easier, becasue your character is
+  closer.
+
+--We only ignore clicks when holding speed-0 object if there's no bare-ground
+  transition (fixes getting stuck with horsebitten snake).
+  Fixes #117,  Fixes #102
+
+--Support for forced creation sounds that always play, even if other
+  same-trigger sounds are going to play in parallel (tipped horse cart sound
+  can play at same time as biting snake sound).
+
+--Allow baby to send JUMP messages every five seconds, instead of just once.
+  Fixes #112.  Fixed baby wiggle direction when mother facing left.
+
+--Don't use DROP message when clicking on self unless actually clicked on
+  clothing.  Fixes #98
+
+--Fixed shoes of rider appearing at (0,0) in world.
+  Fixes jasonrohrer/OneLifeData7#50
+
+--Moved some overlapping text up in transition editor.
+
+
+
+
+Server Fixes
+
+--Bring center of Eve spiral back to 0,0 whenver either x or y exceeds 100,000.
+  Thus, coordinates won't keep growing boundlessly.
+
+--Fixed an invalid read when generating death update for player who died of old
+  age.
+
+--Right-clicking an empty basket (or other non-permanent container) now picks
+  it up (to make it consistent with loose right-click semantics for other
+  objects).
+
+--Right-clicking object on its potential stack-mate (e.g., stone on stone) now
+  starts a new stack.  Feels like a "drop".
+
+--Right clicking on a basket stack with a basket adds the basket to the stack
+  (feels like a drop).
+
+--Right clicking basket stack with bare hand removes basket.
+
+--Fixed disappearing ground object when baby issues /die command.  Fixes #121
+
+--Change to deadly on-ground object wasn't happening when riding over (example:
+  snake goes into attacking posture).
+
+--Fixed wound-healing exploit where stab wound would replace snake bite.  Now
+  your first wound is the one that sticks with you and must be healed to save
+  you.  Each additional wound still halves your death stagger time, though.
+  Fixes #104.
+
+--Support for groundOnly tag in object description to prevent object from being
+  created on a floor.
+
+--Fixed case where non-permanent held object (like goose) force-dropped
+  (through death/wounding), where a ground transition applies.  No more stuck
+  goose or piglet after a force-drop.
+
+
+
+
+
 
 Version 161    2018-November-2
 
@@ -552,6 +638,10 @@ Server Fixes
 
 --Can no longer dress or swap clothing on elderly (was allowing theft of
   elderly backpacks).
+
+--Fixed so that nextID in metaData ID space is preserved across server
+  restarts.  Was overwiting existing written notes after restart.  Fixes #118.
+
 
 
 

@@ -178,6 +178,10 @@ typedef struct ObjectRecord {
         // decay-caused creation).
         char creationSoundInitialOnly;
         
+        // true if creation sound should always play, even if other
+        // same-trigger sounds are playing
+        char creationSoundForce;
+        
 
         // if it is a container, how many slots?
         // 0 if not a container
@@ -464,6 +468,7 @@ int addObject( const char *inDescription,
                SoundUsage inEatingSound,
                SoundUsage inDecaySound,
                char inCreationSoundInitialOnly,
+               char inCreationSoundForce,
                int inNumSlots, float inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
                int *inSlotParent,

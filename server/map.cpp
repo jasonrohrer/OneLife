@@ -2748,7 +2748,36 @@ char initMap() {
     
     metaDBOpen = true;
 
+    DB_Iterator metaIterator;
+    
+    DB_Iterator_init( &metaDB, &metaIterator );
 
+    unsigned char metaKey[4];
+    
+    unsigned char metaValue[MAP_METADATA_LENGTH];
+
+    int maxMetaID = 0;
+    int numMetaRecords = 0;
+    
+    while( DB_Iterator_next( &metaIterator, metaKey, metaValue ) > 0 ) {
+        numMetaRecords++;
+        
+        int metaID = valueToInt( metaKey );
+
+        if( metaID > maxMetaID ) {
+            maxMetaID = metaID;
+            }
+        }
+    
+    AppLog::infoF( 
+        "MetadataDB:  Found %d records with max MetadataID of %d",
+        numMetaRecords, maxMetaID );
+    
+    setLastMetadataID( maxMetaID );
+    
+
+
+    
 
 
     if( lookTimeDBEmpty && cellsLookedAtToInit > 0 ) {
@@ -6161,6 +6190,19 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
             // post-startup eve location has been used too many times
             // place eves on spiral instead
 
+            if( abs( eveLocToUse.x ) > 100000 ||
+                abs( eveLocToUse.y ) > 100000 ) {
+                // we've gotten to far away from center over time
+                
+                // re-center spiral on center to rein things in
+
+                // we'll end up saving a position on the arm of this new
+                // centered spiral for future start-ups, so the eve
+                // location can move out from here
+                eveLocToUse.x = 0;
+                eveLocToUse.y = 0;
+                }
+            
             int jump = SettingsManager::getIntSetting( "nextEveJump", 2000 );
             
             // advance eve angle along spiral
@@ -6180,6 +6222,8 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
             eveLocToUse.x += lrint( delta.x );
             eveLocToUse.y += lrint( delta.y );
             
+            
+
             // but do save it as a possible post-startup location for next time
             File eveLocFile( NULL, "lastEveLocation.txt" );
             char *locString = 

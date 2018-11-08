@@ -2676,7 +2676,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
 
         // shoes on top of feet
-        if( inClothing.backShoe != NULL && i == backFootIndex ) {
+        if( ! skipSprite && 
+            inClothing.backShoe != NULL && i == backFootIndex ) {
+            
             int numCont = 0;
             int *cont = NULL;
             if( inClothingContained != NULL ) {    
@@ -2712,7 +2714,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 delete [] cont;
                 }
             }
-        else if( inClothing.frontShoe != NULL && i == frontFootIndex ) {
+        else if( ! skipSprite && 
+                 inClothing.frontShoe != NULL && i == frontFootIndex ) {
             int numCont = 0;
             int *cont = NULL;
             if( inClothingContained != NULL ) {    

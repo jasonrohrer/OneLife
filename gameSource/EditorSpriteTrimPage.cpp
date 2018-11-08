@@ -428,6 +428,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        blankSoundUsage,
                        blankSoundUsage,
                        0,
+                       0,
                        0, 0, slotPos,
                        slotVert,
                        slotParent,
