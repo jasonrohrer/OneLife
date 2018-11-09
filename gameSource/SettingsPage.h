@@ -41,6 +41,7 @@ class SettingsPage : public GamePage, public ActionListener {
 
 
         TextButton mBackButton;
+        TextButton mEditAccountButton;
         TextButton mRestartButton;
         TextButton mRedetectButton;
 
@@ -59,5 +60,5 @@ class SettingsPage : public GamePage, public ActionListener {
 
         TextButton mCopyButton;
         TextButton mPasteButton;
-;
+
     };
