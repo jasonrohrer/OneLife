@@ -1,6 +1,9 @@
 
 
+// some compilers require this to access UINT64_MAX
+#define __STDC_LIMIT_MACROS
 #include <stdint.h>
+
 #include <stdio.h>
 
 
