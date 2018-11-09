@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 166    ???
+Version 166    2018-November-9
 
 --Made it harder for Steam users to edit their account details by accident.
 
