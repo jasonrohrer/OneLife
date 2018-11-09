@@ -25,6 +25,9 @@ extern char *accountKey;
 
 extern SpriteHandle instructionsSprite;
 
+extern char loginEditOverride;
+
+
 
 ExistingAccountPage::ExistingAccountPage()
         : mEmailField( mainFont, 0, 128, 10, false, 
@@ -51,9 +54,11 @@ ExistingAccountPage::ExistingAccountPage()
           mReviewButton( mainFont, -400, -200, 
                          translate( "postReviewButton" ) ),
           mRedetectButton( mainFont, 0, 198, translate( "redetectButton" ) ),
+          mViewAccountButton( mainFont, 0, 64, translate( "view" ) ),
           mPageActiveStartTime( 0 ),
           mFramesCounted( 0 ),
-          mFPSMeasureDone( false ) {
+          mFPSMeasureDone( false ),
+          mHideAccount( false ) {
     
     
     // center this in free space
@@ -80,6 +85,7 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mAtSignButton );
     setButtonStyle( &mPasteButton );
     setButtonStyle( &mRedetectButton );
+    setButtonStyle( &mViewAccountButton );
 
     setButtonStyle( &mDisableCustomServerButton );
     
@@ -99,6 +105,8 @@ ExistingAccountPage::ExistingAccountPage()
     addComponent( &mKeyField );
     addComponent( &mRedetectButton );
     addComponent( &mDisableCustomServerButton );
+
+    addComponent( &mViewAccountButton );
     
     mLoginButton.addActionListener( this );
     mFriendsButton.addActionListener( this );
@@ -112,6 +120,8 @@ ExistingAccountPage::ExistingAccountPage()
     mPasteButton.addActionListener( this );
 
     mRedetectButton.addActionListener( this );
+
+    mViewAccountButton.addActionListener( this );
     
     mDisableCustomServerButton.addActionListener( this );
 
@@ -221,9 +231,36 @@ void ExistingAccountPage::makeActive( char inFresh ) {
     if( SettingsManager::getIntSetting( "useSteamUpdate", 0 ) ) {
         // no review button on Steam
         mReviewButton.setVisible( false );
+        
+        if( ! loginEditOverride ) {
+            mEmailField.setVisible( false );
+            mKeyField.setVisible( false );
+
+            mClearAccountButton.setVisible( false );
+            
+            mViewAccountButton.setVisible( true );
+            mHideAccount = true;
+            }
+        else {
+            mEmailField.setVisible( true );
+            mKeyField.setVisible( true );       
+     
+            mClearAccountButton.setVisible( true );
+
+            mEmailField.setContentsHidden( false );
+            mKeyField.setContentsHidden( false );
+            mEmailField.focus();
+            
+            loginEditOverride = false;
+            
+            mViewAccountButton.setVisible( false );
+            mHideAccount = false;
+            }
         }
     else {
+        mHideAccount = false;
         mReviewButton.setVisible( true );
+        mViewAccountButton.setVisible( false );
         }
     }
 
@@ -273,6 +310,15 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mFriendsButton ) {
         processLogin( true, "friends" );
+        }
+    else if( inTarget == &mViewAccountButton ) {
+        if( mHideAccount ) {
+            mViewAccountButton.setLabelText( translate( "hide" ) );
+            }
+        else {
+            mViewAccountButton.setLabelText( translate( "view" ) );
+            }
+        mHideAccount = ! mHideAccount;
         }
     else if( inTarget == &mCancelButton ) {
         setSignal( "quit" );
@@ -468,5 +514,70 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
     doublePair pos = { -9, -225 };
     
     drawSprite( instructionsSprite, pos );
+
+
+    if( ! mEmailField.isVisible() ) {
+        char *email = mEmailField.getText();
+        
+        const char *transString = "email";
+        
+        char *steamSuffixPointer = strstr( email, "@steamgames.com" );
+        
+        char coverChar = 'x';
+
+        if( steamSuffixPointer != NULL ) {
+            // terminate it
+            steamSuffixPointer[0] ='\0';
+            transString = "steamID";
+            coverChar = 'X';
+            }
+
+        if( mHideAccount ) {
+            int len = strlen( email );
+            for( int i=0; i<len; i++ ) {
+                if( email[i] != '@' &&
+                    email[i] != '.' ) {
+                    email[i] = coverChar;
+                    }
+                }   
+            }
+        
+
+        char *s = autoSprintf( "%s  %s", translate( transString ), email );
+        
+        pos = mEmailField.getPosition();
+
+        pos.x = -350;        
+        setDrawColor( 1, 1, 1, 1.0 );
+        mainFont->drawString( s, pos, alignLeft );
+        
+        delete [] email;
+        delete [] s;
+        }
+
+    if( ! mKeyField.isVisible() ) {
+        char *key = mKeyField.getText();
+
+        if( mHideAccount ) {
+            int len = strlen( key );
+            for( int i=0; i<len; i++ ) {
+                if( key[i] != '-' ) {
+                    key[i] = 'X';
+                    }
+                }   
+            }
+
+        char *s = autoSprintf( "%s  %s", translate( "accountKey" ), key );
+        
+        pos = mKeyField.getPosition();
+        
+        pos.x = -350;        
+        setDrawColor( 1, 1, 1, 1.0 );
+        mainFont->drawString( s, pos, alignLeft );
+        
+        delete [] key;
+        delete [] s;
+        }
+    
     }
 

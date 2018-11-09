@@ -3,6 +3,22 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 166    2018-November-9
+
+--Made it harder for Steam users to edit their account details by accident.
+
+
+
+
+Server Fixes
+
+--Improved robustness of networking code.  Have seen two server crashes due to
+  corrupted socket handles being passed into FD_SET.  Not sure where the
+  corruption is coming from, but added a check to ensure handle passed into
+  FD_SET is well-formed, and bug report outputting code when it's not.  No
+  longer storing socket handles on the heap, which should also help.
+
+
 
 Version 165    2018-November-8
 

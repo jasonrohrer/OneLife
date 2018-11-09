@@ -1,4 +1,4 @@
-int versionNumber = 165;
+int versionNumber = 166;
 int dataVersionNumber = 0;
 int clientVersionNumber = versionNumber;
 int expectedVersionNumber = 0;
@@ -99,6 +99,9 @@ CustomRandomSource randSource( 34957197 );
 // should we pull the map
 static char mapPullMode = 0;
 static char autoLogIn = 0;
+
+
+char loginEditOverride = false;
 
 
 // start at reflector URL
@@ -1756,6 +1759,15 @@ void drawFrame( char inUpdate ) {
         else if( currentGamePage == settingsPage ) {
             if( settingsPage->checkSignal( "back" ) ) {
                 existingAccountPage->setStatus( NULL, false );
+                currentGamePage = existingAccountPage;
+                currentGamePage->base_makeActive( true );
+                }
+            else if( settingsPage->checkSignal( "editAccount" ) ) {
+                loginEditOverride = true;
+                
+                existingAccountPage->setStatus( "editAccountWarning", false );
+                existingAccountPage->setStatusPositiion( true );
+                
                 currentGamePage = existingAccountPage;
                 currentGamePage->base_makeActive( true );
                 }

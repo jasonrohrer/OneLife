@@ -23,6 +23,7 @@ extern float musicLoudness;
 
 SettingsPage::SettingsPage()
         : mBackButton( mainFont, -542, -280, translate( "backButton" ) ),
+          mEditAccountButton( mainFont, -463, 129, translate( "editAccount" ) ),
           mRestartButton( mainFont, 128, 128, translate( "restartButton" ) ),
           mRedetectButton( mainFont, 153, 249, translate( "redetectButton" ) ),
           mFullscreenBox( 0, 128, 4 ),
@@ -46,6 +47,7 @@ SettingsPage::SettingsPage()
           mPasteButton( mainFont, 518, -216, translate( "paste" ) ) {
     
     setButtonStyle( &mBackButton );
+    setButtonStyle( &mEditAccountButton );
     setButtonStyle( &mRestartButton );
     setButtonStyle( &mRedetectButton );
     setButtonStyle( &mCopyButton );
@@ -53,6 +55,9 @@ SettingsPage::SettingsPage()
 
     addComponent( &mBackButton );
     mBackButton.addActionListener( this );
+
+    addComponent( &mEditAccountButton );
+    mEditAccountButton.addActionListener( this );
 
     addComponent( &mFullscreenBox );
     mFullscreenBox.addActionListener( this );
@@ -137,6 +142,11 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
                                      mCustomServerPortField.getInt() );
         
         setSignal( "back" );
+        setMusicLoudness( 0 );
+        }
+    else if( inTarget == &mEditAccountButton ) {
+        
+        setSignal( "editAccount" );
         setMusicLoudness( 0 );
         }
     else if( inTarget == &mFullscreenBox ) {
@@ -408,6 +418,12 @@ void SettingsPage::makeActive( char inFresh ) {
             tryCount ++;
             }
         
+        if( SettingsManager::getIntSetting( "useSteamUpdate", 0 ) ) {
+            mEditAccountButton.setVisible( true );
+            }
+        else {
+            mEditAccountButton.setVisible( false );
+            }
 
         }
     }

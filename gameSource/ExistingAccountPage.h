@@ -69,11 +69,14 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         
         TextButton mRedetectButton;
 
+        TextButton mViewAccountButton;
+        
 
         double mPageActiveStartTime;
         int mFramesCounted;
         char mFPSMeasureDone;
 
+        char mHideAccount;
 
         void switchFields();
         

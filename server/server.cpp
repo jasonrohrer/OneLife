@@ -1050,6 +1050,34 @@ char readSocketFull( Socket *inSock, SimpleVector<char> *inBuffer ) {
     int numRead = inSock->receive( (unsigned char*)buffer, 512, 0 );
     
     if( numRead == -1 ) {
+
+        if( ! inSock->isSocketInFDRange() ) {
+            // the internal FD of this socket is out of range
+            // probably some kind of heap corruption.
+
+            // save a bug report
+            int allow = 
+                SettingsManager::getIntSetting( "allowBugReports", 0 );
+
+            if( allow ) {
+                char *bugName = 
+                    autoSprintf( "bug_socket_%f", Time::getCurrentTime() );
+                
+                char *bugOutName = autoSprintf( "%s_out.txt", bugName );
+                
+                File outFile( NULL, "serverOut.txt" );
+                if( outFile.exists() ) {
+                    fflush( stdout );
+                    File outCopyFile( NULL, bugOutName );
+                    
+                    outFile.copy( &outCopyFile );
+                    }
+                delete [] bugName;
+                delete [] bugOutName;
+                }
+            }
+        
+            
         return false;
         }
     
@@ -9558,10 +9586,11 @@ int main() {
                             if( strstr( o->description, "origGrave" ) 
                                 != NULL ) {
                                 
-                                GraveMoveInfo g = { newGroundObjectOrigin.x,
-                                                    newGroundObjectOrigin.y,
-                                                    m.x,
-                                                    m.y };
+                                GraveMoveInfo g = { 
+                                    { newGroundObjectOrigin.x,
+                                      newGroundObjectOrigin.y },
+                                    { m.x,
+                                      m.y } };
                                 newGraveMoves.push_back( g );
                                 }
                             }
