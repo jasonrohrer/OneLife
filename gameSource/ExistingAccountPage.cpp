@@ -235,7 +235,9 @@ void ExistingAccountPage::makeActive( char inFresh ) {
         if( ! loginEditOverride ) {
             mEmailField.setVisible( false );
             mKeyField.setVisible( false );
-
+            mEmailField.unfocus();
+            mKeyField.unfocus();
+            
             mClearAccountButton.setVisible( false );
             
             mViewAccountButton.setVisible( true );
