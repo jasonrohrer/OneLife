@@ -9568,10 +9568,11 @@ int main() {
                             if( strstr( o->description, "origGrave" ) 
                                 != NULL ) {
                                 
-                                GraveMoveInfo g = { newGroundObjectOrigin.x,
-                                                    newGroundObjectOrigin.y,
-                                                    m.x,
-                                                    m.y };
+                                GraveMoveInfo g = { 
+                                    { newGroundObjectOrigin.x,
+                                      newGroundObjectOrigin.y },
+                                    { m.x,
+                                      m.y } };
                                 newGraveMoves.push_back( g );
                                 }
                             }
