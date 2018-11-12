@@ -10707,17 +10707,17 @@ int main() {
                         
                         newEmotIndices.push_back( m.i );
                         } 
-                    
-                    if( m.numExtraPos > 0 ) {
-                        delete [] m.extraPos;
-                        }
-
-                    if( m.saidText != NULL ) {
-                        delete [] m.saidText;
-                        }
-                    if( m.bugText != NULL ) {
-                        delete [] m.bugText;
-                        }
+                    }
+                
+                if( m.numExtraPos > 0 ) {
+                    delete [] m.extraPos;
+                    }
+                
+                if( m.saidText != NULL ) {
+                    delete [] m.saidText;
+                    }
+                if( m.bugText != NULL ) {
+                    delete [] m.bugText;
                     }
                 }
             }
