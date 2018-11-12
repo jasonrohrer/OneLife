@@ -9575,7 +9575,8 @@ void LivingLifePage::step() {
             lastPingSent == lastPongReceived ) {
             
             // and got PONG response, so server is hearing us
-            // tis is a real bug
+            // this is a real bug
+
 
             printf( 
                 "Been waiting for response to our action request "
@@ -9594,6 +9595,7 @@ void LivingLifePage::step() {
             ourObject->pendingAction = false;
             
             playerActionPending = false;
+            waitingForPong = false;
             playerActionTargetNotAdjacent = false;
             
             if( nextActionMessageToSend != NULL ) {
@@ -12698,6 +12700,7 @@ void LivingLifePage::step() {
                                 
                                 // ready to execute next action
                                 playerActionPending = false;
+                                waitingForPong = false;
                                 playerActionTargetNotAdjacent = false;
 
                                 existing->pendingAction = false;
@@ -12710,6 +12713,7 @@ void LivingLifePage::step() {
                                 existing->pendingAction = false;
                                 
                                 playerActionPending = false;
+                                waitingForPong = false;
                                 playerActionTargetNotAdjacent = false;
 
                                 if( nextActionMessageToSend != NULL ) {
@@ -13117,6 +13121,7 @@ void LivingLifePage::step() {
                             nextActionMessageToSend = NULL;
                             }
                         playerActionPending = false;
+                        waitingForPong = false;
                         }
                     
 
@@ -13756,6 +13761,7 @@ void LivingLifePage::step() {
                                 existing->pendingAction = false;
                                 
                                 playerActionPending = false;
+                                waitingForPong = false;
                                 playerActionTargetNotAdjacent = false;
 
                                 if( nextActionMessageToSend != NULL ) {

@@ -3,9 +3,20 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 168    ???
+
+--Fixed bug that could result in spurious, false wild bug reports.  After
+  pinging once, and getting a PONG back, we could mistakenly believe that we
+  had received PONGs to future PINGs.
+
+
+
+
 Version 167    2018-November-9
 
 --Whoops... Game-breaking windows networking bug.
+
 
 
 
