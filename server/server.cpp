@@ -642,10 +642,35 @@ FullMapContained getFullMapContained( int inX, int inY ) {
     }
 
 
+
+void freePlayerContainedArrays( LiveObject *inPlayer ) {
+    if( inPlayer->containedIDs != NULL ) {
+        delete [] inPlayer->containedIDs;
+        }
+    if( inPlayer->containedEtaDecays != NULL ) {
+        delete [] inPlayer->containedEtaDecays;
+        }
+    if( inPlayer->subContainedIDs != NULL ) {
+        delete [] inPlayer->subContainedIDs;
+        }
+    if( inPlayer->subContainedEtaDecays != NULL ) {
+        delete [] inPlayer->subContainedEtaDecays;
+        }
+
+    inPlayer->containedIDs = NULL;
+    inPlayer->containedEtaDecays = NULL;
+    inPlayer->subContainedIDs = NULL;
+    inPlayer->subContainedEtaDecays = NULL;
+    }
+
+
+
 void setContained( LiveObject *inPlayer, FullMapContained inContained ) {
     
     inPlayer->numContained = inContained.numContained;
-                                    
+     
+    freePlayerContainedArrays( inPlayer );
+    
     inPlayer->containedIDs = inContained.containedIDs;
     
     inPlayer->containedEtaDecays =
@@ -910,21 +935,8 @@ void quitCleanup() {
             delete [] nextPlayer->email;
             }
 
-        if( nextPlayer->containedIDs != NULL ) {
-            delete [] nextPlayer->containedIDs;
-            }
 
-        if( nextPlayer->containedEtaDecays != NULL ) {
-            delete [] nextPlayer->containedEtaDecays;
-            }
-        
-        if( nextPlayer->subContainedIDs != NULL ) {
-            delete [] nextPlayer->subContainedIDs;
-            }
-        
-        if( nextPlayer->subContainedEtaDecays != NULL ) {
-            delete [] nextPlayer->subContainedEtaDecays;
-            }
+        freePlayerContainedArrays( nextPlayer );
         
         
         if( nextPlayer->pathToDest != NULL ) {
@@ -10173,6 +10185,10 @@ int main() {
                                             
                                             nextPlayer->numContained =
                                                 oldNumContained;
+                                            
+                                            freePlayerContainedArrays(
+                                                nextPlayer );
+                                            
                                             nextPlayer->containedIDs =
                                                 oldContainedIDs;
                                             nextPlayer->containedEtaDecays =
@@ -10256,6 +10272,8 @@ int main() {
                                     nextPlayer->numContained =
                                         targetPlayer->
                                         clothingContained[ind].size();
+                                    
+                                    freePlayerContainedArrays( nextPlayer );
                                     
                                     nextPlayer->containedIDs =
                                         targetPlayer->
@@ -11394,10 +11412,7 @@ int main() {
                     if( change ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
-                        delete [] nextPlayer->containedIDs;
-                        delete [] nextPlayer->containedEtaDecays;
-                        delete [] nextPlayer->subContainedIDs;
-                        delete [] nextPlayer->subContainedEtaDecays;
+                        freePlayerContainedArrays( nextPlayer );
                         
                         nextPlayer->numContained = newContained.size();
 
@@ -13677,21 +13692,7 @@ int main() {
                     delete [] nextPlayer->lastSay;
                     }
                 
-                if( nextPlayer->containedIDs != NULL ) {
-                    delete [] nextPlayer->containedIDs;
-                    }
-                
-                if( nextPlayer->containedEtaDecays != NULL ) {
-                    delete [] nextPlayer->containedEtaDecays;
-                    }
-
-                if( nextPlayer->subContainedIDs != NULL ) {
-                    delete [] nextPlayer->subContainedIDs;
-                    }
-                
-                if( nextPlayer->subContainedEtaDecays != NULL ) {
-                    delete [] nextPlayer->subContainedEtaDecays;
-                    }
+                freePlayerContainedArrays( nextPlayer );
                 
                 if( nextPlayer->pathToDest != NULL ) {
                     delete [] nextPlayer->pathToDest;
