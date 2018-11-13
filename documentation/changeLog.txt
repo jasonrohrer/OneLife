@@ -11,12 +11,14 @@ Version 168    ???
   had received PONGs to future PINGs.
 
 
+
 Server Fixes
 
 --Fixed a memory leak when MOVE received while waiting for FORCE-ACK.
 
 --Fixed a memory leak when swapping clothing.
 
+--Fixed server crash when tutorial-twin players reconnect.
 
 
 

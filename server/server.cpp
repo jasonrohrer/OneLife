@@ -4016,7 +4016,8 @@ static int tutorialCount = 0;
 
         
 
-// returns ID of new player
+// returns ID of new player,
+// or -1 if this player reconnected to an existing ID
 int processLoggedInPlayer( Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
@@ -4072,7 +4073,7 @@ int processLoggedInPlayer( Socket *inSock,
 
             delete [] inEmail;
             
-            return o->id;
+            return -1;
             }
         }
              
@@ -4928,27 +4929,22 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
     if( twinConnections.size() + 1 >= inConnection.twinCount ) {
         // everyone connected and ready in twin party
 
+        AppLog::infoF( "Found %d other people waiting for twin party of %s, "
+                       "ready", 
+                       twinConnections.size(), inConnection.email );
+        
+        char *emailCopy = stringDuplicate( inConnection.email );
+        
         int newID = processLoggedInPlayer( inConnection.sock,
                                            inConnection.sockBuffer,
                                            inConnection.email,
                                            inConnection.tutorialNumber,
                                            anyTwinCurseLevel );
-        
-        
-        LiveObject *newPlayer = NULL;
 
-        if( inConnection.tutorialNumber == 0 ) {
-            newPlayer = getLiveObject( newID );
-            }
-        else {
-            newPlayer = tutorialLoadingPlayers.getElement(
-                tutorialLoadingPlayers.size() - 1 );
-            }
-        
-        if( newPlayer == NULL ) {
-            // maybe new player reconnected AND asked for tutorial
-            // the fact that they asked for a twin code is irrelevant now
-            // they are not part of this waiting party
+        if( newID == -1 ) {
+            AppLog::infoF( "%s reconnected to existing life, not triggering "
+                           "fellow twins to spawn now.",
+                           emailCopy );
 
             // take them out of waiting list too
             for( int i=0; i<waitingForTwinConnections.size(); i++ ) {
@@ -4960,8 +4956,27 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                     break;
                     }
                 }
-            
+
+            delete [] emailCopy;
+
+            if( inConnection.twinCode != NULL ) {
+                delete [] inConnection.twinCode;
+                inConnection.twinCode = NULL;
+                }
             return;
+            }
+
+        delete [] emailCopy;
+        
+        
+        LiveObject *newPlayer = NULL;
+
+        if( inConnection.tutorialNumber == 0 ) {
+            newPlayer = getLiveObject( newID );
+            }
+        else {
+            newPlayer = tutorialLoadingPlayers.getElement(
+                tutorialLoadingPlayers.size() - 1 );
             }
 
 
