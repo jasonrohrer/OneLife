@@ -10,6 +10,10 @@ Version 168    ???
   pinging once, and getting a PONG back, we could mistakenly believe that we
   had received PONGs to future PINGs.
 
+--Fixed glitch in radio button set (example:  twin count selection) where
+  dragging could select more than one choice or no choices.
+
+
 
 
 Server Fixes
