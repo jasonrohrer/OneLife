@@ -51,6 +51,10 @@ then
 			minSpace=1000000
 			remainSpace=$(df / | tail -n 1 | sed -e "s#/dev/root[ ]*[0-9]*[ ]*[0-9]*[ ]*##" | sed -e "s/ [ ]*[0-9%]*.*//");
 
+
+			echo "Server has $remainSpace KB disk space."
+			echo "min sufficient is $minSpace KB"
+			
 			if [ $remainSpace -lt $minSpace ]
 			then
 				echo "Server has insufficient disk space"
@@ -64,14 +68,14 @@ then
 					-H "Accept: application/json" \
 					-H "Content-Type: application/json" \
 					-H "X-Postmark-Server-Token: $postmarkToken" \
-					-d "{From: 'jason@thecastledoctrine.net', To: 'jasonrohrer@fastmail.fm', Subject: 'OneLifeServer on $serverName has low disk space', TextBody: 'Server shut down as precaution at time: $serverT\nPDT: $pdt'}"				
+					-d "{From: 'jason@thecastledoctrine.net', To: 'jasonrohrer@fastmail.fm', Subject: 'OneLifeServer on $serverName has low disk space', TextBody: '$remainSpace KB remain.  Server shut down as precaution at time: $serverT\nPDT: $pdt'}"				
 
 				
 				echo "Shutting server down to be safe."
 
 				echo "1" > ~/checkout/OneLife/server/settings/shutdownMode.ini
 			else
-				echo "Server has sufficient disk space"
+				echo "Server has sufficient disk space."
 			fi
 
 			exit 1
