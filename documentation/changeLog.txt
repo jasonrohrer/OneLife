@@ -24,6 +24,10 @@ Server Fixes
 
 --Fixed server crash when tutorial-twin players reconnect.
 
+--checkIfServerRunning cronjob also makes sure server has sufficient disk
+  space, and shuts it down gracefully if not.
+
+
 
 
 Version 167    2018-November-9

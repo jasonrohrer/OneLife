@@ -44,6 +44,36 @@ then
 		then
             # running
 			echo "Server is running"
+
+			
+			# make sure there's enough free disk space
+			# at least one GB
+			minSpace=1000000
+			remainSpace=$(df / | tail -n 1 | sed -e "s#/dev/root[ ]*[0-9]*[ ]*[0-9]*[ ]*##" | sed -e "s/ [ ]*[0-9%]*.*//");
+
+			if [ $remainSpace -lt $minSpace ]
+			then
+				echo "Server has insufficient disk space"
+
+				# send email report
+				serverT=`date`
+				pdt=`TZ=":America/Los_Angeles" date`
+				
+				curl "https://api.postmarkapp.com/email" \
+					-X POST \
+					-H "Accept: application/json" \
+					-H "Content-Type: application/json" \
+					-H "X-Postmark-Server-Token: $postmarkToken" \
+					-d "{From: 'jason@thecastledoctrine.net', To: 'jasonrohrer@fastmail.fm', Subject: 'OneLifeServer on $serverName has low disk space', TextBody: 'Server shut down as precaution at time: $serverT\nPDT: $pdt'}"				
+
+				
+				echo "Shutting server down to be safe."
+
+				echo "1" > ~/checkout/OneLife/server/settings/shutdownMode.ini
+			else
+				echo "Server has sufficient disk space"
+			fi
+
 			exit 1
 		else
             # stopped
