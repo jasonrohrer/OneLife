@@ -6942,7 +6942,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     // make sure it can be heard, even
                                     // if paused
                                     setSoundLoudness( 1.0 );
-                                    playSoundSprite( mHungerSound );
+                                    playSoundSprite( mHungerSound, 
+                                                     getSoundEffectsLoudness(),
+                                                     // middle
+                                                     0.5 );
                                     }
                                 }
                             }
@@ -9557,7 +9560,9 @@ void LivingLifePage::step() {
                     }
                 
                 if( mTutorialSound != NULL ) {
-                        playSoundSprite( mTutorialSound, 0.18, stereoPos );
+                        playSoundSprite( mTutorialSound, 
+                                         0.18 * getSoundEffectsLoudness(), 
+                                         stereoPos );
                     }
                 }
             }
@@ -14644,7 +14649,10 @@ void LivingLifePage::step() {
                                     // make sure it can be heard
                                     // even if paused
                                     setSoundLoudness( 1.0 );
-                                    playSoundSprite( mHungerSound );
+                                    playSoundSprite( mHungerSound, 
+                                                     getSoundEffectsLoudness(),
+                                                     // middle
+                                                     0.5 );
                                     }
                                 mPulseHungerSound = false;
                                 }

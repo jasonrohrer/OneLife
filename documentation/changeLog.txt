@@ -20,6 +20,8 @@ Version 168    ???
   desired object as an ingredient.  A bunch of other tweaks that just make the
   results more sensible and better.
 
+--Hunger and tutorial chimes now obey SETTINGS sound volume slider.
+
 
 
 
