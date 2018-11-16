@@ -1978,6 +1978,7 @@ function ls_getNextGen( $inFromID ) {
 function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
 
     global $tableNamePrefix;
+    global $enabletweet;
 
     $query = "SELECT id, display_id, name, ".
         "age, last_words, generation, death_time, death_cause ".
@@ -2082,6 +2083,15 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
             echo "<br>\n";
             echo "Final words: \"$last_words\"\n";
             }
+        }
+        
+        if( $enabletweet && ( $id == ls_requestFilter( "id", "/[0-9]+/i", "0" ) ) ){
+            global $tweethashtags; 
+            $tweettext = "$name has died at age $age. They died of: $deathHTML";
+            $tweettext = urlencode($tweettext);
+            $hashtags = implode(",",$tweethashtags);
+            echo "<br>\n";
+            echo "<a href=\"https://twitter.com/intent/tweet?hashtags=$hashtags&text=$tweettext\">Tweet</a>";
         }
     
     }
