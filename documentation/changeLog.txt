@@ -15,6 +15,11 @@ Version 168    ???
 
 --Fixed memory leak when filtering crafting hints.
 
+--Huge improvement to behavior of / crafting filters.  Hides all hints when
+  none relevant, to avoid confusion.  Avoids showing recipes that use the
+  desired object as an ingredient.  A bunch of other tweaks that just make the
+  results more sensible and better.
+
 
 
 

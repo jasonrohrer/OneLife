@@ -211,7 +211,7 @@ enterHint "[ENTER]"
 
 
 making "MAKING:"
-noneRelevant "(NONE RELEVANT)"
+notRelevant "(%s NOT RELEVANT)"
 noMatch "(NO FILTER MATCH)"
 
 

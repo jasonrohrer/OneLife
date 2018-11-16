@@ -732,6 +732,18 @@ static void stripDescriptionComment( char *inString ) {
 
 
 
+static char *getDisplayObjectDescription( int inID ) {
+    ObjectRecord *o = getObject( inID );
+    if( o == NULL ) {
+        return NULL;
+        }
+    char *upper = stringToUpperCase( o->description );
+    stripDescriptionComment( upper );
+    return upper;
+    }
+
+
+
 typedef enum messageType {
     SHUTDOWN,
     SERVER_FULL,
@@ -7866,11 +7878,22 @@ int LivingLifePage::getNumHints( int inObjectID ) {
 
         numFilterHits = numHits;
 
+        SimpleVector<int> exactHitMatchIDs;
+        
+
         for( int i=0; i<numHits; i++ ) {
+            if( hits[i]->id == inObjectID ) {
+                // don't count the object itself as a hit
+                continue;
+                }
             char *des = stringToUpperCase( hits[i]->description );
             
             stripDescriptionComment( des );
         
+            if( strcmp( des, mLastHintFilterString ) == 0 ) {
+                exactHitMatchIDs.push_back( hits[i]->id );
+                }
+
             char *searchPos = strstr( des, mLastHintFilterString );
             
             // only count if occurrence of filter string matches whole words
@@ -7890,7 +7913,7 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                 
                 // space or end of string after search phrase
                 if( remainLen == filterLength ||
-                    searchPos[+1] == ' ' ) {
+                    searchPos[filterLength] == ' ' ) {
                     backOK = true;
                     }
 
@@ -7907,13 +7930,21 @@ int LivingLifePage::getNumHints( int inObjectID ) {
 
         numHits = hitMatchIDs.size();
         
+        int startDepth = getObjectDepth( inObjectID );
+        
+        ObjectRecord *startObject = getObject( inObjectID );
+        if( startObject->isUseDummy ) {
+            startDepth = getObjectDepth( startObject->useDummyParent );
+            }
+        
+
         int shallowestDepth = UNREACHABLE;
        
         for( int i=0; i<numHits; i++ ) {
             
             int depth = getObjectDepth( hitMatchIDs.getElementDirect( i ) );
             
-            if( depth < shallowestDepth ) {
+            if( depth >= startDepth && depth < shallowestDepth ) {
                 shallowestDepth = depth;
                 }
             }
@@ -7935,6 +7966,14 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             delete [] hits;
             }
         
+        // there are exact matches
+        // use those instead
+        if( exactHitMatchIDs.size() > 0 ) {
+            hitIDs.deleteAll();
+            hitIDs.push_back_other( &exactHitMatchIDs );
+            }
+        
+
 
         numHits = hitIDs.size();
 
@@ -8055,6 +8094,22 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             
             int numPrecursors = precursorIDs.size();
             
+            SimpleVector<int> deepPrecursorIDs;
+
+            for( int i=0; i<numPrecursors; i++ ) {
+                int id = precursorIDs.getElementDirect( i );
+            
+                int depth = getObjectDepth( id );
+            
+                if( depth >= startDepth ) {
+                    deepPrecursorIDs.push_back( id );
+                    }
+                }
+            
+            numPrecursors = deepPrecursorIDs.size();
+            
+
+
             for( int i = 0; i<filteredTrans.size(); i++ ) {
                 char matchesFilter = false;
                 TransRecord *t = filteredTrans.getElementDirect( i );
@@ -8062,25 +8117,58 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                 for( int h=0; h<numHits; h++ ) {
                     int id = hitIDs.getElementDirect( h );    
                     
-                    if( t->actor == id ||
-                        t->target == id ||
-                        t->newActor == id ||
-                        t->newTarget == id ) {
+                    if( t->actor != id && t->target != id 
+                        &&
+                        ( t->newActor == id || t->newTarget == id ) ) {
                         matchesFilter = true;
                         break;
                         }    
                     }
                 if( matchesFilter == false ) {
                     for( int p=0; p<numPrecursors; p++ ) {
-                        int id = precursorIDs.getElementDirect( p );
+                        int id = deepPrecursorIDs.getElementDirect( p );
                         
                         if( t->actor != id && t->target != id 
                             &&
                             ( t->newActor == id || t->newTarget == id ) ) {
                             // precursors only count if they actually
                             // make id, not just if they use it
-                            matchesFilter = true;
-                            break;
+
+                            // but make sure it doesn't use
+                            // one of our main hits as an ingredient
+                            char hitIsIngredient = false;
+                            
+                            int actor = t->actor;
+                            int target = t->target;
+                            
+                            if( actor > 0 ) {
+                                ObjectRecord *actorO = 
+                                    getObject( actor );
+                                if( actorO->isUseDummy ) {
+                                    actor = actorO->useDummyParent;
+                                    }
+                                }
+                            if( target > 0 ) {
+                                ObjectRecord *targetO = 
+                                    getObject( target );
+                                if( targetO->isUseDummy ) {
+                                    target = targetO->useDummyParent;
+                                    }
+                                }
+                            
+                            for( int h=0; h<numHits; h++ ) {
+                                int hitID = hitIDs.getElementDirect( h ); 
+                                
+                                if( actor == hitID || 
+                                    target == hitID ) {
+                                    hitIsIngredient = true;
+                                    break;
+                                    }
+                                }
+                            if( ! hitIsIngredient ) {
+                                matchesFilter = true;
+                                break;
+                                }
                             }
                         }
                     }
@@ -8099,7 +8187,10 @@ int LivingLifePage::getNumHints( int inObjectID ) {
 
     int numRelevant = numTrans;
 
-    if( numTrans == 0 && unfilteredTrans.size() > 0 ) {
+      // for now, just leave it empty
+    if( false &&
+        numTrans == 0 && unfilteredTrans.size() > 0 ) {
+        
         // after filtering, no transititions are left
         // show all trans instead
         for( int i = 0; i<unfilteredTrans.size(); i++ ) {
@@ -8125,14 +8216,31 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             }
         
         if( numRelevant == 0 || numFilterHits == 0 ) {
-            const char *key = "noneRelevant";
-            if( numFilterHits == 0 ) {
+            const char *key = "notRelevant";
+            char *reasonString = NULL;
+            if( numFilterHits == 0 && unfilteredTrans.size() > 0 ) {
+                // no match because object named in filter does not
+                // exist
                 key = "noMatch";
+                reasonString = stringDuplicate( translate( key ) );
                 }
+            else {
+                const char *formatString = translate( key );
+                
+                
+                char *objString = getDisplayObjectDescription( inObjectID );
+                reasonString = autoSprintf( formatString, objString );
+                
+                delete [] objString;
+                }
+            
+            
+
             mPendingFilterString = autoSprintf( "%s %s %s",
                                                 translate( "making" ),
                                                 mLastHintFilterString,
-                                                translate( key ) );
+                                                reasonString );
+            delete [] reasonString;
             }
         else {    
             mPendingFilterString = autoSprintf( "%s %s",
