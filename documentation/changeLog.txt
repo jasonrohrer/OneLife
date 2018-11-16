@@ -34,6 +34,8 @@ Server Fixes
 --checkIfServerRunning cronjob also makes sure server has sufficient disk
   space, and shuts it down gracefully if not.
 
+--Caching of generated PHP from index.php for 2 minutes to reduce CPU load on
+  web server.
 
 
 
