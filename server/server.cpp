@@ -12817,7 +12817,11 @@ int main() {
                     int ourHolderID = -1;
                     
                     if( nextPlayer->heldByOther ) {
-                        ourHolderID = getAdultHolding( nextPlayer )->id;
+                        LiveObject *adult = getAdultHolding( nextPlayer );
+                        
+                        if( adult != NULL ) {
+                            ourHolderID = adult->id;
+                            }
                         }
                     
                     // now send updates about all non-held babies,

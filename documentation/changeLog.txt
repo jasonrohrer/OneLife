@@ -42,6 +42,7 @@ Server Fixes
 --Hourly generation of failure report was a huge CPU hog (100% CPU for 5
   minutes straight).  No longer computing entire month (just past two days).
 
+--Fixed server crash from held baby/adult mismatch.
 
 
 
