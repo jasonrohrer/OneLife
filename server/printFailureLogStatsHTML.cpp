@@ -246,11 +246,13 @@ void processLogFile( File *inFile ) {
             
             if( numScanned == 3 ) {
 
-                addCount( &monthRecords, actorID, targetID, count );
+                // skip this for now, to reduce CPU
+                // addCount( &monthRecords, actorID, targetID, count );
 
                 if( isThisWeek ) {
                     
-                    addCount( &weekRecords, actorID, targetID, count );
+                    // skip this for now, to reduce CPU
+                    // addCount( &weekRecords, actorID, targetID, count );
                     
                     if( isToday ) {
                         addCount( &todayRecords, actorID, targetID, count );
