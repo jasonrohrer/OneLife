@@ -37,6 +37,10 @@ Server Fixes
 --Caching of generated PHP from index.php for 2 minutes to reduce CPU load on
   web server.
 
+--Hourly generation of failure report was a huge CPU hog (100% CPU for 5
+  minutes straight).  No longer computing entire month (just past two days).
+
+
 
 
 Version 167    2018-November-9
