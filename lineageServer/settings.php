@@ -17,6 +17,7 @@ $fullServerURL = "http://localhost/jcr13/lineageServer/server.php";
 // The URL of the main, public-face website
 $mainSiteURL = "http://localhost/jcr13/";
 $enabletweet = 0;
+$tweethashtags=['onehouronelife'];
 
 
 // End Basic settings
