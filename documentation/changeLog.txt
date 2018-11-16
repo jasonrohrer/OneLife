@@ -13,6 +13,8 @@ Version 168    ???
 --Fixed glitch in radio button set (example:  twin count selection) where
   dragging could select more than one choice or no choices.
 
+--Fixed memory leak when filtering crafting hints.
+
 
 
 

@@ -7898,6 +7898,8 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                     hitMatchIDs.push_back( hits[i]->id );
                     }
                 }
+            
+            delete [] des;
             }
         
         
