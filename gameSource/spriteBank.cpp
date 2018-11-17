@@ -1153,27 +1153,39 @@ int bakeSprite( const char *inTag,
             int w = image->getWidth();
             int h = image->getHeight();
 
-            // expand until square to permit rotations without
-            // getting cut off
 
-            int newWidth = w;
-            int newHeight = h;
-            if( w < h ) {
-                newWidth = h;
-                }
-            else if( h < w ) {
-                newHeight = w;
-                }
-
-            if( newWidth != w ||
-                newHeight != h ) {
-                Image *biggerImage = image->expandImage( newWidth,
-                                                         newHeight );
-                delete image;
-                image = biggerImage;
+            if( inSpriteHFlips[i] ||
+                inSpriteRot[i] != 0 ) {
                 
-                w = newWidth;
-                h = newHeight;
+                // expand until square to permit rotations without
+                // getting cut off
+                
+                int newWidth = w;
+                int newHeight = h;
+                if( w < h ) {
+                    newWidth = h;
+                    }
+                else if( h < w ) {
+                    newHeight = w;
+                    }
+                
+                int totalPossibleOffset = 
+                    2 * abs( spriteRec->centerAnchorXOffset ) +
+                    2 * abs( spriteRec->centerAnchorYOffset );
+                
+                newWidth += totalPossibleOffset;
+                newHeight += totalPossibleOffset;
+
+                if( newWidth != w ||
+                    newHeight != h ) {
+                    Image *biggerImage = image->expandImage( newWidth,
+                                                             newHeight );
+                    delete image;
+                    image = biggerImage;
+                    
+                    w = newWidth;
+                    h = newHeight;
+                    }
                 }
 
 
