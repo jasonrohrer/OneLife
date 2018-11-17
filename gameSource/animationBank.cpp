@@ -1625,6 +1625,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     doublePair animHeadPos = headPos;
     double animHeadRotDelta = 0;
 
+    doublePair animBodyPos = bodyPos;
+    double animBodyRotDelta = 0;
+
     
     for( int i=0; i<obj->numSprites; i++ ) {
         
@@ -2117,6 +2120,19 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             
             }
 
+        
+        if( i == bodyIndex ) {
+            // this is the body
+            animBodyPos = spritePos;
+            animBodyRotDelta = rot - obj->spriteRot[i];
+            
+            if( inFlipH ) {    
+                animBodyPos.x *= -1;
+                animBodyRotDelta *= -1;
+                }
+            
+            }
+
 
         if( inFlipH ) {
             spritePos.x *= -1;
@@ -2316,6 +2332,36 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         else if( i == topBackArmIndex ) {
             // draw under top of back arm
             
+
+            // body emote above all body parts
+            if( drawWithEmot != NULL &&
+                drawWithEmot->bodyEmot != 0 ) {
+            
+                char used;
+                drawObjectAnim( drawWithEmot->bodyEmot, 
+                                clothingAnimType, 
+                                inFrameTime,
+                                inAnimFade, 
+                                clothingFadeTargetAnimType,
+                                inFadeTargetFrameTime,
+                                inFrozenRotFrameTime,
+                                &used,
+                                endAnimType,
+                                endAnimType,
+                                add( animBodyPos, inPos ),
+                                animBodyRotDelta,
+                                true,
+                                inFlipH,
+                                -1,
+                                0,
+                                false,
+                                false,
+                                emptyClothing,
+                                NULL,
+                                0, NULL,
+                                NULL );
+                }
+
             if( inClothing.bottom != NULL ) {
                 int numCont = 0;
                 int *cont = NULL;
@@ -2590,6 +2636,37 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                             endAnimType,
                             endAnimType,
                             cPos,
+                            animHeadRotDelta,
+                            true,
+                            inFlipH,
+                            -1,
+                            0,
+                            false,
+                            false,
+                            emptyClothing,
+                            NULL,
+                            0, NULL,
+                            NULL );
+            }
+
+
+
+        // face emot on top of eyes
+        if( i == eyesIndex && drawWithEmot != NULL &&
+            drawWithEmot->faceEmot != 0 ) {
+            
+            char used;
+            drawObjectAnim( drawWithEmot->faceEmot, 
+                            clothingAnimType, 
+                            inFrameTime,
+                            inAnimFade, 
+                            clothingFadeTargetAnimType,
+                            inFadeTargetFrameTime,
+                            inFrozenRotFrameTime,
+                            &used,
+                            endAnimType,
+                            endAnimType,
+                            add( animHeadPos, inPos ),
                             animHeadRotDelta,
                             true,
                             inFlipH,
