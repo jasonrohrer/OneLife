@@ -22,6 +22,8 @@ Version 168    ???
 
 --Hunger and tutorial chimes now obey SETTINGS sound volume slider.
 
+--Fixed editor to handle baking of rotated non-square sprites correctly.
+
 
 
 
