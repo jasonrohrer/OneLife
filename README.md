@@ -3,6 +3,19 @@
 A lightly modified client for [One Hour One Life](http://onehouronelife.com), a cross-platform and open-source multiplayer survival game of parenting and civilization building by [Jason Rohrer](http://hcsoftware.sf.net/jason-rohrer).
 
 <p align="center">
+    <table>
+        <tr>
+            <td width="16%" align="center"><a href="https://github.com/Awbz/OneLife#requirements">Requirements</a></td>
+            <td width="16%" align="center"><a href="https://github.com/Awbz/OneLife#installation">Installation</a></td>
+            <td width="16%" align="center"><a href="https://github.com/Awbz/OneLife#usage">Usage</a></td>
+            <td width="16%" align="center"><a href="https://github.com/Awbz/OneLife#added_features">Added Features</a></td>
+            <td width="16%" align="center"><a href="https://github.com/Awbz/OneLife#credits">Credits</a></td>
+            <td width="16%" align="center"><a href="https://github.com/Awbz/OneLife#license">License</a></td>
+        </tr>
+    </table>
+</p>
+
+<p align="center">
     <img align="left" width="15%" src="http://onehouronelife.com/portraitLeft.jpg">
     <img width="50%" src="http://onehouronelife.com/lifeLine.jpg">
     <img width="15%" align="right" src="http://onehouronelife.com/portraitRight.jpg">
@@ -13,25 +26,38 @@ A lightly modified client for [One Hour One Life](http://onehouronelife.com), a 
 # Requirements
    * Requires the base game to already be installed.
       - Grab it from the download link provided when you [created your official lifetime account](https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=), or from [Steam](https://store.steampowered.com/app/595690/One_Hour_One_Life/).
-   * Pre-compiled releases of this modified client are available for Windows, Linux and macOS 10.5+.
+   * The full client, modded client, editor, and server are currently only provided for Windows in the "win_full" package.
+      - **NOTE**: The "win_full" package does **not** automatically grant you access to play on the official servers!  However, you can use this package to host your own private server(s) directly on Windows.
+      - Use **runServer.bat** in the server folder to create the necessary symlinks & launch the server.
+   * Pre-compiled releases of just the modified client are available for Windows, Linux and macOS 10.5+.
 
 # Installation
-Download the [latest release](https://github.com/Awbz/OneLife/releases/latest) and extract all of the zip file's contents into the folder where your game is installed.  That's it!  Now just launch the game with OneLife+.exe for Windows, or OneLife_v###+.app on macOS (where ### is the client version.)
+Download the [latest release](https://github.com/Awbz/OneLife/releases/latest) for your OS and extract all 5 files from the zip file into the folder where your game is installed.  There should be 1 executable and 4 text documents.  That's it!
+
+Now just launch the game with OneLife+.exe for Windows, OneLife_v###+.app on macOS (where ### is the client version), or OneLife+ on Linux.
+
+
+Steam Mod Installation Guide by [KrissJin](https://www.twitch.tv/krissjin):
+<p align="center">
+   <a href="https://youtu.be/H1u8lD0F0-I">
+      <img src="https://img.youtube.com/vi/H1u8lD0F0-I/0.jpg" title="Steam Mod Installation Guide by KrissJin" alt="Steam Mod Installation Guide by KrissJin" width="65%" />
+   </a>
+</p>
 
 # Usage
 Keybind | Description
 ------- | -----------
-**Left Arrow ( &larr; )** | Decreases the FOV zoom scale by 0.5x.  Minimum of 1.0x scale.
-**Right Arrow ( &rarr; )** | Increases the FOV zoom scale by 0.5x.  Maximum of 6.0x scale.
-**Shift + Left Arrow ( &larr; )** | Sets the FOV zoom scale to your preferred minimum.  Defaults to 1.5x scale.
-**Shift + Right Arrow ( &rarr; )** | Sets the FOV zoom scale to your preferred maximum.  Defaults to 3.0x scale.
+**Left ( &larr; )** | Decreases the FOV zoom scale by 0.5x.  Minimum of 1.0x scale.
+**Right ( &rarr; )** | Increases the FOV zoom scale by 0.5x.  Maximum of 6.0x scale.
+**Shift + Left ( &larr; )** | Sets the FOV zoom scale to your preferred minimum.  Defaults to 1.5x scale.
+**Shift + Right ( &rarr; )** | Sets the FOV zoom scale to your preferred maximum.  Defaults to 3.0x scale.
 **Grave Key ( ` )** | Toggles HUD scaling.  HUD scales with zoom level or locks at 1.0x, separate from the game scene.
 **Backslash Key ( \\ )** | Toggles displaying of the Lineage Fertility panel.
 **Shift + Space** | Generate a random name.
 **Shift + a-z** | Generate a random name that begins with the corresponding letter that you press.
 **Shift + DEL** | Sudden Infant Death hotkey.  Only works if you are less than 1 year old & held by your parent.
-**F1 - F7 ( Function Keys )** | Hotkeys for triggering emotions.  The order used is the same as they appear in your emotionWords.ini settings file.
-**? (Question Mark)** | Toggles a zoom-in viewer wherever the mouse cursor is located.
+**F1 - F7 ( F-Keys )** | Hotkeys for triggering emotions.  Ordered the same as your emotionWords.ini settings file.
+**? (Question Mark)** | Toggles the zoomed-in magnifier box that moves with your mouse cursor.
 
 # Added Features
 * **In-Game Adjustable FOV Zoom**
@@ -49,9 +75,9 @@ Keybind | Description
     <img alt="4k - 3x Zoom" width="20%" src="https://user-images.githubusercontent.com/24634429/45483667-7971fb80-b706-11e8-9246-720bc9f15203.png">
 </p>
 
-* **Zoom-IN Viewer**
+* **Zoom-IN Magnifier**
 
-   - Toggle a small zoomed-in viewer, borrowed from the game's Editor.  Great for seeing tiny objects wherever you move your mouse!
+   - Toggle a small zoomed-in magnifier, borrowed from the game's Editor.  Great for seeing tiny objects wherever you move your mouse!
 
 * **Lineage Fertility Panel**
 
