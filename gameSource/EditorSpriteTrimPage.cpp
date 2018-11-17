@@ -25,7 +25,7 @@ static double lastMouseY = 0;
 
 
 EditorSpriteTrimPage::EditorSpriteTrimPage()
-        : mImportEditorButton( mainFont, -210, 260, "Sprites" ),
+        : mImportEditorButton( mainFont, -310, 260, "Sprites" ),
           mSaveButton( mainFont, 400, 64, "Save" ),
           mClearRectButton( mainFont, 400, -65, "X Rect" ),
           mSpritePicker( &spritePickable, -410, 90 ),
