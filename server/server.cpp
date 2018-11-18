@@ -355,6 +355,9 @@ typedef struct LiveObject {
         // wall clock time when they will be dead
         double dyingETA;
 
+        // in cases where their held wound produces a forced emot
+        char emotFrozen;
+        
         
         char connected;
         
@@ -401,6 +404,8 @@ typedef struct LiveObject {
 
         int foodStore;
         
+        double foodCapModifier;
+
         // wall clock time when we should decrement the food store
         double foodDecrementETASeconds;
         
@@ -1736,13 +1741,15 @@ char isFertileAge( LiveObject *inPlayer ) {
 int computeFoodCapacity( LiveObject *inPlayer ) {
     int ageInYears = lrint( computeAge( inPlayer ) );
     
+    int returnVal = 0;
+    
     if( ageInYears < 44 ) {
         
         if( ageInYears > 16 ) {
             ageInYears = 16;
             }
         
-        return ageInYears + 4;
+        returnVal = ageInYears + 4;
         }
     else {
         // food capacity decreases as we near 60
@@ -1752,9 +1759,13 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
             cap = 4;
             }
         
-        return cap;
+        returnVal = cap;
         }
+
+    return ceil( returnVal * inPlayer->foodCapModifier );
     }
+
+
 
 
 double computeMoveSpeed( LiveObject *inPlayer ) {
@@ -4315,8 +4326,12 @@ int processLoggedInPlayer( Socket *inSock,
     // else player starts as newborn
                 
 
+    newObject.foodCapModifier = 1.0;
+
     // start full up to capacity with food
     newObject.foodStore = computeFoodCapacity( &newObject );
+
+    
 
     if( ! newObject.isEve ) {
         // babies start out almost starving
@@ -4765,6 +4780,8 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.dying = false;
     newObject.dyingETA = 0;
     
+    newObject.emotFrozen = false;
+
     newObject.connected = true;
     newObject.error = false;
     newObject.errorCauseString = "";
@@ -6321,6 +6338,84 @@ char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded ) {
 
 
 
+typedef struct ForcedEffects {
+        // -1 if no emot specified
+        int emotIndex;
+        int ttlSec;
+        
+        char foodModifierSet;
+        double foodCapModifier;
+    } ForcedEffects;
+        
+
+
+ForcedEffects checkForForcedEffects( int inHeldObjectID ) {
+    ForcedEffects e = { -1, 0, false, 1.0 };
+    
+    ObjectRecord *o = getObject( inHeldObjectID );
+    
+    if( o != NULL ) {
+        char *emotPos = strstr( o->description, "emot_" );
+        
+        if( emotPos != NULL ) {
+            sscanf( emotPos, "emot_%d_%d", 
+                    &( e.emotIndex ), &( e.ttlSec ) );
+            }
+
+        char *foodPos = strstr( o->description, "food_" );
+        
+        if( foodPos != NULL ) {
+            int numRead = sscanf( foodPos, "food_%lf", 
+                                  &( e.foodCapModifier ) );
+            if( numRead == 1 ) {
+                e.foodModifierSet = true;
+                }
+            }
+        }
+    
+    
+    return e;
+    }
+
+
+
+
+void setNoLongerDying( LiveObject *inPlayer, 
+                       SimpleVector<int> *inPlayerIndicesToSendHealingAbout ) {
+    inPlayer->dying = false;
+    inPlayer->murderSourceID = 0;
+    inPlayer->murderPerpID = 0;
+    if( inPlayer->murderPerpEmail != 
+        NULL ) {
+        delete [] 
+            inPlayer->murderPerpEmail;
+        inPlayer->murderPerpEmail =
+            NULL;
+        }
+    
+    inPlayer->deathSourceID = 0;
+    inPlayer->holdingWound = false;
+    inPlayer->customGraveID = -1;
+    
+    inPlayer->emotFrozen = false;
+    inPlayer->foodCapModifier = 1.0;
+    inPlayer->foodUpdate = true;
+
+    if( inPlayer->deathReason 
+        != NULL ) {
+        delete [] inPlayer->deathReason;
+        inPlayer->deathReason = NULL;
+        }
+                                        
+    inPlayerIndicesToSendHealingAbout->
+        push_back( 
+            getLiveObjectIndex( 
+                inPlayer->id ) );
+    }
+
+
+
+
 int main() {
 
     memset( allowedSayCharMap, false, 256 );
@@ -7473,6 +7568,8 @@ int main() {
 
         SimpleVector<int> newEmotPlayerIDs;
         SimpleVector<int> newEmotIndices;
+        // 0 if no ttl specified
+        SimpleVector<int> newEmotTTLs;
 
 
         SimpleVector<UpdateRecord> newUpdates;
@@ -7600,8 +7697,28 @@ int main() {
                                 r->newTarget;
                             holdingSomethingNew( nextPlayer );
                             
+                            setFreshEtaDecayForHeld( nextPlayer );
+                            
                             nextPlayer->holdingWound = true;
-                                            
+                            
+                            ForcedEffects e = 
+                                checkForForcedEffects( nextPlayer->holdingID );
+                            
+                            if( e.emotIndex != -1 ) {
+                                nextPlayer->emotFrozen = true;
+                                newEmotPlayerIDs.push_back( nextPlayer->id );
+                                newEmotIndices.push_back( e.emotIndex );
+                                newEmotTTLs.push_back( e.ttlSec );
+                                }
+                            if( e.foodModifierSet && 
+                                e.foodCapModifier != 1 ) {
+                                
+                                nextPlayer->foodCapModifier = 
+                                    e.foodCapModifier;
+                                nextPlayer->foodUpdate = true;
+                                }
+                            
+
                             playerIndicesToSendUpdatesAbout.
                                 push_back( 
                                     getLiveObjectIndex( 
@@ -8801,21 +8918,55 @@ int main() {
                                             // an easier-to-treat wound
                                             // to replace their hard-to-treat
                                             // wound
+                                            char woundChange = false;
+                                            
                                             if( ! hitPlayer->holdingWound ) {
+                                                woundChange = true;
+                                                
                                                 hitPlayer->holdingID = 
                                                     woundHit->newTarget;
                                                 holdingSomethingNew( 
                                                     hitPlayer );
+                                                setFreshEtaDecayForHeld( 
+                                                    nextPlayer );
                                                 }
                                             
                                             
                                             hitPlayer->holdingWound = true;
                                             
-                                            playerIndicesToSendUpdatesAbout.
-                                                push_back( 
-                                                    getLiveObjectIndex( 
-                                                        hitPlayer->id ) );
-                                            }   
+                                            if( woundChange ) {
+                                                
+                                                ForcedEffects e = 
+                                                    checkForForcedEffects( 
+                                                        hitPlayer->holdingID );
+                            
+                                                if( e.emotIndex != -1 ) {
+                                                    hitPlayer->emotFrozen = 
+                                                        true;
+                                                    newEmotPlayerIDs.push_back( 
+                                                        hitPlayer->id );
+                                                    newEmotIndices.push_back( 
+                                                        e.emotIndex );
+                                                    newEmotTTLs.push_back( 
+                                                        e.ttlSec );
+                                                    }
+                                            
+                                                if( e.foodModifierSet && 
+                                                    e.foodCapModifier != 1 ) {
+                                                
+                                                    hitPlayer->
+                                                        foodCapModifier = 
+                                                        e.foodCapModifier;
+                                                    hitPlayer->foodUpdate = 
+                                                        true;
+                                                    }
+
+                                                playerIndicesToSendUpdatesAbout.
+                                                    push_back( 
+                                                        getLiveObjectIndex( 
+                                                            hitPlayer->id ) );
+                                                }   
+                                            }
                                         }
                                     
 
@@ -9936,31 +10087,30 @@ int main() {
                                     
                                     if( targetPlayer->holdingID == 0 ) {
                                         // not dying anymore
-                                        targetPlayer->dying = false;
-                                        targetPlayer->murderSourceID = 0;
-                                        targetPlayer->murderPerpID = 0;
-                                        if( targetPlayer->murderPerpEmail != 
-                                            NULL ) {
-                                            delete [] 
-                                                targetPlayer->murderPerpEmail;
-                                            targetPlayer->murderPerpEmail =
-                                                NULL;
+                                        setNoLongerDying( 
+                                            targetPlayer,
+                                            &playerIndicesToSendHealingAbout );
+                                        }
+                                    else {
+                                        // wound changed?
+
+                                        ForcedEffects e = 
+                                            checkForForcedEffects( 
+                                                targetPlayer->holdingID );
+                            
+                                        if( e.emotIndex != -1 ) {
+                                            targetPlayer->emotFrozen = true;
+                                            newEmotPlayerIDs.push_back( 
+                                                targetPlayer->id );
+                                            newEmotIndices.push_back( 
+                                                e.emotIndex );
+                                            newEmotTTLs.push_back( e.ttlSec );
                                             }
-                                        
-                                        targetPlayer->deathSourceID = 0;
-                                        targetPlayer->holdingWound = false;
-                                        targetPlayer->customGraveID = -1;
-                                        
-                                        if( targetPlayer->deathReason 
-                                            != NULL ) {
-                                            delete [] targetPlayer->deathReason;
-                                            targetPlayer->deathReason = NULL;
+                                        if( e.foodCapModifier != 1 ) {
+                                            targetPlayer->foodCapModifier = 
+                                                e.foodCapModifier;
+                                            targetPlayer->foodUpdate = true;
                                             }
-                                        
-                                        playerIndicesToSendHealingAbout.
-                                            push_back( 
-                                                getLiveObjectIndex( 
-                                                    targetPlayer->id ) );
                                         }
                                     }
                                 }
@@ -10733,12 +10883,18 @@ int main() {
                                 }
                             }
                         }
-                    else if( m.type == EMOT ) {
+                    else if( m.type == EMOT && 
+                             ! nextPlayer->emotFrozen ) {
+                        // ignore new EMOT requres from player if emot
+                        // frozen
+
                         // send update even if action fails (to let them
                         // know that action is over)
                         newEmotPlayerIDs.push_back( nextPlayer->id );
                         
                         newEmotIndices.push_back( m.i );
+                        // player-requested emots have no specific TTL
+                        newEmotTTLs.push_back( 0 );
                         } 
                     }
                 
@@ -11250,6 +11406,17 @@ int main() {
                         
                         handleHoldingChange( nextPlayer, newID );
                         
+                        if( newID == 0 &&
+                            nextPlayer->holdingWound &&
+                            nextPlayer->dying ) {
+                            
+                            // wound decayed naturally, count as healed
+                            setNoLongerDying( 
+                                nextPlayer,
+                                &playerIndicesToSendHealingAbout );            
+                            }
+                        
+
                         nextPlayer->heldTransitionSourceID = -1;
                         
                         ObjectRecord *newObj = getObject( newID );
@@ -12260,9 +12427,18 @@ int main() {
                 if( nextPlayer->error ) {
                     continue;
                     }
-
-                char *line = autoSprintf( "%d\n", nextPlayer->id );
-
+                
+                char *line;
+                
+                if( nextPlayer->holdingEtaDecay > 0 ) {
+                    // what they have will cure itself in time
+                    // flag as sick
+                    line = autoSprintf( "%d 1\n", nextPlayer->id );
+                    }
+                else {
+                    line = autoSprintf( "%d\n", nextPlayer->id );
+                    }
+                
                 numAdded++;
                 dyingWorking.appendElementString( line );
                 delete [] line;
@@ -12351,11 +12527,24 @@ int main() {
             int numAdded = 0;
             for( int i=0; i<newEmotPlayerIDs.size(); i++ ) {
                 
-                char *line = autoSprintf( 
-                    "%d %d\n", 
-                    newEmotPlayerIDs.getElementDirect( i ), 
-                    newEmotIndices.getElementDirect( i ) );
+                int ttl = newEmotTTLs.getElementDirect( i );
 
+                char *line;
+                
+                if( ttl == 0  ) {
+                    line = autoSprintf( 
+                        "%d %d\n", 
+                        newEmotPlayerIDs.getElementDirect( i ), 
+                        newEmotIndices.getElementDirect( i ) );
+                    }
+                else {
+                    line = autoSprintf( 
+                        "%d %d %d\n", 
+                        newEmotPlayerIDs.getElementDirect( i ), 
+                        newEmotIndices.getElementDirect( i ),
+                        newEmotTTLs.getElementDirect( i ) );
+                    }
+                
                 numAdded++;
                 emotWorking.appendElementString( line );
                 delete [] line;

@@ -2593,7 +2593,14 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
 
 
     if( inSpeaker->dying ) {
-        setDrawColor( .65, 0, 0, inFade );
+        if( inSpeaker->sick ) {
+            // sick-ish yellow
+            setDrawColor( 0.874510, 0.658824, 0.168627, inFade );
+            }
+        else {
+            // wounded, blood red
+            setDrawColor( .65, 0, 0, inFade );
+            }
         }
     else if( inSpeaker->curseLevel > 0 ) {
         setDrawColor( 0, 0, 0, inFade );
@@ -2659,7 +2666,7 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
             }
         }
     
-    if( inSpeaker->dying ) {
+    if( inSpeaker->dying && ! inSpeaker->sick ) {
         setDrawColor( 1, 1, 1, inFade );
         }
     else if( inSpeaker->curseLevel > 0 ) {
@@ -3158,7 +3165,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                 squarePos.y += 192;
                 }
             
-            int squareRad = 286;
+            int squareRad = 306;
             
             switch( i ) {
                 case 0:
@@ -7009,7 +7016,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
     drawSprite( mGuiPanelSprite, panelPos );
 
     if( ourLiveObject != NULL &&
-        ourLiveObject->dying ) {
+        ourLiveObject->dying  &&
+        ! ourLiveObject->sick ) {
         toggleMultiplicativeBlend( true );
         doublePair bloodPos = panelPos;
         bloodPos.y -= 32;
@@ -11328,6 +11336,7 @@ void LivingLifePage::step() {
                 
                 o.outOfRange = false;
                 o.dying = false;
+                o.sick = false;
                 
                 o.name = NULL;
                 o.relationName = NULL;
@@ -14053,10 +14062,12 @@ void LivingLifePage::step() {
             
             for( int i=1; i<numLines; i++ ) {
                 int id, emotIndex;
-                int numRead = sscanf( lines[i], "%d %d",
-                                      &id, &emotIndex );
+                int ttlSec = -1;
+                
+                int numRead = sscanf( lines[i], "%d %d %d",
+                                      &id, &emotIndex, &ttlSec );
 
-                if( numRead == 2 ) {
+                if( numRead >= 2 ) {
                     for( int j=0; j<gameObjects.size(); j++ ) {
                         if( gameObjects.getElement(j)->id == id ) {
                             
@@ -14064,8 +14075,15 @@ void LivingLifePage::step() {
                             
                             existing->currentEmot = getEmotion( emotIndex );
                             
-                            existing->emotClearETATime = 
-                                game_getCurrentTime() + emotDuration;
+                            if( numRead == 3 && ttlSec > 0 ) {
+                                existing->emotClearETATime = 
+                                    game_getCurrentTime() + ttlSec;
+                                }
+                            else {
+                                // no ttl provided by server, use default
+                                existing->emotClearETATime = 
+                                    game_getCurrentTime() + emotDuration;
+                                }
                             }
                         }
                     }
@@ -14282,16 +14300,21 @@ void LivingLifePage::step() {
             for( int i=1; i<numLines; i++ ) {
 
                 int id;
-                int numRead = sscanf( lines[i], "%d ",
-                                      &( id ) );
+                int sickFlag = 0;
+                
+                int numRead = sscanf( lines[i], "%d %d",
+                                      &( id ), &sickFlag );
 
-                if( numRead == 1 ) {
+                if( numRead >= 1 ) {
                     for( int j=0; j<gameObjects.size(); j++ ) {
                         if( gameObjects.getElement(j)->id == id ) {
                             
                             LiveObject *existing = gameObjects.getElement(j);
                             
                             existing->dying = true;
+                            if( sickFlag ) {
+                                existing->sick = true;
+                                }
                             break;
                             }
                         }
@@ -14323,6 +14346,7 @@ void LivingLifePage::step() {
                             LiveObject *existing = gameObjects.getElement(j);
                             
                             existing->dying = false;
+                            existing->sick = false;
                             
                             // their wound will be gone after this
                             // play decay sound, if any, for their final

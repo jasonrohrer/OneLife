@@ -24,6 +24,14 @@ Version 168    ???
 
 --Fixed editor to handle baking of rotated non-square sprites correctly.
 
+--Support for emots that have a face and body component.
+
+--Emot protocol supports server setting optional emot ttl.
+
+--Dying protocol supports optional sick flag (so blood not displayed on client).
+
+--Highlight square a bit larger to contain top of rubber tree.
+
 
 
 
@@ -45,6 +53,10 @@ Server Fixes
   minutes straight).  No longer computing entire month (just past two days).
 
 --Fixed server crash from held baby/adult mismatch.
+
+--Server can read emot and food tags from wound description to trigger side
+  effects of wound (an emot that goes along with it, or a modification to food
+  capacity).
 
 
 
