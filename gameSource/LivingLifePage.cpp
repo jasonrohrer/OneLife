@@ -758,6 +758,18 @@ static void stripDescriptionComment( char *inString ) {
 
 
 
+static char *getDisplayObjectDescription( int inID ) {
+    ObjectRecord *o = getObject( inID );
+    if( o == NULL ) {
+        return NULL;
+        }
+    char *upper = stringToUpperCase( o->description );
+    stripDescriptionComment( upper );
+    return upper;
+    }
+
+
+
 typedef enum messageType {
     SHUTDOWN,
     SERVER_FULL,
@@ -2632,7 +2644,14 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
 
 
     if( inSpeaker->dying ) {
-        setDrawColor( .65, 0, 0, inFade );
+        if( inSpeaker->sick ) {
+            // sick-ish yellow
+            setDrawColor( 0.874510, 0.658824, 0.168627, inFade );
+            }
+        else {
+            // wounded, blood red
+            setDrawColor( .65, 0, 0, inFade );
+            }
         }
     else if( inSpeaker->curseLevel > 0 ) {
         setDrawColor( 0, 0, 0, inFade );
@@ -2698,7 +2717,7 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
             }
         }
     
-    if( inSpeaker->dying ) {
+    if( inSpeaker->dying && ! inSpeaker->sick ) {
         setDrawColor( 1, 1, 1, inFade );
         }
     else if( inSpeaker->curseLevel > 0 ) {
@@ -3197,7 +3216,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                 squarePos.y += 192;
                 }
             
-            int squareRad = 286;
+            int squareRad = 306;
             
             switch( i ) {
                 case 0:
@@ -6993,7 +7012,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     // make sure it can be heard, even
                                     // if paused
                                     setSoundLoudness( 1.0 );
-                                    playSoundSprite( mHungerSound );
+                                    playSoundSprite( mHungerSound, 
+                                                     getSoundEffectsLoudness(),
+                                                     // middle
+                                                     0.5 );
                                     }
                                 }
                             }
@@ -7079,7 +7101,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
     drawSprite( mGuiPanelSprite, panelPos, gui_fov_effective_scale );
 
     if( ourLiveObject != NULL &&
-        ourLiveObject->dying ) {
+        ourLiveObject->dying  &&
+        ! ourLiveObject->sick ) {
         toggleMultiplicativeBlend( true );
         doublePair bloodPos = panelPos;
         bloodPos.y -= 32 * gui_fov_effective_scale;
@@ -7993,11 +8016,22 @@ int LivingLifePage::getNumHints( int inObjectID ) {
 
         numFilterHits = numHits;
 
+        SimpleVector<int> exactHitMatchIDs;
+        
+
         for( int i=0; i<numHits; i++ ) {
+            if( hits[i]->id == inObjectID ) {
+                // don't count the object itself as a hit
+                continue;
+                }
             char *des = stringToUpperCase( hits[i]->description );
             
             stripDescriptionComment( des );
         
+            if( strcmp( des, mLastHintFilterString ) == 0 ) {
+                exactHitMatchIDs.push_back( hits[i]->id );
+                }
+
             char *searchPos = strstr( des, mLastHintFilterString );
             
             // only count if occurrence of filter string matches whole words
@@ -8017,7 +8051,7 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                 
                 // space or end of string after search phrase
                 if( remainLen == filterLength ||
-                    searchPos[+1] == ' ' ) {
+                    searchPos[filterLength] == ' ' ) {
                     backOK = true;
                     }
 
@@ -8025,6 +8059,8 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                     hitMatchIDs.push_back( hits[i]->id );
                     }
                 }
+            
+            delete [] des;
             }
         
         
@@ -8032,13 +8068,21 @@ int LivingLifePage::getNumHints( int inObjectID ) {
 
         numHits = hitMatchIDs.size();
         
+        int startDepth = getObjectDepth( inObjectID );
+        
+        ObjectRecord *startObject = getObject( inObjectID );
+        if( startObject->isUseDummy ) {
+            startDepth = getObjectDepth( startObject->useDummyParent );
+            }
+        
+
         int shallowestDepth = UNREACHABLE;
        
         for( int i=0; i<numHits; i++ ) {
             
             int depth = getObjectDepth( hitMatchIDs.getElementDirect( i ) );
             
-            if( depth < shallowestDepth ) {
+            if( depth >= startDepth && depth < shallowestDepth ) {
                 shallowestDepth = depth;
                 }
             }
@@ -8060,6 +8104,14 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             delete [] hits;
             }
         
+        // there are exact matches
+        // use those instead
+        if( exactHitMatchIDs.size() > 0 ) {
+            hitIDs.deleteAll();
+            hitIDs.push_back_other( &exactHitMatchIDs );
+            }
+        
+
 
         numHits = hitIDs.size();
 
@@ -8180,6 +8232,22 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             
             int numPrecursors = precursorIDs.size();
             
+            SimpleVector<int> deepPrecursorIDs;
+
+            for( int i=0; i<numPrecursors; i++ ) {
+                int id = precursorIDs.getElementDirect( i );
+            
+                int depth = getObjectDepth( id );
+            
+                if( depth >= startDepth ) {
+                    deepPrecursorIDs.push_back( id );
+                    }
+                }
+            
+            numPrecursors = deepPrecursorIDs.size();
+            
+
+
             for( int i = 0; i<filteredTrans.size(); i++ ) {
                 char matchesFilter = false;
                 TransRecord *t = filteredTrans.getElementDirect( i );
@@ -8187,25 +8255,58 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                 for( int h=0; h<numHits; h++ ) {
                     int id = hitIDs.getElementDirect( h );    
                     
-                    if( t->actor == id ||
-                        t->target == id ||
-                        t->newActor == id ||
-                        t->newTarget == id ) {
+                    if( t->actor != id && t->target != id 
+                        &&
+                        ( t->newActor == id || t->newTarget == id ) ) {
                         matchesFilter = true;
                         break;
                         }    
                     }
                 if( matchesFilter == false ) {
                     for( int p=0; p<numPrecursors; p++ ) {
-                        int id = precursorIDs.getElementDirect( p );
+                        int id = deepPrecursorIDs.getElementDirect( p );
                         
                         if( t->actor != id && t->target != id 
                             &&
                             ( t->newActor == id || t->newTarget == id ) ) {
                             // precursors only count if they actually
                             // make id, not just if they use it
-                            matchesFilter = true;
-                            break;
+
+                            // but make sure it doesn't use
+                            // one of our main hits as an ingredient
+                            char hitIsIngredient = false;
+                            
+                            int actor = t->actor;
+                            int target = t->target;
+                            
+                            if( actor > 0 ) {
+                                ObjectRecord *actorO = 
+                                    getObject( actor );
+                                if( actorO->isUseDummy ) {
+                                    actor = actorO->useDummyParent;
+                                    }
+                                }
+                            if( target > 0 ) {
+                                ObjectRecord *targetO = 
+                                    getObject( target );
+                                if( targetO->isUseDummy ) {
+                                    target = targetO->useDummyParent;
+                                    }
+                                }
+                            
+                            for( int h=0; h<numHits; h++ ) {
+                                int hitID = hitIDs.getElementDirect( h ); 
+                                
+                                if( actor == hitID || 
+                                    target == hitID ) {
+                                    hitIsIngredient = true;
+                                    break;
+                                    }
+                                }
+                            if( ! hitIsIngredient ) {
+                                matchesFilter = true;
+                                break;
+                                }
                             }
                         }
                     }
@@ -8224,7 +8325,10 @@ int LivingLifePage::getNumHints( int inObjectID ) {
 
     int numRelevant = numTrans;
 
-    if( numTrans == 0 && unfilteredTrans.size() > 0 ) {
+      // for now, just leave it empty
+    if( false &&
+        numTrans == 0 && unfilteredTrans.size() > 0 ) {
+        
         // after filtering, no transititions are left
         // show all trans instead
         for( int i = 0; i<unfilteredTrans.size(); i++ ) {
@@ -8250,14 +8354,31 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             }
         
         if( numRelevant == 0 || numFilterHits == 0 ) {
-            const char *key = "noneRelevant";
-            if( numFilterHits == 0 ) {
+            const char *key = "notRelevant";
+            char *reasonString = NULL;
+            if( numFilterHits == 0 && unfilteredTrans.size() > 0 ) {
+                // no match because object named in filter does not
+                // exist
                 key = "noMatch";
+                reasonString = stringDuplicate( translate( key ) );
                 }
+            else {
+                const char *formatString = translate( key );
+                
+                
+                char *objString = getDisplayObjectDescription( inObjectID );
+                reasonString = autoSprintf( formatString, objString );
+                
+                delete [] objString;
+                }
+            
+            
+
             mPendingFilterString = autoSprintf( "%s %s %s",
                                                 translate( "making" ),
                                                 mLastHintFilterString,
-                                                translate( key ) );
+                                                reasonString );
+            delete [] reasonString;
             }
         else {    
             mPendingFilterString = autoSprintf( "%s %s",
@@ -9573,7 +9694,9 @@ void LivingLifePage::step() {
                     }
                 
                 if( mTutorialSound != NULL ) {
-                        playSoundSprite( mTutorialSound, 0.18, stereoPos );
+                        playSoundSprite( mTutorialSound, 
+                                         0.18 * getSoundEffectsLoudness(), 
+                                         stereoPos );
                     }
                 }
             }
@@ -9701,7 +9824,8 @@ void LivingLifePage::step() {
             lastPingSent == lastPongReceived ) {
             
             // and got PONG response, so server is hearing us
-            // tis is a real bug
+            // this is a real bug
+
 
             printf( 
                 "Been waiting for response to our action request "
@@ -9720,6 +9844,7 @@ void LivingLifePage::step() {
             ourObject->pendingAction = false;
             
             playerActionPending = false;
+            waitingForPong = false;
             playerActionTargetNotAdjacent = false;
             
             if( nextActionMessageToSend != NULL ) {
@@ -11337,6 +11462,7 @@ void LivingLifePage::step() {
                 
                 o.outOfRange = false;
                 o.dying = false;
+                o.sick = false;
                 
                 o.name = NULL;
                 o.relationName = NULL;
@@ -12825,6 +12951,7 @@ void LivingLifePage::step() {
                                 
                                 // ready to execute next action
                                 playerActionPending = false;
+                                waitingForPong = false;
                                 playerActionTargetNotAdjacent = false;
 
                                 existing->pendingAction = false;
@@ -12837,6 +12964,7 @@ void LivingLifePage::step() {
                                 existing->pendingAction = false;
                                 
                                 playerActionPending = false;
+                                waitingForPong = false;
                                 playerActionTargetNotAdjacent = false;
 
                                 if( nextActionMessageToSend != NULL ) {
@@ -13108,6 +13236,39 @@ void LivingLifePage::step() {
                                 delete [] stringUpper;
                                 }
                             }
+                        else if( strstr( reasonString, "succumbed" ) != NULL ) {
+                            
+                            int sicknessID = 0;
+                            
+                            sscanf( reasonString, "succumbed_%d", &sicknessID );
+                            
+                            ObjectRecord *sicknessO = NULL;
+                            
+                            if( sicknessID > 0 ) {
+                                sicknessO = getObject( sicknessID );
+                                }
+                            
+
+                            if( sicknessO == NULL ) {
+                                mDeathReason = stringDuplicate( 
+                                    translate( "reasonSuccumbedUnknown" ) );
+                                }
+                            else {
+
+                                char *stringUpper = stringToUpperCase( 
+                                    sicknessO->description );
+
+                                stripDescriptionComment( stringUpper );
+
+
+                                mDeathReason = autoSprintf( 
+                                    "%s%s",
+                                    translate( "reasonSuccumbed" ),
+                                    stringUpper );
+                                
+                                delete [] stringUpper;
+                                }
+                            }
                         else {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonUnknown" ) );
@@ -13244,6 +13405,7 @@ void LivingLifePage::step() {
                             nextActionMessageToSend = NULL;
                             }
                         playerActionPending = false;
+                        waitingForPong = false;
                         }
                     
 
@@ -13883,6 +14045,7 @@ void LivingLifePage::step() {
                                 existing->pendingAction = false;
                                 
                                 playerActionPending = false;
+                                waitingForPong = false;
                                 playerActionTargetNotAdjacent = false;
 
                                 if( nextActionMessageToSend != NULL ) {
@@ -14059,10 +14222,12 @@ void LivingLifePage::step() {
             
             for( int i=1; i<numLines; i++ ) {
                 int id, emotIndex;
-                int numRead = sscanf( lines[i], "%d %d",
-                                      &id, &emotIndex );
+                int ttlSec = -1;
+                
+                int numRead = sscanf( lines[i], "%d %d %d",
+                                      &id, &emotIndex, &ttlSec );
 
-                if( numRead == 2 ) {
+                if( numRead >= 2 ) {
                     for( int j=0; j<gameObjects.size(); j++ ) {
                         if( gameObjects.getElement(j)->id == id ) {
                             
@@ -14070,8 +14235,15 @@ void LivingLifePage::step() {
                             
                             existing->currentEmot = getEmotion( emotIndex );
                             
-                            existing->emotClearETATime = 
-                                game_getCurrentTime() + emotDuration;
+                            if( numRead == 3 && ttlSec > 0 ) {
+                                existing->emotClearETATime = 
+                                    game_getCurrentTime() + ttlSec;
+                                }
+                            else {
+                                // no ttl provided by server, use default
+                                existing->emotClearETATime = 
+                                    game_getCurrentTime() + emotDuration;
+                                }
                             }
                         }
                     }
@@ -14288,16 +14460,21 @@ void LivingLifePage::step() {
             for( int i=1; i<numLines; i++ ) {
 
                 int id;
-                int numRead = sscanf( lines[i], "%d ",
-                                      &( id ) );
+                int sickFlag = 0;
+                
+                int numRead = sscanf( lines[i], "%d %d",
+                                      &( id ), &sickFlag );
 
-                if( numRead == 1 ) {
+                if( numRead >= 1 ) {
                     for( int j=0; j<gameObjects.size(); j++ ) {
                         if( gameObjects.getElement(j)->id == id ) {
                             
                             LiveObject *existing = gameObjects.getElement(j);
                             
                             existing->dying = true;
+                            if( sickFlag ) {
+                                existing->sick = true;
+                                }
                             break;
                             }
                         }
@@ -14329,6 +14506,7 @@ void LivingLifePage::step() {
                             LiveObject *existing = gameObjects.getElement(j);
                             
                             existing->dying = false;
+                            existing->sick = false;
                             
                             // their wound will be gone after this
                             // play decay sound, if any, for their final
@@ -14655,7 +14833,10 @@ void LivingLifePage::step() {
                                     // make sure it can be heard
                                     // even if paused
                                     setSoundLoudness( 1.0 );
-                                    playSoundSprite( mHungerSound );
+                                    playSoundSprite( mHungerSound, 
+                                                     getSoundEffectsLoudness(),
+                                                     // middle
+                                                     0.5 );
                                     }
                                 mPulseHungerSound = false;
                                 }

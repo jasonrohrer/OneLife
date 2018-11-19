@@ -67,7 +67,9 @@ void SpriteToggleButton::setMouseOverTipB( const char *inTipMessageB ) {
 
 void SpriteToggleButton::pointerUp( float inX, float inY ) {
     if( isInside( inX, inY ) ) {
-        setToggled( ! mToggled );
+        if( mPressStartedHere ) {
+            setToggled( ! mToggled );
+            }
         
         // let superclass fire event
         Button::pointerUp( inX, inY );

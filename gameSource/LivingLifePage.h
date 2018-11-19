@@ -57,6 +57,7 @@ typedef struct LiveObject {
         
         char outOfRange;
         char dying;
+        char sick;
         
         char *name;
 
