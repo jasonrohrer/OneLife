@@ -1743,6 +1743,8 @@ char isFertileAge( LiveObject *inPlayer ) {
 
 int computeFoodCapacity( LiveObject *inPlayer ) {
     int ageInYears = lrint( computeAge( inPlayer ) );
+
+    int returnVal = 0;
     
     if( ageInYears < (age_old + 4) ) {
         
@@ -6415,6 +6417,15 @@ void setNoLongerDying( LiveObject *inPlayer,
     }
 
 
+
+
+void sanityCheckSettings(const char *inSettingName) {
+    FILE *fp = SettingsManager::getSettingsFile( inSettingName, "r" );
+	if( fp == NULL ) {
+		fp = SettingsManager::getSettingsFile( inSettingName, "w" );
+	}
+    fclose( fp );
+}
 
 
 int main() {
