@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 169     ???
+
+--Client version checking logic fixed to handle case where server binary
+  version is behind our binary version, but ahead of our data version number.
+
+
+
+
 Steam Depot Hotfix
 
 --Gave a bunch of settings files the userconfig Steam attribute.  Should fix

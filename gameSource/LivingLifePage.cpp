@@ -9831,13 +9831,15 @@ void LivingLifePage::step() {
                     &mRequiredVersion );
             
 
-            if( mRequiredVersion > versionNumber ) {
+            if( mRequiredVersion > versionNumber ||
+                ( mRequiredVersion < versionNumber &&
+                  mRequiredVersion < dataVersionNumber ) ) {
                 
                 // if server is using a newer version than us, we must upgrade
                 // our client
                 
                 // if server is using an older version, check that
-                // their version matches our data version at least
+                // their version is not behind our data version at least
 
                 closeSocket( mServerSocket );
                 mServerSocket = -1;
