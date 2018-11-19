@@ -1642,7 +1642,8 @@ static void setDeathReason( LiveObject *inPlayer, const char *inTag,
         }
     
     // leave space in front so it works at end of PU line
-    if( strcmp( inTag, "killed" ) == 0 ) {
+    if( strcmp( inTag, "killed" ) == 0 ||
+        strcmp( inTag, "succumbed" ) == 0 ) {
         
         inPlayer->deathReason = autoSprintf( " reason_%s_%d", 
                                              inTag, inOptionalID );
@@ -7698,6 +7699,20 @@ int main() {
                             holdingSomethingNew( nextPlayer );
                             
                             setFreshEtaDecayForHeld( nextPlayer );
+                            
+                            if( nextPlayer->holdingEtaDecay > 0 ) {
+                                // what they have will heal on its own 
+                                // with time.  Sickness, not wound.
+                                
+                                // death source is sickness, not
+                                // source
+                                nextPlayer->deathSourceID = 
+                                    nextPlayer->holdingID;
+                                
+                                setDeathReason( nextPlayer, 
+                                                "succumbed",
+                                                nextPlayer->holdingID );
+                                }
                             
                             nextPlayer->holdingWound = true;
                             

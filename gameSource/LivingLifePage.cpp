@@ -13109,6 +13109,39 @@ void LivingLifePage::step() {
                                 delete [] stringUpper;
                                 }
                             }
+                        else if( strstr( reasonString, "succumbed" ) != NULL ) {
+                            
+                            int sicknessID = 0;
+                            
+                            sscanf( reasonString, "succumbed_%d", &sicknessID );
+                            
+                            ObjectRecord *sicknessO = NULL;
+                            
+                            if( sicknessID > 0 ) {
+                                sicknessO = getObject( sicknessID );
+                                }
+                            
+
+                            if( sicknessO == NULL ) {
+                                mDeathReason = stringDuplicate( 
+                                    translate( "reasonSuccumbedUnknown" ) );
+                                }
+                            else {
+
+                                char *stringUpper = stringToUpperCase( 
+                                    sicknessO->description );
+
+                                stripDescriptionComment( stringUpper );
+
+
+                                mDeathReason = autoSprintf( 
+                                    "%s%s",
+                                    translate( "reasonSuccumbed" ),
+                                    stringUpper );
+                                
+                                delete [] stringUpper;
+                                }
+                            }
                         else {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonUnknown" ) );

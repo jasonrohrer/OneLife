@@ -300,6 +300,13 @@ reasonKilled "CAUSE:  KILLED BY "
 
 reasonKilledUnknown "CAUSE:  KILLED BY UNKNOWN WEAPON"
 
+
+reasonSuccumbed "CAUSE:  SUCCUMBED TO "
+
+reasonSuccumbedUnknown "CAUSE:  SUCCUMBED TO UNKNOWN SICKNESS"
+
+
+
 reasonOldAge "CAUSE:  OLD AGE"
 
 reasonSID "CAUSE:  SUDDEN INFANT DEATH"
