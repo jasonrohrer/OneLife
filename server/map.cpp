@@ -2914,7 +2914,7 @@ char initMap() {
                     }
                 if( dummyID > 0 ) {
                     setMapObjectRaw( x, y, dummyID );
-                    numSet = true;
+                    numSet++;
                     }
                 }
             }
