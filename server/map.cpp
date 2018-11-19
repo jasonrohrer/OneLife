@@ -3195,7 +3195,7 @@ void freeMap() {
             int x = xToPlace.getElementDirect( i );
             int y = yToPlace.getElementDirect( i );
             
-            setMapObject( x, y, idToPlace.getElementDirect( i ) );
+            setMapObjectRaw( x, y, idToPlace.getElementDirect( i ) );
             }
 
         
@@ -3210,6 +3210,8 @@ void freeMap() {
 
                 int numCont;
                 int *cont = getContainedRaw( x, y, &numCont, b );
+                
+                char anyChanged = false;
 
                 for( int c=0; c<numCont; c++ ) {
 
@@ -3225,10 +3227,12 @@ void freeMap() {
                     if( contObj != NULL ) {
                         if( contObj->isUseDummy ) {
                             cont[c] = contObj->useDummyParent;
+                            anyChanged = true;
                             numContChanged ++;
                             }
                         else if( contObj->isVariableDummy ) {
                             cont[c] = contObj->variableDummyParent;
+                            anyChanged = true;
                             numContChanged ++;
                             }
                         }
@@ -3238,7 +3242,10 @@ void freeMap() {
                         }
                     }
                 
-                setContained( x, y, numCont, cont, b );
+                if( anyChanged ) {
+                    setContained( x, y, numCont, cont, b );
+                    }
+                
                 delete [] cont;
                 }
             }
