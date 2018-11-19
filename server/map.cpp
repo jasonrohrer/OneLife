@@ -3085,6 +3085,7 @@ static void rememberDummy( FILE *inFile, int inX, int inY,
 void freeMap() {
     printf( "%d calls to getBaseMap\n", getBaseMapCallCount );
 
+    skipTrackingMapChanges = true;
     
     if( lookTimeDBOpen ) {
         DB_close( &lookTimeDB );
@@ -3326,6 +3327,8 @@ void freeMap() {
     liveMovements.clear();
     
     mapChangePosSinceLastStep.deleteAll();
+    
+    skipTrackingMapChanges = false;
     }
 
 
