@@ -21,6 +21,10 @@ Server Fixes
   startup.  There were close to 200,000 moving animals on the map that were
   getting tracked when server1 and server2 started up.
 
+--Skip tracking map changes during initial map cleaning.  Avoids activating
+  motion on escaped horse carts (when they get cleaned as containers).
+
+
 
 
 

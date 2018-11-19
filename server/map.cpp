@@ -1866,10 +1866,18 @@ char getIsCategory( int inID ) {
 
 
 
+// for large inserts, like tutorial map loads, we don't want to 
+// track individual map changes.
+static char skipTrackingMapChanges = false;
+
+
+
 // returns num set after
 int cleanMap() {
     AppLog::info( "\nCleaning map of objects that have been removed..." );
-
+    
+    skipTrackingMapChanges = true;
+    
     DB_Iterator dbi;
     
     
@@ -2077,15 +2085,15 @@ int cleanMap() {
                    totalDBRecordCount, DB_maxStack );
     
     printf( "\n" );
+
+    skipTrackingMapChanges = false;
+
     return totalSetCount;
     }
 
 
 
 
-// for large inserts, like tutorial map loads, we don't want to 
-// track individual map changes.
-static char skipTrackingMapChanges = false;
 
 
 
