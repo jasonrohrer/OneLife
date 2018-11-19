@@ -9957,9 +9957,7 @@ void LivingLifePage::step() {
                     &mRequiredVersion );
             
 
-            if( mRequiredVersion > versionNumber ||
-                ( mRequiredVersion < versionNumber &&
-                  mRequiredVersion != dataVersionNumber ) ) {
+            if( mRequiredVersion > versionNumber ) {
                 
                 // if server is using a newer version than us, we must upgrade
                 // our client
