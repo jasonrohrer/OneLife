@@ -1971,6 +1971,9 @@ int cleanMap() {
             SimpleVector< SimpleVector<int> > newSubCont;
             SimpleVector< SimpleVector<timeSec_t> > newSubContDecay;
             
+            char anyRemoved = false;
+            
+
             for( int c=0; c<numCont; c++ ) {
                 
                 SimpleVector<int> subCont;
@@ -2005,6 +2008,9 @@ int cleanMap() {
                                 subCont.push_back( contSub[s] );
                                 subContDecay.push_back( decaySub[s] );
                                 }
+                            else {
+                                anyRemoved = true;
+                                }
                             }
                         
                         if( contSub != NULL ) {
@@ -2024,11 +2030,17 @@ int cleanMap() {
                         newCont.push_back( cont[c] );
                         newDecay.push_back( decay[c] );
                         }
+                    else {
+                        anyRemoved = true;
+                        }
                     }
 
                 if( thisKept ) {        
                     newSubCont.push_back( subCont );
                     newSubContDecay.push_back( subContDecay );
+                    }
+                else {
+                    anyRemoved = true;
                     }
                 }
             
@@ -2037,41 +2049,44 @@ int cleanMap() {
             delete [] cont;
             delete [] decay;
             
-            numContainedCleared +=
-                ( numCont - newCont.size() );
-
-            int *newContArray = newCont.getElementArray();
-            timeSec_t *newDecayArray = newDecay.getElementArray();
-            
-            setContained( x, y, newCont.size(), newContArray );
-            setContainedEtaDecay( x, y, newDecay.size(), newDecayArray );
-            
-            for( int c=0; c<newCont.size(); c++ ) {
-                int numSub =
-                    newSubCont.getElementDirect( c ).size();
+            if( anyRemoved ) {
                 
-                if( numSub > 0 ) {
-                    int *newSubArray = 
-                        newSubCont.getElementDirect( c ).getElementArray();
-                    timeSec_t *newSubDecayArray = 
-                        newSubContDecay.getElementDirect( c ).getElementArray();
-                    
-                    setContained( x, y, numSub, newSubArray, c + 1 );
-
-                    setContainedEtaDecay( x, y, numSub, newSubDecayArray,
-                                          c + 1 );
-                    
-                    delete [] newSubArray;
-                    delete [] newSubDecayArray;
-                    }
-                else {
-                    clearAllContained( x, y, c + 1 );
-                    }
-                }
+                numContainedCleared +=
+                    ( numCont - newCont.size() );
+                
+                int *newContArray = newCont.getElementArray();
+                timeSec_t *newDecayArray = newDecay.getElementArray();
             
+                setContained( x, y, newCont.size(), newContArray );
+                setContainedEtaDecay( x, y, newDecay.size(), newDecayArray );
+            
+                for( int c=0; c<newCont.size(); c++ ) {
+                    int numSub =
+                        newSubCont.getElementDirect( c ).size();
+                
+                    if( numSub > 0 ) {
+                        int *newSubArray = 
+                            newSubCont.getElementDirect( c ).getElementArray();
+                        timeSec_t *newSubDecayArray = 
+                            newSubContDecay.
+                            getElementDirect( c ).getElementArray();
+                    
+                        setContained( x, y, numSub, newSubArray, c + 1 );
 
-            delete [] newContArray;
-            delete [] newDecayArray;
+                        setContainedEtaDecay( x, y, numSub, newSubDecayArray,
+                                              c + 1 );
+                    
+                        delete [] newSubArray;
+                        delete [] newSubDecayArray;
+                        }
+                    else {
+                        clearAllContained( x, y, c + 1 );
+                        }
+                    }
+
+                delete [] newContArray;
+                delete [] newDecayArray;
+                }
             }
         }
     

@@ -24,6 +24,8 @@ Server Fixes
 --Skip tracking map changes during initial map cleaning.  Avoids activating
   motion on escaped horse carts (when they get cleaned as containers).
 
+--Avoid re-adding contained and sub-contained objects if nothing has changed
+  during map cleaning.
 
 
 
