@@ -17,6 +17,10 @@ Server Fixes
  (24x shorter) to reduce the likelihood of 504 gateway meltdown when one server
  stops responding.
 
+--Don't live track decays for objects added via mapDummyRecall tracking on
+  startup.  There were close to 200,000 moving animals on the map that were
+  getting tracked when server1 and server2 started up.
+
 
 
 

@@ -1361,6 +1361,9 @@ int getMapObjectRaw( int inX, int inY );
 int *getContainedRaw( int inX, int inY, int *outNumContained, 
                       int inSubCont = 0 );
 
+void setMapObjectRaw( int inX, int inY, int inID );
+
+
 
 
 void writeRecentPlacements() {
@@ -2879,6 +2882,8 @@ char initMap() {
         AppLog::info( "Found mapDummyRecall.txt file, restoring dummy objects "
                       "on map" );
         
+        skipTrackingMapChanges = true;
+        
         int numRead = 5;
         
         int numSet = 0;
@@ -2908,11 +2913,13 @@ char initMap() {
                         }
                     }
                 if( dummyID > 0 ) {
-                    setMapObject( x, y, dummyID );
+                    setMapObjectRaw( x, y, dummyID );
                     numSet = true;
                     }
                 }
             }
+        skipTrackingMapChanges = false;
+        
         fclose( dummyFile );
         
         
@@ -5157,11 +5164,14 @@ char isMapSpotBlocking( int inX, int inY ) {
 
 
 
+void setMapObjectRaw( int inX, int inY, int inID ) {
+    dbPut( inX, inY, 0, inID );
+    }
 
 
 
 void setMapObject( int inX, int inY, int inID ) {
-    dbPut( inX, inY, 0, inID );
+    setMapObjectRaw( inX, inY, inID );
 
 
     // actually need to set decay here
