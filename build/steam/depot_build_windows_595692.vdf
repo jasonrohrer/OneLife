@@ -34,4 +34,78 @@
 	// but exclude all symbol files  
 	// This can be a full path, or a path relative to ContentRoot
    //"FileExclusion" "*.pdb"
+
+
+
+ // these files will be modified during runtime
+ // don't overwrite them with default values during update/verify
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\borderless.ini" 
+      "Attributes" "userconfig" 
+    }
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\customServerAddress.ini" 
+      "Attributes" "userconfig" 
+    }
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\customServerPort.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\fullscreen.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\loginSuccess.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\musicLoudness.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\soundEffectsLoudness.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\tutorialDone.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\twinCode.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\useCustomServer.ini" 
+      "Attributes" "userconfig" 
+    }
+
 }
