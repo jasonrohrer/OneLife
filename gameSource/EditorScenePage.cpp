@@ -2039,6 +2039,11 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
     if( inASCII == 'w' ) {
         mShowWhite = ! mShowWhite;
         }
+    else if( inASCII == 't' ) {
+        mFrameCount = 0;
+        restartAllMoves();
+        skipCheckVisible = true;
+        }
     else if( inASCII == 'o' ) {
         mZeroX = mCurX;
         mZeroY = mCurY;
