@@ -398,11 +398,11 @@ PS
 
 
 PE
+p_id emot_index ttl_sec
 p_id emot_index
-p_id emot_index
-p_id emot_index
+p_id emot_index ttl_sec
 ...
-p_id emot_index
+p_id emot_index ttl_sec
 #
 
 
@@ -410,10 +410,14 @@ Example:
 
 PE
 1432 4
-1501 6
+1501 6 30
 1448 1
 #
 
+
+ttl_sec is optional, and specifies how long the emote should be shown, in
+seconds, client-side.  If it is omitted, the client should display the emotion
+for the standard amount of time.
 
 
 
@@ -542,14 +546,18 @@ time to show a visual effect before death-by-apocalypse happens.
 
 
 DY
+p_id isSick
 p_id
-p_id
-p_id
+p_id isSick
+
 ...
 p_id
 #
 
 Indicates that the listed players have been mortally wounded and will die soon.
+
+isSick is optional 1 flag to indicate that player is sick
+(client shouldn't show blood UI overlay for sick players)
 
 
 

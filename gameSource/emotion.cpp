@@ -46,14 +46,28 @@ void initEmotion() {
     delete [] cont;
     
     for( int i=0; i<numParts; i++ ) {
-        if( i < emotions.size() && strcmp( parts[i], "" ) != 0 ) {
+        if( strcmp( parts[i], "" ) != 0 ) {
             
-            Emotion *e = emotions.getElement( i );
+            Emotion *e;
             
-            sscanf( parts[i], "%d %d %d", 
+            if( i < emotions.size() ) {
+                e = emotions.getElement( i );
+                }
+            else {
+                // the list extends beyond emotion words
+                // put dummy trigger in place for these
+                // * is a character that the end user cannot type
+                Emotion eNew = { stringDuplicate( "DUMMY*TRIGGER" ), 0, 0, 0 };
+
+                emotions.push_back( eNew );
+                e = emotions.getElement( emotions.size() - 1 );
+                }
+            sscanf( parts[i], "%d %d %d %d %d", 
                     &( e->eyeEmot ), 
                     &( e->mouthEmot ), 
-                    &( e->otherEmot ) );
+                    &( e->otherEmot ),
+                    &( e->faceEmot ),
+                    &( e->bodyEmot ) );
             }
         delete [] parts[i];
         }
@@ -116,6 +130,12 @@ void markEmotionsLive() {
             }
         if( e->otherEmot > 0 ) {    
             addBaseObjectToLiveObjectSet( e->otherEmot );
+            }
+        if( e->faceEmot > 0 ) {    
+            addBaseObjectToLiveObjectSet( e->faceEmot );
+            }
+        if( e->bodyEmot > 0 ) {    
+            addBaseObjectToLiveObjectSet( e->bodyEmot );
             }
         }
     }

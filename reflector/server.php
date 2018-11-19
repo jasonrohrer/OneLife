@@ -310,6 +310,20 @@ function tryServer( $inAddress, $inPort, $inReportOnly ) {
                 if( mt_rand( 0, 1 ) == 0 ) {
                     return false;
                     }
+                if( $twin_code == "" &&
+                    $current / $max > $startSpreadingFraction ) {
+                    // if not twins, send additional people to
+                    // other servers until this one dies down below
+                    // threshold
+
+                    // so, what happens is this:
+                    // once we pass threshold, all non-twins are sent to
+                    // other servers
+                    // When we die down below threshold, 50% of players
+                    // are sent to other servers, until we get back
+                    // below the stopSpreading fraction, and then we stop.
+                    return false;
+                    }  
                 }
 
             // got here, return this server

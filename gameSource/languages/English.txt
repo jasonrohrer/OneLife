@@ -211,7 +211,7 @@ enterHint "[ENTER]"
 
 
 making "MAKING:"
-noneRelevant "(NONE RELEVANT)"
+notRelevant "(%s NOT RELEVANT)"
 noMatch "(NO FILTER MATCH)"
 
 
@@ -299,6 +299,13 @@ reasonNursingHunger "CAUSE:  NURSING STARVATION"
 reasonKilled "CAUSE:  KILLED BY "
 
 reasonKilledUnknown "CAUSE:  KILLED BY UNKNOWN WEAPON"
+
+
+reasonSuccumbed "CAUSE:  SUCCUMBED TO "
+
+reasonSuccumbedUnknown "CAUSE:  SUCCUMBED TO UNKNOWN SICKNESS"
+
+
 
 reasonOldAge "CAUSE:  OLD AGE"
 

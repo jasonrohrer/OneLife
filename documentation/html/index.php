@@ -1,3 +1,5 @@
+<?php include( "cacheTop.php" ); ?>
+
 <?php include( "header.php" ); ?>
 
 <?php include( "reviewPages/reviewCount.php" ); ?>
@@ -390,3 +392,8 @@ include( "news.php" );
 
     
 <?php include( "footer.php" ); ?>
+
+    
+<?php include( "cacheBottom.php" ); ?>
+
+    

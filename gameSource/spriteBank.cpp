@@ -1080,18 +1080,38 @@ int bakeSprite( const char *inTag,
         yOffsets[i] = lrint( inSpritePos[i].y );
 
         SpriteRecord *r = getSpriteRecord( inSpriteIDs[i] );
-        int radiusX = r->w / 2 + 
+        int radiusXA = r->w / 2 + 
             abs( r->centerAnchorXOffset ) + 
             abs( xOffsets[i] );
-        int radiusY = r->h / 2 + 
+        
+        // consider rotations
+        int radiusXB = r->h / 2 + 
+            abs( r->centerAnchorYOffset ) + 
+            abs( xOffsets[i] );
+        
+
+        int radiusYA = r->h / 2 + 
                  abs( r->centerAnchorYOffset )  + 
                  abs( yOffsets[i] );
+
+        // consider rotations
+        int radiusYB = r->w / 2 + 
+                 abs( r->centerAnchorXOffset )  + 
+                 abs( yOffsets[i] );
+
         
-        if( radiusX > baseRadiusX ) {
-            baseRadiusX = radiusX;
+        if( radiusXA > baseRadiusX ) {
+            baseRadiusX = radiusXA;
             }
-        if( radiusY > baseRadiusY ) {
-            baseRadiusY = radiusY;
+        if( radiusYA > baseRadiusY ) {
+            baseRadiusY = radiusYA;
+            }
+        
+        if( radiusXB > baseRadiusX ) {
+            baseRadiusX = radiusXB;
+            }
+        if( radiusYB > baseRadiusY ) {
+            baseRadiusY = radiusYB;
             }
         }
 
@@ -1132,6 +1152,42 @@ int bakeSprite( const char *inTag,
             
             int w = image->getWidth();
             int h = image->getHeight();
+
+
+            if( inSpriteHFlips[i] ||
+                inSpriteRot[i] != 0 ) {
+                
+                // expand until square to permit rotations without
+                // getting cut off
+                
+                int newWidth = w;
+                int newHeight = h;
+                if( w < h ) {
+                    newWidth = h;
+                    }
+                else if( h < w ) {
+                    newHeight = w;
+                    }
+                
+                int totalPossibleOffset = 
+                    2 * abs( spriteRec->centerAnchorXOffset ) +
+                    2 * abs( spriteRec->centerAnchorYOffset );
+                
+                newWidth += totalPossibleOffset;
+                newHeight += totalPossibleOffset;
+
+                if( newWidth != w ||
+                    newHeight != h ) {
+                    Image *biggerImage = image->expandImage( newWidth,
+                                                             newHeight );
+                    delete image;
+                    image = biggerImage;
+                    
+                    w = newWidth;
+                    h = newHeight;
+                    }
+                }
+
 
             int centerX = w/2 + spriteRec->centerAnchorXOffset;
             int centerY = h/2 + spriteRec->centerAnchorYOffset;

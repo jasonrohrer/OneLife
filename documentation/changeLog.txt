@@ -3,9 +3,67 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 168    2018-November-18
+
+--Fixed bug that could result in spurious, false wild bug reports.  After
+  pinging once, and getting a PONG back, we could mistakenly believe that we
+  had received PONGs to future PINGs.
+
+--Fixed glitch in radio button set (example:  twin count selection) where
+  dragging could select more than one choice or no choices.
+
+--Fixed memory leak when filtering crafting hints.
+
+--Huge improvement to behavior of / crafting filters.  Hides all hints when
+  none relevant, to avoid confusion.  Avoids showing recipes that use the
+  desired object as an ingredient.  A bunch of other tweaks that just make the
+  results more sensible and better.
+
+--Hunger and tutorial chimes now obey SETTINGS sound volume slider.
+
+--Fixed editor to handle baking of rotated non-square sprites correctly.
+
+--Support for emots that have a face and body component.
+
+--Emot protocol supports server setting optional emot ttl.
+
+--Dying protocol supports optional sick flag (so blood not displayed on client).
+
+--Highlight square a bit larger to contain top of rubber tree.
+
+
+
+
+Server Fixes
+
+--Fixed a memory leak when MOVE received while waiting for FORCE-ACK.
+
+--Fixed a memory leak when swapping clothing.
+
+--Fixed server crash when tutorial-twin players reconnect.
+
+--checkIfServerRunning cronjob also makes sure server has sufficient disk
+  space, and shuts it down gracefully if not.
+
+--Caching of generated PHP from index.php for 2 minutes to reduce CPU load on
+  web server.
+
+--Hourly generation of failure report was a huge CPU hog (100% CPU for 5
+  minutes straight).  No longer computing entire month (just past two days).
+
+--Fixed server crash from held baby/adult mismatch.
+
+--Server can read emot and food tags from wound description to trigger side
+  effects of wound (an emot that goes along with it, or a modification to food
+  capacity).
+
+
+
 Version 167    2018-November-9
 
 --Whoops... Game-breaking windows networking bug.
+
 
 
 
