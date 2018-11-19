@@ -11,6 +11,14 @@ Version 169     ???
 
 
 
+Server Fixes
+
+--Reduced timeouts in reflector from 6 seconds total down to 0.25 seconds total
+ (24x shorter) to reduce the likelihood of 504 gateway meltdown when one server
+ stops responding.
+
+
+
 
 Steam Depot Hotfix
 

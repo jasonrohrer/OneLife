@@ -193,7 +193,7 @@ function tryServer( $inAddress, $inPort, $inReportOnly ) {
 
     // suppress printed warnings from fsockopen
     // sometimes servers will be down, and we'll skip them.
-    $fp = @fsockopen( $inAddress, $inPort, $errno, $errstr, 3 );
+    $fp = @fsockopen( $inAddress, $inPort, $errno, $errstr, 0.125 );
     if( !$fp ) {
         // error
 
@@ -204,7 +204,7 @@ function tryServer( $inAddress, $inPort, $inReportOnly ) {
         return false;
         }
     else {
-        stream_set_timeout( $fp, 3 );
+        stream_set_timeout( $fp, 0, 125000 );
         
         $lineCount = 0;
 
