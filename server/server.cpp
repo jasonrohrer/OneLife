@@ -165,6 +165,8 @@ typedef struct FreshConnection {
 
         WebRequest *ticketServerRequest;
 
+        double ticketServerRequestStartTime;
+        
         char error;
         const char *errorCauseString;
         
@@ -7052,7 +7054,8 @@ int main() {
         
         
         // listen for messages from new connections
-
+        double currentTime = Time::getCurrentTime();
+        
         for( int i=0; i<newConnections.size(); i++ ) {
             
             FreshConnection *nextConnection = newConnections.getElement( i );
@@ -7075,8 +7078,16 @@ int main() {
                 }
             else if( nextConnection->ticketServerRequest != NULL ) {
                 
-                int result = nextConnection->ticketServerRequest->step();
-                
+                int result;
+
+                if( currentTime - nextConnection->ticketServerRequestStartTime
+                    < 8 ) {
+                    // 8-second timeout on ticket server requests
+                    result = nextConnection->ticketServerRequest->step();
+                    }
+                else {
+                    result = -1;
+                    }
 
                 if( result == -1 ) {
                     AppLog::info( "Request to ticket server failed, "
@@ -7323,6 +7334,9 @@ int main() {
                                 nextConnection->ticketServerRequest =
                                     new WebRequest( "GET", url, NULL );
                                 
+                                nextConnection->ticketServerRequestStartTime
+                                    = currentTime;
+
                                 delete [] url;
                                 }
                             else if( !requireTicketServerCheck &&
@@ -12087,7 +12101,7 @@ int main() {
 
         // update personal heat value of any player that is due
         // once every 2 seconds
-        double currentTime = Time::getCurrentTime();
+        currentTime = Time::getCurrentTime();
         for( int i=0; i< players.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
             

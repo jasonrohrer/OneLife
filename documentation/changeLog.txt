@@ -27,6 +27,9 @@ Server Fixes
 --Avoid re-adding contained and sub-contained objects if nothing has changed
   during map cleaning.
 
+--Fixed busy wait on server when a ticket server request fails but doesn't
+  close properly.
+
 
 
 
