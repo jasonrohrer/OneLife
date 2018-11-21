@@ -1244,6 +1244,7 @@ function ls_logLife() {
         // no record exists, add one
         $query = "INSERT INTO $tableNamePrefix". "users SET " .
             "email = '$email', ".
+            "email_sha1 = sha1( '$email' ), ".
             "sequence_number = 1, ".
             "life_count = 1 ".
             "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1, ".
