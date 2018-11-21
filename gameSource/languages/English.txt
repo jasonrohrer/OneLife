@@ -114,6 +114,16 @@ vsyncYes "YES"
 vsyncNo "NO"
 redetectButton "RE-DETECT"
 
+
+cursor "MOUSE POINTER:"
+
+system "NATIVE"
+drawn "DRAWN"
+both "BOTH"
+
+scale "SCALE:"
+
+
 useCustomServer "USE CUSTOM SERVER:"
 address "ADDRESS:"
 port "PORT:"
