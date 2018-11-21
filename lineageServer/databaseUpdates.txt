@@ -34,3 +34,13 @@ UPDATE lineageServer_lives set deepest_descendant_generation = -1, deepest_desce
 // add index for lives.name (so name search is faster)
 
 ALTER TABLE lineageServer_lives ADD INDEX name ( name );
+
+
+
+// add email hash, and compute it for all
+
+ALTER TABLE lineageServer_users ADD email_sha1 VARCHAR(40) NOT NULL AFTER email;
+
+ALTER TABLE lineageServer_users ADD INDEX email_sha1 ( email_sha1 );
+
+UPDATE lineageServer_users SET email_sha1 = sha1( email );

@@ -35,6 +35,10 @@ Server Fixes
 --Fixed busy wait on server when a ticket server request fails but doesn't
   close properly.
 
+--Lineage server now supports filtering by email hash (so we can trigger
+  searches by straight GET to a URL without revealing the user's email in the
+  address bar).
+
 
 
 

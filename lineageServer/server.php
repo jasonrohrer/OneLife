@@ -285,6 +285,8 @@ function ls_setupDatabase() {
             "id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT," .
             "email VARCHAR(254) NOT NULL," .
             "UNIQUE KEY( email )," .
+            "email_sha1 CHAR(40) NOT NULL," .
+            "index( email_sha1 ), ".
             "sequence_number INT NOT NULL," .
             "life_count INT NOT NULL );";
 
@@ -1421,11 +1423,19 @@ function ls_frontPage() {
 
     $nameFilter = ls_requestFilter( "filter", "/[A-Z ]+/i", "" );
 
+    $email_sha1 = ls_requestFilter( "email_sha1", "/[a-f0-9]+/i", "" );
+
 
     $filterClause = " WHERE 1 ";
     $filter = "";
-    
-    if( $emailFilter != "" ) {
+
+
+    if( $email_sha1 != "" ) {
+        $email_sha1 = strtolower( $email_sha1 );
+        $filterClause = " WHERE users.email_sha1 = '$email_sha1' ";
+        $filter = "[email hash]";
+        }
+    else if( $emailFilter != "" ) {
         $filterClause = " WHERE users.email = '$emailFilter' ";
         $filter = $emailFilter;
         }
