@@ -9,6 +9,11 @@ Version 169     ???
 --Client version checking logic fixed to handle case where server binary
   version is behind our binary version, but ahead of our data version number.
 
+--Support for drawn (emulated) mouse pointer on ultrawide displays to overcome
+  mouse coordinate skew.  Drawn cursors can also be scaled by end-user, to
+  further help people in high-res or low-vision situations where the native
+  SDL pointer (even the 32x32 bigPointer) is too small.  See SETTINGS screen.
+
 
 
 Server Fixes
