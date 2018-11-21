@@ -42,6 +42,11 @@ Server Fixes
   searches by straight GET to a URL without revealing the user's email in the
   address bar).
 
+--Diseases like Yellow Fever no longer compound to shorten death-stagger-time
+  from a multi-bite.  Instead, there is no death stagger time for a disease,
+  and if you recover before dying from the side effects, you always survive. 
+  However, getting bitten again while sick will still extend your sickness time.
+
 
 
 

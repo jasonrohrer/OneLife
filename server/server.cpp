@@ -7714,7 +7714,35 @@ int main() {
                             
                             setFreshEtaDecayForHeld( nextPlayer );
                             
-                            if( nextPlayer->holdingEtaDecay > 0 ) {
+                            char isSick = false;
+                            
+                            if( strstr(
+                                    getObject( nextPlayer->holdingID )->
+                                    description,
+                                    "sick" ) != NULL ) {
+                                isSick = true;
+
+                                // sicknesses override basic death-stagger
+                                // time.  The person can live forever
+                                // if they are taken care of until
+                                // the sickness passes
+                                
+                                int staggerTime = 
+                                    SettingsManager::getIntSetting(
+                                        "deathStaggerTime", 20 );
+                                
+                                double currentTime = 
+                                    Time::getCurrentTime();
+
+                                // 10x base stagger time should
+                                // give them enough time to either heal
+                                // from the disease or die from its
+                                // side-effects
+                                nextPlayer->dyingETA = 
+                                    currentTime + 10 * staggerTime;
+                                }
+
+                            if( isSick ) {
                                 // what they have will heal on its own 
                                 // with time.  Sickness, not wound.
                                 
