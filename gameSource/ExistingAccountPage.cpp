@@ -10,6 +10,8 @@
 #include "minorGems/util/stringUtils.h"
 #include "minorGems/util/SettingsManager.h"
 
+#include "minorGems/crypto/hashes/sha1.h"
+
 
 #include "minorGems/graphics/openGL/KeyboardHandlerGL.h"
 
@@ -44,7 +46,8 @@ ExistingAccountPage::ExistingAccountPage()
           mDisableCustomServerButton( mainFont, 0, 220, 
                                       translate( "disableCustomServer" ) ),
           mLoginButton( mainFont, 400, 0, translate( "loginButton" ) ),
-          mFriendsButton( mainFont, 400, -120, translate( "friendsButton" ) ),
+          mFriendsButton( mainFont, 400, -80, translate( "friendsButton" ) ),
+          mFamilyTreesButton( mainFont, 400, -160, translate( "familyTrees" ) ),
           mClearAccountButton( mainFont, 400, -280, 
                                translate( "clearAccount" ) ),
           mCancelButton( mainFont, -400, -280, 
@@ -78,6 +81,7 @@ ExistingAccountPage::ExistingAccountPage()
 
     setButtonStyle( &mLoginButton );
     setButtonStyle( &mFriendsButton );
+    setButtonStyle( &mFamilyTreesButton );
     setButtonStyle( &mClearAccountButton );
     setButtonStyle( &mCancelButton );
     setButtonStyle( &mSettingsButton );
@@ -95,6 +99,7 @@ ExistingAccountPage::ExistingAccountPage()
     
     addComponent( &mLoginButton );
     addComponent( &mFriendsButton );
+    addComponent( &mFamilyTreesButton );
     addComponent( &mClearAccountButton );
     addComponent( &mCancelButton );
     addComponent( &mSettingsButton );
@@ -110,6 +115,7 @@ ExistingAccountPage::ExistingAccountPage()
     
     mLoginButton.addActionListener( this );
     mFriendsButton.addActionListener( this );
+    mFamilyTreesButton.addActionListener( this );
     mClearAccountButton.addActionListener( this );
     
     mCancelButton.addActionListener( this );
@@ -201,6 +207,8 @@ void ExistingAccountPage::makeActive( char inFresh ) {
           strcmp( keyText, "" ) == 0 ) ) {
 
         mEmailField.focus();
+
+        mFamilyTreesButton.setVisible( false );
         }
     else {
         mEmailField.unfocus();
@@ -208,6 +216,13 @@ void ExistingAccountPage::makeActive( char inFresh ) {
         
         mEmailField.setContentsHidden( true );
         mKeyField.setContentsHidden( true );
+        
+        char *url = SettingsManager::getStringSetting( "lineageServerURL", "" );
+
+        char show = ( strcmp( url, "" ) != 0 )
+            && isURLLaunchSupported();
+        mFamilyTreesButton.setVisible( show );
+        delete [] url;
         }
     
     delete [] emailText;
@@ -312,6 +327,23 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mFriendsButton ) {
         processLogin( true, "friends" );
+        }
+    else if( inTarget == &mFamilyTreesButton ) {
+        char *url = SettingsManager::getStringSetting( "lineageServerURL", "" );
+
+        if( strcmp( url, "" ) != 0 ) {
+            char *email = mEmailField.getText();
+            
+            char *emailHash = computeSHA1Digest( email );
+            char *fullURL = autoSprintf( "%s?action=front_page&email_sha1=%s",
+                                         url, emailHash );
+            delete [] email;
+            delete [] emailHash;
+            
+            launchURL( fullURL );
+            delete [] fullURL;
+            }
+        delete [] url;
         }
     else if( inTarget == &mViewAccountButton ) {
         if( mHideAccount ) {

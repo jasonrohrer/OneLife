@@ -41,6 +41,8 @@ atSignTip "INSERT '@' SIGN (INTL KEYBOARDS)"
 
 loginButton "LOGIN"
 friendsButton "FRIENDS"
+familyTrees "FAMILY TREES"
+
 clearAccount "CLEAR ACCOUNT"
 settingsButton "SETTINGS"
 postReviewButton "POST REVIEW"

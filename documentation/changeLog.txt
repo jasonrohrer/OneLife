@@ -14,6 +14,9 @@ Version 169     ???
   further help people in high-res or low-vision situations where the native
   SDL pointer (even the 32x32 bigPointer) is too small.  See SETTINGS screen.
 
+--FAMILY TREE button on Menu screen that launches a browser to show your
+  personal recent lives.
+
 
 
 Server Fixes
