@@ -7,6 +7,10 @@ Version 173     ???
 
 --Fixed overlaps in UI of scene editor.
 
+--Scene editor move timing now based on frame count instead of wall-clock time,
+  so move timing is perfect even when running slower (like when outputting
+  frames).
+
 
 
 
