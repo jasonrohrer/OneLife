@@ -2,6 +2,7 @@
 
 #include "TextButton.h"
 #include "CheckboxButton.h"
+#include "RadioButtonSet.h"
 #include "ValueSlider.h"
 #include "SoundUsage.h"
 
@@ -60,5 +61,10 @@ class SettingsPage : public GamePage, public ActionListener {
 
         TextButton mCopyButton;
         TextButton mPasteButton;
+
+
+        RadioButtonSet *mCursorModeSet;
+        
+        ValueSlider mCursorScaleSlider;
 
     };

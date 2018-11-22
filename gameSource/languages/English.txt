@@ -41,6 +41,8 @@ atSignTip "INSERT '@' SIGN (INTL KEYBOARDS)"
 
 loginButton "LOGIN"
 friendsButton "FRIENDS"
+familyTrees "FAMILY TREES"
+
 clearAccount "CLEAR ACCOUNT"
 settingsButton "SETTINGS"
 postReviewButton "POST REVIEW"
@@ -113,6 +115,16 @@ vsyncOn "USING VSYNC:"
 vsyncYes "YES"
 vsyncNo "NO"
 redetectButton "RE-DETECT"
+
+
+cursor "MOUSE POINTER:"
+
+system "NATIVE"
+drawn "DRAWN"
+both "BOTH"
+
+scale "SCALE:"
+
 
 useCustomServer "USE CUSTOM SERVER:"
 address "ADDRESS:"

@@ -1361,6 +1361,9 @@ int getMapObjectRaw( int inX, int inY );
 int *getContainedRaw( int inX, int inY, int *outNumContained, 
                       int inSubCont = 0 );
 
+void setMapObjectRaw( int inX, int inY, int inID );
+
+
 
 
 void writeRecentPlacements() {
@@ -1863,10 +1866,18 @@ char getIsCategory( int inID ) {
 
 
 
+// for large inserts, like tutorial map loads, we don't want to 
+// track individual map changes.
+static char skipTrackingMapChanges = false;
+
+
+
 // returns num set after
 int cleanMap() {
     AppLog::info( "\nCleaning map of objects that have been removed..." );
-
+    
+    skipTrackingMapChanges = true;
+    
     DB_Iterator dbi;
     
     
@@ -1960,6 +1971,9 @@ int cleanMap() {
             SimpleVector< SimpleVector<int> > newSubCont;
             SimpleVector< SimpleVector<timeSec_t> > newSubContDecay;
             
+            char anyRemoved = false;
+            
+
             for( int c=0; c<numCont; c++ ) {
                 
                 SimpleVector<int> subCont;
@@ -1994,6 +2008,9 @@ int cleanMap() {
                                 subCont.push_back( contSub[s] );
                                 subContDecay.push_back( decaySub[s] );
                                 }
+                            else {
+                                anyRemoved = true;
+                                }
                             }
                         
                         if( contSub != NULL ) {
@@ -2013,11 +2030,17 @@ int cleanMap() {
                         newCont.push_back( cont[c] );
                         newDecay.push_back( decay[c] );
                         }
+                    else {
+                        anyRemoved = true;
+                        }
                     }
 
                 if( thisKept ) {        
                     newSubCont.push_back( subCont );
                     newSubContDecay.push_back( subContDecay );
+                    }
+                else {
+                    anyRemoved = true;
                     }
                 }
             
@@ -2026,41 +2049,44 @@ int cleanMap() {
             delete [] cont;
             delete [] decay;
             
-            numContainedCleared +=
-                ( numCont - newCont.size() );
-
-            int *newContArray = newCont.getElementArray();
-            timeSec_t *newDecayArray = newDecay.getElementArray();
-            
-            setContained( x, y, newCont.size(), newContArray );
-            setContainedEtaDecay( x, y, newDecay.size(), newDecayArray );
-            
-            for( int c=0; c<newCont.size(); c++ ) {
-                int numSub =
-                    newSubCont.getElementDirect( c ).size();
+            if( anyRemoved ) {
                 
-                if( numSub > 0 ) {
-                    int *newSubArray = 
-                        newSubCont.getElementDirect( c ).getElementArray();
-                    timeSec_t *newSubDecayArray = 
-                        newSubContDecay.getElementDirect( c ).getElementArray();
-                    
-                    setContained( x, y, numSub, newSubArray, c + 1 );
-
-                    setContainedEtaDecay( x, y, numSub, newSubDecayArray,
-                                          c + 1 );
-                    
-                    delete [] newSubArray;
-                    delete [] newSubDecayArray;
-                    }
-                else {
-                    clearAllContained( x, y, c + 1 );
-                    }
-                }
+                numContainedCleared +=
+                    ( numCont - newCont.size() );
+                
+                int *newContArray = newCont.getElementArray();
+                timeSec_t *newDecayArray = newDecay.getElementArray();
             
+                setContained( x, y, newCont.size(), newContArray );
+                setContainedEtaDecay( x, y, newDecay.size(), newDecayArray );
+            
+                for( int c=0; c<newCont.size(); c++ ) {
+                    int numSub =
+                        newSubCont.getElementDirect( c ).size();
+                
+                    if( numSub > 0 ) {
+                        int *newSubArray = 
+                            newSubCont.getElementDirect( c ).getElementArray();
+                        timeSec_t *newSubDecayArray = 
+                            newSubContDecay.
+                            getElementDirect( c ).getElementArray();
+                    
+                        setContained( x, y, numSub, newSubArray, c + 1 );
 
-            delete [] newContArray;
-            delete [] newDecayArray;
+                        setContainedEtaDecay( x, y, numSub, newSubDecayArray,
+                                              c + 1 );
+                    
+                        delete [] newSubArray;
+                        delete [] newSubDecayArray;
+                        }
+                    else {
+                        clearAllContained( x, y, c + 1 );
+                        }
+                    }
+
+                delete [] newContArray;
+                delete [] newDecayArray;
+                }
             }
         }
     
@@ -2074,15 +2100,15 @@ int cleanMap() {
                    totalDBRecordCount, DB_maxStack );
     
     printf( "\n" );
+
+    skipTrackingMapChanges = false;
+
     return totalSetCount;
     }
 
 
 
 
-// for large inserts, like tutorial map loads, we don't want to 
-// track individual map changes.
-static char skipTrackingMapChanges = false;
 
 
 
@@ -2879,6 +2905,8 @@ char initMap() {
         AppLog::info( "Found mapDummyRecall.txt file, restoring dummy objects "
                       "on map" );
         
+        skipTrackingMapChanges = true;
+        
         int numRead = 5;
         
         int numSet = 0;
@@ -2908,11 +2936,13 @@ char initMap() {
                         }
                     }
                 if( dummyID > 0 ) {
-                    setMapObject( x, y, dummyID );
-                    numSet = true;
+                    setMapObjectRaw( x, y, dummyID );
+                    numSet++;
                     }
                 }
             }
+        skipTrackingMapChanges = false;
+        
         fclose( dummyFile );
         
         
@@ -3055,6 +3085,7 @@ static void rememberDummy( FILE *inFile, int inX, int inY,
 void freeMap() {
     printf( "%d calls to getBaseMap\n", getBaseMapCallCount );
 
+    skipTrackingMapChanges = true;
     
     if( lookTimeDBOpen ) {
         DB_close( &lookTimeDB );
@@ -3165,7 +3196,7 @@ void freeMap() {
             int x = xToPlace.getElementDirect( i );
             int y = yToPlace.getElementDirect( i );
             
-            setMapObject( x, y, idToPlace.getElementDirect( i ) );
+            setMapObjectRaw( x, y, idToPlace.getElementDirect( i ) );
             }
 
         
@@ -3180,6 +3211,8 @@ void freeMap() {
 
                 int numCont;
                 int *cont = getContainedRaw( x, y, &numCont, b );
+                
+                char anyChanged = false;
 
                 for( int c=0; c<numCont; c++ ) {
 
@@ -3195,10 +3228,12 @@ void freeMap() {
                     if( contObj != NULL ) {
                         if( contObj->isUseDummy ) {
                             cont[c] = contObj->useDummyParent;
+                            anyChanged = true;
                             numContChanged ++;
                             }
                         else if( contObj->isVariableDummy ) {
                             cont[c] = contObj->variableDummyParent;
+                            anyChanged = true;
                             numContChanged ++;
                             }
                         }
@@ -3208,7 +3243,10 @@ void freeMap() {
                         }
                     }
                 
-                setContained( x, y, numCont, cont, b );
+                if( anyChanged ) {
+                    setContained( x, y, numCont, cont, b );
+                    }
+                
                 delete [] cont;
                 }
             }
@@ -3289,6 +3327,8 @@ void freeMap() {
     liveMovements.clear();
     
     mapChangePosSinceLastStep.deleteAll();
+    
+    skipTrackingMapChanges = false;
     }
 
 
@@ -5157,11 +5197,14 @@ char isMapSpotBlocking( int inX, int inY ) {
 
 
 
+void setMapObjectRaw( int inX, int inY, int inID ) {
+    dbPut( inX, inY, 0, inID );
+    }
 
 
 
 void setMapObject( int inX, int inY, int inID ) {
-    dbPut( inX, inY, 0, inID );
+    setMapObjectRaw( inX, inY, inID );
 
 
     // actually need to set decay here

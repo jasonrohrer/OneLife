@@ -44,8 +44,30 @@ SettingsPage::SettingsPage()
                                   translate( "port" ),
                                   "0123456789", NULL ),
           mCopyButton( mainFont, 381, -216, translate( "copy" ) ),
-          mPasteButton( mainFont, 518, -216, translate( "paste" ) ) {
+          mPasteButton( mainFont, 518, -216, translate( "paste" ) ),
+          mCursorScaleSlider( mainFont, 297, 155, 4, 200, 30,
+                                       1.0, 10.0, 
+                                       translate( "scale" ) ) {
+                            
+
     
+    const char *choiceList[3] = { translate( "system" ),
+                                  translate( "drawn" ),
+                                  translate( "both" ) };
+    
+    mCursorModeSet = 
+        new RadioButtonSet( mainFont, 561, 275,
+                            3, choiceList,
+                            false, 4 );
+    addComponent( mCursorModeSet );
+    mCursorModeSet->addActionListener( this );
+
+    addComponent( &mCursorScaleSlider );
+    mCursorScaleSlider.addActionListener( this );
+
+    mCursorScaleSlider.toggleField( false );
+
+
     setButtonStyle( &mBackButton );
     setButtonStyle( &mEditAccountButton );
     setButtonStyle( &mRestartButton );
@@ -119,6 +141,8 @@ SettingsPage::SettingsPage()
 
 SettingsPage::~SettingsPage() {
     clearSoundUsage( &mTestSound );
+
+    delete mCursorModeSet;
     }
 
 
@@ -282,6 +306,18 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
             }
         delete [] trimmed;
         }
+    else if( inTarget == mCursorModeSet ) {
+        setCursorMode( mCursorModeSet->getSelectedItem() );
+        
+        int mode = getCursorMode();
+        
+        mCursorScaleSlider.setVisible( mode > 0 );
+        
+        mCursorScaleSlider.setValue( getEmulatedCursorScale() );
+        }
+    else if( inTarget == &mCursorScaleSlider ) {
+        setEmulatedCursorScale( mCursorScaleSlider.getValue() );
+        }
     
     
     }
@@ -357,6 +393,23 @@ void SettingsPage::draw( doublePair inViewCenter,
     mainFont->drawString( translate( "targetFPS" ), pos, alignRight );
     pos.y += 44;
     mainFont->drawString( translate( "currentFPS" ), pos, alignRight );
+
+
+    pos = mCursorModeSet->getPosition();
+    
+    pos.y += 37;
+    mainFont->drawString( translate( "cursor"), pos, alignRight );
+    
+    if( mCursorScaleSlider.isVisible() ) {
+        
+        pos = mCursorScaleSlider.getPosition();
+        
+        pos.x += 72;
+        pos.y -= 2;
+        
+        mainFont->drawString( translate( "scale"), pos, alignRight );
+        }
+    
     }
 
 
@@ -374,6 +427,15 @@ void SettingsPage::step() {
 
 void SettingsPage::makeActive( char inFresh ) {
     if( inFresh ) {        
+
+        int mode = getCursorMode();
+        
+        mCursorModeSet->setSelectedItem( mode );
+        
+        mCursorScaleSlider.setVisible( mode > 0 );
+        
+        mCursorScaleSlider.setValue( getEmulatedCursorScale() );
+
 
         int useCustomServer = 
             SettingsManager::getIntSetting( "useCustomServer", 0 );
