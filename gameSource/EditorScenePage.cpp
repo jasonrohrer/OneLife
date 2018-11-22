@@ -105,7 +105,7 @@ EditorScenePage::EditorScenePage()
           mPersonMoveDelayField( smallFont, 200, -290, 4,
                                false, "Move Delay Sec",
                                "0123456789." ),
-          mPersonEmotField( smallFont, 400, -290, 10,
+          mPersonEmotField( smallFont, 360, -290, 7,
                                true, "Emot",
                                "/ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" ),
           mCellDestSprite( loadSprite( "centerMark.tga" ) ),
@@ -1836,7 +1836,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     delete [] posStringY;
 
     if( c->oID > 0 ) {
-        doublePair pos = { -500, -290 };
+        doublePair pos = { -400, -290 };
         
         char *s = autoSprintf( "oID=%d  %s", c->oID,
                                getObject( c->oID )->description );
