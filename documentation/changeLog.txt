@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 169     ???
+Version 172     2018-November-22
 
 --Client version checking logic fixed to handle case where server binary
   version is behind our binary version, but ahead of our data version number.
@@ -16,6 +16,7 @@ Version 169     ???
 
 --FAMILY TREE button on Menu screen that launches a browser to show your
   personal recent lives.
+
 
 
 
