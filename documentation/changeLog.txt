@@ -13,6 +13,13 @@ Version 173     ???
 
 
 
+Server Fixes
+
+--Shrank next Eve jump to 250, down from 500.  Smaller Eve spiral, more likely
+  to be interaction between villages.
+
+
+
 
 Version 172     2018-November-22
 
