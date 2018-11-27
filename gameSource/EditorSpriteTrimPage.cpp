@@ -41,7 +41,9 @@ EditorSpriteTrimPage::EditorSpriteTrimPage()
           mPickedSprite( -1 ),
           mPickingRect( false ),
           mFreehandSelection( NULL ),
-          mFreehandSelectionSprite( NULL ) {
+          mFreehandSelectionSprite( NULL ),
+          mCursorOffsetX( 0 ),
+          mCursorOffsetY( 0 ) {
 
     addComponent( &mImportEditorButton );
     mImportEditorButton.addActionListener( this );
@@ -68,6 +70,8 @@ EditorSpriteTrimPage::EditorSpriteTrimPage()
     mClearRectButton.setVisible( false );
     
     mBrushSizeSlider.setVisible( false );
+
+    mBrushSizeSlider.addActionListener( this );
     }
 
 
@@ -681,6 +685,11 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
         
         resetSelection();
         }
+    else if( inTarget == &mBrushSizeSlider ) {
+        // don't leave lingering focus in field, because
+        // it blocks cursor movement for making selection
+        TextField::unfocusAll();
+        }
     }
 
 
@@ -963,8 +972,10 @@ void EditorSpriteTrimPage::drawUnderComponents( doublePair inViewCenter,
                     int rA = floor( diam / 2 );
                     int rB = ceil( diam / 2 );
 
-                    drawRect( lastMouseX - rA, lastMouseY + rA,
-                              lastMouseX + rB, lastMouseY - rB );
+                    drawRect( lastMouseX + mCursorOffsetX - rA, 
+                              lastMouseY + mCursorOffsetY + rA,
+                              lastMouseX + mCursorOffsetX + rB, 
+                              lastMouseY + mCursorOffsetY - rB );
                     }
                 
 
@@ -976,7 +987,8 @@ void EditorSpriteTrimPage::drawUnderComponents( doublePair inViewCenter,
                 }
 
             
-            doublePair zoomPos = { lastMouseX, lastMouseY };
+            doublePair zoomPos = { lastMouseX + mCursorOffsetX, 
+                                   lastMouseY + mCursorOffsetY };
             doublePair drawPos = { -500, -290 };
 
             drawZoomView( zoomPos, 16, 4, drawPos );
@@ -1075,6 +1087,8 @@ void EditorSpriteTrimPage::addPointToSelection( int inX, int inY,
 void EditorSpriteTrimPage::pointerMove( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
+    mCursorOffsetX = 0;
+    mCursorOffsetY = 0;
     }
 
 
@@ -1082,6 +1096,8 @@ void EditorSpriteTrimPage::pointerMove( float inX, float inY ) {
 void EditorSpriteTrimPage::pointerDown( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
+    mCursorOffsetX = 0;
+    mCursorOffsetY = 0;
     
     int x = lrint( inX );
     int y = lrint( inY );
@@ -1111,6 +1127,8 @@ void EditorSpriteTrimPage::pointerDown( float inX, float inY ) {
 void EditorSpriteTrimPage::pointerDrag( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
+    mCursorOffsetX = 0;
+    mCursorOffsetY = 0;
     
     int x = lrint( inX );
     int y = lrint( inY );
@@ -1134,7 +1152,9 @@ void EditorSpriteTrimPage::pointerDrag( float inX, float inY ) {
 void EditorSpriteTrimPage::pointerUp( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
-    
+    mCursorOffsetX = 0;
+    mCursorOffsetY = 0;
+
     if( mPickingRect ) {
     
         int x = lrint( inX );
@@ -1170,3 +1190,66 @@ void EditorSpriteTrimPage::pointerUp( float inX, float inY ) {
     mPickingRect = false;
     }
 
+
+
+void EditorSpriteTrimPage::keyDown( unsigned char inASCII ) {
+    if( TextField::isAnyFocused() ) {
+        return;
+        }
+
+    if( mFreehandSplitMode ) {
+        
+        if( inASCII == 13 ) {
+            // enter
+            
+            addPointToSelection( lastMouseX + mCursorOffsetX,
+                                 lastMouseY + mCursorOffsetY,
+                                 1.0 );
+            }
+        else if( inASCII == 8 ) {
+            // backspace
+            addPointToSelection( lastMouseX + mCursorOffsetX,
+                                 lastMouseY + mCursorOffsetY,
+                                 0 );
+            }
+        }
+    }
+
+
+
+void EditorSpriteTrimPage::specialKeyDown( int inKeyCode ) {
+    if( TextField::isAnyFocused() ) {
+        return;
+        }
+
+    int offset = 1;
+    
+    if( isCommandKeyDown() ) {
+        offset = 2;
+        }
+    if( isShiftKeyDown() ) {
+        offset = 4;
+        }
+    if( isCommandKeyDown() && isShiftKeyDown() ) {
+        offset = 9;
+        }
+
+
+    if( mFreehandSplitMode ) {
+        
+        switch( inKeyCode ) {
+            case MG_KEY_LEFT:
+                mCursorOffsetX -= offset;
+                break;
+            case MG_KEY_RIGHT:
+                mCursorOffsetX += offset;
+                break;
+            case MG_KEY_DOWN:
+                mCursorOffsetY -= offset;
+                break;
+            case MG_KEY_UP:
+                mCursorOffsetY += offset;
+                break;
+            }
+        }    
+    }

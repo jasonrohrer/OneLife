@@ -53,6 +53,10 @@ class EditorSpriteTrimPage : public GamePage, public ActionListener {
         virtual void pointerDrag( float inX, float inY );
         virtual void pointerUp( float inX, float inY );
 
+        virtual void keyDown( unsigned char inASCII );
+        
+        virtual void specialKeyDown( int inKeyCode );
+        
 
     protected:
         
@@ -94,7 +98,9 @@ class EditorSpriteTrimPage : public GamePage, public ActionListener {
         Image *mFreehandSelection;
         SpriteHandle mFreehandSelectionSprite;
         
-
+        int mCursorOffsetX, mCursorOffsetY;
+        
+        
         void resetSelection();
 
         void addPointToSelection( int inX, int inY, double inVal );
