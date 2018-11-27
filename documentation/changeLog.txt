@@ -13,6 +13,13 @@ Version 173     ???
 
 --SpriteTrim editor now supports freehand trim.
 
+--Huge improvement to mouse interface:  when clicking a non-permanent object
+  (that can be picked up), where a bare-hand action also applies, left/right
+  buttons now differentiate.  Left to pick up, and right to execute the
+  bare-hand action.  This allows single-object stacks (like tortillas, sliced
+  bread, plates) to be be picked up (left click) or have the top item removed
+  (right click). Fixes jasonrohrer/OneLifeData7#53
+
 
 
 Server Fixes

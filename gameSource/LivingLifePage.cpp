@@ -18000,6 +18000,29 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 // allow right click and default to USE if nothing
                 // else applies
                 action = "USE";
+
+                // check for case where both bare-hand transition
+                // AND pickup applies
+                // use mod-click to differentiate between two possibilities
+                if( ourLiveObject->holdingID == 0 &&
+                    getNumContainerSlots( destID ) == 0 &&
+                    ! getObject( destID )->permanent ) {
+                    
+                    TransRecord *bareHandTrans = getTrans( 0, destID );
+                    
+                    if( bareHandTrans != NULL ) {
+                        if( modClick ) {
+                            action = "USE";
+                            }
+                        else {
+                            action = "REMV";
+
+                             delete [] extra;
+                             extra = stringDuplicate( " 0" );
+                            }
+                        }
+                    }
+
                 send = true;
                 }
             
