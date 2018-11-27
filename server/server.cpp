@@ -5975,17 +5975,23 @@ void apocalypseStep() {
         if( apocalypseRequest == NULL &&
             curTime - lastRemoteApocalypseCheckTime > 
             remoteApocalypseCheckInterval ) {
-            printf( "Checking for remote apocalypse\n" );
-            
+
             lastRemoteApocalypseCheckTime = curTime;
+
+            // don't actually send request to reflector if apocalypse
+            // not possible locally
+            if( SettingsManager::getIntSetting( "apocalypsePossible", 0 ) ) {
+
+                printf( "Checking for remote apocalypse\n" );
             
-            char *url = autoSprintf( "%s?action=check_apocalypse", 
-                                     reflectorURL );
+                char *url = autoSprintf( "%s?action=check_apocalypse", 
+                                         reflectorURL );
         
-            apocalypseRequest =
-                new WebRequest( "GET", url, NULL );
+                apocalypseRequest =
+                    new WebRequest( "GET", url, NULL );
             
-            delete [] url;
+                delete [] url;
+                }
             }
         else if( apocalypseRequest != NULL ) {
             int result = apocalypseRequest->step();

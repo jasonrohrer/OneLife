@@ -27,6 +27,9 @@ Server Fixes
 --Shrank next Eve jump to 250, down from 500.  Smaller Eve spiral, more likely
   to be interaction between villages.
 
+--Server skips sending apocalypse check to reflector if apocalypse disabled
+  locally.
+
 
 
 
