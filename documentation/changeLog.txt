@@ -11,6 +11,8 @@ Version 173     ???
   so move timing is perfect even when running slower (like when outputting
   frames).
 
+--SpriteTrim editor now supports freehand trim.
+
 
 
 Server Fixes

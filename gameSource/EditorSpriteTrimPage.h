@@ -10,6 +10,9 @@
 #include "Picker.h"
 #include "TextButton.h"
 
+#include "ValueSlider.h"
+
+
 
 typedef struct PickedRect {
         int xStart;
@@ -71,6 +74,13 @@ class EditorSpriteTrimPage : public GamePage, public ActionListener {
 
         TextButton mClearRectButton;
 
+        TextButton mFreehandSplitButton;
+
+        ValueSlider mBrushSizeSlider;
+        
+        char mFreehandSplitMode;
+
+
         Picker mSpritePicker;
         
         int mPickedSprite;
@@ -80,6 +90,14 @@ class EditorSpriteTrimPage : public GamePage, public ActionListener {
         
         int mPickStartX, mPickStartY;
         int mPickEndX, mPickEndY;
+
+        Image *mFreehandSelection;
+        SpriteHandle mFreehandSelectionSprite;
+        
+
+        void resetSelection();
+
+        void addPointToSelection( int inX, int inY, double inVal );
         
     };
 
