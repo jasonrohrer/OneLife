@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 173     ???
+Version 174     2018-November-29
 
 --Fixed overlaps in UI of scene editor.
 
