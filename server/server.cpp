@@ -7647,6 +7647,17 @@ int main() {
                 if( !riding &&
                     curOverObj->permanent && curOverObj->deadlyDistance > 0 ) {
                     
+                    char wasSick = false;
+                                        
+                    if( nextPlayer->holdingID > 0 &&
+                        strstr(
+                            getObject( nextPlayer->holdingID )->
+                            description,
+                            "sick" ) != NULL ) {
+                        wasSick = true;
+                        }
+
+
                     addDeadlyMapSpot( curPos );
                     
                     setDeathReason( nextPlayer, 
@@ -7662,7 +7673,10 @@ int main() {
                     nextPlayer->errorCauseString =
                         "Player killed by permanent object";
                     
-                    if( ! nextPlayer->dying ) {
+                    if( ! nextPlayer->dying || wasSick ) {
+                        // if was sick, they had a long stagger
+                        // time set, so cutting it in half makes no sense
+                        
                         int staggerTime = 
                             SettingsManager::getIntSetting(
                                 "deathStaggerTime", 20 );
@@ -7705,7 +7719,11 @@ int main() {
                         setMapObject( curPos.x, curPos.y, r->newActor );
 
                         // new target specifies wound
-                        if( r->newTarget > 0 ) {
+                        // but never replace an existing wound
+                        // death time is shortened above
+                        // however, wounds can replace sickness 
+                        if( r->newTarget > 0 &&
+                            ( ! nextPlayer->holdingWound || wasSick ) ) {
                             // don't drop their wound
                             if( nextPlayer->holdingID != 0 &&
                                 ! nextPlayer->holdingWound ) {
