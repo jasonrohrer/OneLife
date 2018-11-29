@@ -20,6 +20,9 @@ Version 173     ???
   bread, plates) to be be picked up (left click) or have the top item removed
   (right click). Fixes jasonrohrer/OneLifeData7#53
 
+--Fixed edge case of sprite subset detection when zero layers don't match
+  (fixes shaft creation sound playing when two long shafts are pulled apart).
+
 
 
 Server Fixes

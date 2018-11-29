@@ -4716,19 +4716,33 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID ) {
     // allow global position adjustments, as long as all sub-sprites in same
     // relative position to each other
     
-    int spriteSubSeroID = subO->sprites[0];
-    doublePair spriteSubZeroPos = subO->spritePos[0];
+    int spriteSubZeroID = subO->sprites[0];
+    doublePair spriteSubZeroPos = subO->spritePos[0];    
+    double spriteSubZeroRot = subO->spriteRot[0];
+    char spriteSubZeroFlip = subO->spriteHFlip[0];
 
     doublePair spriteSuperZeroPos;
     
-    // find zero sprite in super
-
+    // find sub's zero sprite in super
+    // if there is more than one matching, find one that is closest
+    // to pos of sub's zero sprite
     char found = false;
+    double minDist = 9999999;
+
     for( int ss=0; ss<superO->numSprites; ss++ ) {
-        if( superO->sprites[ ss ] == spriteSubSeroID ) {
+        if( superO->sprites[ ss ] == spriteSubZeroID &&
+            superO->spriteRot[ ss ] == spriteSubZeroRot &&
+            superO->spriteHFlip[ ss ] == spriteSubZeroFlip ) {
+            
             found = true;
-            spriteSuperZeroPos = superO->spritePos[ ss ];
-            break;
+            doublePair pos = superO->spritePos[ ss ];
+
+            double d = distance( pos, spriteSubZeroPos );
+            
+            if( d < minDist ) {
+                minDist = d;
+                spriteSuperZeroPos = pos;
+                }
             }
         }
     
