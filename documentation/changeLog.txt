@@ -15,6 +15,13 @@ Version 177     ???
   detected in the network layer, but this can take a long time.  We still need
   to deal with 'soft breaks' in a sensible way.
 
+--Improved a bunch of little rough edges in the tutorial.  The camera-freezing
+  section is now much more clear and fool-proof.  There are multiple warnings
+  about the last optional area NOT helping you to pass the tutorial (at least
+  two recent Steam reviewers got stuck trying to forge an axe, thinking that
+  was required).
+
+
 
 
 Server Fixes
