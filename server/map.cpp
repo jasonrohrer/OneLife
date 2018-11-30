@@ -1917,13 +1917,18 @@ int cleanMap() {
                 
                 ObjectRecord *o = getObject( id );
                 
-                if( o == NULL || getIsCategory( id ) ) {
+                if( o == NULL || getIsCategory( id ) 
+                    || o->description[0] == '@' ) {
                     // id doesn't exist anymore
                     
                     // OR it's a non-pattern category
                     // those should never exist in map
                     // may be left over from a non-clean shutdown
                     
+                    // OR object is flagged with @
+                    // this may be a pattern category that is actually
+                    // a place-holder
+
                     numClearedCount++;
                     
                     int x = valueToInt( key );
@@ -2889,14 +2894,6 @@ char initMap() {
 
 
 
-    int totalSetCount = 1;
-
-    if( ! skipRemovedObjectCleanup ) {
-        cleanMap();
-        }
-    else {
-        AppLog::info( "Skipping cleaning map of removed objects" );
-        }
 
     
     FILE *dummyFile = fopen( "mapDummyRecall.txt", "r" );
@@ -2951,6 +2948,18 @@ char initMap() {
         remove( "mapDummyRecall.txt" );
         
         printf( "\n" );
+        }
+
+
+
+    // clean map after restoring dummy objects
+    int totalSetCount = 1;
+
+    if( ! skipRemovedObjectCleanup ) {
+        totalSetCount = cleanMap();
+        }
+    else {
+        AppLog::info( "Skipping cleaning map of removed objects" );
         }
     
 
