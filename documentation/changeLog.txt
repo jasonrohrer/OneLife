@@ -21,6 +21,9 @@ Version 177     ???
   two recent Steam reviewers got stuck trying to forge an axe, thinking that
   was required).
 
+--Finally fixed glitch that causes other player's head to be behind the object
+  in the tile to the north of them (move truncation bug).
+ 
 
 
 

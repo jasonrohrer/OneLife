@@ -11810,6 +11810,10 @@ void LivingLifePage::step() {
                                         else {
                                             existing->currentPathStep = p;
                                             }
+                                        
+                                        // set new truncated dest
+                                        existing->xd = o.xd;
+                                        existing->yd = o.yd;
                                         break;
                                         }
                                     }
