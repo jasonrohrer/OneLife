@@ -32,6 +32,9 @@ Server Fixes
 --Server now clears any objects with names that start with @ at startup
   (hotfix for wayward pile category objects in map).
 
+--Fixed so that items contained in baby clothing aren't lost when baby /DIEs.
+  Fixes #141
+
 
 
 
