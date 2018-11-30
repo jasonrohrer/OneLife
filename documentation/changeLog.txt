@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Server now clears any objects with names that start with @ at startup
+  (hotfix for wayward pile category objects in map).
+
+
+
+
 Version 174     2018-November-29
 
 --Fixed overlaps in UI of scene editor.
