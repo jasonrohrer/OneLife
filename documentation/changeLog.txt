@@ -3,10 +3,38 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 173     ???
+Version 174     2018-November-29
 
 --Fixed overlaps in UI of scene editor.
 
+--Scene editor move timing now based on frame count instead of wall-clock time,
+  so move timing is perfect even when running slower (like when outputting
+  frames).
+
+--SpriteTrim editor now supports freehand trim.
+
+--Huge improvement to mouse interface:  when clicking a non-permanent object
+  (that can be picked up), where a bare-hand action also applies, left/right
+  buttons now differentiate.  Left to pick up, and right to execute the
+  bare-hand action.  This allows single-object stacks (like tortillas, sliced
+  bread, plates) to be be picked up (left click) or have the top item removed
+  (right click). Fixes jasonrohrer/OneLifeData7#53
+
+--Fixed edge case of sprite subset detection when zero layers don't match
+  (fixes shaft creation sound playing when two long shafts are pulled apart).
+
+
+
+Server Fixes
+
+--Shrank next Eve jump to 250, down from 500.  Smaller Eve spiral, more likely
+  to be interaction between villages.
+
+--Server skips sending apocalypse check to reflector if apocalypse disabled
+  locally.
+
+--Fixed so that yellow fever doesn't heal wounds (nor does one kind of animal
+  wound replace another).  Fixes #142.
 
 
 

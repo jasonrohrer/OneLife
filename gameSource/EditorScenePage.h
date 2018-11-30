@@ -69,6 +69,9 @@ typedef struct SceneCell {
         double moveDelayTime;
         
         double moveStartTime;
+        
+        int frameCount;
+        
 
         int graveID;
         

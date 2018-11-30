@@ -891,6 +891,8 @@ void EditorScenePage::checkVisible() {
 static void stepMovingCell( SceneCell *inC ) {
     SceneCell *c = inC;
     
+    c->frameCount++;
+
     if( c->oID <= 0 ) {
         return;
         }
@@ -900,7 +902,7 @@ static void stepMovingCell( SceneCell *inC ) {
         }
 
     if( c->moveDelayTime > 0 ) {
-        if( c->moveStartTime + c->moveDelayTime > Time::getCurrentTime() ) {
+        if( c->moveDelayTime * 60 / frameRateFactor > c->frameCount ) {
             return;
             }
         }
@@ -942,6 +944,7 @@ static void stepMovingCell( SceneCell *inC ) {
     
     if( wrap ) {
         c->moveStartTime = Time::getCurrentTime();
+        c->frameCount = 0;
         }
 
     c->moveOffset.x = c->destCellXOffset * c->moveFractionDone * CELL_D;
@@ -961,6 +964,7 @@ static void restartCell( SceneCell *inC ) {
         c->moveOffset.x = 0;
         c->moveOffset.y = 0;
         c->moveStartTime = Time::getCurrentTime();
+        c->frameCount = 0;
         }
     }
 
