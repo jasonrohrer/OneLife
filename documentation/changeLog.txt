@@ -3,6 +3,20 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 177     ???
+
+--Better client behavior in case of real, 2-way connection break with server.
+  If we haven't heard anything from server for 10+ seconds, and our action has
+  been pending for 5+ seconds (bouncing), then declare connection broken.  Old
+  behavior caused it to wait until receiving some kind of message from server
+  before attempting PING/PONG, so it would wait forever if connection was truly
+  broken.  Note that a truly, truly broken connection would eventually be
+  detected in the network layer, but this can take a long time.  We still need
+  to deal with 'soft breaks' in a sensible way.
+
+
+
 Server Fixes
 
 --Server now clears any objects with names that start with @ at startup
