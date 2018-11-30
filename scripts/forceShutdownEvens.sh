@@ -11,7 +11,7 @@ do
 	if [ $((i % 2)) -eq 0 ];
 	then
 		echo "  Force Shutting down $server"
-		ssh -n $user@$server 'echo 1 > ~/checkout/OneLife/server/settings/forceShutdownMode.ini; sleep 3; echo 0 > ~/checkout/OneLife/server/settings/forceShutdownMode.ini'
+		ssh -n $user@$server 'echo 1 > ~/checkout/OneLife/server/settings/forceShutdownMode.ini; sleep 3; echo -n 0 > ~/checkout/OneLife/server/settings/forceShutdownMode.ini'
 	fi
 	i=$((i + 1))
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
