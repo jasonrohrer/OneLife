@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 177     ???
+Version 177     2018-November-30
 
 --Better client behavior in case of real, 2-way connection break with server.
   If we haven't heard anything from server for 10+ seconds, and our action has
