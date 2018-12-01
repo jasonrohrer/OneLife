@@ -3,10 +3,37 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 177     2018-November-30
+
+--Better client behavior in case of real, 2-way connection break with server.
+  If we haven't heard anything from server for 10+ seconds, and our action has
+  been pending for 5+ seconds (bouncing), then declare connection broken.  Old
+  behavior caused it to wait until receiving some kind of message from server
+  before attempting PING/PONG, so it would wait forever if connection was truly
+  broken.  Note that a truly, truly broken connection would eventually be
+  detected in the network layer, but this can take a long time.  We still need
+  to deal with 'soft breaks' in a sensible way.
+
+--Improved a bunch of little rough edges in the tutorial.  The camera-freezing
+  section is now much more clear and fool-proof.  There are multiple warnings
+  about the last optional area NOT helping you to pass the tutorial (at least
+  two recent Steam reviewers got stuck trying to forge an axe, thinking that
+  was required).
+
+--Finally fixed glitch that causes other player's head to be behind the object
+  in the tile to the north of them (move truncation bug).
+ 
+
+
+
 Server Fixes
 
 --Server now clears any objects with names that start with @ at startup
   (hotfix for wayward pile category objects in map).
+
+--Fixed so that items contained in baby clothing aren't lost when baby /DIEs.
+  Fixes #141
 
 
 

@@ -9807,6 +9807,30 @@ void LivingLifePage::step() {
         sendToServerSocket( pingMessage );
         delete [] pingMessage;
         }
+    else if( playerActionPending &&
+             ourObject != NULL &&
+             curTime - ourObject->pendingActionAnimationStartTime > 5 &&
+             curTime - lastServerMessageReceiveTime > 10 &&
+             ! waitingForPong ) {
+        // we're waiting for a response from the server, and
+        // we haven't heard ANYTHING from the server in a long time
+        // a full, two-way network connection break
+        printf( "Been waiting for response to our action request "
+                "from server for %.2f seconds, and last server message "
+                "received %.2f sec ago.  Declaring connection broken.\n",
+                curTime - ourObject->pendingActionAnimationStartTime,
+                curTime - lastServerMessageReceiveTime );
+
+        closeSocket( mServerSocket );
+        mServerSocket = -1;
+        
+        if( mDeathReason != NULL ) {
+            delete [] mDeathReason;
+            }
+        mDeathReason = stringDuplicate( translate( "reasonDisconnected" ) );
+            
+        handleOurDeath( true );
+        }
     
 
     // after 10 seconds of waiting, if we HAVE received our PONG back
@@ -11913,6 +11937,10 @@ void LivingLifePage::step() {
                                         else {
                                             existing->currentPathStep = p;
                                             }
+                                        
+                                        // set new truncated dest
+                                        existing->xd = o.xd;
+                                        existing->yd = o.yd;
                                         break;
                                         }
                                     }

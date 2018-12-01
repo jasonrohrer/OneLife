@@ -8084,6 +8084,34 @@ int main() {
                                             // put clothing in parent's hand
                                             // and then drop
                                             parent->holdingID = cObj->id;
+                                            if( nextPlayer->
+                                                clothingContained[c].
+                                                size() > 0 ) {
+                                                
+                                                parent->numContained =
+                                                    nextPlayer->
+                                                    clothingContained[c].
+                                                    size();
+                                                
+                                                parent->containedIDs =
+                                                    nextPlayer->
+                                                    clothingContained[c].
+                                                    getElementArray();
+                                                parent->containedEtaDecays =
+                                                    nextPlayer->
+                                                    clothingContainedEtaDecays
+                                                    [c].
+                                                    getElementArray();
+                                                
+                                                parent->subContainedIDs
+                                                    = new 
+                                                    SimpleVector<int>[
+                                                    parent->numContained ];
+                                                parent->subContainedEtaDecays
+                                                    = new 
+                                                    SimpleVector<timeSec_t>[
+                                                    parent->numContained ];
+                                                }
                                             
                                             handleDrop( 
                                                 parentPos.x, parentPos.y, 
