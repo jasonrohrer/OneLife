@@ -1546,6 +1546,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
     ObjectRecord *obj = getObject( inObjectID );
     
+    if( obj->noFlip ) {
+        inFlipH = false;
+        }
+
     if( obj->numSprites > MAX_WORKING_SPRITES ) {
         // cannot animate objects with this many sprites
         

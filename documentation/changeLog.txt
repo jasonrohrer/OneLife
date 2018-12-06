@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 180     ???
+
+--noFlip object property now affects object drawing deeply, even when object is
+  contained in a flipped container.
+
+
+
 Version 177     2018-November-30
 
 --Better client behavior in case of real, 2-way connection break with server.

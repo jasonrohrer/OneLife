@@ -2810,6 +2810,10 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                        ClothingSet inClothing,
                        double inScale ) {
     
+    if( inObject->noFlip ) {
+        inFlipH = false;
+        }
+
     HoldingPos returnHoldingPos = { false, {0, 0}, 0 };
     
     SimpleVector <int> frontArmIndices;
