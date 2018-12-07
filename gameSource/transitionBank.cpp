@@ -1808,7 +1808,7 @@ static TransRecord chanceRecords[NUM_CHANCE_RECORDS];
 static int randSeed = 124567;
 
 #include "minorGems/util/random/CustomRandomSource.h"
-static CustomRandomSource randSource( randSeed );
+static CustomRandomSource randSource();
 
 
 TransRecord *getPTrans( int inActor, int inTarget, 
