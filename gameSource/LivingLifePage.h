@@ -174,6 +174,11 @@ typedef struct LiveObject {
         // stacks of items contained in each piece of clothing
         SimpleVector<int> clothingContained[ NUM_CLOTHING_PIECES ];
 
+        float clothingHighlightFades[ NUM_CLOTHING_PIECES ];
+        
+        int currentMouseOverClothingIndex;
+        
+
         // current fractional grid position and speed
         doublePair currentPos;
         // current speed is move delta per frame
