@@ -9,6 +9,10 @@ Version 180     ???
 --noFlip object property now affects object drawing deeply, even when object is
   contained in a flipped container.
 
+--Fixed so that face portion of emot (e.g., yellow fever face) can be drawn
+  even if player doesn't currently have a sprite called Eyes (e.g., when they
+  are a crying baby).  Fixes #145
+
 
 
 Server Fixes

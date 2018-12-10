@@ -2655,8 +2655,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
 
 
-        // face emot on top of eyes
-        if( i == eyesIndex && drawWithEmot != NULL &&
+        // face emot on top of eyes, if they exist, or head
+        // if not
+        if( ( ( eyesIndex != -1 && i == eyesIndex ) 
+              ||
+              ( eyesIndex == -1 && i == headIndex ) )
+            && drawWithEmot != NULL &&
             drawWithEmot->faceEmot != 0 ) {
             
             char used;
