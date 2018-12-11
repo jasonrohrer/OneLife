@@ -452,7 +452,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     mSliders[11] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 6, "Fade Osc" );
+                                   0, 8, "Fade Osc" );
     mSliders[12] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "Fade Hard" );

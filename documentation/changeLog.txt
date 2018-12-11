@@ -13,6 +13,10 @@ Version 180     ???
   even if player doesn't currently have a sprite called Eyes (e.g., when they
   are a crying baby).  Fixes #145
 
+--Mouse-over highlights now shown when mousing over worn clothing.  Fixes #146
+
+--Animation editor allows fade osc of 8 hz max (was 6).
+
 
 
 Server Fixes
