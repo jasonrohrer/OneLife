@@ -17,6 +17,10 @@ Version 180     ???
 
 --Animation editor allows fade osc of 8 hz max (was 6).
 
+--Animation editor can now copy animation from one object to another with
+  right-click even if they are not exact sprite matches, as long as the source
+  object is a subset of the target object.
+
 
 
 Server Fixes

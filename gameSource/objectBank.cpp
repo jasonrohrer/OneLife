@@ -4705,7 +4705,9 @@ int getMaxWideRadius() {
 
 
 
-char isSpriteSubset( int inSuperObjectID, int inSubObjectID ) {
+char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
+                     SimpleVector<SubsetSpriteIndexMap> *outMapping ) {
+
     ObjectRecord *superO = getObject( inSuperObjectID );
     ObjectRecord *subO = getObject( inSubObjectID );
     
@@ -4780,13 +4782,19 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID ) {
                 /* &&
                    equal( superO->spriteColor[ ss ], spriteColor ) */ ) {
                 
-
+                if( outMapping != NULL ) {
+                    SubsetSpriteIndexMap m = { s, ss };
+                    outMapping->push_back( m );
+                    }
                 found = true;
                 break;
                 }
             }
 
         if( !found ) {
+            if( outMapping != NULL ) {
+                outMapping->deleteAll();
+                }
             return false;
             }
         }

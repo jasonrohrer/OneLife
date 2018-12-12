@@ -1920,6 +1920,39 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                         mCurrentAnim[ i ]->objectID = mCurrentObjectID;
                         }
                     }
+                else if( isLastMouseButtonRight() ) {
+                    // no direct mapping from old anim to new object
+                    // has different number of sprites
+
+                    // check if new object exists as a sub-object of
+                    // previous object
+                    SimpleVector<SubsetSpriteIndexMap> map;
+                    
+                    if( isSpriteSubset( oldID, mCurrentObjectID, &map ) ) {
+                        int newID = mCurrentObjectID;
+                        
+                        mCurrentObjectID = oldID;
+                        populateCurrentAnim();
+                        soundIndexChanged();
+                        
+                        for( int i=0; i<endAnimType; i++ ) {
+                            AnimationRecord *newR = getAnimation( newID, 
+                                                                  (AnimType)i );
+                            if( newR == NULL ) {
+                                continue;
+                                }
+                            
+                            for( int m=0; m<map.size(); m++ ) {
+                                SubsetSpriteIndexMap s = 
+                                    map.getElementDirect( m );
+                                
+                                mCurrentAnim[ i ]->spriteAnim[ s.superIndex ] =
+                                    newR->spriteAnim[ s.subIndex ];
+                                }
+                            }
+                        }
+                    }
+                
 
                 if( getObject( mCurrentObjectID )->person ) {
                     mPersonAgeSlider.setVisible( true );

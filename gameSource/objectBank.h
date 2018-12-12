@@ -721,8 +721,17 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject );
 int getMaxWideRadius();
 
 
+typedef struct SubsetSpriteIndexMap {
+        int subIndex;
+        int superIndex;
+    } SubsetSpriteIndexMap;
+        
+
 // returns true if inSubObjectID's sprites are all part of inSuperObjectID
-char isSpriteSubset( int inSuperObjectID, int inSubObjectID );
+// pass in empty vector if index mapping is desired
+// passed-in vector is NOT filled with anything if object is not a sprite subset
+char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
+                     SimpleVector<SubsetSpriteIndexMap> *outMapping = NULL );
 
 
 
