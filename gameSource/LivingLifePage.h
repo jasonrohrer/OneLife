@@ -828,7 +828,9 @@ class LivingLifePage : public GamePage {
 
         void drawMapCell( int inMapI, 
                           int inScreenX, int inScreenY,
-                          char inHighlightOnly = false );
+                          char inHighlightOnly = false,
+                          // blocks frame update for cell and animation sounds
+                          char inNoTimeEffects = false );
         
         void checkForPointerHit( PointerHitRecord *inRecord,
                                  float inX, float inY );

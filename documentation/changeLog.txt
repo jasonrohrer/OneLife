@@ -25,6 +25,12 @@ Version 180     ???
 
 --Added field that allows applying speed multiplier to entire animation.
 
+--Rideable objects can have sprites layers that are drawn behind player.
+
+--Fixed so that objects that are drawn in separate layers are not time updated
+  twice per frame.
+
+
 
 
 Server Fixes
