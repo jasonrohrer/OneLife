@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 180     ???
+Version 181     2018-December-13
 
 --noFlip object property now affects object drawing deeply, even when object is
   contained in a flipped container.
@@ -29,6 +29,8 @@ Version 180     ???
 
 --Fixed so that objects that are drawn in separate layers are not time updated
   twice per frame.
+
+--Fixed issue with game waiting for newly-launched web browser on Linux.
 
 
 
