@@ -763,4 +763,17 @@ char bothSameUseParent( int inAObjectID, int inBObjectID );
 int hideIDForClient( int inObjectID );
 
 
+
+// leverages object's spriteSkipDrawing arrays to draw portion of
+// object (drawn behind or in front) or skip actual drawing of object entirely
+// saves object's spriteSkipDrawing to restore it later
+void prepareToSkipSprites( ObjectRecord *inObject, 
+                           char inDrawBehind, char inSkipAll = false );
+
+// restores spriteSkipDrawing for object to what it was before
+// prepareToSkipSprites was called
+void restoreSkipDrawing( ObjectRecord *inObject );
+
+
+
 #endif

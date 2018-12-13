@@ -224,17 +224,6 @@ class EditorScenePage : public GamePage, public ActionListener {
         void checkNextPrevVisible();
         
         void resizeGrid( int inNewH, int inNewW );
-        
-
-        // can prepare one at a time
-        void prepareToSkipSprites( ObjectRecord *inObject, char inDrawBehind );
-        
-        void restoreSkipDrawing( ObjectRecord *inObject );
-
-        // allocated space that we can use when temporarily manipulating
-        // an object's skipDrawing array
-        int mSkipDrawingWorkingAreaSize;
-        char *mSkipDrawingWorkingArea;
     };
 
         

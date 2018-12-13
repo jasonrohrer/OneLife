@@ -126,8 +126,7 @@ EditorScenePage::EditorScenePage()
           mLittleDheld( false ),
           mBigDheld( false ),
           mScenesFolder( NULL, "scenes" ),
-          mNextFile( NULL ),
-          mSkipDrawingWorkingArea( NULL ) {
+          mNextFile( NULL ) {
     
     addComponent( &mAnimEditorButton );
     mAnimEditorButton.addActionListener( this );
@@ -314,10 +313,6 @@ EditorScenePage::~EditorScenePage() {
 
     if( mNextFile != NULL ) {
         delete mNextFile;
-        }
-
-    if( mSkipDrawingWorkingArea != NULL ) {
-        delete [] mSkipDrawingWorkingArea;
         }
     }
 
@@ -1004,47 +999,6 @@ static void drawOutlineString( const char *inString,
     setDrawColor( 1, 1, 1, 1 );
     
     smallFont->drawString( inString, inPos, inAlign );
-    }
-
-
-
-
-void EditorScenePage::prepareToSkipSprites( ObjectRecord *inObject, 
-                                            char inDrawBehind ) {
-    if( mSkipDrawingWorkingArea != NULL ) {
-        if( mSkipDrawingWorkingAreaSize < inObject->numSprites ) {
-            delete [] mSkipDrawingWorkingArea;
-            mSkipDrawingWorkingArea = NULL;
-            
-            mSkipDrawingWorkingAreaSize = 0;
-            }
-        }
-    if( mSkipDrawingWorkingArea == NULL ) {
-        mSkipDrawingWorkingAreaSize = inObject->numSprites;
-        mSkipDrawingWorkingArea = new char[ mSkipDrawingWorkingAreaSize ];
-        }
-    
-    memcpy( mSkipDrawingWorkingArea, 
-            inObject->spriteSkipDrawing, inObject->numSprites );
-    
-    if( ! inDrawBehind ) {
-        for( int i=0; i< inObject->numSprites; i++ ) {
-            
-            if( inObject->spriteBehindPlayer[i] && ! inDrawBehind ) {
-                inObject->spriteSkipDrawing[i] = true;
-                }
-            else if( ! inObject->spriteBehindPlayer[i] && inDrawBehind ) {
-                inObject->spriteSkipDrawing[i] = true;
-                }
-            }
-        }
-    }
-
-
-
-void EditorScenePage::restoreSkipDrawing( ObjectRecord *inObject ) {
-    memcpy( inObject->spriteSkipDrawing, mSkipDrawingWorkingArea,
-            inObject->numSprites );
     }
 
 

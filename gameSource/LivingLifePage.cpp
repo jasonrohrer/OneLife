@@ -1869,7 +1869,6 @@ LivingLifePage::LivingLifePage()
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?!/ " ),
           mDeathReason( NULL ),
           mShowHighlights( true ),
-          mSkipDrawingWorkingArea( NULL ),
           mUsingSteam( false ),
           mZKeyDown( false ) {
 
@@ -2418,10 +2417,6 @@ LivingLifePage::~LivingLifePage() {
         delete [] mGraveInfo.getElement(i)->relationName;
         }
     mGraveInfo.deleteAll();
-
-    if( mSkipDrawingWorkingArea != NULL ) {
-        delete [] mSkipDrawingWorkingArea;
-        }
     }
 
 
@@ -7689,47 +7684,6 @@ void dropPendingReceivedMessagesRegardingID( LiveObject *inPlayer,
             i--;
             }
         }
-    }
-
-
-
-
-void LivingLifePage::prepareToSkipSprites( ObjectRecord *inObject, 
-                                          char inDrawBehind ) {
-    if( mSkipDrawingWorkingArea != NULL ) {
-        if( mSkipDrawingWorkingAreaSize < inObject->numSprites ) {
-            delete [] mSkipDrawingWorkingArea;
-            mSkipDrawingWorkingArea = NULL;
-            
-            mSkipDrawingWorkingAreaSize = 0;
-            }
-        }
-    if( mSkipDrawingWorkingArea == NULL ) {
-        mSkipDrawingWorkingAreaSize = inObject->numSprites;
-        mSkipDrawingWorkingArea = new char[ mSkipDrawingWorkingAreaSize ];
-        }
-    
-    memcpy( mSkipDrawingWorkingArea, 
-            inObject->spriteSkipDrawing, inObject->numSprites );
-    
-    if( ! inDrawBehind ) {
-        for( int i=0; i< inObject->numSprites; i++ ) {
-            
-            if( inObject->spriteBehindPlayer[i] && ! inDrawBehind ) {
-                inObject->spriteSkipDrawing[i] = true;
-                }
-            else if( ! inObject->spriteBehindPlayer[i] && inDrawBehind ) {
-                inObject->spriteSkipDrawing[i] = true;
-                }
-            }
-        }
-    }
-
-    
-    
-void LivingLifePage::restoreSkipDrawing( ObjectRecord *inObject ) {
-    memcpy( inObject->spriteSkipDrawing, mSkipDrawingWorkingArea,
-            inObject->numSprites );
     }
 
 
