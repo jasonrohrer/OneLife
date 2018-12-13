@@ -2783,7 +2783,21 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                     }
                 
                 
-
+                char splitHeld = false;
+                
+                if( heldObject != NULL &&
+                    heldObject->rideable &&
+                    heldObject->anySpritesBehindPlayer ) {
+                    splitHeld = true;
+                    }
+                
+                if( splitHeld ) {
+                    // don't actually draw person now
+                    // sandwitch them in between layers of held later
+                    prepareToSkipSprites( getObject( mCurrentObjectID ),
+                                          false, true );
+                    }
+                
                 HoldingPos holdingPos = 
                     drawObjectAnim( mCurrentObjectID, 2, 
                                 anim, frameTime,
@@ -2801,6 +2815,10 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 mClothingSet,
                                 NULL );
                 
+                if( splitHeld ) {
+                    restoreSkipDrawing( getObject( mCurrentObjectID ) );
+                    }
+
                 
                 if( heldObject != NULL ) {
                     
@@ -2835,6 +2853,49 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                         heldFadeTargetType = held;
                         }
                     
+                    if( splitHeld ) {
+                        // draw behind part
+                        prepareToSkipSprites( getObject( mHeldID ), true );
+                        
+                        drawObjectAnim( mHeldID, 2,  
+                                        heldAnimType, frameTime,
+                                        animFade, 
+                                        heldFadeTargetType, 
+                                        fadeTargetFrameTime, 
+                                        frozenRotFrameTime,
+                                        &mFrozenRotFrameCountUsed,
+                                        moving,
+                                        moving,
+                                        holdPos, holdRot, 
+                                        false, mFlipDraw, heldAge,
+                                        false,
+                                        false,
+                                        false,
+                                        getEmptyClothingSet(),
+                                        NULL );
+                        restoreSkipDrawing( getObject( mHeldID ) );
+                    
+                        // now draw player in between
+                        drawObjectAnim( mCurrentObjectID, 2, 
+                                anim, frameTime,
+                                animFade,
+                                fadeTargetAnim, fadeTargetFrameTime, 
+                                frozenRotFrameTime,
+                                &mFrozenRotFrameCountUsed,
+                                animRotFrozen,
+                                frozenArmAnim,
+                                frozenArmAnim,
+                                personPos, 0, false, mFlipDraw, age,
+                                hideClosestArm,
+                                hideAllLimbs,
+                                false,
+                                mClothingSet,
+                                NULL );
+                        
+                        // now draw front part of held
+                        prepareToSkipSprites( getObject( mHeldID ), false );
+                        }
+                    
                     drawObjectAnim( mHeldID, 2,  
                                     heldAnimType, frameTime,
                                     animFade, 
@@ -2849,6 +2910,10 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                     false,
                                     getEmptyClothingSet(),
                                     NULL );
+                    
+                    if( splitHeld ) {
+                        restoreSkipDrawing( getObject( mHeldID ) );
+                        }
                     }
                 }
             }

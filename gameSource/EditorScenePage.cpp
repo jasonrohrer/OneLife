@@ -1301,6 +1301,15 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             heldObject = getObject( p->heldID );
                             }
                 
+
+                        char splitHeld = false;
+                        
+                        if( heldObject != NULL &&
+                            heldObject->rideable &&
+                            heldObject->anySpritesBehindPlayer ) {
+                            splitHeld = true;
+                            }
+
                         getArmHoldingParameters( heldObject, 
                                                  &hideClosestArm, 
                                                  &hideAllLimbs );
@@ -1377,6 +1386,14 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             
                             setAnimationEmotion( p->currentEmot );
                             
+                            if( splitHeld ) {
+                                // don't actually draw person now
+                                // sandwitch them in between layers of 
+                                // held later
+                                prepareToSkipSprites( getObject( p->oID ),
+                                                      false, true );
+                                }
+
                             holdingPos =
                             drawObjectAnim( p->oID, 2, p->anim, 
                                             thisFrameTime, 
@@ -1397,6 +1414,10 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                             false,
                                             p->clothing,
                                             NULL );
+                            if( splitHeld ) {
+                                restoreSkipDrawing( getObject( p->oID ) );
+                                }
+
                             setAnimationEmotion( NULL );
                             }
                     
@@ -1443,6 +1464,58 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
                             setAnimationEmotion( p->heldEmotion );
                             
+                            if( splitHeld ) {
+                                // draw behind part
+                                prepareToSkipSprites( getObject( p->heldID ), 
+                                                      true );
+                                drawObjectAnim( p->heldID,  
+                                                heldAnimType, thisFrameTime,
+                                                0, 
+                                                heldFadeTargetType, 
+                                                thisFrameTime, 
+                                                heldFrozenRotFrameTime,
+                                                &used,
+                                                moving,
+                                                moving,
+                                                holdPos, holdRot, 
+                                                false, p->flipH, 
+                                                heldAge,
+                                                false,
+                                                false,
+                                                false,
+                                                heldClothing,
+                                                NULL,
+                                                p->contained.size(), contained,
+                                                subContained );
+                                restoreSkipDrawing( getObject( p->heldID ) );
+
+                                // now draw player in between
+                                drawObjectAnim( p->oID, 2, p->anim, 
+                                                thisFrameTime, 
+                                                0,
+                                                p->anim,
+                                                thisFrameTime,
+                                                frozenRotFrameTime,
+                                                &used,
+                                                frozenArmAnimType,
+                                                frozenArmAnimType,
+                                                personPos,
+                                                0,
+                                                false,
+                                                p->flipH,
+                                                p->age,
+                                                hideClosestArm,
+                                                hideAllLimbs,
+                                                false,
+                                                p->clothing,
+                                                NULL );
+
+                                // draw front part of held
+                                prepareToSkipSprites( getObject( p->heldID ), 
+                                                      false );
+                                }
+                            
+
                             drawObjectAnim( p->heldID,  
                                             heldAnimType, thisFrameTime,
                                             0, 
@@ -1462,6 +1535,11 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                             NULL,
                                             p->contained.size(), contained,
                                             subContained );
+                            
+                            if( splitHeld ) {
+                                restoreSkipDrawing( getObject( p->heldID ) );
+                                }
+
                             setAnimationEmotion( NULL );
                             delete [] contained;
                             delete [] subContained;
