@@ -21,6 +21,10 @@ Version 180     ???
   right-click even if they are not exact sprite matches, as long as the source
   object is a subset of the target object.
 
+--Animation editor allows all osc of 8 hz max (was 6).
+
+--Added field that allows applying speed multiplier to entire animation.
+
 
 
 Server Fixes

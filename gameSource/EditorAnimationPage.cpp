@@ -133,7 +133,10 @@ EditorAnimationPage::EditorAnimationPage()
           mCopyAllSoundAnimButton( smallFont, -85, -160, "Copy All" ),
           mPasteSoundAnimButton( smallFont, -155, -160, "Paste" ),
           mFullSoundCopyButton( smallFont, -300, -328, "Full Sound Copy" ),
-          mFullSoundPasteButton( smallFont, 130, -328, "Full Sound Paste" ) {
+          mFullSoundPasteButton( smallFont, 130, -328, "Full Sound Paste" ),
+          mSpeedMultField( smallFont, -500, -328, 4, false,
+                           "Speed x", "0123456789." ),
+          mSpeedMultApplyButton( smallFont, -446, -328, "Apply" ) {
     
     
     for( int i=0; i<=extraB; i++ ) {
@@ -394,7 +397,7 @@ EditorAnimationPage::EditorAnimationPage()
     
     mSliders[0] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 6, "X Osc" );
+                                   0, 8, "X Osc" );
 
     mXOffsetSlider = new ValueSlider( smallFont, x - 182, 
                                       mSliders[0]->getPosition().y, 
@@ -411,7 +414,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     mSliders[3] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 6, "Y Osc" );
+                                   0, 8, "Y Osc" );
 
     mYOffsetSlider = new ValueSlider( smallFont, x - 182, 
                                       mSliders[3]->getPosition().y, 
@@ -441,7 +444,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     mSliders[8] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 6, "Rock Osc" );
+                                   0, 8, "Rock Osc" );
     mSliders[9] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "Rock Amp" );
@@ -510,7 +513,14 @@ EditorAnimationPage::EditorAnimationPage()
 
     addComponent( &mForceZeroStartCheckbox );
     mForceZeroStartCheckbox.addActionListener( this );
+
+
+    addComponent( &mSpeedMultField );
+    addComponent( &mSpeedMultApplyButton );
+    mSpeedMultApplyButton.addActionListener( this );
     
+    mSpeedMultField.setText( "1.0" );
+
     mClothingSet = getEmptyClothingSet();
     mNextShoeToFill = &( mClothingSet.backShoe );
     mOtherShoe = &( mClothingSet.frontShoe );
@@ -2351,6 +2361,56 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         
 
         mLastTestSpeed = mTestSpeedSlider.getValue();
+        }
+    else if( inTarget == &mSpeedMultApplyButton ) {
+        float mult = mSpeedMultField.getFloat();
+        
+        if( mult > 0 && mult != 1.0f ) {
+
+            for( int i=0; i<mCurrentAnim[ mCurrentType ]->numSprites; i++ ) {
+                SpriteAnimationRecord *r =
+                    &( mCurrentAnim[ mCurrentType ]->spriteAnim[i] );
+                
+                r->xOscPerSec *= mult;
+                r->yOscPerSec *= mult;
+                r->rotPerSec *= mult;
+                
+                r->rockOscPerSec *= mult;
+                
+                r->fadeOscPerSec *= mult;
+                
+                if( r->pauseSec > 0 ) {
+                    r->pauseSec /= mult;
+                    r->durationSec /= mult;
+                    }
+                r->startPauseSec /= mult;
+                }
+            for( int i=0; i<mCurrentAnim[ mCurrentType ]->numSlots; i++ ) {
+                SpriteAnimationRecord *r =
+                    &( mCurrentAnim[ mCurrentType ]->slotAnim[i] );
+                
+                r->xOscPerSec *= mult;
+                r->yOscPerSec *= mult;
+                
+                if( r->pauseSec > 0 ) {
+                    r->pauseSec /= mult;
+                    r->durationSec /= mult;
+                    }
+                r->startPauseSec /= mult;
+                }
+            for( int i=0; i<mCurrentAnim[ mCurrentType ]->numSounds; i++ ) {
+                SoundAnimationRecord *r =
+                    &( mCurrentAnim[ mCurrentType ]->soundAnim[i] );
+                
+                r->repeatPerSec *= mult;
+                }
+            }
+        if( mult > 0 ) {
+            mSpeedMultField.setFloat( mult, -1, true );
+            }
+        else {
+            mSpeedMultField.setText( "1.0" );
+            }
         }
     else {
         
