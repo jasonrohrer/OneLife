@@ -122,6 +122,8 @@ static char savingSpeech = false;
 static char savingSpeechColor = false;
 static char savingSpeechMask = false;
 
+static char savingSpeechNumber = 1;
+
 
 static double emotDuration = 10;
 
@@ -2557,6 +2559,10 @@ SimpleVector<char*> *splitLines( const char *inString,
     }
 
 
+static Image *speechColorImage = NULL;
+static Image *speechMaskImage = NULL;
+
+
 
 // forces uppercase
 void LivingLifePage::drawChalkBackgroundString( doublePair inPos, 
@@ -2610,12 +2616,12 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     char colorOnly = false;
     
     if( savingSpeech && savingSpeechColor && inFade == 1.0 ) {
-        drawSquare( inPos, 512 );
+        drawSquare( inPos, 1024 );
         colorOnly = true;
         }
     else if( savingSpeech && savingSpeechMask && inFade == 1.0 ) {
         setDrawColor( 0, 0, 0, 1.0 );
-        drawSquare( inPos, 512 );
+        drawSquare( inPos, 1024 );
         setDrawColor( 1, 1, 1, 1 );
         maskOnly = true;
         }
@@ -2698,16 +2704,107 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
 
 
     if( colorOnly ) {
-        saveScreenShot( "speechColor" );
+        saveScreenShot( "speechColor", &speechColorImage );
         savingSpeechColor = false;
         savingSpeechMask = true;
         }
     else if( maskOnly ) {
-        saveScreenShot( "speechMask" );
+        saveScreenShot( "speechMask", &speechMaskImage );
         savingSpeechMask = false;
         savingSpeech = false;
         }
+    
+    if( speechColorImage != NULL && speechMaskImage != NULL ) {
+        // both screen shot requests are done
+
+        Image *subColor = speechColorImage->getSubImage( 0, 0, 1280, 500 );
+        Image *subMask = speechMaskImage->getSubImage( 0, 0, 1280, 500 );
         
+        int w = subColor->getWidth();
+        int h = subColor->getHeight();
+        
+        Image blend( w, h, 4, true );
+        blend.paste( subColor );
+        double *alpha = blend.getChannel( 3 );
+        
+        memcpy( alpha, subMask->getChannel( 0 ),
+                w * h * sizeof( double ) );
+        
+        int minX = w -1;
+        int maxX = 0;
+        int minY = h -1;
+        int maxY = 0;
+        
+        for( int y=0; y<h; y++ ) {
+            for( int x=0; x<w; x++ ) {
+                if( alpha[ y * w + x ] > 0 ) {
+                    
+                    if( x < minX ) {
+                        minX = x;
+                        }
+                    if( x > maxX ) {
+                        maxX = x;
+                        }
+
+                    if( y < minY ) {
+                        minY = y;
+                        }
+                    if( y > maxY ) {
+                        maxY = y;
+                        }
+                    }
+                }
+            }
+        
+        // expand 1 pixel to be safe
+        if( minX > 0 ) {
+            minX --;
+            }
+        if( minY > 0 ) {
+            minY --;
+            }
+        if( maxX < w - 1 ) {
+            maxX ++;
+            }
+        if( maxY < h - 1 ) {
+            maxY ++;
+            }
+        
+
+        Image *trimmed = blend.getSubImage( minX, minY,
+                                            maxX - minX,
+                                            maxY - minY );
+                
+        File screenShots( NULL, "screenShots" );
+        
+        char *fileName = autoSprintf( "speechBlend%04d.tga", 
+                                      savingSpeechNumber );
+        savingSpeechNumber++;
+        
+        File *tgaFile = screenShots.getChildFile( fileName );
+        
+        delete [] fileName;
+
+        char *tgaPath = tgaFile->getFullFileName();
+
+        delete tgaFile;
+
+        writeTGAFile( tgaPath, trimmed );
+        
+        delete [] tgaPath;
+        
+        delete trimmed;
+        
+
+        delete subColor;
+        delete subMask;
+
+
+        delete speechColorImage;
+        speechColorImage = NULL;
+        delete speechMaskImage;
+        speechMaskImage = NULL;
+        }
     }
 
 
