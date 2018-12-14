@@ -1,3 +1,15 @@
+New gif size:  480x240
+Fits on Steam store page without getting cut off
+
+Lightworks only supports 16:9, though.
+
+So, need to build video at 1280x720.
+
+Pre-crop titles centered on 1280x640, and then pad bottom of image up to 720.
+
+
+
+
 To make an optimized 480x270 10 FPS gif from a 1280x720 30 FPS video,
 don't forget the color fuzz factor.
  

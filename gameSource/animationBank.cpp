@@ -11,6 +11,7 @@
 #include "minorGems/io/file/File.h"
 
 #include "minorGems/game/gameGraphics.h"
+#include "minorGems/game/drawUtils.h"
 
 
 #include "ageControl.h"
@@ -1185,6 +1186,22 @@ void setAnimationEmotion( Emotion *inEmotion ) {
     }
 
 
+static float clothingHighlightFades[ NUM_CLOTHING_PIECES ];
+
+void setClothingHighlightFades( float *inFades ) {
+    if( inFades == NULL ) {
+        for( int i=0; i<NUM_CLOTHING_PIECES; i++ ) {
+            clothingHighlightFades[i] = 0;
+            }
+        }
+    else {
+        for( int i=0; i<NUM_CLOTHING_PIECES; i++ ) {
+            clothingHighlightFades[i] = inFades[i];
+            }
+        }
+    }
+
+
 
 ObjectAnimPack drawObjectAnimPacked( 
     int inObjectID,
@@ -1427,6 +1444,174 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
 
 
+void drawObjectAnimHighlighted(
+    float inHighlightFade,
+    int inObjectID, AnimType inType, double inFrameTime,
+    double inAnimFade, 
+    AnimType inFadeTargetType,
+    double inFadeTargetFrameTime,
+    double inFrozenRotFrameTime,
+    char *outFrozenRotFrameTimeUsed,
+    AnimType inFrozenArmType,
+    AnimType inFrozenArmFadeTargetType,
+    doublePair inPos,
+    double inRot,
+    char inWorn,
+    char inFlipH,
+    double inAge,
+    int inHideClosestArm,
+    char inHideAllLimbs,
+    char inHeldNotInPlaceYet,
+    ClothingSet inClothing,
+    SimpleVector<int> *inClothingContained,
+    int inNumContained, int *inContainedIDs,
+    SimpleVector<int> *inSubContained ) {
+
+    
+    // draw object normally
+    drawObjectAnim( 
+        inObjectID, inType, inFrameTime,
+        inAnimFade, 
+        inFadeTargetType,
+        inFadeTargetFrameTime,
+        inFrozenRotFrameTime,
+        outFrozenRotFrameTimeUsed,
+        inFrozenArmType,
+        inFrozenArmFadeTargetType,
+        inPos,
+        inRot,
+        inWorn,
+        inFlipH,
+        inAge,
+        inHideClosestArm,
+        inHideAllLimbs,
+        inHeldNotInPlaceYet,
+        inClothing,
+        inClothingContained,
+        inNumContained, inContainedIDs,
+        inSubContained );
+
+    if( inHighlightFade > 0 ) {
+        // draw highlight over top
+        int numPasses = 6;
+        int startPass = 1;
+        
+        for( int i=startPass; i<numPasses; i++ ) {
+            switch( i ) {
+                case 0:
+                    // normal color draw
+                    break;
+                case 1:
+                    // opaque portion
+                    startAddingToStencil( false, true, .99f );
+                    break;
+                case 2:
+                    // first fringe
+                    startAddingToStencil( false, true, .07f );
+                    break;
+                case 3:
+                    // subtract opaque from fringe to get just first fringe
+                    startAddingToStencil( false, false, .99f );
+                    break;
+                case 4:
+                    // second fringe
+                    // ignore totally transparent stuff
+                    // like invisible animation layers
+                    startAddingToStencil( false, true, 0.01f );
+                    break;
+                case 5:
+                    // subtract first fringe from fringe to get 
+                    // just secon fringe
+                    startAddingToStencil( false, false, .07f );
+                    break;
+                default:
+                    break;
+                }
+
+            drawObjectAnim( 
+                inObjectID, inType, inFrameTime,
+                inAnimFade, 
+                inFadeTargetType,
+                inFadeTargetFrameTime,
+                inFrozenRotFrameTime,
+                outFrozenRotFrameTimeUsed,
+                inFrozenArmType,
+                inFrozenArmFadeTargetType,
+                inPos,
+                inRot,
+                inWorn,
+                inFlipH,
+                inAge,
+                inHideClosestArm,
+                inHideAllLimbs,
+                inHeldNotInPlaceYet,
+                inClothing,
+                inClothingContained,
+                inNumContained, inContainedIDs,
+                inSubContained );
+            
+            
+            float mainFade = .35f;
+            
+            toggleAdditiveBlend( true );
+            
+            doublePair squarePos = inPos;
+            
+            int squareRad = 128;
+            
+            switch( i ) {
+                case 0:
+                    // normal color draw
+                    break;
+                case 1:
+                    // opaque portion
+                    startDrawingThroughStencil( false );
+
+                    setDrawColor( 1, 1, 1, inHighlightFade * mainFade );
+                    
+                    drawSquare( squarePos, squareRad );
+                    
+                    stopStencil();
+                    break;
+                case 2:
+                    // first fringe
+                    // wait until next pass to isolate fringe
+                    break;
+                case 3:
+                    // now first fringe is isolated in stencil
+                    startDrawingThroughStencil( false );
+
+                    setDrawColor( 1, 1, 1, inHighlightFade * mainFade * .5 );
+
+                    drawSquare( squarePos, squareRad );
+
+                    stopStencil();                    
+                    break;
+                case 4:
+                    // second fringe
+                    // wait until next pass to isolate fringe
+                    break;
+                case 5:
+                    // now second fringe is isolated in stencil
+                    startDrawingThroughStencil( false );
+                    
+                    setDrawColor( 1, 1, 1, inHighlightFade * mainFade *.25 );
+                    
+                    drawSquare( squarePos, squareRad );
+                    
+                    stopStencil();
+                    break;
+                default:
+                    break;
+                }
+            toggleAdditiveBlend( false );
+            }
+        }
+    }
+
+
+
+
 // compute base pos and rot of each object
 // THEN go back through list and compute compound effects by walking
 // through tree of parent relationships.
@@ -1546,6 +1731,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
     ObjectRecord *obj = getObject( inObjectID );
     
+    if( obj->noFlip ) {
+        inFlipH = false;
+        }
+
     if( obj->numSprites > MAX_WORKING_SPRITES ) {
         // cannot animate objects with this many sprites
         
@@ -2372,7 +2561,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 
 
                 char used;
-                drawObjectAnim( inClothing.bottom->id, 
+                drawObjectAnimHighlighted( clothingHighlightFades[4],
+                                inClothing.bottom->id, 
                                 clothingAnimType, 
                                 inFrameTime,
                                 inAnimFade, 
@@ -2408,7 +2598,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     }
                 
                 char used;
-                drawObjectAnim( inClothing.tunic->id, 
+                drawObjectAnimHighlighted( clothingHighlightFades[1],
+                                inClothing.tunic->id, 
                                 clothingAnimType, 
                                 inFrameTime,
                                 inAnimFade, 
@@ -2444,7 +2635,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     }
 
                 char used;
-                drawObjectAnim( inClothing.backpack->id, 
+                drawObjectAnimHighlighted( clothingHighlightFades[5],
+                                inClothing.backpack->id, 
                                 clothingAnimType, 
                                 inFrameTime,
                                 inAnimFade, 
@@ -2651,8 +2843,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
 
 
-        // face emot on top of eyes
-        if( i == eyesIndex && drawWithEmot != NULL &&
+        // face emot on top of eyes, if they exist, or head
+        // if not
+        if( ( ( eyesIndex != -1 && i == eyesIndex ) 
+              ||
+              ( eyesIndex == -1 && i == headIndex ) )
+            && drawWithEmot != NULL &&
             drawWithEmot->faceEmot != 0 ) {
             
             char used;
@@ -2764,7 +2960,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 }
 
             char used;
-            drawObjectAnim( inClothing.backShoe->id, 
+            drawObjectAnimHighlighted( clothingHighlightFades[3],
+                            inClothing.backShoe->id, 
                             clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
@@ -2801,7 +2998,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 }
             
             char used;
-            drawObjectAnim( inClothing.frontShoe->id, 
+            drawObjectAnimHighlighted( clothingHighlightFades[2],
+                            inClothing.frontShoe->id, 
                             clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
@@ -2862,7 +3060,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             }
         
         char used;
-        drawObjectAnim( inClothing.hat->id, 
+        drawObjectAnimHighlighted( clothingHighlightFades[0],
+                        inClothing.hat->id, 
                         clothingAnimType, 
                         inFrameTime,
                         inAnimFade, 

@@ -4,6 +4,45 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 181     2018-December-13
+
+--noFlip object property now affects object drawing deeply, even when object is
+  contained in a flipped container.
+
+--Fixed so that face portion of emot (e.g., yellow fever face) can be drawn
+  even if player doesn't currently have a sprite called Eyes (e.g., when they
+  are a crying baby).  Fixes #145
+
+--Mouse-over highlights now shown when mousing over worn clothing.  Fixes #146
+
+--Animation editor allows fade osc of 8 hz max (was 6).
+
+--Animation editor can now copy animation from one object to another with
+  right-click even if they are not exact sprite matches, as long as the source
+  object is a subset of the target object.
+
+--Animation editor allows all osc of 8 hz max (was 6).
+
+--Added field that allows applying speed multiplier to entire animation.
+
+--Rideable objects can have sprites layers that are drawn behind player.
+
+--Fixed so that objects that are drawn in separate layers are not time updated
+  twice per frame.
+
+--Fixed issue with game waiting for newly-launched web browser on Linux.
+
+
+
+
+Server Fixes
+
+--randSource for probability transitions (fishing and oil) now seeded with time
+  instead of fixed seed, so that repeated short-run server testing allows me to
+  get a feel for a given probability distribution.
+
+
+
 Version 177     2018-November-30
 
 --Better client behavior in case of real, 2-way connection break with server.

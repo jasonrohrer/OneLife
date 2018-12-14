@@ -63,6 +63,11 @@ static SimpleVector<int> racePersonObjectIDs[ MAX_RACE + 1 ];
 static SimpleVector<int> raceList;
 
 
+// allocated space that we can use when temporarily manipulating
+// an object's skipDrawing array
+static int skipDrawingWorkingAreaSize = -1;
+static char *skipDrawingWorkingArea = NULL;
+
 
 #define MAX_BIOME 511
 
@@ -1783,6 +1788,12 @@ void freeObjectBank() {
         racePersonObjectIDs[i].deleteAll();
         }
     rebuildRaceList();
+
+    if( skipDrawingWorkingArea != NULL ) {
+        delete [] skipDrawingWorkingArea;
+        }
+    skipDrawingWorkingArea = NULL;
+    skipDrawingWorkingAreaSize = -1;
     }
 
 
@@ -2810,6 +2821,10 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                        ClothingSet inClothing,
                        double inScale ) {
     
+    if( inObject->noFlip ) {
+        inFlipH = false;
+        }
+
     HoldingPos returnHoldingPos = { false, {0, 0}, 0 };
     
     SimpleVector <int> frontArmIndices;
@@ -4701,7 +4716,9 @@ int getMaxWideRadius() {
 
 
 
-char isSpriteSubset( int inSuperObjectID, int inSubObjectID ) {
+char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
+                     SimpleVector<SubsetSpriteIndexMap> *outMapping ) {
+
     ObjectRecord *superO = getObject( inSuperObjectID );
     ObjectRecord *subO = getObject( inSubObjectID );
     
@@ -4776,13 +4793,19 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID ) {
                 /* &&
                    equal( superO->spriteColor[ ss ], spriteColor ) */ ) {
                 
-
+                if( outMapping != NULL ) {
+                    SubsetSpriteIndexMap m = { s, ss };
+                    outMapping->push_back( m );
+                    }
                 found = true;
                 break;
                 }
             }
 
         if( !found ) {
+            if( outMapping != NULL ) {
+                outMapping->deleteAll();
+                }
             return false;
             }
         }
@@ -4949,6 +4972,46 @@ int hideIDForClient( int inObjectID ) {
     return inObjectID;
     }
 
+
+
+void prepareToSkipSprites( ObjectRecord *inObject, 
+                           char inDrawBehind, char inSkipAll ) {
+    if( skipDrawingWorkingArea != NULL ) {
+        if( skipDrawingWorkingAreaSize < inObject->numSprites ) {
+            delete [] skipDrawingWorkingArea;
+            skipDrawingWorkingArea = NULL;
+            
+            skipDrawingWorkingAreaSize = 0;
+            }
+        }
+    if( skipDrawingWorkingArea == NULL ) {
+        skipDrawingWorkingAreaSize = inObject->numSprites;
+        skipDrawingWorkingArea = new char[ skipDrawingWorkingAreaSize ];
+        }
+    
+    memcpy( skipDrawingWorkingArea, 
+            inObject->spriteSkipDrawing, inObject->numSprites );
+    
+    for( int i=0; i< inObject->numSprites; i++ ) {
+        
+        if( inSkipAll ) {
+            inObject->spriteSkipDrawing[i] = true;
+            }
+        else if( inObject->spriteBehindPlayer[i] && ! inDrawBehind ) {
+            inObject->spriteSkipDrawing[i] = true;
+            }
+        else if( ! inObject->spriteBehindPlayer[i] && inDrawBehind ) {
+            inObject->spriteSkipDrawing[i] = true;
+            }
+        }
+    }
+
+
+
+void restoreSkipDrawing( ObjectRecord *inObject ) {
+    memcpy( inObject->spriteSkipDrawing, skipDrawingWorkingArea,
+            inObject->numSprites );
+    }
 
 
 

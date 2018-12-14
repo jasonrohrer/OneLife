@@ -275,6 +275,9 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mFullSoundCopyButton;
         TextButton mFullSoundPasteButton;
         
+        TextField mSpeedMultField;
+        TextButton mSpeedMultApplyButton;
+        
 
         void checkNextPrevVisible();
         

@@ -721,8 +721,17 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject );
 int getMaxWideRadius();
 
 
+typedef struct SubsetSpriteIndexMap {
+        int subIndex;
+        int superIndex;
+    } SubsetSpriteIndexMap;
+        
+
 // returns true if inSubObjectID's sprites are all part of inSuperObjectID
-char isSpriteSubset( int inSuperObjectID, int inSubObjectID );
+// pass in empty vector if index mapping is desired
+// passed-in vector is NOT filled with anything if object is not a sprite subset
+char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
+                     SimpleVector<SubsetSpriteIndexMap> *outMapping = NULL );
 
 
 
@@ -752,6 +761,19 @@ char bothSameUseParent( int inAObjectID, int inBObjectID );
 // processes object ID for client consumption
 // hiding hidden variable object ids behind parent ID
 int hideIDForClient( int inObjectID );
+
+
+
+// leverages object's spriteSkipDrawing arrays to draw portion of
+// object (drawn behind or in front) or skip actual drawing of object entirely
+// saves object's spriteSkipDrawing to restore it later
+void prepareToSkipSprites( ObjectRecord *inObject, 
+                           char inDrawBehind, char inSkipAll = false );
+
+// restores spriteSkipDrawing for object to what it was before
+// prepareToSkipSprites was called
+void restoreSkipDrawing( ObjectRecord *inObject );
+
 
 
 #endif

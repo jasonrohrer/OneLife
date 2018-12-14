@@ -446,5 +446,11 @@ char isSoundUsedByAnim( int inSoundID );
 void setAnimationEmotion( Emotion *inEmotion );
 
 
+// sets fade values for clothing highlights of next drawn person
+// or NULL for no clothing highlights
+// Copied internally.
+void setClothingHighlightFades( float *inFades );
+
+
 
 #endif

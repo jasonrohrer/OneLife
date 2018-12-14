@@ -14121,6 +14121,23 @@ float getTotalGlobalFade() {
 void toggleAdditiveTextureColoring( char inAdditive ) {
     }
 
+void toggleAdditiveBlend( char ) {
+    }
+
+void drawSquare( doublePair, double ) {
+    }
+
+void startAddingToStencil( char, char, float ) {
+    }
+
+void startDrawingThroughStencil( char ) {
+    }
+
+void stopStencil() {
+    }
+
+
+
 
 
 // dummy implementations of these functions, which are used in editor
