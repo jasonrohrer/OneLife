@@ -3,6 +3,11 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 182     2018-December-13
+
+--Whoops... various headless helper apps failed to compile.  Fixed.
+
+
 
 Version 181     2018-December-13
 

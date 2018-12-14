@@ -329,6 +329,21 @@ void startOutputAllFrames() {
 void stopOutputAllFrames() {
     }
 
+void toggleAdditiveBlend( char ) {
+    }
+
+void drawSquare( doublePair, double ) {
+    }
+
+void startAddingToStencil( char, char, float ) {
+    }
+
+void startDrawingThroughStencil( char ) {
+    }
+
+void stopStencil() {
+    }
+
 
 
 
