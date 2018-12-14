@@ -2791,11 +2791,16 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                     splitHeld = true;
                     }
                 
+                
+                ClothingSet clothingToDraw = mClothingSet;
+
                 if( splitHeld ) {
                     // don't actually draw person now
                     // sandwitch them in between layers of held later
                     prepareToSkipSprites( getObject( mCurrentObjectID ),
                                           false, true );
+                    
+                    clothingToDraw = getEmptyClothingSet();
                     }
                 
                 HoldingPos holdingPos = 
@@ -2812,7 +2817,7 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 hideClosestArm,
                                 hideAllLimbs,
                                 false,
-                                mClothingSet,
+                                clothingToDraw,
                                 NULL );
                 
                 if( splitHeld ) {

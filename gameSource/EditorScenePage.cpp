@@ -1386,12 +1386,15 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             
                             setAnimationEmotion( p->currentEmot );
                             
+                            ClothingSet clothingToDraw = p->clothing;
+                            
                             if( splitHeld ) {
                                 // don't actually draw person now
                                 // sandwitch them in between layers of 
                                 // held later
                                 prepareToSkipSprites( getObject( p->oID ),
                                                       false, true );
+                                clothingToDraw = getEmptyClothingSet();
                                 }
 
                             holdingPos =
@@ -1412,7 +1415,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                             hideClosestArm,
                                             hideAllLimbs,
                                             false,
-                                            p->clothing,
+                                            clothingToDraw,
                                             NULL );
                             if( splitHeld ) {
                                 restoreSkipDrawing( getObject( p->oID ) );
