@@ -10996,14 +10996,15 @@ int main() {
                              ! nextPlayer->emotFrozen ) {
                         // ignore new EMOT requres from player if emot
                         // frozen
-
-                        // send update even if action fails (to let them
-                        // know that action is over)
-                        newEmotPlayerIDs.push_back( nextPlayer->id );
                         
-                        newEmotIndices.push_back( m.i );
-                        // player-requested emots have no specific TTL
-                        newEmotTTLs.push_back( 0 );
+                        if( m.i <= SettingsManager::getIntSetting( 
+                                "allowedEmotRange", 6 ) ) {
+                            newEmotPlayerIDs.push_back( nextPlayer->id );
+                            
+                            newEmotIndices.push_back( m.i );
+                            // player-requested emots have no specific TTL
+                            newEmotTTLs.push_back( 0 );
+                            }
                         } 
                     }
                 

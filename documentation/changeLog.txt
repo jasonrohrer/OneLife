@@ -10,6 +10,11 @@ Version 182     ???
 --Added /FPS command in client to toggle FPS display while living a life.
 
 
+Server Fixes
+
+--AllowedEmotRange server-side to block clients from manually requesting
+  jaundice emot.  Related to #170.
+
 
 
 Version 181     2018-December-13
