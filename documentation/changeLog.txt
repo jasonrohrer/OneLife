@@ -9,6 +9,10 @@ Version 182     ???
 
 --Added /FPS command in client to toggle FPS display while living a life.
 
+--Added /PING command in client for measuring round-trip latency to server.
+
+
+
 
 Server Fixes
 

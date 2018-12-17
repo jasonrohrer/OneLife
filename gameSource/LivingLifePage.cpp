@@ -134,6 +134,10 @@ static double frameBatchMeasureStartTime = -1;
 static int framesInBatch = 0;
 static double fpsToDraw = -1;
 
+static char showPing = false;
+static double pingSentTime = -1;
+static double pongDeltaTime = -1;
+static double pingDisplayStartTime = -1;
 
 
 // most recent home at end
@@ -6576,6 +6580,48 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
     
+    if( showPing ) {
+        if( pongDeltaTime != -1 &&
+            pingDisplayStartTime == -1 ) {
+            pingDisplayStartTime = game_getCurrentTime();
+            }
+        
+        doublePair pos = lastScreenViewCenter;
+        pos.x += 300;
+        pos.y += 300;
+        
+        char *pingString;
+        
+        if( pongDeltaTime == -1 ) {
+            pingString = 
+                autoSprintf( "%s...", translate( "ping" ) );
+            }
+        else {
+            pingString = 
+                autoSprintf( "%s %d %s", translate( "ping" ), 
+                             lrint( pongDeltaTime * 1000 ), 
+                             translate( "ms" ) );
+            }
+        
+        setDrawColor( 0, 0, 0, 1 );
+        numbersFontFixed->drawString( pingString, pos, alignLeft );
+            
+        setDrawColor( 1, 1, 1, 1 );
+            
+        pos.x += 2;
+        pos.y -= 2;
+        numbersFontFixed->drawString( pingString, pos, alignLeft );
+            
+        delete [] pingString;
+    
+        if( pingDisplayStartTime != -1 &&
+            game_getCurrentTime() - pingDisplayStartTime > 10 ) {
+            showPing = false;
+            }
+        }
+    
+    
+
 
     doublePair slipPos = add( mHomeSlipPosOffset, lastScreenViewCenter );
     
@@ -14505,6 +14551,9 @@ void LivingLifePage::step() {
         else if( type == PONG ) {
             sscanf( message, "PONG\n%d", 
                     &( lastPongReceived ) );
+            if( lastPongReceived == lastPingSent ) {
+                pongDeltaTime = game_getCurrentTime() - pingSentTime;
+                }
             }
         else if( type == NAMES ) {
             int numLines;
@@ -16216,6 +16265,7 @@ void LivingLifePage::makeActive( char inFresh ) {
         }
 
     showFPS = false;
+    showPing = false;
     
     waitForFrameMessages = false;
 
@@ -18848,6 +18898,23 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 frameBatchMeasureStartTime = -1;
                                 framesInBatch = 0;
                                 fpsToDraw = -1;
+                                }
+                            else if( strstr( typedText,
+                                             translate( "pingCommand" ) ) 
+                                     == typedText ) {
+
+                                waitingForPong = true;
+                                lastPingSent ++;
+                                char *pingMessage = 
+                                    autoSprintf( "PING 0 0 %d#", lastPingSent );
+                                
+                                sendToServerSocket( pingMessage );
+                                delete [] pingMessage;
+
+                                showPing = true;
+                                pingSentTime = game_getCurrentTime();
+                                pongDeltaTime = -1;
+                                pingDisplayStartTime = -1;
                                 }
                             else {
                                 // filter hints

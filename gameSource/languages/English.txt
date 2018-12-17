@@ -302,6 +302,9 @@ pingCommand "/PING"
 
 fps "FPS"
 
+ping "PING"
+
+ms "MS"
 
 youDied "YOU DIED"
 
