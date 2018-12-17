@@ -7,6 +7,9 @@ Version 182     ???
 
 --Whoops... various headless helper apps failed to compile.  Fixed.
 
+--Added /FPS command in client to toggle FPS display while living a life.
+
+
 
 
 Version 181     2018-December-13

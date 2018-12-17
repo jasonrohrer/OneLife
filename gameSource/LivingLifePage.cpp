@@ -54,6 +54,7 @@ extern int dataVersionNumber;
 extern double frameRateFactor;
 
 extern Font *mainFont;
+extern Font *numbersFontFixed;
 extern Font *mainFontReview;
 extern Font *handwritingFont;
 extern Font *pencilFont;
@@ -126,6 +127,12 @@ static char savingSpeechNumber = 1;
 
 
 static double emotDuration = 10;
+
+
+static char showFPS = false;
+static double frameBatchMeasureStartTime = -1;
+static int framesInBatch = 0;
+static double fpsToDraw = -1;
 
 
 
@@ -6527,7 +6534,48 @@ void LivingLifePage::draw( doublePair inViewCenter,
         return;
         }    
         
-
+    if( showFPS ) {
+        
+        if( frameBatchMeasureStartTime == -1 ) {
+            frameBatchMeasureStartTime = game_getCurrentTime();
+            }
+        else {
+            framesInBatch ++;
+            
+            
+            if( framesInBatch == 30 ) {
+                double delta = game_getCurrentTime() - 
+                    frameBatchMeasureStartTime;
+            
+                fpsToDraw = framesInBatch / delta;
+                
+                // new batch
+                frameBatchMeasureStartTime = game_getCurrentTime();
+                framesInBatch = 0;
+                }
+            }
+        if( fpsToDraw != -1 ) {
+            
+            doublePair pos = lastScreenViewCenter;
+            pos.x -= 600;
+            pos.y += 300;
+            
+            char *fpsString = 
+                autoSprintf( "%.1f %s", fpsToDraw, translate( "fps" ) );
+            
+            setDrawColor( 0, 0, 0, 1 );
+            numbersFontFixed->drawString( fpsString, pos, alignLeft );
+            
+            setDrawColor( 1, 1, 1, 1 );
+            
+            pos.x += 2;
+            pos.y -= 2;
+            numbersFontFixed->drawString( fpsString, pos, alignLeft );
+            
+            delete [] fpsString;
+            }
+        }
+    
 
     doublePair slipPos = add( mHomeSlipPosOffset, lastScreenViewCenter );
     
@@ -16166,6 +16214,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    showFPS = false;
     
     waitForFrameMessages = false;
 
@@ -18790,6 +18840,14 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 
                                 sendToServerSocket( message );
                                 delete [] message;
+                                }
+                            else if( strstr( typedText,
+                                             translate( "fpsCommand" ) ) 
+                                     == typedText ) {
+                                showFPS = !showFPS;
+                                frameBatchMeasureStartTime = -1;
+                                framesInBatch = 0;
+                                fpsToDraw = -1;
                                 }
                             else {
                                 // filter hints
