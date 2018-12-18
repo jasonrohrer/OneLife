@@ -11,6 +11,8 @@ Version 182     ???
 
 --Added /PING command in client for measuring round-trip latency to server.
 
+--Support for additive blend on sprite layers (candle glow).
+
 
 
 

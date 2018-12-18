@@ -2730,6 +2730,15 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             else if( workingSpriteFade[i] < 1 ) {
                 setDrawFade( workingSpriteFade[i] );
                 }
+
+            
+            char additive = false;
+            if( obj->spriteAdditiveBlend != NULL ) {
+                additive = obj->spriteAdditiveBlend[i];
+                }
+            if( additive ) {
+                toggleAdditiveBlend( true );
+                }
             
             int spriteID = obj->sprites[i];
             
@@ -2762,6 +2771,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             if( multiplicative ) {
                 toggleMultiplicativeBlend( false );
                 toggleAdditiveTextureColoring( false );
+                }
+            
+            if( additive ) {
+                toggleAdditiveBlend( false );
                 }
 
 

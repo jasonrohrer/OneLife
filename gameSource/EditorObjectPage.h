@@ -140,6 +140,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         CheckboxButton mBehindSlotsCheckbox;
         CheckboxButton mBehindPlayerCheckbox;
+        CheckboxButton mAdditiveBlendCheckbox;
         
         TextField mAgeInField;
         TextField mAgeOutField;
