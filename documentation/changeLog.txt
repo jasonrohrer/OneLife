@@ -13,6 +13,10 @@ Version 182     ???
 
 --Support for additive blend on sprite layers (candle glow).
 
+--When searching for a matching body part, now search top-down instead of
+  bottom-up (one new character has two sets of eyes in old age, and we want to
+  find the top ones).
+
 
 
 

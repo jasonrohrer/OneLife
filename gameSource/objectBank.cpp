@@ -4552,7 +4552,7 @@ char isSpriteVisibleAtAge( ObjectRecord *inObject,
     }
 
 
-
+// top-most body part that is flagged
 static int getBodyPartIndex( ObjectRecord *inObject,
                              char *inBodyPartFlagArray,
                              double inAge ) {
@@ -4560,7 +4560,7 @@ static int getBodyPartIndex( ObjectRecord *inObject,
         return 0;
         }
     
-    for( int i=0; i< inObject->numSprites; i++ ) {
+    for( int i = inObject->numSprites - 1; i >= 0; i-- ) {
         if( inBodyPartFlagArray[i] ) {
             
             if( ! isSpriteVisibleAtAge( inObject, i, inAge ) ) {
