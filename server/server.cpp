@@ -9037,7 +9037,7 @@ int main() {
                                                 holdingSomethingNew( 
                                                     hitPlayer );
                                                 setFreshEtaDecayForHeld( 
-                                                    nextPlayer );
+                                                    hitPlayer );
                                                 }
                                             
                                             

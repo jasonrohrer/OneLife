@@ -25,6 +25,8 @@ Server Fixes
 --AllowedEmotRange server-side to block clients from manually requesting
   jaundice emot.  Related to #170.
 
+--Fixed bug in computing decay time for wound.
+
 
 
 Version 181     2018-December-13
