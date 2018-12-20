@@ -62,12 +62,21 @@ void initEmotion() {
                 emotions.push_back( eNew );
                 e = emotions.getElement( emotions.size() - 1 );
                 }
-            sscanf( parts[i], "%d %d %d %d %d", 
+            e->eyeEmot = 0;
+            e->mouthEmot = 0;
+            e->otherEmot = 0;
+            e->faceEmot = 0;
+            e->bodyEmot = 0;
+            e->headEmote = 0;
+            
+
+            sscanf( parts[i], "%d %d %d %d %d %d", 
                     &( e->eyeEmot ), 
                     &( e->mouthEmot ), 
                     &( e->otherEmot ),
                     &( e->faceEmot ),
-                    &( e->bodyEmot ) );
+                    &( e->bodyEmot ),
+                    &( e->headEmote ) );
             }
         delete [] parts[i];
         }
@@ -136,6 +145,9 @@ void markEmotionsLive() {
             }
         if( e->bodyEmot > 0 ) {    
             addBaseObjectToLiveObjectSet( e->bodyEmot );
+            }
+        if( e->headEmote > 0 ) {    
+            addBaseObjectToLiveObjectSet( e->headEmote );
             }
         }
     }

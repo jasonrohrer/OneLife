@@ -20,6 +20,8 @@ Version 182     ???
 --On inserting one object into another in editor, default to bottom layer of
   inserted object as picked layer.
 
+--Support for head layer of emote (on top of everything, like a hat).
+
 
 
 Server Fixes

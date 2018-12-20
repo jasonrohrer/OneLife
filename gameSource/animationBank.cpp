@@ -3041,6 +3041,38 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             }
         
         } 
+    
+
+    // head emot emot on top of everything
+    // if not
+    if( drawWithEmot != NULL &&
+        drawWithEmot->headEmote != 0 ) {
+            
+        char used;
+        drawObjectAnim( drawWithEmot->headEmote, 
+                        clothingAnimType, 
+                        inFrameTime,
+                        inAnimFade, 
+                        clothingFadeTargetAnimType,
+                        inFadeTargetFrameTime,
+                        inFrozenRotFrameTime,
+                        &used,
+                        endAnimType,
+                        endAnimType,
+                        add( animHeadPos, inPos ),
+                        animHeadRotDelta,
+                        true,
+                        inFlipH,
+                        -1,
+                        0,
+                        false,
+                        false,
+                        emptyClothing,
+                        NULL,
+                        0, NULL,
+                        NULL );
+        }
+
 
 
     if( inClothing.hat != NULL ) {
