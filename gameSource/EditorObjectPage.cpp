@@ -2609,6 +2609,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                         pickedRecord->spriteParent[i] + oldNumSprites;
                     }
                 }
+
+            // make bottom layer of inserted object the active layer
+            mPickedObjectLayer = oldNumSprites;
+            mPickedSlot = -1;
+            
+            pickedLayerChanged();
             }
         else if( objectID != -1 ) {
             ObjectRecord *pickedRecord = getObject( objectID );
