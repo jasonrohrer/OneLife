@@ -8983,6 +8983,7 @@ int main() {
                                                   0 );
 
                                     TransRecord *rHit = NULL;
+                                    TransRecord *woundHit = NULL;
                                     
                                     if( someoneHit ) {
                                         // last use on target specifies
@@ -9002,7 +9003,7 @@ int main() {
 
                                         // last use on actor specifies
                                         // what is left in victim's hand
-                                        TransRecord *woundHit = 
+                                        woundHit = 
                                             getPTrans( nextPlayer->holdingID, 
                                                       0, true, false );
                                         
@@ -9088,6 +9089,15 @@ int main() {
                                         // leave bloody knife or
                                         // whatever in hand
                                         nextPlayer->holdingID = rHit->newActor;
+                                        holdingSomethingNew( nextPlayer,
+                                                             oldHolding);
+                                        }
+                                    else if( woundHit != NULL ) {
+                                        // result of hit on held weapon 
+                                        // could also be
+                                        // specified in wound trans
+                                        nextPlayer->holdingID = 
+                                            woundHit->newActor;
                                         holdingSomethingNew( nextPlayer,
                                                              oldHolding);
                                         }

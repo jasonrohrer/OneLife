@@ -28,12 +28,18 @@ Version 182     ???
 
 
 
+
 Server Fixes
 
 --AllowedEmotRange server-side to block clients from manually requesting
   jaundice emot.  Related to #170.
 
 --Fixed bug in computing decay time for wound.
+
+--Improved semantics of wound-and-weapon transitions in terms of how they
+  affect what's left in the hand of the perpetrator (wound transition can now
+  specify a held-weapon change if no other trans is present).
+
 
 
 
