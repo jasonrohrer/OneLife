@@ -22,6 +22,10 @@ Version 182     ???
 
 --Support for head layer of emote (on top of everything, like a hat).
 
+--Copy Child Chain in animation editor now copies entire child tree.
+
+--Added version of child tree copy button that randomizes phases.
+
 
 
 Server Fixes
