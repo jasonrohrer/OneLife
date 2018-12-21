@@ -8,6 +8,9 @@ So, need to build video at 1280x720.
 Pre-crop titles centered on 1280x640, and then pad bottom of image up to 720.
 
 
+Use gifTitlesShifted for boilerplates.
+
+
 
 
 To make an optimized 480x270 10 FPS gif from a 1280x720 30 FPS video,

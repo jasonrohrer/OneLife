@@ -573,6 +573,10 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             char *spriteBehindPlayer = new char[ numSprites ];
             
             memset( spriteBehindPlayer, false, numSprites );
+
+            char *spriteAdditiveBlend = new char[ numSprites ];
+            
+            memset( spriteAdditiveBlend, false, numSprites );
             
             
             addObject( objName,
@@ -589,6 +593,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        0, 0,
                        false,
                        spriteBehindPlayer,
+                       spriteAdditiveBlend,
                        (char*)"0",
                        0,
                        0,
@@ -640,6 +645,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        spriteUseAppear );
             
             delete [] spriteBehindPlayer;
+            delete [] spriteAdditiveBlend;
 
             delete [] spriteIDs;
             delete [] spritePos;

@@ -117,7 +117,9 @@ EditorAnimationPage::EditorAnimationPage()
           mSceneryID( -1 ),
           mClearSceneryButton( smallFont, 280, 220, "X Scenery" ),
           mCopyButton( smallFont, -390, 230, "Copy" ),
-          mCopyChainButton( smallFont, -390, 270, "Copy Child Chain" ),
+          mCopyChainButton( smallFont, -390, 270, "Copy Child Tree" ),
+          mCopyChainRandButton( smallFont, -390, 310, 
+                                "Copy Child Tree Rand Phase" ),
           mCopyWalkButton( smallFont, -260, 270, "Copy Walk" ),
           mCopyAllButton( smallFont, -470, 230, "Copy All" ),
           mCopyUpButton( smallFont, -500, 270, "Copy Up" ),
@@ -296,6 +298,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     addComponent( &mCopyButton );
     addComponent( &mCopyChainButton );
+    addComponent( &mCopyChainRandButton );
     addComponent( &mCopyWalkButton );
     addComponent( &mCopyAllButton );
     addComponent( &mCopyUpButton );
@@ -332,6 +335,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     mCopyButton.addActionListener( this );
     mCopyChainButton.addActionListener( this );
+    mCopyChainRandButton.addActionListener( this );
     mCopyWalkButton.addActionListener( this );
     mCopyAllButton.addActionListener( this );
     mCopyUpButton.addActionListener( this );
@@ -825,6 +829,7 @@ void EditorAnimationPage::checkNextPrevVisible() {
         mPickHeldButton.setVisible( false );
         
         mCopyChainButton.setVisible( false );
+        mCopyChainRandButton.setVisible( false );
         mCopyWalkButton.setVisible( false );
         mCopyUpButton.setVisible( false );
         return;
@@ -856,10 +861,12 @@ void EditorAnimationPage::checkNextPrevVisible() {
 
     if( mCurrentSpriteOrSlot < r->numSprites ) {
         mCopyChainButton.setVisible( true );
+        mCopyChainRandButton.setVisible( true );
         mCopyUpButton.setVisible( true );
         }
     else {
         mCopyChainButton.setVisible( false );
+        mCopyChainRandButton.setVisible( false );
         mCopyUpButton.setVisible( false );
         mChainCopyBuffer.deleteAll();
         }
@@ -1246,6 +1253,16 @@ void EditorAnimationPage::setNextExtraButtonColor() {
     }
 
 
+// keeps inPhase bounded by 1 with wrap-around
+static void phaseOffset( double *inPhase, double offset ) {
+    *inPhase += offset;
+    
+    if( *inPhase > 1 ) {
+        *inPhase -= 1;
+        }
+    }
+
+
 
 void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     
@@ -1477,7 +1494,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mWalkCopied = false;
         mUpCopied = false;
         }
-    else if( inTarget == &mCopyChainButton ) {
+    else if( inTarget == &mCopyChainButton || 
+             inTarget == &mCopyChainRandButton ) {
         mWalkCopied = false;
         mUpCopied = false;
         
@@ -1497,25 +1515,40 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
         AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
 
-        while( newParent != -1 ) {
-            int oldParent = newParent;
-            newParent = -1;
+        // trace parent chain up from each sprite
+        // if we reach newParent, this sprite is in our child chain
+        for( int i=0; i<r->numSprites; i++ ) {
+            int nextParent = r->spriteParent[i];
             
-            for( int i=0; i<r->numSprites; i++ ) {
-                if( r->spriteParent[i] == oldParent ) {
-                    // found a child
-
-                    if( i < anim->numSprites ) {
-                        mChainCopyBuffer.push_back( anim->spriteAnim[i] );
-                        }
-                    
-
-                    newParent = i;
+            while( nextParent != -1 ) {
+                if( nextParent == newParent ) {
+                    mChainCopyBuffer.push_back( anim->spriteAnim[i] );
                     break;
                     }
+                nextParent = r->spriteParent[ nextParent ];
                 }
             }
         printf( "%d in copied chain\n", mChainCopyBuffer.size() );
+
+        if( inTarget == &mCopyChainRandButton ) {
+            // randomized phase
+            double phaseJump = randSource.getRandomBoundedDouble( 0, 1 );
+            
+            for( int i=0; i<mChainCopyBuffer.size(); i++ ) {
+                SpriteAnimationRecord *r = mChainCopyBuffer.getElement( i );
+                
+                if( r->xAmp > 0 )
+                    phaseOffset( &( r->xPhase ), phaseJump );
+                if( r->yAmp > 0 )
+                    phaseOffset( &( r->yPhase ), phaseJump );
+                if( r->rotPerSec > 0 )
+                    phaseOffset( &( r->rotPhase ), phaseJump );
+                if( r->rockAmp > 0 )
+                    phaseOffset( &( r->rockPhase ), phaseJump );
+                if( r->fadeOscPerSec > 0 )
+                    phaseOffset( &( r->fadePhase ), phaseJump );
+                }
+            }
         }
     else if( inTarget == &mCopyWalkButton ) {
         ObjectRecord *r = getObject( mCurrentObjectID );
@@ -1694,26 +1727,24 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             
             AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
             
-            while( newParent != -1 && chainIndex < chainLength ) {
-                int oldParent = newParent;
-                newParent = -1;
+            // look at parent chain up from each sprite and see
+            // if it leads to newParent
+            // if so, paste it
+            for( int i=0; i<r->numSprites && chainIndex < chainLength; i++ ) {
+                int nextParent = r->spriteParent[i];
             
-                for( int i=0; i<r->numSprites; i++ ) {
-                    if( r->spriteParent[i] == oldParent ) {
-                        // found a child
-                        
+                while( nextParent != -1 ) {
+                    if( nextParent == newParent ) {
                         if( i < anim->numSprites ) {
-                            
                             anim->spriteAnim[i] =
                                 mChainCopyBuffer.getElementDirect( 
                                     chainIndex );
                             
                             chainIndex++;
-                            }   
-                        
-                        newParent = i;
+                            }
                         break;
                         }
+                    nextParent = r->spriteParent[ nextParent ];
                     }
                 }
             }

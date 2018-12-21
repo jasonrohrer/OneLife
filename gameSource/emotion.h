@@ -28,6 +28,10 @@ typedef struct Emotion {
         // drawn on top of body, behind top-most arm
         // (drawn under tunic and bottom clothing, if there is any)
         int bodyEmot;
+
+        // drawn relative to head position
+        // drawn on top of everything (like a hat)
+        int headEmote;
         
     } Emotion;
 

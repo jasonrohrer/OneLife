@@ -2730,6 +2730,15 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             else if( workingSpriteFade[i] < 1 ) {
                 setDrawFade( workingSpriteFade[i] );
                 }
+
+            
+            char additive = false;
+            if( obj->spriteAdditiveBlend != NULL ) {
+                additive = obj->spriteAdditiveBlend[i];
+                }
+            if( additive ) {
+                toggleAdditiveBlend( true );
+                }
             
             int spriteID = obj->sprites[i];
             
@@ -2762,6 +2771,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             if( multiplicative ) {
                 toggleMultiplicativeBlend( false );
                 toggleAdditiveTextureColoring( false );
+                }
+            
+            if( additive ) {
+                toggleAdditiveBlend( false );
                 }
 
 
@@ -3028,6 +3041,38 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             }
         
         } 
+    
+
+    // head emot emot on top of everything
+    // if not
+    if( drawWithEmot != NULL &&
+        drawWithEmot->headEmote != 0 ) {
+            
+        char used;
+        drawObjectAnim( drawWithEmot->headEmote, 
+                        clothingAnimType, 
+                        inFrameTime,
+                        inAnimFade, 
+                        clothingFadeTargetAnimType,
+                        inFadeTargetFrameTime,
+                        inFrozenRotFrameTime,
+                        &used,
+                        endAnimType,
+                        endAnimType,
+                        add( animHeadPos, inPos ),
+                        animHeadRotDelta,
+                        true,
+                        inFlipH,
+                        -1,
+                        0,
+                        false,
+                        false,
+                        emptyClothing,
+                        NULL,
+                        0, NULL,
+                        NULL );
+        }
+
 
 
     if( inClothing.hat != NULL ) {

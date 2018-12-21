@@ -1,3 +1,5 @@
+#!/bin/sh
+
 cd /c/cpp/minorGems
 git pull --tags
 
