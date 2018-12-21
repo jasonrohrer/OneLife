@@ -994,6 +994,18 @@ float initObjectBankStep() {
                     }
                 
 
+                r->spriteAdditiveBlend = NULL;
+
+                if( strstr( lines[next], "spritesAdditiveBlend=" ) != NULL ) {
+                    r->spriteAdditiveBlend = new char[ r->numSprites ];
+                    memset( r->spriteAdditiveBlend, false, r->numSprites );
+                    sparseCommaLineToBoolArray( "spritesAdditiveBlend", 
+                                                lines[next],
+                                                r->spriteAdditiveBlend, 
+                                                r->numSprites );
+                    next++;
+                    }
+
 
                 sparseCommaLineToBoolArray( "headIndex", lines[next],
                                             r->spriteIsHead, r->numSprites );
@@ -1683,6 +1695,10 @@ static void freeObjectRecord( int inID ) {
                 delete [] idMap[inID]->spriteBehindPlayer;
                 }
 
+            if( idMap[inID]->spriteAdditiveBlend != NULL ) {
+                delete [] idMap[inID]->spriteAdditiveBlend;
+                }
+
 
             delete [] idMap[inID]->spriteSkipDrawing;
             
@@ -1764,6 +1780,10 @@ void freeObjectBank() {
                 delete [] idMap[i]->spriteBehindPlayer;
                 }
 
+            if( idMap[i]->spriteAdditiveBlend != NULL ) {
+                delete [] idMap[i]->spriteAdditiveBlend;
+                }
+
             delete [] idMap[i]->spriteSkipDrawing;
 
             //printf( "\n\nClearing sound usage for id %d\n", i );            
@@ -1825,6 +1845,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->rightBlockingRadius,
                         inObject->drawBehindPlayer,
                         inObject->spriteBehindPlayer,
+                        inObject->spriteAdditiveBlend,
                         biomeString,
                         inObject->mapChance,
                         inObject->heatValue,
@@ -2098,6 +2119,7 @@ int addObject( const char *inDescription,
                int inLeftBlockingRadius, int inRightBlockingRadius,
                char inDrawBehindPlayer,
                char *inSpriteBehindPlayer,
+               char *inSpriteAdditiveBlend,
                char *inBiomes,
                float inMapChance,
                int inHeatValue,
@@ -2161,6 +2183,16 @@ int addObject( const char *inDescription,
         for( int i=0; i<inNumSprites; i++ ) {
             if( inSpriteBehindPlayer[i] ) {
                 drawBehindIndicesList.push_back( i );
+                }
+            }
+        }
+
+    SimpleVector<int> additiveBlendIndicesList;
+    
+    if( inSpriteAdditiveBlend != NULL ) {    
+        for( int i=0; i<inNumSprites; i++ ) {
+            if( inSpriteAdditiveBlend[i] ) {
+                additiveBlendIndicesList.push_back( i );
                 }
             }
         }
@@ -2374,7 +2406,14 @@ int addObject( const char *inDescription,
                                               inNumSprites ) );
             }
         
-
+        if( additiveBlendIndicesList.size() > 0 ) {
+            lines.push_back(
+                boolArrayToSparseCommaString( "spritesAdditiveBlend",
+                                              inSpriteAdditiveBlend, 
+                                              inNumSprites ) );
+            }
+        
+        
         lines.push_back(
             boolArrayToSparseCommaString( "headIndex",
                                           inSpriteIsHead, inNumSprites ) );
@@ -2525,6 +2564,14 @@ int addObject( const char *inDescription,
         memcpy( r->spriteBehindPlayer, inSpriteBehindPlayer, inNumSprites );
         }
     
+    
+    r->spriteAdditiveBlend = NULL;
+    
+    if( additiveBlendIndicesList.size() > 0 ) {
+        r->spriteAdditiveBlend = new char[ inNumSprites ];
+        memcpy( r->spriteAdditiveBlend, inSpriteAdditiveBlend, inNumSprites );
+        }
+
     
     r->wide = ( r->leftBlockingRadius > 0 || r->rightBlockingRadius > 0 );
     
@@ -3126,7 +3173,15 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                     setDrawFade( 0.0f );
                     }
                 }
-            
+
+            char additive = false;
+            if( inObject->spriteAdditiveBlend != NULL ) {
+                additive = inObject->spriteAdditiveBlend[i];
+                }
+            if( additive ) {
+                toggleAdditiveBlend( true );
+                }
+
             drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
                         rot, 
                         logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
@@ -3135,7 +3190,9 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                 toggleMultiplicativeBlend( false );
                 toggleAdditiveTextureColoring( false );
                 }
-            
+            if( additive ) {
+                toggleAdditiveBlend( false );
+                }
             
             // this is the front-most drawn hand
             // in unanimated, unflipped object
@@ -4495,7 +4552,7 @@ char isSpriteVisibleAtAge( ObjectRecord *inObject,
     }
 
 
-
+// top-most body part that is flagged
 static int getBodyPartIndex( ObjectRecord *inObject,
                              char *inBodyPartFlagArray,
                              double inAge ) {
@@ -4503,7 +4560,7 @@ static int getBodyPartIndex( ObjectRecord *inObject,
         return 0;
         }
     
-    for( int i=0; i< inObject->numSprites; i++ ) {
+    for( int i = inObject->numSprites - 1; i >= 0; i-- ) {
         if( inBodyPartFlagArray[i] ) {
             
             if( ! isSpriteVisibleAtAge( inObject, i, inAge ) ) {

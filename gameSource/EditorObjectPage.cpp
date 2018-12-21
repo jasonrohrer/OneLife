@@ -138,6 +138,7 @@ EditorObjectPage::EditorObjectPage()
           mInvisibleWhenUnwornCheckbox( 290, 0, 2 ),
           mBehindSlotsCheckbox( -190, 0, 2 ),
           mBehindPlayerCheckbox( -190, 0, 2 ),
+          mAdditiveBlendCheckbox( -190, 0, 2 ),
           mAgeInField( smallFont, 
                        260,  -52, 6,
                        false,
@@ -365,13 +366,15 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mInvisibleWhenUnwornCheckbox );
     addComponent( &mBehindSlotsCheckbox );
     addComponent( &mBehindPlayerCheckbox );
+    addComponent( &mAdditiveBlendCheckbox );
     
     mInvisibleWhenWornCheckbox.setVisible( false );
     mInvisibleWhenUnwornCheckbox.setVisible( false );
 
     mBehindSlotsCheckbox.setVisible( false );
     mBehindPlayerCheckbox.setVisible( false );
-    
+    mAdditiveBlendCheckbox.setVisible( false );
+
     addComponent( &mAgeInField );
     addComponent( &mAgeOutField );
     
@@ -391,7 +394,7 @@ EditorObjectPage::EditorObjectPage()
     mInvisibleWhenUnwornCheckbox.addActionListener( this );
     mBehindSlotsCheckbox.addActionListener( this );
     mBehindPlayerCheckbox.addActionListener( this );
-    
+    mAdditiveBlendCheckbox.addActionListener( this );
 
     mAgeInField.addActionListener( this );
     mAgeOutField.addActionListener( this );
@@ -514,6 +517,7 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.spriteInvisibleWhenWorn = new int[ 0 ];
     mCurrentObject.spriteBehindSlots = new char[ 0 ];
     mCurrentObject.spriteBehindPlayer = new char[ 0 ];
+    mCurrentObject.spriteAdditiveBlend = new char[ 0 ];
 
     mCurrentObject.spriteIsHead = new char[ 0 ];
     mCurrentObject.spriteIsBody = new char[ 0 ];
@@ -683,7 +687,7 @@ EditorObjectPage::EditorObjectPage()
     mInvisibleWhenUnwornCheckbox.setPosition( 168, 197 );
     mBehindSlotsCheckbox.setPosition( -118, 217 );
     mBehindPlayerCheckbox.setPosition( -118, 197 );
-
+    mAdditiveBlendCheckbox.setPosition( -118, 300 );
 
     addKeyClassDescription( &mKeyLegend, "n/m", "Switch layers" );
     addKeyClassDescription( &mKeyLegend, "arrows", "Move layer" );
@@ -739,6 +743,7 @@ EditorObjectPage::~EditorObjectPage() {
     delete [] mCurrentObject.spriteInvisibleWhenWorn;
     delete [] mCurrentObject.spriteBehindSlots;
     delete [] mCurrentObject.spriteBehindPlayer;
+    delete [] mCurrentObject.spriteAdditiveBlend;
 
     delete [] mCurrentObject.spriteIsHead;
     delete [] mCurrentObject.spriteIsBody;
@@ -1060,9 +1065,14 @@ void EditorObjectPage::updateAgingPanel() {
         mBehindPlayerCheckbox.setVisible( true );
         mBehindPlayerCheckbox.setToggled( 
             mCurrentObject.spriteBehindPlayer[ mPickedObjectLayer ] );
+        
+        mAdditiveBlendCheckbox.setVisible( true );
+        mAdditiveBlendCheckbox.setToggled( 
+            mCurrentObject.spriteAdditiveBlend[ mPickedObjectLayer ] );
         }
     else {
         mBehindPlayerCheckbox.setVisible( false );
+        mAdditiveBlendCheckbox.setVisible( false );
         }
     }
 
@@ -1182,6 +1192,11 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
             mCurrentObject.spriteBehindPlayer, 
             mCurrentObject.numSprites * sizeof( char ) );
 
+    char *newSpriteAdditiveBlend = new char[ newNumSprites ];
+    memcpy( newSpriteAdditiveBlend, 
+            mCurrentObject.spriteAdditiveBlend, 
+            mCurrentObject.numSprites * sizeof( char ) );
+
 
     char *newSpriteIsHead = new char[ newNumSprites ];
     memcpy( newSpriteIsHead, 
@@ -1238,6 +1253,7 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
     newSpriteInvisibleWhenWorn[ mCurrentObject.numSprites ] = 0;
     newSpriteBehindSlots[ mCurrentObject.numSprites ] = false;
     newSpriteBehindPlayer[ mCurrentObject.numSprites ] = false;
+    newSpriteAdditiveBlend[ mCurrentObject.numSprites ] = false;
             
     newSpriteIsHead[ mCurrentObject.numSprites ] = false;
     newSpriteIsBody[ mCurrentObject.numSprites ] = false;
@@ -1262,6 +1278,7 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
     delete [] mCurrentObject.spriteInvisibleWhenWorn;
     delete [] mCurrentObject.spriteBehindSlots;
     delete [] mCurrentObject.spriteBehindPlayer;
+    delete [] mCurrentObject.spriteAdditiveBlend;
 
     delete [] mCurrentObject.spriteIsHead;
     delete [] mCurrentObject.spriteIsBody;
@@ -1290,6 +1307,8 @@ void EditorObjectPage::addNewSprite( int inSpriteID ) {
         newSpriteBehindSlots;
     mCurrentObject.spriteBehindPlayer = 
         newSpriteBehindPlayer;
+    mCurrentObject.spriteAdditiveBlend = 
+        newSpriteAdditiveBlend;
 
 
     mCurrentObject.spriteIsHead = newSpriteIsHead;
@@ -1410,6 +1429,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mRightBlockingRadiusField.getInt(),
                    mDrawBehindPlayerCheckbox.getToggled(),
                    mCurrentObject.spriteBehindPlayer,
+                   mCurrentObject.spriteAdditiveBlend,
                    biomes,
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
@@ -1557,6 +1577,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                    mRightBlockingRadiusField.getInt(),
                    mDrawBehindPlayerCheckbox.getToggled(),
                    mCurrentObject.spriteBehindPlayer,
+                   mCurrentObject.spriteAdditiveBlend,
                    biomes,
                    mMapChanceField.getFloat(),
                    mHeatValueField.getInt(),
@@ -1705,7 +1726,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
         mBehindPlayerCheckbox.setToggled( false );
         mBehindPlayerCheckbox.setVisible( false );
-        
+        mAdditiveBlendCheckbox.setVisible( false );
 
         delete [] mCurrentObject.slotPos;
         mCurrentObject.slotPos = new doublePair[ 0 ];
@@ -1986,6 +2007,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
                 mBehindSlotsCheckbox.setVisible( false );
                 mBehindPlayerCheckbox.setVisible( false );
+                mAdditiveBlendCheckbox.setVisible( false );
                 }
             }
         }
@@ -2298,6 +2320,10 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentObject.spriteBehindPlayer[ mPickedObjectLayer ]
             = mBehindPlayerCheckbox.getToggled();
         }
+    else if( inTarget == &mAdditiveBlendCheckbox ) {
+        mCurrentObject.spriteAdditiveBlend[ mPickedObjectLayer ]
+            = mAdditiveBlendCheckbox.getToggled();
+        }
     else if( inTarget == &mHeadLayerCheckbox ) {
         mCurrentObject.spriteIsHead[ mPickedObjectLayer ] =
             mHeadLayerCheckbox.getToggled();
@@ -2571,12 +2597,24 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                         pickedRecord->spriteBehindPlayer[i];
                     }
                 
+                mCurrentObject.spriteAdditiveBlend[i + oldNumSprites] = false;
+                if( pickedRecord->spriteAdditiveBlend != NULL ) {
+                    mCurrentObject.spriteAdditiveBlend[i + oldNumSprites] = 
+                        pickedRecord->spriteAdditiveBlend[i];
+                    }
+
                 
                 if( pickedRecord->spriteParent[i] != -1 ) {
                     mCurrentObject.spriteParent[i + oldNumSprites] = 
                         pickedRecord->spriteParent[i] + oldNumSprites;
                     }
                 }
+
+            // make bottom layer of inserted object the active layer
+            mPickedObjectLayer = oldNumSprites;
+            mPickedSlot = -1;
+            
+            pickedLayerChanged();
             }
         else if( objectID != -1 ) {
             ObjectRecord *pickedRecord = getObject( objectID );
@@ -2596,6 +2634,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] mCurrentObject.spriteInvisibleWhenWorn;
             delete [] mCurrentObject.spriteBehindSlots;
             delete [] mCurrentObject.spriteBehindPlayer;
+            delete [] mCurrentObject.spriteAdditiveBlend;
 
             delete [] mCurrentObject.spriteIsHead;
             delete [] mCurrentObject.spriteIsBody;
@@ -2702,6 +2741,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.spriteBehindPlayer = 
                 new char[ pickedRecord->numSprites ];
 
+            mCurrentObject.spriteAdditiveBlend = 
+                new char[ pickedRecord->numSprites ];
+
 
             mCurrentObject.spriteIsHead = 
                 new char[ pickedRecord->numSprites ];
@@ -2773,6 +2815,15 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             if( pickedRecord->spriteBehindPlayer != NULL ) {    
                 memcpy( mCurrentObject.spriteBehindPlayer, 
                         pickedRecord->spriteBehindPlayer,
+                        sizeof( char ) * pickedRecord->numSprites );
+                }
+
+            memset( mCurrentObject.spriteAdditiveBlend, false, 
+                    pickedRecord->numSprites );
+            
+            if( pickedRecord->spriteAdditiveBlend != NULL ) {    
+                memcpy( mCurrentObject.spriteAdditiveBlend, 
+                        pickedRecord->spriteAdditiveBlend,
                         sizeof( char ) * pickedRecord->numSprites );
                 }
             
@@ -2856,6 +2907,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mBehindPlayerCheckbox.setToggled( false );
             mBehindPlayerCheckbox.setVisible( false );
+            
+            mAdditiveBlendCheckbox.setToggled( false );
+            mAdditiveBlendCheckbox.setVisible( false );
             
             mCheckboxes[0]->setToggled( pickedRecord->containable );
             mCheckboxes[1]->setToggled( pickedRecord->permanent );
@@ -3222,7 +3276,8 @@ void EditorObjectPage::drawSpriteLayers( doublePair inDrawOffset,
 
         char multiplicative = 
             getUsesMultiplicativeBlending( mCurrentObject.sprites[i] );
-
+        char additive = mCurrentObject.spriteAdditiveBlend[i];
+        
         
         if( mHoverObjectLayer == i && mHoverStrength > 0 ) {
             blue = 1 - mHoverStrength;
@@ -3307,6 +3362,9 @@ void EditorObjectPage::drawSpriteLayers( doublePair inDrawOffset,
                 toggleAdditiveTextureColoring( true );
                 }
             }
+        if( additive ) {
+            toggleAdditiveBlend( true );
+            }
         
         if( ( inBehindSlots && mCurrentObject.spriteBehindSlots[i] )
             ||
@@ -3352,6 +3410,9 @@ void EditorObjectPage::drawSpriteLayers( doublePair inDrawOffset,
             if( mHoverObjectLayer == i && mHoverStrength > 0 ) {
                 toggleAdditiveTextureColoring( false );
                 }
+            }
+        if( additive ) {
+            toggleAdditiveBlend( false );
             }
         }    
     }
@@ -3900,6 +3961,14 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         
         smallFont->drawString( "Behind Player", pos, alignRight );
         }
+
+    if( mAdditiveBlendCheckbox.isVisible() ) {
+        pos = mAdditiveBlendCheckbox.getPosition();
+    
+        pos.x -= checkboxSep;
+        
+        smallFont->drawString( "Additive Blend", pos, alignRight );
+        }
     
 
     if( mSlotsLockedCheckbox.isVisible() ) {
@@ -4424,6 +4493,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     int *newSpriteInvisibleWhenWorn = new int[ newNumSprites ];
     char *newSpriteBehindSlots = new char[ newNumSprites ];
     char *newSpriteBehindPlayer = new char[ newNumSprites ];
+    char *newSpriteAdditiveBlend = new char[ newNumSprites ];
 
     char *newSpriteIsHead = new char[ newNumSprites ];
     char *newSpriteIsBody = new char[ newNumSprites ];
@@ -4454,6 +4524,8 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
                 mCurrentObject.spriteBehindSlots[i];
             newSpriteBehindPlayer[j] = 
                 mCurrentObject.spriteBehindPlayer[i];
+            newSpriteAdditiveBlend[j] = 
+                mCurrentObject.spriteAdditiveBlend[i];
             newSpriteIsHead[j] = mCurrentObject.spriteIsHead[i];
             newSpriteIsBody[j] = mCurrentObject.spriteIsBody[i];
             newSpriteIsBackFoot[j] = mCurrentObject.spriteIsBackFoot[i];
@@ -4477,6 +4549,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     delete [] mCurrentObject.spriteInvisibleWhenWorn;
     delete [] mCurrentObject.spriteBehindSlots;
     delete [] mCurrentObject.spriteBehindPlayer;
+    delete [] mCurrentObject.spriteAdditiveBlend;
 
     delete [] mCurrentObject.spriteIsHead;
     delete [] mCurrentObject.spriteIsBody;
@@ -4498,6 +4571,7 @@ void EditorObjectPage::clearUseOfSprite( int inSpriteID ) {
     mCurrentObject.spriteInvisibleWhenWorn = newSpriteInvisibleWhenWorn;
     mCurrentObject.spriteBehindSlots = newSpriteBehindSlots;
     mCurrentObject.spriteBehindPlayer = newSpriteBehindPlayer;
+    mCurrentObject.spriteAdditiveBlend = newSpriteAdditiveBlend;
 
     mCurrentObject.spriteIsHead = newSpriteIsHead;
     mCurrentObject.spriteIsBody = newSpriteIsBody;
@@ -5107,6 +5181,9 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         mCurrentObject.spriteBehindPlayer[mPickedObjectLayer] =
             mCurrentObject.spriteBehindPlayer[layerToDupe];
 
+        mCurrentObject.spriteAdditiveBlend[mPickedObjectLayer] =
+            mCurrentObject.spriteAdditiveBlend[layerToDupe];
+
         mCurrentObject.spriteUseVanish[mPickedObjectLayer] =
             mCurrentObject.spriteUseVanish[layerToDupe];
 
@@ -5232,6 +5309,11 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
             deleteFromCharArray( mCurrentObject.spriteBehindPlayer, 
                                  mCurrentObject.numSprites,
                                  mPickedObjectLayer );
+
+        char *newSpriteAdditiveBlend = 
+            deleteFromCharArray( mCurrentObject.spriteAdditiveBlend, 
+                                 mCurrentObject.numSprites,
+                                 mPickedObjectLayer );
         
         char *newSpriteIsHead = 
             deleteFromCharArray( mCurrentObject.spriteIsHead, 
@@ -5276,6 +5358,7 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
         delete [] mCurrentObject.spriteInvisibleWhenWorn;
         delete [] mCurrentObject.spriteBehindSlots;
         delete [] mCurrentObject.spriteBehindPlayer;
+        delete [] mCurrentObject.spriteAdditiveBlend;
         delete [] mCurrentObject.spriteIsHead;
         delete [] mCurrentObject.spriteIsBody;
         delete [] mCurrentObject.spriteIsBackFoot;
@@ -5300,6 +5383,8 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
             newSpriteBehindSlots;
         mCurrentObject.spriteBehindPlayer = 
             newSpriteBehindPlayer;
+        mCurrentObject.spriteAdditiveBlend = 
+            newSpriteAdditiveBlend;
         
         mCurrentObject.spriteIsHead = newSpriteIsHead;
         mCurrentObject.spriteIsBody = newSpriteIsBody;
@@ -5647,6 +5732,10 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                             mCurrentObject.spriteBehindPlayer[
                                 mPickedObjectLayer + 
                                 layerOffset];
+                        char tempAdditiveBlend = 
+                            mCurrentObject.spriteAdditiveBlend[
+                                mPickedObjectLayer + 
+                                layerOffset];
 
                         char tempIsHead = 
                             mCurrentObject.spriteIsHead[
@@ -5762,6 +5851,15 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mPickedObjectLayer];
                         mCurrentObject.spriteBehindPlayer[
                             mPickedObjectLayer] = tempBehindPlayer;
+
+
+                        mCurrentObject.spriteAdditiveBlend[
+                            mPickedObjectLayer 
+                            + layerOffset]
+                            = mCurrentObject.spriteAdditiveBlend[
+                                mPickedObjectLayer];
+                        mCurrentObject.spriteAdditiveBlend[
+                            mPickedObjectLayer] = tempAdditiveBlend;
 
 
                         mCurrentObject.spriteIsHead[ mPickedObjectLayer 
@@ -5898,6 +5996,10 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                             mCurrentObject.spriteBehindPlayer[
                                 mPickedObjectLayer - 
                                 layerOffset];
+                        char tempAdditiveBlend = 
+                            mCurrentObject.spriteAdditiveBlend[
+                                mPickedObjectLayer - 
+                                layerOffset];
 
 
                         char tempIsHead = 
@@ -6014,6 +6116,14 @@ void EditorObjectPage::specialKeyDown( int inKeyCode ) {
                                 mPickedObjectLayer];
                         mCurrentObject.spriteBehindPlayer[
                             mPickedObjectLayer] = tempBehindPlayer;
+
+                        mCurrentObject.spriteAdditiveBlend[
+                            mPickedObjectLayer 
+                            - layerOffset]
+                            = mCurrentObject.spriteAdditiveBlend[
+                                mPickedObjectLayer];
+                        mCurrentObject.spriteAdditiveBlend[
+                            mPickedObjectLayer] = tempAdditiveBlend;
 
 
 

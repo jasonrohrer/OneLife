@@ -296,6 +296,15 @@ unrelated "NO RELATION"
 
 dieCommand "/DIE"
 
+fpsCommand "/FPS"
+
+pingCommand "/PING"
+
+fps "FPS"
+
+ping "PING"
+
+ms "MS"
 
 youDied "YOU DIED"
 

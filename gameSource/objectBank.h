@@ -87,6 +87,10 @@ typedef struct ObjectRecord {
         char anySpritesBehindPlayer;
         char *spriteBehindPlayer;
         
+        // toggle for additive blend mode (glow) for sprites
+        char *spriteAdditiveBlend;
+        
+
         // biome numbers where this object will naturally occur according
         // to mapChance below
         int numBiomes;
@@ -444,6 +448,7 @@ int addObject( const char *inDescription,
                int inLeftBlockingRadius, int inRightBlockingRadius,
                char inDrawBehindPlayer,
                char *inSpriteBehindPlayer,
+               char *inSpriteAdditiveBlend,
                char *inBiomes,
                float inMapChance,
                int inHeatValue,

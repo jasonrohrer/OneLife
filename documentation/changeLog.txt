@@ -3,9 +3,54 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 182     ???
+Version 183     2018-December-20
 
 --Whoops... various headless helper apps failed to compile.  Fixed.
+
+--Added /FPS command in client to toggle FPS display while living a life.
+
+--Added /PING command in client for measuring round-trip latency to server.
+
+--Support for additive blend on sprite layers (candle glow).
+
+--When searching for a matching body part, now search top-down instead of
+  bottom-up (one new character has two sets of eyes in old age, and we want to
+  find the top ones).
+
+--On inserting one object into another in editor, default to bottom layer of
+  inserted object as picked layer.
+
+--Support for head layer of emote (on top of everything, like a hat).
+
+--Copy Child Chain in animation editor now copies entire child tree.
+
+--Added version of child tree copy button that randomizes phases.
+
+--More improvements to crafting hint filters.  Don't show transition matches
+  that produce a precursor as an unlisted side-effect (for example, making a
+  shoe leaves a needle in your hand, but this is irrelevant if you're trying to
+  craft something that has a needle as a precursor).  Don't limit shown
+  transition based on depth of current object.  Instead, cut off precursor
+  chain search from filter target if chain passes through current object.
+  This allows us to see that we need to put two pieces of cut rabbit fur
+  together to make four in order to make bellows (even though four pieces is
+  shallower in the crafting tree than two pieces).
+
+
+
+
+
+Server Fixes
+
+--AllowedEmotRange server-side to block clients from manually requesting
+  jaundice emot.  Related to #170.
+
+--Fixed bug in computing decay time for wound.
+
+--Improved semantics of wound-and-weapon transitions in terms of how they
+  affect what's left in the hand of the perpetrator (wound transition can now
+  specify a held-weapon change if no other trans is present).
+
 
 
 

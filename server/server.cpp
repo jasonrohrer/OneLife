@@ -9001,6 +9001,7 @@ int main() {
                                                   0 );
 
                                     TransRecord *rHit = NULL;
+                                    TransRecord *woundHit = NULL;
                                     
                                     if( someoneHit ) {
                                         // last use on target specifies
@@ -9020,7 +9021,7 @@ int main() {
 
                                         // last use on actor specifies
                                         // what is left in victim's hand
-                                        TransRecord *woundHit = 
+                                        woundHit = 
                                             getPTrans( nextPlayer->holdingID, 
                                                       0, true, false );
                                         
@@ -9055,7 +9056,7 @@ int main() {
                                                 holdingSomethingNew( 
                                                     hitPlayer );
                                                 setFreshEtaDecayForHeld( 
-                                                    nextPlayer );
+                                                    hitPlayer );
                                                 }
                                             
                                             
@@ -9106,6 +9107,15 @@ int main() {
                                         // leave bloody knife or
                                         // whatever in hand
                                         nextPlayer->holdingID = rHit->newActor;
+                                        holdingSomethingNew( nextPlayer,
+                                                             oldHolding);
+                                        }
+                                    else if( woundHit != NULL ) {
+                                        // result of hit on held weapon 
+                                        // could also be
+                                        // specified in wound trans
+                                        nextPlayer->holdingID = 
+                                            woundHit->newActor;
                                         holdingSomethingNew( nextPlayer,
                                                              oldHolding);
                                         }
@@ -11014,14 +11024,15 @@ int main() {
                              ! nextPlayer->emotFrozen ) {
                         // ignore new EMOT requres from player if emot
                         // frozen
-
-                        // send update even if action fails (to let them
-                        // know that action is over)
-                        newEmotPlayerIDs.push_back( nextPlayer->id );
                         
-                        newEmotIndices.push_back( m.i );
-                        // player-requested emots have no specific TTL
-                        newEmotTTLs.push_back( 0 );
+                        if( m.i <= SettingsManager::getIntSetting( 
+                                "allowedEmotRange", 6 ) ) {
+                            newEmotPlayerIDs.push_back( nextPlayer->id );
+                            
+                            newEmotIndices.push_back( m.i );
+                            // player-requested emots have no specific TTL
+                            newEmotTTLs.push_back( 0 );
+                            }
                         } 
                     }
                 
