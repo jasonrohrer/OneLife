@@ -8,7 +8,7 @@ A lightly modified client for [One Hour One Life](http://onehouronelife.com), a 
             <td width="16%" align="center"><a href="https://github.com/Awbz/OneLife#requirements">Requirements</a></td>
             <td width="16%" align="center"><a href="https://github.com/Awbz/OneLife#installation">Installation</a></td>
             <td width="16%" align="center"><a href="https://github.com/Awbz/OneLife#usage">Usage</a></td>
-            <td width="16%" align="center"><a href="https://github.com/Awbz/OneLife#added_features">Added Features</a></td>
+            <td width="16%" align="center"><a href="https://github.com/Awbz/OneLife#added-features">Added Features</a></td>
             <td width="16%" align="center"><a href="https://github.com/Awbz/OneLife#credits">Credits</a></td>
             <td width="16%" align="center"><a href="https://github.com/Awbz/OneLife#license">License</a></td>
         </tr>
