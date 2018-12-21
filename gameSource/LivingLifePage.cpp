@@ -18817,7 +18817,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         }
 
 
-    if( isShiftKeyDown() && ( isalpha( inASCII ) || inASCII == 32 ) ) {
+    if( isShiftKeyDown() && /*( isalpha( inASCII ) ||*/ inASCII == 32 ) /*)*/ {
 		if( ! mSayField.isFocused() ) {
             mSayField.focus();
         }
