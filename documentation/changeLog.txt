@@ -26,6 +26,17 @@ Version 182     ???
 
 --Added version of child tree copy button that randomizes phases.
 
+--More improvements to crafting hint filters.  Don't show transition matches
+  that produce a precursor as an unlisted side-effect (for example, making a
+  shoe leaves a needle in your hand, but this is irrelevant if you're trying to
+  craft something that has a needle as a precursor).  Don't limit shown
+  transition based on depth of current object.  Instead, cut off precursor
+  chain search from filter target if chain passes through current object.
+  This allows us to see that we need to put two pieces of cut rabbit fur
+  together to make four in order to make bellows (even though four pieces is
+  shallower in the crafting tree than two pieces).
+
+
 
 
 
