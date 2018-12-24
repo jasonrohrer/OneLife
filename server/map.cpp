@@ -3091,7 +3091,7 @@ static void rememberDummy( FILE *inFile, int inX, int inY,
 
 
 
-void freeMap() {
+void freeMap( char inSkipCleanup ) {
     printf( "%d calls to getBaseMap\n", getBaseMapCallCount );
 
     skipTrackingMapChanges = true;
@@ -3102,7 +3102,7 @@ void freeMap() {
         }
 
 
-    if( dbOpen ) {
+    if( dbOpen && ! inSkipCleanup ) {
         
         AppLog::infoF( "Cleaning up map database on server shutdown." );
         
@@ -3287,32 +3287,44 @@ void freeMap() {
         
         
         DB_close( &db );
+        dbOpen = false;
         }
-
+    else if( dbOpen ) {
+        // just close with no cleanup
+        DB_close( &db );
+        dbOpen = false;
+        }
+    
     if( timeDBOpen ) {
         DB_close( &timeDB );
+        timeDBOpen = false;
         }
 
     if( biomeDBOpen ) {
         DB_close( &biomeDB );
+        biomeDBOpen = false;
         }
 
 
     if( floorDBOpen ) {
         DB_close( &floorDB );
+        floorDBOpen = false;
         }
 
     if( floorTimeDBOpen ) {
         DB_close( &floorTimeDB );
+        floorTimeDBOpen = false;
         }
 
 
     if( eveDBOpen ) {
         DB_close( &eveDB );
+        eveDBOpen = false;
         }
 
     if( metaDBOpen ) {
         DB_close( &metaDB );
+        metaDBOpen = false;
         }
     
 
@@ -3362,6 +3374,7 @@ void wipeMapFiles() {
     deleteFileByName( "map.db" );
     deleteFileByName( "mapTime.db" );
     deleteFileByName( "playerStats.db" );
+    deleteFileByName( "meta.db" );
     }
 
 

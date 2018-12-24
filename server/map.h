@@ -35,7 +35,7 @@ typedef struct ChangePosition {
 char initMap();
 
 
-void freeMap();
+void freeMap( char inSkipCleanup = false );
 
 
 // can only be called before initMap or after freeMap

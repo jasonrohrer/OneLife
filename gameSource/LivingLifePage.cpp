@@ -778,6 +778,7 @@ typedef enum messageType {
     CURSE_SCORE,
     NAMES,
     APOCALYPSE,
+    APOCALYPSE_DONE,
     DYING,
     HEALED,
     MONUMENT_CALL,
@@ -867,6 +868,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "AP" ) == 0 ) {
         returnValue = APOCALYPSE;
+        }
+    else if( strcmp( copy, "AD" ) == 0 ) {
+        returnValue = APOCALYPSE_DONE;
         }
     else if( strcmp( copy, "DY" ) == 0 ) {
         returnValue = DYING;
@@ -10235,6 +10239,10 @@ void LivingLifePage::step() {
         else if( type == APOCALYPSE ) {
             apocalypseDisplayProgress = 0;
             apocalypseInProgress = true;
+            }
+        else if( type == APOCALYPSE_DONE ) {
+            apocalypseDisplayProgress = 0;
+            apocalypseInProgress = false;
             }
         else if( type == MONUMENT_CALL ) {
             int posX, posY, monumentID;

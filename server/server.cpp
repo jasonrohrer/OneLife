@@ -96,6 +96,8 @@ GridPos apocalypseLocation = { 0, 0 };
 int lastApocalypseNumber = 0;
 double apocalypseStartTime = 0;
 char apocalypseStarted = false;
+char postApocalypseStarted = false;
+
 
 double remoteApocalypseCheckInterval = 30;
 double lastRemoteApocalypseCheckTime = 0;
@@ -467,6 +469,49 @@ typedef struct LiveObject {
 
 SimpleVector<LiveObject> players;
 SimpleVector<LiveObject> tutorialLoadingPlayers;
+
+
+
+// returns a person to their natural state
+static void backToBasics( LiveObject *inPlayer ) {
+    LiveObject *p = inPlayer;
+
+    // do not heal dying people
+    if( ! p->holdingWound && p->holdingID > 0 ) {
+        
+        p->holdingID = 0;
+        
+        p->holdingEtaDecay = 0;
+        
+        p->heldOriginValid = false;
+        p->heldTransitionSourceID = -1;
+        
+        
+        p->numContained = 0;
+        if( p->containedIDs != NULL ) {
+            delete [] p->containedIDs;
+            delete [] p->containedEtaDecays;
+            p->containedIDs = NULL;
+        p->containedEtaDecays = NULL;
+            }
+        
+        if( p->subContainedIDs != NULL ) {
+            delete [] p->subContainedIDs;
+            delete [] p->subContainedEtaDecays;
+            p->subContainedIDs = NULL;
+            p->subContainedEtaDecays = NULL;
+            }
+        }
+        
+        
+    p->clothing = getEmptyClothingSet();
+    
+    for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+        p->clothingEtaDecay[c] = 0;
+        p->clothingContained[c].deleteAll();
+        p->clothingContainedEtaDecays[c].deleteAll();
+        }
+    }
 
 
 
@@ -5980,7 +6025,9 @@ void apocalypseStep() {
 
             // don't actually send request to reflector if apocalypse
             // not possible locally
-            if( SettingsManager::getIntSetting( "apocalypsePossible", 0 ) ) {
+            // or if broadcast mode disabled
+            if( SettingsManager::getIntSetting( "apocalypsePossible", 0 ) &&
+                SettingsManager::getIntSetting( "apocalypseBroadcast", 0 ) ) {
 
                 printf( "Checking for remote apocalypse\n" );
             
@@ -6051,10 +6098,17 @@ void apocalypseStep() {
                 apocalypseTriggered = false;
                 return;
                 }
+            
+            AppLog::info( "Apocalypse triggerered, starting it" );
 
-            if( !apocalypseRemote && 
+
+            // only broadcast to reflector if apocalypseBroadcast set
+            if( !apocalypseRemote &&
+                SettingsManager::getIntSetting( "apocalypseBroadcast", 0 ) &&
                 apocalypseRequest == NULL && reflectorURL != NULL ) {
                 
+                AppLog::info( "Apocalypse broadcast set, telling reflector" );
+
                 
                 char *reflectorSharedSecret = 
                     SettingsManager::
@@ -6148,6 +6202,7 @@ void apocalypseStep() {
             
             apocalypseStartTime = Time::getCurrentTime();
             apocalypseStarted = true;
+            postApocalypseStarted = false;
             }
 
         if( apocalypseRequest != NULL ) {
@@ -6185,31 +6240,89 @@ void apocalypseStep() {
         if( apocalypseRequest == NULL &&
             Time::getCurrentTime() - apocalypseStartTime >= 7 ) {
             
-            for( int i=0; i<players.size(); i++ ) {
-                LiveObject *nextPlayer = players.getElement( i );
+            if( ! postApocalypseStarted  ) {
+                AppLog::infoF( "Enough warning time, %d players still alive",
+                               players.size() );
                 
-                if( ! nextPlayer->error ) {
-                    nextPlayer->error = true;
-                    setDeathReason( nextPlayer, "apocalypse" );
-                    }
-                }
-
-            if( players.size() == 0 ) {
-                // apocalypse over
-
+                
+                double startTime = Time::getCurrentTime();
+                
                 // clear map
-                freeMap();
-                
+                freeMap( true );
+
+                AppLog::infoF( "Apocalypse freeMap took %f sec",
+                               Time::getCurrentTime() - startTime );
                 wipeMapFiles();
+
+                AppLog::infoF( "Apocalypse wipeMapFiles took %f sec",
+                               Time::getCurrentTime() - startTime );
                 
                 initMap();
-
+                
+                AppLog::infoF( "Apocalypse initMap took %f sec",
+                               Time::getCurrentTime() - startTime );
+                
 
                 lastRemoteApocalypseCheckTime = curTime;
-                apocalypseStarted = false;
-                apocalypseTriggered = false;
-                apocalypseRemote = false;
+                
+                for( int i=0; i<players.size(); i++ ) {
+                    LiveObject *nextPlayer = players.getElement( i );
+                    backToBasics( nextPlayer );
+                    }
+                
+                // send everyone update about everyone
+                for( int i=0; i<players.size(); i++ ) {
+                    LiveObject *nextPlayer = players.getElement( i );
+                    nextPlayer->firstMessageSent = false;
+                    nextPlayer->firstMapSent = false;
+                    }
+
+                postApocalypseStarted = true;
                 }
+            else {
+                // make sure all players have gotten map and update
+                char allMapAndUpdate = true;
+                
+                for( int i=0; i<players.size(); i++ ) {
+                    LiveObject *nextPlayer = players.getElement( i );
+                    if( ! nextPlayer->firstMapSent ) {
+                        allMapAndUpdate = false;
+                        break;
+                        }
+                    }
+                
+                if( allMapAndUpdate ) {
+                    
+                    // send all players the AD message
+                    const char *message = "AD\n#";
+                    int messageLength = strlen( message );
+            
+                    for( int i=0; i<players.size(); i++ ) {
+                        LiveObject *nextPlayer = players.getElement( i );
+                        if( !nextPlayer->error && nextPlayer->connected ) {
+                    
+                            int numSent = 
+                                nextPlayer->sock->send( 
+                                    (unsigned char*)message, 
+                                    messageLength,
+                                    false, false );
+                            
+                            nextPlayer->gotPartOfThisFrame = true;
+                    
+                            if( numSent != messageLength ) {
+                                setPlayerDisconnected( nextPlayer, 
+                                                       "Socket write failed" );
+                                }
+                            }
+                        }
+
+                    // totally done
+                    apocalypseStarted = false;
+                    apocalypseTriggered = false;
+                    apocalypseRemote = false;
+                    postApocalypseStarted = false;
+                    }
+                }    
             }
         }
     }

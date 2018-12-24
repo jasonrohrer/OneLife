@@ -137,6 +137,8 @@ NAME (NM)
 
 APOCALYPSE (AP)
 
+APOCALYPSE_DONE (AD)
+
 DYING (DY)
 
 HEALED (HE)
@@ -540,8 +542,16 @@ last_name may be ommitted.
 AP
 #
 
-Indicates that an apocalypse is pending (and death is coming).  Gives client
-time to show a visual effect before death-by-apocalypse happens.
+Indicates that an apocalypse is pending.  Gives client
+time to show a visual effect.
+
+
+
+AD
+#
+
+Indicates that an apocalypse is now over.  Client should go back to displaying
+world.
 
 
 
