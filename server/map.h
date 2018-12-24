@@ -52,7 +52,10 @@ void resetEveRadius();
 
 
 // gets new Eve position on outskirts of civilization
-void getEvePosition( char *inEmail, int *outX, int *outY );
+// if inAllowRespawn, this player's last Eve old-age-death will be
+// considered.
+void getEvePosition( char *inEmail, int *outX, int *outY, 
+                     char inAllowRespawn = true );
 
 
 // save recent placements on Eve's death so that this player can spawn

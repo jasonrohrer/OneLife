@@ -6214,7 +6214,8 @@ doublePair computeRecentCampAve( int *outNumPosFound ) {
 
 
 
-void getEvePosition( char *inEmail, int *outX, int *outY ) {
+void getEvePosition( char *inEmail, int *outX, int *outY, 
+                     char inAllowRespawn ) {
 
     int currentEveRadius = eveRadius;
 
@@ -6229,7 +6230,7 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
     
     int result = eveDBGet( inEmail, &pX, &pY, &pR );
     
-    if( result == 1 && pR > 0 ) {
+    if( inAllowRespawn && result == 1 && pR > 0 ) {
         printf( "Found camp center (%d,%d) r=%d in db for %s\n",
                 pX, pY, pR, inEmail );
         
@@ -6239,7 +6240,7 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
         }
     else {
         // player has never been an Eve that survived to old age before
-        
+        // or such repawning forbidden by caller
 
         // New method:
         GridPos eveLocToUse = eveLocation;

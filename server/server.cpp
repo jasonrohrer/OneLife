@@ -4649,9 +4649,21 @@ int processLoggedInPlayer( Socket *inSock,
         // tutorial didn't happen if not placed
         newObject.isTutorial = false;
         
+        char allowEveRespawn = true;
+        
+        if( numOfAge >= 4 ) {
+            // there are at least 4 fertile females on the server
+            // why is this player spawning as Eve?
+            // they must be on lineage ban everywhere
+            // (and they are NOT a solo player on an empty server)
+            // don't allow them to spawn back at their last old-age Eve death
+            // location.
+            allowEveRespawn = false;
+            }
+
         // else starts at civ outskirts (lone Eve)
         int startX, startY;
-        getEvePosition( newObject.email, &startX, &startY );
+        getEvePosition( newObject.email, &startX, &startY, allowEveRespawn );
 
         if( inCurseStatus.curseLevel > 0 ) {
             // keep cursed players away
