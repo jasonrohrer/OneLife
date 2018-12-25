@@ -4445,30 +4445,70 @@ int processLoggedInPlayer( Socket *inSock,
             // pick random mother from a weighted distribution based on 
             // each mother's temperature
             
+            // AND each mother's current YUM multiplier
+            
+            int maxYumMult = 1;
+
+            for( int i=0; i<parentChoices.size(); i++ ) {
+                LiveObject *p = parentChoices.getElementDirect( i );
+                
+                int yumMult = p->yummyFoodChain.size() - 1;
+                
+                if( yumMult < 0 ) {
+                    yumMult = 0;
+                    }
+                
+                if( yumMult > maxYumMult ) {
+                    maxYumMult = yumMult;
+                    }
+                }
             
             // 0.5 temp is worth .5 weight
             // 1.0 temp and 0 are worth 0 weight
             
-            double totalTemp = 0;
+            // max YumMult worth same that perfect temp is worth (0.5 weight)
+
+            double totalWeight = 0;
             
             for( int i=0; i<parentChoices.size(); i++ ) {
                 LiveObject *p = parentChoices.getElementDirect( i );
 
-                totalTemp += 0.5 - abs( p->heat - 0.5 );
+                // temp part of weight
+                totalWeight += 0.5 - fabs( p->heat - 0.5 );
+                
+
+                int yumMult = p->yummyFoodChain.size() - 1;
+                                
+                if( yumMult < 0 ) {
+                    yumMult = 0;
+                    }
+
+                // yum mult part of weight
+                totalWeight += 0.5 * yumMult / (double) maxYumMult;
                 }
 
             double choice = 
-                randSource.getRandomBoundedDouble( 0, totalTemp );
+                randSource.getRandomBoundedDouble( 0, totalWeight );
             
             
-            totalTemp = 0;
+            totalWeight = 0;
             
             for( int i=0; i<parentChoices.size(); i++ ) {
                 LiveObject *p = parentChoices.getElementDirect( i );
 
-                totalTemp += 0.5 - abs( p->heat - 0.5 );
-                
-                if( totalTemp >= choice ) {
+                totalWeight += 0.5 - fabs( p->heat - 0.5 );
+
+
+                int yumMult = p->yummyFoodChain.size() - 1;
+                                
+                if( yumMult < 0 ) {
+                    yumMult = 0;
+                    }
+
+                // yum mult part of weight
+                totalWeight += 0.5 * yumMult / (double) maxYumMult;
+
+                if( totalWeight >= choice ) {
                     parent = p;
                     break;
                     }                

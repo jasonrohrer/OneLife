@@ -15140,7 +15140,7 @@ void LivingLifePage::step() {
                 ( screenCenterPlayerOffsetX > 0 &&
                   cameraFollowsObject->currentMoveDirection.x > 0 ) ) {
                 
-                moveScale += abs( screenCenterPlayerOffsetX );
+                moveScale += fabs( screenCenterPlayerOffsetX );
                 }
             
             screenCenterPlayerOffsetX -= 
@@ -15154,7 +15154,7 @@ void LivingLifePage::step() {
                 ( screenCenterPlayerOffsetY > 0 &&
                   cameraFollowsObject->currentMoveDirection.y > 0 ) ) {
                 
-                moveScale += abs( screenCenterPlayerOffsetY );
+                moveScale += fabs( screenCenterPlayerOffsetY );
                 }
             
 
@@ -15246,8 +15246,8 @@ void LivingLifePage::step() {
             moveSpeedFactor = 1 * frameRateFactor;
             }
 
-        if( abs( dir.x ) > maxRX ) {
-            double moveScale = moveSpeedFactor * sqrt( abs(dir.x) - maxRX );
+        if( fabs( dir.x ) > maxRX ) {
+            double moveScale = moveSpeedFactor * sqrt( fabs(dir.x) - maxRX );
 
             doublePair moveStep = mult( normalize( dir ), moveScale );
             
@@ -15255,13 +15255,13 @@ void LivingLifePage::step() {
 
             moveStep.x = lrint( moveStep.x );
                         
-            if( abs( moveStep.x ) > 0 ) {
+            if( fabs( moveStep.x ) > 0 ) {
                 lastScreenViewCenter.x += moveStep.x;
                 viewChange = true;
                 }
             }
-        if( abs( dir.y ) > maxRY ) {
-            double moveScale = moveSpeedFactor * sqrt( abs(dir.y) - maxRY );
+        if( fabs( dir.y ) > maxRY ) {
+            double moveScale = moveSpeedFactor * sqrt( fabs(dir.y) - maxRY );
 
             doublePair moveStep = mult( normalize( dir ), moveScale );
             
@@ -15269,7 +15269,7 @@ void LivingLifePage::step() {
 
             moveStep.y = lrint( moveStep.y );
                         
-            if( abs( moveStep.y ) > 0 ) {
+            if( fabs( moveStep.y ) > 0 ) {
                 lastScreenViewCenter.y += moveStep.y;
                 viewChange = true;
                 }
@@ -15638,8 +15638,8 @@ void LivingLifePage::step() {
                         mouseDownFrames >  
                         minMouseDownFrames / frameRateFactor ) {
                         
-                        double absX = abs( delta.x );
-                        double absY = abs( delta.y );
+                        double absX = fabs( delta.x );
+                        double absY = fabs( delta.y );
                         
 
                         if( absX > CELL_D * 1 

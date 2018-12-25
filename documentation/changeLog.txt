@@ -17,6 +17,20 @@ Version 185     ???
   more-developed village later, which is why there was so much player
   confusion around this mechanic.
 
+--Again, whoa!  Huge bug in temperature-based weighting for mother fertility.
+  Was using abs instead of fabs in formula, resulting in all mothers having the
+  same weight, regardless of temperature.
+
+--Added yum-multiplier component to fertility weighting (having the highest yum
+  multiplier on the server is equivalent in weight to having a perfect-middle
+  temperature, and having both results in double weight---warm mothers who are
+  eating a variety of foods will be much more likely to have babies than cold
+  mono-diet mothers).
+
+--Fixed other places in code where abs was used instead of fabs.  These were
+  likely not causing bugs.
+
+
 
 
 
