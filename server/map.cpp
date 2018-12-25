@@ -6372,7 +6372,7 @@ void getEvePosition( char *inEmail, int *outX, int *outY,
 
 
 
-void mapEveDeath( char *inEmail, double inAge ) {
+void mapEveDeath( char *inEmail, double inAge, GridPos inDeathMapPos ) {
     
     // record exists?
 
@@ -6395,9 +6395,6 @@ void mapEveDeath( char *inEmail, double inAge ) {
         }
     
 
-    int num = 0;
-    
-    doublePair ave = computeRecentCampAve( &num );
     
     int result = eveDBGet( inEmail, &pX, &pY, &pR );
     
@@ -6418,25 +6415,13 @@ void mapEveDeath( char *inEmail, double inAge ) {
         // not found in DB
         
         // must overwrite no matter what
-        pX = lrint( ave.x );
-        pY = lrint( ave.y );
-
         pR = eveRadiusStart;
         }
-    
-    
-    if( num > 0 ) {
-        // overwrite middle from last life with new middle of placements
-        // from this life
-        pX = lrint( ave.x );
-        pY = lrint( ave.y );
-        }
-    else {
-        // otherwise, leave last life's average alone
-        printf( "Logging Eve death:   "
-                "Keeping camp average (%d,%d) from last life\n",
-                pX, pY );
-        }
+
+
+    // their next camp will start where they last died
+    pX = inDeathMapPos.x;
+    pY = inDeathMapPos.y;
     
 
     printf( "Remembering Eve's camp in database (%d,%d) r=%d for %s\n",

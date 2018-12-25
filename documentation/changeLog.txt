@@ -11,6 +11,13 @@ Version 185     ???
 --Eve old-age death-location respawn blocked if there are 4 or more fertile
   females on server.  That is supposed to be a solo-play mechanic.
 
+--Whoa!  Huge bug in Eve death location for Eve respawn.  Was not actually
+  using her death location, but instead the weighted average of recent
+  placements on the map.  This would make her respawn in some other
+  more-developed village later, which is why there was so much player
+  confusion around this mechanic.
+
+
 
 
 Version 183     2018-December-20
