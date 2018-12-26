@@ -30,6 +30,8 @@ Version 185     ???
 --Fixed other places in code where abs was used instead of fabs.  These were
   likely not causing bugs.
 
+--Fixed bug in server code where apocalypse setting blocked monument triggers.
+
 
 
 

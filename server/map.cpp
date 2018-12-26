@@ -3567,7 +3567,7 @@ static void dbPut( int inX, int inY, int inSlot, int inValue,
             apocalypseLocation.y = inY;
             }
         }
-    else if( inValue > 0 && inSlot == 0 && inSubCont == 0  ) {
+    if( inValue > 0 && inSlot == 0 && inSubCont == 0  ) {
         
         int status = getMonumentStatus( inValue );
         
