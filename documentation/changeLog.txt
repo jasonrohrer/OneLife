@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 185     ???
+Version 185     2018-December-27
 
 --Survivable apocalypse (full map wipe while players are still alive) that
   doesn't spread to other servers.
