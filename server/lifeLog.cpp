@@ -206,7 +206,9 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
     
     if( inEve ) {
         
-        mapEveDeath( inPlayerEmail, inAge );
+        GridPos deathPos = { inMapX, inMapY };
+        
+        mapEveDeath( inPlayerEmail, inAge, deathPos );
         
         if( inAge > 20 ) {
             resetEveRadius();

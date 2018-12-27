@@ -3,6 +3,39 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 185     2018-December-27
+
+--Survivable apocalypse (full map wipe while players are still alive) that
+  doesn't spread to other servers.
+
+--Eve old-age death-location respawn blocked if there are 4 or more fertile
+  females on server.  That is supposed to be a solo-play mechanic.
+
+--Whoa!  Huge bug in Eve death location for Eve respawn.  Was not actually
+  using her death location, but instead the weighted average of recent
+  placements on the map.  This would make her respawn in some other
+  more-developed village later, which is why there was so much player
+  confusion around this mechanic.
+
+--Again, whoa!  Huge bug in temperature-based weighting for mother fertility.
+  Was using abs instead of fabs in formula, resulting in all mothers having the
+  same weight, regardless of temperature.
+
+--Added yum-multiplier component to fertility weighting (having the highest yum
+  multiplier on the server is equivalent in weight to having a perfect-middle
+  temperature, and having both results in double weight---warm mothers who are
+  eating a variety of foods will be much more likely to have babies than cold
+  mono-diet mothers).
+
+--Fixed other places in code where abs was used instead of fabs.  These were
+  likely not causing bugs.
+
+--Fixed bug in server code where apocalypse setting blocked monument triggers.
+
+
+
+
+
 Version 183     2018-December-20
 
 --Whoops... various headless helper apps failed to compile.  Fixed.

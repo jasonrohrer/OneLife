@@ -98,6 +98,8 @@ GridPos apocalypseLocation = { 0, 0 };
 int lastApocalypseNumber = 0;
 double apocalypseStartTime = 0;
 char apocalypseStarted = false;
+char postApocalypseStarted = false;
+
 
 double remoteApocalypseCheckInterval = 30;
 double lastRemoteApocalypseCheckTime = 0;
@@ -469,6 +471,49 @@ typedef struct LiveObject {
 
 SimpleVector<LiveObject> players;
 SimpleVector<LiveObject> tutorialLoadingPlayers;
+
+
+
+// returns a person to their natural state
+static void backToBasics( LiveObject *inPlayer ) {
+    LiveObject *p = inPlayer;
+
+    // do not heal dying people
+    if( ! p->holdingWound && p->holdingID > 0 ) {
+        
+        p->holdingID = 0;
+        
+        p->holdingEtaDecay = 0;
+        
+        p->heldOriginValid = false;
+        p->heldTransitionSourceID = -1;
+        
+        
+        p->numContained = 0;
+        if( p->containedIDs != NULL ) {
+            delete [] p->containedIDs;
+            delete [] p->containedEtaDecays;
+            p->containedIDs = NULL;
+        p->containedEtaDecays = NULL;
+            }
+        
+        if( p->subContainedIDs != NULL ) {
+            delete [] p->subContainedIDs;
+            delete [] p->subContainedEtaDecays;
+            p->subContainedIDs = NULL;
+            p->subContainedEtaDecays = NULL;
+            }
+        }
+        
+        
+    p->clothing = getEmptyClothingSet();
+    
+    for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+        p->clothingEtaDecay[c] = 0;
+        p->clothingContained[c].deleteAll();
+        p->clothingContainedEtaDecays[c].deleteAll();
+        }
+    }
 
 
 
@@ -4402,30 +4447,70 @@ int processLoggedInPlayer( Socket *inSock,
             // pick random mother from a weighted distribution based on 
             // each mother's temperature
             
+            // AND each mother's current YUM multiplier
+            
+            int maxYumMult = 1;
+
+            for( int i=0; i<parentChoices.size(); i++ ) {
+                LiveObject *p = parentChoices.getElementDirect( i );
+                
+                int yumMult = p->yummyFoodChain.size() - 1;
+                
+                if( yumMult < 0 ) {
+                    yumMult = 0;
+                    }
+                
+                if( yumMult > maxYumMult ) {
+                    maxYumMult = yumMult;
+                    }
+                }
             
             // 0.5 temp is worth .5 weight
             // 1.0 temp and 0 are worth 0 weight
             
-            double totalTemp = 0;
+            // max YumMult worth same that perfect temp is worth (0.5 weight)
+
+            double totalWeight = 0;
             
             for( int i=0; i<parentChoices.size(); i++ ) {
                 LiveObject *p = parentChoices.getElementDirect( i );
 
-                totalTemp += 0.5 - abs( p->heat - 0.5 );
+                // temp part of weight
+                totalWeight += 0.5 - fabs( p->heat - 0.5 );
+                
+
+                int yumMult = p->yummyFoodChain.size() - 1;
+                                
+                if( yumMult < 0 ) {
+                    yumMult = 0;
+                    }
+
+                // yum mult part of weight
+                totalWeight += 0.5 * yumMult / (double) maxYumMult;
                 }
 
             double choice = 
-                randSource.getRandomBoundedDouble( 0, totalTemp );
+                randSource.getRandomBoundedDouble( 0, totalWeight );
             
             
-            totalTemp = 0;
+            totalWeight = 0;
             
             for( int i=0; i<parentChoices.size(); i++ ) {
                 LiveObject *p = parentChoices.getElementDirect( i );
 
-                totalTemp += 0.5 - abs( p->heat - 0.5 );
-                
-                if( totalTemp >= choice ) {
+                totalWeight += 0.5 - fabs( p->heat - 0.5 );
+
+
+                int yumMult = p->yummyFoodChain.size() - 1;
+                                
+                if( yumMult < 0 ) {
+                    yumMult = 0;
+                    }
+
+                // yum mult part of weight
+                totalWeight += 0.5 * yumMult / (double) maxYumMult;
+
+                if( totalWeight >= choice ) {
                     parent = p;
                     break;
                     }                
@@ -4606,9 +4691,21 @@ int processLoggedInPlayer( Socket *inSock,
         // tutorial didn't happen if not placed
         newObject.isTutorial = false;
         
+        char allowEveRespawn = true;
+        
+        if( numOfAge >= 4 ) {
+            // there are at least 4 fertile females on the server
+            // why is this player spawning as Eve?
+            // they must be on lineage ban everywhere
+            // (and they are NOT a solo player on an empty server)
+            // don't allow them to spawn back at their last old-age Eve death
+            // location.
+            allowEveRespawn = false;
+            }
+
         // else starts at civ outskirts (lone Eve)
         int startX, startY;
-        getEvePosition( newObject.email, &startX, &startY );
+        getEvePosition( newObject.email, &startX, &startY, allowEveRespawn );
 
         if( inCurseStatus.curseLevel > 0 ) {
             // keep cursed players away
@@ -5982,7 +6079,9 @@ void apocalypseStep() {
 
             // don't actually send request to reflector if apocalypse
             // not possible locally
-            if( SettingsManager::getIntSetting( "apocalypsePossible", 0 ) ) {
+            // or if broadcast mode disabled
+            if( SettingsManager::getIntSetting( "apocalypsePossible", 0 ) &&
+                SettingsManager::getIntSetting( "apocalypseBroadcast", 0 ) ) {
 
                 printf( "Checking for remote apocalypse\n" );
             
@@ -6053,10 +6152,17 @@ void apocalypseStep() {
                 apocalypseTriggered = false;
                 return;
                 }
+            
+            AppLog::info( "Apocalypse triggerered, starting it" );
 
-            if( !apocalypseRemote && 
+
+            // only broadcast to reflector if apocalypseBroadcast set
+            if( !apocalypseRemote &&
+                SettingsManager::getIntSetting( "apocalypseBroadcast", 0 ) &&
                 apocalypseRequest == NULL && reflectorURL != NULL ) {
                 
+                AppLog::info( "Apocalypse broadcast set, telling reflector" );
+
                 
                 char *reflectorSharedSecret = 
                     SettingsManager::
@@ -6150,6 +6256,7 @@ void apocalypseStep() {
             
             apocalypseStartTime = Time::getCurrentTime();
             apocalypseStarted = true;
+            postApocalypseStarted = false;
             }
 
         if( apocalypseRequest != NULL ) {
@@ -6187,31 +6294,89 @@ void apocalypseStep() {
         if( apocalypseRequest == NULL &&
             Time::getCurrentTime() - apocalypseStartTime >= 7 ) {
             
-            for( int i=0; i<players.size(); i++ ) {
-                LiveObject *nextPlayer = players.getElement( i );
+            if( ! postApocalypseStarted  ) {
+                AppLog::infoF( "Enough warning time, %d players still alive",
+                               players.size() );
                 
-                if( ! nextPlayer->error ) {
-                    nextPlayer->error = true;
-                    setDeathReason( nextPlayer, "apocalypse" );
-                    }
-                }
-
-            if( players.size() == 0 ) {
-                // apocalypse over
-
+                
+                double startTime = Time::getCurrentTime();
+                
                 // clear map
-                freeMap();
-                
+                freeMap( true );
+
+                AppLog::infoF( "Apocalypse freeMap took %f sec",
+                               Time::getCurrentTime() - startTime );
                 wipeMapFiles();
+
+                AppLog::infoF( "Apocalypse wipeMapFiles took %f sec",
+                               Time::getCurrentTime() - startTime );
                 
                 initMap();
-
+                
+                AppLog::infoF( "Apocalypse initMap took %f sec",
+                               Time::getCurrentTime() - startTime );
+                
 
                 lastRemoteApocalypseCheckTime = curTime;
-                apocalypseStarted = false;
-                apocalypseTriggered = false;
-                apocalypseRemote = false;
+                
+                for( int i=0; i<players.size(); i++ ) {
+                    LiveObject *nextPlayer = players.getElement( i );
+                    backToBasics( nextPlayer );
+                    }
+                
+                // send everyone update about everyone
+                for( int i=0; i<players.size(); i++ ) {
+                    LiveObject *nextPlayer = players.getElement( i );
+                    nextPlayer->firstMessageSent = false;
+                    nextPlayer->firstMapSent = false;
+                    }
+
+                postApocalypseStarted = true;
                 }
+            else {
+                // make sure all players have gotten map and update
+                char allMapAndUpdate = true;
+                
+                for( int i=0; i<players.size(); i++ ) {
+                    LiveObject *nextPlayer = players.getElement( i );
+                    if( ! nextPlayer->firstMapSent ) {
+                        allMapAndUpdate = false;
+                        break;
+                        }
+                    }
+                
+                if( allMapAndUpdate ) {
+                    
+                    // send all players the AD message
+                    const char *message = "AD\n#";
+                    int messageLength = strlen( message );
+            
+                    for( int i=0; i<players.size(); i++ ) {
+                        LiveObject *nextPlayer = players.getElement( i );
+                        if( !nextPlayer->error && nextPlayer->connected ) {
+                    
+                            int numSent = 
+                                nextPlayer->sock->send( 
+                                    (unsigned char*)message, 
+                                    messageLength,
+                                    false, false );
+                            
+                            nextPlayer->gotPartOfThisFrame = true;
+                    
+                            if( numSent != messageLength ) {
+                                setPlayerDisconnected( nextPlayer, 
+                                                       "Socket write failed" );
+                                }
+                            }
+                        }
+
+                    // totally done
+                    apocalypseStarted = false;
+                    apocalypseTriggered = false;
+                    apocalypseRemote = false;
+                    postApocalypseStarted = false;
+                    }
+                }    
             }
         }
     }

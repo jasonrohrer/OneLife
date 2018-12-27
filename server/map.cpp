@@ -3091,7 +3091,7 @@ static void rememberDummy( FILE *inFile, int inX, int inY,
 
 
 
-void freeMap() {
+void freeMap( char inSkipCleanup ) {
     printf( "%d calls to getBaseMap\n", getBaseMapCallCount );
 
     skipTrackingMapChanges = true;
@@ -3102,7 +3102,7 @@ void freeMap() {
         }
 
 
-    if( dbOpen ) {
+    if( dbOpen && ! inSkipCleanup ) {
         
         AppLog::infoF( "Cleaning up map database on server shutdown." );
         
@@ -3287,32 +3287,44 @@ void freeMap() {
         
         
         DB_close( &db );
+        dbOpen = false;
         }
-
+    else if( dbOpen ) {
+        // just close with no cleanup
+        DB_close( &db );
+        dbOpen = false;
+        }
+    
     if( timeDBOpen ) {
         DB_close( &timeDB );
+        timeDBOpen = false;
         }
 
     if( biomeDBOpen ) {
         DB_close( &biomeDB );
+        biomeDBOpen = false;
         }
 
 
     if( floorDBOpen ) {
         DB_close( &floorDB );
+        floorDBOpen = false;
         }
 
     if( floorTimeDBOpen ) {
         DB_close( &floorTimeDB );
+        floorTimeDBOpen = false;
         }
 
 
     if( eveDBOpen ) {
         DB_close( &eveDB );
+        eveDBOpen = false;
         }
 
     if( metaDBOpen ) {
         DB_close( &metaDB );
+        metaDBOpen = false;
         }
     
 
@@ -3362,6 +3374,7 @@ void wipeMapFiles() {
     deleteFileByName( "map.db" );
     deleteFileByName( "mapTime.db" );
     deleteFileByName( "playerStats.db" );
+    deleteFileByName( "meta.db" );
     }
 
 
@@ -3554,7 +3567,7 @@ static void dbPut( int inX, int inY, int inSlot, int inValue,
             apocalypseLocation.y = inY;
             }
         }
-    else if( inValue > 0 && inSlot == 0 && inSubCont == 0  ) {
+    if( inValue > 0 && inSlot == 0 && inSubCont == 0  ) {
         
         int status = getMonumentStatus( inValue );
         
@@ -6201,7 +6214,8 @@ doublePair computeRecentCampAve( int *outNumPosFound ) {
 
 
 
-void getEvePosition( char *inEmail, int *outX, int *outY ) {
+void getEvePosition( char *inEmail, int *outX, int *outY, 
+                     char inAllowRespawn ) {
 
     int currentEveRadius = eveRadius;
 
@@ -6216,7 +6230,7 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
     
     int result = eveDBGet( inEmail, &pX, &pY, &pR );
     
-    if( result == 1 && pR > 0 ) {
+    if( inAllowRespawn && result == 1 && pR > 0 ) {
         printf( "Found camp center (%d,%d) r=%d in db for %s\n",
                 pX, pY, pR, inEmail );
         
@@ -6226,7 +6240,7 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
         }
     else {
         // player has never been an Eve that survived to old age before
-        
+        // or such repawning forbidden by caller
 
         // New method:
         GridPos eveLocToUse = eveLocation;
@@ -6358,7 +6372,7 @@ void getEvePosition( char *inEmail, int *outX, int *outY ) {
 
 
 
-void mapEveDeath( char *inEmail, double inAge ) {
+void mapEveDeath( char *inEmail, double inAge, GridPos inDeathMapPos ) {
     
     // record exists?
 
@@ -6381,9 +6395,6 @@ void mapEveDeath( char *inEmail, double inAge ) {
         }
     
 
-    int num = 0;
-    
-    doublePair ave = computeRecentCampAve( &num );
     
     int result = eveDBGet( inEmail, &pX, &pY, &pR );
     
@@ -6404,25 +6415,13 @@ void mapEveDeath( char *inEmail, double inAge ) {
         // not found in DB
         
         // must overwrite no matter what
-        pX = lrint( ave.x );
-        pY = lrint( ave.y );
-
         pR = eveRadiusStart;
         }
-    
-    
-    if( num > 0 ) {
-        // overwrite middle from last life with new middle of placements
-        // from this life
-        pX = lrint( ave.x );
-        pY = lrint( ave.y );
-        }
-    else {
-        // otherwise, leave last life's average alone
-        printf( "Logging Eve death:   "
-                "Keeping camp average (%d,%d) from last life\n",
-                pX, pY );
-        }
+
+
+    // their next camp will start where they last died
+    pX = inDeathMapPos.x;
+    pY = inDeathMapPos.y;
     
 
     printf( "Remembering Eve's camp in database (%d,%d) r=%d for %s\n",

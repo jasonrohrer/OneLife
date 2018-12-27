@@ -1324,7 +1324,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         double thisFrameTime = p->frozenAnimTime;
                         
                         if( thisFrameTime < 0 ) {
-                            thisFrameTime = frameTime + abs( thisFrameTime );
+                            thisFrameTime = frameTime + fabs( thisFrameTime );
                             }
                         
                         
@@ -1613,7 +1613,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     double thisFrameTime = c->frozenAnimTime;
                         
                     if( thisFrameTime < 0 ) {
-                        thisFrameTime = frameTime + abs( thisFrameTime );
+                        thisFrameTime = frameTime + fabs( thisFrameTime );
                         }
 
                 
