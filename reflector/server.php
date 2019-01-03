@@ -213,9 +213,6 @@ function tryServer( $inAddress, $inPort, $inReportOnly ) {
         $spreading = false;
         $stopSpreading = false;
         
-        $current = -1;
-        $max = -1;
-        
         while( !feof( $fp ) && $lineCount < 2 ) {
             $line = fgets( $fp, 128 );
 
@@ -234,6 +231,9 @@ function tryServer( $inAddress, $inPort, $inReportOnly ) {
                 $accepting = true;
                 }
             else if( $lineCount == 1 ) {
+
+                $current = -1;
+                $max = -1;
 
                 sscanf( $line, "%d/%d", $current, $max );
 
@@ -328,19 +328,6 @@ function tryServer( $inAddress, $inPort, $inReportOnly ) {
 
             // got here, return this server
 
-            // log choice
-            $dateString = date( DATE_RFC2822 );
-            global $email;
-            $spreadingString = "false";
-            if( $spreading ) {
-                $spreadingString = "true";
-                }
-            file_put_contents( "/tmp/reflectorLog.txt",
-                               "$dateString: Sending player <$email> ".
-                               "to $inAddress ".
-                               "($current/$max spreading=$spreadingString)\n",
-                               FILE_APPEND );
-            
             echo "$inAddress\n";
             echo "$inPort\n";
             echo "$version\n";
