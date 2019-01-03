@@ -3,6 +3,12 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 187     ???
+
+--Snowball splat face emote fixed.  Forgot to commit the emotionObjects.ini
+  settings file.
+
+
 Version 185     2018-December-27
 
 --Survivable apocalypse (full map wipe while players are still alive) that
