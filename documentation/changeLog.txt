@@ -3,6 +3,36 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 187     2019-January-3
+
+--Snowball splat face emote fixed.  Forgot to commit the emotionObjects.ini
+  settings file.  Fixes #177
+
+--No more jaundice glitch on hat or apron.  Fixes #172
+
+
+
+
+Server Fixes
+
+--Improved reflector code to spread players evenly amoung active servers
+  (thanks CrazyEddie).  Fixes #171
+
+--Wounds, like animal bites, can now replace sickness (though effects of
+  sickness are not eliminated until wound is fully healed).  Fixes #162
+
+--Missing global variable in curse server.
+
+--Fixed so that forced-drop when moving (when attacked by animal) drops
+  relative to current position and not destination.  Fixes #165
+
+--Fixed so that locks/keys don't revert to ? state when they reside in a
+  container during server shutdown.  Fixes #180
+
+
+
+
 Version 185     2018-December-27
 
 --Survivable apocalypse (full map wipe while players are still alive) that

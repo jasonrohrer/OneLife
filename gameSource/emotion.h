@@ -31,7 +31,7 @@ typedef struct Emotion {
 
         // drawn relative to head position
         // drawn on top of everything (like a hat)
-        int headEmote;
+        int headEmot;
         
     } Emotion;
 
