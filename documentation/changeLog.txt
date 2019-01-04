@@ -17,6 +17,9 @@ Server Fixes
 --Wounds, like animal bites, can now replace sickness (though effects of
   sickness are not eliminated until wound is fully healed).  Fixes #162
 
+--Missing global variable in curse server.
+
+
 
 
 Version 185     2018-December-27

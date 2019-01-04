@@ -617,7 +617,7 @@ function cs_getSequenceNumberForEmail( $inEmail ) {
 
 
 function cs_scaleCurseScore( $inEmail ) {
-    global $tableNamePrefix;
+    global $tableNamePrefix, $secondsPerCurseScoreDecrement;
     
     $query = "SELECT curse_score, total_curse_score, extra_life_sec ".
         "FROM $tableNamePrefix"."users ".
