@@ -18905,7 +18905,9 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                         
                         if( strstr( typedText, filterCommand ) == typedText ) {
                             // starts with filter command
-
+                            
+                            LiveObject *ourLiveObject = getOurLiveObject();
+                            
                             int emotIndex = getEmotionIndex( typedText );
                             
                             if( emotIndex != -1 ) {
@@ -18917,8 +18919,9 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 }
                             else if( strstr( typedText,
                                              translate( "dieCommand" ) ) 
-                                     == typedText ) {
-                                // die command issued
+                                     == typedText &&
+                                     computeCurrentAge( ourLiveObject ) < 2 ) {
+                                // die command issued from baby
                                 char *message = 
                                     autoSprintf( "DIE 0 0#" );
                                 
