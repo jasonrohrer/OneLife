@@ -151,6 +151,10 @@ typedef struct {
 
 static SimpleVector<HomePos> homePosStack;
 
+// used on reconnect to decide whether to delete old home positions
+static int lastPlayerID = -1;
+
+
 
 // returns pointer to record, NOT destroyed by caller, or NULL if 
 // home unknown
@@ -13651,6 +13655,12 @@ void LivingLifePage::step() {
                 
                 ourID = ourObject->id;
 
+                if( ourID != lastPlayerID ) {
+                    // different ID than last time, delete home markers
+                    homePosStack.deleteAll();
+                    }
+                lastPlayerID = ourID;
+
                 // we have no measurement yet
                 ourObject->lastActionSendStartTime = 0;
                 ourObject->lastResponseTimeDelta = 0;
@@ -16479,7 +16489,6 @@ void LivingLifePage::makeActive( char inFresh ) {
         nextActionMessageToSend = NULL;
         }
     
-    homePosStack.deleteAll();
 
     for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
         mHomeArrowStates[i].solid = false;
