@@ -1363,6 +1363,9 @@ int *getContainedRaw( int inX, int inY, int *outNumContained,
 
 void setMapObjectRaw( int inX, int inY, int inID );
 
+static void dbPut( int inX, int inY, int inSlot, int inValue, 
+                   int inSubCont = 0 );
+
 
 
 
@@ -2230,6 +2233,12 @@ static char loadIntoMapFromFile( FILE *inFile,
 
 
 
+static inline void changeContained( int inX, int inY, int inSlot, 
+                                    int inSubCont, int inID ) {
+    dbPut( inX, inY, FIRST_CONT_SLOT + inSlot, inID, inSubCont );    
+    }
+
+
 
 char initMap() {
     initDBCaches();
@@ -2908,15 +2917,19 @@ char initMap() {
         
         int numSet = 0;
         
-        while( numRead == 5 ) {
+        while( numRead == 5 || numRead == 7 ) {
             
-            int x, y, parentID, dummyIndex;
+            int x, y, parentID, dummyIndex, slot, b;
             
             char marker;            
             
-            numRead = fscanf( dummyFile, "(%d,%d) %c %d %d\n", 
-                              &x, &y, &marker, &parentID, &dummyIndex );
-            if( numRead == 5 ) {
+            slot = -1;
+            b = 0;
+            
+            numRead = fscanf( dummyFile, "(%d,%d) %c %d %d [%d %d]\n", 
+                              &x, &y, &marker, &parentID, &dummyIndex,
+                              &slot, &b );
+            if( numRead == 5 || numRead == 7 ) {
                 
                 ObjectRecord *parent = getObject( parentID );
                 
@@ -2933,7 +2946,12 @@ char initMap() {
                         }
                     }
                 if( dummyID > 0 ) {
-                    setMapObjectRaw( x, y, dummyID );
+                    if( numRead == 5 ) {
+                        setMapObjectRaw( x, y, dummyID );
+                        }
+                    else {
+                        changeContained( x, y, slot, b, dummyID );
+                        }
                     numSet++;
                     }
                 }
@@ -3040,7 +3058,8 @@ void freeAndNullString( char **inStringPointer ) {
 
 
 static void rememberDummy( FILE *inFile, int inX, int inY, 
-                           ObjectRecord *inDummyO ) {
+                           ObjectRecord *inDummyO, 
+                           int inSlot = -1, int inB = 0 ) {
     
     if( inFile == NULL ) {
         return;
@@ -3083,9 +3102,16 @@ static void rememberDummy( FILE *inFile, int inX, int inY,
         }
     
     if( parent > 0 && dummyIndex >= 0 ) {
-        fprintf( inFile, "(%d,%d) %c %d %d\n", 
-                 inX, inY, 
-                 marker, parent, dummyIndex );
+        if( inSlot == -1 && inB == 0 ) {   
+            fprintf( inFile, "(%d,%d) %c %d %d\n", 
+                     inX, inY, 
+                     marker, parent, dummyIndex );
+            }
+        else {
+            fprintf( inFile, "(%d,%d) %c %d %d [%d %d]\n", 
+                     inX, inY, 
+                     marker, parent, dummyIndex, inSlot, inB );
+            }
         }
     }
 
@@ -3194,74 +3220,75 @@ void freeMap( char inSkipCleanup ) {
                         }
                     }
                 }
+        
+
+            for( int i=0; i<xToPlace.size(); i++ ) {
+                int x = xToPlace.getElementDirect( i );
+                int y = yToPlace.getElementDirect( i );
             
+                setMapObjectRaw( x, y, idToPlace.getElementDirect( i ) );
+                }
+
+        
+            int numContChanged = 0;
+        
+            for( int i=0; i<xContToCheck.size(); i++ ) {
+                int x = xContToCheck.getElementDirect( i );
+                int y = yContToCheck.getElementDirect( i );
+                int b = bContToCheck.getElementDirect( i );
+        
+                if( getMapObjectRaw( x, y ) != 0 ) {
+
+                    int numCont;
+                    int *cont = getContainedRaw( x, y, &numCont, b );
+                
+                    char anyChanged = false;
+
+                    for( int c=0; c<numCont; c++ ) {
+
+                        char subCont = false;
+                    
+                        if( cont[c] < 0 ) {
+                            cont[c] *= -1;
+                            subCont = true;
+                            }
+                    
+                        ObjectRecord *contObj = getObject( cont[c] );
+                    
+                        if( contObj != NULL ) {
+                            if( contObj->isUseDummy ) {
+                                cont[c] = contObj->useDummyParent;
+                                rememberDummy( dummyFile, x, y, contObj, c, b );
+                            
+                                anyChanged = true;
+                                numContChanged ++;
+                                }
+                            else if( contObj->isVariableDummy ) {
+                                cont[c] = contObj->variableDummyParent;
+                                rememberDummy( dummyFile, x, y, contObj, c, b );
+                            
+                                anyChanged = true;
+                                numContChanged ++;
+                                }
+                            }
+                   
+                        if( subCont ) {
+                            cont[c] *= -1;
+                            }
+                        }
+                
+                    if( anyChanged ) {
+                        setContained( x, y, numCont, cont, b );
+                        }
+                
+                    delete [] cont;
+                    }
+                }
+                    
             if( dummyFile != NULL ) {
                 fclose( dummyFile );
                 }
-            }
-        
-
-        for( int i=0; i<xToPlace.size(); i++ ) {
-            int x = xToPlace.getElementDirect( i );
-            int y = yToPlace.getElementDirect( i );
             
-            setMapObjectRaw( x, y, idToPlace.getElementDirect( i ) );
-            }
-
-        
-        int numContChanged = 0;
-        
-        for( int i=0; i<xContToCheck.size(); i++ ) {
-            int x = xContToCheck.getElementDirect( i );
-            int y = yContToCheck.getElementDirect( i );
-            int b = bContToCheck.getElementDirect( i );
-        
-            if( getMapObjectRaw( x, y ) != 0 ) {
-
-                int numCont;
-                int *cont = getContainedRaw( x, y, &numCont, b );
-                
-                char anyChanged = false;
-
-                for( int c=0; c<numCont; c++ ) {
-
-                    char subCont = false;
-                    
-                    if( cont[c] < 0 ) {
-                        cont[c] *= -1;
-                        subCont = true;
-                        }
-                    
-                    ObjectRecord *contObj = getObject( cont[c] );
-                    
-                    if( contObj != NULL ) {
-                        if( contObj->isUseDummy ) {
-                            cont[c] = contObj->useDummyParent;
-                            anyChanged = true;
-                            numContChanged ++;
-                            }
-                        else if( contObj->isVariableDummy ) {
-                            cont[c] = contObj->variableDummyParent;
-                            anyChanged = true;
-                            numContChanged ++;
-                            }
-                        }
-                   
-                    if( subCont ) {
-                        cont[c] *= -1;
-                        }
-                    }
-                
-                if( anyChanged ) {
-                    setContained( x, y, numCont, cont, b );
-                    }
-                
-                delete [] cont;
-                }
-            }
-
-        
-        if( ! skipUseDummyCleanup ) {    
             AppLog::infoF(
                 "...%d useDummy/variable objects present that were changed "
                 "back into their unused parent.",
@@ -3520,7 +3547,7 @@ timeSec_t dbLookTimeGet( int inX, int inY ) {
 
 
 static void dbPut( int inX, int inY, int inSlot, int inValue, 
-                   int inSubCont = 0 ) {
+                   int inSubCont ) {
     
     if( inSlot == 0 && inSubCont == 0 ) {
         // object has changed
@@ -5423,7 +5450,7 @@ void setContained( int inX, int inY, int inNumContained, int *inContained,
                    int inSubCont ) {
     dbPut( inX, inY, NUM_CONT_SLOT, inNumContained, inSubCont );
     for( int i=0; i<inNumContained; i++ ) {
-        dbPut( inX, inY, FIRST_CONT_SLOT + i, inContained[i], inSubCont );
+        changeContained( inX, inY, i, inSubCont, inContained[i] );
         }
     }
 

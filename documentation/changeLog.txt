@@ -25,6 +25,11 @@ Server Fixes
 --Fixed so that forced-drop when moving (when attacked by animal) drops
   relative to current position and not destination.  Fixes #165
 
+--Fixed so that locks/keys don't revert to ? state when they reside in a
+  container during server shutdown.  Fixes #180
+
+
+
 
 Version 185     2018-December-27
 
