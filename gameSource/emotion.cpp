@@ -67,7 +67,7 @@ void initEmotion() {
             e->otherEmot = 0;
             e->faceEmot = 0;
             e->bodyEmot = 0;
-            e->headEmote = 0;
+            e->headEmot = 0;
             
 
             sscanf( parts[i], "%d %d %d %d %d %d", 
@@ -76,7 +76,7 @@ void initEmotion() {
                     &( e->otherEmot ),
                     &( e->faceEmot ),
                     &( e->bodyEmot ),
-                    &( e->headEmote ) );
+                    &( e->headEmot ) );
             }
         delete [] parts[i];
         }
@@ -146,8 +146,8 @@ void markEmotionsLive() {
         if( e->bodyEmot > 0 ) {    
             addBaseObjectToLiveObjectSet( e->bodyEmot );
             }
-        if( e->headEmote > 0 ) {    
-            addBaseObjectToLiveObjectSet( e->headEmote );
+        if( e->headEmot > 0 ) {    
+            addBaseObjectToLiveObjectSet( e->headEmot );
             }
         }
     }

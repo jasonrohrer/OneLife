@@ -8,6 +8,9 @@ Version 187     ???
 --Snowball splat face emote fixed.  Forgot to commit the emotionObjects.ini
   settings file.  Fixes #177
 
+--No more jaundice glitch on hat or apron.  Fixes #172
+
+
 
 Server Fixes
 
