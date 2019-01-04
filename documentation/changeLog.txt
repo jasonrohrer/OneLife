@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 189     ???
+Version 188     2019-January-4
 
 --Fixed swap of baskets with different numbers of items in a larger container.
   Fixes #184
@@ -20,6 +20,7 @@ Version 189     ???
 
 --Tutorial button on main menu page (appears after you beat tutorial).
   Fixes #190
+
 
 
 
