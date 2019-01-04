@@ -3,12 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 187     ???
+
+Version 187     2019-January-3
 
 --Snowball splat face emote fixed.  Forgot to commit the emotionObjects.ini
   settings file.  Fixes #177
 
 --No more jaundice glitch on hat or apron.  Fixes #172
+
 
 
 
