@@ -5405,7 +5405,7 @@ static char addHeldToContainer( LiveObject *inPlayer,
                                                        numInNow );
                     
                         if( bottomNum != topNum ) {
-                            same = true;
+                            same = false;
                             }
                         else {
                             for( int b=0; b<bottomNum; b++ ) {
