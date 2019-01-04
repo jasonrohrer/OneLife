@@ -55,7 +55,7 @@ Keybind | Description
 **Backslash Key ( \\ )** | Toggles displaying of the Lineage Fertility panel.
 **Shift + Space** | Generate a random name.
 **Shift + a-z** | Generate a random name that begins with the corresponding letter that you press.
-**Shift + DEL** | Sudden Infant Death hotkey.  Only works if you are less than 1 year old & held by your parent.
+**Shift + DEL** | Instant Death hotkey.  Works at any location and regardless of age.
 **F1 - F7 ( F-Keys )** | Hotkeys for triggering emotions.  Ordered the same as your emotionWords.ini settings file.
 **? (Question Mark)** | Toggles the zoomed-in magnifier box that moves with your mouse cursor.
 
@@ -111,7 +111,7 @@ Keybind | Description
 
 * **Easy Chat**
    - Auto-focuses the chat box when you start typing.  Never "lose" your chat by forgetting to press Enter first!
-   - Includes keybinds for triggering Emotes or Sudden Infant Death commands.
+   - Includes keybinds for triggering Emotes or Instant Death commands.
 
 # Credits
 Thanks to [Joriom](https://onehouronelife.com/forums/profile.php?id=607) for the [detailed guides](https://onehouronelife.com/forums/viewtopic.php?id=1438), [Bimble](https://onehouronelife.com/forums/profile.php?id=682) for the [VirtualBox image](https://onehouronelife.com/forums/viewtopic.php?id=498), [Drakulon](https://onehouronelife.com/forums/profile.php?id=1165) for the [original FOV mod concept](https://onehouronelife.com/forums/viewtopic.php?id=1422), and [UncleGus](https://github.com/UncleGus) for the [original lifespan concept](https://github.com/UncleGus/OneLife/tree/lifespan).
