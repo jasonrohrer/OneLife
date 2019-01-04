@@ -10,6 +10,7 @@ Version 189     ???
 
 --Fixed tutorial wording to avoid confusion about Eve.  Fixes #185
 
+--Min age for default actions (open door, rouse bear) now 3.  Fixes #186
 
 
 

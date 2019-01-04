@@ -82,6 +82,10 @@ int minPickupBabyAge = 10;
 
 int babyAge = 5;
 
+// age when bare-hand actions become available to a baby (opening doors, etc.)
+int defaultActionAge = 3;
+
+
 double forceDeathAge = 60;
 
 
@@ -9588,6 +9592,9 @@ int main() {
                                         target );
                                     }
                                 
+                                double playerAge = computeAge( nextPlayer );
+                                
+
                                 if( r != NULL && containmentTransfer ) {
                                     // special case contained items
                                     // moving from actor into new target
@@ -9610,9 +9617,13 @@ int main() {
                                 else if( r != NULL &&
                                     // are we old enough to handle
                                     // what we'd get out of this transition?
-                                    ( r->newActor == 0 || 
-                                      getObject( r->newActor )->minPickupAge <= 
-                                      computeAge( nextPlayer ) ) 
+                                    ( ( r->newActor == 0 &&
+                                        playerAge >= defaultActionAge )
+                                      || 
+                                      ( r->newActor > 0 &&
+                                        getObject( r->newActor )->minPickupAge 
+                                        <= 
+                                        playerAge ) ) 
                                     &&
                                     // does this create a blocking object?
                                     // only consider vertical-blocking
