@@ -19,7 +19,8 @@ Server Fixes
 
 --Missing global variable in curse server.
 
-
+--Fixed so that forced-drop when moving (when attacked by animal) drops
+  relative to current position and not destination.  Fixes #165
 
 
 Version 185     2018-December-27

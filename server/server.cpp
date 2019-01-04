@@ -3391,9 +3391,11 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                                     
         
         GridPos spot;
+
+        GridPos playerPos = getPlayerPos( inDroppingPlayer );
         
         char found = findDropSpot( inX, inY, 
-                                   inDroppingPlayer->xd, inDroppingPlayer->yd,
+                                   playerPos.x, playerPos.y,
                                    &spot );
         
         int foundX = spot.x;
