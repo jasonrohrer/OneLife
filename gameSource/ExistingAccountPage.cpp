@@ -58,6 +58,8 @@ ExistingAccountPage::ExistingAccountPage()
                          translate( "postReviewButton" ) ),
           mRedetectButton( mainFont, 0, 198, translate( "redetectButton" ) ),
           mViewAccountButton( mainFont, 0, 64, translate( "view" ) ),
+          mTutorialButton( mainFont, 522, 300, 
+                           translate( "tutorial" ) ),
           mPageActiveStartTime( 0 ),
           mFramesCounted( 0 ),
           mFPSMeasureDone( false ),
@@ -90,6 +92,7 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mPasteButton );
     setButtonStyle( &mRedetectButton );
     setButtonStyle( &mViewAccountButton );
+    setButtonStyle( &mTutorialButton );
 
     setButtonStyle( &mDisableCustomServerButton );
     
@@ -112,6 +115,7 @@ ExistingAccountPage::ExistingAccountPage()
     addComponent( &mDisableCustomServerButton );
 
     addComponent( &mViewAccountButton );
+    addComponent( &mTutorialButton );
     
     mLoginButton.addActionListener( this );
     mFriendsButton.addActionListener( this );
@@ -128,6 +132,7 @@ ExistingAccountPage::ExistingAccountPage()
     mRedetectButton.addActionListener( this );
 
     mViewAccountButton.addActionListener( this );
+    mTutorialButton.addActionListener( this );
     
     mDisableCustomServerButton.addActionListener( this );
 
@@ -178,6 +183,15 @@ void ExistingAccountPage::showDisableCustomServerButton( char inShow ) {
 
 
 void ExistingAccountPage::makeActive( char inFresh ) {
+
+    if( SettingsManager::getIntSetting( "tutorialDone", 0 ) ) {
+        mTutorialButton.setVisible( true );
+        }
+    else {
+        // tutorial forced anyway
+        mTutorialButton.setVisible( false );
+        }
+    
 
     mFramesCounted = 0;
     mPageActiveStartTime = game_getCurrentTime();    
@@ -302,6 +316,9 @@ void ExistingAccountPage::step() {
 void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mLoginButton ) {
         processLogin( true, "done" );
+        }
+    else if( inTarget == &mTutorialButton ) {
+        processLogin( true, "tutorial" );
         }
     else if( inTarget == &mClearAccountButton ) {
         SettingsManager::setSetting( "email", "" );
