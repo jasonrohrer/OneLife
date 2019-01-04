@@ -8,6 +8,9 @@ Version 189     ???
 --Fixed swap of baskets with different numbers of items in a larger container.
   Fixes #184
 
+--Fixed tutorial wording to avoid confusion about Eve.  Fixes #185
+
+
 
 
 Version 187     2019-January-3
