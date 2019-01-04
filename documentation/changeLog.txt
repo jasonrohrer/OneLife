@@ -3,6 +3,26 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 188     2019-January-4
+
+--Fixed swap of baskets with different numbers of items in a larger container.
+  Fixes #184
+
+--Fixed tutorial wording to avoid confusion about Eve.  Fixes #185
+
+--Min age for default actions (open door, rouse bear) now 3.  Fixes #186
+
+--On reconnect, don't clear home markers unless we see a new player ID.
+  Fixes #188
+
+--/DIE command no longer blocks crafting hints for DIE when older than 2.
+  Fixes #189
+
+--Tutorial button on main menu page (appears after you beat tutorial).
+  Fixes #190
+
+
+
 
 Version 187     2019-January-3
 

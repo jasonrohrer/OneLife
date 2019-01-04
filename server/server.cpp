@@ -84,6 +84,10 @@ int minPickupBabyAge = 10;
 
 int babyAge = 5;
 
+// age when bare-hand actions become available to a baby (opening doors, etc.)
+int defaultActionAge = 3;
+
+
 double forceDeathAge = age_death;
 
 
@@ -1790,7 +1794,7 @@ char isFertileAge( LiveObject *inPlayer ) {
 
 int computeFoodCapacity( LiveObject *inPlayer ) {
     int ageInYears = lrint( computeAge( inPlayer ) );
-
+    
     int returnVal = 0;
     
     if( ageInYears < (age_old + 4) ) {
@@ -1799,7 +1803,7 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
             ageInYears = 16;
             }
         
-        return ageInYears + 4;
+        returnVal = ageInYears + 4;
         }
     else {
         // food capacity decreases as we near age_death
@@ -1809,7 +1813,7 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
             cap = 4;
             }
         
-        return cap;
+        returnVal = cap;
         }
 
     return ceil( returnVal * inPlayer->foodCapModifier );
@@ -5407,7 +5411,7 @@ static char addHeldToContainer( LiveObject *inPlayer,
                                                        numInNow );
                     
                         if( bottomNum != topNum ) {
-                            same = true;
+                            same = false;
                             }
                         else {
                             for( int b=0; b<bottomNum; b++ ) {
@@ -9606,6 +9610,9 @@ int main() {
                                         target );
                                     }
                                 
+                                double playerAge = computeAge( nextPlayer );
+                                
+
                                 if( r != NULL && containmentTransfer ) {
                                     // special case contained items
                                     // moving from actor into new target
@@ -9628,9 +9635,13 @@ int main() {
                                 else if( r != NULL &&
                                     // are we old enough to handle
                                     // what we'd get out of this transition?
-                                    ( r->newActor == 0 || 
-                                      getObject( r->newActor )->minPickupAge <= 
-                                      computeAge( nextPlayer ) ) 
+                                    ( ( r->newActor == 0 &&
+                                        playerAge >= defaultActionAge )
+                                      || 
+                                      ( r->newActor > 0 &&
+                                        getObject( r->newActor )->minPickupAge 
+                                        <= 
+                                        playerAge ) ) 
                                     &&
                                     // does this create a blocking object?
                                     // only consider vertical-blocking
