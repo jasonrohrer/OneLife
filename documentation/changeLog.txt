@@ -14,6 +14,9 @@ Server Fixes
 --Improved reflector code to spread players evenly amoung active servers
   (thanks CrazyEddie).  Fixes #171
 
+--Wounds, like animal bites, can now replace sickness (though effects of
+  sickness are not eliminated until wound is fully healed).  Fixes #162
+
 
 
 Version 185     2018-December-27

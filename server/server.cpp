@@ -9165,6 +9165,17 @@ int main() {
                                             hitPlayer->customGraveID = 
                                                 rHit->newTarget;
                                             }
+                                        
+                                        char wasSick = false;
+                                        
+                                        if( hitPlayer->holdingID > 0 &&
+                                            strstr(
+                                                getObject( 
+                                                    hitPlayer->holdingID )->
+                                                description,
+                                                "sick" ) != NULL ) {
+                                            wasSick = true;
+                                            }
 
                                         // last use on actor specifies
                                         // what is left in victim's hand
@@ -9193,9 +9204,13 @@ int main() {
                                             // an easier-to-treat wound
                                             // to replace their hard-to-treat
                                             // wound
+
+                                            // however, do let wounds replace
+                                            // sickness
                                             char woundChange = false;
                                             
-                                            if( ! hitPlayer->holdingWound ) {
+                                            if( ! hitPlayer->holdingWound ||
+                                                wasSick ) {
                                                 woundChange = true;
                                                 
                                                 hitPlayer->holdingID = 
