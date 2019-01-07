@@ -291,7 +291,7 @@ if( $handle ) {
                 }
 
             $serverFound = tryServer( $serverAddresses[$i], $serverPorts[$i],
-                                      $reportOnly, false );
+                                      $reportOnly, true );
             }
         }
     
