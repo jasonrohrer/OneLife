@@ -8,6 +8,8 @@ Version 190     ???
 --Fixed so that client sends correct number of tokens for LOGIN with blank
   email.  Thanks Andrew K.
 
+--Added support for global triggers (for radio transmission).
+
 
 
 Server Fixes
