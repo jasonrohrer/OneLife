@@ -5346,25 +5346,30 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                         if( metaID > 0 ) {
                             TransRecord *tR = getPTrans( metaID, id );
                             
-                            dbPut( q.x, q.y, 0, tR->newTarget );
+                            if( tR != NULL ) {
+                                
+                                dbPut( q.x, q.y, 0, tR->newTarget );
                             
-                            // save this to our "triggered" list
-                            int foundIndex = findGridPos(
-                                &( s->triggeredLocations ), q );
-                            
-                            if( foundIndex != -1 ) {
-                                // already exists
-                                // replace
-                                *( s->triggeredIDs.getElement( foundIndex ) ) =
-                                    tR->newTarget;
-                                *( s->triggeredRevertIDs.getElement( 
-                                       foundIndex ) ) =
-                                    tR->target;
-                                }
-                            else {
-                                s->triggeredLocations.push_back( q );
-                                s->triggeredIDs.push_back( tR->newTarget );
-                                s->triggeredRevertIDs.push_back( tR->target );
+                                // save this to our "triggered" list
+                                int foundIndex = findGridPos(
+                                    &( s->triggeredLocations ), q );
+                                
+                                if( foundIndex != -1 ) {
+                                    // already exists
+                                    // replace
+                                    *( s->triggeredIDs.getElement( 
+                                           foundIndex ) ) =
+                                        tR->newTarget;
+                                    *( s->triggeredRevertIDs.getElement( 
+                                           foundIndex ) ) =
+                                        tR->target;
+                                    }
+                                else {
+                                    s->triggeredLocations.push_back( q );
+                                    s->triggeredIDs.push_back( tR->newTarget );
+                                    s->triggeredRevertIDs.push_back( 
+                                        tR->target );
+                                    }
                                 }
                             }
                         }
@@ -5414,6 +5419,7 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                         s->triggeredLocations.deleteElement( i );
                         s->triggeredIDs.deleteElement( i );
                         s->triggeredRevertIDs.deleteElement( i );
+                        i--;
                         
                         // remember it as a reciever (it has gone back
                         // to being a receiver again)
@@ -5433,6 +5439,45 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
         
         if( foundIndex == -1 ) {
             s->receiverLocations.push_back( p );
+            }
+        
+        if( s->triggerOnLocations.size() > 0 ) {
+            // this receiver is currently triggered
+            
+            // trigger it now, right away, as soon as it is placed on map
+                                    
+            int metaID = getMetaTriggerObject( o->globalTriggerIndex );
+                        
+            if( metaID > 0 ) {
+                TransRecord *tR = getPTrans( metaID, inID );
+
+                if( tR != NULL ) {
+                    
+                    dbPut( inX, inY, 0, tR->newTarget );
+                        
+                    GridPos q = { inX, inY };
+                                  
+    
+                    // save this to our "triggered" list
+                    int foundIndex = findGridPos( 
+                        &( s->triggeredLocations ), q );
+                    
+                    if( foundIndex != -1 ) {
+                        // already exists
+                        // replace
+                        *( s->triggeredIDs.getElement( foundIndex ) ) =
+                            tR->newTarget;
+                        *( s->triggeredRevertIDs.getElement( 
+                               foundIndex ) ) =
+                            tR->target;
+                        }
+                    else {
+                        s->triggeredLocations.push_back( q );
+                        s->triggeredIDs.push_back( tR->newTarget );
+                        s->triggeredRevertIDs.push_back( tR->target );
+                        }
+                    }
+                }
             }
         }
     }
