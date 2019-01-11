@@ -2240,6 +2240,26 @@ static inline void changeContained( int inX, int inY, int inSlot,
 
 
 
+typedef struct GlobalTriggerState {
+        SimpleVector<GridPos> triggerOnLocations;
+        
+        // receivers for this trigger that are waiting to be turned on
+        SimpleVector<GridPos> receiverLocations;
+        
+        SimpleVector<GridPos> triggeredLocations;
+        SimpleVector<int> triggeredIDs;
+        // what we revert to when global trigger turns off (back to receiver)
+        SimpleVector<int> triggeredRevertIDs;
+    } GlobalTriggerState;
+        
+
+
+static SimpleVector<GlobalTriggerState> globalTriggerStates;
+
+
+
+
+
 char initMap() {
     initDBCaches();
     initBiomeCache();
@@ -2988,6 +3008,16 @@ char initMap() {
 
         // ignore old value for placements
         clearRecentPlacements();
+        }
+
+
+
+    globalTriggerStates.deleteAll();
+    
+    int numTriggers = getNumGlobalTriggers();
+    for( int i=0; i<numTriggers; i++ ) {
+        GlobalTriggerState s;
+        globalTriggerStates.push_back( s );
         }
 
 
@@ -5246,8 +5276,210 @@ char isMapSpotBlocking( int inX, int inY ) {
 
 
 
+
+static char equal( GridPos inA, GridPos inB ) {
+    if( inA.x == inB.x && inA.y == inB.y ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
+static int findGridPos( SimpleVector<GridPos> *inList, GridPos inP ) {
+    for( int i=0; i<inList->size(); i++ ) {
+        GridPos q = inList->getElementDirect( i );
+        if( equal( inP, q ) ) {
+            return i;
+            }
+        }
+    return -1;
+    }
+
+
+
 void setMapObjectRaw( int inX, int inY, int inID ) {
     dbPut( inX, inY, 0, inID );
+    
+
+    // global trigger stuff
+
+    if( inID <= 0 ) {
+        return;
+        }
+
+    ObjectRecord *o = getObject( inID );
+    
+    if( o == NULL ) {
+        return;
+        }
+
+    if( o->isGlobalTriggerOn ) {
+        GlobalTriggerState *s = globalTriggerStates.getElement(
+            o->globalTriggerIndex );
+        
+        GridPos p = { inX, inY };
+        
+        int foundIndex = findGridPos( &( s->triggerOnLocations ), p );
+        
+        if( foundIndex == -1 ) {
+            s->triggerOnLocations.push_back( p );
+            
+            if( s->triggerOnLocations.size() == 1 ) {
+                // just turned on globally
+
+                /// process all receivers
+                for( int i=0; i<s->receiverLocations.size(); i++ ) {
+                    GridPos q = s->receiverLocations.getElementDirect( i );
+
+                    int id = getMapObjectRaw( q.x, q.y );
+                    
+                    ObjectRecord *oR = getObject( id );
+                    
+                    if( oR->isGlobalReceiver &&
+                        oR->globalTriggerIndex == o->globalTriggerIndex ) {
+                        // match
+                        
+                        int metaID = getMetaTriggerObject( 
+                            o->globalTriggerIndex );
+                        
+                        if( metaID > 0 ) {
+                            TransRecord *tR = getPTrans( metaID, id );
+                            
+                            if( tR != NULL ) {
+                                
+                                dbPut( q.x, q.y, 0, tR->newTarget );
+                            
+                                // save this to our "triggered" list
+                                int foundIndex = findGridPos(
+                                    &( s->triggeredLocations ), q );
+                                
+                                if( foundIndex != -1 ) {
+                                    // already exists
+                                    // replace
+                                    *( s->triggeredIDs.getElement( 
+                                           foundIndex ) ) =
+                                        tR->newTarget;
+                                    *( s->triggeredRevertIDs.getElement( 
+                                           foundIndex ) ) =
+                                        tR->target;
+                                    }
+                                else {
+                                    s->triggeredLocations.push_back( q );
+                                    s->triggeredIDs.push_back( tR->newTarget );
+                                    s->triggeredRevertIDs.push_back( 
+                                        tR->target );
+                                    }
+                                }
+                            }
+                        }
+                    // receiver no longer here
+                    // (either wasn't here anymore for other reasons,
+                    //  or we just changed it into its triggered state)
+                    // remove it
+                    s->receiverLocations.deleteElement( i );
+                    i--;
+                    }
+                }
+            }
+        }
+    else if( o->isGlobalTriggerOff ) {
+        GlobalTriggerState *s = globalTriggerStates.getElement(
+            o->globalTriggerIndex );
+        
+        GridPos p = { inX, inY };
+
+        int foundIndex = findGridPos( &( s->triggerOnLocations ), p );
+        
+        if( foundIndex != -1 ) {
+            s->triggerOnLocations.deleteElement( foundIndex );
+            
+            if( s->triggerOnLocations.size() == 0 ) {
+                // just turned off globally, no on triggers left on map
+
+                /// process all triggered elements back to off
+
+                for( int i=0; i<s->triggeredLocations.size(); i++ ) {
+                    GridPos q = s->triggeredLocations.getElementDirect( i );
+
+                    int curID = getMapObjectRaw( q.x, q.y );
+
+                    int triggeredID = s->triggeredIDs.getElementDirect( i );
+                    
+                    if( curID == triggeredID ) {
+                        // cell still in triggered state
+
+                        // revert it
+                        int revertID = 
+                            s->triggeredRevertIDs.getElementDirect( i );
+                        
+                        dbPut( q.x, q.y, 0, revertID );
+                        
+                        // no longer triggered, remove it
+                        s->triggeredLocations.deleteElement( i );
+                        s->triggeredIDs.deleteElement( i );
+                        s->triggeredRevertIDs.deleteElement( i );
+                        i--;
+                        
+                        // remember it as a reciever (it has gone back
+                        // to being a receiver again)
+                        s->receiverLocations.push_back( q );
+                        }
+                    }
+                }
+            }
+        }
+    else if( o->isGlobalReceiver ) {
+        GlobalTriggerState *s = globalTriggerStates.getElement(
+            o->globalTriggerIndex );
+        
+        GridPos p = { inX, inY };
+
+        int foundIndex = findGridPos( &( s->receiverLocations ), p );
+        
+        if( foundIndex == -1 ) {
+            s->receiverLocations.push_back( p );
+            }
+        
+        if( s->triggerOnLocations.size() > 0 ) {
+            // this receiver is currently triggered
+            
+            // trigger it now, right away, as soon as it is placed on map
+                                    
+            int metaID = getMetaTriggerObject( o->globalTriggerIndex );
+                        
+            if( metaID > 0 ) {
+                TransRecord *tR = getPTrans( metaID, inID );
+
+                if( tR != NULL ) {
+                    
+                    dbPut( inX, inY, 0, tR->newTarget );
+                        
+                    GridPos q = { inX, inY };
+                                  
+    
+                    // save this to our "triggered" list
+                    int foundIndex = findGridPos( 
+                        &( s->triggeredLocations ), q );
+                    
+                    if( foundIndex != -1 ) {
+                        // already exists
+                        // replace
+                        *( s->triggeredIDs.getElement( foundIndex ) ) =
+                            tR->newTarget;
+                        *( s->triggeredRevertIDs.getElement( 
+                               foundIndex ) ) =
+                            tR->target;
+                        }
+                    else {
+                        s->triggeredLocations.push_back( q );
+                        s->triggeredIDs.push_back( tR->newTarget );
+                        s->triggeredRevertIDs.push_back( tR->target );
+                        }
+                    }
+                }
+            }
+        }
     }
 
 

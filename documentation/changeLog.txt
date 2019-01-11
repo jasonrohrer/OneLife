@@ -3,6 +3,24 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 190     2019-January-11
+
+--Fixed so that client sends correct number of tokens for LOGIN with blank
+  email.  Thanks Andrew K.
+
+--Added support for global triggers (for radio transmission).
+
+
+
+
+Server Fixes
+
+--Whoops... new reflector code was still using 50/50 coin flips for spreading
+  servers, causing some players to fall of the end of the list and find no
+  server to connect to.  Fixes #191
+
+
+
 Version 188     2019-January-4
 
 --Fixed swap of baskets with different numbers of items in a larger container.

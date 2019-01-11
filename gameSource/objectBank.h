@@ -336,8 +336,13 @@ typedef struct ObjectRecord {
 
         char mayHaveMetadata;
         
-
-
+        
+        char isGlobalTriggerOn;
+        char isGlobalTriggerOff;
+        char isGlobalReceiver;
+        // index into globalTriggers vector
+        int globalTriggerIndex;
+        
     } ObjectRecord;
 
 
@@ -778,6 +783,13 @@ void prepareToSkipSprites( ObjectRecord *inObject,
 // restores spriteSkipDrawing for object to what it was before
 // prepareToSkipSprites was called
 void restoreSkipDrawing( ObjectRecord *inObject );
+
+
+
+// gets number of global trigger indices
+int getNumGlobalTriggers();
+
+int getMetaTriggerObject( int inTriggerIndex );
 
 
 

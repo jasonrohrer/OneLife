@@ -10323,9 +10323,24 @@ void LivingLifePage::step() {
                                          
 
             char *outMessage;
+
+            char *tempEmail;
+            
+            if( strlen( userEmail ) > 0 ) {
+                tempEmail = stringDuplicate( userEmail );
+                }
+            else {
+                // a blank email
+                // this will cause LOGIN message to have one less token
+                
+                // stick a place-holder in there instead
+                tempEmail = stringDuplicate( "blank_email" );
+                }
+            
+
             if( strlen( userEmail ) <= 80 ) {    
                 outMessage = autoSprintf( "LOGIN %-80s %s %s %d%s#",
-                                          userEmail, pwHash, keyHash,
+                                          tempEmail, pwHash, keyHash,
                                           mTutorialNumber, twinExtra );
                 }
             else {
@@ -10334,10 +10349,11 @@ void LivingLifePage::step() {
                 // but note that the playback will fail if email.ini
                 // doesn't match on the playback machine
                 outMessage = autoSprintf( "LOGIN %s %s %s %d%s#",
-                                          userEmail, pwHash, keyHash,
+                                          tempEmail, pwHash, keyHash,
                                           mTutorialNumber, twinExtra );
                 }
             
+            delete [] tempEmail;
             delete [] twinExtra;
             delete [] pwHash;
             delete [] keyHash;
