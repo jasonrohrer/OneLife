@@ -2257,10 +2257,103 @@ typedef struct GlobalTriggerState {
 static SimpleVector<GlobalTriggerState> globalTriggerStates;
 
 
+static int numSpeechPipes = 0;
+
+static SimpleVector<GridPos> *speechPipesIn = NULL;
+
+static SimpleVector<GridPos> *speechPipesOut = NULL;
+
+
+
+static char isAdjacent( GridPos inPos, int inX, int inY ) {
+    if( inX <= inPos.x + 1 &&
+        inX >= inPos.x - 1 &&
+        inY <= inPos.y + 1 &&
+        inY >= inPos.y - 1 ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
+void getSpeechPipesIn( int inX, int inY, SimpleVector<int> *outIndicies ) {
+    for( int i=0; i<numSpeechPipes; i++ ) {
+        
+        for( int p=0; p<speechPipesIn[ i ].size(); p++ ) {
+            
+            GridPos inPos = speechPipesIn[i].getElementDirect( p );
+            if( isAdjacent( inPos, inX, inY ) ) {
+                 
+                // make sure pipe-in is still here
+                int id = getMapObjectRaw( inPos.x, inPos.y );
+                    
+                char stillHere = false;
+            
+                if( id > 0 ) {
+                    ObjectRecord *oIn = getObject( id );
+                
+                    if( oIn->speechPipeIn && 
+                        oIn->speechPipeIndex == i ) {
+                        stillHere = true;
+                        }
+                    }
+                if( ! stillHere ) {
+                    speechPipesIn[ i ].deleteElement( p );
+                    p--;
+                    }
+                else {
+                    outIndicies->push_back( i );
+                    break;
+                    }
+                }
+            }
+        }
+    }
+
+
+
+SimpleVector<GridPos> *getSpeechPipesOut( int inIndex ) {
+    // first, filter them to make sure they are all still here
+    for( int p=0; p<speechPipesOut[ inIndex ].size(); p++ ) {
+        
+        GridPos outPos = speechPipesOut[ inIndex ].getElementDirect( p );
+        // make sure pipe-out is still here
+        int id = getMapObjectRaw( outPos.x, outPos.y );
+        
+        char stillHere = false;
+        
+        if( id > 0 ) {
+            ObjectRecord *oOut = getObject( id );
+            
+            if( oOut->speechPipeOut && 
+                oOut->speechPipeIndex == inIndex ) {
+                stillHere = true;
+                }
+            }
+        if( ! stillHere ) {
+            speechPipesOut[ inIndex ].deleteElement( p );
+            p--;
+            }
+        }
+    
+    return &( speechPipesOut[ inIndex ] );
+    }
+
+
+
 
 
 
 char initMap() {
+    
+    numSpeechPipes = getMaxSpeechPipeIndex() + 1;
+    
+    speechPipesIn = new SimpleVector<GridPos>[ numSpeechPipes ];
+    speechPipesOut = new SimpleVector<GridPos>[ numSpeechPipes ];
+    
+
+
     initDBCaches();
     initBiomeCache();
 
@@ -3407,6 +3500,13 @@ void freeMap( char inSkipCleanup ) {
     mapChangePosSinceLastStep.deleteAll();
     
     skipTrackingMapChanges = false;
+    
+    
+    delete [] speechPipesIn;
+    delete [] speechPipesOut;
+    
+    speechPipesIn = NULL;
+    speechPipesOut = NULL;
     }
 
 
@@ -5302,7 +5402,7 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
     dbPut( inX, inY, 0, inID );
     
 
-    // global trigger stuff
+    // global trigger and speech pipe stuff
 
     if( inID <= 0 ) {
         return;
@@ -5314,7 +5414,28 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
         return;
         }
 
-    if( o->isGlobalTriggerOn ) {
+
+    if( o->speechPipeIn ) {
+        GridPos p = { inX, inY };
+        
+        int foundIndex = 
+            findGridPos( &( speechPipesIn[ o->speechPipeIndex ] ), p );
+        
+        if( foundIndex == -1 ) {
+            speechPipesIn[ o->speechPipeIndex ].push_back( p );
+            }        
+        }
+    else if( o->speechPipeOut ) {
+        GridPos p = { inX, inY };
+        
+        int foundIndex = 
+            findGridPos( &( speechPipesOut[ o->speechPipeIndex ] ), p );
+        
+        if( foundIndex == -1 ) {
+            speechPipesOut[ o->speechPipeIndex ].push_back( p );
+            }
+        }
+    else if( o->isGlobalTriggerOn ) {
         GlobalTriggerState *s = globalTriggerStates.getElement(
             o->globalTriggerIndex );
         
@@ -5334,6 +5455,13 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
 
                     int id = getMapObjectRaw( q.x, q.y );
                     
+                    if( id <= 0 ) {
+                        // receiver no longer here
+                        s->receiverLocations.deleteElement( i );
+                        i--;
+                        continue;
+                        }
+
                     ObjectRecord *oR = getObject( id );
                     
                     if( oR->isGlobalReceiver &&

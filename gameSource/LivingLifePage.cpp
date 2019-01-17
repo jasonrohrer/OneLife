@@ -140,6 +140,29 @@ static double pongDeltaTime = -1;
 static double pingDisplayStartTime = -1;
 
 
+typedef struct LocationSpeech {
+        doublePair pos;
+        char *speech;
+        double fade;
+        // wall clock time when speech should start fading
+        double fadeETATime;
+    } LocationSpeech;
+
+
+
+SimpleVector<LocationSpeech> locationSpeech;
+
+
+static void clearLocationSpeech() {
+    for( int i=0; i<locationSpeech.size(); i++ ) {
+        delete [] locationSpeech.getElementDirect( i ).speech;
+        }
+    locationSpeech.deleteAll();
+    }
+
+
+
+
 // most recent home at end
 
 typedef struct {
@@ -773,6 +796,7 @@ typedef enum messageType {
     PLAYER_MOVES_START,
     PLAYER_OUT_OF_RANGE,
     PLAYER_SAYS,
+    LOCATION_SAYS,
     PLAYER_EMOT,
     FOOD_CHANGE,
     HEAT_CHANGE,
@@ -845,6 +869,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "PS" ) == 0 ) {
         returnValue = PLAYER_SAYS;
+        }
+    else if( strcmp( copy, "LS" ) == 0 ) {
+        returnValue = LOCATION_SAYS;
         }
     else if( strcmp( copy, "PE" ) == 0 ) {
         returnValue = PLAYER_EMOT;
@@ -2438,6 +2465,8 @@ LivingLifePage::~LivingLifePage() {
         delete [] mGraveInfo.getElement(i)->relationName;
         }
     mGraveInfo.deleteAll();
+
+    clearLocationSpeech();
     }
 
 
@@ -2612,7 +2641,7 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         }
 
 
-    if( inSpeaker->dying ) {
+    if( inSpeaker != NULL && inSpeaker->dying ) {
         if( inSpeaker->sick ) {
             // sick-ish yellow
             setDrawColor( 0.874510, 0.658824, 0.168627, inFade );
@@ -2622,7 +2651,7 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
             setDrawColor( .65, 0, 0, inFade );
             }
         }
-    else if( inSpeaker->curseLevel > 0 ) {
+    else if( inSpeaker != NULL && inSpeaker->curseLevel > 0 ) {
         setDrawColor( 0, 0, 0, inFade );
         }
     else {
@@ -2686,16 +2715,16 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
             }
         }
     
-    if( inSpeaker->dying && ! inSpeaker->sick ) {
+    if( inSpeaker != NULL && inSpeaker->dying && ! inSpeaker->sick ) {
         setDrawColor( 1, 1, 1, inFade );
         }
-    else if( inSpeaker->curseLevel > 0 ) {
+    else if( inSpeaker != NULL && inSpeaker->curseLevel > 0 ) {
         setDrawColor( 1, 1, 1, inFade );
         if( inSpeaker->speechIsSuccessfulCurse ) {
             setDrawColor( 0.875, 0, 0.875, inFade );
             }
         }
-    else if( inSpeaker->speechIsSuccessfulCurse ) {
+    else if( inSpeaker != NULL && inSpeaker->speechIsSuccessfulCurse ) {
         setDrawColor( 0.5, 0, 0.5, inFade );
         }
     else {
@@ -5897,6 +5926,37 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                    o->speechFade, widthLimit,
                                    o );
         }
+
+
+
+    for( int i=0; i<locationSpeech.size(); i++ ) {
+        LocationSpeech *ls = locationSpeech.getElement( i );
+        
+        doublePair pos = ls->pos;
+        
+        
+        doublePair speechPos = pos;
+
+
+        speechPos.y += 84;
+        
+        int width = 250;
+        int widthLimit = 250;
+        
+        double fullWidth = 
+            handwritingFont->measureString( ls->speech );
+        
+        if( fullWidth < width ) {
+            width = (int)fullWidth;
+            }
+        
+        speechPos.x -= width / 2;
+        
+        drawChalkBackgroundString( speechPos, ls->speech, 
+                                   ls->fade, widthLimit );
+        }
+    
+
     
 
     /*
@@ -14412,6 +14472,57 @@ void LivingLifePage::step() {
                 }
             delete [] lines;
             }
+        else if( type == LOCATION_SAYS ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            for( int i=1; i<numLines; i++ ) {
+                int x = 0;
+                int y = 0;
+                
+                int numRead = sscanf( lines[i], "%d %d", &x, &y );
+                
+                
+                if( numRead == 2 ) {
+                    
+                    char *firstSpace = strstr( lines[i], " " );
+
+                    if( firstSpace != NULL ) {
+                        char *secondSpace = strstr( &( firstSpace[1] ), " " );
+                        
+
+                        if( secondSpace != NULL ) {
+                            
+                            char *speech = &( secondSpace[1] );
+                            
+                            LocationSpeech ls;
+                            
+                            ls.pos.x = x * CELL_D;
+                            ls.pos.y = y * CELL_D;
+                            
+                            ls.speech = stringDuplicate( speech );
+                            
+                            ls.fade = 1.0;
+                            
+                            // longer time for longer speech
+                            ls.fadeETATime = 
+                                game_getCurrentTime() + 3 +
+                                strlen( ls.speech ) / 5;
+
+                            locationSpeech.push_back( ls );
+                            }
+                        }
+                    }
+                
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
         else if( type == PLAYER_EMOT ) {
             int numLines;
             char **lines = split( message, "\n", &numLines );
@@ -15942,6 +16053,22 @@ void LivingLifePage::step() {
             }
         }
     
+    
+    // step fades on location-based speech
+    if( !mapPullMode )
+    for( int i=0; i<locationSpeech.size(); i++ ) {
+        LocationSpeech *ls = locationSpeech.getElement( i );
+        if( game_getCurrentTime() > ls->fadeETATime ) {
+            ls->fade -= 0.05 * frameRateFactor;
+            
+            if( ls->fade <= 0 ) {
+                delete [] ls->speech;
+                locationSpeech.deleteElement( i );
+                i --;
+                }
+            }
+        }
+    
 
     double currentTime = game_getCurrentTime();
     
@@ -16314,6 +16441,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    clearLocationSpeech();
 
     showFPS = false;
     showPing = false;
