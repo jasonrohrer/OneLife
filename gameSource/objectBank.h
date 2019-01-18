@@ -343,6 +343,11 @@ typedef struct ObjectRecord {
         // index into globalTriggers vector
         int globalTriggerIndex;
         
+
+        char speechPipeIn;
+        char speechPipeOut;
+        int speechPipeIndex;
+
     } ObjectRecord;
 
 
@@ -783,6 +788,9 @@ void prepareToSkipSprites( ObjectRecord *inObject,
 // restores spriteSkipDrawing for object to what it was before
 // prepareToSkipSprites was called
 void restoreSkipDrawing( ObjectRecord *inObject );
+
+
+int getMaxSpeechPipeIndex();
 
 
 

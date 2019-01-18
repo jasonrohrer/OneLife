@@ -3195,10 +3195,17 @@ GridPos findClosestEmptyMapSpot( int inX, int inY, int inMaxPointsToCheck,
 SimpleVector<char> newSpeech;
 SimpleVector<ChangePosition> newSpeechPos;
 
+
+SimpleVector<char> newLocationSpeech;
+SimpleVector<ChangePosition> newLocationSpeechPos;
+
+
+
+
 char *isCurseNamingSay( char *inSaidString );
 
 
-static void makePlayerSay( LiveObject *inPlayer, char *inToSay) {    
+static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {    
                         
     if( inPlayer->lastSay != NULL ) {
         delete [] inPlayer->lastSay;
@@ -3262,6 +3269,36 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay) {
         }
 
     newSpeechPos.push_back( p );
+
+
+
+    SimpleVector<int> pipesIn;
+    GridPos playerPos = getPlayerPos( inPlayer );
+    
+    getSpeechPipesIn( playerPos.x, playerPos.y, &pipesIn );
+    
+    if( pipesIn.size() > 0 ) {
+        for( int p=0; p<pipesIn.size(); p++ ) {
+            int pipeIndex = pipesIn.getElementDirect( p );
+
+            SimpleVector<GridPos> *pipesOut = getSpeechPipesOut( pipeIndex );
+
+            for( int i=0; i<pipesOut->size(); i++ ) {
+                GridPos outPos = pipesOut->getElementDirect( i );
+                
+                char *line = autoSprintf( "%d %d %s\n", 
+                                          outPos.x,
+                                          outPos.y, inToSay );
+                
+                newLocationSpeech.appendElementString( line );
+                        
+                delete [] line;
+
+                ChangePosition outChangePos = { outPos.x, outPos.y, false };
+                newLocationSpeechPos.push_back( outChangePos );
+                }
+            }
+        }
     }
 
 
@@ -12591,6 +12628,35 @@ int main() {
             }
 
 
+
+
+        unsigned char *locationSpeechMessage = NULL;
+        int locationSpeechMessageLength = 0;
+        
+        if( newLocationSpeech.size() > 0 ) {
+            newLocationSpeech.push_back( '#' );
+            char *temp = newLocationSpeech.getElementString();
+
+            char *speechMessageText = concatonate( "LS\n", temp );
+            delete [] temp;
+
+            locationSpeechMessageLength = strlen( speechMessageText );
+            
+            if( locationSpeechMessageLength < maxUncompressedSize ) {
+                locationSpeechMessage = (unsigned char*)speechMessageText;
+                }
+            else {
+                // compress for all players once here
+                locationSpeechMessage = makeCompressedMessage( 
+                    speechMessageText, 
+                    locationSpeechMessageLength, &locationSpeechMessageLength );
+                
+                delete [] speechMessageText;
+                }
+
+            }
+
+
         unsigned char *lineageMessage = NULL;
         int lineageMessageLength = 0;
         
@@ -13868,6 +13934,40 @@ int main() {
                             }
                         }
                     }
+
+
+                if( locationSpeechMessage != NULL && nextPlayer->connected ) {
+                    double minUpdateDist = 64;
+                    
+                    for( int u=0; u<newLocationSpeechPos.size(); u++ ) {
+                        ChangePosition *p = 
+                            newLocationSpeechPos.getElement( u );
+                        
+                        // locationSpeech never global
+
+                        double d = intDist( p->x, p->y, 
+                                            playerXD, playerYD );
+                        
+                        if( d < minUpdateDist ) {
+                            minUpdateDist = d;
+                            }
+                        }
+
+                    if( minUpdateDist <= maxDist ) {
+                        int numSent = 
+                            nextPlayer->sock->send( 
+                                locationSpeechMessage, 
+                                locationSpeechMessageLength, 
+                                false, false );
+                        
+                        nextPlayer->gotPartOfThisFrame = true;
+                        
+                        if( numSent != locationSpeechMessageLength ) {
+                            setPlayerDisconnected( nextPlayer, 
+                                                   "Socket write failed" );
+                            }
+                        }
+                    }
                 
 
 
@@ -14155,6 +14255,9 @@ int main() {
         if( speechMessage != NULL ) {
             delete [] speechMessage;
             }
+        if( locationSpeechMessage != NULL ) {
+            delete [] locationSpeechMessage;
+            }
         if( lineageMessage != NULL ) {
             delete [] lineageMessage;
             }
@@ -14178,6 +14281,9 @@ int main() {
         // this one is global, so we must clear it every loop
         newSpeech.deleteAll();
         newSpeechPos.deleteAll();
+        
+        newLocationSpeech.deleteAll();
+        newLocationSpeechPos.deleteAll();
         
 
         
