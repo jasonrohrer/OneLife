@@ -3,6 +3,15 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 195     ???
+
+--Changed projection for drawn mouse pointer (to further fix behavior on
+  ultrawidescreen).
+
+
+
+
 Version 193     2019-January-17
 
 --Code for transmission of speech through speech pipe objects.
