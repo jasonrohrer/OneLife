@@ -123,6 +123,8 @@ PLAYER_OUT_OF_RANGE (PO)
 
 PLAYER_SAYS (PS)
 
+LOCATION_SAYS (LS)
+
 PLAYER_EMOT (PE)
 
 MAP_CHANGE (MX)
@@ -396,6 +398,30 @@ PS
 1501/1 CURSE JOHN SMITH
 1448/0 HELP ME
 #
+
+
+
+
+
+LS
+x y text
+x y text
+x y text
+...
+x y text
+#
+
+Text at each location says must not contain # or newline.
+
+Example:
+
+LS
+0 25 HELLO THERE
+14034 3424 CURSE JOHN SMITH
+-342 3847 HELP ME
+#
+
+
 
 
 

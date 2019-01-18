@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 193     2019-January-17
+
+--Code for transmission of speech through speech pipe objects.
+
+
+
+
 Version 190     2019-January-11
 
 --Fixed so that client sends correct number of tokens for LOGIN with blank

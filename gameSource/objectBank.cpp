@@ -405,6 +405,51 @@ static void setupObjectGlobalTriggers( ObjectRecord *inR ) {
 
 
 
+static int maxSpeechPipeIndex = 0;
+
+
+static void setupObjectSpeechPipe( ObjectRecord *inR ) {
+    inR->speechPipeIn = false;
+    inR->speechPipeOut = false;
+    
+    inR->speechPipeIndex = -1;
+
+    if( strstr( inR->description, "speech" ) == NULL ) {
+        return;
+        }
+
+    char *inLoc = strstr( inR->description, "speechIn_" );
+    if( inLoc != NULL ) {
+        inR->speechPipeIn = true;        
+        
+        char *indexLoc = &( inLoc[ strlen( "speechIn_" ) ] );
+        
+        sscanf( indexLoc, "%d", &( inR->speechPipeIndex ) );
+        }
+    else {
+        
+        char *outLoc = strstr( inR->description, "speechOut_" );
+        if( outLoc != NULL ) {
+            inR->speechPipeOut = true;
+            
+            char *indexLoc = &( outLoc[ strlen( "speechOut_" ) ] );
+        
+            sscanf( indexLoc, "%d", &( inR->speechPipeIndex ) );
+            }
+        }
+
+    if( inR->speechPipeIndex > maxSpeechPipeIndex ) {
+        maxSpeechPipeIndex = inR->speechPipeIndex;
+        }
+    }
+
+
+int getMaxSpeechPipeIndex() {
+    return maxSpeechPipeIndex;
+    }
+
+
+
 float initObjectBankStep() {
         
     if( currentFile == cache.numFiles ) {
@@ -452,6 +497,8 @@ float initObjectBankStep() {
                 setupObjectWritingStatus( r );
                 
                 setupObjectGlobalTriggers( r );
+                
+                setupObjectSpeechPipe( r );
                 
 
                 next++;
@@ -2890,6 +2937,9 @@ int addObject( const char *inDescription,
     
     setupObjectGlobalTriggers( r );
     
+    setupObjectSpeechPipe( r );
+    
+
     memset( r->spriteSkipDrawing, false, inNumSprites );
     
 
