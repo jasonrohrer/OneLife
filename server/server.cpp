@@ -3194,7 +3194,7 @@ SimpleVector<char> newSpeech;
 SimpleVector<ChangePosition> newSpeechPos;
 
 
-SimpleVector<char> newLocationSpeech;
+SimpleVector<char*> newLocationSpeech;
 SimpleVector<ChangePosition> newLocationSpeechPos;
 
 
@@ -3284,14 +3284,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             for( int i=0; i<pipesOut->size(); i++ ) {
                 GridPos outPos = pipesOut->getElementDirect( i );
                 
-                char *line = autoSprintf( "%d %d %s\n", 
-                                          outPos.x,
-                                          outPos.y, inToSay );
+                newLocationSpeech.push_back( stringDuplicate( inToSay ) );
                 
-                newLocationSpeech.appendElementString( line );
-                        
-                delete [] line;
-
                 ChangePosition outChangePos = { outPos.x, outPos.y, false };
                 newLocationSpeechPos.push_back( outChangePos );
                 }
@@ -12612,32 +12606,6 @@ int main() {
 
 
 
-        unsigned char *locationSpeechMessage = NULL;
-        int locationSpeechMessageLength = 0;
-        
-        if( newLocationSpeech.size() > 0 ) {
-            newLocationSpeech.push_back( '#' );
-            char *temp = newLocationSpeech.getElementString();
-
-            char *speechMessageText = concatonate( "LS\n", temp );
-            delete [] temp;
-
-            locationSpeechMessageLength = strlen( speechMessageText );
-            
-            if( locationSpeechMessageLength < maxUncompressedSize ) {
-                locationSpeechMessage = (unsigned char*)speechMessageText;
-                }
-            else {
-                // compress for all players once here
-                locationSpeechMessage = makeCompressedMessage( 
-                    speechMessageText, 
-                    locationSpeechMessageLength, &locationSpeechMessageLength );
-                
-                delete [] speechMessageText;
-                }
-
-            }
-
 
         unsigned char *lineageMessage = NULL;
         int lineageMessageLength = 0;
@@ -13918,7 +13886,7 @@ int main() {
                     }
 
 
-                if( locationSpeechMessage != NULL && nextPlayer->connected ) {
+                if( newLocationSpeech.size() > 0 && nextPlayer->connected ) {
                     double minUpdateDist = 64;
                     
                     for( int u=0; u<newLocationSpeechPos.size(); u++ ) {
@@ -13936,15 +13904,56 @@ int main() {
                         }
 
                     if( minUpdateDist <= maxDist ) {
+                        // some of location speech in range
+                        
+                        SimpleVector<char> working;
+                        
+                        working.appendElementString( "LS\n" );
+                        
+                        for( int u=0; u<newLocationSpeechPos.size(); u++ ) {
+                            ChangePosition *p = 
+                                newLocationSpeechPos.getElement( u );
+                            
+                            char *line = autoSprintf( 
+                                "%d %d %s\n",
+                                p->x - nextPlayer->birthPos.x, 
+                                p->y - nextPlayer->birthPos.y,
+                                newLocationSpeech.getElementDirect( u ) );
+                            working.appendElementString( line );
+                            
+                            delete [] line;
+                            }
+                        working.push_back( '#' );
+                        
+                        char *message = 
+                            working.getElementString();
+                        int len = working.size();
+                        
+
+                        if( len > maxUncompressedSize ) {
+                            int compLen = 0;
+                            
+                            unsigned char *compMessage = makeCompressedMessage( 
+                                message, 
+                                len, 
+                                &compLen );
+                
+                            delete [] message;
+                            len = compLen;
+                            message = (char*)compMessage;
+                            }
+
                         int numSent = 
                             nextPlayer->sock->send( 
-                                locationSpeechMessage, 
-                                locationSpeechMessageLength, 
+                                (unsigned char*)message,
+                                len, 
                                 false, false );
+                        
+                        delete [] message;
                         
                         nextPlayer->gotPartOfThisFrame = true;
                         
-                        if( numSent != locationSpeechMessageLength ) {
+                        if( numSent != len ) {
                             setPlayerDisconnected( nextPlayer, 
                                                    "Socket write failed" );
                             }
@@ -14237,9 +14246,6 @@ int main() {
         if( speechMessage != NULL ) {
             delete [] speechMessage;
             }
-        if( locationSpeechMessage != NULL ) {
-            delete [] locationSpeechMessage;
-            }
         if( lineageMessage != NULL ) {
             delete [] lineageMessage;
             }
@@ -14264,7 +14270,7 @@ int main() {
         newSpeech.deleteAll();
         newSpeechPos.deleteAll();
         
-        newLocationSpeech.deleteAll();
+        newLocationSpeech.deallocateStringElements();
         newLocationSpeechPos.deleteAll();
         
 
