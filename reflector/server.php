@@ -46,7 +46,17 @@ $twin_code = strtoupper( $twin_code );
 // this is better than using their IP address, because that can change
 // Want to send people back to the same server tomorrow if load conditions
 // are the same, even if their IP changes.
-mt_srand( crc32( $email ) );
+//mt_srand( crc32( $email ) );
+
+// actually, don't make it sticky with their email address
+// seed with their email address plus the current time
+// so when they reconnect later (next life), they will be randomly
+// sent to another server
+// Note that this is not great for reconnects after crashes, but those
+// should hopefully be rare
+mt_srand( crc32( $email . time() ) );
+
+
 
 
 if( $twin_code != "" ) {

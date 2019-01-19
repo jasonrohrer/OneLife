@@ -11,6 +11,13 @@ Version 195     ???
 
 
 
+Server Fixes
+
+--Reflector changed so that server assignment is not sticky for a given email
+  address.  Each new life is a random re-roll among available servers.
+
+
+
 
 Version 193     2019-January-17
 
