@@ -18,6 +18,9 @@ Server Fixes
 
 --Added birth location offsets to AM receiver message positions.
 
+--Reflector fixed so that offline servers aren't counted when summing current
+  active server totals.
+
 
 
 

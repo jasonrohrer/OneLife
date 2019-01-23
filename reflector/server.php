@@ -196,7 +196,8 @@ if( $handle ) {
 
         $maxCapPerServer = array();
         $currentPopPerServer = array();
-
+        $offlineServerFlags = array();
+        
         $totalNumServer = 0;
         
         while( ( $line = fgets( $handle ) ) !== false ) {
@@ -213,32 +214,48 @@ if( $handle ) {
             
                 $maxFile = "/tmp/" .$address . "_" . $port . "_max";
                 $currentFile = "/tmp/" .$address . "_" . $port . "_current";
+                $offlineFile = "/tmp/" .$address . "_" . $port . "_offline";
 
                 $max = file_get_contents_safe( $maxFile );
                 $current = file_get_contents_safe( $currentFile );
+                $offline = file_get_contents_safe( $offlineFile );
 
                 if( $max === FALSE ||
-                    $current === FALSE ) {
+                    $current === FALSE ||
+                    $offline === FALSE ) {
                     // start with a sensible default,
                     // we know nothing about this server
                     $max = 100;
                     $current = 0;
+                    $offline = 0;
                     }
                 $totalMaxCap += $max;
                 $totalCurrentPop += $current;
                 $maxCapPerServer[] = $max;
                 $currentPopPerServer[] = $current;
-
+                $offlineServerFlags[] = $offline;
+                
                 $totalNumServer ++;
                 }
             }
 
+        
         // sums for just our active server subset
+        // but skip offline servers along the way
         $activeMaxCap = 0;
         $activeCurrentPop = 0;
-        for( $i=0; $i<$curNumServers; $i++ ) {
-            $activeMaxCap += $maxCapPerServer[$i];
-            $activeCurrentPop += $currentPopPerServer[$i];
+
+        $i=0;
+        $numServersSummed = 0;
+        while( $i < $totalNumServer &&
+               $numServersSummed < $curNumServers ) {
+
+            if( $offlineServerFlags[$i] == 0 ) {
+                $activeMaxCap += $maxCapPerServer[$i];
+                $activeCurrentPop += $currentPopPerServer[$i];
+                $numServersSummed++;
+                }
+            $i++;
             }
 
         if( $curNumServers < $totalNumServer &&
@@ -343,7 +360,9 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
 
     $maxFile = "/tmp/" .$inAddress . "_" . $inPort . "_max";
     $currentFile = "/tmp/" .$inAddress . "_" . $inPort . "_current";
+    $offlineFile = "/tmp/" .$inAddress . "_" . $inPort . "_offline";
 
+    
     // suppress printed warnings from fsockopen
     // sometimes servers will be down, and we'll skip them.
     $fp = @fsockopen( $inAddress, $inPort, $errno, $errstr, 0.125 );
@@ -353,6 +372,7 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
         if( $inReportOnly ) {
             echo "|--> $inAddress : $inPort ::: OFFLINE<br><br>";
             }
+        file_put_contents( $offlineFile, "1" );
         
         return false;
         }
@@ -379,6 +399,7 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
                     echo "|--> $inAddress : $inPort ::: OFFLINE<br><br>";
                     }
                 
+                file_put_contents( $offlineFile, "1" );
                 return false;
                 }
             
@@ -420,6 +441,7 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
 
         file_put_contents( $maxFile, "$max" );
         file_put_contents( $currentFile, "$current" );
+        file_put_contents( $offlineFile, "0" );
         
         
         if( $inReportOnly ) {
