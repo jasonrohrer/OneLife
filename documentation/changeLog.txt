@@ -21,6 +21,10 @@ Server Fixes
 --Reflector fixed so that offline servers aren't counted when summing current
   active server totals.
 
+--Reflector now picks from weighted distribution of actually-alive set of
+  servers, if some of the servers in the active set are offline.  Last-ditch
+  effort code added to find SOME server for the player, if the weighted picking
+  fails for whatever reason.
 
 
 
