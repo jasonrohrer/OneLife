@@ -112,11 +112,11 @@ echo "Sending stats server settings to remote server and restarting it."
 
 scp -o StrictHostKeychecking=no ~/checkout/OneLife/server/settings/statsServerSharedSecret.ini ~/checkout/OneLife/server/settings/statsServerURL.ini ~/checkout/OneLife/server/settings/useStatsServer.ini ~/checkout/OneLife/server/settings/lineageServerSharedSecret.ini ~/checkout/OneLife/server/settings/lineageServerURL.ini ~/checkout/OneLife/server/settings/useLineageServer.ini ~/checkout/OneLife/server/settings/curseServerSharedSecret.ini ~/checkout/OneLife/server/settings/curseServerURL.ini ~/checkout/OneLife/server/settings/useCurseServer.ini ~/checkout/OneLife/server/settings/reflectorSharedSecret.ini jcr13@$subdomain.onehouronelife.com:checkout/OneLife/server/settings/
 
-ssh -o StrictHostKeychecking=no jcr13@$subdomain.onehouronelife.com '~/checkout/OneLife/scripts/remoteServerCodeUpdate.sh'
+ssh -n -o StrictHostKeychecking=no jcr13@$subdomain.onehouronelife.com '~/checkout/OneLife/scripts/remoteServerCodeUpdate.sh'
 
-ssh -o StrictHostKeychecking=no jcr13@$subdomain.onehouronelife.com "echo $subdomain.onehouronelife.com > ~/checkout/OneLife/server/serverID.ini"
+ssh -n -o StrictHostKeychecking=no jcr13@$subdomain.onehouronelife.com "echo $subdomain.onehouronelife.com > ~/checkout/OneLife/server/serverID.ini"
 
-ssh -o StrictHostKeychecking=no jcr13@$subdomain.onehouronelife.com '~/checkout/OneLife/scripts/remoteServerStartup.sh'
+ssh -n -o StrictHostKeychecking=no jcr13@$subdomain.onehouronelife.com '~/checkout/OneLife/scripts/remoteServerStartup.sh'
 
 EOSU2
 
