@@ -12616,15 +12616,14 @@ int main() {
 
         
 
+        // add changes from auto-decays on map, 
+        // mixed with player-caused changes
+        stepMap( &mapChanges, &mapChangesPos );
+        
         
 
         
         if( periodicStepThisStep ) {
-
-            // add changes from auto-decays on map, 
-            // mixed with player-caused changes
-            stepMap( &mapChanges, &mapChangesPos );
-        
 
             // figure out who has recieved a new curse token
             // they are sent a message about it below (CX)
