@@ -8045,7 +8045,6 @@ int main() {
                                             nextPlayer->id ) );
                                 }
                             }
-                        continue;
                         }
                     else if( riding && 
                              curOverObj->permanent && 
