@@ -26,6 +26,10 @@ Server Fixes
   effort code added to find SOME server for the player, if the weighted picking
   fails for whatever reason.
 
+--Optimization: Don't need to do select at all on receive if timeout 0
+  (using MSG_DONTWAIT anyway).  select was found to be a hotspot with profiler.
+
+
 
 
 Version 193     2019-January-17
