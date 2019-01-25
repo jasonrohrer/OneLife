@@ -1357,7 +1357,6 @@ void outputBiomeFractals() {
 
 
 
-int getMapObjectRaw( int inX, int inY );
 int *getContainedRaw( int inX, int inY, int *outNumContained, 
                       int inSubCont = 0 );
 

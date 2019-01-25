@@ -1986,7 +1986,9 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                 getBiomeHeatValue( getMapBiome( mapX, mapY ) );
 
 
-            ObjectRecord *o = getObject( getMapObject( mapX, mapY ) );
+            // call Raw version for better performance
+            // we don't care if object decayed since we last looked at it
+            ObjectRecord *o = getObject( getMapObjectRaw( mapX, mapY ) );
                     
                     
                     

@@ -37,6 +37,9 @@ Server Fixes
   incoming message rate, of 2 players every 0.1 seconds (20 players per second
   during active times).
 
+--Optimization: Exposed getMapObjectRaw externally so recomputeHeatMap can use
+   it to avoid wasting cycles checking for decaying objects.
+
 
 
 
