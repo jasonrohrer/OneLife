@@ -46,6 +46,8 @@ Server Fixes
 
 --Removed a wayward continue.
 
+--Optimization:  Don't check curse settings every stepCurses call.
+
 
 
 Version 193     2019-January-17

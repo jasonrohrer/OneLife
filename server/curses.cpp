@@ -219,16 +219,30 @@ void freeCurses() {
 
 
 
+static double lastCurseSettingCheckTime = 0;
+
+static double curseSettingCheckInterval = 10;
+
+static double tokenTime = 7200.0;
+static double decrementTime = 3600.0;
+
+
 static void stepCurses() {
 
-    double tokenTime = SettingsManager::getFloatSetting( "curseTokenTime",
-                                                         7200.0 );
-    double decrementTime = 
-        SettingsManager::getFloatSetting( "curseDecrementTime", 3600.0 );
     
 
     double curTime = Time::getCurrentTime();
     
+    if( curTime - lastCurseSettingCheckTime > curseSettingCheckInterval ) {
+        tokenTime = SettingsManager::getFloatSetting( "curseTokenTime",
+                                                      7200.0 );
+        decrementTime = 
+            SettingsManager::getFloatSetting( "curseDecrementTime", 3600.0 );
+        
+        lastCurseSettingCheckTime = curTime;
+        }
+    
+
     for( int i=0; i<playerNames.size(); i++ ) {
         PlayerNameRecord *r = playerNames.getElement( i );
         
