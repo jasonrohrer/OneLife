@@ -29,6 +29,14 @@ Server Fixes
 --Optimization: Don't need to do select at all on receive if timeout 0
   (using MSG_DONTWAIT anyway).  select was found to be a hotspot with profiler.
 
+--Optimization: Profiler found 26% of non-idle time spent recomputing heat
+  maps.  We were taking another step through list of players each time new
+  messages arrived, meaning that we were looping through them faster and faster
+  during busy times (in one estimate, processing heat maps for 130 players
+  every second).  Now we process them at a fixed max rate, regardless of
+  incoming message rate, of 2 players every 0.1 seconds (20 players per second
+  during active times).
+
 
 
 

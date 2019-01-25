@@ -1934,9 +1934,12 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
 
 
 
-// recompute heat for fixed number of players per step
+// recompute heat for fixed number of players per timestep
 static int numPlayersRecomputeHeatPerStep = 2;
 static int lastPlayerIndexHeatRecomputed = -1;
+static double lastHeatUpdateTime = 0;
+static double heatUpdateTimeStep = 0.1;
+
 
 // how often the player's personal heat advances toward their environmental
 // heat value
@@ -12393,24 +12396,34 @@ int main() {
             }
         
 
-        // recompute heat map here for next players in line
-        int r = 0;
-        for( r=lastPlayerIndexHeatRecomputed+1; 
-             r < lastPlayerIndexHeatRecomputed + 1 + 
-                 numPlayersRecomputeHeatPerStep
-                 &&
-                 r < players.size(); r++ ) {
-                    
-            recomputeHeatMap( players.getElement( r ) );
+
+        double currentTimeHeat = Time::getCurrentTime();
+        
+        if( currentTimeHeat - lastHeatUpdateTime >= heatUpdateTimeStep ) {
+            // a heat step has passed
+            
+            
+            // recompute heat map here for next players in line
+            int r = 0;
+            for( r=lastPlayerIndexHeatRecomputed+1; 
+                 r < lastPlayerIndexHeatRecomputed + 1 + 
+                     numPlayersRecomputeHeatPerStep
+                     &&
+                     r < players.size(); r++ ) {
+                
+                recomputeHeatMap( players.getElement( r ) );
+                }
+            
+            lastPlayerIndexHeatRecomputed = r - 1;
+            
+            if( r == players.size() ) {
+                // done updating for last player
+                // start over
+                lastPlayerIndexHeatRecomputed = -1;
+                }
+            lastHeatUpdateTime = currentTimeHeat;
             }
         
-        lastPlayerIndexHeatRecomputed = r - 1;
-        
-        if( r == players.size() ) {
-            // done updating for last player
-            // start over
-            lastPlayerIndexHeatRecomputed = -1;
-            }
 
 
 
