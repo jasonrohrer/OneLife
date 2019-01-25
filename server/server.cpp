@@ -462,6 +462,9 @@ typedef struct LiveObject {
 
         timeSec_t lastRegionLookTime;
         
+        double playerCrossingCheckTime;
+        
+
         char monumentPosSet;
         GridPos lastMonumentPos;
         int lastMonumentID;
@@ -1931,6 +1934,10 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
         
     return speed;
     }
+
+
+// how often do we check what a player is standing on top of for attack effects?
+static double playerCrossingCheckStepTime = 0.25;
 
 
 
@@ -4464,6 +4471,7 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.yd = 0;
     
     newObject.lastRegionLookTime = 0;
+    newObject.playerCrossingCheckTime = 0;
     
     
     LiveObject *parent = NULL;
@@ -7824,220 +7832,245 @@ int main() {
 
             if( nextPlayer->error ) {
                 continue;
-                }
-            
-            GridPos curPos = { nextPlayer->xd, nextPlayer->yd };
-            
-            if( nextPlayer->xd != nextPlayer->xs ||
-                nextPlayer->yd != nextPlayer->ys ) {
-                
-                curPos = computePartialMoveSpot( nextPlayer );
-                }
-            
-            int curOverID = getMapObject( curPos.x, curPos.y );
-            
+                }            
 
-            if( ! nextPlayer->heldByOther &&
-                curOverID != 0 && 
-                ! isMapObjectInTransit( curPos.x, curPos.y ) &&
-                ! wasRecentlyDeadly( curPos ) ) {
+            double curCrossTime = Time::getCurrentTime();
+
+            char checkCrossing = true;
+            
+            if( curCrossTime < nextPlayer->playerCrossingCheckTime +
+                playerCrossingCheckStepTime ) {
+                // player not due for another check yet
+                checkCrossing = false;
+                }
+            else {
+                // time for next check for this player
+                nextPlayer->playerCrossingCheckTime = curCrossTime;
+                checkCrossing = true;
+                }
+            
+            
+            if( checkCrossing ) {
+                printf( "Checking what player is crossing at time %f\n",
+                        curCrossTime );
+
+                GridPos curPos = { nextPlayer->xd, nextPlayer->yd };
+            
+                if( nextPlayer->xd != nextPlayer->xs ||
+                    nextPlayer->yd != nextPlayer->ys ) {
                 
-                ObjectRecord *curOverObj = getObject( curOverID );
-                
-                char riding = false;
-                
-                if( nextPlayer->holdingID > 0 && 
-                    getObject( nextPlayer->holdingID )->rideable ) {
-                    riding = true;
+                    curPos = computePartialMoveSpot( nextPlayer );
                     }
+            
+                int curOverID = getMapObject( curPos.x, curPos.y );
+            
 
-                if( !riding &&
-                    curOverObj->permanent && curOverObj->deadlyDistance > 0 ) {
-                    
-                    char wasSick = false;
-                                        
-                    if( nextPlayer->holdingID > 0 &&
-                        strstr(
-                            getObject( nextPlayer->holdingID )->
-                            description,
-                            "sick" ) != NULL ) {
-                        wasSick = true;
-                        }
-
-
-                    addDeadlyMapSpot( curPos );
-                    
-                    setDeathReason( nextPlayer, 
-                                    "killed",
-                                    curOverID );
-                    
-                    nextPlayer->deathSourceID = curOverID;
-                    
-                    if( curOverObj->isUseDummy ) {
-                        nextPlayer->deathSourceID = curOverObj->useDummyParent;
-                        }
-
-                    nextPlayer->errorCauseString =
-                        "Player killed by permanent object";
-                    
-                    if( ! nextPlayer->dying || wasSick ) {
-                        // if was sick, they had a long stagger
-                        // time set, so cutting it in half makes no sense
-                        
-                        int staggerTime = 
-                            SettingsManager::getIntSetting(
-                                "deathStaggerTime", 20 );
-                        
-                        double currentTime = 
-                            Time::getCurrentTime();
-                        
-                        nextPlayer->dying = true;
-                        nextPlayer->dyingETA = 
-                            currentTime + staggerTime;
-
-                        playerIndicesToSendDyingAbout.
-                            push_back( 
-                                getLiveObjectIndex( 
-                                    nextPlayer->id ) );
-                        }
-                    else {
-                        // already dying, and getting attacked again
-                        
-                        // halve their remaining stagger time
-                        double currentTime = 
-                            Time::getCurrentTime();
-                        
-                        double staggerTimeLeft = 
-                            nextPlayer->dyingETA - currentTime;
-                        
-                        if( staggerTimeLeft > 0 ) {
-                            staggerTimeLeft /= 2;
-                            nextPlayer->dyingETA = 
-                                currentTime + staggerTimeLeft;
-                            }
-                        }
+                if( ! nextPlayer->heldByOther &&
+                    curOverID != 0 && 
+                    ! isMapObjectInTransit( curPos.x, curPos.y ) &&
+                    ! wasRecentlyDeadly( curPos ) ) {
                 
+                    ObjectRecord *curOverObj = getObject( curOverID );
+                
+                    char riding = false;
+                
+                    if( nextPlayer->holdingID > 0 && 
+                        getObject( nextPlayer->holdingID )->rideable ) {
+                        riding = true;
+                        }
+
+                    if( !riding &&
+                        curOverObj->permanent && 
+                        curOverObj->deadlyDistance > 0 ) {
                     
-                    // generic on-person
-                    TransRecord *r = 
-                        getPTrans( curOverID, 0 );
+                        char wasSick = false;
+                                        
+                        if( nextPlayer->holdingID > 0 &&
+                            strstr(
+                                getObject( nextPlayer->holdingID )->
+                                description,
+                                "sick" ) != NULL ) {
+                            wasSick = true;
+                            }
 
-                    if( r != NULL ) {
-                        setMapObject( curPos.x, curPos.y, r->newActor );
 
-                        // new target specifies wound
-                        // but never replace an existing wound
-                        // death time is shortened above
-                        // however, wounds can replace sickness 
-                        if( r->newTarget > 0 &&
-                            ( ! nextPlayer->holdingWound || wasSick ) ) {
-                            // don't drop their wound
-                            if( nextPlayer->holdingID != 0 &&
-                                ! nextPlayer->holdingWound ) {
-                                handleDrop( 
-                                    curPos.x, curPos.y, 
-                                    nextPlayer,
-                                    &playerIndicesToSendUpdatesAbout );
-                                }
-                            nextPlayer->holdingID = 
-                                r->newTarget;
-                            holdingSomethingNew( nextPlayer );
-                            
-                            setFreshEtaDecayForHeld( nextPlayer );
-                            
-                            char isSick = false;
-                            
-                            if( strstr(
-                                    getObject( nextPlayer->holdingID )->
-                                    description,
-                                    "sick" ) != NULL ) {
-                                isSick = true;
+                        addDeadlyMapSpot( curPos );
+                    
+                        setDeathReason( nextPlayer, 
+                                        "killed",
+                                        curOverID );
+                    
+                        nextPlayer->deathSourceID = curOverID;
+                    
+                        if( curOverObj->isUseDummy ) {
+                            nextPlayer->deathSourceID = 
+                                curOverObj->useDummyParent;
+                            }
 
-                                // sicknesses override basic death-stagger
-                                // time.  The person can live forever
-                                // if they are taken care of until
-                                // the sickness passes
-                                
-                                int staggerTime = 
-                                    SettingsManager::getIntSetting(
-                                        "deathStaggerTime", 20 );
-                                
-                                double currentTime = 
-                                    Time::getCurrentTime();
+                        nextPlayer->errorCauseString =
+                            "Player killed by permanent object";
+                    
+                        if( ! nextPlayer->dying || wasSick ) {
+                            // if was sick, they had a long stagger
+                            // time set, so cutting it in half makes no sense
+                        
+                            int staggerTime = 
+                                SettingsManager::getIntSetting(
+                                    "deathStaggerTime", 20 );
+                        
+                            double currentTime = 
+                                Time::getCurrentTime();
+                        
+                            nextPlayer->dying = true;
+                            nextPlayer->dyingETA = 
+                                currentTime + staggerTime;
 
-                                // 10x base stagger time should
-                                // give them enough time to either heal
-                                // from the disease or die from its
-                                // side-effects
-                                nextPlayer->dyingETA = 
-                                    currentTime + 10 * staggerTime;
-                                }
-
-                            if( isSick ) {
-                                // what they have will heal on its own 
-                                // with time.  Sickness, not wound.
-                                
-                                // death source is sickness, not
-                                // source
-                                nextPlayer->deathSourceID = 
-                                    nextPlayer->holdingID;
-                                
-                                setDeathReason( nextPlayer, 
-                                                "succumbed",
-                                                nextPlayer->holdingID );
-                                }
-                            
-                            nextPlayer->holdingWound = true;
-                            
-                            ForcedEffects e = 
-                                checkForForcedEffects( nextPlayer->holdingID );
-                            
-                            if( e.emotIndex != -1 ) {
-                                nextPlayer->emotFrozen = true;
-                                newEmotPlayerIDs.push_back( nextPlayer->id );
-                                newEmotIndices.push_back( e.emotIndex );
-                                newEmotTTLs.push_back( e.ttlSec );
-                                }
-                            if( e.foodModifierSet && 
-                                e.foodCapModifier != 1 ) {
-                                
-                                nextPlayer->foodCapModifier = 
-                                    e.foodCapModifier;
-                                nextPlayer->foodUpdate = true;
-                                }
-                            
-
-                            playerIndicesToSendUpdatesAbout.
+                            playerIndicesToSendDyingAbout.
                                 push_back( 
                                     getLiveObjectIndex( 
                                         nextPlayer->id ) );
                             }
-                        }
-                    continue;
-                    }
-                else if( riding && 
-                         curOverObj->permanent && 
-                         curOverObj->deadlyDistance > 0 ) {
-                    // rode over something deadly
-                    // see if it affects what we're riding
-
-                    TransRecord *r = 
-                        getPTrans( nextPlayer->holdingID, curOverID );
+                        else {
+                            // already dying, and getting attacked again
+                        
+                            // halve their remaining stagger time
+                            double currentTime = 
+                                Time::getCurrentTime();
+                        
+                            double staggerTimeLeft = 
+                                nextPlayer->dyingETA - currentTime;
+                        
+                            if( staggerTimeLeft > 0 ) {
+                                staggerTimeLeft /= 2;
+                                nextPlayer->dyingETA = 
+                                    currentTime + staggerTimeLeft;
+                                }
+                            }
+                
                     
-                    if( r != NULL ) {
-                        handleHoldingChange( nextPlayer,
-                                             r->newActor );
-                        nextPlayer->heldTransitionSourceID = curOverID;
-                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        // generic on-person
+                        TransRecord *r = 
+                            getPTrans( curOverID, 0 );
 
-                        setMapObject( curPos.x, curPos.y, r->newTarget );
+                        if( r != NULL ) {
+                            setMapObject( curPos.x, curPos.y, r->newActor );
 
-                        // it attacked their vehicle 
-                        // put it on cooldown so it won't immediately
-                        // attack them
-                        addDeadlyMapSpot( curPos );
+                            // new target specifies wound
+                            // but never replace an existing wound
+                            // death time is shortened above
+                            // however, wounds can replace sickness 
+                            if( r->newTarget > 0 &&
+                                ( ! nextPlayer->holdingWound || wasSick ) ) {
+                                // don't drop their wound
+                                if( nextPlayer->holdingID != 0 &&
+                                    ! nextPlayer->holdingWound ) {
+                                    handleDrop( 
+                                        curPos.x, curPos.y, 
+                                        nextPlayer,
+                                        &playerIndicesToSendUpdatesAbout );
+                                    }
+                                nextPlayer->holdingID = 
+                                    r->newTarget;
+                                holdingSomethingNew( nextPlayer );
+                            
+                                setFreshEtaDecayForHeld( nextPlayer );
+                            
+                                char isSick = false;
+                            
+                                if( strstr(
+                                        getObject( nextPlayer->holdingID )->
+                                        description,
+                                        "sick" ) != NULL ) {
+                                    isSick = true;
+
+                                    // sicknesses override basic death-stagger
+                                    // time.  The person can live forever
+                                    // if they are taken care of until
+                                    // the sickness passes
+                                
+                                    int staggerTime = 
+                                        SettingsManager::getIntSetting(
+                                            "deathStaggerTime", 20 );
+                                
+                                    double currentTime = 
+                                        Time::getCurrentTime();
+
+                                    // 10x base stagger time should
+                                    // give them enough time to either heal
+                                    // from the disease or die from its
+                                    // side-effects
+                                    nextPlayer->dyingETA = 
+                                        currentTime + 10 * staggerTime;
+                                    }
+
+                                if( isSick ) {
+                                    // what they have will heal on its own 
+                                    // with time.  Sickness, not wound.
+                                
+                                    // death source is sickness, not
+                                    // source
+                                    nextPlayer->deathSourceID = 
+                                        nextPlayer->holdingID;
+                                
+                                    setDeathReason( nextPlayer, 
+                                                    "succumbed",
+                                                    nextPlayer->holdingID );
+                                    }
+                            
+                                nextPlayer->holdingWound = true;
+                            
+                                ForcedEffects e = 
+                                    checkForForcedEffects( 
+                                        nextPlayer->holdingID );
+                            
+                                if( e.emotIndex != -1 ) {
+                                    nextPlayer->emotFrozen = true;
+                                    newEmotPlayerIDs.push_back( 
+                                        nextPlayer->id );
+                                    newEmotIndices.push_back( e.emotIndex );
+                                    newEmotTTLs.push_back( e.ttlSec );
+                                    }
+                                if( e.foodModifierSet && 
+                                    e.foodCapModifier != 1 ) {
+                                
+                                    nextPlayer->foodCapModifier = 
+                                        e.foodCapModifier;
+                                    nextPlayer->foodUpdate = true;
+                                    }
+                            
+
+                                playerIndicesToSendUpdatesAbout.
+                                    push_back( 
+                                        getLiveObjectIndex( 
+                                            nextPlayer->id ) );
+                                }
+                            }
+                        continue;
                         }
-                    }                
+                    else if( riding && 
+                             curOverObj->permanent && 
+                             curOverObj->deadlyDistance > 0 ) {
+                        // rode over something deadly
+                        // see if it affects what we're riding
+
+                        TransRecord *r = 
+                            getPTrans( nextPlayer->holdingID, curOverID );
+                    
+                        if( r != NULL ) {
+                            handleHoldingChange( nextPlayer,
+                                                 r->newActor );
+                            nextPlayer->heldTransitionSourceID = curOverID;
+                            playerIndicesToSendUpdatesAbout.push_back( i );
+
+                            setMapObject( curPos.x, curPos.y, r->newTarget );
+
+                            // it attacked their vehicle 
+                            // put it on cooldown so it won't immediately
+                            // attack them
+                            addDeadlyMapSpot( curPos );
+                            }
+                        }                
+                    }
                 }
             
             
