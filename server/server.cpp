@@ -7878,9 +7878,6 @@ int main() {
             
             
             if( checkCrossing ) {
-                printf( "Checking what player is crossing at time %f\n",
-                        curCrossTime );
-
                 GridPos curPos = { nextPlayer->xd, nextPlayer->yd };
             
                 if( nextPlayer->xd != nextPlayer->xs ||
