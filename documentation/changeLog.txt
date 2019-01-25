@@ -44,6 +44,8 @@ Server Fixes
   step (and server steps happen faster and faster as the inbound message rate
   increases).  Fixed to only check what a player is crossing every 0.25 seconds.
 
+--Removed a wayward continue.
+
 
 
 Version 193     2019-January-17
