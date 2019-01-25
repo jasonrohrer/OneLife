@@ -48,6 +48,10 @@ Server Fixes
 
 --Optimization:  Don't check curse settings every stepCurses call.
 
+--Optimization:  Only execute certain non-reactive parts of server step loop
+  once every 0.25 seconds at most, not every loop (loop can run very fast when
+  a lot of messages are coming in.
+
 
 
 Version 193     2019-January-17

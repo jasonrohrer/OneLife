@@ -1940,6 +1940,13 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
 static double playerCrossingCheckStepTime = 0.25;
 
 
+// for steps in main loop that shouldn't happen every loop
+// (loop runs faster or slower depending on how many messages are incoming)
+static double periodicStepTime = 0.25;
+static double lastPeriodicStepTime = 0;
+
+
+
 
 // recompute heat for fixed number of players per timestep
 static int numPlayersRecomputeHeatPerStep = 2;
@@ -6890,12 +6897,30 @@ int main() {
     // waiting in the buffer for a given socket
     char someClientMessageReceived = false;
     
+    
+    int shutdownMode = SettingsManager::getIntSetting( "shutdownMode", 0 );
+    int forceShutdownMode = 
+            SettingsManager::getIntSetting( "forceShutdownMode", 0 );
+        
 
     while( !quit ) {
+
+        double curStepTime = Time::getCurrentTime();
         
-        int shutdownMode = SettingsManager::getIntSetting( "shutdownMode", 0 );
-        int forceShutdownMode = 
-            SettingsManager::getIntSetting( "forceShutdownMode", 0 );
+        char periodicStepThisStep = false;
+        
+        if( curStepTime - lastPeriodicStepTime > periodicStepTime ) {
+            periodicStepThisStep = true;
+            lastPeriodicStepTime = curStepTime;
+            }
+        
+        
+        if( periodicStepThisStep ) {
+            shutdownMode = SettingsManager::getIntSetting( "shutdownMode", 0 );
+            forceShutdownMode = 
+                SettingsManager::getIntSetting( "forceShutdownMode", 0 );
+            }
+        
         
         if( forceShutdownMode ) {
             shutdownMode = 1;
@@ -6946,18 +6971,20 @@ int main() {
             }
         
 
-        
-        apocalypseStep();
-        monumentStep();
-        
-        //checkBackup();
+        if( periodicStepThisStep ) {
+            
+            apocalypseStep();
+            monumentStep();
+            
+            //checkBackup();
 
-        stepFoodLog();
-        stepFailureLog();
-        
-        stepPlayerStats();
-        stepLineageLog();
-        stepCurseServerRequests();
+            stepFoodLog();
+            stepFailureLog();
+            
+            stepPlayerStats();
+            stepLineageLog();
+            stepCurseServerRequests();
+            }
         
         
         int numLive = players.size();
@@ -12592,35 +12619,35 @@ int main() {
         
 
         
-                
+        if( periodicStepThisStep ) {
 
-        // add changes from auto-decays on map, mixed with player-caused changes
-        stepMap( &mapChanges, &mapChangesPos );
+            // add changes from auto-decays on map, 
+            // mixed with player-caused changes
+            stepMap( &mapChanges, &mapChangesPos );
         
 
-        // figure out who has recieved a new curse token
-        // they are sent a message about it below (CX)
-        SimpleVector<char*> newCurseTokenEmails;
-        getNewCurseTokenHolders( &newCurseTokenEmails );
+            // figure out who has recieved a new curse token
+            // they are sent a message about it below (CX)
+            SimpleVector<char*> newCurseTokenEmails;
+            getNewCurseTokenHolders( &newCurseTokenEmails );
         
-        for( int i=0; i<newCurseTokenEmails.size(); i++ ) {
-            char *email = newCurseTokenEmails.getElementDirect( i );
-            
-            for( int j=0; j<numLive; j++ ) {
-                LiveObject *nextPlayer = players.getElement(j);
+            for( int i=0; i<newCurseTokenEmails.size(); i++ ) {
+                char *email = newCurseTokenEmails.getElementDirect( i );
                 
-                if( strcmp( nextPlayer->email, email ) == 0 ) {
+                for( int j=0; j<numLive; j++ ) {
+                    LiveObject *nextPlayer = players.getElement(j);
                     
-                    nextPlayer->curseTokenCount = 1;
-                    nextPlayer->curseTokenUpdate = true;
-                    break;
+                    if( strcmp( nextPlayer->email, email ) == 0 ) {
+                        
+                        nextPlayer->curseTokenCount = 1;
+                        nextPlayer->curseTokenUpdate = true;
+                        break;
+                        }
                     }
+                
+                delete [] email;
                 }
-            
-            delete [] email;
             }
-        
-
         
 
 
