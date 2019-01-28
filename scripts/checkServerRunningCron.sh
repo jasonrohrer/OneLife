@@ -98,7 +98,29 @@ then
 					exit 1
 				fi
 			fi
+
 			
+			# make sure it's not a read-only filesystem
+			ro=`grep ' / ' /proc/mounts | grep --count ' ro,'`
+
+			if [ $ro -eq 1 ]
+			then
+				echo "File system read-only"
+				
+				# send email report
+				serverT=`date`
+				pdt=`TZ=":America/Los_Angeles" date`
+				
+				curl "https://api.postmarkapp.com/email" \
+					-X POST \
+					-H "Accept: application/json" \
+					-H "Content-Type: application/json" \
+					-H "X-Postmark-Server-Token: $postmarkToken" \
+					-d "{From: 'jason@thecastledoctrine.net', To: 'jasonrohrer@fastmail.fm', Subject: 'OneLifeServer on $serverName has read-only file system', TextBody: 'File system mounted at / flagged as ro.'}"				
+				exit 1
+			fi 
+
+
 			echo "Relaunching server"
 
 			# launch it

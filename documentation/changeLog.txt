@@ -52,6 +52,8 @@ Server Fixes
   once every 0.25 seconds at most, not every loop (loop can run very fast when
   a lot of messages are coming in.
 
+--Check in server code and cron job for read-only file system.
+
 
 
 Version 193     2019-January-17

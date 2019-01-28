@@ -479,6 +479,23 @@ SimpleVector<LiveObject> tutorialLoadingPlayers;
 
 
 
+static char checkReadOnly() {
+    const char *testFileName = "testReadOnly.txt";
+    
+    FILE *testFile = fopen( testFileName, "w" );
+    
+    if( testFile != NULL ) {
+        
+        fclose( testFile );
+        remove( testFileName );
+        return false;
+        }
+    return true;
+    }
+
+
+
+
 // returns a person to their natural state
 static void backToBasics( LiveObject *inPlayer ) {
     LiveObject *p = inPlayer;
@@ -6649,6 +6666,12 @@ void setNoLongerDying( LiveObject *inPlayer,
 
 int main() {
 
+    if( checkReadOnly() ) {
+        printf( "File system read-only.  Server exiting.\n" );
+        return 1;
+        }
+    
+
     memset( allowedSayCharMap, false, 256 );
     
     int numAllowed = strlen( allowedSayChars );
@@ -6919,6 +6942,16 @@ int main() {
             shutdownMode = SettingsManager::getIntSetting( "shutdownMode", 0 );
             forceShutdownMode = 
                 SettingsManager::getIntSetting( "forceShutdownMode", 0 );
+            
+            if( checkReadOnly() ) {
+                // read-only file system causes all kinds of weird 
+                // behavior
+                // shut this server down NOW
+                printf( "File system read only, forcing server shutdown.\n" );
+
+                shutdownMode = 1;
+                forceShutdownMode = 1;
+                }
             }
         
         
