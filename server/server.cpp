@@ -6949,6 +6949,11 @@ int main() {
                 // shut this server down NOW
                 printf( "File system read only, forcing server shutdown.\n" );
 
+                // force-run cron script one time here
+                // this will send warning email to admin
+                // (cron jobs stop running if filesystem read-only)
+                system( "../scripts/checkServerRunningCron.sh" );
+
                 shutdownMode = 1;
                 forceShutdownMode = 1;
                 }
