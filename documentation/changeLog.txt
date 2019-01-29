@@ -54,6 +54,13 @@ Server Fixes
 
 --Check in server code and cron job for read-only file system.
 
+--Recomputing heat map for 20 players per second was a little slow.  With 200
+  players, that means each player only gets their heat map updated every 10
+  seconds.  Upped it to 80 players per second (each player gets updated every
+  2.5 seconds when there are 200 players).  Also shrunk dimensions of heat map
+  from 10x10 down to 8x8 (64% of original size, thus lowering computation load).
+
+
 
 
 Version 193     2019-January-17

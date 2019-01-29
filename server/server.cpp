@@ -66,7 +66,7 @@ static JenkinsRandomSource randSource;
 #include "../gameSource/GridPos.h"
 
 
-#define HEAT_MAP_D 10
+#define HEAT_MAP_D 8
 
 float targetHeat = 10;
 
@@ -1966,7 +1966,7 @@ static double lastPeriodicStepTime = 0;
 
 
 // recompute heat for fixed number of players per timestep
-static int numPlayersRecomputeHeatPerStep = 2;
+static int numPlayersRecomputeHeatPerStep = 8;
 static int lastPlayerIndexHeatRecomputed = -1;
 static double lastHeatUpdateTime = 0;
 static double heatUpdateTimeStep = 0.1;
