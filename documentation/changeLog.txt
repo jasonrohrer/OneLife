@@ -9,6 +9,9 @@ Version 195     ???
 --Changed projection for drawn mouse pointer (to further fix behavior on
   ultrawidescreen).
 
+--Tutorial draws attention to vertical doors, which are hard to see.  Tutorial
+  intro explains time commitment and gives death warning.  More explanation of
+  YUM and MEH.
 
 
 Server Fixes
