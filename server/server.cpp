@@ -12395,7 +12395,7 @@ int main() {
                                     nextPlayer->ys );
                             
                             AppLog::infoF( "Player %d flight taking off, "
-                                           "dest (%d,%d)\n",
+                                           "dest (%d,%d)",
                                            nextPlayer->id,
                                            destPos.x, destPos.y );
                             
