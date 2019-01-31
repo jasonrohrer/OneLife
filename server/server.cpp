@@ -13542,10 +13542,12 @@ int main() {
 
                 if( abs( playerXD - nextPlayer->lastSentMapX ) > 7
                     ||
-                    abs( playerYD - nextPlayer->lastSentMapY ) > 8 ) {
+                    abs( playerYD - nextPlayer->lastSentMapY ) > 8 
+                    ||
+                    ! nextPlayer->firstMapSent ) {
                 
                     // moving out of bounds of chunk, send update
-                    
+                    // or player flagged as needing first map again
                     
                     sendMapChunkMessage( nextPlayer,
                                          // override if held

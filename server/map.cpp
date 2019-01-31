@@ -7033,6 +7033,10 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY ) {
 
         return flightLandingPos.getElementDirect( nextIndex );
         }
+    else if( closestIndex != -1 && flightLandingPos.size() == 1 ) {
+        // land at closest, only option
+        return flightLandingPos.getElementDirect( closestIndex );
+        }
     
     // got here, no place to land
 
