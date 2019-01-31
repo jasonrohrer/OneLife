@@ -7024,18 +7024,46 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY ) {
 
     
     if( closestIndex != -1 && flightLandingPos.size() > 1 ) {
-    
+        // found closest, and there's more than one
+        // look for next valid position in order
+
         int nextIndex = closestIndex + 1;
         
         if( nextIndex >= flightLandingPos.size() ) {
             nextIndex = 0;
             }
+        
+        GridPos nextPos = flightLandingPos.getElementDirect( nextIndex );
 
-        return flightLandingPos.getElementDirect( nextIndex );
+        while( ! equal( nextPos, closestPos ) ) {
+            
+            int oID = getMapObject( nextPos.x, nextPos.y );
+            
+            if( oID > 0 &&
+                getObject( oID )->isFlightLanding ) {
+                
+                return nextPos;
+                }
+            
+            // no longer valid landing pos
+            // remove from list
+            flightLandingPos.deleteElement( nextIndex );
+            
+            // keep looking
+            if( nextIndex >= flightLandingPos.size() ) {
+                nextIndex = 0;
+                }
+        
+            nextPos = flightLandingPos.getElementDirect( nextIndex );
+            }
+
+        // if we got here, we never found a nextPos that was valid
+        // closestPos is only option
+        return closestPos;
         }
     else if( closestIndex != -1 && flightLandingPos.size() == 1 ) {
         // land at closest, only option
-        return flightLandingPos.getElementDirect( closestIndex );
+        return closestPos;
         }
     
     // got here, no place to land
