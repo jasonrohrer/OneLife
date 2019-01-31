@@ -444,6 +444,17 @@ static void setupObjectSpeechPipe( ObjectRecord *inR ) {
     }
 
 
+
+static void setupFlightLanding( ObjectRecord *inR ) {
+    inR->isFlightLanding = false;
+    char *landPos = strstr( inR->description, "+land" );
+    if( landPos != NULL ) {
+        inR->isFlightLanding = true;
+        }
+    }
+
+
+
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
     }
@@ -499,6 +510,8 @@ float initObjectBankStep() {
                 setupObjectGlobalTriggers( r );
                 
                 setupObjectSpeechPipe( r );
+                
+                setupFlightLanding( r );
                 
 
                 next++;
@@ -2938,6 +2951,8 @@ int addObject( const char *inDescription,
     setupObjectGlobalTriggers( r );
     
     setupObjectSpeechPipe( r );
+    
+    setupFlightLanding( r );
     
 
     memset( r->spriteSkipDrawing, false, inNumSprites );

@@ -569,7 +569,8 @@ static void biomeDBPut( int inX, int inY, int inValue, int inSecondPlace,
 
 
 // returns -1 on failure, 1 on success
-static int eveDBGet( char *inEmail, int *outX, int *outY, int *outRadius ) {
+static int eveDBGet( const char *inEmail, int *outX, int *outY, 
+                     int *outRadius ) {
     unsigned char key[50];
     
     unsigned char value[12];
@@ -594,7 +595,7 @@ static int eveDBGet( char *inEmail, int *outX, int *outY, int *outRadius ) {
 
 
 
-static void eveDBPut( char *inEmail, int inX, int inY, int inRadius ) {
+static void eveDBPut( const char *inEmail, int inX, int inY, int inRadius ) {
     unsigned char key[50];
     unsigned char value[12];
     
@@ -2264,6 +2265,10 @@ static SimpleVector<GridPos> *speechPipesOut = NULL;
 
 
 
+static SimpleVector<GridPos> flightLandingPos;
+
+
+
 static char isAdjacent( GridPos inPos, int inX, int inY ) {
     if( inX <= inPos.x + 1 &&
         inX >= inPos.x - 1 &&
@@ -3506,6 +3511,8 @@ void freeMap( char inSkipCleanup ) {
     
     speechPipesIn = NULL;
     speechPipesOut = NULL;
+
+    flightLandingPos.deleteAll();
     }
 
 
@@ -5414,6 +5421,28 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
         }
 
 
+
+    if( o->isFlightLanding ) {
+        GridPos p = { inX, inY };
+
+        char found = false;
+
+        for( int i=0; i<flightLandingPos.size(); i++ ) {
+            GridPos otherP = flightLandingPos.getElementDirect( i );
+            
+            if( equal( otherP, p ) ) {
+                found = true;
+                break;
+                }
+            }
+        
+        if( !found ) {
+            flightLandingPos.push_back( p );
+            }
+        }
+    
+
+
     if( o->speechPipeIn ) {
         GridPos p = { inX, inY };
         
@@ -6600,7 +6629,7 @@ doublePair computeRecentCampAve( int *outNumPosFound ) {
 
 
 
-void getEvePosition( char *inEmail, int *outX, int *outY, 
+void getEvePosition( const char *inEmail, int *outX, int *outY, 
                      char inAllowRespawn ) {
 
     int currentEveRadius = eveRadius;
@@ -6758,7 +6787,7 @@ void getEvePosition( char *inEmail, int *outX, int *outY,
 
 
 
-void mapEveDeath( char *inEmail, double inAge, GridPos inDeathMapPos ) {
+void mapEveDeath( const char *inEmail, double inAge, GridPos inDeathMapPos ) {
     
     // record exists?
 
@@ -6949,3 +6978,72 @@ int addMetadata( int inObjectID, unsigned char *inBuffer ) {
     
     return mapID;
     }
+
+
+
+
+static unsigned int distSquared( GridPos inA, GridPos inB ) {
+    int xDiff = inA.x - inB.x;
+    int yDiff = inA.y - inB.y;
+    
+    return xDiff * xDiff + yDiff * yDiff;
+    }
+
+
+
+GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY ) {
+    int closestIndex = -1;
+    GridPos closestPos;
+    unsigned int closestDist = INT_MAX;
+
+    GridPos curPos = { inCurrentX, inCurrentY };
+
+    for( int i=0; i<flightLandingPos.size(); i++ ) {
+        GridPos thisPos = flightLandingPos.getElementDirect( i );
+        
+        unsigned int dist = distSquared( curPos, thisPos );
+        
+        if( dist < closestDist ) {
+            
+            // check if this is still a valid landing pos
+            int oID = getMapObject( thisPos.x, thisPos.y );
+            
+            if( oID <=0 ||
+                ! getObject( oID )->isFlightLanding ) {
+                
+                // not even a valid landing pos anymore
+                flightLandingPos.deleteElement( i );
+                i--;
+                continue;
+                }
+            closestDist = dist;
+            closestPos = thisPos;
+            closestIndex = i;
+            }
+        }
+
+    
+    if( closestIndex != -1 && flightLandingPos.size() > 1 ) {
+    
+        int nextIndex = closestIndex++;
+        
+        if( nextIndex >= flightLandingPos.size() ) {
+            nextIndex = 0;
+            }
+
+        return flightLandingPos.getElementDirect( nextIndex );
+        }
+    
+    // got here, no place to land
+
+    // crash them at next Eve location
+    
+    int eveX, eveY;
+    
+    getEvePosition( "dummyPlaneCrashEmail@test.com", &eveX, &eveY, false );
+    
+    GridPos returnVal = { eveX, eveY };
+    
+    return returnVal;
+    }
+
