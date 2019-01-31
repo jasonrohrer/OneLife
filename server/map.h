@@ -8,6 +8,8 @@
 #include "../gameSource/GridPos.h"
 #include "../gameSource/transitionBank.h"
 
+#include "minorGems/game/doublePair.h"
+
 
 
 typedef struct ChangePosition {
@@ -284,7 +286,8 @@ int getMapObjectRaw( int inX, int inY );
 
 // next landing strip in line, in round-the-world circuit across all
 // landing positions
-GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY );
+GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
+                                 doublePair inDir );
 
 
 

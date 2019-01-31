@@ -12388,11 +12388,28 @@ int main() {
                             ( xDist > 3 || yDist > 3 ) ) {
                                     
                             // player takes off
+                            
+                            double xDir = 
+                                nextPlayer->pathToDest[ 
+                                      nextPlayer->pathLength - 1 ].x
+                                  -
+                                  nextPlayer->pathToDest[ 
+                                      nextPlayer->pathLength - 2 ].x;
+                            double yDir = 
+                                nextPlayer->pathToDest[ 
+                                      nextPlayer->pathLength - 1 ].y
+                                  -
+                                  nextPlayer->pathToDest[ 
+                                      nextPlayer->pathLength - 2 ].y;
+                            
+                                  
+                            doublePair takeOffDir = { xDir, yDir };
 
                             GridPos destPos = 
                                 getNextFlightLandingPos(
                                     nextPlayer->xs,
-                                    nextPlayer->ys );
+                                    nextPlayer->ys,
+                                    takeOffDir );
                             
                             AppLog::infoF( "Player %d flight taking off, "
                                            "dest (%d,%d)",
