@@ -12393,13 +12393,23 @@ int main() {
                                 getNextFlightLandingPos(
                                     nextPlayer->xs,
                                     nextPlayer->ys );
-                                    
+                            
+                            AppLog::infoF( "Player %d flight taking off, "
+                                           "dest (%d,%d)\n",
+                                           nextPlayer->id,
+                                           destPos.x, destPos.y );
+                            
+
                             nextPlayer->xd = nextPlayer->xs =
                                 destPos.x;
                             nextPlayer->yd = nextPlayer->ys =
                                 destPos.y;
                                 
                             nextPlayer->posForced = true;
+                            
+                            // send them a brand new map chunk
+                            // around their new location
+                            nextPlayer->firstMapSent = false;
 
                             int destID = getMapObject( destPos.x,
                                                        destPos.y );

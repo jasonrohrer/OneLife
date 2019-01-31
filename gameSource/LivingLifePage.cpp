@@ -812,6 +812,7 @@ typedef enum messageType {
     MONUMENT_CALL,
     GRAVE,
     GRAVE_MOVE,
+    FLIGHT_DEST,
     FORCED_SHUTDOWN,
     PONG,
     COMPRESSED_MESSAGE,
@@ -917,6 +918,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "GM" ) == 0 ) {
         returnValue = GRAVE_MOVE;
+        }
+    else if( strcmp( copy, "FD" ) == 0 ) {
+        returnValue = FLIGHT_DEST;
         }
     else if( strcmp( copy, "PONG" ) == 0 ) {
         returnValue = PONG;
@@ -1127,11 +1131,19 @@ char *getNextServerMessage() {
                         }
                     }
                 else if( t == MAP_CHUNK ||
-                         t == PONG ) {
+                         t == PONG ||
+                         t == FLIGHT_DEST ) {
                     // map chunks are followed by compressed data
                     // they cannot be queued
                     
                     // PONG messages should be returned instantly
+                    
+                    // FLIGHT_DEST messages also should be returned instantly
+                    // otherwise, they will be queued and seen by 
+                    // the client after the corresponding MC message
+                    // for the new location.
+                    // which will invalidate the map around player's old
+                    // location
                     return message;
                     }
                 else {
@@ -10422,6 +10434,54 @@ void LivingLifePage::step() {
                         g->worldPos.x = posXNew;
                         g->worldPos.y = posYNew;
                         }    
+                    }
+                }            
+            }
+        else if( type == FLIGHT_DEST ) {
+            int posX, posY, playerID;
+            
+            int numRead = sscanf( message, "FD\n%d %d %d",
+                                  &playerID, &posX, &posY );
+            if( numRead == 3 ) {
+                applyReceiveOffset( &posX, &posY );
+                
+                LiveObject *flyingPerson = getLiveObject( playerID );
+                
+                if( flyingPerson != NULL ) {
+                    // move them there instantly
+                    flyingPerson->xd = posX;
+                    flyingPerson->yd = posY;
+                    
+                    flyingPerson->xServer = posX;
+                    flyingPerson->yServer = posY;
+                    
+                    flyingPerson->currentPos.x = posX;
+                    flyingPerson->currentPos.y = posY;
+                    
+                    flyingPerson->currentSpeed = 0;
+                    flyingPerson->currentGridSpeed = 0;
+                    flyingPerson->destTruncated = false;
+                    
+                    flyingPerson->currentMoveDirection.x = 0;
+                    flyingPerson->currentMoveDirection.y = 0;
+                    
+                    if( flyingPerson->pathToDest != NULL ) {
+                        delete [] flyingPerson->pathToDest;
+                        flyingPerson->pathToDest = NULL;
+                        }
+
+                    flyingPerson->inMotion = false;
+                        
+
+                    if( flyingPerson->id == ourID ) {
+                        // special case for self
+                        
+                        // jump camera there instantly
+                        lastScreenViewCenter.x = posX * CELL_D;
+                        lastScreenViewCenter.y = posY * CELL_D;
+                        setViewCenterPosition( lastScreenViewCenter.x,
+                                               lastScreenViewCenter.y );
+                        }
                     }
                 }            
             }
