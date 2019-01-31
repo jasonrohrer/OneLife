@@ -445,11 +445,19 @@ static void setupObjectSpeechPipe( ObjectRecord *inR ) {
 
 
 
-static void setupFlightLanding( ObjectRecord *inR ) {
+static void setupFlight( ObjectRecord *inR ) {
+    inR->isFlying = false;
     inR->isFlightLanding = false;
-    char *landPos = strstr( inR->description, "+land" );
-    if( landPos != NULL ) {
-        inR->isFlightLanding = true;
+
+    char *flyPos = strstr( inR->description, "+fly" );
+    if( flyPos != NULL ) {
+        inR->isFlying = true;
+        }
+    else {
+        char *landPos = strstr( inR->description, "+land" );
+        if( landPos != NULL ) {
+            inR->isFlightLanding = true;
+            }
         }
     }
 
@@ -511,7 +519,7 @@ float initObjectBankStep() {
                 
                 setupObjectSpeechPipe( r );
                 
-                setupFlightLanding( r );
+                setupFlight( r );
                 
 
                 next++;
@@ -2952,7 +2960,7 @@ int addObject( const char *inDescription,
     
     setupObjectSpeechPipe( r );
     
-    setupFlightLanding( r );
+    setupFlight( r );
     
 
     memset( r->spriteSkipDrawing, false, inNumSprites );

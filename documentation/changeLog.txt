@@ -13,6 +13,9 @@ Version 195     ???
   intro explains time commitment and gives death warning.  More explanation of
   YUM and MEH.
 
+--Editor supports baking sprites that include color-adjusted sprite layers.
+
+
 
 Server Fixes
 

@@ -7025,7 +7025,7 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY ) {
     
     if( closestIndex != -1 && flightLandingPos.size() > 1 ) {
     
-        int nextIndex = closestIndex++;
+        int nextIndex = closestIndex + 1;
         
         if( nextIndex >= flightLandingPos.size() ) {
             nextIndex = 0;

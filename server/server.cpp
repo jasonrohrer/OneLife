@@ -470,6 +470,9 @@ typedef struct LiveObject {
         int lastMonumentID;
         char monumentPosSent;
         
+
+        char holdingFlightObject;
+
     } LiveObject;
 
 
@@ -1839,15 +1842,21 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
 
 
 
+// with 128-wide tiles, character moves at 480 pixels per second
+// at 60 fps, this is 8 pixels per frame
+// important that it's a whole number of pixels for smooth camera movement
+static double baseWalkSpeed = 3.75;
+
+// min speed for takeoff
+static double minFlightSpeed = 15;
+
+
 
 double computeMoveSpeed( LiveObject *inPlayer ) {
     double age = computeAge( inPlayer );
     
 
-    // with 128-wide tiles, character moves at 480 pixels per second
-    // at 60 fps, this is 8 pixels per frame
-    // important that it's a whole number of pixels for smooth camera movement
-    double speed = 3.75;
+    double speed = baseWalkSpeed;
     
     // baby moves at 360 pixels per second, or 6 pixels per frame
     double babySpeedFactor = 0.75;
@@ -3368,6 +3377,16 @@ static void holdingSomethingNew( LiveObject *inPlayer,
                 delete [] quotedPhrase;
                 }
             }
+
+        if( o->isFlying ) {
+            inPlayer->holdingFlightObject = true;
+            }
+        else {
+            inPlayer->holdingFlightObject = false;
+            }
+        }
+    else {
+        inPlayer->holdingFlightObject = false;
         }
     }
 
@@ -4985,6 +5004,8 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.monumentPosSet = false;
     newObject.monumentPosSent = true;
     
+    newObject.holdingFlightObject = false;
+
                 
     for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
         newObject.heatMap[i] = 0;
@@ -6663,6 +6684,13 @@ void setNoLongerDying( LiveObject *inPlayer,
 
 
 
+typedef struct FlightDest {
+        int playerID;
+        GridPos destPos;
+    } FlightDest;
+        
+
+
 
 int main() {
 
@@ -7886,6 +7914,10 @@ int main() {
         SimpleVector<MapChangeRecord> mapChanges;
         SimpleVector<ChangePosition> mapChangesPos;
         
+
+        SimpleVector<FlightDest> newFlightDest;
+        
+
 
         
         timeSec_t curLookTime = Time::timeSec();
@@ -12324,6 +12356,14 @@ int main() {
                         >
                         nextPlayer->moveTotalSeconds ) {
                         
+                        int xDist = abs( nextPlayer->xs - nextPlayer->xd );
+                        int yDist = abs( nextPlayer->ys - nextPlayer->yd );
+                        
+                        double moveSpeed = computeMoveSpeed( nextPlayer ) *
+                            getPathSpeedModifier( nextPlayer->pathToDest,
+                                                  nextPlayer->pathLength );
+
+
                         // done
                         nextPlayer->xs = nextPlayer->xd;
                         nextPlayer->ys = nextPlayer->yd;                        
@@ -12339,6 +12379,82 @@ int main() {
                             nextPlayer->posForced = true;
                             }
                         playerIndicesToSendUpdatesAbout.push_back( i );
+
+                        
+                        // if they went far enough and fast enough
+                        if( nextPlayer->holdingFlightObject &&
+                            moveSpeed >= minFlightSpeed &&
+                            ! nextPlayer->pathTruncated &&
+                            ( xDist > 3 || yDist > 3 ) ) {
+                                    
+                            // player takes off
+
+                            GridPos destPos = 
+                                getNextFlightLandingPos(
+                                    nextPlayer->xs,
+                                    nextPlayer->ys );
+                                    
+                            nextPlayer->xd = nextPlayer->xs =
+                                destPos.x;
+                            nextPlayer->yd = nextPlayer->ys =
+                                destPos.y;
+                                
+                            nextPlayer->posForced = true;
+
+                            int destID = getMapObject( destPos.x,
+                                                       destPos.y );
+                                    
+                            char heldTransHappened = false;
+                                    
+                            if( destID > 0 &&
+                                getObject( destID )->isFlightLanding ) {
+                                // found a landing place
+                                TransRecord *tr =
+                                    getPTrans( nextPlayer->holdingID,
+                                               destID );
+                                        
+                                if( tr != NULL ) {
+                                    heldTransHappened = true;
+                                            
+                                    setMapObject( destPos.x, destPos.y,
+                                                  tr->newTarget );
+
+                                    transferHeldContainedToMap( 
+                                        nextPlayer,
+                                        destPos.x, destPos.y );
+
+                                    handleHoldingChange(
+                                        nextPlayer,
+                                        tr->newActor );
+                                            
+                                    // stick player next to landing
+                                    // pad
+                                    nextPlayer->xd --;
+                                    nextPlayer->xs = nextPlayer->xd;
+                                    }
+                                }
+                            if( ! heldTransHappened ) {
+                                // crash landing
+                                // force decay of held
+                                // no matter how much time is left
+                                // (flight uses fuel)
+                                TransRecord *decayTrans =
+                                    getPTrans( -1, 
+                                               nextPlayer->holdingID );
+                                        
+                                if( decayTrans != NULL ) {
+                                    handleHoldingChange( 
+                                        nextPlayer,
+                                        decayTrans->newTarget );
+                                    }
+                                }
+                                    
+                            FlightDest fd = {
+                                nextPlayer->id,
+                                destPos };
+
+                            newFlightDest.push_back( fd );
+                            }
                         }
                     }
                 
@@ -13325,7 +13441,30 @@ int main() {
                     
                     delete [] monMessage;
                     }
-                
+
+
+                // everyone gets all flight messages
+                if( newFlightDest.size() > 0 ) {
+                    
+                    // compose FD messages for this player
+                    
+                    for( int u=0; u<newFlightDest.size(); u++ ) {
+                        FlightDest *f = newFlightDest.getElement( u );
+                        
+                        char *flightMessage = 
+                            autoSprintf( "FD\n%d %d %d\n#",
+                                         f->playerID,
+                                         f->destPos.x -
+                                         nextPlayer->birthPos.x, 
+                                         f->destPos.y -
+                                         nextPlayer->birthPos.y );
+                        
+                        sendMessageToPlayer( nextPlayer, flightMessage,
+                                             strlen( flightMessage ) );
+                        delete [] flightMessage;
+                        }
+                    }
+
 
                 // everyone gets all grave messages
                 if( newGraves.size() > 0 ) {

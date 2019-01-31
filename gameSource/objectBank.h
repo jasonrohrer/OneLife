@@ -344,6 +344,7 @@ typedef struct ObjectRecord {
         char speechPipeOut;
         int speechPipeIndex;
 
+        char isFlying;
         char isFlightLanding;
 
     } ObjectRecord;
