@@ -5895,7 +5895,7 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
         // truncate
                             
         GridPos dropPos = 
-            computePartialMoveSpot( inPlayer );
+            getPlayerPos( inPlayer );
                             
         // offset to counter-act offsets built into
         // drop code
@@ -8373,7 +8373,7 @@ int main() {
                                     nextPlayer->customGraveID = 0;
                             
                                     GridPos parentPos = 
-                                        computePartialMoveSpot( parent );
+                                        getPlayerPos( parent );
 
                                     // put invisible grave there for now
                                     GraveInfo graveInfo = { parentPos, 
@@ -11903,7 +11903,7 @@ int main() {
                             // object decayed into a permanent
                             // force drop
                              GridPos dropPos = 
-                                computePartialMoveSpot( nextPlayer );
+                                getPlayerPos( nextPlayer );
                             
                              handleDrop( 
                                     dropPos.x, dropPos.y, 
@@ -12153,7 +12153,7 @@ int main() {
                                 float stretch = cObj->slotTimeStretch;
                                 
                                 GridPos dropPos = 
-                                    computePartialMoveSpot( nextPlayer );
+                                    getPlayerPos( nextPlayer );
                             
                                 // offset to counter-act offsets built into
                                 // drop code
