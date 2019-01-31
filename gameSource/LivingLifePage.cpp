@@ -4300,7 +4300,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         drawSquare( lastScreenViewCenter, 100 );
         
         setDrawColor( 1, 1, 1, 1 );
-        doublePair pos = { 0, 0 };
+        doublePair pos = { lastScreenViewCenter.x, lastScreenViewCenter.y };
         
 
        
@@ -4348,6 +4348,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
         else if( userReconnect ) {
             drawMessage( "waitingReconnect", pos );
             }
+        else if( mPlayerInFlight ) {
+            drawMessage( "waitingArrival", pos );
+            }
         else if( userTwinCode == NULL ) {
             drawMessage( "waitingBirth", pos );
             }
@@ -4377,27 +4380,27 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         if( mStartedLoadingFirstObjectSet ) {
             
-            pos.y = -100;
+            pos.y -= 100;
             drawMessage( "loadingMap", pos );
 
             // border
             setDrawColor( 1, 1, 1, 1 );
     
-            drawRect( -100, -220, 
-                      100, -200 );
+            drawRect( pos.x - 100, pos.y - 120, 
+                      pos.x + 100, pos.y - 100 );
 
             // inner black
             setDrawColor( 0, 0, 0, 1 );
             
-            drawRect( -98, -218, 
-                      98, -202 );
+            drawRect( pos.x - 98, pos.y - 118, 
+                      pos.x + 98, pos.y - 102 );
     
     
             // progress
             setDrawColor( .8, .8, .8, 1 );
-            drawRect( -98, -218, 
-                      -98 + mFirstObjectSetLoadingProgress * ( 98 * 2 ), 
-                      -202 );
+            drawRect( pos.x - 98, pos.y - 118, 
+                      pos.x - 98 + mFirstObjectSetLoadingProgress * ( 98 * 2 ), 
+                      pos.y - 102 );
             }
         
         return;
@@ -10481,6 +10484,13 @@ void LivingLifePage::step() {
                         lastScreenViewCenter.y = posY * CELL_D;
                         setViewCenterPosition( lastScreenViewCenter.x,
                                                lastScreenViewCenter.y );
+                        
+                        // show loading screen again
+                        mFirstServerMessagesReceived = 2;
+                        mStartedLoadingFirstObjectSet = false;
+                        mDoneLoadingFirstObjectSet = false;
+                        mFirstObjectSetLoadingProgress = 0;
+                        mPlayerInFlight = true;
                         }
                     }
                 }            
@@ -16236,7 +16246,17 @@ void LivingLifePage::step() {
             mDoneLoadingFirstObjectSet = 
                 isLiveObjectSetFullyLoaded( &mFirstObjectSetLoadingProgress );
             
+            if( mDoneLoadingFirstObjectSet &&
+                game_getCurrentTime() - mStartedLoadingFirstObjectSetStartTime
+                < 1 ) {
+                // always show loading progress for at least 1 second
+                mDoneLoadingFirstObjectSet = false;
+                }
+            
+
             if( mDoneLoadingFirstObjectSet ) {
+                mPlayerInFlight = false;
+                
                 printf( "First map load done\n" );
                 
                 restartMusic( computeCurrentAge( ourLiveObject ),
@@ -16423,6 +16443,7 @@ void LivingLifePage::step() {
             finalizeLiveObjectSet();
             
             mStartedLoadingFirstObjectSet = true;
+            mStartedLoadingFirstObjectSetStartTime = game_getCurrentTime();
             }
         }
     
@@ -16504,6 +16525,8 @@ void LivingLifePage::makeActive( char inFresh ) {
 
     clearLocationSpeech();
 
+    mPlayerInFlight = false;
+    
     showFPS = false;
     showPing = false;
     

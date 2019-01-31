@@ -458,6 +458,7 @@ class LivingLifePage : public GamePage {
         
         char mStartedLoadingFirstObjectSet;
         char mDoneLoadingFirstObjectSet;
+        double mStartedLoadingFirstObjectSetStartTime;
 
         float mFirstObjectSetLoadingProgress;
         
@@ -880,6 +881,8 @@ class LivingLifePage : public GamePage {
 
         char mUsingSteam;
         char mZKeyDown;
+
+        char mPlayerInFlight;
 
     };
 

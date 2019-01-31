@@ -183,6 +183,8 @@ cancelWaitingFriends "PRESS [x] KEY TO CANCEL"
 
 waitingReconnect "TRYING TO RECONNECT"
 
+waitingArrival "CURRENTLY IN TRANSIT"
+
 
 loadingMap "LOADING MAP"
 
