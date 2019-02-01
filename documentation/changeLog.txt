@@ -9,6 +9,8 @@ Server Fixes
 
 --Lineage log has index for faster display.  Better logging.
 
+--Whoops!  New server setup script was not putting serverID in right location.
+
 
 
 Version 195     2019-January-31
