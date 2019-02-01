@@ -246,7 +246,8 @@ function ls_setupDatabase() {
         $query =
             "CREATE TABLE $tableName(" .
             "entry TEXT NOT NULL, ".
-            "entry_time DATETIME NOT NULL );";
+            "entry_time DATETIME NOT NULL, ".
+            "index( entry_time ) );";
 
         $result = ls_queryDatabase( $query );
 
@@ -1291,6 +1292,9 @@ function ls_logLife() {
         return;
         }
 
+    ls_log( "Got valid logLife call:  " . $_SERVER[ 'QUERY_STRING' ] );
+    
+    
     if( $trueSeq == 0 ) {
         // no record exists, add one
         $query = "INSERT INTO $tableNamePrefix". "users SET " .
@@ -1623,7 +1627,6 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
         "ORDER BY $inOrderBy ".
         "LIMIT $inNumRows;";
 
-    ls_log( "Front page query:  $query" );
     
     $result = ls_queryDatabase( $query );
     

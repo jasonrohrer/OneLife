@@ -7,6 +7,8 @@ Server Fixes
 
 --Paginated lineage server log listing.
 
+--Lineage log has index for faster display.  Better logging.
+
 
 
 Version 195     2019-January-31

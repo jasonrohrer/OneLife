@@ -44,3 +44,7 @@ ALTER TABLE lineageServer_users ADD email_sha1 VARCHAR(40) NOT NULL AFTER email;
 ALTER TABLE lineageServer_users ADD INDEX email_sha1 ( email_sha1 );
 
 UPDATE lineageServer_users SET email_sha1 = sha1( email );
+
+
+// index for log
+ALTER TABLE lineageServer_log ADD INDEX entry_time ( entry_time );
