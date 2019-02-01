@@ -18,7 +18,7 @@ int valueToInt( unsigned char *inValue ) {
     }
 
 
-void emailToKey( char *inEmail, unsigned char *outKey ) {
+void emailToKey( const char *inEmail, unsigned char *outKey ) {
     memset( outKey, ' ', 50 );
     
     int len = 50;

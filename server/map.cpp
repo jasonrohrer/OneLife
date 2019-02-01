@@ -569,7 +569,8 @@ static void biomeDBPut( int inX, int inY, int inValue, int inSecondPlace,
 
 
 // returns -1 on failure, 1 on success
-static int eveDBGet( char *inEmail, int *outX, int *outY, int *outRadius ) {
+static int eveDBGet( const char *inEmail, int *outX, int *outY, 
+                     int *outRadius ) {
     unsigned char key[50];
     
     unsigned char value[12];
@@ -594,7 +595,7 @@ static int eveDBGet( char *inEmail, int *outX, int *outY, int *outRadius ) {
 
 
 
-static void eveDBPut( char *inEmail, int inX, int inY, int inRadius ) {
+static void eveDBPut( const char *inEmail, int inX, int inY, int inRadius ) {
     unsigned char key[50];
     unsigned char value[12];
     
@@ -1357,7 +1358,6 @@ void outputBiomeFractals() {
 
 
 
-int getMapObjectRaw( int inX, int inY );
 int *getContainedRaw( int inX, int inY, int *outNumContained, 
                       int inSubCont = 0 );
 
@@ -2262,6 +2262,10 @@ static int numSpeechPipes = 0;
 static SimpleVector<GridPos> *speechPipesIn = NULL;
 
 static SimpleVector<GridPos> *speechPipesOut = NULL;
+
+
+
+static SimpleVector<GridPos> flightLandingPos;
 
 
 
@@ -3507,6 +3511,8 @@ void freeMap( char inSkipCleanup ) {
     
     speechPipesIn = NULL;
     speechPipesOut = NULL;
+
+    flightLandingPos.deleteAll();
     }
 
 
@@ -5386,6 +5392,26 @@ static char equal( GridPos inA, GridPos inB ) {
 
 
 
+static char tooClose( GridPos inA, GridPos inB, int inMinComponentDistance ) {
+    int xDist = inA.x - inB.x;
+    if( xDist < 0 ) {
+        xDist = -xDist;
+        }
+    int yDist = inA.y - inB.y;
+    if( yDist < 0 ) {
+        yDist = -yDist;
+        }
+    
+    if( xDist < inMinComponentDistance &&
+        yDist < inMinComponentDistance ) {
+        return true;
+        }
+    return false;
+    }
+    
+
+
+
 static int findGridPos( SimpleVector<GridPos> *inList, GridPos inP ) {
     for( int i=0; i<inList->size(); i++ ) {
         GridPos q = inList->getElementDirect( i );
@@ -5413,6 +5439,42 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
     if( o == NULL ) {
         return;
         }
+
+
+
+    if( o->isFlightLanding ) {
+        GridPos p = { inX, inY };
+
+        char found = false;
+
+        for( int i=0; i<flightLandingPos.size(); i++ ) {
+            GridPos otherP = flightLandingPos.getElementDirect( i );
+            
+            // any new strip w/ 250,250 manhattan distance doesn't count
+            if( tooClose( otherP, p, 250 ) ) {
+                
+                // make sure this "too close" strip really still exists
+                int oID = getMapObject( otherP.x, otherP.y );
+            
+                if( oID <=0 ||
+                    ! getObject( oID )->isFlightLanding ) {
+                
+                    // not even a valid landing pos anymore
+                    flightLandingPos.deleteElement( i );
+                    i--;
+                    }
+                else {
+                    found = true;
+                    break;
+                    }
+                }
+            }
+        
+        if( !found ) {
+            flightLandingPos.push_back( p );
+            }
+        }
+    
 
 
     if( o->speechPipeIn ) {
@@ -6601,7 +6663,7 @@ doublePair computeRecentCampAve( int *outNumPosFound ) {
 
 
 
-void getEvePosition( char *inEmail, int *outX, int *outY, 
+void getEvePosition( const char *inEmail, int *outX, int *outY, 
                      char inAllowRespawn ) {
 
     int currentEveRadius = eveRadius;
@@ -6759,7 +6821,7 @@ void getEvePosition( char *inEmail, int *outX, int *outY,
 
 
 
-void mapEveDeath( char *inEmail, double inAge, GridPos inDeathMapPos ) {
+void mapEveDeath( const char *inEmail, double inAge, GridPos inDeathMapPos ) {
     
     // record exists?
 
@@ -6950,3 +7012,162 @@ int addMetadata( int inObjectID, unsigned char *inBuffer ) {
     
     return mapID;
     }
+
+
+
+
+static unsigned int distSquared( GridPos inA, GridPos inB ) {
+    int xDiff = inA.x - inB.x;
+    int yDiff = inA.y - inB.y;
+    
+    return xDiff * xDiff + yDiff * yDiff;
+    }
+
+
+
+
+void removeLandingPos( GridPos inPos ) {
+    for( int i=0; i<flightLandingPos.size(); i++ ) {
+        if( equal( inPos, flightLandingPos.getElementDirect( i ) ) ) {
+            flightLandingPos.deleteElement( i );
+            return;
+            }
+        }
+    }
+
+
+char isInDir( GridPos inPos, GridPos inOtherPos, doublePair inDir ) {
+    int dX = inOtherPos.x - inPos.x;
+    int dY = inOtherPos.y - inPos.y;
+    
+    if( inDir.x > 0 && dX > 0 ) {
+        return true;
+        }
+    if( inDir.x < 0 && dX < 0 ) {
+        return true;
+        }
+    if( inDir.y > 0 && dY > 0 ) {
+        return true;
+        }
+    if( inDir.y < 0 && dY < 0 ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
+GridPos getNextCloseLandingPos( GridPos inPos, doublePair inDir, 
+                                char *outFound ) {
+    
+    int closestIndex = -1;
+    GridPos closestPos;
+    unsigned int closestDist = INT_MAX;
+    
+    for( int i=0; i<flightLandingPos.size(); i++ ) {
+        GridPos thisPos = flightLandingPos.getElementDirect( i );
+        
+        if( isInDir( inPos, thisPos, inDir ) ) {
+            unsigned int dist = distSquared( inPos, thisPos );
+            
+            if( dist < closestDist ) {
+                // check if this is still a valid landing pos
+                int oID = getMapObject( thisPos.x, thisPos.y );
+                
+                if( oID <=0 ||
+                    ! getObject( oID )->isFlightLanding ) {
+                    
+                    // not even a valid landing pos anymore
+                    flightLandingPos.deleteElement( i );
+                    i--;
+                    continue;
+                    }
+                closestDist = dist;
+                closestPos = thisPos;
+                closestIndex = i;
+                }
+            }
+        }
+    
+    if( closestIndex == -1 ) {
+        *outFound = false;
+        }
+    else {
+        *outFound = true;
+        }
+    
+    return closestPos;
+    }
+
+                
+
+
+
+GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY, 
+                                 doublePair inDir ) {
+    int closestIndex = -1;
+    GridPos closestPos;
+    unsigned int closestDist = INT_MAX;
+
+    GridPos curPos = { inCurrentX, inCurrentY };
+
+    for( int i=0; i<flightLandingPos.size(); i++ ) {
+        GridPos thisPos = flightLandingPos.getElementDirect( i );
+        
+        unsigned int dist = distSquared( curPos, thisPos );
+        
+        if( dist < closestDist ) {
+            
+            // check if this is still a valid landing pos
+            int oID = getMapObject( thisPos.x, thisPos.y );
+            
+            if( oID <=0 ||
+                ! getObject( oID )->isFlightLanding ) {
+                
+                // not even a valid landing pos anymore
+                flightLandingPos.deleteElement( i );
+                i--;
+                continue;
+                }
+            closestDist = dist;
+            closestPos = thisPos;
+            closestIndex = i;
+            }
+        }
+
+    
+    if( closestIndex != -1 && flightLandingPos.size() > 1 ) {
+        // found closest, and there's more than one
+        // look for next valid position in chosen direction
+
+        
+        char found = false;
+        
+        GridPos nextPos = getNextCloseLandingPos( closestPos, inDir, &found );
+        
+        if( found ) {
+            return nextPos;
+            }
+
+        // if we got here, we never found a nextPos that was valid
+        // closestPos is only option
+        return closestPos;
+        }
+    else if( closestIndex != -1 && flightLandingPos.size() == 1 ) {
+        // land at closest, only option
+        return closestPos;
+        }
+    
+    // got here, no place to land
+
+    // crash them at next Eve location
+    
+    int eveX, eveY;
+    
+    getEvePosition( "dummyPlaneCrashEmail@test.com", &eveX, &eveY, false );
+    
+    GridPos returnVal = { eveX, eveY };
+    
+    return returnVal;
+    }
+

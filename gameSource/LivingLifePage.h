@@ -7,7 +7,6 @@
 #include "minorGems/ui/event/ActionListener.h"
 #include "minorGems/util/SimpleVector.h"
 
-
 #include "minorGems/game/game.h"
 
 
@@ -459,6 +458,7 @@ class LivingLifePage : public GamePage {
         
         char mStartedLoadingFirstObjectSet;
         char mDoneLoadingFirstObjectSet;
+        double mStartedLoadingFirstObjectSetStartTime;
 
         float mFirstObjectSetLoadingProgress;
         
@@ -877,10 +877,12 @@ class LivingLifePage : public GamePage {
         // in the map at its destination.
         // inExtraIndex is its index in the mMapExtraMovingObjects vectors
         void endExtraObjectMove( int inExtraIndex );
+        
 
-		
         char mUsingSteam;
         char mZKeyDown;
+
+        char mPlayerInFlight;
 
         
         // FOVMOD NOTE:  Change 1/1 - Take these changes during the merge process

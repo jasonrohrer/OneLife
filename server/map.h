@@ -8,6 +8,8 @@
 #include "../gameSource/GridPos.h"
 #include "../gameSource/transitionBank.h"
 
+#include "minorGems/game/doublePair.h"
+
 
 
 typedef struct ChangePosition {
@@ -54,13 +56,13 @@ void resetEveRadius();
 // gets new Eve position on outskirts of civilization
 // if inAllowRespawn, this player's last Eve old-age-death will be
 // considered.
-void getEvePosition( char *inEmail, int *outX, int *outY, 
+void getEvePosition( const char *inEmail, int *outX, int *outY, 
                      char inAllowRespawn = true );
 
 
 // save recent placements on Eve's death so that this player can spawn
 // near them if they are ever Eve again
-void mapEveDeath( char *inEmail, double inAge, GridPos inDeathMapPos );
+void mapEveDeath( const char *inEmail, double inAge, GridPos inDeathMapPos );
 
 
 
@@ -273,6 +275,19 @@ void getSpeechPipesIn( int inX, int inY, SimpleVector<int> *outIndicies );
 
 // returned vector NOT destroyed or modified by caller
 SimpleVector<GridPos> *getSpeechPipesOut( int inIndex );
+
+
+
+// for performance reasons, when the true decayed version of the object
+// doesn't matter, this skips some expensive steps
+int getMapObjectRaw( int inX, int inY );
+
+
+
+// next landing strip in line, in round-the-world circuit across all
+// landing positions
+GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
+                                 doublePair inDir );
 
 
 

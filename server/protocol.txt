@@ -157,6 +157,8 @@ CURSE_TOKEN_CHANGE (CX)
 
 CURSE_SCORE_CHANGE (CS)
 
+FLIGHT_DEST (FD)
+
 FORCED_SHUTDOWN (SD)
 
 FRAME (FM)
@@ -667,6 +669,15 @@ excess_curse_points#
 
 Tells player about their curse score, if it is above the threshold.
 
+
+
+FD
+p_id dest_x dest_y
+#
+
+Sent to all players to let them know about new flights.
+
+Flying player should wait for a MAP_CHUNK message around the destination.
 
 
 
