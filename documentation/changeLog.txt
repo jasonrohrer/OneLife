@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 195     ???
+Version 195     2019-January-31
 
 --Changed projection for drawn mouse pointer (to further fix behavior on
   ultrawidescreen).
