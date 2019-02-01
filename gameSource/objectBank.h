@@ -6,12 +6,8 @@
 #include "minorGems/util/SimpleVector.h"
 
 
-typedef struct FloatRGB {
-        float r, g, b;
-    } FloatRGB;
+#include "FloatRGB.h"
 
-
-char equal( FloatRGB inA, FloatRGB inB );
 
 
 #include "SoundUsage.h"
@@ -347,6 +343,9 @@ typedef struct ObjectRecord {
         char speechPipeIn;
         char speechPipeOut;
         int speechPipeIndex;
+
+        char isFlying;
+        char isFlightLanding;
 
     } ObjectRecord;
 

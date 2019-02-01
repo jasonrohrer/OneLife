@@ -1063,7 +1063,8 @@ int bakeSprite( const char *inTag,
                 int *inSpriteIDs,
                 doublePair *inSpritePos,
                 double *inSpriteRot,
-                char *inSpriteHFlips ) {
+                char *inSpriteHFlips,
+                FloatRGB *inSpriteColors ) {
     
     File spritesDir( NULL, "sprites" );
             
@@ -1197,7 +1198,15 @@ int bakeSprite( const char *inTag,
             for( int c=0; c<4; c++ ) {
                 chan[c] = image->getChannel( c );
                 }
-                
+            
+            FloatRGB spriteColor = inSpriteColors[i];
+
+            float spriteColorParts[3] = {
+                spriteColor.r,
+                spriteColor.g,
+                spriteColor.b };
+            
+
             // number of clockwise 90 degree rotations
             int numRotSteps = 0;
             
@@ -1279,7 +1288,7 @@ int bakeSprite( const char *inTag,
                             // as weight
                             baseChan[c][baseI] = 
                                 (1 - chan[3][i] ) * baseChan[c][baseI] +
-                                chan[3][i] * chan[c][i];
+                                chan[3][i] * chan[c][i] * spriteColorParts[c];
                             }
                         
                         // add alphas

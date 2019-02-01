@@ -46,7 +46,17 @@ $twin_code = strtoupper( $twin_code );
 // this is better than using their IP address, because that can change
 // Want to send people back to the same server tomorrow if load conditions
 // are the same, even if their IP changes.
-mt_srand( crc32( $email ) );
+//mt_srand( crc32( $email ) );
+
+// actually, don't make it sticky with their email address
+// seed with their email address plus the current time
+// so when they reconnect later (next life), they will be randomly
+// sent to another server
+// Note that this is not great for reconnects after crashes, but those
+// should hopefully be rare
+mt_srand( crc32( $email . time() ) );
+
+
 
 
 if( $twin_code != "" ) {
@@ -186,7 +196,8 @@ if( $handle ) {
 
         $maxCapPerServer = array();
         $currentPopPerServer = array();
-
+        $offlineServerFlags = array();
+        
         $totalNumServer = 0;
         
         while( ( $line = fgets( $handle ) ) !== false ) {
@@ -203,51 +214,70 @@ if( $handle ) {
             
                 $maxFile = "/tmp/" .$address . "_" . $port . "_max";
                 $currentFile = "/tmp/" .$address . "_" . $port . "_current";
+                $offlineFile = "/tmp/" .$address . "_" . $port . "_offline";
 
                 $max = file_get_contents_safe( $maxFile );
                 $current = file_get_contents_safe( $currentFile );
+                $offline = file_get_contents_safe( $offlineFile );
 
                 if( $max === FALSE ||
-                    $current === FALSE ) {
+                    $current === FALSE ||
+                    $offline === FALSE ) {
                     // start with a sensible default,
                     // we know nothing about this server
                     $max = 100;
                     $current = 0;
+                    $offline = 0;
                     }
                 $totalMaxCap += $max;
                 $totalCurrentPop += $current;
                 $maxCapPerServer[] = $max;
                 $currentPopPerServer[] = $current;
-
+                $offlineServerFlags[] = $offline;
+                
                 $totalNumServer ++;
                 }
             }
 
+        
         // sums for just our active server subset
+        // but skip offline servers along the way
         $activeMaxCap = 0;
         $activeCurrentPop = 0;
-        for( $i=0; $i<$curNumServers; $i++ ) {
-            $activeMaxCap += $maxCapPerServer[$i];
-            $activeCurrentPop += $currentPopPerServer[$i];
+
+        $i=0;
+        $numServersSummed = 0;
+        $currentActiveServerIndices = array();
+        
+        while( $i < $totalNumServer &&
+               $numServersSummed < $curNumServers ) {
+
+            if( $offlineServerFlags[$i] == 0 ) {
+                $activeMaxCap += $maxCapPerServer[$i];
+                $activeCurrentPop += $currentPopPerServer[$i];
+                $numServersSummed++;
+                $currentActiveServerIndices[] = $i;
+                }
+            $i++;
             }
 
         if( $curNumServers < $totalNumServer &&
             $activeMaxCap * $startSpreadingFraction <= $activeCurrentPop ) {
             // we are over 50%
-            // add another server
+            // add another server for next time
             $curNumServers ++;
 
             file_put_contents( $curNumServersFile, $curNumServers );
-            $activeMaxCap += $maxCapPerServer[ $curNumServers - 1 ];
+            // don't adjust $activeMaxCap this time
             }
         else if( $curNumServers > 1 &&
                  $activeMaxCap * $stopSpreadingFraction >= $activeCurrentPop ) {
             // below threshold
-            // remove a server
+            // remove a server for next time
             $curNumServers --;
 
             file_put_contents( $curNumServersFile, $curNumServers );
-            $activeMaxCap -= $maxCapPerServer[ $curNumServers ];
+            // don't adjust $activeMaxCap this time
             }
 
 
@@ -264,16 +294,20 @@ if( $handle ) {
             $i = 0;
             $totalWeight = 0;
             
-            while( $i < $curNumServers ) {
-                $totalWeight += $maxCapPerServer[$i] / $activeMaxCap;
+            while( $i < $numServersSummed ) {
+                $serverInd = $currentActiveServerIndices[$i];
+                
+                $totalWeight += $maxCapPerServer[$serverInd] / $activeMaxCap;
 
                 $tooFull = false;
-                if( $currentPopPerServer[$i] / $maxCapPerServer[$i] >
+                if( $currentPopPerServer[$serverInd] /
+                    $maxCapPerServer[$serverInd] >
                     $tooFullFraction ) {
                     $tooFull = true;
                     }
                 else if( $twin_code != "" &&
-                         $currentPopPerServer[$i] / $maxCapPerServer[$i] >
+                         $currentPopPerServer[$serverInd] /
+                         $maxCapPerServer[$serverInd] >
                          $tooFullForTwinsFraction ) {
                     $tooFull = true;
                     }
@@ -285,13 +319,30 @@ if( $handle ) {
                 $i++;
                 }
 
-            if( $i >= $curNumServers ) {
+            if( $i >= $numServersSummed ) {
                 // something went wrong above, maybe precision errors
-                $i = mt_rand( 0, $curNumServers - 1 );
+                $i = mt_rand( 0, $numServersSummed - 1 );
                 }
 
-            $serverFound = tryServer( $serverAddresses[$i], $serverPorts[$i],
+            $serverInd = $currentActiveServerIndices[$i];
+            
+            $serverFound = tryServer( $serverAddresses[$serverInd],
+                                      $serverPorts[$serverInd],
                                       $reportOnly, true );
+            }
+
+        if( !$serverFound ) {
+            // yikes!
+            // last ditch attempt to find some server, any server
+            // for them to connect to
+            $i = 0;
+            while( $i < $totalNumServer &&
+                   ! $serverFound ) {
+                $serverFound = tryServer( $serverAddresses[$i],
+                                          $serverPorts[$i],
+                                          $reportOnly, true );
+                $i++;
+                }
             }
         }
     
@@ -333,7 +384,9 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
 
     $maxFile = "/tmp/" .$inAddress . "_" . $inPort . "_max";
     $currentFile = "/tmp/" .$inAddress . "_" . $inPort . "_current";
+    $offlineFile = "/tmp/" .$inAddress . "_" . $inPort . "_offline";
 
+    
     // suppress printed warnings from fsockopen
     // sometimes servers will be down, and we'll skip them.
     $fp = @fsockopen( $inAddress, $inPort, $errno, $errstr, 0.125 );
@@ -343,6 +396,7 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
         if( $inReportOnly ) {
             echo "|--> $inAddress : $inPort ::: OFFLINE<br><br>";
             }
+        file_put_contents( $offlineFile, "1" );
         
         return false;
         }
@@ -369,6 +423,7 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
                     echo "|--> $inAddress : $inPort ::: OFFLINE<br><br>";
                     }
                 
+                file_put_contents( $offlineFile, "1" );
                 return false;
                 }
             
@@ -410,6 +465,7 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
 
         file_put_contents( $maxFile, "$max" );
         file_put_contents( $currentFile, "$current" );
+        file_put_contents( $offlineFile, "0" );
         
         
         if( $inReportOnly ) {

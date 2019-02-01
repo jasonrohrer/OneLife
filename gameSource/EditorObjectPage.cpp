@@ -1898,7 +1898,8 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                                 mCurrentObject.sprites,
                                 mCurrentObject.spritePos,
                                 mCurrentObject.spriteRot,
-                                mCurrentObject.spriteHFlip );
+                                mCurrentObject.spriteHFlip,
+                                mCurrentObject.spriteColor );
         
         spritePickable.usePickable( newID );
 

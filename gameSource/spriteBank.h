@@ -2,6 +2,9 @@
 #define SPRITE_BANK_INCLUDED
 
 
+#include "FloatRGB.h"
+
+
 #include "minorGems/game/gameGraphics.h"
 
 
@@ -133,7 +136,8 @@ int bakeSprite( const char *inTag,
                 // offset of each sprite center relative to center point
                 doublePair *inSpritePos,
                 double *inSpriteRot,
-                char *inSpriteHFlips );
+                char *inSpriteHFlips,
+                FloatRGB *inSpriteColors );
 
 
                 
