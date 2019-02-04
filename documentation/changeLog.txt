@@ -11,6 +11,8 @@ Server Fixes
 
 --Whoops!  New server setup script was not putting serverID in right location.
 
+--Download page lets you change your own email.
+
 
 
 Version 195     2019-January-31
