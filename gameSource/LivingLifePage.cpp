@@ -12418,6 +12418,14 @@ void LivingLifePage::step() {
                             existing->xd = o.xd;
                             existing->yd = o.yd;
                             existing->destTruncated = false;
+
+                            // clear an existing path, since they may no
+                            // longer be on it
+                            if( existing->pathToDest != NULL ) {
+                                delete [] existing->pathToDest;
+                                existing->pathToDest = NULL;
+                                }
+
                             }
                         existing->outOfRange = false;
 
@@ -13249,6 +13257,13 @@ void LivingLifePage::step() {
                             existing->xd = o.xd;
                             existing->yd = o.yd;
                             existing->destTruncated = false;
+
+                            // clear an existing path, since they may no
+                            // longer be on it
+                            if( existing->pathToDest != NULL ) {
+                                delete [] existing->pathToDest;
+                                existing->pathToDest = NULL;
+                                }
 
                             if( existing->lastHeldByRawPosSet ) {    
                                 existing->heldByDropOffset =
