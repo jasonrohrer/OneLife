@@ -16,6 +16,11 @@ Server Fixes
 --Min-distance-at-speed for takeoff reduced to 2 (was 4) to make take-off
   easier.
 
+--Made take-off at end of road explicit, so that you always go all the way to
+  the end in one direction before taking off.
+
+
+
 
 Version 195     2019-January-31
 

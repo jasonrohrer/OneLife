@@ -12356,9 +12356,6 @@ int main() {
                         >
                         nextPlayer->moveTotalSeconds ) {
                         
-                        int xDist = abs( nextPlayer->xs - nextPlayer->xd );
-                        int yDist = abs( nextPlayer->ys - nextPlayer->yd );
-                        
                         double moveSpeed = computeMoveSpeed( nextPlayer ) *
                             getPathSpeedModifier( nextPlayer->pathToDest,
                                                   nextPlayer->pathLength );
@@ -12385,9 +12382,9 @@ int main() {
                         if( nextPlayer->holdingFlightObject &&
                             moveSpeed >= minFlightSpeed &&
                             ! nextPlayer->pathTruncated &&
-                            ( xDist >= 2 || yDist >= 2 ) ) {
+                            nextPlayer->pathLength >= 2 ) {
                                     
-                            // player takes off
+                            // player takes off ?
                             
                             double xDir = 
                                 nextPlayer->pathToDest[ 
@@ -12402,85 +12399,99 @@ int main() {
                                   nextPlayer->pathToDest[ 
                                       nextPlayer->pathLength - 2 ].y;
                             
-                                  
-                            doublePair takeOffDir = { xDir, yDir };
-
-                            GridPos destPos = 
-                                getNextFlightLandingPos(
-                                    nextPlayer->xs,
-                                    nextPlayer->ys,
-                                    takeOffDir );
+                            int beyondEndX = nextPlayer->xs + xDir;
+                            int beyondEndY = nextPlayer->ys + yDir;
                             
-                            AppLog::infoF( "Player %d flight taking off, "
-                                           "dest (%d,%d)",
-                                           nextPlayer->id,
-                                           destPos.x, destPos.y );
+                            int endFloorID = getMapFloor( nextPlayer->xs,
+                                                          nextPlayer->ys );
+                            
+                            int beyondEndFloorID = getMapFloor( beyondEndX,
+                                                                beyondEndY );
+                            
+                            if( beyondEndFloorID != endFloorID ) {
+                                // went all the way to the end of the 
+                                // current floor in this direction, 
+                                // take off there
+                            
+                                doublePair takeOffDir = { xDir, yDir };
+
+                                GridPos destPos = 
+                                    getNextFlightLandingPos(
+                                        nextPlayer->xs,
+                                        nextPlayer->ys,
+                                        takeOffDir );
+                            
+                                AppLog::infoF( "Player %d flight taking off, "
+                                               "dest (%d,%d)",
+                                               nextPlayer->id,
+                                               destPos.x, destPos.y );
                             
 
-                            nextPlayer->xd = nextPlayer->xs =
-                                destPos.x;
-                            nextPlayer->yd = nextPlayer->ys =
-                                destPos.y;
+                                nextPlayer->xd = nextPlayer->xs =
+                                    destPos.x;
+                                nextPlayer->yd = nextPlayer->ys =
+                                    destPos.y;
                                 
-                            nextPlayer->posForced = true;
+                                nextPlayer->posForced = true;
                             
-                            // send them a brand new map chunk
-                            // around their new location
-                            nextPlayer->firstMapSent = false;
+                                // send them a brand new map chunk
+                                // around their new location
+                                nextPlayer->firstMapSent = false;
 
-                            int destID = getMapObject( destPos.x,
-                                                       destPos.y );
+                                int destID = getMapObject( destPos.x,
+                                                           destPos.y );
                                     
-                            char heldTransHappened = false;
+                                char heldTransHappened = false;
                                     
-                            if( destID > 0 &&
-                                getObject( destID )->isFlightLanding ) {
-                                // found a landing place
-                                TransRecord *tr =
-                                    getPTrans( nextPlayer->holdingID,
-                                               destID );
+                                if( destID > 0 &&
+                                    getObject( destID )->isFlightLanding ) {
+                                    // found a landing place
+                                    TransRecord *tr =
+                                        getPTrans( nextPlayer->holdingID,
+                                                   destID );
                                         
-                                if( tr != NULL ) {
-                                    heldTransHappened = true;
+                                    if( tr != NULL ) {
+                                        heldTransHappened = true;
                                             
-                                    setMapObject( destPos.x, destPos.y,
-                                                  tr->newTarget );
+                                        setMapObject( destPos.x, destPos.y,
+                                                      tr->newTarget );
 
-                                    transferHeldContainedToMap( 
-                                        nextPlayer,
-                                        destPos.x, destPos.y );
+                                        transferHeldContainedToMap( 
+                                            nextPlayer,
+                                            destPos.x, destPos.y );
 
-                                    handleHoldingChange(
-                                        nextPlayer,
-                                        tr->newActor );
+                                        handleHoldingChange(
+                                            nextPlayer,
+                                            tr->newActor );
                                             
-                                    // stick player next to landing
-                                    // pad
-                                    nextPlayer->xd --;
-                                    nextPlayer->xs = nextPlayer->xd;
+                                        // stick player next to landing
+                                        // pad
+                                        nextPlayer->xd --;
+                                        nextPlayer->xs = nextPlayer->xd;
+                                        }
                                     }
-                                }
-                            if( ! heldTransHappened ) {
-                                // crash landing
-                                // force decay of held
-                                // no matter how much time is left
-                                // (flight uses fuel)
-                                TransRecord *decayTrans =
-                                    getPTrans( -1, 
-                                               nextPlayer->holdingID );
+                                if( ! heldTransHappened ) {
+                                    // crash landing
+                                    // force decay of held
+                                    // no matter how much time is left
+                                    // (flight uses fuel)
+                                    TransRecord *decayTrans =
+                                        getPTrans( -1, 
+                                                   nextPlayer->holdingID );
                                         
-                                if( decayTrans != NULL ) {
-                                    handleHoldingChange( 
-                                        nextPlayer,
-                                        decayTrans->newTarget );
+                                    if( decayTrans != NULL ) {
+                                        handleHoldingChange( 
+                                            nextPlayer,
+                                            decayTrans->newTarget );
+                                        }
                                     }
-                                }
                                     
-                            FlightDest fd = {
-                                nextPlayer->id,
-                                destPos };
+                                FlightDest fd = {
+                                    nextPlayer->id,
+                                    destPos };
 
-                            newFlightDest.push_back( fd );
+                                newFlightDest.push_back( fd );
+                                }
                             }
                         }
                     }
