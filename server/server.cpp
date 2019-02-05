@@ -12385,7 +12385,7 @@ int main() {
                         if( nextPlayer->holdingFlightObject &&
                             moveSpeed >= minFlightSpeed &&
                             ! nextPlayer->pathTruncated &&
-                            ( xDist > 3 || yDist > 3 ) ) {
+                            ( xDist >= 2 || yDist >= 2 ) ) {
                                     
                             // player takes off
                             
