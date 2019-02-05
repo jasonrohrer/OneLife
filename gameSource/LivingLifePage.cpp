@@ -1387,6 +1387,60 @@ void updateMoveSpeed( LiveObject *inObject ) {
     }
 
 
+
+static void fixupSingularPath( LiveObject *inObject ) {
+    if( inObject->pathLength != 1 ) return;
+
+    printf("%d fixup for overtruncated path\n", inObject->id);
+    
+    // trimmed path too short
+    // needs to have at least
+    // a start and end pos
+    
+    // give it an artificial
+    // start pos
+    
+
+    doublePair nextWorld =
+        gridToDouble( 
+         inObject->pathToDest[0] );
+
+    
+    doublePair vectorAway;
+
+    if( ! equal( 
+            inObject->currentPos,
+            nextWorld ) ) {
+            
+        vectorAway = normalize(
+            sub( 
+                inObject->
+                currentPos,
+                nextWorld ) );
+        }
+    else {
+        vectorAway.x = 1;
+        vectorAway.y = 0;
+        }
+    
+    GridPos oldPos =
+        inObject->pathToDest[0];
+    
+    delete [] inObject->pathToDest;
+    inObject->pathLength = 2;
+    
+    inObject->pathToDest =
+        new GridPos[2];
+    inObject->pathToDest[0].x =
+        oldPos.x + vectorAway.x;
+    inObject->pathToDest[0].y =
+        oldPos.y + vectorAway.y;
+    
+    inObject->pathToDest[1] =
+        oldPos;
+    }
+
+
 // should match limit on server
 static int pathFindingD = 32;
 
@@ -12241,6 +12295,10 @@ void LivingLifePage::step() {
                                         break;
                                         }
                                     }
+
+                                if( existing->pathLength == 1 ) {
+                                    fixupSingularPath( existing );
+                                    }
                                 }
                             }
 
@@ -14211,52 +14269,7 @@ void LivingLifePage::step() {
                                                        existing->pathLength );
 
                                             if( existing->pathLength == 1 ) {
-                                                
-                                                // trimmed path too short
-                                                // needs to have at least
-                                                // a start and end pos
-                                                
-                                                // give it an artificial
-                                                // start pos
-                                                
-
-                                                doublePair nextWorld =
-                                                    gridToDouble( 
-                                                     existing->pathToDest[0] );
-
-                                                
-                                                doublePair vectorAway;
-
-                                                if( ! equal( 
-                                                        existing->currentPos,
-                                                        nextWorld ) ) {
-                                                        
-                                                    vectorAway = normalize(
-                                                        sub( 
-                                                            existing->
-                                                            currentPos,
-                                                            nextWorld ) );
-                                                    }
-                                                else {
-                                                    vectorAway.x = 1;
-                                                    vectorAway.y = 0;
-                                                    }
-                                                
-                                                GridPos oldPos =
-                                                    existing->pathToDest[0];
-                                                
-                                                delete [] existing->pathToDest;
-                                                existing->pathLength = 2;
-                                                
-                                                existing->pathToDest =
-                                                    new GridPos[2];
-                                                existing->pathToDest[0].x =
-                                                    oldPos.x + vectorAway.x;
-                                                existing->pathToDest[0].y =
-                                                    oldPos.y + vectorAway.y;
-                                                
-                                                existing->pathToDest[1] =
-                                                    oldPos;
+                                                fixupSingularPath( existing );
                                                 }
                                             
                                             
