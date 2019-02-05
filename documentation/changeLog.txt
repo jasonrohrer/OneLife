@@ -3,14 +3,6 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 197     ???
-
---Improved case detection when mouse held down close to player character (on
-  fast moves in vehicle on road, this was resulting in auto-clicking too soon,
-  sometimes causing vehicle to go off end of road).
-
-
-
 Server Fixes
 
 --Paginated lineage server log listing.
