@@ -15889,11 +15889,17 @@ void LivingLifePage::step() {
                                 o->waypointY = lrint( worldMouseY / CELL_D );
 
                                 pointerDown( fakeClick.x, fakeClick.y );
+
+                                endPos.x = (double)( fakeClick.x );
+                                endPos.y = (double)( fakeClick.y );
                                
                                 o->useWaypoint = false;
                                 }
                             else {
                                 pointerDown( worldMouseX, worldMouseY );
+
+                                endPos.x = (double)( worldMouseX );
+                                endPos.y = (double)( worldMouseY );
                                 }
                             }
                         }
