@@ -15855,42 +15855,46 @@ void LivingLifePage::step() {
                             
                             if( absX < CELL_D * 4 
                                 &&
-                                absY < CELL_D * 4 
-                                &&
-                                mouseDownFrames >  
-                                minMouseDownFrames / frameRateFactor ) {
+                                absY < CELL_D * 4 ) {
+                                    if( mouseDownFrames >  
+                                        minMouseDownFrames / frameRateFactor ) {
                                 
-                                // they're holding mouse down very close
-                                // to to their character
+                                    // they're holding mouse down very close
+                                    // to to their character
+                                    
+                                    // throw mouse way out, further in the same
+                                    // direction
+                                    
+                                    // we don't want to repeatedly find a bunch
+                                    // of short-path moves when mouse
+                                    // is held down
+                                    
+                                    doublePair mouseVector =
+                                        mult( 
+                                            normalize( 
+                                                sub( worldMouse, 
+                                                     worldCurrent ) ),
+                                            CELL_D * 4 );
+                                    
+                                    doublePair fakeClick = add( worldCurrent,
+                                                                mouseVector );
+                                    
+                                    o->useWaypoint = true;
+                                    // leave some wiggle room here
+                                    // path through waypoint might get extended
+                                    // if it involves obstacles
+                                    o->maxWaypointPathLength = 10;
+                                    
+                                    o->waypointX = 
+                                        lrint( worldMouseX / CELL_D );
+                                    o->waypointY = 
+                                        lrint( worldMouseY / CELL_D );
                                 
-                                // throw mouse way out, further in the same
-                                // direction
-                                
-                                // we don't want to repeatedly find a bunch
-                                // of short-path moves when mouse
-                                // is held down
-                            
-                                doublePair mouseVector =
-                                    mult( 
-                                        normalize( 
-                                            sub( worldMouse, worldCurrent ) ),
-                                        CELL_D * 4 );
-                                
-                                doublePair fakeClick = add( worldCurrent,
-                                                            mouseVector );
-                                
-                                o->useWaypoint = true;
-                                // leave some wiggle room here
-                                // path through waypoint might get extended
-                                // if it involves obstacles
-                                o->maxWaypointPathLength = 10;
-                                
-                                o->waypointX = lrint( worldMouseX / CELL_D );
-                                o->waypointY = lrint( worldMouseY / CELL_D );
 
-                                pointerDown( fakeClick.x, fakeClick.y );
-                               
-                                o->useWaypoint = false;
+                                    pointerDown( fakeClick.x, fakeClick.y );
+                                    
+                                    o->useWaypoint = false;
+                                    }
                                 }
                             else {
                                 pointerDown( worldMouseX, worldMouseY );
