@@ -22,6 +22,10 @@ Server Fixes
 --Basket swap in a larger container wasn't working if both baskets contained
   same number of items.  Fixes #217
 
+--Reflector fixed to update OFFLINE status of servers every 20 seconds, even
+  when report isn't being loaded (before, only report would trigger an update
+  to OFFLINE status of a server).
+
 
 
 

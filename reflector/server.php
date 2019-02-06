@@ -176,7 +176,7 @@ if( $handle ) {
                 $address = $parts[1];
                 $port = $parts[2];
                 
-                $serverFound = tryServer( $address, $port, $reportOnly );
+                $serverFound = tryServer( $address, $port, $reportOnly, false );
                 }
             }
         }
@@ -229,6 +229,21 @@ if( $handle ) {
                     $current = 0;
                     $offline = 0;
                     }
+
+                if( $offline == 1 &&
+                    filemtime( $offlineFile ) < time() - 20 ) {
+                    // offline, and hasn't been checked for 20 seconds
+
+                    $onlineNow = tryServer( $address, $port, false,
+                                            true, // test only, don't print
+                                            true );
+
+                    if( $onlineNow ) {
+                        $offline = 0;
+                        }
+                    }
+                
+                
                 $totalMaxCap += $max;
                 $totalCurrentPop += $current;
                 $maxCapPerServer[] = $max;
@@ -328,7 +343,7 @@ if( $handle ) {
             
             $serverFound = tryServer( $serverAddresses[$serverInd],
                                       $serverPorts[$serverInd],
-                                      $reportOnly, true );
+                                      $reportOnly, false, true );
             }
 
         if( !$serverFound ) {
@@ -340,7 +355,7 @@ if( $handle ) {
                    ! $serverFound ) {
                 $serverFound = tryServer( $serverAddresses[$i],
                                           $serverPorts[$i],
-                                          $reportOnly, true );
+                                          $reportOnly, false, true );
                 $i++;
                 }
             }
@@ -373,6 +388,7 @@ if( !$serverFound && !$reportOnly ) {
 // $inReportOnly set to true means we print a report line for this server
 //             and return false
 function tryServer( $inAddress, $inPort, $inReportOnly,
+                    $inTestOnly,
                     $inIgnoreSpreading = false ) {
 
     global $version, $startSpreadingFraction, $tooFullFraction,
@@ -537,13 +553,15 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
             $current++;
             file_put_contents( $currentFile, "$current" );
 
-            
-            echo "$inAddress\n";
-            echo "$inPort\n";
-            echo "$version\n";
-            echo "$updateServerURL\n";
-            echo "OK";
 
+            if( ! $inTestOnly ) {    
+                echo "$inAddress\n";
+                echo "$inPort\n";
+                echo "$version\n";
+                echo "$updateServerURL\n";
+                echo "OK";
+                }
+            
             return true;
             
             }
