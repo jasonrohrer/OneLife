@@ -5512,7 +5512,6 @@ static char addHeldToContainer( LiveObject *inPlayer,
                                     break;
                                     }
                                 }
-                            same = true;
                             }
                         }
                     }

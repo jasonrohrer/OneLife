@@ -19,6 +19,9 @@ Server Fixes
 --Made take-off at end of road explicit, so that you always go all the way to
   the end in one direction before taking off.
 
+--Basket swap in a larger container wasn't working if both baskets contained
+  same number of items.  Fixes #217
+
 
 
 
