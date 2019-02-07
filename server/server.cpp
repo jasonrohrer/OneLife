@@ -2036,9 +2036,6 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             int j = y * HEAT_MAP_D + x;
             heatOutputGrid[j] = 0;
             rGrid[j] = 0;
-                    
-            heatOutputGrid[j] +=
-                getBiomeHeatValue( getMapBiome( mapX, mapY ) );
 
 
             // call Raw version for better performance
@@ -2359,6 +2356,9 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
 
     float playerHeat = 
         inPlayer->heatMap[ playerMapIndex ];
+
+    playerHeat +=
+        getBiomeHeatValue( getMapBiome( pos.x, pos.y ) );
             
     // printf( "Player heat = %f\n", playerHeat );
             
