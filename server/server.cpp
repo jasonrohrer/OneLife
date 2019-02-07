@@ -359,6 +359,9 @@ typedef struct LiveObject {
         char isNew;
         char firstMessageSent;
         
+        char inFlight;
+        
+
         char dying;
         // wall clock time when they will be dead
         double dyingETA;
@@ -4197,6 +4200,7 @@ int processLoggedInPlayer( Socket *inSock,
             // they are connecting again, need to send them everything again
             o->firstMapSent = false;
             o->firstMessageSent = false;
+            o->inFlight = false;
             
             o->connected = true;
             
@@ -4969,6 +4973,7 @@ int processLoggedInPlayer( Socket *inSock,
     
     newObject.isNew = true;
     newObject.firstMessageSent = false;
+    newObject.inFlight = false;
     
     newObject.dying = false;
     newObject.dyingETA = 0;
@@ -6421,6 +6426,7 @@ void apocalypseStep() {
                     LiveObject *nextPlayer = players.getElement( i );
                     nextPlayer->firstMessageSent = false;
                     nextPlayer->firstMapSent = false;
+                    nextPlayer->inFlight = false;
                     }
 
                 postApocalypseStarted = true;
@@ -12424,19 +12430,18 @@ int main() {
                                                "dest (%d,%d)",
                                                nextPlayer->id,
                                                destPos.x, destPos.y );
-                            
-
-                                nextPlayer->xd = nextPlayer->xs =
-                                    destPos.x;
-                                nextPlayer->yd = nextPlayer->ys =
-                                    destPos.y;
                                 
-                                nextPlayer->posForced = true;
+                                
                             
                                 // send them a brand new map chunk
                                 // around their new location
+                                // and re-tell them about all players
+                                // (relative to their new "birth" location...
+                                //  see below)
+                                nextPlayer->firstMessageSent = false;
                                 nextPlayer->firstMapSent = false;
-
+                                nextPlayer->inFlight = true;
+                                
                                 int destID = getMapObject( destPos.x,
                                                            destPos.y );
                                     
@@ -12465,8 +12470,7 @@ int main() {
                                             
                                         // stick player next to landing
                                         // pad
-                                        nextPlayer->xd --;
-                                        nextPlayer->xs = nextPlayer->xd;
+                                        destPos.x --;
                                         }
                                     }
                                 if( ! heldTransHappened ) {
@@ -12490,6 +12494,34 @@ int main() {
                                     destPos };
 
                                 newFlightDest.push_back( fd );
+                                
+                                nextPlayer->xd = destPos.x;
+                                nextPlayer->xs = destPos.x;
+                                nextPlayer->yd = destPos.y;
+                                nextPlayer->ys = destPos.y;
+
+                                // reset their birth location
+                                // their landing position becomes their
+                                // new 0,0 for now
+                                
+                                // birth-relative coordinates enable the client
+                                // (which is on a GPU with 32-bit floats)
+                                // to operate at true coordinates well above
+                                // the 23-bit preciions of 32-bit floats.
+                                
+                                // We keep the coordinates small by assuming
+                                // that a player can never get too far from
+                                // their birth location in one lifetime.
+                                
+                                // Flight teleportation violates this 
+                                // assumption.
+                                nextPlayer->birthPos.x = nextPlayer->xs;
+                                nextPlayer->birthPos.y = nextPlayer->ys;
+                                nextPlayer->heldOriginX = nextPlayer->xs;
+                                nextPlayer->heldOriginY = nextPlayer->ys;
+                                
+                                nextPlayer->actionTarget.x = nextPlayer->xs;
+                                nextPlayer->actionTarget.y = nextPlayer->ys;
                                 }
                             }
                         }
@@ -13191,6 +13223,40 @@ int main() {
         for( int i=0; i<numLive; i++ ) {
             
             LiveObject *nextPlayer = players.getElement(i);
+            
+            
+            // everyone gets all flight messages
+            // even if they haven't gotten first message yet
+            // (because the flier will get their first message again
+            // when they land, and we need to tell them about flight first)
+            if( nextPlayer->firstMapSent ||
+                nextPlayer->inFlight ) {
+                
+                nextPlayer->inFlight = false;
+                
+                if( newFlightDest.size() > 0 ) {
+                    
+                    // compose FD messages for this player
+                    
+                    for( int u=0; u<newFlightDest.size(); u++ ) {
+                        FlightDest *f = newFlightDest.getElement( u );
+                        
+                        char *flightMessage = 
+                            autoSprintf( "FD\n%d %d %d\n#",
+                                         f->playerID,
+                                         f->destPos.x -
+                                         nextPlayer->birthPos.x, 
+                                         f->destPos.y -
+                                         nextPlayer->birthPos.y );
+                        
+                        sendMessageToPlayer( nextPlayer, flightMessage,
+                                             strlen( flightMessage ) );
+                        delete [] flightMessage;
+                        }
+                    }
+                }
+
+            
 
             
             if( ! nextPlayer->firstMessageSent ) {
@@ -13480,27 +13546,6 @@ int main() {
                     }
 
 
-                // everyone gets all flight messages
-                if( newFlightDest.size() > 0 ) {
-                    
-                    // compose FD messages for this player
-                    
-                    for( int u=0; u<newFlightDest.size(); u++ ) {
-                        FlightDest *f = newFlightDest.getElement( u );
-                        
-                        char *flightMessage = 
-                            autoSprintf( "FD\n%d %d %d\n#",
-                                         f->playerID,
-                                         f->destPos.x -
-                                         nextPlayer->birthPos.x, 
-                                         f->destPos.y -
-                                         nextPlayer->birthPos.y );
-                        
-                        sendMessageToPlayer( nextPlayer, flightMessage,
-                                             strlen( flightMessage ) );
-                        delete [] flightMessage;
-                        }
-                    }
 
 
                 // everyone gets all grave messages

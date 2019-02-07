@@ -3,6 +3,19 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 197     ???
+
+--Server must update birth location of flying player to ensure that coordinates
+  remain in low range to avoid GPU rounding errors (i.e., in case where player
+  flies out to tutorial at coordinate x=10M).
+
+--Players that were out of range before flight may come in range after flight.
+  Server now sends a complete server-wide PU to flying player (the same as when
+  player first connects), updated with new birth location (landing location).
+
+
+
+
 Server Fixes
 
 --Paginated lineage server log listing.

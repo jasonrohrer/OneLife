@@ -10486,11 +10486,15 @@ void LivingLifePage::step() {
                                                lastScreenViewCenter.y );
                         
                         // show loading screen again
-                        mFirstServerMessagesReceived = 2;
+                        mFirstServerMessagesReceived = 0;
                         mStartedLoadingFirstObjectSet = false;
                         mDoneLoadingFirstObjectSet = false;
                         mFirstObjectSetLoadingProgress = 0;
                         mPlayerInFlight = true;
+
+                        // we're going to get a whole new PU message
+                        // re-describing everyone's positions
+                        clearLiveObjects();
                         }
                     }
                 }            
