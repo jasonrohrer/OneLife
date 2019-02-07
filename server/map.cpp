@@ -7045,8 +7045,8 @@ void removeLandingPos( GridPos inPos ) {
 
 
 char isInDir( GridPos inPos, GridPos inOtherPos, doublePair inDir ) {
-    int dX = inOtherPos.x - inPos.x;
-    int dY = inOtherPos.y - inPos.y;
+    double dX = (double)inOtherPos.x - (double)inPos.x;
+    double dY = (double)inOtherPos.y - (double)inPos.y;
     
     if( inDir.x > 0 && dX > 0 ) {
         return true;
