@@ -47,6 +47,9 @@ Server Fixes
   Server now sends a complete server-wide PU to flying player (the same as when
   player first connects), updated with new birth location (landing location).
 
+--Calculating distance-squared when finding closest flight landing position now
+  double precision (using ints isn't going to work for distances above about
+  50K.
 
 
 
