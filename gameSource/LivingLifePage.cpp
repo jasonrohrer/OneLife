@@ -64,6 +64,7 @@ extern Font *pencilErasedFont;
 // to make all erased pencil fonts lighter
 static float pencilErasedFontExtraFade = 0.75;
 
+static char playPlayerObjectCreationSounds = true;
 
 extern doublePair lastScreenViewCenter;
 
@@ -10495,6 +10496,9 @@ void LivingLifePage::step() {
                         // we're going to get a whole new PU message
                         // re-describing everyone's positions
                         clearLiveObjects();
+
+                        // but don't play player creation sounds again
+                        playPlayerObjectCreationSounds = false;
                         }
                     }
                 }            
@@ -13445,7 +13449,8 @@ void LivingLifePage::step() {
                         
                         ObjectRecord *obj = getObject( o.displayID );
                         
-                        if( obj->creationSound.numSubSounds > 0 ) {
+                        if( playPlayerObjectCreationSounds && 
+                            obj->creationSound.numSubSounds > 0 ) {
                                 
                             playSound( obj->creationSound,
                                        getVectorFromCamera( 
@@ -13804,7 +13809,9 @@ void LivingLifePage::step() {
                     gameObjects.getElement( recentInsertedGameObjectIndex );
                 
                 ourID = ourObject->id;
-
+                
+                playPlayerObjectCreationSounds = true;
+                
                 if( ourID != lastPlayerID ) {
                     // different ID than last time, delete home markers
                     homePosStack.deleteAll();
@@ -16528,6 +16535,8 @@ void LivingLifePage::makeActive( char inFresh ) {
         }
 
     clearLocationSpeech();
+
+    playPlayerObjectCreationSounds = true;
 
     mPlayerInFlight = false;
     
