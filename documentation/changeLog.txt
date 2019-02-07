@@ -8,6 +8,9 @@ Version 197     ???
 --Client preparing for furture protocol change where SN message contains an
   opaque string (including a random nonce) instead of a number.
 
+--Home markers, which are invalid after flight, are cleared.
+
+
 
 
 Server Fixes

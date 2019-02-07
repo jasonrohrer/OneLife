@@ -10490,6 +10490,9 @@ void LivingLifePage::step() {
                         mDoneLoadingFirstObjectSet = false;
                         mFirstObjectSetLoadingProgress = 0;
                         mPlayerInFlight = true;
+
+                        // home markers invalid now
+                        homePosStack.deleteAll();
                         }
                     }
                 }            
