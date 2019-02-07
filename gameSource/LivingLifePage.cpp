@@ -2247,12 +2247,19 @@ void LivingLifePage::runTutorial() {
 
 
 
-void LivingLifePage::clearLiveObjects() {
+void LivingLifePage::clearLiveObjects( int inIDToSkip ) {
+    LiveObject skippedObject;
+    
     for( int i=0; i<gameObjects.size(); i++ ) {
         
         LiveObject *nextObject =
             gameObjects.getElement( i );
         
+        if( nextObject->id == inIDToSkip ) {
+            skippedObject = *nextObject;
+            continue;
+            }
+
         nextObject->pendingReceivedMessages.deallocateStringElements();
 
         if( nextObject->containedIDs != NULL ) {
@@ -2284,6 +2291,10 @@ void LivingLifePage::clearLiveObjects() {
         }
     
     gameObjects.deleteAll();
+
+    if( inIDToSkip != -1 ) {
+        gameObjects.push_back( skippedObject );
+        }
     }
 
 
@@ -10494,7 +10505,9 @@ void LivingLifePage::step() {
 
                         // we're going to get a whole new PU message
                         // re-describing everyone's positions
-                        clearLiveObjects();
+                        // don't delete our object, though, because
+                        // we don't want to play our creation sound again
+                        clearLiveObjects( ourID );
                         }
                     }
                 }            
