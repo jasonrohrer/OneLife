@@ -13,6 +13,8 @@ Version 197     ???
   Server now sends a complete server-wide PU to flying player (the same as when
   player first connects), updated with new birth location (landing location).
 
+--Client preparing for furture protocol change where SN message contains an
+  opaque string (including a random nonce) instead of a number.
 
 
 
