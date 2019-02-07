@@ -809,7 +809,7 @@ class LivingLifePage : public GamePage {
         LiveObject *getLiveObject( int inID );
         
 
-        void clearLiveObjects( int inIDToSkip = -1 );
+        void clearLiveObjects();
         
         // inSpeaker can be NULL
         void drawChalkBackgroundString( doublePair inPos, 
