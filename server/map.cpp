@@ -5450,10 +5450,9 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
         for( int i=0; i<flightLandingPos.size(); i++ ) {
             GridPos otherP = flightLandingPos.getElementDirect( i );
             
-            // any new strip w/ 250,250 manhattan distance doesn't count
-            if( tooClose( otherP, p, 250 ) ) {
+            if( equal( p, otherP ) ) {
                 
-                // make sure this "too close" strip really still exists
+                // make sure this other strip really still exists
                 int oID = getMapObject( otherP.x, otherP.y );
             
                 if( oID <=0 ||
@@ -7057,7 +7056,8 @@ char isInDir( GridPos inPos, GridPos inOtherPos, doublePair inDir ) {
 
 
 
-GridPos getNextCloseLandingPos( GridPos inPos, doublePair inDir, 
+GridPos getNextCloseLandingPos( GridPos inCurPose, 
+                                doublePair inDir, 
                                 char *outFound ) {
     
     int closestIndex = -1;
@@ -7066,9 +7066,16 @@ GridPos getNextCloseLandingPos( GridPos inPos, doublePair inDir,
     
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
+
+        if( tooClose( inCurPose, thisPos, 250 ) ) {
+            // don't consider landing at spots closer than 250,250 manhattan
+            // to takeoff spot
+            continue;
+            }
+
         
-        if( isInDir( inPos, thisPos, inDir ) ) {
-            unsigned int dist = distSquared( inPos, thisPos );
+        if( isInDir( inCurPose, thisPos, inDir ) ) {
+            unsigned int dist = distSquared( inCurPose, thisPos );
             
             if( dist < closestDist ) {
                 // check if this is still a valid landing pos
@@ -7143,7 +7150,7 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
         
         char found = false;
         
-        GridPos nextPos = getNextCloseLandingPos( closestPos, inDir, &found );
+        GridPos nextPos = getNextCloseLandingPos( curPos, inDir, &found );
         
         if( found ) {
             return nextPos;

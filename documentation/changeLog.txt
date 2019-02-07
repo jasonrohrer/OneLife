@@ -39,6 +39,10 @@ Server Fixes
   when report isn't being loaded (before, only report would trigger an update
   to OFFLINE status of a server).
 
+--Nearby landing pads no longer block eachother.  Instead, when taking off, we
+  search for some pad in the chosen direction that is at least 250 away in
+  either x or y.
+
 
 
 
