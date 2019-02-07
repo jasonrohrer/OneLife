@@ -7065,7 +7065,7 @@ char isInDir( GridPos inPos, GridPos inOtherPos, doublePair inDir ) {
 
 
 
-GridPos getNextCloseLandingPos( GridPos inCurPose, 
+GridPos getNextCloseLandingPos( GridPos inCurPos, 
                                 doublePair inDir, 
                                 char *outFound ) {
     
@@ -7076,15 +7076,15 @@ GridPos getNextCloseLandingPos( GridPos inCurPose,
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
 
-        if( tooClose( inCurPose, thisPos, 250 ) ) {
+        if( tooClose( inCurPos, thisPos, 250 ) ) {
             // don't consider landing at spots closer than 250,250 manhattan
             // to takeoff spot
             continue;
             }
 
         
-        if( isInDir( inCurPose, thisPos, inDir ) ) {
-            double dist = distSquared( inCurPose, thisPos );
+        if( isInDir( inCurPos, thisPos, inDir ) ) {
+            double dist = distSquared( inCurPos, thisPos );
             
             if( dist < closestDist ) {
                 // check if this is still a valid landing pos
