@@ -5090,9 +5090,11 @@ int processLoggedInPlayer( Socket *inSock,
               players.size(),
               newObject.parentChainLength );
     
-    AppLog::infoF( "New player %s connected as player %d (tutorial=%d) (%d,%d)",
+    AppLog::infoF( "New player %s connected as player %d (tutorial=%d) (%d,%d)"
+                   " (maxPlacementX=%d)",
                    newObject.email, newObject.id,
-                   inTutorialNumber, newObject.xs, newObject.ys );
+                   inTutorialNumber, newObject.xs, newObject.ys,
+                   maxPlacementX );
     
     return newObject.id;
     }
@@ -12426,10 +12428,13 @@ int main() {
                                         nextPlayer->ys,
                                         takeOffDir );
                             
-                                AppLog::infoF( "Player %d flight taking off, "
-                                               "dest (%d,%d)",
-                                               nextPlayer->id,
-                                               destPos.x, destPos.y );
+                                AppLog::infoF( 
+                                    "Player %d flight taking off from (%d,%d), "
+                                    "flightDir (%f,%f), dest (%d,%d)",
+                                    nextPlayer->id,
+                                    nextPlayer->xs, nextPlayer->ys,
+                                    xDir, yDir,
+                                    destPos.x, destPos.y );
                                 
                                 
                             

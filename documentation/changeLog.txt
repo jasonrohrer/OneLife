@@ -51,6 +51,9 @@ Server Fixes
   double precision (using ints isn't going to work for distances above about
   50K.
 
+--Better logging of maxPlacementX and flights.
+
+
 
 
 Version 195     2019-January-31
