@@ -56,6 +56,17 @@ Server Fixes
 
 --Better logging of maxPlacementX and flights.
 
+--Heat overhaul:  R values stack multiplicatively, not additively.
+
+--Heat overhaul:  Separate fixed heat map produced by underlying biome
+  (biomes no longer generate or absorb heat each step).
+
+--Heat overhaul:  Floor insulates between air and underlying biome.
+
+--Heat overhaul:  Air itself has a small R value to slow base propagation
+  per sim step.
+
+
 
 
 
