@@ -43,6 +43,7 @@ Server Fixes
   search for some pad in the chosen direction that is at least 250 away in
   either x or y.
 
+--Partially-used objects are not restored to stale parts of map.  Fixes #206
 
 
 

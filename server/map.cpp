@@ -3034,6 +3034,8 @@ char initMap() {
         
         int numSet = 0;
         
+        int numStale = 0;
+
         while( numRead == 5 || numRead == 7 ) {
             
             int x, y, parentID, dummyIndex, slot, b;
@@ -3047,6 +3049,12 @@ char initMap() {
                               &x, &y, &marker, &parentID, &dummyIndex,
                               &slot, &b );
             if( numRead == 5 || numRead == 7 ) {
+
+                if( dbLookTimeGet( x, y ) <= 0 ) {
+                    // stale area of map
+                    numStale++;
+                    continue;
+                    }                
                 
                 ObjectRecord *parent = getObject( parentID );
                 
@@ -3078,7 +3086,8 @@ char initMap() {
         fclose( dummyFile );
         
         
-        AppLog::infoF( "Restored %d dummy objects to map", numSet );
+        AppLog::infoF( "Restored %d dummy objects to map "
+                       "(%d skipped as stale)", numSet, numStale );
         
         remove( "mapDummyRecall.txt" );
         
