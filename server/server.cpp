@@ -2027,6 +2027,11 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             }
         } 
 
+    
+    // air itself offers some insulation
+    // a vacuum panel has R-value that is 25x greater than air
+    float rAir = 0.04;
+    
 
     for( int y=0; y<HEAT_MAP_D; y++ ) {
         int mapY = pos.y + y - HEAT_MAP_D / 2;
@@ -2037,7 +2042,7 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                     
             int j = y * HEAT_MAP_D + x;
             heatOutputGrid[j] = 0;
-            rGrid[j] = 0;
+            rGrid[j] = rAir;
             rFloorGrid[j] = 0;
 
             biomeHeatGrid[j] =
@@ -2056,7 +2061,7 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                 if( o->permanent ) {
                     // loose objects sitting on ground don't
                     // contribute to r-value (like dropped clothing)
-                    rGrid[j] = o->rValue;
+                    rGrid[j] = rCombine( rGrid[j], o->rValue );
                     }
 
 
@@ -2164,23 +2169,11 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     int playerMapIndex = 
         ( HEAT_MAP_D / 2 ) * HEAT_MAP_D +
         ( HEAT_MAP_D / 2 );
-            
+        
 
-    rGrid[ playerMapIndex ] = rCombine( rGrid[ playerMapIndex ], clothingR );
-            
-            
-    if( rGrid[ playerMapIndex ] > 1 ) {
-                
-        rGrid[ playerMapIndex ] = 1;
-        }
-            
-
-    // body itself produces 1 unit of heat
-    // (r value of clothing can hold this in
-    heatOutputGrid[ playerMapIndex ] += 1;
-            
-
+    
     // what player is holding can contribute heat
+    // add this to the grid, since it's "outside" the player's body
     if( inPlayer->holdingID > 0 ) {
         ObjectRecord *heldO = getObject( inPlayer->holdingID );
                 
@@ -2225,30 +2218,6 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             }
         }
             
-    // clothing can contribute heat
-    for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
-                
-        ObjectRecord *cO = clothingByIndex( inPlayer->clothing, c );
-            
-        if( cO != NULL ) {
-            heatOutputGrid[playerMapIndex ] += cO->heatValue;
-
-            // contained items in clothing can contribute
-            // heat, shielded by clothing r-values
-            double cRFactor = 1 - cO->rValue;
-
-            for( int s=0; 
-                 s < inPlayer->clothingContained[c].size(); s++ ) {
-                        
-                ObjectRecord *sO = 
-                    getObject( inPlayer->clothingContained[c].
-                               getElementDirect( s ) );
-                        
-                heatOutputGrid[ playerMapIndex ] += 
-                    sO->heatValue * cRFactor;
-                }
-            }
-        }
             
 
             
@@ -2313,6 +2282,17 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                         ( tempHeatGrid[ nj ] - centerOldHeat );
                     }
                 
+                // now 9th "neighbor" floor
+                float floorLeak = 1 - rFloorGrid[ j ];
+                
+                // ground (under floor) always has heat of matching biome value
+                // (never gains or loses heat, infinite)
+                float groundHeat = biomeHeatGrid[ j ];
+                
+                heatDelta += nWeights[8] * centerLeak * floorLeak *
+                    ( groundHeat - centerOldHeat );
+
+                
                 inPlayer->heatMap[j] = 
                     tempHeatGrid[j] + heatDelta / totalNWeight;
                 
@@ -2373,12 +2353,68 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
       }
     */
 
-    float playerHeat = 
+    float envPlayerHeat = 
         inPlayer->heatMap[ playerMapIndex ];
 
-    playerHeat +=
-        getBiomeHeatValue( getMapBiome( pos.x, pos.y ) );
+
+
+    // clothing can contribute heat
+    // apply this separate from heat grid above
+    float clothingHeat = 0;
+    for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+                
+        ObjectRecord *cO = clothingByIndex( inPlayer->clothing, c );
             
+        if( cO != NULL ) {
+            clothingHeat += cO->heatValue;
+
+            // contained items in clothing can contribute
+            // heat, shielded by clothing r-values
+            double cRFactor = 1 - cO->rValue;
+
+            for( int s=0; 
+                 s < inPlayer->clothingContained[c].size(); s++ ) {
+                        
+                ObjectRecord *sO = 
+                    getObject( inPlayer->clothingContained[c].
+                               getElementDirect( s ) );
+                        
+                clothingHeat += 
+                    sO->heatValue * cRFactor;
+                }
+            }
+        }
+
+
+
+
+
+
+    // simulate player "leaking" or gaining heat with environment
+
+    float playerHeat = targetHeat;
+
+    
+
+    for( int c=0; c<numCycles; c++ ) {        
+
+        // clothingR modulates heat lost (or gained) from environment
+        float clothingLeak = 1 - clothingR;
+
+        float heatDelta = clothingLeak * ( envPlayerHeat - playerHeat );
+        
+        playerHeat += heatDelta;
+
+
+        // player's body generates 1 unit of heat per sim step
+        playerHeat += 1;
+        
+        // player's clothing may generate heat each step
+        playerHeat += clothingHeat;
+        }
+
+
+    
     // printf( "Player heat = %f\n", playerHeat );
             
     // convert into 0..1 range, where 0.5 represents targetHeat
