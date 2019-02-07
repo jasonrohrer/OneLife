@@ -1990,6 +1990,18 @@ static double heatUpdateSeconds = 2;
 
 
 
+// blend R-values multiplicatively, for layers
+// 1 - R( A + B ) = (1 - R(A)) * (1 - R(B))
+//
+// or
+//
+//R( A + B ) =  R(A) + R(B) - R(A) * R(B)
+static double rCombine( double inRA, double inRB ) {
+    return inRA + inRB - inRA * inRB;
+    }
+
+
+
 static void recomputeHeatMap( LiveObject *inPlayer ) {
             
     // what if we recompute it from scratch every time?
@@ -2105,7 +2117,7 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                     
             if( fO != NULL ) {
                 heatOutputGrid[j] += fO->heatValue;
-                rGrid[j] += fO->rValue;
+                rGrid[j] = rCombine( rGrid[j], fO->rValue );
                 }
             }
         }
@@ -2151,7 +2163,7 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
         ( HEAT_MAP_D / 2 );
             
 
-    rGrid[ playerMapIndex ] += clothingR;
+    rGrid[ playerMapIndex ] = rCombine( rGrid[ playerMapIndex ], clothingR );
             
             
     if( rGrid[ playerMapIndex ] > 1 ) {
