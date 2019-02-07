@@ -13231,9 +13231,7 @@ int main() {
             // when they land, and we need to tell them about flight first)
             if( nextPlayer->firstMapSent ||
                 nextPlayer->inFlight ) {
-                
-                nextPlayer->inFlight = false;
-                
+                                
                 if( newFlightDest.size() > 0 ) {
                     
                     // compose FD messages for this player
@@ -13291,13 +13289,28 @@ int main() {
                         continue;
                         }
 
+                    char oWasForced = o->posForced;
                     
+                    if( nextPlayer->inFlight ) {
+                        // not a true first message
+                        
+                        // force all positions for all players
+                        o->posForced = true;
+                        }
+                    
+
                     // true mid-move positions for first message
                     // all relative to new player's birth pos
                     char *messageLine = getUpdateLine( o, 
                                                        nextPlayer->birthPos,
                                                        false, true );
                     
+                    if( nextPlayer->inFlight ) {
+                        // restore
+                        o->posForced = oWasForced;
+                        }
+                    
+
                     // skip sending info about errored players in
                     // first message
                     if( o->id != nextPlayer->id ) {
@@ -13515,6 +13528,7 @@ int main() {
 
                 
                 nextPlayer->firstMessageSent = true;
+                nextPlayer->inFlight = false;
                 }
             else {
                 // this player has first message, ready for updates/moves
