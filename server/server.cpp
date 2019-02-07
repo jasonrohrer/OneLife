@@ -2010,7 +2010,9 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
         }
 
     float heatOutputGrid[ HEAT_MAP_D * HEAT_MAP_D ];
+    float biomeHeatGrid[ HEAT_MAP_D * HEAT_MAP_D ];
     float rGrid[ HEAT_MAP_D * HEAT_MAP_D ];
+    float rFloorGrid[ HEAT_MAP_D * HEAT_MAP_D ];
 
 
     GridPos pos = getPlayerPos( inPlayer );
@@ -2036,6 +2038,10 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             int j = y * HEAT_MAP_D + x;
             heatOutputGrid[j] = 0;
             rGrid[j] = 0;
+            rFloorGrid[j] = 0;
+
+            biomeHeatGrid[j] =
+                getBiomeHeatValue( getMapBiome( mapX, mapY ) );
 
 
             // call Raw version for better performance
@@ -2114,7 +2120,7 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                     
             if( fO != NULL ) {
                 heatOutputGrid[j] += fO->heatValue;
-                rGrid[j] = rCombine( rGrid[j], fO->rValue );
+                rFloorGrid[j] = fO->rValue;
                 }
             }
         }
@@ -2258,12 +2264,25 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     // http://demonstrations.wolfram.com/
     //        ACellularAutomatonBasedHeatEquation/
     // diags have way less contact area
-    double nWeights[8] = { 4, 4, 4, 4, 1, 1, 1, 1 };
+    // last weight is floor (full contact area just like side walls)
+    double nWeights[9] = { 4, 4, 4, 4, 1, 1, 1, 1, 4 };
             
-    double totalNWeight = 20;
+    double totalNWeight = 24;
             
             
     //double startTime = Time::getCurrentTime();
+
+    // start player heat map, all the way to edge, filled with biome
+    // heat values
+    // Edge will never change during sim (edge has less than 8 neighbors)
+    // so it will act like an infinite heat sink
+    for( int y=0; y<HEAT_MAP_D; y++ ) {
+        for( int x=0; x<HEAT_MAP_D; x++ ) {
+            int j = y * HEAT_MAP_D + x;
+            inPlayer->heatMap[j] = biomeHeatGrid[j];
+            }
+        }
+    
 
     for( int c=0; c<numCycles; c++ ) {
                 
