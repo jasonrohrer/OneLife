@@ -61,10 +61,23 @@ Server Fixes
 --Heat overhaul:  Separate fixed heat map produced by underlying biome
   (biomes no longer generate or absorb heat each step).
 
+--Heat overhaul:  Biome temperature serves as starting air heat value for each
+  cell in the simulation grid.
+
 --Heat overhaul:  Floor insulates between air and underlying biome.
 
 --Heat overhaul:  Air itself has a small R value to slow base propagation
   per sim step.
+
+--Heat overhaul:  Biome temperature fixed at edge of simulation grid, instead
+  of having a fixed 0.00 temperature sink at edge.
+
+--Heat overhaul:  Heat produced by clothing (not currently used) summed as a
+  separate step at the end, and doesn't count as a heat source in the 
+  environmental simulation grid.
+
+--Heat overhaul:  Player clothing simulated as separate step at the end, after
+  simulating environmental propagation grid.
 
 
 
