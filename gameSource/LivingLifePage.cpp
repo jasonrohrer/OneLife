@@ -134,6 +134,20 @@ static double frameBatchMeasureStartTime = -1;
 static int framesInBatch = 0;
 static double fpsToDraw = -1;
 
+
+static char showNet = false;
+static double netBatchMeasureStartTime = -1;
+static int messagesInPerSec = -1;
+static int messagesOutPerSec = -1;
+static int bytesInPerSec = -1;
+static int bytesOutPerSec = -1;
+static int messagesInCount = 0;
+static int messagesOutCount = 0;
+static int bytesInCount = 0;
+static int bytesOutCount = 0;
+
+
+
 static char showPing = false;
 static double pingSentTime = -1;
 static double pongDeltaTime = -1;
@@ -580,7 +594,8 @@ static char readServerSocketFull( int inServerSocket ) {
         
         serverSocketBuffer.appendArray( buffer, numRead );
         numServerBytesRead += numRead;
-
+        bytesInCount += numRead;
+        
         numRead = readFromSocket( inServerSocket, buffer, 512 );
         }    
 
@@ -613,6 +628,9 @@ void LivingLifePage::sendToServerSocket( char *inMessage ) {
     if( numSent == len ) {
         numServerBytesSent += len;
         overheadServerBytesSent += 52;
+        
+        messagesOutCount++;
+        bytesOutCount += len;
         }
     else {
         printf( "Failed to send message to server socket "
@@ -977,6 +995,8 @@ char *getNextServerMessageRaw() {
             char *returnMessage = pendingMapChunkMessage;
             pendingMapChunkMessage = NULL;
 
+            messagesInCount++;
+
             return returnMessage;
             }
         else {
@@ -1017,6 +1037,7 @@ char *getNextServerMessageRaw() {
                 
                 delete [] decompressedMessage;
                 
+                messagesInCount++;
                 return textMessage;
                 }
             }
@@ -1083,6 +1104,7 @@ char *getNextServerMessageRaw() {
         return NULL;
         }
     else {
+        messagesInCount++;
         return message;
         }
     }
@@ -4238,6 +4260,20 @@ static char isInBounds( int inX, int inY, int inMapD ) {
 
 
 
+static void drawFixedShadowString( const char *inString, doublePair inPos ) {
+    
+    setDrawColor( 0, 0, 0, 1 );
+    numbersFontFixed->drawString( inString, inPos, alignLeft );
+            
+    setDrawColor( 1, 1, 1, 1 );
+            
+    inPos.x += 2;
+    inPos.y -= 2;
+    numbersFontFixed->drawString( inString, inPos, alignLeft );
+    }
+
+
+
 typedef struct DrawOrderRecord {
         char person;
         // if person
@@ -6622,7 +6658,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }    
         
     if( showFPS ) {
+            
+        doublePair pos = lastScreenViewCenter;
+        pos.x -= 600;
+        pos.y += 300;
         
+        if( mTutorialNumber > 0 ) {
+            pos.y -= 50;
+            }
+
         if( frameBatchMeasureStartTime == -1 ) {
             frameBatchMeasureStartTime = game_getCurrentTime();
             }
@@ -6642,24 +6686,80 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 }
             }
         if( fpsToDraw != -1 ) {
-            
-            doublePair pos = lastScreenViewCenter;
-            pos.x -= 600;
-            pos.y += 300;
-            
+        
             char *fpsString = 
                 autoSprintf( "%.1f %s", fpsToDraw, translate( "fps" ) );
             
-            setDrawColor( 0, 0, 0, 1 );
-            numbersFontFixed->drawString( fpsString, pos, alignLeft );
-            
-            setDrawColor( 1, 1, 1, 1 );
-            
-            pos.x += 2;
-            pos.y -= 2;
-            numbersFontFixed->drawString( fpsString, pos, alignLeft );
+            drawFixedShadowString( fpsString, pos );
             
             delete [] fpsString;
+            }
+        else {
+            drawFixedShadowString( translate( "fpsPending" ), pos );
+            }
+        }
+    
+    if( showNet ) {
+        doublePair pos = lastScreenViewCenter;
+        pos.x -= 600;
+        pos.y += 300;
+        
+        if( showFPS ) {
+            pos.y -= 50;
+            }
+        // covered by tutorial sheets
+        if( mTutorialNumber > 0 ) {
+            pos.y -= 50;
+            }
+
+        double curTime = game_getCurrentTime();
+        
+        if( netBatchMeasureStartTime == -1 ) {
+            netBatchMeasureStartTime = curTime;
+            }
+        else {
+            
+            double batchLength = curTime - netBatchMeasureStartTime;
+            
+            if( batchLength >= 1.0 ) {
+                // full batch
+
+                messagesInPerSec = lrint( messagesInCount / batchLength );
+                messagesOutPerSec = lrint( messagesOutCount / batchLength );
+
+                bytesInPerSec = lrint( bytesInCount / batchLength );
+                bytesOutPerSec = lrint( bytesOutCount / batchLength );
+                
+                // new batch
+                messagesInCount = 0;
+                messagesOutCount = 0;
+                bytesInCount = 0;
+                bytesOutCount = 0;
+                
+                netBatchMeasureStartTime = curTime;
+                }
+            }
+        
+        if( messagesInPerSec != -1 ) {
+            char *netStringA = 
+                autoSprintf( translate( "netStringA" ), 
+                             messagesOutPerSec, messagesInPerSec );
+            char *netStringB = 
+                autoSprintf( translate( "netStringB" ), 
+                             bytesOutPerSec, bytesInPerSec );
+            
+            drawFixedShadowString( netStringA, pos );
+            
+
+            pos.y -= 50;
+            
+            drawFixedShadowString( netStringB, pos );
+            
+            delete [] netStringA;
+            delete [] netStringB;
+            }
+        else {
+            drawFixedShadowString( translate( "netPending" ), pos );
             }
         }
     
@@ -6673,6 +6773,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
         pos.x += 300;
         pos.y += 300;
         
+        if( mTutorialNumber > 0 ) {
+            pos.y -= 50;
+            }
+
         char *pingString;
         
         if( pongDeltaTime == -1 ) {
@@ -6685,15 +6789,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                              lrint( pongDeltaTime * 1000 ), 
                              translate( "ms" ) );
             }
-        
-        setDrawColor( 0, 0, 0, 1 );
-        numbersFontFixed->drawString( pingString, pos, alignLeft );
-            
-        setDrawColor( 1, 1, 1, 1 );
-            
-        pos.x += 2;
-        pos.y -= 2;
-        numbersFontFixed->drawString( pingString, pos, alignLeft );
+
+        drawFixedShadowString( pingString, pos );
             
         delete [] pingString;
     
@@ -16530,6 +16627,7 @@ void LivingLifePage::makeActive( char inFresh ) {
     mPlayerInFlight = false;
     
     showFPS = false;
+    showNet = false;
     showPing = false;
     
     waitForFrameMessages = false;
@@ -19165,6 +19263,20 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 frameBatchMeasureStartTime = -1;
                                 framesInBatch = 0;
                                 fpsToDraw = -1;
+                                }
+                            else if( strstr( typedText,
+                                             translate( "netCommand" ) ) 
+                                     == typedText ) {
+                                showNet = !showNet;
+                                netBatchMeasureStartTime = -1;
+                                messagesInPerSec = -1;
+                                messagesOutPerSec = -1;
+                                bytesInPerSec = -1;
+                                bytesOutPerSec = -1;
+                                messagesInCount = 0;
+                                messagesOutCount = 0;
+                                bytesInCount = 0;
+                                bytesOutCount = 0;
                                 }
                             else if( strstr( typedText,
                                              translate( "pingCommand" ) ) 

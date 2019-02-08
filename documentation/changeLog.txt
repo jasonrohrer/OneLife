@@ -10,6 +10,8 @@ Version 197     ???
 
 --Home markers, which are invalid after flight, are cleared.
 
+--/NET command to display network load stats in client.
+
 
 
 
