@@ -79,6 +79,13 @@ Server Fixes
 --Heat overhaul:  Player clothing simulated as separate step at the end, after
   simulating environmental propagation grid.
 
+--Problem:  if tutorial is always placed at 2x max birth location, then if
+  people fly to the tutorial and have a baby there repeatedly, the tutorial
+  location grows exponentially.  Saw 10M, 20M, 40M, 80M, 160M, 320M in server
+  log as people continued flying to tutorial and having babies there.  It will
+  quickly overflow.  Now it is max birth location +400,000, so it grows
+  linearly if people fly there and have babies there.  People can "chase" the
+  tutorial area 5000 times before we need to worry about overflow.
 
 
 

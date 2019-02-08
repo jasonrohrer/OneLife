@@ -4232,6 +4232,11 @@ static LiveObject *getHitPlayer( int inX, int inY,
 // for placement of tutorials out of the way 
 static int maxPlacementX = 5000000;
 
+// tutorial is alwasy placed 400,000 to East of furthest birth/Eve
+// location
+static int tutorialOffsetX = 400000;
+
+
 // each subsequent tutorial gets put in a diferent place
 static int tutorialCount = 0;
 
@@ -4816,7 +4821,7 @@ int processLoggedInPlayer( Socket *inSock,
         }
     else if( inTutorialNumber > 0 ) {
         
-        int startX = maxPlacementX * 2;
+        int startX = maxPlacementX + tutorialOffsetX;
         int startY = tutorialCount * 25;
 
         newObject.xs = startX;
