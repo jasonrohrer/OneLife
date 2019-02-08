@@ -87,6 +87,10 @@ Server Fixes
   linearly if people fly there and have babies there.  People can "chase" the
   tutorial area 5000 times before we need to worry about overflow.
 
+--Fixed additional int overflows in server distance functions by switching to
+  double precision.  This was potentially causing distant map changes to be
+  sent to a player unecessarily, eating up bandwidth.
+
 
 
 

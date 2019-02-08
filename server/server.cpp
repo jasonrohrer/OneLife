@@ -2640,9 +2640,10 @@ static char equal( GridPos inA, GridPos inB ) {
 
 
 static double distance( GridPos inA, GridPos inB ) {
-    return sqrt( ( inA.x - inB.x ) * ( inA.x - inB.x )
-                 +
-                 ( inA.y - inB.y ) * ( inA.y - inB.y ) );
+    double dx = (double)inA.x - (double)inB.x;
+    double dy = (double)inA.y - (double)inB.y;
+
+    return sqrt(  dx * dx + dy * dy );
     }
 
 
@@ -2883,8 +2884,8 @@ int sendMapChunkMessage( LiveObject *inO,
 
 
 double intDist( int inXA, int inYA, int inXB, int inYB ) {
-    int dx = inXA - inXB;
-    int dy = inYA - inYB;
+    double dx = (double)inXA - (double)inXB;
+    double dy = (double)inYA - (double)inYB;
 
     return sqrt(  dx * dx + dy * dy );
     }

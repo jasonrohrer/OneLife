@@ -4193,10 +4193,11 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                     GridPos p = getClosestPlayerPos( inX, inY );
                     
-                    double dist = 
-                        sqrt( ( p.x - inX ) * ( p.x - inX ) + 
-                              ( p.y - inY ) * ( p.y - inY ) );
+                    double dX = (double)p.x - (double)inX;
+                    double dY = (double)p.y - (double)inY;
 
+                    double dist = sqrt( dX + dY );
+                    
                     if( dist <= 7 &&
                         ( p.x != 0 || p.y != 0 ) ) {
                         
@@ -4206,8 +4207,8 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             desiredMoveDist = lrint( dist );
                             }
 
-                        dir.x = p.x - inX;
-                        dir.y = p.y - inY;
+                        dir.x = dX;
+                        dir.y = dY;
                         dir = normalize( dir );
                         
                         // round to one of 8 cardinal directions
