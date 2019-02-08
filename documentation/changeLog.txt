@@ -12,6 +12,7 @@ Version 197     ???
 
 --/NET command to display network load stats in client.
 
+--/FPS and /NET commands now show history graphs (last 100 seconds).
 
 
 

@@ -129,10 +129,14 @@ static char savingSpeechNumber = 1;
 static double emotDuration = 10;
 
 
+static int historyGraphLength = 100;
+
 static char showFPS = false;
 static double frameBatchMeasureStartTime = -1;
 static int framesInBatch = 0;
 static double fpsToDraw = -1;
+
+static SimpleVector<double> fpsHistoryGraph;
 
 
 static char showNet = false;
@@ -145,6 +149,11 @@ static int messagesInCount = 0;
 static int messagesOutCount = 0;
 static int bytesInCount = 0;
 static int bytesOutCount = 0;
+
+static SimpleVector<double> messagesInHistoryGraph;
+static SimpleVector<double> messagesOutHistoryGraph;
+static SimpleVector<double> bytesInHistoryGraph;
+static SimpleVector<double> bytesOutHistoryGraph;
 
 
 
@@ -4273,6 +4282,51 @@ static void drawFixedShadowString( const char *inString, doublePair inPos ) {
     }
 
 
+static void addToGraph( SimpleVector<double> *inHistory, double inValue ) {
+    inHistory->push_back( inValue );
+                
+    while( inHistory->size() > historyGraphLength ) {
+        inHistory->deleteElement( 0 );
+        }
+    }
+
+
+
+static void drawGraph( SimpleVector<double> *inHistory, doublePair inPos,
+                       FloatColor inColor ) {
+    double max = 0;
+    for( int i=0; i<inHistory->size(); i++ ) {
+        double val = inHistory->getElementDirect( i );
+        if( val > max ) {
+            max = val;
+            }
+        }
+
+    setDrawColor( 0, 0, 0, 0.5 );
+
+    double graphHeight = 40;
+
+    drawRect( inPos.x - 2, 
+              inPos.y - 2,
+              inPos.x + historyGraphLength + 2,
+              inPos.y + graphHeight + 2 );
+        
+    
+
+    setDrawColor( inColor.r, inColor.g, inColor.b, 0.75 );
+    for( int i=0; i<inHistory->size(); i++ ) {
+        double val = inHistory->getElementDirect( i );
+
+        double scaledVal = val / max;
+        
+        drawRect( inPos.x + i, 
+                  inPos.y,
+                  inPos.x + i + 1,
+                  inPos.y + scaledVal * graphHeight );
+        }
+    }
+
+
 
 typedef struct DrawOrderRecord {
         char person;
@@ -6680,6 +6734,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
                 fpsToDraw = framesInBatch / delta;
                 
+                addToGraph( &fpsHistoryGraph, fpsToDraw );
+                
                 // new batch
                 frameBatchMeasureStartTime = game_getCurrentTime();
                 framesInBatch = 0;
@@ -6692,6 +6748,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             drawFixedShadowString( fpsString, pos );
             
+            pos.x += 20 + numbersFontFixed->measureString( fpsString );
+            pos.y -= 20;
+            
+            FloatColor yellow = { 1, 1, 0, 1 };
+            drawGraph( &fpsHistoryGraph, pos, yellow );
+
             delete [] fpsString;
             }
         else {
@@ -6730,6 +6792,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 bytesInPerSec = lrint( bytesInCount / batchLength );
                 bytesOutPerSec = lrint( bytesOutCount / batchLength );
                 
+                
+                addToGraph( &messagesInHistoryGraph, messagesInPerSec );
+                addToGraph( &messagesOutHistoryGraph, messagesOutPerSec );
+                addToGraph( &bytesInHistoryGraph, bytesInPerSec );
+                addToGraph( &bytesOutHistoryGraph, bytesOutPerSec );
+
+
                 // new batch
                 messagesInCount = 0;
                 messagesOutCount = 0;
@@ -6750,11 +6819,33 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             drawFixedShadowString( netStringA, pos );
             
+            doublePair graphPos = pos;
+            
+            graphPos.x += 20 + numbersFontFixed->measureString( netStringA );
+            graphPos.y -= 20;
+
+            FloatColor yellow = { 1, 1, 0, 1 };
+            drawGraph( &messagesOutHistoryGraph, graphPos, yellow );
+
+            graphPos.x += historyGraphLength + 10;
+            drawGraph( &messagesInHistoryGraph, graphPos, yellow );
 
             pos.y -= 50;
             
             drawFixedShadowString( netStringB, pos );
             
+            graphPos = pos;
+            
+            graphPos.x += 20 + numbersFontFixed->measureString( netStringB );
+            graphPos.y -= 20;
+
+            drawGraph( &bytesOutHistoryGraph, graphPos, yellow );
+
+            graphPos.x += historyGraphLength + 10;
+            drawGraph( &bytesInHistoryGraph, graphPos, yellow );
+
+
+
             delete [] netStringA;
             delete [] netStringB;
             }
