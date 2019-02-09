@@ -3034,6 +3034,8 @@ char initMap() {
         
         int numSet = 0;
         
+        int numStale = 0;
+
         while( numRead == 5 || numRead == 7 ) {
             
             int x, y, parentID, dummyIndex, slot, b;
@@ -3047,6 +3049,12 @@ char initMap() {
                               &x, &y, &marker, &parentID, &dummyIndex,
                               &slot, &b );
             if( numRead == 5 || numRead == 7 ) {
+
+                if( dbLookTimeGet( x, y ) <= 0 ) {
+                    // stale area of map
+                    numStale++;
+                    continue;
+                    }                
                 
                 ObjectRecord *parent = getObject( parentID );
                 
@@ -3078,7 +3086,8 @@ char initMap() {
         fclose( dummyFile );
         
         
-        AppLog::infoF( "Restored %d dummy objects to map", numSet );
+        AppLog::infoF( "Restored %d dummy objects to map "
+                       "(%d skipped as stale)", numSet, numStale );
         
         remove( "mapDummyRecall.txt" );
         
@@ -4184,10 +4193,11 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                     GridPos p = getClosestPlayerPos( inX, inY );
                     
-                    double dist = 
-                        sqrt( ( p.x - inX ) * ( p.x - inX ) + 
-                              ( p.y - inY ) * ( p.y - inY ) );
+                    double dX = (double)p.x - (double)inX;
+                    double dY = (double)p.y - (double)inY;
 
+                    double dist = sqrt( dX + dY );
+                    
                     if( dist <= 7 &&
                         ( p.x != 0 || p.y != 0 ) ) {
                         
@@ -4197,8 +4207,8 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             desiredMoveDist = lrint( dist );
                             }
 
-                        dir.x = p.x - inX;
-                        dir.y = p.y - inY;
+                        dir.x = dX;
+                        dir.y = dY;
                         dir = normalize( dir );
                         
                         // round to one of 8 cardinal directions
@@ -5393,11 +5403,11 @@ static char equal( GridPos inA, GridPos inB ) {
 
 
 static char tooClose( GridPos inA, GridPos inB, int inMinComponentDistance ) {
-    int xDist = inA.x - inB.x;
+    double xDist = (double)inA.x - (double)inB.x;
     if( xDist < 0 ) {
         xDist = -xDist;
         }
-    int yDist = inA.y - inB.y;
+    double yDist = (double)inA.y - (double)inB.y;
     if( yDist < 0 ) {
         yDist = -yDist;
         }
@@ -5450,10 +5460,9 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
         for( int i=0; i<flightLandingPos.size(); i++ ) {
             GridPos otherP = flightLandingPos.getElementDirect( i );
             
-            // any new strip w/ 250,250 manhattan distance doesn't count
-            if( tooClose( otherP, p, 250 ) ) {
+            if( equal( p, otherP ) ) {
                 
-                // make sure this "too close" strip really still exists
+                // make sure this other strip really still exists
                 int oID = getMapObject( otherP.x, otherP.y );
             
                 if( oID <=0 ||
@@ -7016,9 +7025,9 @@ int addMetadata( int inObjectID, unsigned char *inBuffer ) {
 
 
 
-static unsigned int distSquared( GridPos inA, GridPos inB ) {
-    int xDiff = inA.x - inB.x;
-    int yDiff = inA.y - inB.y;
+static double distSquared( GridPos inA, GridPos inB ) {
+    double xDiff = (double)inA.x - (double)inB.x;
+    double yDiff = (double)inA.y - (double)inB.y;
     
     return xDiff * xDiff + yDiff * yDiff;
     }
@@ -7037,8 +7046,8 @@ void removeLandingPos( GridPos inPos ) {
 
 
 char isInDir( GridPos inPos, GridPos inOtherPos, doublePair inDir ) {
-    int dX = inOtherPos.x - inPos.x;
-    int dY = inOtherPos.y - inPos.y;
+    double dX = (double)inOtherPos.x - (double)inPos.x;
+    double dY = (double)inOtherPos.y - (double)inPos.y;
     
     if( inDir.x > 0 && dX > 0 ) {
         return true;
@@ -7057,18 +7066,26 @@ char isInDir( GridPos inPos, GridPos inOtherPos, doublePair inDir ) {
 
 
 
-GridPos getNextCloseLandingPos( GridPos inPos, doublePair inDir, 
+GridPos getNextCloseLandingPos( GridPos inCurPos, 
+                                doublePair inDir, 
                                 char *outFound ) {
     
     int closestIndex = -1;
     GridPos closestPos;
-    unsigned int closestDist = INT_MAX;
+    double closestDist = DBL_MAX;
     
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
+
+        if( tooClose( inCurPos, thisPos, 250 ) ) {
+            // don't consider landing at spots closer than 250,250 manhattan
+            // to takeoff spot
+            continue;
+            }
+
         
-        if( isInDir( inPos, thisPos, inDir ) ) {
-            unsigned int dist = distSquared( inPos, thisPos );
+        if( isInDir( inCurPos, thisPos, inDir ) ) {
+            double dist = distSquared( inCurPos, thisPos );
             
             if( dist < closestDist ) {
                 // check if this is still a valid landing pos
@@ -7107,14 +7124,14 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
                                  doublePair inDir ) {
     int closestIndex = -1;
     GridPos closestPos;
-    unsigned int closestDist = INT_MAX;
+    double closestDist = DBL_MAX;
 
     GridPos curPos = { inCurrentX, inCurrentY };
 
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
         
-        unsigned int dist = distSquared( curPos, thisPos );
+        double dist = distSquared( curPos, thisPos );
         
         if( dist < closestDist ) {
             
@@ -7143,7 +7160,7 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
         
         char found = false;
         
-        GridPos nextPos = getNextCloseLandingPos( closestPos, inDir, &found );
+        GridPos nextPos = getNextCloseLandingPos( curPos, inDir, &found );
         
         if( found ) {
             return nextPos;

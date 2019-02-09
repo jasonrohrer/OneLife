@@ -361,6 +361,9 @@ typedef struct LiveObject {
         char isNew;
         char firstMessageSent;
         
+        char inFlight;
+        
+
         char dying;
         // wall clock time when they will be dead
         double dyingETA;
@@ -1989,6 +1992,18 @@ static double heatUpdateSeconds = 2;
 
 
 
+// blend R-values multiplicatively, for layers
+// 1 - R( A + B ) = (1 - R(A)) * (1 - R(B))
+//
+// or
+//
+//R( A + B ) =  R(A) + R(B) - R(A) * R(B)
+static double rCombine( double inRA, double inRB ) {
+    return inRA + inRB - inRA * inRB;
+    }
+
+
+
 static void recomputeHeatMap( LiveObject *inPlayer ) {
             
     // what if we recompute it from scratch every time?
@@ -1997,7 +2012,9 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
         }
 
     float heatOutputGrid[ HEAT_MAP_D * HEAT_MAP_D ];
+    float biomeHeatGrid[ HEAT_MAP_D * HEAT_MAP_D ];
     float rGrid[ HEAT_MAP_D * HEAT_MAP_D ];
+    float rFloorGrid[ HEAT_MAP_D * HEAT_MAP_D ];
 
 
     GridPos pos = getPlayerPos( inPlayer );
@@ -2012,6 +2029,11 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             }
         } 
 
+    
+    // air itself offers some insulation
+    // a vacuum panel has R-value that is 25x greater than air
+    float rAir = 0.04;
+    
 
     for( int y=0; y<HEAT_MAP_D; y++ ) {
         int mapY = pos.y + y - HEAT_MAP_D / 2;
@@ -2022,9 +2044,10 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                     
             int j = y * HEAT_MAP_D + x;
             heatOutputGrid[j] = 0;
-            rGrid[j] = 0;
-                    
-            heatOutputGrid[j] +=
+            rGrid[j] = rAir;
+            rFloorGrid[j] = 0;
+
+            biomeHeatGrid[j] =
                 getBiomeHeatValue( getMapBiome( mapX, mapY ) );
 
 
@@ -2040,7 +2063,7 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                 if( o->permanent ) {
                     // loose objects sitting on ground don't
                     // contribute to r-value (like dropped clothing)
-                    rGrid[j] = o->rValue;
+                    rGrid[j] = rCombine( rGrid[j], o->rValue );
                     }
 
 
@@ -2104,7 +2127,7 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                     
             if( fO != NULL ) {
                 heatOutputGrid[j] += fO->heatValue;
-                rGrid[j] += fO->rValue;
+                rFloorGrid[j] = fO->rValue;
                 }
             }
         }
@@ -2148,23 +2171,11 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     int playerMapIndex = 
         ( HEAT_MAP_D / 2 ) * HEAT_MAP_D +
         ( HEAT_MAP_D / 2 );
-            
+        
 
-    rGrid[ playerMapIndex ] += clothingR;
-            
-            
-    if( rGrid[ playerMapIndex ] > 1 ) {
-                
-        rGrid[ playerMapIndex ] = 1;
-        }
-            
-
-    // body itself produces 1 unit of heat
-    // (r value of clothing can hold this in
-    heatOutputGrid[ playerMapIndex ] += 1;
-            
-
+    
     // what player is holding can contribute heat
+    // add this to the grid, since it's "outside" the player's body
     if( inPlayer->holdingID > 0 ) {
         ObjectRecord *heldO = getObject( inPlayer->holdingID );
                 
@@ -2209,30 +2220,6 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             }
         }
             
-    // clothing can contribute heat
-    for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
-                
-        ObjectRecord *cO = clothingByIndex( inPlayer->clothing, c );
-            
-        if( cO != NULL ) {
-            heatOutputGrid[playerMapIndex ] += cO->heatValue;
-
-            // contained items in clothing can contribute
-            // heat, shielded by clothing r-values
-            double cRFactor = 1 - cO->rValue;
-
-            for( int s=0; 
-                 s < inPlayer->clothingContained[c].size(); s++ ) {
-                        
-                ObjectRecord *sO = 
-                    getObject( inPlayer->clothingContained[c].
-                               getElementDirect( s ) );
-                        
-                heatOutputGrid[ playerMapIndex ] += 
-                    sO->heatValue * cRFactor;
-                }
-            }
-        }
             
 
             
@@ -2248,12 +2235,25 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     // http://demonstrations.wolfram.com/
     //        ACellularAutomatonBasedHeatEquation/
     // diags have way less contact area
-    double nWeights[8] = { 4, 4, 4, 4, 1, 1, 1, 1 };
+    // last weight is floor (full contact area just like side walls)
+    double nWeights[9] = { 4, 4, 4, 4, 1, 1, 1, 1, 4 };
             
-    double totalNWeight = 20;
+    double totalNWeight = 24;
             
             
     //double startTime = Time::getCurrentTime();
+
+    // start player heat map, all the way to edge, filled with biome
+    // heat values
+    // Edge will never change during sim (edge has less than 8 neighbors)
+    // so it will act like an infinite heat sink
+    for( int y=0; y<HEAT_MAP_D; y++ ) {
+        for( int x=0; x<HEAT_MAP_D; x++ ) {
+            int j = y * HEAT_MAP_D + x;
+            inPlayer->heatMap[j] = biomeHeatGrid[j];
+            }
+        }
+    
 
     for( int c=0; c<numCycles; c++ ) {
                 
@@ -2283,6 +2283,17 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                     heatDelta += nWeights[n] * centerLeak * nLeak *
                         ( tempHeatGrid[ nj ] - centerOldHeat );
                     }
+                
+                // now 9th "neighbor" floor
+                float floorLeak = 1 - rFloorGrid[ j ];
+                
+                // ground (under floor) always has heat of matching biome value
+                // (never gains or loses heat, infinite)
+                float groundHeat = biomeHeatGrid[ j ];
+                
+                heatDelta += nWeights[8] * centerLeak * floorLeak *
+                    ( groundHeat - centerOldHeat );
+
                 
                 inPlayer->heatMap[j] = 
                     tempHeatGrid[j] + heatDelta / totalNWeight;
@@ -2344,9 +2355,68 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
       }
     */
 
-    float playerHeat = 
+    float envPlayerHeat = 
         inPlayer->heatMap[ playerMapIndex ];
+
+
+
+    // clothing can contribute heat
+    // apply this separate from heat grid above
+    float clothingHeat = 0;
+    for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+                
+        ObjectRecord *cO = clothingByIndex( inPlayer->clothing, c );
             
+        if( cO != NULL ) {
+            clothingHeat += cO->heatValue;
+
+            // contained items in clothing can contribute
+            // heat, shielded by clothing r-values
+            double cRFactor = 1 - cO->rValue;
+
+            for( int s=0; 
+                 s < inPlayer->clothingContained[c].size(); s++ ) {
+                        
+                ObjectRecord *sO = 
+                    getObject( inPlayer->clothingContained[c].
+                               getElementDirect( s ) );
+                        
+                clothingHeat += 
+                    sO->heatValue * cRFactor;
+                }
+            }
+        }
+
+
+
+
+
+
+    // simulate player "leaking" or gaining heat with environment
+
+    float playerHeat = targetHeat;
+
+    
+
+    for( int c=0; c<numCycles; c++ ) {        
+
+        // clothingR modulates heat lost (or gained) from environment
+        float clothingLeak = 1 - clothingR;
+
+        float heatDelta = clothingLeak * ( envPlayerHeat - playerHeat );
+        
+        playerHeat += heatDelta;
+
+
+        // player's body generates 1 unit of heat per sim step
+        playerHeat += 1;
+        
+        // player's clothing may generate heat each step
+        playerHeat += clothingHeat;
+        }
+
+
+    
     // printf( "Player heat = %f\n", playerHeat );
             
     // convert into 0..1 range, where 0.5 represents targetHeat
@@ -2572,9 +2642,10 @@ static char equal( GridPos inA, GridPos inB ) {
 
 
 static double distance( GridPos inA, GridPos inB ) {
-    return sqrt( ( inA.x - inB.x ) * ( inA.x - inB.x )
-                 +
-                 ( inA.y - inB.y ) * ( inA.y - inB.y ) );
+    double dx = (double)inA.x - (double)inB.x;
+    double dy = (double)inA.y - (double)inB.y;
+
+    return sqrt(  dx * dx + dy * dy );
     }
 
 
@@ -2815,8 +2886,8 @@ int sendMapChunkMessage( LiveObject *inO,
 
 
 double intDist( int inXA, int inYA, int inXB, int inYB ) {
-    int dx = inXA - inXB;
-    int dy = inYA - inYB;
+    double dx = (double)inXA - (double)inXB;
+    double dy = (double)inYA - (double)inYB;
 
     return sqrt(  dx * dx + dy * dy );
     }
@@ -4164,6 +4235,11 @@ static LiveObject *getHitPlayer( int inX, int inY,
 // for placement of tutorials out of the way 
 static int maxPlacementX = 5000000;
 
+// tutorial is alwasy placed 400,000 to East of furthest birth/Eve
+// location
+static int tutorialOffsetX = 400000;
+
+
 // each subsequent tutorial gets put in a diferent place
 static int tutorialCount = 0;
 
@@ -4199,6 +4275,7 @@ int processLoggedInPlayer( Socket *inSock,
             // they are connecting again, need to send them everything again
             o->firstMapSent = false;
             o->firstMessageSent = false;
+            o->inFlight = false;
             
             o->connected = true;
             
@@ -4747,7 +4824,7 @@ int processLoggedInPlayer( Socket *inSock,
         }
     else if( inTutorialNumber > 0 ) {
         
-        int startX = maxPlacementX * 2;
+        int startX = maxPlacementX + tutorialOffsetX;
         int startY = tutorialCount * 25;
 
         newObject.xs = startX;
@@ -4971,6 +5048,7 @@ int processLoggedInPlayer( Socket *inSock,
     
     newObject.isNew = true;
     newObject.firstMessageSent = false;
+    newObject.inFlight = false;
     
     newObject.dying = false;
     newObject.dyingETA = 0;
@@ -5087,9 +5165,11 @@ int processLoggedInPlayer( Socket *inSock,
               players.size(),
               newObject.parentChainLength );
     
-    AppLog::infoF( "New player %s connected as player %d (tutorial=%d) (%d,%d)",
+    AppLog::infoF( "New player %s connected as player %d (tutorial=%d) (%d,%d)"
+                   " (maxPlacementX=%d)",
                    newObject.email, newObject.id,
-                   inTutorialNumber, newObject.xs, newObject.ys );
+                   inTutorialNumber, newObject.xs, newObject.ys,
+                   maxPlacementX );
     
     return newObject.id;
     }
@@ -5514,7 +5594,6 @@ static char addHeldToContainer( LiveObject *inPlayer,
                                     break;
                                     }
                                 }
-                            same = true;
                             }
                         }
                     }
@@ -6424,6 +6503,7 @@ void apocalypseStep() {
                     LiveObject *nextPlayer = players.getElement( i );
                     nextPlayer->firstMessageSent = false;
                     nextPlayer->firstMapSent = false;
+                    nextPlayer->inFlight = false;
                     }
 
                 postApocalypseStarted = true;
@@ -12374,9 +12454,6 @@ int main() {
                         >
                         nextPlayer->moveTotalSeconds ) {
                         
-                        int xDist = abs( nextPlayer->xs - nextPlayer->xd );
-                        int yDist = abs( nextPlayer->ys - nextPlayer->yd );
-                        
                         double moveSpeed = computeMoveSpeed( nextPlayer ) *
                             getPathSpeedModifier( nextPlayer->pathToDest,
                                                   nextPlayer->pathLength );
@@ -12403,9 +12480,9 @@ int main() {
                         if( nextPlayer->holdingFlightObject &&
                             moveSpeed >= minFlightSpeed &&
                             ! nextPlayer->pathTruncated &&
-                            ( xDist > 3 || yDist > 3 ) ) {
+                            nextPlayer->pathLength >= 2 ) {
                                     
-                            // player takes off
+                            // player takes off ?
                             
                             double xDir = 
                                 nextPlayer->pathToDest[ 
@@ -12420,85 +12497,128 @@ int main() {
                                   nextPlayer->pathToDest[ 
                                       nextPlayer->pathLength - 2 ].y;
                             
-                                  
-                            doublePair takeOffDir = { xDir, yDir };
-
-                            GridPos destPos = 
-                                getNextFlightLandingPos(
-                                    nextPlayer->xs,
-                                    nextPlayer->ys,
-                                    takeOffDir );
+                            int beyondEndX = nextPlayer->xs + xDir;
+                            int beyondEndY = nextPlayer->ys + yDir;
                             
-                            AppLog::infoF( "Player %d flight taking off, "
-                                           "dest (%d,%d)",
-                                           nextPlayer->id,
-                                           destPos.x, destPos.y );
+                            int endFloorID = getMapFloor( nextPlayer->xs,
+                                                          nextPlayer->ys );
                             
+                            int beyondEndFloorID = getMapFloor( beyondEndX,
+                                                                beyondEndY );
+                            
+                            if( beyondEndFloorID != endFloorID ) {
+                                // went all the way to the end of the 
+                                // current floor in this direction, 
+                                // take off there
+                            
+                                doublePair takeOffDir = { xDir, yDir };
 
-                            nextPlayer->xd = nextPlayer->xs =
-                                destPos.x;
-                            nextPlayer->yd = nextPlayer->ys =
-                                destPos.y;
+                                GridPos destPos = 
+                                    getNextFlightLandingPos(
+                                        nextPlayer->xs,
+                                        nextPlayer->ys,
+                                        takeOffDir );
+                            
+                                AppLog::infoF( 
+                                    "Player %d flight taking off from (%d,%d), "
+                                    "flightDir (%f,%f), dest (%d,%d)",
+                                    nextPlayer->id,
+                                    nextPlayer->xs, nextPlayer->ys,
+                                    xDir, yDir,
+                                    destPos.x, destPos.y );
                                 
-                            nextPlayer->posForced = true;
+                                
                             
-                            // send them a brand new map chunk
-                            // around their new location
-                            nextPlayer->firstMapSent = false;
-
-                            int destID = getMapObject( destPos.x,
-                                                       destPos.y );
+                                // send them a brand new map chunk
+                                // around their new location
+                                // and re-tell them about all players
+                                // (relative to their new "birth" location...
+                                //  see below)
+                                nextPlayer->firstMessageSent = false;
+                                nextPlayer->firstMapSent = false;
+                                nextPlayer->inFlight = true;
+                                
+                                int destID = getMapObject( destPos.x,
+                                                           destPos.y );
                                     
-                            char heldTransHappened = false;
+                                char heldTransHappened = false;
                                     
-                            if( destID > 0 &&
-                                getObject( destID )->isFlightLanding ) {
-                                // found a landing place
-                                TransRecord *tr =
-                                    getPTrans( nextPlayer->holdingID,
-                                               destID );
+                                if( destID > 0 &&
+                                    getObject( destID )->isFlightLanding ) {
+                                    // found a landing place
+                                    TransRecord *tr =
+                                        getPTrans( nextPlayer->holdingID,
+                                                   destID );
                                         
-                                if( tr != NULL ) {
-                                    heldTransHappened = true;
+                                    if( tr != NULL ) {
+                                        heldTransHappened = true;
                                             
-                                    setMapObject( destPos.x, destPos.y,
-                                                  tr->newTarget );
+                                        setMapObject( destPos.x, destPos.y,
+                                                      tr->newTarget );
 
-                                    transferHeldContainedToMap( 
-                                        nextPlayer,
-                                        destPos.x, destPos.y );
+                                        transferHeldContainedToMap( 
+                                            nextPlayer,
+                                            destPos.x, destPos.y );
 
-                                    handleHoldingChange(
-                                        nextPlayer,
-                                        tr->newActor );
+                                        handleHoldingChange(
+                                            nextPlayer,
+                                            tr->newActor );
                                             
-                                    // stick player next to landing
-                                    // pad
-                                    nextPlayer->xd --;
-                                    nextPlayer->xs = nextPlayer->xd;
+                                        // stick player next to landing
+                                        // pad
+                                        destPos.x --;
+                                        }
                                     }
-                                }
-                            if( ! heldTransHappened ) {
-                                // crash landing
-                                // force decay of held
-                                // no matter how much time is left
-                                // (flight uses fuel)
-                                TransRecord *decayTrans =
-                                    getPTrans( -1, 
-                                               nextPlayer->holdingID );
+                                if( ! heldTransHappened ) {
+                                    // crash landing
+                                    // force decay of held
+                                    // no matter how much time is left
+                                    // (flight uses fuel)
+                                    TransRecord *decayTrans =
+                                        getPTrans( -1, 
+                                                   nextPlayer->holdingID );
                                         
-                                if( decayTrans != NULL ) {
-                                    handleHoldingChange( 
-                                        nextPlayer,
-                                        decayTrans->newTarget );
+                                    if( decayTrans != NULL ) {
+                                        handleHoldingChange( 
+                                            nextPlayer,
+                                            decayTrans->newTarget );
+                                        }
                                     }
-                                }
                                     
-                            FlightDest fd = {
-                                nextPlayer->id,
-                                destPos };
+                                FlightDest fd = {
+                                    nextPlayer->id,
+                                    destPos };
 
-                            newFlightDest.push_back( fd );
+                                newFlightDest.push_back( fd );
+                                
+                                nextPlayer->xd = destPos.x;
+                                nextPlayer->xs = destPos.x;
+                                nextPlayer->yd = destPos.y;
+                                nextPlayer->ys = destPos.y;
+
+                                // reset their birth location
+                                // their landing position becomes their
+                                // new 0,0 for now
+                                
+                                // birth-relative coordinates enable the client
+                                // (which is on a GPU with 32-bit floats)
+                                // to operate at true coordinates well above
+                                // the 23-bit preciions of 32-bit floats.
+                                
+                                // We keep the coordinates small by assuming
+                                // that a player can never get too far from
+                                // their birth location in one lifetime.
+                                
+                                // Flight teleportation violates this 
+                                // assumption.
+                                nextPlayer->birthPos.x = nextPlayer->xs;
+                                nextPlayer->birthPos.y = nextPlayer->ys;
+                                nextPlayer->heldOriginX = nextPlayer->xs;
+                                nextPlayer->heldOriginY = nextPlayer->ys;
+                                
+                                nextPlayer->actionTarget.x = nextPlayer->xs;
+                                nextPlayer->actionTarget.y = nextPlayer->ys;
+                                }
                             }
                         }
                     }
@@ -13199,6 +13319,38 @@ int main() {
         for( int i=0; i<numLive; i++ ) {
             
             LiveObject *nextPlayer = players.getElement(i);
+            
+            
+            // everyone gets all flight messages
+            // even if they haven't gotten first message yet
+            // (because the flier will get their first message again
+            // when they land, and we need to tell them about flight first)
+            if( nextPlayer->firstMapSent ||
+                nextPlayer->inFlight ) {
+                                
+                if( newFlightDest.size() > 0 ) {
+                    
+                    // compose FD messages for this player
+                    
+                    for( int u=0; u<newFlightDest.size(); u++ ) {
+                        FlightDest *f = newFlightDest.getElement( u );
+                        
+                        char *flightMessage = 
+                            autoSprintf( "FD\n%d %d %d\n#",
+                                         f->playerID,
+                                         f->destPos.x -
+                                         nextPlayer->birthPos.x, 
+                                         f->destPos.y -
+                                         nextPlayer->birthPos.y );
+                        
+                        sendMessageToPlayer( nextPlayer, flightMessage,
+                                             strlen( flightMessage ) );
+                        delete [] flightMessage;
+                        }
+                    }
+                }
+
+            
 
             
             if( ! nextPlayer->firstMessageSent ) {
@@ -13233,13 +13385,28 @@ int main() {
                         continue;
                         }
 
+                    char oWasForced = o->posForced;
                     
+                    if( nextPlayer->inFlight ) {
+                        // not a true first message
+                        
+                        // force all positions for all players
+                        o->posForced = true;
+                        }
+                    
+
                     // true mid-move positions for first message
                     // all relative to new player's birth pos
                     char *messageLine = getUpdateLine( o, 
                                                        nextPlayer->birthPos,
                                                        false, true );
                     
+                    if( nextPlayer->inFlight ) {
+                        // restore
+                        o->posForced = oWasForced;
+                        }
+                    
+
                     // skip sending info about errored players in
                     // first message
                     if( o->id != nextPlayer->id ) {
@@ -13457,6 +13624,7 @@ int main() {
 
                 
                 nextPlayer->firstMessageSent = true;
+                nextPlayer->inFlight = false;
                 }
             else {
                 // this player has first message, ready for updates/moves
@@ -13488,27 +13656,6 @@ int main() {
                     }
 
 
-                // everyone gets all flight messages
-                if( newFlightDest.size() > 0 ) {
-                    
-                    // compose FD messages for this player
-                    
-                    for( int u=0; u<newFlightDest.size(); u++ ) {
-                        FlightDest *f = newFlightDest.getElement( u );
-                        
-                        char *flightMessage = 
-                            autoSprintf( "FD\n%d %d %d\n#",
-                                         f->playerID,
-                                         f->destPos.x -
-                                         nextPlayer->birthPos.x, 
-                                         f->destPos.y -
-                                         nextPlayer->birthPos.y );
-                        
-                        sendMessageToPlayer( nextPlayer, flightMessage,
-                                             strlen( flightMessage ) );
-                        delete [] flightMessage;
-                        }
-                    }
 
 
                 // everyone gets all grave messages

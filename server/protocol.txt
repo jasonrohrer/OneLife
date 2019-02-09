@@ -61,6 +61,12 @@ sequence_number
 
 Where sequence_number is a positive integer in base-10 ascii.
 
+NOTE:
+Future versions of protocol will use an opaque ASCII string as a sequence
+number, to support inclusion of a randomized nonce.
+
+
+
 
 2.  The client MUST respond with the following login message:
 

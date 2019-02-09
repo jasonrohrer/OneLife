@@ -3,6 +3,112 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 198     2019-February-9
+
+--Client preparing for furture protocol change where SN message contains an
+  opaque string (including a random nonce) instead of a number.
+
+--Home markers, which are invalid after flight, are cleared.
+
+--/NET command to display network load stats in client.
+
+--/FPS and /NET commands now show history graphs (last 100 seconds).
+
+--FINALLY fixed a lurking source of client network lag, caused by the way that
+  message frame batches were processed (while processing messages that are part
+  of a frame, no message was processed, even if the entire frame was available,
+  meaning that the number of display frames spent processing a message frame
+  grows relative to the number of messages in the frame.  As frame rate drops
+  on slower computers, this causes a message backlog to build up, especially in
+  busy areas where there are lots of things happening every message frame.  We
+  now process all available messages while we're waiting for the end of a frame
+  to arrive.  Thanks to jrudolf for pinpointing the cause of this issue.
+  Fixes #125
+
+
+
+
+
+Server Fixes
+
+--Paginated lineage server log listing.
+
+--Lineage log has index for faster display.  Better logging.
+
+--Whoops!  New server setup script was not putting serverID in right location.
+
+--Download page lets you change your own email.
+
+--Min-distance-at-speed for takeoff reduced to 2 (was 4) to make take-off
+  easier.
+
+--Made take-off at end of road explicit, so that you always go all the way to
+  the end in one direction before taking off.
+
+--Basket swap in a larger container wasn't working if both baskets contained
+  same number of items.  Fixes #217
+
+--Reflector fixed to update OFFLINE status of servers every 20 seconds, even
+  when report isn't being loaded (before, only report would trigger an update
+  to OFFLINE status of a server).
+
+--Nearby landing pads no longer block eachother.  Instead, when taking off, we
+  search for some pad in the chosen direction that is at least 250 away in
+  either x or y.
+
+--Partially-used objects are not restored to stale parts of map.  Fixes #206
+
+--Server must update birth location of flying player to ensure that coordinates
+  remain in low range to avoid GPU rounding errors (i.e., in case where player
+  flies out to tutorial at coordinate x=10M).
+
+--Players that were out of range before flight may come in range after flight.
+  Server now sends a complete server-wide PU to flying player (the same as when
+  player first connects), updated with new birth location (landing location).
+
+--Calculating distance-squared when finding closest flight landing position now
+  double precision (using ints isn't going to work for distances above about
+  50K.
+
+--Better logging of maxPlacementX and flights.
+
+--Heat overhaul:  R values stack multiplicatively, not additively.
+
+--Heat overhaul:  Separate fixed heat map produced by underlying biome
+  (biomes no longer generate or absorb heat each step).
+
+--Heat overhaul:  Biome temperature serves as starting air heat value for each
+  cell in the simulation grid.
+
+--Heat overhaul:  Floor insulates between air and underlying biome.
+
+--Heat overhaul:  Air itself has a small R value to slow base propagation
+  per sim step.
+
+--Heat overhaul:  Biome temperature fixed at edge of simulation grid, instead
+  of having a fixed 0.00 temperature sink at edge.
+
+--Heat overhaul:  Heat produced by clothing (not currently used) summed as a
+  separate step at the end, and doesn't count as a heat source in the 
+  environmental simulation grid.
+
+--Heat overhaul:  Player clothing simulated as separate step at the end, after
+  simulating environmental propagation grid.
+
+--Problem:  if tutorial is always placed at 2x max birth location, then if
+  people fly to the tutorial and have a baby there repeatedly, the tutorial
+  location grows exponentially.  Saw 10M, 20M, 40M, 80M, 160M, 320M in server
+  log as people continued flying to tutorial and having babies there.  It will
+  quickly overflow.  Now it is max birth location +400,000, so it grows
+  linearly if people fly there and have babies there.  People can "chase" the
+  tutorial area 5000 times before we need to worry about overflow.
+
+--Fixed additional int overflows in server distance functions by switching to
+  double precision.  This was potentially causing distant map changes to be
+  sent to a player unecessarily, eating up bandwidth.
+
+
+
 
 Version 195     2019-January-31
 

@@ -300,9 +300,17 @@ dieCommand "/DIE"
 
 fpsCommand "/FPS"
 
+netCommand "/NET"
+
 pingCommand "/PING"
 
 fps "FPS"
+
+fpsPending "FPS..."
+
+netPending "NET..."
+netStringA "MSG/SEC:   %3d UP : %4d DN" 
+netStringB "BYTES/SEC: %3d UP : %4d DN" 
 
 ping "PING"
 

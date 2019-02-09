@@ -1,0 +1,1 @@
+g++ -I../.. -o networkStressTest networkStressTest.cpp ../../minorGems/network/NetworkFunctionLocks.cpp ../../minorGems/network/linux/SocketLinux.cpp ../../minorGems/network/linux/SocketServerLinux.cpp ../../minorGems/system/linux/ThreadLinux.cpp ../../minorGems/system/linux/MutexLockLinux.cpp -lpthread
