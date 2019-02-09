@@ -14,6 +14,19 @@ Version 197     ???
 
 --/FPS and /NET commands now show history graphs (last 100 seconds).
 
+--FINALLY fixed a lurking source of client network lag, caused by the way that
+  message frame batches were processed (while processing messages that are part
+  of a frame, no message was processed, even if the entire frame was available,
+  meaning that the number of display frames spent processing a message frame
+  grows relative to the number of messages in the frame.  As frame rate drops
+  on slower computers, this causes a message backlog to build up, especially in
+  busy areas where there are lots of things happening every message frame.  We
+  now process all available messages while we're waiting for the end of a frame
+  to arrive.  Thanks to jrudolf for pinpointing the cause of this issue.
+  Fixes #125
+
+
+
 
 
 Server Fixes

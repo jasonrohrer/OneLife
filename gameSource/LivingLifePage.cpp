@@ -1150,7 +1150,7 @@ char *getNextServerMessage() {
             
             char *message = getNextServerMessageRaw();
             
-            if( message != NULL ) {
+            while( message != NULL ) {
                 messageType t = getMessageType( message );
                 
                 if( strstr( message, "FM" ) == message ) {
@@ -1159,6 +1159,11 @@ char *getNextServerMessage() {
                     
                     if( serverFrameMessages.size() > 0 ) {
                         serverFrameReady = true;
+                        // see end of frame, stop reading more messages
+                        // for now (they are part of next frame)
+                        // and start returning message to caller from
+                        // this frame
+                        break;
                         }
                     }
                 else if( t == MAP_CHUNK ||
@@ -1182,6 +1187,10 @@ char *getNextServerMessage() {
                     // keep it
                     serverFrameMessages.push_back( message );
                     }
+                
+                // keep reading messages, until we either see the 
+                // end of the frame or read all available messages
+                message = getNextServerMessageRaw();
                 }
             }
 
