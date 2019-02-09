@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 197     ???
+Version 198     2019-February-9
 
 --Client preparing for furture protocol change where SN message contains an
   opaque string (including a random nonce) instead of a number.
