@@ -107,6 +107,9 @@ Server Fixes
   double precision.  This was potentially causing distant map changes to be
   sent to a player unecessarily, eating up bandwidth.
 
+--Heat overhaul:  Player clothing now modulates how fast player body
+  temperature moves toward surrounding temperature.
+
 
 
 

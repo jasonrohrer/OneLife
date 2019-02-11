@@ -398,11 +398,15 @@ typedef struct LiveObject {
         // net heat of environment around player
         // map is tracked in heat units (each object produces an 
         // integer amount of heat)
-        // it is mapped into 0..1 based on targetHeat to set this value here
+        // this is in base heat units, range 0 to infinity
         float envHeat;
 
-        // heat of local player object
-        // their heat value gradually moves toward envHeat over time
+        // amount of heat currently in player's body, also in
+        // base heat units
+        float bodyHeat;
+        
+
+        // body heat normalized to [0,1], with targetHeat at 0.5
         float heat;
         
         // flags this player as needing to recieve a heat update
@@ -1989,6 +1993,11 @@ static double heatUpdateTimeStep = 0.1;
 static double heatUpdateSeconds = 2;
 
 
+// air itself offers some insulation
+// a vacuum panel has R-value that is 25x greater than air
+static float rAir = 0.04;
+
+
 
 // blend R-values multiplicatively, for layers
 // 1 - R( A + B ) = (1 - R(A)) * (1 - R(B))
@@ -1999,6 +2008,80 @@ static double heatUpdateSeconds = 2;
 static double rCombine( double inRA, double inRB ) {
     return inRA + inRB - inRA * inRB;
     }
+
+
+
+
+static float computeClothingR( LiveObject *inPlayer ) {
+    
+    float headWeight = 0.25;
+    float chestWeight = 0.35;
+    float buttWeight = 0.2;
+    float eachFootWeigth = 0.1;
+            
+    float backWeight = 0.1;
+
+
+    float clothingR = 0;
+            
+    if( inPlayer->clothing.hat != NULL ) {
+        clothingR += headWeight *  inPlayer->clothing.hat->rValue;
+        }
+    if( inPlayer->clothing.tunic != NULL ) {
+        clothingR += chestWeight * inPlayer->clothing.tunic->rValue;
+        }
+    if( inPlayer->clothing.frontShoe != NULL ) {
+        clothingR += 
+            eachFootWeigth * inPlayer->clothing.frontShoe->rValue;
+        }
+    if( inPlayer->clothing.backShoe != NULL ) {
+        clothingR += eachFootWeigth * 
+            inPlayer->clothing.backShoe->rValue;
+        }
+    if( inPlayer->clothing.bottom != NULL ) {
+        clothingR += buttWeight * inPlayer->clothing.bottom->rValue;
+        }
+    if( inPlayer->clothing.backpack != NULL ) {
+        clothingR += backWeight * inPlayer->clothing.backpack->rValue;
+        }
+    
+    // even if the player is naked, they are insulated from their
+    // environment by rAir
+    return rCombine( rAir, clothingR );
+    }
+
+
+
+static float computeClothingHeat( LiveObject *inPlayer ) {
+    // clothing can contribute heat
+    // apply this separate from heat grid above
+    float clothingHeat = 0;
+    for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+                
+        ObjectRecord *cO = clothingByIndex( inPlayer->clothing, c );
+            
+        if( cO != NULL ) {
+            clothingHeat += cO->heatValue;
+
+            // contained items in clothing can contribute
+            // heat, shielded by clothing r-values
+            double cRFactor = 1 - cO->rValue;
+
+            for( int s=0; 
+                 s < inPlayer->clothingContained[c].size(); s++ ) {
+                        
+                ObjectRecord *sO = 
+                    getObject( inPlayer->clothingContained[c].
+                               getElementDirect( s ) );
+                        
+                clothingHeat += 
+                    sO->heatValue * cRFactor;
+                }
+            }
+        }
+    return clothingHeat;
+    }
+
 
 
 
@@ -2028,9 +2111,6 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
         } 
 
     
-    // air itself offers some insulation
-    // a vacuum panel has R-value that is 25x greater than air
-    float rAir = 0.04;
     
 
     for( int y=0; y<HEAT_MAP_D; y++ ) {
@@ -2130,41 +2210,7 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             }
         }
 
-    // clothing is additive to R value at center spot
-
-    float headWeight = 0.25;
-    float chestWeight = 0.35;
-    float buttWeight = 0.2;
-    float eachFootWeigth = 0.1;
-            
-    float backWeight = 0.1;
-
-
-    float clothingR = 0;
-            
-    if( inPlayer->clothing.hat != NULL ) {
-        clothingR += headWeight *  inPlayer->clothing.hat->rValue;
-        }
-    if( inPlayer->clothing.tunic != NULL ) {
-        clothingR += chestWeight * inPlayer->clothing.tunic->rValue;
-        }
-    if( inPlayer->clothing.frontShoe != NULL ) {
-        clothingR += 
-            eachFootWeigth * inPlayer->clothing.frontShoe->rValue;
-        }
-    if( inPlayer->clothing.backShoe != NULL ) {
-        clothingR += eachFootWeigth * 
-            inPlayer->clothing.backShoe->rValue;
-        }
-    if( inPlayer->clothing.bottom != NULL ) {
-        clothingR += buttWeight * inPlayer->clothing.bottom->rValue;
-        }
-    if( inPlayer->clothing.backpack != NULL ) {
-        clothingR += backWeight * inPlayer->clothing.backpack->rValue;
-        }
-
-    //printf( "Clothing r = %f\n", clothingR );
-            
+    
             
     int playerMapIndex = 
         ( HEAT_MAP_D / 2 ) * HEAT_MAP_D +
@@ -2353,79 +2399,8 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
       }
     */
 
-    float envPlayerHeat = 
+    inPlayer->envHeat = 
         inPlayer->heatMap[ playerMapIndex ];
-
-
-
-    // clothing can contribute heat
-    // apply this separate from heat grid above
-    float clothingHeat = 0;
-    for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
-                
-        ObjectRecord *cO = clothingByIndex( inPlayer->clothing, c );
-            
-        if( cO != NULL ) {
-            clothingHeat += cO->heatValue;
-
-            // contained items in clothing can contribute
-            // heat, shielded by clothing r-values
-            double cRFactor = 1 - cO->rValue;
-
-            for( int s=0; 
-                 s < inPlayer->clothingContained[c].size(); s++ ) {
-                        
-                ObjectRecord *sO = 
-                    getObject( inPlayer->clothingContained[c].
-                               getElementDirect( s ) );
-                        
-                clothingHeat += 
-                    sO->heatValue * cRFactor;
-                }
-            }
-        }
-
-
-
-
-
-
-    // simulate player "leaking" or gaining heat with environment
-
-    float playerHeat = targetHeat;
-
-    
-
-    for( int c=0; c<numCycles; c++ ) {        
-
-        // clothingR modulates heat lost (or gained) from environment
-        float clothingLeak = 1 - clothingR;
-
-        float heatDelta = clothingLeak * ( envPlayerHeat - playerHeat );
-        
-        playerHeat += heatDelta;
-
-
-        // player's body generates 1 unit of heat per sim step
-        playerHeat += 1;
-        
-        // player's clothing may generate heat each step
-        playerHeat += clothingHeat;
-        }
-
-
-    
-    // printf( "Player heat = %f\n", playerHeat );
-            
-    // convert into 0..1 range, where 0.5 represents targetHeat
-    inPlayer->envHeat = ( playerHeat / targetHeat ) / 2;
-    if( inPlayer->envHeat > 1 ) {
-        inPlayer->envHeat = 1;
-        }
-    if( inPlayer->envHeat < 0 ) {
-        inPlayer->envHeat = 0;
-        }
-
     }
 
 
@@ -4561,7 +4536,8 @@ int processLoggedInPlayer( Socket *inSock,
         }
     
 
-    newObject.envHeat = 0.5;
+    newObject.envHeat = targetHeat;
+    newObject.bodyHeat = targetHeat;
     newObject.heat = 0.5;
     newObject.heatUpdate = false;
     newObject.lastHeatUpdate = Time::getCurrentTime();
@@ -12792,37 +12768,37 @@ int main() {
         for( int i=0; i< players.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
             
-            if( nextPlayer->error || 
-                currentTime - nextPlayer->lastHeatUpdate < heatUpdateSeconds ||
-                nextPlayer->envHeat == nextPlayer->heat ) {
+            if( nextPlayer->error ||
+                currentTime - nextPlayer->lastHeatUpdate < heatUpdateSeconds ) {
                 continue;
                 }
             
-            // Purho easing
-            double delta = nextPlayer->envHeat - nextPlayer->heat;
             
-            if( fabs( delta ) < 0.05 ) {
-                nextPlayer->heat = nextPlayer->envHeat;
-                }
-            else {
-                
-                double change = 0.2 * delta;
-                
-                if( fabs( change ) < 0.05 ) {
-                    // step is too small
-                    
-                    if( change > 0 ) {
-                        change = 0.05;
-                        }
-                    else {
-                        change = -0.05;
-                        }
-                    }
-                
+            // body produces its own heat
+            nextPlayer->bodyHeat += 1;
 
-                nextPlayer->heat += change;
-                }
+            nextPlayer->bodyHeat += computeClothingHeat( nextPlayer );
+
+            float clothingR = computeClothingR( nextPlayer );
+
+            // clothingR modulates heat lost (or gained) from environment
+            float clothingLeak = 1 - clothingR;
+
+            float heatDelta = 
+                clothingLeak * ( nextPlayer->envHeat - nextPlayer->bodyHeat );
+
+            nextPlayer->bodyHeat += heatDelta;
             
+            
+            // convert into 0..1 range, where 0.5 represents targetHeat
+            nextPlayer->heat = ( nextPlayer->bodyHeat / targetHeat ) / 2;
+            if( nextPlayer->heat > 1 ) {
+                nextPlayer->heat = 1;
+                }
+            if( nextPlayer->heat < 0 ) {
+                nextPlayer->heat = 0;
+                }
+
             nextPlayer->heatUpdate = true;
             nextPlayer->lastHeatUpdate = currentTime;
             }
