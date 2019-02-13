@@ -168,7 +168,8 @@ typedef struct FreshConnection {
         SimpleVector<char> *sockBuffer;
 
         unsigned int sequenceNumber;
-
+        char *sequenceNumberString;
+        
         WebRequest *ticketServerRequest;
 
         double ticketServerRequestStartTime;
@@ -960,6 +961,8 @@ static void deleteMembers( FreshConnection *inConnection ) {
     delete inConnection->sock;
     delete inConnection->sockBuffer;
     
+    delete [] inConnection->sequenceNumberString;
+
     if( inConnection->ticketServerRequest != NULL ) {
         delete inConnection->ticketServerRequest;
         }
@@ -7319,7 +7322,28 @@ int main() {
                 newConnection.sock = sock;
 
                 newConnection.sequenceNumber = nextSequenceNumber;
+
                 
+
+                char *secretString = 
+                    SettingsManager::getStringSetting( 
+                        "statsServerSharedSecret", "sdfmlk3490sadfm3ug9324" );
+
+                char *numberString = 
+                    autoSprintf( "%lu", newConnection.sequenceNumber );
+                
+                char *nonce = hmac_sha1( secretString, numberString );
+
+                delete [] secretString;
+                delete [] numberString;
+
+                newConnection.sequenceNumberString = 
+                    autoSprintf( "%s%lu", nonce, 
+                                 newConnection.sequenceNumber );
+                
+                delete [] nonce;
+                    
+
                 newConnection.tutorialNumber = 0;
                 newConnection.curseStatus.curseLevel = 0;
                 newConnection.curseStatus.excessPoints = 0;
@@ -7370,10 +7394,10 @@ int main() {
                 else {
                     message = autoSprintf( "SN\n"
                                            "%d/%d\n"
-                                           "%lu\n"
+                                           "%s\n"
                                            "%lu\n#",
                                            currentPlayers, maxPlayers,
-                                           newConnection.sequenceNumber,
+                                           newConnection.sequenceNumberString,
                                            versionNumber );
                     newConnection.shutdownMode = false;
                     }
@@ -7530,6 +7554,7 @@ int main() {
                                     nextConnection->curseStatus );
                                 }
                             
+                            delete [] nextConnection->sequenceNumberString;
                             newConnections.deleteElement( i );
                             i--;
                             }
@@ -7660,15 +7685,10 @@ int main() {
                             if( requireClientPassword &&
                                 ! nextConnection->error  ) {
 
-                                char *value = 
-                                    autoSprintf( 
-                                        "%d",
-                                        nextConnection->sequenceNumber );
-                                
-                                char *trueHash = hmac_sha1( clientPassword, 
-                                                            value );
-
-                                delete [] value;
+                                char *trueHash = 
+                                    hmac_sha1( 
+                                        clientPassword, 
+                                        nextConnection->sequenceNumberString );
                                 
 
                                 if( strcmp( trueHash, pwHash ) != 0 ) {
@@ -7693,11 +7713,11 @@ int main() {
                                     "%s?action=check_ticket_hash"
                                     "&email=%s"
                                     "&hash_value=%s"
-                                    "&string_to_hash=%lu",
+                                    "&string_to_hash=%s",
                                     ticketServerURL,
                                     encodedEmail,
                                     keyHash,
-                                    nextConnection->sequenceNumber );
+                                    nextConnection->sequenceNumberString );
 
                                 delete [] encodedEmail;
 
@@ -7759,6 +7779,9 @@ int main() {
                                             nextConnection->tutorialNumber,
                                             nextConnection->curseStatus );
                                         }
+                                    
+                                    delete [] 
+                                        nextConnection->sequenceNumberString;
                                     newConnections.deleteElement( i );
                                     i--;
                                     }

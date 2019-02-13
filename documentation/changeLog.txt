@@ -110,6 +110,11 @@ Server Fixes
 --Heat overhaul:  Player clothing now modulates how fast player body
   temperature moves toward surrounding temperature.
 
+--Server implementation of SN protocol change, where we have a non-repeating
+  nonce based on a server-side secret, instead of a simple sequence number.
+  This fixes a potential security hole where private servers can harvest
+  sequence-number/hash pairs and replay them to log into the real server as
+  that player.
 
 
 

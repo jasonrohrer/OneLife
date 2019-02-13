@@ -10379,9 +10379,7 @@ void LivingLifePage::step() {
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
             
-            // in future versions of protocol,
-            // sequence number will be a nonce, and won't just be a pure number
-            char numberString[200];
+            char challengeString[200];
 
             // we don't use these for anything in client
             int currentPlayers = 0;
@@ -10392,7 +10390,7 @@ void LivingLifePage::step() {
                     "SN\n"
                     "%d/%d\n"
                     "%199s\n"
-                    "%d\n", &currentPlayers, &maxPlayers, numberString, 
+                    "%d\n", &currentPlayers, &maxPlayers, challengeString, 
                     &mRequiredVersion );
             
 
@@ -10437,9 +10435,9 @@ void LivingLifePage::step() {
                 }
             
 
-            char *pwHash = hmac_sha1( password, numberString );
+            char *pwHash = hmac_sha1( password, challengeString );
 
-            char *keyHash = hmac_sha1( pureKey, numberString );
+            char *keyHash = hmac_sha1( pureKey, challengeString );
             
             delete [] pureKey;
             delete [] password;
