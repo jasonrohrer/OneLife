@@ -2483,10 +2483,15 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     printf( "%d radiant heat sources in airspace (total = %f)\n", 
             numRadiantHeatSources, radiantAirSpaceHeatVal );
 
+    float biomeHeatWeight = 1;
+    float radiantHeatWeight = 1;
+    
+    float containedHeatWeight = 4;
+
     inPlayer->envHeat = 
-        radiantAirSpaceHeatVal + 
-        containedAirSpaceHeatVal +
-        getBiomeHeatValue( getMapBiome( pos.x, pos.y ) );
+        radiantHeatWeight * radiantAirSpaceHeatVal + 
+        containedHeatWeight * containedAirSpaceHeatVal +
+        biomeHeatWeight * getBiomeHeatValue( getMapBiome( pos.x, pos.y ) );
     }
 
 
