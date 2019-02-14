@@ -116,6 +116,15 @@ Server Fixes
   sequence-number/hash pairs and replay them to log into the real server as
   that player.
 
+--Heat overhaul:  replaced simulation of cellular atomata heat grid with even
+  heat spreading over enclosed airspace via convection and direct radiant heat
+  based on distance from each heat source in airspace.  Still using 8x8 grid to
+  measure airspace, which might fall short in larger buildings, but still feels
+  much more intuitive than old system.  Biome heat contribution is also added
+  int from player's position as a final step, so there's no biome boundary
+  blending. 
+
+
 
 
 Version 195     2019-January-31

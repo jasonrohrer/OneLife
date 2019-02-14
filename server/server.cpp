@@ -1972,6 +1972,15 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
     }
 
 
+
+static double distance( GridPos inA, GridPos inB ) {
+    double dx = (double)inA.x - (double)inB.x;
+    double dy = (double)inA.y - (double)inB.y;
+
+    return sqrt(  dx * dx + dy * dy );
+    }
+
+
 // how often do we check what a player is standing on top of for attack effects?
 static double playerCrossingCheckStepTime = 0.25;
 
@@ -2089,14 +2098,15 @@ static float computeClothingHeat( LiveObject *inPlayer ) {
 
 
 static void recomputeHeatMap( LiveObject *inPlayer ) {
-            
+    
+    int gridSize = HEAT_MAP_D * HEAT_MAP_D;
+
     // what if we recompute it from scratch every time?
-    for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
+    for( int i=0; i<gridSize; i++ ) {
         inPlayer->heatMap[i] = 0;
         }
 
     float heatOutputGrid[ HEAT_MAP_D * HEAT_MAP_D ];
-    float biomeHeatGrid[ HEAT_MAP_D * HEAT_MAP_D ];
     float rGrid[ HEAT_MAP_D * HEAT_MAP_D ];
     float rFloorGrid[ HEAT_MAP_D * HEAT_MAP_D ];
 
@@ -2126,10 +2136,7 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             int j = y * HEAT_MAP_D + x;
             heatOutputGrid[j] = 0;
             rGrid[j] = rAir;
-            rFloorGrid[j] = 0;
-
-            biomeHeatGrid[j] =
-                getBiomeHeatValue( getMapBiome( mapX, mapY ) );
+            rFloorGrid[j] = rAir;
 
 
             // call Raw version for better performance
@@ -2208,11 +2215,16 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                     
             if( fO != NULL ) {
                 heatOutputGrid[j] += fO->heatValue;
-                rFloorGrid[j] = fO->rValue;
+                rFloorGrid[j] = rCombine( rFloorGrid[j], fO->rValue );
                 }
             }
         }
 
+
+    
+    int numNeighbors = 8;
+    int ndx[8] = { 0, 1,  0, -1,  1,  1, -1, -1 };
+    int ndy[8] = { 1, 0, -1,  0,  1, -1,  1, -1 };
     
             
     int playerMapIndex = 
@@ -2269,141 +2281,212 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             
             
 
-            
-    //double startTime = Time::getCurrentTime();
-            
-    int numCycles = 8;
-            
-    int numNeighbors = 8;
-    int ndx[8] = { 0, 1,  0, -1,  1,  1, -1, -1 };
-    int ndy[8] = { 1, 0, -1,  0,  1, -1,  1, -1 };
-            
-    // found equation here:
-    // http://demonstrations.wolfram.com/
-    //        ACellularAutomatonBasedHeatEquation/
-    // diags have way less contact area
-    // last weight is floor (full contact area just like side walls)
-    double nWeights[9] = { 4, 4, 4, 4, 1, 1, 1, 1, 4 };
-            
-    double totalNWeight = 24;
-            
-            
-    //double startTime = Time::getCurrentTime();
+    // grid of flags for points that are in same airspace (surrounded by walls)
+    // as player
+    // This is the area where heat spreads evenly by convection
+    char airSpaceGrid[ HEAT_MAP_D * HEAT_MAP_D ];
+    
+    memset( airSpaceGrid, false, HEAT_MAP_D * HEAT_MAP_D );
+    
+    airSpaceGrid[ playerMapIndex ] = true;
 
-    // start player heat map, all the way to edge, filled with biome
-    // heat values
-    // Edge will never change during sim (edge has less than 8 neighbors)
-    // so it will act like an infinite heat sink
-    for( int y=0; y<HEAT_MAP_D; y++ ) {
-        for( int x=0; x<HEAT_MAP_D; x++ ) {
-            int j = y * HEAT_MAP_D + x;
-            inPlayer->heatMap[j] = biomeHeatGrid[j];
+    SimpleVector<int> frontierA;
+    SimpleVector<int> frontierB;
+    frontierA.push_back( playerMapIndex );
+    
+    SimpleVector<int> *thisFrontier = &frontierA;
+    SimpleVector<int> *nextFrontier = &frontierB;
+
+    while( thisFrontier->size() > 0 ) {
+
+        for( int f=0; f<thisFrontier->size(); f++ ) {
+            
+            int i = thisFrontier->getElementDirect( f );
+            
+            char negativeYCutoff = false;
+            
+            if( rGrid[i] > rAir ) {
+                // grid cell is insulating, and somehow it's in our
+                // frontier.  Player must be standing behind a closed
+                // door.  Block neighbors to south
+                negativeYCutoff = true;
+                }
+            
+
+            int x = i % HEAT_MAP_D;
+            int y = i / HEAT_MAP_D;
+            
+            for( int n=0; n<numNeighbors; n++ ) {
+                        
+                int nx = x + ndx[n];
+                int ny = y + ndy[n];
+                
+                if( negativeYCutoff && ndy[n] < 1 ) {
+                    continue;
+                    }
+
+                if( nx >= 0 && nx < HEAT_MAP_D &&
+                    ny >= 0 && ny < HEAT_MAP_D ) {
+
+                    int nj = ny * HEAT_MAP_D + nx;
+                    
+                    if( ! airSpaceGrid[ nj ]
+                        && rGrid[ nj ] <= rAir ) {
+
+                        airSpaceGrid[ nj ] = true;
+                        
+                        nextFrontier->push_back( nj );
+                        }
+                    }
+                }
+            }
+        
+        thisFrontier->deleteAll();
+        
+        SimpleVector<int> *temp = thisFrontier;
+        thisFrontier = nextFrontier;
+        
+        nextFrontier = temp;
+        }
+    
+    if( rGrid[playerMapIndex] > rAir ) {
+        // player standing in insulated spot
+        // don't count this as part of their air space
+        airSpaceGrid[ playerMapIndex ] = false;
+        }
+
+    int numInAirspace = 0;
+    for( int i=0; i<gridSize; i++ ) {
+        if( airSpaceGrid[ i ] ) {
+            numInAirspace++;
+            }
+        }
+    
+    printf( "\n###### %d in airspace\n\n", numInAirspace );
+
+    
+    float rBoundarySum = 0;
+    int rBoundarySize = 0;
+    
+    for( int i=0; i<gridSize; i++ ) {
+        if( airSpaceGrid[i] ) {
+            
+            int x = i % HEAT_MAP_D;
+            int y = i / HEAT_MAP_D;
+            
+            for( int n=0; n<numNeighbors; n++ ) {
+                        
+                int nx = x + ndx[n];
+                int ny = y + ndy[n];
+                
+                if( nx >= 0 && nx < HEAT_MAP_D &&
+                    ny >= 0 && ny < HEAT_MAP_D ) {
+                    
+                    int nj = ny * HEAT_MAP_D + nx;
+                    
+                    if( ! airSpaceGrid[ nj ] ) {
+                        
+                        // boundary!
+                        rBoundarySum += rGrid[ nj ];
+                        rBoundarySize ++;
+                        }
+                    }
+                else {
+                    // boundary is off edge
+                    // assume air R-value
+                    rBoundarySum += rAir;
+                    rBoundarySize ++;
+                    }
+                }
+            }
+        }
+
+    
+    // floor counts as boundary too
+    // 4x its effect (seems more important than one of 8 walls
+    if( numInAirspace > 0 ) {
+        for( int i=0; i<gridSize; i++ ) {
+            if( airSpaceGrid[i] ) {
+                rBoundarySum += 4 * rFloorGrid[i];
+                rBoundarySize += 4;
+                }
             }
         }
     
 
-    for( int c=0; c<numCycles; c++ ) {
-                
-        float tempHeatGrid[ HEAT_MAP_D * HEAT_MAP_D ];
-        memcpy( tempHeatGrid, inPlayer->heatMap, 
-                HEAT_MAP_D * HEAT_MAP_D * sizeof( float ) );
-                
-        for( int y=1; y<HEAT_MAP_D-1; y++ ) {
-            for( int x=1; x<HEAT_MAP_D-1; x++ ) {
-                int j = y * HEAT_MAP_D + x;
-            
-                float heatDelta = 0;
-                
-                float centerLeak = 1 - rGrid[j];
 
-                float centerOldHeat = tempHeatGrid[j];
+    float rBoundaryAverage = rAir;
+    
+    if( rBoundarySize > 0 ) {
+        rBoundaryAverage = rBoundarySum / rBoundarySize;
+        }
 
-                for( int n=0; n<numNeighbors; n++ ) {
-                
-                    int nx = x + ndx[n];
-                    int ny = y + ndy[n];
-                        
-                    int nj = ny * HEAT_MAP_D + nx;
-                        
-                    float nLeak = 1 - rGrid[ nj ];
-                    
-                    heatDelta += nWeights[n] * centerLeak * nLeak *
-                        ( tempHeatGrid[ nj ] - centerOldHeat );
-                    }
-                
-                // now 9th "neighbor" floor
-                float floorLeak = 1 - rFloorGrid[ j ];
-                
-                // ground (under floor) always has heat of matching biome value
-                // (never gains or loses heat, infinite)
-                float groundHeat = biomeHeatGrid[ j ];
-                
-                heatDelta += nWeights[8] * centerLeak * floorLeak *
-                    ( groundHeat - centerOldHeat );
+    
+    
 
-                
-                inPlayer->heatMap[j] = 
-                    tempHeatGrid[j] + heatDelta / totalNWeight;
-                
-                inPlayer->heatMap[j] += heatOutputGrid[j];
-                }
+
+    printf( "Boundary contains %d tiles with average r of %f\n", rBoundarySize,
+            rBoundaryAverage );
+
+    float airSpaceHeatSum = 0;
+    
+    for( int i=0; i<gridSize; i++ ) {
+        if( airSpaceGrid[i] ) {
+            airSpaceHeatSum += heatOutputGrid[i];
             }
-        } 
-            
-    //printf( "Computing %d cycles took %f ms\n",
-    //        numCycles, 
-    //        ( Time::getCurrentTime() - startTime ) * 1000 );
-    /*
-      printf( "Player heat map:\n" );
-            
-      for( int y=0; y<HEAT_MAP_D; y++ ) {
-                
-      for( int x=0; x<HEAT_MAP_D; x++ ) {                    
-      int j = y * HEAT_MAP_D + x;
-                    
-      printf( "%04.1f ", 
-      inPlayer->heatMap[ j ] );
-      //tempHeatGrid[ y * HEAT_MAP_D + x ] );
-      }
-      printf( "\n" );
+        }
 
-      char anyTags = false;
-      for( int x=0; x<HEAT_MAP_D; x++ ) {
-      int j = y * HEAT_MAP_D + x;
-                    
-      if( j == playerMapIndex ) {
-      anyTags = true;
-      break;
-      }
-      if( heatOutputGrid[ j ] > 0 ) {
-      anyTags = true;
-      break;
-      }
-      }
-                
-      if( anyTags ) {
-      for( int x=0; x<HEAT_MAP_D; x++ ) {                    
-      int j = y * HEAT_MAP_D + x;
-      if( j == playerMapIndex ) {
-      printf( "p" );
-      }
-      else printf( " " );
-                        
-      if( heatOutputGrid[j] > 0 ) {
-      printf( "H%d   ", 
-      heatOutputGrid[j] );
-      }
-      else {
-      printf( "    " );
-      }
-      }
-      printf( "\n" );
-      }
-      }
-    */
+
+    float airSpaceHeatVal = 0;
+    
+    if( numInAirspace > 0 ) {
+        // spread heat evenly over airspace
+        airSpaceHeatVal = airSpaceHeatSum / numInAirspace;
+        }
+
+    float containedAirSpaceHeatVal = airSpaceHeatVal * rBoundaryAverage;
+    
+    printf( "Total heat in airspace = %f, spread over %d tiles = %f, "
+            "insulated by %f = %f\n",
+            airSpaceHeatSum, numInAirspace, airSpaceHeatVal,
+            rBoundaryAverage, containedAirSpaceHeatVal );
+
+
+    float radiantAirSpaceHeatVal = 0;
+
+    GridPos playerHeatMapPos = { playerMapIndex % HEAT_MAP_D, 
+                                 playerMapIndex / HEAT_MAP_D };
+    
+
+    int numRadiantHeatSources = 0;
+    
+    for( int i=0; i<gridSize; i++ ) {
+        if( airSpaceGrid[i] && heatOutputGrid[i] > 0 ) {
+            
+            int x = i % HEAT_MAP_D;
+            int y = i / HEAT_MAP_D;
+            
+            GridPos heatPos = { x, y };
+            
+
+            double d = distance( playerHeatMapPos, heatPos );
+            
+            // avoid infinite heat when player standing on source
+            d += 1;
+            
+
+            radiantAirSpaceHeatVal += heatOutputGrid[ i ] / ( d * d );
+            numRadiantHeatSources ++;
+            }
+        }
+    
+    printf( "%d radiant heat sources in airspace (total = %f)\n", 
+            numRadiantHeatSources, radiantAirSpaceHeatVal );
 
     inPlayer->envHeat = 
-        inPlayer->heatMap[ playerMapIndex ];
+        radiantAirSpaceHeatVal + 
+        containedAirSpaceHeatVal +
+        getBiomeHeatValue( getMapBiome( pos.x, pos.y ) );
     }
 
 
@@ -2617,12 +2700,6 @@ static char equal( GridPos inA, GridPos inB ) {
     }
 
 
-static double distance( GridPos inA, GridPos inB ) {
-    double dx = (double)inA.x - (double)inB.x;
-    double dy = (double)inA.y - (double)inB.y;
-
-    return sqrt(  dx * dx + dy * dy );
-    }
 
 
 
