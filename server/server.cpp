@@ -2472,10 +2472,8 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             double d = distance( playerHeatMapPos, heatPos );
             
             // avoid infinite heat when player standing on source
-            d += 1;
-            
 
-            radiantAirSpaceHeatVal += heatOutputGrid[ i ] / ( d * d );
+            radiantAirSpaceHeatVal += heatOutputGrid[ i ] / ( 1.5 * d + 1 );
             numRadiantHeatSources ++;
             }
         }
@@ -12886,7 +12884,7 @@ int main() {
             
             
             // body produces its own heat
-            nextPlayer->bodyHeat += 1;
+            nextPlayer->bodyHeat += 0.3;
 
             nextPlayer->bodyHeat += computeClothingHeat( nextPlayer );
 
@@ -12897,6 +12895,9 @@ int main() {
 
             float heatDelta = 
                 clothingLeak * ( nextPlayer->envHeat - nextPlayer->bodyHeat );
+
+            // slow this down a bit
+            heatDelta *= 0.5;
 
             nextPlayer->bodyHeat += heatDelta;
             
