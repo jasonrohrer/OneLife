@@ -1981,6 +1981,14 @@ static double distance( GridPos inA, GridPos inB ) {
     }
 
 
+
+static float sign( float inF ) {
+    if (inF > 0) return 1;
+    if (inF < 0) return -1;
+    return 0;
+    }
+
+
 // how often do we check what a player is standing on top of for attack effects?
 static double playerCrossingCheckStepTime = 0.25;
 
@@ -12911,7 +12919,7 @@ int main() {
             // (so we never change heat faster than 1 unit per timestep)
             
             float heatDeltaAbs = fabs( heatDelta );
-            float heatDeltaSign = heatDelta / heatDeltaAbs;
+            float heatDeltaSign = sign( heatDelta );
 
             float maxDelta = 2;
             // larger values make a sharper "knee"
