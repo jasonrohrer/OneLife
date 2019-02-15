@@ -407,6 +407,11 @@ typedef struct LiveObject {
         float bodyHeat;
         
 
+        // used track current biome heat for biome shock effects
+        float biomeHeat;
+        
+
+
         // body heat normalized to [0,1], with targetHeat at 0.5
         float heat;
         
@@ -2512,6 +2517,8 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
         containedHeatWeight * containedAirSpaceHeatVal +
         biomeHeatWeight * biomeHeat +
         constHeatValue;
+
+    inPlayer->biomeHeat = biomeHeat;
     }
 
 
@@ -4643,6 +4650,7 @@ int processLoggedInPlayer( Socket *inSock,
 
     newObject.envHeat = targetHeat;
     newObject.bodyHeat = targetHeat;
+    newObject.biomeHeat = targetHeat;
     newObject.heat = 0.5;
     newObject.heatUpdate = false;
     newObject.lastHeatUpdate = Time::getCurrentTime();
@@ -12900,7 +12908,7 @@ int main() {
             
             
             // body produces its own heat
-            nextPlayer->bodyHeat += 0.3;
+            nextPlayer->bodyHeat += 0.25;
 
             nextPlayer->bodyHeat += computeClothingHeat( nextPlayer );
 
@@ -12935,6 +12943,25 @@ int main() {
 
             nextPlayer->bodyHeat += heatDeltaScaled;
             
+            
+            float bodyDiffFromTarget = targetHeat - nextPlayer->bodyHeat;
+            
+            float biomeDiffFromTarget = targetHeat - nextPlayer->biomeHeat;
+            
+            // for any biome that explicitly affects temperature
+            // there's a "shock" when you enter it, if it's heat value
+            // is on the other side of "perfect" from where you are at.
+            if( nextPlayer->biomeHeat != 0 && 
+                bodyDiffFromTarget != 0 &&
+                biomeDiffFromTarget != 0 &&
+                sign( bodyDiffFromTarget ) != sign( biomeDiffFromTarget ) ) {
+                
+                // modulate this shock by clothing
+                nextPlayer->bodyHeat = 
+                    targetHeat - clothingLeak * biomeDiffFromTarget;
+                }
+            
+
             
             // convert into 0..1 range, where 0.5 represents targetHeat
             nextPlayer->heat = ( nextPlayer->bodyHeat / targetHeat ) / 2;
