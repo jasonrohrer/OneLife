@@ -2491,11 +2491,19 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     // and biome
     float floorLeak = 1 - rFloorGrid[ playerMapIndex ];
 
+    
+    float biomeHeat = 
+        floorLeak * getBiomeHeatValue( getMapBiome( pos.x, pos.y ) );
+    
+    // small offset to ensure that naked-on-green biome the same
+    // in new heat model as old
+    float constHeatValue = 1.1;
+
     inPlayer->envHeat = 
         radiantHeatWeight * radiantAirSpaceHeatVal + 
         containedHeatWeight * containedAirSpaceHeatVal +
-        floorLeak * 
-        biomeHeatWeight * getBiomeHeatValue( getMapBiome( pos.x, pos.y ) );
+        biomeHeatWeight * biomeHeat +
+        constHeatValue;
     }
 
 
