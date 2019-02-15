@@ -2488,9 +2488,15 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     
     float containedHeatWeight = 4;
 
+
+    // biome affects player less if there's a floor between player
+    // and biome
+    float floorLeak = 1 - rFloorGrid[ playerMapIndex ];
+
     inPlayer->envHeat = 
         radiantHeatWeight * radiantAirSpaceHeatVal + 
         containedHeatWeight * containedAirSpaceHeatVal +
+        floorLeak * 
         biomeHeatWeight * getBiomeHeatValue( getMapBiome( pos.x, pos.y ) );
     }
 
