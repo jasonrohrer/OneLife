@@ -12906,8 +12906,26 @@ int main() {
 
             // slow this down a bit
             heatDelta *= 0.5;
+            
+            // feed through curve that is asymtotic at 1
+            // (so we never change heat faster than 1 unit per timestep)
+            
+            float heatDeltaAbs = fabs( heatDelta );
+            float heatDeltaSign = heatDelta / heatDeltaAbs;
 
-            nextPlayer->bodyHeat += heatDelta;
+            float maxDelta = 2;
+            // larger values make a sharper "knee"
+            float deltaSlope = 0.5;
+            
+            // max - max/(slope*x+1)
+            
+            float heatDeltaScaled = 
+                maxDelta - maxDelta / ( deltaSlope * heatDeltaAbs + 1 );
+            
+            heatDeltaScaled *= heatDeltaSign;
+
+
+            nextPlayer->bodyHeat += heatDeltaScaled;
             
             
             // convert into 0..1 range, where 0.5 represents targetHeat
