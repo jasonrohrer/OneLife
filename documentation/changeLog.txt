@@ -138,6 +138,16 @@ Server Fixes
   effect is modulated by clothing though (it reduces the shock of stepping
   into the arctic or desert).
 
+--Heat overhaul:  changed the mechanisms of fever.  Instead of heat produced by
+  a held object (same as holding a hot coal or whatever), where it would be
+  modulated by clothing R value (or in the old system, contained by it), heat
+  from fever is a separate quantity that gets added in after all head
+  computations for player.  Thermal shock reduction, based on clothing, is
+  also disabled when you have a fever (so there's no punishment for wearing
+  clothes when you head to the snow to cool the fever off).
+
+
+
 
 
 Version 195     2019-January-31

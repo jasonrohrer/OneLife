@@ -427,6 +427,9 @@ typedef struct LiveObject {
         
         double foodCapModifier;
 
+        double fever;
+        
+
         // wall clock time when we should decrement the food store
         double foodDecrementETASeconds;
         
@@ -4657,6 +4660,8 @@ int processLoggedInPlayer( Socket *inSock,
 
     newObject.foodCapModifier = 1.0;
 
+    newObject.fever = 0;
+
     // start full up to capacity with food
     newObject.foodStore = computeFoodCapacity( &newObject );
 
@@ -6809,12 +6814,15 @@ typedef struct ForcedEffects {
         
         char foodModifierSet;
         double foodCapModifier;
+        
+        char feverSet;
+        float fever;
     } ForcedEffects;
         
 
 
 ForcedEffects checkForForcedEffects( int inHeldObjectID ) {
-    ForcedEffects e = { -1, 0, false, 1.0 };
+    ForcedEffects e = { -1, 0, false, 1.0, false, 0.0f };
     
     ObjectRecord *o = getObject( inHeldObjectID );
     
@@ -6833,6 +6841,16 @@ ForcedEffects checkForForcedEffects( int inHeldObjectID ) {
                                   &( e.foodCapModifier ) );
             if( numRead == 1 ) {
                 e.foodModifierSet = true;
+                }
+            }
+
+        char *feverPos = strstr( o->description, "fever_" );
+        
+        if( feverPos != NULL ) {
+            int numRead = sscanf( feverPos, "fever_%f", 
+                                  &( e.fever ) );
+            if( numRead == 1 ) {
+                e.feverSet = true;
                 }
             }
         }
@@ -6864,6 +6882,8 @@ void setNoLongerDying( LiveObject *inPlayer,
     inPlayer->emotFrozen = false;
     inPlayer->foodCapModifier = 1.0;
     inPlayer->foodUpdate = true;
+
+    inPlayer->fever = 0;
 
     if( inPlayer->deathReason 
         != NULL ) {
@@ -8346,6 +8366,9 @@ int main() {
                                         e.foodCapModifier;
                                     nextPlayer->foodUpdate = true;
                                     }
+                                if( e.feverSet ) {
+                                    nextPlayer->fever = e.fever;
+                                    }
                             
 
                                 playerIndicesToSendUpdatesAbout.
@@ -9633,6 +9656,11 @@ int main() {
                                                     hitPlayer->foodUpdate = 
                                                         true;
                                                     }
+                                                
+                                                if( e.feverSet ) {
+                                                    hitPlayer->fever = e.fever;
+                                                    }
+
 
                                                 playerIndicesToSendUpdatesAbout.
                                                     push_back( 
@@ -10799,6 +10827,9 @@ int main() {
                                             targetPlayer->foodCapModifier = 
                                                 e.foodCapModifier;
                                             targetPlayer->foodUpdate = true;
+                                            }
+                                        if( e.feverSet ) {
+                                            targetPlayer->fever = e.fever;
                                             }
                                         }
                                     }
@@ -12988,18 +13019,30 @@ int main() {
                     sign( biomeDiffFromTarget ) ) {
                 
                     // modulate this shock by clothing
-                    nextPlayer->bodyHeat = 
-                        targetHeat - clothingLeak * biomeDiffFromTarget;
+
+                    // but only if player does not have fever
+                    // we don't want to punish them for wearing clothes
+                    // if they get a fever
+                    if( nextPlayer->fever == 0 ) {
+                        nextPlayer->bodyHeat = 
+                            targetHeat - clothingLeak * biomeDiffFromTarget;
+                        }
+                    else {
+                        // direct shock, as if unclothed
+                        float airLeak = 1 - rAir;
+                        nextPlayer->bodyHeat = 
+                            targetHeat - airLeak * biomeDiffFromTarget;
+                        }
                     }
 
                 // we've handled this shock
                 nextPlayer->lastBiomeHeat = nextPlayer->biomeHeat;
                 }
             
-
+            float totalBodyHeat = nextPlayer->bodyHeat + nextPlayer->fever;
             
             // convert into 0..1 range, where 0.5 represents targetHeat
-            nextPlayer->heat = ( nextPlayer->bodyHeat / targetHeat ) / 2;
+            nextPlayer->heat = ( totalBodyHeat / targetHeat ) / 2;
             if( nextPlayer->heat > 1 ) {
                 nextPlayer->heat = 1;
                 }
