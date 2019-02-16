@@ -3,6 +3,15 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 199     2019-February-15
+
+--Scene editor allows copy/paste of area containing floor and people.
+
+--Updated tutorial to explain new heat system.
+
+
+
+
 Version 198     2019-February-9
 
 --Client preparing for furture protocol change where SN message contains an
@@ -106,6 +115,39 @@ Server Fixes
 --Fixed additional int overflows in server distance functions by switching to
   double precision.  This was potentially causing distant map changes to be
   sent to a player unecessarily, eating up bandwidth.
+
+--Heat overhaul:  Player clothing now modulates how fast player body
+  temperature moves toward surrounding temperature.
+
+--Server implementation of SN protocol change, where we have a non-repeating
+  nonce based on a server-side secret, instead of a simple sequence number.
+  This fixes a potential security hole where private servers can harvest
+  sequence-number/hash pairs and replay them to log into the real server as
+  that player.
+
+--Heat overhaul:  replaced simulation of cellular atomata heat grid with even
+  heat spreading over enclosed airspace via convection and direct radiant heat
+  based on distance from each heat source in airspace.  Still using 8x8 grid to
+  measure airspace, which might fall short in larger buildings, but still feels
+  much more intuitive than old system.  Biome heat contribution is also added
+  int from player's position as a final step, so there's no biome boundary
+  blending. 
+
+--Heat overhaul:  moving to a temperature-affecting biome that is on the
+  opposite side of "perfect" from you results in an instantaneous temperature
+  shock, jumping to that side of the temp meter instead of tweening there
+  through perfect.  This makes biome-boundary-dancing ineffective.  This
+  effect is modulated by clothing though (it reduces the shock of stepping
+  into the arctic or desert).
+
+--Heat overhaul:  changed the mechanisms of fever.  Instead of heat produced by
+  a held object (same as holding a hot coal or whatever), where it would be
+  modulated by clothing R value (or in the old system, contained by it), heat
+  from fever is a separate quantity that gets added in after all head
+  computations for player.  Thermal shock reduction, based on clothing, is
+  also disabled when you have a fever (so there's no punishment for wearing
+  clothes when you head to the snow to cool the fever off).
+
 
 
 

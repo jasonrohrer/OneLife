@@ -170,7 +170,8 @@ typedef struct FreshConnection {
         SimpleVector<char> *sockBuffer;
 
         unsigned int sequenceNumber;
-
+        char *sequenceNumberString;
+        
         WebRequest *ticketServerRequest;
 
         double ticketServerRequestStartTime;
@@ -400,11 +401,20 @@ typedef struct LiveObject {
         // net heat of environment around player
         // map is tracked in heat units (each object produces an 
         // integer amount of heat)
-        // it is mapped into 0..1 based on targetHeat to set this value here
+        // this is in base heat units, range 0 to infinity
         float envHeat;
 
-        // heat of local player object
-        // their heat value gradually moves toward envHeat over time
+        // amount of heat currently in player's body, also in
+        // base heat units
+        float bodyHeat;
+        
+
+        // used track current biome heat for biome-change shock effects
+        float biomeHeat;
+        float lastBiomeHeat;
+
+
+        // body heat normalized to [0,1], with targetHeat at 0.5
         float heat;
         
         // flags this player as needing to recieve a heat update
@@ -418,6 +428,9 @@ typedef struct LiveObject {
         int foodStore;
         
         double foodCapModifier;
+
+        double fever;
+        
 
         // wall clock time when we should decrement the food store
         double foodDecrementETASeconds;
@@ -958,6 +971,8 @@ static void deleteMembers( FreshConnection *inConnection ) {
     delete inConnection->sock;
     delete inConnection->sockBuffer;
     
+    delete [] inConnection->sequenceNumberString;
+
     if( inConnection->ticketServerRequest != NULL ) {
         delete inConnection->ticketServerRequest;
         }
@@ -1967,6 +1982,23 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
     }
 
 
+
+static double distance( GridPos inA, GridPos inB ) {
+    double dx = (double)inA.x - (double)inB.x;
+    double dy = (double)inA.y - (double)inB.y;
+
+    return sqrt(  dx * dx + dy * dy );
+    }
+
+
+
+static float sign( float inF ) {
+    if (inF > 0) return 1;
+    if (inF < 0) return -1;
+    return 0;
+    }
+
+
 // how often do we check what a player is standing on top of for attack effects?
 static double playerCrossingCheckStepTime = 0.25;
 
@@ -1991,6 +2023,11 @@ static double heatUpdateTimeStep = 0.1;
 static double heatUpdateSeconds = 2;
 
 
+// air itself offers some insulation
+// a vacuum panel has R-value that is 25x greater than air
+static float rAir = 0.04;
+
+
 
 // blend R-values multiplicatively, for layers
 // 1 - R( A + B ) = (1 - R(A)) * (1 - R(B))
@@ -2004,15 +2041,90 @@ static double rCombine( double inRA, double inRB ) {
 
 
 
-static void recomputeHeatMap( LiveObject *inPlayer ) {
+
+static float computeClothingR( LiveObject *inPlayer ) {
+    
+    float headWeight = 0.25;
+    float chestWeight = 0.35;
+    float buttWeight = 0.2;
+    float eachFootWeigth = 0.1;
             
+    float backWeight = 0.1;
+
+
+    float clothingR = 0;
+            
+    if( inPlayer->clothing.hat != NULL ) {
+        clothingR += headWeight *  inPlayer->clothing.hat->rValue;
+        }
+    if( inPlayer->clothing.tunic != NULL ) {
+        clothingR += chestWeight * inPlayer->clothing.tunic->rValue;
+        }
+    if( inPlayer->clothing.frontShoe != NULL ) {
+        clothingR += 
+            eachFootWeigth * inPlayer->clothing.frontShoe->rValue;
+        }
+    if( inPlayer->clothing.backShoe != NULL ) {
+        clothingR += eachFootWeigth * 
+            inPlayer->clothing.backShoe->rValue;
+        }
+    if( inPlayer->clothing.bottom != NULL ) {
+        clothingR += buttWeight * inPlayer->clothing.bottom->rValue;
+        }
+    if( inPlayer->clothing.backpack != NULL ) {
+        clothingR += backWeight * inPlayer->clothing.backpack->rValue;
+        }
+    
+    // even if the player is naked, they are insulated from their
+    // environment by rAir
+    return rCombine( rAir, clothingR );
+    }
+
+
+
+static float computeClothingHeat( LiveObject *inPlayer ) {
+    // clothing can contribute heat
+    // apply this separate from heat grid above
+    float clothingHeat = 0;
+    for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
+                
+        ObjectRecord *cO = clothingByIndex( inPlayer->clothing, c );
+            
+        if( cO != NULL ) {
+            clothingHeat += cO->heatValue;
+
+            // contained items in clothing can contribute
+            // heat, shielded by clothing r-values
+            double cRFactor = 1 - cO->rValue;
+
+            for( int s=0; 
+                 s < inPlayer->clothingContained[c].size(); s++ ) {
+                        
+                ObjectRecord *sO = 
+                    getObject( inPlayer->clothingContained[c].
+                               getElementDirect( s ) );
+                        
+                clothingHeat += 
+                    sO->heatValue * cRFactor;
+                }
+            }
+        }
+    return clothingHeat;
+    }
+
+
+
+
+static void recomputeHeatMap( LiveObject *inPlayer ) {
+    
+    int gridSize = HEAT_MAP_D * HEAT_MAP_D;
+
     // what if we recompute it from scratch every time?
-    for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
+    for( int i=0; i<gridSize; i++ ) {
         inPlayer->heatMap[i] = 0;
         }
 
     float heatOutputGrid[ HEAT_MAP_D * HEAT_MAP_D ];
-    float biomeHeatGrid[ HEAT_MAP_D * HEAT_MAP_D ];
     float rGrid[ HEAT_MAP_D * HEAT_MAP_D ];
     float rFloorGrid[ HEAT_MAP_D * HEAT_MAP_D ];
 
@@ -2030,9 +2142,6 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
         } 
 
     
-    // air itself offers some insulation
-    // a vacuum panel has R-value that is 25x greater than air
-    float rAir = 0.04;
     
 
     for( int y=0; y<HEAT_MAP_D; y++ ) {
@@ -2045,10 +2154,7 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             int j = y * HEAT_MAP_D + x;
             heatOutputGrid[j] = 0;
             rGrid[j] = rAir;
-            rFloorGrid[j] = 0;
-
-            biomeHeatGrid[j] =
-                getBiomeHeatValue( getMapBiome( mapX, mapY ) );
+            rFloorGrid[j] = rAir;
 
 
             // call Raw version for better performance
@@ -2127,46 +2233,17 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                     
             if( fO != NULL ) {
                 heatOutputGrid[j] += fO->heatValue;
-                rFloorGrid[j] = fO->rValue;
+                rFloorGrid[j] = rCombine( rFloorGrid[j], fO->rValue );
                 }
             }
         }
 
-    // clothing is additive to R value at center spot
 
-    float headWeight = 0.25;
-    float chestWeight = 0.35;
-    float buttWeight = 0.2;
-    float eachFootWeigth = 0.1;
-            
-    float backWeight = 0.1;
-
-
-    float clothingR = 0;
-            
-    if( inPlayer->clothing.hat != NULL ) {
-        clothingR += headWeight *  inPlayer->clothing.hat->rValue;
-        }
-    if( inPlayer->clothing.tunic != NULL ) {
-        clothingR += chestWeight * inPlayer->clothing.tunic->rValue;
-        }
-    if( inPlayer->clothing.frontShoe != NULL ) {
-        clothingR += 
-            eachFootWeigth * inPlayer->clothing.frontShoe->rValue;
-        }
-    if( inPlayer->clothing.backShoe != NULL ) {
-        clothingR += eachFootWeigth * 
-            inPlayer->clothing.backShoe->rValue;
-        }
-    if( inPlayer->clothing.bottom != NULL ) {
-        clothingR += buttWeight * inPlayer->clothing.bottom->rValue;
-        }
-    if( inPlayer->clothing.backpack != NULL ) {
-        clothingR += backWeight * inPlayer->clothing.backpack->rValue;
-        }
-
-    //printf( "Clothing r = %f\n", clothingR );
-            
+    
+    int numNeighbors = 8;
+    int ndx[8] = { 0, 1,  0, -1,  1,  1, -1, -1 };
+    int ndy[8] = { 1, 0, -1,  0,  1, -1,  1, -1 };
+    
             
     int playerMapIndex = 
         ( HEAT_MAP_D / 2 ) * HEAT_MAP_D +
@@ -2222,212 +2299,256 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             
             
 
-            
-    //double startTime = Time::getCurrentTime();
-            
-    int numCycles = 8;
-            
-    int numNeighbors = 8;
-    int ndx[8] = { 0, 1,  0, -1,  1,  1, -1, -1 };
-    int ndy[8] = { 1, 0, -1,  0,  1, -1,  1, -1 };
-            
-    // found equation here:
-    // http://demonstrations.wolfram.com/
-    //        ACellularAutomatonBasedHeatEquation/
-    // diags have way less contact area
-    // last weight is floor (full contact area just like side walls)
-    double nWeights[9] = { 4, 4, 4, 4, 1, 1, 1, 1, 4 };
-            
-    double totalNWeight = 24;
-            
-            
-    //double startTime = Time::getCurrentTime();
-
-    // start player heat map, all the way to edge, filled with biome
-    // heat values
-    // Edge will never change during sim (edge has less than 8 neighbors)
-    // so it will act like an infinite heat sink
-    for( int y=0; y<HEAT_MAP_D; y++ ) {
-        for( int x=0; x<HEAT_MAP_D; x++ ) {
-            int j = y * HEAT_MAP_D + x;
-            inPlayer->heatMap[j] = biomeHeatGrid[j];
-            }
-        }
+    // grid of flags for points that are in same airspace (surrounded by walls)
+    // as player
+    // This is the area where heat spreads evenly by convection
+    char airSpaceGrid[ HEAT_MAP_D * HEAT_MAP_D ];
     
+    memset( airSpaceGrid, false, HEAT_MAP_D * HEAT_MAP_D );
+    
+    airSpaceGrid[ playerMapIndex ] = true;
 
-    for( int c=0; c<numCycles; c++ ) {
-                
-        float tempHeatGrid[ HEAT_MAP_D * HEAT_MAP_D ];
-        memcpy( tempHeatGrid, inPlayer->heatMap, 
-                HEAT_MAP_D * HEAT_MAP_D * sizeof( float ) );
-                
-        for( int y=1; y<HEAT_MAP_D-1; y++ ) {
-            for( int x=1; x<HEAT_MAP_D-1; x++ ) {
-                int j = y * HEAT_MAP_D + x;
+    SimpleVector<int> frontierA;
+    SimpleVector<int> frontierB;
+    frontierA.push_back( playerMapIndex );
+    
+    SimpleVector<int> *thisFrontier = &frontierA;
+    SimpleVector<int> *nextFrontier = &frontierB;
+
+    while( thisFrontier->size() > 0 ) {
+
+        for( int f=0; f<thisFrontier->size(); f++ ) {
             
-                float heatDelta = 0;
-                
-                float centerLeak = 1 - rGrid[j];
+            int i = thisFrontier->getElementDirect( f );
+            
+            char negativeYCutoff = false;
+            
+            if( rGrid[i] > rAir ) {
+                // grid cell is insulating, and somehow it's in our
+                // frontier.  Player must be standing behind a closed
+                // door.  Block neighbors to south
+                negativeYCutoff = true;
+                }
+            
 
-                float centerOldHeat = tempHeatGrid[j];
-
-                for( int n=0; n<numNeighbors; n++ ) {
+            int x = i % HEAT_MAP_D;
+            int y = i / HEAT_MAP_D;
+            
+            for( int n=0; n<numNeighbors; n++ ) {
+                        
+                int nx = x + ndx[n];
+                int ny = y + ndy[n];
                 
-                    int nx = x + ndx[n];
-                    int ny = y + ndy[n];
-                        
-                    int nj = ny * HEAT_MAP_D + nx;
-                        
-                    float nLeak = 1 - rGrid[ nj ];
-                    
-                    heatDelta += nWeights[n] * centerLeak * nLeak *
-                        ( tempHeatGrid[ nj ] - centerOldHeat );
+                if( negativeYCutoff && ndy[n] < 1 ) {
+                    continue;
                     }
-                
-                // now 9th "neighbor" floor
-                float floorLeak = 1 - rFloorGrid[ j ];
-                
-                // ground (under floor) always has heat of matching biome value
-                // (never gains or loses heat, infinite)
-                float groundHeat = biomeHeatGrid[ j ];
-                
-                heatDelta += nWeights[8] * centerLeak * floorLeak *
-                    ( groundHeat - centerOldHeat );
 
-                
-                inPlayer->heatMap[j] = 
-                    tempHeatGrid[j] + heatDelta / totalNWeight;
-                
-                inPlayer->heatMap[j] += heatOutputGrid[j];
+                if( nx >= 0 && nx < HEAT_MAP_D &&
+                    ny >= 0 && ny < HEAT_MAP_D ) {
+
+                    int nj = ny * HEAT_MAP_D + nx;
+                    
+                    if( ! airSpaceGrid[ nj ]
+                        && rGrid[ nj ] <= rAir ) {
+
+                        airSpaceGrid[ nj ] = true;
+                        
+                        nextFrontier->push_back( nj );
+                        }
+                    }
                 }
             }
-        } 
+        
+        thisFrontier->deleteAll();
+        
+        SimpleVector<int> *temp = thisFrontier;
+        thisFrontier = nextFrontier;
+        
+        nextFrontier = temp;
+        }
+    
+    if( rGrid[playerMapIndex] > rAir ) {
+        // player standing in insulated spot
+        // don't count this as part of their air space
+        airSpaceGrid[ playerMapIndex ] = false;
+        }
+
+    int numInAirspace = 0;
+    for( int i=0; i<gridSize; i++ ) {
+        if( airSpaceGrid[ i ] ) {
+            numInAirspace++;
+            }
+        }
+    
+    printf( "\n###### %d in airspace\n\n", numInAirspace );
+
+    
+    float rBoundarySum = 0;
+    int rBoundarySize = 0;
+    
+    for( int i=0; i<gridSize; i++ ) {
+        if( airSpaceGrid[i] ) {
             
-    //printf( "Computing %d cycles took %f ms\n",
-    //        numCycles, 
-    //        ( Time::getCurrentTime() - startTime ) * 1000 );
-    /*
-      printf( "Player heat map:\n" );
+            int x = i % HEAT_MAP_D;
+            int y = i / HEAT_MAP_D;
             
-      for( int y=0; y<HEAT_MAP_D; y++ ) {
+            for( int n=0; n<numNeighbors; n++ ) {
+                        
+                int nx = x + ndx[n];
+                int ny = y + ndy[n];
                 
-      for( int x=0; x<HEAT_MAP_D; x++ ) {                    
-      int j = y * HEAT_MAP_D + x;
+                if( nx >= 0 && nx < HEAT_MAP_D &&
+                    ny >= 0 && ny < HEAT_MAP_D ) {
                     
-      printf( "%04.1f ", 
-      inPlayer->heatMap[ j ] );
-      //tempHeatGrid[ y * HEAT_MAP_D + x ] );
-      }
-      printf( "\n" );
-
-      char anyTags = false;
-      for( int x=0; x<HEAT_MAP_D; x++ ) {
-      int j = y * HEAT_MAP_D + x;
+                    int nj = ny * HEAT_MAP_D + nx;
                     
-      if( j == playerMapIndex ) {
-      anyTags = true;
-      break;
-      }
-      if( heatOutputGrid[ j ] > 0 ) {
-      anyTags = true;
-      break;
-      }
-      }
-                
-      if( anyTags ) {
-      for( int x=0; x<HEAT_MAP_D; x++ ) {                    
-      int j = y * HEAT_MAP_D + x;
-      if( j == playerMapIndex ) {
-      printf( "p" );
-      }
-      else printf( " " );
+                    if( ! airSpaceGrid[ nj ] ) {
                         
-      if( heatOutputGrid[j] > 0 ) {
-      printf( "H%d   ", 
-      heatOutputGrid[j] );
-      }
-      else {
-      printf( "    " );
-      }
-      }
-      printf( "\n" );
-      }
-      }
-    */
-
-    float envPlayerHeat = 
-        inPlayer->heatMap[ playerMapIndex ];
-
-
-
-    // clothing can contribute heat
-    // apply this separate from heat grid above
-    float clothingHeat = 0;
-    for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
-                
-        ObjectRecord *cO = clothingByIndex( inPlayer->clothing, c );
-            
-        if( cO != NULL ) {
-            clothingHeat += cO->heatValue;
-
-            // contained items in clothing can contribute
-            // heat, shielded by clothing r-values
-            double cRFactor = 1 - cO->rValue;
-
-            for( int s=0; 
-                 s < inPlayer->clothingContained[c].size(); s++ ) {
-                        
-                ObjectRecord *sO = 
-                    getObject( inPlayer->clothingContained[c].
-                               getElementDirect( s ) );
-                        
-                clothingHeat += 
-                    sO->heatValue * cRFactor;
+                        // boundary!
+                        rBoundarySum += rGrid[ nj ];
+                        rBoundarySize ++;
+                        }
+                    }
+                else {
+                    // boundary is off edge
+                    // assume air R-value
+                    rBoundarySum += rAir;
+                    rBoundarySize ++;
+                    }
                 }
             }
         }
 
+    
+    // floor counts as boundary too
+    // 4x its effect (seems more important than one of 8 walls
+    
+    // count non-air floor tiles while we're at it
+    int numFloorTilesInAirspace = 0;
 
-
-
-
-
-    // simulate player "leaking" or gaining heat with environment
-
-    float playerHeat = targetHeat;
-
+    if( numInAirspace > 0 ) {
+        for( int i=0; i<gridSize; i++ ) {
+            if( airSpaceGrid[i] ) {
+                rBoundarySum += 4 * rFloorGrid[i];
+                rBoundarySize += 4;
+                
+                if( rFloorGrid[i] > rAir ) {
+                    numFloorTilesInAirspace++;
+                    }
+                }
+            }
+        }
     
 
-    for( int c=0; c<numCycles; c++ ) {        
 
-        // clothingR modulates heat lost (or gained) from environment
-        float clothingLeak = 1 - clothingR;
+    float rBoundaryAverage = rAir;
+    
+    if( rBoundarySize > 0 ) {
+        rBoundaryAverage = rBoundarySum / rBoundarySize;
+        }
 
-        float heatDelta = clothingLeak * ( envPlayerHeat - playerHeat );
-        
-        playerHeat += heatDelta;
+    
+    
 
 
-        // player's body generates 1 unit of heat per sim step
-        playerHeat += 1;
-        
-        // player's clothing may generate heat each step
-        playerHeat += clothingHeat;
+    printf( "Boundary contains %d tiles with average r of %f\n", rBoundarySize,
+            rBoundaryAverage );
+
+    float airSpaceHeatSum = 0;
+    
+    for( int i=0; i<gridSize; i++ ) {
+        if( airSpaceGrid[i] ) {
+            airSpaceHeatSum += heatOutputGrid[i];
+            }
         }
 
 
+    float airSpaceHeatVal = 0;
     
-    // printf( "Player heat = %f\n", playerHeat );
+    if( numInAirspace > 0 ) {
+        // spread heat evenly over airspace
+        airSpaceHeatVal = airSpaceHeatSum / numInAirspace;
+        }
+
+    float containedAirSpaceHeatVal = airSpaceHeatVal * rBoundaryAverage;
+    
+    printf( "Total heat in airspace = %f, spread over %d tiles = %f, "
+            "insulated by %f = %f\n",
+            airSpaceHeatSum, numInAirspace, airSpaceHeatVal,
+            rBoundaryAverage, containedAirSpaceHeatVal );
+
+
+    float radiantAirSpaceHeatVal = 0;
+
+    GridPos playerHeatMapPos = { playerMapIndex % HEAT_MAP_D, 
+                                 playerMapIndex / HEAT_MAP_D };
+    
+
+    int numRadiantHeatSources = 0;
+    
+    for( int i=0; i<gridSize; i++ ) {
+        if( airSpaceGrid[i] && heatOutputGrid[i] > 0 ) {
             
-    // convert into 0..1 range, where 0.5 represents targetHeat
-    inPlayer->envHeat = ( playerHeat / targetHeat ) / 2;
-    if( inPlayer->envHeat > 1 ) {
-        inPlayer->envHeat = 1;
+            int x = i % HEAT_MAP_D;
+            int y = i / HEAT_MAP_D;
+            
+            GridPos heatPos = { x, y };
+            
+
+            double d = distance( playerHeatMapPos, heatPos );
+            
+            // avoid infinite heat when player standing on source
+
+            radiantAirSpaceHeatVal += heatOutputGrid[ i ] / ( 1.5 * d + 1 );
+            numRadiantHeatSources ++;
+            }
         }
-    if( inPlayer->envHeat < 0 ) {
-        inPlayer->envHeat = 0;
+    
+    printf( "%d radiant heat sources in airspace (total = %f)\n", 
+            numRadiantHeatSources, radiantAirSpaceHeatVal );
+
+    float biomeHeatWeight = 1;
+    float radiantHeatWeight = 1;
+    
+    float containedHeatWeight = 4;
+
+
+    // boundary r-value also limits affect of biome heat on player's
+    // environment... keeps biome "out"
+    float boundaryLeak = 1 - rBoundaryAverage;
+
+    if( numFloorTilesInAirspace != numInAirspace ) {
+        // biome heat invades airspace if entire thing isn't covered by
+        // a floor (not really indoors)
+        boundaryLeak = 1;
         }
 
+
+    // a hot biome only pulls us up above perfect
+    // (hot biome leaking into a building can never make the building
+    //  just right).
+    // Enclosed walls can make a hot biome not as hot, but never cool
+    float biomeHeat = getBiomeHeatValue( getMapBiome( pos.x, pos.y ) );
+    
+    if( biomeHeat > targetHeat ) {
+        biomeHeat = boundaryLeak * (biomeHeat - targetHeat) + targetHeat;
+        }
+    else if( biomeHeat < 0 ) {
+        // a cold biome's coldness is modulated directly by walls, however
+        biomeHeat = boundaryLeak * biomeHeat;
+        }
+    
+    // small offset to ensure that naked-on-green biome the same
+    // in new heat model as old
+    float constHeatValue = 1.1;
+
+    inPlayer->envHeat = 
+        radiantHeatWeight * radiantAirSpaceHeatVal + 
+        containedHeatWeight * containedAirSpaceHeatVal +
+        biomeHeatWeight * biomeHeat +
+        constHeatValue;
+
+    inPlayer->biomeHeat = biomeHeat;
     }
 
 
@@ -2641,12 +2762,6 @@ static char equal( GridPos inA, GridPos inB ) {
     }
 
 
-static double distance( GridPos inA, GridPos inB ) {
-    double dx = (double)inA.x - (double)inB.x;
-    double dy = (double)inA.y - (double)inB.y;
-
-    return sqrt(  dx * dx + dy * dy );
-    }
 
 
 
@@ -4547,6 +4662,8 @@ int processLoggedInPlayer( Socket *inSock,
 
     newObject.foodCapModifier = 1.0;
 
+    newObject.fever = 0;
+
     // start full up to capacity with food
     newObject.foodStore = computeFoodCapacity( &newObject );
 
@@ -4563,7 +4680,10 @@ int processLoggedInPlayer( Socket *inSock,
         }
     
 
-    newObject.envHeat = 0.5;
+    newObject.envHeat = targetHeat;
+    newObject.bodyHeat = targetHeat;
+    newObject.biomeHeat = targetHeat;
+    newObject.lastBiomeHeat = targetHeat;
     newObject.heat = 0.5;
     newObject.heatUpdate = false;
     newObject.lastHeatUpdate = Time::getCurrentTime();
@@ -6696,12 +6816,15 @@ typedef struct ForcedEffects {
         
         char foodModifierSet;
         double foodCapModifier;
+        
+        char feverSet;
+        float fever;
     } ForcedEffects;
         
 
 
 ForcedEffects checkForForcedEffects( int inHeldObjectID ) {
-    ForcedEffects e = { -1, 0, false, 1.0 };
+    ForcedEffects e = { -1, 0, false, 1.0, false, 0.0f };
     
     ObjectRecord *o = getObject( inHeldObjectID );
     
@@ -6720,6 +6843,16 @@ ForcedEffects checkForForcedEffects( int inHeldObjectID ) {
                                   &( e.foodCapModifier ) );
             if( numRead == 1 ) {
                 e.foodModifierSet = true;
+                }
+            }
+
+        char *feverPos = strstr( o->description, "fever_" );
+        
+        if( feverPos != NULL ) {
+            int numRead = sscanf( feverPos, "fever_%f", 
+                                  &( e.fever ) );
+            if( numRead == 1 ) {
+                e.feverSet = true;
                 }
             }
         }
@@ -6751,6 +6884,8 @@ void setNoLongerDying( LiveObject *inPlayer,
     inPlayer->emotFrozen = false;
     inPlayer->foodCapModifier = 1.0;
     inPlayer->foodUpdate = true;
+
+    inPlayer->fever = 0;
 
     if( inPlayer->deathReason 
         != NULL ) {
@@ -7361,7 +7496,28 @@ int main() {
                 newConnection.sock = sock;
 
                 newConnection.sequenceNumber = nextSequenceNumber;
+
                 
+
+                char *secretString = 
+                    SettingsManager::getStringSetting( 
+                        "statsServerSharedSecret", "sdfmlk3490sadfm3ug9324" );
+
+                char *numberString = 
+                    autoSprintf( "%lu", newConnection.sequenceNumber );
+                
+                char *nonce = hmac_sha1( secretString, numberString );
+
+                delete [] secretString;
+                delete [] numberString;
+
+                newConnection.sequenceNumberString = 
+                    autoSprintf( "%s%lu", nonce, 
+                                 newConnection.sequenceNumber );
+                
+                delete [] nonce;
+                    
+
                 newConnection.tutorialNumber = 0;
                 newConnection.curseStatus.curseLevel = 0;
                 newConnection.curseStatus.excessPoints = 0;
@@ -7412,10 +7568,10 @@ int main() {
                 else {
                     message = autoSprintf( "SN\n"
                                            "%d/%d\n"
-                                           "%lu\n"
+                                           "%s\n"
                                            "%lu\n#",
                                            currentPlayers, maxPlayers,
-                                           newConnection.sequenceNumber,
+                                           newConnection.sequenceNumberString,
                                            versionNumber );
                     newConnection.shutdownMode = false;
                     }
@@ -7572,6 +7728,7 @@ int main() {
                                     nextConnection->curseStatus );
                                 }
                             
+                            delete [] nextConnection->sequenceNumberString;
                             newConnections.deleteElement( i );
                             i--;
                             }
@@ -7702,15 +7859,10 @@ int main() {
                             if( requireClientPassword &&
                                 ! nextConnection->error  ) {
 
-                                char *value = 
-                                    autoSprintf( 
-                                        "%d",
-                                        nextConnection->sequenceNumber );
-                                
-                                char *trueHash = hmac_sha1( clientPassword, 
-                                                            value );
-
-                                delete [] value;
+                                char *trueHash = 
+                                    hmac_sha1( 
+                                        clientPassword, 
+                                        nextConnection->sequenceNumberString );
                                 
 
                                 if( strcmp( trueHash, pwHash ) != 0 ) {
@@ -7735,11 +7887,11 @@ int main() {
                                     "%s?action=check_ticket_hash"
                                     "&email=%s"
                                     "&hash_value=%s"
-                                    "&string_to_hash=%lu",
+                                    "&string_to_hash=%s",
                                     ticketServerURL,
                                     encodedEmail,
                                     keyHash,
-                                    nextConnection->sequenceNumber );
+                                    nextConnection->sequenceNumberString );
 
                                 delete [] encodedEmail;
 
@@ -7801,6 +7953,9 @@ int main() {
                                             nextConnection->tutorialNumber,
                                             nextConnection->curseStatus );
                                         }
+                                    
+                                    delete [] 
+                                        nextConnection->sequenceNumberString;
                                     newConnections.deleteElement( i );
                                     i--;
                                     }
@@ -8228,6 +8383,9 @@ int main() {
                                     nextPlayer->foodCapModifier = 
                                         e.foodCapModifier;
                                     nextPlayer->foodUpdate = true;
+                                    }
+                                if( e.feverSet ) {
+                                    nextPlayer->fever = e.fever;
                                     }
                             
 
@@ -9516,6 +9674,11 @@ int main() {
                                                     hitPlayer->foodUpdate = 
                                                         true;
                                                     }
+                                                
+                                                if( e.feverSet ) {
+                                                    hitPlayer->fever = e.fever;
+                                                    }
+
 
                                                 playerIndicesToSendUpdatesAbout.
                                                     push_back( 
@@ -10682,6 +10845,9 @@ int main() {
                                             targetPlayer->foodCapModifier = 
                                                 e.foodCapModifier;
                                             targetPlayer->foodUpdate = true;
+                                            }
+                                        if( e.feverSet ) {
+                                            targetPlayer->fever = e.fever;
                                             }
                                         }
                                     }
@@ -12810,37 +12976,98 @@ int main() {
         for( int i=0; i< players.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
             
-            if( nextPlayer->error || 
-                currentTime - nextPlayer->lastHeatUpdate < heatUpdateSeconds ||
-                nextPlayer->envHeat == nextPlayer->heat ) {
+            if( nextPlayer->error ||
+                currentTime - nextPlayer->lastHeatUpdate < heatUpdateSeconds ) {
                 continue;
                 }
             
-            // Purho easing
-            double delta = nextPlayer->envHeat - nextPlayer->heat;
             
-            if( fabs( delta ) < 0.05 ) {
-                nextPlayer->heat = nextPlayer->envHeat;
-                }
-            else {
+            // body produces its own heat
+            nextPlayer->bodyHeat += 0.25;
+
+            nextPlayer->bodyHeat += computeClothingHeat( nextPlayer );
+
+            float clothingR = computeClothingR( nextPlayer );
+
+            // clothingR modulates heat lost (or gained) from environment
+            float clothingLeak = 1 - clothingR;
+
+            float heatDelta = 
+                clothingLeak * ( nextPlayer->envHeat - nextPlayer->bodyHeat );
+
+            // slow this down a bit
+            heatDelta *= 0.5;
+            
+            // feed through curve that is asymtotic at 1
+            // (so we never change heat faster than 1 unit per timestep)
+            
+            float heatDeltaAbs = fabs( heatDelta );
+            float heatDeltaSign = sign( heatDelta );
+
+            float maxDelta = 2;
+            // larger values make a sharper "knee"
+            float deltaSlope = 0.5;
+            
+            // max - max/(slope*x+1)
+            
+            float heatDeltaScaled = 
+                maxDelta - maxDelta / ( deltaSlope * heatDeltaAbs + 1 );
+            
+            heatDeltaScaled *= heatDeltaSign;
+
+
+            nextPlayer->bodyHeat += heatDeltaScaled;
+            
+  
+            if( nextPlayer->lastBiomeHeat != nextPlayer->biomeHeat ) {
                 
-                double change = 0.2 * delta;
+          
+                float lastBiomeDiffFromTarget = 
+                    targetHeat - nextPlayer->lastBiomeHeat;
+            
+                float biomeDiffFromTarget = targetHeat - nextPlayer->biomeHeat;
+            
+                // for any biome
+                // there's a "shock" when you enter it, if it's heat value
+                // is on the other side of "perfect" from the last biome
+                // you were in.
+                if( lastBiomeDiffFromTarget != 0 &&
+                    biomeDiffFromTarget != 0 &&
+                    sign( lastBiomeDiffFromTarget ) != 
+                    sign( biomeDiffFromTarget ) ) {
                 
-                if( fabs( change ) < 0.05 ) {
-                    // step is too small
-                    
-                    if( change > 0 ) {
-                        change = 0.05;
+                    // modulate this shock by clothing
+
+                    // but only if player does not have fever
+                    // we don't want to punish them for wearing clothes
+                    // if they get a fever
+                    if( nextPlayer->fever == 0 ) {
+                        nextPlayer->bodyHeat = 
+                            targetHeat - clothingLeak * biomeDiffFromTarget;
                         }
                     else {
-                        change = -0.05;
+                        // direct shock, as if unclothed
+                        float airLeak = 1 - rAir;
+                        nextPlayer->bodyHeat = 
+                            targetHeat - airLeak * biomeDiffFromTarget;
                         }
                     }
-                
 
-                nextPlayer->heat += change;
+                // we've handled this shock
+                nextPlayer->lastBiomeHeat = nextPlayer->biomeHeat;
                 }
             
+            float totalBodyHeat = nextPlayer->bodyHeat + nextPlayer->fever;
+            
+            // convert into 0..1 range, where 0.5 represents targetHeat
+            nextPlayer->heat = ( totalBodyHeat / targetHeat ) / 2;
+            if( nextPlayer->heat > 1 ) {
+                nextPlayer->heat = 1;
+                }
+            if( nextPlayer->heat < 0 ) {
+                nextPlayer->heat = 0;
+                }
+
             nextPlayer->heatUpdate = true;
             nextPlayer->lastHeatUpdate = currentTime;
             }

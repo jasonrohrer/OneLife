@@ -56,14 +56,12 @@ Client login proceedure.
     
 SN
 current_players/max_players
-sequence_number
+challenge_string
+required_version_number
 #
 
-Where sequence_number is a positive integer in base-10 ascii.
+Where challenge_string is an ascii string, less than 150 characters long.
 
-NOTE:
-Future versions of protocol will use an opaque ASCII string as a sequence
-number, to support inclusion of a randomized nonce.
 
 
 
@@ -75,13 +73,13 @@ LOGIN email password_hash account_key_hash tutorial_number twin_code_hash twin_c
 
 password_hash is based on the server access password, and is computed by:
 
-HMAC_SHA1( password, sequence_number )
+HMAC_SHA1( password, challenge_string )
 
 
 account_key_hash is based on the client's account key, all uppercase with
 hyphens removed, and is computed by:
 
-HMAC_SHA1( account_key, sequence_number )
+HMAC_SHA1( account_key, challenge_string )
 
 
 tutorial_number specifies the tutorail map number to load, or 0 for normal game.

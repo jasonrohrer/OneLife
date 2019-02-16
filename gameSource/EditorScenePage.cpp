@@ -53,6 +53,8 @@ static doublePair cornerPos = { - 704, 360 };
 
 static char copyAreaSet = false;
 static SceneCell copyArea[ copyAreaSize ][ copyAreaSize ];
+static SceneCell copyFloorArea[ copyAreaSize ][ copyAreaSize ];
+static SceneCell copyPeopleArea[ copyAreaSize ][ copyAreaSize ];
 
 
 
@@ -2127,6 +2129,10 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
                 
                 copyArea[ y - mCurY ][ x - mCurX ] 
                     = mCells[ y ][ x ];
+                copyFloorArea[ y - mCurY ][ x - mCurX ] 
+                    = mFloorCells[ y ][ x ];
+                copyPeopleArea[ y - mCurY ][ x - mCurX ] 
+                    = mPersonCells[ y ][ x ];
                 }
             }
         copyAreaSet = true;
@@ -2164,6 +2170,10 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
                 
                     mCells[ y ][ x ] = 
                         copyArea[ y - mCurY ][ x - mCurX ];
+                    mFloorCells[ y ][ x ] = 
+                        copyFloorArea[ y - mCurY ][ x - mCurX ];
+                    mPersonCells[ y ][ x ] = 
+                        copyPeopleArea[ y - mCurY ][ x - mCurX ];
                     }
                 }
             }
