@@ -7,6 +7,8 @@ Version 200     ????
 
 --Scene editor allows copy/paste of area containing floor and people.
 
+--Updated tutorial to explain new heat system.
+
 
 
 
