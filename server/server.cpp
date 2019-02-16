@@ -2518,9 +2518,20 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
         boundaryLeak = 1;
         }
 
+
+    // a hot biome only pulls us up above perfect
+    // (hot biome leaking into a building can never make the building
+    //  just right).
+    // Enclosed walls can make a hot biome not as hot, but never cool
+    float biomeHeat = getBiomeHeatValue( getMapBiome( pos.x, pos.y ) );
     
-    float biomeHeat = 
-        boundaryLeak * getBiomeHeatValue( getMapBiome( pos.x, pos.y ) );
+    if( biomeHeat > targetHeat ) {
+        biomeHeat = boundaryLeak * (biomeHeat - targetHeat) + targetHeat;
+        }
+    else if( biomeHeat < 0 ) {
+        // a cold biome's coldness is modulated directly by walls, however
+        biomeHeat = boundaryLeak * biomeHeat;
+        }
     
     // small offset to ensure that naked-on-green biome the same
     // in new heat model as old
