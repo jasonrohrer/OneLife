@@ -2417,11 +2417,19 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     
     // floor counts as boundary too
     // 4x its effect (seems more important than one of 8 walls
+    
+    // count non-air floor tiles while we're at it
+    int numFloorTilesInAirspace = 0;
+
     if( numInAirspace > 0 ) {
         for( int i=0; i<gridSize; i++ ) {
             if( airSpaceGrid[i] ) {
                 rBoundarySum += 4 * rFloorGrid[i];
                 rBoundarySize += 4;
+                
+                if( rFloorGrid[i] > rAir ) {
+                    numFloorTilesInAirspace++;
+                    }
                 }
             }
         }
@@ -2503,6 +2511,12 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     // boundary r-value also limits affect of biome heat on player's
     // environment... keeps biome "out"
     float boundaryLeak = 1 - rBoundaryAverage;
+
+    if( numFloorTilesInAirspace != numInAirspace ) {
+        // biome heat invades airspace if entire thing isn't covered by
+        // a floor (not really indoors)
+        boundaryLeak = 1;
+        }
 
     
     float biomeHeat = 
