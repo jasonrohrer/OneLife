@@ -2500,13 +2500,13 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     float containedHeatWeight = 4;
 
 
-    // biome affects player less if there's a floor between player
-    // and biome
-    float floorLeak = 1 - rFloorGrid[ playerMapIndex ];
+    // boundary r-value also limits affect of biome heat on player's
+    // environment... keeps biome "out"
+    float boundaryLeak = 1 - rBoundaryAverage;
 
     
     float biomeHeat = 
-        floorLeak * getBiomeHeatValue( getMapBiome( pos.x, pos.y ) );
+        boundaryLeak * getBiomeHeatValue( getMapBiome( pos.x, pos.y ) );
     
     // small offset to ensure that naked-on-green biome the same
     // in new heat model as old
