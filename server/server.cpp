@@ -407,9 +407,9 @@ typedef struct LiveObject {
         float bodyHeat;
         
 
-        // used track current biome heat for biome shock effects
+        // used track current biome heat for biome-change shock effects
         float biomeHeat;
-        
+        float lastBiomeHeat;
 
 
         // body heat normalized to [0,1], with targetHeat at 0.5
@@ -4651,6 +4651,7 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.envHeat = targetHeat;
     newObject.bodyHeat = targetHeat;
     newObject.biomeHeat = targetHeat;
+    newObject.lastBiomeHeat = targetHeat;
     newObject.heat = 0.5;
     newObject.heatUpdate = false;
     newObject.lastHeatUpdate = Time::getCurrentTime();
@@ -12943,22 +12944,31 @@ int main() {
 
             nextPlayer->bodyHeat += heatDeltaScaled;
             
-            
-            float bodyDiffFromTarget = targetHeat - nextPlayer->bodyHeat;
-            
-            float biomeDiffFromTarget = targetHeat - nextPlayer->biomeHeat;
-            
-            // for any biome that explicitly affects temperature
-            // there's a "shock" when you enter it, if it's heat value
-            // is on the other side of "perfect" from where you are at.
-            if( nextPlayer->biomeHeat != 0 && 
-                bodyDiffFromTarget != 0 &&
-                biomeDiffFromTarget != 0 &&
-                sign( bodyDiffFromTarget ) != sign( biomeDiffFromTarget ) ) {
+  
+            if( nextPlayer->lastBiomeHeat != nextPlayer->biomeHeat ) {
                 
-                // modulate this shock by clothing
-                nextPlayer->bodyHeat = 
-                    targetHeat - clothingLeak * biomeDiffFromTarget;
+          
+                float lastBiomeDiffFromTarget = 
+                    targetHeat - nextPlayer->lastBiomeHeat;
+            
+                float biomeDiffFromTarget = targetHeat - nextPlayer->biomeHeat;
+            
+                // for any biome
+                // there's a "shock" when you enter it, if it's heat value
+                // is on the other side of "perfect" from the last biome
+                // you were in.
+                if( lastBiomeDiffFromTarget != 0 &&
+                    biomeDiffFromTarget != 0 &&
+                    sign( lastBiomeDiffFromTarget ) != 
+                    sign( biomeDiffFromTarget ) ) {
+                
+                    // modulate this shock by clothing
+                    nextPlayer->bodyHeat = 
+                        targetHeat - clothingLeak * biomeDiffFromTarget;
+                    }
+
+                // we've handled this shock
+                nextPlayer->lastBiomeHeat = nextPlayer->biomeHeat;
                 }
             
 
