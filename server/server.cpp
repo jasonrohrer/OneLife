@@ -969,8 +969,10 @@ static void deleteMembers( FreshConnection *inConnection ) {
     delete inConnection->sock;
     delete inConnection->sockBuffer;
     
-    delete [] inConnection->sequenceNumberString;
-
+    if( inConnection->sequenceNumberString != NULL ) {    
+        delete [] inConnection->sequenceNumberString;
+        }
+    
     if( inConnection->ticketServerRequest != NULL ) {
         delete inConnection->ticketServerRequest;
         }
@@ -7680,6 +7682,9 @@ int main() {
                             
                             delete nextConnection->ticketServerRequest;
                             nextConnection->ticketServerRequest = NULL;
+
+                            delete [] nextConnection->sequenceNumberString;
+                            nextConnection->sequenceNumberString = NULL;
                             
                             if( nextConnection->twinCode != NULL
                                 && 
@@ -7699,8 +7704,7 @@ int main() {
                                     nextConnection->tutorialNumber,
                                     nextConnection->curseStatus );
                                 }
-                            
-                            delete [] nextConnection->sequenceNumberString;
+                                                        
                             newConnections.deleteElement( i );
                             i--;
                             }
@@ -7906,7 +7910,12 @@ int main() {
                                     
                                     delete nextConnection->ticketServerRequest;
                                     nextConnection->ticketServerRequest = NULL;
-                            
+                                    
+                                    delete [] 
+                                        nextConnection->sequenceNumberString;
+                                    nextConnection->sequenceNumberString = NULL;
+
+
                                     if( nextConnection->twinCode != NULL
                                         && 
                                         nextConnection->twinCount > 0 ) {
@@ -7925,9 +7934,7 @@ int main() {
                                             nextConnection->tutorialNumber,
                                             nextConnection->curseStatus );
                                         }
-                                    
-                                    delete [] 
-                                        nextConnection->sequenceNumberString;
+                                                                        
                                     newConnections.deleteElement( i );
                                     i--;
                                     }
