@@ -2378,8 +2378,6 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             }
         }
     
-    printf( "\n###### %d in airspace\n\n", numInAirspace );
-
     
     float rBoundarySum = 0;
     int rBoundarySize = 0;
@@ -2449,8 +2447,6 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     
 
 
-    printf( "Boundary contains %d tiles with average r of %f\n", rBoundarySize,
-            rBoundaryAverage );
 
     float airSpaceHeatSum = 0;
     
@@ -2470,10 +2466,6 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
 
     float containedAirSpaceHeatVal = airSpaceHeatVal * rBoundaryAverage;
     
-    printf( "Total heat in airspace = %f, spread over %d tiles = %f, "
-            "insulated by %f = %f\n",
-            airSpaceHeatSum, numInAirspace, airSpaceHeatVal,
-            rBoundaryAverage, containedAirSpaceHeatVal );
 
 
     float radiantAirSpaceHeatVal = 0;
@@ -2502,8 +2494,6 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
             }
         }
     
-    printf( "%d radiant heat sources in airspace (total = %f)\n", 
-            numRadiantHeatSources, radiantAirSpaceHeatVal );
 
     float biomeHeatWeight = 1;
     float radiantHeatWeight = 1;
