@@ -12960,6 +12960,16 @@ int main() {
                 continue;
                 }
             
+            // in case we cross a biome boundary since last time
+            // there will be thermal shock that will take them to
+            // other side of target temp.
+            // 
+            // but never make them more comfortable (closer to
+            // target) then they were before
+            float oldDiffFromTarget = 
+                targetHeat - nextPlayer->bodyHeat;
+
+
             
             // body produces its own heat
             nextPlayer->bodyHeat += 0.25;
@@ -13023,6 +13033,24 @@ int main() {
                     if( nextPlayer->fever == 0 ) {
                         nextPlayer->bodyHeat = 
                             targetHeat - clothingLeak * biomeDiffFromTarget;
+                        
+                        float newDiffFromTarget =
+                            targetHeat - nextPlayer->bodyHeat;
+                        
+                        float oldAbs = fabs( oldDiffFromTarget );
+                        
+                        if( fabs( newDiffFromTarget ) < 
+                            oldAbs ) {
+                            // they used crossing boundary to become more
+                            // comfortable
+                            
+                            // force them to be no more comfortable than
+                            // they used to be
+                            nextPlayer->bodyHeat = 
+                                targetHeat - 
+                                sign( newDiffFromTarget ) * oldAbs;
+                            }
+
                         }
                     else {
                         // direct shock, as if unclothed

@@ -9,6 +9,17 @@ Server Fixes
 --Fixed crash caused by wayward deletion of new sequence number string in twin
   code.
 
+--Fixed clothing biome boundary dancing exploit (crossing boundary between
+  hot/cold biome will never make you more comfortable (closer to target middle
+  temp) than you were before crossing).  Clothing still reduces thermal shock
+  from crossing biome boundaries, but only if you are already closer to target
+  temp than thermal shock on other side of temp meter.  So if you are close to
+  perfect, wearing clothing will help a lot when you cross a biome boundary
+  from cold to hot.  If you are currently freezing (and in clothes), the
+  clothing won't help much when you cross into a hot biome to reduce shock.
+
+
+
 
 Version 199     2019-February-15
 
