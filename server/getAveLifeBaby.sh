@@ -1,7 +1,7 @@
 
 for f in *day.txt; do
 
-	num=`grep "D " $f | sed -e "s/.*age=//" | sed -e "s/ .*//" | awk '$1 < 65.0' | wc -l`
+	num=`grep "D " $f | sed -e "s/.*age=//" | sed -e "s/ .*//" | awk '$1 < 14.0' | wc -l`
 
 	if [ $num -gt 0 ]
 	then
