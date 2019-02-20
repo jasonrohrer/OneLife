@@ -2538,7 +2538,7 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
         biomeHeatWeight * biomeHeat +
         constHeatValue;
 
-    inPlayer->biomeHeat = biomeHeat;
+    inPlayer->biomeHeat = biomeHeat + constHeatValue;
     }
 
 
@@ -12972,7 +12972,10 @@ int main() {
 
             
             // body produces its own heat
-            nextPlayer->bodyHeat += 0.25;
+            // but only in a cold env
+            if( nextPlayer->envHeat < targetHeat ) {
+                nextPlayer->bodyHeat += 0.25;
+                }
 
             nextPlayer->bodyHeat += computeClothingHeat( nextPlayer );
 

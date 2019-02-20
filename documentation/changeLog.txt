@@ -18,6 +18,10 @@ Server Fixes
   from cold to hot.  If you are currently freezing (and in clothes), the
   clothing won't help much when you cross into a hot biome to reduce shock.
 
+--Body heat now only applies in cold environments, so it won't cause
+  overheating when wearing clothes in hot environments (clothes slow how fast
+  you heat up in the hot environment, but don't hurt you by making you even
+  hotter after you acclimate).
 
 
 
