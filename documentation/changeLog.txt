@@ -23,6 +23,14 @@ Server Fixes
   you heat up in the hot environment, but don't hurt you by making you even
   hotter after you acclimate).
 
+--If client sends malformed message, we now disconnect them instead of killing
+  them.  Related to #194.
+
+--If client sends more than 200 character without sending a message terminator,
+  we treat this as a malformed message (to prevent a rogue client from filling
+  up the buffer on the server).
+
+
 
 
 Version 199     2019-February-15

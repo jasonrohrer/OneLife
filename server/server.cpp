@@ -1018,8 +1018,16 @@ void quitCleanup() {
 
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *nextPlayer = players.getElement(i);
-        delete nextPlayer->sock;
-        delete nextPlayer->sockBuffer;
+
+        if( nextPlayer->sock != NULL ) {
+            delete nextPlayer->sock;
+            nextPlayer->sock = NULL;
+            }
+        if( nextPlayer->sockBuffer != NULL ) {
+            delete nextPlayer->sockBuffer;
+            nextPlayer->sockBuffer = NULL;
+            }
+
         delete nextPlayer->lineage;
 
         if( nextPlayer->name != NULL ) {
@@ -1208,6 +1216,19 @@ char *getNextClientMessage( SimpleVector<char> *inBuffer ) {
     int index = inBuffer->getElementIndex( '#' );
         
     if( index == -1 ) {
+
+        if( inBuffer->size() > 200 ) {
+            // 200 characters with no message terminator?
+            // client is sending us nonsense
+            // cut it off here to avoid buffer overflow
+            
+            AppLog::info( "More than 200 characters in client receive buffer "
+                          "with no messsage terminator present, "
+                          "generating NONSENSE message." );
+            
+            return stringDuplicate( "NONSENSE 0 0" );
+            }
+
         return NULL;
         }
     
@@ -2816,8 +2837,8 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
     
     // just mark them as not connected
 
-    AppLog::infoF( "Player %d (%s) marked as disconnected.",
-                   inPlayer->id, inPlayer->email );
+    AppLog::infoF( "Player %d (%s) marked as disconnected (%s).",
+                   inPlayer->id, inPlayer->email, inReason );
     inPlayer->connected = false;
 
     // when player reconnects, they won't get a force PU message
@@ -2827,6 +2848,16 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
     // also, stop polling their socket, which will trigger constant
     // socket events from here on out, and cause us to busy-loop
     sockPoll.removeSocket( inPlayer->sock );
+
+    
+    if( inPlayer->sock != NULL ) {
+        delete inPlayer->sock;
+        inPlayer->sock = NULL;
+        }
+    if( inPlayer->sockBuffer != NULL ) {
+        delete inPlayer->sockBuffer;
+        inPlayer->sockBuffer = NULL;
+        }
     }
 
 
@@ -4371,8 +4402,14 @@ int processLoggedInPlayer( Socket *inSock,
 
             
             // give them this new socket and buffer
-            delete o->sock;
-            delete o->sockBuffer;
+            if( o->sock != NULL ) {
+                delete o->sock;
+                o->sock = NULL;
+                }
+            if( o->sockBuffer != NULL ) {
+                delete o->sockBuffer;
+                o->sockBuffer = NULL;
+                }
             
             o->sock = inSock;
             o->sockBuffer = inSockBuffer;
@@ -8438,11 +8475,8 @@ int main() {
                 if( m.type == UNKNOWN ) {
                     AppLog::info( "Client error, unknown message type." );
                     
-                    setDeathReason( nextPlayer, "unknown_message" );
-
-                    nextPlayer->error = true;
-                    nextPlayer->errorCauseString =
-                        "Unknown message type";
+                    setPlayerDisconnected( nextPlayer, 
+                                           "Unknown message type" );
                     }
 
                 //Thread::staticSleep( 
