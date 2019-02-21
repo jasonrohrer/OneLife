@@ -16456,6 +16456,12 @@ void LivingLifePage::step() {
                 
                 printf( "First map load done\n" );
                 
+                int loaded, total;
+                countLoadedSprites( &loaded, &total );
+                
+                printf( "%d/%d sprites loaded\n", loaded, total );
+                
+
                 restartMusic( computeCurrentAge( ourLiveObject ),
                               ourLiveObject->ageRate );
                 setSoundLoudness( 1.0 );

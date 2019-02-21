@@ -1469,3 +1469,25 @@ char getSpriteHit( int inID, int inXCenterOffset, int inYCenterOffset ) {
 
 
 
+void countLoadedSprites( int *outLoaded, int *outTotal ) {
+    int loaded = 0;
+    int total = 0;
+    
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            
+            total ++;
+            if( idMap[i]->sprite != NULL ) {
+                loaded ++;
+                }
+            }
+        }
+    
+    *outLoaded = loaded;
+    *outTotal = total;
+    }
+
+    
+
+
+
