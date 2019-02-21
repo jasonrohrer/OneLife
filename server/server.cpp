@@ -256,6 +256,7 @@ typedef struct LiveObject {
         // held by other player?
         char heldByOther;
         int heldByOtherID;
+        char everHeldByParent;
 
         // player that's responsible for updates that happen to this
         // player during current step
@@ -2845,12 +2846,13 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
     // so we shouldn't be waiting for them to ack
     inPlayer->waitingForForceResponse = false;
 
-    // also, stop polling their socket, which will trigger constant
-    // socket events from here on out, and cause us to busy-loop
-    sockPoll.removeSocket( inPlayer->sock );
-
+    
     
     if( inPlayer->sock != NULL ) {
+        // also, stop polling their socket, which will trigger constant
+        // socket events from here on out, and cause us to busy-loop
+        sockPoll.removeSocket( inPlayer->sock );
+
         delete inPlayer->sock;
         inPlayer->sock = NULL;
         }
@@ -4500,7 +4502,9 @@ int processLoggedInPlayer( Socket *inSock,
     
 
     newObject.heldByOther = false;
-                            
+    newObject.everHeldByParent = false;
+    
+
     int numOfAge = 0;
                             
     int numPlayers = players.size();
@@ -8064,7 +8068,9 @@ int main() {
                                    "(cause: %s)",
                                    nextConnection->errorCauseString );
 
-                    sockPoll.removeSocket( nextConnection->sock );
+                    if( nextConnection->sock != NULL ) {
+                        sockPoll.removeSocket( nextConnection->sock );
+                        }
                     
                     deleteMembers( nextConnection );
                     
@@ -8606,10 +8612,7 @@ int main() {
                     delete [] message;
                     }
                 else if( m.type == DIE ) {
-                    if( computeAge( nextPlayer ) < 1 &&
-                        nextPlayer->heldByOther &&
-                        nextPlayer->heldByOtherID == 
-                        nextPlayer->parentID ) {
+                    if( computeAge( nextPlayer ) < 1 ) {
                         
                         // killed self
                         // SID triggers a lineage ban
@@ -8619,14 +8622,27 @@ int main() {
 
                         nextPlayer->error = true;
                         nextPlayer->errorCauseString = "Baby suicide";
-                        int parentID = nextPlayer->heldByOtherID;
+                        int parentID = nextPlayer->parentID;
                         
-                        LiveObject *parent = 
+                        LiveObject *parentO = 
                             getLiveObject( parentID );
                         
-                        if( parent != NULL ) {
+                        if( parentO != NULL && nextPlayer->everHeldByParent ) {
+                            // mother picked up this SID baby at least
+                            // one time
                             // mother can have another baby right away
-                            parent->birthCoolDown = 0;
+                            parentO->birthCoolDown = 0;
+                            }
+                        
+                        
+                        int holdingAdultID = nextPlayer->heldByOtherID;
+
+                        LiveObject *adult = NULL;
+                        if( nextPlayer->heldByOther ) {
+                            adult = getLiveObject( holdingAdultID );
+                            }
+
+                        if( adult != NULL ) {
                             
                             int babyBonesID = 
                                 SettingsManager::getIntSetting( 
@@ -8641,20 +8657,20 @@ int main() {
                                     // don't leave grave on ground just yet
                                     nextPlayer->customGraveID = 0;
                             
-                                    GridPos parentPos = 
-                                        getPlayerPos( parent );
+                                    GridPos adultPos = 
+                                        getPlayerPos( adult );
 
                                     // put invisible grave there for now
-                                    GraveInfo graveInfo = { parentPos, 
+                                    GraveInfo graveInfo = { adultPos, 
                                                             nextPlayer->id };
                                     newGraves.push_back( graveInfo );
                                     
-                                    parent->heldGraveOriginX = parentPos.x;
+                                    adult->heldGraveOriginX = adultPos.x;
                                     
-                                    parent->heldGraveOriginY = parentPos.y;
+                                    adult->heldGraveOriginY = adultPos.y;
                                  
                                     playerIndicesToSendUpdatesAbout.push_back(
-                                        getLiveObjectIndex( parentID ) );
+                                        getLiveObjectIndex( holdingAdultID ) );
                                     
                                     // what if baby wearing clothes?
                                     for( int c=0; 
@@ -8665,52 +8681,52 @@ int main() {
                                             nextPlayer->clothing, c );
                                         
                                         if( cObj != NULL ) {
-                                            // put clothing in parent's hand
+                                            // put clothing in adult's hand
                                             // and then drop
-                                            parent->holdingID = cObj->id;
+                                            adult->holdingID = cObj->id;
                                             if( nextPlayer->
                                                 clothingContained[c].
                                                 size() > 0 ) {
                                                 
-                                                parent->numContained =
+                                                adult->numContained =
                                                     nextPlayer->
                                                     clothingContained[c].
                                                     size();
                                                 
-                                                parent->containedIDs =
+                                                adult->containedIDs =
                                                     nextPlayer->
                                                     clothingContained[c].
                                                     getElementArray();
-                                                parent->containedEtaDecays =
+                                                adult->containedEtaDecays =
                                                     nextPlayer->
                                                     clothingContainedEtaDecays
                                                     [c].
                                                     getElementArray();
                                                 
-                                                parent->subContainedIDs
+                                                adult->subContainedIDs
                                                     = new 
                                                     SimpleVector<int>[
-                                                    parent->numContained ];
-                                                parent->subContainedEtaDecays
+                                                    adult->numContained ];
+                                                adult->subContainedEtaDecays
                                                     = new 
                                                     SimpleVector<timeSec_t>[
-                                                    parent->numContained ];
+                                                    adult->numContained ];
                                                 }
                                             
                                             handleDrop( 
-                                                parentPos.x, parentPos.y, 
-                                                parent,
+                                                adultPos.x, adultPos.y, 
+                                                adult,
                                                 NULL );
                                             }
                                         }
                                     
                                     // finally leave baby bones
                                     // in their hands
-                                    parent->holdingID = babyBonesID;
+                                    adult->holdingID = babyBonesID;
                                     
                                     // this works to force client to play
                                     // creation sound for baby bones.
-                                    parent->heldTransitionSourceID = 
+                                    adult->heldTransitionSourceID = 
                                         nextPlayer->displayID;
                                     
                                     nextPlayer->heldByOther = false;
@@ -10552,6 +10568,12 @@ int main() {
                                     hitPlayer->heldByOther = true;
                                     hitPlayer->heldByOtherID = nextPlayer->id;
                                     
+                                    if( hitPlayer->heldByOtherID ==
+                                        hitPlayer->parentID ) {
+                                        hitPlayer->everHeldByParent = true;
+                                        }
+                                    
+
                                     // force baby to drop what they are
                                     // holding
 
@@ -11764,8 +11786,10 @@ int main() {
                     nextPlayer->error = false;
                     }
                 else {
-                    // stop listening for activity on this socket
-                    sockPoll.removeSocket( nextPlayer->sock );
+                    if( nextPlayer->sock != NULL ) {
+                        // stop listening for activity on this socket
+                        sockPoll.removeSocket( nextPlayer->sock );
+                        }
                     }
                 
 
@@ -15022,11 +15046,19 @@ int main() {
 
                 AppLog::infoF( "%d remaining player(s) alive on server ",
                                players.size() - 1 );
-
-                sockPoll.removeSocket( nextPlayer->sock );
                 
-                delete nextPlayer->sock;
-                delete nextPlayer->sockBuffer;
+                if( nextPlayer->sock != NULL ) {
+                    sockPoll.removeSocket( nextPlayer->sock );
+                
+                    delete nextPlayer->sock;
+                    nextPlayer->sock = NULL;
+                    }
+                
+                if( nextPlayer->sockBuffer != NULL ) {
+                    delete nextPlayer->sockBuffer;
+                    nextPlayer->sockBuffer = NULL;
+                    }
+                
                 delete nextPlayer->lineage;
                 
                 if( nextPlayer->name != NULL ) {

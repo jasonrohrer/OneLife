@@ -30,6 +30,8 @@ Server Fixes
   we treat this as a malformed message (to prevent a rogue client from filling
   up the buffer on the server).
 
+--/DIE command now works even if you're not held, and clears mother's birth
+  cooldown if she ever picked up up at least once.  Fixes #194
 
 
 
