@@ -38,6 +38,7 @@ $curseThreshold = 8;
 // hours must be fraction < 1 or a whole number >= 1
 $lifetimeThresholds = array(   0, 15, 25, 55, 65, 75 );
 $hoursToServe =       array( 0.5,  1,  2,  3,  4,  5 );
+$servingThreshold =   array(   8,  8,  7,  6,  4,  3 );
 
 // how long you have to live in a life before it "counts" toward
 // time served to decrement your curse score

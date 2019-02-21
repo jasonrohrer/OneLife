@@ -36,6 +36,15 @@ Server Fixes
 --/DIE command now works up to age 2, to compensate for slow map load times on
   some machines.
 
+--Donkeytown threshold (which was fixed at a current curse score of 8 before)
+  now goes down as a player's total curse score rises.  Once they hit 25 total
+  points, it goes down to 7.  At 55, it goes down to 6.  At 65 down to 4.  And
+  75 down to 3.  Note that there are only 27 people in the game with a total
+  curse score of 55 or more.  A very tiny sliver of the total player
+  population.  So, we now wait for the worst players to anger fewer people
+  before sending them to Donkeytown.  Fixes #204
+
+
 
 
 Version 199     2019-February-15

@@ -633,9 +633,21 @@ function cs_scaleCurseScore( $inEmail ) {
             cs_mysqli_result( $result, 0, "total_curse_score" );
         $extra_life_sec = cs_mysqli_result( $result, 0, "extra_life_sec" );
         
-        global $curseThreshold, $lifetimeThresholds, $hoursToServe;
+        global $curseThreshold, $lifetimeThresholds, $hoursToServe,
+            $servingThreshold;
+
+        $personalThreshold = $curseThreshold;
+
+        $index = 0;
+        foreach( $lifetimeThresholds as $thresh ) {
+            if( $total_curse_score >= $thresh ) {
+                $personalThreshold = $servingThreshold[ $index ];
+                }
+            $index++;
+            }
+
         
-        if( $curse_score >= $curseThreshold ) {
+        if( $curse_score >= $personalThreshold ) {
 
             $hours = 0;
 
@@ -656,7 +668,7 @@ function cs_scaleCurseScore( $inEmail ) {
             
             // score encodes hours to serve
             // one hour puts them right at the threshold
-            $curse_score = $curseThreshold + $hours - 1;
+            $curse_score = $personalThreshold + $hours - 1;
 
             $query = "UPDATE $tableNamePrefix"."users SET " .
                 "curse_score = $curse_score, " .
@@ -920,7 +932,7 @@ function cs_isCursed() {
         }
 
 
-    $query = "SELECT curse_score ".
+    $query = "SELECT curse_score, total_curse_score ".
             "FROM $tableNamePrefix"."users ".
             "WHERE email = '$email';";
     $result = cs_queryDatabase( $query );
@@ -934,9 +946,23 @@ function cs_isCursed() {
         }
 
     $curse_score = cs_mysqli_result( $result, 0, "curse_score" );
+    $total_curse_score = cs_mysqli_result( $result, 0, "total_curse_score" );
 
-    if( $curse_score >= $curseThreshold ) {
-        $excess = ( $curse_score - $curseThreshold ) + 1;
+    global $lifetimeThresholds, $hoursToServe, $servingThreshold;
+    
+    $personalThreshold = $curseThreshold;
+
+    $index = 0;
+    foreach( $lifetimeThresholds as $thresh ) {
+        if( $total_curse_score >= $thresh ) {
+            $personalThreshold = $servingThreshold[ $index ];
+            }
+        $index++;
+        }
+
+    
+    if( $curse_score >= $personalThreshold ) {
+        $excess = ( $curse_score - $personalThreshold ) + 1;
         echo "1 $excess";
         return;
         }
