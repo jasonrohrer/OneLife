@@ -33,6 +33,9 @@ Server Fixes
 --/DIE command now works even if you're not held, and clears mother's birth
   cooldown if she ever picked up up at least once.  Fixes #194
 
+--/DIE command now works up to age 2, to compensate for slow map load times on
+  some machines.
+
 
 
 Version 199     2019-February-15

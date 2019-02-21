@@ -8612,7 +8612,7 @@ int main() {
                     delete [] message;
                     }
                 else if( m.type == DIE ) {
-                    if( computeAge( nextPlayer ) < 1 ) {
+                    if( computeAge( nextPlayer ) < 2 ) {
                         
                         // killed self
                         // SID triggers a lineage ban
