@@ -1325,52 +1325,33 @@ void drawFrame( char inUpdate ) {
                         initSpriteBankFinish();
                         
                         loadingPhaseStartTime = Time::getCurrentTime();
-                        
-                        int numReverbs = initSoundBankStart();
+      
+                        char rebuilding;
+
+                        int numSounds = initSoundBankStart( &rebuilding );
                             
-                        if( numReverbs > 0 ) {
+                        loadingPage->setCurrentPhase( 
+                            "SOUNDS##(GENERATING REVERBS)" );
+
+                        if( rebuilding ) {
                             loadingPage->setCurrentPhase( 
-                                "SOUNDS##(GENERATING REVERBS)" );
-                            loadingPage->setCurrentProgress( 0 );
-                        
-                            
-                            loadingStepBatchSize = numReverbs / numLoadingSteps;
-                            
-                            if( loadingStepBatchSize < 1 ) {
-                                loadingStepBatchSize = 1;
-                                }
-                            
-                            loadingPhase ++;
+                                translate( "soundsRebuild" ) );
                             }
                         else {
-                            // skip progress for sounds
-                            initSoundBankFinish();
-                            
-                            char rebuilding;
-                        
-                            int numAnimations = 
-                                initAnimationBankStart( &rebuilding );
-                            
-                            if( rebuilding ) {
-                                loadingPage->setCurrentPhase( 
-                                    translate( "animationsRebuild" ) );
-                                }
-                            else {
-                                loadingPage->setCurrentPhase(
-                                    translate( "animations" ) );
-                                }
-                            loadingPage->setCurrentProgress( 0 );
-                            
-                            
-                            loadingStepBatchSize = 
-                                numAnimations / numLoadingSteps;
-                            
-                            if( loadingStepBatchSize < 1 ) {
-                                loadingStepBatchSize = 1;
-                                }
-                            
-                            loadingPhase += 2;
+                            loadingPage->setCurrentPhase(
+                                translate( "sounds" ) );
                             }
+
+                        loadingPage->setCurrentProgress( 0 );
+                        
+                            
+                        loadingStepBatchSize = numSounds / numLoadingSteps;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+                        
+                        loadingPhase ++;
                         }
                     break;
                     }

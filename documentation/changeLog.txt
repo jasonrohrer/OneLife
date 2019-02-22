@@ -11,6 +11,9 @@ Version 201    ???
   screen shown from a single compressed cache file (used to load sprites from
   separate files as-needed at map load time).  Now map loads almost instantly.
 
+--Same compressed cache file technique for sounds and reverbs before LOGIN.
+  Now the map loads instantly, since all assets are pre-loaded.
+
 
 
 Server Fixes
