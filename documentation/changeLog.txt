@@ -53,6 +53,7 @@ Server Fixes
   population.  So, we now wait for the worst players to anger fewer people
   before sending them to Donkeytown.  Fixes #204
 
+--Age rate (secondsPerYear) is now an adjustable server setting.
 
 
 

@@ -7015,6 +7015,10 @@ int main() {
 
     eatBonus = 
         SettingsManager::getIntSetting( "eatBonus", 0 );
+
+
+    secondsPerYear = 
+        SettingsManager::getFloatSetting( "secondsPerYear", 60.0f );
     
 
     if( clientPassword == NULL ) {
