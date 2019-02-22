@@ -7,6 +7,10 @@ Version 201    ???
 
 --Client prints stat about fraction of total sprites loaded.
 
+--Dramatic speed up to client load time.  Pre-loading all sprites before LOGIN
+  screen shown from a single compressed cache file (used to load sprites from
+  separate files as-needed at map load time).  Now map loads almost instantly.
+
 
 
 Server Fixes

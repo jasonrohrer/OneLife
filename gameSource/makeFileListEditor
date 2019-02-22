@@ -43,6 +43,7 @@ overlayBank.cpp \
 keyLegend.cpp \
 LoadingPage.cpp \
 folderCache.cpp \
+binFolderCache.cpp \
 PickableStatics.cpp \
 soundBank.cpp \
 SoundWidget.cpp \
