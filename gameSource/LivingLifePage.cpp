@@ -4477,7 +4477,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         
         
-        if( mStartedLoadingFirstObjectSet ) {
+        // hide map loading progress, because for now, it's almost
+        // instantaneous
+        if( false && mStartedLoadingFirstObjectSet ) {
             
             pos.y -= 100;
             drawMessage( "loadingMap", pos );
@@ -16447,7 +16449,7 @@ void LivingLifePage::step() {
                 game_getCurrentTime() - mStartedLoadingFirstObjectSetStartTime
                 < 1 ) {
                 // always show loading progress for at least 1 second
-                mDoneLoadingFirstObjectSet = false;
+                //mDoneLoadingFirstObjectSet = false;
                 }
             
 
