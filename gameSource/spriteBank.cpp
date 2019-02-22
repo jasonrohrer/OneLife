@@ -916,6 +916,24 @@ SpriteRecord **searchSprites( const char *inSearch,
 
 
 
+static void clearCacheFiles() {
+    File *cacheFile = spritesDir.getChildFile( "cache.fcz" );
+    
+    cacheFile->remove();
+    
+    delete cacheFile;
+    
+    
+    File *binCacheFile = spritesDir.getChildFile( "bin_cache.fcz" );
+    
+    binCacheFile->remove();
+    
+    delete binCacheFile;
+    }
+
+
+
+
 int addSprite( const char *inTag, SpriteHandle inSprite,
                Image *inSourceImage,
                char inMultiplicativeBlending,
@@ -968,12 +986,7 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
             
         newID = nextSpriteNumber;
 
-        File *cacheFile = spritesDir.getChildFile( "cache.fcz" );
-        
-        cacheFile->remove();
-        
-        delete cacheFile;
-
+        clearCacheFiles();
 
         File *spriteFile = spritesDir.getChildFile( fileNameTGA );
             
@@ -1516,12 +1529,8 @@ void deleteSpriteFromBank( int inID ) {
         File *spriteFileTXT = spritesDir.getChildFile( fileNameTXT );
 
             
-        File *cacheFile = spritesDir.getChildFile( "cache.fcz" );
-            
-        cacheFile->remove();
+        clearCacheFiles();
         
-        delete cacheFile;
-
 
         loadedSprites.deleteElementEqualTo( inID );
         
