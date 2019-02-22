@@ -55,6 +55,15 @@ Server Fixes
 
 --Age rate (secondsPerYear) is now an adjustable server setting.
 
+--Simplified thermal shock code in a way that reduces its impact.  Now when
+  crossing from a too-cool to a too-hot biome (or vice versa), you shock to the
+  mirror-image position on the temperature meter.  Clothing no longer affects
+  this.  After flip-flopping on the temperature meter, you then gradually go up
+  (or down) towards the biome's target temperature.  This gradual change is
+  slowed by clothing, as usual.  This means that crossing a biome boundary will
+  never cause a sudden increase in your hunger rate.
+
+
 
 
 Version 199     2019-February-15

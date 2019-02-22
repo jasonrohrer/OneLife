@@ -13032,6 +13032,32 @@ int main() {
                 targetHeat - nextPlayer->bodyHeat;
 
 
+            if( nextPlayer->lastBiomeHeat != nextPlayer->biomeHeat ) {
+                
+          
+                float lastBiomeDiffFromTarget = 
+                    targetHeat - nextPlayer->lastBiomeHeat;
+            
+                float biomeDiffFromTarget = targetHeat - nextPlayer->biomeHeat;
+            
+                // for any biome
+                // there's a "shock" when you enter it, if it's heat value
+                // is on the other side of "perfect" from the temp you were at
+                if( lastBiomeDiffFromTarget != 0 &&
+                    biomeDiffFromTarget != 0 &&
+                    sign( oldDiffFromTarget ) != 
+                    sign( biomeDiffFromTarget ) ) {
+                    
+                    
+                    // shock them to their mirror temperature on the meter
+                    // (reflected across target temp)
+                    nextPlayer->bodyHeat = targetHeat + oldDiffFromTarget;
+                    }
+
+                // we've handled this shock
+                nextPlayer->lastBiomeHeat = nextPlayer->biomeHeat;
+                }
+
             
             // body produces its own heat
             // but only in a cold env
@@ -13073,61 +13099,6 @@ int main() {
             nextPlayer->bodyHeat += heatDeltaScaled;
             
   
-            if( nextPlayer->lastBiomeHeat != nextPlayer->biomeHeat ) {
-                
-          
-                float lastBiomeDiffFromTarget = 
-                    targetHeat - nextPlayer->lastBiomeHeat;
-            
-                float biomeDiffFromTarget = targetHeat - nextPlayer->biomeHeat;
-            
-                // for any biome
-                // there's a "shock" when you enter it, if it's heat value
-                // is on the other side of "perfect" from the last biome
-                // you were in.
-                if( lastBiomeDiffFromTarget != 0 &&
-                    biomeDiffFromTarget != 0 &&
-                    sign( lastBiomeDiffFromTarget ) != 
-                    sign( biomeDiffFromTarget ) ) {
-                
-                    // modulate this shock by clothing
-
-                    // but only if player does not have fever
-                    // we don't want to punish them for wearing clothes
-                    // if they get a fever
-                    if( nextPlayer->fever == 0 ) {
-                        nextPlayer->bodyHeat = 
-                            targetHeat - clothingLeak * biomeDiffFromTarget;
-                        
-                        float newDiffFromTarget =
-                            targetHeat - nextPlayer->bodyHeat;
-                        
-                        float oldAbs = fabs( oldDiffFromTarget );
-                        
-                        if( fabs( newDiffFromTarget ) < 
-                            oldAbs ) {
-                            // they used crossing boundary to become more
-                            // comfortable
-                            
-                            // force them to be no more comfortable than
-                            // they used to be
-                            nextPlayer->bodyHeat = 
-                                targetHeat - 
-                                sign( newDiffFromTarget ) * oldAbs;
-                            }
-
-                        }
-                    else {
-                        // direct shock, as if unclothed
-                        float airLeak = 1 - rAir;
-                        nextPlayer->bodyHeat = 
-                            targetHeat - airLeak * biomeDiffFromTarget;
-                        }
-                    }
-
-                // we've handled this shock
-                nextPlayer->lastBiomeHeat = nextPlayer->biomeHeat;
-                }
             
             float totalBodyHeat = nextPlayer->bodyHeat + nextPlayer->fever;
             
