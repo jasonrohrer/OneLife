@@ -18,6 +18,7 @@ fpsErrorLogin "ERROR:  FPS MISMATCH DETECTED.##VSYNC CHANGED?  MEASURED %0.1f FP
 loading "LOADING"
 
 sprites "SPRITES"
+sounds "SOUNDS"
 objects "OBJECTS"
 transitions "TRANSITIONS"
 animations "ANIMATIONS"
@@ -27,6 +28,7 @@ groundTextures "GROUND TEXTURES"
 
 
 spritesRebuild "SPRITES##(REBUILDING CACHE)"
+soundsRebuild "SOUNDS##(REBUILDING CACHE)"
 objectsRebuild "OBJECTS##(REBUILDING CACHE)"
 transitionsRebuild "TRANSITIONS##(REBUILDING CACHE)"
 animationsRebuild "ANIMATIONS##(REBUILDING CACHE)"

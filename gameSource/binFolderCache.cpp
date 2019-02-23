@@ -54,6 +54,9 @@ BinFolderCache initBinFolderCache( const char *inFolderName,
             if( strstr( name, inPattern ) != NULL ) {
                 c.dirFiles->push_back( childFiles[i] );
                 }
+            else {
+                delete childFiles[i];
+                }
             delete [] name;
             }
         delete [] childFiles;

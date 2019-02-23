@@ -673,6 +673,9 @@ float initSoundBankStep() {
 void initSoundBankFinish() {
     endMultiConvolution( &reverbConvolution );
     
+    freeBinFolderCache( soundCache );
+    freeBinFolderCache( reverbCache );
+
     delete reverbFolder;
     }
 
