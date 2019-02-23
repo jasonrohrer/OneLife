@@ -112,6 +112,8 @@ int main() {
     deleteCache( "categories" );
     deleteCache( "animations" );
     deleteCache( "transitions" );
+    deleteCache( "sounds" );
+    deleteCache( "reverbCache" );
     
     File groundTileCacheFolder( NULL, "groundTileCache" );
     
