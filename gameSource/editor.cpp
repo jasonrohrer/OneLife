@@ -1084,8 +1084,11 @@ void drawFrame( char inUpdate ) {
                     break;
                     }
                 case 1: {
-                    float progress = initSoundBankStep();
-                    loadingPage->setCurrentProgress( progress );
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initSoundBankStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
                     
                     if( progress == 1.0 ) {
                         initSoundBankFinish();
