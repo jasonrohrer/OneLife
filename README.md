@@ -55,7 +55,7 @@ Keybind | Description
 **Backslash Key ( \\ )** | Toggles displaying of the Lineage Fertility panel.
 **Shift + Space** | Generate a random name.
 **Shift + a-z** | Generate a random name that begins with the corresponding letter that you press.
-**Shift + DEL** | Instant Death hotkey.  Works at any location and regardless of age.
+**Shift + DEL** | Sudden Infant Death (/DIE) hotkey.  Honors server restrictions for usage.
 **F1 - F7 ( F-Keys )** | Hotkeys for triggering emotions.  Ordered the same as your emotionWords.ini settings file.
 **? (Question Mark)** | Toggles the zoomed-in magnifier box that moves with your mouse cursor.
 
