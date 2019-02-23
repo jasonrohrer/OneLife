@@ -299,6 +299,7 @@ echo ""
 cd ~/checkout/OneLifeData7
 git pull
 rm */cache.fcz
+rm */bin_cache.fcz
 
 
 

@@ -29,6 +29,16 @@ static void deleteCache( const char *inFolderName ) {
             cacheFile->remove();
             
             delete cacheFile;
+            cacheFile = NULL;
+            }
+        
+        cacheFile = folder.getChildFile( "bin_cache.fcz" );
+        
+        if( cacheFile != NULL ) {
+            
+            cacheFile->remove();
+            
+            delete cacheFile;
             }
         }
     }
@@ -183,13 +193,10 @@ int main() {
     printf( "\n" );
 
 
-    num = initSoundBankStart( false );
+    num = initSoundBankStart( &rebuilding );
 
-    if( num > 0 ) {
+    if( rebuilding ) {
         runRebuild( "sounds", num, &initSoundBankStep );
-        }
-    else {
-        printf( "No reverbs need to be generated\n" );
         }
     initSoundBankFinish();
 

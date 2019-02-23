@@ -6,6 +6,7 @@ git pull
 
 # clear caches
 rm */cache.fcz
+rm */bin_cache.fcz
 
 
 cd ../OneLifeWorking
