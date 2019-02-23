@@ -14381,7 +14381,8 @@ int main() {
                         }
                     
 
-                    if( middleDistancePlayerIDs.size() > 0 ) {
+                    if( middleDistancePlayerIDs.size() > 0 
+                        && nextPlayer->connected ) {
 
                         unsigned char *outOfRangeMessage = NULL;
                         int outOfRangeMessageLength = 0;

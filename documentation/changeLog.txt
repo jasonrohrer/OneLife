@@ -3,6 +3,12 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes:
+
+--Fixed server crash due to not checking player disconnected status in one spot
+  before sending a message to their socket.
+
+
 
 Version 204    2019-February-22
 
