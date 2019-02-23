@@ -18,6 +18,7 @@ Version 201    ???
 
 
 
+
 Server Fixes
 
 --Fixed crash caused by wayward deletion of new sequence number string in twin
@@ -68,6 +69,8 @@ Server Fixes
   slowed by clothing, as usual.  This means that crossing a biome boundary will
   never cause a sudden increase in your hunger rate.
 
+--Lineage bans now affect all twins.  If one twin cannot be born in this line,
+  then none of them can.  Fixes #221
 
 
 

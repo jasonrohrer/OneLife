@@ -4381,7 +4381,12 @@ static int tutorialOffsetX = 400000;
 // each subsequent tutorial gets put in a diferent place
 static int tutorialCount = 0;
 
-        
+
+
+// fill this with emails that should also affect lineage ban
+// if any twin in group is banned, all should be
+static SimpleVector<char*> tempTwinEmails;
+
 
 // returns ID of new player,
 // or -1 if this player reconnected to an existing ID
@@ -4557,6 +4562,21 @@ int processLoggedInPlayer( Socket *inSock,
                 continue;
                 }
             
+            // test any twins also
+            char twinBanned = false;
+            for( int s=0; s<tempTwinEmails.size(); s++ ) {
+                if( ! isLinePermitted( tempTwinEmails.getElementDirect( s ),
+                                       player->lineageEveID ) ) {
+                    twinBanned = true;
+                    break;
+                    }
+                }
+            
+            if( twinBanned ) {
+                continue;
+                }
+            
+
 
             int numPastBabies = player->babyIDs->size();
             
@@ -5380,12 +5400,22 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
         
         char *emailCopy = stringDuplicate( inConnection.email );
         
+        // set up twin emails for lineage ban
+        for( int i=0; i<twinConnections.size(); i++ ) {
+            FreshConnection *nextConnection = 
+                twinConnections.getElementDirect( i );
+        
+            tempTwinEmails.push_back( nextConnection->email );
+            }
+        
+
         int newID = processLoggedInPlayer( inConnection.sock,
                                            inConnection.sockBuffer,
                                            inConnection.email,
                                            inConnection.tutorialNumber,
                                            anyTwinCurseLevel );
-
+        tempTwinEmails.deleteAll();
+        
         if( newID == -1 ) {
             AppLog::infoF( "%s reconnected to existing life, not triggering "
                            "fellow twins to spawn now.",
