@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 201    ???
+Version 202    2019-February-22
 
 --Client prints stat about fraction of total sprites loaded.
 
@@ -80,6 +80,7 @@ Server Fixes
 --Snowballs in backpack no longer push body temp off the negative end of the
   scale.  Clothing heat and held-item heat now handled in a more sensible way.
   Fixes #226
+
 
 
 
