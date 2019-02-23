@@ -41,6 +41,10 @@ cd ../$buildDir
 
 ../$sourceWorkingDir/OneLife/gameSource/regenerateCaches
 
+# don't ever include bin_cache in bundles, because they are large
+# and change every update
+rm */bin_cache.fcz
+
 
 cd ..
 
