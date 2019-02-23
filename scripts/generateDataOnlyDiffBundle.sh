@@ -209,11 +209,17 @@ cd ~/checkout/diffWorking/dataLast
 cp ~/checkout/OneLifeWorking/gameSource/reverbImpulseResponse.aiff .
 ~/checkout/OneLifeWorking/gameSource/regenerateCaches
 rm reverbImpulseResponse.aiff
+# don't include bin_cache files in downloads, because they change
+# with each update, and are too big
+# cache.fcz files are full of compressed text files, so they're much smaller
+# and fine to included when they change
+rm */bin_cache.fcz
 
 cd ~/checkout/diffWorking/dataLatest
 cp ~/checkout/OneLifeWorking/gameSource/reverbImpulseResponse.aiff .
 ~/checkout/OneLifeWorking/gameSource/regenerateCaches
 rm reverbImpulseResponse.aiff
+rm */bin_cache.fcz
 
 
 echo "" 
@@ -299,6 +305,7 @@ echo ""
 cd ~/checkout/OneLifeData7
 git pull
 rm */cache.fcz
+rm */bin_cache.fcz
 
 
 

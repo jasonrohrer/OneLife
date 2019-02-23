@@ -155,5 +155,8 @@ void setRemapSeed( int inSeed );
 void setRemapFraction( double inFraction );
 
 
+void countLoadedSprites( int *outLoaded, int *outTotal );
+
+
 
 #endif

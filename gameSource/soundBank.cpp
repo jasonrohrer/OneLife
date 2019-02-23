@@ -19,6 +19,8 @@
 
 #include "minorGems/system/Time.h"
 
+#include "binFolderCache.h"
+
 
 
 static int mapSize;
@@ -174,6 +176,40 @@ static char doesReverbCacheExist( int inID, File *inReverbFolder ) {
     }
 
 
+
+
+static void clearSoundCacheFile() {
+    File soundsFolder( NULL, "sounds" );
+
+    File *cacheFile = soundsFolder.getChildFile( "bin_cache.fcz" );
+    
+    cacheFile->remove();
+    
+    delete cacheFile;
+    }
+
+
+
+static void clearReverbCacheFile() {
+    File reverbFolder( NULL, "reverbCache" );
+
+    File *cacheFile = reverbFolder.getChildFile( "bin_cache.fcz" );
+    
+    cacheFile->remove();
+    
+    delete cacheFile;
+    }
+
+
+
+
+static void clearCacheFiles() {
+    clearSoundCacheFile();
+    clearReverbCacheFile();
+    }
+
+
+
 static char printSteps = false;
 
 
@@ -327,10 +363,20 @@ static SimpleVector<int> reverbsToRegenerate;
 static int nextReverbToRegenerate = 0;
 static File *reverbFolder;
 
+static int currentSoundFile = 0;
+static int currentReverbFile = 0;
 
-int initSoundBankStart( char inPrintSteps ) {
+
+static BinFolderCache soundCache;
+static BinFolderCache reverbCache;
+
+SimpleVector<SoundRecord*> records;
+
+
+
+int initSoundBankStart( char *outRebuildingCache ) {
     
-    printSteps = inPrintSteps;
+    //printSteps = inPrintSteps;
     
     
     soundEffectsLoudness = 
@@ -346,71 +392,16 @@ int initSoundBankStart( char inPrintSteps ) {
                                                  44100 );
     maxID = 0;
 
-    File soundFolder( NULL, "sounds" );
+    currentSoundFile = 0;
+    currentReverbFile = 0;
     
-    SimpleVector<SoundRecord*> records;
-
-    if( soundFolder.exists() && soundFolder.isDirectory() ) {
-        
-        int numFiles = 0;
-        
-        File **childFiles = soundFolder.getChildFiles( &numFiles );
-        
+    char rebuildingSounds, rebuildingReverbs;
     
-        for( int i=0; i<numFiles; i++ ) {
-            
-
-            char *fileName = childFiles[i]->getFileName();
     
-            // skip all non-AIFF files 
-            if( strstr( fileName, ".aiff" ) != NULL ) {
-                            
-                SoundRecord *r = new SoundRecord;
-
-
-                r->sound = NULL;
-                r->reverbSound = NULL;
-                
-                r->loading = false;
-                r->numStepsUnused = 0;
-                r->liveUseageCount = 0;
-                
-                r->id = 0;
-        
-                sscanf( fileName, "%d.txt", &( r->id ) );
-                
-
-                records.push_back( r );
-
-                if( maxID < r->id ) {
-                    maxID = r->id;
-                    }
-                }
-            
-            delete [] fileName;
-            delete childFiles[i];
-            }
-        delete [] childFiles;
-        }
+    soundCache = initBinFolderCache( "sounds", ".aiff", &rebuildingSounds );
     
-    mapSize = maxID + 1;
-    
-    idMap = new SoundRecord*[ mapSize ];
-    
-    for( int i=0; i<mapSize; i++ ) {
-        idMap[i] = NULL;
-        }
-    
-    int numRecords = records.size();
-    for( int i=0; i<numRecords; i++ ) {
-        SoundRecord *r = records.getElementDirect(i);
-        
-        idMap[ r->id ] = r;
-        }
-
-    printf( "Loaded %d sound IDs from sounds folder\n", numRecords );
-
-
+    reverbCache = 
+        initBinFolderCache( "reverbCache", ".aiff", &rebuildingReverbs );
 
     
     File eqFile( NULL, "eqImpulseResponse.aiff" );
@@ -465,15 +456,36 @@ int initSoundBankStart( char inPrintSteps ) {
                     startMultiConvolution( reverbFloats, numReverbSamples );
                 
                 delete [] reverbFloats;
-                
-                for( int i=0; i<numRecords; i++ ) {
-                    SoundRecord *r = records.getElementDirect(i);
-                    
-                    if( ! doesReverbCacheExist( r->id, reverbFolder ) ) {
-                        reverbsToRegenerate.push_back( r->id );
-                        }                    
 
+                File soundFolder( NULL, "sounds" );
+                
+                int numFiles;
+                File **childFiles = soundFolder.getChildFiles( &numFiles );
+        
+    
+                for( int i=0; i<numFiles; i++ ) {
+            
+                    
+                    char *fileName = childFiles[i]->getFileName();
+                    delete childFiles[i];
+                    
+                    // skip all non-AIFF files 
+                    if( strstr( fileName, ".aiff" ) != NULL ) {
+                        
+                        int id = 0;
+                        sscanf( fileName, "%d.aiff", &id );
+                        
+                
+                        if( ! doesReverbCacheExist( id, reverbFolder ) ) {
+                            reverbsToRegenerate.push_back( id );
+                            }                    
+                        
+                        }
+                    delete [] fileName;
                     }
+                
+                delete [] childFiles;
+                
                 
                 delete [] reverbSamples;
                 }
@@ -481,25 +493,179 @@ int initSoundBankStart( char inPrintSteps ) {
             }
         }
     
-    return reverbsToRegenerate.size();
+    *outRebuildingCache = 
+        rebuildingSounds || rebuildingReverbs ||
+        ( reverbsToRegenerate.size() > 0 );
+
+    return reverbsToRegenerate.size() + 
+        soundCache.numFiles + 
+        reverbCache.numFiles;
     }
 
 
 
 float initSoundBankStep() {
     
-    if( nextReverbToRegenerate == reverbsToRegenerate.size() ) {
+    if( currentSoundFile == soundCache.numFiles &&
+        nextReverbToRegenerate == reverbsToRegenerate.size() &&
+        currentReverbFile == reverbCache.numFiles ) {
         return 1.0f;
         }
     
-    int id = reverbsToRegenerate.getElementDirect( nextReverbToRegenerate );
+    if( currentSoundFile < soundCache.numFiles ) {
+        int i = currentSoundFile;
+        
+        char *fileName = getFileName( soundCache, i );
     
-    generateReverb( getSoundRecord( id ), reverbFolder );
+        // skip all non-AIFF files 
+        if( strstr( fileName, ".aiff" ) != NULL ) {
+            char added = false;
+            
+            SoundRecord *r = new SoundRecord;
 
-    nextReverbToRegenerate++;
+            
+            r->sound = NULL;
+            r->reverbSound = NULL;
+            
+            r->loading = false;
+            r->numStepsUnused = 0;
+            r->liveUseageCount = 0;
+            
+            r->id = 0;
+            
+            sscanf( fileName, "%d.txt", &( r->id ) );
+            
+            int aiffDataLength;
+            unsigned char *aiffData = 
+                getFileContents( soundCache, i, 
+                                fileName, &aiffDataLength );
+            
+            if( aiffData != NULL ) {
+                
+                int numSamples;
+                int16_t *samples =
+                    readMono16AIFFData( aiffData, aiffDataLength, &numSamples );
+                
+
+                if( samples != NULL ) {
+                    
+                    r->sound = setSoundSprite( samples, numSamples );
+                    
+                    
+                    records.push_back( r );
+                    added = true;
+                    if( maxID < r->id ) {
+                        maxID = r->id;
+                        }
+
+                    delete [] samples;                    
+                    }
+                delete [] aiffData;
+                }
+
+            if( !added ) {
+                delete r;
+                }
+            }
+        
+        delete [] fileName;
+        
+        currentSoundFile ++;
+
+        if( currentSoundFile == soundCache.numFiles ) {
+            // done loading all sounds
+            mapSize = maxID + 1;
     
-    return (float)nextReverbToRegenerate / 
-        (float)( reverbsToRegenerate.size() );
+            idMap = new SoundRecord*[ mapSize ];
+            
+            for( int i=0; i<mapSize; i++ ) {
+                idMap[i] = NULL;
+                }
+            
+            int numRecords = records.size();
+            for( int i=0; i<numRecords; i++ ) {
+                SoundRecord *r = records.getElementDirect(i);
+                
+                idMap[ r->id ] = r;
+                }
+
+            printf( "Loaded %d sound IDs from sounds folder\n", numRecords );
+            }
+        }
+    else if( nextReverbToRegenerate < reverbsToRegenerate.size() ) {
+
+        int id = reverbsToRegenerate.getElementDirect( nextReverbToRegenerate );
+    
+        generateReverb( getSoundRecord( id ), reverbFolder );
+
+        nextReverbToRegenerate++;
+        
+        if( nextReverbToRegenerate == reverbsToRegenerate.size() ) {
+            // done regenning reverbs, and there were some
+
+            // rebuild cache of reverb sounds from scratch            
+            clearReverbCacheFile();
+            freeBinFolderCache( reverbCache );
+            
+            char rebuilding;
+            
+            reverbCache = 
+                initBinFolderCache( "reverbCache", ".aiff", &rebuilding );
+            }
+        }
+    else if( currentReverbFile < reverbCache.numFiles ) {
+        int i = currentReverbFile;
+        
+        char *fileName = getFileName( reverbCache, i );
+    
+        // skip all non-AIFF files 
+        if( strstr( fileName, ".aiff" ) != NULL ) {
+
+            int aiffDataLength;
+            unsigned char *aiffData = 
+                getFileContents( reverbCache, i, 
+                                 fileName, &aiffDataLength );
+            
+            if( aiffData != NULL ) {
+                int id = 0;
+                
+                sscanf( fileName, "%d.txt", &( id ) );
+                
+                SoundRecord *r = getSoundRecord( id );
+                
+                if( r != NULL ) {
+
+                    int numSamples;
+                    int16_t *samples =
+                        readMono16AIFFData( aiffData, aiffDataLength, 
+                                            &numSamples );
+                    
+                    if( samples != NULL ) {
+                        
+                        r->reverbSound = setSoundSprite( samples, numSamples );
+                        
+                        delete [] samples;                    
+                        }
+                    }
+                delete [] aiffData;
+                }
+            }
+        
+        delete [] fileName;
+        
+        currentReverbFile ++;
+
+        if( currentReverbFile == reverbCache.numFiles ) {
+            printf( "Loaded %d reverbs from reverbCache folder\n", 
+                    currentReverbFile );
+            }
+        }
+
+    
+    return (float)( currentSoundFile + 
+                    currentReverbFile + nextReverbToRegenerate ) / 
+        (float)( soundCache.numFiles + reverbCache.numFiles + 
+                 reverbsToRegenerate.size() );
     }
         
 
@@ -507,6 +673,9 @@ float initSoundBankStep() {
 void initSoundBankFinish() {
     endMultiConvolution( &reverbConvolution );
     
+    freeBinFolderCache( soundCache );
+    freeBinFolderCache( reverbCache );
+
     delete reverbFolder;
     }
 
@@ -645,6 +814,12 @@ char *getSoundBankLoadFailure() {
 
 
 void stepSoundBank() {
+    // no more dynamic loading or unloading
+    // they are all loaded at startup
+    return;
+    
+    // keep this code in case we ever want to go back...
+
     for( int i=0; i<loadingSounds.size(); i++ ) {
         SoundLoadingRecord *loadingR = loadingSounds.getElement( i );
         
@@ -1257,6 +1432,8 @@ int stopRecordingSound() {
         delete [] nextNumberString;
         
         delete nextNumberFile;
+
+        clearCacheFiles();
         }
     
     if( newID == -1 ) {

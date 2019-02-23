@@ -3786,8 +3786,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             }
         
 
-        if( ! inObj->tempAgeOverrideSet )
-            setAnimationEmotion( inObj->currentEmot );
+        setAnimationEmotion( inObj->currentEmot );
         
         holdingPos =
             drawObjectAnim( inObj->displayID, 2, curType, 
@@ -3973,8 +3972,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
             personPos = add( personPos, inObj->ridingOffset );
 
-            if( ! inObj->tempAgeOverrideSet )
-                setAnimationEmotion( inObj->currentEmot );
+            setAnimationEmotion( inObj->currentEmot );
 
             
             if( heldObject->anySpritesBehindPlayer ) {
@@ -4095,8 +4093,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                     }
                 
                 
-                if( ! babyO->tempAgeOverrideSet )
-                    setAnimationEmotion( babyO->currentEmot );
+                setAnimationEmotion( babyO->currentEmot );
                 
                 doublePair babyHeldPos = holdPos;
                 
@@ -4534,7 +4531,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         
         
-        if( mStartedLoadingFirstObjectSet ) {
+        // hide map loading progress, because for now, it's almost
+        // instantaneous
+        if( false && mStartedLoadingFirstObjectSet ) {
             
             pos.y -= 100;
             drawMessage( "loadingMap", pos );
@@ -16576,7 +16575,7 @@ void LivingLifePage::step() {
                 game_getCurrentTime() - mStartedLoadingFirstObjectSetStartTime
                 < 1 ) {
                 // always show loading progress for at least 1 second
-                mDoneLoadingFirstObjectSet = false;
+                //mDoneLoadingFirstObjectSet = false;
                 }
             
 
@@ -16585,6 +16584,12 @@ void LivingLifePage::step() {
                 
                 printf( "First map load done\n" );
                 
+                int loaded, total;
+                countLoadedSprites( &loaded, &total );
+                
+                printf( "%d/%d sprites loaded\n", loaded, total );
+                
+
                 restartMusic( computeCurrentAge( ourLiveObject ),
                               ourLiveObject->ageRate );
                 setSoundLoudness( 1.0 );

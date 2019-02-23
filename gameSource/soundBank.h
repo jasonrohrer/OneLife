@@ -27,8 +27,8 @@ typedef struct SoundRecord {
 
 
 
-// returns number of reverb cache files that need to be regenerated
-int initSoundBankStart( char inPrintSteps=true );
+// returns number of sounds that need to be loaded (or reverbs regenerated)
+int initSoundBankStart( char *outRebuildingCache );
 
 
 // returns progress... ready for Finish when progress == 1.0

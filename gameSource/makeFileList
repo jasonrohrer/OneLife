@@ -36,6 +36,7 @@ RebirthChoicePage.cpp \
 TextField.cpp \
 LoadingPage.cpp \
 folderCache.cpp \
+binFolderCache.cpp \
 liveObjectSet.cpp \
 ../commonSource/fractalNoise.cpp \
 ExistingAccountPage.cpp \

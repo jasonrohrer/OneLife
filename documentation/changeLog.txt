@@ -3,6 +3,87 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 202    2019-February-22
+
+--Client prints stat about fraction of total sprites loaded.
+
+--Dramatic speed up to client load time.  Pre-loading all sprites before LOGIN
+  screen shown from a single compressed cache file (used to load sprites from
+  separate files as-needed at map load time).  Now map loads almost instantly.
+
+--Same compressed cache file technique for sounds and reverbs before LOGIN.
+  Now the map loads instantly, since all assets are pre-loaded.
+
+--Hid LOADING MAP progress bar screen in client, since it's no longer needed.
+
+--Fix so that starting to cry again does not clear yellow color from yellow
+  fever on baby (emotes in general are fine when crying, becasue crying baby
+  doesn't have offical mouth or eyes that facial emots can hook onto, but
+  blushing can still work).  Fixes #231
+
+
+
+
+Server Fixes
+
+--Fixed crash caused by wayward deletion of new sequence number string in twin
+  code.
+
+--Fixed clothing biome boundary dancing exploit (crossing boundary between
+  hot/cold biome will never make you more comfortable (closer to target middle
+  temp) than you were before crossing).  Clothing still reduces thermal shock
+  from crossing biome boundaries, but only if you are already closer to target
+  temp than thermal shock on other side of temp meter.  So if you are close to
+  perfect, wearing clothing will help a lot when you cross a biome boundary
+  from cold to hot.  If you are currently freezing (and in clothes), the
+  clothing won't help much when you cross into a hot biome to reduce shock.
+
+--Body heat now only applies in cold environments, so it won't cause
+  overheating when wearing clothes in hot environments (clothes slow how fast
+  you heat up in the hot environment, but don't hurt you by making you even
+  hotter after you acclimate).
+
+--If client sends malformed message, we now disconnect them instead of killing
+  them.  Related to #194.
+
+--If client sends more than 200 character without sending a message terminator,
+  we treat this as a malformed message (to prevent a rogue client from filling
+  up the buffer on the server).
+
+--/DIE command now works even if you're not held, and clears mother's birth
+  cooldown if she ever picked up up at least once.  Fixes #194
+
+--/DIE command now works up to age 2, to compensate for slow map load times on
+  some machines.
+
+--Donkeytown threshold (which was fixed at a current curse score of 8 before)
+  now goes down as a player's total curse score rises.  Once they hit 25 total
+  points, it goes down to 7.  At 55, it goes down to 6.  At 65 down to 4.  And
+  75 down to 3.  Note that there are only 27 people in the game with a total
+  curse score of 55 or more.  A very tiny sliver of the total player
+  population.  So, we now wait for the worst players to anger fewer people
+  before sending them to Donkeytown.  Fixes #204
+
+--Age rate (secondsPerYear) is now an adjustable server setting.
+
+--Simplified thermal shock code in a way that reduces its impact.  Now when
+  crossing from a too-cool to a too-hot biome (or vice versa), you shock to the
+  mirror-image position on the temperature meter.  Clothing no longer affects
+  this.  After flip-flopping on the temperature meter, you then gradually go up
+  (or down) towards the biome's target temperature.  This gradual change is
+  slowed by clothing, as usual.  This means that crossing a biome boundary will
+  never cause a sudden increase in your hunger rate.
+
+--Lineage bans now affect all twins.  If one twin cannot be born in this line,
+  then none of them can.  Fixes #221
+
+--Snowballs in backpack no longer push body temp off the negative end of the
+  scale.  Clothing heat and held-item heat now handled in a more sensible way.
+  Fixes #226
+
+
+
+
 Version 199     2019-February-15
 
 --Scene editor allows copy/paste of area containing floor and people.
