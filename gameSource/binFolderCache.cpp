@@ -3,6 +3,9 @@
 #include "minorGems/formats/encodingUtils.h"
 
 
+extern int versionNumber;
+
+
 
 BinFolderCache initBinFolderCache( const char *inFolderName,
                                    const char *inPattern,
@@ -24,7 +27,36 @@ BinFolderCache initBinFolderCache( const char *inFolderName,
         return c;
         }
     
-    File *cacheFile = folderDir->getChildFile( "bin_cache.fcz" );
+    char *curCacheName = autoSprintf( "bin_v%d_cache.fcz", versionNumber );
+
+
+    // clear any older version cache files
+    int numChildFiles;
+    File **childFiles = 
+        folderDir->getChildFiles( &numChildFiles );
+    
+    for( int i=0; i<numChildFiles; i++ ) {
+        char *name = childFiles[i]->getFileName();
+        
+        if( strcmp( name, curCacheName ) != 0 &&
+            strstr( name, "bin_" ) != NULL &&
+            strstr( name, "cache.fcz" ) != NULL ) {
+            
+            printf( "Removing outdated bin_cache file:  %s\n", name );
+            childFiles[i]->remove();
+            }
+        
+        delete [] name;
+        
+        delete childFiles[i];
+        }
+    delete [] childFiles;
+
+
+
+    File *cacheFile = folderDir->getChildFile( curCacheName );
+    
+
 
     if( cacheFile->exists() ) {
         char *cacheFileName = cacheFile->getFullFileName();
@@ -33,8 +65,8 @@ BinFolderCache initBinFolderCache( const char *inFolderName,
         
         fscanf( c.cacheFile, "%d#", &( c.numFiles ) );
 
-        printf( "Opened a bin_cache.fcz from the %s folder with %d files\n",
-                inFolderName, c.numFiles );
+        printf( "Opened a %s from the %s folder with %d files\n",
+                curCacheName, inFolderName, c.numFiles );
 
         delete [] cacheFileName;
         }
@@ -70,6 +102,9 @@ BinFolderCache initBinFolderCache( const char *inFolderName,
         fprintf( c.cacheFile, "%d#", c.numFiles );
         delete [] cacheFileName;
         }
+
+    delete [] curCacheName;
+
 
     delete cacheFile;
     delete folderDir;
@@ -190,4 +225,29 @@ void freeBinFolderCache( BinFolderCache inCache ) {
         }
     
     }
+
+
+
+
+void clearAllBinCacheFiles( File *inFolder ) {
+    int numChildFiles;
+    File **childFiles = 
+        inFolder->getChildFiles( &numChildFiles );
+    
+    for( int i=0; i<numChildFiles; i++ ) {
+        char *name = childFiles[i]->getFileName();
+        
+        if( strstr( name, "bin_" ) != NULL &&
+            strstr( name, "cache.fcz" ) != NULL ) {
+            
+            childFiles[i]->remove();
+            }
+        
+        delete [] name;
+        
+        delete childFiles[i];
+        }
+    delete [] childFiles;
+    }
+
 

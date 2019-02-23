@@ -8,6 +8,9 @@ Version 204    2019-February-22
 
 --Oh jeez... gotta fopen files in binary mode on Windows.
 
+--Old bin_cache files need to be cleared after each update.  New implementation
+  that uses latest version number in file name.
+
 
 
 Version 202    2019-February-22

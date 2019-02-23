@@ -9,11 +9,17 @@
 
 #include "groundSprites.h"
 
+#include "binFolderCache.h"
+
 
 #include "minorGems/io/file/File.h"
 #include "minorGems/system/Thread.h"
 #include "minorGems/game/game.h"
 #include "minorGems/graphics/converters/TGAImageConverter.h"
+
+
+// dummy version number for binFolderCache.cpp
+int versionNumber = 1;
 
 
 
@@ -32,14 +38,8 @@ static void deleteCache( const char *inFolderName ) {
             cacheFile = NULL;
             }
         
-        cacheFile = folder.getChildFile( "bin_cache.fcz" );
         
-        if( cacheFile != NULL ) {
-            
-            cacheFile->remove();
-            
-            delete cacheFile;
-            }
+        clearAllBinCacheFiles( &folder );        
         }
     }
 

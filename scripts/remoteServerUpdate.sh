@@ -34,7 +34,7 @@ cd ~/checkout/OneLifeData7
 git checkout master
 git pull --tags
 rm */cache.fcz
-rm */bin_cache.fcz
+rm */bin_*cache.fcz
 
 
 echo "" 

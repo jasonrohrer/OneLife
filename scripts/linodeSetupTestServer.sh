@@ -37,7 +37,7 @@ cd ../OneLifeData7
 git pull
 
 rm */cache.fcz
-rm */bin_cache.fcz
+rm */bin_*cache.fcz
 
 
 cd ../OneLife

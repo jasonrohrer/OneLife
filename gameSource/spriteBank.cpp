@@ -921,14 +921,9 @@ static void clearCacheFiles() {
     
     cacheFile->remove();
     
-    delete cacheFile;
+    delete cacheFile;    
     
-    
-    File *binCacheFile = spritesDir.getChildFile( "bin_cache.fcz" );
-    
-    binCacheFile->remove();
-    
-    delete binCacheFile;
+    clearAllBinCacheFiles( &spritesDir );
     }
 
 
