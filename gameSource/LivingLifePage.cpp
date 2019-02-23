@@ -19403,9 +19403,9 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             }
             break;
         case 127: { // DEL
-            //if( getOurLiveObject()->age < 1 && getOurLiveObject()->heldByAdultID > 0 ) {
+            //if( getOurLiveObject()->age < 3 && getOurLiveObject()->heldByAdultID > 0 ) {
                 if( isShiftKeyDown() ) {
-                    sendToServerSocket( (char*)"MOVE 0 0#" );
+                    sendToServerSocket( (char*)"DIE 0 0#" );
                 }
             //}
             break;
