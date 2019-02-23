@@ -2136,6 +2136,59 @@ static float computeClothingHeat( LiveObject *inPlayer ) {
 
 
 
+static float computeHeldHeat( LiveObject *inPlayer ) {
+    float heat = 0;
+    
+    // what player is holding can contribute heat
+    // add this to the grid, since it's "outside" the player's body
+    if( inPlayer->holdingID > 0 ) {
+        ObjectRecord *heldO = getObject( inPlayer->holdingID );
+                
+        heat += heldO->heatValue;
+                
+        double heldRFactor = 1 - heldO->rValue;
+                
+        // contained can contribute too, but shielded by r-value
+        // of container
+        for( int c=0; c<inPlayer->numContained; c++ ) {
+                    
+            int cID = inPlayer->containedIDs[c];
+            char hasSub = false;
+                    
+            if( cID < 0 ) {
+                hasSub = true;
+                cID = -cID;
+                }
+
+            ObjectRecord *contO = getObject( cID );
+                    
+            heat += 
+                contO->heatValue * heldRFactor;
+                    
+
+            if( hasSub ) {
+                // sub contained too, but shielded by both r-values
+                double contRFactor = 1 - contO->rValue;
+
+                for( int s=0; 
+                     s<inPlayer->subContainedIDs[c].size(); s++ ) {
+                        
+                    ObjectRecord *subO =
+                        getObject( inPlayer->subContainedIDs[c].
+                                   getElementDirect( s ) );
+                            
+                    heat += 
+                        subO->heatValue * 
+                        contRFactor * heldRFactor;
+                    }
+                }
+            }
+        }
+    return heat;
+    }
+
+
+
 
 static void recomputeHeatMap( LiveObject *inPlayer ) {
     
@@ -2273,53 +2326,9 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
         
 
     
-    // what player is holding can contribute heat
-    // add this to the grid, since it's "outside" the player's body
-    if( inPlayer->holdingID > 0 ) {
-        ObjectRecord *heldO = getObject( inPlayer->holdingID );
-                
-        heatOutputGrid[ playerMapIndex ] += heldO->heatValue;
-                
-        double heldRFactor = 1 - heldO->rValue;
-                
-        // contained can contribute too, but shielded by r-value
-        // of container
-        for( int c=0; c<inPlayer->numContained; c++ ) {
-                    
-            int cID = inPlayer->containedIDs[c];
-            char hasSub = false;
-                    
-            if( cID < 0 ) {
-                hasSub = true;
-                cID = -cID;
-                }
-
-            ObjectRecord *contO = getObject( cID );
-                    
-            heatOutputGrid[ playerMapIndex ] += 
-                contO->heatValue * heldRFactor;
-                    
-
-            if( hasSub ) {
-                // sub contained too, but shielded by both r-values
-                double contRFactor = 1 - contO->rValue;
-
-                for( int s=0; 
-                     s<inPlayer->subContainedIDs[c].size(); s++ ) {
-                        
-                    ObjectRecord *subO =
-                        getObject( inPlayer->subContainedIDs[c].
-                                   getElementDirect( s ) );
-                            
-                    heatOutputGrid[ playerMapIndex ] += 
-                        subO->heatValue * 
-                        contRFactor * heldRFactor;
-                    }
-                }
-            }
-        }
             
-            
+    heatOutputGrid[ playerMapIndex ] += computeHeldHeat( inPlayer );
+    
 
     // grid of flags for points that are in same airspace (surrounded by walls)
     // as player
@@ -13095,15 +13104,26 @@ int main() {
                 nextPlayer->bodyHeat += 0.25;
                 }
 
-            nextPlayer->bodyHeat += computeClothingHeat( nextPlayer );
+            float clothingHeat = computeClothingHeat( nextPlayer );
+            
+            float heldHeat = computeHeldHeat( nextPlayer );
+            
 
             float clothingR = computeClothingR( nextPlayer );
 
             // clothingR modulates heat lost (or gained) from environment
             float clothingLeak = 1 - clothingR;
 
+            // clothing heat and held heat are conductive
+            // if they are present, they move envHeat up or down, before
+            // we compute diff with body heat
+            // (if they are 0, they have no effect)
             float heatDelta = 
-                clothingLeak * ( nextPlayer->envHeat - nextPlayer->bodyHeat );
+                clothingLeak * ( clothingHeat + 
+                                 heldHeat + 
+                                 nextPlayer->envHeat 
+                                 - 
+                                 nextPlayer->bodyHeat );
 
             // slow this down a bit
             heatDelta *= 0.5;
@@ -13128,7 +13148,15 @@ int main() {
 
             nextPlayer->bodyHeat += heatDeltaScaled;
             
-  
+            // cap body heat, so that it doesn't climb way out of range
+            // even in extreme situations
+            if( nextPlayer->bodyHeat > 2 * targetHeat ) {
+                nextPlayer->bodyHeat = 2 * targetHeat;
+                }
+            else if( nextPlayer->bodyHeat < 0 ) {
+                nextPlayer->bodyHeat = 0;
+                }
+            
             
             float totalBodyHeat = nextPlayer->bodyHeat + nextPlayer->fever;
             
