@@ -1329,9 +1329,6 @@ void drawFrame( char inUpdate ) {
                         char rebuilding;
 
                         int numSounds = initSoundBankStart( &rebuilding );
-                            
-                        loadingPage->setCurrentPhase( 
-                            "SOUNDS##(GENERATING REVERBS)" );
 
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase( 

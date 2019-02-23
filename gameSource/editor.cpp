@@ -1055,57 +1055,31 @@ void drawFrame( char inUpdate ) {
                     if( progress == 1.0 ) {
                         initOverlayBankFinish();
                         
+                        loadingPhaseStartTime = Time::getCurrentTime();
 
-                        int numReverbs = 
-                            initSoundBankStart();
-                        
-                        if( numReverbs > 0 ) {
+                        char rebuilding;
+
+                        int numSounds = initSoundBankStart( &rebuilding );
+
+                        if( rebuilding ) {
                             loadingPage->setCurrentPhase( 
-                                "SOUNDS##(GENERATING REVERBS)" );
-                            loadingPage->setCurrentProgress( 0 );
-                        
-                            
-                            loadingStepBatchSize = numReverbs / 20;
-                        
-                            if( loadingStepBatchSize < 1 ) {
-                                loadingStepBatchSize = 1;
-                                }
-                            
-                            loadingPhase ++;
+                                translate( "soundsRebuild" ) );
                             }
                         else {
-                            // skip sound progress
-                            initSoundBankFinish();
-                            
-                            // turn reverb off in editor so that we can
-                            // hear raw sounds
-                            disableReverb( true );
-
-                            loadingPhaseStartTime = Time::getCurrentTime();
-
-                            char rebuilding;
-                            
-                            int numSprites = 
-                                initSpriteBankStart( &rebuilding );
-                        
-                            if( rebuilding ) {
-                                loadingPage->setCurrentPhase( 
-                                    "SPRITES##(REBUILDING CACHE)" );
-                                }
-                            else {
-                                loadingPage->setCurrentPhase( "SPRITES" );
-                                }
-                            loadingPage->setCurrentProgress( 0 );
-                            
-                            
-                            loadingStepBatchSize = numSprites / 20;
-                            
-                            if( loadingStepBatchSize < 1 ) {
-                                loadingStepBatchSize = 1;
-                                }
-                        
-                            loadingPhase += 2;
+                            loadingPage->setCurrentPhase(
+                                translate( "sounds" ) );
                             }
+
+                        loadingPage->setCurrentProgress( 0 );
+                        
+                        
+                        loadingStepBatchSize = numSounds / 20;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+                        
+                        loadingPhase ++;
                         }
                     break;
                     }
@@ -1115,6 +1089,10 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initSoundBankFinish();
+                        
+                        // turn reverb off in editor so that we can
+                        // hear raw sounds
+                        disableReverb( true );
                         
                         loadingPhaseStartTime = Time::getCurrentTime();
 
