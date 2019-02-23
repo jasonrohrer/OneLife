@@ -181,11 +181,7 @@ static char doesReverbCacheExist( int inID, File *inReverbFolder ) {
 static void clearSoundCacheFile() {
     File soundsFolder( NULL, "sounds" );
 
-    File *cacheFile = soundsFolder.getChildFile( "bin_cache.fcz" );
-    
-    cacheFile->remove();
-    
-    delete cacheFile;
+    clearAllBinCacheFiles( &soundsFolder );
     }
 
 
@@ -193,11 +189,7 @@ static void clearSoundCacheFile() {
 static void clearReverbCacheFile() {
     File reverbFolder( NULL, "reverbCache" );
 
-    File *cacheFile = reverbFolder.getChildFile( "bin_cache.fcz" );
-    
-    cacheFile->remove();
-    
-    delete cacheFile;
+    clearAllBinCacheFiles( &reverbFolder );
     }
 
 

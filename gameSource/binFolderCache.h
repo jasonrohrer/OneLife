@@ -34,3 +34,7 @@ unsigned char *getFileContents( BinFolderCache inCache, int inFileNumber,
 
 // writes new cache to disk, based on read contents, as needed
 void freeBinFolderCache( BinFolderCache inCache );
+
+
+
+void clearAllBinCacheFiles( File *inFolder );

@@ -213,13 +213,13 @@ rm reverbImpulseResponse.aiff
 # with each update, and are too big
 # cache.fcz files are full of compressed text files, so they're much smaller
 # and fine to included when they change
-rm */bin_cache.fcz
+rm */bin_*cache.fcz
 
 cd ~/checkout/diffWorking/dataLatest
 cp ~/checkout/OneLifeWorking/gameSource/reverbImpulseResponse.aiff .
 ~/checkout/OneLifeWorking/gameSource/regenerateCaches
 rm reverbImpulseResponse.aiff
-rm */bin_cache.fcz
+rm */bin_*cache.fcz
 
 
 echo "" 

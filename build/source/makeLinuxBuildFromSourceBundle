@@ -43,7 +43,7 @@ cd ../$buildDir
 
 # don't ever include bin_cache in bundles, because they are large
 # and change every update
-rm */bin_cache.fcz
+rm */bin_*cache.fcz
 
 
 cd ..
