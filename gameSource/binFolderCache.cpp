@@ -29,7 +29,7 @@ BinFolderCache initBinFolderCache( const char *inFolderName,
     if( cacheFile->exists() ) {
         char *cacheFileName = cacheFile->getFullFileName();
         
-        c.cacheFile = fopen( cacheFileName, "r" );
+        c.cacheFile = fopen( cacheFileName, "rb" );
         
         fscanf( c.cacheFile, "%d#", &( c.numFiles ) );
 
@@ -65,7 +65,7 @@ BinFolderCache initBinFolderCache( const char *inFolderName,
 
         char *cacheFileName = cacheFile->getFullFileName();
         
-        c.cacheFile = fopen( cacheFileName, "w" );
+        c.cacheFile = fopen( cacheFileName, "wb" );
         
         fprintf( c.cacheFile, "%d#", c.numFiles );
         delete [] cacheFileName;
