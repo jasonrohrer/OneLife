@@ -3734,8 +3734,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             }
         
 
-        if( ! inObj->tempAgeOverrideSet )
-            setAnimationEmotion( inObj->currentEmot );
+        setAnimationEmotion( inObj->currentEmot );
         
         holdingPos =
             drawObjectAnim( inObj->displayID, 2, curType, 
@@ -3921,8 +3920,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
             personPos = add( personPos, inObj->ridingOffset );
 
-            if( ! inObj->tempAgeOverrideSet )
-                setAnimationEmotion( inObj->currentEmot );
+            setAnimationEmotion( inObj->currentEmot );
 
             
             if( heldObject->anySpritesBehindPlayer ) {
@@ -4043,8 +4041,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                     }
                 
                 
-                if( ! babyO->tempAgeOverrideSet )
-                    setAnimationEmotion( babyO->currentEmot );
+                setAnimationEmotion( babyO->currentEmot );
                 
                 doublePair babyHeldPos = holdPos;
                 

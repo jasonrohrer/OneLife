@@ -16,6 +16,11 @@ Version 201    ???
 
 --Hid LOADING MAP progress bar screen in client, since it's no longer needed.
 
+--Fix so that starting to cry again does not clear yellow color from yellow
+  fever on baby (emotes in general are fine when crying, becasue crying baby
+  doesn't have offical mouth or eyes that facial emots can hook onto, but
+  blushing can still work).  Fixes #231
+
 
 
 
