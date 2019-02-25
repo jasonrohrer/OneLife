@@ -1,6 +1,9 @@
 int versionNumber = 204;
 int dataVersionNumber = 0;
 
+int binVersionNumber = versionNumber;
+
+
 // NOTE that OneLife doesn't use account hmacs
 
 // retain an older version number here if server is compatible
@@ -443,6 +446,12 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     initAgeControl();
     
     updateDataVersionNumber();
+
+
+    AppLog::printOutNextMessage();
+    AppLog::infoF( "OneLife client v%d (binV=%d, dataV=%d) starting up",
+                   versionNumber, binVersionNumber, dataVersionNumber );
+            
 
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
