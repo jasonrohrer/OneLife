@@ -25,6 +25,8 @@ Server Fixes:
   with something on the ground.  This code was causing an extra transition step
   to happen, making a horse's lasso disappear, for example.  Fixes #233
 
+--Fixed incorrect variable declaration location in lineage server.
+
 
 
 
