@@ -7,7 +7,7 @@ $ls_version = "1";
 
 
 // cache in each run
-global $lineageCache
+global $lineageCache;
 $lineageCache = array();
 
 
