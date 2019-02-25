@@ -228,6 +228,8 @@ typedef struct LiveObject {
 
 
         GridPos birthPos;
+        GridPos originalBirthPos;
+        
 
         int parentID;
 
@@ -2005,12 +2007,7 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
 
 
 
-static double distance( GridPos inA, GridPos inB ) {
-    double dx = (double)inA.x - (double)inB.x;
-    double dy = (double)inA.y - (double)inB.y;
 
-    return sqrt(  dx * dx + dy * dy );
-    }
 
 
 
@@ -4566,7 +4563,9 @@ int processLoggedInPlayer( Socket *inSock,
                 canHaveBaby = false;
                 }
             
-            if( ! isLinePermitted( newObject.email, player->lineageEveID ) ) {
+            GridPos motherPos = getPlayerPos( player );
+
+            if( ! isLinePermitted( newObject.email, motherPos ) ) {
                 // this line forbidden for new player
                 continue;
                 }
@@ -4575,7 +4574,7 @@ int processLoggedInPlayer( Socket *inSock,
             char twinBanned = false;
             for( int s=0; s<tempTwinEmails.size(); s++ ) {
                 if( ! isLinePermitted( tempTwinEmails.getElementDirect( s ),
-                                       player->lineageEveID ) ) {
+                                       motherPos ) ) {
                     twinBanned = true;
                     break;
                     }
@@ -5309,6 +5308,9 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.birthPos.x = newObject.xd;
     newObject.birthPos.y = newObject.yd;
     
+    newObject.originalBirthPos = newObject.birthPos;
+    
+
     newObject.heldOriginX = newObject.xd;
     newObject.heldOriginY = newObject.yd;
     
@@ -11893,7 +11895,7 @@ int main() {
 
                 if( ! nextPlayer->isTutorial )
                 recordLineage( nextPlayer->email, 
-                               nextPlayer->lineageEveID,
+                               nextPlayer->originalBirthPos,
                                yearsLived, 
                                // count true murder victims here, not suicide
                                ( killerID > 0 && killerID != nextPlayer->id ),

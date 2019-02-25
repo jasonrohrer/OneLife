@@ -33,6 +33,7 @@ map.cpp \
 ../gameSource/folderCache.cpp \
 ../gameSource/SoundUsage.cpp \
 ../gameSource/objectMetadata.cpp \
+../gameSource/GridPos.cpp \
 ../commonSource/fractalNoise.cpp \
 kissdb.cpp \
 lineardb3.cpp \

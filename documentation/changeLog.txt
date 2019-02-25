@@ -16,6 +16,12 @@ Server Fixes:
 --Fixed server crash due to not checking player disconnected status in one spot
   before sending a message to their socket.
 
+--Lineage limit now applies to birth location instead of family line, to deal
+  with multi-family towns (or twin-Eve founded towns).  After living a
+  substantial life, cannot be born within 2000 tiles of that birth location
+  until enough time has been spent living in other areas.  Fixes #222
+
+
 
 
 Version 204    2019-February-22
