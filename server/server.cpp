@@ -11434,24 +11434,7 @@ int main() {
                                                     // bare-ground
                                                     // trans leaves nothing in
                                                     // our hand
-                                            
-                                                    // first, change what they
-                                                    // are holding to this 
-                                                    // newTarget
-                                                    handleHoldingChange( 
-                                                        nextPlayer,
-                                                        r->newTarget );
-                                            
-                                                    // this will handle 
-                                                    // container
-                                                    // size changes, etc.
-                                                    // This is what should 
-                                                    // end up
-                                                    // on the ground
-                                                    // as the result
-                                                    // of the use-on-bare-ground
-                                                    // transition.
-
+                                                    
                                                     // now swap it with the 
                                                     // non-permanent object
                                                     // on the ground.
@@ -11538,31 +11521,6 @@ int main() {
 
                                             // swap what we're holding for
                                             // target
-
-                                            // "set-down" type bare ground 
-                                            // trans exists for what we're 
-                                            // holding?
-                                            TransRecord
-                                                *r = getPTrans( 
-                                                    nextPlayer->holdingID, 
-                                                    -1 );
-
-                                            if( r != NULL && 
-                                                r->newActor == 0 &&
-                                                r->newTarget > 0 ) {
-                                            
-                                                // only applies if the 
-                                                // bare-ground
-                                                // trans leaves nothing in
-                                                // our hand
-                                            
-                                                // first, change what they
-                                                // are holding to this 
-                                                // newTarget
-                                                handleHoldingChange( 
-                                                    nextPlayer,
-                                                    r->newTarget );
-                                                }
                                             
                                             int oldHeld = 
                                                 nextPlayer->holdingID;

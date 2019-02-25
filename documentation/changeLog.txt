@@ -21,6 +21,10 @@ Server Fixes:
   substantial life, cannot be born within 2000 tiles of that birth location
   until enough time has been spent living in other areas.  Fixes #222
 
+--Removed some redundant code triggered when a permanent held object is swapped
+  with something on the ground.  This code was causing an extra transition step
+  to happen, making a horse's lasso disappear, for example.  Fixes #233
+
 
 
 
