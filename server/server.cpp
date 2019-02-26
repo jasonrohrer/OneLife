@@ -6973,6 +6973,62 @@ void setNoLongerDying( LiveObject *inPlayer,
 
 
 
+static void checkSickStaggerTime( LiveObject *inPlayer ) {
+    ObjectRecord *heldObj = NULL;
+    
+    if( inPlayer->holdingID > 0 ) {
+        heldObj = getObject( inPlayer->holdingID );
+        }
+    else {
+        return;
+        }
+
+    
+    char isSick = false;
+    
+    if( strstr(
+            heldObj->
+            description,
+            "sick" ) != NULL ) {
+        isSick = true;
+        
+        // sicknesses override basic death-stagger
+        // time.  The person can live forever
+        // if they are taken care of until
+        // the sickness passes
+        
+        int staggerTime = 
+            SettingsManager::getIntSetting(
+                "deathStaggerTime", 20 );
+        
+        double currentTime = 
+            Time::getCurrentTime();
+        
+        // 10x base stagger time should
+        // give them enough time to either heal
+        // from the disease or die from its
+        // side-effects
+        inPlayer->dyingETA = 
+            currentTime + 10 * staggerTime;
+        }
+    
+    if( isSick ) {
+        // what they have will heal on its own 
+        // with time.  Sickness, not wound.
+        
+        // death source is sickness, not
+        // source
+        inPlayer->deathSourceID = 
+            inPlayer->holdingID;
+        
+        setDeathReason( inPlayer, 
+                        "succumbed",
+                        inPlayer->holdingID );
+        }
+    }
+
+
+
 typedef struct FlightDest {
         int playerID;
         GridPos destPos;
@@ -8389,48 +8445,9 @@ int main() {
                             
                                 setFreshEtaDecayForHeld( nextPlayer );
                             
-                                char isSick = false;
-                            
-                                if( strstr(
-                                        getObject( nextPlayer->holdingID )->
-                                        description,
-                                        "sick" ) != NULL ) {
-                                    isSick = true;
-
-                                    // sicknesses override basic death-stagger
-                                    // time.  The person can live forever
-                                    // if they are taken care of until
-                                    // the sickness passes
+                                checkSickStaggerTime( nextPlayer );
                                 
-                                    int staggerTime = 
-                                        SettingsManager::getIntSetting(
-                                            "deathStaggerTime", 20 );
                                 
-                                    double currentTime = 
-                                        Time::getCurrentTime();
-
-                                    // 10x base stagger time should
-                                    // give them enough time to either heal
-                                    // from the disease or die from its
-                                    // side-effects
-                                    nextPlayer->dyingETA = 
-                                        currentTime + 10 * staggerTime;
-                                    }
-
-                                if( isSick ) {
-                                    // what they have will heal on its own 
-                                    // with time.  Sickness, not wound.
-                                
-                                    // death source is sickness, not
-                                    // source
-                                    nextPlayer->deathSourceID = 
-                                        nextPlayer->holdingID;
-                                
-                                    setDeathReason( nextPlayer, 
-                                                    "succumbed",
-                                                    nextPlayer->holdingID );
-                                    }
-                            
                                 nextPlayer->holdingWound = true;
                             
                                 ForcedEffects e = 
@@ -9753,7 +9770,9 @@ int main() {
                                                     hitPlayer->fever = e.fever;
                                                     }
 
-
+                                                checkSickStaggerTime( 
+                                                    hitPlayer );
+                                                
                                                 playerIndicesToSendUpdatesAbout.
                                                     push_back( 
                                                         getLiveObjectIndex( 

@@ -27,6 +27,7 @@ Server Fixes:
 
 --Fixed incorrect variable declaration location in lineage server.
 
+--Compounded snowball splats are no longer deadly.  Fixes #235
 
 
 
