@@ -5749,7 +5749,9 @@ static char addHeldToContainer( LiveObject *inPlayer,
         if( inSwap &&  numInNow > 1 ) {
             // take what's on bottom of container, but only if it's different
             // from what's in our hand
-
+            // AND we are old enough to take it
+            double playerAge = computeAge( inPlayer );
+            
             // if we find a same object on bottom, keep going up until
             // we find a non-same one to swap
             for( int botInd = 0; botInd < numInNow - 1; botInd ++ ) {
@@ -5758,8 +5760,13 @@ static char addHeldToContainer( LiveObject *inPlayer,
 
                 int bottomItem = 
                     getContained( inContX, inContY, botInd, 0 );
-            
-                if( bottomItem == idToAdd ) {
+                
+                if( bottomItem > 0 &&
+                    getObject( bottomItem )->minPickupAge > playerAge ) {
+                    // too young to hold!
+                    same = true;
+                    }
+                else if( bottomItem == idToAdd ) {
                     if( bottomItem > 0 ) {
                         // not sub conts
                         same = true;
@@ -5855,6 +5862,28 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                 getNumContained( inContX, inContY );
                                 
             int toRemoveID = 0;
+            
+            double playerAge = computeAge( inPlayer );
+
+            
+            if( inSlotNumber < 0 ) {
+                inSlotNumber = numIn;
+                
+                // no slot specified
+                // find top-most object that they can actually pick up
+
+                while( inSlotNumber > 0 &&
+                       getObject( getContained( 
+                                      inContX, inContY,
+                                      inSlotNumber ) )->minPickupAge >
+                       playerAge )  {
+            
+                    inSlotNumber--;
+                    }
+                }
+            
+
+
                                 
             if( numIn > 0 ) {
                 toRemoveID = getContained( inContX, inContY, inSlotNumber );
@@ -6083,9 +6112,23 @@ static void removeFromClothingContainerToHold( LiveObject *inPlayer,
         inPlayer->clothingContained[inC].size();
 
     int slotToRemove = inI;
+
+    double playerAge = computeAge( inPlayer );
+
                                 
     if( slotToRemove < 0 ) {
         slotToRemove = oldNumContained - 1;
+
+        // no slot specified
+        // find top-most object that they can actually pick up
+
+        while( slotToRemove > 0 &&
+               getObject( inPlayer->clothingContained[inC].
+                          getElementDirect( slotToRemove ) )->minPickupAge >
+               playerAge ) {
+            
+            slotToRemove --;
+            }
         }
                                 
     int toRemoveID = -1;
@@ -6103,8 +6146,7 @@ static void removeFromClothingContainerToHold( LiveObject *inPlayer,
         oldNumContained > slotToRemove &&
         slotToRemove >= 0 &&
         // old enough to handle it
-        getObject( toRemoveID )->minPickupAge <= 
-        computeAge( inPlayer ) ) {
+        getObject( toRemoveID )->minPickupAge <= playerAge ) {
                                     
 
         inPlayer->holdingID = 
@@ -11386,20 +11428,30 @@ int main() {
                                     if( nextPlayer->holdingID == 0 ) {
                                         // add to top worked
 
+                                        double playerAge = 
+                                            computeAge( nextPlayer );
+                                        
                                         // now take off bottom to hold
                                         // but keep looking to find something
                                         // different than what we were
                                         // holding before
+                                        // AND that we are old enough to pick
+                                        // up
                                         for( int s=0; 
                                              s < nextPlayer->
                                                  clothingContained[m.c].size() 
                                                  - 1;
                                              s++ ) {
                                             
-                                            if( nextPlayer->
-                                                 clothingContained[m.c].
-                                                getElementDirect( s ) != 
-                                                oldHeld ) {
+                                            int otherID =
+                                                nextPlayer->
+                                                clothingContained[m.c].
+                                                getElementDirect( s );
+                                            
+                                            if( otherID != 
+                                                oldHeld &&
+                                                getObject( otherID )->
+                                                minPickupAge <= playerAge ) {
                                                 
                                               removeFromClothingContainerToHold(
                                                     nextPlayer, m.c, s );

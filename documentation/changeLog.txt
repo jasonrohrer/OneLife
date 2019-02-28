@@ -29,6 +29,10 @@ Server Fixes:
 
 --Compounded snowball splats are no longer deadly.  Fixes #235
 
+--Container removes and swaps now skips any item that player is not old enough
+  to hold (knife on top of backpack no longer blocks access to other items).
+  Fixes #238
+
 
 
 Version 204    2019-February-22
