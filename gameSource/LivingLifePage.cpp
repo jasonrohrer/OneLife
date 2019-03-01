@@ -18764,7 +18764,16 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     
                     TransRecord *bareHandTrans = getTrans( 0, destID );
                     
-                    if( bareHandTrans != NULL ) {
+                    if( bareHandTrans != NULL &&
+                        bareHandTrans->newTarget != 0 ) {
+                        
+                        // bare hand trans exists, and it's NOT just a
+                        // direct "pickup" trans that should always be applied
+                        // (from target to new actor)
+                        // The bare hand trans leaves something on the ground
+                        // meaning that it is transformational (removing
+                        // a plate from a stack, tweaking something, etc.)
+
                         if( modClick ) {
                             action = "USE";
                             }

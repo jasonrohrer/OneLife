@@ -9,6 +9,11 @@ Version 206    ???
 
 --Client and editor no longer fight each other over bin_cache version numbers.
 
+--Fixed so client left/right mouse differentation for pick-up vs. modify (like
+  for stacks of bowls) only kicks in if the modify transition is a true
+  modification, leaving something on the ground, and not just a pick-up change.
+  This, in turn, fixes picking up piglets so that they go into their held
+  state.  Fixes #240
 
 
 Server Fixes:
