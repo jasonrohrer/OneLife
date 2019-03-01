@@ -12940,7 +12940,7 @@ int main() {
                     
 
                     if( decrementedPlayer != NULL &&
-                        decrementedPlayer->foodStore <= 0 ) {
+                        decrementedPlayer->foodStore < 0 ) {
                         // player has died
                         
                         // break the connection with them

@@ -16,6 +16,8 @@ Version 206    ???
   state.  Fixes #240
 
 
+
+
 Server Fixes:
 
 --Fixed server crash due to not checking player disconnected status in one spot
@@ -37,6 +39,12 @@ Server Fixes:
 --Container removes and swaps now skips any item that player is not old enough
   to hold (knife on top of backpack no longer blocks access to other items).
   Fixes #238
+
+--Now you don't die until your food goes negative, making empty-hunger-bar
+  behavior consistent when you starve down to 0 or nurse down to 0.  When your
+  hunger bar shows 0, you still have one pip's worth of time before death.  You
+  only die when it is decremented FROM 0.  This also gives you a bit of extra
+  warning time, generally.  Fixes #241
 
 
 
