@@ -15,6 +15,10 @@ Version 206    ???
   This, in turn, fixes picking up piglets so that they go into their held
   state.  Fixes #240
 
+--Made walking-on-road behavior consistent if blocking object intersects.  Now
+  you always stop, instead of routing around in a poorly defined way and
+  changing speed.  Fixes #242
+
 
 
 

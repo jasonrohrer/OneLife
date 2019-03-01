@@ -16674,7 +16674,11 @@ char LivingLifePage::isSameFloor( int inFloor, GridPos inFloorPos,
                             
     int nextMapI = getMapIndex( nextStep.x, nextStep.y );
                             
-    if( nextMapI != -1 && 
+    if( nextMapI != -1 
+        && 
+        ( mMap[ nextMapI ] <= 0 ||
+          ! getObject( mMap[ nextMapI ] )->blocksWalking )
+        &&
         mMapFloors[ nextMapI ] == inFloor ) {
         return true;
         }
