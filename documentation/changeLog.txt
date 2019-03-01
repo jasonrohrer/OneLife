@@ -19,6 +19,7 @@ Version 206    ???
   you always stop, instead of routing around in a poorly defined way and
   changing speed.  Fixes #242
 
+--VOG.
 
 
 

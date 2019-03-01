@@ -85,6 +85,10 @@ extern int userTwinCount;
 
 extern char userReconnect;
 
+static char vogMode = false;
+static doublePair vogPos = { 0, 0 };
+
+    
 
 extern float musicLoudness;
 
@@ -840,6 +844,7 @@ typedef enum messageType {
     GRAVE,
     GRAVE_MOVE,
     FLIGHT_DEST,
+    VOG_UPDATE,
     FORCED_SHUTDOWN,
     PONG,
     COMPRESSED_MESSAGE,
@@ -948,6 +953,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "FD" ) == 0 ) {
         returnValue = FLIGHT_DEST;
+        }
+    else if( strcmp( copy, "VU" ) == 0 ) {
+        returnValue = VOG_UPDATE;
         }
     else if( strcmp( copy, "PONG" ) == 0 ) {
         returnValue = PONG;
@@ -10691,6 +10699,27 @@ void LivingLifePage::step() {
                     }
                 }            
             }
+        else if( type == VOG_UPDATE ) {
+            int posX, posY;
+            
+            int numRead = sscanf( message, "VU\n%d %d",
+                                  &posX, &posY );
+            if( numRead == 2 ) {
+                vogPos.x = posX;
+                vogPos.y = posY;
+
+                // jump camp instantly
+                lastScreenViewCenter.x = posX * CELL_D;
+                lastScreenViewCenter.y = posY * CELL_D;
+                setViewCenterPosition( lastScreenViewCenter.x,
+                                       lastScreenViewCenter.y );
+
+                mCurMouseOverCellFade = 1.0;
+                
+                mCurMouseOverCell.x = vogPos.x - mMapOffsetX + mMapD / 2;
+                mCurMouseOverCell.y = vogPos.y - mMapOffsetY + mMapD / 2;
+                }
+            }
         else if( type == MAP_CHUNK ) {
             
             int sizeX = 0;
@@ -15496,6 +15525,10 @@ void LivingLifePage::step() {
             // eve has a larger say limit
             sayCap = 30;
             }
+        if( vogMode ) {
+            sayCap = 200;
+            }
+        
         char *currentText = mSayField.getText();
         
         if( strlen( currentText ) > 0 && currentText[0] == '/' ) {
@@ -15522,12 +15555,22 @@ void LivingLifePage::step() {
                 }
             }
         
-
-        doublePair screenTargetPos = 
-            mult( cameraFollowsObject->currentPos, CELL_D );
+        doublePair targetObjectPos = cameraFollowsObject->currentPos;
+        
+        if( vogMode ) {
+            targetObjectPos = vogPos;
+            }
         
 
-        if( cameraFollowsObject->currentPos.x != cameraFollowsObject->xd
+
+        doublePair screenTargetPos = 
+            mult( targetObjectPos, CELL_D );
+        
+        if( vogMode ) {
+            // don't adjust camera
+            }
+        else if( 
+            cameraFollowsObject->currentPos.x != cameraFollowsObject->xd
             ||
             cameraFollowsObject->currentPos.y != cameraFollowsObject->yd ) {
             
@@ -15617,14 +15660,16 @@ void LivingLifePage::step() {
             
             }
 
-
-        screenTargetPos.x = 
-            CELL_D * cameraFollowsObject->currentPos.x - 
-            screenCenterPlayerOffsetX;
-        
-        screenTargetPos.y = 
-            CELL_D * cameraFollowsObject->currentPos.y - 
-            screenCenterPlayerOffsetY;
+        if( ! vogMode ) {
+            
+            screenTargetPos.x = 
+                CELL_D * targetObjectPos.x - 
+                screenCenterPlayerOffsetX;
+            
+            screenTargetPos.y = 
+                CELL_D * targetObjectPos.y - 
+                screenCenterPlayerOffsetY;
+            }
         
 
         // whole pixels
@@ -16733,6 +16778,8 @@ void LivingLifePage::makeActive( char inFresh ) {
 
     mPlayerInFlight = false;
     
+    vogMode = false;
+    
     showFPS = false;
     showNet = false;
     showPing = false;
@@ -17719,6 +17766,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
     if( mServerSocket == -1 ) {
         // dead
+        return;
+        }
+    
+    if( vogMode ) {
         return;
         }
 
@@ -19163,6 +19214,36 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             getOurLiveObject()->age -= 1;
             break;
         */
+        case 'V':
+            if( ! mSayField.isFocused() &&
+                serverSocketConnected &&
+                SettingsManager::getIntSetting( "vogModeOn", 0 ) ) {
+                
+                if( ! vogMode ) {
+                    sendToServerSocket( (char*)"VOGS 0 0#" );
+                    vogMode = true;
+                    vogPos = getOurLiveObject()->currentPos;
+                    }
+                else {
+                    sendToServerSocket( (char*)"VOGX 0 0#" );
+                    vogMode = false;
+                    }
+                }
+            break;
+        case 'N':
+            if( ! mSayField.isFocused() &&
+                serverSocketConnected &&
+                vogMode ) {
+                sendToServerSocket( (char*)"VOGP 0 0#" );
+                }
+            break;
+        case 'M':
+            if( ! mSayField.isFocused() &&
+                serverSocketConnected &&
+                vogMode ) {
+                sendToServerSocket( (char*)"VOGN 0 0#" );
+                }
+            break;
         case 'S':
             if( savingSpeechEnabled && 
                 ! mSayField.isFocused() ) {
@@ -19443,9 +19524,16 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                         }
                     else {
                         // send text to server
+
+                        const char *sayCommand = "SAY";
+                        
+                        if( vogMode ) {
+                            sayCommand = "VOGT";
+                            }
+                        
                         char *message = 
-                            autoSprintf( "SAY 0 0 %s#",
-                                         typedText );
+                            autoSprintf( "%s 0 0 %s#",
+                                         sayCommand, typedText );
                         sendToServerSocket( message );
                         delete [] message;
                         }
@@ -19486,7 +19574,47 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
         return;
         }
 
-    if( inKeyCode == MG_KEY_UP ||
+    if( vogMode && ! mSayField.isFocused() ) {
+        GridPos posOffset = { 0, 0 };
+        
+        int jump = 1;
+        
+        if( isCommandKeyDown() ) {
+            jump *= 2;
+            }
+        if( isShiftKeyDown() ) {
+            jump *= 5;
+            }
+
+        if( inKeyCode == MG_KEY_UP ) {
+            posOffset.y = jump;
+            }
+        else if( inKeyCode == MG_KEY_DOWN ) {
+            posOffset.y = -jump;
+            }
+        else if( inKeyCode == MG_KEY_LEFT ) {
+            posOffset.x = -jump;
+            }
+        else if( inKeyCode == MG_KEY_RIGHT ) {
+            posOffset.x = jump;
+            }
+
+        if( posOffset.x != 0 || posOffset.y != 0 ) {
+            
+            GridPos newPos;
+            newPos.x = vogPos.x;
+            newPos.y = vogPos.y;
+            
+            newPos.x += posOffset.x;
+            newPos.y += posOffset.y;
+            
+            char *message = autoSprintf( "VOGM %d %d#",
+                                         newPos.x, newPos.y );
+            sendToServerSocket( message );
+            delete [] message;
+            }
+        }
+    else if( inKeyCode == MG_KEY_UP ||
         inKeyCode == MG_KEY_DOWN ) {
         if( ! mSayField.isFocused() && inKeyCode == MG_KEY_UP ) {
             if( mSentChatPhrases.size() > 0 ) {

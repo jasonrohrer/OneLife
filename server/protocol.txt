@@ -163,6 +163,8 @@ CURSE_SCORE_CHANGE (CS)
 
 FLIGHT_DEST (FD)
 
+VOG_UPDATE (VU)
+
 FORCED_SHUTDOWN (SD)
 
 FRAME (FM)
@@ -427,6 +429,18 @@ LS
 -342 3847 HELP ME
 #
 
+
+
+VU
+x y
+#
+
+Example:
+
+
+VU
+301 14
+#
 
 
 
@@ -744,6 +758,13 @@ EMOT x y e#
 DIE x y#
 FORCE x y#
 PING x y unique_id#
+VOGS x y#
+VOGN x y#
+VOGP x y#
+VOGM x y#
+VOGI x y id#
+VOGT x y text# 
+VOGX x y#
 
 
 KA   is a keep-alive message used to keep the connection alive when the client

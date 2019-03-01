@@ -491,7 +491,11 @@ typedef struct LiveObject {
         
 
         char holdingFlightObject;
-
+        
+        char vogMode;
+        GridPos preVogPos;
+        int vogJumpIndex;
+        
     } LiveObject;
 
 
@@ -1286,6 +1290,13 @@ typedef enum messageType {
     TRIGGER,
     BUG,
     PING,
+    VOGS,
+    VOGN,
+    VOGP,
+    VOGM,
+    VOGI,
+    VOGT,
+    VOGX,
     UNKNOWN
     } messageType;
 
@@ -1620,6 +1631,51 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         if( numRead != 4 ) {
             m.type = UNKNOWN;
             }
+        }
+    else if( strcmp( nameBuffer, "VOGS" ) == 0 ) {
+        m.type = VOGS;
+        }
+    else if( strcmp( nameBuffer, "VOGN" ) == 0 ) {
+        m.type = VOGN;
+        }
+    else if( strcmp( nameBuffer, "VOGP" ) == 0 ) {
+        m.type = VOGP;
+        }
+    else if( strcmp( nameBuffer, "VOGM" ) == 0 ) {
+        m.type = VOGM;
+        }
+    else if( strcmp( nameBuffer, "VOGI" ) == 0 ) {
+        m.type = VOGI;
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.id ) );
+        
+        if( numRead != 4 ) {
+            m.id = -1;
+            }
+        }
+    else if( strcmp( nameBuffer, "VOGT" ) == 0 ) {
+        m.type = VOGT;
+
+        // look after second space
+        char *firstSpace = strstr( inMessage, " " );
+        
+        if( firstSpace != NULL ) {
+            
+            char *secondSpace = strstr( &( firstSpace[1] ), " " );
+            
+            if( secondSpace != NULL ) {
+
+                char *thirdSpace = strstr( &( secondSpace[1] ), " " );
+                
+                if( thirdSpace != NULL ) {
+                    m.saidText = stringDuplicate( &( thirdSpace[1] ) );
+                    }
+                }
+            }
+        }
+    else if( strcmp( nameBuffer, "VOGX" ) == 0 ) {
+        m.type = VOGX;
         }
     else {
         m.type = UNKNOWN;
@@ -5265,6 +5321,9 @@ int processLoggedInPlayer( Socket *inSock,
     
     newObject.holdingFlightObject = false;
 
+    newObject.vogMode = false;
+    newObject.vogJumpIndex = 0;
+    
                 
     for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
         newObject.heatMap[i] = 0;
@@ -8689,6 +8748,163 @@ int main() {
                     if( areTriggersEnabled() ) {
                         trigger( m.trigger );
                         }
+                    }
+                else if( m.type == VOGS ) {
+                    int allow = 
+                        SettingsManager::getIntSetting( "allowVOGMode", 0 );
+
+                    if( allow ) {
+                        
+                        SimpleVector<char *> *list = 
+                            SettingsManager::getSetting( 
+                                "vogAllowAccounts" );
+                        
+                        allow = false;
+                        
+                        for( int i=0; i<list->size(); i++ ) {
+                            if( strcmp( nextPlayer->email,
+                                        list->getElementDirect( i ) ) == 0 ) {
+                                
+                                allow = true;
+                                break;
+                                }
+                            }
+                        
+                        list->deallocateStringElements();
+                        delete list;
+                        }
+                    
+
+                    if( allow && nextPlayer->connected ) {
+                        nextPlayer->vogMode = true;
+                        nextPlayer->preVogPos = getPlayerPos( nextPlayer );
+                        nextPlayer->vogJumpIndex = 0;
+                        }
+                    }
+                else if( m.type == VOGN ) {
+                    if( nextPlayer->vogMode &&
+                        players.size() > 1 ) {
+                        
+                        nextPlayer->vogJumpIndex++;
+                        if( nextPlayer->vogJumpIndex == i ) {
+                            nextPlayer->vogJumpIndex++;
+                            }
+                        if( nextPlayer->vogJumpIndex >= players.size() ) {
+                            nextPlayer->vogJumpIndex = 0;
+                            }
+                        if( nextPlayer->vogJumpIndex == i ) {
+                            nextPlayer->vogJumpIndex++;
+                            }
+                        
+                        LiveObject *otherPlayer = 
+                            players.getElement( 
+                                nextPlayer->vogJumpIndex );
+                        
+                        GridPos o = getPlayerPos( otherPlayer );
+                        
+                        nextPlayer->xd = o.x;
+                        nextPlayer->yd = o.y;
+
+                        nextPlayer->xs = o.x;
+                        nextPlayer->ys = o.y;
+
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        }
+                    }
+                else if( m.type == VOGP ) {
+                    if( nextPlayer->vogMode &&
+                        players.size() > 1 ) {
+
+                        nextPlayer->vogJumpIndex--;
+
+                        if( nextPlayer->vogJumpIndex == i ) {
+                            nextPlayer->vogJumpIndex--;
+                            }
+                        if( nextPlayer->vogJumpIndex < 0 ) {
+                            nextPlayer->vogJumpIndex = players.size() - 1;
+                            }
+                        if( nextPlayer->vogJumpIndex == i ) {
+                            nextPlayer->vogJumpIndex--;
+                            }
+
+                        LiveObject *otherPlayer = 
+                            players.getElement( 
+                                nextPlayer->vogJumpIndex );
+                        
+                        GridPos o = getPlayerPos( otherPlayer );
+
+                        nextPlayer->xd = o.x;
+                        nextPlayer->yd = o.y;
+
+                        nextPlayer->xs = o.x;
+                        nextPlayer->ys = o.y;
+
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        }
+                    }
+                else if( m.type == VOGM ) {
+                    if( nextPlayer->vogMode ) {
+                        nextPlayer->xd = m.x;
+                        nextPlayer->yd = m.y;
+                        
+                        nextPlayer->xs = m.x;
+                        nextPlayer->ys = m.y;
+                        
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        }
+                    }
+                else if( m.type == VOGI ) {
+                    if( nextPlayer->vogMode ) {
+                        if( m.id > 0 &&
+                            getObject( m.id ) != NULL ) {
+                            
+                            setMapObject( m.x, m.y, m.id );
+                            }
+                        }
+                    }
+                else if( m.type == VOGT && m.saidText != NULL ) {
+                    if( nextPlayer->vogMode ) {
+                        
+                        newLocationSpeech.push_back( 
+                            stringDuplicate( m.saidText ) );
+                        GridPos p = getPlayerPos( nextPlayer );
+                        
+                        ChangePosition cp;
+                        cp.x = p.x;
+                        cp.y = p.y;
+                        cp.global = false;
+
+                        newLocationSpeechPos.push_back( cp );
+                        }
+                    }
+                else if( m.type == VOGX ) {
+                    if( nextPlayer->vogMode ) {
+                        nextPlayer->vogMode = false;
+                        
+                        GridPos p = nextPlayer->preVogPos;
+                        
+                        nextPlayer->xd = p.x;
+                        nextPlayer->yd = p.y;
+                        
+                        nextPlayer->xs = p.x;
+                        nextPlayer->ys = p.y;
+                        
+                        // send them one last VU message to move them 
+                        // back instantly
+                        char *message = autoSprintf( "VU\n%d %d\n#", 
+                                                     nextPlayer->xs,
+                                                     nextPlayer->ys );
+                        sendMessageToPlayer( nextPlayer, message,
+                                             strlen( message ) );
+                        
+                        delete [] message;
+                        
+                        nextPlayer->posForced = true;
+                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        }
+                    }
+                else if( nextPlayer->vogMode ) {
+                    // ignore non-VOG messages from them
                     }
                 else if( m.type == FORCE ) {
                     if( m.x == nextPlayer->xd &&
@@ -12901,7 +13117,10 @@ int main() {
                     }
                 
                 // check if we need to decrement their food
-                if( Time::getCurrentTime() > 
+                double curTime = Time::getCurrentTime();
+                
+                if( ! nextPlayer->vogMode &&
+                    curTime > 
                     nextPlayer->foodDecrementETASeconds ) {
                     
                     // only if femail of fertile age
@@ -12934,7 +13153,7 @@ int main() {
                     // duration of holding
                     
                     // only update the time of the fed player
-                    nextPlayer->foodDecrementETASeconds +=
+                    nextPlayer->foodDecrementETASeconds = curTime +
                         computeFoodDecrementTimeSeconds( nextPlayer );
 
                     
@@ -13214,6 +13433,24 @@ int main() {
                 continue;
                 }
             
+            // VOG players only receive updates about themselves
+            // handle this here, to take them out of circulation
+            
+            if( nextPlayer->vogMode ) {
+
+                char *message = autoSprintf( "VU\n%d %d\n#", 
+                                             nextPlayer->xs,
+                                             nextPlayer->ys );
+                
+                sendMessageToPlayer( nextPlayer, message,
+                                     strlen( message ) );
+                delete [] message;
+
+                nextPlayer->updateSent = true;
+                continue;
+                }
+            
+
             // also force-recompute heat maps for players that are getting
             // updated
             // don't bother with this for now
