@@ -2908,6 +2908,18 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
     // so we shouldn't be waiting for them to ack
     inPlayer->waitingForForceResponse = false;
 
+
+    if( inPlayer->vogMode ) {    
+        inPlayer->vogMode = false;
+                        
+        GridPos p = inPlayer->preVogPos;
+        
+        inPlayer->xd = p.x;
+        inPlayer->yd = p.y;
+        
+        inPlayer->xs = p.x;
+        inPlayer->ys = p.y;
+        }
     
     
     if( inPlayer->sock != NULL ) {
@@ -8437,6 +8449,7 @@ int main() {
             
 
                 if( ! nextPlayer->heldByOther &&
+                    ! nextPlayer->vogMode &&
                     curOverID != 0 && 
                     ! isMapObjectInTransit( curPos.x, curPos.y ) &&
                     ! wasRecentlyDeadly( curPos ) ) {
