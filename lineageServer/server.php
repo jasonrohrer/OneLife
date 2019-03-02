@@ -6,6 +6,11 @@ global $ls_version;
 $ls_version = "1";
 
 
+// cache in each run
+global $lineageCache;
+$lineageCache = array();
+
+
 
 // edit settings.php to change server' settings
 include( "settings.php" );
@@ -1702,8 +1707,6 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
 
 
 
-// cache in each run
-$lineageCache = array();
 
 // gets array from $inFromID up to Eve, or limited by $inLimit steps
 function ls_getLineage( $inFromID, $inLimit ) {

@@ -66,6 +66,8 @@ SoundUsage.cpp \
 TwinPage.cpp \
 objectMetadata.cpp \
 emotion.cpp \
+Picker.cpp \
+PickableStatics.cpp \
 
 
 GAME_GRAPHICS = \

@@ -38,3 +38,8 @@ void freeBinFolderCache( BinFolderCache inCache );
 
 
 void clearAllBinCacheFiles( File *inFolder );
+
+
+
+// defaults to true
+void setAutoClearOldBinCacheFiles( char inAutoClear );
