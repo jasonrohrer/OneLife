@@ -5943,13 +5943,27 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                 // no slot specified
                 // find top-most object that they can actually pick up
 
+                int toRemoveID = getContained( 
+                    inContX, inContY,
+                    inSlotNumber );
+                
+                if( toRemoveID < 0 ) {
+                    toRemoveID *= -1;
+                    }
+                
                 while( inSlotNumber > 0 &&
-                       getObject( getContained( 
-                                      inContX, inContY,
-                                      inSlotNumber ) )->minPickupAge >
+                       getObject( toRemoveID )->minPickupAge >
                        playerAge )  {
             
                     inSlotNumber--;
+                    
+                    toRemoveID = getContained( 
+                        inContX, inContY,
+                        inSlotNumber );
+                
+                    if( toRemoveID < 0 ) {
+                        toRemoveID *= -1;
+                        }
                     }
                 }
             
