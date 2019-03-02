@@ -6,6 +6,9 @@
 extern int versionNumber;
 
 
+static char autoClear = true;
+
+
 
 BinFolderCache initBinFolderCache( const char *inFolderName,
                                    const char *inPattern,
@@ -42,8 +45,17 @@ BinFolderCache initBinFolderCache( const char *inFolderName,
             strstr( name, "bin_" ) != NULL &&
             strstr( name, "cache.fcz" ) != NULL ) {
             
-            printf( "Removing outdated bin_cache file:  %s\n", name );
-            childFiles[i]->remove();
+            if( autoClear ) {
+                printf( "Removing outdated bin_cache file:  %s\n", name );
+                childFiles[i]->remove();
+                }
+            else {
+                // different bin cache file discovered than
+                // what we were expecting based on version number
+                // use it!
+                delete [] curCacheName;
+                curCacheName = stringDuplicate( name );
+                }
             }
         
         delete [] name;
@@ -249,5 +261,14 @@ void clearAllBinCacheFiles( File *inFolder ) {
         }
     delete [] childFiles;
     }
+
+
+
+
+void setAutoClearOldBinCacheFiles( char inAutoClear ) {
+    autoClear = inAutoClear;
+    }
+
+
 
 

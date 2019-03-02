@@ -7,4 +7,7 @@ typedef struct GridPos {
     } GridPos;
 
 
+double distance( GridPos inA, GridPos inB );
+
+
 #endif

@@ -4,6 +4,58 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 206    2019-March-1
+
+--Game client now prints version number on startup.
+
+--Client and editor no longer fight each other over bin_cache version numbers.
+
+--Fixed so client left/right mouse differentation for pick-up vs. modify (like
+  for stacks of bowls) only kicks in if the modify transition is a true
+  modification, leaving something on the ground, and not just a pick-up change.
+  This, in turn, fixes picking up piglets so that they go into their held
+  state.  Fixes #240
+
+--Made walking-on-road behavior consistent if blocking object intersects.  Now
+  you always stop, instead of routing around in a poorly defined way and
+  changing speed.  Fixes #242
+
+--VOG.
+
+
+
+
+Server Fixes:
+
+--Fixed server crash due to not checking player disconnected status in one spot
+  before sending a message to their socket.
+
+--Lineage limit now applies to birth location instead of family line, to deal
+  with multi-family towns (or twin-Eve founded towns).  After living a
+  substantial life, cannot be born within 2000 tiles of that birth location
+  until enough time has been spent living in other areas.  Fixes #222
+
+--Removed some redundant code triggered when a permanent held object is swapped
+  with something on the ground.  This code was causing an extra transition step
+  to happen, making a horse's lasso disappear, for example.  Fixes #233
+
+--Fixed incorrect variable declaration location in lineage server.
+
+--Compounded snowball splats are no longer deadly.  Fixes #235
+
+--Container removes and swaps now skips any item that player is not old enough
+  to hold (knife on top of backpack no longer blocks access to other items).
+  Fixes #238
+
+--Now you don't die until your food goes negative, making empty-hunger-bar
+  behavior consistent when you starve down to 0 or nurse down to 0.  When your
+  hunger bar shows 0, you still have one pip's worth of time before death.  You
+  only die when it is decremented FROM 0.  This also gives you a bit of extra
+  warning time, generally.  Fixes #241
+
+
+
+
 Version 204    2019-February-22
 
 --Oh jeez... gotta fopen files in binary mode on Windows.

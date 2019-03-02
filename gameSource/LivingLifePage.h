@@ -14,6 +14,8 @@
 
 #include "GamePage.h"
 
+#include "Picker.h"
+
 
 #include "pathFind.h"
 
@@ -392,7 +394,7 @@ typedef struct ExtraMapObject {
 
 
 
-class LivingLifePage : public GamePage {
+class LivingLifePage : public GamePage, public ActionListener {
         
     public:
 
@@ -444,6 +446,9 @@ class LivingLifePage : public GamePage {
             return mRequiredVersion;
             }
 
+
+        virtual void actionPerformed( GUIComponent *inTarget );
+        
 
     protected:
 
@@ -884,6 +889,7 @@ class LivingLifePage : public GamePage {
 
         char mPlayerInFlight;
 
+        Picker mObjectPicker;
         
         // FOVMOD NOTE:  Change 1/1 - Take these changes during the merge process
         void changeHUDFOV(float newScale = 1.0f);
