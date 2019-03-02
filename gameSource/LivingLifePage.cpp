@@ -19242,6 +19242,14 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                     vogMode = true;
                     vogPos = getOurLiveObject()->currentPos;
                     vogPickerOn = false;
+                    mObjectPicker.setPosition( vogPos.x * CELL_D + 510,
+                                               vogPos.y * CELL_D + 90 );
+                    
+                    // jump camp instantly
+                    lastScreenViewCenter.x = vogPos.x * CELL_D;
+                    lastScreenViewCenter.y = vogPos.y * CELL_D;
+                    setViewCenterPosition( lastScreenViewCenter.x,
+                                           lastScreenViewCenter.y );
                     }
                 else {
                     sendToServerSocket( (char*)"VOGX 0 0#" );
