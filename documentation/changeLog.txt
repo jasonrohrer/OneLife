@@ -3,7 +3,8 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 206    ???
+
+Version 206    2019-March-1
 
 --Game client now prints version number on startup.
 
@@ -20,6 +21,7 @@ Version 206    ???
   changing speed.  Fixes #242
 
 --VOG.
+
 
 
 
@@ -50,6 +52,7 @@ Server Fixes:
   hunger bar shows 0, you still have one pip's worth of time before death.  You
   only die when it is decremented FROM 0.  This also gives you a bit of extra
   warning time, generally.  Fixes #241
+
 
 
 
