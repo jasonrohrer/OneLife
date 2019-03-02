@@ -85,7 +85,10 @@ class PageComponent : public GUIComponent {
         
         // add for default event handling
         void addComponent( PageComponent *inComponent );
+        
+        void removeComponent( PageComponent *inComponent );
 
+        
         // default implementations pass tool tip up to parent
 
 

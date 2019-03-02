@@ -45,6 +45,13 @@
 #include <stdlib.h>//#include <math.h>
 
 
+#define OHOL_NON_EDITOR 1
+#include "ObjectPickable.h"
+
+static ObjectPickable objectPickable;
+
+
+
 #define MAP_D 64
 #define MAP_NUM_CELLS 4096
 
@@ -87,6 +94,8 @@ extern char userReconnect;
 
 static char vogMode = false;
 static doublePair vogPos = { 0, 0 };
+
+static char vogPickerOn = false;
 
     
 
@@ -1978,7 +1987,8 @@ LivingLifePage::LivingLifePage()
           mDeathReason( NULL ),
           mShowHighlights( true ),
           mUsingSteam( false ),
-          mZKeyDown( false ) {
+          mZKeyDown( false ),
+          mObjectPicker( &objectPickable, +510, 90 ) {
 
 
     if( SettingsManager::getIntSetting( "useSteamUpdate", 0 ) ) {
@@ -8050,7 +8060,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
             drawMessage( "bugMessage2", messagePos );
             }
         }
+
     
+    if( vogMode ) {
+        // draw again, so we can see picker
+        PageComponent::base_draw( inViewCenter, inViewSize );
+        }
     }
 
 
@@ -10707,6 +10722,9 @@ void LivingLifePage::step() {
             if( numRead == 2 ) {
                 vogPos.x = posX;
                 vogPos.y = posY;
+
+                mObjectPicker.setPosition( vogPos.x * CELL_D + 510,
+                                           vogPos.y * CELL_D + 90 );
 
                 // jump camp instantly
                 lastScreenViewCenter.x = posX * CELL_D;
@@ -19223,11 +19241,32 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                     sendToServerSocket( (char*)"VOGS 0 0#" );
                     vogMode = true;
                     vogPos = getOurLiveObject()->currentPos;
+                    vogPickerOn = false;
                     }
                 else {
                     sendToServerSocket( (char*)"VOGX 0 0#" );
                     vogMode = false;
+                    if( vogPickerOn ) {
+                        removeComponent( &mObjectPicker );
+                        mObjectPicker.removeActionListener( this );
+                        }
+                    vogPickerOn = false;
                     }
+                }
+            break;
+        case 'I':
+            if( ! mSayField.isFocused() &&
+                vogMode ) {
+                
+                if( ! vogPickerOn ) {
+                    addComponent( &mObjectPicker );
+                    mObjectPicker.addActionListener( this );
+                    }
+                else {
+                    removeComponent( &mObjectPicker );
+                    mObjectPicker.removeActionListener( this );    
+                    }
+                vogPickerOn = ! vogPickerOn;
                 }
             break;
         case 'N':
@@ -19375,12 +19414,12 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             break;
         case 13:  // enter
             // speak
-            if( ! mSayField.isFocused() ) {
+            if( ! TextField::isAnyFocused() ) {
                 
                 mSayField.setText( "" );
                 mSayField.focus();
                 }
-            else {
+            else if( mSayField.isFocused() ) {
                 char *typedText = mSayField.getText();
                 
                 
@@ -19558,6 +19597,10 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 
                 delete [] typedText;
                 }
+            else if( vogMode ) {
+                // return to cursor control
+                TextField::unfocusAll();
+                }
             break;
         }
     }
@@ -19574,7 +19617,7 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
         return;
         }
 
-    if( vogMode && ! mSayField.isFocused() ) {
+    if( vogMode && ! TextField::isAnyFocused() ) {
         GridPos posOffset = { 0, 0 };
         
         int jump = 1;
@@ -19743,7 +19786,28 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
 
     }
 
+
+
+
+void LivingLifePage::actionPerformed( GUIComponent *inTarget ) {
+    if( vogMode && inTarget == &mObjectPicker ) {
+
+        char rightClick;
+        int objectID = mObjectPicker.getSelectedObject( &rightClick );
         
+        if( objectID != -1 ) {
+            char *message = autoSprintf( "VOGI %d %d %d#",
+                                         lrint( vogPos.x ), 
+                                         lrint( vogPos.y ), objectID );
+            
+            sendToServerSocket( message );
+            
+            delete [] message;
+            }
+        }
+    }
+
+
 
 
 
