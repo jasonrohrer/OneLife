@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes:
+
+--Fixed crash when player clicks to remove default object from container.
+
+
+
 Version 206    2019-March-1
 
 --Game client now prints version number on startup.

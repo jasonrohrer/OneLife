@@ -5938,7 +5938,7 @@ char removeFromContainerToHold( LiveObject *inPlayer,
 
             
             if( inSlotNumber < 0 ) {
-                inSlotNumber = numIn;
+                inSlotNumber = numIn - 1;
                 
                 // no slot specified
                 // find top-most object that they can actually pick up
