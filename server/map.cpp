@@ -1026,7 +1026,9 @@ static int getBaseMap( int inX, int inY ) {
             return 0;
             }
         
-        lastCheckedBiome = biomes[pickedBiome];
+        if (lastCheckedBiome == -1) {
+            lastCheckedBiome = biomes[pickedBiome];
+            }
         
 
         
