@@ -8,6 +8,8 @@ Server Fixes:
 
 --Fixed crash when player clicks to remove default object from container.
 
+--No babies born to vog player.  Fixes #244
+
 
 
 Version 206    2019-March-1

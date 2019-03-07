@@ -4623,6 +4623,10 @@ int processLoggedInPlayer( Socket *inSock,
             continue;
             }
 
+        if( player->vogMode ) {
+            continue;
+            }
+
         if( isFertileAge( player ) ) {
             numOfAge ++;
             
