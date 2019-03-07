@@ -1217,7 +1217,7 @@ void EditorImportPage::pointerMove( float inX, float inY ) {
                 0.75 * mMovingOverlayScaleStart * 
                 ( pos.y - mMovingOverlayPointerStart.y ) / 100;
         
-            if( mOverlayScale.getLastElement() < 0 ) {
+            if( mOverlayScale.getLastElementDirect() < 0 ) {
                 *( mOverlayScale.getLastElement() ) = 0;
                 }
             }

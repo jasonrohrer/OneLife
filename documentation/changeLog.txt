@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 209     ????
+
+--Fixed overlay negative scaling check in EditorImportPage.  Thanks Chard.
+  Fixes #243
+
+
+
 Server Fixes:
 
 --Fixed crash when player clicks to remove default object from container.
@@ -12,6 +19,7 @@ Server Fixes:
 
 --Fixed so that lastCheckedBiome is correct, in certain cases where we call
   getBaseMap for neighboring cells too.  Thanks Chard.  Fixes #245.  Fixes #246
+
 
 
 
