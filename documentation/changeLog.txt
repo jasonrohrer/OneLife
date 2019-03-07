@@ -10,6 +10,9 @@ Server Fixes:
 
 --No babies born to vog player.  Fixes #244
 
+--Fixed so that lastCheckedBiome is correct, in certain cases where we call
+  getBaseMap for neighboring cells too.  Thanks Chard.  Fixes #245.  Fixes #246
+
 
 
 Version 206    2019-March-1

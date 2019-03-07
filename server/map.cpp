@@ -1026,7 +1026,14 @@ static int getBaseMap( int inX, int inY ) {
             return 0;
             }
         
-        lastCheckedBiome = biomes[pickedBiome];
+        // only override if it's not already set
+        // if it's already set, then we're calling getBaseMap for neighboring
+        // map cells (wide, tall, moving objects, etc.)
+        // getBaseMap is always called for our cell in question first
+        // before examining neighboring cells if needed
+        if( lastCheckedBiome == -1 ) {    
+            lastCheckedBiome = biomes[pickedBiome];
+            }
         
 
         
