@@ -14494,7 +14494,8 @@ int main() {
                         LiveObject *otherPlayer = 
                             players.getElement( j );
                         
-                        if( otherPlayer->error ) {
+                        if( otherPlayer->error ||
+                            otherPlayer->vogMode ) {
                             continue;
                             }
 
