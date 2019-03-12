@@ -11,6 +11,8 @@ Version 209     ????
 
 --scanf calls in soundBank and spriteBank were using .txt file extensions.
 
+--Added work-around for corrupted bin_cache files instead of crashing.
+
 
 
 Server Fixes:
