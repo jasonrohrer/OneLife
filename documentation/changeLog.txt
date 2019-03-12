@@ -9,6 +9,8 @@ Version 209     ????
 --Fixed overlay negative scaling check in EditorImportPage.  Thanks Chard.
   Fixes #243
 
+--scanf calls in soundBank and spriteBank were using .txt file extensions.
+
 
 
 Server Fixes:
