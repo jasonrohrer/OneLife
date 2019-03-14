@@ -13,6 +13,8 @@ Version 209     ????
 
 --Added work-around for corrupted bin_cache files instead of crashing.
 
+--100 Hz added to possible frame rates.
+
 
 
 Server Fixes:
