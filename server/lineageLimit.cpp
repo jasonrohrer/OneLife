@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 
-static double minRebirthDistance = 2000;
+static double minRebirthDistance = 200;
 
 
 
@@ -74,6 +74,10 @@ static double oneLineMaxYears = 0;
 
 
 void primeLineageTest( int inNumLivePlayers ) {
+    
+    minRebirthDistance = SettingsManager::getIntSetting( "minRebirthDistance",
+                                                         200 );
+    
 
     staleTime = Time::getCurrentTime() - staleTimeout;
 

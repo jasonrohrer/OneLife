@@ -29,6 +29,14 @@ Server Fixes:
 --Fixed so that on-chunk vog players do not become visible when walking onto a
    map chunk.
 
+--Min rebirth distance reduced from 2000 down to 200.  Eve spiral jump radius
+  is currently 250, so as the eve spiral passed near established towns, that
+  Eve would be blocked from giving birth to players who lived recently in the
+  nearby town.  2000 was too large.  200 is large enough to prevent you from
+  being in born in the same specific town over and over, even if there are
+  multiple family lines in that town.
+
+
 
 
 Version 206    2019-March-1
