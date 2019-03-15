@@ -4065,9 +4065,26 @@ typedef struct UpdateRecord{
 
 
 static char *getUpdateLineFromRecord( 
-    UpdateRecord *inRecord, GridPos inRelativeToPos ) {
+    UpdateRecord *inRecord, GridPos inRelativeToPos, GridPos inObserverPos ) {
     
     if( inRecord->posUsed ) {
+        
+        GridPos updatePos = { inRecord->absolutePosX, inRecord->absolutePosY };
+        
+        if( distance( updatePos, inObserverPos ) > 64 ) {
+            // this update is for a far-away player
+            
+            // put dummy positions in to hide their coordinates
+            // so that people sniffing the protocol can't get relative
+            // location information
+            
+            return autoSprintf( inRecord->formatString,
+                                1977, 1977,
+                                1977, 1977,
+                                1977, 1977 );
+            }
+
+
         return autoSprintf( inRecord->formatString,
                             inRecord->absoluteActionTarget.x 
                             - inRelativeToPos.x,
@@ -4079,13 +4096,11 @@ static char *getUpdateLineFromRecord(
                             inRecord->absolutePosY - inRelativeToPos.y );
         }
     else {
+        // posUsed false only if thise is a DELETE PU message
+        // set all positions to 0 in that case
         return autoSprintf( inRecord->formatString,
-                            inRecord->absoluteActionTarget.x 
-                            - inRelativeToPos.x,
-                            inRecord->absoluteActionTarget.y 
-                            - inRelativeToPos.y,
-                            inRecord->absoluteHeldOriginX - inRelativeToPos.x, 
-                            inRecord->absoluteHeldOriginY - inRelativeToPos.y );
+                            0, 0,
+                            0, 0 );
         }
     }
 
@@ -4321,12 +4336,13 @@ static UpdateRecord getUpdateRecord(
 // inPartial gets update line for player's current possition mid-path
 // positions in update line will be relative to inRelativeToPos
 static char *getUpdateLine( LiveObject *inPlayer, GridPos inRelativeToPos,
+                            GridPos inObserverPos,
                             char inDelete,
                             char inPartial = false ) {
     
     UpdateRecord r = getUpdateRecord( inPlayer, inDelete, inPartial );
     
-    char *line = getUpdateLineFromRecord( &r, inRelativeToPos );
+    char *line = getUpdateLineFromRecord( &r, inRelativeToPos, inObserverPos );
 
     delete [] r.formatString;
     
@@ -14065,6 +14081,9 @@ int main() {
                 }
 
             
+            
+            double maxDist = 32;
+            double maxDist2 = maxDist * 2;
 
             
             if( ! nextPlayer->firstMessageSent ) {
@@ -14079,7 +14098,9 @@ int main() {
                     continue;
                     }
 
-
+                
+                SimpleVector<int> outOfRangePlayerIDs;
+                
 
                 // now send starting message
                 SimpleVector<char> messageBuffer;
@@ -14116,6 +14137,8 @@ int main() {
                     // all relative to new player's birth pos
                     char *messageLine = getUpdateLine( o, 
                                                        nextPlayer->birthPos,
+                                                       getPlayerPos(
+                                                           nextPlayer ),
                                                        false, true );
                     
                     if( nextPlayer->inFlight || 
@@ -14130,6 +14153,14 @@ int main() {
                     if( o->id != nextPlayer->id ) {
                         messageBuffer.appendElementString( messageLine );
                         delete [] messageLine;
+                        
+                        double d = intDist( o->xd, o->yd, 
+                                            nextPlayer->xd,
+                                            nextPlayer->yd );
+                        
+                        if( d > maxDist ) {
+                            outOfRangePlayerIDs.push_back( o->id );
+                            }
                         }
                     else {
                         // save until end
@@ -14150,6 +14181,33 @@ int main() {
                 sendMessageToPlayer( nextPlayer, message, strlen( message ) );
                 
                 delete [] message;
+
+
+                // send out-of-range message for all players in PU above
+                // that were out of range
+                if( outOfRangePlayerIDs.size() > 0 ) {
+                    SimpleVector<char> messageChars;
+            
+                    messageChars.appendElementString( "PO\n" );
+            
+                    for( int i=0; i<outOfRangePlayerIDs.size(); i++ ) {
+                        char buffer[20];
+                        sprintf( buffer, "%d\n",
+                                 outOfRangePlayerIDs.getElementDirect( i ) );
+                                
+                        messageChars.appendElementString( buffer );
+                        }
+                    messageChars.push_back( '#' );
+
+                    char *outOfRangeMessageText = 
+                        messageChars.getElementString();
+                    
+                    sendMessageToPlayer( nextPlayer, outOfRangeMessageText,
+                                         strlen( outOfRangeMessageText ) );
+
+                    delete [] outOfRangeMessageText;
+                    }
+                
                 
 
                 char *movesMessage = getMovesMessage( false, 
@@ -14498,6 +14556,8 @@ int main() {
                                         char *updateLine = 
                                             getUpdateLine( otherPlayer,
                                                            nextPlayer->birthPos,
+                                                           getPlayerPos( 
+                                                               nextPlayer ),
                                                            false ); 
                                     
                                         chunkPlayerUpdates.
@@ -14559,6 +14619,7 @@ int main() {
                                 char *updateLine = 
                                     getUpdateLine( otherPlayer, 
                                                    nextPlayer->birthPos,
+                                                   getPlayerPos( nextPlayer ),
                                                    false ); 
                                     
                                 chunkPlayerUpdates.appendElementString( 
@@ -14664,8 +14725,6 @@ int main() {
 
                 
 
-                double maxDist = 32;
-                double maxDist2 = maxDist * 2;
 
                 if( newUpdates.size() > 0 && nextPlayer->connected ) {
 
@@ -14721,7 +14780,8 @@ int main() {
                             char *line =
                                 getUpdateLineFromRecord( 
                                     newUpdates.getElement( u ),
-                                    nextPlayer->birthPos );
+                                    nextPlayer->birthPos,
+                                    getPlayerPos( nextPlayer ) );
                             
                             updateChars.appendElementString( line );
                             delete [] line;
@@ -15136,7 +15196,8 @@ int main() {
                     
                         char *line = getUpdateLineFromRecord(
                             newDeleteUpdates.getElement( u ),
-                            nextPlayer->birthPos );
+                            nextPlayer->birthPos,
+                            getPlayerPos( nextPlayer ) );
                     
                         deleteUpdateChars.appendElementString( line );
                     
