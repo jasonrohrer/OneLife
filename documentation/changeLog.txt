@@ -54,6 +54,10 @@ Server Fixes:
   to more perfect.  But when you move to a less perfect environment, it will
   slow down your temperature change.
 
+--Prevented relative position leaking for far-away player in initial player
+  update message.  Also fixed for far-away grave messages.  Fixes #251
+
+
 
 
 Version 206    2019-March-1

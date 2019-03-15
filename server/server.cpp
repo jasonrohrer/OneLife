@@ -571,6 +571,9 @@ static void backToBasics( LiveObject *inPlayer ) {
 typedef struct GraveInfo {
         GridPos pos;
         int playerID;
+        // eve that started the line of this dead person
+        // used for tracking whether grave is part of player's family or not
+        int lineageEveID;
     } GraveInfo;
 
 
@@ -9088,8 +9091,10 @@ int main() {
                                         getPlayerPos( adult );
 
                                     // put invisible grave there for now
-                                    GraveInfo graveInfo = { adultPos, 
-                                                            nextPlayer->id };
+                                    GraveInfo graveInfo = 
+                                        { adultPos, 
+                                          nextPlayer->id,
+                                          nextPlayer->lineageEveID };
                                     newGraves.push_back( graveInfo );
                                     
                                     adult->heldGraveOriginX = adultPos.x;
@@ -12379,7 +12384,8 @@ int main() {
                                       deathID );
                         setResponsiblePlayer( -1 );
                         
-                        GraveInfo graveInfo = { dropPos, nextPlayer->id };
+                        GraveInfo graveInfo = { dropPos, nextPlayer->id,
+                                                nextPlayer->lineageEveID };
                         newGraves.push_back( graveInfo );
                         
 
@@ -14443,17 +14449,30 @@ int main() {
                     for( int u=0; u<newGraves.size(); u++ ) {
                         GraveInfo *g = newGraves.getElement( u );
                         
-                        char *graveMessage = 
-                            autoSprintf( "GV\n%d %d %d\n#", 
-                                         g->pos.x -
-                                         nextPlayer->birthPos.x, 
-                                         g->pos.y -
-                                         nextPlayer->birthPos.y,
-                                         g->playerID );
-                        
-                        sendMessageToPlayer( nextPlayer, graveMessage,
-                                             strlen( graveMessage ) );
-                        delete [] graveMessage;
+                        // only graves that are either in-range
+                        // OR that are part of our family line.
+                        // This prevents leaking relative positions
+                        // through grave locations, but still allows
+                        // us to return home after a long journey
+                        // and find the grave of a family member
+                        // who died while we were away.
+                        if( distance( g->pos, getPlayerPos( nextPlayer ) )
+                            < maxDist2 
+                            ||
+                            g->lineageEveID == nextPlayer->lineageEveID ) {
+                            
+                            char *graveMessage = 
+                                autoSprintf( "GV\n%d %d %d\n#", 
+                                             g->pos.x -
+                                             nextPlayer->birthPos.x, 
+                                             g->pos.y -
+                                             nextPlayer->birthPos.y,
+                                             g->playerID );
+                            
+                            sendMessageToPlayer( nextPlayer, graveMessage,
+                                                 strlen( graveMessage ) );
+                            delete [] graveMessage;
+                            }
                         }
                     }
 
@@ -14466,7 +14485,29 @@ int main() {
                     for( int u=0; u<newGraveMoves.size(); u++ ) {
                         GraveMoveInfo *g = newGraveMoves.getElement( u );
                         
-                        char *graveMessage = 
+                        // lineage info lost once grave moves
+                        // and we still don't want long-distance relative
+                        // position leaking happening here.
+                        // So, far-away grave moves simply won't be 
+                        // transmitted.  This may result in some confusion
+                        // between different clients that have different
+                        // info about graves, but that's okay.
+
+                        // Anyway, if you're far from home, and your relative
+                        // dies, you'll hear about the original grave.
+                        // But then if someone moves the bones before you
+                        // get home, you won't be able to find the grave
+                        // by name after that.
+                        
+                        GridPos playerPos = getPlayerPos( nextPlayer );
+                        
+                        if( distance( g->posStart, playerPos )
+                            < maxDist2 
+                            ||
+                            distance( g->posEnd, playerPos )
+                            < maxDist2 ) {
+
+                            char *graveMessage = 
                             autoSprintf( "GM\n%d %d %d %d\n#", 
                                          g->posStart.x -
                                          nextPlayer->birthPos.x,
@@ -14477,9 +14518,10 @@ int main() {
                                          g->posEnd.y -
                                          nextPlayer->birthPos.y );
                         
-                        sendMessageToPlayer( nextPlayer, graveMessage,
-                                             strlen( graveMessage ) );
-                        delete [] graveMessage;
+                            sendMessageToPlayer( nextPlayer, graveMessage,
+                                                 strlen( graveMessage ) );
+                            delete [] graveMessage;
+                            }
                         }
                     }
                 
