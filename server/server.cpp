@@ -13438,13 +13438,8 @@ int main() {
                 nextPlayer->lastBiomeHeat = nextPlayer->biomeHeat;
                 }
 
-            
-            // body produces its own heat
-            // but only in a cold env
-            if( nextPlayer->envHeat < targetHeat ) {
-                nextPlayer->bodyHeat += 0.25;
-                }
 
+            
             float clothingHeat = computeClothingHeat( nextPlayer );
             
             float heldHeat = computeHeldHeat( nextPlayer );
@@ -13455,14 +13450,46 @@ int main() {
             // clothingR modulates heat lost (or gained) from environment
             float clothingLeak = 1 - clothingR;
 
+            
+
+            // what our body temp will move toward gradually
             // clothing heat and held heat are conductive
             // if they are present, they move envHeat up or down, before
             // we compute diff with body heat
             // (if they are 0, they have no effect)
+            float envHeatTarget = clothingHeat + heldHeat + nextPlayer->envHeat;
+            
+            if( envHeatTarget < targetHeat ) {
+                // we're in a cold environment
+                
+                // clothing actually reduces how cold it is
+                // based on its R-value
+
+                // in other words, it "closes the gap" between our
+                // perfect temp and our environmental temp
+
+                // perfect clothing R would cut the environmental cold
+                // factor in half
+
+                float targetDiff = targetHeat - envHeatTarget;
+                
+                float clothingAdjustedDiff = targetDiff / ( 1 + clothingR );
+                
+                envHeatTarget = targetHeat - clothingAdjustedDiff;
+                }
+            
+
+            // clothing only slows down temp movement AWAY from perfect
+            if( abs( targetHeat - envHeatTarget ) <
+                abs( targetHeat - nextPlayer->bodyHeat ) ) {
+                // env heat is closer to perfect than our current body temp
+                // clothing R should not apply in this case
+                clothingLeak = 1.0;
+                }
+            
+            
             float heatDelta = 
-                clothingLeak * ( clothingHeat + 
-                                 heldHeat + 
-                                 nextPlayer->envHeat 
+                clothingLeak * ( envHeatTarget 
                                  - 
                                  nextPlayer->bodyHeat );
 
@@ -13501,6 +13528,15 @@ int main() {
             
             float totalBodyHeat = nextPlayer->bodyHeat + nextPlayer->fever;
             
+            // 0.25 body heat no longer added in each step above
+            // add in a flat constant here to reproduce its effects
+            // but only in a cold env (just like the old body heat)
+            if( envHeatTarget < targetHeat ) {
+                totalBodyHeat += 0.003;
+                }
+
+
+
             // convert into 0..1 range, where 0.5 represents targetHeat
             nextPlayer->heat = ( totalBodyHeat / targetHeat ) / 2;
             if( nextPlayer->heat > 1 ) {

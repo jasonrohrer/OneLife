@@ -36,6 +36,23 @@ Server Fixes:
   being in born in the same specific town over and over, even if there are
   multiple family lines in that town.
 
+--Clothing thermal model reworked to make it more intuitive.  Before, because
+  clothing held in body heat, which was added each sim step, additional
+  clothing had a non-linear effect on your steady-state temperature.  Adding or
+  removing one shoe could dramatically change your temperature.  Now, no body
+  heat is added each sim step.  Instead, the R-value of your clothing outfit
+  closes the gap between your environment's temperature and your ideal
+  temperature, but only in cold environments.  A perfect set of clothing with
+  an R-value of 1.0 would bring a cold environment twice as close to perfect as
+  it would be without clothing.  In other words, clothing alone gets you 
+  half-way to perfect now in cold environments.  This effect is additve and
+  linear, so in a cold environment, each piece of clothing that you add makes
+  you a little bit warmer.  Also, the clothing R value still slows your
+  temperature change, but only if your environment is further from perfect than
+  your current temperature.  If you move into a more perfect environment (like 
+  standing by a fire), your clothing will not slow down your temperature change
+  to more perfect.  But when you move to a less perfect environment, it will
+  slow down your temperature change.
 
 
 
