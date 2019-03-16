@@ -15,14 +15,6 @@ A lightly modified client for [One Hour One Life](http://onehouronelife.com), a 
     </table>
 </p>
 
-<p align="center">
-    <img align="left" width="15%" src="http://onehouronelife.com/portraitLeft.jpg">
-    <img width="50%" src="http://onehouronelife.com/lifeLine.jpg">
-    <img width="15%" align="right" src="http://onehouronelife.com/portraitRight.jpg">
-    <br />
-    <img width="65%" src="http://onehouronelife.com/logo558x305_border.jpg">
-</p>
-
 # Requirements
    * Requires the base game to already be installed.
       - Grab it from the download link provided when you [created your official lifetime account](https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=), or from [Steam](https://store.steampowered.com/app/595690/One_Hour_One_Life/).
