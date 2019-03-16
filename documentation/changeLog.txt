@@ -18,6 +18,9 @@ Version 209     ????
 --Left or right click now works to remove specific item from permanent
   container.  Fixes #257
 
+--Support for sounds in emot objects.
+
+
 
 
 Server Fixes:

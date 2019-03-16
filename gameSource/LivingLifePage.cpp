@@ -14858,6 +14858,8 @@ void LivingLifePage::step() {
                             
                             LiveObject *existing = gameObjects.getElement(j);
                             
+                            Emotion *oldEmot = existing->currentEmot;
+                            
                             existing->currentEmot = getEmotion( emotIndex );
                             
                             if( numRead == 3 && ttlSec > 0 ) {
@@ -14868,6 +14870,35 @@ void LivingLifePage::step() {
                                 // no ttl provided by server, use default
                                 existing->emotClearETATime = 
                                     game_getCurrentTime() + emotDuration;
+                                }
+
+                            if( oldEmot != existing->currentEmot &&
+                                existing->currentEmot != NULL ) {
+                                doublePair playerPos = existing->currentPos;
+                                
+                                for( int i=0; 
+                                     i<getEmotionNumObjectSlots(); i++ ) {
+                                    
+                                    int id =
+                                        getEmotionObjectByIndex(
+                                            existing->currentEmot, i );
+                                    
+                                    if( id > 0 ) {
+                                        ObjectRecord *obj = getObject( id );
+                                        
+                                        if( obj->creationSound.numSubSounds 
+                                            > 0 ) {    
+                                    
+                                            playSound( 
+                                                obj->creationSound,
+                                                getVectorFromCamera( 
+                                                    playerPos.x,
+                                                    playerPos.y ) );
+                                            // stop after first sound played
+                                            break;
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

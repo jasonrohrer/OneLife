@@ -57,5 +57,10 @@ Emotion *getEmotion( int inIndex );
 void markEmotionsLive();
 
 
+int getEmotionNumObjectSlots();
+
+int getEmotionObjectByIndex( Emotion *inEmote, int inIndex );
+
+
 
 #endif

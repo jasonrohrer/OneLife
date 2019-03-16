@@ -152,4 +152,34 @@ void markEmotionsLive() {
         }
     }
 
+
+
+int getEmotionNumObjectSlots() {
+    return 6;
+    }
+
+
+int getEmotionObjectByIndex( Emotion *inEmote, int inIndex ) {
+    if( inIndex < 0 || inIndex >= 6 ) {
+        return 0;
+        }
+    switch( inIndex ) {
+        case 0:
+            return inEmote->eyeEmot;
+        case 1:
+            return inEmote->mouthEmot;
+        case 2:
+            return inEmote->otherEmot;
+        case 3:
+            return inEmote->faceEmot;
+        case 4:
+            return inEmote->bodyEmot;
+        case 5:
+            return inEmote->headEmot;
+        default:
+            return 0;
+        }    
+    }
+
+
         
