@@ -525,7 +525,7 @@ float initSoundBankStep() {
             
             r->id = 0;
             
-            sscanf( fileName, "%d.txt", &( r->id ) );
+            sscanf( fileName, "%d.aiff", &( r->id ) );
             
             int aiffDataLength;
             unsigned char *aiffData = 
@@ -621,7 +621,7 @@ float initSoundBankStep() {
             if( aiffData != NULL ) {
                 int id = 0;
                 
-                sscanf( fileName, "%d.txt", &( id ) );
+                sscanf( fileName, "%d.aiff", &( id ) );
                 
                 SoundRecord *r = getSoundRecord( id );
                 

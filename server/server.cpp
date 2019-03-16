@@ -496,7 +496,9 @@ typedef struct LiveObject {
         
         char vogMode;
         GridPos preVogPos;
+        GridPos preVogBirthPos;
         int vogJumpIndex;
+        char postVogMode;
         
     } LiveObject;
 
@@ -571,6 +573,9 @@ static void backToBasics( LiveObject *inPlayer ) {
 typedef struct GraveInfo {
         GridPos pos;
         int playerID;
+        // eve that started the line of this dead person
+        // used for tracking whether grave is part of player's family or not
+        int lineageEveID;
     } GraveInfo;
 
 
@@ -2921,6 +2926,8 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
         
         inPlayer->xs = p.x;
         inPlayer->ys = p.y;
+
+        inPlayer->birthPos = inPlayer->preVogBirthPos;
         }
     
     
@@ -4063,9 +4070,26 @@ typedef struct UpdateRecord{
 
 
 static char *getUpdateLineFromRecord( 
-    UpdateRecord *inRecord, GridPos inRelativeToPos ) {
+    UpdateRecord *inRecord, GridPos inRelativeToPos, GridPos inObserverPos ) {
     
     if( inRecord->posUsed ) {
+        
+        GridPos updatePos = { inRecord->absolutePosX, inRecord->absolutePosY };
+        
+        if( distance( updatePos, inObserverPos ) > 64 ) {
+            // this update is for a far-away player
+            
+            // put dummy positions in to hide their coordinates
+            // so that people sniffing the protocol can't get relative
+            // location information
+            
+            return autoSprintf( inRecord->formatString,
+                                1977, 1977,
+                                1977, 1977,
+                                1977, 1977 );
+            }
+
+
         return autoSprintf( inRecord->formatString,
                             inRecord->absoluteActionTarget.x 
                             - inRelativeToPos.x,
@@ -4077,13 +4101,11 @@ static char *getUpdateLineFromRecord(
                             inRecord->absolutePosY - inRelativeToPos.y );
         }
     else {
+        // posUsed false only if thise is a DELETE PU message
+        // set all positions to 0 in that case
         return autoSprintf( inRecord->formatString,
-                            inRecord->absoluteActionTarget.x 
-                            - inRelativeToPos.x,
-                            inRecord->absoluteActionTarget.y 
-                            - inRelativeToPos.y,
-                            inRecord->absoluteHeldOriginX - inRelativeToPos.x, 
-                            inRecord->absoluteHeldOriginY - inRelativeToPos.y );
+                            0, 0,
+                            0, 0 );
         }
     }
 
@@ -4319,12 +4341,13 @@ static UpdateRecord getUpdateRecord(
 // inPartial gets update line for player's current possition mid-path
 // positions in update line will be relative to inRelativeToPos
 static char *getUpdateLine( LiveObject *inPlayer, GridPos inRelativeToPos,
+                            GridPos inObserverPos,
                             char inDelete,
                             char inPartial = false ) {
     
     UpdateRecord r = getUpdateRecord( inPlayer, inDelete, inPartial );
     
-    char *line = getUpdateLineFromRecord( &r, inRelativeToPos );
+    char *line = getUpdateLineFromRecord( &r, inRelativeToPos, inObserverPos );
 
     delete [] r.formatString;
     
@@ -4618,6 +4641,10 @@ int processLoggedInPlayer( Socket *inSock,
             }
 
         if( player->isTutorial ) {
+            continue;
+            }
+
+        if( player->vogMode ) {
             continue;
             }
 
@@ -5336,6 +5363,7 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.holdingFlightObject = false;
 
     newObject.vogMode = false;
+    newObject.postVogMode = false;
     newObject.vogJumpIndex = 0;
     
                 
@@ -5940,18 +5968,32 @@ char removeFromContainerToHold( LiveObject *inPlayer,
 
             
             if( inSlotNumber < 0 ) {
-                inSlotNumber = numIn;
+                inSlotNumber = numIn - 1;
                 
                 // no slot specified
                 // find top-most object that they can actually pick up
 
+                int toRemoveID = getContained( 
+                    inContX, inContY,
+                    inSlotNumber );
+                
+                if( toRemoveID < 0 ) {
+                    toRemoveID *= -1;
+                    }
+                
                 while( inSlotNumber > 0 &&
-                       getObject( getContained( 
-                                      inContX, inContY,
-                                      inSlotNumber ) )->minPickupAge >
+                       getObject( toRemoveID )->minPickupAge >
                        playerAge )  {
             
                     inSlotNumber--;
+                    
+                    toRemoveID = getContained( 
+                        inContX, inContY,
+                        inSlotNumber );
+                
+                    if( toRemoveID < 0 ) {
+                        toRemoveID *= -1;
+                        }
                     }
                 }
             
@@ -7570,18 +7612,23 @@ int main() {
                     }
                 }
             
-            // look at food decrement time too
-                
-            double timeLeft =
-                nextPlayer->foodDecrementETASeconds - curTime;
-                        
-            if( timeLeft < 0 ) {
-                timeLeft = 0;
-                }
-            if( timeLeft < minMoveTime ) {
-                minMoveTime = timeLeft;
-                }           
 
+            double timeLeft = minMoveTime;
+            
+            if( ! nextPlayer->vogMode ) {
+                // look at food decrement time too
+                
+                timeLeft =
+                    nextPlayer->foodDecrementETASeconds - curTime;
+                
+                if( timeLeft < 0 ) {
+                    timeLeft = 0;
+                    }
+                if( timeLeft < minMoveTime ) {
+                    minMoveTime = timeLeft;
+                    }           
+                }
+            
             // look at held decay too
             if( nextPlayer->holdingEtaDecay != 0 ) {
                 
@@ -8809,6 +8856,7 @@ int main() {
                     if( allow && nextPlayer->connected ) {
                         nextPlayer->vogMode = true;
                         nextPlayer->preVogPos = getPlayerPos( nextPlayer );
+                        nextPlayer->preVogBirthPos = nextPlayer->birthPos;
                         nextPlayer->vogJumpIndex = 0;
                         }
                     }
@@ -8833,13 +8881,31 @@ int main() {
                         
                         GridPos o = getPlayerPos( otherPlayer );
                         
+                        GridPos oldPos = getPlayerPos( nextPlayer );
+                        
+
                         nextPlayer->xd = o.x;
                         nextPlayer->yd = o.y;
 
                         nextPlayer->xs = o.x;
                         nextPlayer->ys = o.y;
 
-                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        if( distance( oldPos, o ) > 10000 ) {
+                            nextPlayer->birthPos = o;
+                            }
+
+                        char *message = autoSprintf( "VU\n%d %d\n#",
+                                                     nextPlayer->xs - 
+                                                     nextPlayer->birthPos.x,
+                                                     nextPlayer->ys -
+                                                     nextPlayer->birthPos.y );
+                        sendMessageToPlayer( nextPlayer, message,
+                                             strlen( message ) );
+                        
+                        delete [] message;
+
+                        nextPlayer->firstMessageSent = false;
+                        nextPlayer->firstMapSent = false;
                         }
                     }
                 else if( m.type == VOGP ) {
@@ -8863,14 +8929,32 @@ int main() {
                                 nextPlayer->vogJumpIndex );
                         
                         GridPos o = getPlayerPos( otherPlayer );
+                        
+                        GridPos oldPos = getPlayerPos( nextPlayer );
+                        
 
                         nextPlayer->xd = o.x;
                         nextPlayer->yd = o.y;
 
                         nextPlayer->xs = o.x;
                         nextPlayer->ys = o.y;
+                        
+                        if( distance( oldPos, o ) > 10000 ) {
+                            nextPlayer->birthPos = o;
+                            }
+                        
+                        char *message = autoSprintf( "VU\n%d %d\n#",
+                                                     nextPlayer->xs - 
+                                                     nextPlayer->birthPos.x,
+                                                     nextPlayer->ys -
+                                                     nextPlayer->birthPos.y );
+                        sendMessageToPlayer( nextPlayer, message,
+                                             strlen( message ) );
+                        
+                        delete [] message;
 
-                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        nextPlayer->firstMessageSent = false;
+                        nextPlayer->firstMapSent = false;
                         }
                     }
                 else if( m.type == VOGM ) {
@@ -8881,7 +8965,15 @@ int main() {
                         nextPlayer->xs = m.x;
                         nextPlayer->ys = m.y;
                         
-                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        char *message = autoSprintf( "VU\n%d %d\n#",
+                                                     nextPlayer->xs - 
+                                                     nextPlayer->birthPos.x,
+                                                     nextPlayer->ys -
+                                                     nextPlayer->birthPos.y );
+                        sendMessageToPlayer( nextPlayer, message,
+                                             strlen( message ) );
+                        
+                        delete [] message;
                         }
                     }
                 else if( m.type == VOGI ) {
@@ -8920,18 +9012,23 @@ int main() {
                         nextPlayer->xs = p.x;
                         nextPlayer->ys = p.y;
                         
+                        nextPlayer->birthPos = nextPlayer->preVogBirthPos;
+
                         // send them one last VU message to move them 
                         // back instantly
-                        char *message = autoSprintf( "VU\n%d %d\n#", 
-                                                     nextPlayer->xs,
-                                                     nextPlayer->ys );
+                        char *message = autoSprintf( "VU\n%d %d\n#",
+                                                     nextPlayer->xs - 
+                                                     nextPlayer->birthPos.x,
+                                                     nextPlayer->ys -
+                                                     nextPlayer->birthPos.y );
                         sendMessageToPlayer( nextPlayer, message,
                                              strlen( message ) );
                         
                         delete [] message;
                         
-                        nextPlayer->posForced = true;
-                        playerIndicesToSendUpdatesAbout.push_back( i );
+                        nextPlayer->postVogMode = true;
+                        nextPlayer->firstMessageSent = false;
+                        nextPlayer->firstMapSent = false;
                         }
                     }
                 else if( nextPlayer->vogMode ) {
@@ -9012,8 +9109,10 @@ int main() {
                                         getPlayerPos( adult );
 
                                     // put invisible grave there for now
-                                    GraveInfo graveInfo = { adultPos, 
-                                                            nextPlayer->id };
+                                    GraveInfo graveInfo = 
+                                        { adultPos, 
+                                          nextPlayer->id,
+                                          nextPlayer->lineageEveID };
                                     newGraves.push_back( graveInfo );
                                     
                                     adult->heldGraveOriginX = adultPos.x;
@@ -11984,11 +12083,21 @@ int main() {
                         
                         if( m.i <= SettingsManager::getIntSetting( 
                                 "allowedEmotRange", 6 ) ) {
-                            newEmotPlayerIDs.push_back( nextPlayer->id );
                             
-                            newEmotIndices.push_back( m.i );
-                            // player-requested emots have no specific TTL
-                            newEmotTTLs.push_back( 0 );
+                            SimpleVector<int> *forbidden =
+                                SettingsManager::getIntSettingMulti( 
+                                    "forbiddenEmots" );
+                            
+                            if( forbidden->getElementIndex( m.i ) == -1 ) {
+                                // not forbidden
+
+                                newEmotPlayerIDs.push_back( nextPlayer->id );
+                            
+                                newEmotIndices.push_back( m.i );
+                                // player-requested emots have no specific TTL
+                                newEmotTTLs.push_back( 0 );
+                                }
+                            delete forbidden;
                             }
                         } 
                     }
@@ -12303,7 +12412,8 @@ int main() {
                                       deathID );
                         setResponsiblePlayer( -1 );
                         
-                        GraveInfo graveInfo = { dropPos, nextPlayer->id };
+                        GraveInfo graveInfo = { dropPos, nextPlayer->id,
+                                                nextPlayer->lineageEveID };
                         newGraves.push_back( graveInfo );
                         
 
@@ -13378,13 +13488,8 @@ int main() {
                 nextPlayer->lastBiomeHeat = nextPlayer->biomeHeat;
                 }
 
-            
-            // body produces its own heat
-            // but only in a cold env
-            if( nextPlayer->envHeat < targetHeat ) {
-                nextPlayer->bodyHeat += 0.25;
-                }
 
+            
             float clothingHeat = computeClothingHeat( nextPlayer );
             
             float heldHeat = computeHeldHeat( nextPlayer );
@@ -13395,14 +13500,46 @@ int main() {
             // clothingR modulates heat lost (or gained) from environment
             float clothingLeak = 1 - clothingR;
 
+            
+
+            // what our body temp will move toward gradually
             // clothing heat and held heat are conductive
             // if they are present, they move envHeat up or down, before
             // we compute diff with body heat
             // (if they are 0, they have no effect)
+            float envHeatTarget = clothingHeat + heldHeat + nextPlayer->envHeat;
+            
+            if( envHeatTarget < targetHeat ) {
+                // we're in a cold environment
+                
+                // clothing actually reduces how cold it is
+                // based on its R-value
+
+                // in other words, it "closes the gap" between our
+                // perfect temp and our environmental temp
+
+                // perfect clothing R would cut the environmental cold
+                // factor in half
+
+                float targetDiff = targetHeat - envHeatTarget;
+                
+                float clothingAdjustedDiff = targetDiff / ( 1 + clothingR );
+                
+                envHeatTarget = targetHeat - clothingAdjustedDiff;
+                }
+            
+
+            // clothing only slows down temp movement AWAY from perfect
+            if( abs( targetHeat - envHeatTarget ) <
+                abs( targetHeat - nextPlayer->bodyHeat ) ) {
+                // env heat is closer to perfect than our current body temp
+                // clothing R should not apply in this case
+                clothingLeak = 1.0;
+                }
+            
+            
             float heatDelta = 
-                clothingLeak * ( clothingHeat + 
-                                 heldHeat + 
-                                 nextPlayer->envHeat 
+                clothingLeak * ( envHeatTarget 
                                  - 
                                  nextPlayer->bodyHeat );
 
@@ -13441,6 +13578,15 @@ int main() {
             
             float totalBodyHeat = nextPlayer->bodyHeat + nextPlayer->fever;
             
+            // 0.25 body heat no longer added in each step above
+            // add in a flat constant here to reproduce its effects
+            // but only in a cold env (just like the old body heat)
+            if( envHeatTarget < targetHeat ) {
+                totalBodyHeat += 0.003;
+                }
+
+
+
             // convert into 0..1 range, where 0.5 represents targetHeat
             nextPlayer->heat = ( totalBodyHeat / targetHeat ) / 2;
             if( nextPlayer->heat > 1 ) {
@@ -13464,19 +13610,10 @@ int main() {
                 continue;
                 }
             
-            // VOG players only receive updates about themselves
-            // handle this here, to take them out of circulation
             
             if( nextPlayer->vogMode ) {
-
-                char *message = autoSprintf( "VU\n%d %d\n#", 
-                                             nextPlayer->xs,
-                                             nextPlayer->ys );
-                
-                sendMessageToPlayer( nextPlayer, message,
-                                     strlen( message ) );
-                delete [] message;
-
+                // VOG players
+                // handle this here, to take them out of circulation
                 nextPlayer->updateSent = true;
                 continue;
                 }
@@ -13978,6 +14115,9 @@ int main() {
                 }
 
             
+            
+            double maxDist = 32;
+            double maxDist2 = maxDist * 2;
 
             
             if( ! nextPlayer->firstMessageSent ) {
@@ -13992,7 +14132,9 @@ int main() {
                     continue;
                     }
 
-
+                
+                SimpleVector<int> outOfRangePlayerIDs;
+                
 
                 // now send starting message
                 SimpleVector<char> messageBuffer;
@@ -14008,13 +14150,16 @@ int main() {
                 
                     LiveObject *o = players.getElement( i );
                 
-                    if( o != nextPlayer && o->error ) {
+                    if( ( o != nextPlayer && o->error ) 
+                        ||
+                        o->vogMode ) {
                         continue;
                         }
 
                     char oWasForced = o->posForced;
                     
-                    if( nextPlayer->inFlight ) {
+                    if( nextPlayer->inFlight || 
+                        nextPlayer->vogMode || nextPlayer->postVogMode ) {
                         // not a true first message
                         
                         // force all positions for all players
@@ -14026,9 +14171,12 @@ int main() {
                     // all relative to new player's birth pos
                     char *messageLine = getUpdateLine( o, 
                                                        nextPlayer->birthPos,
+                                                       getPlayerPos(
+                                                           nextPlayer ),
                                                        false, true );
                     
-                    if( nextPlayer->inFlight ) {
+                    if( nextPlayer->inFlight || 
+                        nextPlayer->vogMode || nextPlayer->postVogMode ) {
                         // restore
                         o->posForced = oWasForced;
                         }
@@ -14039,6 +14187,14 @@ int main() {
                     if( o->id != nextPlayer->id ) {
                         messageBuffer.appendElementString( messageLine );
                         delete [] messageLine;
+                        
+                        double d = intDist( o->xd, o->yd, 
+                                            nextPlayer->xd,
+                                            nextPlayer->yd );
+                        
+                        if( d > maxDist ) {
+                            outOfRangePlayerIDs.push_back( o->id );
+                            }
                         }
                     else {
                         // save until end
@@ -14059,6 +14215,33 @@ int main() {
                 sendMessageToPlayer( nextPlayer, message, strlen( message ) );
                 
                 delete [] message;
+
+
+                // send out-of-range message for all players in PU above
+                // that were out of range
+                if( outOfRangePlayerIDs.size() > 0 ) {
+                    SimpleVector<char> messageChars;
+            
+                    messageChars.appendElementString( "PO\n" );
+            
+                    for( int i=0; i<outOfRangePlayerIDs.size(); i++ ) {
+                        char buffer[20];
+                        sprintf( buffer, "%d\n",
+                                 outOfRangePlayerIDs.getElementDirect( i ) );
+                                
+                        messageChars.appendElementString( buffer );
+                        }
+                    messageChars.push_back( '#' );
+
+                    char *outOfRangeMessageText = 
+                        messageChars.getElementString();
+                    
+                    sendMessageToPlayer( nextPlayer, outOfRangeMessageText,
+                                         strlen( outOfRangeMessageText ) );
+
+                    delete [] outOfRangeMessageText;
+                    }
+                
                 
 
                 char *movesMessage = getMovesMessage( false, 
@@ -14252,6 +14435,7 @@ int main() {
                 
                 nextPlayer->firstMessageSent = true;
                 nextPlayer->inFlight = false;
+                nextPlayer->postVogMode = false;
                 }
             else {
                 // this player has first message, ready for updates/moves
@@ -14293,17 +14477,30 @@ int main() {
                     for( int u=0; u<newGraves.size(); u++ ) {
                         GraveInfo *g = newGraves.getElement( u );
                         
-                        char *graveMessage = 
-                            autoSprintf( "GV\n%d %d %d\n#", 
-                                         g->pos.x -
-                                         nextPlayer->birthPos.x, 
-                                         g->pos.y -
-                                         nextPlayer->birthPos.y,
-                                         g->playerID );
-                        
-                        sendMessageToPlayer( nextPlayer, graveMessage,
-                                             strlen( graveMessage ) );
-                        delete [] graveMessage;
+                        // only graves that are either in-range
+                        // OR that are part of our family line.
+                        // This prevents leaking relative positions
+                        // through grave locations, but still allows
+                        // us to return home after a long journey
+                        // and find the grave of a family member
+                        // who died while we were away.
+                        if( distance( g->pos, getPlayerPos( nextPlayer ) )
+                            < maxDist2 
+                            ||
+                            g->lineageEveID == nextPlayer->lineageEveID ) {
+                            
+                            char *graveMessage = 
+                                autoSprintf( "GV\n%d %d %d\n#", 
+                                             g->pos.x -
+                                             nextPlayer->birthPos.x, 
+                                             g->pos.y -
+                                             nextPlayer->birthPos.y,
+                                             g->playerID );
+                            
+                            sendMessageToPlayer( nextPlayer, graveMessage,
+                                                 strlen( graveMessage ) );
+                            delete [] graveMessage;
+                            }
                         }
                     }
 
@@ -14316,7 +14513,29 @@ int main() {
                     for( int u=0; u<newGraveMoves.size(); u++ ) {
                         GraveMoveInfo *g = newGraveMoves.getElement( u );
                         
-                        char *graveMessage = 
+                        // lineage info lost once grave moves
+                        // and we still don't want long-distance relative
+                        // position leaking happening here.
+                        // So, far-away grave moves simply won't be 
+                        // transmitted.  This may result in some confusion
+                        // between different clients that have different
+                        // info about graves, but that's okay.
+
+                        // Anyway, if you're far from home, and your relative
+                        // dies, you'll hear about the original grave.
+                        // But then if someone moves the bones before you
+                        // get home, you won't be able to find the grave
+                        // by name after that.
+                        
+                        GridPos playerPos = getPlayerPos( nextPlayer );
+                        
+                        if( distance( g->posStart, playerPos )
+                            < maxDist2 
+                            ||
+                            distance( g->posEnd, playerPos )
+                            < maxDist2 ) {
+
+                            char *graveMessage = 
                             autoSprintf( "GM\n%d %d %d %d\n#", 
                                          g->posStart.x -
                                          nextPlayer->birthPos.x,
@@ -14327,9 +14546,10 @@ int main() {
                                          g->posEnd.y -
                                          nextPlayer->birthPos.y );
                         
-                        sendMessageToPlayer( nextPlayer, graveMessage,
-                                             strlen( graveMessage ) );
-                        delete [] graveMessage;
+                            sendMessageToPlayer( nextPlayer, graveMessage,
+                                                 strlen( graveMessage ) );
+                            delete [] graveMessage;
+                            }
                         }
                     }
                 
@@ -14406,6 +14626,8 @@ int main() {
                                         char *updateLine = 
                                             getUpdateLine( otherPlayer,
                                                            nextPlayer->birthPos,
+                                                           getPlayerPos( 
+                                                               nextPlayer ),
                                                            false ); 
                                     
                                         chunkPlayerUpdates.
@@ -14438,7 +14660,8 @@ int main() {
                         LiveObject *otherPlayer = 
                             players.getElement( j );
                         
-                        if( otherPlayer->error ) {
+                        if( otherPlayer->error ||
+                            otherPlayer->vogMode ) {
                             continue;
                             }
 
@@ -14466,6 +14689,7 @@ int main() {
                                 char *updateLine = 
                                     getUpdateLine( otherPlayer, 
                                                    nextPlayer->birthPos,
+                                                   getPlayerPos( nextPlayer ),
                                                    false ); 
                                     
                                 chunkPlayerUpdates.appendElementString( 
@@ -14571,8 +14795,6 @@ int main() {
 
                 
 
-                double maxDist = 32;
-                double maxDist2 = maxDist * 2;
 
                 if( newUpdates.size() > 0 && nextPlayer->connected ) {
 
@@ -14628,7 +14850,8 @@ int main() {
                             char *line =
                                 getUpdateLineFromRecord( 
                                     newUpdates.getElement( u ),
-                                    nextPlayer->birthPos );
+                                    nextPlayer->birthPos,
+                                    getPlayerPos( nextPlayer ) );
                             
                             updateChars.appendElementString( line );
                             delete [] line;
@@ -15043,7 +15266,8 @@ int main() {
                     
                         char *line = getUpdateLineFromRecord(
                             newDeleteUpdates.getElement( u ),
-                            nextPlayer->birthPos );
+                            nextPlayer->birthPos,
+                            getPlayerPos( nextPlayer ) );
                     
                         deleteUpdateChars.appendElementString( line );
                     

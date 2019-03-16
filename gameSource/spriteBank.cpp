@@ -439,7 +439,7 @@ float initSpriteBankStep() {
         if( strstr( fileName, ".tga" ) != NULL ) {
             
             int spriteID = 0;
-            sscanf( fileName, "%d.txt", &spriteID );
+            sscanf( fileName, "%d.tga", &spriteID );
 
             if( spriteID > 0 ) {
                 

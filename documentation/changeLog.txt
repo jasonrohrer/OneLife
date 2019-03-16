@@ -4,6 +4,71 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 211     2019-March-16
+
+--Fixed overlay negative scaling check in EditorImportPage.  Thanks Chard.
+  Fixes #243
+
+--scanf calls in soundBank and spriteBank were using .txt file extensions.
+
+--Added work-around for corrupted bin_cache files instead of crashing.
+
+--100 Hz added to possible frame rates.
+
+--Left or right click now works to remove specific item from permanent
+  container.  Fixes #257
+
+--Support for sounds in emot objects.
+
+
+
+
+Server Fixes:
+
+--Fixed crash when player clicks to remove default object from container.
+
+--No babies born to vog player.  Fixes #244
+
+--Fixed so that lastCheckedBiome is correct, in certain cases where we call
+  getBaseMap for neighboring cells too.  Thanks Chard.  Fixes #245.  Fixes #246
+
+--Fixed so that on-chunk vog players do not become visible when walking onto a
+   map chunk.
+
+--Min rebirth distance reduced from 2000 down to 200.  Eve spiral jump radius
+  is currently 250, so as the eve spiral passed near established towns, that
+  Eve would be blocked from giving birth to players who lived recently in the
+  nearby town.  2000 was too large.  200 is large enough to prevent you from
+  being in born in the same specific town over and over, even if there are
+  multiple family lines in that town.
+
+--Clothing thermal model reworked to make it more intuitive.  Before, because
+  clothing held in body heat, which was added each sim step, additional
+  clothing had a non-linear effect on your steady-state temperature.  Adding or
+  removing one shoe could dramatically change your temperature.  Now, no body
+  heat is added each sim step.  Instead, the R-value of your clothing outfit
+  closes the gap between your environment's temperature and your ideal
+  temperature, but only in cold environments.  A perfect set of clothing with
+  an R-value of 1.0 would bring a cold environment twice as close to perfect as
+  it would be without clothing.  In other words, clothing alone gets you 
+  half-way to perfect now in cold environments.  This effect is additve and
+  linear, so in a cold environment, each piece of clothing that you add makes
+  you a little bit warmer.  Also, the clothing R value still slows your
+  temperature change, but only if your environment is further from perfect than
+  your current temperature.  If you move into a more perfect environment (like 
+  standing by a fire), your clothing will not slow down your temperature change
+  to more perfect.  But when you move to a less perfect environment, it will
+  slow down your temperature change.
+
+--Prevented relative position leaking for far-away player in initial player
+  update message.  Also fixed for far-away grave messages.  Fixes #251
+
+--Support for forbidden emot indices right in middle of list instead of just at
+  end of list.
+
+
+
+
 Version 206    2019-March-1
 
 --Game client now prints version number on startup.

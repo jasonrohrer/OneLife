@@ -9,6 +9,52 @@ extern int versionNumber;
 static char autoClear = true;
 
 
+static char verifyCacheFile( FILE *inFile, int inNumFiles, 
+                             int *outFailNumber ) {
+
+    long oldPos = ftell( inFile );
+    
+    char fail = false;
+    
+    for( int i=0; i<inNumFiles; i++ ) {
+        
+        char nameBuffer[200];
+        
+        int numRead = fscanf( inFile, "%199s #", nameBuffer );
+        
+        if( numRead != 1 ) {
+            fail = true;
+            *outFailNumber = i;
+            break;
+            }
+        
+        int compSize, rawSize;
+        
+        numRead = fscanf( inFile, "%d %d#", &compSize, &rawSize );
+        
+        if( numRead != 2 ) {
+            fail = true;
+            *outFailNumber = i;
+            break;
+            }
+
+        int seekResult = fseek( inFile, compSize, SEEK_CUR );
+        
+        if( seekResult != 0 ) {
+            fail = true;
+            *outFailNumber = i;
+            break;
+            }
+        }
+
+    
+    // return to start pos
+    fseek( inFile, oldPos, SEEK_SET );
+
+    return !fail;
+    }
+
+
 
 BinFolderCache initBinFolderCache( const char *inFolderName,
                                    const char *inPattern,
@@ -69,20 +115,45 @@ BinFolderCache initBinFolderCache( const char *inFolderName,
     File *cacheFile = folderDir->getChildFile( curCacheName );
     
 
+    char cacheFileGood = false;
+    
 
     if( cacheFile->exists() ) {
         char *cacheFileName = cacheFile->getFullFileName();
         
         c.cacheFile = fopen( cacheFileName, "rb" );
         
-        fscanf( c.cacheFile, "%d#", &( c.numFiles ) );
+        int numRead = fscanf( c.cacheFile, "%d#", &( c.numFiles ) );
 
-        printf( "Opened a %s from the %s folder with %d files\n",
-                curCacheName, inFolderName, c.numFiles );
+        if( numRead != 1 ) {
+            printf( "Reading num files from %s failed, rebuilding\n",
+                    curCacheName );
+            fclose( c.cacheFile );
+            }
+        else {
+
+            printf( "Opened a %s from the %s folder with %d files\n",
+                    curCacheName, inFolderName, c.numFiles );
+            
+            int failNumber = 0;
+
+            if( ! verifyCacheFile( c.cacheFile, c.numFiles, &failNumber ) ) {
+                printf( "Cache file verification for %s failed on file %d/%d, "
+                        "rebuilding\n",
+                        curCacheName,
+                        failNumber, c.numFiles );
+                fclose( c.cacheFile );
+                }
+            else {
+                cacheFileGood = true;
+                }
+            }
 
         delete [] cacheFileName;
         }
-    else {
+
+    
+    if( !cacheFileGood ) {
         *outRebuildingCache = true;
         
         int numChildFiles;
