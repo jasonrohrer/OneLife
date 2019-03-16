@@ -18799,9 +18799,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         }
                     }
                 }
-            else if( modClick && ourLiveObject->holdingID == 0 &&
+            else if( ( modClick || getObject( destID )->permanent )
+                     && ourLiveObject->holdingID == 0 &&
                      destID != 0 &&
                      getNumContainerSlots( destID ) > 0 ) {
+                
+                // for permanent container objects, we shouldn't make
+                // distinction between left and right click
+
                 action = "REMV";
                 send = true;
                 delete [] extra;

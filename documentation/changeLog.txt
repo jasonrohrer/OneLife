@@ -15,6 +15,9 @@ Version 209     ????
 
 --100 Hz added to possible frame rates.
 
+--Left or right click now works to remove specific item from permanent
+  container.  Fixes #257
+
 
 
 Server Fixes:
