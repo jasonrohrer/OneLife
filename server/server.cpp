@@ -12065,11 +12065,21 @@ int main() {
                         
                         if( m.i <= SettingsManager::getIntSetting( 
                                 "allowedEmotRange", 6 ) ) {
-                            newEmotPlayerIDs.push_back( nextPlayer->id );
                             
-                            newEmotIndices.push_back( m.i );
-                            // player-requested emots have no specific TTL
-                            newEmotTTLs.push_back( 0 );
+                            SimpleVector<int> *forbidden =
+                                SettingsManager::getIntSettingMulti( 
+                                    "forbiddenEmots" );
+                            
+                            if( forbidden->getElementIndex( m.i ) == -1 ) {
+                                // not forbidden
+
+                                newEmotPlayerIDs.push_back( nextPlayer->id );
+                            
+                                newEmotIndices.push_back( m.i );
+                                // player-requested emots have no specific TTL
+                                newEmotTTLs.push_back( 0 );
+                                }
+                            delete forbidden;
                             }
                         } 
                     }

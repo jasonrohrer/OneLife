@@ -60,6 +60,9 @@ Server Fixes:
 --Prevented relative position leaking for far-away player in initial player
   update message.  Also fixed for far-away grave messages.  Fixes #251
 
+--Support for forbidden emot indices right in middle of list instead of just at
+  end of list.
+
 
 
 
