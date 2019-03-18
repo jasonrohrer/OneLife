@@ -8,6 +8,9 @@ Server Fixes:
 --Temporarily taking public life log data offline.  Will move it to a separate 
   server when I return from GDC.
 
+--Temporary fix server-side for client basket and horse cart bug.
+
+
 
 
 Version 211     2019-March-16
