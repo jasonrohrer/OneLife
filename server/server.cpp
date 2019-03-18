@@ -8703,7 +8703,7 @@ int main() {
                 
 
                 // special case
-                // work-around for basket and horse cart
+                // work-around for basket and horse cart, and rail cart
                 // until I can fix the client after GDC
                 // treat this REMV as a USE
                 if( m.type == REMV && m.i == -1 ) {
@@ -8715,8 +8715,7 @@ int main() {
                         if( targetObj->permanent ) {
                             TransRecord *handTrans = getPTrans(
                                 0, target );
-                            if( handTrans != NULL &&
-                                handTrans->newActor > 0 ) {
+                            if( handTrans != NULL ) {
                                 m.type = USE;
                                 }
                             }
