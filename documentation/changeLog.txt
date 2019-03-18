@@ -3,6 +3,12 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes:
+
+--Temporarily taking public life log data offline.  Will move it to a separate 
+  server when I return from GDC.
+
+
 
 Version 211     2019-March-16
 

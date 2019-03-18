@@ -30,7 +30,7 @@ echo "Processing files newer than $days days"
 
 
 tempDir=~/tempLifeLogs
-webDir=~/public_html/publicLifeLogData
+webDir=~/private_html/publicLifeLogData
 
 
 mkdir $webDir
