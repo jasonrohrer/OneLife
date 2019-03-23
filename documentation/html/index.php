@@ -30,6 +30,7 @@ function showPayLinks( $inSimple ) {
 <font size=3><ul> 
       <li>Lifetime server account
       <li>All future updates
+      <li>Unlock on Steam
       <li>Full source code
       <li>Tech support included
       </ul></font>
