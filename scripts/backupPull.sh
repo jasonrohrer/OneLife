@@ -55,6 +55,23 @@ rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" 
 
 
 
+if [ ! -f ~/backups/thecastledoctrine ]
+then
+    mkdir ~/backups/thecastledoctrine
+fi
+
+rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress thecastledoctrine.net:backups/* ~/backups/thecastledoctrine/
+
+
+if [ ! -f ~/backups/cordialminuet ]
+then
+    mkdir ~/backups/cordialminuet
+fi
+
+rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress cordialminuet.com:backups/* ~/backups/cordialminuet/
+
+
+
 echo ""
 echo "Deleting local files that are more than 14 days old"
 echo ""
