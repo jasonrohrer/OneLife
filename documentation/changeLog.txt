@@ -21,6 +21,9 @@ Server Fixes:
 
 --Rolled back server-side temp fix, now that client-side fix is in place.
 
+--Animals no longer spawn outside of their target biomes (along biome
+  boundaries).  No more mosquitos in desert, seals in jungle.  Fixes #260
+
 
 
 
