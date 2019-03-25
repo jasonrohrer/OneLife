@@ -8701,32 +8701,6 @@ int main() {
                 
                 delete [] message;
                 
-
-                // special case
-                // work-around for basket and horse cart, and rail cart
-                // until I can fix the client after GDC
-                // treat this REMV as a USE
-                if( m.type == REMV && m.i == -1 ) {
-                    int target = getMapObject( m.x, m.y );
-
-                    if( target > 0 ) {
-                        ObjectRecord *targetObj = getObject( target );
-                        
-                        if( targetObj->permanent ) {
-                            TransRecord *handTrans = getPTrans(
-                                0, target );
-                            if( handTrans != NULL ) {
-                                m.type = USE;
-                                }
-                            }
-                        }
-                    }
-                        
-
-
-
-
-
                 if( m.type == UNKNOWN ) {
                     AppLog::info( "Client error, unknown message type." );
                     

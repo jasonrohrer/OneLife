@@ -3,12 +3,23 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 212    ???
+
+--Fixed bug in regular-click on permanent containers mapping to REMV always,
+  even if container has a bare-hand action (like horse cart).  Fixes #261
+
+
+
+
 Server Fixes:
 
 --Temporarily taking public life log data offline.  Will move it to a separate 
   server when I return from GDC.
 
 --Temporary fix server-side for client basket and horse cart bug.
+
+--Rolled back server-side temp fix, now that client-side fix is in place.
 
 
 
