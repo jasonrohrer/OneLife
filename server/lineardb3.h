@@ -57,6 +57,11 @@ typedef struct {
     
 
     
+typedef enum lastOperationType {
+    LASTOP_NA,
+    LASTOP_READ,
+    LASTOP_WRITE
+    } lastOperationType;
 
 
 typedef struct {
@@ -102,6 +107,7 @@ typedef struct {
 
         LINEARDB3_PageManager *overflowBuckets;
         
+        lastOperationType lastOperation;
 
     } LINEARDB3;
 

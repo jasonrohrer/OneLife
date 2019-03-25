@@ -9,6 +9,7 @@
 #ifdef _WIN32
 #define fseeko fseeko64
 #define ftello ftello64
+#define SAFE_READ_WRITE_SWITCHING
 #endif
 
 
@@ -310,6 +311,36 @@ static void markBucketEmpty( PageManager *inPM, uint32_t inBucketIndex ) {
 
 
 
+#ifdef SAFE_READ_WRITE_SWITCHING
+#define dbseeko( db, offset, origin ) safe_dbseeko( db, offset, origin )
+#define dbwrite( buffer, size, db ) safe_dbwrite( buffer, size, db )
+#define dbread( buffer, size, db ) safe_dbread( buffer, size, db )
+#else
+#define dbseeko( db, offset, origin ) fseeko( db->file, offset, origin )
+#define dbwrite( buffer, size, db ) fwrite( buffer, size, 1, db->file )
+#define dbread( buffer, size, db ) fread( buffer, size, 1, db->file )
+#endif
+
+inline static int safe_dbseeko( LINEARDB3 *inDB, long offset, int origin ) {
+    inDB->lastOperation = LASTOP_NA;
+    return fseek( inDB->file, offset, origin );
+    }
+
+inline static size_t safe_dbwrite( const void * buffer, size_t size, LINEARDB3 *inDB ) {
+    if( inDB->lastOperation == LASTOP_READ ) {
+        fseek( inDB->file, 0, SEEK_CUR );
+        }
+    inDB->lastOperation = LASTOP_WRITE;
+    return fwrite( buffer, size, 1, inDB->file );
+    }
+
+inline static size_t safe_dbread( void * buffer, size_t size, LINEARDB3 *inDB ) {
+    if( inDB->lastOperation == LASTOP_WRITE ) {
+        fseek( inDB->file, 0, SEEK_CUR );
+        }
+    inDB->lastOperation = LASTOP_READ;
+    return fread(buffer, size, 1, inDB->file);
+    }
 
 
 static const char *magicString = "Ld2";
@@ -324,14 +355,14 @@ static const char *magicString = "Ld2";
 
 // returns 0 on success, -1 on error
 static int writeHeader( LINEARDB3 *inDB ) {
-    if( fseeko( inDB->file, 0, SEEK_SET ) ) {
+    if( dbseeko( inDB, 0, SEEK_SET ) ) {
         return -1;
         }
 
     int numWritten;
         
-    numWritten = fwrite( magicString, strlen( magicString ), 
-                         1, inDB->file );
+    numWritten = dbwrite( magicString, strlen( magicString ), 
+                         inDB );
     if( numWritten != 1 ) {
         return -1;
         }
@@ -341,7 +372,7 @@ static int writeHeader( LINEARDB3 *inDB ) {
 
     val32 = inDB->keySize;
     
-    numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
+    numWritten = dbwrite( &val32, sizeof(uint32_t), inDB );
     if( numWritten != 1 ) {
         return -1;
         }
@@ -349,7 +380,7 @@ static int writeHeader( LINEARDB3 *inDB ) {
 
     val32 = inDB->valueSize;
     
-    numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
+    numWritten = dbwrite( &val32, sizeof(uint32_t), inDB );
     if( numWritten != 1 ) {
         return -1;
         }
@@ -464,7 +495,7 @@ int LINEARDB3_open(
     
     // seek to the end to find out file size
 
-    if( fseeko( inDB->file, 0, SEEK_END ) ) {
+    if( dbseeko( inDB, 0, SEEK_END ) ) {
         return 1;
         }
     
@@ -488,7 +519,7 @@ int LINEARDB3_open(
         }
     else {
         // read header
-        if( fseeko( inDB->file, 0, SEEK_SET ) ) {
+        if( dbseeko( inDB, 0, SEEK_SET ) ) {
             return 1;
             }
         
@@ -497,7 +528,7 @@ int LINEARDB3_open(
         
         char magicBuffer[ 4 ];
         
-        numRead = fread( magicBuffer, 3, 1, inDB->file );
+        numRead = dbread( magicBuffer, 3, inDB );
 
         if( numRead != 1 ) {
             return 1;
@@ -514,7 +545,7 @@ int LINEARDB3_open(
 
         uint32_t val32;
         
-        numRead = fread( &val32, sizeof(uint32_t), 1, inDB->file );
+        numRead = dbread( &val32, sizeof(uint32_t), inDB );
         
         if( numRead != 1 ) {
             return 1;
@@ -529,7 +560,7 @@ int LINEARDB3_open(
         
 
 
-        numRead = fread( &val32, sizeof(uint32_t), 1, inDB->file );
+        numRead = dbread( &val32, sizeof(uint32_t), inDB );
         
         if( numRead != 1 ) {
             return 1;
@@ -547,7 +578,7 @@ int LINEARDB3_open(
 
 
         // make sure hash table exists in file
-        if( fseeko( inDB->file, 0, SEEK_END ) ) {
+        if( dbseeko( inDB, 0, SEEK_END ) ) {
             return 1;
             }
  
@@ -579,14 +610,14 @@ int LINEARDB3_open(
                 return 1;
                 }
             
-            if( fseeko( inDB->file, 0, SEEK_SET ) ) {
+            if( dbseeko( inDB, 0, SEEK_SET ) ) {
                 return 1;
                 }
             
             unsigned char headerBuffer[ LINEARDB3_HEADER_SIZE ];
             
-            int numRead = fread( headerBuffer, 
-                                 LINEARDB3_HEADER_SIZE, 1, inDB->file );
+            int numRead = dbread( headerBuffer, 
+                                 LINEARDB3_HEADER_SIZE, inDB );
             
             if( numRead != 1 ) {
                 printf( "Failed to read header from lineardb3 file %s\n",
@@ -604,8 +635,8 @@ int LINEARDB3_open(
                 
 
             for( uint64_t i=0; i<numRecordsInFile; i++ ) {
-                numRead = fread( inDB->recordBuffer, 
-                                 inDB->recordSizeBytes, 1, inDB->file );
+                numRead = dbread( inDB->recordBuffer, 
+                                 inDB->recordSizeBytes, inDB );
             
                 if( numRead != 1 ) {
                     printf( "Failed to read record from lineardb3 file %s\n",
@@ -659,13 +690,13 @@ int LINEARDB3_open(
         initPageManager( inDB->overflowBuckets, 2 );
 
 
-        if( fseeko( inDB->file, LINEARDB3_HEADER_SIZE, SEEK_SET ) ) {
+        if( dbseeko( inDB, LINEARDB3_HEADER_SIZE, SEEK_SET ) ) {
             return 1;
             }
         
         for( uint64_t i=0; i<numRecordsInFile; i++ ) {
-            int numRead = fread( inDB->recordBuffer, 
-                                 inDB->recordSizeBytes, 1, inDB->file );
+            int numRead = dbread( inDB->recordBuffer, 
+                                 inDB->recordSizeBytes, inDB );
             
             if( numRead != 1 ) {
                 printf( "Failed to read record from lineardb3 file\n" );
@@ -1026,13 +1057,13 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
             
             // never seek unless we have to
             if( ftello( inDB->file ) != (signed)filePosRec ) {
-                if( fseeko( inDB->file, filePosRec, SEEK_SET ) ) {
+                if( dbseeko( inDB, filePosRec, SEEK_SET ) ) {
                     return -1;
                     }
                 }
             
-            int numRead = fread( inDB->recordBuffer, inDB->keySize, 1,
-                                 inDB->file );
+            int numRead = dbread( inDB->recordBuffer, inDB->keySize,
+                                 inDB );
                 
             if( numRead != 1 ) {
                 return -1;
@@ -1056,7 +1087,7 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
                     
                     // no seeking done yet
                     // go to end of file
-                    if( fseeko( inDB->file, 0, SEEK_END ) ) {
+                    if( dbseeko( inDB, 0, SEEK_END ) ) {
                         return -1;
                         }
                     // make sure it matches where we've documented that
@@ -1069,7 +1100,7 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
 
                 
                 int numWritten = 
-                    fwrite( inKey, inDB->keySize, 1, inDB->file );
+                    dbwrite( inKey, inDB->keySize, inDB );
                 if( numWritten != 1 ) {
                     return -1;
                     }
@@ -1077,8 +1108,8 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
                 
             // else already seeked and read key of non-empty record
             // ready to write value
-            int numWritten = fwrite( inOutValue, inDB->valueSize, 1, 
-                                     inDB->file );
+            int numWritten = dbwrite( inOutValue, inDB->valueSize,
+                                     inDB );
                 
             if( numWritten != 1 ) {
                 return -1;
@@ -1093,8 +1124,8 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
             // read the key above
             // ready to read value now
                 
-            int numRead = fread( inOutValue, inDB->valueSize, 1, 
-                                 inDB->file );
+            int numRead = dbread( inOutValue, inDB->valueSize,
+                                 inDB );
             
             if( numRead != 1 ) {
                 return -1;
@@ -1218,7 +1249,7 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
             if( ftello( inDB->file ) != (signed)filePosRec ) {
             
                 // go to end of file
-                if( fseeko( inDB->file, 0, SEEK_END ) ) {
+                if( dbseeko( inDB, 0, SEEK_END ) ) {
                     return -1;
                     }
             
@@ -1230,9 +1261,9 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
                 }
             
                 
-            int numWritten = fwrite( inKey, inDB->keySize, 1, inDB->file );
+            int numWritten = dbwrite( inKey, inDB->keySize, inDB );
             
-            numWritten += fwrite( inOutValue, inDB->valueSize, 1, inDB->file );
+            numWritten += dbwrite( inOutValue, inDB->valueSize, inDB );
                 
             if( numWritten != 2 ) {
                 return -1;
@@ -1308,22 +1339,22 @@ int LINEARDB3_Iterator_next( LINEARDB3_Iterator *inDBi,
         
                     
         if( ftello( db->file ) != (signed)fileRecPos ) {    
-            if( fseeko( db->file, fileRecPos, SEEK_SET ) ) {
+            if( dbseeko( db, fileRecPos, SEEK_SET ) ) {
                 return -1;
                 }
             }
         
 
-        int numRead = fread( outKey, 
-                             db->keySize, 1,
-                             db->file );
+        int numRead = dbread( outKey, 
+                             db->keySize,
+                             db );
         if( numRead != 1 ) {
             return -1;
             }
         
-        numRead = fread( outValue, 
-                         db->valueSize, 1,
-                         db->file );
+        numRead = dbread( outValue, 
+                         db->valueSize,
+                         db );
         if( numRead != 1 ) {
             return -1;
             }
