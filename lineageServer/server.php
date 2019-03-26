@@ -1543,6 +1543,9 @@ function ls_frontPage() {
         if( $checkEmailHashes && ! $correct ) {
             // block filtering by email if hash not correct
             $emailFilter = "";
+            // don't default to first half of email as name filter
+            // that's confusing
+            $nameFilter = "";
             }
         }
     
