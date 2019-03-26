@@ -1479,8 +1479,9 @@ function ls_getFaceURLForAge( $inAge, $inDisplayID ) {
 
 function ls_frontPage() {
 
-    $emailFilter =
-        ls_requestFilter( "filter", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    // no longer accepting raw email in search box
+    $emailFilter = "";
+        //ls_requestFilter( "filter", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     $nameFilter = ls_requestFilter( "filter", "/[A-Z ]+/i", "" );
 
