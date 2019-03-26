@@ -18,6 +18,15 @@ $fullServerURL = "http://localhost/jcr13/lineageServer/server.php";
 $mainSiteURL = "http://localhost/jcr13/";
 
 
+// The URL of the ticket server's server.php script.
+// This is used to validate ticket IDs.
+$ticketServerURL = "http://localhost/jcr13/ticketServer/server.php";
+
+// to enable ticket server checks when filtering by email
+$checkEmailHashes = false;
+
+
+
 
 // End Basic settings
 

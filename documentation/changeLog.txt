@@ -9,6 +9,8 @@ Version 212    ???
 --Fixed bug in regular-click on permanent containers mapping to REMV always,
   even if container has a bare-hand action (like horse cart).  Fixes #261
 
+--Client provides account key hmac in lineage server URL.
+
 
 
 
@@ -23,6 +25,10 @@ Server Fixes:
 
 --Animals no longer spawn outside of their target biomes (along biome
   boundaries).  No more mosquitos in desert, seals in jungle.  Fixes #260
+
+--Lineage server now requires account key hmac along with email search to
+  verify email ownership and protect privacy.  (Disabled for now until client
+  update.)
 
 
 
