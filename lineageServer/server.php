@@ -1304,7 +1304,7 @@ function ls_logLife() {
         // no record exists, add one
         $query = "INSERT INTO $tableNamePrefix". "users SET " .
             "email = '$email', ".
-            "email_sha1 = sha1( '$email' ), ".
+            "email_sha1 = sha1( lower( '$email' ) ), ".
             "sequence_number = 1, ".
             "life_count = 1 ".
             "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1, ".
@@ -1480,11 +1480,15 @@ function ls_getFaceURLForAge( $inAge, $inDisplayID ) {
 function ls_frontPage() {
 
     // no longer accepting raw email in search box
+    // only in email param
+    // we can't depend on email_sha1 after all, because
+    // of email case differences
     $emailFilter = "";
-        //ls_requestFilter( "filter", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+        ls_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     $nameFilter = ls_requestFilter( "filter", "/[A-Z ]+/i", "" );
 
+    // leave sha1 behavior in place for backwards compat
     $email_sha1 = ls_requestFilter( "email_sha1", "/[a-f0-9]+/i", "" );
 
     if( $email_sha1 != "" ) {

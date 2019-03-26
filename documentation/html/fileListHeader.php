@@ -6,7 +6,7 @@ $fileListHeader = $header .
 'echo "<center><font size=6>Downloads</font><br><br>"; ' .
 'echo "Your account email is: <b>$email</b><br><br>"; '.
 'echo "Your Account Key is: <b>$ticket_id</b><br><br><br>"; '.
-'$email_sha1 = sha1( $email );'.
+'$email_sha1 = sha1( strtolower( $email ) );'.
 '$pureTicket = strtoupper( implode( preg_split( "/-/", $ticket_id ) ) );'.
 '$stringToHash = mt_rand( 0, 2000000000 );'.
 '$ticket_hash = strtoupper( ts_hmac_sha1( $pureTicket, $stringToHash ) );'.    

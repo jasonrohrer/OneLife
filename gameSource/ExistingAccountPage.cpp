@@ -367,7 +367,12 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
 
             delete [] pureKey;
 
-            char *emailHash = computeSHA1Digest( email );
+            char *lowerEmail = stringToLowerCase( email );
+
+            char *emailHash = computeSHA1Digest( lowerEmail );
+
+            delete [] lowerEmail;
+
             char *fullURL = autoSprintf( "%s?action=front_page&email_sha1=%s"
                                          "&ticket_hash=%s"
                                          "&string_to_hash=%s",
