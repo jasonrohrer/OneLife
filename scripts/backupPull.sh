@@ -44,6 +44,15 @@ fi
 rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress $user@$server:backups/* ~/backups/$server
 
 
+echo ""
+echo "Deleting local files that are more than 14 days old"
+echo ""
+
+# delete backup files older than two weeks
+find ~/backups/$server -mtime +14 -delete
+ 
+
+
 
 
 if [ ! -f ~/backups/northcountrynotes ]
@@ -72,12 +81,6 @@ rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" 
 
 
 
-echo ""
-echo "Deleting local files that are more than 14 days old"
-echo ""
-
-# delete backup files older than two weeks
-find ~/backups/$server -mtime +14 -delete
 
 
 
