@@ -34,6 +34,11 @@ Server Fixes:
   verify email ownership and protect privacy.  (Disabled for now until client
   update.)
 
+--Default server setting (settings/remoteReport.ini  = 0) now avoids reporting
+  to central curse, lineage, and review servers.  This one setting overrides
+  all others that control reporting.  People who are running vanilla server
+  code will no longer be hammering my servers with bad requests.
+
 
 
 

@@ -54,7 +54,9 @@ void initPlayerStats() {
     dbOpen = true;
 
 
-    useStatsServer = SettingsManager::getIntSetting( "useStatsServer", 0 );    
+    useStatsServer = 
+        SettingsManager::getIntSetting( "useStatsServer", 0 ) &&
+        SettingsManager::getIntSetting( "remoteReport", 0 );    
     
     statsServerURL = 
         SettingsManager::

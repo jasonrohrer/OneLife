@@ -42,7 +42,8 @@ static SimpleVector<LineageRecord> records;
 void initLineageLog() {
 
     useLineageServer = 
-        SettingsManager::getIntSetting( "useLineageServer", 0 );    
+        SettingsManager::getIntSetting( "useLineageServer", 0 ) &&
+        SettingsManager::getIntSetting( "remoteReport", 0 );    
     
     lineageServerURL = 
         SettingsManager::
