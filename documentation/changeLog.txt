@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 212    ???
+Version 212    2019-March-29
 
 --Fixed bug in regular-click on permanent containers mapping to REMV always,
   even if container has a bare-hand action (like horse cart).  Fixes #261
