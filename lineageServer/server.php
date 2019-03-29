@@ -1519,34 +1519,39 @@ function ls_frontPage() {
 
     if( $emailFilter != "" ) {
 
-        $ticket_hash = ls_requestFilter( "ticket_hash", "/[a-f0-9]+/i", "" );
-
-        $string_to_hash =
-            ls_requestFilter( "string_to_hash", "/[A-Z0-9]+/i", "0" );
-
-        $correct = false;
-
-        global $ticketServerURL;
-        $url = "$ticketServerURL".
-            "?action=check_ticket_hash".
-            "&email=$emailFilter".
-            "&hash_value=$ticket_hash".
-            "&string_to_hash=$string_to_hash";
-        
-        $result = trim( file_get_contents( $url ) );
-        
-        if( $result == "VALID" ) {
-            $correct = true;
-            }
-
         global $checkEmailHashes;
-        
-        if( $checkEmailHashes && ! $correct ) {
-            // block filtering by email if hash not correct
-            $emailFilter = "";
-            // don't default to first half of email as name filter
-            // that's confusing
-            $nameFilter = "";
+
+        if( $checkEmailHashes ) {
+            
+
+            $ticket_hash =
+                ls_requestFilter( "ticket_hash", "/[a-f0-9]+/i", "" );
+
+            $string_to_hash =
+                ls_requestFilter( "string_to_hash", "/[A-Z0-9]+/i", "0" );
+
+            $correct = false;
+            
+            global $ticketServerURL;
+            $url = "$ticketServerURL".
+                "?action=check_ticket_hash".
+                "&email=$emailFilter".
+                "&hash_value=$ticket_hash".
+                "&string_to_hash=$string_to_hash";
+            
+            $result = trim( file_get_contents( $url ) );
+            
+            if( $result == "VALID" ) {
+                $correct = true;
+                }
+            
+            if( ! $correct ) {
+                // block filtering by email if hash not correct
+                $emailFilter = "";
+                // don't default to first half of email as name filter
+                // that's confusing
+                $nameFilter = "";
+                }
             }
         }
     
