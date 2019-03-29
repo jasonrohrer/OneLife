@@ -11,6 +11,10 @@ Version 212    ???
 
 --Client provides account key hmac in lineage server URL.
 
+--Special case of object sprite subset detection (where sub object has a single
+  sprite, it is a subset even if there are rotations, flips, or translations in
+  the super-object).  Example:  removing onion from plate.
+
 
 
 
