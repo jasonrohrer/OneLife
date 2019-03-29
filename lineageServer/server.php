@@ -1291,13 +1291,13 @@ function ls_logLife() {
         strtoupper( ls_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
 
     if( $computedHashValue != $hash_value ) {
-        ls_log( "logLife denied for bad hash value" );
+        // ls_log( "logLife denied for bad hash value" );
 
         echo "DENIED";
         return;
         }
-
-    ls_log( "Got valid logLife call:  " . $_SERVER[ 'QUERY_STRING' ] );
+    
+    // ls_log( "Got valid logLife call:  " . $_SERVER[ 'QUERY_STRING' ] );
     
     
     if( $trueSeq == 0 ) {
