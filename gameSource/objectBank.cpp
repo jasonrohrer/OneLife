@@ -5029,7 +5029,25 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
     if( subO->numSprites == 0 ) {
         return true;
         }
-
+    else if( subO->numSprites == 1 &&
+             superO->numSprites >= 1 ) {
+        // special case:
+        // new object is a single-sprite object
+        
+        // treat it as a subset of old object if that sprite occurs
+        // at all, regardless of rotation, position, flip, etc.
+        int spriteID = subO->sprites[0];
+        
+        for( int ss=0; ss<superO->numSprites; ss++ ) {
+            if( superO->sprites[ ss ] == spriteID ) {
+                return true;
+                }
+            }
+        // if our sub-obj's single sprite does not occur, 
+        // it's definitely not a subset
+        return false;
+        }
+    
     // allow global position adjustments, as long as all sub-sprites in same
     // relative position to each other
     

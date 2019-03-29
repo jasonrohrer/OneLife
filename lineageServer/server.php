@@ -1291,20 +1291,20 @@ function ls_logLife() {
         strtoupper( ls_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
 
     if( $computedHashValue != $hash_value ) {
-        ls_log( "logLife denied for bad hash value" );
+        // ls_log( "logLife denied for bad hash value" );
 
         echo "DENIED";
         return;
         }
-
-    ls_log( "Got valid logLife call:  " . $_SERVER[ 'QUERY_STRING' ] );
+    
+    // ls_log( "Got valid logLife call:  " . $_SERVER[ 'QUERY_STRING' ] );
     
     
     if( $trueSeq == 0 ) {
         // no record exists, add one
         $query = "INSERT INTO $tableNamePrefix". "users SET " .
             "email = '$email', ".
-            "email_sha1 = sha1( '$email' ), ".
+            "email_sha1 = sha1( lower( '$email' ) ), ".
             "sequence_number = 1, ".
             "life_count = 1 ".
             "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1, ".
@@ -1479,17 +1479,83 @@ function ls_getFaceURLForAge( $inAge, $inDisplayID ) {
 
 function ls_frontPage() {
 
-    $emailFilter =
-        ls_requestFilter( "filter", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    // no longer accepting raw email in search box
+    $emailFilter = "";
+        //ls_requestFilter( "filter", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     $nameFilter = ls_requestFilter( "filter", "/[A-Z ]+/i", "" );
 
     $email_sha1 = ls_requestFilter( "email_sha1", "/[a-f0-9]+/i", "" );
 
+    if( $email_sha1 != "" ) {
+        // use this to look up email
 
+        global $tableNamePrefix;
+    
+        $query = "SELECT email ".
+            "FROM $tableNamePrefix"."users WHERE email_sha1='$email_sha1';";
+    
+        $result = ls_queryDatabase( $query );
+    
+        $numRows = mysqli_num_rows( $result );
+
+        if( $numRows == 0 ) {
+            $emailFilter = "";
+            }
+        else {    
+            $emailFilter =
+                ls_mysqli_result( $result, 0, "email" );
+            }
+
+        // then clear it
+        // don't allow searching on hash directly, if it doesn't
+        // match an email
+        $email_sha1 = "";
+        }
+    
+    
     $filterClause = " WHERE 1 ";
     $filter = "";
 
+    if( $emailFilter != "" ) {
+
+        global $checkEmailHashes;
+
+        if( $checkEmailHashes ) {
+            
+
+            $ticket_hash =
+                ls_requestFilter( "ticket_hash", "/[a-f0-9]+/i", "" );
+
+            $string_to_hash =
+                ls_requestFilter( "string_to_hash", "/[A-Z0-9]+/i", "0" );
+
+            $correct = false;
+            
+            global $ticketServerURL;
+            $url = "$ticketServerURL".
+                "?action=check_ticket_hash".
+                "&email=$emailFilter".
+                "&hash_value=$ticket_hash".
+                "&string_to_hash=$string_to_hash";
+            
+            $result = trim( file_get_contents( $url ) );
+            
+            if( $result == "VALID" ) {
+                $correct = true;
+                }
+            
+            if( ! $correct ) {
+                // block filtering by email if hash not correct
+                $emailFilter = "";
+                // don't default to first half of email as name filter
+                // that's confusing
+                $nameFilter = "";
+                }
+            }
+        }
+    
+    
 
     if( $email_sha1 != "" ) {
         $email_sha1 = strtolower( $email_sha1 );
@@ -1520,9 +1586,8 @@ function ls_frontPage() {
 
     echo "<center>";
 
-    $filterToShow = $filter;
+    $filterToShow = $nameFilter;
     
-
     if( ls_requestFilter( "hide_filter", "/[01]+/i", "0" ) ) {
         $filterToShow = "-hidden-";
         }
@@ -1531,7 +1596,7 @@ function ls_frontPage() {
 ?>
             <FORM ACTION="server.php" METHOD="post">
     <INPUT TYPE="hidden" NAME="action" VALUE="front_page">
-             Email or Character Name:
+             Character Name:
     <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="filter"
              VALUE="<?php echo $filterToShow;?>">
     <INPUT TYPE="Submit" VALUE="Filter">

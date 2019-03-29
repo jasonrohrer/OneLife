@@ -18959,12 +18959,17 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         }
                     }
                 }
-            else if( ( modClick || getObject( destID )->permanent )
+            else if( destID != 0 &&
+                     ( modClick || 
+                       ( getObject( destID )->permanent &&
+                         getTrans( 0, destID ) == NULL
+                         ) 
+                       )
                      && ourLiveObject->holdingID == 0 &&
-                     destID != 0 &&
                      getNumContainerSlots( destID ) > 0 ) {
                 
-                // for permanent container objects, we shouldn't make
+                // for permanent container objects that have no bare-hand
+                // transition , we shouldn't make
                 // distinction between left and right click
 
                 action = "REMV";

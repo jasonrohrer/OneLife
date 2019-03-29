@@ -3,6 +3,8 @@
 #include "message.h"
 #include "buttonStyle.h"
 
+#include "accountHmac.h"
+
 
 #include "minorGems/game/Font.h"
 #include "minorGems/game/game.h"
@@ -14,6 +16,10 @@
 
 
 #include "minorGems/graphics/openGL/KeyboardHandlerGL.h"
+
+#include "minorGems/util/random/JenkinsRandomSource.h"
+
+static JenkinsRandomSource randSource;
 
 
 extern Font *mainFont;
@@ -351,11 +357,31 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         if( strcmp( url, "" ) != 0 ) {
             char *email = mEmailField.getText();
             
-            char *emailHash = computeSHA1Digest( email );
-            char *fullURL = autoSprintf( "%s?action=front_page&email_sha1=%s",
-                                         url, emailHash );
+            char *string_to_hash = 
+                autoSprintf( "%d", 
+                             randSource.getRandomBoundedInt( 0, 2000000000 ) );
+             
+            char *pureKey = getPureAccountKey();
+            
+            char *ticket_hash = hmac_sha1( pureKey, string_to_hash );
+
+            delete [] pureKey;
+
+            char *lowerEmail = stringToLowerCase( email );
+
+            char *emailHash = computeSHA1Digest( lowerEmail );
+
+            delete [] lowerEmail;
+
+            char *fullURL = autoSprintf( "%s?action=front_page&email_sha1=%s"
+                                         "&ticket_hash=%s"
+                                         "&string_to_hash=%s",
+                                         url, emailHash, 
+                                         ticket_hash, string_to_hash );
             delete [] email;
             delete [] emailHash;
+            delete [] ticket_hash;
+            delete [] string_to_hash;
             
             launchURL( fullURL );
             delete [] fullURL;

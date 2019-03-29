@@ -4,6 +4,44 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 212    2019-March-29
+
+--Fixed bug in regular-click on permanent containers mapping to REMV always,
+  even if container has a bare-hand action (like horse cart).  Fixes #261
+
+--Client provides account key hmac in lineage server URL.
+
+--Special case of object sprite subset detection (where sub object has a single
+  sprite, it is a subset even if there are rotations, flips, or translations in
+  the super-object).  Example:  removing onion from plate.
+
+
+
+
+Server Fixes:
+
+--Temporarily taking public life log data offline.  Will move it to a separate 
+  server when I return from GDC.
+
+--Temporary fix server-side for client basket and horse cart bug.
+
+--Rolled back server-side temp fix, now that client-side fix is in place.
+
+--Animals no longer spawn outside of their target biomes (along biome
+  boundaries).  No more mosquitos in desert, seals in jungle.  Fixes #260
+
+--Lineage server now requires account key hmac along with email search to
+  verify email ownership and protect privacy.  (Disabled for now until client
+  update.)
+
+--Default server setting (settings/remoteReport.ini  = 0) now avoids reporting
+  to central curse, lineage, and review servers.  This one setting overrides
+  all others that control reporting.  People who are running vanilla server
+  code will no longer be hammering my servers with bad requests.
+
+
+
+
 Version 211     2019-March-16
 
 --Fixed overlay negative scaling check in EditorImportPage.  Thanks Chard.

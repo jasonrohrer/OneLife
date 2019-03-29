@@ -1142,6 +1142,19 @@ static int getBaseMap( int inX, int inY ) {
 
         if( i >= 0 ) {
             int returnID = naturalMapIDs[pickedBiome].getElementDirect( i );
+            
+            if( pickedBiome == secondPlace ) {
+                // object peeking through from second place biome
+
+                // make sure it's not a moving object (animal)
+                // those are locked to their target biome only
+                TransRecord *t = getPTrans( -1, returnID );
+                if( t != NULL && t->move != 0 ) {
+                    // put empty tile there instead
+                    returnID = 0;
+                    }
+                }
+
             mapCacheInsert( inX, inY, returnID );
             return returnID;
             }

@@ -144,7 +144,9 @@ void initCurses() {
         fclose( f );
         }
 
-    useCurseServer = SettingsManager::getIntSetting( "useCurseServer", 0 );
+    useCurseServer = 
+        SettingsManager::getIntSetting( "useCurseServer", 0 ) &&
+        SettingsManager::getIntSetting( "remoteReport", 0 );
     
     if( useCurseServer ) {
         AppLog::info( "Using remote curse server." );

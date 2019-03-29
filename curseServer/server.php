@@ -726,7 +726,7 @@ function cs_curse() {
         strtoupper( cs_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
 
     if( $computedHashValue != $hash_value ) {
-        cs_log( "curse denied for bad hash value" );
+        // cs_log( "curse denied for bad hash value" );
 
         echo "DENIED";
         return;
@@ -814,7 +814,7 @@ function cs_liveTime() {
         strtoupper( cs_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
 
     if( $computedHashValue != $hash_value ) {
-        cs_log( "live_time denied for bad hash value" );
+        // cs_log( "live_time denied for bad hash value" );
 
         echo "DENIED";
         return;
@@ -925,7 +925,7 @@ function cs_isCursed() {
         strtoupper( cs_hmac_sha1( $sharedGameServerSecret, $email ) );
 
     if( $computedHashValue != $email_hash_value ) {
-        cs_log( "isCursed denied for bad hash value" );
+        // cs_log( "isCursed denied for bad hash value" );
 
         echo "DENIED";
         return;
