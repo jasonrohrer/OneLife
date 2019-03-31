@@ -1,1 +1,22 @@
 IDI_ICON1 ICON DISCARDABLE "icon.ico"
+1 VERSIONINFO
+PRODUCTVERSION  212
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "CompanyName", "Jason Rohrer"
+      VALUE "FileDescription", "One Hour One Life"
+      VALUE "InternalName", "OneLife+"
+      VALUE "LegalCopyright", "Jason Rohrer - Public Domain"
+      VALUE "OriginalFilename", "OneLife+.exe"
+      VALUE "ProductName", "One Hour One Life"
+      VALUE "ProductVersion", "212"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END
