@@ -56,6 +56,12 @@ typedef struct {
     
     
 
+// WONDIBLE WINDOWS SERVER FIX NOTE:  Change 1/2 - Take these lines during the merge process.
+typedef enum lastOperationType {
+        LASTOP_NA,
+        LASTOP_READ,
+        LASTOP_WRITE
+    } lastOperationType;
     
 
 
@@ -102,6 +108,8 @@ typedef struct {
 
         LINEARDB3_PageManager *overflowBuckets;
         
+        // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 2/2 - Take these lines during the merge process.
+        lastOperationType lastOperation;
 
     } LINEARDB3;
 
