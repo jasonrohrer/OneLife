@@ -943,11 +943,15 @@ static void drawPauseScreen() {
                            messagePos, alignCenter );
 
     // SERVER DISPLAY NOTE:  Change 1/1 - Take these lines during the merge process
-    messagePos.y -= 0.625 * (viewHeight / 15);
-    mainFont->drawString( autoSprintf("%s", serverIP),
-                           messagePos, alignCenter );
-        
-    messagePos.y -= 0.625 * (viewHeight / 15);
+    if( serverIP != NULL ) {
+        messagePos.y -= 0.625 * (viewHeight / 15);
+        mainFont->drawString( autoSprintf("%s", serverIP),
+                              messagePos, alignCenter );
+        messagePos.y -= 0.625 * (viewHeight / 15);
+        }
+    else {
+        messagePos.y -= 1.250 * (viewHeight / 15);
+        }
     mainFont->drawString( translate( "pauseMessage2" ), 
                            messagePos, alignCenter );
 
