@@ -19917,11 +19917,21 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
 		
     // FOVMOD NOTE:  Change 27/27 - Take these lines during the merge process
     if( inKeyCode == MG_KEY_F1) {
-        sendToServerSocket( (char*)"EMOT 0 0 0#" );
+        if( isShiftKeyDown() ) {
+            sendToServerSocket( (char*)"EMOT 0 0 14#" );
+            }
+        else {
+            sendToServerSocket( (char*)"EMOT 0 0 0#" );
+            }
         return;
         }
     if( inKeyCode == MG_KEY_F2) {
-        sendToServerSocket( (char*)"EMOT 0 0 1#" );
+        if( isShiftKeyDown() ) {
+            sendToServerSocket( (char*)"EMOT 0 0 15#" );
+            }
+        else {
+            sendToServerSocket( (char*)"EMOT 0 0 1#" );
+            }
         return;
         }
     if( inKeyCode == MG_KEY_F3) {
@@ -19942,6 +19952,26 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
         }
     if( inKeyCode == MG_KEY_F7) {
         sendToServerSocket( (char*)"EMOT 0 0 6#" );
+        return;
+        }
+    if( inKeyCode == MG_KEY_F8) {
+        sendToServerSocket( (char*)"EMOT 0 0 9#" );
+        return;
+        }
+    if( inKeyCode == MG_KEY_F9) {
+        sendToServerSocket( (char*)"EMOT 0 0 10#" );
+        return;
+        }
+    if( inKeyCode == MG_KEY_F10) {
+        sendToServerSocket( (char*)"EMOT 0 0 11#" );
+        return;
+        }
+    if( inKeyCode == MG_KEY_F11) {
+        sendToServerSocket( (char*)"EMOT 0 0 12#" );
+        return;
+        }
+    if( inKeyCode == MG_KEY_F12) {
+        sendToServerSocket( (char*)"EMOT 0 0 13#" );
         return;
         }
 	if( inKeyCode == MG_KEY_LEFT || 
