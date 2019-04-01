@@ -1,11 +1,10 @@
 int versionNumber = 212;
 int dataVersionNumber = 0;
-int clientVersionNumber = versionNumber;
-int expectedVersionNumber = 0;
 
 int binVersionNumber = versionNumber;
 
 
+int expectedVersionNumber = 0;
 // NOTE that OneLife doesn't use account hmacs
 
 // retain an older version number here if server is compatible
@@ -165,13 +164,14 @@ doublePair lastScreenViewCenter = {0, 0 };
 
 // world width of one view
 // FOVMOD NOTE:  Change 1/3 - Take these lines during the merge process
+int gui_hud_mode = 0;
 float gui_fov_scale = 1.0f;
-int gui_fov_scale_hud = 0;
-float gui_fov_effective_scale = ( gui_fov_scale_hud ) ? 1.0f : gui_fov_scale;
+float gui_fov_scale_hud = 1.0f;
+float gui_fov_target_scale_hud = 1.0f;
 float gui_fov_preferred_min_scale = 1.5f;
 float gui_fov_preferred_max_scale = 3.0f;
-int gui_fov_offset_x = (int)(((1280 * gui_fov_scale) - 1280)/2);
-int gui_fov_offset_y = (int)(((720 * gui_fov_scale) - 720)/2);
+int gui_fov_offset_x = (int)(((1280 * gui_fov_target_scale_hud) - 1280)/2);
+int gui_fov_offset_y = (int)(((720 * gui_fov_target_scale_hud) - 720)/2);
 
 
 double viewWidth = 1280 * gui_fov_scale;
@@ -205,29 +205,40 @@ void setFOVScale() {
     sanityCheckSettings( "fovScaleHUD" );
     sanityCheckSettings( "fovPreferredMin" );
     sanityCheckSettings( "fovPreferredMax" );
-    gui_fov_scale_hud = SettingsManager::getIntSetting( "fovScaleHUD", 0 );
-    SettingsManager::setSetting( "fovScaleHUD", gui_fov_scale_hud );
+	sanityCheckSettings( "hudDrawMode" );
+
+	gui_hud_mode = SettingsManager::getIntSetting( "hudDrawMode", 0 );
+	if( gui_hud_mode < 0 ) gui_hud_mode = 0;
+	else if( gui_hud_mode > 2 ) gui_hud_mode = 2;
+	SettingsManager::setSetting( "hudDrawMode", gui_hud_mode );
+
+    gui_fov_target_scale_hud = SettingsManager::getFloatSetting( "fovScaleHUD", 1.0f );
+	if( gui_fov_target_scale_hud < 1.0f ) gui_fov_target_scale_hud = 1.0f;
+	else if( gui_fov_target_scale_hud > 6.0f ) gui_fov_target_scale_hud = 6.0f;
+	SettingsManager::setSetting( "fovScaleHUD", gui_fov_target_scale_hud );
+	
     gui_fov_scale = SettingsManager::getFloatSetting( "fovScale", 1.0f );
-    if( ! gui_fov_scale || gui_fov_scale < 1 ) {
-        SettingsManager::setSetting( "fovScale", 1.0f );
-    } else if ( gui_fov_scale > 6 ) {
-        SettingsManager::setSetting( "fovScale", 6.0f );
-    }
+    if( gui_fov_scale < 1.0f ) gui_fov_scale = 1.0f;
+	else if ( gui_fov_scale > 6.0f ) gui_fov_scale = 6.0f;
+	SettingsManager::setSetting( "fovScale", gui_fov_scale );
+
     gui_fov_preferred_min_scale = SettingsManager::getFloatSetting( "fovPreferredMin", 1.5f );
-    if( ! gui_fov_preferred_min_scale || gui_fov_preferred_min_scale < 1 ) {
-        SettingsManager::setSetting( "fovPreferredMin", 1.0f );
-    } else if ( gui_fov_preferred_min_scale > 6 ) {
-        SettingsManager::setSetting( "fovPreferredMin", 6.0f );
-    }
+    if( ! gui_fov_preferred_min_scale || gui_fov_preferred_min_scale < 1 )
+		gui_fov_preferred_min_scale = 1.f;
+    else if ( gui_fov_preferred_min_scale > 6 )
+		gui_fov_preferred_min_scale = 6.f;
+	SettingsManager::setSetting( "fovPreferredMin", gui_fov_preferred_min_scale );
+
     gui_fov_preferred_max_scale = SettingsManager::getFloatSetting( "fovPreferredMax", 3.0f );
-    if( ! gui_fov_preferred_max_scale || gui_fov_preferred_max_scale < 1 ) {
-        SettingsManager::setSetting( "fovPreferredMax", 1.0f );
-    } else if ( gui_fov_preferred_max_scale > 6 ) {
-        SettingsManager::setSetting( "fovPreferredMax", 6.0f );
-    }
-    gui_fov_effective_scale = ( gui_fov_scale_hud ) ? 1.0f : gui_fov_scale;
-    gui_fov_offset_x = (int)(((1280 * gui_fov_scale) - 1280)/2);
-    gui_fov_offset_y = (int)(((720 * gui_fov_scale) - 720)/2);
+    if( ! gui_fov_preferred_max_scale || gui_fov_preferred_max_scale < 1 )
+		gui_fov_preferred_max_scale = 1.f;
+	else if ( gui_fov_preferred_max_scale > 6 )
+		gui_fov_preferred_max_scale = 6.f;
+	SettingsManager::setSetting( "fovPreferredMax", gui_fov_preferred_max_scale );
+
+	gui_fov_scale_hud = gui_fov_scale / gui_fov_target_scale_hud;
+    gui_fov_offset_x = (int)(((1280 * gui_fov_target_scale_hud) - 1280)/2);
+    gui_fov_offset_y = (int)(((720 * gui_fov_target_scale_hud) - 720)/2);
     viewWidth = 1280 * gui_fov_scale;
     viewHeight = 720 * gui_fov_scale;
     visibleViewWidth = viewWidth;
@@ -642,22 +653,21 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     mainFontFixed->setMinimumPositionPrecision( 1 );
     numbersFontFixed->setMinimumPositionPrecision( 1 );
     
-    smallFont = new Font( getFontTGAFileName(), 3, 8, false, 8 * gui_fov_effective_scale );
+    // FOVMOD NOTE:  Change 3/3 - Take these lines during the merge process
+    smallFont = new Font( getFontTGAFileName(), 3, 8, false, 8 * gui_fov_scale_hud );
 
-
-    // FOVMOD NOTE:  Change 3/3 - Take these lines during the merge process	
     handwritingFont = 
-        new Font( "font_handwriting_32_32.tga", 3, 6, false, 16 * gui_fov_effective_scale );
+        new Font( "font_handwriting_32_32.tga", 3, 6, false, 16 * gui_fov_scale_hud );
 
     handwritingFont->setMinimumPositionPrecision( 1 );
 
     pencilFont = 
-        new Font( "font_pencil_32_32.tga", 3, 6, false, 16 * gui_fov_effective_scale );
+        new Font( "font_pencil_32_32.tga", 3, 6, false, 16 * gui_fov_scale_hud );
 
     pencilFont->setMinimumPositionPrecision( 1 );
 
     pencilErasedFont = 
-        new Font( "font_pencil_erased_32_32.tga", 3, 6, false, 16 * gui_fov_effective_scale );
+        new Font( "font_pencil_erased_32_32.tga", 3, 6, false, 16 * gui_fov_scale_hud );
 
     pencilErasedFont->setMinimumPositionPrecision( 1 );
 
@@ -1732,11 +1742,11 @@ void drawFrame( char inUpdate ) {
                         autoLogIn = false;
                         }
 
-                    if( clientVersionNumber == expectedVersionNumber ) { 
+                    if( binVersionNumber == expectedVersionNumber ) { 
                         currentGamePage = existingAccountPage;
                         currentGamePage->base_makeActive( true );
                         }
-                    else if( clientVersionNumber > expectedVersionNumber ) {
+                    else if( binVersionNumber > expectedVersionNumber ) {
                         currentGamePage = finalMessagePage;                        
                         finalMessagePage->setMessageKey( "upgradeMessage" );
                         finalMessagePage->setSubMessage( "IT LOOKS LIKE YOU UPDATED THE MOD##BEFORE DOWNLOADING THE LATEST GAME UPDATE.####USE YOUR UN-MODDED CLIENT TO UPDATE FIRST.##(DON'T FORGET TO CLEAR ANY CUSTOM SERVER SETTINGS!)" );
@@ -1745,7 +1755,7 @@ void drawFrame( char inUpdate ) {
                     else {
                         currentGamePage = finalMessagePage;                        
                         finalMessagePage->setMessageKey( "upgradeMessage" );
-                        finalMessagePage->setSubMessage( autoSprintf( "THIS VERSION OF THE MOD IS OUTDATED##(EXPECTING VERSION %d - RUNNING VERSION %d)##PLEASE DOWNLOAD A NEWER VERSION FROM:####HTTPS://GITHUB.COM/AWBZ/ONELIFE/RELEASES/LATEST", expectedVersionNumber, clientVersionNumber ) );
+                        finalMessagePage->setSubMessage( autoSprintf( "THIS VERSION OF THE MOD IS OUTDATED##(EXPECTING VERSION %d - RUNNING VERSION %d)##PLEASE DOWNLOAD A NEWER VERSION FROM:####HTTPS://GITHUB.COM/AWBZ/ONELIFE/RELEASES/LATEST", expectedVersionNumber, binVersionNumber ) );
                         currentGamePage->base_makeActive( true );
                     }
                 }
