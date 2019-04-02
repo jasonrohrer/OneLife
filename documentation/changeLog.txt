@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes:
+
+--Fixed bug that skipped heat map recomputation if number of players on server
+  shrank.
+
+
+
 Version 212    2019-March-29
 
 --Fixed bug in regular-click on permanent containers mapping to REMV always,

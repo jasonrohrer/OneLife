@@ -13414,7 +13414,7 @@ int main() {
             
             lastPlayerIndexHeatRecomputed = r - 1;
             
-            if( r == players.size() ) {
+            if( r >= players.size() ) {
                 // done updating for last player
                 // start over
                 lastPlayerIndexHeatRecomputed = -1;
