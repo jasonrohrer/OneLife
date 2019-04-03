@@ -1641,7 +1641,7 @@ function ls_frontPage() {
     
     ls_printFrontPageRows(
         "$rootFilterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 DAY )",
-        "deepest_descendant_generation DESC, death_time DESC",
+        "deepest_descendant_generation - generation DESC, death_time DESC",
         $numPerList );
     
     
@@ -1665,8 +1665,9 @@ function ls_frontPage() {
         "</font></td></tr>\n";
     
     ls_printFrontPageRows(
-        "$rootFilterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 WEEK )",
-        "deepest_descendant_generation DESC, death_time DESC",
+        "$rootFilterClause AND ".
+        "death_time >= DATE_SUB( NOW(), INTERVAL 1 WEEK )",
+        "deepest_descendant_generation - generation DESC, death_time DESC",
         $numPerList );
 
 
@@ -1675,7 +1676,7 @@ function ls_frontPage() {
     
     ls_printFrontPageRows(
         $rootFilterClause,
-        "deepest_descendant_generation DESC, death_time DESC",
+        "deepest_descendant_generation - generation DESC, death_time DESC",
         $numPerList );
 
     
