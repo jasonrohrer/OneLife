@@ -11,6 +11,8 @@ Server Fixes:
 
 --Lineage server shows tables of deep roots.
 
+--Family name sticks with you even if your mother is nameless or doesn't name
+  you.
 
 
 Version 212    2019-March-29

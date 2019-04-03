@@ -211,6 +211,9 @@ typedef struct LiveObject {
         char *name;
         char nameHasSuffix;
         
+        char *familyName;
+        
+
         char *lastSay;
 
         CurseStatus curseStatus;
@@ -1095,6 +1098,10 @@ void quitCleanup() {
 
         if( nextPlayer->name != NULL ) {
             delete [] nextPlayer->name;
+            }
+
+        if( nextPlayer->familyName != NULL ) {
+            delete [] nextPlayer->familyName;
             }
 
         if( nextPlayer->lastSay != NULL ) {
@@ -5331,6 +5338,8 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.lineage = new SimpleVector<int>();
     
     newObject.name = NULL;
+    newObject.familyName = NULL;
+    
     newObject.nameHasSuffix = false;
     newObject.lastSay = NULL;
     newObject.curseStatus = inCurseStatus;
@@ -5449,6 +5458,10 @@ int processLoggedInPlayer( Socket *inSock,
         // do not log babies that new Eve spawns next to as parents
         newObject.parentID = parent->id;
         parentEmail = parent->email;
+
+        if( parent->familyName != NULL ) {
+            newObject.familyName = stringDuplicate( parent->familyName );
+            }
 
         newObject.lineageEveID = parent->lineageEveID;
 
@@ -9862,6 +9875,10 @@ int main() {
                                 nextPlayer->name = autoSprintf( "%s %s",
                                                                 eveName, 
                                                                 close );
+
+                                nextPlayer->familyName = 
+                                    stringDuplicate( close );
+                                
                                 nextPlayer->name = getUniqueCursableName( 
                                     nextPlayer->name, 
                                     &( nextPlayer->nameHasSuffix ) );
@@ -9891,8 +9908,19 @@ int main() {
                                         lastName = strstr( nextPlayer->name, 
                                                            " " );
                                         
+                                        if( lastName != NULL ) {
+                                            // skip space
+                                            lastName = &( lastName[1] );
+                                            }
+
                                         if( lastName == NULL ) {
                                             lastName = "";
+
+                                            if( nextPlayer->familyName != 
+                                                NULL ) {
+                                                lastName = 
+                                                    nextPlayer->familyName;
+                                                }    
                                             }
                                         else if( nextPlayer->nameHasSuffix ) {
                                             // only keep last name
@@ -9904,8 +9932,7 @@ int main() {
                                             // is the last name IS the suffix.
                                             
                                             char *suffixPos =
-                                                strstr( (char*)&( lastName[1] ),
-                                                        " " );
+                                                strstr( (char*)lastName, " " );
                                             
                                             if( suffixPos == NULL ) {
                                                 // last name is suffix, actually
@@ -9921,10 +9948,16 @@ int main() {
                                                 }
                                             }
                                         }
+                                    else if( nextPlayer->familyName != NULL ) {
+                                        lastName = nextPlayer->familyName;
+                                        }
+                                    
+
 
                                     const char *close = 
                                         findCloseFirstName( name );
-                                    babyO->name = autoSprintf( "%s%s",
+
+                                    babyO->name = autoSprintf( "%s %s",
                                                                close, 
                                                                lastName );
 
@@ -15755,6 +15788,10 @@ int main() {
                 
                 if( nextPlayer->name != NULL ) {
                     delete [] nextPlayer->name;
+                    }
+
+                if( nextPlayer->familyName != NULL ) {
+                    delete [] nextPlayer->familyName;
                     }
 
                 if( nextPlayer->lastSay != NULL ) {
