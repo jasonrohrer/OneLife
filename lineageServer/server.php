@@ -1791,7 +1791,7 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
 
             $descendFurther = $deepest_descendant_generation - $generation;
             $generationString = $generationString . "<br>" .
-                "Descendant Depth: $descendFurther";
+                "Lineage Depth: $descendFurther";
             }
         
         
