@@ -48,3 +48,8 @@ UPDATE lineageServer_users SET email_sha1 = sha1( email );
 
 // index for log
 ALTER TABLE lineageServer_log ADD INDEX entry_time ( entry_time );
+
+
+
+
+ALTER TABLE lineageServer_lives ADD INDEX ( deepest_descendant_generation, death_time );

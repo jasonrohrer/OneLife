@@ -9,6 +9,8 @@ Server Fixes:
 --Fixed bug that skipped heat map recomputation if number of players on server
   shrank.
 
+--Lineage server shows tables of deep roots.
+
 
 
 Version 212    2019-March-29
