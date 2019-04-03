@@ -507,6 +507,57 @@ SimpleVector<LiveObject> tutorialLoadingPlayers;
 
 
 
+typedef struct DeadObject {
+        int id;
+        
+        int displayID;
+        
+        char *name;
+        
+        SimpleVector<int> *lineage;
+        
+        // id of Eve that started this line
+        int lineageEveID;
+        
+
+
+        // time that this life started (for computing age)
+        // not actual creation time (can be adjusted to tweak starting age,
+        // for example, in case of Eve who starts older).
+        double lifeStartTimeSeconds;
+
+    } DeadObject;
+
+
+
+SimpleVector<DeadObject> pastPlayers;
+
+
+
+static void addPastPlayer( LiveObject *inPlayer ) {
+    
+    DeadObject o;
+    
+    o.id = inPlayer->id;
+    o.displayID = inPlayer->displayID;
+    o.name = NULL;
+    if( inPlayer->name != NULL ) {
+        o.name = stringDuplicate( inPlayer->name );
+        }
+    o.lineageEveID = inPlayer->lineageEveID;
+    o.lifeStartTimeSeconds = inPlayer->lifeStartTimeSeconds;
+    
+    o.lineage = new SimpleVector<int>();
+    for( int i=0; i< inPlayer->lineage->size(); i++ ) {
+        o.lineage->push_back( inPlayer->lineage->getElementDirect( i ) );
+        }
+    
+    pastPlayers.push_back( o );
+    }
+
+
+
+
 static char checkReadOnly() {
     const char *testFileName = "testReadOnly.txt";
     
@@ -1073,6 +1124,15 @@ void quitCleanup() {
     players.deleteAll();
 
 
+    for( int i=0; i<pastPlayers.size(); i++ ) {
+        DeadObject *o = pastPlayers.getElement( i );
+        
+        delete [] o->name;
+        delete o->lineage;
+        }
+    pastPlayers.deleteAll();
+    
+
     freeLineageLimit();
     
     freePlayerStats();
@@ -1290,6 +1350,7 @@ typedef enum messageType {
     EMOT,
     JUMP,
     DIE,
+    GRAVE,
     FORCE,
     MAP,
     TRIGGER,
@@ -1503,6 +1564,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "DIE" ) == 0 ) {
         m.type = DIE;
+        }
+    else if( strcmp( nameBuffer, "GRAVE" ) == 0 ) {
+        m.type = GRAVE;
         }
     else if( strcmp( nameBuffer, "FORCE" ) == 0 ) {
         m.type = FORCE;
@@ -1856,12 +1920,20 @@ void handleShutdownDeath( LiveObject *inPlayer,
 
 
 
-double computeAge( LiveObject *inPlayer ) {
+double computeAge( double inLifeStartTimeSeconds ) {
+    
     double deltaSeconds = 
-        Time::getCurrentTime() - inPlayer->lifeStartTimeSeconds;
+        Time::getCurrentTime() - inLifeStartTimeSeconds;
     
     double age = deltaSeconds * getAgeRate();
     
+    return age;
+    }
+
+
+
+double computeAge( LiveObject *inPlayer ) {
+    double age = computeAge( inPlayer->lifeStartTimeSeconds );
     if( age >= forceDeathAge ) {
         setDeathReason( inPlayer, "age" );
         
@@ -9170,6 +9242,83 @@ int main() {
                         // else let normal grave appear for this dead baby
                         }
                     }
+                else if( m.type == GRAVE ) {
+                    // immediately send GO response
+                    
+                    int id = -1;
+                    
+                    DeadObject *o = NULL;
+                    for( int i=0; i<pastPlayers.size(); i++ ) {
+                        DeadObject *oThis = pastPlayers.getElement( i );
+                        
+                        if( oThis->id == id ) {
+                            o = oThis;
+                            break;
+                            }
+                        }
+                    
+                    SimpleVector<int> *defaultLineage = 
+                        new SimpleVector<int>();
+                    
+                    defaultLineage->push_back( 0 );
+                    DeadObject defaultO = 
+                        { 0,
+                          0,
+                          stringDuplicate( "~" ),
+                          defaultLineage,
+                          0,
+                          0 };
+                    
+                    if( o == NULL ) {
+                        o = &defaultO;
+                        }
+
+                    if( o != NULL ) {
+                        char *formattedName;
+                        
+                        if( o->name != NULL ) {
+                            char found;
+                            formattedName =
+                                replaceAll( o->name, " ", "_", &found );
+                            }
+                        else {
+                            formattedName = stringDuplicate( "~" );
+                            }
+
+                        SimpleVector<char> linWorking;
+                        
+                        for( int j=1; j<o->lineage->size(); j++ ) {
+                            char *mID = 
+                                autoSprintf( 
+                                    " %d",
+                                    o->lineage->getElementDirect( j ) );
+                            linWorking.appendElementString( mID );
+                            delete [] mID;
+                            }
+                        char *linString = linWorking.getElementString();
+                        
+                        char *message = autoSprintf(
+                            "GO\n%d %d %d %d %lf %s%s\n#",
+                            m.x - nextPlayer->birthPos.x,
+                            m.y - nextPlayer->birthPos.y,
+                            o->id, o->displayID, 
+                            computeAge( o->lifeStartTimeSeconds ),
+                            formattedName, linString );
+                        printf( "Processing %d,%d from birth pos %d,%d\n",
+                                m.x, m.y, nextPlayer->birthPos.x,
+                                nextPlayer->birthPos.y );
+                        
+                        delete [] formattedName;
+                        delete [] linString;
+
+                        sendMessageToPlayer( nextPlayer, message, 
+                                             strlen( message ) );
+                        delete [] message;
+                        }
+                    
+                    delete [] defaultO.name;
+                    delete defaultO.lineage;
+                    }
                 else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
                     // if we're waiting for a FORCE response, ignore
@@ -15588,6 +15737,8 @@ int main() {
                 AppLog::infoF( "%d remaining player(s) alive on server ",
                                players.size() - 1 );
                 
+                addPastPlayer( nextPlayer );
+
                 if( nextPlayer->sock != NULL ) {
                     sockPoll.removeSocket( nextPlayer->sock );
                 

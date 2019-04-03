@@ -155,6 +155,8 @@ GRAVE (GV)
 
 GRAVE_MOVE (GM)
 
+GRAVE_OLD (GO)
+
 CURSED (CU)
 
 CURSE_TOKEN_CHANGE (CX)
@@ -663,6 +665,19 @@ Grave at xs,ys moved to xd,yd.
 
 
 
+GO
+x y p_id po_id age underscored_name mother_id grandmother_id great_grandmother_id ... eve_id
+#
+
+
+Provides info about an old grave that wasn't created during your lifetime.
+In response to a GRAVE message from client.
+
+underscored_name is name with spaces replaced by _
+If player has no name, this will be ~ character instead.
+
+
+
 CU
 p_id level
 p_id level
@@ -756,6 +771,7 @@ KILL x y id#
 JUMP x y#
 EMOT x y e#
 DIE x y#
+GRAVE X Y#
 FORCE x y#
 PING x y unique_id#
 VOGS x y#

@@ -336,17 +336,25 @@ static int getHomeDir( doublePair inCurrentPlayerPos,
 
 
 
-char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
-    SimpleVector<int> ourLin = inOurObject->lineage;
-    SimpleVector<int> theirLin = inTheirObject->lineage;
-    
-    int ourID = inOurObject->id;
-    int theirID = inTheirObject->id;
 
-    char theyMale = getObject( inTheirObject->displayID )->male;
+
+char *getRelationName( SimpleVector<int> *ourLin, 
+                       SimpleVector<int> *theirLin, 
+                       int ourID, int theirID,
+                       int ourDisplayID, int theirDisplayID,
+                       double ourAge, double theirAge ) {
     
 
-    if( ourLin.size() == 0 && theirLin.size() == 0 ) {
+    ObjectRecord *theirDisplayO = getObject( theirDisplayID );
+    
+    char theyMale = false;
+    
+    if( theirDisplayO != NULL ) {
+        theyMale = theirDisplayO->male;
+        }
+    
+
+    if( ourLin->size() == 0 && theirLin->size() == 0 ) {
         // both eve, no relation
         return NULL;
         }
@@ -359,8 +367,8 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
     
     char found = false;
 
-    for( int i=0; i<theirLin.size(); i++ ) {
-        if( theirLin.getElementDirect( i ) == ourID ) {
+    for( int i=0; i<theirLin->size(); i++ ) {
+        if( theirLin->getElementDirect( i ) == ourID ) {
             found = true;
             
             if( theyMale ) {
@@ -377,8 +385,8 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
         }
 
     if( ! found ) {
-        for( int i=0; i<ourLin.size(); i++ ) {
-            if( ourLin.getElementDirect( i ) == theirID ) {
+        for( int i=0; i<ourLin->size(); i++ ) {
+            if( ourLin->getElementDirect( i ) == theirID ) {
                 found = true;
                 main = translate( "mother" );
                 if( i > 0  ) {
@@ -401,11 +409,11 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
         int ourMatchIndex = -1;
         int theirMatchIndex = -1;
         
-        for( int i=0; i<ourLin.size(); i++ ) {
-            for( int j=0; j<theirLin.size(); j++ ) {
+        for( int i=0; i<ourLin->size(); i++ ) {
+            for( int j=0; j<theirLin->size(); j++ ) {
                 
-                if( ourLin.getElementDirect( i ) == 
-                    theirLin.getElementDirect( j ) ) {
+                if( ourLin->getElementDirect( i ) == 
+                    theirLin->getElementDirect( j ) ) {
                     ourMatchIndex = i;
                     theirMatchIndex = j;
                     break;
@@ -430,17 +438,17 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
                 main = translate( "sister" );
                 }
             
-            if( inOurObject->age < inTheirObject->age - 0.1 ) {
+            if( ourAge < theirAge - 0.1 ) {
                 big = true;
                 }
-            else if( inOurObject->age > inTheirObject->age + 0.1 ) {
+            else if( ourAge > theirAge + 0.1 ) {
                 little = true;
                 }
             else {
                 // close enough together in age
                 twin = true;
                 
-                if( inOurObject->displayID == inTheirObject->displayID ) {
+                if( ourDisplayID == theirDisplayID ) {
                     identical = true;
                     }
                 }
@@ -552,6 +560,22 @@ char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
         }
 
     return buffer.getElementString();
+    }
+
+
+
+char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
+    SimpleVector<int> ourLin = inOurObject->lineage;
+    SimpleVector<int> theirLin = inTheirObject->lineage;
+    
+    int ourID = inOurObject->id;
+    int theirID = inTheirObject->id;
+
+    
+    return getRelationName( &ourLin, &theirLin, ourID, theirID,
+                            inOurObject->displayID, inTheirObject->displayID,
+                            inOurObject->age,
+                            inTheirObject->age );
     }
 
 
@@ -852,6 +876,7 @@ typedef enum messageType {
     MONUMENT_CALL,
     GRAVE,
     GRAVE_MOVE,
+    GRAVE_OLD,
     FLIGHT_DEST,
     VOG_UPDATE,
     FORCED_SHUTDOWN,
@@ -959,6 +984,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "GM" ) == 0 ) {
         returnValue = GRAVE_MOVE;
+        }
+    else if( strcmp( copy, "GO" ) == 0 ) {
+        returnValue = GRAVE_OLD;
         }
     else if( strcmp( copy, "FD" ) == 0 ) {
         returnValue = FLIGHT_DEST;
@@ -7916,6 +7944,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 des = getObject( idToDescribe )->description;
 
                 if( strstr( des, "origGrave" ) != NULL ) {
+                    char found = false;
                     
                     for( int g=0; g<mGraveInfo.size(); g++ ) {
                         GraveInfo *gI = mGraveInfo.getElement( g );
@@ -7933,10 +7962,23 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             delete [] desNoComment;
                             
                             desToDelete = des;
-
+                            found = true;
                             break;
                             }    
                         }
+
+                    // FIXME:  this will hammer server repeatedly
+                    // until response arrives.
+                    if( !found ) {
+                        char *graveMessage = 
+                            autoSprintf( "GRAVE %d %d#",
+                                         mCurMouseOverWorld.x,
+                                         mCurMouseOverWorld.y );
+
+                        sendToServerSocket( graveMessage );
+                        delete [] graveMessage;
+                        }
+                    
                     }
                 }
             
@@ -10655,6 +10697,95 @@ void LivingLifePage::step() {
                         }    
                     }
                 }            
+            }
+        else if( type == GRAVE_OLD ) {
+            int posX, posY, playerID, displayID;
+            double age;
+            
+            char nameBuffer[200];
+            
+            nameBuffer[0] = '\0';
+            
+            int numRead = sscanf( message, "GO\n%d %d %d %d %lf %199s",
+                                  &posX, &posY, &playerID, &displayID,
+                                  &age, nameBuffer );
+            if( numRead == 6 ) {
+                applyReceiveOffset( &posX, &posY );
+
+                int nameLen = strlen( nameBuffer );
+                for( int i=0; i<nameLen; i++ ) {
+                    if( nameBuffer[i] == '_' ) {
+                        nameBuffer[i] = ' ';
+                        }
+                    }
+                
+                
+                SimpleVector<int> otherLin;
+
+                int numLines;
+                
+                char **lines = split( message, "\n", &numLines );
+
+                if( numLines > 1 ) {
+                    SimpleVector<char *> *tokens = 
+                        tokenizeString( lines[1] );
+
+                    for( int t=6; t<tokens->size(); t++ ) {
+                        char *tok = tokens->getElementDirect( t );
+                                    
+                        int mID = 0;
+                        sscanf( tok, "%d", &mID );
+                        
+                        if( mID != 0 ) {
+                            otherLin.push_back( mID );
+                            }
+                        }
+                    tokens->deallocateStringElements();
+                    }
+
+
+                for( int i=0; i<numLines; i++ ) {
+                    delete [] lines[i];
+                    }
+                delete [] lines;
+                
+                LiveObject *ourLiveObject = getOurLiveObject();
+
+                char *relationName = getRelationName( 
+                    &( ourLiveObject->lineage ),
+                    &otherLin,
+                    ourID,
+                    playerID,
+                    ourLiveObject->displayID,
+                    displayID,
+                    ourLiveObject->age,
+                    age );
+
+                GraveInfo g;
+                g.worldPos.x = posX;
+                g.worldPos.y = posY;
+                
+                char *des = relationName;
+                char *desToDelete = NULL;
+                    
+                if( des == NULL ) {
+                    des = (char*)translate( "unrelated" );
+                    }
+                if( strcmp( nameBuffer, "" ) != 0 &&
+                    strcmp( nameBuffer, "~" ) != 0 ) {
+                    des = autoSprintf( "%s - %s",
+                                       nameBuffer, des );
+                    desToDelete = des;
+                    }
+
+                g.relationName = stringDuplicate( des );
+                
+                if( desToDelete != NULL ) {
+                    delete [] desToDelete;
+                    }
+                
+                mGraveInfo.push_back( g );
+                }
             }
         else if( type == FLIGHT_DEST ) {
             int posX, posY, playerID;
