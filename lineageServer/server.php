@@ -365,7 +365,10 @@ function ls_setupDatabase() {
             // OR just queries on deepest_descendant_generation fast.
             // but not querys on just death_time fast
             "INDEX( deepest_descendant_generation, death_time ),".
-            "deepest_descendant_life_id INT NOT NULL );";
+            "deepest_descendant_life_id INT NOT NULL," .
+            // how deep the lineage is from this point 
+            "lineage_depth INT NOT NULL," .
+            "INDEX( lineage_depth ) );";
 
         $result = ls_queryDatabase( $query );
 
@@ -1362,7 +1365,8 @@ function ls_logLife() {
         "generation = '$generation', " .
         "eve_life_id = '$eve_life_id', ".
         "deepest_descendant_generation = -1, ".
-        "deepest_descendant_life_id = -1;";
+        "deepest_descendant_life_id = -1, ".
+        "lineage_depth = 0;";
 
     ls_queryDatabase( $query );
 
@@ -1434,7 +1438,9 @@ function ls_setDeepestGenerationUp( $inID,
             "deepest_descendant_generation = ".
             "  $in_deepest_descendant_generation, ".
             "deepest_descendant_life_id = ".
-            "  $in_deepest_descendant_life_id ".
+            "  $in_deepest_descendant_life_id, ".
+            "lineage_depth = ".
+            "  $in_deepest_descendant_generation - generation ".
             "WHERE id = $inID;";
         
         ls_queryDatabase( $query );
@@ -1641,7 +1647,7 @@ function ls_frontPage() {
     
     ls_printFrontPageRows(
         "$rootFilterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 DAY )",
-        "deepest_descendant_generation - generation DESC, death_time DESC",
+        "lineage_depth DESC, death_time DESC",
         $numPerList );
     
     
@@ -1667,7 +1673,7 @@ function ls_frontPage() {
     ls_printFrontPageRows(
         "$rootFilterClause AND ".
         "death_time >= DATE_SUB( NOW(), INTERVAL 1 WEEK )",
-        "deepest_descendant_generation - generation DESC, death_time DESC",
+        "lineage_depth DESC, death_time DESC",
         $numPerList );
 
 
@@ -1676,7 +1682,7 @@ function ls_frontPage() {
     
     ls_printFrontPageRows(
         $rootFilterClause,
-        "deepest_descendant_generation - generation DESC, death_time DESC",
+        "lineage_depth DESC, death_time DESC",
         $numPerList );
 
     
@@ -2498,7 +2504,8 @@ function ls_computeDeepestGeneration( $inID ) {
         $query = "UPDATE $tableNamePrefix"."lives ".
             "SET ".
             "deepest_descendant_generation = $deepest_descendant_generation, ".
-            "deepest_descendant_life_id = $deepest_descendant_life_id ".
+            "deepest_descendant_life_id = $deepest_descendant_life_id, ".
+            "lineage_depth = $deepest_descendant_life_id - generation ".
             "WHERE id = $inID;";
         
         ls_queryDatabase( $query );  
