@@ -368,7 +368,7 @@ function ls_setupDatabase() {
             "deepest_descendant_life_id INT NOT NULL," .
             // how deep the lineage is from this point 
             "lineage_depth INT NOT NULL," .
-            "INDEX( lineage_depth ) );";
+            "INDEX( lineage_depth, death_time ) );";
 
         $result = ls_queryDatabase( $query );
 
