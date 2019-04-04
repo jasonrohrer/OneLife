@@ -2505,7 +2505,7 @@ function ls_computeDeepestGeneration( $inID ) {
             "SET ".
             "deepest_descendant_generation = $deepest_descendant_generation, ".
             "deepest_descendant_life_id = $deepest_descendant_life_id, ".
-            "lineage_depth = $deepest_descendant_life_id - generation ".
+            "lineage_depth = $deepest_descendant_generation - generation ".
             "WHERE id = $inID;";
         
         ls_queryDatabase( $query );  
