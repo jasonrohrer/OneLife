@@ -10705,7 +10705,22 @@ void LivingLifePage::step() {
                 applyReceiveOffset( &posXNew, &posYNew );
 
 
-                for( int i=0; i<mGraveInfo.size(); i++ ) {
+                // handle case where two graves are "in the air"
+                // at the same time, and one gets put down where the
+                // other was picked up from before the other gets put down.
+                // (graves swapping position)
+
+                // When showing label to player, these are walked through
+                // in order until first match found
+
+                // So, we should walk through in reverse order until
+                // LAST match found, and then move that one to the top
+                // of the list.
+
+                // it will "cover up" the label of the still-matching
+                // grave further down on the list, which we will find
+                // and fix later when it fininall finishes moving.
+                for( int i=mGraveInfo.size() - 1; i >= 0; i-- ) {
                     GraveInfo *g = mGraveInfo.getElement( i );
                     
                     if( g->worldPos.x == posX &&
@@ -10713,6 +10728,11 @@ void LivingLifePage::step() {
                         
                         g->worldPos.x = posXNew;
                         g->worldPos.y = posYNew;
+                        
+                        GraveInfo gStruct = *g;
+                        mGraveInfo.deleteElement( i );
+                        mGraveInfo.push_front( gStruct );
+                        break;
                         }    
                     }
                 }            
@@ -10729,7 +10749,8 @@ void LivingLifePage::step() {
                                   &posX, &posY, &playerID, &displayID,
                                   &age, nameBuffer );
             if( numRead == 6 ) {
-                
+                applyReceiveOffset( &posX, &posY );
+
                 GridPos thisPos = { posX, posY };
                 
                 for( int i=0; i<graveRequestPos.size(); i++ ) {
@@ -10740,9 +10761,6 @@ void LivingLifePage::step() {
                         }
                     }
                 
-
-                applyReceiveOffset( &posX, &posY );
-
                 int nameLen = strlen( nameBuffer );
                 for( int i=0; i<nameLen; i++ ) {
                     if( nameBuffer[i] == '_' ) {
