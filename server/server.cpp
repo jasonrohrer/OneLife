@@ -533,6 +533,8 @@ typedef struct DeadObject {
 
 
 
+static double lastPastPlayerFlushTime = 0;
+
 SimpleVector<DeadObject> pastPlayers;
 
 
@@ -7548,6 +7550,30 @@ int main() {
     while( !quit ) {
 
         double curStepTime = Time::getCurrentTime();
+        
+        // flush past players hourly
+        if( curStepTime - lastPastPlayerFlushTime > 3600 ) {
+            
+            // default one week
+            int pastPlayerFlushTime = 
+                SettingsManager::getIntSetting( "pastPlayerFlushTime", 604000 );
+            
+            for( int i=0; i<pastPlayers.size(); i++ ) {
+                DeadObject *o = pastPlayers.getElement( i );
+                
+                if( curStepTime - o->lifeStartTimeSeconds > 
+                    pastPlayerFlushTime ) {
+                    // stale
+                    delete [] o->name;
+                    delete o->lineage;
+                    pastPlayers.deleteElement( i );
+                    i--;
+                    } 
+                }
+            
+            lastPastPlayerFlushTime = curStepTime;
+            }
+        
         
         char periodicStepThisStep = false;
         
