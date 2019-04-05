@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 214    ???
+
+--Object editor supports pasting color over all sprites in object.
+
+
+
+
 
 Server Fixes:
 
@@ -13,6 +20,9 @@ Server Fixes:
 
 --Family name sticks with you even if your mother is nameless or doesn't name
   you.
+
+
+
 
 
 Version 212    2019-March-29
