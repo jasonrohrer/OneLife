@@ -169,6 +169,9 @@ static SimpleVector<double> bytesInHistoryGraph;
 static SimpleVector<double> bytesOutHistoryGraph;
 
 
+static SimpleVector<GridPos> graveRequestPos;
+
+
 
 static char showPing = false;
 static double pingSentTime = -1;
@@ -7967,16 +7970,32 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             }    
                         }
 
-                    // FIXME:  this will hammer server repeatedly
-                    // until response arrives.
                     if( !found ) {
-                        char *graveMessage = 
-                            autoSprintf( "GRAVE %d %d#",
-                                         mCurMouseOverWorld.x,
-                                         mCurMouseOverWorld.y );
 
-                        sendToServerSocket( graveMessage );
-                        delete [] graveMessage;
+                        char alreadySent = false;
+                        for( int i=0; i<graveRequestPos.size(); i++ ) {
+                            if( equal( graveRequestPos.getElementDirect( i ),
+                                       mCurMouseOverWorld ) ) {
+                                alreadySent = true;
+                                break;
+                                }
+                            }
+
+                        if( !alreadySent ) {                            
+                            char *graveMessage = 
+                                autoSprintf( "GRAVE %d %d#",
+                                             mCurMouseOverWorld.x,
+                                             mCurMouseOverWorld.y );
+                            
+                            sendToServerSocket( graveMessage );
+                            delete [] graveMessage;
+                            graveRequestPos.push_back( mCurMouseOverWorld );
+                            }
+                        
+                        // blank des for now
+                        // avoid flicker when response arrives
+                        des = stringDuplicate( "" );
+                        desToDelete = des;
                         }
                     
                     }
@@ -10710,6 +10729,18 @@ void LivingLifePage::step() {
                                   &posX, &posY, &playerID, &displayID,
                                   &age, nameBuffer );
             if( numRead == 6 ) {
+                
+                GridPos thisPos = { posX, posY };
+                
+                for( int i=0; i<graveRequestPos.size(); i++ ) {
+                    if( equal( graveRequestPos.getElementDirect( i ),
+                               thisPos ) ) {
+                        graveRequestPos.deleteElement( i );
+                        break;
+                        }
+                    }
+                
+
                 applyReceiveOffset( &posX, &posY );
 
                 int nameLen = strlen( nameBuffer );
@@ -16953,6 +16984,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    graveRequestPos.deleteAll();
 
     clearLocationSpeech();
 
