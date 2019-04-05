@@ -9311,9 +9311,9 @@ int main() {
                     if( o == NULL ) {
                         // check for living player too 
                         for( int i=0; i<players.size(); i++ ) {
-                            if( oThis->id == id ) {
-                                LiveObject *oThis = players.getElement( i );
+                            LiveObject *oThis = players.getElement( i );
                             
+                            if( oThis->id == id ) {
                                 defaultO.id = oThis->id;
                                 defaultO.displayID = oThis->displayID;
                             
