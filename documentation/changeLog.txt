@@ -7,6 +7,7 @@ Version 214    ???
 
 --Object editor supports pasting color over all sprites in object.
 
+--Fixed bug causing some category-based transitions to not show up in editor.
 
 
 
