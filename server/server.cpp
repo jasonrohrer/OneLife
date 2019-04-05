@@ -9309,6 +9309,32 @@ int main() {
                           0 };
                     
                     if( o == NULL ) {
+                        // check for living player too 
+                        for( int i=0; i<players.size(); i++ ) {
+                            if( oThis->id == id ) {
+                                LiveObject *oThis = players.getElement( i );
+                            
+                                defaultO.id = oThis->id;
+                                defaultO.displayID = oThis->displayID;
+                            
+                                if( oThis->name != NULL ) {
+                                    delete [] defaultO.name;
+                                    defaultO.name = 
+                                        stringDuplicate( oThis->name );
+                                    }
+                            
+                                defaultO.lineage->push_back_other( 
+                                    oThis->lineage );
+                            
+                                defaultO.lineageEveID = oThis->lineageEveID;
+                                defaultO.lifeStartTimeSeconds =
+                                    oThis->lifeStartTimeSeconds;
+                                }
+                            }
+                        }
+                    
+
+                    if( o == NULL ) {
                         o = &defaultO;
                         }
 
