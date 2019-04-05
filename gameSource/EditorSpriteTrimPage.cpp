@@ -179,9 +179,11 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mSpritePicker ) {
         
+        int oldID = mPickedSprite;
+        
         int spriteID = mSpritePicker.getSelectedObject();
 
-        if( spriteID != -1 ) {
+        if( spriteID != -1 && oldID != spriteID ) {
             mPickedSprite = spriteID;
             
             mPickingRect = false;
@@ -190,7 +192,9 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             mSaveButton.setVisible( false );
             mClearRectButton.setVisible( false );
             }
-        resetSelection();
+        if( spriteID != -1 && oldID != spriteID ) {
+            resetSelection();
+            }
         }
     else if( inTarget == &mClearRectButton ) {
         mRects.deleteElement( mRects.size() - 1 );

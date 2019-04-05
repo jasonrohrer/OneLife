@@ -9,6 +9,7 @@ Version 214    ???
 
 --Fixed bug causing some category-based transitions to not show up in editor.
 
+--Sprite Trim Editor no longer clears trim when subsprites saved.
 
 
 
