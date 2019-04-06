@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 214    ???
+Version 215    2019-April-5
 
 --Object editor supports pasting color over all sprites in object.
 
