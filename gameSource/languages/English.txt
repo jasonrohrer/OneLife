@@ -296,6 +296,10 @@ manyTimes "MANY TIMES"
 
 unrelated "NO RELATION"
 
+namelessPerson "NAMELESS PERSON"
+
+forgottenPerson "FORGOTTEN PERSON"
+
 
 
 dieCommand "/DIE"

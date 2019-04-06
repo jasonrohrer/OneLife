@@ -10678,6 +10678,11 @@ void LivingLifePage::step() {
                     
                     if( des == NULL ) {
                         des = (char*)translate( "unrelated" );
+
+                        if( gravePerson->name == NULL ) {
+                            // call them nameless instead
+                            des = (char*)translate( "namelessPerson" );
+                            }
                         }
                     if( gravePerson->name != NULL ) {
                         des = autoSprintf( "%s - %s",
@@ -10819,6 +10824,17 @@ void LivingLifePage::step() {
                     
                 if( des == NULL ) {
                     des = (char*)translate( "unrelated" );
+                    
+                    if( strcmp( nameBuffer, "" ) == 0 ||
+                        strcmp( nameBuffer, "~" ) == 0 ) {
+                        // call them nameless instead
+                        des = (char*)translate( "namelessPerson" );
+
+                        if( playerID == 0 ) {
+                            // call them forgotten instead
+                            des = (char*)translate( "forgottenPerson" );
+                            }
+                        }
                     }
                 if( strcmp( nameBuffer, "" ) != 0 &&
                     strcmp( nameBuffer, "~" ) != 0 ) {
