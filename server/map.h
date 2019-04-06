@@ -290,5 +290,12 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
                                  doublePair inDir );
 
 
+// get and set player ID for grave on map
+
+// returns 0 if not found
+int getGravePlayerID( int inX, int inY );
+
+void setGravePlayerID( int inX, int inY, int inPlayerID );
+
 
 #endif

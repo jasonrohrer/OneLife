@@ -48,3 +48,22 @@ UPDATE lineageServer_users SET email_sha1 = sha1( email );
 
 // index for log
 ALTER TABLE lineageServer_log ADD INDEX entry_time ( entry_time );
+
+
+
+
+ALTER TABLE lineageServer_lives ADD INDEX ( deepest_descendant_generation, death_time );
+
+
+
+
+ALTER TABLE lineageServer_lives ADD lineage_depth INT NOT NULL AFTER deepest_descendant_life_id;
+
+ALTER TABLE lineageServer_lives ADD INDEX lineage_depth ( lineage_depth );
+
+
+ALTER TABLE lineageServer_lives ADD INDEX ( lineage_depth, death_time );
+
+
+
+UPDATE lineageServer_lives set lineage_depth = deepest_descendant_generation - generation WHERE deepest_descendant_generation != -1 and generation != -1;

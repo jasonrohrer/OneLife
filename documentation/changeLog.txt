@@ -3,6 +3,36 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 215    2019-April-5
+
+--Object editor supports pasting color over all sprites in object.
+
+--Fixed bug causing some category-based transitions to not show up in editor.
+
+--Sprite Trim Editor no longer clears trim when subsprites saved.
+
+--Fixed client-side bug when two graves are "in the air" simultaneously and
+  swap positions on the ground, which resulted in one of the grave's info being
+  lost.
+
+--Support for mousing over old graves from people who died before your birth.
+
+
+
+
+Server Fixes:
+
+--Fixed bug that skipped heat map recomputation if number of players on server
+  shrank.
+
+--Lineage server shows tables of deep roots.
+
+--Family name sticks with you even if your mother is nameless or doesn't name
+  you.
+
+
+
+
 
 Version 212    2019-March-29
 

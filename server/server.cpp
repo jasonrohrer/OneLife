@@ -213,6 +213,9 @@ typedef struct LiveObject {
         char *name;
         char nameHasSuffix;
         
+        char *familyName;
+        
+
         char *lastSay;
 
         CurseStatus curseStatus;
@@ -315,6 +318,7 @@ typedef struct LiveObject {
         // track origin of held separate to use when placing a grave
         int heldGraveOriginX;
         int heldGraveOriginY;
+        int heldGravePlayerID;
         
 
         // if held object was created by a transition on a target, what is the
@@ -506,6 +510,59 @@ typedef struct LiveObject {
 
 SimpleVector<LiveObject> players;
 SimpleVector<LiveObject> tutorialLoadingPlayers;
+
+
+
+typedef struct DeadObject {
+        int id;
+        
+        int displayID;
+        
+        char *name;
+        
+        SimpleVector<int> *lineage;
+        
+        // id of Eve that started this line
+        int lineageEveID;
+        
+
+
+        // time that this life started (for computing age)
+        // not actual creation time (can be adjusted to tweak starting age,
+        // for example, in case of Eve who starts older).
+        double lifeStartTimeSeconds;
+
+    } DeadObject;
+
+
+
+static double lastPastPlayerFlushTime = 0;
+
+SimpleVector<DeadObject> pastPlayers;
+
+
+
+static void addPastPlayer( LiveObject *inPlayer ) {
+    
+    DeadObject o;
+    
+    o.id = inPlayer->id;
+    o.displayID = inPlayer->displayID;
+    o.name = NULL;
+    if( inPlayer->name != NULL ) {
+        o.name = stringDuplicate( inPlayer->name );
+        }
+    o.lineageEveID = inPlayer->lineageEveID;
+    o.lifeStartTimeSeconds = inPlayer->lifeStartTimeSeconds;
+    
+    o.lineage = new SimpleVector<int>();
+    for( int i=0; i< inPlayer->lineage->size(); i++ ) {
+        o.lineage->push_back( inPlayer->lineage->getElementDirect( i ) );
+        }
+    
+    pastPlayers.push_back( o );
+    }
+
 
 
 
@@ -1048,6 +1105,10 @@ void quitCleanup() {
             delete [] nextPlayer->name;
             }
 
+        if( nextPlayer->familyName != NULL ) {
+            delete [] nextPlayer->familyName;
+            }
+
         if( nextPlayer->lastSay != NULL ) {
             delete [] nextPlayer->lastSay;
             }
@@ -1074,6 +1135,15 @@ void quitCleanup() {
         }
     players.deleteAll();
 
+
+    for( int i=0; i<pastPlayers.size(); i++ ) {
+        DeadObject *o = pastPlayers.getElement( i );
+        
+        delete [] o->name;
+        delete o->lineage;
+        }
+    pastPlayers.deleteAll();
+    
 
     freeLineageLimit();
     
@@ -1292,6 +1362,7 @@ typedef enum messageType {
     EMOT,
     JUMP,
     DIE,
+    GRAVE,
     FORCE,
     MAP,
     TRIGGER,
@@ -1505,6 +1576,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "DIE" ) == 0 ) {
         m.type = DIE;
+        }
+    else if( strcmp( nameBuffer, "GRAVE" ) == 0 ) {
+        m.type = GRAVE;
         }
     else if( strcmp( nameBuffer, "FORCE" ) == 0 ) {
         m.type = FORCE;
@@ -1858,12 +1932,20 @@ void handleShutdownDeath( LiveObject *inPlayer,
 
 
 
-double computeAge( LiveObject *inPlayer ) {
+double computeAge( double inLifeStartTimeSeconds ) {
+    
     double deltaSeconds = 
-        Time::getCurrentTime() - inPlayer->lifeStartTimeSeconds;
+        Time::getCurrentTime() - inLifeStartTimeSeconds;
     
     double age = deltaSeconds * getAgeRate();
     
+    return age;
+    }
+
+
+
+double computeAge( LiveObject *inPlayer ) {
+    double age = computeAge( inPlayer->lifeStartTimeSeconds );
     if( age >= forceDeathAge ) {
         setDeathReason( inPlayer, "age" );
         
@@ -5261,6 +5343,8 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.lineage = new SimpleVector<int>();
     
     newObject.name = NULL;
+    newObject.familyName = NULL;
+    
     newObject.nameHasSuffix = false;
     newObject.lastSay = NULL;
     newObject.curseStatus = inCurseStatus;
@@ -5296,7 +5380,8 @@ int processLoggedInPlayer( Socket *inSock,
 
     newObject.heldGraveOriginX = 0;
     newObject.heldGraveOriginY = 0;
-
+    newObject.heldGravePlayerID = 0;
+    
     newObject.heldTransitionSourceID = -1;
     newObject.numContained = 0;
     newObject.containedIDs = NULL;
@@ -5379,6 +5464,10 @@ int processLoggedInPlayer( Socket *inSock,
         // do not log babies that new Eve spawns next to as parents
         newObject.parentID = parent->id;
         parentEmail = parent->email;
+
+        if( parent->familyName != NULL ) {
+            newObject.familyName = stringDuplicate( parent->familyName );
+            }
 
         newObject.lineageEveID = parent->lineageEveID;
 
@@ -6179,6 +6268,17 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
 
 
 
+static void setHeldGraveOrigin( LiveObject *inPlayer, int inX, int inY ) {
+    inPlayer->heldGraveOriginX = inX;
+    inPlayer->heldGraveOriginY = inY;
+    
+    inPlayer->heldGravePlayerID = getGravePlayerID( inX, inY );
+    
+    // clear it from ground
+    setGravePlayerID( inX, inY, 0 );
+    }
+
+
 
 static void pickupToHold( LiveObject *inPlayer, int inX, int inY, 
                           int inTargetID ) {
@@ -6198,9 +6298,8 @@ static void pickupToHold( LiveObject *inPlayer, int inX, int inY,
     
     inPlayer->holdingID = inTargetID;
     holdingSomethingNew( inPlayer );
-    
-    inPlayer->heldGraveOriginX = inX;
-    inPlayer->heldGraveOriginY = inY;
+
+    setHeldGraveOrigin( inPlayer, inX, inY );
     
     inPlayer->heldOriginValid = 1;
     inPlayer->heldOriginX = inX;
@@ -7481,6 +7580,30 @@ int main() {
     while( !quit ) {
 
         double curStepTime = Time::getCurrentTime();
+        
+        // flush past players hourly
+        if( curStepTime - lastPastPlayerFlushTime > 3600 ) {
+            
+            // default one week
+            int pastPlayerFlushTime = 
+                SettingsManager::getIntSetting( "pastPlayerFlushTime", 604000 );
+            
+            for( int i=0; i<pastPlayers.size(); i++ ) {
+                DeadObject *o = pastPlayers.getElement( i );
+                
+                if( curStepTime - o->lifeStartTimeSeconds > 
+                    pastPlayerFlushTime ) {
+                    // stale
+                    delete [] o->name;
+                    delete o->lineage;
+                    pastPlayers.deleteElement( i );
+                    i--;
+                    } 
+                }
+            
+            lastPastPlayerFlushTime = curStepTime;
+            }
+        
         
         char periodicStepThisStep = false;
         
@@ -9111,16 +9234,35 @@ int main() {
                                         getPlayerPos( adult );
 
                                     // put invisible grave there for now
+                                    // find an empty spot for this grave
+                                    // where there's no grave already
+                                    GridPos gravePos = adultPos;
+                                    
+                                    // give up after 100 steps
+                                    // huge graveyard around?
+                                    int stepCount = 0;
+                                    while( getGravePlayerID( 
+                                               gravePos.x, 
+                                               gravePos.y ) > 0 &&
+                                           stepCount < 100 ) {
+                                        gravePos.x ++;
+                                        stepCount ++;
+                                        }
+                                    
                                     GraveInfo graveInfo = 
-                                        { adultPos, 
+                                        { gravePos, 
                                           nextPlayer->id,
                                           nextPlayer->lineageEveID };
                                     newGraves.push_back( graveInfo );
                                     
-                                    adult->heldGraveOriginX = adultPos.x;
+                                    setGravePlayerID(
+                                        gravePos.x, gravePos.y,
+                                        nextPlayer->id );
                                     
-                                    adult->heldGraveOriginY = adultPos.y;
-                                 
+                                    setHeldGraveOrigin( adult, 
+                                                        gravePos.x,
+                                                        gravePos.y );
+                                    
                                     playerIndicesToSendUpdatesAbout.push_back(
                                         getLiveObjectIndex( holdingAdultID ) );
                                     
@@ -9187,6 +9329,109 @@ int main() {
                             }
                         // else let normal grave appear for this dead baby
                         }
+                    }
+                else if( m.type == GRAVE ) {
+                    // immediately send GO response
+                    
+                    int id = getGravePlayerID( m.x, m.y );
+                    
+                    DeadObject *o = NULL;
+                    for( int i=0; i<pastPlayers.size(); i++ ) {
+                        DeadObject *oThis = pastPlayers.getElement( i );
+                        
+                        if( oThis->id == id ) {
+                            o = oThis;
+                            break;
+                            }
+                        }
+                    
+                    SimpleVector<int> *defaultLineage = 
+                        new SimpleVector<int>();
+                    
+                    defaultLineage->push_back( 0 );
+                    DeadObject defaultO = 
+                        { 0,
+                          0,
+                          stringDuplicate( "~" ),
+                          defaultLineage,
+                          0,
+                          0 };
+                    
+                    if( o == NULL ) {
+                        // check for living player too 
+                        for( int i=0; i<players.size(); i++ ) {
+                            LiveObject *oThis = players.getElement( i );
+                            
+                            if( oThis->id == id ) {
+                                defaultO.id = oThis->id;
+                                defaultO.displayID = oThis->displayID;
+                            
+                                if( oThis->name != NULL ) {
+                                    delete [] defaultO.name;
+                                    defaultO.name = 
+                                        stringDuplicate( oThis->name );
+                                    }
+                            
+                                defaultO.lineage->push_back_other( 
+                                    oThis->lineage );
+                            
+                                defaultO.lineageEveID = oThis->lineageEveID;
+                                defaultO.lifeStartTimeSeconds =
+                                    oThis->lifeStartTimeSeconds;
+                                }
+                            }
+                        }
+                    
+
+                    if( o == NULL ) {
+                        o = &defaultO;
+                        }
+
+                    if( o != NULL ) {
+                        char *formattedName;
+                        
+                        if( o->name != NULL ) {
+                            char found;
+                            formattedName =
+                                replaceAll( o->name, " ", "_", &found );
+                            }
+                        else {
+                            formattedName = stringDuplicate( "~" );
+                            }
+
+                        SimpleVector<char> linWorking;
+                        
+                        for( int j=0; j<o->lineage->size(); j++ ) {
+                            char *mID = 
+                                autoSprintf( 
+                                    " %d",
+                                    o->lineage->getElementDirect( j ) );
+                            linWorking.appendElementString( mID );
+                            delete [] mID;
+                            }
+                        char *linString = linWorking.getElementString();
+                        
+                        char *message = autoSprintf(
+                            "GO\n%d %d %d %d %lf %s%s\n#",
+                            m.x - nextPlayer->birthPos.x,
+                            m.y - nextPlayer->birthPos.y,
+                            o->id, o->displayID, 
+                            computeAge( o->lifeStartTimeSeconds ),
+                            formattedName, linString );
+                        printf( "Processing %d,%d from birth pos %d,%d\n",
+                                m.x, m.y, nextPlayer->birthPos.x,
+                                nextPlayer->birthPos.y );
+                        
+                        delete [] formattedName;
+                        delete [] linString;
+
+                        sendMessageToPlayer( nextPlayer, message, 
+                                             strlen( message ) );
+                        delete [] message;
+                        }
+                    
+                    delete [] defaultO.name;
+                    delete defaultO.lineage;
                     }
                 else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
@@ -9731,6 +9976,10 @@ int main() {
                                 nextPlayer->name = autoSprintf( "%s %s",
                                                                 eveName, 
                                                                 close );
+
+                                nextPlayer->familyName = 
+                                    stringDuplicate( close );
+                                
                                 nextPlayer->name = getUniqueCursableName( 
                                     nextPlayer->name, 
                                     &( nextPlayer->nameHasSuffix ) );
@@ -9760,8 +10009,19 @@ int main() {
                                         lastName = strstr( nextPlayer->name, 
                                                            " " );
                                         
+                                        if( lastName != NULL ) {
+                                            // skip space
+                                            lastName = &( lastName[1] );
+                                            }
+
                                         if( lastName == NULL ) {
                                             lastName = "";
+
+                                            if( nextPlayer->familyName != 
+                                                NULL ) {
+                                                lastName = 
+                                                    nextPlayer->familyName;
+                                                }    
                                             }
                                         else if( nextPlayer->nameHasSuffix ) {
                                             // only keep last name
@@ -9773,8 +10033,7 @@ int main() {
                                             // is the last name IS the suffix.
                                             
                                             char *suffixPos =
-                                                strstr( (char*)&( lastName[1] ),
-                                                        " " );
+                                                strstr( (char*)lastName, " " );
                                             
                                             if( suffixPos == NULL ) {
                                                 // last name is suffix, actually
@@ -9790,10 +10049,16 @@ int main() {
                                                 }
                                             }
                                         }
+                                    else if( nextPlayer->familyName != NULL ) {
+                                        lastName = nextPlayer->familyName;
+                                        }
+                                    
+
 
                                     const char *close = 
                                         findCloseFirstName( name );
-                                    babyO->name = autoSprintf( "%s%s",
+
+                                    babyO->name = autoSprintf( "%s %s",
                                                                close, 
                                                                lastName );
 
@@ -10288,6 +10553,10 @@ int main() {
                             { nextPlayer->heldGraveOriginX,
                               nextPlayer->heldGraveOriginY };
                         
+                        // save current value here, because it may 
+                        // change below
+                        int heldGravePlayerID = nextPlayer->heldGravePlayerID;
+                        
 
                         char distanceUseAllowed = false;
                         
@@ -10517,8 +10786,7 @@ int main() {
                                     handleHoldingChange( nextPlayer,
                                                          r->newActor );
 
-                                    nextPlayer->heldGraveOriginX = m.x;
-                                    nextPlayer->heldGraveOriginY = m.y;
+                                    setHeldGraveOrigin( nextPlayer, m.x, m.y );
                                     }
                                 else if( r != NULL &&
                                     // are we old enough to handle
@@ -10558,9 +10826,10 @@ int main() {
                                     if( ! defaultTrans ) {    
                                         handleHoldingChange( nextPlayer,
                                                              r->newActor );
-                                        nextPlayer->heldGraveOriginX = m.x;
-                                        nextPlayer->heldGraveOriginY = m.y;
-                                    
+                                        
+                                        setHeldGraveOrigin( nextPlayer, 
+                                                            m.x, m.y );
+                                        
                                         if( r->target > 0 ) {    
                                             nextPlayer->heldTransitionSourceID =
                                                 r->target;
@@ -10808,8 +11077,8 @@ int main() {
                                             handleHoldingChange( nextPlayer,
                                                                  r->newActor );
                                             
-                                            nextPlayer->heldGraveOriginX = m.x;
-                                            nextPlayer->heldGraveOriginY = m.y;
+                                            setHeldGraveOrigin( nextPlayer, 
+                                                                m.x, m.y );
                                             }
                                         else {
                                             // changing floor to non-floor
@@ -10829,11 +11098,9 @@ int main() {
                                                 handleHoldingChange( 
                                                     nextPlayer,
                                                     r->newActor );
-                                                nextPlayer->
-                                                    heldGraveOriginX = m.x;
-                                                nextPlayer->
-                                                    heldGraveOriginY = m.y;
-                                    
+                                                setHeldGraveOrigin( nextPlayer, 
+                                                                    m.x, m.y );
+                                            
                                                 usedOnFloor = true;
                                                 }
                                             }
@@ -10918,16 +11185,16 @@ int main() {
                                             handleHoldingChange( nextPlayer,
                                                                  r->newActor );
                                             
-                                            nextPlayer->heldGraveOriginX = m.x;
-                                            nextPlayer->heldGraveOriginY = m.y;
+                                            setHeldGraveOrigin( nextPlayer, 
+                                                                m.x, m.y );
                                             }
                                         else {
                                             handleHoldingChange( nextPlayer,
                                                                  r->newActor );
                                             
-                                            nextPlayer->heldGraveOriginX = m.x;
-                                            nextPlayer->heldGraveOriginY = m.y;
-                                    
+                                            setHeldGraveOrigin( nextPlayer, 
+                                                                m.x, m.y );
+                                            
                                             setResponsiblePlayer( 
                                                 - nextPlayer->id );
                                             
@@ -10964,6 +11231,9 @@ int main() {
                             if( strstr( o->description, "origGrave" ) 
                                 != NULL ) {
                                 
+                                setGravePlayerID( 
+                                    m.x, m.y, heldGravePlayerID );
+
                                 GraveMoveInfo g = { 
                                     { newGroundObjectOrigin.x,
                                       newGroundObjectOrigin.y },
@@ -12418,6 +12688,8 @@ int main() {
                                                 nextPlayer->lineageEveID };
                         newGraves.push_back( graveInfo );
                         
+                        setGravePlayerID( dropPos.x, dropPos.y,
+                                          nextPlayer->id );
 
                         ObjectRecord *deathObject = getObject( deathID );
                         
@@ -13432,7 +13704,7 @@ int main() {
             
             lastPlayerIndexHeatRecomputed = r - 1;
             
-            if( r == players.size() ) {
+            if( r >= players.size() ) {
                 // done updating for last player
                 // start over
                 lastPlayerIndexHeatRecomputed = -1;
@@ -15606,6 +15878,8 @@ int main() {
                 AppLog::infoF( "%d remaining player(s) alive on server ",
                                players.size() - 1 );
                 
+                addPastPlayer( nextPlayer );
+
                 if( nextPlayer->sock != NULL ) {
                     sockPoll.removeSocket( nextPlayer->sock );
                 
@@ -15622,6 +15896,10 @@ int main() {
                 
                 if( nextPlayer->name != NULL ) {
                     delete [] nextPlayer->name;
+                    }
+
+                if( nextPlayer->familyName != NULL ) {
+                    delete [] nextPlayer->familyName;
                     }
 
                 if( nextPlayer->lastSay != NULL ) {

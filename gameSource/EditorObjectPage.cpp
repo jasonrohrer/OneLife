@@ -5114,6 +5114,17 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
             pickedLayerChanged();
             }
         }
+    if( mPickedObjectLayer == -1 && mPickedSlot == -1 && inASCII == 'v' ) {
+        // no sprite layer selected
+        // paste same color on all layers
+        for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+            if( ! getUsesMultiplicativeBlending( 
+                    mCurrentObject.sprites[ i ] ) ) {
+                mCurrentObject.spriteColor[ i ] = mColorClipboard;
+                }
+            }
+        pickedLayerChanged();
+        }
     if( mPickedObjectLayer != -1 && inASCII == 'C' ) {
         ObjectRecord *saved = getObject( mCurrentObject.id );
         

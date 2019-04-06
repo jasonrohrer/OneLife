@@ -360,7 +360,15 @@ function ls_setupDatabase() {
             // both -1 if not set
             // 0 if set and empty
             "deepest_descendant_generation INT NOT NULL,".
-            "deepest_descendant_life_id INT NOT NULL );";
+            // this will make queries ordering by deepest_descendant_generation
+            // and death_time fast
+            // OR just queries on deepest_descendant_generation fast.
+            // but not querys on just death_time fast
+            "INDEX( deepest_descendant_generation, death_time ),".
+            "deepest_descendant_life_id INT NOT NULL," .
+            // how deep the lineage is from this point 
+            "lineage_depth INT NOT NULL," .
+            "INDEX( lineage_depth, death_time ) );";
 
         $result = ls_queryDatabase( $query );
 
@@ -1357,7 +1365,8 @@ function ls_logLife() {
         "generation = '$generation', " .
         "eve_life_id = '$eve_life_id', ".
         "deepest_descendant_generation = -1, ".
-        "deepest_descendant_life_id = -1;";
+        "deepest_descendant_life_id = -1, ".
+        "lineage_depth = 0;";
 
     ls_queryDatabase( $query );
 
@@ -1429,7 +1438,9 @@ function ls_setDeepestGenerationUp( $inID,
             "deepest_descendant_generation = ".
             "  $in_deepest_descendant_generation, ".
             "deepest_descendant_life_id = ".
-            "  $in_deepest_descendant_life_id ".
+            "  $in_deepest_descendant_life_id, ".
+            "lineage_depth = ".
+            "  $in_deepest_descendant_generation - generation ".
             "WHERE id = $inID;";
         
         ls_queryDatabase( $query );
@@ -1517,6 +1528,8 @@ function ls_frontPage() {
     $filterClause = " WHERE 1 ";
     $filter = "";
 
+    $customFilterSet = false;
+    
     if( $emailFilter != "" ) {
 
         global $checkEmailHashes;
@@ -1561,10 +1574,12 @@ function ls_frontPage() {
         $email_sha1 = strtolower( $email_sha1 );
         $filterClause = " WHERE users.email_sha1 = '$email_sha1' ";
         $filter = "[email hash]";
+        $customFilterSet = true;
         }
     else if( $emailFilter != "" ) {
         $filterClause = " WHERE users.email = '$emailFilter' ";
         $filter = $emailFilter;
+        $customFilterSet = true;
         }
     else if( $nameFilter != "" ) {
         // name filter is used as prefix filter for speed
@@ -1576,6 +1591,7 @@ function ls_frontPage() {
         // this case.
         $filterClause = " WHERE lives.name LIKE '$nameFilter%' ";
         $filter = $nameFilter;
+        $customFilterSet = true;
         }
 
     
@@ -1604,6 +1620,14 @@ function ls_frontPage() {
   
 <?php
 
+    $rootFilterClause = $filterClause;
+
+    if( ! $customFilterSet ) {
+        // no filter set, show only eves in this root lists
+        $rootFilterClause = " WHERE generation = 1 ";
+        }
+
+                 
     
     echo "<table border=0 cellpadding=20>";
 
@@ -1618,12 +1642,12 @@ function ls_frontPage() {
                            $numPerList );
 
 
-    echo "<tr><td colspan=6><font size=5>Today's Long Lines:".
+    echo "<tr><td colspan=6><font size=5>Today's Deep Roots:".
         "</font></td></tr>\n";
     
     ls_printFrontPageRows(
-        "$filterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 DAY )",
-        "generation DESC, death_time DESC",
+        "$rootFilterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 DAY )",
+        "lineage_depth DESC, death_time DESC",
         $numPerList );
     
     
@@ -1642,6 +1666,35 @@ function ls_frontPage() {
                            $numPerList );
 
 
+    
+    echo "<tr><td colspan=6><font size=5>This Week's Deep Roots:".
+        "</font></td></tr>\n";
+    
+    ls_printFrontPageRows(
+        "$rootFilterClause AND ".
+        "death_time >= DATE_SUB( NOW(), INTERVAL 1 WEEK )",
+        "lineage_depth DESC, death_time DESC",
+        $numPerList );
+
+
+    echo "<tr><td colspan=6><font size=5>All Time Deep Roots:".
+        "</font></td></tr>\n";
+    
+    ls_printFrontPageRows(
+        $rootFilterClause,
+        "lineage_depth DESC, death_time DESC",
+        $numPerList );
+
+    
+    
+    echo "<tr><td colspan=6><font size=5>Today's Long Lines:".
+        "</font></td></tr>\n";
+    
+    ls_printFrontPageRows(
+        "$filterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 DAY )",
+        "generation DESC, death_time DESC",
+        $numPerList );
+    
     
     echo "<tr><td colspan=6><font size=5>This Week's Long Lines:".
         "</font></td></tr>\n";
@@ -1690,7 +1743,7 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
 
 
     $query = "SELECT lives.id, display_id, name, ".
-        "age, generation, death_time ".
+        "age, generation, death_time, deepest_descendant_generation ".
         "FROM $tableNamePrefix"."lives as lives ".
         "INNER JOIN $tableNamePrefix"."users as users ".
         "ON lives.user_id = users.id  $inFilterClause ".
@@ -1712,7 +1765,10 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
         $generation = ls_mysqli_result( $result, $i, "generation" );
         $death_time = ls_mysqli_result( $result, $i, "death_time" );
 
+        $deepest_descendant_generation =
+            ls_mysqli_result( $result, $i, "deepest_descendant_generation" );
 
+        
         $deathAgoSec = strtotime( "now" ) -
             strtotime( $death_time );
         
@@ -1721,17 +1777,30 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
         if( $generation == -1 ) {
             $generation = ls_getGeneration( $id );
             }
+
+        $generationString = $generation;
+        
         if( $generation == -1 ) {
             if( $deathAgoSec >= 3600 ) {
-                $generation = "Ancestor unknown";
+                $generationString = "Ancestor unknown";
                 }
             else {
-                $generation = "Mother still living";
+                $generationString = "Mother still living";
                 }
             }
         else {
-            $generation = "Generation: $generation";
+            $generationString = "Generation: $generation";
             }
+
+        if( $deepest_descendant_generation != -1 &&
+            $generation != -1 &&
+            $deepest_descendant_generation > $generation ) {
+
+            $descendFurther = $deepest_descendant_generation - $generation;
+            $generationString = $generationString . "<br>" .
+                "Lineage Depth: $descendFurther";
+            }
+        
         
         $age = floor( $age );
 
@@ -1760,7 +1829,7 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
 
         echo "<td>$name</td>";
         echo "<td>$age $yearWord old</td>";
-        echo "<td>$generation</td>";
+        echo "<td>$generationString</td>";
         echo "<td>Died $deathAgo ago</td>";
 
         echo "</tr>";
@@ -2435,7 +2504,8 @@ function ls_computeDeepestGeneration( $inID ) {
         $query = "UPDATE $tableNamePrefix"."lives ".
             "SET ".
             "deepest_descendant_generation = $deepest_descendant_generation, ".
-            "deepest_descendant_life_id = $deepest_descendant_life_id ".
+            "deepest_descendant_life_id = $deepest_descendant_life_id, ".
+            "lineage_depth = $deepest_descendant_generation - generation ".
             "WHERE id = $inID;";
         
         ls_queryDatabase( $query );  

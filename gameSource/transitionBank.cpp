@@ -1936,6 +1936,8 @@ static TransRecord **search( SimpleVector<TransRecord *> inMapToSearch[],
     
     if( inID >= mapSize ) {
         // no transition for an object with this ID range
+        *outNumResults = 0;
+        *outNumRemaining = 0;
         return NULL;
         }
 
@@ -2031,11 +2033,15 @@ static TransRecord **searchWithCategories(
     int *outNumResults, int *outNumRemaining ) {
 
 
-    if( inID >= mapSize ) {
-        return NULL;
+    // don't completely block results if we are outside bounds of map
+    // map is created based on objects that have transitions
+    // if we have an high-ID object that has no transitions itself
+    // but is part of a category, it may be off the map
+    int numRecords = 0;
+    if( inID < mapSize ) {
+        numRecords = inMapToSearch[inID].size();
         }
 
-    int numRecords = inMapToSearch[inID].size();
 
     ReverseCategoryRecord *catRec = getReverseCategory( inID );
 
