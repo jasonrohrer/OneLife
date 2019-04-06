@@ -316,6 +316,7 @@ typedef struct LiveObject {
         // track origin of held separate to use when placing a grave
         int heldGraveOriginX;
         int heldGraveOriginY;
+        int heldGravePlayerID;
         
 
         // if held object was created by a transition on a target, what is the
@@ -5377,7 +5378,8 @@ int processLoggedInPlayer( Socket *inSock,
 
     newObject.heldGraveOriginX = 0;
     newObject.heldGraveOriginY = 0;
-
+    newObject.heldGravePlayerID = 0;
+    
     newObject.heldTransitionSourceID = -1;
     newObject.numContained = 0;
     newObject.containedIDs = NULL;
@@ -6264,6 +6266,17 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
 
 
 
+static void setHeldGraveOrigin( LiveObject *inPlayer, int inX, int inY ) {
+    inPlayer->heldGraveOriginX = inX;
+    inPlayer->heldGraveOriginY = inY;
+    
+    inPlayer->heldGravePlayerID = getGravePlayerID( inX, inY );
+    
+    // clear it from ground
+    setGravePlayerID( inX, inY, 0 );
+    }
+
+
 
 static void pickupToHold( LiveObject *inPlayer, int inX, int inY, 
                           int inTargetID ) {
@@ -6283,9 +6296,8 @@ static void pickupToHold( LiveObject *inPlayer, int inX, int inY,
     
     inPlayer->holdingID = inTargetID;
     holdingSomethingNew( inPlayer );
-    
-    inPlayer->heldGraveOriginX = inX;
-    inPlayer->heldGraveOriginY = inY;
+
+    setHeldGraveOrigin( inPlayer, inX, inY );
     
     inPlayer->heldOriginValid = 1;
     inPlayer->heldOriginX = inX;
@@ -9204,16 +9216,35 @@ int main() {
                                         getPlayerPos( adult );
 
                                     // put invisible grave there for now
+                                    // find an empty spot for this grave
+                                    // where there's no grave already
+                                    GridPos gravePos = adultPos;
+                                    
+                                    // give up after 100 steps
+                                    // huge graveyard around?
+                                    int stepCount = 0;
+                                    while( getGravePlayerID( 
+                                               gravePos.x, 
+                                               gravePos.y ) > 0 &&
+                                           stepCount < 100 ) {
+                                        gravePos.x ++;
+                                        stepCount ++;
+                                        }
+                                    
                                     GraveInfo graveInfo = 
-                                        { adultPos, 
+                                        { gravePos, 
                                           nextPlayer->id,
                                           nextPlayer->lineageEveID };
                                     newGraves.push_back( graveInfo );
                                     
-                                    adult->heldGraveOriginX = adultPos.x;
+                                    setGravePlayerID(
+                                        gravePos.x, gravePos.y,
+                                        nextPlayer->id );
                                     
-                                    adult->heldGraveOriginY = adultPos.y;
-                                 
+                                    setHeldGraveOrigin( adult, 
+                                                        gravePos.x,
+                                                        gravePos.y );
+                                    
                                     playerIndicesToSendUpdatesAbout.push_back(
                                         getLiveObjectIndex( holdingAdultID ) );
                                     
@@ -9284,7 +9315,7 @@ int main() {
                 else if( m.type == GRAVE ) {
                     // immediately send GO response
                     
-                    int id = -1;
+                    int id = getGravePlayerID( m.x, m.y );
                     
                     DeadObject *o = NULL;
                     for( int i=0; i<pastPlayers.size(); i++ ) {
@@ -9352,7 +9383,7 @@ int main() {
 
                         SimpleVector<char> linWorking;
                         
-                        for( int j=1; j<o->lineage->size(); j++ ) {
+                        for( int j=0; j<o->lineage->size(); j++ ) {
                             char *mID = 
                                 autoSprintf( 
                                     " %d",
@@ -10504,6 +10535,10 @@ int main() {
                             { nextPlayer->heldGraveOriginX,
                               nextPlayer->heldGraveOriginY };
                         
+                        // save current value here, because it may 
+                        // change below
+                        int heldGravePlayerID = nextPlayer->heldGravePlayerID;
+                        
 
                         char distanceUseAllowed = false;
                         
@@ -10733,8 +10768,7 @@ int main() {
                                     handleHoldingChange( nextPlayer,
                                                          r->newActor );
 
-                                    nextPlayer->heldGraveOriginX = m.x;
-                                    nextPlayer->heldGraveOriginY = m.y;
+                                    setHeldGraveOrigin( nextPlayer, m.x, m.y );
                                     }
                                 else if( r != NULL &&
                                     // are we old enough to handle
@@ -10774,9 +10808,10 @@ int main() {
                                     if( ! defaultTrans ) {    
                                         handleHoldingChange( nextPlayer,
                                                              r->newActor );
-                                        nextPlayer->heldGraveOriginX = m.x;
-                                        nextPlayer->heldGraveOriginY = m.y;
-                                    
+                                        
+                                        setHeldGraveOrigin( nextPlayer, 
+                                                            m.x, m.y );
+                                        
                                         if( r->target > 0 ) {    
                                             nextPlayer->heldTransitionSourceID =
                                                 r->target;
@@ -11024,8 +11059,8 @@ int main() {
                                             handleHoldingChange( nextPlayer,
                                                                  r->newActor );
                                             
-                                            nextPlayer->heldGraveOriginX = m.x;
-                                            nextPlayer->heldGraveOriginY = m.y;
+                                            setHeldGraveOrigin( nextPlayer, 
+                                                                m.x, m.y );
                                             }
                                         else {
                                             // changing floor to non-floor
@@ -11045,11 +11080,9 @@ int main() {
                                                 handleHoldingChange( 
                                                     nextPlayer,
                                                     r->newActor );
-                                                nextPlayer->
-                                                    heldGraveOriginX = m.x;
-                                                nextPlayer->
-                                                    heldGraveOriginY = m.y;
-                                    
+                                                setHeldGraveOrigin( nextPlayer, 
+                                                                    m.x, m.y );
+                                            
                                                 usedOnFloor = true;
                                                 }
                                             }
@@ -11134,16 +11167,16 @@ int main() {
                                             handleHoldingChange( nextPlayer,
                                                                  r->newActor );
                                             
-                                            nextPlayer->heldGraveOriginX = m.x;
-                                            nextPlayer->heldGraveOriginY = m.y;
+                                            setHeldGraveOrigin( nextPlayer, 
+                                                                m.x, m.y );
                                             }
                                         else {
                                             handleHoldingChange( nextPlayer,
                                                                  r->newActor );
                                             
-                                            nextPlayer->heldGraveOriginX = m.x;
-                                            nextPlayer->heldGraveOriginY = m.y;
-                                    
+                                            setHeldGraveOrigin( nextPlayer, 
+                                                                m.x, m.y );
+                                            
                                             setResponsiblePlayer( 
                                                 - nextPlayer->id );
                                             
@@ -11180,6 +11213,9 @@ int main() {
                             if( strstr( o->description, "origGrave" ) 
                                 != NULL ) {
                                 
+                                setGravePlayerID( 
+                                    m.x, m.y, heldGravePlayerID );
+
                                 GraveMoveInfo g = { 
                                     { newGroundObjectOrigin.x,
                                       newGroundObjectOrigin.y },
@@ -12634,6 +12670,8 @@ int main() {
                                                 nextPlayer->lineageEveID };
                         newGraves.push_back( graveInfo );
                         
+                        setGravePlayerID( dropPos.x, dropPos.y,
+                                          nextPlayer->id );
 
                         ObjectRecord *deathObject = getObject( deathID );
                         

@@ -278,6 +278,10 @@ static DB floorTimeDB;
 static char floorTimeDBOpen = false;
 
 
+static DB graveDB;
+static char graveDBOpen = false;
+
+
 // per-player memory of where they should spawn as eve
 static DB eveDB;
 static char eveDBOpen = false;
@@ -2366,6 +2370,14 @@ SimpleVector<GridPos> *getSpeechPipesOut( int inIndex ) {
 
 
 
+static void deleteFileByName( const char *inFileName ) {
+    File f( NULL, inFileName );
+    
+    if( f.exists() ) {
+        f.remove();
+        }
+    }
+
 
 
 
@@ -2881,6 +2893,28 @@ char initMap() {
     
     floorTimeDBOpen = true;
 
+
+
+    // ALWAYS delete old grave DB at each server startup
+    // grave info is only player ID, and server only remembers players
+    // live, in RAM, while it is still running
+    deleteFileByName( "grave.db" );
+
+
+    error = DB_open( &graveDB, 
+                     "grave.db", 
+                     KISSDB_OPEN_MODE_RWCREAT,
+                     80000,
+                     8, // two 32-bit ints, xy
+                     4 // one int, the grave player ID at x,y 
+                     );
+    
+    if( error ) {
+        AppLog::errorF( "Error %d opening grave KissDB", error );
+        return false;
+        }
+    
+    graveDBOpen = true;
 
 
 
@@ -3500,6 +3534,12 @@ void freeMap( char inSkipCleanup ) {
         }
 
 
+    if( graveDBOpen ) {
+        DB_close( &graveDB );
+        graveDBOpen = false;
+        }
+
+
     if( eveDBOpen ) {
         DB_close( &eveDB );
         eveDBOpen = false;
@@ -3547,13 +3587,6 @@ void freeMap( char inSkipCleanup ) {
 
 
 
-static void deleteFileByName( const char *inFileName ) {
-    File f( NULL, inFileName );
-    
-    if( f.exists() ) {
-        f.remove();
-        }
-    }
 
 
 
@@ -3562,6 +3595,7 @@ void wipeMapFiles() {
     deleteFileByName( "eve.db" );
     deleteFileByName( "floor.db" );
     deleteFileByName( "floorTime.db" );
+    deleteFileByName( "grave.db" );
     deleteFileByName( "lookTime.db" );
     deleteFileByName( "map.db" );
     deleteFileByName( "mapTime.db" );
@@ -7206,5 +7240,40 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
     GridPos returnVal = { eveX, eveY };
     
     return returnVal;
+    }
+
+
+
+int getGravePlayerID( int inX, int inY ) {
+    unsigned char key[9];
+    unsigned char value[4];
+
+    // look for changes to default in database
+    intPairToKey( inX, inY, key );
+    
+    int result = DB_get( &graveDB, key, value );
+    
+    if( result == 0 ) {
+        // found
+        int returnVal = valueToInt( value );
+        
+        return returnVal;
+        }
+    else {
+        return 0;
+        }
+    }
+
+
+void setGravePlayerID( int inX, int inY, int inPlayerID ) {
+    unsigned char key[8];
+    unsigned char value[4];
+    
+
+    intPairToKey( inX, inY, key );
+    intToValue( inPlayerID, value );
+            
+    
+    DB_put( &graveDB, key, value );
     }
 

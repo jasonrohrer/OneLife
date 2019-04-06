@@ -15,6 +15,9 @@ Version 214    ???
   swap positions on the ground, which resulted in one of the grave's info being
   lost.
 
+--Support for mousing over old graves from people who died before your birth.
+
+
 
 
 Server Fixes:
