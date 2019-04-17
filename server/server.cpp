@@ -10908,6 +10908,45 @@ int main() {
                                         setEtaDecay( m.x, m.y, oldEtaDecay );
                                         }
                                     
+
+                                    if( r->actor == 0 &&
+                                        target > 0 && r->newTarget > 0 &&
+                                        target != r->newTarget ) {
+                                        
+                                        TransRecord *oldDecayTrans = 
+                                            getTrans( -1, target );
+                                        
+                                        TransRecord *newDecayTrans = 
+                                            getTrans( -1, r->newTarget );
+                                        
+                                        if( oldDecayTrans != NULL &&
+                                            newDecayTrans != NULL  &&
+                                            oldDecayTrans->epochAutoDecay ==
+                                            newDecayTrans->epochAutoDecay &&
+                                            oldDecayTrans->autoDecaySeconds ==
+                                            newDecayTrans->autoDecaySeconds &&
+                                            oldDecayTrans->autoDecaySeconds 
+                                            > 0 ) {
+                                            
+                                            // old target and new
+                                            // target decay into something
+                                            // in same amount of time
+                                            // and this was a bare-hand
+                                            // action
+                                            
+                                            // doesn't matter if they 
+                                            // decay into SAME thing.
+
+                                            // keep old decay time in place
+                                            // (instead of resetting timer)
+                                            setEtaDecay( m.x, m.y, 
+                                                         oldEtaDecay );
+                                            }
+                                        }
+                                    
+
+                                    
+
                                     if( r->newTarget != 0 ) {
                                         
                                         handleMapChangeToPaths( 

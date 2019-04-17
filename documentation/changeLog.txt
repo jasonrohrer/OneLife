@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes:
+
+--Bare-hand actions no longer reset decay time if new object decays in same
+  amount of time as old object (even if they decay into different things).
+
+
+
 Version 215    2019-April-5
 
 --Object editor supports pasting color over all sprites in object.
