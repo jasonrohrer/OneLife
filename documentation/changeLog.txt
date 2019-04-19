@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 216    ???
+Version 216    2019-April-19
 
 --Fixed long-standing bug in transition generation when both actor and target
   have uses but one of them is marked as noUse (example:  digging potatoes
