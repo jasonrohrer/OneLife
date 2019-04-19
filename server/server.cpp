@@ -150,6 +150,11 @@ static SimpleVector<char*> nameGivingPhrases;
 static SimpleVector<char*> familyNameGivingPhrases;
 static SimpleVector<char*> cursingPhrases;
 
+static SimpleVector<char*> youGivingPhrases;
+static SimpleVector<char*> namedGivingPhrases;
+
+
+
 static char *eveName = NULL;
 
 
@@ -579,6 +584,13 @@ char isOwned( LiveObject *inPlayer, int inX, int inY ) {
     }
 
 
+
+char isOwned( LiveObject *inPlayer, GridPos inPos ) {
+    return isOwned( inPlayer, inPos.x, inPos.y );
+    }
+
+
+
 void removeAllOwnership( LiveObject *inPlayer ) {
     for( int i=0; i<inPlayer->ownedPositions.size(); i++ ) {
         GridPos *p = inPlayer->ownedPositions.getElement( i );
@@ -595,7 +607,7 @@ void removeAllOwnership( LiveObject *inPlayer ) {
             LiveObject *otherPlayer = players.getElement( j );
             
             if( otherPlayer != inPlayer ) {
-                if( isOwned( otherPlayer, p->x, p->y ) ) {
+                if( isOwned( otherPlayer, *p ) ) {
                     noOtherOwners = false;
                     break;
                     }
@@ -1245,7 +1257,9 @@ void quitCleanup() {
     nameGivingPhrases.deallocateStringElements();
     familyNameGivingPhrases.deallocateStringElements();
     cursingPhrases.deallocateStringElements();
-
+    youGivingPhrases.deallocateStringElements();
+    namedGivingPhrases.deallocateStringElements();
+    
     if( eveName != NULL ) {
         delete [] eveName;
         eveName = NULL;
@@ -6713,6 +6727,44 @@ char *isNamingSay( char *inSaidString, SimpleVector<char*> *inPhraseList ) {
     }
 
 
+// returns newly allocated name, or NULL
+// looks for phrases that start with a name
+char *isReverseNamingSay( char *inSaidString, 
+                          SimpleVector<char*> *inPhraseList ) {
+    
+    if( inSaidString[0] == ':' ) {
+        // first : indicates reading a written phrase.
+        // reading written phrase aloud does not have usual effects
+        // (block curse exploit)
+        return NULL;
+        }
+
+    for( int i=0; i<inPhraseList->size(); i++ ) {
+        char *testString = inPhraseList->getElementDirect( i );
+        
+        char *hitLoc = strstr( inSaidString, testString );
+
+        if( hitLoc != NULL ) {
+
+            char *saidDupe = stringDuplicate( inSaidString );
+
+            hitLoc = strstr( saidDupe, testString );
+
+            // back one, to exclude space from name
+            if( hitLoc != saidDupe ) {
+                hitLoc[-1] = '\0';
+                return saidDupe;
+                }
+            else {
+                delete [] saidDupe;
+                return NULL;
+                }
+            }
+        }
+    return NULL;
+    }
+
+
 
 char *isBabyNamingSay( char *inSaidString ) {
     return isNamingSay( inSaidString, &nameGivingPhrases );
@@ -6725,6 +6777,69 @@ char *isFamilyNamingSay( char *inSaidString ) {
 char *isCurseNamingSay( char *inSaidString ) {
     return isNamingSay( inSaidString, &cursingPhrases );
     }
+
+char *isNamedGivingSay( char *inSaidString ) {
+    return isReverseNamingSay( inSaidString, &namedGivingPhrases );
+    }
+
+
+
+char isYouGivingSay( char *inSaidString ) {
+    if( inSaidString[0] == ':' ) {
+        // first : indicates reading a written phrase.
+        // reading written phrase aloud does not have usual effects
+        // (block curse exploit)
+        return false;
+        }
+
+    for( int i=0; i<youGivingPhrases.size(); i++ ) {
+        char *testString = youGivingPhrases.getElementDirect( i );
+        
+        char *hitLoc = strstr( inSaidString, testString );
+
+        if( hitLoc != NULL ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
+
+LiveObject *getClosestOtherPlayer( LiveObject *inThisPlayer,
+                                   double inMinAge = 0,
+                                   char inNameMustBeNULL = false ) {
+    GridPos thisPos = getPlayerPos( inThisPlayer );
+
+    // don't consider anyone who is too far away
+    double closestDist = 20;
+    LiveObject *closestOther = NULL;
+    
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = 
+            players.getElement(j);
+        
+        if( otherPlayer != inThisPlayer &&
+            ! otherPlayer->error &&
+            computeAge( otherPlayer ) >= inMinAge &&
+            ( ! inNameMustBeNULL || otherPlayer->name == NULL ) ) {
+                                        
+            GridPos otherPos = 
+                getPlayerPos( otherPlayer );
+            
+            double dist =
+                distance( thisPos, otherPos );
+            
+            if( dist < closestDist ) {
+                closestDist = dist;
+                closestOther = otherPlayer;
+                }
+            }
+        }
+    return closestOther;
+    }
+
 
 
 int readIntFromFile( const char *inFileName, int inDefaultValue ) {
@@ -7469,7 +7584,12 @@ int main() {
     readPhrases( "familyNamingPhrases", &familyNameGivingPhrases );
 
     readPhrases( "cursingPhrases", &cursingPhrases );
+
     
+    readPhrases( "youGivingPhrases", &youGivingPhrases );
+    readPhrases( "namedGivingPhrases", &namedGivingPhrases );
+    
+
     eveName = 
         SettingsManager::getStringSetting( "eveName", "EVE" );
 
@@ -10006,7 +10126,70 @@ int main() {
                                 m.saidText[c] = ' ';
                                 }
                             }
+
                         
+                        if( nextPlayer->ownedPositions.size() > 0 ) {
+                            // consider phrases that assign ownership
+                            LiveObject *newOwnerPlayer = NULL;
+
+                            char *namedOwner = isNamedGivingSay( m.saidText );
+                            
+                            if( namedOwner != NULL ) {
+                                
+                                for( int j=0; j<players.size(); j++ ) {
+                                    LiveObject *otherPlayer = 
+                                        players.getElement( j );
+                                    if( ! otherPlayer->error &&
+                                        otherPlayer != nextPlayer &&
+                                        otherPlayer->name != NULL &&
+                                        strcmp( otherPlayer->name, 
+                                                namedOwner ) == 0 ) {
+                                        
+                                        newOwnerPlayer = otherPlayer;
+                                        break;
+                                        }
+                                    }
+                                delete [] namedOwner;
+                                }
+                            else if( isYouGivingSay( m.saidText ) ) {
+                                // find closest other player
+                                newOwnerPlayer = 
+                                    getClosestOtherPlayer( nextPlayer );
+                                }
+                            
+                            if( newOwnerPlayer != NULL ) {
+                                // find closest spot that this player owns
+                                GridPos thisPos = getPlayerPos( nextPlayer );
+
+                                double minDist = DBL_MAX;
+                            
+                                GridPos closePos;
+                            
+                                for( int j=0; 
+                                     j< nextPlayer->ownedPositions.size();
+                                     j++ ) {
+                                    GridPos nextPos = 
+                                        nextPlayer->
+                                        ownedPositions.getElementDirect( j );
+                                    double d = distance( nextPos, thisPos );
+                                
+                                    if( d < minDist ) {
+                                        minDist = d;
+                                        closePos = nextPos;
+                                        }
+                                    }
+
+                                if( minDist < DBL_MAX ) {
+                                    // found one
+                                    if( ! isOwned( newOwnerPlayer, 
+                                                   closePos ) ) {
+                                        newOwnerPlayer->
+                                            ownedPositions.push_back( 
+                                                closePos );
+                                        }
+                                    }
+                                }
+                            }
 
 
                         
@@ -10141,32 +10324,12 @@ int main() {
                             if( name != NULL && strcmp( name, "" ) != 0 ) {
                                 // still, check if we're naming a nearby,
                                 // nameless non-baby
-                                GridPos thisPos = getPlayerPos( nextPlayer );
-                                
-                                // don't consider anyone who is too far away
-                                double closestDist = 20;
-                                LiveObject *closestOther = NULL;
-                                
-                                for( int j=0; j<numLive; j++ ) {
-                                    LiveObject *otherPlayer = 
-                                        players.getElement(j);
-                                    
-                                    if( otherPlayer != nextPlayer &&
-                                        computeAge( otherPlayer ) >= babyAge &&
-                                        otherPlayer->name == NULL ) {
-                                        
-                                        GridPos otherPos = 
-                                            getPlayerPos( otherPlayer );
-                                        
-                                        double dist =
-                                            distance( thisPos, otherPos );
-                                        
-                                        if( dist < closestDist ) {
-                                            closestDist = dist;
-                                            closestOther = otherPlayer;
-                                            }
-                                        }
-                                    }
+
+                                LiveObject *closestOther = 
+                                    getClosestOtherPlayer( nextPlayer,
+                                                           true,
+                                                           babyAge );
+
                                 if( closestOther != NULL ) {
                                     const char *close = 
                                         findCloseFirstName( name );
