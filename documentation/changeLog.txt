@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 216    ???
+
+--Fixed long-standing bug in transition generation when both actor and target
+  have uses but one of them is marked as noUse (example:  digging potatoes
+  without using shovel).
+
+
+
 Server Fixes:
 
 --Bare-hand actions no longer reset decay time if new object decays in same
