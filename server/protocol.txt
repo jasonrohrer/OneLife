@@ -157,6 +157,8 @@ GRAVE_MOVE (GM)
 
 GRAVE_OLD (GO)
 
+OWNER_LIST (OW)
+
 CURSED (CU)
 
 CURSE_TOKEN_CHANGE (CX)
@@ -677,6 +679,15 @@ underscored_name is name with spaces replaced by _
 If player has no name, this will be ~ character instead.
 
 
+OW
+x y p_id p_id p_id ... p_id
+#
+
+
+Provides owner list for position x y
+
+
+
 
 CU
 p_id level
@@ -771,7 +782,8 @@ KILL x y id#
 JUMP x y#
 EMOT x y e#
 DIE x y#
-GRAVE X Y#
+GRAVE x y#
+OWNER x y#
 FORCE x y#
 PING x y unique_id#
 VOGS x y#

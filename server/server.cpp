@@ -511,6 +511,9 @@ typedef struct LiveObject {
         // list of positions owned by this player
         SimpleVector<GridPos> ownedPositions;
 
+        // list of owned positions that this player has heard about
+        SimpleVector<GridPos> knownOwnedPositions;
+
     } LiveObject;
 
 
@@ -591,9 +594,33 @@ char isOwned( LiveObject *inPlayer, GridPos inPos ) {
 
 
 
+char isKnownOwned( LiveObject *inPlayer, int inX, int inY ) {
+    for( int i=0; i<inPlayer->knownOwnedPositions.size(); i++ ) {
+        GridPos *p = inPlayer->knownOwnedPositions.getElement( i );
+        
+        if( p->x == inX && p->y == inY ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
+char isKnownOwned( LiveObject *inPlayer, GridPos inPos ) {
+    return isKnownOwned( inPlayer, inPos.x, inPos.y );
+    }
+
+
+
+SimpleVector<GridPos> recentlyRemovedOwnerPos;
+
+
 void removeAllOwnership( LiveObject *inPlayer ) {
     for( int i=0; i<inPlayer->ownedPositions.size(); i++ ) {
         GridPos *p = inPlayer->ownedPositions.getElement( i );
+
+        recentlyRemovedOwnerPos.push_back( *p );
         
         int oID = getMapObject( p->x, p->y );
 
@@ -630,6 +657,31 @@ void removeAllOwnership( LiveObject *inPlayer ) {
                 }
             }
         }
+    }
+
+
+
+char *getOwnershipString( int inX, int inY ) {    
+    SimpleVector<char> messageWorking;
+    
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = players.getElement( j );
+        if( ! otherPlayer->error &&
+            isOwned( otherPlayer, inX, inY ) ) {
+            char *playerIDString = 
+                autoSprintf( " %d", otherPlayer->id );
+            messageWorking.appendElementString( 
+                playerIDString );
+            delete [] playerIDString;
+            }
+        }
+    char *message = messageWorking.getElementString();
+    return message;
+    }
+
+
+char *getOwnershipString( GridPos inPos ) {
+    return getOwnershipString( inPos.x, inPos.y );
     }
 
 
@@ -1435,6 +1487,7 @@ typedef enum messageType {
     JUMP,
     DIE,
     GRAVE,
+    OWNER,
     FORCE,
     MAP,
     TRIGGER,
@@ -1651,6 +1704,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "GRAVE" ) == 0 ) {
         m.type = GRAVE;
+        }
+    else if( strcmp( nameBuffer, "OWNER" ) == 0 ) {
+        m.type = OWNER;
         }
     else if( strcmp( nameBuffer, "FORCE" ) == 0 ) {
         m.type = FORCE;
@@ -8736,6 +8792,12 @@ int main() {
         SimpleVector<GraveInfo> newGraves;
         SimpleVector<GraveMoveInfo> newGraveMoves;
 
+        SimpleVector<GridPos> newOwnerPos;
+
+        newOwnerPos.push_back_other( &recentlyRemovedOwnerPos );
+        recentlyRemovedOwnerPos.deleteAll();
+        
+
         SimpleVector<int> newEmotPlayerIDs;
         SimpleVector<int> newEmotIndices;
         // 0 if no ttl specified
@@ -9595,6 +9657,36 @@ int main() {
                     delete [] defaultO.name;
                     delete defaultO.lineage;
                     }
+                else if( m.type == OWNER ) {
+                    // immediately send OW response
+                    SimpleVector<char> messageWorking;
+                    messageWorking.appendElementString( "OW\n" );
+                    
+                    char *leadString = 
+                        autoSprintf( "%d %d", 
+                                     m.x - nextPlayer->birthPos.x, 
+                                     m.y - nextPlayer->birthPos.y );
+                    messageWorking.appendElementString( leadString );
+                    delete [] leadString;
+                    
+                    char *ownerString = getOwnershipString( m.x, m.y );
+                    messageWorking.appendElementString( ownerString );
+                    delete [] ownerString;
+
+                    messageWorking.appendElementString( "\n#" );
+                    char *message = messageWorking.getElementString();
+                    
+                    sendMessageToPlayer( nextPlayer, message, 
+                                         strlen( message ) );
+                    delete [] message;
+
+                    GridPos p = { m.x, m.y };
+                    
+                    if( ! isKnownOwned( nextPlayer, p ) ) {
+                        // remember that we know about it
+                        nextPlayer->knownOwnedPositions.push_back( p );
+                        }
+                    }
                 else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
                     // if we're waiting for a FORCE response, ignore
@@ -10186,6 +10278,7 @@ int main() {
                                         newOwnerPlayer->
                                             ownedPositions.push_back( 
                                                 closePos );
+                                        newOwnerPos.push_back( closePos );
                                         }
                                     }
                                 }
@@ -11151,6 +11244,7 @@ int main() {
 
                                         nextPlayer->
                                             ownedPositions.push_back( newPos );
+                                        newOwnerPos.push_back( newPos );
                                         }
                                 
 
@@ -14613,6 +14707,14 @@ int main() {
             }
 
         
+        SimpleVector<char*> newOwnerStrings;
+        for( int u=0; u<newOwnerPos.size(); u++ ) {
+            newOwnerStrings.push_back( 
+                getOwnershipString( newOwnerPos.getElementDirect( u ) ) );
+            }
+
+
+
         
         // send moves and updates to clients
         
@@ -15093,6 +15195,49 @@ int main() {
                         }
                     }
                 
+                
+                // everyone gets all owner change messages
+                if( newOwnerPos.size() > 0 ) {
+                    
+                    // compose OW messages for this player
+                    for( int u=0; u<newOwnerPos.size(); u++ ) {
+                        GridPos p = newOwnerPos.getElementDirect( u );
+                        
+                        // only pos that are either in-range
+                        // OR are already known to this player.
+                        // This prevents leaking relative positions
+                        // through owned locations, but still allows
+                        // us to instantly learn about important ownership
+                        // changes
+                        char known = isKnownOwned( nextPlayer, p );
+                        
+                        if( known ||
+                            distance( p, getPlayerPos( nextPlayer ) )
+                            < maxDist2 
+                            ||
+                            isOwned( nextPlayer, p ) ) {
+                            
+                            if( ! known ) {
+                                // remember that we know about it now
+                                nextPlayer->knownOwnedPositions.push_back( p );
+                                }
+
+                            char *ownerMessage = 
+                                autoSprintf( 
+                                    "OW\n%d %d%s\n#", 
+                                    p.x -
+                                    nextPlayer->birthPos.x, 
+                                    p.y -
+                                    nextPlayer->birthPos.y,
+                                    newOwnerStrings.getElementDirect( u ) );
+                            
+                            sendMessageToPlayer( nextPlayer, ownerMessage,
+                                                 strlen( ownerMessage ) );
+                            delete [] ownerMessage;
+                            }
+                        }
+                    }
+
                 
 
                 int playerXD = nextPlayer->xd;
@@ -16106,7 +16251,8 @@ int main() {
         newLocationSpeech.deallocateStringElements();
         newLocationSpeechPos.deleteAll();
         
-
+        newOwnerStrings.deallocateStringElements();
+        
         
         // handle end-of-frame for all players that need it
         const char *frameMessage = "FM\n#";
