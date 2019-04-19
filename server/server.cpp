@@ -15971,6 +15971,19 @@ int main() {
         // handle closing any that have an error
         for( int i=0; i<players.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement(i);
+            
+            if( nextPlayer->error ) {
+                // do this immediately when a player dies
+                // don't wait until we're about to delete them
+                // takes too long
+                
+                // note that we will do this multiple times as
+                // we wait for their deleteSentDoneETA
+                //
+                // that's okay, because subsequent calls to this are cheap
+                removeAllOwnership( nextPlayer );
+                }
+            
 
             if( nextPlayer->error && nextPlayer->deleteSent &&
                 nextPlayer->deleteSentDoneETA < Time::getCurrentTime() ) {
@@ -16029,8 +16042,6 @@ int main() {
                 
                 delete nextPlayer->babyBirthTimes;
                 delete nextPlayer->babyIDs;
-                
-                removeAllOwnership( nextPlayer );
 
                 players.deleteElement( i );
                 i--;
