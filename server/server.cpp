@@ -502,6 +502,10 @@ typedef struct LiveObject {
         int vogJumpIndex;
         char postVogMode;
         
+
+        // list of positions owned by this player
+        SimpleVector<GridPos> ownedPositions;
+
     } LiveObject;
 
 
@@ -561,6 +565,60 @@ static void addPastPlayer( LiveObject *inPlayer ) {
     pastPlayers.push_back( o );
     }
 
+
+
+char isOwned( LiveObject *inPlayer, int inX, int inY ) {
+    for( int i=0; i<inPlayer->ownedPositions.size(); i++ ) {
+        GridPos *p = inPlayer->ownedPositions.getElement( i );
+        
+        if( p->x == inX && p->y == inY ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+void removeAllOwnership( LiveObject *inPlayer ) {
+    for( int i=0; i<inPlayer->ownedPositions.size(); i++ ) {
+        GridPos *p = inPlayer->ownedPositions.getElement( i );
+        
+        int oID = getMapObject( p->x, p->y );
+
+        if( oID <= 0 ) {
+            continue;
+            }
+
+        char noOtherOwners = true;
+        
+        for( int j=0; j<players.size(); j++ ) {
+            LiveObject *otherPlayer = players.getElement( j );
+            
+            if( otherPlayer != inPlayer ) {
+                if( isOwned( otherPlayer, p->x, p->y ) ) {
+                    noOtherOwners = false;
+                    break;
+                    }
+                }
+            }
+        
+        if( noOtherOwners ) {
+            // last owner of p just died
+            // force end transition
+            SimpleVector<int> *deathMarkers = getAllPossibleDeathIDs();
+            for( int j=0; j<deathMarkers->size(); j++ ) {
+                int deathID = deathMarkers->getElementDirect( j );
+                TransRecord *t = getTrans( deathID, oID );
+                
+                if( t != NULL ) {
+                    
+                    setMapObject( p->x, p->y, t->newTarget );
+                    break;
+                    }
+                }
+            }
+        }
+    }
 
 
 
@@ -1130,6 +1188,8 @@ void quitCleanup() {
 
         delete nextPlayer->babyBirthTimes;
         delete nextPlayer->babyIDs;
+        
+        removeAllOwnership( nextPlayer );
         }
     players.deleteAll();
 
@@ -10595,27 +10655,36 @@ int main() {
                             int oldHolding = nextPlayer->holdingID;
                             
                             char wrongSide = false;
+                            char ownershipBlocked = false;
                             
-                            if( target != 0 &&
-                                isGridAdjacent( m.x, m.y,
-                                                nextPlayer->xd, 
-                                                nextPlayer->yd ) ) {
+                            if( target != 0 ) {
                                 ObjectRecord *targetObj = getObject( target );
 
-                                if( targetObj->sideAccess ) {
+                                if( isGridAdjacent( m.x, m.y,
+                                                    nextPlayer->xd, 
+                                                    nextPlayer->yd ) ) {
                                     
-                                    if( m.y > nextPlayer->yd ||
-                                        m.y < nextPlayer->yd ) {
-                                        // access from N or S
-                                        wrongSide = true;
+                                    if( targetObj->sideAccess ) {
+                                        
+                                        if( m.y > nextPlayer->yd ||
+                                            m.y < nextPlayer->yd ) {
+                                            // access from N or S
+                                            wrongSide = true;
+                                            }
                                         }
+                                    }
+                                if( targetObj->isOwned ) {
+                                    // make sure player owns this pos
+                                    ownershipBlocked = 
+                                        ! isOwned( nextPlayer, m.x, m.y );
                                     }
                                 }
                             
 
                             
-                            if( wrongSide ) {
+                            if( wrongSide || ownershipBlocked ) {
                                 // ignore action from wrong side
+                                // or that players don't own
                                 }
                             else if( target != 0 ) {
                                 ObjectRecord *targetObj = getObject( target );
@@ -10908,6 +10977,19 @@ int main() {
                                         setEtaDecay( m.x, m.y, oldEtaDecay );
                                         }
                                     
+                                    if( target > 0 && r->newTarget > 0 &&
+                                        target != r->newTarget &&
+                                        ! getObject( target )->isOwned &&
+                                        getObject( r->newTarget )->isOwned ) {
+                                        
+                                        // player just created an owned
+                                        // object here
+                                        GridPos newPos = { m.x, m.y };
+
+                                        nextPlayer->
+                                            ownedPositions.push_back( newPos );
+                                        }
+                                
 
                                     if( r->actor == 0 &&
                                         target > 0 && r->newTarget > 0 &&
@@ -15948,6 +16030,8 @@ int main() {
                 delete nextPlayer->babyBirthTimes;
                 delete nextPlayer->babyIDs;
                 
+                removeAllOwnership( nextPlayer );
+
                 players.deleteElement( i );
                 i--;
                 }
