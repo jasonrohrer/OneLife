@@ -463,6 +463,17 @@ static void setupFlight( ObjectRecord *inR ) {
 
 
 
+static void setupOwned( ObjectRecord *inR ) {
+    inR->isOwned = false;
+    
+    char *ownedPos = strstr( inR->description, "+owned" );
+    if( ownedPos != NULL ) {
+        inR->isOwned = true;
+        }
+    }
+
+
+
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
     }
@@ -520,6 +531,8 @@ float initObjectBankStep() {
                 setupObjectSpeechPipe( r );
                 
                 setupFlight( r );
+                
+                setupOwned( r );
                 
 
                 next++;
@@ -2961,6 +2974,8 @@ int addObject( const char *inDescription,
     setupObjectSpeechPipe( r );
     
     setupFlight( r );
+    
+    setupOwned( r );
     
 
     memset( r->spriteSkipDrawing, false, inNumSprites );

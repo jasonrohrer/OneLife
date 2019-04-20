@@ -1,0 +1,6 @@
+SHELL=/bin/bash
+
+3,18,33,48 * * * * /usr/bin/indexer --quiet --config /etc/sphinxsearch/sphinx.conf fluxbb_search_posts_delta --rotate >/dev/null 2>&1
+
+30 4 * * * /usr/bin/indexer --quiet --config /etc/sphinxsearch/sphinx.conf fluxbb_search_posts_main --rotate >/dev/null 2>&1; /usr/bin/indexer --quiet --config /etc/sphinxsearch/sphinx.conf fluxbb_search_posts_delta --rotate >/dev/null 2>&1
+

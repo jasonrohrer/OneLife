@@ -152,6 +152,11 @@ static SimpleVector<char*> nameGivingPhrases;
 static SimpleVector<char*> familyNameGivingPhrases;
 static SimpleVector<char*> cursingPhrases;
 
+static SimpleVector<char*> youGivingPhrases;
+static SimpleVector<char*> namedGivingPhrases;
+
+
+
 static char *eveName = NULL;
 
 
@@ -504,6 +509,13 @@ typedef struct LiveObject {
         int vogJumpIndex;
         char postVogMode;
         
+
+        // list of positions owned by this player
+        SimpleVector<GridPos> ownedPositions;
+
+        // list of owned positions that this player has heard about
+        SimpleVector<GridPos> knownOwnedPositions;
+
     } LiveObject;
 
 
@@ -563,6 +575,116 @@ static void addPastPlayer( LiveObject *inPlayer ) {
     pastPlayers.push_back( o );
     }
 
+
+
+char isOwned( LiveObject *inPlayer, int inX, int inY ) {
+    for( int i=0; i<inPlayer->ownedPositions.size(); i++ ) {
+        GridPos *p = inPlayer->ownedPositions.getElement( i );
+        
+        if( p->x == inX && p->y == inY ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
+char isOwned( LiveObject *inPlayer, GridPos inPos ) {
+    return isOwned( inPlayer, inPos.x, inPos.y );
+    }
+
+
+
+char isKnownOwned( LiveObject *inPlayer, int inX, int inY ) {
+    for( int i=0; i<inPlayer->knownOwnedPositions.size(); i++ ) {
+        GridPos *p = inPlayer->knownOwnedPositions.getElement( i );
+        
+        if( p->x == inX && p->y == inY ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
+char isKnownOwned( LiveObject *inPlayer, GridPos inPos ) {
+    return isKnownOwned( inPlayer, inPos.x, inPos.y );
+    }
+
+
+
+SimpleVector<GridPos> recentlyRemovedOwnerPos;
+
+
+void removeAllOwnership( LiveObject *inPlayer ) {
+    for( int i=0; i<inPlayer->ownedPositions.size(); i++ ) {
+        GridPos *p = inPlayer->ownedPositions.getElement( i );
+
+        recentlyRemovedOwnerPos.push_back( *p );
+        
+        int oID = getMapObject( p->x, p->y );
+
+        if( oID <= 0 ) {
+            continue;
+            }
+
+        char noOtherOwners = true;
+        
+        for( int j=0; j<players.size(); j++ ) {
+            LiveObject *otherPlayer = players.getElement( j );
+            
+            if( otherPlayer != inPlayer ) {
+                if( isOwned( otherPlayer, *p ) ) {
+                    noOtherOwners = false;
+                    break;
+                    }
+                }
+            }
+        
+        if( noOtherOwners ) {
+            // last owner of p just died
+            // force end transition
+            SimpleVector<int> *deathMarkers = getAllPossibleDeathIDs();
+            for( int j=0; j<deathMarkers->size(); j++ ) {
+                int deathID = deathMarkers->getElementDirect( j );
+                TransRecord *t = getTrans( deathID, oID );
+                
+                if( t != NULL ) {
+                    
+                    setMapObject( p->x, p->y, t->newTarget );
+                    break;
+                    }
+                }
+            }
+        }
+    }
+
+
+
+char *getOwnershipString( int inX, int inY ) {    
+    SimpleVector<char> messageWorking;
+    
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = players.getElement( j );
+        if( ! otherPlayer->error &&
+            isOwned( otherPlayer, inX, inY ) ) {
+            char *playerIDString = 
+                autoSprintf( " %d", otherPlayer->id );
+            messageWorking.appendElementString( 
+                playerIDString );
+            delete [] playerIDString;
+            }
+        }
+    char *message = messageWorking.getElementString();
+    return message;
+    }
+
+
+char *getOwnershipString( GridPos inPos ) {
+    return getOwnershipString( inPos.x, inPos.y );
+    }
 
 
 
@@ -1132,6 +1254,8 @@ void quitCleanup() {
 
         delete nextPlayer->babyBirthTimes;
         delete nextPlayer->babyIDs;
+        
+        removeAllOwnership( nextPlayer );
         }
     players.deleteAll();
 
@@ -1187,7 +1311,9 @@ void quitCleanup() {
     nameGivingPhrases.deallocateStringElements();
     familyNameGivingPhrases.deallocateStringElements();
     cursingPhrases.deallocateStringElements();
-
+    youGivingPhrases.deallocateStringElements();
+    namedGivingPhrases.deallocateStringElements();
+    
     if( eveName != NULL ) {
         delete [] eveName;
         eveName = NULL;
@@ -1363,6 +1489,7 @@ typedef enum messageType {
     JUMP,
     DIE,
     GRAVE,
+    OWNER,
     FORCE,
     MAP,
     TRIGGER,
@@ -1579,6 +1706,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "GRAVE" ) == 0 ) {
         m.type = GRAVE;
+        }
+    else if( strcmp( nameBuffer, "OWNER" ) == 0 ) {
+        m.type = OWNER;
         }
     else if( strcmp( nameBuffer, "FORCE" ) == 0 ) {
         m.type = FORCE;
@@ -6655,6 +6785,44 @@ char *isNamingSay( char *inSaidString, SimpleVector<char*> *inPhraseList ) {
     }
 
 
+// returns newly allocated name, or NULL
+// looks for phrases that start with a name
+char *isReverseNamingSay( char *inSaidString, 
+                          SimpleVector<char*> *inPhraseList ) {
+    
+    if( inSaidString[0] == ':' ) {
+        // first : indicates reading a written phrase.
+        // reading written phrase aloud does not have usual effects
+        // (block curse exploit)
+        return NULL;
+        }
+
+    for( int i=0; i<inPhraseList->size(); i++ ) {
+        char *testString = inPhraseList->getElementDirect( i );
+        
+        char *hitLoc = strstr( inSaidString, testString );
+
+        if( hitLoc != NULL ) {
+
+            char *saidDupe = stringDuplicate( inSaidString );
+
+            hitLoc = strstr( saidDupe, testString );
+
+            // back one, to exclude space from name
+            if( hitLoc != saidDupe ) {
+                hitLoc[-1] = '\0';
+                return saidDupe;
+                }
+            else {
+                delete [] saidDupe;
+                return NULL;
+                }
+            }
+        }
+    return NULL;
+    }
+
+
 
 char *isBabyNamingSay( char *inSaidString ) {
     return isNamingSay( inSaidString, &nameGivingPhrases );
@@ -6667,6 +6835,69 @@ char *isFamilyNamingSay( char *inSaidString ) {
 char *isCurseNamingSay( char *inSaidString ) {
     return isNamingSay( inSaidString, &cursingPhrases );
     }
+
+char *isNamedGivingSay( char *inSaidString ) {
+    return isReverseNamingSay( inSaidString, &namedGivingPhrases );
+    }
+
+
+
+char isYouGivingSay( char *inSaidString ) {
+    if( inSaidString[0] == ':' ) {
+        // first : indicates reading a written phrase.
+        // reading written phrase aloud does not have usual effects
+        // (block curse exploit)
+        return false;
+        }
+
+    for( int i=0; i<youGivingPhrases.size(); i++ ) {
+        char *testString = youGivingPhrases.getElementDirect( i );
+        
+        char *hitLoc = strstr( inSaidString, testString );
+
+        if( hitLoc != NULL ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
+
+LiveObject *getClosestOtherPlayer( LiveObject *inThisPlayer,
+                                   double inMinAge = 0,
+                                   char inNameMustBeNULL = false ) {
+    GridPos thisPos = getPlayerPos( inThisPlayer );
+
+    // don't consider anyone who is too far away
+    double closestDist = 20;
+    LiveObject *closestOther = NULL;
+    
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = 
+            players.getElement(j);
+        
+        if( otherPlayer != inThisPlayer &&
+            ! otherPlayer->error &&
+            computeAge( otherPlayer ) >= inMinAge &&
+            ( ! inNameMustBeNULL || otherPlayer->name == NULL ) ) {
+                                        
+            GridPos otherPos = 
+                getPlayerPos( otherPlayer );
+            
+            double dist =
+                distance( thisPos, otherPos );
+            
+            if( dist < closestDist ) {
+                closestDist = dist;
+                closestOther = otherPlayer;
+                }
+            }
+        }
+    return closestOther;
+    }
+
 
 
 int readIntFromFile( const char *inFileName, int inDefaultValue ) {
@@ -7427,7 +7658,12 @@ int main() {
     readPhrases( "familyNamingPhrases", &familyNameGivingPhrases );
 
     readPhrases( "cursingPhrases", &cursingPhrases );
+
     
+    readPhrases( "youGivingPhrases", &youGivingPhrases );
+    readPhrases( "namedGivingPhrases", &namedGivingPhrases );
+    
+
     eveName = 
         SettingsManager::getStringSetting( "eveName", "EVE" );
 
@@ -8574,6 +8810,12 @@ int main() {
         SimpleVector<GraveInfo> newGraves;
         SimpleVector<GraveMoveInfo> newGraveMoves;
 
+        SimpleVector<GridPos> newOwnerPos;
+
+        newOwnerPos.push_back_other( &recentlyRemovedOwnerPos );
+        recentlyRemovedOwnerPos.deleteAll();
+        
+
         SimpleVector<int> newEmotPlayerIDs;
         SimpleVector<int> newEmotIndices;
         // 0 if no ttl specified
@@ -9433,6 +9675,36 @@ int main() {
                     delete [] defaultO.name;
                     delete defaultO.lineage;
                     }
+                else if( m.type == OWNER ) {
+                    // immediately send OW response
+                    SimpleVector<char> messageWorking;
+                    messageWorking.appendElementString( "OW\n" );
+                    
+                    char *leadString = 
+                        autoSprintf( "%d %d", 
+                                     m.x - nextPlayer->birthPos.x, 
+                                     m.y - nextPlayer->birthPos.y );
+                    messageWorking.appendElementString( leadString );
+                    delete [] leadString;
+                    
+                    char *ownerString = getOwnershipString( m.x, m.y );
+                    messageWorking.appendElementString( ownerString );
+                    delete [] ownerString;
+
+                    messageWorking.appendElementString( "\n#" );
+                    char *message = messageWorking.getElementString();
+                    
+                    sendMessageToPlayer( nextPlayer, message, 
+                                         strlen( message ) );
+                    delete [] message;
+
+                    GridPos p = { m.x, m.y };
+                    
+                    if( ! isKnownOwned( nextPlayer, p ) ) {
+                        // remember that we know about it
+                        nextPlayer->knownOwnedPositions.push_back( p );
+                        }
+                    }
                 else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
                     // if we're waiting for a FORCE response, ignore
@@ -9964,7 +10236,71 @@ int main() {
                                 m.saidText[c] = ' ';
                                 }
                             }
+
                         
+                        if( nextPlayer->ownedPositions.size() > 0 ) {
+                            // consider phrases that assign ownership
+                            LiveObject *newOwnerPlayer = NULL;
+
+                            char *namedOwner = isNamedGivingSay( m.saidText );
+                            
+                            if( namedOwner != NULL ) {
+                                
+                                for( int j=0; j<players.size(); j++ ) {
+                                    LiveObject *otherPlayer = 
+                                        players.getElement( j );
+                                    if( ! otherPlayer->error &&
+                                        otherPlayer != nextPlayer &&
+                                        otherPlayer->name != NULL &&
+                                        strcmp( otherPlayer->name, 
+                                                namedOwner ) == 0 ) {
+                                        
+                                        newOwnerPlayer = otherPlayer;
+                                        break;
+                                        }
+                                    }
+                                delete [] namedOwner;
+                                }
+                            else if( isYouGivingSay( m.saidText ) ) {
+                                // find closest other player
+                                newOwnerPlayer = 
+                                    getClosestOtherPlayer( nextPlayer );
+                                }
+                            
+                            if( newOwnerPlayer != NULL ) {
+                                // find closest spot that this player owns
+                                GridPos thisPos = getPlayerPos( nextPlayer );
+
+                                double minDist = DBL_MAX;
+                            
+                                GridPos closePos;
+                            
+                                for( int j=0; 
+                                     j< nextPlayer->ownedPositions.size();
+                                     j++ ) {
+                                    GridPos nextPos = 
+                                        nextPlayer->
+                                        ownedPositions.getElementDirect( j );
+                                    double d = distance( nextPos, thisPos );
+                                
+                                    if( d < minDist ) {
+                                        minDist = d;
+                                        closePos = nextPos;
+                                        }
+                                    }
+
+                                if( minDist < DBL_MAX ) {
+                                    // found one
+                                    if( ! isOwned( newOwnerPlayer, 
+                                                   closePos ) ) {
+                                        newOwnerPlayer->
+                                            ownedPositions.push_back( 
+                                                closePos );
+                                        newOwnerPos.push_back( closePos );
+                                        }
+                                    }
+                                }
+                            }
 
 
                         
@@ -10099,32 +10435,12 @@ int main() {
                             if( name != NULL && strcmp( name, "" ) != 0 ) {
                                 // still, check if we're naming a nearby,
                                 // nameless non-baby
-                                GridPos thisPos = getPlayerPos( nextPlayer );
-                                
-                                // don't consider anyone who is too far away
-                                double closestDist = 20;
-                                LiveObject *closestOther = NULL;
-                                
-                                for( int j=0; j<numLive; j++ ) {
-                                    LiveObject *otherPlayer = 
-                                        players.getElement(j);
-                                    
-                                    if( otherPlayer != nextPlayer &&
-                                        computeAge( otherPlayer ) >= babyAge &&
-                                        otherPlayer->name == NULL ) {
-                                        
-                                        GridPos otherPos = 
-                                            getPlayerPos( otherPlayer );
-                                        
-                                        double dist =
-                                            distance( thisPos, otherPos );
-                                        
-                                        if( dist < closestDist ) {
-                                            closestDist = dist;
-                                            closestOther = otherPlayer;
-                                            }
-                                        }
-                                    }
+
+                                LiveObject *closestOther = 
+                                    getClosestOtherPlayer( nextPlayer,
+                                                           true,
+                                                           babyAge );
+
                                 if( closestOther != NULL ) {
                                     const char *close = 
                                         findCloseFirstName( name );
@@ -10613,27 +10929,36 @@ int main() {
                             int oldHolding = nextPlayer->holdingID;
                             
                             char wrongSide = false;
+                            char ownershipBlocked = false;
                             
-                            if( target != 0 &&
-                                isGridAdjacent( m.x, m.y,
-                                                nextPlayer->xd, 
-                                                nextPlayer->yd ) ) {
+                            if( target != 0 ) {
                                 ObjectRecord *targetObj = getObject( target );
 
-                                if( targetObj->sideAccess ) {
+                                if( isGridAdjacent( m.x, m.y,
+                                                    nextPlayer->xd, 
+                                                    nextPlayer->yd ) ) {
                                     
-                                    if( m.y > nextPlayer->yd ||
-                                        m.y < nextPlayer->yd ) {
-                                        // access from N or S
-                                        wrongSide = true;
+                                    if( targetObj->sideAccess ) {
+                                        
+                                        if( m.y > nextPlayer->yd ||
+                                            m.y < nextPlayer->yd ) {
+                                            // access from N or S
+                                            wrongSide = true;
+                                            }
                                         }
+                                    }
+                                if( targetObj->isOwned ) {
+                                    // make sure player owns this pos
+                                    ownershipBlocked = 
+                                        ! isOwned( nextPlayer, m.x, m.y );
                                     }
                                 }
                             
 
                             
-                            if( wrongSide ) {
+                            if( wrongSide || ownershipBlocked ) {
                                 // ignore action from wrong side
+                                // or that players don't own
                                 }
                             else if( target != 0 ) {
                                 ObjectRecord *targetObj = getObject( target );
@@ -10926,6 +11251,59 @@ int main() {
                                         setEtaDecay( m.x, m.y, oldEtaDecay );
                                         }
                                     
+                                    if( target > 0 && r->newTarget > 0 &&
+                                        target != r->newTarget &&
+                                        ! getObject( target )->isOwned &&
+                                        getObject( r->newTarget )->isOwned ) {
+                                        
+                                        // player just created an owned
+                                        // object here
+                                        GridPos newPos = { m.x, m.y };
+
+                                        nextPlayer->
+                                            ownedPositions.push_back( newPos );
+                                        newOwnerPos.push_back( newPos );
+                                        }
+                                
+
+                                    if( r->actor == 0 &&
+                                        target > 0 && r->newTarget > 0 &&
+                                        target != r->newTarget ) {
+                                        
+                                        TransRecord *oldDecayTrans = 
+                                            getTrans( -1, target );
+                                        
+                                        TransRecord *newDecayTrans = 
+                                            getTrans( -1, r->newTarget );
+                                        
+                                        if( oldDecayTrans != NULL &&
+                                            newDecayTrans != NULL  &&
+                                            oldDecayTrans->epochAutoDecay ==
+                                            newDecayTrans->epochAutoDecay &&
+                                            oldDecayTrans->autoDecaySeconds ==
+                                            newDecayTrans->autoDecaySeconds &&
+                                            oldDecayTrans->autoDecaySeconds 
+                                            > 0 ) {
+                                            
+                                            // old target and new
+                                            // target decay into something
+                                            // in same amount of time
+                                            // and this was a bare-hand
+                                            // action
+                                            
+                                            // doesn't matter if they 
+                                            // decay into SAME thing.
+
+                                            // keep old decay time in place
+                                            // (instead of resetting timer)
+                                            setEtaDecay( m.x, m.y, 
+                                                         oldEtaDecay );
+                                            }
+                                        }
+                                    
+
+                                    
+
                                     if( r->newTarget != 0 ) {
                                         
                                         handleMapChangeToPaths( 
@@ -14347,6 +14725,14 @@ int main() {
             }
 
         
+        SimpleVector<char*> newOwnerStrings;
+        for( int u=0; u<newOwnerPos.size(); u++ ) {
+            newOwnerStrings.push_back( 
+                getOwnershipString( newOwnerPos.getElementDirect( u ) ) );
+            }
+
+
+
         
         // send moves and updates to clients
         
@@ -14827,6 +15213,49 @@ int main() {
                         }
                     }
                 
+                
+                // everyone gets all owner change messages
+                if( newOwnerPos.size() > 0 ) {
+                    
+                    // compose OW messages for this player
+                    for( int u=0; u<newOwnerPos.size(); u++ ) {
+                        GridPos p = newOwnerPos.getElementDirect( u );
+                        
+                        // only pos that are either in-range
+                        // OR are already known to this player.
+                        // This prevents leaking relative positions
+                        // through owned locations, but still allows
+                        // us to instantly learn about important ownership
+                        // changes
+                        char known = isKnownOwned( nextPlayer, p );
+                        
+                        if( known ||
+                            distance( p, getPlayerPos( nextPlayer ) )
+                            < maxDist2 
+                            ||
+                            isOwned( nextPlayer, p ) ) {
+                            
+                            if( ! known ) {
+                                // remember that we know about it now
+                                nextPlayer->knownOwnedPositions.push_back( p );
+                                }
+
+                            char *ownerMessage = 
+                                autoSprintf( 
+                                    "OW\n%d %d%s\n#", 
+                                    p.x -
+                                    nextPlayer->birthPos.x, 
+                                    p.y -
+                                    nextPlayer->birthPos.y,
+                                    newOwnerStrings.getElementDirect( u ) );
+                            
+                            sendMessageToPlayer( nextPlayer, ownerMessage,
+                                                 strlen( ownerMessage ) );
+                            delete [] ownerMessage;
+                            }
+                        }
+                    }
+
                 
 
                 int playerXD = nextPlayer->xd;
@@ -15840,7 +16269,8 @@ int main() {
         newLocationSpeech.deallocateStringElements();
         newLocationSpeechPos.deleteAll();
         
-
+        newOwnerStrings.deallocateStringElements();
+        
         
         // handle end-of-frame for all players that need it
         const char *frameMessage = "FM\n#";
@@ -15868,6 +16298,19 @@ int main() {
         // handle closing any that have an error
         for( int i=0; i<players.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement(i);
+            
+            if( nextPlayer->error ) {
+                // do this immediately when a player dies
+                // don't wait until we're about to delete them
+                // takes too long
+                
+                // note that we will do this multiple times as
+                // we wait for their deleteSentDoneETA
+                //
+                // that's okay, because subsequent calls to this are cheap
+                removeAllOwnership( nextPlayer );
+                }
+            
 
             if( nextPlayer->error && nextPlayer->deleteSent &&
                 nextPlayer->deleteSentDoneETA < Time::getCurrentTime() ) {
@@ -15926,7 +16369,7 @@ int main() {
                 
                 delete nextPlayer->babyBirthTimes;
                 delete nextPlayer->babyIDs;
-                
+
                 players.deleteElement( i );
                 i--;
                 }

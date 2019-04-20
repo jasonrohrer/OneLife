@@ -1945,7 +1945,8 @@ int cleanMap() {
                 ObjectRecord *o = getObject( id );
                 
                 if( o == NULL || getIsCategory( id ) 
-                    || o->description[0] == '@' ) {
+                    || o->description[0] == '@' 
+                    || o->isOwned ) {
                     // id doesn't exist anymore
                     
                     // OR it's a non-pattern category
@@ -1955,6 +1956,10 @@ int cleanMap() {
                     // OR object is flagged with @
                     // this may be a pattern category that is actually
                     // a place-holder
+
+                    // OR it's owned (no owned objects should be left
+                    // on map after server restarts... server must have
+                    // crashed and not shut down properly)
 
                     numClearedCount++;
                     

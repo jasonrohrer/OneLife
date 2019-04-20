@@ -346,6 +346,8 @@ typedef struct ObjectRecord {
 
         char isFlying;
         char isFlightLanding;
+        
+        char isOwned;
 
     } ObjectRecord;
 

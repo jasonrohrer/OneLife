@@ -16,6 +16,9 @@
 #include <stdlib.h>
 
 
+// make binFolderCache happy
+int versionNumber = 60;
+
 
 static int targetNumSteps = 78;
 

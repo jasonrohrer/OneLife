@@ -234,6 +234,9 @@ noMatch "(NO FILTER MATCH)"
 your "YOUR"
 of "OF"
 
+ownedBy "OWNED BY"
+
+
 mother "MOTHER"
 son "SON"
 daughter "DAUGHTER"
@@ -299,6 +302,8 @@ unrelated "NO RELATION"
 namelessPerson "NAMELESS PERSON"
 
 forgottenPerson "FORGOTTEN PERSON"
+
+unknownPerson "UNKNOWN PERSON"
 
 
 

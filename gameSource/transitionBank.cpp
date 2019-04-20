@@ -799,6 +799,8 @@ void initTransBankFinish() {
                         }
                     if( tr->noUseActor ) {
                         dir = 0;
+                        TransIDPair tp = { actor->id, newActor->id };
+                        actorSteps.push_back( tp );
                         }
 
                     for( int u=0; u<actor->numUses; u++ ) {
@@ -883,6 +885,8 @@ void initTransBankFinish() {
                         }
                     if( tr->noUseTarget ) {
                         dir = 0;
+                        TransIDPair tp = { target->id, newTarget->id };
+                        targetSteps.push_back( tp );
                         }
                     
                     for( int u=0; u<target->numUses; u++ ) {
