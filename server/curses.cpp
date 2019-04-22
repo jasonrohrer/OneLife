@@ -418,6 +418,22 @@ void cursesLogDeath( char *inEmail, double inAge ) {
         r->livedTimeSinceScoreDecrement += lifeTimeSinceScoreDecrement;
         }
 
+    for( int i=0; i<playerNames.size(); i++ ) {
+        PlayerNameRecord *r = playerNames.getElement( i );
+        
+        if( strcmp( r->email, inEmail ) == 0 ) {
+            // allow name record to exist for 60 seconds after
+            // player dies
+            r->timeCreated = Time::getCurrentTime() + 60 - playerNameTimeout;
+            // push to front of list
+            PlayerNameRecord newRec = *r;
+            playerNames.deleteElement( i );
+            playerNames.push_front( newRec );
+            break;
+            }
+        }
+
+
     if( useCurseServer ) {
         double sec = inAge * 60;
         

@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes:
+
+--You can no longer curses someone by name after they've been dead for 60
+  seconds.
+
+
+
+
 Version 216    2019-April-19
 
 --Fixed long-standing bug in transition generation when both actor and target
