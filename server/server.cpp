@@ -3769,6 +3769,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         strcmp( cursedName, "" ) != 0 ) {
         
         isCurse = cursePlayer( inPlayer->id,
+                               inPlayer->lineageEveID,
                                inPlayer->email,
                                cursedName );
         
@@ -10304,7 +10305,8 @@ int main() {
 
                                 logName( nextPlayer->id,
                                          nextPlayer->email,
-                                         nextPlayer->name );
+                                         nextPlayer->name,
+                                         nextPlayer->lineageEveID );
                                 playerIndicesToSendNamesAbout.push_back( i );
                                 }
                             }
@@ -10402,7 +10404,8 @@ int main() {
                                     
                                     logName( babyO->id,
                                              babyO->email,
-                                             babyO->name );
+                                             babyO->name,
+                                             babyO->lineageEveID );
                                     
                                     playerIndicesToSendNamesAbout.push_back( 
                                         getLiveObjectIndex( babyO->id ) );
@@ -10436,7 +10439,8 @@ int main() {
 
                                     logName( closestOther->id,
                                              closestOther->email,
-                                             closestOther->name );
+                                             closestOther->name,
+                                             closestOther->lineageEveID );
                                     
                                     playerIndicesToSendNamesAbout.push_back( 
                                         getLiveObjectIndex( 

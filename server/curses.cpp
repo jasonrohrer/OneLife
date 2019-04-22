@@ -81,6 +81,7 @@ typedef struct PlayerNameRecord {
         char *name;
         char *email;
         double timeCreated;
+        int lineageEveID;
     } PlayerNameRecord;
 
 
@@ -453,7 +454,8 @@ void cursesLogDeath( char *inEmail, double inAge ) {
 
 
 // can return NULL if name not found
-static CurseRecord *findCurseRecordByName( char *inName ) {
+static CurseRecord *findCurseRecordByName( char *inName,
+                                           int *outLineageEveID ) {
     
     char *email = NULL;
     
@@ -462,6 +464,7 @@ static CurseRecord *findCurseRecordByName( char *inName ) {
         
         if( strcmp( r->name, inName ) == 0 ) {
             email = r->email;
+            *outLineageEveID = r->lineageEveID;
             break;
             }
         }
@@ -513,16 +516,24 @@ void getNewCurseTokenHolders( SimpleVector<char*> *inEmailList ) {
 
 
 
-char cursePlayer( int inGiverID, char *inGiverEmail, 
+char cursePlayer( int inGiverID, int inGiverLineageEveID, char *inGiverEmail, 
                   char *inReceiverName ) {
     stepCurses();
     
-    CurseRecord *receiverRecord = findCurseRecordByName( inReceiverName );
+    int receiverLineageEveID = 0;
+    
+    CurseRecord *receiverRecord = 
+        findCurseRecordByName( inReceiverName, &receiverLineageEveID );
     
     if( receiverRecord == NULL ) {
         return false;
         }
     
+    if( receiverLineageEveID != inGiverLineageEveID ) {
+        // not in the same family, can't curse
+        return false;
+        }
+
     if( !useCurseServer && receiverRecord->bornCursed ) {
         // already getting born cursed, from local curses, 
         // leave them alone for now
@@ -580,11 +591,13 @@ char cursePlayer( int inGiverID, char *inGiverEmail,
 
 
 
-void logPlayerNameForCurses( char *inPlayerEmail, char *inPlayerName ) {
+void logPlayerNameForCurses( char *inPlayerEmail, char *inPlayerName,
+                             int inLineageEveID ) {
     // structure to track names per player
     PlayerNameRecord r = { stringDuplicate( inPlayerName ),
                            stringDuplicate( inPlayerEmail ),
-                           Time::getCurrentTime() };
+                           Time::getCurrentTime(),
+                           inLineageEveID };
     
     playerNames.push_back( r );
     }

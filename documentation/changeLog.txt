@@ -9,6 +9,8 @@ Server Fixes:
 --You can no longer curses someone by name after they've been dead for 60
   seconds.
 
+--You can only curse your own family members, not people from other lines.
+
 
 
 
