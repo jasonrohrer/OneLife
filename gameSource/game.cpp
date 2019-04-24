@@ -171,7 +171,7 @@ double viewHeight = 720;
 // then we will put letterbox bars on the sides
 // Usually, if screen is not 16:9, it will be taller, not wider,
 // and we will put letterbox bars on the top and bottom 
-const double visibleViewWidth = viewWidth;
+double visibleViewWidth = viewWidth;
 
 
 
