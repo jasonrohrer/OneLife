@@ -3230,7 +3230,7 @@ function ls_checkPassword( $inFunctionName ) {
         
         if( $passwordSent && $enableYubikey ) {
             global $yubikeyIDs, $yubicoClientID, $yubicoSecretKey,
-                $ticketGenerationSecret;
+                $passwordHashingPepper;
             
             $yubikey = $_REQUEST[ "yubikey" ];
 
@@ -3245,7 +3245,7 @@ function ls_checkPassword( $inFunctionName ) {
                 }
             
             
-            $nonce = ls_hmac_sha1( $ticketGenerationSecret, uniqid() );
+            $nonce = ls_hmac_sha1( $passwordHashingPepper, uniqid() );
             
             $callURL =
                 "https://api2.yubico.com/wsapi/2.0/verify?id=$yubicoClientID".
