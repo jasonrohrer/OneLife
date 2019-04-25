@@ -167,9 +167,29 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
             delete [] pureKey;
             
             
+            // insert comment at end with hash value
+            // header describes length of comment (002A is 42 bytes)
+            unsigned char *commentHeader = hexDecode( (char*)"FFEE002A" );
+
+            // the last two bytes of a JPG should be FFD9
+            // delete these for now, and add them back later
+            jpegBytes.deleteElement( jpegBytes.size() - 1 );
+            jpegBytes.deleteElement( jpegBytes.size() - 1 );
+            
+            jpegBytes.appendArray( commentHeader, 4 );
+            delete [] commentHeader;
+            
+            printf( "Key hash = %s", keyHash );
+            
+            jpegBytes.appendArray( (unsigned char *)keyHash, 
+                                   strlen( keyHash ) );
+            
+            // add jpg footer again
+            jpegBytes.push_back( 0xFF );
+            jpegBytes.push_back( 0xD9 );
+            
             unsigned char *jpegData = jpegBytes.getElementArray();
             
-            // FIXME:  add hash as jpg comment
 
             char *jpegBase64 = 
                 base64Encode( jpegData, jpegBytes.size(), false );

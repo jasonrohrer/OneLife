@@ -783,7 +783,7 @@ function ps_submitPhoto() {
     // 002A is length 42 (hash length plus 2 length bytes) 
     // followed by 40-char hash in ascii
 
-    $sigComment = hex2bin( "FFEE002A" ) + $hash_value;
+    $sigComment = hex2bin( "FFEE002A" ) . $hash_value;
 
     $pos = strpos( $jpg_binary, $sigComment );
 
