@@ -4,7 +4,10 @@
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/stringUtils.h"
+#include "minorGems/formats/encodingUtils.h"
 #include "minorGems/game/game.h"
+
+#include "minorGems/network/web/URLUtils.h"
 
 #include "minorGems/crypto/hashes/sha1.h"
 
@@ -136,9 +139,14 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
 
         char *url = SettingsManager::getStringSetting( "photoServerURL", "" );
         
-        
+
+        char *encodedEmail = URLUtils::urlEncode( userEmail );
+
         char *getURL = autoSprintf( "%s?action=get_sequence_number&email=%s", 
-                                   url, userEmail );
+                                   url, encodedEmail );
+
+        delete [] encodedEmail;
+        
         char *result = forceWebRequest( "GET", getURL, NULL );
         
         delete [] getURL;
@@ -158,10 +166,21 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
             delete [] seqNumberString;
             delete [] pureKey;
             
-
-            char *base64Encode( unsigned char *inData, int inDataLength,
-                    char inBreakLines = true );
             
+            unsigned char *jpegData = jpegBytes.getElementArray();
+            
+            // FIXME:  add hash as jpg comment
+
+            char *jpegBase64 = 
+                base64Encode( jpegData, jpegBytes.size(), false );
+
+            delete [] jpegData;
+            
+
+            char *jpegURL = URLUtils::urlEncode( jpegBase64 );
+            
+            encodedEmail = URLUtils::urlEncode( userEmail );
+
             char *postBody = 
                 autoSprintf( "action=submit_photo"
                              "&email=%s"
@@ -172,15 +191,33 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
                              "&photo_subject_ids="
                              "&photo_author_name=JASON+ROHRER"
                              "&photo_subjects_name="
+                             "&jpg_base64=%s"
                              , 
-                             userEmail,
+                             encodedEmail,
                              seqNumber,
                              keyHash,
                              serverIP,
-                             ourID
+                             ourID,
+                             jpegURL
                              );
+            delete [] encodedEmail;
+            delete [] jpegURL;
             
+
+            FILE *bodyFile = fopen( "body.txt", "w" );
+            fprintf( bodyFile, "%s", postBody );
+            fclose( bodyFile );
+            
+            delete [] jpegBase64;
+
             result = forceWebRequest( "POST", url, postBody );
+            
+            delete [] postBody;
+
+            printf( "Result of jpg posting = %s\n", result );
+            
+
+            delete [] result;
             
             // FIXME:  finish this code to test
 

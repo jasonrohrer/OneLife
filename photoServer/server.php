@@ -181,9 +181,9 @@ else if( preg_match( "/server\.php/", $_SERVER[ "SCRIPT_NAME" ] ) ) {
     global $tableNamePrefix;
     
     // check if our tables exist
-    $exists = ps_doesTableExist( $tableNamePrefix . "servers" ) &&
+    $exists = ps_doesTableExist( $tableNamePrefix . "photos" ) &&
         ps_doesTableExist( $tableNamePrefix . "users" ) &&
-        ps_doesTableExist( $tableNamePrefix . "lives" ) &&
+        ps_doesTableExist( $tableNamePrefix . "photo_appearances" ) &&
         ps_doesTableExist( $tableNamePrefix . "log" );
     
         
@@ -278,9 +278,11 @@ function ps_setupDatabase() {
             "CREATE TABLE $tableName(" .
             "id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT," .
             "user_id INT UNSIGNED NOT NULL,".
+            "index( user_id ), ".
             "url VARCHAR(254) NOT NULL,".
             "author_name varchar(255) NOT NULL,".
-            "subject_names text NOT NULL );";
+            "subject_names text NOT NULL,".
+            "submission_time DATETIME NOT NULL );";
 
         $result = ps_queryDatabase( $query );
 
@@ -529,19 +531,16 @@ function ps_showData( $checkPassword = true ) {
     echo "<tr>\n";    
     echo "<tr><td>".orderLink( "id", "ID" )."</td>\n";
     echo "<td>".orderLink( "email", "Email" )."</td>\n";
-    echo "<td>".orderLink( "curse_score", "Current Curse Score" )."</td>\n";
-    echo "<td>".orderLink( "total_curse_score", "Total Curse Score" )."</td>\n";
-    echo "<td>ExtraSec</td>\n";
+    echo "<td>".orderLink( "photos_submitted", "Photos Submitted" )."</td>\n";
+    echo "<td>".orderLink( "photos_rejected", "Photos Rejected" )."</td>\n";
     echo "</tr>\n";
 
 
     for( $i=0; $i<$numRows; $i++ ) {
         $id = ps_mysqli_result( $result, $i, "id" );
         $email = ps_mysqli_result( $result, $i, "email" );
-        $curse_score = ps_mysqli_result( $result, $i, "curse_score" );
-        $extra_life_sec = ps_mysqli_result( $result, $i, "extra_life_sec" );
-        $total_curse_score =
-            ps_mysqli_result( $result, $i, "total_curse_score" );
+        $photos_submitted = ps_mysqli_result( $result, $i, "photos_submitted" );
+        $photos_rejected = ps_mysqli_result( $result, $i, "photos_rejected" );
         
         $encodedEmail = urlencode( $email );
 
@@ -552,9 +551,8 @@ function ps_showData( $checkPassword = true ) {
         echo "<td>".
             "<a href=\"server.php?action=show_detail&email=$encodedEmail\">".
             "$email</a></td>\n";
-        echo "<td>$curse_score</td>\n";
-        echo "<td>$total_curse_score</td>\n";
-        echo "<td>$extra_life_sec</td>\n";
+        echo "<td>$photos_submitted</td>\n";
+        echo "<td>$photos_rejected</td>\n";
         echo "</tr>\n";
         }
     echo "</table>";
@@ -584,26 +582,54 @@ function ps_showDetail( $checkPassword = true ) {
 
     $email = ps_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
             
-    $query = "SELECT id, curse_score, total_curse_score, extra_life_sec ".
+    $query = "SELECT id, photos_submitted, photos_rejected ".
         "FROM $tableNamePrefix"."users ".
         "WHERE email = '$email';";
     $result = ps_queryDatabase( $query );
 
     $id = ps_mysqli_result( $result, 0, "id" );
-    $curse_score = ps_mysqli_result( $result, 0, "curse_score" );
-    $total_curse_score = ps_mysqli_result( $result, 0, "total_curse_score" );
-    $extra_life_sec = ps_mysqli_result( $result, 0, "extra_life_sec" );
-
+    $photos_submitted = ps_mysqli_result( $result, 0, "photos_submitted" );
+    $photos_rejected = ps_mysqli_result( $result, 0, "photos_rejected" );
+    
     
 
     echo "<center><table border=0><tr><td>";
     
     echo "<b>ID:</b> $id<br><br>";
     echo "<b>Email:</b> $email<br><br>";
-    echo "<b>Current Curse Score:</b> $curse_score<br><br>";
-    echo "<b>Total Curse Score:</b> $total_curse_score<br><br>";
-    echo "<b>ExtraLifeSec:</b> $extra_life_sec<br><br>";
+    echo "<b>Photos Submitted:</b> $photos_submitted<br><br>";
+    echo "<b>Photos Rejected:</b> $photos_rejected<br><br>";
     echo "<br><br>";
+
+
+    $query = "SELECT url, author_name, subject_names, submission_time ".
+        "FROM $tableNamePrefix"."photos ".
+        "WHERE user_id = '$id' ".
+        "ORDER BY id DESC;";
+    $result = ps_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+    
+    $id = ps_mysqli_result( $result, 0, "id" );
+
+    for( $i=0; $i<$numRows; $i++ ) {
+        $url = ps_mysqli_result( $result, $i, "url" );
+        $author_name = ps_mysqli_result( $result, $i, "author_name" );
+        $subject_names = ps_mysqli_result( $result, $i, "subject_names" );
+        $submission_time = ps_mysqli_result( $result, $i, "submission_time" );
+
+        echo "<img src='$url'><br>";
+        echo "by $author_name<br>";
+        echo "featuring $subject_names<br>";
+        $agoSec = strtotime( "now" ) -
+            strtotime( $submission_time );
+        
+        $ago = ps_secondsToAgeSummary( $agoSec );
+
+        echo "$submission_time ($ago ago)<br>";
+
+        echo "<br><br><br>\n";
+        }
     }
 
 
@@ -715,7 +741,7 @@ function ps_submitPhoto() {
 
     
     
-    $hash_value = ls_requestFilter( "hash_value", "/[A-F0-9]+/i", "" );
+    $hash_value = ps_requestFilter( "hash_value", "/[A-F0-9]+/i", "" );
 
     $hash_value = strtoupper( $hash_value );
 
@@ -734,7 +760,7 @@ function ps_submitPhoto() {
     $result = file_get_contents( $request );
 
     if( $result != "VALID" ) {
-        rs_log( "submitPhoto denied for failed hash check, $email" );
+        ps_log( "submitPhoto denied for failed hash check, $email" );
 
         if( $id != -1 ) {
             $query = "UPDATE $tableNamePrefix"."users ".
@@ -749,7 +775,7 @@ function ps_submitPhoto() {
     // base64
     // [0-9], [A-Z], [a-z], and [+,/,=].    
 
-    $jpg_base64 = ps_requestFilter( "jpg_base64", "[A-Z0-9a-z+/=]", "" );
+    $jpg_base64 = ps_requestFilter( "jpg_base64", "/[A-Z0-9a-z+\/=]+/", "" );
 
     $jpg_binary = base64_decode( $jpg_base64 );
 
@@ -761,13 +787,24 @@ function ps_submitPhoto() {
 
     $pos = strpos( $jpg_binary, $sigComment );
 
-    if( $pos === false ) {
-        rs_log( "submitPhoto denied for missing hash comment, $email" );
+    if( $pos === FALSE ) {
+        ps_log( "submitPhoto denied for missing hash comment, $email" );
 
         if( $id != -1 ) {
             $query = "UPDATE $tableNamePrefix"."users ".
                 "SET photos_rejected = photos_rejected + 1;";
             ps_queryDatabase( $query );
+            }
+        else {
+            // got this far
+            // they are a real user
+            // but the photo they submitted was bogus
+            // create a record for them to count it
+            $query = "INSERT INTO $tableNamePrefix". "users SET " .
+                "email = '$email', sequence_number = 1, ".
+                "photos_submitted = 0, photos_rejected = 1;";
+            ps_queryDatabase( $query );
+            $id = ps_getUserID( $email );
             }
         
         echo "DENIED";
@@ -779,10 +816,13 @@ function ps_submitPhoto() {
     // save it into the folder
     global $submittedPhotoLocation, $submittedPhotoURL;
 
-    $photoFileName = hmac_sha1( $email, $sequence_number . uniqid() ) . "jpg";
+    $photoFileName =
+        ps_hmac_sha1( $email, $sequence_number . uniqid() ) . ".jpg";
 
-    file_put_contents( $submittedPhotoLocation . $photoFileName,
-                       $jpg_binary );
+    $filePath = $submittedPhotoLocation . $photoFileName;
+
+    
+    file_put_contents( $filePath, $jpg_binary );
 
     $photoURL = $submittedPhotoURL . $photoFileName;
     
@@ -817,34 +857,45 @@ function ps_submitPhoto() {
     $photo_author_name = ps_formatName( $photo_author_name );
 
     $subjectList = "";
-    if( count( $subjectNames ) > 0 ) {
-        $subjectList = $subjectNames[0];
-        }
-    if( count( $subjectNames ) == 2 ) {
-        $subjectList = $subjectList . "and " . $subjectNames[1];
-        }
-    else {
-        for( $i=1; $i < count( $subjectNames ) - 1; $i ++ ) {
-            $subjectList = $subjectList . ", " . $subjectNames[$i];
+    if( $photo_subjects_names != "" && count( $subjectNames ) > 0 ) {
+        $subjectList = ps_formatName( $subjectNames[0] );
+
+        if( count( $subjectNames ) == 2 ) {
+            $subjectList = $subjectList . "and " .
+                ps_formatName( $subjectNames[1] );
             }
-        $subjectList =
-            $subjectList . ", and " .
-            $subjectNames[ count( $subjectNames ) - 1 ];
+        else {
+                for( $i=1; $i < count( $subjectNames ) - 1; $i ++ ) {
+                    $subjectList = $subjectList . ", " .
+                        ps_formatName( $subjectNames[$i] );
+                    }
+                $subjectList =
+                    $subjectList . ", and " .
+                    ps_formatName(
+                        $subjectNames[ count( $subjectNames ) - 1 ] );
+            }
         }
+    
 
     $query = "INSERT INTO $tableNamePrefix"."photos ".
         "SET user_id = $id, url = '$photoURL', ".
+        "submission_time = CURRENT_TIMESTAMP, ".
         "author_name = '$photo_author_name', subject_names = '$subjectList';";
     ps_queryDatabase( $query );
 
-    $photoID = mysqli_insert_id( $ls_mysqlLink );
+    global $ps_mysqlLink;
+    
+    $photoID = mysqli_insert_id( $ps_mysqlLink );
+
     
     // 3.  insert photo_appearances records for each subject and author
     //     (probably write a function for this and call it in a loop)
     ps_addAppearance( $photoID, $server_name, $photo_author_id );
 
-    foreach( $photo_subject_id as $subjectID ) {
-        ps_addAppearance( $photoID, $server_name, $subjectID );
+    if( $photo_subject_ids != "" ) {
+        foreach( $photo_subject_id as $subjectID ) {
+            ps_addAppearance( $photoID, $server_name, $subjectID );
+            }
         }
 
     echo "OK";
@@ -856,7 +907,7 @@ function ps_submitPhoto() {
 function ps_addAppearance( $photoID, $server_name, $player_id ) {
     global $tableNamePrefix;
     $query = "INSERT INTO $tableNamePrefix"."photo_appearances ".
-        "SET sever_name = '$server_name', player_id = $player_id, ".
+        "SET server_name = '$server_name', player_id = $player_id, ".
         "photo_id = $photoID;";
     ps_queryDatabase( $query );
     }
@@ -865,6 +916,8 @@ function ps_addAppearance( $photoID, $server_name, $player_id ) {
 
 // -1 if doesn't exist
 function ps_getUserID( $email ) {
+    global $tableNamePrefix;
+    
     $query = "SELECT id FROM $tableNamePrefix"."users ".
         "WHERE email = '$email';";
     
@@ -908,7 +961,7 @@ function ps_formatName( $inName ) {
         if( !preg_match('/[^IVCXL]/', $nameParts[1] ) ) {
             // string contains only roman numeral digits
             // but VIX and other last names possible
-            if( ls_romanToInt( $nameParts[1] ) > 0 ) {
+            if( ps_romanToInt( $nameParts[1] ) > 0 ) {
                 // leave second part uppercase
                 $secondRoman = true;
                 }
