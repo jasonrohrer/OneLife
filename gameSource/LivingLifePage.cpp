@@ -17325,7 +17325,8 @@ void LivingLifePage::makeActive( char inFresh ) {
 
     mSayField.setText( "" );
     mSayField.unfocus();
-
+    TextField::unfocusAll();
+    
     mOldArrows.deleteAll();
     mOldDesStrings.deallocateStringElements();
     mOldDesFades.deleteAll();

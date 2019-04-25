@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 218    ???
+
+--Fixed bug that cause chat sheet to not appear if another field was focused.
+  Was caused by VOG code.
+
+
+
 
 Server Fixes:
 
