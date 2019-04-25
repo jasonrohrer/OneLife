@@ -117,13 +117,16 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
         data[i++] = lrint( b[p] * 255 );
         }
     
-
+    delete im;
+    
 
     int result = stbi_write_jpg_to_func( 
         jpegWriteFunc, NULL, 
         w, h, 
         3, data, 90 );
 
+    delete [] data;
+    
 
     if( result == 0 ) {
         // error
@@ -179,8 +182,6 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
             jpegBytes.appendArray( commentHeader, 4 );
             delete [] commentHeader;
             
-            printf( "Key hash = %s", keyHash );
-            
             jpegBytes.appendArray( (unsigned char *)keyHash, 
                                    strlen( keyHash ) );
             
@@ -222,6 +223,7 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
                              );
             delete [] encodedEmail;
             delete [] jpegURL;
+            delete [] keyHash;
             
 
             FILE *bodyFile = fopen( "body.txt", "w" );
@@ -238,24 +240,8 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
             
 
             delete [] result;
-            
-            // FIXME:  finish this code to test
-
-            /*
-            server.php
-
-action=submit_photo
-&email=[email address]
-&sequence_number=[int]
-&hash_value=[hash value]
-&server_name=[string]
-&photo_author_id=[int]
-&photo_subjects_ids=[string]
-&photo_author_name=[string]
-&photo_subjects_names=[string]
-&jpg_base64=[jpg file as base 64]
-            */
             }
+        delete [] url;
         }
 
     jpegBytes.deleteAll();
