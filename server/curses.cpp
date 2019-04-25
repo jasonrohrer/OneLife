@@ -423,9 +423,11 @@ void cursesLogDeath( char *inEmail, double inAge ) {
         PlayerNameRecord *r = playerNames.getElement( i );
         
         if( strcmp( r->email, inEmail ) == 0 ) {
-            // allow name record to exist for 60 seconds after
+            // allow name record to exist for 5 minutes after
             // player dies
-            r->timeCreated = Time::getCurrentTime() + 60 - playerNameTimeout;
+            r->timeCreated = 
+                Time::getCurrentTime() + 60 * 5 - playerNameTimeout;
+            
             // push to front of list
             PlayerNameRecord newRec = *r;
             playerNames.deleteElement( i );
