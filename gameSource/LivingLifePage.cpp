@@ -17,6 +17,8 @@
 
 #include "emotion.h"
 
+#include "photos.h"
+
 
 #include "liveAnimationTriggers.h"
 
@@ -137,6 +139,8 @@ static char savingSpeechColor = false;
 static char savingSpeechMask = false;
 
 static char savingSpeechNumber = 1;
+
+static char takingPhoto = false;
 
 
 static double emotDuration = 10;
@@ -6780,6 +6784,23 @@ void LivingLifePage::draw( doublePair inViewCenter,
         toggleAdditiveBlend( false );
         }
     
+    
+    if( takingPhoto ) {
+        doublePair pos = ourLiveObject->currentPos;
+        pos = mult( pos, CELL_D );
+        pos = sub( pos, lastScreenViewCenter );
+        
+        int screenWidth, screenHeight;
+        getScreenDimensions( &screenWidth, &screenHeight );
+        
+        pos.x += screenWidth / 2;
+        pos.y += screenHeight / 2;
+        
+        takePhoto( pos, ourLiveObject->holdingFlip ? -1 : 1  );
+        takingPhoto = false;
+        }
+    
+
     
     if( hideGuiPanel ) {
         // skip gui
@@ -19700,6 +19721,10 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 savingSpeech = true;
                 }
             break;
+        case '@': {
+            takingPhoto = true;
+            break;
+            }
         case 'x':
             if( userTwinCode != NULL &&
                 ! mStartedLoadingFirstObjectSet ) {

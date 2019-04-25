@@ -691,7 +691,7 @@ function ps_submitPhoto() {
     &photo_author_id=[int]
     &photo_subjects_ids=[string]
     &photo_author_name=[string]
-    &photo_subjects_name=[string]
+    &photo_subjects_names=[string]
     &jpg_base64=[jpg file as base 64]
     */
 
@@ -711,18 +711,7 @@ function ps_submitPhoto() {
         }
 
     
-    $query = "SELECT id FROM $tableNamePrefix"."users ".
-        "WHERE email = '$email';";
-    
-    $result = ps_queryDatabase( $query );
-
-    $numRows = mysqli_num_rows( $result );
-
-    $id = -1;
-    
-    if( $numRows > 0 ) {
-        $id = ps_mysqli_result( $result, 0, "id" );
-        }
+    $id = ps_getUserID( $email );
 
     
     
@@ -803,19 +792,137 @@ function ps_submitPhoto() {
         ps_requestFilter( "photo_subjects_ids", "/[0-9,]+/i", "0" );
     $photo_author_name =
         ps_requestFilter( "photo_author_name", "/[A-Z0 ]+/i", "" );
-    $photo_subject_names =
-        ps_requestFilter( "photo_subject_names", "/[A-Z0 ,]+/i", "" );
+    $photo_subjects_names =
+        ps_requestFilter( "photo_subjects_names", "/[A-Z0 ,]+/i", "" );
 
     $subjectIDs = explode( $photo_subject_ids, "," );
-    $subjectNames = explode( $photo_subject_names, "," );
+    $subjectNames = explode( $photo_subjects_names, "," );
 
-    // FIXME:
+
     // 1.  insert user record if needed (or update sequence number if not)
-    // 2.  insert photo record with names and user ID and URL
+    if( $id != -1 ) {
+        $query = "UPDATE $tableNamePrefix"."users ".
+            "SET sequence_number = sequence_number + 1, ".
+            "photos_submitted = photos_submitted + 1;";
+        ps_queryDatabase( $query );
+        }
+    else {
+        $query = "INSERT INTO $tableNamePrefix". "users SET " .
+            "email = '$email', sequence_number = 1, ".
+            "photos_submitted = 1, photos_rejected = 0;";
+        ps_queryDatabase( $query );
+        $id = ps_getUserID( $email );
+        }
+    // 2.  insert photo record with names, user ID, and URL
+    $photo_author_name = ps_formatName( $photo_author_name );
+
+    $subjectList = "";
+    if( count( $subjectNames ) > 0 ) {
+        $subjectList = $subjectNames[0];
+        }
+    if( count( $subjectNames ) == 2 ) {
+        $subjectList = $subjectList . "and " . $subjectNames[1];
+        }
+    else {
+        for( $i=1; $i < count( $subjectNames ) - 1; $i ++ ) {
+            $subjectList = $subjectList . ", " . $subjectNames[$i];
+            }
+        $subjectList =
+            $subjectList . ", and " .
+            $subjectNames[ count( $subjectNames ) - 1 ];
+        }
+
+    $query = "INSERT INTO $tableNamePrefix"."photos ".
+        "SET user_id = $id, url = '$photoURL', ".
+        "author_name = '$photo_author_name', subject_names = '$subjectList';";
+    ps_queryDatabase( $query );
+
+    $photoID = mysqli_insert_id( $ls_mysqlLink );
+    
     // 3.  insert photo_appearances records for each subject and author
     //     (probably write a function for this and call it in a loop)
-    
+    ps_addAppearance( $photoID, $server_name, $photo_author_id );
+
+    foreach( $photo_subject_id as $subjectID ) {
+        ps_addAppearance( $photoID, $server_name, $subjectID );
+        }
+
+    echo "OK";
     }
+
+
+
+
+function ps_addAppearance( $photoID, $server_name, $player_id ) {
+    global $tableNamePrefix;
+    $query = "INSERT INTO $tableNamePrefix"."photo_appearances ".
+        "SET sever_name = '$server_name', player_id = $player_id, ".
+        "photo_id = $photoID;";
+    ps_queryDatabase( $query );
+    }
+
+
+
+// -1 if doesn't exist
+function ps_getUserID( $email ) {
+    $query = "SELECT id FROM $tableNamePrefix"."users ".
+        "WHERE email = '$email';";
+    
+    $result = ps_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    $id = -1;
+    
+    if( $numRows > 0 ) {
+        $id = ps_mysqli_result( $result, 0, "id" );
+        }
+    return $id;
+    }
+
+
+
+function ps_formatName( $inName ) {
+    $inName = strtoupper( $inName );
+
+    $nameParts = preg_split( "/\s+/", $inName );
+
+    $numParts = count( $nameParts );
+
+    if( $numParts > 0 ) {
+        // first part always a name part,
+        $nameParts[0] = ucfirst( strtolower( $nameParts[0] ) );
+        }
+    
+    if( $numParts == 3 ) {
+        // second part last name
+        $nameParts[1] = ucfirst( strtolower( $nameParts[1] ) );
+        // leave suffix uppercase
+        }
+    else if( count( $nameParts ) == 2 ) {
+        // tricky case
+        // is second part suffix or last name?
+
+        $secondRoman = false;
+        
+        if( !preg_match('/[^IVCXL]/', $nameParts[1] ) ) {
+            // string contains only roman numeral digits
+            // but VIX and other last names possible
+            if( ls_romanToInt( $nameParts[1] ) > 0 ) {
+                // leave second part uppercase
+                $secondRoman = true;
+                }
+            }
+
+        if( ! $secondRoman ) {
+            // second is last name
+            $nameParts[1] = ucfirst( strtolower( $nameParts[1] ) );
+            }
+        }
+    
+    return implode( " ", $nameParts );
+    }
+
 
 
 

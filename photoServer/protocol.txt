@@ -41,7 +41,7 @@ action=submit_photo
 &photo_author_id=[int]
 &photo_subjects_ids=[string]
 &photo_author_name=[string]
-&photo_subjects_name=[string]
+&photo_subjects_names=[string]
 &jpg_base64=[jpg file as base 64]
 
 Return:
