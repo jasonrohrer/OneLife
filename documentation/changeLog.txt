@@ -11,6 +11,8 @@ Server Fixes:
 
 --You can only curse your own family members, not people from other lines.
 
+--Fixed coordinate leak in initial PM message.
+
 
 
 

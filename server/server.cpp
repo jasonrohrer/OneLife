@@ -2985,20 +2985,45 @@ char *getMovesMessageFromList( SimpleVector<MoveRecord> *inMoves,
     return NULL;
     }
 
+
+
+double intDist( int inXA, int inYA, int inXB, int inYB ) {
+    double dx = (double)inXA - (double)inXB;
+    double dy = (double)inYA - (double)inYB;
+
+    return sqrt(  dx * dx + dy * dy );
+    }
     
     
     
 // returns NULL if there are no matching moves
 // positions in moves relative to inRelativeToPos
+// filters out moves that are taking place further than 32 away from inLocalPos
 char *getMovesMessage( char inNewMovesOnly,
                        GridPos inRelativeToPos,
+                       GridPos inLocalPos,
                        SimpleVector<ChangePosition> *inChangeVector = NULL ) {
     
     
     SimpleVector<MoveRecord> v = getMoveRecords( inNewMovesOnly, 
                                                  inChangeVector );
     
-    char *message = getMovesMessageFromList( &v, inRelativeToPos );
+    SimpleVector<MoveRecord> closeRecords;
+
+    for( int i=0; i<v.size(); i++ ) {
+        MoveRecord r = v.getElementDirect( i );
+        
+        double d = intDist( r.absoluteX, r.absoluteY,
+                            inLocalPos.x, inLocalPos.y );
+        
+        if( d <= 32 ) {
+            closeRecords.push_back( r );
+            }
+        }
+    
+    
+
+    char *message = getMovesMessageFromList( &closeRecords, inRelativeToPos );
     
     for( int i=0; i<v.size(); i++ ) {
         delete [] v.getElement(i)->formatString;
@@ -3316,12 +3341,6 @@ int sendMapChunkMessage( LiveObject *inO,
 
 
 
-double intDist( int inXA, int inYA, int inXB, int inYB ) {
-    double dx = (double)inXA - (double)inXB;
-    double dy = (double)inYA - (double)inYB;
-
-    return sqrt(  dx * dx + dy * dy );
-    }
 
 
 
@@ -14890,8 +14909,10 @@ int main() {
                 
                 
 
-                char *movesMessage = getMovesMessage( false, 
-                                                      nextPlayer->birthPos );
+                char *movesMessage = 
+                    getMovesMessage( false, 
+                                     nextPlayer->birthPos,
+                                     getPlayerPos( nextPlayer ) );
                 
                 if( movesMessage != NULL ) {
                     
