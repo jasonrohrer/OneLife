@@ -1061,7 +1061,7 @@ function ps_submitPhoto() {
     ps_addAppearance( $photoID, $server_name, $photo_author_id );
 
     if( $photo_subject_ids != "" ) {
-        foreach( $photo_subject_id as $subjectID ) {
+        foreach( $subjectIDs as $subjectID ) {
             ps_addAppearance( $photoID, $server_name, $subjectID );
             }
         }

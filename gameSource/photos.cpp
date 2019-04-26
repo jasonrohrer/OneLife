@@ -154,7 +154,11 @@ static inline double intDist( int inXA, int inYA, int inXB, int inYB ) {
 
 void takePhoto( doublePair inCamerLocation, int inCameraFacing,
                 int inSequenceNumber,
-                char *inServerSig ) {
+                char *inServerSig,
+                int inAuthorID,
+                char *inAuthorName,
+                SimpleVector<int> *inSubjectIDs,
+                SimpleVector<char*> *inSubjectNames ) {
 
     char *serverSig = stringDuplicate( inServerSig );
     
@@ -379,7 +383,44 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing,
             base64Encode( jpegData, jpegBytes.size(), false );
         
         delete [] jpegData;
+
+
+        char *subjectIDs;
+        if( inSubjectIDs->size() == 0 ) {
+            subjectIDs = stringDuplicate( "" );
+            }
+        else {
+            int *listInts = inSubjectIDs->getElementArray();
+            
+            SimpleVector<char*> stringList;
+            
+            for( int i=0; i< inSubjectIDs->size(); i++ ) {
+                stringList.push_back( autoSprintf( "%d", listInts[i] ) );
+                }
+
+            char **list = stringList.getElementArray();
+            subjectIDs = join( list, stringList.size(), "," );
+            delete [] list;
+            stringList.deallocateStringElements();
+            }
         
+
+        char *subjectNames;
+        if( inSubjectNames->size() == 0 ) {
+            subjectNames = stringDuplicate( "" );
+            }
+        else {
+            char **list = inSubjectNames->getElementArray();
+            subjectNames = join( list, inSubjectNames->size(), "," );
+            delete [] list;
+            
+            char *enc = URLUtils::urlEncode( subjectNames );
+            delete [] subjectNames;
+            subjectNames = enc;
+            }
+        
+        
+
         
         char *jpegURL = URLUtils::urlEncode( jpegBase64 );
         
@@ -393,9 +434,9 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing,
                          "&server_sig=%s"
                          "&server_name=%s"
                          "&photo_author_id=%d"
-                         "&photo_subjects_ids="
-                         "&photo_author_name=JASON+ROHRER"
-                         "&photo_subjects_names=SALLY+SUE"
+                         "&photo_subjects_ids=%s"
+                         "&photo_author_name=%s"
+                         "&photo_subjects_names=%s"
                          "&jpg_base64=%s"
                          , 
                          encodedEmail,
@@ -403,12 +444,18 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing,
                          keyHash,
                          serverSig,
                          serverIP,
-                         ourID,
+                         inAuthorID,
+                         subjectIDs,
+                         inAuthorName,
+                         subjectNames,
                          jpegURL
                          );
         delete [] encodedEmail;
         delete [] jpegURL;
         delete [] keyHash;
+
+        delete [] subjectIDs;
+        delete [] subjectNames;
         
 
         FILE *bodyFile = fopen( "body.txt", "w" );

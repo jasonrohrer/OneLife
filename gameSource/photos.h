@@ -1,4 +1,5 @@
 #include "minorGems/game/doublePair.h"
+#include "minorGems/util/SimpleVector.h"
 
 
 void initPhotos();
@@ -17,4 +18,9 @@ int getNextPhotoSequenceNumber();
 // server sig copied internally, destroyed by caller
 void takePhoto( doublePair inCamerLocation, int inCameraFacing,
                 int inSequenceNumber,
-                char *inServerSig );
+                char *inServerSig,
+                int inAuthorID,
+                // these are copied internally, destroyed by caller
+                char *inAuthorName,
+                SimpleVector<int> *inSubjectIDs,
+                SimpleVector<char*> *inSubjectNames );

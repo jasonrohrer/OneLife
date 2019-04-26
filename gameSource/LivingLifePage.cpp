@@ -6830,9 +6830,61 @@ void LivingLifePage::draw( doublePair inViewCenter,
             pos.x += screenWidth / 2;
             pos.y += screenHeight / 2;
         
+            char *ourName;
+            
+            if( ourLiveObject->name != NULL ) {
+                ourName = ourLiveObject->name;
+                }
+            else {
+                ourName = (char*)translate( "namelessPerson" );
+                }
+            
+            SimpleVector<int> subjectIDs;
+            SimpleVector<char*> subjectNames;
+
+            int xStart = takingPhotoGlobalPos.x + 1;
+            
+            int xEnd;
+
+            if( takingPhotoFlip ) {
+                xStart = takingPhotoGlobalPos.x - 3;
+                xEnd = takingPhotoGlobalPos.x - 1;
+                }
+            else {
+                xEnd = xStart + 3;
+                }
+            
+            int yStart = takingPhotoGlobalPos.y - 1;
+            int yEnd = yStart + 2;
+
+
+            for( int i=0; i<gameObjects.size(); i++ ) {
+                
+                LiveObject *o = gameObjects.getElement( i );
+                
+                if( o != ourLiveObject ) {
+                    doublePair p = o->currentPos;
+                    
+                    if( p.x >= xStart && p.x <= xEnd &&
+                        p.y >= yStart && p.y <= yEnd ) {
+                        subjectIDs.push_back( o->id );
+                        
+                        if( o->name != NULL ) {
+                            subjectNames.push_back( o->name );
+                            }
+                        }
+                    }
+                }
+            
+
             takePhoto( pos, takingPhotoFlip ? -1 : 1,
                        photoSequenceNumber,
-                       photoSig );
+                       photoSig,
+                       ourID,
+                       ourName,
+                       &subjectIDs,
+                       &subjectNames );
+            
             takingPhoto = false;
             delete [] photoSig;
             photoSig = NULL;
