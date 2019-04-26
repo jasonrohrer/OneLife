@@ -141,6 +141,8 @@ static char savingSpeechMask = false;
 static char savingSpeechNumber = 1;
 
 static char takingPhoto = false;
+static GridPos takingPhotoGlobalPos;
+static char takingPhotoFlip = false;
 static int photoSequenceNumber = -1;
 static char waitingForPhotoSig = false;
 static char *photoSig = NULL;
@@ -6803,20 +6805,21 @@ void LivingLifePage::draw( doublePair inViewCenter,
         if( photoSequenceNumber == -1 ) {
             photoSequenceNumber = getNextPhotoSequenceNumber();
             }
-        else if( photoSig == NULL && ! waitingForPhotoSig ) {
-            
-            doublePair pos = ourLiveObject->currentPos;
-            
+        else if( photoSig == NULL && ! waitingForPhotoSig ) {            
             char *message = 
                 autoSprintf( "PHOTO %d %d %d#",
-                             lrint( pos.x ), lrint( pos.y ),
+                             takingPhotoGlobalPos.x, takingPhotoGlobalPos.y,
                              photoSequenceNumber );
             sendToServerSocket( message );
             waitingForPhotoSig = true;
             delete [] message;
             }
         else if( photoSig != NULL ) {
-            doublePair pos = ourLiveObject->currentPos;
+            doublePair pos;
+            
+            pos.x = takingPhotoGlobalPos.x;
+            pos.y = takingPhotoGlobalPos.y;
+            
             
             pos = mult( pos, CELL_D );
             pos = sub( pos, lastScreenViewCenter );
@@ -6827,7 +6830,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             pos.x += screenWidth / 2;
             pos.y += screenHeight / 2;
         
-            takePhoto( pos, ourLiveObject->holdingFlip ? -1 : 1,
+            takePhoto( pos, takingPhotoFlip ? -1 : 1,
                        photoSequenceNumber,
                        photoSig );
             takingPhoto = false;
@@ -11993,6 +11996,24 @@ void LivingLifePage::step() {
                             responsiblePlayerObject = 
                                 getGameObject( responsiblePlayerID );
                             }
+                        
+                        if( old > 0 &&
+                            newID > 0 &&
+                            old != newID &&
+                            responsiblePlayerID == - ourID ) {
+                            
+                            // check for photo triggered
+                            if( strstr( getObject( newID )->description,
+                                        "+photo" ) != NULL ) {
+                                
+                                takingPhotoGlobalPos.x = x;
+                                takingPhotoGlobalPos.y = y;
+                                takingPhotoFlip = mMapTileFlips[ mapI ];
+                                takingPhoto = true;
+                                }
+                            
+                            }
+                        
 
                         if( old > 0 &&
                             old == newID &&
@@ -19783,10 +19804,6 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 savingSpeech = true;
                 }
             break;
-        case '@': {
-            takingPhoto = true;
-            break;
-            }
         case 'x':
             if( userTwinCode != NULL &&
                 ! mStartedLoadingFirstObjectSet ) {
