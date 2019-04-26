@@ -898,12 +898,16 @@ function ps_submitPhoto() {
         // that are playing on unofficial servers
         
         // ps_log( "submitPhoto denied for bad server sig, $email" );
-        
+
+        // don't count these as rejected either
+        // want rejected to be a sign that people are trying to hack
+        /*
         if( $id != -1 ) {
             $query = "UPDATE $tableNamePrefix"."users ".
                 "SET photos_rejected = photos_rejected + 1;";
             ps_queryDatabase( $query );
             }
+        */
         
         echo "DENIED";
         return;
