@@ -62,6 +62,7 @@ action=submit_photo
 &email=[email address]
 &sequence_number=[int]
 &hash_value=[hash value]
+&server_sig=[hash value]
 &server_name=[string]
 &photo_author_id=[int]
 &photo_subjects_ids=[string]
@@ -79,6 +80,13 @@ Used by clients to submit photos.
 hash_value is computed on both ends with:
 
 HMAC_SHA1( account_key, sequence_number )
+
+
+server_sig is provided by a trusted server, computed by:
+
+HMAC_SHA1( shared_secret, sequence_number )
+
+(Client must ask server for a signature before submitting a photo.)
 
 
 If sequence number is <= previously used sequence number for this email address,

@@ -1500,6 +1500,7 @@ typedef enum messageType {
     VOGI,
     VOGT,
     VOGX,
+    PHOTO,
     UNKNOWN
     } messageType;
 
@@ -1886,7 +1887,17 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     else if( strcmp( nameBuffer, "VOGX" ) == 0 ) {
         m.type = VOGX;
         }
-    else {
+   else if( strcmp( nameBuffer, "PHOTO" ) == 0 ) {
+        m.type = PHOTO;
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.id ) );
+        
+        if( numRead != 4 ) {
+            m.id = 0;
+            }
+        }
+     else {
         m.type = UNKNOWN;
         }
     
@@ -9707,6 +9718,50 @@ int main() {
                         nextPlayer->knownOwnedPositions.push_back( p );
                         }
                     }
+                else if( m.type == PHOTO ) {
+                    // immediately send photo response
+
+                    char *photoServerSharedSecret = 
+                        SettingsManager::
+                        getStringSetting( "photoServerSharedSecret",
+                                          "secret_phrase" );
+                    
+                    char *idString = autoSprintf( "%d", m.id );
+                    
+                    char *hash;
+                    
+                    // is a photo device present at x and y?
+                    char photo = false;
+                    
+                    int oID = getMapObject( m.x, m.y );
+                    
+                    if( oID > 0 ) {
+                        if( strstr( getObject( oID )->description,
+                                    "+photo" ) != NULL ) {
+                            photo = true;
+                            }
+                        }
+                    
+                    if( ! photo ) {
+                        hash = hmac_sha1( "dummy", idString );
+                        }
+                    else {
+                        hash = hmac_sha1( photoServerSharedSecret, idString );
+                        }
+                    
+                    delete [] photoServerSharedSecret;
+                    delete [] idString;
+                    
+                    char *message = autoSprintf( "PH\n%d %d %s#", 
+                                                 m.x, m.y, hash );
+                    
+                    delete [] hash;
+
+                    sendMessageToPlayer( nextPlayer, message, 
+                                         strlen( message ) );
+                    delete [] message;
+                    }
+
                 else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
                     // if we're waiting for a FORCE response, ignore

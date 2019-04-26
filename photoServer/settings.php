@@ -30,6 +30,18 @@ $submittedPhotoURL = "http://localhost/jcr13/photoServer/photos/";
 
 
 
+// secret shared with trusted game servers that allows their users to
+// post photos
+
+// MUST be changed from this default to prevent off-server photos.
+
+// should not contain spaces
+
+$sharedGameServerSecret = "secret_phrase";
+
+
+
+
 // Customization settings
 
 
