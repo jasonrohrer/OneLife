@@ -894,8 +894,11 @@ function ps_submitPhoto() {
         strtoupper( ps_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
 
     if( $server_sig != $computedServerSig ) {
-        ps_log( "submitPhoto denied for bad server sig, $email" );
-
+        // don't log this, because it might be common from clients
+        // that are playing on unofficial servers
+        
+        // ps_log( "submitPhoto denied for bad server sig, $email" );
+        
         if( $id != -1 ) {
             $query = "UPDATE $tableNamePrefix"."users ".
                 "SET photos_rejected = photos_rejected + 1;";
