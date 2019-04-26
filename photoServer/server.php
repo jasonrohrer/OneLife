@@ -19,11 +19,6 @@ include( "settings.php" );
 
 
 
-// no caching
-//header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-header('Cache-Control: no-store, no-cache, must-revalidate');
-header('Cache-Control: post-check=0, pre-check=0', FALSE);
-header('Pragma: no-cache'); 
 
 
 
@@ -119,6 +114,37 @@ $debug = ps_requestFilter( "debug", "/[01]/" );
 $remoteIP = "";
 if( isset( $_SERVER[ "REMOTE_ADDR" ] ) ) {
     $remoteIP = $_SERVER[ "REMOTE_ADDR" ];
+    }
+
+
+if( $action != "photo_link_image" ) {
+    // no caching, EXCEPT for generated images
+    
+    //header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    header('Cache-Control: no-store, no-cache, must-revalidate');
+    header('Cache-Control: post-check=0, pre-check=0', FALSE);
+    header('Pragma: no-cache'); 
+
+    // note that the photo_link_status should never change for a a dead
+    // player, and only the lineage server (which talks about dead players only)
+    // will use these link images
+    // (Players can't appear in a photo after they're dead)
+    // So caching these link images is okay.
+    }
+else {
+    header("Cache-Control: private, max-age=10800, pre-check=10800");
+    header("Pragma: private");
+    header("Expires: " . date(DATE_RFC822,strtotime(" 20 day")));
+
+    if( isset($_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) { 
+        header('Last-Modified: '.
+               date(DATE_RFC822,strtotime("26 April 2019")), true, 304);
+        exit;
+        }
+    else {
+        header("Last-Modified: " .
+               date(DATE_RFC822,strtotime("26 April 2019")));
+        }
     }
 
 

@@ -18,6 +18,13 @@ $fullServerURL = "http://localhost/jcr13/lineageServer/server.php";
 $mainSiteURL = "http://localhost/jcr13/";
 
 
+// the URL of the photo server to link to for photo appearances
+$photoServerURL = "http://localhost/jcr13/photoServer/server.php";
+
+$usePhotoServer = true;
+
+
+
 // The URL of the ticket server's server.php script.
 // This is used to validate ticket IDs.
 $ticketServerURL = "http://localhost/jcr13/ticketServer/server.php";
