@@ -94,7 +94,7 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
         rectStartX -= 400 + CELL_D;
         }
     else {
-        rectStartX += CELL_D;
+        rectStartX += CELL_D / 2;
         }
     if( rectStartX < 0 ) {
         rectStartX = 0;
@@ -103,7 +103,7 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
         rectStartX = screenWidth - 401;
         }
         
-    int rectStartY = lrint( inCamerLocation.y ) - 200;
+    int rectStartY = lrint( inCamerLocation.y ) - CELL_D / 2;
     
     if( rectStartY < 0 ) {
         rectStartY = 0;
