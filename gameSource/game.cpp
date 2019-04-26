@@ -1325,6 +1325,9 @@ void drawFrame( char inUpdate ) {
     stepSoundBank();
     
     stepMusicPlayer();
+    
+    stepPhotos();
+    
 
     if( currentGamePage != NULL ) {
         currentGamePage->base_step();

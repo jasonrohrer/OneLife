@@ -849,6 +849,7 @@ function ps_submitPhoto() {
     &email=[email address]
     &sequence_number=[int]
     &hash_value=[hash value]
+    &server_sig=[hash value]
     &server_name=[string]
     &photo_author_id=[int]
     &photo_subjects_ids=[string]
@@ -881,6 +882,30 @@ function ps_submitPhoto() {
 
     $hash_value = strtoupper( $hash_value );
 
+    
+    $server_sig = ps_requestFilter( "server_sig", "/[A-F0-9]+/i", "" );
+
+    $server_sig = strtoupper( $server_sig );
+
+
+    global $sharedGameServerSecret;
+
+    $computedServerSig =
+        strtoupper( ps_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
+
+    if( $server_sig != $computedServerSig ) {
+        ps_log( "submitPhoto denied for bad server sig, $email" );
+
+        if( $id != -1 ) {
+            $query = "UPDATE $tableNamePrefix"."users ".
+                "SET photos_rejected = photos_rejected + 1;";
+            ps_queryDatabase( $query );
+            }
+        
+        echo "DENIED";
+        return;
+        }
+    
 
 
     $encodedEmail = urlencode( $email );

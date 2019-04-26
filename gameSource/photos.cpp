@@ -31,13 +31,80 @@ void initPhotos() {
     photoBorder = readTGAFile( "photoBorder.tga" );
     }
 
+
+static int sequenceNumberWebRequest = -1;
+
+
 void freePhotos() {
     delete photoBorder;
+
+    if( sequenceNumberWebRequest != -1 ) {
+        clearWebRequest( sequenceNumberWebRequest );
+        sequenceNumberWebRequest = -1;
+        }
+    }
+
+
+static int nextSequenceNumber = -1;
+
+
+void stepPhotos() {
+
+    if( sequenceNumberWebRequest != -1 ) {
+        int result = stepWebRequest( sequenceNumberWebRequest );
+        
+        if( result == -1 ) {
+            clearWebRequest( sequenceNumberWebRequest );
+            sequenceNumberWebRequest = -1;
+            }
+        else if( result == 1 ) {
+
+            char *resultString = getWebResult( sequenceNumberWebRequest );
+            clearWebRequest( sequenceNumberWebRequest );
+            
+            if( resultString != NULL ) {
+                sscanf( resultString, "%d", &nextSequenceNumber );
+                delete [] resultString;
+                }
+            }
+        // else result == 0, still waiting
+        }
     }
 
 
 
-void stepPhotos() {
+
+int getNextPhotoSequenceNumber() {
+    
+    if( nextSequenceNumber != -1 ) {
+        // result from last request ready
+        
+        int returnVal = nextSequenceNumber;
+        nextSequenceNumber = -1;
+        return returnVal;
+        }
+    else if( sequenceNumberWebRequest == -1 ) {
+        // start a new request
+        
+        char *url = SettingsManager::getStringSetting( "photoServerURL", "" );
+        
+        
+        char *encodedEmail = URLUtils::urlEncode( userEmail );
+        
+        char *getURL = autoSprintf( "%s?action=get_sequence_number&email=%s", 
+                                    url, encodedEmail );
+        
+        delete [] encodedEmail;
+        delete [] url;
+        
+        
+        sequenceNumberWebRequest = startWebRequest( "GET", getURL, NULL );
+        
+        delete [] getURL;
+        }
+    
+    // result not ready yet
+    return -1;
     }
 
 
@@ -85,7 +152,12 @@ static inline double intDist( int inXA, int inYA, int inXB, int inYB ) {
 
 
 
-void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
+void takePhoto( doublePair inCamerLocation, int inCameraFacing,
+                int inSequenceNumber,
+                char *inServerSig ) {
+
+    char *serverSig = stringDuplicate( inServerSig );
+    
     int screenWidth, screenHeight;
     getScreenDimensions( &screenWidth, &screenHeight );
         
@@ -270,107 +342,95 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
         char *url = SettingsManager::getStringSetting( "photoServerURL", "" );
         
 
+        
+        char *seqNumberString = autoSprintf( "%d", inSequenceNumber );
+
+        char *pureKey = getPureAccountKey();
+        
+        char *keyHash = hmac_sha1( pureKey, seqNumberString );
+        
+        delete [] seqNumberString;
+        delete [] pureKey;
+            
+            
+        // insert comment at end with hash value
+        // header describes length of comment (002A is 42 bytes)
+        unsigned char *commentHeader = hexDecode( (char*)"FFEE002A" );
+        
+        // the last two bytes of a JPG should be FFD9
+        // delete these for now, and add them back later
+        jpegBytes.deleteElement( jpegBytes.size() - 1 );
+        jpegBytes.deleteElement( jpegBytes.size() - 1 );
+        
+        jpegBytes.appendArray( commentHeader, 4 );
+        delete [] commentHeader;
+        
+        jpegBytes.appendArray( (unsigned char *)keyHash, 
+                               strlen( keyHash ) );
+        
+        // add jpg footer again
+        jpegBytes.push_back( 0xFF );
+        jpegBytes.push_back( 0xD9 );
+        
+        unsigned char *jpegData = jpegBytes.getElementArray();
+        
+        
+        char *jpegBase64 = 
+            base64Encode( jpegData, jpegBytes.size(), false );
+        
+        delete [] jpegData;
+        
+        
+        char *jpegURL = URLUtils::urlEncode( jpegBase64 );
+        
         char *encodedEmail = URLUtils::urlEncode( userEmail );
-
-        char *getURL = autoSprintf( "%s?action=get_sequence_number&email=%s", 
-                                   url, encodedEmail );
-
+        
+        char *postBody = 
+            autoSprintf( "action=submit_photo"
+                         "&email=%s"
+                         "&sequence_number=%d"
+                         "&hash_value=%s"
+                         "&server_sig=%s"
+                         "&server_name=%s"
+                         "&photo_author_id=%d"
+                         "&photo_subjects_ids="
+                         "&photo_author_name=JASON+ROHRER"
+                         "&photo_subjects_names=SALLY+SUE"
+                         "&jpg_base64=%s"
+                         , 
+                         encodedEmail,
+                         inSequenceNumber,
+                         keyHash,
+                         serverSig,
+                         serverIP,
+                         ourID,
+                         jpegURL
+                         );
         delete [] encodedEmail;
+        delete [] jpegURL;
+        delete [] keyHash;
         
-        char *result = forceWebRequest( "GET", getURL, NULL );
-        
-        delete [] getURL;
-        
-        if( result != NULL ) {
-            int seqNumber = 0;
-        
-            sscanf( result, "%d", &seqNumber );
-            delete [] result;
-        
-            char *seqNumberString = autoSprintf( "%d", seqNumber );
 
-            char *pureKey = getPureAccountKey();
+        FILE *bodyFile = fopen( "body.txt", "w" );
+        fprintf( bodyFile, "%s", postBody );
+        fclose( bodyFile );
+            
+        delete [] jpegBase64;
 
-            char *keyHash = hmac_sha1( pureKey, seqNumberString );
+        char *webResult = forceWebRequest( "POST", url, postBody );
+            
+        delete [] postBody;
 
-            delete [] seqNumberString;
-            delete [] pureKey;
-            
-            
-            // insert comment at end with hash value
-            // header describes length of comment (002A is 42 bytes)
-            unsigned char *commentHeader = hexDecode( (char*)"FFEE002A" );
-
-            // the last two bytes of a JPG should be FFD9
-            // delete these for now, and add them back later
-            jpegBytes.deleteElement( jpegBytes.size() - 1 );
-            jpegBytes.deleteElement( jpegBytes.size() - 1 );
-            
-            jpegBytes.appendArray( commentHeader, 4 );
-            delete [] commentHeader;
-            
-            jpegBytes.appendArray( (unsigned char *)keyHash, 
-                                   strlen( keyHash ) );
-            
-            // add jpg footer again
-            jpegBytes.push_back( 0xFF );
-            jpegBytes.push_back( 0xD9 );
-            
-            unsigned char *jpegData = jpegBytes.getElementArray();
+        printf( "Result of jpg posting = %s\n", webResult );
             
 
-            char *jpegBase64 = 
-                base64Encode( jpegData, jpegBytes.size(), false );
-
-            delete [] jpegData;
-            
-
-            char *jpegURL = URLUtils::urlEncode( jpegBase64 );
-            
-            encodedEmail = URLUtils::urlEncode( userEmail );
-
-            char *postBody = 
-                autoSprintf( "action=submit_photo"
-                             "&email=%s"
-                             "&sequence_number=%d"
-                             "&hash_value=%s"
-                             "&server_name=%s"
-                             "&photo_author_id=%d"
-                             "&photo_subjects_ids="
-                             "&photo_author_name=JASON+ROHRER"
-                             "&photo_subjects_names=SALLY+SUE"
-                             "&jpg_base64=%s"
-                             , 
-                             encodedEmail,
-                             seqNumber,
-                             keyHash,
-                             serverIP,
-                             ourID,
-                             jpegURL
-                             );
-            delete [] encodedEmail;
-            delete [] jpegURL;
-            delete [] keyHash;
-            
-
-            FILE *bodyFile = fopen( "body.txt", "w" );
-            fprintf( bodyFile, "%s", postBody );
-            fclose( bodyFile );
-            
-            delete [] jpegBase64;
-
-            result = forceWebRequest( "POST", url, postBody );
-            
-            delete [] postBody;
-
-            printf( "Result of jpg posting = %s\n", result );
-            
-
-            delete [] result;
-            }
+        delete [] webResult;
+    
         delete [] url;
         }
-
+    
     jpegBytes.deleteAll();
+
+    delete [] serverSig;
     }
 

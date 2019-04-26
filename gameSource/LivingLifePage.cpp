@@ -141,6 +141,9 @@ static char savingSpeechMask = false;
 static char savingSpeechNumber = 1;
 
 static char takingPhoto = false;
+static int photoSequenceNumber = -1;
+static char waitingForPhotoSig = false;
+static char *photoSig = NULL;
 
 
 static double emotDuration = 10;
@@ -888,6 +891,7 @@ typedef enum messageType {
     OWNER,
     FLIGHT_DEST,
     VOG_UPDATE,
+    PHOTO_SIGNATURE,
     FORCED_SHUTDOWN,
     PONG,
     COMPRESSED_MESSAGE,
@@ -1005,6 +1009,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "VU" ) == 0 ) {
         returnValue = VOG_UPDATE;
+        }
+    else if( strcmp( copy, "PH" ) == 0 ) {
+        returnValue = PHOTO_SIGNATURE;
         }
     else if( strcmp( copy, "PONG" ) == 0 ) {
         returnValue = PONG;
@@ -1225,7 +1232,8 @@ char *getNextServerMessage() {
                     }
                 else if( t == MAP_CHUNK ||
                          t == PONG ||
-                         t == FLIGHT_DEST ) {
+                         t == FLIGHT_DEST ||
+                         t == PHOTO_SIGNATURE ) {
                     // map chunks are followed by compressed data
                     // they cannot be queued
                     
@@ -2579,6 +2587,11 @@ LivingLifePage::~LivingLifePage() {
     clearOwnerInfo();
 
     clearLocationSpeech();
+
+    if( photoSig != NULL ) {
+        delete [] photoSig;
+        photoSig = NULL;
+        }
     }
 
 
@@ -6786,18 +6799,43 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
     
     if( takingPhoto ) {
-        doublePair pos = ourLiveObject->currentPos;
-        pos = mult( pos, CELL_D );
-        pos = sub( pos, lastScreenViewCenter );
+
+        if( photoSequenceNumber == -1 ) {
+            photoSequenceNumber = getNextPhotoSequenceNumber();
+            }
+        else if( photoSig == NULL && ! waitingForPhotoSig ) {
+            
+            doublePair pos = ourLiveObject->currentPos;
+            
+            char *message = 
+                autoSprintf( "PHOTO %d %d %d#",
+                             lrint( pos.x ), lrint( pos.y ),
+                             photoSequenceNumber );
+            sendToServerSocket( message );
+            waitingForPhotoSig = true;
+            delete [] message;
+            }
+        else if( photoSig != NULL ) {
+            doublePair pos = ourLiveObject->currentPos;
+            
+            pos = mult( pos, CELL_D );
+            pos = sub( pos, lastScreenViewCenter );
+            
+            int screenWidth, screenHeight;
+            getScreenDimensions( &screenWidth, &screenHeight );
+            
+            pos.x += screenWidth / 2;
+            pos.y += screenHeight / 2;
         
-        int screenWidth, screenHeight;
-        getScreenDimensions( &screenWidth, &screenHeight );
-        
-        pos.x += screenWidth / 2;
-        pos.y += screenHeight / 2;
-        
-        takePhoto( pos, ourLiveObject->holdingFlip ? -1 : 1  );
-        takingPhoto = false;
+            takePhoto( pos, ourLiveObject->holdingFlip ? -1 : 1,
+                       photoSequenceNumber,
+                       photoSig );
+            takingPhoto = false;
+            delete [] photoSig;
+            photoSig = NULL;
+            photoSequenceNumber = -1;
+            waitingForPhotoSig = false;
+            }
         }
     
 
@@ -11110,6 +11148,20 @@ void LivingLifePage::step() {
                 
                 mCurMouseOverCell.x = vogPos.x - mMapOffsetX + mMapD / 2;
                 mCurMouseOverCell.y = vogPos.y - mMapOffsetY + mMapD / 2;
+                }
+            }
+        else if( type == PHOTO_SIGNATURE ) {
+            int posX, posY;
+
+            char sig[100];
+            
+            int numRead = sscanf( message, "PH\n%d %d %99s",
+                                  &posX, &posY, sig );
+            if( numRead == 3 ) {
+                photoSig = stringDuplicate( sig );
+                }
+            else {
+                photoSig = stringDuplicate( "NO_SIG" );
                 }
             }
         else if( type == MAP_CHUNK ) {
@@ -17196,6 +17248,15 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    takingPhoto = false;
+    photoSequenceNumber = -1;
+    waitingForPhotoSig = false;
+    if( photoSig != NULL ) {
+        delete [] photoSig;
+        photoSig = NULL;
+        }
+
 
     graveRequestPos.deleteAll();
     ownerRequestPos.deleteAll();
