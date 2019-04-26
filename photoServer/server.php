@@ -137,6 +137,12 @@ else if( $action == "submit_photo" ) {
 else if( $action == "photo_link_image" ) {
     ps_photoLinkImage();
     }
+else if( $action == "photo_appearances" ) {
+    ps_photoAppearances();
+    }
+else if( $action == "front_page" ) {
+    ps_frontPage();
+    }
 else if( $action == "show_log" ) {
     ps_showLog();
     }
@@ -573,6 +579,7 @@ function ps_showDetail( $checkPassword = true ) {
     if( $checkPassword ) {
         ps_checkPassword( "show_detail" );
         }
+    echo "<body bgcolor=#AAAAAA>";
     
     echo "[<a href=\"server.php?action=show_data" .
          "\">Main</a>]<br><br><br>";
@@ -602,10 +609,21 @@ function ps_showDetail( $checkPassword = true ) {
     echo "<br><br>";
 
 
+    ps_displayPhotoList( "WHERE user_id = '$id'", "" );
+
+    echo "</td></tr></table></center>";
+    echo "</body>";
+    }
+
+
+
+function ps_displayPhotoList( $inWhereClause, $inLimitClause ) {
+    global $tableNamePrefix;
+    
     $query = "SELECT url, author_name, subject_names, submission_time ".
         "FROM $tableNamePrefix"."photos ".
-        "WHERE user_id = '$id' ".
-        "ORDER BY id DESC;";
+        "$inWhereClause ".
+        "ORDER BY id DESC $inLimitClause;";
     $result = ps_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
@@ -618,18 +636,54 @@ function ps_showDetail( $checkPassword = true ) {
         $subject_names = ps_mysqli_result( $result, $i, "subject_names" );
         $submission_time = ps_mysqli_result( $result, $i, "submission_time" );
 
-        echo "<img src='$url'><br>";
-        echo "by $author_name<br>";
-        echo "featuring $subject_names<br>";
-        $agoSec = strtotime( "now" ) -
-            strtotime( $submission_time );
-        
-        $ago = ps_secondsToAgeSummary( $agoSec );
 
-        echo "$submission_time ($ago ago)<br>";
-
-        echo "<br><br><br>\n";
+        ps_displayPhoto( $url, $author_name, $subject_names,
+                         $submission_time );
         }
+    }
+
+
+
+function ps_displayPhoto( $url, $author_name, $subject_names,
+                          $submission_time ) {    
+    
+    echo "<table border=0><tr><td colspan=2>";
+        
+    echo "<img src='$url'></td></tr>";
+
+        
+    echo "<tr><td>by $author_name</td>";
+
+    $agoSec = strtotime( "now" ) - strtotime( $submission_time );
+        
+    $ago = ps_secondsToAgeSummary( $agoSec );
+
+    echo "<td align=right>$ago ago</td></tr><br>";
+
+    if( $subject_names != "" ) {
+        echo "<tr><td colspan=2>featuring $subject_names</td></tr>";
+        }
+    echo "</table>";
+        
+    echo "<br><br><br>\n";
+    }
+
+
+
+function ps_displayPhotoID( $id ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT url, author_name, subject_names, submission_time ".
+        "FROM $tableNamePrefix"."photos ".
+        "WHERE id = $id;";
+    $result = ps_queryDatabase( $query );
+
+    $url = ps_mysqli_result( $result, 0, "url" );
+    $author_name = ps_mysqli_result( $result, 0, "author_name" );
+    $subject_names = ps_mysqli_result( $result, 0, "subject_names" );
+    $submission_time = ps_mysqli_result( $result, 0, "submission_time" );
+
+    ps_displayPhoto( $url, $author_name, $subject_names, $submission_time );
     }
 
 
@@ -705,6 +759,62 @@ function ps_photoLinkImage() {
         }
     }
 
+
+
+function ps_photoAppearances() {
+    global $tableNamePrefix;
+    
+    $server_name = ps_requestFilter( "server_name", "/[A-Z0-9._\-]+/i", "" );
+    $player_id = ps_requestFilter( "player_id", "/[0-9]+/i", "0" );
+
+    // count results
+    $query = "SELECT photo_id FROM $tableNamePrefix".
+        "photo_appearances ".
+        "WHERE server_name = '$server_name' AND player_id = $player_id;";
+
+    $result = ps_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    global $header, $footer;
+
+    eval( $header );
+
+    echo "<center>";
+    
+    if( $numRows == 0 ) {
+        echo "No photos found";
+        }
+    else {
+        for( $i=0; $i<$numRows; $i++ ) {
+            $id = ps_mysqli_result( $result, $i, "photo_id" );
+            ps_displayPhotoID( $id );
+            }
+        }
+
+    echo "</center>";
+    
+    eval( $footer );
+    }
+
+
+
+function ps_frontPage() {
+    global $header, $footer;
+
+    eval( $header );
+
+    echo "<center>";
+
+    echo "<br><font size=5>Recent Photographs:</font><br><br>";
+    
+    
+    ps_displayPhotoList( "", "LIMIT 10" );
+
+    echo "</center>";
+    
+    eval( $footer );
+    }
 
 
 
@@ -831,12 +941,12 @@ function ps_submitPhoto() {
     $photo_subject_ids =
         ps_requestFilter( "photo_subjects_ids", "/[0-9,]+/i", "0" );
     $photo_author_name =
-        ps_requestFilter( "photo_author_name", "/[A-Z0 ]+/i", "" );
+        ps_requestFilter( "photo_author_name", "/[A-Z ]+/i", "" );
     $photo_subjects_names =
-        ps_requestFilter( "photo_subjects_names", "/[A-Z0 ,]+/i", "" );
+        ps_requestFilter( "photo_subjects_names", "/[A-Z ,]+/i", "" );
 
-    $subjectIDs = explode( $photo_subject_ids, "," );
-    $subjectNames = explode( $photo_subjects_names, "," );
+    $subjectIDs = explode( ",", $photo_subject_ids );
+    $subjectNames = explode( ",", $photo_subjects_names );
 
 
     // 1.  insert user record if needed (or update sequence number if not)
@@ -861,10 +971,10 @@ function ps_submitPhoto() {
         $subjectList = ps_formatName( $subjectNames[0] );
 
         if( count( $subjectNames ) == 2 ) {
-            $subjectList = $subjectList . "and " .
+            $subjectList = $subjectList . " and " .
                 ps_formatName( $subjectNames[1] );
             }
-        else {
+        else if( count( $subjectNames ) > 2 ) {
                 for( $i=1; $i < count( $subjectNames ) - 1; $i ++ ) {
                     $subjectList = $subjectList . ", " .
                         ps_formatName( $subjectNames[$i] );

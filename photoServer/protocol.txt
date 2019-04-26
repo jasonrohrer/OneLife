@@ -14,6 +14,31 @@ The image will indicate whether there are any photos available for this life.
 
 
 server.php
+?action=photo_appearances
+&server_name=[string]
+&player_id=[int]
+
+
+Shows page of player's photo appearances.
+
+
+
+
+
+
+server.php
+?action=front_page
+
+
+Shows recent photos.
+
+
+
+
+
+
+
+server.php
 ?action=get_sequence_number
 &email=[email address]
 

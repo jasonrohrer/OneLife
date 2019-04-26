@@ -336,9 +336,9 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
                              "&hash_value=%s"
                              "&server_name=%s"
                              "&photo_author_id=%d"
-                             "&photo_subject_ids="
+                             "&photo_subjects_ids="
                              "&photo_author_name=JASON+ROHRER"
-                             "&photo_subjects_name="
+                             "&photo_subjects_names=SALLY+SUE"
                              "&jpg_base64=%s"
                              , 
                              encodedEmail,
