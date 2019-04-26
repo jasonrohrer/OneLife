@@ -222,6 +222,8 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing ) {
             }
         }
     
+    delete blurGray;
+    delete blurGrayLess;
 
     
     double *borderAlpha = photoBorder->getChannel( 3 );
