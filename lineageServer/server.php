@@ -2248,10 +2248,6 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
         
         $faceURL = ls_getFaceURLForAge( $age, $display_id );
 
-        echo "<a href='server.php?action=character_page&".
-            "id=$id&rel_id=$inRelID'>";
-
-        $grayPercent = ls_getGrayPercent( $deathAgoSec );
 
 
         global $photoServerURL, $usePhotoServer;
@@ -2268,6 +2264,11 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
             echo "<img border=0 width=20 height=20 align=middle src=$imageURL>";
             }
 
+        
+        echo "<a href='server.php?action=character_page&".
+            "id=$id&rel_id=$inRelID'>";
+
+        $grayPercent = ls_getGrayPercent( $deathAgoSec );
         
         
         echo "<img src='$faceURL' ".
