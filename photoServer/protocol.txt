@@ -118,10 +118,10 @@ However, it is impossible to submit a photo, bogus or not, that is not signed
 by your account key.  In other words, if you submit a bogus photo, I will be
 able to verify that you did it.
 
-SO: do not use your account key to submit bogus photos.  Doing so would
-be disruptive to the game, and wasteful of my time.  If you do this, your
-account will be banned, no second chances, no refund, and no warnings.
-This is your warning.
+SO: do not use your account key to submit bogus photos, or photos with bogus
+author names, or bogus subject names.  Doing so would be disruptive to the 
+game, and wasteful of my time.  If you do this, your account will be banned, 
+no second chances, no refund, and no warnings.  This is your warning.
 
 
 

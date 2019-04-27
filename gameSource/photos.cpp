@@ -152,6 +152,9 @@ static inline double intDist( int inXA, int inYA, int inXB, int inYB ) {
 
 
 
+// Don't muck with this code in a way that tricks the photo server.
+// read OneLife/photoServer/protocol.txt for your very serious warning
+// about this.
 void takePhoto( doublePair inCamerLocation, int inCameraFacing,
                 int inSequenceNumber,
                 char *inServerSig,
