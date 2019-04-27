@@ -12369,6 +12369,24 @@ void LivingLifePage::step() {
                                 mMapDropOffsets[mapI].y = 0;
                                 mMapDropRot[mapI] = 0;
                                 mMapDropSounds[mapI] = blankSoundUsage;
+
+                                if( responsiblePlayerObject != NULL ) {
+                                    // copy their flip, even if off-screen
+                                    mMapTileFlips[mapI] =
+                                        responsiblePlayerObject->holdingFlip;
+                                    }
+                                else if( responsiblePlayerID < -1 &&
+                                         old == 0 && 
+                                         mMap[ mapI ] > 0 &&
+                                         ! getObject( mMap[ mapI ] )->
+                                         permanent ) {
+                                    // use-on-bare-ground
+                                    // with non-permanent result
+                                    // honor flip direction of player
+                                    mMapTileFlips[mapI] =
+                                        getLiveObject( -responsiblePlayerID )->
+                                        holdingFlip;
+                                    }
                                 }
                             else {
                                 // copy last frame count from last holder
