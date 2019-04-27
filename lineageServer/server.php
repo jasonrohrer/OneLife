@@ -1740,16 +1740,22 @@ function ls_getGrayPercent( $inDeathAgoSec ) {
 
 function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
     global $tableNamePrefix;
+    global $photoServerURL, $usePhotoServer;
+    
 
-
-    $query = "SELECT lives.id, display_id, name, ".
-        "age, generation, death_time, deepest_descendant_generation ".
+    $query = "SELECT lives.id, display_id, player_id, name, ".
+        "age, generation, death_time, deepest_descendant_generation, ".
+        "servers.server " .
         "FROM $tableNamePrefix"."lives as lives ".
         "INNER JOIN $tableNamePrefix"."users as users ".
-        "ON lives.user_id = users.id  $inFilterClause ".
+        "ON lives.user_id = users.id ".
+        "INNER JOIN $tableNamePrefix"."servers as servers ".
+        "ON lives.server_id = servers.id  ".
+        "$inFilterClause ".
         "ORDER BY $inOrderBy ".
         "LIMIT $inNumRows;";
-
+    ls_log( $query );
+    
     
     $result = ls_queryDatabase( $query );
     
@@ -1827,7 +1833,32 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
             "width=100 height=98 border=0 ".
             "style='-webkit-filter:sepia($grayPercent%);'></a></td>";
 
-        echo "<td>$name</td>";
+        echo "<td>$name";
+
+        
+
+        if( $usePhotoServer ) {
+
+            $serverName = ls_mysqli_result( $result, $i, "server" );
+            $player_id = ls_mysqli_result( $result, $i, "player_id" );
+            
+            $imageURL =
+                $photoServerURL .
+                "?action=photo_link_image".
+                "&server_name=$serverName&player_id=$player_id";
+
+            $linkURL =
+                $photoServerURL .
+                "?action=photo_appearances".
+                "&server_name=$serverName&player_id=$player_id";
+
+            echo " <a href=$linkURL>".
+                "<img border=0 width=20 height=20 ".
+                "align=middle style='margin-bottom:9px; margin-left:3px' ".
+                "src=$imageURL></a>";
+            }
+        
+        echo "</td>";
         echo "<td>$age $yearWord old</td>";
         echo "<td>$generationString</td>";
         echo "<td>Died $deathAgo ago</td>";
@@ -2181,9 +2212,13 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
 
     global $tableNamePrefix;
 
-    $query = "SELECT id, display_id, name, ".
-        "age, last_words, generation, death_time, death_cause ".
-        "FROM $tableNamePrefix"."lives WHERE id=$inID;";
+    $query = "SELECT lives.id, display_id, player_id, name, ".
+        "age, last_words, generation, death_time, death_cause, ".
+        "servers.server " .
+        "FROM $tableNamePrefix"."lives as lives ".
+        "INNER JOIN $tableNamePrefix"."servers as servers ".
+        "ON lives.server_id = servers.id  ".
+        "WHERE lives.id=$inID;";
     
     $result = ls_queryDatabase( $query );
     
@@ -2213,15 +2248,55 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
         
         $faceURL = ls_getFaceURLForAge( $age, $display_id );
 
+
+
+        global $photoServerURL, $usePhotoServer;
+
+        if( $usePhotoServer ) {
+            // put dummy image on left of face for centering
+
+            $imageURL =
+                $photoServerURL .
+                "?action=photo_link_image".
+                "&server_name=dummy&player_id=0";
+
+
+            echo "<img border=0 width=20 height=20 align=middle src=$imageURL>";
+            }
+
+        
         echo "<a href='server.php?action=character_page&".
             "id=$id&rel_id=$inRelID'>";
 
         $grayPercent = ls_getGrayPercent( $deathAgoSec );
         
+        
         echo "<img src='$faceURL' ".
-            "width=100 height=98 border=0 ".
+            "width=100 height=98 border=0 align=middle ".
             "style='-webkit-filter:sepia($grayPercent%);'>";
 
+        
+
+        if( $usePhotoServer ) {
+            // now real photo link to right of face
+            $serverName = ls_mysqli_result( $result, $i, "server" );
+            $player_id = ls_mysqli_result( $result, $i, "player_id" );
+            
+            $imageURL =
+                $photoServerURL .
+                "?action=photo_link_image".
+                "&server_name=$serverName&player_id=$player_id";
+
+            $linkURL =
+                $photoServerURL .
+                "?action=photo_appearances".
+                "&server_name=$serverName&player_id=$player_id";
+
+            echo "<a href=$linkURL>".
+                "<img border=0 width=20 height=20 ".
+                "align=middle src=$imageURL></a>";
+            }
+        
         echo "</a>";
         
         $yearWord = "years";
@@ -3230,7 +3305,7 @@ function ls_checkPassword( $inFunctionName ) {
         
         if( $passwordSent && $enableYubikey ) {
             global $yubikeyIDs, $yubicoClientID, $yubicoSecretKey,
-                $ticketGenerationSecret;
+                $passwordHashingPepper;
             
             $yubikey = $_REQUEST[ "yubikey" ];
 
@@ -3245,7 +3320,7 @@ function ls_checkPassword( $inFunctionName ) {
                 }
             
             
-            $nonce = ls_hmac_sha1( $ticketGenerationSecret, uniqid() );
+            $nonce = ls_hmac_sha1( $passwordHashingPepper, uniqid() );
             
             $callURL =
                 "https://api2.yubico.com/wsapi/2.0/verify?id=$yubicoClientID".

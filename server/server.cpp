@@ -1502,6 +1502,7 @@ typedef enum messageType {
     VOGI,
     VOGT,
     VOGX,
+    PHOTO,
     UNKNOWN
     } messageType;
 
@@ -1888,7 +1889,17 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     else if( strcmp( nameBuffer, "VOGX" ) == 0 ) {
         m.type = VOGX;
         }
-    else {
+   else if( strcmp( nameBuffer, "PHOTO" ) == 0 ) {
+        m.type = PHOTO;
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.id ) );
+        
+        if( numRead != 4 ) {
+            m.id = 0;
+            }
+        }
+     else {
         m.type = UNKNOWN;
         }
     
@@ -2987,20 +2998,45 @@ char *getMovesMessageFromList( SimpleVector<MoveRecord> *inMoves,
     return NULL;
     }
 
+
+
+double intDist( int inXA, int inYA, int inXB, int inYB ) {
+    double dx = (double)inXA - (double)inXB;
+    double dy = (double)inYA - (double)inYB;
+
+    return sqrt(  dx * dx + dy * dy );
+    }
     
     
     
 // returns NULL if there are no matching moves
 // positions in moves relative to inRelativeToPos
+// filters out moves that are taking place further than 32 away from inLocalPos
 char *getMovesMessage( char inNewMovesOnly,
                        GridPos inRelativeToPos,
+                       GridPos inLocalPos,
                        SimpleVector<ChangePosition> *inChangeVector = NULL ) {
     
     
     SimpleVector<MoveRecord> v = getMoveRecords( inNewMovesOnly, 
                                                  inChangeVector );
     
-    char *message = getMovesMessageFromList( &v, inRelativeToPos );
+    SimpleVector<MoveRecord> closeRecords;
+
+    for( int i=0; i<v.size(); i++ ) {
+        MoveRecord r = v.getElementDirect( i );
+        
+        double d = intDist( r.absoluteX, r.absoluteY,
+                            inLocalPos.x, inLocalPos.y );
+        
+        if( d <= 32 ) {
+            closeRecords.push_back( r );
+            }
+        }
+    
+    
+
+    char *message = getMovesMessageFromList( &closeRecords, inRelativeToPos );
     
     for( int i=0; i<v.size(); i++ ) {
         delete [] v.getElement(i)->formatString;
@@ -3318,12 +3354,6 @@ int sendMapChunkMessage( LiveObject *inO,
 
 
 
-double intDist( int inXA, int inYA, int inXB, int inYB ) {
-    double dx = (double)inXA - (double)inXB;
-    double dy = (double)inYA - (double)inYB;
-
-    return sqrt(  dx * dx + dy * dy );
-    }
 
 
 
@@ -3771,6 +3801,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         strcmp( cursedName, "" ) != 0 ) {
         
         isCurse = cursePlayer( inPlayer->id,
+                               inPlayer->lineageEveID,
                                inPlayer->email,
                                cursedName );
         
@@ -9705,6 +9736,50 @@ int main() {
                         nextPlayer->knownOwnedPositions.push_back( p );
                         }
                     }
+                else if( m.type == PHOTO ) {
+                    // immediately send photo response
+
+                    char *photoServerSharedSecret = 
+                        SettingsManager::
+                        getStringSetting( "photoServerSharedSecret",
+                                          "secret_phrase" );
+                    
+                    char *idString = autoSprintf( "%d", m.id );
+                    
+                    char *hash;
+                    
+                    // is a photo device present at x and y?
+                    char photo = false;
+                    
+                    int oID = getMapObject( m.x, m.y );
+                    
+                    if( oID > 0 ) {
+                        if( strstr( getObject( oID )->description,
+                                    "+photo" ) != NULL ) {
+                            photo = true;
+                            }
+                        }
+                    
+                    if( ! photo ) {
+                        hash = hmac_sha1( "dummy", idString );
+                        }
+                    else {
+                        hash = hmac_sha1( photoServerSharedSecret, idString );
+                        }
+                    
+                    delete [] photoServerSharedSecret;
+                    delete [] idString;
+                    
+                    char *message = autoSprintf( "PH\n%d %d %s#", 
+                                                 m.x, m.y, hash );
+                    
+                    delete [] hash;
+
+                    sendMessageToPlayer( nextPlayer, message, 
+                                         strlen( message ) );
+                    delete [] message;
+                    }
+
                 else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
                     // if we're waiting for a FORCE response, ignore
@@ -10322,7 +10397,8 @@ int main() {
 
                                 logName( nextPlayer->id,
                                          nextPlayer->email,
-                                         nextPlayer->name );
+                                         nextPlayer->name,
+                                         nextPlayer->lineageEveID );
                                 playerIndicesToSendNamesAbout.push_back( i );
                                 }
                             }
@@ -10420,7 +10496,8 @@ int main() {
                                     
                                     logName( babyO->id,
                                              babyO->email,
-                                             babyO->name );
+                                             babyO->name,
+                                             babyO->lineageEveID );
                                     
                                     playerIndicesToSendNamesAbout.push_back( 
                                         getLiveObjectIndex( babyO->id ) );
@@ -10454,7 +10531,8 @@ int main() {
 
                                     logName( closestOther->id,
                                              closestOther->email,
-                                             closestOther->name );
+                                             closestOther->name,
+                                             closestOther->lineageEveID );
                                     
                                     playerIndicesToSendNamesAbout.push_back( 
                                         getLiveObjectIndex( 
@@ -14904,8 +14982,10 @@ int main() {
                 
                 
 
-                char *movesMessage = getMovesMessage( false, 
-                                                      nextPlayer->birthPos );
+                char *movesMessage = 
+                    getMovesMessage( false, 
+                                     nextPlayer->birthPos,
+                                     getPlayerPos( nextPlayer ) );
                 
                 if( movesMessage != NULL ) {
                     

@@ -169,6 +169,8 @@ FLIGHT_DEST (FD)
 
 VOG_UPDATE (VU)
 
+PHOTO_SIGNATURE (PH)
+
 FORCED_SHUTDOWN (SD)
 
 FRAME (FM)
@@ -725,6 +727,14 @@ Flying player should wait for a MAP_CHUNK message around the destination.
 
 
 
+PH
+x y signature
+#
+
+Gives the player a requested photo signature for their last PHOTO request.
+Will return a dummy signature if the photo is denied.
+
+
 
 SD
 #
@@ -793,7 +803,7 @@ VOGM x y#
 VOGI x y id#
 VOGT x y text# 
 VOGX x y#
-
+PHOTO x y seq#
 
 KA   is a keep-alive message used to keep the connection alive when the client
      is idle and not sending any other messages (NATs and other routers can
@@ -885,6 +895,9 @@ FORCE  is used to acknowledge a forced-pos PU sent previously by the server.
 PING is used to request a PONG response fromt the server.  The x and y 
      coordinates are ignored.  The unique_id parameter will be returned
      in the PONG response.
+
+PHOTO is used to request a photo approval and signature for position
+      x y and sequence number seq
 
 
 This one is more complicated:

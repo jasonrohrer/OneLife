@@ -24,6 +24,8 @@ FFT code by <a href="http://www.kurims.kyoto-u.ac.jp/~ooura/fft.html">Takuya Oou
 
 OGG Vorbis decoder by <a href="http://nothings.org/stb_vorbis/">Sean Barrett</a>.<br><br><br>
 
+Image output code by <a href="https://github.com/nothings/stb">Sean Barrett</a><br><br><br>
+
 Reverb impulse response data from <a href="http://www.echothief.com/woodruff-lane/">EchoThief</a>.<br><br><br>
 
 Spelling dictionary compiled using <a href="http://wordlist.aspell.net/">SCOWL and Friends</a> and hashed using MurmurHash2 by <a href="https://sites.google.com/site/murmurhash/">Austin Appleby</a>.<br><br><br>

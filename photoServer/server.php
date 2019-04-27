@@ -2,8 +2,8 @@
 
 
 
-global $cs_version;
-$cs_version = "1";
+global $ps_version;
+$ps_version = "1";
 
 
 
@@ -19,11 +19,6 @@ include( "settings.php" );
 
 
 
-// no caching
-//header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-header('Cache-Control: no-store, no-cache, must-revalidate');
-header('Cache-Control: post-check=0, pre-check=0', FALSE);
-header('Pragma: no-cache'); 
 
 
 
@@ -46,7 +41,7 @@ set_error_handler(function($severity, $message, $file, $line) {
 // page layout for web-based setup
 $setup_header = "
 <HTML>
-<HEAD><TITLE>Curse Server Web-based setup</TITLE></HEAD>
+<HEAD><TITLE>Photo Server Web-based setup</TITLE></HEAD>
 <BODY BGCOLOR=#FFFFFF TEXT=#000000 LINK=#0000FF VLINK=#FF0000>
 
 <CENTER>
@@ -70,10 +65,10 @@ $setup_footer = "
 // we hand-filter all _REQUEST data with regexs before submitting it to the DB
 if( get_magic_quotes_gpc() ) {
     // force magic quotes to be removed
-    $_GET     = array_map( 'cs_stripslashes_deep', $_GET );
-    $_POST    = array_map( 'cs_stripslashes_deep', $_POST );
-    $_REQUEST = array_map( 'cs_stripslashes_deep', $_REQUEST );
-    $_COOKIE  = array_map( 'cs_stripslashes_deep', $_COOKIE );
+    $_GET     = array_map( 'ps_stripslashes_deep', $_GET );
+    $_POST    = array_map( 'ps_stripslashes_deep', $_POST );
+    $_REQUEST = array_map( 'ps_stripslashes_deep', $_REQUEST );
+    $_COOKIE  = array_map( 'ps_stripslashes_deep', $_COOKIE );
     }
     
 
@@ -83,7 +78,7 @@ if( get_magic_quotes_gpc() ) {
 // (To prevent it from being dangerous to surf other sites while you are
 // logged in as admin.)
 // Thanks Chris Cowan.
-function cs_checkReferrer() {
+function ps_checkReferrer() {
     global $fullServerURL;
     
     if( !isset($_SERVER['HTTP_REFERER']) ||
@@ -97,7 +92,7 @@ function cs_checkReferrer() {
 
 
 // all calls need to connect to DB, so do it once here
-cs_connectToDatabase();
+ps_connectToDatabase();
 
 // close connection down below (before function declarations)
 
@@ -112,9 +107,9 @@ cs_connectToDatabase();
 
 
 // grab POST/GET variables
-$action = cs_requestFilter( "action", "/[A-Z_]+/i" );
+$action = ps_requestFilter( "action", "/[A-Z_]+/i" );
 
-$debug = cs_requestFilter( "debug", "/[01]/" );
+$debug = ps_requestFilter( "debug", "/[01]/" );
 
 $remoteIP = "";
 if( isset( $_SERVER[ "REMOTE_ADDR" ] ) ) {
@@ -122,44 +117,78 @@ if( isset( $_SERVER[ "REMOTE_ADDR" ] ) ) {
     }
 
 
+if( $action != "photo_link_image" ) {
+    // no caching, EXCEPT for generated images
+    
+    //header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    header('Cache-Control: no-store, no-cache, must-revalidate');
+    header('Cache-Control: post-check=0, pre-check=0', FALSE);
+    header('Pragma: no-cache'); 
+
+    // note that the photo_link_status should never change for a a dead
+    // player, and only the lineage server (which talks about dead players only)
+    // will use these link images
+    // (Players can't appear in a photo after they're dead)
+    // So caching these link images is okay.
+    }
+else {
+    header("Cache-Control: private, max-age=10800, pre-check=10800");
+    header("Pragma: private");
+    header("Expires: " . date(DATE_RFC822,strtotime(" 20 day")));
+
+    if( isset($_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) { 
+        header('Last-Modified: '.
+               date(DATE_RFC822,strtotime("26 April 2019")), true, 304);
+        exit;
+        }
+    else {
+        header("Last-Modified: " .
+               date(DATE_RFC822,strtotime("26 April 2019")));
+        }
+    }
+
+
 
 
 if( $action == "version" ) {
-    global $cs_version;
-    echo "$cs_version";
+    global $ps_version;
+    echo "$ps_version";
     }
 else if( $action == "get_sequence_number" ) {
-    cs_getSequenceNumber();
+    ps_getSequenceNumber();
     }
-else if( $action == "curse" ) {
-    cs_curse();
+else if( $action == "submit_photo" ) {
+    ps_submitPhoto();
     }
-else if( $action == "live_time" ) {
-    cs_liveTime();
+else if( $action == "photo_link_image" ) {
+    ps_photoLinkImage();
     }
-else if( $action == "is_cursed" ) {
-    cs_isCursed();
+else if( $action == "photo_appearances" ) {
+    ps_photoAppearances();
+    }
+else if( $action == "front_page" ) {
+    ps_frontPage();
     }
 else if( $action == "show_log" ) {
-    cs_showLog();
+    ps_showLog();
     }
 else if( $action == "clear_log" ) {
-    cs_clearLog();
+    ps_clearLog();
     }
 else if( $action == "show_data" ) {
-    cs_showData();
+    ps_showData();
     }
 else if( $action == "show_detail" ) {
-    cs_showDetail();
+    ps_showDetail();
     }
 else if( $action == "logout" ) {
-    cs_logout();
+    ps_logout();
     }
-else if( $action == "cs_setup" ) {
+else if( $action == "ps_setup" ) {
     global $setup_header, $setup_footer;
     echo $setup_header; 
 
-    echo "<H2>Curse Server Web-based Setup</H2>";
+    echo "<H2>Photo Server Web-based Setup</H2>";
 
     echo "Creating tables:<BR>";
 
@@ -168,7 +197,7 @@ else if( $action == "cs_setup" ) {
           <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=5>
           <TR><TD BGCOLOR=#FFFFFF>";
 
-    cs_setupDatabase();
+    ps_setupDatabase();
 
     echo "</TD></TR></TABLE></TD></TR></TABLE></CENTER><BR><BR>";
     
@@ -184,14 +213,14 @@ else if( preg_match( "/server\.php/", $_SERVER[ "SCRIPT_NAME" ] ) ) {
     global $tableNamePrefix;
     
     // check if our tables exist
-    $exists = cs_doesTableExist( $tableNamePrefix . "servers" ) &&
-        cs_doesTableExist( $tableNamePrefix . "users" ) &&
-        cs_doesTableExist( $tableNamePrefix . "lives" ) &&
-        cs_doesTableExist( $tableNamePrefix . "log" );
+    $exists = ps_doesTableExist( $tableNamePrefix . "photos" ) &&
+        ps_doesTableExist( $tableNamePrefix . "users" ) &&
+        ps_doesTableExist( $tableNamePrefix . "photo_appearances" ) &&
+        ps_doesTableExist( $tableNamePrefix . "log" );
     
         
     if( $exists  ) {
-        echo "Curse Server database setup and ready";
+        echo "Photo Server database setup and ready";
         }
     else {
         // start the setup procedure
@@ -199,13 +228,13 @@ else if( preg_match( "/server\.php/", $_SERVER[ "SCRIPT_NAME" ] ) ) {
         global $setup_header, $setup_footer;
         echo $setup_header; 
 
-        echo "<H2>Curse Server Web-based Setup</H2>";
+        echo "<H2>Photo Server Web-based Setup</H2>";
     
-        echo "Curse Server will walk you through a " .
+        echo "Photo Server will walk you through a " .
             "brief setup process.<BR><BR>";
         
         echo "Step 1: ".
-            "<A HREF=\"server.php?action=cs_setup\">".
+            "<A HREF=\"server.php?action=ps_setup\">".
             "create the database tables</A>";
 
         echo $setup_footer;
@@ -217,7 +246,7 @@ else if( preg_match( "/server\.php/", $_SERVER[ "SCRIPT_NAME" ] ) ) {
 // done processing
 // only function declarations below
 
-cs_closeDatabase();
+ps_closeDatabase();
 
 
 
@@ -228,20 +257,21 @@ cs_closeDatabase();
 /**
  * Creates the database tables needed by seedBlogs.
  */
-function cs_setupDatabase() {
+function ps_setupDatabase() {
     global $tableNamePrefix;
 
     $tableName = $tableNamePrefix . "log";
-    if( ! cs_doesTableExist( $tableName ) ) {
+    if( ! ps_doesTableExist( $tableName ) ) {
 
         // this table contains general info about the server
         // use INNODB engine so table can be locked
         $query =
             "CREATE TABLE $tableName(" .
             "entry TEXT NOT NULL, ".
-            "entry_time DATETIME NOT NULL );";
+            "entry_time DATETIME NOT NULL, ".
+            "index( entry_time ) );";
 
-        $result = cs_queryDatabase( $query );
+        $result = ps_queryDatabase( $query );
 
         echo "<B>$tableName</B> table created<BR>";
         }
@@ -252,7 +282,7 @@ function cs_setupDatabase() {
     
     
     $tableName = $tableNamePrefix . "users";
-    if( ! cs_doesTableExist( $tableName ) ) {
+    if( ! ps_doesTableExist( $tableName ) ) {
 
         $query =
             "CREATE TABLE $tableName(" .
@@ -260,11 +290,53 @@ function cs_setupDatabase() {
             "email VARCHAR(254) NOT NULL," .
             "UNIQUE KEY( email )," .
             "sequence_number INT NOT NULL," .
-            "curse_score INT NOT NULL," .
-            "extra_life_sec FLOAT NOT NULL," .
-            "total_curse_score INT NOT NULL );";
+            "photos_submitted INT NOT NULL," .
+            "photos_rejected INT NOT NULL );";
 
-        $result = cs_queryDatabase( $query );
+        $result = ps_queryDatabase( $query );
+
+        echo "<B>$tableName</B> table created<BR>";
+        }
+    else {
+        echo "<B>$tableName</B> table already exists<BR>";
+        }
+
+
+
+    $tableName = $tableNamePrefix . "photos";
+    if( ! ps_doesTableExist( $tableName ) ) {
+
+        $query =
+            "CREATE TABLE $tableName(" .
+            "id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "user_id INT UNSIGNED NOT NULL,".
+            "index( user_id ), ".
+            "url VARCHAR(254) NOT NULL,".
+            "author_name varchar(255) NOT NULL,".
+            "subject_names text NOT NULL,".
+            "submission_time DATETIME NOT NULL );";
+
+        $result = ps_queryDatabase( $query );
+
+        echo "<B>$tableName</B> table created<BR>";
+        }
+    else {
+        echo "<B>$tableName</B> table already exists<BR>";
+        }
+
+
+    $tableName = $tableNamePrefix . "photo_appearances";
+    if( ! ps_doesTableExist( $tableName ) ) {
+
+        $query =
+            "CREATE TABLE $tableName(" .
+            "id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "server_name VARCHAR(254) NOT NULL," .
+            "player_id INT UNSIGNED NOT NULL," .
+            "index( server_name, player_id )," .
+            "photo_id INT UNSIGNED NOT NULL );";
+        
+        $result = ps_queryDatabase( $query );
 
         echo "<B>$tableName</B> table created<BR>";
         }
@@ -275,8 +347,8 @@ function cs_setupDatabase() {
 
 
 
-function cs_showLog() {
-    cs_checkPassword( "show_log" );
+function ps_showLog() {
+    ps_checkPassword( "show_log" );
 
      echo "[<a href=\"server.php?action=show_data" .
          "\">Main</a>]<br><br><br>";
@@ -285,7 +357,7 @@ function cs_showLog() {
 
     $query = "SELECT * FROM $tableNamePrefix"."log ".
         "ORDER BY entry_time DESC;";
-    $result = cs_queryDatabase( $query );
+    $result = ps_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
 
@@ -300,8 +372,8 @@ function cs_showLog() {
         
 
     for( $i=0; $i<$numRows; $i++ ) {
-        $time = cs_mysqli_result( $result, $i, "entry_time" );
-        $entry = htmlspecialchars( cs_mysqli_result( $result, $i, "entry" ) );
+        $time = ps_mysqli_result( $result, $i, "entry_time" );
+        $entry = htmlspecialchars( ps_mysqli_result( $result, $i, "entry" ) );
 
         echo "<b>$time</b>:<br>$entry<hr>\n";
         }
@@ -309,8 +381,8 @@ function cs_showLog() {
 
 
 
-function cs_clearLog() {
-    cs_checkPassword( "clear_log" );
+function ps_clearLog() {
+    ps_checkPassword( "clear_log" );
 
      echo "[<a href=\"server.php?action=show_data" .
          "\">Main</a>]<br><br><br>";
@@ -318,7 +390,7 @@ function cs_clearLog() {
     global $tableNamePrefix;
 
     $query = "DELETE FROM $tableNamePrefix"."log;";
-    $result = cs_queryDatabase( $query );
+    $result = ps_queryDatabase( $query );
     
     if( $result ) {
         echo "Log cleared.";
@@ -347,10 +419,10 @@ function cs_clearLog() {
 
 
 
-function cs_logout() {
-    cs_checkReferrer();
+function ps_logout() {
+    ps_checkReferrer();
     
-    cs_clearPasswordCookie();
+    ps_clearPasswordCookie();
 
     echo "Logged out";
     }
@@ -358,12 +430,12 @@ function cs_logout() {
 
 
 
-function cs_showData( $checkPassword = true ) {
+function ps_showData( $checkPassword = true ) {
     // these are global so they work in embeded function call below
     global $skip, $search, $order_by;
 
     if( $checkPassword ) {
-        cs_checkPassword( "show_data" );
+        ps_checkPassword( "show_data" );
         }
     
     global $tableNamePrefix, $remoteIP;
@@ -379,13 +451,13 @@ function cs_showData( $checkPassword = true ) {
 
 
 
-    $skip = cs_requestFilter( "skip", "/[0-9]+/", 0 );
+    $skip = ps_requestFilter( "skip", "/[0-9]+/", 0 );
     
     global $usersPerPage;
     
-    $search = cs_requestFilter( "search", "/[A-Z0-9_@. \-]+/i" );
+    $search = ps_requestFilter( "search", "/[A-Z0-9_@. \-]+/i" );
 
-    $order_by = cs_requestFilter( "order_by", "/[A-Z_]+/i",
+    $order_by = ps_requestFilter( "order_by", "/[A-Z_]+/i",
                                   "id" );
     
     $keywordClause = "";
@@ -407,8 +479,8 @@ function cs_showData( $checkPassword = true ) {
     $query = "SELECT COUNT(*) FROM $tableNamePrefix".
         "users $keywordClause;";
 
-    $result = cs_queryDatabase( $query );
-    $totalRecords = cs_mysqli_result( $result, 0, 0 );
+    $result = ps_queryDatabase( $query );
+    $totalRecords = ps_mysqli_result( $result, 0, 0 );
 
 
     $orderDir = "DESC";
@@ -422,7 +494,7 @@ function cs_showData( $checkPassword = true ) {
         "FROM $tableNamePrefix"."users $keywordClause".
         "ORDER BY $order_by $orderDir ".
         "LIMIT $skip, $usersPerPage;";
-    $result = cs_queryDatabase( $query );
+    $result = ps_queryDatabase( $query );
     
     $numRows = mysqli_num_rows( $result );
 
@@ -491,19 +563,16 @@ function cs_showData( $checkPassword = true ) {
     echo "<tr>\n";    
     echo "<tr><td>".orderLink( "id", "ID" )."</td>\n";
     echo "<td>".orderLink( "email", "Email" )."</td>\n";
-    echo "<td>".orderLink( "curse_score", "Current Curse Score" )."</td>\n";
-    echo "<td>".orderLink( "total_curse_score", "Total Curse Score" )."</td>\n";
-    echo "<td>ExtraSec</td>\n";
+    echo "<td>".orderLink( "photos_submitted", "Photos Submitted" )."</td>\n";
+    echo "<td>".orderLink( "photos_rejected", "Photos Rejected" )."</td>\n";
     echo "</tr>\n";
 
 
     for( $i=0; $i<$numRows; $i++ ) {
-        $id = cs_mysqli_result( $result, $i, "id" );
-        $email = cs_mysqli_result( $result, $i, "email" );
-        $curse_score = cs_mysqli_result( $result, $i, "curse_score" );
-        $extra_life_sec = cs_mysqli_result( $result, $i, "extra_life_sec" );
-        $total_curse_score =
-            cs_mysqli_result( $result, $i, "total_curse_score" );
+        $id = ps_mysqli_result( $result, $i, "id" );
+        $email = ps_mysqli_result( $result, $i, "email" );
+        $photos_submitted = ps_mysqli_result( $result, $i, "photos_submitted" );
+        $photos_rejected = ps_mysqli_result( $result, $i, "photos_rejected" );
         
         $encodedEmail = urlencode( $email );
 
@@ -514,9 +583,8 @@ function cs_showData( $checkPassword = true ) {
         echo "<td>".
             "<a href=\"server.php?action=show_detail&email=$encodedEmail\">".
             "$email</a></td>\n";
-        echo "<td>$curse_score</td>\n";
-        echo "<td>$total_curse_score</td>\n";
-        echo "<td>$extra_life_sec</td>\n";
+        echo "<td>$photos_submitted</td>\n";
+        echo "<td>$photos_rejected</td>\n";
         echo "</tr>\n";
         }
     echo "</table>";
@@ -533,10 +601,11 @@ function cs_showData( $checkPassword = true ) {
 
 
 
-function cs_showDetail( $checkPassword = true ) {
+function ps_showDetail( $checkPassword = true ) {
     if( $checkPassword ) {
-        cs_checkPassword( "show_detail" );
+        ps_checkPassword( "show_detail" );
         }
+    echo "<body bgcolor=#AAAAAA>";
     
     echo "[<a href=\"server.php?action=show_data" .
          "\">Main</a>]<br><br><br>";
@@ -544,28 +613,103 @@ function cs_showDetail( $checkPassword = true ) {
     global $tableNamePrefix;
     
 
-    $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
+    $email = ps_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
             
-    $query = "SELECT id, curse_score, total_curse_score, extra_life_sec ".
+    $query = "SELECT id, photos_submitted, photos_rejected ".
         "FROM $tableNamePrefix"."users ".
         "WHERE email = '$email';";
-    $result = cs_queryDatabase( $query );
+    $result = ps_queryDatabase( $query );
 
-    $id = cs_mysqli_result( $result, 0, "id" );
-    $curse_score = cs_mysqli_result( $result, 0, "curse_score" );
-    $total_curse_score = cs_mysqli_result( $result, 0, "total_curse_score" );
-    $extra_life_sec = cs_mysqli_result( $result, 0, "extra_life_sec" );
-
+    $id = ps_mysqli_result( $result, 0, "id" );
+    $photos_submitted = ps_mysqli_result( $result, 0, "photos_submitted" );
+    $photos_rejected = ps_mysqli_result( $result, 0, "photos_rejected" );
+    
     
 
     echo "<center><table border=0><tr><td>";
     
     echo "<b>ID:</b> $id<br><br>";
     echo "<b>Email:</b> $email<br><br>";
-    echo "<b>Current Curse Score:</b> $curse_score<br><br>";
-    echo "<b>Total Curse Score:</b> $total_curse_score<br><br>";
-    echo "<b>ExtraLifeSec:</b> $extra_life_sec<br><br>";
+    echo "<b>Photos Submitted:</b> $photos_submitted<br><br>";
+    echo "<b>Photos Rejected:</b> $photos_rejected<br><br>";
     echo "<br><br>";
+
+
+    ps_displayPhotoList( "WHERE user_id = '$id'", "" );
+
+    echo "</td></tr></table></center>";
+    echo "</body>";
+    }
+
+
+
+function ps_displayPhotoList( $inWhereClause, $inLimitClause ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT url, author_name, subject_names, submission_time ".
+        "FROM $tableNamePrefix"."photos ".
+        "$inWhereClause ".
+        "ORDER BY id DESC $inLimitClause;";
+    $result = ps_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+    
+    $id = ps_mysqli_result( $result, 0, "id" );
+
+    for( $i=0; $i<$numRows; $i++ ) {
+        $url = ps_mysqli_result( $result, $i, "url" );
+        $author_name = ps_mysqli_result( $result, $i, "author_name" );
+        $subject_names = ps_mysqli_result( $result, $i, "subject_names" );
+        $submission_time = ps_mysqli_result( $result, $i, "submission_time" );
+
+
+        ps_displayPhoto( $url, $author_name, $subject_names,
+                         $submission_time );
+        }
+    }
+
+
+
+function ps_displayPhoto( $url, $author_name, $subject_names,
+                          $submission_time ) {    
+    
+    echo "<table border=0><tr><td colspan=2>";
+        
+    echo "<img src='$url'></td></tr>";
+
+        
+    echo "<tr><td>by $author_name</td>";
+
+    $agoSec = strtotime( "now" ) - strtotime( $submission_time );
+        
+    $ago = ps_secondsToAgeSummary( $agoSec );
+
+    echo "<td align=right>$ago ago</td></tr><br>";
+
+    if( $subject_names != "" ) {
+        echo "<tr><td colspan=2>featuring $subject_names</td></tr>";
+        }
+    echo "</table>";
+        
+    echo "<br><br><br>\n";
+    }
+
+
+
+function ps_displayPhotoID( $id ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT url, author_name, subject_names, submission_time ".
+        "FROM $tableNamePrefix"."photos ".
+        "WHERE id = $id;";
+    $result = ps_queryDatabase( $query );
+
+    $url = ps_mysqli_result( $result, 0, "url" );
+    $author_name = ps_mysqli_result( $result, 0, "author_name" );
+    $subject_names = ps_mysqli_result( $result, 0, "subject_names" );
+    $submission_time = ps_mysqli_result( $result, 0, "submission_time" );
+
+    ps_displayPhoto( $url, $author_name, $subject_names, $submission_time );
     }
 
 
@@ -574,21 +718,21 @@ function cs_showDetail( $checkPassword = true ) {
 
 
 
-function cs_getSequenceNumber() {
+function ps_getSequenceNumber() {
     global $tableNamePrefix;
     
 
-    $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $email = ps_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     if( $email == "" ) {
-        cs_log( "getSequenceNumber denied for bad email" );
+        ps_log( "getSequenceNumber denied for bad email" );
 
         echo "DENIED";
         return;
         }
     
     
-    $seq = cs_getSequenceNumberForEmail( $email );
+    $seq = ps_getSequenceNumberForEmail( $email );
 
     echo "$seq\n"."OK";
     }
@@ -597,12 +741,12 @@ function cs_getSequenceNumber() {
 
 // assumes already-filtered, valid email
 // returns 0 if not found
-function cs_getSequenceNumberForEmail( $inEmail ) {
+function ps_getSequenceNumberForEmail( $inEmail ) {
     global $tableNamePrefix;
     
     $query = "SELECT sequence_number FROM $tableNamePrefix"."users ".
         "WHERE email = '$inEmail';";
-    $result = cs_queryDatabase( $query );
+    $result = ps_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
 
@@ -610,372 +754,401 @@ function cs_getSequenceNumberForEmail( $inEmail ) {
         return 0;
         }
     else {
-        return cs_mysqli_result( $result, 0, "sequence_number" );
+        return ps_mysqli_result( $result, 0, "sequence_number" );
         }
     }
 
 
 
-function cs_scaleCurseScore( $inEmail ) {
-    global $tableNamePrefix, $secondsPerCurseScoreDecrement;
-    
-    $query = "SELECT curse_score, total_curse_score, extra_life_sec ".
-        "FROM $tableNamePrefix"."users ".
-        "WHERE email = '$inEmail';"; 
 
-    $result = cs_queryDatabase( $query );
-        
+function ps_photoLinkImage() {
+    global $tableNamePrefix, $photosLinkImage, $noPhotosLinkImage;
+    
+    $server_name = ps_requestFilter( "server_name", "/[A-Z0-9._\-]+/i", "" );
+    $player_id = ps_requestFilter( "player_id", "/[0-9]+/i", "0" );
+
+    // count results
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix".
+        "photo_appearances ".
+        "WHERE server_name = '$server_name' AND player_id = $player_id;";
+
+    $result = ps_queryDatabase( $query );
+    $totalRecords = ps_mysqli_result( $result, 0, 0 );
+
+    header("Content-type: image/png");
+    
+    if( $totalRecords == 0 ) {
+        readfile( $noPhotosLinkImage );
+        }
+    else {
+        readfile( $photosLinkImage );
+        }
+    }
+
+
+
+function ps_photoAppearances() {
+    global $tableNamePrefix;
+    
+    $server_name = ps_requestFilter( "server_name", "/[A-Z0-9._\-]+/i", "" );
+    $player_id = ps_requestFilter( "player_id", "/[0-9]+/i", "0" );
+
+    // count results
+    $query = "SELECT photo_id FROM $tableNamePrefix".
+        "photo_appearances ".
+        "WHERE server_name = '$server_name' AND player_id = $player_id;";
+
+    $result = ps_queryDatabase( $query );
+
     $numRows = mysqli_num_rows( $result );
 
-    if( $numRows == 1 ) {
-        $curse_score = cs_mysqli_result( $result, 0, "curse_score" );
-        $total_curse_score =
-            cs_mysqli_result( $result, 0, "total_curse_score" );
-        $extra_life_sec = cs_mysqli_result( $result, 0, "extra_life_sec" );
-        
-        global $curseThreshold, $lifetimeThresholds, $hoursToServe,
-            $servingThreshold;
+    global $header, $footer;
 
-        $personalThreshold = $curseThreshold;
+    eval( $header );
 
-        $index = 0;
-        foreach( $lifetimeThresholds as $thresh ) {
-            if( $total_curse_score >= $thresh ) {
-                $personalThreshold = $servingThreshold[ $index ];
-                }
-            $index++;
-            }
-
-        
-        if( $curse_score >= $personalThreshold ) {
-
-            $hours = 0;
-
-            $index = 0;
-            foreach( $lifetimeThresholds as $thresh ) {
-                if( $total_curse_score >= $thresh ) {
-                    $hours = $hoursToServe[ $index ];
-                    }
-                $index++;
-                }
-
-            if( $hours > 0 && $hours < 1 ) {
-                $extra_life_sec += $hours * $secondsPerCurseScoreDecrement;
-
-                $hours = 1;
-                }
-            $hours = floor( $hours );
-            
-            // score encodes hours to serve
-            // one hour puts them right at the threshold
-            $curse_score = $personalThreshold + $hours - 1;
-
-            $query = "UPDATE $tableNamePrefix"."users SET " .
-                "curse_score = $curse_score, " .
-                "extra_life_sec = $extra_life_sec " .
-                "WHERE email = '$inEmail'; ";
-            
-            $result = cs_queryDatabase( $query );
+    echo "<center>";
+    
+    if( $numRows == 0 ) {
+        echo "No photos found";
+        }
+    else {
+        for( $i=0; $i<$numRows; $i++ ) {
+            $id = ps_mysqli_result( $result, $i, "photo_id" );
+            ps_displayPhotoID( $id );
             }
         }
+
+    echo "</center>";
+    
+    eval( $footer );
     }
 
 
 
+function ps_frontPage() {
+    global $header, $footer;
 
+    eval( $header );
 
-function cs_curse() {
-    global $tableNamePrefix, $sharedGameServerSecret;
+    echo "<center>";
 
-    // no locking is done here, because action is asynchronous anyway
-    // and there's no way to prevent a server from acting on a stale
-    // sequence number if calls for the same email are interleaved
-
-    // however, we only want to support a given email address playing on
-    // one server at a time, so it's okay if some parallel lives are
-    // not logged correctly
+    echo "<br><font size=5>Recent Photographs:</font><br><br>";
     
+    
+    ps_displayPhotoList( "", "LIMIT 10" );
 
-    $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    echo "</center>";
+    
+    eval( $footer );
+    }
 
-    $sequence_number = cs_requestFilter( "sequence_number", "/[0-9]+/i", "0" );
 
-    $hash_value = cs_requestFilter( "hash_value", "/[A-F0-9]+/i", "" );
+
+function ps_submitPhoto() {
+    /*
+    &email=[email address]
+    &sequence_number=[int]
+    &hash_value=[hash value]
+    &server_sig=[hash value]
+    &server_name=[string]
+    &photo_author_id=[int]
+    &photo_subjects_ids=[string]
+    &photo_author_name=[string]
+    &photo_subjects_names=[string]
+    &jpg_base64=[jpg file as base 64]
+    */
+
+    global $tableNamePrefix;
+    
+    $email = ps_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $sequence_number = ps_requestFilter( "sequence_number", "/[0-9]+/i", "0" );
+
+    if( $email == "" ) {
+        echo "DENIED";
+        return;
+        }
+
+    if( ps_getSequenceNumberForEmail( $email ) > $sequence_number ) {
+        echo "DENIED";
+        return;
+        }
+
+    
+    $id = ps_getUserID( $email );
+
+    
+    
+    $hash_value = ps_requestFilter( "hash_value", "/[A-F0-9]+/i", "" );
 
     $hash_value = strtoupper( $hash_value );
 
+    
+    $server_sig = ps_requestFilter( "server_sig", "/[A-F0-9]+/i", "" );
 
-    if( $email == "" ) {
+    $server_sig = strtoupper( $server_sig );
 
-        cs_log( "curse denied for bad email or server name" );
+
+    global $sharedGameServerSecret;
+
+    $computedServerSig =
+        strtoupper( ps_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
+
+    if( $server_sig != $computedServerSig ) {
+        // don't log this, because it might be common from clients
+        // that are playing on unofficial servers
+        
+        // ps_log( "submitPhoto denied for bad server sig, $email" );
+
+        // don't count these as rejected either
+        // want rejected to be a sign that people are trying to hack
+        /*
+        if( $id != -1 ) {
+            $query = "UPDATE $tableNamePrefix"."users ".
+                "SET photos_rejected = photos_rejected + 1;";
+            ps_queryDatabase( $query );
+            }
+        */
         
         echo "DENIED";
         return;
         }
     
-    $trueSeq = cs_getSequenceNumberForEmail( $email );
 
-    if( $trueSeq > $sequence_number ) {
-        cs_log( "curse denied for stale sequence number" );
 
+    $encodedEmail = urlencode( $email );
+
+    global $ticketServerURL;
+
+    $request = "$ticketServerURL".
+        "?action=check_ticket_hash".
+        "&email=$encodedEmail" .
+        "&hash_value=$hash_value" .
+        "&string_to_hash=$sequence_number";
+    
+    $result = file_get_contents( $request );
+
+    if( $result != "VALID" ) {
+        ps_log( "submitPhoto denied for failed hash check, $email" );
+
+        if( $id != -1 ) {
+            $query = "UPDATE $tableNamePrefix"."users ".
+                "SET photos_rejected = photos_rejected + 1;";
+            ps_queryDatabase( $query );
+            }
+        
         echo "DENIED";
         return;
         }
 
-    $computedHashValue =
-        strtoupper( cs_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
+    // base64
+    // [0-9], [A-Z], [a-z], and [+,/,=].    
 
-    if( $computedHashValue != $hash_value ) {
-        // cs_log( "curse denied for bad hash value" );
+    $jpg_base64 = ps_requestFilter( "jpg_base64", "/[A-Z0-9a-z+\/=]+/", "" );
 
+    $jpg_binary = base64_decode( $jpg_base64 );
+
+    // search for 0xFFEE002A
+    // 002A is length 42 (hash length plus 2 length bytes) 
+    // followed by 40-char hash in ascii
+
+    $sigComment = hex2bin( "FFEE002A" ) . $hash_value;
+
+    $pos = strpos( $jpg_binary, $sigComment );
+
+    if( $pos === FALSE ) {
+        ps_log( "submitPhoto denied for missing hash comment, $email" );
+
+        if( $id != -1 ) {
+            $query = "UPDATE $tableNamePrefix"."users ".
+                "SET photos_rejected = photos_rejected + 1;";
+            ps_queryDatabase( $query );
+            }
+        else {
+            // got this far
+            // they are a real user
+            // but the photo they submitted was bogus
+            // create a record for them to count it
+            $query = "INSERT INTO $tableNamePrefix". "users SET " .
+                "email = '$email', sequence_number = 1, ".
+                "photos_submitted = 0, photos_rejected = 1;";
+            ps_queryDatabase( $query );
+            $id = ps_getUserID( $email );
+            }
+        
         echo "DENIED";
         return;
         }
 
-    if( $trueSeq == 0 ) {
-        // no record exists, add one
-        $query = "INSERT INTO $tableNamePrefix". "users SET " .
-            "email = '$email', ".
-            "sequence_number = 1, ".
-            "curse_score = 1, ".
-            "total_curse_score = 1, ".
-            "extra_life_sec = 0 ".
-            "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1, ".
-            "extra_life_sec = 0, ".
-            "curse_score = curse_score + 1, ".
-            "total_curse_score = total_curse_score + 1;";
+    // jpg submission valid
+
+    // save it into the folder
+    global $submittedPhotoLocation, $submittedPhotoURL;
+
+    $photoFileName =
+        ps_hmac_sha1( $email, $sequence_number . uniqid() ) . ".jpg";
+
+    $filePath = $submittedPhotoLocation . $photoFileName;
+
+    
+    file_put_contents( $filePath, $jpg_binary );
+
+    $photoURL = $submittedPhotoURL . $photoFileName;
+    
+    $server_name = ps_requestFilter( "server_name", "/[A-Z0-9._\-]+/i", "" );
+    $photo_author_id = ps_requestFilter( "photo_author_id", "/[0-9]+/i", "0" );
+    $photo_subject_ids =
+        ps_requestFilter( "photo_subjects_ids", "/[0-9,]+/i", "0" );
+    $photo_author_name =
+        ps_requestFilter( "photo_author_name", "/[A-Z ]+/i", "" );
+    $photo_subjects_names =
+        ps_requestFilter( "photo_subjects_names", "/[A-Z ,]+/i", "" );
+
+    $subjectIDs = explode( ",", $photo_subject_ids );
+    $subjectNames = explode( ",", $photo_subjects_names );
+
+
+    // 1.  insert user record if needed (or update sequence number if not)
+    if( $id != -1 ) {
+        $query = "UPDATE $tableNamePrefix"."users ".
+            "SET sequence_number = sequence_number + 1, ".
+            "photos_submitted = photos_submitted + 1;";
+        ps_queryDatabase( $query );
         }
     else {
-        // update the existing one
-        $query = "UPDATE $tableNamePrefix"."users SET " .
-            // our values might be stale, increment values in table
-            "sequence_number = sequence_number + 1, ".
-            // reset their accumulated lifetime counter when they
-            // get additional curse points.
-            "extra_life_sec = 0, ".
-            "curse_score = curse_score + 1, " .
-            "total_curse_score = total_curse_score + 1 " .
-            "WHERE email = '$email'; ";
-        
+        $query = "INSERT INTO $tableNamePrefix". "users SET " .
+            "email = '$email', sequence_number = 1, ".
+            "photos_submitted = 1, photos_rejected = 0;";
+        ps_queryDatabase( $query );
+        $id = ps_getUserID( $email );
+        }
+    // 2.  insert photo record with names, user ID, and URL
+    $photo_author_name = ps_formatName( $photo_author_name );
+
+    $subjectList = "";
+    if( $photo_subjects_names != "" && count( $subjectNames ) > 0 ) {
+        $subjectList = ps_formatName( $subjectNames[0] );
+
+        if( count( $subjectNames ) == 2 ) {
+            $subjectList = $subjectList . " and " .
+                ps_formatName( $subjectNames[1] );
+            }
+        else if( count( $subjectNames ) > 2 ) {
+                for( $i=1; $i < count( $subjectNames ) - 1; $i ++ ) {
+                    $subjectList = $subjectList . ", " .
+                        ps_formatName( $subjectNames[$i] );
+                    }
+                $subjectList =
+                    $subjectList . ", and " .
+                    ps_formatName(
+                        $subjectNames[ count( $subjectNames ) - 1 ] );
+            }
+        }
+    
+
+    $query = "INSERT INTO $tableNamePrefix"."photos ".
+        "SET user_id = $id, url = '$photoURL', ".
+        "submission_time = CURRENT_TIMESTAMP, ".
+        "author_name = '$photo_author_name', subject_names = '$subjectList';";
+    ps_queryDatabase( $query );
+
+    global $ps_mysqlLink;
+    
+    $photoID = mysqli_insert_id( $ps_mysqlLink );
+
+    
+    // 3.  insert photo_appearances records for each subject and author
+    //     (probably write a function for this and call it in a loop)
+    ps_addAppearance( $photoID, $server_name, $photo_author_id );
+
+    if( $photo_subject_ids != "" ) {
+        foreach( $subjectIDs as $subjectID ) {
+            ps_addAppearance( $photoID, $server_name, $subjectID );
+            }
         }
 
-    cs_queryDatabase( $query );
-    
-    cs_scaleCurseScore( $email );    
-    
     echo "OK";
     }
 
 
 
 
-function cs_liveTime() {
-    global $tableNamePrefix, $sharedGameServerSecret,
-        $secondsPerCurseScoreDecrement;
-
-    // no locking is done here, because action is asynchronous anyway
-    // and there's no way to prevent a server from acting on a stale
-    // sequence number if calls for the same email are interleaved
-
-    // however, we only want to support a given email address playing on
-    // one server at a time, so it's okay if some parallel lives are
-    // not logged correctly
-    
-
-    $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
-
-    $seconds = cs_requestFilter( "seconds", "/[0-9.]+/i", "0" );
-    
-    $sequence_number = cs_requestFilter( "sequence_number", "/[0-9]+/i", "0" );
-
-    $hash_value = cs_requestFilter( "hash_value", "/[A-F0-9]+/i", "" );
-
-    $hash_value = strtoupper( $hash_value );
-
-
-    if( $email == "" ) {
-
-        cs_log( "live_time denied for bad email or server name" );
-        
-        echo "DENIED";
-        return;
-        }
-    
-    $trueSeq = cs_getSequenceNumberForEmail( $email );
-
-    if( $trueSeq > $sequence_number ) {
-        cs_log( "live_time denied for stale sequence number" );
-
-        echo "DENIED";
-        return;
-        }
-
-    $computedHashValue =
-        strtoupper( cs_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
-
-    if( $computedHashValue != $hash_value ) {
-        // cs_log( "live_time denied for bad hash value" );
-
-        echo "DENIED";
-        return;
-        }
-
-
-    global $minServedSecondsCount;
-    if( $seconds < $minServedSecondsCount ) {
-        // life is too short to count as time served.
-        echo "OK";
-        return;
-        }
-    
-    
-    if( $trueSeq == 0 ) {
-        // no record exists, add one
-        $query = "INSERT INTO $tableNamePrefix". "users SET " .
-            "email = '$email', ".
-            "sequence_number = 1, ".
-            "curse_score = 0, ".
-            "total_curse_score = 0, ".
-            // don't count lived time unless already cursed
-            "extra_life_sec = 0 ".
-            "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1;";
-        }
-    else {
-        // update the existing one
-
-        $query = "SELECT curse_score, extra_life_sec ".
-            "FROM $tableNamePrefix"."users ".
-            "WHERE email = '$email';";
-        $result = cs_queryDatabase( $query );
-
-        $numRows = mysqli_num_rows( $result );
-
-        if( $numRows > 0 ) {
-
-            $curse_score = cs_mysqli_result( $result, 0, "curse_score" );
-            $extra_life_sec = cs_mysqli_result( $result, 0, "extra_life_sec" );
-
-
-            if( $curse_score > 0 ) {
-                $totalLifeSec = $seconds + $extra_life_sec;
-
-                while( $totalLifeSec >= $secondsPerCurseScoreDecrement &&
-                       $curse_score > 0 ) {
-                    $curse_score --;
-                    $totalLifeSec -= $secondsPerCurseScoreDecrement;
-                    }
-
-                if( $curse_score > 0 ) {
-                    $extra_life_sec = $totalLifeSec;
-                    }
-                else {
-                    $extra_life_sec = 0;
-                    }
-                
-
-                // never decrement total_curse_score
-                
-                $query = "UPDATE $tableNamePrefix"."users SET " .
-                    // our values might be stale, increment values in table
-                    "sequence_number = sequence_number + 1, ".
-                    "curse_score = $curse_score, " .
-                    "extra_life_sec = $extra_life_sec " .
-                    "WHERE email = '$email'; ";
-                }
-            }
-        }
-
-    cs_queryDatabase( $query );
-
-    echo "OK";
+function ps_addAppearance( $photoID, $server_name, $player_id ) {
+    global $tableNamePrefix;
+    $query = "INSERT INTO $tableNamePrefix"."photo_appearances ".
+        "SET server_name = '$server_name', player_id = $player_id, ".
+        "photo_id = $photoID;";
+    ps_queryDatabase( $query );
     }
 
 
 
-
-function cs_isCursed() {
-    global $tableNamePrefix, $sharedGameServerSecret, $curseThreshold;
-
-    // no locking is done here, because action is asynchronous anyway
-    // and there's no way to prevent a server from acting on a stale
-    // sequence number if calls for the same email are interleaved
-
-    // however, we only want to support a given email address playing on
-    // one server at a time, so it's okay if some parallel lives are
-    // not logged correctly
+// -1 if doesn't exist
+function ps_getUserID( $email ) {
+    global $tableNamePrefix;
     
-
-    $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
-
-    $email_hash_value =
-        cs_requestFilter( "email_hash_value", "/[A-F0-9]+/i", "" );
-
-    $email_hash_value = strtoupper( $email_hash_value );
-
-
-    if( $email == "" ) {
-
-        cs_log( "isCursed denied for bad email or server name" );
-        
-        echo "DENIED";
-        return;
-        }
-
-    $computedHashValue =
-        strtoupper( cs_hmac_sha1( $sharedGameServerSecret, $email ) );
-
-    if( $computedHashValue != $email_hash_value ) {
-        // cs_log( "isCursed denied for bad hash value" );
-
-        echo "DENIED";
-        return;
-        }
-
-
-    $query = "SELECT curse_score, total_curse_score ".
-            "FROM $tableNamePrefix"."users ".
-            "WHERE email = '$email';";
-    $result = cs_queryDatabase( $query );
+    $query = "SELECT id FROM $tableNamePrefix"."users ".
+        "WHERE email = '$email';";
+    
+    $result = ps_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
+
+    $id = -1;
     
-    if( $numRows = 0 ) {
-        // player doesn't exist, they are automatically not cursed
-        echo "0 0";
-        return;
+    if( $numRows > 0 ) {
+        $id = ps_mysqli_result( $result, 0, "id" );
         }
+    return $id;
+    }
 
-    $curse_score = cs_mysqli_result( $result, 0, "curse_score" );
-    $total_curse_score = cs_mysqli_result( $result, 0, "total_curse_score" );
 
-    global $lifetimeThresholds, $hoursToServe, $servingThreshold;
+
+function ps_formatName( $inName ) {
+    $inName = strtoupper( $inName );
+
+    $nameParts = preg_split( "/\s+/", $inName );
+
+    $numParts = count( $nameParts );
+
+    if( $numParts > 0 ) {
+        // first part always a name part,
+        $nameParts[0] = ucfirst( strtolower( $nameParts[0] ) );
+        }
     
-    $personalThreshold = $curseThreshold;
+    if( $numParts == 3 ) {
+        // second part last name
+        $nameParts[1] = ucfirst( strtolower( $nameParts[1] ) );
+        // leave suffix uppercase
+        }
+    else if( count( $nameParts ) == 2 ) {
+        // tricky case
+        // is second part suffix or last name?
 
-    $index = 0;
-    foreach( $lifetimeThresholds as $thresh ) {
-        if( $total_curse_score >= $thresh ) {
-            $personalThreshold = $servingThreshold[ $index ];
+        $secondRoman = false;
+        
+        if( !preg_match('/[^IVCXL]/', $nameParts[1] ) ) {
+            // string contains only roman numeral digits
+            // but VIX and other last names possible
+            if( ps_romanToInt( $nameParts[1] ) > 0 ) {
+                // leave second part uppercase
+                $secondRoman = true;
+                }
             }
-        $index++;
-        }
 
-    
-    if( $curse_score >= $personalThreshold ) {
-        $excess = ( $curse_score - $personalThreshold ) + 1;
-        echo "1 $excess";
-        return;
+        if( ! $secondRoman ) {
+            // second is last name
+            $nameParts[1] = ucfirst( strtolower( $nameParts[1] ) );
+            }
         }
-    echo "0 0";
+    
+    return implode( " ", $nameParts );
     }
 
 
 
 
 
-
-
-$cs_mysqlLink;
+$ps_mysqlLink;
 
 
 // general-purpose functions down here, many copied from seedBlogs
@@ -983,20 +1156,20 @@ $cs_mysqlLink;
 /**
  * Connects to the database according to the database variables.
  */  
-function cs_connectToDatabase() {
+function ps_connectToDatabase() {
     global $databaseServer,
         $databaseUsername, $databasePassword, $databaseName,
-        $cs_mysqlLink;
+        $ps_mysqlLink;
     
     
-    $cs_mysqlLink =
+    $ps_mysqlLink =
         mysqli_connect( $databaseServer, $databaseUsername, $databasePassword )
-        or cs_operationError( "Could not connect to database server: " .
-                              mysqli_error( $cs_mysqlLink ) );
+        or ps_operationError( "Could not connect to database server: " .
+                              mysqli_error( $ps_mysqlLink ) );
     
-    mysqli_select_db( $cs_mysqlLink, $databaseName )
-        or cs_operationError( "Could not select $databaseName database: " .
-                              mysqli_error( $cs_mysqlLink ) );
+    mysqli_select_db( $ps_mysqlLink, $databaseName )
+        or ps_operationError( "Could not select $databaseName database: " .
+                              mysqli_error( $ps_mysqlLink ) );
     }
 
 
@@ -1004,10 +1177,10 @@ function cs_connectToDatabase() {
 /**
  * Closes the database connection.
  */
-function cs_closeDatabase() {
-    global $cs_mysqlLink;
+function ps_closeDatabase() {
+    global $ps_mysqlLink;
     
-    mysqli_close( $cs_mysqlLink );
+    mysqli_close( $ps_mysqlLink );
     }
 
 
@@ -1017,7 +1190,7 @@ function cs_closeDatabase() {
  *            34 minutes
  *            45 seconds
  */
-function cs_secondsToTimeSummary( $inSeconds ) {
+function ps_secondsToTimeSummary( $inSeconds ) {
     if( $inSeconds < 120 ) {
         if( $inSeconds == 1 ) {
             return "$inSeconds second";
@@ -1044,7 +1217,7 @@ function cs_secondsToTimeSummary( $inSeconds ) {
  *            3 months
  *            2.5 years
  */
-function cs_secondsToAgeSummary( $inSeconds ) {
+function ps_secondsToAgeSummary( $inSeconds ) {
     if( $inSeconds < 120 ) {
         if( $inSeconds == 1 ) {
             return "$inSeconds second";
@@ -1086,19 +1259,19 @@ function cs_secondsToAgeSummary( $inSeconds ) {
  *
  * @return a result handle that can be passed to other mysql functions.
  */
-function cs_queryDatabase( $inQueryString ) {
-    global $cs_mysqlLink;
+function ps_queryDatabase( $inQueryString ) {
+    global $ps_mysqlLink;
     
-    if( gettype( $cs_mysqlLink ) != "resource" ) {
+    if( gettype( $ps_mysqlLink ) != "resource" ) {
         // not a valid mysql link?
-        cs_connectToDatabase();
+        ps_connectToDatabase();
         }
     
-    $result = mysqli_query( $cs_mysqlLink, $inQueryString );
+    $result = mysqli_query( $ps_mysqlLink, $inQueryString );
     
     if( $result == FALSE ) {
 
-        $errorNumber = mysqli_errno( $cs_mysqlLink );
+        $errorNumber = mysqli_errno( $ps_mysqlLink );
         
         // server lost or gone?
         if( $errorNumber == 2006 ||
@@ -1110,19 +1283,19 @@ function cs_queryDatabase( $inQueryString ) {
             $errorNumber == 1046 ) {
 
             // connect again?
-            cs_closeDatabase();
-            cs_connectToDatabase();
+            ps_closeDatabase();
+            ps_connectToDatabase();
 
-            $result = mysqli_query( $cs_mysqlLink, $inQueryString )
-                or cs_operationError(
+            $result = mysqli_query( $ps_mysqlLink, $inQueryString )
+                or ps_operationError(
                     "Database query failed:<BR>$inQueryString<BR><BR>" .
-                    mysqli_error( $cs_mysqlLink ) );
+                    mysqli_error( $ps_mysqlLink ) );
             }
         else {
             // some other error (we're still connected, so we can
             // add log messages to database
-            cs_fatalError( "Database query failed:<BR>$inQueryString<BR><BR>" .
-                           mysqli_error( $cs_mysqlLink ) );
+            ps_fatalError( "Database query failed:<BR>$inQueryString<BR><BR>" .
+                           mysqli_error( $ps_mysqlLink ) );
             }
         }
 
@@ -1134,7 +1307,7 @@ function cs_queryDatabase( $inQueryString ) {
 /**
  * Replacement for the old mysql_result function.
  */
-function cs_mysqli_result( $result, $number, $field=0 ) {
+function ps_mysqli_result( $result, $number, $field=0 ) {
     mysqli_data_seek( $result, $number );
     $row = mysqli_fetch_array( $result );
     return $row[ $field ];
@@ -1149,19 +1322,19 @@ function cs_mysqli_result( $result, $number, $field=0 ) {
  *
  * @return 1 if the table exists, or 0 if not.
  */
-function cs_doesTableExist( $inTableName ) {
+function ps_doesTableExist( $inTableName ) {
     // check if our table exists
     $tableExists = 0;
     
     $query = "SHOW TABLES";
-    $result = cs_queryDatabase( $query );
+    $result = ps_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
 
 
     for( $i=0; $i<$numRows && ! $tableExists; $i++ ) {
 
-        $tableName = cs_mysqli_result( $result, $i, 0 );
+        $tableName = ps_mysqli_result( $result, $i, 0 );
         
         if( $tableName == $inTableName ) {
             $tableExists = 1;
@@ -1172,15 +1345,15 @@ function cs_doesTableExist( $inTableName ) {
 
 
 
-function cs_log( $message ) {
-    global $enableLog, $tableNamePrefix, $cs_mysqlLink;
+function ps_log( $message ) {
+    global $enableLog, $tableNamePrefix, $ps_mysqlLink;
 
     if( $enableLog ) {
-        $slashedMessage = mysqli_real_escape_string( $cs_mysqlLink, $message );
+        $slashedMessage = mysqli_real_escape_string( $ps_mysqlLink, $message );
     
         $query = "INSERT INTO $tableNamePrefix"."log VALUES ( " .
             "'$slashedMessage', CURRENT_TIMESTAMP );";
-        $result = cs_queryDatabase( $query );
+        $result = ps_queryDatabase( $query );
         }
     }
 
@@ -1191,7 +1364,7 @@ function cs_log( $message ) {
  *
  * @param $message the error message to display on the error page.
  */
-function cs_fatalError( $message ) {
+function ps_fatalError( $message ) {
     //global $errorMessage;
 
     // set the variable that is displayed inside error.php
@@ -1204,7 +1377,7 @@ function cs_fatalError( $message ) {
     
     echo( $logMessage );
 
-    cs_log( $logMessage );
+    ps_log( $logMessage );
     
     die();
     }
@@ -1216,7 +1389,7 @@ function cs_fatalError( $message ) {
  *
  * @param $message the error message to display.
  */
-function cs_operationError( $message ) {
+function ps_operationError( $message ) {
     
     // for now, just print error message
     echo( "ERROR:  $message" );
@@ -1233,10 +1406,10 @@ function cs_operationError( $message ) {
  *
  * @return the value or array with slashes added.
  */
-function cs_addslashes_deep( $inValue ) {
+function ps_addslashes_deep( $inValue ) {
     return
         ( is_array( $inValue )
-          ? array_map( 'cs_addslashes_deep', $inValue )
+          ? array_map( 'ps_addslashes_deep', $inValue )
           : addslashes( $inValue ) );
     }
 
@@ -1250,10 +1423,10 @@ function cs_addslashes_deep( $inValue ) {
  *
  * @return the value or array with slashes removed.
  */
-function cs_stripslashes_deep( $inValue ) {
+function ps_stripslashes_deep( $inValue ) {
     return
         ( is_array( $inValue )
-          ? array_map( 'cs_stripslashes_deep', $inValue )
+          ? array_map( 'ps_stripslashes_deep', $inValue )
           : stripslashes( $inValue ) );
     }
 
@@ -1264,12 +1437,12 @@ function cs_stripslashes_deep( $inValue ) {
  *
  * Returns "" (or specified default value) if there is no match.
  */
-function cs_requestFilter( $inRequestVariable, $inRegex, $inDefault = "" ) {
+function ps_requestFilter( $inRequestVariable, $inRegex, $inDefault = "" ) {
     if( ! isset( $_REQUEST[ $inRequestVariable ] ) ) {
         return $inDefault;
         }
 
-    return cs_filter( $_REQUEST[ $inRequestVariable ], $inRegex, $inDefault );
+    return ps_filter( $_REQUEST[ $inRequestVariable ], $inRegex, $inDefault );
     }
 
 
@@ -1278,7 +1451,7 @@ function cs_requestFilter( $inRequestVariable, $inRegex, $inDefault = "" ) {
  *
  * Returns "" (or specified default value) if there is no match.
  */
-function cs_filter( $inValue, $inRegex, $inDefault = "" ) {
+function ps_filter( $inValue, $inRegex, $inDefault = "" ) {
     
     $numMatches = preg_match( $inRegex,
                               $inValue, $matches );
@@ -1300,7 +1473,7 @@ function cs_filter( $inValue, $inRegex, $inDefault = "" ) {
 // This avoids storing the password itself in the cookie, so a stale cookie
 // (cached by a browser) can't be used to figure out the password and log in
 // later. 
-function cs_checkPassword( $inFunctionName ) {
+function ps_checkPassword( $inFunctionName ) {
     $password = "";
     $password_hash = "";
 
@@ -1320,7 +1493,7 @@ function cs_checkPassword( $inFunctionName ) {
         // already hashed client-side on login form
         // hash again, because hash client sends us is not stored in
         // our settings file
-        $password = cs_hmac_sha1( $passwordHashingPepper,
+        $password = ps_hmac_sha1( $passwordHashingPepper,
                                   $_REQUEST[ "passwordHMAC" ] );
         
         
@@ -1331,7 +1504,7 @@ function cs_checkPassword( $inFunctionName ) {
         $password_hash = $newSalt . "_" . $newHash;
         }
     else if( isset( $_COOKIE[ $cookieName ] ) ) {
-        cs_checkReferrer();
+        ps_checkReferrer();
         $password_hash = $_COOKIE[ $cookieName ];
         
         // check that it's a good hash
@@ -1375,13 +1548,13 @@ function cs_checkPassword( $inFunctionName ) {
             
             echo "Incorrect password.";
 
-            cs_log( "Failed $inFunctionName access with password:  ".
+            ps_log( "Failed $inFunctionName access with password:  ".
                     "$password" );
             }
         else {
             echo "Session expired.";
                 
-            cs_log( "Failed $inFunctionName access with bad cookie:  ".
+            ps_log( "Failed $inFunctionName access with bad cookie:  ".
                     "$password_hash" );
             }
         
@@ -1406,7 +1579,7 @@ function cs_checkPassword( $inFunctionName ) {
                 }
             
             
-            $nonce = cs_hmac_sha1( $passwordHashingPepper, uniqid() );
+            $nonce = ps_hmac_sha1( $passwordHashingPepper, uniqid() );
             
             $callURL =
                 "https://api2.yubico.com/wsapi/2.0/verify?id=$yubicoClientID".
@@ -1473,7 +1646,7 @@ function cs_checkPassword( $inFunctionName ) {
 
 
 
-function cs_clearPasswordCookie() {
+function ps_clearPasswordCookie() {
     global $tableNamePrefix;
 
     $cookieName = $tableNamePrefix . "cookie_password_hash";
@@ -1492,13 +1665,13 @@ function cs_clearPasswordCookie() {
 
 
 
-function cs_hmac_sha1( $inKey, $inData ) {
+function ps_hmac_sha1( $inKey, $inData ) {
     return hash_hmac( "sha1", 
                       $inData, $inKey );
     } 
 
  
-function cs_hmac_sha1_raw( $inKey, $inData ) {
+function ps_hmac_sha1_raw( $inKey, $inData ) {
     return hash_hmac( "sha1", 
                       $inData, $inKey, true );
     } 
@@ -1509,7 +1682,7 @@ function cs_hmac_sha1_raw( $inKey, $inData ) {
  
  
 // decodes a ASCII hex string into an array of 0s and 1s 
-function cs_hexDecodeToBitString( $inHexString ) {
+function ps_hexDecodeToBitString( $inHexString ) {
     $digits = str_split( $inHexString );
 
     $bitString = "";
