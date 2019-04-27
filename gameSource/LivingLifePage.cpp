@@ -6074,7 +6074,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
     
-    
+    if( ! takingPhoto )
     for( int i=0; i<speakers.size(); i++ ) {
         LiveObject *o = speakers.getElementDirect( i );
         
