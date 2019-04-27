@@ -31,5 +31,5 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
                char *inKillerEmail = NULL );
 
 
-void logName( int inPlayerID, char *inEmail, char *inName );
+void logName( int inPlayerID, char *inEmail, char *inName, int inLineageEveID );
 

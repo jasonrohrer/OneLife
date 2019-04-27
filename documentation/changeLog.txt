@@ -3,6 +3,31 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 219    2019-April-27
+
+--Fixed bug that cause chat sheet to not appear if another field was focused.
+  Was caused by VOG code.
+
+--Copying an off-screen player's flip orientation when insta-dropping an 
+  object.
+
+--Copying a player's flip orientation when use-on-bare-ground with a non-
+  permanent result.
+
+
+
+
+Server Fixes:
+
+--You can no longer curses someone by name after they've been dead for 5 
+  minutes.
+
+--You can only curse your own family members, not people from other lines.
+
+--Fixed coordinate leak in initial PM message.
+
+
+
 
 Version 216    2019-April-19
 

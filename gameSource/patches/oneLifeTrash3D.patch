@@ -1,0 +1,143 @@
+diff --git a/gameSource/LivingLifePage.cpp b/gameSource/LivingLifePage.cpp
+index 2afb3b1..ac40c47 100644
+--- a/gameSource/LivingLifePage.cpp
++++ b/gameSource/LivingLifePage.cpp
+@@ -79,6 +79,7 @@ static char shouldMoveCamera = true;
+ 
+ extern double viewWidth;
+ extern double viewHeight;
++extern double visibleViewWidth;
+ 
+ extern int screenW, screenH;
+ 
+@@ -4648,8 +4649,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
+ 
+     memset( mMapCellDrawnFlags, false, numCells );
+ 
++    setDrawColor( 0.5, 0.5, 0.75, 1 );
++    drawSquare( lastScreenViewCenter, 2000 );
++    
++    setDrawColor( 0.0, 0.5, 0.0, 1 );
++    drawRect( lastScreenViewCenter.x - 800, lastScreenViewCenter.y - 800,
++              lastScreenViewCenter.x + 800, lastScreenViewCenter.y + 270 );
++    
+     // draw underlying ground biomes
+-    for( int y=yEndFloor; y>=yStartFloor; y-- ) {
++    if( false ) for( int y=yEndFloor; y>=yStartFloor; y-- ) {
+ 
+         int screenY = CELL_D * ( y + mMapOffsetY - mMapD / 2 );
+ 
+@@ -4844,6 +4852,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
+     // draw floors on top of biome
+     for( int y=yEnd; y>=yStart; y-- ) {
+         
++        double smoothGridCenterY = 
++            lastScreenViewCenter.y / CELL_D - mMapOffsetY + mMapD/2;
++
++        double viewScale = (y - smoothGridCenterY + 4.0) / 4.0;
++
++        setLetterbox( viewScale * visibleViewWidth, viewScale * viewHeight );
++
++        setViewSize( viewWidth * viewScale );
++
++
+         int worldY = y + mMapOffsetY - mMapD / 2;
+ 
+         int screenY = CELL_D * worldY;        
+@@ -5013,7 +5031,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
+     toggleAdditiveTextureColoring( true );
+     setDrawColor( multAmount, multAmount, multAmount, 1 );
+     
+-    for( int y=-1; y<=1; y++ ) {
++    if( false ) for( int y=-1; y<=1; y++ ) {
+ 
+         doublePair pos = groundCenterPos;
+ 
+@@ -5056,7 +5074,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
+     //toggleAdditiveTextureColoring( true );
+     setDrawColor( 1, 1, 1, addAmount );
+     
+-    for( int y=-1; y<=1; y++ ) {
++    if( false ) for( int y=-1; y<=1; y++ ) {
+ 
+         doublePair pos = groundCenterPos;
+         
+@@ -5500,6 +5518,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
+ 
+         int screenY = CELL_D * worldY;
+         
++        double smoothGridCenterY = 
++            lastScreenViewCenter.y / CELL_D - mMapOffsetY + mMapD/2;
++
++        double viewScale = (y - smoothGridCenterY + 4.0) / 4.0;
++
++        setLetterbox( viewScale * visibleViewWidth, viewScale * viewHeight );
++
++        setViewSize( viewWidth * viewScale );
++        
+ 
+         // draw marked objects behind everything else, including players
+         
+@@ -5791,6 +5818,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
+             if( drawRec.person ) {
+                 LiveObject *o = drawRec.personO;
+                 
++                double viewScalePerson = 
++                    ( o->currentPos.y - lastScreenViewCenter.y / CELL_D 
++                      + 4.0 ) / 4.0;;
++                
++                setLetterbox( viewScalePerson * visibleViewWidth, 
++                              viewScalePerson * viewHeight );
++                
++                setViewSize( viewWidth * viewScalePerson );
++                
+                 ObjectAnimPack heldPack =
+                     drawLiveObject( o, &speakers, &speakersPos );
+                 
+@@ -5836,6 +5872,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
+                         heldToDrawOnTop.push_back( heldPack );
+                         }
+                     }
++                setLetterbox( viewScale * visibleViewWidth, 
++                              viewScale * viewHeight );
++
++                setViewSize( viewWidth * viewScale );
+                 }
+             else if( drawRec.extraMovingObj ) {
+                 ExtraMapObject *mO = mMapExtraMovingObjects.getElement(
+@@ -6020,7 +6060,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
+                 }
+             }
+         } // end loop over rows on screen
+-    
++    setLetterbox( visibleViewWidth, viewHeight );
++    setViewSize( viewWidth );
++            
+ 
+     // finally, draw any highlighted our-placements
+     if( mCurMouseOverID > 0 && ! mCurMouseOverSelf && mCurMouseOverBehind ) {
+@@ -6061,6 +6103,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
+         
+         doublePair pos = speakersPos.getElementDirect( i );
+         
++        double viewScaleSpeech = 
++            ( pos.y / CELL_D - lastScreenViewCenter.y / CELL_D 
++              + 4.0 ) / 4.0;;
++                
++        setLetterbox( viewScaleSpeech * visibleViewWidth, 
++                      viewScaleSpeech * viewHeight );
++                
++        setViewSize( viewWidth * viewScaleSpeech );
+         
+         doublePair speechPos = pos;
+ 
+@@ -6106,7 +6156,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
+                                    o->speechFade, widthLimit,
+                                    o );
+         }
+-
++    setLetterbox( visibleViewWidth, viewHeight );
++    setViewSize( viewWidth );
+ 
+ 
+     for( int i=0; i<locationSpeech.size(); i++ ) {

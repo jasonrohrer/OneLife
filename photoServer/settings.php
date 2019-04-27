@@ -9,29 +9,20 @@ $databasePassword = "testPassword";
 $databaseName = "test";
 
 // The URL of to the server.php script.
-$fullServerURL = "http://localhost/jcr13/lineageServer/server.php";
+$fullServerURL = "http://localhost/jcr13/photoServer/server.php";
 
-
+// for checking ticket_id hashes
+$ticketServerURL = "http://localhost/jcr13/ticketServer/server.php";
 
 
 // The URL of the main, public-face website
 $mainSiteURL = "http://localhost/jcr13/";
 
 
-// the URL of the photo server to link to for photo appearances
-$photoServerURL = "http://localhost/jcr13/photoServer/server.php";
-
-$usePhotoServer = true;
-
-
-
-// The URL of the ticket server's server.php script.
-// This is used to validate ticket IDs.
-$ticketServerURL = "http://localhost/jcr13/ticketServer/server.php";
-
-// to enable ticket server checks when filtering by email
-$checkEmailHashes = false;
-
+// script must have write access here
+// must be web-accessible
+$submittedPhotoLocation = "photos/";
+$submittedPhotoURL = "http://localhost/jcr13/photoServer/photos/";
 
 
 
@@ -39,15 +30,10 @@ $checkEmailHashes = false;
 
 
 
-// Customization settings
+// secret shared with trusted game servers that allows their users to
+// post photos
 
-// Adjust these to change the way the server  works.
-
-
-// secret shared with trusted game servers that allows them to post
-// game stats
-
-// MUST be changed from this default to prevent false game stats reporting.
+// MUST be changed from this default to prevent off-server photos.
 
 // should not contain spaces
 
@@ -56,6 +42,16 @@ $sharedGameServerSecret = "secret_phrase";
 
 
 
+// Customization settings
+
+
+$noPhotosLinkImage = "noPhotoLinkImage.png";
+$photosLinkImage = "photoLinkImage.png";
+
+
+
+
+// Adjust these to change the way the server  works.
 // Prefix to use in table names (in case more than one application is using
 // the same database).  Multiple tables are created (example: "log", "reviews",
 //  and so on).
@@ -66,7 +62,7 @@ $sharedGameServerSecret = "secret_phrase";
 // Thus, more than one server installation can use the same database
 // (or the server can share a database with another application that uses
 //  similar table names).
-$tableNamePrefix = "lineageServer_";
+$tableNamePrefix = "photoServer_";
 
 
 
@@ -129,11 +125,6 @@ $header = "include( \"../noBotsHeader.php\" );";
 $footer = "include( \"../noCounterFooter.php\" );";
 
 
-$facesWebPath = "faces";
-
-
-// path in filesystem to object folder
-$objectsPath = "objects";
 
 
 

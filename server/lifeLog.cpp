@@ -273,11 +273,12 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
 
 
 
-void logName( int inPlayerID, char *inEmail, char *inName ) {
+void logName( int inPlayerID, char *inEmail, char *inName,
+              int inLineageEveID ) {
     if( nameLogFile != NULL ) {
         fprintf( nameLogFile, "%d %s\n", inPlayerID, inName );
         }
-    logPlayerNameForCurses( inEmail, inName );
+    logPlayerNameForCurses( inEmail, inName, inLineageEveID );
     }
 
     
