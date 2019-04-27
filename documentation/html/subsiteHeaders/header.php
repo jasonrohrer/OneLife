@@ -33,14 +33,15 @@ if( isset( $blockRobots ) && $blockRobots == 1 ) {
     
     <table border=0 cellspacing=5 cellpadding=0 width=100%><tr>
 
-    <td align=center width=12%>[<a href='http://onehouronelife.com'>Home</a>]</td>
-    <td align=center width=12%>[<a href='https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=<?php echo $referrer;?>'>Buy</a>]</td>
-    <td align=center width=12%>[<a href='http://onehouronelife.com/newsPage.php'>News</a>]</td>
-    <td align=center width=12%>[<a href='http://lineage.onehouronelife.com/server.php?action=front_page'>Family Trees</a>]</td>
-    <td align=center width=12%>[<a href='http://onehouronelife.com/updateLog.php'>Update Log</a>]</td>
-    <td align=center width=12%>[<a href='https://onehouronelife.com/forums'>Forums</a>]</td>
-    <td align=center width=12%>[<a href='https://onetech.info/'>Tech Tree</a>]</td>
-    <td align=center width=12%>[<a href="http://onehouronelife.gamepedia.com">Wiki</a>]</td>
+    <td align=center width=11%>[<a href='http://onehouronelife.com'>Home</a>]</td>
+    <td align=center width=11%>[<a href='https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=<?php echo $referrer;?>'>Buy</a>]</td>
+    <td align=center width=11%>[<a href='http://onehouronelife.com/newsPage.php'>News</a>]</td>
+    <td align=center width=11%>[<a href='http://lineage.onehouronelife.com/server.php?action=front_page'>Family Trees</a>]</td>
+    <td align=center width=11%>[<a href='http://photos.onehouronelife.com/server.php?action=front_page'>Photos</a>]</td>
+    <td align=center width=11%>[<a href='http://onehouronelife.com/updateLog.php'>Update Log</a>]</td>
+    <td align=center width=11%>[<a href='https://onehouronelife.com/forums'>Forums</a>]</td>
+    <td align=center width=11%>[<a href='https://onetech.info/'>Tech Tree</a>]</td>
+    <td align=center width=11%>[<a href="http://onehouronelife.gamepedia.com">Wiki</a>]</td>
 
 
 </tr></table>
