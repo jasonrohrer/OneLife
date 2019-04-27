@@ -33,6 +33,7 @@ void initPhotos() {
 
 
 static int sequenceNumberWebRequest = -1;
+static int submitPhotoWebRequest = -1;
 
 
 void freePhotos() {
@@ -41,6 +42,10 @@ void freePhotos() {
     if( sequenceNumberWebRequest != -1 ) {
         clearWebRequest( sequenceNumberWebRequest );
         sequenceNumberWebRequest = -1;
+        }
+    if( submitPhotoWebRequest != -1 ) {
+        clearWebRequest( submitPhotoWebRequest );
+        submitPhotoWebRequest = -1;
         }
     }
 
@@ -64,6 +69,26 @@ void stepPhotos() {
             
             if( resultString != NULL ) {
                 sscanf( resultString, "%d", &nextSequenceNumber );
+                delete [] resultString;
+                }
+            }
+        // else result == 0, still waiting
+        }
+    else if( submitPhotoWebRequest != -1 ) {
+        int result = stepWebRequest( submitPhotoWebRequest );
+        
+        if( result == -1 ) {
+            printf( "submitPhoto web request failed\n" );
+            clearWebRequest( submitPhotoWebRequest );
+            submitPhotoWebRequest = -1;
+            }
+        else if( result == 1 ) {
+
+            char *resultString = getWebResult( submitPhotoWebRequest );
+            clearWebRequest( submitPhotoWebRequest );
+            
+            if( resultString != NULL ) {
+                printf( "submitPhoto web request result:  %s\n", resultString );
                 delete [] resultString;
                 }
             }
@@ -162,6 +187,11 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing,
                 char *inAuthorName,
                 SimpleVector<int> *inSubjectIDs,
                 SimpleVector<char*> *inSubjectNames ) {
+
+    if( submitPhotoWebRequest != -1 ) {
+        // one at a time
+        return;
+        }
 
     char *serverSig = stringDuplicate( inServerSig );
     
@@ -340,12 +370,13 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing,
     else {
         // success
         // test
+        /*
         FILE *testFile = fopen( "test.jpg", "w" );
         for( int i=0; i<jpegBytes.size(); i++ ) {
             fwrite( jpegBytes.getElement(i), 1, 1, testFile );
             }
         fclose( testFile );
-
+        */
         char *url = SettingsManager::getStringSetting( "photoServerURL", "" );
         
 
@@ -460,21 +491,16 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing,
         delete [] subjectIDs;
         delete [] subjectNames;
         
-
+        /*
         FILE *bodyFile = fopen( "body.txt", "w" );
         fprintf( bodyFile, "%s", postBody );
         fclose( bodyFile );
-            
+        */  
         delete [] jpegBase64;
 
-        char *webResult = forceWebRequest( "POST", url, postBody );
+        submitPhotoWebRequest = startWebRequest( "POST", url, postBody );
             
         delete [] postBody;
-
-        printf( "Result of jpg posting = %s\n", webResult );
-            
-
-        delete [] webResult;
     
         delete [] url;
         }
