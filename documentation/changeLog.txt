@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 218    ???
+Version 219    2019-April-27
 
 --Fixed bug that cause chat sheet to not appear if another field was focused.
   Was caused by VOG code.
@@ -13,6 +13,7 @@ Version 218    ???
 
 --Copying a player's flip orientation when use-on-bare-ground with a non-
   permanent result.
+
 
 
 
