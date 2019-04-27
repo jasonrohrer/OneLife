@@ -887,6 +887,8 @@ function ps_submitPhoto() {
 
     $server_sig = strtoupper( $server_sig );
 
+    $server_name = ps_requestFilter( "server_name", "/[A-Z0-9._\-]+/i", "" );
+
 
     global $sharedGameServerSecret;
 
@@ -897,7 +899,8 @@ function ps_submitPhoto() {
         // don't log this, because it might be common from clients
         // that are playing on unofficial servers
         
-        // ps_log( "submitPhoto denied for bad server sig, $email" );
+        ps_log( "submitPhoto denied for bad server sig, ".
+                "$email on $server_name" );
 
         // don't count these as rejected either
         // want rejected to be a sign that people are trying to hack
@@ -994,7 +997,6 @@ function ps_submitPhoto() {
 
     $photoURL = $submittedPhotoURL . $photoFileName;
     
-    $server_name = ps_requestFilter( "server_name", "/[A-Z0-9._\-]+/i", "" );
     $photo_author_id = ps_requestFilter( "photo_author_id", "/[0-9]+/i", "0" );
     $photo_subject_ids =
         ps_requestFilter( "photo_subjects_ids", "/[0-9,]+/i", "0" );
