@@ -6916,6 +6916,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
     if( takingPhoto ) {
 
+        // FIX FOR PHOTOS UPDATE - ZOOMED OUT PHOTOES WILL BE DELETED FROM THE SERVER!
+        float currentFOV = gui_fov_scale;
+        changeFOV( 1.0 );
+
         if( photoSequenceNumber == -1 ) {
             photoSequenceNumber = getNextPhotoSequenceNumber();
             }
@@ -7005,6 +7009,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             photoSequenceNumber = -1;
             waitingForPhotoSig = false;
             }
+
+            changeFOV( currentFOV );
         }
     
 
