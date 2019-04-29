@@ -8082,7 +8082,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                 if( strstr( des, "origGrave" ) != NULL ) {
                     char found = false;
-                    int foundIndex = -1;
                     
                     for( int g=0; g<mGraveInfo.size(); g++ ) {
                         GraveInfo *gI = mGraveInfo.getElement( g );
@@ -8100,12 +8099,23 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                       gI->creationTime ) *
                                     ourLiveObject->ageRate );
 
-                            if( gI->lastMouseOverYears != -1 ) {
+                            if( gI->creationTimeUnknown ) {
+                                years = 0;
+                                }
+
+                            double currentTime = game_getCurrentTime();
+                            
+                            if( gI->lastMouseOverYears != -1 &&
+                                currentTime - gI->lastMouseOverTime < 2 ) {
+                                // continuous mouse-over
+                                // don't let years tick up
                                 years = gI->lastMouseOverYears;
+                                gI->lastMouseOverTime = currentTime;
                                 }
                             else {
                                 // save it for next time
                                 gI->lastMouseOverYears = years;
+                                gI->lastMouseOverTime = currentTime;
                                 }
                             
                             const char *yearWord;
@@ -8191,21 +8201,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             
                             desToDelete = des;
                             found = true;
-                            foundIndex = g;
                             break;
                             }    
-                        }
-
-                    if( found ) {
-                        for( int g=0; g<mGraveInfo.size(); g++ ) {
-                            if( g != foundIndex ) {
-                                GraveInfo *gI = mGraveInfo.getElement( g );
-                                // no longer mousing over this
-                                // clear it so it can change
-                                // on next mouse-over
-                                gI->lastMouseOverYears = -1;
-                                }
-                            }
                         }
                     
                         
@@ -10999,7 +10996,9 @@ void LivingLifePage::step() {
                     g.worldPos.x = posX;
                     g.worldPos.y = posY;
                     g.creationTime = game_getCurrentTime();
+                    g.creationTimeUnknown = false;
                     g.lastMouseOverYears = -1;
+                    g.lastMouseOverTime = g.creationTime;
                     
                     char *des = gravePerson->relationName;
                     char *desToDelete = NULL;
@@ -11179,7 +11178,17 @@ void LivingLifePage::step() {
                 
                 g.creationTime = 
                     game_getCurrentTime() - age / ourLiveObject->ageRate;
+                
+                if( age == -1 ) {
+                    g.creationTime = 0;
+                    g.creationTimeUnknown = true;
+                    }
+                else {
+                    g.creationTimeUnknown = false;
+                    }
+                
                 g.lastMouseOverYears = -1;
+                g.lastMouseOverTime = g.creationTime;
                 
                 mGraveInfo.push_back( g );
                 }

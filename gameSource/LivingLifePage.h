@@ -313,10 +313,17 @@ typedef struct GraveInfo {
         // and current age rate)
         double creationTime;
 
+        // if server sends -1 for grave age, we don't display age
+        char creationTimeUnknown;
+
         // to prevent YEARS display from ticking up while we
         // are still mousing over (violates the erased pencil consistency)
         // -1 if not set
         int lastMouseOverYears;
+        // last time we displayed a mouse-over label for this
+        // used to detect when we've moused away, even if not mousing
+        // over another grave
+        double lastMouseOverTime;
     } GraveInfo;
         
 

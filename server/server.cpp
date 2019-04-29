@@ -9677,13 +9677,24 @@ int main() {
                             }
                         char *linString = linWorking.getElementString();
                         
+                        double age;
+                        
+                        if( o->deathTimeSeconds > 0 ) {
+                            // "age" in years since they died 
+                            age = computeAge( o->deathTimeSeconds );
+                            }
+                        else {
+                            // grave of unknown person
+                            // let client know that age is bogus
+                            age = -1;
+                            }
+                        
                         char *message = autoSprintf(
                             "GO\n%d %d %d %d %lf %s%s\n#",
                             m.x - nextPlayer->birthPos.x,
                             m.y - nextPlayer->birthPos.y,
                             o->id, o->displayID, 
-                            // "age" in years since they died 
-                            computeAge( o->deathTimeSeconds ),
+                            age,
                             formattedName, linString );
                         printf( "Processing %d,%d from birth pos %d,%d\n",
                                 m.x, m.y, nextPlayer->birthPos.x,
