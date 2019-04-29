@@ -308,6 +308,15 @@ typedef struct LiveObject {
 typedef struct GraveInfo {
         GridPos worldPos;
         char *relationName;
+        // wall clock time when grave was created
+        // (for old graves, estimated based on grave age
+        // and current age rate)
+        double creationTime;
+
+        // to prevent YEARS display from ticking up while we
+        // are still mousing over (violates the erased pencil consistency)
+        // -1 if not set
+        int lastMouseOverYears;
     } GraveInfo;
         
 

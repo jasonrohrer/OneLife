@@ -255,6 +255,10 @@ typedef struct LiveObject {
         // not actual creation time (can be adjusted to tweak starting age,
         // for example, in case of Eve who starts older).
         double lifeStartTimeSeconds;
+
+        // time when this player actually died
+        double deathTimeSeconds;
+        
         
         // the wall clock time when this life started
         // used for computing playtime, not age
@@ -541,6 +545,10 @@ typedef struct DeadObject {
         // not actual creation time (can be adjusted to tweak starting age,
         // for example, in case of Eve who starts older).
         double lifeStartTimeSeconds;
+        
+        // time this person died
+        double deathTimeSeconds;
+        
 
     } DeadObject;
 
@@ -564,6 +572,7 @@ static void addPastPlayer( LiveObject *inPlayer ) {
         }
     o.lineageEveID = inPlayer->lineageEveID;
     o.lifeStartTimeSeconds = inPlayer->lifeStartTimeSeconds;
+    o.deathTimeSeconds = inPlayer->deathTimeSeconds;
     
     o.lineage = new SimpleVector<int>();
     for( int i=0; i< inPlayer->lineage->size(); i++ ) {
@@ -9633,6 +9642,8 @@ int main() {
                                 defaultO.lineageEveID = oThis->lineageEveID;
                                 defaultO.lifeStartTimeSeconds =
                                     oThis->lifeStartTimeSeconds;
+                                defaultO.deathTimeSeconds =
+                                    oThis->deathTimeSeconds;
                                 }
                             }
                         }
@@ -9671,7 +9682,8 @@ int main() {
                             m.x - nextPlayer->birthPos.x,
                             m.y - nextPlayer->birthPos.y,
                             o->id, o->displayID, 
-                            computeAge( o->lifeStartTimeSeconds ),
+                            // "age" in years since they died 
+                            computeAge( o->deathTimeSeconds ),
                             formattedName, linString );
                         printf( "Processing %d,%d from birth pos %d,%d\n",
                                 m.x, m.y, nextPlayer->birthPos.x,
@@ -12905,6 +12917,7 @@ int main() {
                 newDeleteUpdates.push_back( 
                     getUpdateRecord( nextPlayer, true ) );                
                 
+                nextPlayer->deathTimeSeconds = Time::getCurrentTime();
 
                 nextPlayer->isNew = false;
                 

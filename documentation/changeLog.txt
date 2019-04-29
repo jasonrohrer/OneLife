@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 220    ???
+
+--Server now reports death-age in GRAVE_OLD message, and client now displays
+  how long person has been dead on grave mouse-over.
+
+
+
 Version 219    2019-April-27
 
 --Fixed bug that cause chat sheet to not appear if another field was focused.

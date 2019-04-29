@@ -670,7 +670,7 @@ Grave at xs,ys moved to xd,yd.
 
 
 GO
-x y p_id po_id age underscored_name mother_id grandmother_id great_grandmother_id ... eve_id
+x y p_id po_id death_age underscored_name mother_id grandmother_id great_grandmother_id ... eve_id
 #
 
 
@@ -679,6 +679,9 @@ In response to a GRAVE message from client.
 
 underscored_name is name with spaces replaced by _
 If player has no name, this will be ~ character instead.
+
+death_age is how long the player has been dead (in in-game years)
+
 
 
 OW
