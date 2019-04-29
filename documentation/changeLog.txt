@@ -9,6 +9,14 @@ Version 220    ???
   how long person has been dead on grave mouse-over.
 
 
+Server Fixes:
+
+--Nightly mass disconnect issue:  rolling the servers log.txt over was using a
+  copy operation, and for a 2.9 GB log file, this was stalling the server for
+  20 seconds.  Switched to a move operation instead, which is instantaneous.
+
+
+
 
 Version 219    2019-April-27
 
