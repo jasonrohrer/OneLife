@@ -6436,14 +6436,29 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
 
 
 
-static void setHeldGraveOrigin( LiveObject *inPlayer, int inX, int inY ) {
-    inPlayer->heldGraveOriginX = inX;
-    inPlayer->heldGraveOriginY = inY;
+static void setHeldGraveOrigin( LiveObject *inPlayer, int inX, int inY,
+                                int inNewTarget ) {
+    // make sure that there is nothing left there
+    // for now, transitions that remove graves leave nothing behind
+    if( inNewTarget == 0 ) {
+        
+        // make sure that that there was a grave there before
+        int gravePlayerID = getGravePlayerID( inX, inY );
+        
+        if( gravePlayerID > 0 ) {
+            
+            // player action actually picked up this grave
+            
+            inPlayer->heldGraveOriginX = inX;
+            inPlayer->heldGraveOriginY = inY;
+            
+            inPlayer->heldGravePlayerID = getGravePlayerID( inX, inY );
+            
+            // clear it from ground
+            setGravePlayerID( inX, inY, 0 );
+            }
+        }
     
-    inPlayer->heldGravePlayerID = getGravePlayerID( inX, inY );
-    
-    // clear it from ground
-    setGravePlayerID( inX, inY, 0 );
     }
 
 
@@ -6467,7 +6482,7 @@ static void pickupToHold( LiveObject *inPlayer, int inX, int inY,
     inPlayer->holdingID = inTargetID;
     holdingSomethingNew( inPlayer );
 
-    setHeldGraveOrigin( inPlayer, inX, inY );
+    setHeldGraveOrigin( inPlayer, inX, inY, 0 );
     
     inPlayer->heldOriginValid = 1;
     inPlayer->heldOriginX = inX;
@@ -9525,7 +9540,8 @@ int main() {
                                     
                                     setHeldGraveOrigin( adult, 
                                                         gravePos.x,
-                                                        gravePos.y );
+                                                        gravePos.y,
+                                                        0 );
                                     
                                     playerIndicesToSendUpdatesAbout.push_back(
                                         getLiveObjectIndex( holdingAdultID ) );
@@ -11194,7 +11210,8 @@ int main() {
                                     handleHoldingChange( nextPlayer,
                                                          r->newActor );
 
-                                    setHeldGraveOrigin( nextPlayer, m.x, m.y );
+                                    setHeldGraveOrigin( nextPlayer, m.x, m.y,
+                                                        r->newTarget );
                                     }
                                 else if( r != NULL &&
                                     // are we old enough to handle
@@ -11236,7 +11253,8 @@ int main() {
                                                              r->newActor );
                                         
                                         setHeldGraveOrigin( nextPlayer, 
-                                                            m.x, m.y );
+                                                            m.x, m.y,
+                                                            r->newTarget );
                                         
                                         if( r->target > 0 ) {    
                                             nextPlayer->heldTransitionSourceID =
@@ -11539,7 +11557,8 @@ int main() {
                                                                  r->newActor );
                                             
                                             setHeldGraveOrigin( nextPlayer, 
-                                                                m.x, m.y );
+                                                                m.x, m.y,
+                                                                resultID );
                                             }
                                         else {
                                             // changing floor to non-floor
@@ -11560,7 +11579,8 @@ int main() {
                                                     nextPlayer,
                                                     r->newActor );
                                                 setHeldGraveOrigin( nextPlayer, 
-                                                                    m.x, m.y );
+                                                                    m.x, m.y,
+                                                                    resultID );
                                             
                                                 usedOnFloor = true;
                                                 }
@@ -11647,14 +11667,16 @@ int main() {
                                                                  r->newActor );
                                             
                                             setHeldGraveOrigin( nextPlayer, 
-                                                                m.x, m.y );
+                                                                m.x, m.y,
+                                                                r->newTarget );
                                             }
                                         else {
                                             handleHoldingChange( nextPlayer,
                                                                  r->newActor );
                                             
                                             setHeldGraveOrigin( nextPlayer, 
-                                                                m.x, m.y );
+                                                                m.x, m.y,
+                                                                r->newTarget );
                                             
                                             setResponsiblePlayer( 
                                                 - nextPlayer->id );
@@ -11682,25 +11704,27 @@ int main() {
                                         }
                                     }
                                 }
-                            }
-
-
-                        if( newGroundObject > 0 ) {
-
-                            ObjectRecord *o = getObject( newGroundObject );
                             
-                            if( strstr( o->description, "origGrave" ) 
-                                != NULL ) {
-                                
-                                setGravePlayerID( 
-                                    m.x, m.y, heldGravePlayerID );
 
-                                GraveMoveInfo g = { 
-                                    { newGroundObjectOrigin.x,
-                                      newGroundObjectOrigin.y },
-                                    { m.x,
-                                      m.y } };
-                                newGraveMoves.push_back( g );
+                            if( target == 0 && newGroundObject > 0 ) {
+                                // target location was empty, and now it's not
+                                // check if we moved a grave here
+                            
+                                ObjectRecord *o = getObject( newGroundObject );
+                                
+                                if( strstr( o->description, "origGrave" ) 
+                                    != NULL ) {
+                                    
+                                    setGravePlayerID( 
+                                        m.x, m.y, heldGravePlayerID );
+                                    
+                                    GraveMoveInfo g = { 
+                                        { newGroundObjectOrigin.x,
+                                          newGroundObjectOrigin.y },
+                                        { m.x,
+                                          m.y } };
+                                    newGraveMoves.push_back( g );
+                                    }
                                 }
                             }
                         }
