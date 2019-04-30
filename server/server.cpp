@@ -626,6 +626,9 @@ SimpleVector<GridPos> recentlyRemovedOwnerPos;
 
 
 void removeAllOwnership( LiveObject *inPlayer ) {
+    double startTime = Time::getCurrentTime();
+    int num = inPlayer->ownedPositions.size();
+    
     for( int i=0; i<inPlayer->ownedPositions.size(); i++ ) {
         GridPos *p = inPlayer->ownedPositions.getElement( i );
 
@@ -666,6 +669,13 @@ void removeAllOwnership( LiveObject *inPlayer ) {
                 }
             }
         }
+    
+    inPlayer->ownedPositions.deleteAll();
+
+    AppLog::infoF( "Removing all ownership (%d owned) for "
+                   "player %d (%s) took %lf sec",
+                   num, inPlayer->id, inPlayer->email, 
+                   Time::getCurrentTime() - startTime );
     }
 
 
@@ -1218,6 +1228,8 @@ void quitCleanup() {
 
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *nextPlayer = players.getElement(i);
+        
+        removeAllOwnership( nextPlayer );
 
         if( nextPlayer->sock != NULL ) {
             delete nextPlayer->sock;
@@ -1260,9 +1272,7 @@ void quitCleanup() {
 
 
         delete nextPlayer->babyBirthTimes;
-        delete nextPlayer->babyIDs;
-        
-        removeAllOwnership( nextPlayer );
+        delete nextPlayer->babyIDs;        
         }
     players.deleteAll();
 
@@ -12950,6 +12960,8 @@ int main() {
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
                 
+                removeAllOwnership( nextPlayer );
+
                 if( nextPlayer->heldByOther ) {
                     
                     handleForcedBabyDrop( nextPlayer,
@@ -16423,19 +16435,6 @@ int main() {
         // handle closing any that have an error
         for( int i=0; i<players.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement(i);
-            
-            if( nextPlayer->error ) {
-                // do this immediately when a player dies
-                // don't wait until we're about to delete them
-                // takes too long
-                
-                // note that we will do this multiple times as
-                // we wait for their deleteSentDoneETA
-                //
-                // that's okay, because subsequent calls to this are cheap
-                removeAllOwnership( nextPlayer );
-                }
-            
 
             if( nextPlayer->error && nextPlayer->deleteSent &&
                 nextPlayer->deleteSentDoneETA < Time::getCurrentTime() ) {

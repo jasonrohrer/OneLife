@@ -21,6 +21,12 @@ Server Fixes:
 
 --Map pull mode now prevents player starvation.
 
+--Fixed bug in removing owners that was causing the OW message detailing
+  ownership change to be sent over and over (every server frame, which can be
+  hundreds of times per second) during the 5-second grace period before we
+  disconnect the dead player.  This overloaded the socket buffer for clients,
+  causing them to disconnect.  Fixes #286
+
 
 
 Version 219    2019-April-27
