@@ -19,6 +19,8 @@ Server Fixes:
 
 --Map pull mode now deals in absolute coordinates.
 
+--Map pull mode now prevents player starvation.
+
 
 
 Version 219    2019-April-27

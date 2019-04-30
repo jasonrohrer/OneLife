@@ -9201,6 +9201,13 @@ int main() {
                     
 
                     if( allow && nextPlayer->connected ) {
+                        
+                        // keep them full of food so they don't 
+                        // die of hunger during the pull
+                        nextPlayer->foodStore = 
+                            computeFoodCapacity( nextPlayer );
+                        
+
                         int length;
 
                         // map chunks sent back to client absolute
