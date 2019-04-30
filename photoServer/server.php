@@ -1060,7 +1060,8 @@ function ps_submitPhoto() {
     if( $id != -1 ) {
         $query = "UPDATE $tableNamePrefix"."users ".
             "SET sequence_number = sequence_number + 1, ".
-            "photos_submitted = photos_submitted + 1;";
+            "photos_submitted = photos_submitted + 1".
+            "WHERE email = '$email';";
         ps_queryDatabase( $query );
         }
     else {
