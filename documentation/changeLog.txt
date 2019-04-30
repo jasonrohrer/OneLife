@@ -17,6 +17,7 @@ Server Fixes:
 
 --Fixed a bunch of bugs in way old graves and moving graves are tracked.
 
+--Map pull mode now deals in absolute coordinates.
 
 
 
