@@ -982,7 +982,8 @@ function ps_submitPhoto() {
 
         if( $id != -1 ) {
             $query = "UPDATE $tableNamePrefix"."users ".
-                "SET photos_rejected = photos_rejected + 1;";
+                "SET photos_rejected = photos_rejected + 1 ".
+                "WHERE email = '$email';";
             ps_queryDatabase( $query );
             }
         
@@ -1010,7 +1011,8 @@ function ps_submitPhoto() {
 
         if( $id != -1 ) {
             $query = "UPDATE $tableNamePrefix"."users ".
-                "SET photos_rejected = photos_rejected + 1;";
+                "SET photos_rejected = photos_rejected + 1 ".
+                "WHERE email = '$email';";
             ps_queryDatabase( $query );
             }
         else {
@@ -1060,7 +1062,7 @@ function ps_submitPhoto() {
     if( $id != -1 ) {
         $query = "UPDATE $tableNamePrefix"."users ".
             "SET sequence_number = sequence_number + 1, ".
-            "photos_submitted = photos_submitted + 1".
+            "photos_submitted = photos_submitted + 1 ".
             "WHERE email = '$email';";
         ps_queryDatabase( $query );
         }
