@@ -30,6 +30,8 @@ Server Fixes:
   disconnect the dead player.  This overloaded the socket buffer for clients,
   causing them to disconnect.  Fixes #286
 
+--Support for gridPlacement objects that are spread evenly on map (ponds).
+
 
 
 Version 219    2019-April-27
