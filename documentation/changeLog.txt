@@ -8,6 +8,9 @@ Version 220    ???
 --Server now reports death-age in GRAVE_OLD message, and client now displays
   how long person has been dead on grave mouse-over.
 
+--Temporarily disable mushroom sprite remap effect when taking photos.
+
+
 
 Server Fixes:
 

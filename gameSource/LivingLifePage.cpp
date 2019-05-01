@@ -9711,7 +9711,13 @@ void LivingLifePage::step() {
                 mCurrentRemapFraction = 0;
                 mRemapPeak = 0;
                 }
-            setRemapFraction( mCurrentRemapFraction );
+            if( takingPhoto ) {
+                // stop remapping briefly during photo
+                setRemapFraction( 0 );
+                }
+            else {
+                setRemapFraction( mCurrentRemapFraction );
+                }
             }
         }
     
