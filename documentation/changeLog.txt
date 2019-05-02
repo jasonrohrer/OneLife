@@ -10,6 +10,9 @@ Version 220    ???
 
 --Temporarily disable mushroom sprite remap effect when taking photos.
 
+--PaperThreshold slider in import editor allows better control of feathering on
+  transparent sprite edges.
+
 
 
 Server Fixes:
