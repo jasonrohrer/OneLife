@@ -1016,6 +1016,8 @@ static int getBaseMap( int inX, int inY ) {
     for( int g=0; g < gridPlacements.size(); g++ ) {
         MapGridPlacement *gp = gridPlacements.getElement( g );
 
+
+        /*
         double gridWiggleX = getXYFractal( inX / gp->spacing, 
                                            inY / gp->spacing, 
                                            0.1, 0.25 );
@@ -1023,7 +1025,10 @@ static int getBaseMap( int inX, int inY ) {
         double gridWiggleY = getXYFractal( inX / gp->spacing, 
                                            inY / gp->spacing + 392387, 
                                            0.1, 0.25 );
-        
+        */
+        // turn wiggle off for now
+        double gridWiggleX = 0;
+        double gridWiggleY = 0;
 
         if( ( inX + gp->phase + lrint( gridWiggleX * gp->wiggleScale ) ) 
             % gp->spacing == 0 &&
