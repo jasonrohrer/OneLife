@@ -13,6 +13,8 @@ Version 220    ???
 --PaperThreshold slider in import editor allows better control of feathering on
   transparent sprite edges.
 
+--New protocol for server to tell client about valley spacing.
+
 
 
 Server Fixes:

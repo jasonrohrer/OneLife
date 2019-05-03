@@ -159,6 +159,8 @@ GRAVE_OLD (GO)
 
 OWNER_LIST (OW)
 
+VALLEY_SPACING (VS)
+
 CURSED (CU)
 
 CURSE_TOKEN_CHANGE (CX)
@@ -690,6 +692,16 @@ x y p_id p_id p_id ... p_id
 
 
 Provides owner list for position x y
+
+
+
+VS
+y_spacing y_offset
+#
+
+Provides information about horizontal valley spacing to client.
+Offset is from client's birth position (0,0) of first valley.
+
 
 
 

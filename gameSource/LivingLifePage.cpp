@@ -896,6 +896,7 @@ typedef enum messageType {
     GRAVE_MOVE,
     GRAVE_OLD,
     OWNER,
+    VALLEY_SPACING,
     FLIGHT_DEST,
     VOG_UPDATE,
     PHOTO_SIGNATURE,
@@ -1010,6 +1011,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "OW" ) == 0 ) {
         returnValue = OWNER;
+        }
+    else if( strcmp( copy, "VS" ) == 0 ) {
+        returnValue = VALLEY_SPACING;
         }
     else if( strcmp( copy, "FD" ) == 0 ) {
         returnValue = FLIGHT_DEST;
@@ -1901,6 +1905,10 @@ static int lastPongReceived = 0;
 
 
 int ourID;
+
+static int valleySpacing = 40;
+static int valleyOffset = 0;
+
 
 char lastCharUsed = 'A';
 
@@ -4881,7 +4889,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 if( pass == 1 ) {
                     
-                    int yMod = abs( tileWorldY ) % 40;
+                    int yMod = abs( tileWorldY + valleyOffset ) % valleySpacing;
                     
                     // on a culvert fault line?
                     if( yMod == 0 ) {
@@ -4908,6 +4916,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 if( s == 1 ) {
                                     stoneJigglePos.x += CELL_D / 2;
                                     }
+                                
+                                stoneJigglePos.y -= 16;
                                 
                                 stoneJigglePos.y +=
                                     getXYFractal( stoneJigglePos.x,
@@ -11320,6 +11330,10 @@ void LivingLifePage::step() {
                 }
             tokens->deallocateStringElements();
             delete tokens;
+            }
+        else if( type == VALLEY_SPACING ) {
+            sscanf( message, "VS\n%d %d",
+                    &valleySpacing, &valleyOffset );
             }
         else if( type == FLIGHT_DEST ) {
             int posX, posY, playerID;

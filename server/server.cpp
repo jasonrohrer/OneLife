@@ -14928,6 +14928,24 @@ int main() {
                     }
 
                 
+                // next send info about valley lines
+
+                int valleySpacing = 
+                    SettingsManager::getIntSetting( "valleySpacing", 40 );
+                                  
+                char *valleyMessage = 
+                    autoSprintf( "VS\n"
+                                 "%d %d\n#",
+                                 valleySpacing,
+                                 nextPlayer->birthPos.y % valleySpacing );
+                
+                sendMessageToPlayer( nextPlayer, 
+                                     valleyMessage, strlen( valleyMessage ) );
+                
+                delete [] valleyMessage;
+                
+
+
                 SimpleVector<int> outOfRangePlayerIDs;
                 
 
