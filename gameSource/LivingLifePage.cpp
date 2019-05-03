@@ -189,6 +189,11 @@ static double pongDeltaTime = -1;
 static double pingDisplayStartTime = -1;
 
 
+static double culvertFractalScale = 20;
+static double culvertFractalRoughness = 0.62;
+static double culvertFractalAmp = 98;
+
+
 typedef struct LocationSpeech {
         doublePair pos;
         char *speech;
@@ -2314,6 +2319,19 @@ LivingLifePage::LivingLifePage()
                            mHomeArrowSprites );
     splitAndExpandSprites( "homeArrowsErased.tga", NUM_HOME_ARROWS, 
                            mHomeArrowErasedSprites );
+
+    
+    SimpleVector<int> *culvertStoneIDs = 
+        SettingsManager::getIntSettingMulti( "culvertStoneSprites" );
+    
+    for( int i=0; i<culvertStoneIDs->size(); i++ ) {
+        int id = culvertStoneIDs->getElementDirect( i );
+        
+        if( getSprite( id ) != NULL ) {
+            mCulvertStoneSpriteIDs.push_back( id );
+            }
+        }
+    delete culvertStoneIDs;
 
 
     mCurrentArrowI = 0;
@@ -4668,11 +4686,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
     memset( mMapCellDrawnFlags, false, numCells );
 
     // draw underlying ground biomes
+
+    // two passes
+    // once for biomes
+    // second time for overlay shading on y-culvert lines
+    for( int pass=0; pass<2; pass++ )
     for( int y=yEndFloor; y>=yStartFloor; y-- ) {
 
         int screenY = CELL_D * ( y + mMapOffsetY - mMapD / 2 );
 
         int tileY = -lrint( screenY / CELL_D );
+
+        int tileWorldY = - tileY;
+        
 
         // slight offset to compensate for tile overlaps and
         // make biome tiles more centered on world tiles
@@ -4683,7 +4709,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             char inBounds = isInBounds( x, y, mMapD );
 
-            if( inBounds && mMapCellDrawnFlags[mapI] ) {
+            if( pass == 0 && inBounds && mMapCellDrawnFlags[mapI] ) {
                 continue;
                 }
 
@@ -4749,7 +4775,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     setX += s->numTilesHigh;
                     }
                 
-
+                if( pass == 0 )
                 if( setY == 0 && setX == 0 ) {
                     
                     // check if we're on corner of all-same-biome region that
@@ -4817,7 +4843,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         }
                     }
 
-                
+                if( pass == 0 )
                 if( ! inBounds || ! mMapCellDrawnFlags[mapI] ) {
                     // not drawn as whole sheet
                     
@@ -4850,6 +4876,51 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         }
                     if( inBounds ) {
                         mMapCellDrawnFlags[mapI] = true;
+                        }
+                    }
+                
+                if( pass == 1 ) {
+                    
+                    int yMod = abs( tileWorldY ) % 40;
+                    
+                    // on a culvert fault line?
+                    if( yMod == 0 ) {
+                        
+                        setDrawColor( 0, 0, 0, 0.625 );
+                        
+                        JenkinsRandomSource stonePicker( tileX );
+                        
+                        if( mCulvertStoneSpriteIDs.size() > 0 ) {
+                            
+                            for( int s=0; s<2; s++ ) {
+                                
+                                int stoneIndex = 
+                                    stonePicker.getRandomBoundedInt( 
+                                        0,
+                                        mCulvertStoneSpriteIDs.size() - 1 );
+                                
+                                int stoneSpriteID =
+                                    mCulvertStoneSpriteIDs.getElementDirect( 
+                                        stoneIndex );
+                                
+                                doublePair stoneJigglePos = pos;
+                                
+                                if( s == 1 ) {
+                                    stoneJigglePos.x += CELL_D / 2;
+                                    }
+                                
+                                stoneJigglePos.y +=
+                                    getXYFractal( stoneJigglePos.x,
+                                                  stoneJigglePos.y,
+                                                  culvertFractalRoughness, 
+                                                  culvertFractalScale ) * 
+                                    culvertFractalAmp;
+
+                                drawSprite( getSprite( stoneSpriteID ), 
+                                            stoneJigglePos  );
+                                }
+                            }
+                        
                         }
                     }
                 }

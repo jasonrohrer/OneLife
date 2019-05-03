@@ -604,6 +604,8 @@ class LivingLifePage : public GamePage, public ActionListener {
         SpriteHandle mHomeArrowErasedSprites[ NUM_HOME_ARROWS ];
         
         HomeArrow mHomeArrowStates[ NUM_HOME_ARROWS ];
+
+        SimpleVector<int> mCulvertStoneSpriteIDs;
         
         SimpleVector<char*> mPreviousHomeDistStrings;
         SimpleVector<float> mPreviousHomeDistFades;
