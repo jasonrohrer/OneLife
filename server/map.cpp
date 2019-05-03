@@ -3135,9 +3135,10 @@ char initMap() {
                     }
                 
                 MapGridPlacement gp =
-                    { id, spacing, 
-                      phaseRandSource.getRandomBoundedInt( 0, 
-                                                           spacing - 1 ),
+                    { id, spacing,
+                      0,
+                      //phaseRandSource.getRandomBoundedInt( 0, 
+                      //                                     spacing - 1 ),
                       wiggleScale,
                       permittedBiomes };
                 
@@ -5150,13 +5151,13 @@ int getMapObjectRaw( int inX, int inY ) {
                 // south
                 int sID = getBaseMap( inX, inY - 1 );
                         
-                if( sID > 0 && getObjectHeight( sID ) >= 2 ) {
+                if( sID > 0 && getObjectHeight( sID ) >= 1 * CELL_D ) {
                     return 0;
                     }
                 
                 int s2ID = getBaseMap( inX, inY - 2 );
                         
-                if( s2ID > 0 && getObjectHeight( s2ID ) >= 3 ) {
+                if( s2ID > 0 && getObjectHeight( s2ID ) >= 2 * CELL_D ) {
                     return 0;
                     }                
                 }

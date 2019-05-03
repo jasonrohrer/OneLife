@@ -35,6 +35,13 @@ Server Fixes:
 
 --Support for gridPlacement objects that are spread evenly on map (ponds).
 
+--Fixed RIDICULOUS bug in map placement algorithm (that was mis-measuring tall
+  objects to the south that would block placement of short objects, effectively
+  blocking placement of short objects in the two tiles to the north of any
+  object that sticks up above the tile center).  Map is now much fuller than it
+  used to be.
+
+
 
 
 Version 219    2019-April-27
