@@ -237,6 +237,18 @@ static int *biomes;
 static SimpleVector<int> *naturalMapIDs;
 static SimpleVector<float> *naturalMapChances;
 
+typedef struct MapGridPlacement {
+        int id;
+        int spacing;
+        int phase;
+        int wiggleScale;
+        SimpleVector<int> permittedBiomes;
+    } MapGridPlacement;
+
+static SimpleVector<MapGridPlacement> gridPlacements;
+
+
+
 static SimpleVector<int> allNaturalMapIDs;
 
 static float *totalChanceWeight;
@@ -996,6 +1008,55 @@ static int getBaseMap( int inX, int inY ) {
         }
     
     getBaseMapCallCount ++;
+
+
+    // see if any of our grids apply
+    setXYRandomSeed( 9753 );
+
+    for( int g=0; g < gridPlacements.size(); g++ ) {
+        MapGridPlacement *gp = gridPlacements.getElement( g );
+
+
+        /*
+        double gridWiggleX = getXYFractal( inX / gp->spacing, 
+                                           inY / gp->spacing, 
+                                           0.1, 0.25 );
+        
+        double gridWiggleY = getXYFractal( inX / gp->spacing, 
+                                           inY / gp->spacing + 392387, 
+                                           0.1, 0.25 );
+        */
+        // turn wiggle off for now
+        double gridWiggleX = 0;
+        double gridWiggleY = 0;
+
+        if( ( inX + gp->phase + lrint( gridWiggleX * gp->wiggleScale ) ) 
+            % gp->spacing == 0 &&
+            ( inY + gp->phase + lrint( gridWiggleY * gp->wiggleScale ) ) 
+            % gp->spacing == 0 ) {
+            
+            // hits this grid
+
+            // make sure this biome is on the list for this object
+            int secondPlace;
+            double secondPlaceGap;
+        
+            int pickedBiome = getMapBiomeIndex( inX, inY, &secondPlace,
+                                                &secondPlaceGap );
+        
+            if( pickedBiome == -1 ) {
+                mapCacheInsert( inX, inY, 0 );
+                return 0;
+                }
+
+            if( gp->permittedBiomes.getElementIndex( pickedBiome ) != -1 ) {
+                mapCacheInsert( inX, inY, gp->id );
+                return gp->id;
+                }
+            }    
+        }
+             
+
 
     setXYRandomSeed( 5379 );
     
@@ -3040,6 +3101,8 @@ char initMap() {
         }
     
 
+    CustomRandomSource phaseRandSource( randSeed );
+
     
     for( int i=0; i<numObjects; i++ ) {
         ObjectRecord *o = allObjects[i];
@@ -3049,17 +3112,50 @@ char initMap() {
             int id = o->id;
             
             allNaturalMapIDs.push_back( id );
-            
-            for( int j=0; j< o->numBiomes; j++ ) {
-                int b = o->biomes[j];
 
-                int bIndex = getBiomeIndex( b );
+            char *gridPlacementLoc =
+                strstr( o->description, "gridPlacement" );
                 
-            
-                naturalMapIDs[bIndex].push_back( id );
-                naturalMapChances[bIndex].push_back( p );
-            
-                totalChanceWeight[bIndex] += p;
+            if( gridPlacementLoc != NULL ) {
+                // special grid placement
+                
+                int spacing = 10;
+                sscanf( gridPlacementLoc, "gridPlacement%d", &spacing );
+                
+                SimpleVector<int> permittedBiomes;
+                for( int b=0; b<o->numBiomes; b++ ) {
+                    permittedBiomes.push_back( 
+                        getBiomeIndex( o->biomes[ b ] ) );
+                    }
+
+                int wiggleScale = 4;
+                
+                if( spacing > 12 ) {
+                    wiggleScale = spacing / 3;
+                    }
+                
+                MapGridPlacement gp =
+                    { id, spacing,
+                      0,
+                      //phaseRandSource.getRandomBoundedInt( 0, 
+                      //                                     spacing - 1 ),
+                      wiggleScale,
+                      permittedBiomes };
+                
+                gridPlacements.push_back( gp );
+                }
+            else {
+                // regular fractal placement
+                
+                for( int j=0; j< o->numBiomes; j++ ) {
+                    int b = o->biomes[j];
+                    
+                    int bIndex = getBiomeIndex( b );
+                    naturalMapIDs[bIndex].push_back( id );
+                    naturalMapChances[bIndex].push_back( p );
+                    
+                    totalChanceWeight[bIndex] += p;
+                    }
                 }
             }
         }
@@ -5055,13 +5151,13 @@ int getMapObjectRaw( int inX, int inY ) {
                 // south
                 int sID = getBaseMap( inX, inY - 1 );
                         
-                if( sID > 0 && getObjectHeight( sID ) >= 2 ) {
+                if( sID > 0 && getObjectHeight( sID ) >= 1 * CELL_D ) {
                     return 0;
                     }
                 
                 int s2ID = getBaseMap( inX, inY - 2 );
                         
-                if( s2ID > 0 && getObjectHeight( s2ID ) >= 3 ) {
+                if( s2ID > 0 && getObjectHeight( s2ID ) >= 2 * CELL_D ) {
                     return 0;
                     }                
                 }

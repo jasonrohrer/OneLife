@@ -257,6 +257,10 @@ typedef struct LiveObject {
         // not actual creation time (can be adjusted to tweak starting age,
         // for example, in case of Eve who starts older).
         double lifeStartTimeSeconds;
+
+        // time when this player actually died
+        double deathTimeSeconds;
+        
         
         // the wall clock time when this life started
         // used for computing playtime, not age
@@ -543,6 +547,10 @@ typedef struct DeadObject {
         // not actual creation time (can be adjusted to tweak starting age,
         // for example, in case of Eve who starts older).
         double lifeStartTimeSeconds;
+        
+        // time this person died
+        double deathTimeSeconds;
+        
 
     } DeadObject;
 
@@ -566,6 +574,7 @@ static void addPastPlayer( LiveObject *inPlayer ) {
         }
     o.lineageEveID = inPlayer->lineageEveID;
     o.lifeStartTimeSeconds = inPlayer->lifeStartTimeSeconds;
+    o.deathTimeSeconds = inPlayer->deathTimeSeconds;
     
     o.lineage = new SimpleVector<int>();
     for( int i=0; i< inPlayer->lineage->size(); i++ ) {
@@ -619,6 +628,9 @@ SimpleVector<GridPos> recentlyRemovedOwnerPos;
 
 
 void removeAllOwnership( LiveObject *inPlayer ) {
+    double startTime = Time::getCurrentTime();
+    int num = inPlayer->ownedPositions.size();
+    
     for( int i=0; i<inPlayer->ownedPositions.size(); i++ ) {
         GridPos *p = inPlayer->ownedPositions.getElement( i );
 
@@ -659,6 +671,13 @@ void removeAllOwnership( LiveObject *inPlayer ) {
                 }
             }
         }
+    
+    inPlayer->ownedPositions.deleteAll();
+
+    AppLog::infoF( "Removing all ownership (%d owned) for "
+                   "player %d (%s) took %lf sec",
+                   num, inPlayer->id, inPlayer->email, 
+                   Time::getCurrentTime() - startTime );
     }
 
 
@@ -1211,6 +1230,8 @@ void quitCleanup() {
 
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *nextPlayer = players.getElement(i);
+        
+        removeAllOwnership( nextPlayer );
 
         if( nextPlayer->sock != NULL ) {
             delete nextPlayer->sock;
@@ -1253,9 +1274,7 @@ void quitCleanup() {
 
 
         delete nextPlayer->babyBirthTimes;
-        delete nextPlayer->babyIDs;
-        
-        removeAllOwnership( nextPlayer );
+        delete nextPlayer->babyIDs;        
         }
     players.deleteAll();
 
@@ -1904,12 +1923,15 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     
     // incoming client messages are relative to birth pos
-    m.x += inPlayer->birthPos.x;
-    m.y += inPlayer->birthPos.y;
+    // except NOT map pull messages, which are absolute
+    if( m.type != MAP ) {    
+        m.x += inPlayer->birthPos.x;
+        m.y += inPlayer->birthPos.y;
 
-    for( int i=0; i<m.numExtraPos; i++ ) {
-        m.extraPos[i].x += inPlayer->birthPos.x;
-        m.extraPos[i].y += inPlayer->birthPos.y;
+        for( int i=0; i<m.numExtraPos; i++ ) {
+            m.extraPos[i].x += inPlayer->birthPos.x;
+            m.extraPos[i].y += inPlayer->birthPos.y;
+            }
         }
 
     return m;
@@ -6429,14 +6451,29 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
 
 
 
-static void setHeldGraveOrigin( LiveObject *inPlayer, int inX, int inY ) {
-    inPlayer->heldGraveOriginX = inX;
-    inPlayer->heldGraveOriginY = inY;
+static void setHeldGraveOrigin( LiveObject *inPlayer, int inX, int inY,
+                                int inNewTarget ) {
+    // make sure that there is nothing left there
+    // for now, transitions that remove graves leave nothing behind
+    if( inNewTarget == 0 ) {
+        
+        // make sure that that there was a grave there before
+        int gravePlayerID = getGravePlayerID( inX, inY );
+        
+        if( gravePlayerID > 0 ) {
+            
+            // player action actually picked up this grave
+            
+            inPlayer->heldGraveOriginX = inX;
+            inPlayer->heldGraveOriginY = inY;
+            
+            inPlayer->heldGravePlayerID = getGravePlayerID( inX, inY );
+            
+            // clear it from ground
+            setGravePlayerID( inX, inY, 0 );
+            }
+        }
     
-    inPlayer->heldGravePlayerID = getGravePlayerID( inX, inY );
-    
-    // clear it from ground
-    setGravePlayerID( inX, inY, 0 );
     }
 
 
@@ -6460,7 +6497,7 @@ static void pickupToHold( LiveObject *inPlayer, int inX, int inY,
     inPlayer->holdingID = inTargetID;
     holdingSomethingNew( inPlayer );
 
-    setHeldGraveOrigin( inPlayer, inX, inY );
+    setHeldGraveOrigin( inPlayer, inX, inY, 0 );
     
     inPlayer->heldOriginValid = 1;
     inPlayer->heldOriginX = inX;
@@ -9192,13 +9229,25 @@ int main() {
                     
 
                     if( allow && nextPlayer->connected ) {
+                        
+                        // keep them full of food so they don't 
+                        // die of hunger during the pull
+                        nextPlayer->foodStore = 
+                            computeFoodCapacity( nextPlayer );
+                        
+
                         int length;
+
+                        // map chunks sent back to client absolute
+                        // relative to center instead of birth pos
+                        GridPos centerPos = { 0, 0 };
+                        
                         unsigned char *mapChunkMessage = 
                             getChunkMessage( m.x - chunkDimensionX / 2, 
                                              m.y - chunkDimensionY / 2,
                                              chunkDimensionX,
                                              chunkDimensionY,
-                                             nextPlayer->birthPos,
+                                             centerPos,
                                              &length );
                         
                         int numSent = 
@@ -9534,7 +9583,8 @@ int main() {
                                     
                                     setHeldGraveOrigin( adult, 
                                                         gravePos.x,
-                                                        gravePos.y );
+                                                        gravePos.y,
+                                                        0 );
                                     
                                     playerIndicesToSendUpdatesAbout.push_back(
                                         getLiveObjectIndex( holdingAdultID ) );
@@ -9651,6 +9701,8 @@ int main() {
                                 defaultO.lineageEveID = oThis->lineageEveID;
                                 defaultO.lifeStartTimeSeconds =
                                     oThis->lifeStartTimeSeconds;
+                                defaultO.deathTimeSeconds =
+                                    oThis->deathTimeSeconds;
                                 }
                             }
                         }
@@ -9684,12 +9736,24 @@ int main() {
                             }
                         char *linString = linWorking.getElementString();
                         
+                        double age;
+                        
+                        if( o->deathTimeSeconds > 0 ) {
+                            // "age" in years since they died 
+                            age = computeAge( o->deathTimeSeconds );
+                            }
+                        else {
+                            // grave of unknown person
+                            // let client know that age is bogus
+                            age = -1;
+                            }
+                        
                         char *message = autoSprintf(
                             "GO\n%d %d %d %d %lf %s%s\n#",
                             m.x - nextPlayer->birthPos.x,
                             m.y - nextPlayer->birthPos.y,
                             o->id, o->displayID, 
-                            computeAge( o->lifeStartTimeSeconds ),
+                            age,
                             formattedName, linString );
                         printf( "Processing %d,%d from birth pos %d,%d\n",
                                 m.x, m.y, nextPlayer->birthPos.x,
@@ -11189,7 +11253,8 @@ int main() {
                                     handleHoldingChange( nextPlayer,
                                                          r->newActor );
 
-                                    setHeldGraveOrigin( nextPlayer, m.x, m.y );
+                                    setHeldGraveOrigin( nextPlayer, m.x, m.y,
+                                                        r->newTarget );
                                     }
                                 else if( r != NULL &&
                                     // are we old enough to handle
@@ -11231,7 +11296,8 @@ int main() {
                                                              r->newActor );
                                         
                                         setHeldGraveOrigin( nextPlayer, 
-                                                            m.x, m.y );
+                                                            m.x, m.y,
+                                                            r->newTarget );
                                         
                                         if( r->target > 0 ) {    
                                             nextPlayer->heldTransitionSourceID =
@@ -11534,7 +11600,8 @@ int main() {
                                                                  r->newActor );
                                             
                                             setHeldGraveOrigin( nextPlayer, 
-                                                                m.x, m.y );
+                                                                m.x, m.y,
+                                                                resultID );
                                             }
                                         else {
                                             // changing floor to non-floor
@@ -11555,7 +11622,8 @@ int main() {
                                                     nextPlayer,
                                                     r->newActor );
                                                 setHeldGraveOrigin( nextPlayer, 
-                                                                    m.x, m.y );
+                                                                    m.x, m.y,
+                                                                    resultID );
                                             
                                                 usedOnFloor = true;
                                                 }
@@ -11642,14 +11710,16 @@ int main() {
                                                                  r->newActor );
                                             
                                             setHeldGraveOrigin( nextPlayer, 
-                                                                m.x, m.y );
+                                                                m.x, m.y,
+                                                                r->newTarget );
                                             }
                                         else {
                                             handleHoldingChange( nextPlayer,
                                                                  r->newActor );
                                             
                                             setHeldGraveOrigin( nextPlayer, 
-                                                                m.x, m.y );
+                                                                m.x, m.y,
+                                                                r->newTarget );
                                             
                                             setResponsiblePlayer( 
                                                 - nextPlayer->id );
@@ -11677,25 +11747,27 @@ int main() {
                                         }
                                     }
                                 }
-                            }
-
-
-                        if( newGroundObject > 0 ) {
-
-                            ObjectRecord *o = getObject( newGroundObject );
                             
-                            if( strstr( o->description, "origGrave" ) 
-                                != NULL ) {
-                                
-                                setGravePlayerID( 
-                                    m.x, m.y, heldGravePlayerID );
 
-                                GraveMoveInfo g = { 
-                                    { newGroundObjectOrigin.x,
-                                      newGroundObjectOrigin.y },
-                                    { m.x,
-                                      m.y } };
-                                newGraveMoves.push_back( g );
+                            if( target == 0 && newGroundObject > 0 ) {
+                                // target location was empty, and now it's not
+                                // check if we moved a grave here
+                            
+                                ObjectRecord *o = getObject( newGroundObject );
+                                
+                                if( strstr( o->description, "origGrave" ) 
+                                    != NULL ) {
+                                    
+                                    setGravePlayerID( 
+                                        m.x, m.y, heldGravePlayerID );
+                                    
+                                    GraveMoveInfo g = { 
+                                        { newGroundObjectOrigin.x,
+                                          newGroundObjectOrigin.y },
+                                        { m.x,
+                                          m.y } };
+                                    newGraveMoves.push_back( g );
+                                    }
                                 }
                             }
                         }
@@ -12906,6 +12978,8 @@ int main() {
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
                 
+                removeAllOwnership( nextPlayer );
+
                 if( nextPlayer->heldByOther ) {
                     
                     handleForcedBabyDrop( nextPlayer,
@@ -12923,6 +12997,7 @@ int main() {
                 newDeleteUpdates.push_back( 
                     getUpdateRecord( nextPlayer, true ) );                
                 
+                nextPlayer->deathTimeSeconds = Time::getCurrentTime();
 
                 nextPlayer->isNew = false;
                 
@@ -14871,6 +14946,24 @@ int main() {
                     }
 
                 
+                // next send info about valley lines
+
+                int valleySpacing = 
+                    SettingsManager::getIntSetting( "valleySpacing", 40 );
+                                  
+                char *valleyMessage = 
+                    autoSprintf( "VS\n"
+                                 "%d %d\n#",
+                                 valleySpacing,
+                                 nextPlayer->birthPos.y % valleySpacing );
+                
+                sendMessageToPlayer( nextPlayer, 
+                                     valleyMessage, strlen( valleyMessage ) );
+                
+                delete [] valleyMessage;
+                
+
+
                 SimpleVector<int> outOfRangePlayerIDs;
                 
 
@@ -16378,19 +16471,6 @@ int main() {
         // handle closing any that have an error
         for( int i=0; i<players.size(); i++ ) {
             LiveObject *nextPlayer = players.getElement(i);
-            
-            if( nextPlayer->error ) {
-                // do this immediately when a player dies
-                // don't wait until we're about to delete them
-                // takes too long
-                
-                // note that we will do this multiple times as
-                // we wait for their deleteSentDoneETA
-                //
-                // that's okay, because subsequent calls to this are cheap
-                removeAllOwnership( nextPlayer );
-                }
-            
 
             if( nextPlayer->error && nextPlayer->deleteSent &&
                 nextPlayer->deleteSentDoneETA < Time::getCurrentTime() ) {

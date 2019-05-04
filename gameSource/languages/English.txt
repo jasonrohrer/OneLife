@@ -305,6 +305,33 @@ forgottenPerson "FORGOTTEN PERSON"
 
 unknownPerson "UNKNOWN PERSON"
 
+yearAgo "YEAR AGO"
+yearsAgo "YEARS AGO"
+
+died "DIED"
+
+zero "ZERO"
+one "ONE"
+two "TWO"
+three "THREE"
+four "FOUR"
+five "FIVE"
+six "SIX"
+seven "SEVEN"
+eight "EIGHT"
+nine "NINE"
+ten "TEN"
+eleven "ELEVEN"
+twelve "TWELVE"
+thirteen "THIRTEEN"
+fourteen "FOURTEEN"
+fifteen "FIFTEEN"
+sixteen "SIXTEEN"
+seventeen "SEVENTEEN"
+eighteen "EIGHTEEN"
+nineteen "NINETEEN"
+twenty "TWENTY"
+
 
 
 dieCommand "/DIE"

@@ -69,10 +69,14 @@ EditorImportPage::EditorImportPage()
                                  100, 20,
                                  0, 1, "Black Threshold" ),
           mBlackLineThresholdDefaultButton( smallFont, 305, 170, "D" ),
-          mSaturationSlider( smallFont, 90, 140, 2,
+          mPaperThresholdSlider( smallFont, 90, 140, 2,
+                                 100, 20,
+                                 0, 1, "Paper Threshold" ),
+          mPaperThresholdDefaultButton( smallFont, 305, 140, "D" ),
+          mSaturationSlider( smallFont, 90, 110, 2,
                              100, 20,
                              -1, 2, "Saturation" ),
-          mSaturationDefaultButton( smallFont, 305, 140, "D" ),
+          mSaturationDefaultButton( smallFont, 305, 110, "D" ),
           mSpriteTagField( mainFont, 
                            0,  -260, 6,
                            false,
@@ -108,6 +112,13 @@ EditorImportPage::EditorImportPage()
 
     addComponent( &mBlackLineThresholdDefaultButton );
     mBlackLineThresholdDefaultButton.addActionListener( this );
+
+    addComponent( &mPaperThresholdSlider );
+    mPaperThresholdSlider.setValue( 0.88 );
+    mPaperThresholdSlider.addActionListener( this );
+
+    addComponent( &mPaperThresholdDefaultButton );
+    mPaperThresholdDefaultButton.addActionListener( this );
 
 
     addComponent( &mSaturationSlider );
@@ -803,6 +814,13 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         mBlackLineThresholdSlider.setValue( 0.2 );
         processSelection();
         }
+    else if( inTarget == &mPaperThresholdSlider ) {
+        processSelection();
+        }
+    else if( inTarget == &mPaperThresholdDefaultButton ) {
+        mPaperThresholdSlider.setValue( 0.88 );
+        processSelection();
+        }
     else if( inTarget == &mSaturationSlider ) {
         processSelection();
         }
@@ -1281,7 +1299,7 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
 
     // middle of screen?
     if( ( inX > -310 && inX < 310 && 
-          inY > -210 && inY < 120 ) 
+          inY > -210 && inY < 90 ) 
         || 
         // or top-left middle of screen (no gui compoents up there
         ( inX > -310 && inX < 46  && inY > 0 ) ) {
@@ -1607,7 +1625,7 @@ void EditorImportPage::specialKeyDown( int inKeyCode ) {
 void EditorImportPage::processSelection() {
 
     // surrounding paper area becomes totally transparent above this brightness 
-    double paperThreshold = 0.88;
+    double paperThreshold = mPaperThresholdSlider.getValue();;
 
     
     if( mProcessedSelection != NULL ) {

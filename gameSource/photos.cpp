@@ -142,32 +142,6 @@ void jpegWriteFunc( void *context, void *data, int size ) {
 
 
 
-// for testing, force web request now, blocking until done
-static char *forceWebRequest( const char *inMethod, const char *inURL,
-                              const char *inBody ) {
-    
-    int handle = startWebRequest( inMethod, inURL, inBody );
-
-    int result = 0;
-    
-    while( result == 0 ) {
-        result = stepWebRequest( handle );
-        }
-    
-    if( result != 1 ) {
-        clearWebRequest( handle );
-        return NULL;
-        }
-    
-
-    char *resultString = getWebResult( handle );
-    clearWebRequest( handle );
-    
-    return resultString;
-    }
-
-
-
 static inline double intDist( int inXA, int inYA, int inXB, int inYB ) {
     double dx = (double)inXA - (double)inXB;
     double dy = (double)inYA - (double)inYB;

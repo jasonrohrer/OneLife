@@ -215,6 +215,11 @@ static double pongDeltaTime = -1;
 static double pingDisplayStartTime = -1;
 
 
+static double culvertFractalScale = 20;
+static double culvertFractalRoughness = 0.62;
+static double culvertFractalAmp = 98;
+
+
 typedef struct LocationSpeech {
         doublePair pos;
         char *speech;
@@ -949,6 +954,7 @@ typedef enum messageType {
     GRAVE_MOVE,
     GRAVE_OLD,
     OWNER,
+    VALLEY_SPACING,
     FLIGHT_DEST,
     VOG_UPDATE,
     PHOTO_SIGNATURE,
@@ -1063,6 +1069,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "OW" ) == 0 ) {
         returnValue = OWNER;
+        }
+    else if( strcmp( copy, "VS" ) == 0 ) {
+        returnValue = VALLEY_SPACING;
         }
     else if( strcmp( copy, "FD" ) == 0 ) {
         returnValue = FLIGHT_DEST;
@@ -1955,6 +1964,10 @@ static int lastPongReceived = 0;
 
 int ourID;
 
+static int valleySpacing = 40;
+static int valleyOffset = 0;
+
+
 char lastCharUsed = 'A';
 
 char mapPullMode = false;
@@ -2392,6 +2405,19 @@ LivingLifePage::LivingLifePage()
                            mHomeArrowSprites );
     splitAndExpandSprites( "homeArrowsErased.tga", NUM_HOME_ARROWS, 
                            mHomeArrowErasedSprites );
+
+    
+    SimpleVector<int> *culvertStoneIDs = 
+        SettingsManager::getIntSettingMulti( "culvertStoneSprites" );
+    
+    for( int i=0; i<culvertStoneIDs->size(); i++ ) {
+        int id = culvertStoneIDs->getElementDirect( i );
+        
+        if( getSprite( id ) != NULL ) {
+            mCulvertStoneSpriteIDs.push_back( id );
+            }
+        }
+    delete culvertStoneIDs;
 
 
     mCurrentArrowI = 0;
@@ -4780,11 +4806,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
     memset( mMapCellDrawnFlags, false, numCells );
 
     // draw underlying ground biomes
+
+    // two passes
+    // once for biomes
+    // second time for overlay shading on y-culvert lines
+    for( int pass=0; pass<2; pass++ )
     for( int y=yEndFloor; y>=yStartFloor; y-- ) {
 
         int screenY = CELL_D * ( y + mMapOffsetY - mMapD / 2 );
 
         int tileY = -lrint( screenY / CELL_D );
+
+        int tileWorldY = - tileY;
+        
 
         // slight offset to compensate for tile overlaps and
         // make biome tiles more centered on world tiles
@@ -4795,7 +4829,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             char inBounds = isInBounds( x, y, mMapD );
 
-            if( inBounds && mMapCellDrawnFlags[mapI] ) {
+            if( pass == 0 && inBounds && mMapCellDrawnFlags[mapI] ) {
                 continue;
                 }
 
@@ -4861,7 +4895,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     setX += s->numTilesHigh;
                     }
                 
-
+                if( pass == 0 )
                 if( setY == 0 && setX == 0 ) {
                     
                     // check if we're on corner of all-same-biome region that
@@ -4929,7 +4963,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         }
                     }
 
-                
+                if( pass == 0 )
                 if( ! inBounds || ! mMapCellDrawnFlags[mapI] ) {
                     // not drawn as whole sheet
                     
@@ -4962,6 +4996,53 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         }
                     if( inBounds ) {
                         mMapCellDrawnFlags[mapI] = true;
+                        }
+                    }
+                
+                if( pass == 1 ) {
+                    
+                    int yMod = abs( tileWorldY + valleyOffset ) % valleySpacing;
+                    
+                    // on a culvert fault line?
+                    if( yMod == 0 ) {
+                        
+                        setDrawColor( 0, 0, 0, 0.625 );
+                        
+                        JenkinsRandomSource stonePicker( tileX );
+                        
+                        if( mCulvertStoneSpriteIDs.size() > 0 ) {
+                            
+                            for( int s=0; s<2; s++ ) {
+                                
+                                int stoneIndex = 
+                                    stonePicker.getRandomBoundedInt( 
+                                        0,
+                                        mCulvertStoneSpriteIDs.size() - 1 );
+                                
+                                int stoneSpriteID =
+                                    mCulvertStoneSpriteIDs.getElementDirect( 
+                                        stoneIndex );
+                                
+                                doublePair stoneJigglePos = pos;
+                                
+                                if( s == 1 ) {
+                                    stoneJigglePos.x += CELL_D / 2;
+                                    }
+                                
+                                stoneJigglePos.y -= 16;
+                                
+                                stoneJigglePos.y +=
+                                    getXYFractal( stoneJigglePos.x,
+                                                  stoneJigglePos.y,
+                                                  culvertFractalRoughness, 
+                                                  culvertFractalScale ) * 
+                                    culvertFractalAmp;
+
+                                drawSprite( getSprite( stoneSpriteID ), 
+                                            stoneJigglePos  );
+                                }
+                            }
+                        
                         }
                     }
                 }
@@ -8287,16 +8368,119 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             stripDescriptionComment( desNoComment );
 
                             // a grave we know about
-                            des = autoSprintf( "%s %s %s",
+                            int years = 
+                                lrint( 
+                                    ( game_getCurrentTime() - 
+                                      gI->creationTime ) *
+                                    ourLiveObject->ageRate );
+
+                            if( gI->creationTimeUnknown ) {
+                                years = 0;
+                                }
+
+                            double currentTime = game_getCurrentTime();
+                            
+                            if( gI->lastMouseOverYears != -1 &&
+                                currentTime - gI->lastMouseOverTime < 2 ) {
+                                // continuous mouse-over
+                                // don't let years tick up
+                                years = gI->lastMouseOverYears;
+                                gI->lastMouseOverTime = currentTime;
+                                }
+                            else {
+                                // save it for next time
+                                gI->lastMouseOverYears = years;
+                                gI->lastMouseOverTime = currentTime;
+                                }
+                            
+                            const char *yearWord;
+                            if( years == 1 ) {
+                                yearWord = translate( "yearAgo" );
+                                }
+                            else {
+                                yearWord = translate( "yearsAgo" );
+                                }
+                            
+                            char *yearsString;
+                            
+                            if( years > 20 ) {
+                                if( years > 1000000 ) {
+                                    int mil = years / 1000000;
+                                    int remain = years % 1000000;
+                                    int thou = remain / 1000;
+                                    int extra = remain % 1000;
+                                    yearsString = 
+                                        autoSprintf( "%d,%d,%d", 
+                                                     mil, thou, extra );
+                                    }
+                                else if( years > 1000 ) {
+                                    yearsString = 
+                                        autoSprintf( "%d,%d", 
+                                                     years / 1000,
+                                                     years % 1000 );
+                                    }
+                                else {
+                                    yearsString = autoSprintf( "%d", years );
+                                    }
+                                }
+                            else {
+                                const char *numberKeys[21] = { 
+                                    "zero",
+                                    "one",
+                                    "two",
+                                    "three",
+                                    "four",
+                                    "five",
+                                    "six",
+                                    "seven",
+                                    "eight",
+                                    "nine",
+                                    "ten",
+                                    "eleven",
+                                    "twelve",
+                                    "thirteen",
+                                    "fourteen",
+                                    "fifteen",
+                                    "sixteen",
+                                    "seventeen",
+                                    "eighteen",
+                                    "nineteen",
+                                    "twenty"
+                                    };
+                                yearsString = stringDuplicate( 
+                                    translate( numberKeys[ years ] ) );
+                                }
+                            
+
+
+                            char *deathPhrase;
+                            
+                            if( years == 0 ) {
+                                deathPhrase = stringDuplicate( "" );
+                                }
+                            else {
+                                deathPhrase = 
+                                    autoSprintf( " - %s %s %s",
+                                                 translate( "died" ),
+                                                 yearsString, yearWord );
+                                }
+
+                            delete [] yearsString;
+                            
+                            des = autoSprintf( "%s %s %s%s",
                                                desNoComment, translate( "of" ),
-                                               gI->relationName );
+                                               gI->relationName,
+                                               deathPhrase );
                             delete [] desNoComment;
+                            delete [] deathPhrase;
                             
                             desToDelete = des;
                             found = true;
                             break;
                             }    
                         }
+                    
+                        
 
                     if( !found ) {
 
@@ -9802,7 +9986,13 @@ void LivingLifePage::step() {
                 mCurrentRemapFraction = 0;
                 mRemapPeak = 0;
                 }
-            setRemapFraction( mCurrentRemapFraction );
+            if( takingPhoto ) {
+                // stop remapping briefly during photo
+                setRemapFraction( 0 );
+                }
+            else {
+                setRemapFraction( mCurrentRemapFraction );
+                }
             }
         }
     
@@ -11086,7 +11276,11 @@ void LivingLifePage::step() {
                     GraveInfo g;
                     g.worldPos.x = posX;
                     g.worldPos.y = posY;
-
+                    g.creationTime = game_getCurrentTime();
+                    g.creationTimeUnknown = false;
+                    g.lastMouseOverYears = -1;
+                    g.lastMouseOverTime = g.creationTime;
+                    
                     char *des = gravePerson->relationName;
                     char *desToDelete = NULL;
                     
@@ -11209,6 +11403,7 @@ void LivingLifePage::step() {
                             }
                         }
                     tokens->deallocateStringElements();
+                    delete tokens;
                     }
 
 
@@ -11263,6 +11458,20 @@ void LivingLifePage::step() {
                     delete [] desToDelete;
                     }
                 
+                g.creationTime = 
+                    game_getCurrentTime() - age / ourLiveObject->ageRate;
+                
+                if( age == -1 ) {
+                    g.creationTime = 0;
+                    g.creationTimeUnknown = true;
+                    }
+                else {
+                    g.creationTimeUnknown = false;
+                    }
+                
+                g.lastMouseOverYears = -1;
+                g.lastMouseOverTime = g.creationTime;
+                
                 mGraveInfo.push_back( g );
                 }
             }
@@ -11316,6 +11525,10 @@ void LivingLifePage::step() {
                 }
             tokens->deallocateStringElements();
             delete tokens;
+            }
+        else if( type == VALLEY_SPACING ) {
+            sscanf( message, "VS\n%d %d",
+                    &valleySpacing, &valleyOffset );
             }
         else if( type == FLIGHT_DEST ) {
             int posX, posY, playerID;

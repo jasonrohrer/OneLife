@@ -181,6 +181,9 @@ else if( $action == "show_data" ) {
 else if( $action == "show_detail" ) {
     ps_showDetail();
     }
+else if( $action == "delete_photo" ) {
+    ps_deletePhoto();
+    }
 else if( $action == "logout" ) {
     ps_logout();
     }
@@ -635,7 +638,7 @@ function ps_showDetail( $checkPassword = true ) {
     echo "<br><br>";
 
 
-    ps_displayPhotoList( "WHERE user_id = '$id'", "" );
+    ps_displayPhotoList( "WHERE user_id = '$id'", "", true, $email );
 
     echo "</td></tr></table></center>";
     echo "</body>";
@@ -643,10 +646,44 @@ function ps_showDetail( $checkPassword = true ) {
 
 
 
-function ps_displayPhotoList( $inWhereClause, $inLimitClause ) {
+function ps_deletePhoto() {
+    if( $checkPassword ) {
+        ps_checkPassword( "delete_photo" );
+        }
+    
     global $tableNamePrefix;
     
-    $query = "SELECT url, author_name, subject_names, submission_time ".
+
+    $email = ps_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
+    $id = ps_requestFilter( "id", "/[0-9]+/i", -1 );
+
+    if( ! $id != -1 ) {
+        $query = "DELETE FROM $tableNamePrefix"."photos ".
+            "WHERE id = $id;";
+        ps_queryDatabase( $query );
+
+        $query = "DELETE FROM $tableNamePrefix"."photo_appearances ".
+            "WHERE photo_id = $id;";
+        ps_queryDatabase( $query );
+
+        $query = "UPDATE $tableNamePrefix"."users ".
+            "SET photos_submitted = photos_submitted - 1, ".
+            "photos_rejected = photos_rejected + 1 ".
+            "WHERE email = '$email';";
+        ps_queryDatabase( $query );
+        }
+    
+    ps_showDetail( false );
+    }
+
+
+
+function ps_displayPhotoList( $inWhereClause, $inLimitClause,
+                              $inShowDeleteLinks = false,
+                              $inShowDeleteEmail = "" ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT id, url, author_name, subject_names, submission_time ".
         "FROM $tableNamePrefix"."photos ".
         "$inWhereClause ".
         "ORDER BY id DESC $inLimitClause;";
@@ -654,17 +691,27 @@ function ps_displayPhotoList( $inWhereClause, $inLimitClause ) {
 
     $numRows = mysqli_num_rows( $result );
     
-    $id = ps_mysqli_result( $result, 0, "id" );
 
     for( $i=0; $i<$numRows; $i++ ) {
+        $id = ps_mysqli_result( $result, $i, "id" );
         $url = ps_mysqli_result( $result, $i, "url" );
         $author_name = ps_mysqli_result( $result, $i, "author_name" );
         $subject_names = ps_mysqli_result( $result, $i, "subject_names" );
         $submission_time = ps_mysqli_result( $result, $i, "submission_time" );
 
 
+        if( $inShowDeleteLinks ) {
+            echo "<table border=0><tr><td>";
+            }
+            
         ps_displayPhoto( $url, $author_name, $subject_names,
                          $submission_time );
+
+        if( $inShowDeleteLinks ) {
+            echo "</td><td>[<a href=\"server.php?action=delete_photo".
+                "&email=$inShowDeleteEmail&id=$id\">delete</a>]".
+                "</td></tr></table>";
+            }
         }
     }
 
@@ -673,7 +720,7 @@ function ps_displayPhotoList( $inWhereClause, $inLimitClause ) {
 function ps_displayPhoto( $url, $author_name, $subject_names,
                           $submission_time ) {    
     
-    echo "<table border=0><tr><td colspan=2>";
+    echo "<table width=400 border=0><tr><td colspan=2>";
         
     echo "<img src='$url'></td></tr>";
 
@@ -935,7 +982,8 @@ function ps_submitPhoto() {
 
         if( $id != -1 ) {
             $query = "UPDATE $tableNamePrefix"."users ".
-                "SET photos_rejected = photos_rejected + 1;";
+                "SET photos_rejected = photos_rejected + 1 ".
+                "WHERE email = '$email';";
             ps_queryDatabase( $query );
             }
         
@@ -963,7 +1011,8 @@ function ps_submitPhoto() {
 
         if( $id != -1 ) {
             $query = "UPDATE $tableNamePrefix"."users ".
-                "SET photos_rejected = photos_rejected + 1;";
+                "SET photos_rejected = photos_rejected + 1 ".
+                "WHERE email = '$email';";
             ps_queryDatabase( $query );
             }
         else {
@@ -1013,7 +1062,8 @@ function ps_submitPhoto() {
     if( $id != -1 ) {
         $query = "UPDATE $tableNamePrefix"."users ".
             "SET sequence_number = sequence_number + 1, ".
-            "photos_submitted = photos_submitted + 1;";
+            "photos_submitted = photos_submitted + 1 ".
+            "WHERE email = '$email';";
         ps_queryDatabase( $query );
         }
     else {

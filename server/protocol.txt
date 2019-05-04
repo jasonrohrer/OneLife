@@ -159,6 +159,8 @@ GRAVE_OLD (GO)
 
 OWNER_LIST (OW)
 
+VALLEY_SPACING (VS)
+
 CURSED (CU)
 
 CURSE_TOKEN_CHANGE (CX)
@@ -670,7 +672,7 @@ Grave at xs,ys moved to xd,yd.
 
 
 GO
-x y p_id po_id age underscored_name mother_id grandmother_id great_grandmother_id ... eve_id
+x y p_id po_id death_age underscored_name mother_id grandmother_id great_grandmother_id ... eve_id
 #
 
 
@@ -680,6 +682,9 @@ In response to a GRAVE message from client.
 underscored_name is name with spaces replaced by _
 If player has no name, this will be ~ character instead.
 
+death_age is how long the player has been dead (in in-game years)
+
+
 
 OW
 x y p_id p_id p_id ... p_id
@@ -687,6 +692,16 @@ x y p_id p_id p_id ... p_id
 
 
 Provides owner list for position x y
+
+
+
+VS
+y_spacing y_offset
+#
+
+Provides information about horizontal valley spacing to client.
+Offset is from client's birth position (0,0) of first valley.
+
 
 
 
