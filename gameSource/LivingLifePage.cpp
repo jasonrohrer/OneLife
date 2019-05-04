@@ -11209,6 +11209,7 @@ void LivingLifePage::step() {
                             }
                         }
                     tokens->deallocateStringElements();
+                    delete tokens;
                     }
 
 
