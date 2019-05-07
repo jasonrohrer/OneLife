@@ -228,6 +228,8 @@ typedef struct {
 
 static SimpleVector<HomePos> homePosStack;
 
+static SimpleVector<HomePos> oldHomePosStack;
+
 // used on reconnect to decide whether to delete old home positions
 static int lastPlayerID = -1;
 
@@ -14775,9 +14777,11 @@ void LivingLifePage::step() {
                 ourID = ourObject->id;
 
                 if( ourID != lastPlayerID ) {
-                    // different ID than last time, delete home markers
-                    homePosStack.deleteAll();
+                    // different ID than last time, delete old home markers
+                    oldHomePosStack.deleteAll();
                     }
+                homePosStack.push_back_other( &oldHomePosStack );
+
                 lastPlayerID = ourID;
 
                 // we have no measurement yet
@@ -17552,6 +17556,11 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    oldHomePosStack.deleteAll();
+    
+    oldHomePosStack.push_back_other( &homePosStack );
+    
 
     takingPhoto = false;
     photoSequenceNumber = -1;
