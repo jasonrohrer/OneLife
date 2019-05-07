@@ -7,6 +7,9 @@ Server Fixes:
 
 --Manually-triggered server object survey (objects around living players).
 
+--Handled case where ticket server check not required, and thus curse status of
+  player might be unknown (birth of a baby was blocked in that case, forcing
+  all players to be Eve).
 
 
 

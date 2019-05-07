@@ -4989,8 +4989,8 @@ int processLoggedInPlayer( Socket *inSock,
                 }
             
             if( canHaveBaby ) {
-                if( ( inCurseStatus.curseLevel == 0 && 
-                      player->curseStatus.curseLevel == 0 ) 
+                if( ( inCurseStatus.curseLevel <= 0 && 
+                      player->curseStatus.curseLevel <= 0 ) 
                     || 
                     ( inCurseStatus.curseLevel > 0 && 
                       player->curseStatus.curseLevel > 0 ) ) {
