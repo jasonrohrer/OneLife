@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes:
+
+--Manually-triggered server object survey (objects around living players).
+
+
+
+
 Version 221    2019-May-5
 
 --Server now reports death-age in GRAVE_OLD message, and client now displays

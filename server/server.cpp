@@ -48,6 +48,7 @@
 #include "names.h"
 #include "curses.h"
 #include "lineageLimit.h"
+#include "objectSurvey.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -1300,6 +1301,9 @@ void quitCleanup() {
     freeFoodLog();
     freeFailureLog();
     
+    freeObjectSurvey();
+    
+
     freeTriggers();
 
     freeMap();
@@ -7774,6 +7778,9 @@ int main() {
 
     initFoodLog();
     initFailureLog();
+
+    initObjectSurvey();
+    
     
     initTriggers();
 
@@ -7987,6 +7994,28 @@ int main() {
         
         
         int numLive = players.size();
+
+
+
+        if( shouldRunObjectSurvey() ) {
+            SimpleVector<GridPos> livePlayerPos;
+            
+            for( int i=0; i<numLive; i++ ) {
+                LiveObject *nextPlayer = players.getElement( i );
+            
+                if( nextPlayer->error ) {
+                    continue;
+                    }
+                
+                livePlayerPos.push_back( getPlayerPos( nextPlayer ) );
+                }
+
+            startObjectSurvey( &livePlayerPos );
+            }
+        
+        stepObjectSurvey();
+        
+
         
         double secPerYear = 1.0 / getAgeRate();
         
