@@ -5962,7 +5962,7 @@ static char directLineBlocked( GridPos inSource, GridPos inDest ) {
         double error = deltaErr - 0.5;
         
         int y = inSource.y;
-        for( int x=inSource.x; x != inDest.x; x += xStep ) {
+        for( int x=inSource.x; x != inDest.x || y != inDest.y; x += xStep ) {
             if( isMapSpotBlocking( x, y ) ) {
                 return true;
                 }

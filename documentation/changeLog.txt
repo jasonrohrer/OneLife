@@ -20,6 +20,9 @@ Server Fixes:
   player might be unknown (birth of a baby was blocked in that case, forcing
   all players to be Eve).
 
+--Fixed bug in unblocked path detection that was allowing arrows to shoot
+  through walls on diagonals.  Thanks Tarr.
+
 
 
 
