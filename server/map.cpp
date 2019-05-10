@@ -206,6 +206,10 @@ static SimpleVector<double> recentlyUsedPrimaryEvePositionTimes;
 // three hours
 static double recentlyUsedPrimaryEvePositionTimeout = 3600 * 3;
 
+static int eveHomeMarkerObjectID = -1;
+
+
+
 
 // what human-placed stuff, together, counts as a camp
 static int campRadius = 20;
@@ -3126,7 +3130,11 @@ char initMap() {
         if( strstr( o->description, "eveSecondaryLocObjectID" ) != NULL ) {
             eveSecondaryLocObjectIDs.push_back( o->id );
             }
+        if( strstr( o->description, "eveHomeMarker" ) != NULL ) {
+            eveHomeMarkerObjectID = o->id;
+            }
         
+
 
         float p = o->mapChance;
         if( p > 0 ) {
@@ -6995,6 +7003,21 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
                 *outX = foundP.x;
                 *outY = foundP.y - 1;
                 
+                if( eveHomeMarkerObjectID > 0 ) {
+                    // stick home marker there
+                    setMapObject( *outX, *outY, eveHomeMarkerObjectID );
+                    }
+                else {
+                    // make it empty
+                    setMapObject( *outX, *outY, 0 );
+                    }
+                
+                // clear a few more objects to the south, to make
+                // sure Eve's spring doesn't spawn behind a tree
+                setMapObject( *outX, *outY - 1, 0 );
+                setMapObject( *outX, *outY - 2, 0 );
+                setMapObject( *outX, *outY - 3, 0 );
+
                 // exact placement, not radius
                 return;
                 }
