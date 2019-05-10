@@ -412,6 +412,8 @@ typedef struct BidirectionalLanguageMap {
         int eveIDA;
         int eveIDB;
         
+        int seed;
+
         const char *startingMapping[ NUM_STARTING_CONSONANT_CLUSTERS ];
         const char *endingMapping[ NUM_ENDING_CONSONANT_CLUSTERS ];
         const char *startingVowelMapping[ NUM_STARTING_VOWEL_CLUSTERS ];
@@ -430,6 +432,7 @@ static void initMapping( BidirectionalLanguageMap *inMap,
     
     inMap->eveIDA = inEveIDA;
     inMap->eveIDB = inEveIDB;
+    inMap->seed = inRandSeed;
 
     inMap->allMappings[ START_I ] = inMap->startingMapping;
     inMap->allMappings[ END_I ] = inMap->endingMapping;
@@ -547,8 +550,9 @@ void decrementLanguageCount( int inEveID ) {
         if( r->langCount <= 0 ) {
             // language is dead, last speaker died
             
-            freeEveLangRecord( r );
-            
+            freeEveLangRecord( r );                        
+            langRecords.deleteElement( rInd );
+
             // now walk through and remove other mappings
             for( int e=0; e<langRecords.size(); e++ ) {
                 EveLangRecord *rOther = langRecords.getElementDirect( e );
@@ -566,8 +570,6 @@ void decrementLanguageCount( int inEveID ) {
                         }
                     }
                 }
-            
-            langRecords.deleteElement( rInd );
             }
         }
     }
@@ -595,8 +597,6 @@ void stepLanguage() {
                          
             int seed = r->eveID + otherEveID + time( NULL );
 
-            seed = 6;
-            
             initMapping( map,
                          r->eveID,
                          otherEveID,
@@ -612,6 +612,11 @@ void stepLanguage() {
 
 // handles punctuation, etc.
 char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB ) {
+
+    if( inEveIDA == inEveIDB ) {
+        // self, no translation
+        return stringDuplicate( inPhrase );
+        }
 
     int lookupEveID = inEveIDA;
     int otherEveID = inEveIDB;
@@ -638,14 +643,78 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB ) {
                     
                     char *lcPhrase = stringToLowerCase( inPhrase );
 
-                    // fixme, split into words
-                    char *newWord = remapWordNew( lcPhrase, 
-                                                  allClusters,
-                                                  map->allMappings );
+                    SimpleVector<char*> words;
+                    SimpleVector<char> wordIsAlpha;
+
+                    int nextChar = 0;
+                    int len = strlen( lcPhrase );
+                    
+                    while( nextChar < len ) {
+                        
+                        SimpleVector<char> thisWord;
+                        
+                        while( nextChar < len &&
+                               lcPhrase[ nextChar ] >= 'a' &&
+                               lcPhrase[ nextChar ] <= 'z' ) {
+                            
+                            thisWord.push_back( lcPhrase[ nextChar ] );
+                            nextChar++;
+                            }
+                        if( thisWord.size() > 0 ) {
+                            words.push_back( thisWord.getElementString() );
+                            wordIsAlpha.push_back( true );
+                            }
+
+                        while( nextChar < len &&
+                               ( lcPhrase[ nextChar ] < 'a' ||
+                                 lcPhrase[ nextChar ] > 'z' )  ) {
+
+                            // non-alpha chars are each separate words
+                            char *charWord = new char[2];
+                            charWord[0] = lcPhrase[ nextChar ];
+                            charWord[1] = '\0';
+                            
+                            words.push_back( charWord );
+                            wordIsAlpha.push_back( false );
+                            
+                            nextChar++;
+                            }
+                        }
+                    
                     delete [] lcPhrase;
                     
-                    char *ucNew = stringToUpperCase( newWord );
-                    delete [] newWord;
+
+                    SimpleVector<char> transPhraseWorking;                    
+
+                    for( int w=0; w<words.size(); w++ ) {
+                        char *word = words.getElementDirect( w );
+                        
+                        if( wordIsAlpha.getElementDirect( w ) ) {
+                            
+                            
+                            char *newWord = remapWordNew( word, 
+                                                          allClusters,
+                                                          map->allMappings );
+                            
+                            transPhraseWorking.appendElementString( newWord );
+                            delete [] newWord;
+                            }
+                        else {
+                            // add non-alpha directly
+                            transPhraseWorking.appendElementString( word );
+                            }
+                        
+                        delete [] word;
+                        }
+
+                    char *newPhrase = transPhraseWorking.getElementString();
+                    
+                    char *ucNew = stringToUpperCase( newPhrase );
+                    delete [] newPhrase;
+
+                    printf( "Mapping %s to %s (seed=%d)\n",
+                            inPhrase, ucNew, map->seed );
+                    
                     return ucNew;
                     }
                 }

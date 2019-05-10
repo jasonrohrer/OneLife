@@ -16108,6 +16108,8 @@ int main() {
                                     messageLen, 
                                     false, false );
                         
+                            delete [] message;
+                            
                             nextPlayer->gotPartOfThisFrame = true;
                         
                             if( numSent != messageLen ) {
