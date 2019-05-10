@@ -52,6 +52,7 @@ curses.cpp \
 curseLog.cpp \
 spiral.cpp \
 objectSurvey.cpp \
+language.cpp \
 
 
 
