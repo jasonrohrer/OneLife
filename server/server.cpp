@@ -16056,12 +16056,27 @@ int main() {
 
                                 int speakerID = 
                                     newSpeechPlayerIDs.getElementDirect( u );
+                                LiveObject *speakerObj =
+                                    getLiveObject( speakerID );
+                                
+                                int listenerEveID = nextPlayer->lineageEveID;
+
+                                int speakerEveID;
+                                
+                                if( speakerObj != NULL ) {
+                                    speakerEveID = speakerObj->lineageEveID;
+                                    }
+                                else {
+                                    // speaker dead, doesn't matter what we
+                                    // do
+                                    speakerEveID = listenerEveID;
+                                    }
                                 
                                 char *translatedPhrase =
                                     mapLanguagePhrase( 
                                         newSpeechPhrases.getElementDirect( u ),
-                                        speakerID,
-                                        nextPlayer->id );
+                                        speakerEveID,
+                                        listenerEveID );
                                 printf( "phrase = %s, translatedPhrase = %s\n",
                                         newSpeechPhrases.getElementDirect( u ),
                                         translatedPhrase );
