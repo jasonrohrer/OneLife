@@ -3127,7 +3127,7 @@ char initMap() {
     for( int i=0; i<numObjects; i++ ) {
         ObjectRecord *o = allObjects[i];
 
-        if( strstr( o->description, "eveSecondaryLocObjectID" ) != NULL ) {
+        if( strstr( o->description, "eveSecondaryLoc" ) != NULL ) {
             eveSecondaryLocObjectIDs.push_back( o->id );
             }
         if( strstr( o->description, "eveHomeMarker" ) != NULL ) {
