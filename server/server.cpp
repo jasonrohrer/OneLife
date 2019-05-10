@@ -16040,8 +16040,6 @@ int main() {
                         SimpleVector<char> messageWorking;
                         messageWorking.appendElementString( "PS\n" );
                         
-                        printf( "%d phrases\n", 
-                                newSpeechPos.size() );
                         
                         for( int u=0; u<newSpeechPos.size(); u++ ) {
 
@@ -16077,9 +16075,6 @@ int main() {
                                         newSpeechPhrases.getElementDirect( u ),
                                         speakerEveID,
                                         listenerEveID );
-                                printf( "phrase = %s, translatedPhrase = %s\n",
-                                        newSpeechPhrases.getElementDirect( u ),
-                                        translatedPhrase );
                                         
                                 int curseFlag =
                                     newSpeechCurseFlags.getElementDirect( u );

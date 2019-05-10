@@ -712,9 +712,6 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB ) {
                     char *ucNew = stringToUpperCase( newPhrase );
                     delete [] newPhrase;
 
-                    printf( "Mapping %s to %s (seed=%d)\n",
-                            inPhrase, ucNew, map->seed );
-                    
                     return ucNew;
                     }
                 }
