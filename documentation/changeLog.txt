@@ -23,6 +23,13 @@ Server Fixes:
 --Fixed bug in unblocked path detection that was allowing arrows to shoot
   through walls on diagonals.  Thanks Tarr.
 
+--Different Eve lines speak different languages with bi-directional filter.
+
+--New Eve placement on natural spring grid, with auto-home-marker for Eve.
+
+--childSameRaceLikelihood now 100%.  Races with 3 members are not forced to
+  have children of the neighboring race.
+
 
 
 

@@ -5285,7 +5285,7 @@ int processLoggedInPlayer( Socket *inSock,
                 
                 char forceDifferentRace = false;
 
-                if( getRaceSize( parentObject->race ) < 4 ) {
+                if( getRaceSize( parentObject->race ) < 3 ) {
                     // no room in race for diverse family members
                     
                     // pick a different race for child to ensure village 
