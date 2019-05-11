@@ -3,6 +3,38 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 223    2019-May-10
+
+--Fixed bug that was causing inherited home marker position (closest marker
+  visible on screen during spawn) to get deleted.
+
+
+
+
+Server Fixes:
+
+--Manually-triggered server object survey (objects around living players).
+
+--Handled case where ticket server check not required, and thus curse status of
+  player might be unknown (birth of a baby was blocked in that case, forcing
+  all players to be Eve).
+
+--Fixed bug in unblocked path detection that was allowing arrows to shoot
+  through walls on diagonals.  Thanks Tarr.
+
+--Different Eve lines speak different languages with bi-directional filter.
+
+--New Eve placement on natural spring grid, with auto-home-marker for Eve.
+
+--childSameRaceLikelihood now 100%.  Races with 3 members are not forced to
+  have children of the neighboring race.
+
+--Support for deadly objects that work on other family only.
+
+
+
+
 Version 221    2019-May-5
 
 --Server now reports death-age in GRAVE_OLD message, and client now displays
