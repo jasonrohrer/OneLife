@@ -203,8 +203,8 @@ static GridPos lastEvePrimaryLocation = {0,0};
 static SimpleVector<GridPos> recentlyUsedPrimaryEvePositions;
 // when they were place, so they can time out
 static SimpleVector<double> recentlyUsedPrimaryEvePositionTimes;
-// three hours
-static double recentlyUsedPrimaryEvePositionTimeout = 3600 * 3;
+// one hour
+static double recentlyUsedPrimaryEvePositionTimeout = 3600;
 
 static int eveHomeMarkerObjectID = -1;
 
