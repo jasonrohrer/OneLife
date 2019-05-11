@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 223    ???
+Version 223    2019-May-10
 
 --Fixed bug that was causing inherited home marker position (closest marker
   visible on screen during spawn) to get deleted.
