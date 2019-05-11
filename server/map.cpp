@@ -5179,19 +5179,39 @@ int getMapObjectRaw( int inX, int inY ) {
                 }
             else if( getObjectHeight( result ) < CELL_D ) {
                 // a short object should be here
-                // make sure there's not a tall object below already
+                // make sure there's not any semi-short objects below already
 
+                // this avoids vertical stacking of short objects
+                // and ensures that the map is sparse with short object
+                // clusters, even in very dense map areas
+                // (we don't want the floor tiled with berry bushes)
+
+                // this used to be an unintentional bug, but it was in place
+                // for a year, and we got used to it.
+
+                // when the bug was fixed, the map became way too dense
+                // in short-object areas
                 
+                // actually, fully replicate the bug for now
+                // only block short objects with objects to the south
+                // that extend above the tile midline
+
+                // So we can have clusters of very short objects, like stones
+                // but not less-short ones like berry bushes, rabbit holes, etc.
+
+                // use the old buggy "2 pixels" and "3 pixels" above the
+                // midline measure just to keep the map the same
+
                 // south
                 int sID = getBaseMap( inX, inY - 1 );
                         
-                if( sID > 0 && getObjectHeight( sID ) >= 1 * CELL_D ) {
+                if( sID > 0 && getObjectHeight( sID ) >= 2 ) {
                     return 0;
                     }
                 
                 int s2ID = getBaseMap( inX, inY - 2 );
                         
-                if( s2ID > 0 && getObjectHeight( s2ID ) >= 2 * CELL_D ) {
+                if( s2ID > 0 && getObjectHeight( s2ID ) >= 3 ) {
                     return 0;
                     }                
                 }

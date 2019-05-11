@@ -4,6 +4,15 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes:
+
+--Timeout to re-use previously-used Eve spring locations is 1 hour instead of 3.
+
+--New map, with bug fix, too dense.  Restored old map spacing.
+
+
+
+
 Version 223    2019-May-10
 
 --Fixed bug that was causing inherited home marker position (closest marker
