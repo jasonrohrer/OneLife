@@ -30,6 +30,8 @@ Server Fixes:
 --childSameRaceLikelihood now 100%.  Races with 3 members are not forced to
   have children of the neighboring race.
 
+--Support for deadly objects that work on other family only.
+
 
 
 

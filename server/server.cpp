@@ -10714,6 +10714,21 @@ int main() {
                                     
                                     char someoneHit = false;
 
+
+                                    if( hitPlayer != NULL &&
+                                        strstr( heldObj->description,
+                                                "otherFamilyOnly" ) ) {
+                                        // make sure victim is in
+                                        // different family
+                                        
+                                        if( hitPlayer->lineageEveID ==
+                                            nextPlayer->lineageEveID ) {
+                                            
+                                            hitPlayer = NULL;
+                                            }
+                                        }
+                                    
+
                                     if( hitPlayer != NULL ) {
                                         someoneHit = true;
                                         // break the connection with 
