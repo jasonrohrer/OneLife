@@ -12204,6 +12204,23 @@ int main() {
                                 // into a full clothing container!
                                 char couldHaveGoneIn = false;
 
+                                ObjectRecord *clickedClothing = NULL;
+                                TransRecord *clickedClothingTrans = NULL;
+                                if( m.i >= 0 &&
+                                    m.i < NUM_CLOTHING_PIECES ) {
+                                    clickedClothing =
+                                        clothingByIndex( nextPlayer->clothing,
+                                                         m.i );
+                                    
+                                    if( clickedClothing != NULL ) {
+                                        
+                                        clickedClothingTrans =
+                                            getPTrans( nextPlayer->holdingID,
+                                                       clickedClothing->id );
+                                        }
+                                    }
+                                
+
                                 if( targetPlayer == nextPlayer &&
                                     m.i >= 0 && 
                                     m.i < NUM_CLOTHING_PIECES &&
@@ -12212,6 +12229,34 @@ int main() {
                                         m.i,
                                         &couldHaveGoneIn) ) {
                                     // worked!
+                                    }
+                                // next case:  can what they're holding
+                                // be used to transform clothing?
+                                else if( m.i >= 0 &&
+                                         m.i < NUM_CLOTHING_PIECES &&
+                                         clickedClothing != NULL &&
+                                         clickedClothingTrans != NULL ) {
+                                    
+                                    // NOTE:
+                                    // this is a niave way of handling
+                                    // this case, and it doesn't deal
+                                    // with all kinds of possible complexities
+                                    // (like if the clothing decay time should
+                                    //  change, or number of slots change)
+                                    // Assuming that we won't add transitions
+                                    // for clothing with those complexities
+                                    // Works for removing sword
+                                    // from backpack
+
+                                    handleHoldingChange(
+                                        nextPlayer,
+                                        clickedClothingTrans->newActor );
+                                    
+                                    setClothingByIndex( 
+                                        &( nextPlayer->clothing ), 
+                                        m.i,
+                                        getObject( 
+                                            clickedClothingTrans->newTarget ) );
                                     }
                                 // next case, holding food
                                 // that couldn't be put into clicked clothing
@@ -12502,8 +12547,60 @@ int main() {
                                         &( targetPlayer->clothing.backpack );
                                     clothingSlotIndex = 5;
                                     }
-
+                                
+                                TransRecord *bareHandClothingTrans
+                                    = NULL;
+                                
                                 if( clothingSlot != NULL ) {
+                                    bareHandClothingTrans =
+                                        getPTrans( 0, ( *clothingSlot )->id );
+                                    }
+                                
+
+                                if( targetPlayer == nextPlayer &&
+                                    bareHandClothingTrans != NULL ) {
+                                    
+                                    // bare hand transforms clothing
+                                    
+                                    // this may not handle all possible cases
+                                    // correctly.  A naive implementation for
+                                    // now.  Works for removing sword
+                                    // from backpack
+
+                                    nextPlayer->holdingID =
+                                        bareHandClothingTrans->newActor;
+
+                                    handleHoldingChange( 
+                                        nextPlayer,
+                                        bareHandClothingTrans->newActor );
+                                    
+                                    nextPlayer->heldOriginValid = 0;
+                                    nextPlayer->heldOriginX = 0;
+                                    nextPlayer->heldOriginY = 0;
+                                    
+
+                                    if( bareHandClothingTrans->newTarget > 0 ) {
+                                        *clothingSlot = 
+                                            getObject( bareHandClothingTrans->
+                                                       newTarget );
+                                        }
+                                    else {
+                                        *clothingSlot = NULL;
+                                        
+                                        int ind = clothingSlotIndex;
+                                        
+                                        targetPlayer->clothingEtaDecay[ind] = 0;
+                                        
+                                        targetPlayer->clothingContained[ind].
+                                            deleteAll();
+                                        
+                                        targetPlayer->
+                                            clothingContainedEtaDecays[ind].
+                                            deleteAll();
+                                        }
+                                    }
+                                else if( clothingSlot != NULL ) {
+                                    // bare hand removes clothing
                                     
                                     int ind = clothingSlotIndex;
                                     
