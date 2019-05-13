@@ -10,6 +10,9 @@ Server Fixes:
 
 --New map, with bug fix, too dense.  Restored old map spacing.
 
+--Fixed bug in Eve grid placement that caused resorting to old spriral.
+  Fixes #303
+
 
 
 

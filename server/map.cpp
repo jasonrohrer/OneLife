@@ -6926,7 +6926,9 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
             
             int r;
             
-            for( r=1; r<5; r++ ) {
+            int maxSearchRadius = 10;
+
+            for( r=1; r<maxSearchRadius; r++ ) {
                 
                 for( int y=-r; y<=r; y++ ) {
                     for( int x=-r; x<=r; x++ ) {
@@ -6936,9 +6938,6 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
                         tryP.y += y * evePrimaryLocSpacing;
                         
                         char existsAlready = false;
-                        
-                        printf( "%d recenly used\n",
-                                recentlyUsedPrimaryEvePositions.size() );
 
                         for( int p=0; p<recentlyUsedPrimaryEvePositions.size();
                              p++ ) {
@@ -6951,7 +6950,7 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
                                     deleteElement( p );
                                 recentlyUsedPrimaryEvePositionTimes.
                                     deleteElement( p );
-                                printf( "Timed out!\n" );
+
                                 p--;
                                 continue;
                                 }
@@ -6962,27 +6961,21 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
                             
                             if( equal( pos, tryP ) ) {
                                 existsAlready = true;
-                                printf( "exists already\n" );
                                 break;
                                 }
                             }
                         
                         if( existsAlready ) {
-                            printf( "really exists already, skipping %d,%d\n",
-                                    tryP.x, tryP.y );
-                            
                             continue;
                             }
                         else {
-                            printf( "does not exists already, checking %d,%d\n",
-                                    tryP.x, tryP.y );
                             }
                         
                                      
                         int mapID = getMapObject( tryP.x, tryP.y );
 
                         if( mapID == evePrimaryLocObjectID ) {
-                            printf( "Found primary at %d,%d\n",
+                            printf( "Found primary Eve object at %d,%d\n",
                                     tryP.x, tryP.y );
                             found = true;
                             foundP = tryP;
@@ -6990,7 +6983,7 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
                         else if( eveSecondaryLocObjectIDs.getElementIndex( 
                                      mapID ) != -1 ) {
                             // a secondary ID, allowed
-                            printf( "Found secondary at %d,%d\n",
+                            printf( "Found secondary Eve object at %d,%d\n",
                                     tryP.x, tryP.y );
                             found = true;
                             foundP = tryP;
@@ -7003,18 +6996,22 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
                 }
 
             if( found ) {
-                printf( "Found = true!\n" );
-                
-                if( r > 5 ) {
-                    // exhausted window around last eve center
+
+                if( r >= maxSearchRadius / 2 ) {
+                    // exhausted central window around last eve center
                     // save this as the new eve center
                     // next time, we'll search a window around that
+
+                    AppLog::infoF( "Eve pos %d,%d not in center of "
+                                   "grid window, recentering window for "
+                                   "next time", foundP.x, foundP.y );
+
                     lastEvePrimaryLocation = foundP;
                     }
 
-                printf( "Sticking Eve at unused primary grid pos "
-                        "of %d,%d\n",
-                        foundP.x, foundP.y );
+                AppLog::infoF( "Sticking Eve at unused primary grid pos "
+                               "of %d,%d\n",
+                               foundP.x, foundP.y );
                 
                 recentlyUsedPrimaryEvePositions.push_back( foundP );
                 recentlyUsedPrimaryEvePositionTimes.push_back( curTime );
@@ -7040,6 +7037,10 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
 
                 // exact placement, not radius
                 return;
+                }
+            else {
+                AppLog::info( "Unable to find location for Eve "
+                              "on primary grid." );
                 }
             }
         
