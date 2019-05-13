@@ -6390,8 +6390,12 @@ char removeFromContainerToHold( LiveObject *inPlayer,
 
 
 
+// outCouldHaveGoneIn, if non-NULL, is set to TRUE if clothing
+// could potentialy contain what we're holding (even if clothing too full
+// to contain it)
 static char addHeldToClothingContainer( LiveObject *inPlayer, 
-                                        int inC ) {    
+                                        int inC,
+                                        char *outCouldHaveGoneIn = NULL ) {    
     // drop into own clothing
     ObjectRecord *cObj = 
         clothingByIndex( 
@@ -6413,6 +6417,12 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
             getObject( inPlayer->holdingID )->
             containSize;
     
+        
+        if( containSize <= slotSize &&
+            outCouldHaveGoneIn != NULL ) {
+            *outCouldHaveGoneIn = true;
+            }
+
         if( oldNum < cObj->numSlots &&
             containSize <= slotSize ) {
             // room
@@ -12188,17 +12198,26 @@ int main() {
                                 // player clicked on clothing
                                 // try adding held into clothing, but if
                                 // that fails go on to other cases
+
+                                // except do not force them to eat
+                                // something that could have gone
+                                // into a full clothing container!
+                                char couldHaveGoneIn = false;
+
                                 if( targetPlayer == nextPlayer &&
                                     m.i >= 0 && 
                                     m.i < NUM_CLOTHING_PIECES &&
-                                    addHeldToClothingContainer( nextPlayer,
-                                                                m.i ) ) {
+                                    addHeldToClothingContainer( 
+                                        nextPlayer,
+                                        m.i,
+                                        &couldHaveGoneIn) ) {
                                     // worked!
                                     }
                                 // next case, holding food
                                 // that couldn't be put into clicked clothing
                                 else if( obj->foodValue > 0 && 
-                                         targetPlayer->foodStore < cap ) {
+                                         targetPlayer->foodStore < cap &&
+                                         ! couldHaveGoneIn ) {
                                     
                                     targetPlayer->justAte = true;
                                     targetPlayer->justAteID = 
