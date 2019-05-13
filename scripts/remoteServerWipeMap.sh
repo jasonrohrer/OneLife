@@ -44,6 +44,8 @@ rm ~/checkout/OneLife/server/eve.db
 
 rm ~/checkout/OneLife/server/recentPlacements.txt
 rm ~/checkout/OneLife/server/eveRadius.txt
+rm ~/checkout/OneLife/server/mapDummyRecall.txt
+rm ~/checkout/OneLife/server/lastEveLocation.txt
 
 
 
