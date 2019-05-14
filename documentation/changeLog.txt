@@ -24,6 +24,9 @@ Server Fixes:
   multi-speech message server frame.  All speech messages from the frame
   should be sent in one message.
 
+--Lineage server catches character name searches that match too many names, to
+  avoid overly long query times.
+
 
 
 

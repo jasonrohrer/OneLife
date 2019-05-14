@@ -1568,6 +1568,9 @@ function ls_frontPage() {
             }
         }
     
+
+    $tooManyNameMatches = false;
+    $numNameMatches = 0;
     
 
     if( $email_sha1 != "" ) {
@@ -1592,6 +1595,20 @@ function ls_frontPage() {
         $filterClause = " WHERE lives.name LIKE '$nameFilter%' ";
         $filter = $nameFilter;
         $customFilterSet = true;
+
+
+        // make sure there aren't too many
+        global $tableNamePrefix;
+        $query = "SELECT COUNT(*) from $tableNamePrefix"."lives as lives ".
+            "$filterClause";
+
+        $result = ls_queryDatabase( $query );
+        $numNameMatches = ls_mysqli_result( $result, 0, 0 );
+
+        if( $numNameMatches > 1000 ) {
+            $filterClause = " WHERE 1 ";
+            $tooManyNameMatches = true;
+            }
         }
 
     
@@ -1627,7 +1644,12 @@ function ls_frontPage() {
         $rootFilterClause = " WHERE generation = 1 ";
         }
 
-                 
+
+    if( $tooManyNameMatches ) {
+        echo "<br><br>Too many matches ($numNameMatches) for ".
+            "name '$nameFilter'<br><br>";
+        }
+    
     
     echo "<table border=0 cellpadding=20>";
 
