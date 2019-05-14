@@ -20,6 +20,10 @@ Server Fixes:
   transitions to allow sword to be added and removed from backpack in a more
   visible spot (not contained).
 
+--Fixed rare server crash when a player connection breaks in middle of a
+  multi-speech message server frame.  All speech messages from the frame
+  should be sent in one message.
+
 
 
 
