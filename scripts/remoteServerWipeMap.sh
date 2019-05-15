@@ -46,7 +46,7 @@ rm ~/checkout/OneLife/server/recentPlacements.txt
 rm ~/checkout/OneLife/server/eveRadius.txt
 rm ~/checkout/OneLife/server/mapDummyRecall.txt
 rm ~/checkout/OneLife/server/lastEveLocation.txt
-
+echo "0,0" > ~/checkout/OneLife/server/shutdownLongLineagePos.txt
 
 
 echo "" 
