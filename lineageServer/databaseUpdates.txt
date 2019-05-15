@@ -67,3 +67,6 @@ ALTER TABLE lineageServer_lives ADD INDEX ( lineage_depth, death_time );
 
 
 UPDATE lineageServer_lives set lineage_depth = deepest_descendant_generation - generation WHERE deepest_descendant_generation != -1 and generation != -1;
+
+
+ALTER TABLE lineageServer_lives ADD INDEX eve_life_id ( eve_life_id );

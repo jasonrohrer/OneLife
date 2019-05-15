@@ -357,6 +357,7 @@ function ls_setupDatabase() {
             // 0 for Eve
             // the Eve of this family line
             "eve_life_id INT NOT NULL,".
+            "INDEX( eve_life_id ),".
             // both -1 if not set
             // 0 if set and empty
             "deepest_descendant_generation INT NOT NULL,".
