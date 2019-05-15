@@ -36,6 +36,7 @@ Server Fixes:
 --Map wiping script now checks ~/skipMapWipe.txt file, so certain servers can
   be flagged as never wiping.
 
+--More dense Eve packing by instant-reusing spring sites for dead Eve lineages.
 
 
 

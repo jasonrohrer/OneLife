@@ -201,6 +201,7 @@ static SimpleVector<int> eveSecondaryLocObjectIDs;
 static GridPos lastEvePrimaryLocation = {0,0};
 
 static SimpleVector<GridPos> recentlyUsedPrimaryEvePositions;
+static SimpleVector<int> recentlyUsedPrimaryEvePositionPlayerIDs;
 // when they were place, so they can time out
 static SimpleVector<double> recentlyUsedPrimaryEvePositionTimes;
 // one hour
@@ -2474,6 +2475,7 @@ char initMap() {
     eveSecondaryLocObjectIDs.deleteAll();
     recentlyUsedPrimaryEvePositionTimes.deleteAll();
     recentlyUsedPrimaryEvePositions.deleteAll();
+    recentlyUsedPrimaryEvePositionPlayerIDs.deleteAll();
     
 
     initDBCaches();
@@ -6881,7 +6883,11 @@ doublePair computeRecentCampAve( int *outNumPosFound ) {
 
 
 
-void getEvePosition( const char *inEmail, int *outX, int *outY, 
+extern char doesEveLineExist( int inEveID );
+
+
+
+void getEvePosition( const char *inEmail, int inID, int *outX, int *outY, 
                      char inAllowRespawn ) {
 
     int currentEveRadius = eveRadius;
@@ -6928,6 +6934,40 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
             
             int maxSearchRadius = 10;
 
+
+            // first, clean any that have timed out
+            // or gone extinct
+            for( int p=0; p<recentlyUsedPrimaryEvePositions.size();
+                 p++ ) {
+
+                char reusePos = false;
+                
+                if( curTime -
+                    recentlyUsedPrimaryEvePositionTimes.
+                    getElementDirect( p )
+                    > recentlyUsedPrimaryEvePositionTimeout ) {
+                    // timed out
+                    reusePos = true;
+                    }
+                else if( ! doesEveLineExist( 
+                             recentlyUsedPrimaryEvePositionPlayerIDs.
+                             getElementDirect( p ) ) ) {
+                    // eve line extinct
+                    reusePos = true;
+                    }
+
+                if( reusePos ) {
+                    recentlyUsedPrimaryEvePositions.
+                        deleteElement( p );
+                    recentlyUsedPrimaryEvePositionTimes.
+                        deleteElement( p );
+                    recentlyUsedPrimaryEvePositionPlayerIDs.
+                        deleteElement( p );
+                    p--;
+                    }
+                }
+
+
             for( r=1; r<maxSearchRadius; r++ ) {
                 
                 for( int y=-r; y<=r; y++ ) {
@@ -6941,19 +6981,6 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
 
                         for( int p=0; p<recentlyUsedPrimaryEvePositions.size();
                              p++ ) {
-                            if( curTime -
-                                recentlyUsedPrimaryEvePositionTimes.
-                                getElementDirect( p )
-                                > recentlyUsedPrimaryEvePositionTimeout ) {
-                                // timed out
-                                recentlyUsedPrimaryEvePositions.
-                                    deleteElement( p );
-                                recentlyUsedPrimaryEvePositionTimes.
-                                    deleteElement( p );
-
-                                p--;
-                                continue;
-                                }
 
                             GridPos pos =
                                 recentlyUsedPrimaryEvePositions.
@@ -7015,7 +7042,8 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
                 
                 recentlyUsedPrimaryEvePositions.push_back( foundP );
                 recentlyUsedPrimaryEvePositionTimes.push_back( curTime );
-
+                recentlyUsedPrimaryEvePositionPlayerIDs.push_back( inID );
+                
                 // stick Eve directly to south
                 *outX = foundP.x;
                 *outY = foundP.y - 1;
@@ -7547,7 +7575,7 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
     
     int eveX, eveY;
     
-    getEvePosition( "dummyPlaneCrashEmail@test.com", &eveX, &eveY, false );
+    getEvePosition( "dummyPlaneCrashEmail@test.com", 0, &eveX, &eveY, false );
     
     GridPos returnVal = { eveX, eveY };
     

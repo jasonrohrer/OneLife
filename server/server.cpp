@@ -529,6 +529,20 @@ SimpleVector<LiveObject> tutorialLoadingPlayers;
 
 
 
+char doesEveLineExist( int inEveID ) {
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( ( ! o->error ) && o->lineageEveID == inEveID ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
+
 typedef struct DeadObject {
         int id;
         
@@ -5419,7 +5433,8 @@ int processLoggedInPlayer( Socket *inSock,
 
         // else starts at civ outskirts (lone Eve)
         int startX, startY;
-        getEvePosition( newObject.email, &startX, &startY, allowEveRespawn );
+        getEvePosition( newObject.email, 
+                        newObject.id, &startX, &startY, allowEveRespawn );
 
         if( inCurseStatus.curseLevel > 0 ) {
             // keep cursed players away
