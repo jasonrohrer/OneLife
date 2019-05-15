@@ -27,6 +27,9 @@ Server Fixes:
 --Lineage server catches character name searches that match too many names, to
   avoid overly long query times.
 
+--Map wiping script now checks ~/skipMapWipe.txt file, so certain servers can
+  be flagged as never wiping.
+
 
 
 
