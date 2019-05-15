@@ -515,9 +515,20 @@ char *getRelationName( SimpleVector<int> *ourLin,
     buffer.appendElementString( translate( "your" ) );
     buffer.appendElementString( " " );
 
-    for( int i=0; i<numGreats; i++ ) {
-        buffer.appendElementString( translate( "great" ) );
+
+    if( numGreats <= 4 ) {    
+        for( int i=0; i<numGreats; i++ ) {
+            buffer.appendElementString( translate( "great" ) );
+            }
         }
+    else {
+        char *greatCount = autoSprintf( "%dX %s", 
+                                        numGreats, translate( "great") );
+        buffer.appendElementString( greatCount );
+        delete [] greatCount;
+        }
+    
+    
     if( grand ) {
         buffer.appendElementString( translate( "grand" ) );
         }
