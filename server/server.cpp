@@ -13151,6 +13151,7 @@ int main() {
                 
                 decrementLanguageCount( nextPlayer->lineageEveID );
                 
+                removePlayerLanguageMaps( nextPlayer->id );
                 
                 if( nextPlayer->heldByOther ) {
                     
@@ -16204,23 +16205,34 @@ int main() {
                                     getLiveObject( speakerID );
                                 
                                 int listenerEveID = nextPlayer->lineageEveID;
-
+                                int listenerID = nextPlayer->id;
+                                double listenerAge = computeAge( nextPlayer );
+                                
                                 int speakerEveID;
+                                double speakerAge;
                                 
                                 if( speakerObj != NULL ) {
                                     speakerEveID = speakerObj->lineageEveID;
+                                    speakerID = speakerObj->id;
+                                    speakerAge = computeAge( speakerObj );
                                     }
                                 else {
                                     // speaker dead, doesn't matter what we
                                     // do
                                     speakerEveID = listenerEveID;
+                                    speakerID = listenerID;
+                                    speakerAge = listenerAge;
                                     }
                                 
                                 char *translatedPhrase =
                                     mapLanguagePhrase( 
                                         newSpeechPhrases.getElementDirect( u ),
                                         speakerEveID,
-                                        listenerEveID );
+                                        listenerEveID,
+                                        speakerID,
+                                        listenerID,
+                                        speakerAge,
+                                        listenerAge );
                                         
                                 int curseFlag =
                                     newSpeechCurseFlags.getElementDirect( u );

@@ -43,6 +43,8 @@ Server Fixes:
 
 --Fixed major array-bounds bug if you die and drop something in a crowded area.
 
+--Babies can now learn other languages that are spoken around them.
+
 
 
 
