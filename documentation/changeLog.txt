@@ -13,6 +13,7 @@ Version 227    ???
   away, maybe way off screen, than before.
 
 
+
 Server Fixes:
 
 --Timeout to re-use previously-used Eve spring locations is 1 hour instead of 3.
@@ -61,6 +62,11 @@ Server Fixes:
 --Support for special DIE baby grave, on ground or held, that can decay faster.
 
 --If you put a sword-backpack on a baby, they can no longer draw the sword.
+
+--Eve grid search centered around some living person, chosen at random.
+  Becasue big towns have more people, they will end up with more Eves around
+  them.
+
 
 
 

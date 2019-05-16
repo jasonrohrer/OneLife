@@ -6888,6 +6888,7 @@ extern char doesEveLineExist( int inEveID );
 
 
 void getEvePosition( const char *inEmail, int inID, int *outX, int *outY, 
+                     SimpleVector<GridPos> *inOtherPeoplePos,
                      char inAllowRespawn ) {
 
     int currentEveRadius = eveRadius;
@@ -6923,8 +6924,24 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         if( eveLocationUsage >= maxEveLocationUsage
             && evePrimaryLocObjectID > 0 ) {
             
+            GridPos centerP = lastEvePrimaryLocation;
+            
+            if( inOtherPeoplePos->size() > 0 ) {
+                
+                centerP = inOtherPeoplePos->getElementDirect( 
+                    randSource.getRandomBoundedInt(
+                        0, inOtherPeoplePos->size() - 1 ) );
+                
+                // round to nearest whole spacing multiple
+                centerP.x /= evePrimaryLocSpacing;
+                centerP.y /= evePrimaryLocSpacing;
+                
+                centerP.x *= evePrimaryLocSpacing;
+                centerP.y *= evePrimaryLocSpacing;
+                }
+            
 
-            GridPos tryP = lastEvePrimaryLocation;
+            GridPos tryP = centerP;
             char found = false;
             GridPos foundP = tryP;
             
@@ -6972,7 +6989,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                 
                 for( int y=-r; y<=r; y++ ) {
                     for( int x=-r; x<=r; x++ ) {
-                        tryP = lastEvePrimaryLocation;
+                        tryP = centerP;
                         
                         tryP.x += x * evePrimaryLocSpacing;
                         tryP.y += y * evePrimaryLocSpacing;
@@ -7062,8 +7079,17 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                 setMapObject( *outX, *outY - 1, 0 );
                 setMapObject( *outX, *outY - 2, 0 );
                 setMapObject( *outX, *outY - 3, 0 );
+                
+                
+                // finally, prevent Eve entrapment by sticking
+                // her at a random location around the spring
 
-                // exact placement, not radius
+                doublePair v = { 14, 0 };
+                v = rotate( v, randSource.getRandomBoundedInt( 0, 2 * M_PI ) );
+                
+                *outX += v.x;
+                *outY += v.y;
+                
                 return;
                 }
             else {
@@ -7574,8 +7600,11 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
     // crash them at next Eve location
     
     int eveX, eveY;
+
+    SimpleVector<GridPos> otherPeoplePos;
     
-    getEvePosition( "dummyPlaneCrashEmail@test.com", 0, &eveX, &eveY, false );
+    getEvePosition( "dummyPlaneCrashEmail@test.com", 0, &eveX, &eveY, 
+                    &otherPeoplePos, false );
     
     GridPos returnVal = { eveX, eveY };
     
