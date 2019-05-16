@@ -41,6 +41,7 @@ Server Fixes:
 --Lineage ban now lasts 1.5 hours of living in game, or 3 hours max, even if
   not living in game (used to be 24 hours if not living in game).
 
+--Fixed major array-bounds bug if you die and drop something in a crowded area.
 
 
 

@@ -13319,7 +13319,7 @@ int main() {
                     int n = 0;
                     GridPos centerDropPos = dropPos;
                     
-                    while( oldObject != 0 && n <= 4 ) {
+                    while( oldObject != 0 && n < 4 ) {
                         
                         // don't combine graves
                         if( ! isGrave( oldObject ) ) {
