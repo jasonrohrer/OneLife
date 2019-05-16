@@ -24,6 +24,7 @@ void removePlayerLanguageMaps( int inPlayerID );
 char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
                          int inPlayerIDA, int inPlayerIDB,
                          // ages in years
-                         double inAgeA, double inAgeB );
+                         double inAgeA, double inAgeB,
+                         int inParentIDA, int inParentIDB );
 
 

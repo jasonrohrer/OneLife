@@ -16207,14 +16207,17 @@ int main() {
                                 int listenerEveID = nextPlayer->lineageEveID;
                                 int listenerID = nextPlayer->id;
                                 double listenerAge = computeAge( nextPlayer );
+                                int listenerParentID = nextPlayer->parentID;
                                 
                                 int speakerEveID;
                                 double speakerAge;
+                                int speakerParentID = -1;
                                 
                                 if( speakerObj != NULL ) {
                                     speakerEveID = speakerObj->lineageEveID;
                                     speakerID = speakerObj->id;
                                     speakerAge = computeAge( speakerObj );
+                                    speakerParentID = speakerObj->parentID;
                                     }
                                 else {
                                     // speaker dead, doesn't matter what we
@@ -16232,7 +16235,9 @@ int main() {
                                         speakerID,
                                         listenerID,
                                         speakerAge,
-                                        listenerAge );
+                                        listenerAge,
+                                        speakerParentID,
+                                        listenerParentID );
                                         
                                 int curseFlag =
                                     newSpeechCurseFlags.getElementDirect( u );

@@ -672,7 +672,8 @@ static LanguageLearningMap blankLearningMap;
 // if young enough to learn, and no map exists, returns fresh map
 static LanguageLearningMap *getPlayerLearningMap( int inEveIDA, int inEveIDB,
                                                   int inPlayerID,
-                                                  double inPlayerAge ) {
+                                                  double inPlayerAge,
+                                                  int inParentID = -1 ) {
     
     PlayerLearningRecord *playerRec = NULL;
     
@@ -715,10 +716,34 @@ static LanguageLearningMap *getPlayerLearningMap( int inEveIDA, int inEveIDB,
             return NULL;
             }
 
+        // copy from parent, if it exists
+        LanguageLearningMap *parentMap = NULL;
+        
+        if( inParentID != -1 ) {
+            // NULL if parent dead or parent never learned this language
+            parentMap = 
+                getPlayerLearningMap( inEveIDA, inEveIDB,
+                                      inParentID,
+                                      // dummy parent age
+                                      // don't allow creation of new parent
+                                      // map here
+                                      maxLanguageLearningAge + 1 );
+            }
+        
+
         // add a blank one
         map = new LanguageLearningMap;
         initMapping( map, inEveIDA, inEveIDB, inPlayerID );
-        
+
+        if( parentMap != NULL ) {
+            
+            // copy parent's map            
+            for( int s=0; s<NUM_CLUSTER_SETS; s++ ) {    
+                memcpy( map->allMappings[s], parentMap->allMappings[s],
+                        allClusterSizes[s] );
+                }
+            }
+
         playerRec->learningMaps.push_back( map );
         }
     
@@ -901,7 +926,8 @@ void stepLanguage() {
 // handles punctuation, etc.
 char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
                          int inPlayerIDA, int inPlayerIDB,
-                         double inAgeA, double inAgeB ) {
+                         double inAgeA, double inAgeB,
+                         int inParentIDA, int inParentIDB ) {
 
     if( inEveIDA == inEveIDB ) {
         // self, no translation
@@ -920,10 +946,12 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
     // these can be NULL
     LanguageLearningMap *learnA = getPlayerLearningMap( lookupEveID, otherEveID,
                                                         inPlayerIDA,
-                                                        inAgeA );
+                                                        inAgeA,
+                                                        inParentIDA );
     LanguageLearningMap *learnB = getPlayerLearningMap( lookupEveID, otherEveID,
                                                         inPlayerIDB,
-                                                        inAgeB );
+                                                        inAgeB,
+                                                        inParentIDB );
     
     
     // only B, the listener, can ever learn more

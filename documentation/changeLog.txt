@@ -43,8 +43,12 @@ Server Fixes:
 
 --Fixed major array-bounds bug if you die and drop something in a crowded area.
 
---Babies can now learn other languages that are spoken around them.
+--Babies can now learn other languages that are spoken around them before age 3.
 
+--Babies inherit whatever portion of another language their mother learned
+  while she was a baby.  Thus, accents disappear trans-generationally,
+  assuming that each new baby is exposed to even more of the language before
+  age 3.
 
 
 
