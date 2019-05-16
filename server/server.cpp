@@ -9586,12 +9586,12 @@ int main() {
                             adult = getLiveObject( holdingAdultID );
                             }
 
+                        int babyBonesID = 
+                            SettingsManager::getIntSetting( 
+                                "babyBones", -1 );
+                        
                         if( adult != NULL ) {
                             
-                            int babyBonesID = 
-                                SettingsManager::getIntSetting( 
-                                    "babyBones", -1 );
-
                             if( babyBonesID != -1 ) {
                                 ObjectRecord *babyBonesO = 
                                     getObject( babyBonesID );
@@ -9699,7 +9699,30 @@ int main() {
                                     }
                                 }
                             }
-                        // else let normal grave appear for this dead baby
+                        else {
+                            
+                            int babyBonesGroundID = 
+                                SettingsManager::getIntSetting( 
+                                    "babyBonesGround", -1 );
+                            
+                            if( babyBonesGroundID != -1 ) {
+                                nextPlayer->customGraveID = babyBonesGroundID;
+                                }
+                            else if( babyBonesID != -1 ) {
+                                // else figure out what the held baby bones
+                                // become when dropped on ground
+                                TransRecord *groundTrans =
+                                    getPTrans( babyBonesID, -1 );
+                                
+                                if( groundTrans != NULL &&
+                                    groundTrans->newTarget > 0 ) {
+                                    
+                                    nextPlayer->customGraveID = 
+                                        groundTrans->newTarget;
+                                    }
+                                }
+                            // else just use standard grave
+                            }
                         }
                     }
                 else if( m.type == GRAVE ) {

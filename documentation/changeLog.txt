@@ -55,6 +55,8 @@ Server Fixes:
 
 --Fixed bug that prevented eating when clicking on clothing with no slots.
 
+--Support for special DIE baby grave, on ground or held, that can decay faster.
+
 
 
 
