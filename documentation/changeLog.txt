@@ -50,6 +50,9 @@ Server Fixes:
   assuming that each new baby is exposed to even more of the language before
   age 3.
 
+--Upped the learning window to age 6.  Three years with mom, three years 
+  wandering the village to hear others speaking.
+
 
 
 Version 223    2019-May-10
