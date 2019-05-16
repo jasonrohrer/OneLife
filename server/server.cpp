@@ -12256,6 +12256,18 @@ int main() {
                                         clickedClothingTrans =
                                             getPTrans( nextPlayer->holdingID,
                                                        clickedClothing->id );
+                                        
+                                        if( clickedClothingTrans != NULL ) {
+                                            int na =
+                                                clickedClothingTrans->newActor;
+                                            
+                                            if( na > 0 &&
+                                                getObject( na )->minPickupAge >
+                                                computeAge( nextPlayer ) ) {
+                                                // too young for trans
+                                                clickedClothingTrans = NULL;
+                                                }
+                                            }
                                         }
                                     }
                                 
@@ -12593,6 +12605,18 @@ int main() {
                                 if( clothingSlot != NULL ) {
                                     bareHandClothingTrans =
                                         getPTrans( 0, ( *clothingSlot )->id );
+                                    
+                                    if( bareHandClothingTrans != NULL ) {
+                                        int na =
+                                            bareHandClothingTrans->newActor;
+                                            
+                                        if( na > 0 &&
+                                            getObject( na )->minPickupAge >
+                                            computeAge( nextPlayer ) ) {
+                                            // too young for trans
+                                            bareHandClothingTrans = NULL;
+                                            }
+                                        }
                                     }
                                 
 

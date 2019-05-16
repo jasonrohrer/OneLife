@@ -57,6 +57,8 @@ Server Fixes:
 
 --Support for special DIE baby grave, on ground or held, that can decay faster.
 
+--If you put a sword-backpack on a baby, they can no longer draw the sword.
+
 
 
 
