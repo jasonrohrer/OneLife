@@ -11856,10 +11856,13 @@ void LivingLifePage::step() {
                     int closestX = 0;
                     int closestY = 0;
                     
-                    // only if marker starts on birth screen
+                    // only if marker starts on birth map chunk
                     
                     // use distance squared here, no need for sqrt
-                    double closestDist = 5 * 5;
+
+                    // rough estimate of radius of birth map chunk
+                    // this allows markers way off the screen, but so what?
+                    double closestDist = 16 * 16;
 
                     int mapCenterY = y + sizeY / 2;
                     int mapCenterX = x + sizeX / 2;
