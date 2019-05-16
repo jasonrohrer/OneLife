@@ -415,7 +415,7 @@ static char *remapWordNew( char *inWord,
         
         if( loc != NULL &&
             strlen( clust ) ==
-            ( remainLen - ( loc - wordWorking ) ) ) {
+            (unsigned int)( ( remainLen - ( loc - wordWorking ) ) ) ) {
             
             // match, and at end of word
             endClusterIndex = c;
