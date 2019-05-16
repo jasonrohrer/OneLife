@@ -53,6 +53,9 @@ Server Fixes:
 --Upped the learning window to age 6.  Three years with mom, three years 
   wandering the village to hear others speaking.
 
+--Fixed bug that prevented eating when clicking on clothing with no slots.
+
+
 
 
 Version 223    2019-May-10

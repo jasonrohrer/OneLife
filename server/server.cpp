@@ -6434,6 +6434,7 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
     
         
         if( containSize <= slotSize &&
+            cObj->numSlots > 0 &&
             outCouldHaveGoneIn != NULL ) {
             *outCouldHaveGoneIn = true;
             }
