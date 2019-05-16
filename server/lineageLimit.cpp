@@ -97,6 +97,14 @@ void primeLineageTest( int inNumLivePlayers ) {
         return;
         }
 
+
+    // keep adjusting stale timeout relative to max hours
+    // instead of 24 hours, you can live in the game 1.5 hours, or
+    // take a break from the game for 3 hours (as an example).
+    staleTimeout = hours * 2 * 3600;
+    staleTime = Time::getCurrentTime() - staleTimeout;
+
+
     testSkipped = false;
 
     otherLineRequiredYears = ( hours * 3600 ) / secondsPerYear;
