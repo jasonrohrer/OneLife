@@ -13370,6 +13370,13 @@ int main() {
                     deathID = nextPlayer->customGraveID;
                     }
 
+                char deathMarkerHasSlots = false;
+                
+                if( deathID > 0 ) {
+                    deathMarkerHasSlots = 
+                        ( getObject( deathID )->numSlots > 0 );
+                    }
+
                 int oldObject = getMapObject( dropPos.x, dropPos.y );
                 
                 SimpleVector<int> oldContained;
@@ -13390,7 +13397,8 @@ int main() {
                         if( ! isGrave( oldObject ) ) {
                             ObjectRecord *r = getObject( oldObject );
                             
-                            if( r->numSlots == 0 && ! r->permanent 
+                            if( deathMarkerHasSlots &&
+                                r->numSlots == 0 && ! r->permanent 
                                 && ! r->rideable ) {
                                 
                                 // found a containble object
