@@ -17,5 +17,14 @@ void decrementLanguageCount( int inEveID );
 void stepLanguage();
 
 
+void removePlayerLanguageMaps( int inPlayerID );
+
+
 // handles punctuation, etc.
-char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB );
+char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
+                         int inPlayerIDA, int inPlayerIDB,
+                         // ages in years
+                         double inAgeA, double inAgeB,
+                         int inParentIDA, int inParentIDB );
+
+

@@ -201,10 +201,11 @@ static SimpleVector<int> eveSecondaryLocObjectIDs;
 static GridPos lastEvePrimaryLocation = {0,0};
 
 static SimpleVector<GridPos> recentlyUsedPrimaryEvePositions;
+static SimpleVector<int> recentlyUsedPrimaryEvePositionPlayerIDs;
 // when they were place, so they can time out
 static SimpleVector<double> recentlyUsedPrimaryEvePositionTimes;
-// three hours
-static double recentlyUsedPrimaryEvePositionTimeout = 3600 * 3;
+// one hour
+static double recentlyUsedPrimaryEvePositionTimeout = 3600;
 
 static int eveHomeMarkerObjectID = -1;
 
@@ -2474,6 +2475,7 @@ char initMap() {
     eveSecondaryLocObjectIDs.deleteAll();
     recentlyUsedPrimaryEvePositionTimes.deleteAll();
     recentlyUsedPrimaryEvePositions.deleteAll();
+    recentlyUsedPrimaryEvePositionPlayerIDs.deleteAll();
     
 
     initDBCaches();
@@ -5179,19 +5181,39 @@ int getMapObjectRaw( int inX, int inY ) {
                 }
             else if( getObjectHeight( result ) < CELL_D ) {
                 // a short object should be here
-                // make sure there's not a tall object below already
+                // make sure there's not any semi-short objects below already
 
+                // this avoids vertical stacking of short objects
+                // and ensures that the map is sparse with short object
+                // clusters, even in very dense map areas
+                // (we don't want the floor tiled with berry bushes)
+
+                // this used to be an unintentional bug, but it was in place
+                // for a year, and we got used to it.
+
+                // when the bug was fixed, the map became way too dense
+                // in short-object areas
                 
+                // actually, fully replicate the bug for now
+                // only block short objects with objects to the south
+                // that extend above the tile midline
+
+                // So we can have clusters of very short objects, like stones
+                // but not less-short ones like berry bushes, rabbit holes, etc.
+
+                // use the old buggy "2 pixels" and "3 pixels" above the
+                // midline measure just to keep the map the same
+
                 // south
                 int sID = getBaseMap( inX, inY - 1 );
                         
-                if( sID > 0 && getObjectHeight( sID ) >= 1 * CELL_D ) {
+                if( sID > 0 && getObjectHeight( sID ) >= 2 ) {
                     return 0;
                     }
                 
                 int s2ID = getBaseMap( inX, inY - 2 );
                         
-                if( s2ID > 0 && getObjectHeight( s2ID ) >= 2 * CELL_D ) {
+                if( s2ID > 0 && getObjectHeight( s2ID ) >= 3 ) {
                     return 0;
                     }                
                 }
@@ -6861,7 +6883,12 @@ doublePair computeRecentCampAve( int *outNumPosFound ) {
 
 
 
-void getEvePosition( const char *inEmail, int *outX, int *outY, 
+extern char doesEveLineExist( int inEveID );
+
+
+
+void getEvePosition( const char *inEmail, int inID, int *outX, int *outY, 
+                     SimpleVector<GridPos> *inOtherPeoplePos,
                      char inAllowRespawn ) {
 
     int currentEveRadius = eveRadius;
@@ -6897,8 +6924,24 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
         if( eveLocationUsage >= maxEveLocationUsage
             && evePrimaryLocObjectID > 0 ) {
             
+            GridPos centerP = lastEvePrimaryLocation;
+            
+            if( inOtherPeoplePos->size() > 0 ) {
+                
+                centerP = inOtherPeoplePos->getElementDirect( 
+                    randSource.getRandomBoundedInt(
+                        0, inOtherPeoplePos->size() - 1 ) );
+                
+                // round to nearest whole spacing multiple
+                centerP.x /= evePrimaryLocSpacing;
+                centerP.y /= evePrimaryLocSpacing;
+                
+                centerP.x *= evePrimaryLocSpacing;
+                centerP.y *= evePrimaryLocSpacing;
+                }
+            
 
-            GridPos tryP = lastEvePrimaryLocation;
+            GridPos tryP = centerP;
             char found = false;
             GridPos foundP = tryP;
             
@@ -6906,35 +6949,55 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
             
             int r;
             
-            for( r=1; r<5; r++ ) {
+            int maxSearchRadius = 10;
+
+
+            // first, clean any that have timed out
+            // or gone extinct
+            for( int p=0; p<recentlyUsedPrimaryEvePositions.size();
+                 p++ ) {
+
+                char reusePos = false;
+                
+                if( curTime -
+                    recentlyUsedPrimaryEvePositionTimes.
+                    getElementDirect( p )
+                    > recentlyUsedPrimaryEvePositionTimeout ) {
+                    // timed out
+                    reusePos = true;
+                    }
+                else if( ! doesEveLineExist( 
+                             recentlyUsedPrimaryEvePositionPlayerIDs.
+                             getElementDirect( p ) ) ) {
+                    // eve line extinct
+                    reusePos = true;
+                    }
+
+                if( reusePos ) {
+                    recentlyUsedPrimaryEvePositions.
+                        deleteElement( p );
+                    recentlyUsedPrimaryEvePositionTimes.
+                        deleteElement( p );
+                    recentlyUsedPrimaryEvePositionPlayerIDs.
+                        deleteElement( p );
+                    p--;
+                    }
+                }
+
+
+            for( r=1; r<maxSearchRadius; r++ ) {
                 
                 for( int y=-r; y<=r; y++ ) {
                     for( int x=-r; x<=r; x++ ) {
-                        tryP = lastEvePrimaryLocation;
+                        tryP = centerP;
                         
                         tryP.x += x * evePrimaryLocSpacing;
                         tryP.y += y * evePrimaryLocSpacing;
                         
                         char existsAlready = false;
-                        
-                        printf( "%d recenly used\n",
-                                recentlyUsedPrimaryEvePositions.size() );
 
                         for( int p=0; p<recentlyUsedPrimaryEvePositions.size();
                              p++ ) {
-                            if( curTime -
-                                recentlyUsedPrimaryEvePositionTimes.
-                                getElementDirect( p )
-                                > recentlyUsedPrimaryEvePositionTimeout ) {
-                                // timed out
-                                recentlyUsedPrimaryEvePositions.
-                                    deleteElement( p );
-                                recentlyUsedPrimaryEvePositionTimes.
-                                    deleteElement( p );
-                                printf( "Timed out!\n" );
-                                p--;
-                                continue;
-                                }
 
                             GridPos pos =
                                 recentlyUsedPrimaryEvePositions.
@@ -6942,27 +7005,21 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
                             
                             if( equal( pos, tryP ) ) {
                                 existsAlready = true;
-                                printf( "exists already\n" );
                                 break;
                                 }
                             }
                         
                         if( existsAlready ) {
-                            printf( "really exists already, skipping %d,%d\n",
-                                    tryP.x, tryP.y );
-                            
                             continue;
                             }
                         else {
-                            printf( "does not exists already, checking %d,%d\n",
-                                    tryP.x, tryP.y );
                             }
                         
                                      
                         int mapID = getMapObject( tryP.x, tryP.y );
 
                         if( mapID == evePrimaryLocObjectID ) {
-                            printf( "Found primary at %d,%d\n",
+                            printf( "Found primary Eve object at %d,%d\n",
                                     tryP.x, tryP.y );
                             found = true;
                             foundP = tryP;
@@ -6970,7 +7027,7 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
                         else if( eveSecondaryLocObjectIDs.getElementIndex( 
                                      mapID ) != -1 ) {
                             // a secondary ID, allowed
-                            printf( "Found secondary at %d,%d\n",
+                            printf( "Found secondary Eve object at %d,%d\n",
                                     tryP.x, tryP.y );
                             found = true;
                             foundP = tryP;
@@ -6983,22 +7040,27 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
                 }
 
             if( found ) {
-                printf( "Found = true!\n" );
-                
-                if( r > 5 ) {
-                    // exhausted window around last eve center
+
+                if( r >= maxSearchRadius / 2 ) {
+                    // exhausted central window around last eve center
                     // save this as the new eve center
                     // next time, we'll search a window around that
+
+                    AppLog::infoF( "Eve pos %d,%d not in center of "
+                                   "grid window, recentering window for "
+                                   "next time", foundP.x, foundP.y );
+
                     lastEvePrimaryLocation = foundP;
                     }
 
-                printf( "Sticking Eve at unused primary grid pos "
-                        "of %d,%d\n",
-                        foundP.x, foundP.y );
+                AppLog::infoF( "Sticking Eve at unused primary grid pos "
+                               "of %d,%d\n",
+                               foundP.x, foundP.y );
                 
                 recentlyUsedPrimaryEvePositions.push_back( foundP );
                 recentlyUsedPrimaryEvePositionTimes.push_back( curTime );
-
+                recentlyUsedPrimaryEvePositionPlayerIDs.push_back( inID );
+                
                 // stick Eve directly to south
                 *outX = foundP.x;
                 *outY = foundP.y - 1;
@@ -7017,9 +7079,22 @@ void getEvePosition( const char *inEmail, int *outX, int *outY,
                 setMapObject( *outX, *outY - 1, 0 );
                 setMapObject( *outX, *outY - 2, 0 );
                 setMapObject( *outX, *outY - 3, 0 );
+                
+                
+                // finally, prevent Eve entrapment by sticking
+                // her at a random location around the spring
 
-                // exact placement, not radius
+                doublePair v = { 14, 0 };
+                v = rotate( v, randSource.getRandomBoundedInt( 0, 2 * M_PI ) );
+                
+                *outX += v.x;
+                *outY += v.y;
+                
                 return;
+                }
+            else {
+                AppLog::info( "Unable to find location for Eve "
+                              "on primary grid." );
                 }
             }
         
@@ -7525,8 +7600,11 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
     // crash them at next Eve location
     
     int eveX, eveY;
+
+    SimpleVector<GridPos> otherPeoplePos;
     
-    getEvePosition( "dummyPlaneCrashEmail@test.com", &eveX, &eveY, false );
+    getEvePosition( "dummyPlaneCrashEmail@test.com", 0, &eveX, &eveY, 
+                    &otherPeoplePos, false );
     
     GridPos returnVal = { eveX, eveY };
     

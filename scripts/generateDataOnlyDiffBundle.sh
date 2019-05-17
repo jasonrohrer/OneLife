@@ -1,4 +1,32 @@
 
+wipeMaps=0
+
+# two arguments means automation
+if [ $# -ne 2 ]
+then
+	echo ""
+	echo ""
+	echo "Auto wipe maps as part of process?"
+	echo ""
+	echo "Enter WIPE to wipe, or press [ENTER] to skip."
+	echo ""
+	echo -n "Wipe maps: "
+	read wipeMapsWord
+
+	if [ "$wipeMapsWord" = "WIPE" ]
+	then
+		echo
+		echo "Auto-wiping maps."
+		echo
+		wipeMaps=1
+	else
+		echo
+		echo "NOT Auto-wiping maps."
+		echo
+	fi
+fi
+
+
 
 # note that if we're running on cron-job automation, this might not work
 # in genral, we have never done cron-job automation for midnight updates
@@ -542,13 +570,25 @@ echo ""
 echo "Triggering EVEN remote server startups."
 echo ""
 
+
+withMapWipeNote=""
+serverStartupCommand="~/checkout/OneLife/scripts/remoteServerStartup.sh"
+
+if [ $wipeMaps -eq 1 ]
+then
+	withMapWipeNote=" (with map wipe)"
+	serverStartupCommand="~/checkout/OneLife/scripts/remoteServerWipeMap.sh"
+fi
+
+
+
 i=1
 while read user server port
 do
 	if [ $((i % 2)) -eq 0 ];
 	then
-		echo "  Triggering server startup on $server"
-		ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerStartup.sh'
+		echo "  Triggering server startup$withMapWipeNote on $server"
+		ssh -n $user@$server "$serverStartupCommand"
 	fi
 	i=$((i + 1))
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
@@ -585,8 +625,8 @@ while read user server port
 do
 	if [ $((i % 2)) -eq 1 ];
 	then
-		echo "  Triggering server startup on $server"
-		ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerStartup.sh'
+		echo "  Triggering server startup$withMapWipeNote on $server"
+		ssh -n $user@$server "$serverStartupCommand"
 	fi
 	i=$((i + 1))
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )

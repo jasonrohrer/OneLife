@@ -531,6 +531,20 @@ SimpleVector<LiveObject> tutorialLoadingPlayers;
 
 
 
+char doesEveLineExist( int inEveID ) {
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( ( ! o->error ) && o->lineageEveID == inEveID ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
+
 typedef struct DeadObject {
         int id;
         
@@ -5420,8 +5434,25 @@ int processLoggedInPlayer( Socket *inSock,
             }
 
         // else starts at civ outskirts (lone Eve)
+        
+        SimpleVector<GridPos> otherPeoplePos( numPlayers );
+        
+        for( int i=0; i<numPlayers; i++ ) {
+            LiveObject *player = players.getElement( i );
+            
+            if( player->error || 
+                ! player->connected ) {
+                continue;
+                }
+            GridPos p = { player->xs, player->ys };
+            otherPeoplePos.push_back( p );
+            }
+        
+
         int startX, startY;
-        getEvePosition( newObject.email, &startX, &startY, allowEveRespawn );
+        getEvePosition( newObject.email, 
+                        newObject.id, &startX, &startY, 
+                        &otherPeoplePos, allowEveRespawn );
 
         if( inCurseStatus.curseLevel > 0 ) {
             // keep cursed players away
@@ -6392,8 +6423,12 @@ char removeFromContainerToHold( LiveObject *inPlayer,
 
 
 
+// outCouldHaveGoneIn, if non-NULL, is set to TRUE if clothing
+// could potentialy contain what we're holding (even if clothing too full
+// to contain it)
 static char addHeldToClothingContainer( LiveObject *inPlayer, 
-                                        int inC ) {    
+                                        int inC,
+                                        char *outCouldHaveGoneIn = NULL ) {    
     // drop into own clothing
     ObjectRecord *cObj = 
         clothingByIndex( 
@@ -6415,6 +6450,13 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
             getObject( inPlayer->holdingID )->
             containSize;
     
+        
+        if( containSize <= slotSize &&
+            cObj->numSlots > 0 &&
+            outCouldHaveGoneIn != NULL ) {
+            *outCouldHaveGoneIn = true;
+            }
+
         if( oldNum < cObj->numSlots &&
             containSize <= slotSize ) {
             // room
@@ -9578,12 +9620,12 @@ int main() {
                             adult = getLiveObject( holdingAdultID );
                             }
 
+                        int babyBonesID = 
+                            SettingsManager::getIntSetting( 
+                                "babyBones", -1 );
+                        
                         if( adult != NULL ) {
                             
-                            int babyBonesID = 
-                                SettingsManager::getIntSetting( 
-                                    "babyBones", -1 );
-
                             if( babyBonesID != -1 ) {
                                 ObjectRecord *babyBonesO = 
                                     getObject( babyBonesID );
@@ -9691,7 +9733,30 @@ int main() {
                                     }
                                 }
                             }
-                        // else let normal grave appear for this dead baby
+                        else {
+                            
+                            int babyBonesGroundID = 
+                                SettingsManager::getIntSetting( 
+                                    "babyBonesGround", -1 );
+                            
+                            if( babyBonesGroundID != -1 ) {
+                                nextPlayer->customGraveID = babyBonesGroundID;
+                                }
+                            else if( babyBonesID != -1 ) {
+                                // else figure out what the held baby bones
+                                // become when dropped on ground
+                                TransRecord *groundTrans =
+                                    getPTrans( babyBonesID, -1 );
+                                
+                                if( groundTrans != NULL &&
+                                    groundTrans->newTarget > 0 ) {
+                                    
+                                    nextPlayer->customGraveID = 
+                                        groundTrans->newTarget;
+                                    }
+                                }
+                            // else just use standard grave
+                            }
                         }
                     }
                 else if( m.type == GRAVE ) {
@@ -12206,17 +12271,83 @@ int main() {
                                 // player clicked on clothing
                                 // try adding held into clothing, but if
                                 // that fails go on to other cases
+
+                                // except do not force them to eat
+                                // something that could have gone
+                                // into a full clothing container!
+                                char couldHaveGoneIn = false;
+
+                                ObjectRecord *clickedClothing = NULL;
+                                TransRecord *clickedClothingTrans = NULL;
+                                if( m.i >= 0 &&
+                                    m.i < NUM_CLOTHING_PIECES ) {
+                                    clickedClothing =
+                                        clothingByIndex( nextPlayer->clothing,
+                                                         m.i );
+                                    
+                                    if( clickedClothing != NULL ) {
+                                        
+                                        clickedClothingTrans =
+                                            getPTrans( nextPlayer->holdingID,
+                                                       clickedClothing->id );
+                                        
+                                        if( clickedClothingTrans != NULL ) {
+                                            int na =
+                                                clickedClothingTrans->newActor;
+                                            
+                                            if( na > 0 &&
+                                                getObject( na )->minPickupAge >
+                                                computeAge( nextPlayer ) ) {
+                                                // too young for trans
+                                                clickedClothingTrans = NULL;
+                                                }
+                                            }
+                                        }
+                                    }
+                                
+
                                 if( targetPlayer == nextPlayer &&
                                     m.i >= 0 && 
                                     m.i < NUM_CLOTHING_PIECES &&
-                                    addHeldToClothingContainer( nextPlayer,
-                                                                m.i ) ) {
+                                    addHeldToClothingContainer( 
+                                        nextPlayer,
+                                        m.i,
+                                        &couldHaveGoneIn) ) {
                                     // worked!
+                                    }
+                                // next case:  can what they're holding
+                                // be used to transform clothing?
+                                else if( m.i >= 0 &&
+                                         m.i < NUM_CLOTHING_PIECES &&
+                                         clickedClothing != NULL &&
+                                         clickedClothingTrans != NULL ) {
+                                    
+                                    // NOTE:
+                                    // this is a niave way of handling
+                                    // this case, and it doesn't deal
+                                    // with all kinds of possible complexities
+                                    // (like if the clothing decay time should
+                                    //  change, or number of slots change)
+                                    // Assuming that we won't add transitions
+                                    // for clothing with those complexities
+                                    // Works for removing sword
+                                    // from backpack
+
+                                    handleHoldingChange(
+                                        nextPlayer,
+                                        clickedClothingTrans->newActor );
+                                    
+                                    setClothingByIndex( 
+                                        &( nextPlayer->clothing ), 
+                                        m.i,
+                                        getObject( 
+                                            clickedClothingTrans->newTarget ) );
                                     }
                                 // next case, holding food
                                 // that couldn't be put into clicked clothing
                                 else if( obj->foodValue > 0 && 
-                                         targetPlayer->foodStore < cap ) {
+                                         targetPlayer->foodStore < cap &&
+                                         ! couldHaveGoneIn ) {
                                     
                                     targetPlayer->justAte = true;
                                     targetPlayer->justAteID = 
@@ -12501,8 +12632,72 @@ int main() {
                                         &( targetPlayer->clothing.backpack );
                                     clothingSlotIndex = 5;
                                     }
-
+                                
+                                TransRecord *bareHandClothingTrans
+                                    = NULL;
+                                
                                 if( clothingSlot != NULL ) {
+                                    bareHandClothingTrans =
+                                        getPTrans( 0, ( *clothingSlot )->id );
+                                    
+                                    if( bareHandClothingTrans != NULL ) {
+                                        int na =
+                                            bareHandClothingTrans->newActor;
+                                            
+                                        if( na > 0 &&
+                                            getObject( na )->minPickupAge >
+                                            computeAge( nextPlayer ) ) {
+                                            // too young for trans
+                                            bareHandClothingTrans = NULL;
+                                            }
+                                        }
+                                    }
+                                
+
+                                if( targetPlayer == nextPlayer &&
+                                    bareHandClothingTrans != NULL ) {
+                                    
+                                    // bare hand transforms clothing
+                                    
+                                    // this may not handle all possible cases
+                                    // correctly.  A naive implementation for
+                                    // now.  Works for removing sword
+                                    // from backpack
+
+                                    nextPlayer->holdingID =
+                                        bareHandClothingTrans->newActor;
+
+                                    handleHoldingChange( 
+                                        nextPlayer,
+                                        bareHandClothingTrans->newActor );
+                                    
+                                    nextPlayer->heldOriginValid = 0;
+                                    nextPlayer->heldOriginX = 0;
+                                    nextPlayer->heldOriginY = 0;
+                                    
+
+                                    if( bareHandClothingTrans->newTarget > 0 ) {
+                                        *clothingSlot = 
+                                            getObject( bareHandClothingTrans->
+                                                       newTarget );
+                                        }
+                                    else {
+                                        *clothingSlot = NULL;
+                                        
+                                        int ind = clothingSlotIndex;
+                                        
+                                        targetPlayer->clothingEtaDecay[ind] = 0;
+                                        
+                                        targetPlayer->clothingContained[ind].
+                                            deleteAll();
+                                        
+                                        targetPlayer->
+                                            clothingContainedEtaDecays[ind].
+                                            deleteAll();
+                                        }
+                                    }
+                                else if( clothingSlot != NULL ) {
+                                    // bare hand removes clothing
                                     
                                     int ind = clothingSlotIndex;
                                     
@@ -13038,6 +13233,7 @@ int main() {
                 
                 decrementLanguageCount( nextPlayer->lineageEveID );
                 
+                removePlayerLanguageMaps( nextPlayer->id );
                 
                 if( nextPlayer->heldByOther ) {
                     
@@ -13206,7 +13402,7 @@ int main() {
                     int n = 0;
                     GridPos centerDropPos = dropPos;
                     
-                    while( oldObject != 0 && n <= 4 ) {
+                    while( oldObject != 0 && n < 4 ) {
                         
                         // don't combine graves
                         if( ! isGrave( oldObject ) ) {
@@ -16091,23 +16287,39 @@ int main() {
                                     getLiveObject( speakerID );
                                 
                                 int listenerEveID = nextPlayer->lineageEveID;
-
+                                int listenerID = nextPlayer->id;
+                                double listenerAge = computeAge( nextPlayer );
+                                int listenerParentID = nextPlayer->parentID;
+                                
                                 int speakerEveID;
+                                double speakerAge;
+                                int speakerParentID = -1;
                                 
                                 if( speakerObj != NULL ) {
                                     speakerEveID = speakerObj->lineageEveID;
+                                    speakerID = speakerObj->id;
+                                    speakerAge = computeAge( speakerObj );
+                                    speakerParentID = speakerObj->parentID;
                                     }
                                 else {
                                     // speaker dead, doesn't matter what we
                                     // do
                                     speakerEveID = listenerEveID;
+                                    speakerID = listenerID;
+                                    speakerAge = listenerAge;
                                     }
                                 
                                 char *translatedPhrase =
                                     mapLanguagePhrase( 
                                         newSpeechPhrases.getElementDirect( u ),
                                         speakerEveID,
-                                        listenerEveID );
+                                        listenerEveID,
+                                        speakerID,
+                                        listenerID,
+                                        speakerAge,
+                                        listenerAge,
+                                        speakerParentID,
+                                        listenerParentID );
                                         
                                 int curseFlag =
                                     newSpeechCurseFlags.getElementDirect( u );
@@ -16122,43 +16334,44 @@ int main() {
                                 
                                 delete [] line;
                                 }
-                            messageWorking.appendElementString( "#" );
-                            
-                            char *messageText = 
-                                messageWorking.getElementString();
-                            
-                            int messageLen = strlen( messageText );
-            
-                            unsigned char *message = 
-                                (unsigned char*) messageText;
-                            
-
-                            if( messageLen >= maxUncompressedSize ) {
-                                char *old = messageText;
-                                int oldLen = messageLen;
-                                
-                                message = makeCompressedMessage( 
-                                    old, 
-                                    oldLen, &messageLen );
-                                
-                                delete [] old;
-                                }
-
-                            
-                            int numSent = 
-                                nextPlayer->sock->send( 
-                                    message, 
-                                    messageLen, 
-                                    false, false );
+                            }
                         
-                            delete [] message;
+                        messageWorking.appendElementString( "#" );
                             
-                            nextPlayer->gotPartOfThisFrame = true;
+                        char *messageText = 
+                            messageWorking.getElementString();
                         
-                            if( numSent != messageLen ) {
-                                setPlayerDisconnected( nextPlayer, 
-                                                       "Socket write failed" );
-                                }
+                        int messageLen = strlen( messageText );
+                        
+                        unsigned char *message = 
+                            (unsigned char*) messageText;
+                        
+                        
+                        if( messageLen >= maxUncompressedSize ) {
+                            char *old = messageText;
+                            int oldLen = messageLen;
+                            
+                            message = makeCompressedMessage( 
+                                old, 
+                                oldLen, &messageLen );
+                            
+                            delete [] old;
+                            }
+                        
+                        
+                        int numSent = 
+                            nextPlayer->sock->send( 
+                                message, 
+                                messageLen, 
+                                false, false );
+                        
+                        delete [] message;
+                        
+                        nextPlayer->gotPartOfThisFrame = true;
+                        
+                        if( numSent != messageLen ) {
+                            setPlayerDisconnected( nextPlayer, 
+                                                   "Socket write failed" );
                             }
                         }
                     }

@@ -3,6 +3,74 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 228    2019-May-16
+
+--Abbreviating more than 4 GREATS in grave names as 5X GREAT so that it doesn't
+  go off the edge of the screen.
+
+--Eve placed in random location at radius around spring, with home arrow
+  pointing back to spring.  Client searches for initial home arrow further
+  away, maybe way off screen, than before.
+
+
+
+
+Server Fixes:
+
+--Timeout to re-use previously-used Eve spring locations is 1 hour instead of 3.
+
+--New map, with bug fix, too dense.  Restored old map spacing.
+
+--Fixed bug in Eve grid placement that caused resorting to old spriral.
+  Fixes #303
+
+--Fixed so that trying to add food to a full backpack doesn't make you eat
+  it by accident.  Fixes #304
+
+--Support for on-worn-clothing transitions and bare-hand-on-worn-clothing
+  transitions to allow sword to be added and removed from backpack in a more
+  visible spot (not contained).
+
+--Fixed rare server crash when a player connection breaks in middle of a
+  multi-speech message server frame.  All speech messages from the frame
+  should be sent in one message.
+
+--Lineage server catches character name searches that match too many names, to
+  avoid overly long query times.
+
+--Map wiping script now checks ~/skipMapWipe.txt file, so certain servers can
+  be flagged as never wiping.
+
+--More dense Eve packing by instant-reusing spring sites for dead Eve lineages.
+
+--Lineage ban now lasts 1.5 hours of living in game, or 3 hours max, even if
+  not living in game (used to be 24 hours if not living in game).
+
+--Fixed major array-bounds bug if you die and drop something in a crowded area.
+
+--Babies can now learn other languages that are spoken around them before age 3.
+
+--Babies inherit whatever portion of another language their mother learned
+  while she was a baby.  Thus, accents disappear trans-generationally,
+  assuming that each new baby is exposed to even more of the language before
+  age 3.
+
+--Upped the learning window to age 6.  Three years with mom, three years 
+  wandering the village to hear others speaking.
+
+--Fixed bug that prevented eating when clicking on clothing with no slots.
+
+--Support for special DIE baby grave, on ground or held, that can decay faster.
+
+--If you put a sword-backpack on a baby, they can no longer draw the sword.
+
+--Eve grid search centered around some living person, chosen at random.
+  Becasue big towns have more people, they will end up with more Eves around
+  them.
+
+
+
+
 
 Version 223    2019-May-10
 

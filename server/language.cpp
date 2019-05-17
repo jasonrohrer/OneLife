@@ -4,6 +4,7 @@
 
 
 #include "minorGems/util/SimpleVector.h"
+#include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/stringUtils.h"
 #include "minorGems/util/random/CustomRandomSource.h"
 #include "minorGems/util/MinPriorityQueue.h"
@@ -31,6 +32,11 @@
 // occurrence.  Low values mean common clusters only map to other common 
 // clusters, and uncommon clusters only map to uncommon cluster.
 static int closeSetSize = 3;
+
+
+static double maxLanguageLearningAge = 3.0;
+static double languageLearningRate = 0.5;
+static int languageLearningRepetitionLimit = 20;
 
 
 
@@ -224,6 +230,32 @@ static void closeFreqMirrorShuffle( SimpleVector<int> *inIndexList,
 
 
 
+typedef struct LanguageLearningMap {
+        int eveIDA;
+        int eveIDB;
+        
+        // records this player's learning of the language map between
+        // these two eves
+        int playerID;
+
+        
+        // these are false if the mapping is not learned, true if learned
+        char startingMapping[ NUM_STARTING_CONSONANT_CLUSTERS ];
+        char endingMapping[ NUM_ENDING_CONSONANT_CLUSTERS ];
+        char startingVowelMapping[ NUM_STARTING_VOWEL_CLUSTERS ];
+        char vowelMapping[ NUM_VOWEL_CLUSTERS ];
+        char middleMapping[ NUM_MIDDLE_CONSONANT_CLUSTERS ];
+
+        char *allMappings[ NUM_CLUSTER_SETS ];
+        
+        // keep a log of recenly-heard words, and
+        // ignore learning more about that word until enough other
+        // words have come in between
+        SimpleVector<char*> recentWords;
+    } LanguageLearningMap;
+
+
+
 
 #define NUM_VOWELS 6
 
@@ -276,9 +308,67 @@ static char *findInitialCluster( char *inWord,
 
 
 
+
+// Maps inSourceClusters to inDestClusters based on set and cluster index
+// Applies the combined learning of both learning maps
+// If the listener (B) can still learn, we potentially update their learning
+// map for this cluster.
+static const char *clusterMap( 
+    const char **inSourceClusters[ NUM_CLUSTER_SETS ],
+    const char **inDestClusters[ NUM_CLUSTER_SETS ],
+    int inSetIndex,
+    int inClusterIndex,
+    LanguageLearningMap *inLearnA,
+    LanguageLearningMap *inLearnB,
+    char inCanLearnB ) {
+    
+    if( inLearnA->allMappings[inSetIndex][inClusterIndex] ||
+        inLearnB->allMappings[inSetIndex][inClusterIndex] ) {
+        // know this cluster already, skip mapping it
+        return inSourceClusters[ inSetIndex ][ inClusterIndex ];
+        }
+    else {   
+        // map it
+        const char *returnVal = 
+            inDestClusters[ inSetIndex ][ inClusterIndex ];
+        
+        if( inCanLearnB &&
+            randSource.getRandomDouble() > 0.5 ) {
+            // coin flipped heads
+            
+            // B learns this for the future
+            inLearnB->allMappings[inSetIndex][inClusterIndex] = true;
+            
+            // need back-mapping too
+            // search source map for dest cluster
+            // mark the back-mapping learned too
+            for( int c=0; c<allClusterSizes[inSetIndex]; c++ ) {
+                if( strcmp( inSourceClusters[ inSetIndex ][c],
+                            returnVal ) == 0 ) {
+                    inLearnB->allMappings[inSetIndex][c] = true;
+                    break;
+                    }
+                }
+            // don't need to hear it repeated
+            // know it the first time we learn it
+            return inSourceClusters[ inSetIndex ][ inClusterIndex ];
+            }
+        return returnVal;
+        }
+    }
+
+
+
+
+
+// if canLearnB, B's map is updated after the mapping for any clusters
+// used
 static char *remapWordNew( char *inWord, 
                            const char **inSourceClusters[ NUM_CLUSTER_SETS ],
-                           const char **inDestClusters[ NUM_CLUSTER_SETS ] ) {
+                           const char **inDestClusters[ NUM_CLUSTER_SETS ],
+                           LanguageLearningMap *inLearnA,
+                           LanguageLearningMap *inLearnB,
+                           char inCanLearnB ) {
     
     char *wordWorkingOrig = stringDuplicate( inWord );
 
@@ -325,7 +415,7 @@ static char *remapWordNew( char *inWord,
         
         if( loc != NULL &&
             strlen( clust ) ==
-            ( remainLen - ( loc - wordWorking ) ) ) {
+            (unsigned int)( ( remainLen - ( loc - wordWorking ) ) ) ) {
             
             // match, and at end of word
             endClusterIndex = c;
@@ -374,18 +464,45 @@ static char *remapWordNew( char *inWord,
     
     if( startClusterIndex != -1 ) {
         mappedWord.appendElementString( 
-            inDestClusters[ START_I ][ startClusterIndex ] );
+            clusterMap( 
+                inSourceClusters,
+                inDestClusters,
+                START_I,
+                startClusterIndex,
+                inLearnA,
+                inLearnB,
+                inCanLearnB ) );
+        //mappedWord.appendElementString( 
+        //    inDestClusters[ START_I ][ startClusterIndex ] );
         }
     if( startVowelClusterIndex != -1 ) {
         mappedWord.appendElementString( 
-            inDestClusters[ START_VOWEL_I ][ startVowelClusterIndex ] );
+            clusterMap( 
+                inSourceClusters,
+                inDestClusters,
+                START_VOWEL_I,
+                startVowelClusterIndex,
+                inLearnA,
+                inLearnB,
+                inCanLearnB ) );
+        //mappedWord.appendElementString( 
+        //    inDestClusters[ START_VOWEL_I ][ startVowelClusterIndex ] );
         }
     
     for( int m=0; m < middleClusterIndices.size(); m++ ) {
         ClusterIndex ci = middleClusterIndices.getElementDirect( m );
         
-        mappedWord.appendElementString(
-            inDestClusters[ ci.setIndex ][ ci.index ] );
+        mappedWord.appendElementString( 
+            clusterMap( 
+                inSourceClusters,
+                inDestClusters,
+                ci.setIndex,
+                ci.index,
+                inLearnA,
+                inLearnB,
+                inCanLearnB ) );
+        //mappedWord.appendElementString(
+        //    inDestClusters[ ci.setIndex ][ ci.index ] );
         }
     // add any remaining portion of the word, which could not
     // be matched to mid clusters
@@ -395,7 +512,16 @@ static char *remapWordNew( char *inWord,
         }
     if( endClusterIndex != -1 ) {
         mappedWord.appendElementString( 
-            inDestClusters[ END_I ][ endClusterIndex ] );
+            clusterMap( 
+                inSourceClusters,
+                inDestClusters,
+                END_I,
+                endClusterIndex,
+                inLearnA,
+                inLearnB,
+                inCanLearnB ) );
+        //mappedWord.appendElementString( 
+        //    inDestClusters[ END_I ][ endClusterIndex ] );
         }
     
     delete [] wordWorkingOrig;
@@ -478,9 +604,165 @@ static SimpleVector<EveLangRecord*> langRecords;
 
 
 
+static char checkForWordRepeat( LanguageLearningMap *inMap,
+                                char *inWord ) {
+    for( int i=0; i< inMap->recentWords.size(); i++ ) {
+        char *otherWord = inMap->recentWords.getElementDirect( i );
+        
+        if( strcmp( inWord, otherWord ) == 0 ) {
+            // hit
+            // don't move to end
+            return true;
+            }
+        }
+    
+    // no hit yet
+    inMap->recentWords.push_back( stringDuplicate( inWord ) );
+    
+    if( inMap->recentWords.size() > languageLearningRepetitionLimit ) {
+        // list too long, remove oldest
+        delete [] inMap->recentWords.getElementDirect( 0 );
+        inMap->recentWords.deleteElement( 0 );
+        }
+    return false;
+    }
+
+    
+    
+
+
+
+static void initMapping( LanguageLearningMap *inMap,
+                         int inEveIDA,
+                         int inEveIDB,
+                         int inPlayerID ) {
+    inMap->eveIDA = inEveIDA;
+    inMap->eveIDB = inEveIDB;
+    inMap->playerID = inPlayerID;
+
+    inMap->allMappings[ START_I ] = inMap->startingMapping;
+    inMap->allMappings[ END_I ] = inMap->endingMapping;
+    inMap->allMappings[ START_VOWEL_I ] = inMap->startingVowelMapping;
+    inMap->allMappings[ VOWEL_I ] = inMap->vowelMapping;
+    inMap->allMappings[ MID_I ] = inMap->middleMapping;
+
+
+    for( int s=0; s<NUM_CLUSTER_SETS; s++ ) {    
+        memset( inMap->allMappings[s], false, allClusterSizes[s] );
+        }
+    }
+
+
+
+typedef struct PlayerLearningRecord {
+        int playerID;
+        SimpleVector<LanguageLearningMap*> learningMaps;
+    } PlayerLearningRecord;
+
+
+static SimpleVector<PlayerLearningRecord *> learningRecords;
+
+
+static LanguageLearningMap blankLearningMap;
+
+
+
+
+// if age too old to learn, and no map exists, returns NULL
+// if young enough to learn, and no map exists, returns fresh map
+static LanguageLearningMap *getPlayerLearningMap( int inEveIDA, int inEveIDB,
+                                                  int inPlayerID,
+                                                  double inPlayerAge,
+                                                  int inParentID = -1 ) {
+    
+    PlayerLearningRecord *playerRec = NULL;
+    
+    for( int p=0; p < learningRecords.size(); p++ ) {
+        PlayerLearningRecord *r = learningRecords.getElementDirect( p );
+        
+        if( r->playerID == inPlayerID ) {
+            playerRec = r;
+            break;
+            }
+        }
+    
+    if( playerRec == NULL ) {
+        // no rec for this player
+        if( inPlayerAge > maxLanguageLearningAge ) {
+            return NULL;
+            }
+        playerRec = new PlayerLearningRecord;
+        playerRec->playerID = inPlayerID;
+        
+        learningRecords.push_back( playerRec );
+        }
+
+    LanguageLearningMap *map = NULL;
+    
+    for( int m=0; m< playerRec->learningMaps.size(); m++ ) {
+        LanguageLearningMap *checkMap = 
+            playerRec->learningMaps.getElementDirect( m );
+        
+        if( checkMap->eveIDA == inEveIDA &&
+            checkMap->eveIDB == inEveIDB ) {
+            map = checkMap;
+            break;
+            }
+        }
+
+    if( map == NULL ) {
+        // no player map for this eve combo
+        if( inPlayerAge > maxLanguageLearningAge ) {
+            return NULL;
+            }
+
+        // copy from parent, if it exists
+        LanguageLearningMap *parentMap = NULL;
+        
+        if( inParentID != -1 ) {
+            // NULL if parent dead or parent never learned this language
+            parentMap = 
+                getPlayerLearningMap( inEveIDA, inEveIDB,
+                                      inParentID,
+                                      // dummy parent age
+                                      // don't allow creation of new parent
+                                      // map here
+                                      maxLanguageLearningAge + 1 );
+            }
+        
+
+        // add a blank one
+        map = new LanguageLearningMap;
+        initMapping( map, inEveIDA, inEveIDB, inPlayerID );
+
+        if( parentMap != NULL ) {
+            
+            // copy parent's map            
+            for( int s=0; s<NUM_CLUSTER_SETS; s++ ) {    
+                memcpy( map->allMappings[s], parentMap->allMappings[s],
+                        allClusterSizes[s] );
+                }
+            }
+
+        playerRec->learningMaps.push_back( map );
+        }
+    
+    return map;
+    }
+
+
+
 
 
 void initLanguage() {
+    initMapping( &blankLearningMap, 0, 0, 0 );
+
+    maxLanguageLearningAge = 
+        SettingsManager::getFloatSetting( "maxLanguageLearningAge", 3.0 );
+    languageLearningRate = 
+        SettingsManager::getFloatSetting( "languageLearningRate", 0.5 );
+    languageLearningRepetitionLimit = 
+        SettingsManager::getIntSetting( "languageLearningRepetitionLimit", 20 );
     }
 
 
@@ -494,6 +776,30 @@ static void freeEveLangRecord( EveLangRecord *inR ) {
     }
 
 
+static void freePlayerLearningRecord( PlayerLearningRecord *inR ) {
+    for( int m=0; m < inR->learningMaps.size(); m++ ) {
+        inR->learningMaps.getElementDirect( m )->
+            recentWords.deallocateStringElements();
+        
+        delete inR->learningMaps.getElementDirect( m );
+        }
+    
+    delete inR;
+    }
+
+
+void removePlayerLanguageMaps( int inPlayerID ) {
+    for( int p=0; p<learningRecords.size(); p++ ) {
+        PlayerLearningRecord *r = learningRecords.getElementDirect( p );
+        if( r->playerID == inPlayerID ) {
+            freePlayerLearningRecord( r );
+            learningRecords.deleteElement( p );
+            return;
+            }
+        }
+    }
+
+
 
 void freeLanguage() {
 
@@ -503,6 +809,13 @@ void freeLanguage() {
         freeEveLangRecord( r );
         }
     langRecords.deleteAll();
+
+    for( int e=0; e<learningRecords.size(); e++ ) {
+        PlayerLearningRecord *r = learningRecords.getElementDirect( e );
+        
+        freePlayerLearningRecord( r );
+        }
+    learningRecords.deleteAll();
     }
 
 
@@ -611,7 +924,10 @@ void stepLanguage() {
 
 
 // handles punctuation, etc.
-char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB ) {
+char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
+                         int inPlayerIDA, int inPlayerIDB,
+                         double inAgeA, double inAgeB,
+                         int inParentIDA, int inParentIDB ) {
 
     if( inEveIDA == inEveIDB ) {
         // self, no translation
@@ -625,7 +941,34 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB ) {
         lookupEveID = inEveIDB;
         otherEveID = inEveIDA;
         }
+
+
+    // these can be NULL
+    LanguageLearningMap *learnA = getPlayerLearningMap( lookupEveID, otherEveID,
+                                                        inPlayerIDA,
+                                                        inAgeA,
+                                                        inParentIDA );
+    LanguageLearningMap *learnB = getPlayerLearningMap( lookupEveID, otherEveID,
+                                                        inPlayerIDB,
+                                                        inAgeB,
+                                                        inParentIDB );
     
+    
+    // only B, the listener, can ever learn more
+    char canLearnB = ( inAgeB <= maxLanguageLearningAge );
+    
+    if( learnA == NULL ) {
+        learnA = &blankLearningMap;
+        }
+
+    if( learnB == NULL ) {
+        learnB = &blankLearningMap;
+        // never update blank map
+        canLearnB = false;
+        }
+    
+
+
 
     char *returnString = NULL;
     
@@ -691,11 +1034,22 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB ) {
                         
                         if( wordIsAlpha.getElementDirect( w ) ) {
                             
+                            char canLearnThisWord = canLearnB;
+                            
+                            if( canLearnThisWord ) {
+                                // make sure it's not a repeat
+                                canLearnThisWord = 
+                                    ! checkForWordRepeat( learnB, word );
+                                }
+                            
                             
                             char *newWord = remapWordNew( word, 
                                                           allClusters,
-                                                          map->allMappings );
-                            
+                                                          map->allMappings,
+                                                          learnA,
+                                                          learnB,
+                                                          canLearnThisWord );
+
                             transPhraseWorking.appendElementString( newWord );
                             delete [] newWord;
                             }

@@ -1,3 +1,27 @@
+# put a 1 in this file to stop this
+# to block map wipes per-server
+flagFile=~/skipMapWipe.txt
+
+skipWipe=0
+
+if [ -f $flagFile ]
+then
+
+	flag=$(head -n 1 $flagFile)
+
+
+	if [ "$flag" = "1" ]
+	then
+		echo ""
+		echo "Skipping map wipe for this server"
+		echo ""
+		skipWipe=1
+	fi
+fi
+
+
+
+
 echo "" 
 echo "Shutting down server"
 echo ""
@@ -25,25 +49,30 @@ else
 fi
 
 
+if [ $skipWipe -ne 1 ]
+then
+	echo "" 
+	echo "Deleting map and biome and mapTime db files and recent placements"
+	echo ""
+	
 
+	rm ~/checkout/OneLife/server/biome.db 
+	rm ~/checkout/OneLife/server/map.db
+	rm ~/checkout/OneLife/server/mapTime.db
+	rm ~/checkout/OneLife/server/lookTime.db
+	rm ~/checkout/OneLife/server/floor.db 
+	rm ~/checkout/OneLife/server/floorTime.db
+	rm ~/checkout/OneLife/server/eve.db
 
-echo "" 
-echo "Deleting map and biome and mapTime db files and recent placements"
-echo ""
+    # don't delete playerStats.db
 
+	rm ~/checkout/OneLife/server/recentPlacements.txt
+	rm ~/checkout/OneLife/server/eveRadius.txt
+	rm ~/checkout/OneLife/server/mapDummyRecall.txt
+	rm ~/checkout/OneLife/server/lastEveLocation.txt
+	echo "0,0" > ~/checkout/OneLife/server/shutdownLongLineagePos.txt
+fi
 
-rm ~/checkout/OneLife/server/biome.db 
-rm ~/checkout/OneLife/server/map.db
-rm ~/checkout/OneLife/server/mapTime.db
-rm ~/checkout/OneLife/server/lookTime.db
-rm ~/checkout/OneLife/server/floor.db 
-rm ~/checkout/OneLife/server/floorTime.db
-rm ~/checkout/OneLife/server/eve.db
-
-# don't delete playerStats.db
-
-rm ~/checkout/OneLife/server/recentPlacements.txt
-rm ~/checkout/OneLife/server/eveRadius.txt
 
 
 
