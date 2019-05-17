@@ -7,6 +7,9 @@ Server Fixes:
 
 --Fixed bug in deletion of underlying object if grave marker has no slots.
 
+--Increased name match limit in family tree search to 30,000, and ensuring
+  performance by forcing use of name column as index in all name queries.
+
 
 
 Version 228    2019-May-16
