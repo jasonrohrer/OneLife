@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 227    ???
+Version 228    2019-May-16
 
 --Abbreviating more than 4 GREATS in grave names as 5X GREAT so that it doesn't
   go off the edge of the screen.
@@ -11,6 +11,7 @@ Version 227    ???
 --Eve placed in random location at radius around spring, with home arrow
   pointing back to spring.  Client searches for initial home arrow further
   away, maybe way off screen, than before.
+
 
 
 
