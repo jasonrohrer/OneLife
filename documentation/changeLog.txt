@@ -10,6 +10,10 @@ Server Fixes:
 --Increased name match limit in family tree search to 30,000, and ensuring
   performance by forcing use of name column as index in all name queries.
 
+--Code that accepts KILL command is more liberal in case of a moving target.
+  Now it's very hard to miss with the bow, assuming that the target is within
+  range and you actually click on them client-side.
+
 
 
 Version 228    2019-May-16

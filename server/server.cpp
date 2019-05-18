@@ -10777,6 +10777,35 @@ int main() {
                                     LiveObject *hitPlayer = 
                                         getHitPlayer( m.x, m.y, m.id, true );
                                     
+
+                                    if( hitPlayer == NULL && m.id > 0 ) {
+                                        // they claim to have clicked someone
+                                        // but we think they didn't
+                                        
+                                        hitPlayer = getLiveObject( m.id );
+                                        
+                                        if( hitPlayer != NULL ) {
+                                            // check if the target player is in
+                                            // range
+                                            GridPos otherPlayerPos = 
+                                                getPlayerPos( hitPlayer );
+                                            
+                                            double otherDist =
+                                                distance( playerPos, 
+                                                          otherPlayerPos );
+                                        
+                                            // give them the benefit of the
+                                            // doubt.  Add +1 to allowed
+                                            // distance.
+                                            if( otherDist > 
+                                                heldObj->deadlyDistance + 1 ) {
+                                                
+                                                hitPlayer = NULL;
+                                                }
+                                            }
+                                        }
+                                    
+
                                     char someoneHit = false;
 
 
