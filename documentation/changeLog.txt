@@ -14,6 +14,10 @@ Server Fixes:
   Now it's very hard to miss with the bow, assuming that the target is within
   range and you actually click on them client-side.
 
+--Fixed so that use-on-bare-ground objects that are groundOnly can't be used on
+  floors.
+
+
 
 
 Version 228    2019-May-16

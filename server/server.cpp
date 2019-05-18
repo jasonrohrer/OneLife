@@ -11794,9 +11794,12 @@ int main() {
                                           computeAge( nextPlayer ) ) ) {
                                         
                                         canPlace = true;
+                                        
+                                        ObjectRecord *newTargetObj =
+                                            getObject( r->newTarget );
+                                        
 
-                                        if( getObject( r->newTarget )->
-                                            blocksWalking &&
+                                        if( newTargetObj->blocksWalking &&
                                             ! isMapSpotEmpty( m.x, m.y ) ) {
                                             
                                             // can't do on-bare ground
@@ -11804,6 +11807,17 @@ int main() {
                                             // standing
                                             // if it creates a blocking 
                                             // object
+                                            canPlace = false;
+                                            }
+                                        else if( 
+                                            strstr( newTargetObj->description, 
+                                                    "groundOnly" ) != NULL
+                                            &&
+                                            getMapFloor( m.x, m.y ) != 0 ) {
+                                            // floor present
+                                        
+                                            // new target not allowed 
+                                            // to exist on floor
                                             canPlace = false;
                                             }
                                         }
