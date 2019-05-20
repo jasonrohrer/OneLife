@@ -5439,7 +5439,9 @@ int processLoggedInPlayer( Socket *inSock,
             LiveObject *player = players.getElement( i );
             
             if( player->error || 
-                ! player->connected ) {
+                ! player->connected ||
+                player->isTutorial ||
+                player->vogMode ) {
                 continue;
                 }
             GridPos p = { player->xs, player->ys };

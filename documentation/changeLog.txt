@@ -17,6 +17,10 @@ Server Fixes:
 --Fixed so that use-on-bare-ground objects that are groundOnly can't be used on
   floors.
 
+--Added a script to automate end-user installation of a private server on Linux.
+
+--Fixed so that Eves don't spawn near tutorial town.
+
 
 
 
