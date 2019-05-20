@@ -23,6 +23,8 @@ Server Fixes:
 
 --Fixed so that VOG doesn't see language-mapped phrases.
 
+--Fixed so that spring placement not blocked by objects to the south.
+
 
 
 
