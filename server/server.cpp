@@ -16344,18 +16344,33 @@ int main() {
                                     speakerAge = listenerAge;
                                     }
                                 
-                                char *translatedPhrase =
-                                    mapLanguagePhrase( 
-                                        newSpeechPhrases.getElementDirect( u ),
-                                        speakerEveID,
-                                        listenerEveID,
-                                        speakerID,
-                                        listenerID,
-                                        speakerAge,
-                                        listenerAge,
-                                        speakerParentID,
-                                        listenerParentID );
-                                        
+                                
+                                char *translatedPhrase;
+                                
+                                if( nextPlayer->vogMode || 
+                                    ( speakerObj != NULL &&
+                                      speakerObj->vogMode ) ) {
+                                    
+                                    translatedPhrase =
+                                        stringDuplicate( 
+                                            newSpeechPhrases.
+                                            getElementDirect( u ) );
+                                    }
+                                else {
+                                    translatedPhrase =
+                                        mapLanguagePhrase( 
+                                            newSpeechPhrases.
+                                                getElementDirect( u ),
+                                            speakerEveID,
+                                            listenerEveID,
+                                            speakerID,
+                                            listenerID,
+                                            speakerAge,
+                                            listenerAge,
+                                            speakerParentID,
+                                            listenerParentID );
+                                    }
+                                
                                 int curseFlag =
                                     newSpeechCurseFlags.getElementDirect( u );
 

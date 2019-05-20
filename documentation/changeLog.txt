@@ -21,6 +21,8 @@ Server Fixes:
 
 --Fixed so that Eves don't spawn near tutorial town.
 
+--Fixed so that VOG doesn't see language-mapped phrases.
+
 
 
 
