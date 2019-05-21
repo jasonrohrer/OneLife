@@ -3321,6 +3321,10 @@ void LivingLifePage::drawMapCell( int inMapI,
             // or permanent behind-player objects (e.g., roads) 
             // are never drawn flipped
             flip = false;
+            // remember that this tile is NOT flipped, so that it
+            // won't flip back strangely if it changes to something
+            // that doesn't have a noFlip status
+            mMapTileFlips[ inMapI ] = false;
             }
         
         char highlight = false;

@@ -3,6 +3,16 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 231    ???
+
+--Tiles that are drawn as non-flipped remember their non-flipped status, even
+  if they change to flippable tiles later (so they don't flip back and forth
+  in an unappealing way).
+
+
+
+
+
 Server Fixes:
 
 --Fixed bug in deletion of underlying object if grave marker has no slots.
