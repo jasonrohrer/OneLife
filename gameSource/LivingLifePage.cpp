@@ -10787,7 +10787,6 @@ void LivingLifePage::step() {
 
             // end it
             ourObject->pendingActionAnimationProgress = 0;
-            ourObject->pendingActionAnimationTotalProgress = 0;
             ourObject->pendingAction = false;
             
             playerActionPending = false;
@@ -13443,8 +13442,6 @@ void LivingLifePage::step() {
                                 existing->actionTargetY = actionTargetY;
                                 existing->pendingActionAnimationProgress = 
                                     0.025 * frameRateFactor;
-                                existing->pendingActionAnimationTotalProgress = 
-                                    existing->pendingActionAnimationProgress;
                                 }
 
                             if( heldOriginValid || 
@@ -14278,8 +14275,6 @@ void LivingLifePage::step() {
 
                             if( forced ) {
                                 existing->pendingActionAnimationProgress = 0;
-                                existing->pendingActionAnimationTotalProgress =
-                                    0;
                                 existing->pendingAction = false;
                                 
                                 playerActionPending = false;
@@ -14409,7 +14404,6 @@ void LivingLifePage::step() {
 
                         o.pendingAction = false;
                         o.pendingActionAnimationProgress = 0;
-                        o.pendingActionAnimationTotalProgress = 0;
                         
                         o.currentPos.x = o.xd;
                         o.currentPos.y = o.yd;
@@ -15367,8 +15361,6 @@ void LivingLifePage::step() {
                                 // (no longer possible, since truncated)
 
                                 existing->pendingActionAnimationProgress = 0;
-                                existing->pendingActionAnimationTotalProgress =
-                                    0;
                                 existing->pendingAction = false;
                                 
                                 playerActionPending = false;
@@ -17133,7 +17125,6 @@ void LivingLifePage::step() {
             ( o->pendingAction || o->pendingActionAnimationProgress != 0 ) ) {
             
             o->pendingActionAnimationProgress += progressInc;
-            o->pendingActionAnimationTotalProgress += progressInc;
             
             if( o->pendingActionAnimationProgress > 1 ) {
                 if( o->pendingAction ) {
@@ -17144,7 +17135,6 @@ void LivingLifePage::step() {
                     // no longer pending, finish last cycle by snapping
                     // back to 0
                     o->pendingActionAnimationProgress = 0;
-                    o->pendingActionAnimationTotalProgress = 0;
                     o->actionTargetTweakX = 0;
                     o->actionTargetTweakY = 0;
                     }
@@ -17153,13 +17143,11 @@ void LivingLifePage::step() {
         else if( o->id != ourID && o->pendingActionAnimationProgress != 0 ) {
             
             o->pendingActionAnimationProgress += progressInc;
-            o->pendingActionAnimationTotalProgress += progressInc;
             
             if( o->pendingActionAnimationProgress > 1 ) {
                 // no longer pending, finish last cycle by snapping
                 // back to 0
                 o->pendingActionAnimationProgress = 0;
-                o->pendingActionAnimationTotalProgress = 0;
                 o->actionTargetTweakX = 0;
                 o->actionTargetTweakY = 0;
                 }
@@ -17215,9 +17203,7 @@ void LivingLifePage::step() {
             // matter how fast the server responds
             ourLiveObject->pendingActionAnimationProgress = 
                 0.025 * frameRateFactor;
-            ourLiveObject->pendingActionAnimationTotalProgress =
-                ourLiveObject->pendingActionAnimationProgress;
-
+            
             ourLiveObject->pendingActionAnimationStartTime = 
                 currentTime;
             
