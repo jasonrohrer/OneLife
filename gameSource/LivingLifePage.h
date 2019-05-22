@@ -299,6 +299,9 @@ typedef struct LiveObject {
         // wall clock time when emot clears
         double emotClearETATime;
 
+        char killMode;
+        int killWithID;
+
     } LiveObject;
 
 

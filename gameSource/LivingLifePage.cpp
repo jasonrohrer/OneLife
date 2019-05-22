@@ -12834,6 +12834,9 @@ void LivingLifePage::step() {
                 o.currentEmot = NULL;
                 o.emotClearETATime = 0;
                 
+                o.killMode = false;
+                o.killWithID = -1;
+                
 
                 int forced = 0;
                 int done_moving = 0;
@@ -13463,7 +13466,38 @@ void LivingLifePage::step() {
                                     }
                                 }
                             }
+                        else if( o.id == ourID &&
+                                 actionAttempt &&
+                                 ! justAte &&
+                                 existing->killMode &&
+                                 // they were still holding the same weapon
+                                 // before this update
+                                 existing->killWithID == oldHeld &&
+                                 // their weapon changed as a result of this
+                                 // update
+                                 existing->holdingID != oldHeld ) {
+                            
+                            // show kill "doing" animation and bounce
+                            
+                            playerActionTargetX = actionTargetX;
+                            playerActionTargetY = actionTargetY;
+                            
+                            addNewAnimPlayerOnly( existing, doing );
 
+                            if( existing->pendingActionAnimationProgress 
+                                == 0 ) {    
+                                existing->pendingActionAnimationProgress = 
+                                    0.025 * frameRateFactor;
+                                }
+                            
+                            if( facingOverride == 1 ) {
+                                existing->holdingFlip = false;
+                                }
+                            else if( facingOverride == -1 ) {
+                                existing->holdingFlip = true;
+                                }
+                            }
+                        
                         
                         char creationSoundPlayed = false;
                         char otherSoundPlayed = false;
@@ -19100,6 +19134,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     // try to walk near victim right away
                     killMode = true;
                     
+                    ourLiveObject->killMode = true;
+                    ourLiveObject->killWithID = ourLiveObject->holdingID;
+
                     // ignore mod-click from here on out, to avoid
                     // force-dropping weapon
                     modClick = false;
