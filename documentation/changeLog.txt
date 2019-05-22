@@ -9,6 +9,7 @@ Version 231    ???
   if they change to flippable tiles later (so they don't flip back and forth
   in an unappealing way).
 
+--Client supports new KILL message semantics.
 
 
 

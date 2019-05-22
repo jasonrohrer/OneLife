@@ -19055,32 +19055,21 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
     
 
-    // true if we're too far away to kill BUT we should execute
-    // kill once we get to destination
 
-    // if we're close enough to kill, we'll kill from where we're standing
-    // and return
-    char killLater = false;
-    int killLaterID = -1;
+    // new semantics
+    // as soon as we trigger a kill attempt, we go into kill mode
+    // by sending server a KILL message right away
+    char killMode = false;
     
 
     if( destID == 0 &&
+        p.hitOtherPerson &&
         modClick && ourLiveObject->holdingID > 0 &&
         getObject( ourLiveObject->holdingID )->deadlyDistance > 0 ) {
         
         // special case
 
         // check for possible kill attempt at a distance
-
-        // if it fails (target too far away or no person near),
-        // then we resort to standard drop code below
-
-
-        double d = sqrt( ( clickDestX - ourLiveObject->xd ) * 
-                         ( clickDestX - ourLiveObject->xd )
-                         +
-                         ( clickDestY - ourLiveObject->yd ) * 
-                         ( clickDestY - ourLiveObject->yd ) );
 
         doublePair targetPos = { (double)clickDestX, (double)clickDestY };
         
@@ -19098,65 +19087,42 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 if( distance( targetPos, o->currentPos ) < 1 ) {
                     // clicked on someone
                     
-                    if( getObject( ourLiveObject->holdingID )->deadlyDistance 
-                        >= d ) {
-                        // close enough to use deadly object right now
+                    // new semantics:
+                    // send KILL to server right away to
+                    // tell server of our intentions
+                    // (whether or not we are close enough)
 
-                        
-                        if( nextActionMessageToSend != NULL ) {
-                            delete [] nextActionMessageToSend;
-                            nextActionMessageToSend = NULL;
-                            }
-                        
-                        if( p.hitOtherPerson ) {
-                            nextActionMessageToSend = 
-                                autoSprintf( "KILL %d %d %d#",
-                                             sendX( clickDestX ), 
-                                             sendY( clickDestY ),
-                                             p.hitOtherPersonID );
-                            printf( "KILL with direct-click target player "
-                                    "id=%d\n", p.hitOtherPersonID );
-                            }
-                        else {
-                            nextActionMessageToSend = 
-                                autoSprintf( "KILL %d %d#",
-                                             sendX( clickDestX ), 
-                                             sendY( clickDestY ) );
-                            printf( "KILL with target "
-                                    "player on closest tile, id=%d\n", o->id );
-                            }
+                    // then walk there
+                    
+                    if( nextActionMessageToSend != NULL ) {
+                        delete [] nextActionMessageToSend;
+                        nextActionMessageToSend = NULL;
+                        }
                         
                         
-                        playerActionTargetX = clickDestX;
-                        playerActionTargetY = clickDestY;
-                        
-                        playerActionTargetNotAdjacent = true;
-                        
-                        
+                    char *killMessage = 
+                        autoSprintf( "KILL %d %d %d#",
+                                     sendX( clickDestX ), 
+                                     sendY( clickDestY ),
+                                     p.hitOtherPersonID );
+                    printf( "KILL with direct-click target player "
+                            "id=%d\n", p.hitOtherPersonID );
+                    
+                    sendToServerSocket( killMessage );
 
-                        return;
-                        }
-                    else {
-                        // too far away, but try to kill later,
-                        // once we walk there, using standard path-to-adjacent
-                        // code below
-                        killLater = true;
-                        
-                        if( p.hitOtherPerson ) {
-                            killLaterID = p.hitOtherPersonID;
-                            }
-                        
-                        break;
-                        }
+                    // try to walk near victim right away
+                    killMode = true;
+                    
+                    // ignore mod-click from here on out, to avoid
+                    // force-dropping weapon
+                    modClick = false;
                     }
                 }
             }
-    
         }
     
 
-    if( ! killLater &&
-        destID != 0 &&
+    if( destID != 0 &&
         ! modClick &&
         ourLiveObject->holdingID > 0 &&
         getObject( ourLiveObject->holdingID )->useDistance > 1 &&
@@ -19244,8 +19210,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     // and return
     char useOnBabyLater = false;
     
-    if( !killLater &&
-        p.hitOtherPerson &&
+    if( p.hitOtherPerson &&
         ! modClick && 
         destID == 0 &&
         canClickOnOtherForNonKill ) {
@@ -19350,7 +19315,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     
 
-    if( destID == 0 && !modClick && !tryingToPickUpBaby && !useOnBabyLater && 
+    if( !killMode && 
+        destID == 0 && !modClick && !tryingToPickUpBaby && !useOnBabyLater && 
         ! ( clickDestX == ourLiveObject->xd && 
             clickDestY == ourLiveObject->yd ) ) {
         // a move to an empty spot where we're not already standing
@@ -19359,6 +19325,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         mustMove = true;
         }
     else if( ( modClick && ourLiveObject->holdingID != 0 )
+             || killMode
              || tryingToPickUpBaby
              || useOnBabyLater
              || destID != 0
@@ -19518,7 +19485,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             }
         
 
-        if( canExecute ) {
+        if( canExecute && ! killMode ) {
             
             const char *action = "";
             char *extra = stringDuplicate( "" );
@@ -19546,61 +19513,46 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 nextActionDropping = true;
                 send = true;
 
-                // special case:  we're too far away to kill someone
-                // but we've right clicked on them from a distance
-                // walk up and execute KILL once we get there.
-                
-                if( killLater ) {
-                    action = "KILL";
+                // check for other special case
+                // a use-on-ground transition or use-on-floor transition
 
-                    if( killLaterID != -1 ) {
-                        delete [] extra;
-                        extra = autoSprintf( " %d", killLaterID );
+                if( ourLiveObject->holdingID > 0 ) {
+                        
+                    ObjectRecord *held = 
+                        getObject( ourLiveObject->holdingID );
+                        
+                    char foundAlt = false;
+                        
+                    if( held->foodValue == 0 ) {
+                            
+                        TransRecord *r = 
+                            getTrans( ourLiveObject->holdingID,
+                                      -1 );
+                            
+                        if( r != NULL &&
+                            r->newTarget != 0 ) {
+                                
+                            // a use-on-ground transition exists!
+                                
+                            // override the drop action
+                            action = "USE";
+                            foundAlt = true;
+                            }
                         }
-                    }
-                else {
-                    // check for other special case
-                    // a use-on-ground transition or use-on-floor transition
 
-                    if( ourLiveObject->holdingID > 0 ) {
-                        
-                        ObjectRecord *held = 
-                            getObject( ourLiveObject->holdingID );
-                        
-                        char foundAlt = false;
-                        
-                        if( held->foodValue == 0 ) {
-                            
-                            TransRecord *r = 
-                                getTrans( ourLiveObject->holdingID,
-                                          -1 );
-                            
-                            if( r != NULL &&
-                                r->newTarget != 0 ) {
+                    if( !foundAlt && floorDestID > 0 ) {
+                        // check if use on floor exists
+                        TransRecord *r = 
+                            getTrans( ourLiveObject->holdingID, 
+                                      floorDestID );
                                 
-                                // a use-on-ground transition exists!
+                        if( r != NULL ) {
+                            // a use-on-floor transition exists!
                                 
-                                // override the drop action
-                                action = "USE";
-                                foundAlt = true;
-                                }
+                            // override the drop action
+                            action = "USE";
+                                
                             }
-
-                        if( !foundAlt && floorDestID > 0 ) {
-                            // check if use on floor exists
-                            TransRecord *r = 
-                                getTrans( ourLiveObject->holdingID, 
-                                          floorDestID );
-                                
-                            if( r != NULL ) {
-                                // a use-on-floor transition exists!
-                                
-                                // override the drop action
-                                action = "USE";
-                                
-                                }
-                            }
-
                         }
                     }
                 }
