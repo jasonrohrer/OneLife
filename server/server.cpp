@@ -68,7 +68,7 @@ static JenkinsRandomSource randSource;
 #include "../gameSource/GridPos.h"
 
 
-#define HEAT_MAP_D 8
+#define HEAT_MAP_D 13
 
 float targetHeat = 10;
 
@@ -439,6 +439,10 @@ typedef struct LiveObject {
         // wall clock time of last time this player was sent
         // a heat update
         double lastHeatUpdate;
+
+        // true if heat map features player surrounded by walls
+        char isIndoors;
+        
 
 
         int foodStore;
@@ -2518,6 +2522,10 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     
     int gridSize = HEAT_MAP_D * HEAT_MAP_D;
 
+    // assume indoors until we find an air boundary of space
+    inPlayer->isIndoors = true;
+    
+
     // what if we recompute it from scratch every time?
     for( int i=0; i<gridSize; i++ ) {
         inPlayer->heatMap[i] = 0;
@@ -2767,6 +2775,7 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                     // assume air R-value
                     rBoundarySum += rAir;
                     rBoundarySize ++;
+                    inPlayer->isIndoors = false;
                     }
                 }
             }
@@ -2787,6 +2796,10 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
                 
                 if( rFloorGrid[i] > rAir ) {
                     numFloorTilesInAirspace++;
+                    }
+                else {
+                    // gap in floor
+                    inPlayer->isIndoors = false;
                     }
                 }
             }
@@ -5125,6 +5138,7 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.heat = 0.5;
     newObject.heatUpdate = false;
     newObject.lastHeatUpdate = Time::getCurrentTime();
+    newObject.isIndoors = false;
     
 
     newObject.foodDecrementETASeconds =
@@ -14606,6 +14620,12 @@ int main() {
             
             if( envHeatTarget < targetHeat ) {
                 // we're in a cold environment
+
+                if( nextPlayer->isIndoors ) {
+                    float targetDiff = targetHeat - envHeatTarget;
+                    float indoorAdjustedDiff = targetDiff / 2;
+                    envHeatTarget = targetHeat - indoorAdjustedDiff;
+                    }
                 
                 // clothing actually reduces how cold it is
                 // based on its R-value
@@ -14619,6 +14639,21 @@ int main() {
                 float targetDiff = targetHeat - envHeatTarget;
                 
                 float clothingAdjustedDiff = targetDiff / ( 1 + clothingR );
+                
+                // how much did clothing improve our situation?
+                float improvement = targetDiff - clothingAdjustedDiff;
+                
+                if( nextPlayer->isIndoors ) {
+                    // if indoors, double the improvement of clothing
+                    // thus, if it took us half-way to perfect, being
+                    // indoors will take us all the way to perfect
+                    // think about this as a reduction in the wind chill
+                    // factor
+                    
+                    improvement *= 2;
+                    }
+                clothingAdjustedDiff = targetDiff - improvement;
+
                 
                 envHeatTarget = targetHeat - clothingAdjustedDiff;
                 }

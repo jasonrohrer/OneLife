@@ -35,6 +35,13 @@ Server Fixes:
 
 --Fixed so that spring placement not blocked by objects to the south.
 
+--Improved thermal model for buildings.  Now using a 13x13 heat grid instead of
+  8x8, to support larger buildings.  We now detect a binary indoor/outdoor
+  property for each player, based on being completely surrounded by walls,
+  floors, and closed doors.  If indoors, the effect of a cold environment is
+  halved, and the effect of clothing to protect from cold environments is
+  doubled.
+
 
 
 
