@@ -167,6 +167,8 @@ static char allowedSayCharMap[256];
 static const char *allowedSayChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! ";
 
 
+static int killEmotionIndex = 2;
+
 
 
 // for incoming socket connections that are still in the login process
@@ -7662,6 +7664,427 @@ typedef struct FlightDest {
         
 
 
+typedef struct KillState {
+        int killerID;
+        int killerWeaponID;
+        int targetID;
+        double emotStartTime;
+    } KillState;
+
+
+SimpleVector<KillState> activeKillStates;
+
+
+void addKillState( int inKillerID, int inTargetID ) {
+    char found = false;
+    
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+        
+        if( s->killerID == inKillerID ) {
+            found = true;
+            s->killerWeaponID = getLiveObject( inKillerID )->holdingID;
+            s->targetID = inTargetID;
+            s->emotStartTime = Time::getCurrentTime();
+            }
+        }
+    
+    if( !found ) {
+        // add new
+        KillState s = { inKillerID, 
+                        getLiveObject( inKillerID )->holdingID,
+                        inTargetID, 
+                        Time::getCurrentTime() };
+        activeKillStates.push_back( s );
+        }
+    }
+
+    
+
+
+
+void executeKillAction( int inKillerIndex,
+                        int inTargetIndex,
+                        SimpleVector<int> *playerIndicesToSendUpdatesAbout,
+                        SimpleVector<int> *playerIndicesToSendDyingAbout,
+                        SimpleVector<int> *newEmotPlayerIDs,
+                        SimpleVector<int> *newEmotIndices,
+                        SimpleVector<int> *newEmotTTLs ) {
+    int i = inKillerIndex;
+    LiveObject *nextPlayer = players.getElement( inKillerIndex );    
+
+    LiveObject *hitPlayer = players.getElement( inTargetIndex );
+
+    GridPos targetPos = getPlayerPos( hitPlayer );
+
+
+    // send update even if action fails (to let them
+    // know that action is over)
+    playerIndicesToSendUpdatesAbout->push_back( i );
+                        
+    if( nextPlayer->holdingID > 0 ) {
+                            
+        nextPlayer->actionAttempt = 1;
+        nextPlayer->actionTarget.x = targetPos.x;
+        nextPlayer->actionTarget.y = targetPos.y;
+                            
+        if( nextPlayer->actionTarget.x > nextPlayer->xd ) {
+            nextPlayer->facingOverride = 1;
+            }
+        else if( nextPlayer->actionTarget.x < nextPlayer->xd ) {
+            nextPlayer->facingOverride = -1;
+            }
+
+        // holding something
+        ObjectRecord *heldObj = 
+            getObject( nextPlayer->holdingID );
+                            
+        if( heldObj->deadlyDistance > 0 ) {
+            // it's deadly
+
+            GridPos playerPos = getPlayerPos( nextPlayer );
+                                
+            double d = distance( targetPos,
+                                 playerPos );
+                                
+            if( heldObj->deadlyDistance >= d &&
+                ! directLineBlocked( playerPos, 
+                                     targetPos ) ) {
+                // target is close enough
+                // and no blocking objects along the way                
+
+                char someoneHit = false;
+
+
+                if( hitPlayer != NULL &&
+                    strstr( heldObj->description,
+                            "otherFamilyOnly" ) ) {
+                    // make sure victim is in
+                    // different family
+                                        
+                    if( hitPlayer->lineageEveID ==
+                        nextPlayer->lineageEveID ) {
+                                            
+                        hitPlayer = NULL;
+                        }
+                    }
+                                    
+
+                if( hitPlayer != NULL ) {
+                    someoneHit = true;
+                    // break the connection with 
+                    // them, eventually
+                    // let them stagger a bit first
+
+                    hitPlayer->murderSourceID =
+                        nextPlayer->holdingID;
+                                        
+                    hitPlayer->murderPerpID =
+                        nextPlayer->id;
+                                        
+                    // brand this player as a murderer
+                    nextPlayer->everKilledAnyone = true;
+
+                    if( hitPlayer->murderPerpEmail 
+                        != NULL ) {
+                        delete [] 
+                            hitPlayer->murderPerpEmail;
+                        }
+                                        
+                    hitPlayer->murderPerpEmail =
+                        stringDuplicate( 
+                            nextPlayer->email );
+                                        
+
+                    setDeathReason( hitPlayer, 
+                                    "killed",
+                                    nextPlayer->holdingID );
+
+                    // if not already dying
+                    if( ! hitPlayer->dying ) {
+                        int staggerTime = 
+                            SettingsManager::getIntSetting(
+                                "deathStaggerTime", 20 );
+                                            
+                        double currentTime = 
+                            Time::getCurrentTime();
+                                            
+                        hitPlayer->dying = true;
+                        hitPlayer->dyingETA = 
+                            currentTime + staggerTime;
+
+                        playerIndicesToSendDyingAbout->
+                            push_back( 
+                                getLiveObjectIndex( 
+                                    hitPlayer->id ) );
+                                        
+                        hitPlayer->errorCauseString =
+                            "Player killed by other player";
+                        }
+                    else {
+                        // already dying, 
+                        // and getting attacked again
+                        
+                        // halve their remaining 
+                        // stagger time
+                        double currentTime = 
+                            Time::getCurrentTime();
+                                             
+                        double staggerTimeLeft = 
+                            hitPlayer->dyingETA - 
+                            currentTime;
+                        
+                        if( staggerTimeLeft > 0 ) {
+                            staggerTimeLeft /= 2;
+                            hitPlayer->dyingETA = 
+                                currentTime + 
+                                staggerTimeLeft;
+                            }
+                        }
+                    }
+                                    
+                                    
+                // a player either hit or not
+                // in either case, weapon was used
+                                    
+                // check for a transition for weapon
+
+                // 0 is generic "on person" target
+                TransRecord *r = 
+                    getPTrans( nextPlayer->holdingID, 
+                               0 );
+
+                TransRecord *rHit = NULL;
+                TransRecord *woundHit = NULL;
+                                    
+                if( someoneHit ) {
+                    // last use on target specifies
+                    // grave and weapon change on hit
+                    // non-last use (r above) specifies
+                    // what projectile ends up in grave
+                    // or on ground
+                    rHit = 
+                        getPTrans( nextPlayer->holdingID, 
+                                   0, false, true );
+                                        
+                    if( rHit != NULL &&
+                        rHit->newTarget > 0 ) {
+                        hitPlayer->customGraveID = 
+                            rHit->newTarget;
+                        }
+                                        
+                    char wasSick = false;
+                                        
+                    if( hitPlayer->holdingID > 0 &&
+                        strstr(
+                            getObject( 
+                                hitPlayer->holdingID )->
+                            description,
+                            "sick" ) != NULL ) {
+                        wasSick = true;
+                        }
+
+                    // last use on actor specifies
+                    // what is left in victim's hand
+                    woundHit = 
+                        getPTrans( nextPlayer->holdingID, 
+                                   0, true, false );
+                                        
+                    if( woundHit != NULL &&
+                        woundHit->newTarget > 0 ) {
+                                            
+                        // don't drop their wound
+                        if( hitPlayer->holdingID != 0 &&
+                            ! hitPlayer->holdingWound ) {
+                            handleDrop( 
+                                targetPos.x, targetPos.y, 
+                                hitPlayer,
+                                playerIndicesToSendUpdatesAbout );
+                            }
+
+                        // give them a new wound
+                        // if they don't already have
+                        // one, but never replace their
+                        // original wound.  That allows
+                        // a healing exploit where you
+                        // intentionally give someone
+                        // an easier-to-treat wound
+                        // to replace their hard-to-treat
+                        // wound
+
+                        // however, do let wounds replace
+                        // sickness
+                        char woundChange = false;
+                                            
+                        if( ! hitPlayer->holdingWound ||
+                            wasSick ) {
+                            woundChange = true;
+                                                
+                            hitPlayer->holdingID = 
+                                woundHit->newTarget;
+                            holdingSomethingNew( 
+                                hitPlayer );
+                            setFreshEtaDecayForHeld( 
+                                hitPlayer );
+                            }
+                                            
+                                            
+                        hitPlayer->holdingWound = true;
+                                            
+                        if( woundChange ) {
+                                                
+                            ForcedEffects e = 
+                                checkForForcedEffects( 
+                                    hitPlayer->holdingID );
+                            
+                            if( e.emotIndex != -1 ) {
+                                hitPlayer->emotFrozen = 
+                                    true;
+                                newEmotPlayerIDs->push_back( 
+                                    hitPlayer->id );
+                                newEmotIndices->push_back( 
+                                    e.emotIndex );
+                                newEmotTTLs->push_back( 
+                                    e.ttlSec );
+                                }
+                                            
+                            if( e.foodModifierSet && 
+                                e.foodCapModifier != 1 ) {
+                                                
+                                hitPlayer->
+                                    foodCapModifier = 
+                                    e.foodCapModifier;
+                                hitPlayer->foodUpdate = 
+                                    true;
+                                }
+                                                
+                            if( e.feverSet ) {
+                                hitPlayer->fever = e.fever;
+                                }
+
+                            checkSickStaggerTime( 
+                                hitPlayer );
+                                                
+                            playerIndicesToSendUpdatesAbout->
+                                push_back( 
+                                    getLiveObjectIndex( 
+                                        hitPlayer->id ) );
+                            }   
+                        }
+                    }
+                                    
+
+                int oldHolding = nextPlayer->holdingID;
+                timeSec_t oldEtaDecay = 
+                    nextPlayer->holdingEtaDecay;
+
+                if( rHit != NULL ) {
+                    // if hit trans exist
+                    // leave bloody knife or
+                    // whatever in hand
+                    nextPlayer->holdingID = rHit->newActor;
+                    holdingSomethingNew( nextPlayer,
+                                         oldHolding);
+                    }
+                else if( woundHit != NULL ) {
+                    // result of hit on held weapon 
+                    // could also be
+                    // specified in wound trans
+                    nextPlayer->holdingID = 
+                        woundHit->newActor;
+                    holdingSomethingNew( nextPlayer,
+                                         oldHolding);
+                    }
+                else if( r != NULL ) {
+                    nextPlayer->holdingID = r->newActor;
+                    holdingSomethingNew( nextPlayer,
+                                         oldHolding );
+                    }
+
+
+                if( r != NULL || rHit != NULL ) {
+                                        
+                    nextPlayer->heldTransitionSourceID = 0;
+                                        
+                    if( oldHolding != 
+                        nextPlayer->holdingID ) {
+                                            
+                        setFreshEtaDecayForHeld( 
+                            nextPlayer );
+                        }
+                    }
+                                    
+
+                if( r != NULL ) {
+                                    
+                    if( hitPlayer != NULL &&
+                        r->newTarget != 0 ) {
+                                        
+                        hitPlayer->embeddedWeaponID = 
+                            r->newTarget;
+                                        
+                        if( oldHolding == r->newTarget ) {
+                            // what we are holding
+                            // is now embedded in them
+                            // keep old decay
+                            hitPlayer->
+                                embeddedWeaponEtaDecay =
+                                oldEtaDecay;
+                            }
+                        else {
+                                            
+                            TransRecord *newDecayT = 
+                                getMetaTrans( 
+                                    -1, 
+                                    r->newTarget );
+                    
+                            if( newDecayT != NULL ) {
+                                hitPlayer->
+                                    embeddedWeaponEtaDecay = 
+                                    Time::timeSec() + 
+                                    newDecayT->
+                                    autoDecaySeconds;
+                                }
+                            else {
+                                // no further decay
+                                hitPlayer->
+                                    embeddedWeaponEtaDecay 
+                                    = 0;
+                                }
+                            }
+                        }
+                    else if( hitPlayer == NULL &&
+                             isMapSpotEmpty( targetPos.x, 
+                                             targetPos.y ) ) {
+                        // this is old code, and probably never gets executed
+                        
+                        // no player hit, and target ground
+                        // spot is empty
+                        setMapObject( targetPos.x, targetPos.y, 
+                                      r->newTarget );
+                                        
+                        // if we're thowing a weapon
+                        // target is same as what we
+                        // were holding
+                        if( oldHolding == r->newTarget ) {
+                            // preserve old decay time 
+                            // of what we were holding
+                            setEtaDecay( targetPos.x, targetPos.y,
+                                         oldEtaDecay );
+                            }
+                        }
+                    // else new target, post-kill-attempt
+                    // is lost
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+
 
 int main() {
 
@@ -7787,7 +8210,10 @@ int main() {
 
     eveName = 
         SettingsManager::getStringSetting( "eveName", "EVE" );
-
+    
+    killEmotionIndex =
+        SettingsManager::getIntSetting( "killEmotionIndex", 2 );
+    
 
 #ifdef WIN_32
     printf( "\n\nPress CTRL-C to shut down server gracefully\n\n" );
@@ -10750,400 +11176,27 @@ int main() {
                         makePlayerSay( nextPlayer, m.saidText );
                         }
                     else if( m.type == KILL ) {
-                        // send update even if action fails (to let them
-                        // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
-                        
-                        if( nextPlayer->holdingID > 0 &&
-                            ! (m.x == nextPlayer->xd &&
-                               m.y == nextPlayer->yd ) ) {
+                        if( m.id > 0 && 
+                            nextPlayer->holdingID > 0 &&
+                            getObject( nextPlayer->holdingID )->deadlyDistance
+                            > 0 ) {
                             
-                            nextPlayer->actionAttempt = 1;
-                            nextPlayer->actionTarget.x = m.x;
-                            nextPlayer->actionTarget.y = m.y;
+                            // player transitioning into kill state
                             
-                            if( m.x > nextPlayer->xd ) {
-                                nextPlayer->facingOverride = 1;
-                                }
-                            else if( m.x < nextPlayer->xd ) {
-                                nextPlayer->facingOverride = -1;
-                                }
-
-                            // holding something
-                            ObjectRecord *heldObj = 
-                                getObject( nextPlayer->holdingID );
+                            LiveObject *targetPlayer =
+                                getLiveObject( m.id );
                             
-                            if( heldObj->deadlyDistance > 0 ) {
-                                // it's deadly
-
-                                GridPos targetPos = { m.x, m.y };
-                                GridPos playerPos = { nextPlayer->xd,
-                                                      nextPlayer->yd };
+                            if( targetPlayer != NULL ) {
+                                nextPlayer->emotFrozen = true;
+                                newEmotPlayerIDs.push_back( 
+                                    nextPlayer->id );
+                                newEmotIndices.push_back( 
+                                    killEmotionIndex );
+                                newEmotTTLs.push_back( 120 );
                                 
-                                double d = distance( targetPos,
-                                                     playerPos );
-                                
-                                if( heldObj->deadlyDistance >= d &&
-                                    ! directLineBlocked( playerPos, 
-                                                         targetPos ) ) {
-                                    // target is close enough
-                                    // and no blocking objects along the way
-                                    
-                                    // is anyone there?
-                                    LiveObject *hitPlayer = 
-                                        getHitPlayer( m.x, m.y, m.id, true );
-                                    
-
-                                    if( hitPlayer == NULL && m.id > 0 ) {
-                                        // they claim to have clicked someone
-                                        // but we think they didn't
-                                        
-                                        hitPlayer = getLiveObject( m.id );
-                                        
-                                        if( hitPlayer != NULL ) {
-                                            // check if the target player is in
-                                            // range
-                                            GridPos otherPlayerPos = 
-                                                getPlayerPos( hitPlayer );
-                                            
-                                            double otherDist =
-                                                distance( playerPos, 
-                                                          otherPlayerPos );
-                                        
-                                            // give them the benefit of the
-                                            // doubt.  Add +1 to allowed
-                                            // distance.
-                                            if( otherDist > 
-                                                heldObj->deadlyDistance + 1 ) {
-                                                
-                                                hitPlayer = NULL;
-                                                }
-                                            }
-                                        }
-                                    
-
-                                    char someoneHit = false;
-
-
-                                    if( hitPlayer != NULL &&
-                                        strstr( heldObj->description,
-                                                "otherFamilyOnly" ) ) {
-                                        // make sure victim is in
-                                        // different family
-                                        
-                                        if( hitPlayer->lineageEveID ==
-                                            nextPlayer->lineageEveID ) {
-                                            
-                                            hitPlayer = NULL;
-                                            }
-                                        }
-                                    
-
-                                    if( hitPlayer != NULL ) {
-                                        someoneHit = true;
-                                        // break the connection with 
-                                        // them, eventually
-                                        // let them stagger a bit first
-
-                                        hitPlayer->murderSourceID =
-                                            nextPlayer->holdingID;
-                                        
-                                        hitPlayer->murderPerpID =
-                                            nextPlayer->id;
-                                        
-                                        // brand this player as a murderer
-                                        nextPlayer->everKilledAnyone = true;
-
-                                        if( hitPlayer->murderPerpEmail 
-                                            != NULL ) {
-                                            delete [] 
-                                                hitPlayer->murderPerpEmail;
-                                            }
-                                        
-                                        hitPlayer->murderPerpEmail =
-                                            stringDuplicate( 
-                                                nextPlayer->email );
-                                        
-
-                                        setDeathReason( hitPlayer, 
-                                                        "killed",
-                                                        nextPlayer->holdingID );
-
-                                        // if not already dying
-                                        if( ! hitPlayer->dying ) {
-                                            int staggerTime = 
-                                                SettingsManager::getIntSetting(
-                                                    "deathStaggerTime", 20 );
-                                            
-                                            double currentTime = 
-                                                Time::getCurrentTime();
-                                            
-                                            hitPlayer->dying = true;
-                                            hitPlayer->dyingETA = 
-                                                currentTime + staggerTime;
-
-                                            playerIndicesToSendDyingAbout.
-                                                push_back( 
-                                                    getLiveObjectIndex( 
-                                                        hitPlayer->id ) );
-                                        
-                                            hitPlayer->errorCauseString =
-                                                "Player killed by other player";
-                                            }
-                                         else {
-                                             // already dying, 
-                                             // and getting attacked again
-                        
-                                             // halve their remaining 
-                                             // stagger time
-                                             double currentTime = 
-                                                 Time::getCurrentTime();
-                                             
-                                             double staggerTimeLeft = 
-                                                 hitPlayer->dyingETA - 
-                                                 currentTime;
-                        
-                                             if( staggerTimeLeft > 0 ) {
-                                                 staggerTimeLeft /= 2;
-                                                 hitPlayer->dyingETA = 
-                                                     currentTime + 
-                                                     staggerTimeLeft;
-                                                 }
-                                             }
-                                        }
-                                    
-                                    
-                                    // a player either hit or not
-                                    // in either case, weapon was used
-                                    
-                                    // check for a transition for weapon
-
-                                    // 0 is generic "on person" target
-                                    TransRecord *r = 
-                                        getPTrans( nextPlayer->holdingID, 
-                                                  0 );
-
-                                    TransRecord *rHit = NULL;
-                                    TransRecord *woundHit = NULL;
-                                    
-                                    if( someoneHit ) {
-                                        // last use on target specifies
-                                        // grave and weapon change on hit
-                                        // non-last use (r above) specifies
-                                        // what projectile ends up in grave
-                                        // or on ground
-                                        rHit = 
-                                            getPTrans( nextPlayer->holdingID, 
-                                                      0, false, true );
-                                        
-                                        if( rHit != NULL &&
-                                            rHit->newTarget > 0 ) {
-                                            hitPlayer->customGraveID = 
-                                                rHit->newTarget;
-                                            }
-                                        
-                                        char wasSick = false;
-                                        
-                                        if( hitPlayer->holdingID > 0 &&
-                                            strstr(
-                                                getObject( 
-                                                    hitPlayer->holdingID )->
-                                                description,
-                                                "sick" ) != NULL ) {
-                                            wasSick = true;
-                                            }
-
-                                        // last use on actor specifies
-                                        // what is left in victim's hand
-                                        woundHit = 
-                                            getPTrans( nextPlayer->holdingID, 
-                                                      0, true, false );
-                                        
-                                        if( woundHit != NULL &&
-                                            woundHit->newTarget > 0 ) {
-                                            
-                                            // don't drop their wound
-                                            if( hitPlayer->holdingID != 0 &&
-                                                ! hitPlayer->holdingWound ) {
-                                                handleDrop( 
-                                                    m.x, m.y, 
-                                                    hitPlayer,
-                                             &playerIndicesToSendUpdatesAbout );
-                                                }
-
-                                            // give them a new wound
-                                            // if they don't already have
-                                            // one, but never replace their
-                                            // original wound.  That allows
-                                            // a healing exploit where you
-                                            // intentionally give someone
-                                            // an easier-to-treat wound
-                                            // to replace their hard-to-treat
-                                            // wound
-
-                                            // however, do let wounds replace
-                                            // sickness
-                                            char woundChange = false;
-                                            
-                                            if( ! hitPlayer->holdingWound ||
-                                                wasSick ) {
-                                                woundChange = true;
-                                                
-                                                hitPlayer->holdingID = 
-                                                    woundHit->newTarget;
-                                                holdingSomethingNew( 
-                                                    hitPlayer );
-                                                setFreshEtaDecayForHeld( 
-                                                    hitPlayer );
-                                                }
-                                            
-                                            
-                                            hitPlayer->holdingWound = true;
-                                            
-                                            if( woundChange ) {
-                                                
-                                                ForcedEffects e = 
-                                                    checkForForcedEffects( 
-                                                        hitPlayer->holdingID );
-                            
-                                                if( e.emotIndex != -1 ) {
-                                                    hitPlayer->emotFrozen = 
-                                                        true;
-                                                    newEmotPlayerIDs.push_back( 
-                                                        hitPlayer->id );
-                                                    newEmotIndices.push_back( 
-                                                        e.emotIndex );
-                                                    newEmotTTLs.push_back( 
-                                                        e.ttlSec );
-                                                    }
-                                            
-                                                if( e.foodModifierSet && 
-                                                    e.foodCapModifier != 1 ) {
-                                                
-                                                    hitPlayer->
-                                                        foodCapModifier = 
-                                                        e.foodCapModifier;
-                                                    hitPlayer->foodUpdate = 
-                                                        true;
-                                                    }
-                                                
-                                                if( e.feverSet ) {
-                                                    hitPlayer->fever = e.fever;
-                                                    }
-
-                                                checkSickStaggerTime( 
-                                                    hitPlayer );
-                                                
-                                                playerIndicesToSendUpdatesAbout.
-                                                    push_back( 
-                                                        getLiveObjectIndex( 
-                                                            hitPlayer->id ) );
-                                                }   
-                                            }
-                                        }
-                                    
-
-                                    int oldHolding = nextPlayer->holdingID;
-                                    timeSec_t oldEtaDecay = 
-                                        nextPlayer->holdingEtaDecay;
-
-                                    if( rHit != NULL ) {
-                                        // if hit trans exist
-                                        // leave bloody knife or
-                                        // whatever in hand
-                                        nextPlayer->holdingID = rHit->newActor;
-                                        holdingSomethingNew( nextPlayer,
-                                                             oldHolding);
-                                        }
-                                    else if( woundHit != NULL ) {
-                                        // result of hit on held weapon 
-                                        // could also be
-                                        // specified in wound trans
-                                        nextPlayer->holdingID = 
-                                            woundHit->newActor;
-                                        holdingSomethingNew( nextPlayer,
-                                                             oldHolding);
-                                        }
-                                    else if( r != NULL ) {
-                                        nextPlayer->holdingID = r->newActor;
-                                        holdingSomethingNew( nextPlayer,
-                                                             oldHolding );
-                                        }
-
-
-                                    if( r != NULL || rHit != NULL ) {
-                                        
-                                        nextPlayer->heldTransitionSourceID = 0;
-                                        
-                                        if( oldHolding != 
-                                            nextPlayer->holdingID ) {
-                                            
-                                            setFreshEtaDecayForHeld( 
-                                                nextPlayer );
-                                            }
-                                        }
-                                    
-
-                                    if( r != NULL ) {
-                                    
-                                        if( hitPlayer != NULL &&
-                                            r->newTarget != 0 ) {
-                                        
-                                            hitPlayer->embeddedWeaponID = 
-                                                r->newTarget;
-                                        
-                                            if( oldHolding == r->newTarget ) {
-                                                // what we are holding
-                                                // is now embedded in them
-                                                // keep old decay
-                                                hitPlayer->
-                                                    embeddedWeaponEtaDecay =
-                                                    oldEtaDecay;
-                                                }
-                                            else {
-                                            
-                                                TransRecord *newDecayT = 
-                                                    getMetaTrans( 
-                                                        -1, 
-                                                        r->newTarget );
-                    
-                                                if( newDecayT != NULL ) {
-                                                    hitPlayer->
-                                                     embeddedWeaponEtaDecay = 
-                                                        Time::timeSec() + 
-                                                        newDecayT->
-                                                        autoDecaySeconds;
-                                                    }
-                                                else {
-                                                    // no further decay
-                                                    hitPlayer->
-                                                        embeddedWeaponEtaDecay 
-                                                        = 0;
-                                                    }
-                                                }
-                                            }
-                                        else if( hitPlayer == NULL &&
-                                                 isMapSpotEmpty( m.x, 
-                                                                 m.y ) ) {
-                                            // no player hit, and target ground
-                                            // spot is empty
-                                            setMapObject( m.x, m.y, 
-                                                          r->newTarget );
-                                        
-                                            // if we're thowing a weapon
-                                            // target is same as what we
-                                            // were holding
-                                            if( oldHolding == r->newTarget ) {
-                                                // preserve old decay time 
-                                                // of what we were holding
-                                                setEtaDecay( m.x, m.y,
-                                                             oldEtaDecay );
-                                                }
-                                            }
-                                        // else new target, post-kill-attempt
-                                        // is lost
-                                        }
-                                    }
+                                addKillState( nextPlayer->id,
+                                              targetPlayer->id );
                                 }
                             }
                         }
@@ -13207,6 +13260,71 @@ int main() {
                 }
             }
 
+        
+        // process pending KILL actions
+        for( int i=0; i<activeKillStates.size(); i++ ) {
+            KillState *s = activeKillStates.getElement( i );
+            
+            LiveObject *killer = getLiveObject( s->killerID );
+            LiveObject *target = getLiveObject( s->targetID );
+            
+            if( killer == NULL || target == NULL ||
+                killer->error || target->error ||
+                killer->holdingID != s->killerWeaponID ) {
+                // either player dead, or held-weapon change
+                
+                // kill request done
+                if( killer != NULL ) {
+                    // clear their emot
+                    killer->emotFrozen = false;
+
+                    newEmotPlayerIDs.push_back( killer->id );
+                            
+                    newEmotIndices.push_back( -1 );
+                    newEmotTTLs.push_back( 0 );
+                    }
+                
+                activeKillStates.deleteElement( i );
+                i--;
+                continue;
+                }
+            
+            // kill request still active!
+            
+            // see if it is realized (close enough)?
+            GridPos playerPos = getPlayerPos( killer );
+            GridPos targetPos = getPlayerPos( target );
+            
+            double dist = distance( playerPos, targetPos );
+            
+            if( getObject( killer->holdingID )->deadlyDistance >= dist &&
+                ! directLineBlocked( playerPos, targetPos ) ) {
+                // close enough to kill
+                
+                executeKillAction( getLiveObjectIndex( s->killerID ),
+                                   getLiveObjectIndex( s->targetID ),
+                                   &playerIndicesToSendUpdatesAbout,
+                                   &playerIndicesToSendDyingAbout,
+                                   &newEmotPlayerIDs,
+                                   &newEmotIndices,
+                                   &newEmotTTLs );
+                }
+            else {
+                // still not close enough
+                // see if we need to renew emote
+                double curTime = Time::getCurrentTime();
+                
+                if( curTime - s->emotStartTime > 30 ) {
+                    s->emotStartTime = curTime;
+                    
+                    newEmotPlayerIDs.push_back( killer->id );
+                            
+                    newEmotIndices.push_back( killEmotionIndex );
+                    newEmotTTLs.push_back( 0 );
+                    }
+                }
+            }
+        
 
 
         // now that messages have been processed for all

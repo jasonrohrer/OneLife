@@ -42,6 +42,20 @@ Server Fixes:
   halved, and the effect of clothing to protect from cold environments is
   doubled.
 
+--Changed semantics of player KILL action server-side.  Instead of an
+  instantaneous action based on player proximity that either succeeds or fails,
+  the server remembers that the player is trying to kill that other player and
+  forces an angry emote for their face.  If they ever get within range of the
+  target player, the kill action is executed.  The kill state will get canceled
+  if they drop their weapon, target someone else, or if their target dies of
+  other causes.  Essentially, once you set a quest for blood on another player,
+  if you ever cross paths with them, it will happen.  This dramatically reduces
+  the effectiveness of dancing around, but doesn't undercut the advantage of
+  range weapons (you can still run away from an attacker).  If two players
+  attempt to kill each other simultaneously, the player that was put into the
+  kill state first will succeed, if the players ever cross paths.
+
+
 
 
 
