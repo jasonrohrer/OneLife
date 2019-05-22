@@ -13629,7 +13629,8 @@ void LivingLifePage::step() {
                                     }
                                 else {
                                     // don't interrupt walking
-                                    if( nearEndOfMovement( existing ) ) {
+                                    if( actionAttempt && 
+                                        nearEndOfMovement( existing ) ) {
                                         addNewAnimPlayerOnly( 
                                             existing, doing );
                                         }

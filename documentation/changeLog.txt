@@ -11,6 +11,8 @@ Version 231    ???
 
 --Client supports new KILL message semantics.
 
+--Fixed a glitch where other players showed doing animation when their held
+  object passively changed.
 
 
 
