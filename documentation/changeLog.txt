@@ -69,6 +69,10 @@ Server Fixes:
 
 --Fixed bug in param order in call to getClosestOtherPlayer.
 
+--If you didn't inherit a family name at birth, you get the family name of
+  whoever is holding you when they name you.  Related to #227
+
+
 
 
 

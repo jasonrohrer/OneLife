@@ -11067,6 +11067,19 @@ int main() {
                                     babyO->name = autoSprintf( "%s %s",
                                                                close, 
                                                                lastName );
+                                    
+                                    if( babyO->familyName == NULL &&
+                                        nextPlayer->familyName != NULL ) {
+                                        // mother didn't have a family 
+                                        // name set when baby was born
+                                        // now she does
+                                        // or whatever player named 
+                                        // this orphaned baby does
+                                        babyO->familyName = 
+                                            stringDuplicate( 
+                                                nextPlayer->familyName );
+                                        }
+                                    
 
                                     int spaceCount = 0;
                                     int lastSpaceIndex = -1;
