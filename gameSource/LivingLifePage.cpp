@@ -16891,7 +16891,9 @@ void LivingLifePage::step() {
                 }
             else {
 
-                if( o->id == ourID && mouseDown && shouldMoveCamera ) {
+                if( o->id == ourID && mouseDown && shouldMoveCamera &&
+                    o->pathLength > 2 ) {
+                    
                     float worldMouseX, worldMouseY;
                     
                     screenToWorld( lastScreenMouseX,
