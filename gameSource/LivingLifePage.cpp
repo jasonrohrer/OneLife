@@ -19094,53 +19094,49 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
         doublePair targetPos = { (double)clickDestX, (double)clickDestY };
         
-
-
-        for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = getLiveObject( p.hitOtherPersonID );
         
-            LiveObject *o = gameObjects.getElement( i );
+        if( o->id != ourID &&
             
-            if( o->id != ourID &&
-                o->heldByAdultID == -1 ) {
+            o->heldByAdultID == -1 ) {
                 
-                // can't kill by clicking on ghost-location of held baby
-
-                if( distance( targetPos, o->currentPos ) < 1 ) {
-                    // clicked on someone
+            // can't kill by clicking on ghost-location of held baby
+            
+            if( distance( targetPos, o->currentPos ) < 1 ) {
+                // clicked on someone
                     
-                    // new semantics:
-                    // send KILL to server right away to
-                    // tell server of our intentions
-                    // (whether or not we are close enough)
-
-                    // then walk there
-                    
-                    if( nextActionMessageToSend != NULL ) {
-                        delete [] nextActionMessageToSend;
-                        nextActionMessageToSend = NULL;
-                        }
-                        
-                        
-                    char *killMessage = 
-                        autoSprintf( "KILL %d %d %d#",
-                                     sendX( clickDestX ), 
-                                     sendY( clickDestY ),
-                                     p.hitOtherPersonID );
-                    printf( "KILL with direct-click target player "
-                            "id=%d\n", p.hitOtherPersonID );
-                    
-                    sendToServerSocket( killMessage );
-
-                    // try to walk near victim right away
-                    killMode = true;
-                    
-                    ourLiveObject->killMode = true;
-                    ourLiveObject->killWithID = ourLiveObject->holdingID;
-
-                    // ignore mod-click from here on out, to avoid
-                    // force-dropping weapon
-                    modClick = false;
+                // new semantics:
+                // send KILL to server right away to
+                // tell server of our intentions
+                // (whether or not we are close enough)
+                
+                // then walk there
+                
+                if( nextActionMessageToSend != NULL ) {
+                    delete [] nextActionMessageToSend;
+                    nextActionMessageToSend = NULL;
                     }
+                        
+                        
+                char *killMessage = 
+                    autoSprintf( "KILL %d %d %d#",
+                                 sendX( clickDestX ), 
+                                 sendY( clickDestY ),
+                                 p.hitOtherPersonID );
+                printf( "KILL with direct-click target player "
+                        "id=%d\n", p.hitOtherPersonID );
+                    
+                sendToServerSocket( killMessage );
+
+                // try to walk near victim right away
+                killMode = true;
+                    
+                ourLiveObject->killMode = true;
+                ourLiveObject->killWithID = ourLiveObject->holdingID;
+
+                // ignore mod-click from here on out, to avoid
+                // force-dropping weapon
+                modClick = false;
                 }
             }
         }
