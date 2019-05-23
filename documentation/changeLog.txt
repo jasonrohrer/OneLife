@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 231    ???
+Version 231    2019-May-23
 
 --Tiles that are drawn as non-flipped remember their non-flipped status, even
   if they change to flippable tiles later (so they don't flip back and forth
@@ -19,6 +19,7 @@ Version 231    ???
 --Applied fixes for various movement glitches.  Thanks Justin L.
 
 --KILL action now requires SHIFT key held.  Instruction image updated.
+
 
 
 
