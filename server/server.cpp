@@ -8084,6 +8084,121 @@ void executeKillAction( int inKillerIndex,
 
 
 
+void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
+               SimpleVector<int> *playerIndicesToSendNamesAbout ) {    
+
+    LiveObject *nextPlayer = inNamer;
+    LiveObject *babyO = inBaby;
+    
+    char *name = inName;
+    
+    
+    const char *lastName = "";
+    if( nextPlayer->name != NULL ) {
+        lastName = strstr( nextPlayer->name, 
+                           " " );
+                                        
+        if( lastName != NULL ) {
+            // skip space
+            lastName = &( lastName[1] );
+            }
+
+        if( lastName == NULL ) {
+            lastName = "";
+
+            if( nextPlayer->familyName != 
+                NULL ) {
+                lastName = 
+                    nextPlayer->familyName;
+                }    
+            }
+        else if( nextPlayer->nameHasSuffix ) {
+            // only keep last name
+            // if it contains another
+            // space (the suffix is after
+            // the last name).  Otherwise
+            // we are probably confused,
+            // and what we think
+            // is the last name IS the suffix.
+                                            
+            char *suffixPos =
+                strstr( (char*)lastName, " " );
+                                            
+            if( suffixPos == NULL ) {
+                // last name is suffix, actually
+                // don't pass suffix on to baby
+                lastName = "";
+                }
+            else {
+                // last name plus suffix
+                // okay to pass to baby
+                // because we strip off
+                // third part of name
+                // (suffix) below.
+                }
+            }
+        }
+    else if( nextPlayer->familyName != NULL ) {
+        lastName = nextPlayer->familyName;
+        }
+    else if( babyO->familyName != NULL ) {
+        lastName = babyO->familyName;
+        }
+                                    
+
+
+    const char *close = 
+        findCloseFirstName( name );
+
+    babyO->name = autoSprintf( "%s %s",
+                               close, 
+                               lastName );
+                                    
+    if( babyO->familyName == NULL &&
+        nextPlayer->familyName != NULL ) {
+        // mother didn't have a family 
+        // name set when baby was born
+        // now she does
+        // or whatever player named 
+        // this orphaned baby does
+        babyO->familyName = 
+            stringDuplicate( 
+                nextPlayer->familyName );
+        }
+                                    
+
+    int spaceCount = 0;
+    int lastSpaceIndex = -1;
+
+    int nameLen = strlen( babyO->name );
+    for( int s=0; s<nameLen; s++ ) {
+        if( babyO->name[s] == ' ' ) {
+            lastSpaceIndex = s;
+            spaceCount++;
+            }
+        }
+                                    
+    if( spaceCount > 1 ) {
+        // remove suffix from end
+        babyO->name[ lastSpaceIndex ] = '\0';
+        }
+                                    
+    babyO->name = getUniqueCursableName( 
+        babyO->name, 
+        &( babyO->nameHasSuffix ) );
+                                    
+    logName( babyO->id,
+             babyO->email,
+             babyO->name,
+             babyO->lineageEveID );
+                                    
+    playerIndicesToSendNamesAbout->push_back( 
+        getLiveObjectIndex( babyO->id ) );
+    }
+
+
+
+
 
 
 int main() {
@@ -11008,106 +11123,10 @@ int main() {
                             
                             if( babyO != NULL && babyO->name == NULL ) {
                                 char *name = isBabyNamingSay( m.saidText );
-                                
+
                                 if( name != NULL && strcmp( name, "" ) != 0 ) {
-                                    const char *lastName = "";
-                                    if( nextPlayer->name != NULL ) {
-                                        lastName = strstr( nextPlayer->name, 
-                                                           " " );
-                                        
-                                        if( lastName != NULL ) {
-                                            // skip space
-                                            lastName = &( lastName[1] );
-                                            }
-
-                                        if( lastName == NULL ) {
-                                            lastName = "";
-
-                                            if( nextPlayer->familyName != 
-                                                NULL ) {
-                                                lastName = 
-                                                    nextPlayer->familyName;
-                                                }    
-                                            }
-                                        else if( nextPlayer->nameHasSuffix ) {
-                                            // only keep last name
-                                            // if it contains another
-                                            // space (the suffix is after
-                                            // the last name).  Otherwise
-                                            // we are probably confused,
-                                            // and what we think
-                                            // is the last name IS the suffix.
-                                            
-                                            char *suffixPos =
-                                                strstr( (char*)lastName, " " );
-                                            
-                                            if( suffixPos == NULL ) {
-                                                // last name is suffix, actually
-                                                // don't pass suffix on to baby
-                                                lastName = "";
-                                                }
-                                            else {
-                                                // last name plus suffix
-                                                // okay to pass to baby
-                                                // because we strip off
-                                                // third part of name
-                                                // (suffix) below.
-                                                }
-                                            }
-                                        }
-                                    else if( nextPlayer->familyName != NULL ) {
-                                        lastName = nextPlayer->familyName;
-                                        }
-                                    
-
-
-                                    const char *close = 
-                                        findCloseFirstName( name );
-
-                                    babyO->name = autoSprintf( "%s %s",
-                                                               close, 
-                                                               lastName );
-                                    
-                                    if( babyO->familyName == NULL &&
-                                        nextPlayer->familyName != NULL ) {
-                                        // mother didn't have a family 
-                                        // name set when baby was born
-                                        // now she does
-                                        // or whatever player named 
-                                        // this orphaned baby does
-                                        babyO->familyName = 
-                                            stringDuplicate( 
-                                                nextPlayer->familyName );
-                                        }
-                                    
-
-                                    int spaceCount = 0;
-                                    int lastSpaceIndex = -1;
-
-                                    int nameLen = strlen( babyO->name );
-                                    for( int s=0; s<nameLen; s++ ) {
-                                        if( babyO->name[s] == ' ' ) {
-                                            lastSpaceIndex = s;
-                                            spaceCount++;
-                                            }
-                                        }
-                                    
-                                    if( spaceCount > 1 ) {
-                                        // remove suffix from end
-                                        babyO->name[ lastSpaceIndex ] = '\0';
-                                        }
-                                    
-                                    babyO->name = getUniqueCursableName( 
-                                        babyO->name, 
-                                        &( babyO->nameHasSuffix ) );
-                                    
-                                    logName( babyO->id,
-                                             babyO->email,
-                                             babyO->name,
-                                             babyO->lineageEveID );
-                                    
-                                    playerIndicesToSendNamesAbout.push_back( 
-                                        getLiveObjectIndex( babyO->id ) );
+                                    nameBaby( nextPlayer, babyO, name,
+                                              &playerIndicesToSendNamesAbout );
                                     }
                                 }
                             }
@@ -11125,24 +11144,9 @@ int main() {
                                                            babyAge, true );
 
                                 if( closestOther != NULL ) {
-                                    const char *close = 
-                                        findCloseFirstName( name );
-                                    
-                                    closestOther->name = 
-                                        stringDuplicate( close );
-                                    
-                                    closestOther->name = getUniqueCursableName( 
-                                        closestOther->name,
-                                        &( closestOther->nameHasSuffix ) );
-
-                                    logName( closestOther->id,
-                                             closestOther->email,
-                                             closestOther->name,
-                                             closestOther->lineageEveID );
-                                    
-                                    playerIndicesToSendNamesAbout.push_back( 
-                                        getLiveObjectIndex( 
-                                            closestOther->id ) );
+                                    nameBaby( nextPlayer, closestOther,
+                                              name, 
+                                              &playerIndicesToSendNamesAbout );
                                     }
                                 }
 
