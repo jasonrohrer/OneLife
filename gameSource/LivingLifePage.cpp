@@ -1517,10 +1517,10 @@ void updateMoveSpeed( LiveObject *inObject ) {
 
 
 
-static void fixupSingularPath( LiveObject *inObject ) {
-    if( inObject->pathLength != 1 ) return;
-
-    printf("%d fixup for overtruncated path\n", inObject->id);
+static void fixSingleStepPath( LiveObject *inObject ) {
+    
+    printf( "Fix for overtruncated, single-step path for player %d\n", 
+            inObject->id );
     
     // trimmed path too short
     // needs to have at least
@@ -1568,6 +1568,7 @@ static void fixupSingularPath( LiveObject *inObject ) {
     inObject->pathToDest[1] =
         oldPos;
     }
+
 
 
 // should match limit on server
@@ -13292,7 +13293,7 @@ void LivingLifePage::step() {
                                     }
 
                                 if( existing->pathLength == 1 ) {
-                                    fixupSingularPath( existing );
+                                    fixSingleStepPath( existing );
                                     }
                                 }
                             }
@@ -15308,7 +15309,7 @@ void LivingLifePage::step() {
                                                        existing->pathLength );
 
                                             if( existing->pathLength == 1 ) {
-                                                fixupSingularPath( existing );
+                                                fixSingleStepPath( existing );
                                                 }
                                             
                                             

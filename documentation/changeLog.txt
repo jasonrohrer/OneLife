@@ -16,6 +16,8 @@ Version 231    ???
 
 --Fixed glitch on auto-click at the end of very short paths.
 
+--Applied fixes for various movement glitches.  Thanks Justin L.
+
 
 
 Server Fixes:
