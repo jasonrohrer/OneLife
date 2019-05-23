@@ -19123,7 +19123,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     if( destID == 0 &&
         p.hitOtherPerson &&
         modClick && ourLiveObject->holdingID > 0 &&
-        getObject( ourLiveObject->holdingID )->deadlyDistance > 0 ) {
+        getObject( ourLiveObject->holdingID )->deadlyDistance > 0 &&
+        isShiftKeyDown() ) {
         
         // special case
 
