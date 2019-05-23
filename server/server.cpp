@@ -11109,8 +11109,7 @@ int main() {
 
                                 LiveObject *closestOther = 
                                     getClosestOtherPlayer( nextPlayer,
-                                                           true,
-                                                           babyAge );
+                                                           babyAge, true );
 
                                 if( closestOther != NULL ) {
                                     const char *close = 

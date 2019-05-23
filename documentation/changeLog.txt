@@ -18,6 +18,8 @@ Version 231    ???
 
 --Applied fixes for various movement glitches.  Thanks Justin L.
 
+--KILL action now requires SHIFT key held.  Instruction image updated.
+
 
 
 Server Fixes:
@@ -64,6 +66,8 @@ Server Fixes:
 
 --Fixed missing fseek between fread and fwrite calls.  Thanks Justin L.
   Related to pull request #268
+
+--Fixed bug in param order in call to getClosestOtherPlayer.
 
 
 
