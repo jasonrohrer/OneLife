@@ -267,7 +267,6 @@ typedef struct LiveObject {
 
         char pendingAction;
         float pendingActionAnimationProgress;
-        float pendingActionAnimationTotalProgress;
         double pendingActionAnimationStartTime;
         
         double lastActionSendStartTime;
@@ -299,6 +298,9 @@ typedef struct LiveObject {
         Emotion *currentEmot;
         // wall clock time when emot clears
         double emotClearETATime;
+
+        char killMode;
+        int killWithID;
 
     } LiveObject;
 

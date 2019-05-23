@@ -1010,7 +1010,7 @@ static void mapCacheInsert( int inX, int inY, int inID ) {
 static int getBaseMapCallCount = 0;
 
 
-static int getBaseMap( int inX, int inY ) {
+static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
     
     if( inX > xLimit || inX < -xLimit ||
         inY > yLimit || inY < -yLimit ) {
@@ -1026,6 +1026,11 @@ static int getBaseMap( int inX, int inY ) {
     
     getBaseMapCallCount ++;
 
+
+    if( outGridPlacement != NULL ) {
+        *outGridPlacement = false;
+        }
+    
 
     // see if any of our grids apply
     setXYRandomSeed( 9753 );
@@ -1068,6 +1073,10 @@ static int getBaseMap( int inX, int inY ) {
 
             if( gp->permittedBiomes.getElementIndex( pickedBiome ) != -1 ) {
                 mapCacheInsert( inX, inY, gp->id );
+
+                if( outGridPlacement != NULL ) {
+                    *outGridPlacement = true;
+                    }
                 return gp->id;
                 }
             }    
@@ -5135,8 +5144,10 @@ int getMapObjectRaw( int inX, int inY ) {
     
     if( result == -1 ) {
         // nothing in map
-        result = getBaseMap( inX, inY );
+        char wasGridPlacement = false;
         
+        result = getBaseMap( inX, inY, &wasGridPlacement );
+
         if( result > 0 ) {
             ObjectRecord *o = getObject( result );
             
@@ -5179,8 +5190,10 @@ int getMapObjectRaw( int inX, int inY ) {
                         }
                     }
                 }
-            else if( getObjectHeight( result ) < CELL_D ) {
+            else if( !wasGridPlacement && getObjectHeight( result ) < CELL_D ) {
                 // a short object should be here
+                // and it wasn't forced by a grid placement
+
                 // make sure there's not any semi-short objects below already
 
                 // this avoids vertical stacking of short objects

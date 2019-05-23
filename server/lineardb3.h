@@ -56,13 +56,7 @@ typedef struct {
     
     
 
-// WONDIBLE WINDOWS SERVER FIX NOTE:  Change 1/2 - Take these lines during the merge process.
-typedef enum lastOperationType {
-        LASTOP_NA,
-        LASTOP_READ,
-        LASTOP_WRITE
-    } lastOperationType;
-    
+enum LastFileOp{ opRead, opWrite };
 
 
 typedef struct {
@@ -89,6 +83,9 @@ typedef struct {
 
         FILE *file;        
 
+        // for deciding when fseek is needed between reads and writes
+        LastFileOp lastOp;
+
         // equal to the largest possible 32-bit table size, given
         // our current table size
         // used as mod for computing 32-bit hash fingerprints
@@ -108,8 +105,6 @@ typedef struct {
 
         LINEARDB3_PageManager *overflowBuckets;
         
-        // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 2/2 - Take these lines during the merge process.
-        lastOperationType lastOperation;
 
     } LINEARDB3;
 
