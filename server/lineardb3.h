@@ -56,7 +56,7 @@ typedef struct {
     
     
 
-    
+enum LastFileOp{ opRead, opWrite };
 
 
 typedef struct {
@@ -82,6 +82,9 @@ typedef struct {
         unsigned int valueSize;
 
         FILE *file;        
+
+        // for deciding when fseek is needed between reads and writes
+        LastFileOp lastOp;
 
         // equal to the largest possible 32-bit table size, given
         // our current table size

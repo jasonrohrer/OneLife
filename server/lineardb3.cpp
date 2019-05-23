@@ -481,7 +481,8 @@ int LINEARDB3_open(
         if( writeHeader( inDB ) != 0 ) {
             return 1;
             }
-
+        
+        inDB->lastOp = opWrite;
         
         initPageManager( inDB->hashTable, inDB->hashTableSizeA );
         initPageManager( inDB->overflowBuckets, 2 );
@@ -690,6 +691,8 @@ int LINEARDB3_open(
                 return 1;
                 }
             }
+        
+        inDB->lastOp = opRead;
         }
     
 
@@ -1025,7 +1028,9 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
             // read key to make sure it actually matches
             
             // never seek unless we have to
-            if( ftello( inDB->file ) != (signed)filePosRec ) {
+            if( inDB->lastOp == opWrite || 
+                ftello( inDB->file ) != (signed)filePosRec ) {
+
                 if( fseeko( inDB->file, filePosRec, SEEK_SET ) ) {
                     return -1;
                     }
@@ -1033,7 +1038,8 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
             
             int numRead = fread( inDB->recordBuffer, inDB->keySize, 1,
                                  inDB->file );
-                
+            inDB->lastOp = opRead;
+    
             if( numRead != 1 ) {
                 return -1;
                 }
@@ -1052,7 +1058,8 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
                 // if we're doing a series of fresh inserts,
                 // the file pos is already waiting at the end of the file
                 // for us
-                if( ftello( inDB->file ) != (signed)filePosRec ) {
+                if( inDB->lastOp == opRead ||
+                    ftello( inDB->file ) != (signed)filePosRec ) {
                     
                     // no seeking done yet
                     // go to end of file
@@ -1070,6 +1077,8 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
                 
                 int numWritten = 
                     fwrite( inKey, inDB->keySize, 1, inDB->file );
+                inDB->lastOp = opWrite;
+                
                 if( numWritten != 1 ) {
                     return -1;
                     }
@@ -1077,9 +1086,15 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
                 
             // else already seeked and read key of non-empty record
             // ready to write value
+
+            // still need to seek here after reading before writing
+            // according to fopen docs
+            fseeko( inDB->file, 0, SEEK_CUR );
+            
             int numWritten = fwrite( inOutValue, inDB->valueSize, 1, 
                                      inDB->file );
-                
+            inDB->lastOp = opWrite;
+    
             if( numWritten != 1 ) {
                 return -1;
                 }
@@ -1095,6 +1110,7 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
                 
             int numRead = fread( inOutValue, inDB->valueSize, 1, 
                                  inDB->file );
+            inDB->lastOp = opRead;
             
             if( numRead != 1 ) {
                 return -1;
@@ -1215,7 +1231,8 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
                 inDB->recordSizeBytes;
 
             // don't seek unless we have to
-            if( ftello( inDB->file ) != (signed)filePosRec ) {
+            if( inDB->lastOp == opRead ||
+                ftello( inDB->file ) != (signed)filePosRec ) {
             
                 // go to end of file
                 if( fseeko( inDB->file, 0, SEEK_END ) ) {
@@ -1231,7 +1248,8 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
             
                 
             int numWritten = fwrite( inKey, inDB->keySize, 1, inDB->file );
-            
+            inDB->lastOp = opWrite;
+
             numWritten += fwrite( inOutValue, inDB->valueSize, 1, inDB->file );
                 
             if( numWritten != 2 ) {
@@ -1307,7 +1325,9 @@ int LINEARDB3_Iterator_next( LINEARDB3_Iterator *inDBi,
             inDBi->nextRecordIndex * db->recordSizeBytes;
         
                     
-        if( ftello( db->file ) != (signed)fileRecPos ) {    
+        if( db->lastOp == opWrite ||
+            ftello( db->file ) != (signed)fileRecPos ) {
+    
             if( fseeko( db->file, fileRecPos, SEEK_SET ) ) {
                 return -1;
                 }
@@ -1317,6 +1337,8 @@ int LINEARDB3_Iterator_next( LINEARDB3_Iterator *inDBi,
         int numRead = fread( outKey, 
                              db->keySize, 1,
                              db->file );
+        db->lastOp = opRead;
+        
         if( numRead != 1 ) {
             return -1;
             }

@@ -62,6 +62,8 @@ Server Fixes:
   attempt to kill each other simultaneously, the player that was put into the
   kill state first will succeed, if the players ever cross paths.
 
+--Fixed missing fseek between fread and fwrite calls.  Thanks Justin L.
+  Related to pull request #268
 
 
 
