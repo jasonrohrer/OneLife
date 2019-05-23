@@ -3,6 +3,86 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 231    2019-May-23
+
+--Tiles that are drawn as non-flipped remember their non-flipped status, even
+  if they change to flippable tiles later (so they don't flip back and forth
+  in an unappealing way).
+
+--Client supports new KILL message semantics.
+
+--Fixed a glitch where other players showed doing animation when their held
+  object passively changed.
+
+--Fixed glitch on auto-click at the end of very short paths.
+
+--Applied fixes for various movement glitches.  Thanks Justin L.
+
+--KILL action now requires SHIFT key held.  Instruction image updated.
+
+
+
+
+Server Fixes:
+
+--Fixed bug in deletion of underlying object if grave marker has no slots.
+
+--Increased name match limit in family tree search to 30,000, and ensuring
+  performance by forcing use of name column as index in all name queries.
+
+--Code that accepts KILL command is more liberal in case of a moving target.
+  Now it's very hard to miss with the bow, assuming that the target is within
+  range and you actually click on them client-side.
+
+--Fixed so that use-on-bare-ground objects that are groundOnly can't be used on
+  floors.
+
+--Added a script to automate end-user installation of a private server on Linux.
+
+--Fixed so that Eves don't spawn near tutorial town.
+
+--Fixed so that VOG doesn't see language-mapped phrases.
+
+--Fixed so that spring placement not blocked by objects to the south.
+
+--Improved thermal model for buildings.  Now using a 13x13 heat grid instead of
+  8x8, to support larger buildings.  We now detect a binary indoor/outdoor
+  property for each player, based on being completely surrounded by walls,
+  floors, and closed doors.  If indoors, the effect of a cold environment is
+  halved, and the effect of clothing to protect from cold environments is
+  doubled.
+
+--Changed semantics of player KILL action server-side.  Instead of an
+  instantaneous action based on player proximity that either succeeds or fails,
+  the server remembers that the player is trying to kill that other player and
+  forces an angry emote for their face.  If they ever get within range of the
+  target player, the kill action is executed.  The kill state will get canceled
+  if they drop their weapon, target someone else, or if their target dies of
+  other causes.  Essentially, once you set a quest for blood on another player,
+  if you ever cross paths with them, it will happen.  This dramatically reduces
+  the effectiveness of dancing around, but doesn't undercut the advantage of
+  range weapons (you can still run away from an attacker).  If two players
+  attempt to kill each other simultaneously, the player that was put into the
+  kill state first will succeed, if the players ever cross paths.
+
+--Fixed missing fseek between fread and fwrite calls.  Thanks Justin L.
+  Related to pull request #268
+
+--Fixed bug in param order in call to getClosestOtherPlayer.
+
+--If you didn't inherit a family name at birth, you get the family name of
+  whoever is holding you when they name you.  Related to #227
+
+--Standardized other-person-naming code, whether for held baby, or non-held,
+  currently-nameless adult.  Baby inherits the family name of their mother at
+  birth, or the family name of their namer otherwise.  Family name can differ
+  from last name, depending on who named you, but your family name will
+  resurface later down the line as a last name if your last name is lost. 
+  Fixes #277
+
+
+
+
 Version 228    2019-May-16
 
 --Abbreviating more than 4 GREATS in grave names as 5X GREAT so that it doesn't

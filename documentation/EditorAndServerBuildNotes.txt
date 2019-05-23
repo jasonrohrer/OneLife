@@ -121,7 +121,7 @@ echo "69" > serverCodeVersionNumber.txt
 
 If you want to write a bash script to do this for you, try this:
 
-git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
+git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=2 refs/tags | grep "OneLife_v" | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
 
 
 

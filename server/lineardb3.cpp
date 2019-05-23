@@ -9,8 +9,6 @@
 #ifdef _WIN32
 #define fseeko fseeko64
 #define ftello ftello64
-// WONDIBLE WINDOWS SERVER FIX NOTE:  Change 1/28 - Take these lines during the merge process.
-#define SAFE_READ_WRITE_SWITCHING
 #endif
 
 
@@ -311,37 +309,8 @@ static void markBucketEmpty( PageManager *inPM, uint32_t inBucketIndex ) {
 
 
 
-// WONDIBLE WINDOWS SERVER FIX NOTE:  Change 2/28 - Take these lines during the merge process.
-#ifdef SAFE_READ_WRITE_SWITCHING
-#define dbseeko( db, offset, origin ) safe_dbseeko( db, offset, origin )
-#define dbwrite( buffer, size, db ) safe_dbwrite( buffer, size, db )
-#define dbread( buffer, size, db ) safe_dbread( buffer, size, db )
-#else
-#define dbseeko( db, offset, origin ) fseeko( db->file, offset, origin )
-#define dbwrite( buffer, size, db ) fwrite( buffer, size, 1, db->file )
-#define dbread( buffer, size, db ) fread( buffer, size, 1, db->file )
-#endif
 
-inline static int safe_dbseeko( LINEARDB3 *inDB, long offset, int origin ) {
-    inDB->lastOperation = LASTOP_NA;
-    return fseek( inDB->file, offset, origin );
-    }
 
-inline static size_t safe_dbwrite( const void *buffer, size_t size, LINEARDB3 *inDB ) {
-    if( inDB->lastOperation == LASTOP_READ ) {
-        fseek( inDB->file, 0, SEEK_CUR );
-        }
-    inDB->lastOperation = LASTOP_WRITE;
-    return fwrite( buffer, size, 1, inDB->file );
-    }
-
-inline static size_t safe_dbread( void *buffer, size_t size, LINEARDB3 *inDB ) {
-    if( inDB->lastOperation == LASTOP_WRITE ) {
-        fseek( inDB->file, 0, SEEK_CUR );
-        }
-    inDB->lastOperation = LASTOP_READ;
-    return fread( buffer, size, 1, inDB->file );
-    }
 
 static const char *magicString = "Ld2";
 
@@ -355,16 +324,14 @@ static const char *magicString = "Ld2";
 
 // returns 0 on success, -1 on error
 static int writeHeader( LINEARDB3 *inDB ) {
-    // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 3/28 - Take these lines during the merge process.
-    if( dbseeko( inDB, 0, SEEK_SET ) ) {
+    if( fseeko( inDB->file, 0, SEEK_SET ) ) {
         return -1;
         }
 
     int numWritten;
         
-    // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 4/28 - Take these lines during the merge process.
-    numWritten = dbwrite( magicString, strlen( magicString ), 
-                         inDB );
+    numWritten = fwrite( magicString, strlen( magicString ), 
+                         1, inDB->file );
     if( numWritten != 1 ) {
         return -1;
         }
@@ -374,8 +341,7 @@ static int writeHeader( LINEARDB3 *inDB ) {
 
     val32 = inDB->keySize;
     
-    // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 5/28 - Take these lines during the merge process.
-    numWritten = dbwrite( &val32, sizeof(uint32_t), inDB );
+    numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
     if( numWritten != 1 ) {
         return -1;
         }
@@ -383,8 +349,7 @@ static int writeHeader( LINEARDB3 *inDB ) {
 
     val32 = inDB->valueSize;
     
-    // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 6/28 - Take these lines during the merge process.
-    numWritten = dbwrite( &val32, sizeof(uint32_t), inDB );
+    numWritten = fwrite( &val32, sizeof(uint32_t), 1, inDB->file );
     if( numWritten != 1 ) {
         return -1;
         }
@@ -499,8 +464,7 @@ int LINEARDB3_open(
     
     // seek to the end to find out file size
 
-    // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 7/28 - Take these lines during the merge process.
-    if( dbseeko( inDB, 0, SEEK_END ) ) {
+    if( fseeko( inDB->file, 0, SEEK_END ) ) {
         return 1;
         }
     
@@ -517,15 +481,15 @@ int LINEARDB3_open(
         if( writeHeader( inDB ) != 0 ) {
             return 1;
             }
-
+        
+        inDB->lastOp = opWrite;
         
         initPageManager( inDB->hashTable, inDB->hashTableSizeA );
         initPageManager( inDB->overflowBuckets, 2 );
         }
     else {
         // read header
-        // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 8/28 - Take these lines during the merge process.
-        if( dbseeko( inDB, 0, SEEK_SET ) ) {
+        if( fseeko( inDB->file, 0, SEEK_SET ) ) {
             return 1;
             }
         
@@ -534,8 +498,7 @@ int LINEARDB3_open(
         
         char magicBuffer[ 4 ];
         
-        // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 9/28 - Take these lines during the merge process.
-        numRead = dbread( magicBuffer, 3, inDB );
+        numRead = fread( magicBuffer, 3, 1, inDB->file );
 
         if( numRead != 1 ) {
             return 1;
@@ -552,8 +515,7 @@ int LINEARDB3_open(
 
         uint32_t val32;
         
-        // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 10/28 - Take these lines during the merge process.
-        numRead = dbread( &val32, sizeof(uint32_t), inDB );
+        numRead = fread( &val32, sizeof(uint32_t), 1, inDB->file );
         
         if( numRead != 1 ) {
             return 1;
@@ -568,8 +530,7 @@ int LINEARDB3_open(
         
 
 
-        // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 11/28 - Take these lines during the merge process.
-        numRead = dbread( &val32, sizeof(uint32_t), inDB );
+        numRead = fread( &val32, sizeof(uint32_t), 1, inDB->file );
         
         if( numRead != 1 ) {
             return 1;
@@ -587,8 +548,7 @@ int LINEARDB3_open(
 
 
         // make sure hash table exists in file
-        // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 12/28 - Take these lines during the merge process.
-        if( dbseeko( inDB, 0, SEEK_END ) ) {
+        if( fseeko( inDB->file, 0, SEEK_END ) ) {
             return 1;
             }
  
@@ -620,16 +580,14 @@ int LINEARDB3_open(
                 return 1;
                 }
             
-            // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 13/28 - Take these lines during the merge process.
-            if( dbseeko( inDB, 0, SEEK_SET ) ) {
+            if( fseeko( inDB->file, 0, SEEK_SET ) ) {
                 return 1;
                 }
             
             unsigned char headerBuffer[ LINEARDB3_HEADER_SIZE ];
             
-            // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 14/28 - Take these lines during the merge process.
-            int numRead = dbread( headerBuffer, 
-                                 LINEARDB3_HEADER_SIZE, inDB );
+            int numRead = fread( headerBuffer, 
+                                 LINEARDB3_HEADER_SIZE, 1, inDB->file );
             
             if( numRead != 1 ) {
                 printf( "Failed to read header from lineardb3 file %s\n",
@@ -647,9 +605,8 @@ int LINEARDB3_open(
                 
 
             for( uint64_t i=0; i<numRecordsInFile; i++ ) {
-                // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 15/28 - Take these lines during the merge process.
-                numRead = dbread( inDB->recordBuffer, 
-                                 inDB->recordSizeBytes, inDB );
+                numRead = fread( inDB->recordBuffer, 
+                                 inDB->recordSizeBytes, 1, inDB->file );
             
                 if( numRead != 1 ) {
                     printf( "Failed to read record from lineardb3 file %s\n",
@@ -703,15 +660,13 @@ int LINEARDB3_open(
         initPageManager( inDB->overflowBuckets, 2 );
 
 
-        // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 16/28 - Take these lines during the merge process.
-        if( dbseeko( inDB, LINEARDB3_HEADER_SIZE, SEEK_SET ) ) {
+        if( fseeko( inDB->file, LINEARDB3_HEADER_SIZE, SEEK_SET ) ) {
             return 1;
             }
         
         for( uint64_t i=0; i<numRecordsInFile; i++ ) {
-            // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 17/28 - Take these lines during the merge process.
-            int numRead = dbread( inDB->recordBuffer, 
-                                 inDB->recordSizeBytes, inDB );
+            int numRead = fread( inDB->recordBuffer, 
+                                 inDB->recordSizeBytes, 1, inDB->file );
             
             if( numRead != 1 ) {
                 printf( "Failed to read record from lineardb3 file\n" );
@@ -736,6 +691,8 @@ int LINEARDB3_open(
                 return 1;
                 }
             }
+        
+        inDB->lastOp = opRead;
         }
     
 
@@ -1071,17 +1028,18 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
             // read key to make sure it actually matches
             
             // never seek unless we have to
-            if( ftello( inDB->file ) != (signed)filePosRec ) {
-                // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 18/28 - Take these lines during the merge process.
-                if( dbseeko( inDB, filePosRec, SEEK_SET ) ) {
+            if( inDB->lastOp == opWrite || 
+                ftello( inDB->file ) != (signed)filePosRec ) {
+
+                if( fseeko( inDB->file, filePosRec, SEEK_SET ) ) {
                     return -1;
                     }
                 }
             
-            // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 19/28 - Take these lines during the merge process.
-            int numRead = dbread( inDB->recordBuffer, inDB->keySize,
-                                 inDB );
-                
+            int numRead = fread( inDB->recordBuffer, inDB->keySize, 1,
+                                 inDB->file );
+            inDB->lastOp = opRead;
+    
             if( numRead != 1 ) {
                 return -1;
                 }
@@ -1100,12 +1058,12 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
                 // if we're doing a series of fresh inserts,
                 // the file pos is already waiting at the end of the file
                 // for us
-                if( ftello( inDB->file ) != (signed)filePosRec ) {
+                if( inDB->lastOp == opRead ||
+                    ftello( inDB->file ) != (signed)filePosRec ) {
                     
                     // no seeking done yet
                     // go to end of file
-                    // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 20/28 - Take these lines during the merge process.
-                    if( dbseeko( inDB, 0, SEEK_END ) ) {
+                    if( fseeko( inDB->file, 0, SEEK_END ) ) {
                         return -1;
                         }
                     // make sure it matches where we've documented that
@@ -1118,8 +1076,9 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
 
                 
                 int numWritten = 
-                    // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 21/28 - Take these lines during the merge process.
-                    dbwrite( inKey, inDB->keySize, inDB );
+                    fwrite( inKey, inDB->keySize, 1, inDB->file );
+                inDB->lastOp = opWrite;
+                
                 if( numWritten != 1 ) {
                     return -1;
                     }
@@ -1127,10 +1086,15 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
                 
             // else already seeked and read key of non-empty record
             // ready to write value
-            // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 22/28 - Take these lines during the merge process.
-            int numWritten = dbwrite( inOutValue, inDB->valueSize,
-                                     inDB );
-                
+
+            // still need to seek here after reading before writing
+            // according to fopen docs
+            fseeko( inDB->file, 0, SEEK_CUR );
+            
+            int numWritten = fwrite( inOutValue, inDB->valueSize, 1, 
+                                     inDB->file );
+            inDB->lastOp = opWrite;
+    
             if( numWritten != 1 ) {
                 return -1;
                 }
@@ -1144,9 +1108,9 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
             // read the key above
             // ready to read value now
                 
-            // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 23/28 - Take these lines during the merge process.
-            int numRead = dbread( inOutValue, inDB->valueSize,
-                                 inDB );
+            int numRead = fread( inOutValue, inDB->valueSize, 1, 
+                                 inDB->file );
+            inDB->lastOp = opRead;
             
             if( numRead != 1 ) {
                 return -1;
@@ -1267,11 +1231,11 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
                 inDB->recordSizeBytes;
 
             // don't seek unless we have to
-            if( ftello( inDB->file ) != (signed)filePosRec ) {
+            if( inDB->lastOp == opRead ||
+                ftello( inDB->file ) != (signed)filePosRec ) {
             
                 // go to end of file
-                // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 24/28 - Take these lines during the merge process.
-                if( dbseeko( inDB, 0, SEEK_END ) ) {
+                if( fseeko( inDB->file, 0, SEEK_END ) ) {
                     return -1;
                     }
             
@@ -1283,10 +1247,10 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
                 }
             
                 
-            // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 25/28 - Take these lines during the merge process.
-            int numWritten = dbwrite( inKey, inDB->keySize, inDB );
-            
-            numWritten += dbwrite( inOutValue, inDB->valueSize, inDB );
+            int numWritten = fwrite( inKey, inDB->keySize, 1, inDB->file );
+            inDB->lastOp = opWrite;
+
+            numWritten += fwrite( inOutValue, inDB->valueSize, 1, inDB->file );
                 
             if( numWritten != 2 ) {
                 return -1;
@@ -1361,26 +1325,27 @@ int LINEARDB3_Iterator_next( LINEARDB3_Iterator *inDBi,
             inDBi->nextRecordIndex * db->recordSizeBytes;
         
                     
-        if( ftello( db->file ) != (signed)fileRecPos ) {    
-            // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 26/28 - Take these lines during the merge process.
-            if( dbseeko( db, fileRecPos, SEEK_SET ) ) {
+        if( db->lastOp == opWrite ||
+            ftello( db->file ) != (signed)fileRecPos ) {
+    
+            if( fseeko( db->file, fileRecPos, SEEK_SET ) ) {
                 return -1;
                 }
             }
         
 
-        // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 27/28 - Take these lines during the merge process.
-        int numRead = dbread( outKey, 
-                             db->keySize,
-                             db );
+        int numRead = fread( outKey, 
+                             db->keySize, 1,
+                             db->file );
+        db->lastOp = opRead;
+        
         if( numRead != 1 ) {
             return -1;
             }
         
-        // WONDIBLE WINDOWS SERVER FIX NOTE:  Change 28/28 - Take these lines during the merge process.
-        numRead = dbread( outValue, 
-                         db->valueSize,
-                         db );
+        numRead = fread( outValue, 
+                         db->valueSize, 1,
+                         db->file );
         if( numRead != 1 ) {
             return -1;
             }
