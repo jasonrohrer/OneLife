@@ -72,6 +72,12 @@ Server Fixes:
 --If you didn't inherit a family name at birth, you get the family name of
   whoever is holding you when they name you.  Related to #227
 
+--Standardized other-person-naming code, whether for held baby, or non-held,
+  currently-nameless adult.  Baby inherits the family name of their mother at
+  birth, or the family name of their namer otherwise.  Family name can differ
+  from last name, depending on who named you, but your family name will
+  resurface later down the line as a last name if your last name is lost. 
+  Fixes #277
 
 
 
