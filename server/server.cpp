@@ -8813,7 +8813,15 @@ int main() {
             // don't wait at all if there are tutorial maps to load
             pollTimeout = 0;
             }
+        
 
+        if( pollTimeout > 0.1 && activeKillStates.size() > 0 ) {
+            // we have active kill requests pending
+            // want a short timeout so that we can catch kills 
+            // when player's paths cross
+            pollTimeout = 0.1;
+            }
+        
 
         // we thus use zero CPU as long as no messages or new connections
         // come in, and only wake up when some timed action needs to be

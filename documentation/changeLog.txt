@@ -22,6 +22,10 @@ Server Fixes:
 
 --Query times listed on front page of family tree server.
 
+--Reduced server step time to 1/10 sec max if there are active kill requests
+  pending, so that even on servers with very few players, kills happen
+  instantly when players cross paths.
+
 
 
 
