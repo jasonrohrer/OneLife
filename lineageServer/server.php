@@ -1800,7 +1800,6 @@ function ls_printFrontPageRows( $inForceIndexClause,
         "$inFilterClause ".
         "ORDER BY $inOrderBy ".
         "LIMIT $inNumRows;";
-    ls_log( $query );
     
     
     $result = ls_queryDatabase( $query );
