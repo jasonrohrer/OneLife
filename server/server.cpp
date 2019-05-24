@@ -4480,6 +4480,16 @@ static UpdateRecord getUpdateRecord(
         doneMoving = inPlayer->lastMoveSequenceNumber;
         }
     
+    char midMove = false;
+    
+    if( inPartial || 
+        inPlayer->xs != inPlayer->xd ||
+        inPlayer->ys != inPlayer->yd ) {
+        
+        midMove = true;
+        }
+    
+
     UpdateRecord r;
         
 
@@ -4493,7 +4503,7 @@ static UpdateRecord getUpdateRecord(
 
         r.posUsed = true;
 
-        if( doneMoving > 0 || ! inPartial ) {
+        if( doneMoving > 0 || ! midMove ) {
             x = inPlayer->xs;
             y = inPlayer->ys;
             }

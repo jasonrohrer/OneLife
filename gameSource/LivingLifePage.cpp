@@ -13259,7 +13259,7 @@ void LivingLifePage::step() {
                                 // PU destination matches our current path dest
                                 // no move truncation
                                 }
-                            else {
+                            else if( done_moving > 0 ) {
                                 // PU should be somewhere along our path
                                 // a truncated move
                                 
@@ -14264,7 +14264,7 @@ void LivingLifePage::step() {
                         
                         char babyDropped = false;
                         
-                        if( done_moving && existing->heldByAdultID != -1 ) {
+                        if( done_moving > 0 && existing->heldByAdultID != -1 ) {
                             babyDropped = true;
                             }
                         
@@ -14333,7 +14333,7 @@ void LivingLifePage::step() {
 
                             existing->heldByAdultID = -1;
                             }
-                        else if( done_moving && forced ) {
+                        else if( done_moving > 0 && forced ) {
                             
                             // don't ever force-update these for
                             // our locally-controlled object

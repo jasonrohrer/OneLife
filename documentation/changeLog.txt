@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 233    ??
+
+--Fixed long-standing bug when something decays in the hand of a moving player,
+  causing a bad player update message to get sent, making their position revert
+  on other clients.
+
+
 
 Server Fixes:
 
