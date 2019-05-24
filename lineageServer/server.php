@@ -1729,9 +1729,20 @@ function ls_frontPage() {
     
     echo "<tr><td colspan=6><font size=5>Today's Long Lines:".
         "</font></td></tr>\n";
+
+    $specialForceIndexClause = $forceIndexClause;
+
+    if( $specialForceIndexClause == "" ) {
+        // we need to speed this query up by forcing an index on death_time
+        // otherwise, mysql orders them by generation number first, and
+        // then walks through to find $numPerList with matching death times
+        // there are way too many long lines beyond what we will have
+        // today, so this is a lot to walk through
+        $specialForceIndexClause = " FORCE INDEX( death_time ) ";
+        }
     
     ls_printFrontPageRows(
-        $forceIndexClause,
+        $specialForceIndexClause,
         "$filterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 DAY )",
         "generation DESC, death_time DESC",
         $numPerList );
