@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes:
+
+--Query times listed on front page of family tree server.
+
+
+
+
 Version 231    2019-May-23
 
 --Tiles that are drawn as non-flipped remember their non-flipped status, even

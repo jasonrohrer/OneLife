@@ -1785,7 +1785,8 @@ function ls_printFrontPageRows( $inForceIndexClause,
                                 $inFilterClause, $inOrderBy, $inNumRows ) {
     global $tableNamePrefix;
     global $photoServerURL, $usePhotoServer;
-    
+
+    $startTime = microtime( true );
 
     $query = "SELECT lives.id, display_id, player_id, name, ".
         "age, generation, death_time, deepest_descendant_generation, ".
@@ -1911,6 +1912,14 @@ function ls_printFrontPageRows( $inForceIndexClause,
         echo "</tr>";
         }
 
+    $runTime = microtime( true ) - $startTime;
+
+    $runTimeMS = number_format( $runTime * 1000, 0 );
+    
+    
+    echo "<tr><td colspan=6 align=right>".
+        "(query took $runTimeMS miliseconds)</td></tr>";
+    
     }
 
 
