@@ -9,6 +9,10 @@ Version 233    ??
   causing a bad player update message to get sent, making their position revert
   on other clients.
 
+--On SHIFT-click to kill, allow missing by up to four tiles (finding closest
+  person and calling them the target) to avoid the annoying "drop your weapon
+  by accident" game when you're trying to click on a moving target.
+
 
 
 Server Fixes:
