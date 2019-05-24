@@ -1926,9 +1926,13 @@ function ls_printFrontPageRows( $inForceIndexClause,
 
     $runTimeMS = number_format( $runTime * 1000, 0 );
     
+    $plural = "";
+    if( $runTimeMS != 1 ) {
+        $plural = "s";
+        }
     
     echo "<tr><td colspan=6 align=right>".
-        "(query took $runTimeMS miliseconds)</td></tr>";
+        "(query took $runTimeMS milisecond$plural)</td></tr>";
 
     if( $runTime > 0.5 ) {
         ls_log( "This query took $runTimeMS miliseconds:  $query" );
