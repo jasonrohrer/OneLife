@@ -13,6 +13,9 @@ Version 233    ??
   person and calling them the target) to avoid the annoying "drop your weapon
   by accident" game when you're trying to click on a moving target.
 
+--Fixed long-standing bug that would defer mid-move player change until after
+  their move completed.
+
 
 
 Server Fixes:

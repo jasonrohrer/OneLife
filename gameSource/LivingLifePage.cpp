@@ -13297,17 +13297,26 @@ void LivingLifePage::step() {
                                     }
                                 }
                             }
-
-                        // defer it until they're done moving
-                        printf( "Holding PU message for "
-                                "%d until later, "
-                                "%d other messages pending for them\n",
-                                existing->id,
-                                existing->pendingReceivedMessages.size() );
-                                
-                        existing->pendingReceivedMessages.push_back(
-                            autoSprintf( "PU\n%s\n#",
-                                         lines[i] ) );
+                        
+                        if( done_moving > 0  ||
+                            existing->pendingReceivedMessages.size() > 0 ) {
+                            
+                            // this PU happens after they are done moving
+                            // or it happens mid-move, but we already
+                            // have messages held, so it may be meant
+                            // to happen in the middle of their next move
+                            
+                            // defer it until they're done moving
+                            printf( "Holding PU message for "
+                                    "%d until later, "
+                                    "%d other messages pending for them\n",
+                                    existing->id,
+                                    existing->pendingReceivedMessages.size() );
+                            
+                            existing->pendingReceivedMessages.push_back(
+                                autoSprintf( "PU\n%s\n#",
+                                             lines[i] ) );
+                            }
                         }
                     else if( existing != NULL &&
                              existing->heldByAdultID != -1 &&
