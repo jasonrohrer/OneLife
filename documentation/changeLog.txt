@@ -26,6 +26,8 @@ Server Fixes:
   pending, so that even on servers with very few players, kills happen
   instantly when players cross paths.
 
+--Added a work-around for a bug in move path validation that was causing valid
+  moves to get rejected by server.  Fixed check for diagonal adjacent.
 
 
 

@@ -3125,7 +3125,7 @@ static char isGridAdjacentDiag( int inXA, int inYA, int inXB, int inYB ) {
         return true;
         }
     
-    if( abs( inXA - inXB ) == 1 && abs( inYA - inYB ) ) {
+    if( abs( inXA - inXB ) == 1 && abs( inYA - inYB ) == 1 ) {
         return true;
         }
     
@@ -10730,6 +10730,23 @@ int main() {
                                     }
                                     
                                 if( pathStep != 0 ) {
+
+                                    if( c == -1 ) {
+                                        // fix weird case where our start
+                                        // pos is on our path
+                                        // not sure what causes this
+                                        // but it causes the valid path
+                                        // check to fail below
+                                        int firstStep = c + pathStep;
+                                        GridPos firstPos =
+                                            nextPlayer->pathToDest[ firstStep ];
+                                        
+                                        if( firstPos.x == nextPlayer->xs &&
+                                            firstPos.y == nextPlayer->ys ) {
+                                            c = 0;
+                                            }
+                                        }
+                                    
                                     for( int p = c + pathStep; 
                                          p != theirPathIndex + pathStep; 
                                          p += pathStep ) {
