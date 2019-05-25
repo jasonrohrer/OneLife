@@ -49,6 +49,12 @@ cd ../OneLife/build/source
 ../../../minorGems/game/diffBundle/diffBundle OneLife_v$1 OneLife_v$2 $2_inc_linux.dbz
 
 
+echo
+echo -n "Press ENTER to scp diff bundle to web server."
+
+read userIn
+
+
 
 scp $2_inc_linux.dbz jcr15@onehouronelife.com:diffBundles/ 
 

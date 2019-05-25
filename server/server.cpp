@@ -3127,7 +3127,7 @@ static char isGridAdjacentDiag( int inXA, int inYA, int inXB, int inYB ) {
         return true;
         }
     
-    if( abs( inXA - inXB ) == 1 && abs( inYA - inYB ) ) {
+    if( abs( inXA - inXB ) == 1 && abs( inYA - inYB ) == 1 ) {
         return true;
         }
     
@@ -4482,6 +4482,16 @@ static UpdateRecord getUpdateRecord(
         doneMoving = inPlayer->lastMoveSequenceNumber;
         }
     
+    char midMove = false;
+    
+    if( inPartial || 
+        inPlayer->xs != inPlayer->xd ||
+        inPlayer->ys != inPlayer->yd ) {
+        
+        midMove = true;
+        }
+    
+
     UpdateRecord r;
         
 
@@ -4495,7 +4505,7 @@ static UpdateRecord getUpdateRecord(
 
         r.posUsed = true;
 
-        if( doneMoving > 0 || ! inPartial ) {
+        if( doneMoving > 0 || ! midMove ) {
             x = inPlayer->xs;
             y = inPlayer->ys;
             }
@@ -8821,7 +8831,15 @@ int main() {
             // don't wait at all if there are tutorial maps to load
             pollTimeout = 0;
             }
+        
 
+        if( pollTimeout > 0.1 && activeKillStates.size() > 0 ) {
+            // we have active kill requests pending
+            // want a short timeout so that we can catch kills 
+            // when player's paths cross
+            pollTimeout = 0.1;
+            }
+        
 
         // we thus use zero CPU as long as no messages or new connections
         // come in, and only wake up when some timed action needs to be
@@ -10730,6 +10748,23 @@ int main() {
                                     }
                                     
                                 if( pathStep != 0 ) {
+
+                                    if( c == -1 ) {
+                                        // fix weird case where our start
+                                        // pos is on our path
+                                        // not sure what causes this
+                                        // but it causes the valid path
+                                        // check to fail below
+                                        int firstStep = c + pathStep;
+                                        GridPos firstPos =
+                                            nextPlayer->pathToDest[ firstStep ];
+                                        
+                                        if( firstPos.x == nextPlayer->xs &&
+                                            firstPos.y == nextPlayer->ys ) {
+                                            c = 0;
+                                            }
+                                        }
+                                    
                                     for( int p = c + pathStep; 
                                          p != theirPathIndex + pathStep; 
                                          p += pathStep ) {

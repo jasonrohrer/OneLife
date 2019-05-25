@@ -3,6 +3,34 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 234    2019-May-25
+
+--Fixed long-standing bug when something decays in the hand of a moving player,
+  causing a bad player update message to get sent, making their position revert
+  on other clients.
+
+--On SHIFT-click to kill, allow missing by up to four tiles (finding closest
+  person and calling them the target) to avoid the annoying "drop your weapon
+  by accident" game when you're trying to click on a moving target.
+
+--Fixed long-standing bug that would defer mid-move player change until after
+  their move completed.
+
+
+
+Server Fixes:
+
+--Query times listed on front page of family tree server.
+
+--Reduced server step time to 1/10 sec max if there are active kill requests
+  pending, so that even on servers with very few players, kills happen
+  instantly when players cross paths.
+
+--Added a work-around for a bug in move path validation that was causing valid
+  moves to get rejected by server.  Fixed check for diagonal adjacent.
+
+
+
 Version 231    2019-May-23
 
 --Tiles that are drawn as non-flipped remember their non-flipped status, even

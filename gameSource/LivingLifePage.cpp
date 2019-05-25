@@ -13454,7 +13454,7 @@ void LivingLifePage::step() {
                                 // PU destination matches our current path dest
                                 // no move truncation
                                 }
-                            else {
+                            else if( done_moving > 0 ) {
                                 // PU should be somewhere along our path
                                 // a truncated move
                                 
@@ -13492,17 +13492,26 @@ void LivingLifePage::step() {
                                     }
                                 }
                             }
-
-                        // defer it until they're done moving
-                        printf( "Holding PU message for "
-                                "%d until later, "
-                                "%d other messages pending for them\n",
-                                existing->id,
-                                existing->pendingReceivedMessages.size() );
-                                
-                        existing->pendingReceivedMessages.push_back(
-                            autoSprintf( "PU\n%s\n#",
-                                         lines[i] ) );
+                        
+                        if( done_moving > 0  ||
+                            existing->pendingReceivedMessages.size() > 0 ) {
+                            
+                            // this PU happens after they are done moving
+                            // or it happens mid-move, but we already
+                            // have messages held, so it may be meant
+                            // to happen in the middle of their next move
+                            
+                            // defer it until they're done moving
+                            printf( "Holding PU message for "
+                                    "%d until later, "
+                                    "%d other messages pending for them\n",
+                                    existing->id,
+                                    existing->pendingReceivedMessages.size() );
+                            
+                            existing->pendingReceivedMessages.push_back(
+                                autoSprintf( "PU\n%s\n#",
+                                             lines[i] ) );
+                            }
                         }
                     else if( existing != NULL &&
                              existing->heldByAdultID != -1 &&
@@ -14459,7 +14468,7 @@ void LivingLifePage::step() {
                         
                         char babyDropped = false;
                         
-                        if( done_moving && existing->heldByAdultID != -1 ) {
+                        if( done_moving > 0 && existing->heldByAdultID != -1 ) {
                             babyDropped = true;
                             }
                         
@@ -14528,7 +14537,7 @@ void LivingLifePage::step() {
 
                             existing->heldByAdultID = -1;
                             }
-                        else if( done_moving && forced ) {
+                        else if( done_moving > 0 && forced ) {
                             
                             // don't ever force-update these for
                             // our locally-controlled object
@@ -15424,6 +15433,14 @@ void LivingLifePage::step() {
                                         // off old path before or after 
                                         // where we are
                                         
+                                        printf( "    CUR PATH:  " );
+                                        printPath( oldPath.getElementArray(), 
+                                                   oldPathLength );
+                                        printf( "    WE AT:  %d (%d,%d)  \n",
+                                                oldCurrentPathIndex,
+                                                oldCurrentPathPos.x,
+                                                oldCurrentPathPos.y );
+
                                         int foundStartIndex = -1;
                                         
                                         for( int i=0; i<oldPathLength; i++ ) {
@@ -17349,7 +17366,8 @@ void LivingLifePage::step() {
                             }
                         }
 
-                    printf( "Reached dest %f seconds early\n",
+                    printf( "Reached dest (%.0f,%.0f) %f seconds early\n",
+                            endPos.x, endPos.y,
                             o->moveEtaTime - game_getCurrentTime() );
                     }
                 else {
@@ -18966,6 +18984,103 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
 
     checkForPointerHit( &p, inX, inY );
+
+
+
+    // new semantics
+    // as soon as we trigger a kill attempt, we go into kill mode
+    // by sending server a KILL message right away
+    char killMode = false;
+ 
+
+    // don't allow weapon-drop on kill-click unless there's really
+    // no one around
+    if( ! mouseAlreadyDown &&
+        modClick && ourLiveObject->holdingID > 0 &&
+        getObject( ourLiveObject->holdingID )->deadlyDistance > 0 &&
+        isShiftKeyDown() &&
+        ! p.hitOtherPerson ) {
+        
+        // everything good to go for a kill-click, but they missed
+        // hitting someone (and maybe they clicked on an object instead)
+
+        // find closest person for them to hit
+        
+        doublePair clickPos = { inX, inY };
+        
+        
+        int closePersonID = -1;
+        double closeDistance = DBL_MAX;
+        
+        for( int i=gameObjects.size()-1; i>=0; i-- ) {
+        
+            LiveObject *o = gameObjects.getElement( i );
+
+            if( o->id == ourID ) {
+                // don't consider ourself as a kill target
+                continue;
+                }
+            
+            if( o->outOfRange ) {
+                // out of range, but this was their last known position
+                // don't draw now
+                continue;
+                }
+            
+            if( o->heldByAdultID != -1 ) {
+                // held by someone else, can't click on them
+                continue;
+                }
+            
+            if( o->heldByDropOffset.x != 0 ||
+                o->heldByDropOffset.y != 0 ) {
+                // recently dropped baby, skip
+                continue;
+                }
+                
+                
+            double oX = o->xd;
+            double oY = o->yd;
+                
+            if( o->currentSpeed != 0 && o->pathToDest != NULL ) {
+                oX = o->currentPos.x;
+                oY = o->currentPos.y;
+                }
+
+            oY *= CELL_D;
+            oX *= CELL_D;
+            
+
+            // center of body up from feet position in tile
+            oY += CELL_D / 2;
+            
+            doublePair oPos = { oX, oY };
+            
+
+            double thisDistance = distance( clickPos, oPos );
+            
+            if( thisDistance < closeDistance ) {
+                closeDistance = thisDistance;
+                closePersonID = o->id;
+                }
+            }
+
+        if( closePersonID != -1 && closeDistance < 4 * CELL_D ) {
+            // somewhat close to clicking on someone
+            p.hitOtherPerson = true;
+            p.hitOtherPersonID = closePersonID;
+            p.hitAnObject = false;
+            p.hit = true;
+            killMode = true;
+            }
+        
+        }
+
+
+
+
+
+
     
     mCurMouseOverPerson = p.hitOtherPerson || p.hitSelf;
 
@@ -19072,7 +19187,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             clickDestX, clickDestY, 
             mapX, mapY,
             ourLiveObject->xd, ourLiveObject->yd );
-    if( mapY >= 0 && mapY < mMapD &&
+    if( ! killMode && 
+        mapY >= 0 && mapY < mMapD &&
         mapX >= 0 && mapX < mMapD ) {
         
         destID = mMap[ mapY * mMapD + mapX ];
@@ -19328,11 +19444,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
 
 
-    // new semantics
-    // as soon as we trigger a kill attempt, we go into kill mode
-    // by sending server a KILL message right away
-    char killMode = false;
+   
     
+    
+
 
     if( destID == 0 &&
         p.hitOtherPerson &&
@@ -19344,52 +19459,47 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
         // check for possible kill attempt at a distance
 
-        doublePair targetPos = { (double)clickDestX, (double)clickDestY };
-        
         LiveObject *o = getLiveObject( p.hitOtherPersonID );
         
-        if( o->id != ourID &&
-            
+        if( o->id != ourID &&            
             o->heldByAdultID == -1 ) {
                 
             // can't kill by clicking on ghost-location of held baby
             
-            if( distance( targetPos, o->currentPos ) < 1 ) {
-                // clicked on someone
+            // clicked on someone
                     
-                // new semantics:
-                // send KILL to server right away to
-                // tell server of our intentions
-                // (whether or not we are close enough)
+            // new semantics:
+            // send KILL to server right away to
+            // tell server of our intentions
+            // (whether or not we are close enough)
                 
-                // then walk there
+            // then walk there
                 
-                if( nextActionMessageToSend != NULL ) {
-                    delete [] nextActionMessageToSend;
-                    nextActionMessageToSend = NULL;
-                    }
-                        
-                        
-                char *killMessage = 
-                    autoSprintf( "KILL %d %d %d#",
-                                 sendX( clickDestX ), 
-                                 sendY( clickDestY ),
-                                 p.hitOtherPersonID );
-                printf( "KILL with direct-click target player "
-                        "id=%d\n", p.hitOtherPersonID );
-                    
-                sendToServerSocket( killMessage );
-
-                // try to walk near victim right away
-                killMode = true;
-                    
-                ourLiveObject->killMode = true;
-                ourLiveObject->killWithID = ourLiveObject->holdingID;
-
-                // ignore mod-click from here on out, to avoid
-                // force-dropping weapon
-                modClick = false;
+            if( nextActionMessageToSend != NULL ) {
+                delete [] nextActionMessageToSend;
+                nextActionMessageToSend = NULL;
                 }
+                        
+                        
+            char *killMessage = 
+                autoSprintf( "KILL %d %d %d#",
+                             sendX( clickDestX ), 
+                             sendY( clickDestY ),
+                             p.hitOtherPersonID );
+            printf( "KILL with direct-click target player "
+                    "id=%d\n", p.hitOtherPersonID );
+                    
+            sendToServerSocket( killMessage );
+
+            // try to walk near victim right away
+            killMode = true;
+                    
+            ourLiveObject->killMode = true;
+            ourLiveObject->killWithID = ourLiveObject->holdingID;
+
+            // ignore mod-click from here on out, to avoid
+            // force-dropping weapon
+            modClick = false;
             }
         }
     
