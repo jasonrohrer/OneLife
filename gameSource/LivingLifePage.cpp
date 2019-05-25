@@ -15238,6 +15238,14 @@ void LivingLifePage::step() {
                                         // off old path before or after 
                                         // where we are
                                         
+                                        printf( "    CUR PATH:  " );
+                                        printPath( oldPath.getElementArray(), 
+                                                   oldPathLength );
+                                        printf( "    WE AT:  %d (%d,%d)  \n",
+                                                oldCurrentPathIndex,
+                                                oldCurrentPathPos.x,
+                                                oldCurrentPathPos.y );
+
                                         int foundStartIndex = -1;
                                         
                                         for( int i=0; i<oldPathLength; i++ ) {
@@ -17162,7 +17170,8 @@ void LivingLifePage::step() {
                             }
                         }
 
-                    printf( "Reached dest %f seconds early\n",
+                    printf( "Reached dest (%.0f,%.0f) %f seconds early\n",
+                            endPos.x, endPos.y,
                             o->moveEtaTime - game_getCurrentTime() );
                     }
                 else {
