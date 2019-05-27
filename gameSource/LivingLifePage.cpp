@@ -15359,25 +15359,32 @@ void LivingLifePage::step() {
                                     
                                     printf( "Manually forced\n" );
                                     
-                                    // prev step
-                                    int b = 
-                                        (int)floor( 
-                                            fractionPassed * 
-                                            ( existing->pathLength - 1 ) );
-                                    // next step
-                                    int n =
-                                        (int)ceil( 
-                                            fractionPassed *
-                                            ( existing->pathLength - 1 ) );
+                                    // find closest spot along path
+                                    // to our current pos
+                                    double minDist = DBL_MAX;
                                     
-                                    if( n == b ) {
-                                        if( n < existing->pathLength - 1 ) {
-                                            n ++ ;
-                                            }
-                                        else {
-                                            b--;
+                                    // prev step
+                                    int b = -1;
+                                    
+                                    for( int testB=0; 
+                                         testB < existing->pathLength - 1; 
+                                         testB ++ ) {
+                                        
+                                        doublePair worldPos = gridToDouble( 
+                                            existing->pathToDest[testB] );
+                                        
+                                        double thisDist = 
+                                            distance( worldPos,
+                                                      existing->currentPos );
+                                        if( thisDist < minDist ) {
+                                            b = testB;
+                                            minDist = thisDist;
                                             }
                                         }
+                                    
+
+                                    // next step
+                                    int n = b + 1;
                                     
                                     existing->currentPathStep = b;
                                     
@@ -15428,7 +15435,14 @@ void LivingLifePage::step() {
                                     double timeAdjust =
                                         existing->moveTotalTime * fractionDiff;
                                     
-                                    existing->moveEtaTime += timeAdjust;
+                                    if( fractionDiff < 0 ) {
+                                        // only speed up...
+                                        // never slow down, because
+                                        // it's always okay if we show
+                                        // player arriving early
+
+                                        existing->moveEtaTime += timeAdjust;
+                                        }
                                     }
                                 
 

@@ -3,6 +3,20 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 235    ???
+
+--Fixed one cause of rubber-banding player movement in client.  No need to
+  navigate all the way back to start of a new path sent by server if we're
+  closer to a spot in the middle of the path.
+
+--Fixed so that other players never slow down in their movement to match
+  server timing, but still speed up if necessary.  (It's always okay for
+  another player to arrive at their destination early, client-side.)
+
+
+
+
 Version 234    2019-May-25
 
 --Fixed long-standing bug when something decays in the hand of a moving player,
