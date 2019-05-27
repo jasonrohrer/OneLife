@@ -50,6 +50,7 @@
 #include "lineageLimit.h"
 #include "objectSurvey.h"
 #include "language.h"
+#include "familySkipList.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -1325,7 +1326,7 @@ void quitCleanup() {
     freeObjectSurvey();
     
     freeLanguage();
-    
+    freeFamilySkipList();
 
     freeTriggers();
 
@@ -5197,6 +5198,31 @@ int processLoggedInPlayer( Socket *inSock,
             }
         else {
             // baby
+
+
+            
+            // filter parent choices by this baby's skip list
+            SimpleVector<LiveObject *> 
+                filteredParentChoices( parentChoices.size() );
+            
+            for( int i=0; i<parentChoices.size(); i++ ) {
+                LiveObject *p = parentChoices.getElementDirect( i );
+                
+                if( ! isSkipped( inEmail, p->lineageEveID ) ) {
+                    filteredParentChoices.push_back( p );
+                    }
+                }
+
+            if( filteredParentChoices.size() == 0 ) {
+                // baby has skipped everyone
+                
+                // clear their list and let them start over again
+                clearSkipList( inEmail );
+                
+                filteredParentChoices.push_back_other( &parentChoices );
+                }
+            
+
             
             // pick random mother from a weighted distribution based on 
             // each mother's temperature
@@ -5205,8 +5231,8 @@ int processLoggedInPlayer( Socket *inSock,
             
             int maxYumMult = 1;
 
-            for( int i=0; i<parentChoices.size(); i++ ) {
-                LiveObject *p = parentChoices.getElementDirect( i );
+            for( int i=0; i<filteredParentChoices.size(); i++ ) {
+                LiveObject *p = filteredParentChoices.getElementDirect( i );
                 
                 int yumMult = p->yummyFoodChain.size() - 1;
                 
@@ -5226,8 +5252,8 @@ int processLoggedInPlayer( Socket *inSock,
 
             double totalWeight = 0;
             
-            for( int i=0; i<parentChoices.size(); i++ ) {
-                LiveObject *p = parentChoices.getElementDirect( i );
+            for( int i=0; i<filteredParentChoices.size(); i++ ) {
+                LiveObject *p = filteredParentChoices.getElementDirect( i );
 
                 // temp part of weight
                 totalWeight += 0.5 - fabs( p->heat - 0.5 );
@@ -5249,8 +5275,8 @@ int processLoggedInPlayer( Socket *inSock,
             
             totalWeight = 0;
             
-            for( int i=0; i<parentChoices.size(); i++ ) {
-                LiveObject *p = parentChoices.getElementDirect( i );
+            for( int i=0; i<filteredParentChoices.size(); i++ ) {
+                LiveObject *p = filteredParentChoices.getElementDirect( i );
 
                 totalWeight += 0.5 - fabs( p->heat - 0.5 );
 
@@ -8400,6 +8426,7 @@ int main() {
     initObjectSurvey();
     
     initLanguage();
+    initFamilySkipList();
     
     
     initTriggers();
@@ -13546,16 +13573,30 @@ int main() {
                 double yearsLived = 
                     getSecondsPlayed( nextPlayer ) * getAgeRate();
 
-                if( ! nextPlayer->isTutorial )
-                recordLineage( nextPlayer->email, 
-                               nextPlayer->originalBirthPos,
-                               yearsLived, 
-                               // count true murder victims here, not suicide
-                               ( killerID > 0 && killerID != nextPlayer->id ),
-                               // killed other or committed SID suicide
-                               nextPlayer->everKilledAnyone || 
-                               nextPlayer->suicide );
-        
+                if( ! nextPlayer->isTutorial ) {
+                    
+                    recordLineage( 
+                        nextPlayer->email, 
+                        nextPlayer->originalBirthPos,
+                        yearsLived, 
+                        // count true murder victims here, not suicide
+                        ( killerID > 0 && killerID != nextPlayer->id ),
+                        // killed other or committed SID suicide
+                        // CHANGE:
+                        // no longer count SID toward lineage ban
+                        // we added this family to baby's skip
+                        // list below
+                        nextPlayer->everKilledAnyone );
+                    
+                    if( nextPlayer->suicide ) {
+                        // add to player's skip list
+                        skipFamily( nextPlayer->email, 
+                                    nextPlayer->lineageEveID );
+                        }
+                    }
+                
+                
+
                 if( ! nextPlayer->deathLogged ) {
                     char disconnect = true;
                     
