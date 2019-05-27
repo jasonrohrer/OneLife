@@ -20377,7 +20377,9 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
 	
 	if( isalpha( inASCII ) ) {
         if( ! mSayField.isFocused() ) {
-            mSayField.setText( reinterpret_cast<char*>( &inASCII ) );
+	     char text[2];
+	     sprintf(text, "%c", inASCII);
+            mSayField.setText(text);
             mSayField.focus();
         }
     }
