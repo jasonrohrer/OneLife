@@ -36,6 +36,9 @@ Server Fixes
   potentially clear in an uneven sequence, based on their order in the
   database.  Thus, partial ruins are possible.
 
+--Don't spawn non-cursed Eve near donkey town.
+
+
 
 
 

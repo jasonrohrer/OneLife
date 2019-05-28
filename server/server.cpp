@@ -5486,7 +5486,17 @@ int processLoggedInPlayer( Socket *inSock,
         // else starts at civ outskirts (lone Eve)
         
         SimpleVector<GridPos> otherPeoplePos( numPlayers );
+
+
+        // consider players to be near Eve location that match
+        // Eve's curse status
+        char seekingCursed = false;
         
+        if( inCurseStatus.curseLevel > 0 ) {
+            seekingCursed = true;
+            }
+        
+
         for( int i=0; i<numPlayers; i++ ) {
             LiveObject *player = players.getElement( i );
             
@@ -5496,6 +5506,15 @@ int processLoggedInPlayer( Socket *inSock,
                 player->vogMode ) {
                 continue;
                 }
+
+            if( seekingCursed && player->curseStatus.curseLevel <= 0 ) {
+                continue;
+                }
+            else if( ! seekingCursed &&
+                     player->curseStatus.curseLevel > 0 ) {
+                continue;
+                }
+
             GridPos p = { player->xs, player->ys };
             otherPeoplePos.push_back( p );
             }
