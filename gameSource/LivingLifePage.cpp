@@ -307,6 +307,26 @@ static  GridPos *getHomeLocation() {
 
 
 
+static void popHomeLocation() {
+    if(homePosStack.size() > 0) {
+         homePosStack.deleteLastElement();
+    }
+}
+
+
+
+static void cycleHomeLocation() {
+    if(homePosStack.size() == 0) {
+        return;
+    }
+
+   HomePos newest = *homePosStack.getElement(homePosStack.size() -1);
+   homePosStack.deleteLastElement();
+   homePosStack.push_front(newest);
+}
+
+
+
 static void removeHomeLocation( int inX, int inY ) {
     for( int i=0; i<homePosStack.size(); i++ ) {
         GridPos p = homePosStack.getElementDirect( i ).pos;
@@ -333,15 +353,6 @@ static void addHomeLocation( int inX, int inY ) {
 
 static void addAncientHomeLocation( int inX, int inY ) {
     removeHomeLocation( inX, inY );
-
-    // remove all ancient pos
-    // there can be only one ancient
-    for( int i=0; i<homePosStack.size(); i++ ) {
-        if( homePosStack.getElementDirect( i ).ancient ) {
-            homePosStack.deleteElement( i );
-            i--;
-            }
-        }
 
     GridPos newPos = { inX, inY };
     HomePos p;
@@ -407,7 +418,7 @@ static int getHomeDir( doublePair inCurrentPlayerPos,
         a += 2 * M_PI;
         }
     
-    int index = lrint( 8 * a / ( 2 * M_PI ) );
+    int index = lrint( 360 * a / ( 2 * M_PI ) );
     
     return index;
     }
@@ -7373,6 +7384,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
             double homeDist = 0;
             
             int arrowIndex = getHomeDir( ourLiveObject->currentPos, &homeDist );
+	    float arrowRotation =0;
+	    if(arrowIndex != -1) {
+		arrowRotation = -arrowIndex/360.0f;
+		arrowIndex = 0;
+	    }
             
             if( arrowIndex == -1 || ! mHomeArrowStates[arrowIndex].solid ) {
                 // solid change
@@ -7427,7 +7443,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 setDrawColor( 1, 1, 1, 1 );
                 
-                drawSprite( mHomeArrowSprites[arrowIndex], arrowPos, gui_fov_scale_hud );
+                drawSprite( mHomeArrowSprites[arrowIndex], arrowPos, gui_fov_scale_hud, arrowRotation );
                 }
                             
             toggleMultiplicativeBlend( false );
@@ -7438,7 +7454,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             distPos.y -= 47 * gui_fov_scale_hud;
             
-            if( homeDist > 1000 ) {
+            if( homeDist > 10 ) {
                 drawTopAsErased = false;
                 
                 setDrawColor( 0, 0, 0, 1 );
@@ -7449,10 +7465,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 if( thousands < 1000 ) {
                     if( thousands < 10 ) {
-                        distString = autoSprintf( "%.1fK", thousands );
+                        distString = autoSprintf( "%.2fK", thousands );
                         }
                     else {
-                        distString = autoSprintf( "%.0fK", 
+                        distString = autoSprintf( "%.1fK",
                                                   thousands );
                         }
                     }
@@ -7460,16 +7476,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     double millions = homeDist / 1000000;
                     if( millions < 1000 ) {
                         if( millions < 10 ) {
-                            distString = autoSprintf( "%.1fM", millions );
+                            distString = autoSprintf( "%.2fM", millions );
                             }
                         else {
-                            distString = autoSprintf( "%.0fM", millions );
+                            distString = autoSprintf( "%.1fM", millions );
                             }
                         }
                     else {
                         double billions = homeDist / 1000000000;
                         
-                        distString = autoSprintf( "%.1fG", billions );
+                        distString = autoSprintf( "%.2fG", billions );
                         }
                     }
 
@@ -10374,7 +10390,7 @@ void LivingLifePage::step() {
         if( homeArrow != -1 && ! tooClose ) {
             mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y + 68;
             
-            if( homeDist > 1000 ) {
+            if( homeDist > 10 ) {
                 mHomeSlipPosTargetOffset.y += 20;
                 }
             }
@@ -20406,6 +20422,40 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             getOurLiveObject()->age -= 1;
             break;
         */
+
+        case '+': {
+            if(mSayField.isFocused()) {
+               break;
+            }
+            LiveObject *ourLiveObject = getOurLiveObject();
+
+            if( ourLiveObject != NULL ) {
+                cycleHomeLocation();
+            }
+            }
+            break;
+        case '=': {
+            if(mSayField.isFocused()) {
+               break;
+            }
+            LiveObject *ourLiveObject = getOurLiveObject();
+
+            if( ourLiveObject != NULL ) {
+                addHomeLocation(ourLiveObject->xServer, ourLiveObject->yServer);
+            }
+	    }
+            break;
+        case '-': {
+            if(mSayField.isFocused()) {
+               break;
+            }
+            LiveObject *ourLiveObject = getOurLiveObject();
+
+            if( ourLiveObject != NULL ) {
+                popHomeLocation();
+            }
+            }
+            break;
         case 'V':
             if( ! mSayField.isFocused() &&
                 serverSocketConnected &&
