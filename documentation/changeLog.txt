@@ -38,6 +38,8 @@ Server Fixes
 
 --Don't spawn non-cursed Eve near donkey town.
 
+--Always reset mother's birth cool down if baby does /DIE, whether ever held
+  or not.
 
 
 

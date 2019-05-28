@@ -10210,7 +10210,21 @@ int main() {
                         LiveObject *parentO = 
                             getLiveObject( parentID );
                         
-                        if( parentO != NULL && nextPlayer->everHeldByParent ) {
+                        // CHANGE:
+                        // Reset mother's cool-down whenever baby suicides
+                        // Otherwise, if DIE baby acts quick enough
+                        // they can cycle through all families, putting
+                        // each mother on cooldown, and end up as Eve
+                        // intentionally
+                        //
+                        // Old:  only if she picked up baby one time.
+                        // (also, with instant map load, it's easy
+                        //  for baby to run away before being picked
+                        //  up by a mother that wants the baby)
+                        //
+                        //if( parentO != NULL && 
+                        //    nextPlayer->everHeldByParent ) {
+                        if( parentO != NULL ) {
                             // mother picked up this SID baby at least
                             // one time
                             // mother can have another baby right away
