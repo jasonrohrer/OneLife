@@ -41,6 +41,9 @@ Server Fixes
 --Always reset mother's birth cool down if baby does /DIE, whether ever held
   or not.
 
+--Mother's birth cool-down instantly resets when her most-recent baby dies of
+  any cause.
+
 
 
 

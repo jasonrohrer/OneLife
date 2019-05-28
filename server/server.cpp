@@ -10225,8 +10225,6 @@ int main() {
                         //if( parentO != NULL && 
                         //    nextPlayer->everHeldByParent ) {
                         if( parentO != NULL ) {
-                            // mother picked up this SID baby at least
-                            // one time
                             // mother can have another baby right away
                             parentO->birthCoolDown = 0;
                             }
@@ -13520,6 +13518,27 @@ int main() {
                                           &playerIndicesToSendUpdatesAbout );
                     }
                 
+                
+                if( nextPlayer->parentID != -1 ) {
+                    
+                    LiveObject *parentO = 
+                        getLiveObject( nextPlayer->parentID );
+                    
+                    if( parentO != NULL ) {
+                        
+                        if( parentO->babyIDs->getElementIndex( nextPlayer->id )
+                            == parentO->babyIDs->size() - 1 ) {
+                            
+                            // this mother's most-recent baby just died
+                            
+                            // mother can have another baby right away
+                            parentO->birthCoolDown = 0;
+                            }
+                        }
+                    }
+                
+                
+
 
                 newDeleteUpdates.push_back( 
                     getUpdateRecord( nextPlayer, true ) );                
