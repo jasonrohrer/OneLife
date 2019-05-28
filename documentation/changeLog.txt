@@ -25,6 +25,17 @@ Server Fixes
   families, so that you've skipped them all, and none are left, your skip list
   is cleared.
 
+--When the server has 15 or more simultaneous players, 200 map database entries
+  are examined every periodic server step (4x per second), and any entries in
+  regions that have not been seen by players in 8 hours are set back to their
+  natural state.  Depending on the size of the database, walking through all
+  entries can take quite a while (the current bigserver2 database has 25
+  million entries, so that would take 8 hours at the current rate).  Thus, the
+  actual decay-back-to-nature time will be at least 8 hours, due to the time it
+  takes to walk through all database entries.  Also, a group of tiles will
+  potentially clear in an uneven sequence, based on their order in the
+  database.  Thus, partial ruins are possible.
+
 
 
 

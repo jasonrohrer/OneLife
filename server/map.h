@@ -299,4 +299,10 @@ int getGravePlayerID( int inX, int inY );
 void setGravePlayerID( int inX, int inY, int inPlayerID );
 
 
+
+// culling regions of map that haven't been seen in a long time
+void stepMapLongTermCulling( int inNumCurrentPlayers );
+
+
+
 #endif

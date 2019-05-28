@@ -8637,6 +8637,8 @@ int main() {
             stepPlayerStats();
             stepLineageLog();
             stepCurseServerRequests();
+
+            stepMapLongTermCulling( players.size() );
             }
         
         
