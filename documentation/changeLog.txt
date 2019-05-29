@@ -47,6 +47,9 @@ Server Fixes
 --Max birth cool-down for mother is 3 minutes instead of 5 (mean 1.2 minutes
   instead of 2 minutes).
 
+--Ancient stone walls are left standing during 8-hour-no-look map culling.
+
+
 
 
 Version 234    2019-May-25

@@ -7686,6 +7686,8 @@ static int longTermCullingSeconds = 3600 * 12;
 
 static int minActivePlayersForLongTermCulling = 15;
 
+static SimpleVector<int> noCullItemList;
+
 
 void stepMapLongTermCulling( int inNumCurrentPlayers ) {
 
@@ -7704,6 +7706,13 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
         minActivePlayersForLongTermCulling = 
             SettingsManager::getIntSetting( 
                 "minActivePlayersForLongTermCulling", 15 );
+        
+        SimpleVector<int> *list = 
+            SettingsManager::getIntSettingMulti( "noCullItemList" );
+        
+        noCullItemList.deleteAll();
+        noCullItemList.push_back_other( list );
+        delete list;
         }
 
 
@@ -7729,8 +7738,13 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
         if( result <= 0 ) {
             // restart the iterator back at the beginning
             DB_Iterator_init( &db, &tileCullingIterator );
+            continue;
             }
-        else if( valueToInt( value ) > 0 ) {
+
+        
+        int tileID = valueToInt( value );
+        
+        if( tileID > 0 ) {
             // next value
 
             int s = valueToInt( &( tileKey[8] ) );
@@ -7745,10 +7759,14 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
 
                 if( curTime - lastLookTime > longTermCullingSeconds ) {
                     // stale
-                    clearAllContained( x, y );
+                    
+                    if( noCullItemList.getElementIndex( tileID ) == -1 ) {
+                        // not on our no-cull list
+                        clearAllContained( x, y );
 
-                    // put proc-genned map value in there
-                    setMapObject( x, y, getTweakedBaseMap( x, y ) );
+                        // put proc-genned map value in there
+                        setMapObject( x, y, getTweakedBaseMap( x, y ) );
+                        }
                     }
                 }
             }
@@ -7769,8 +7787,12 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
         if( result <= 0 ) {
             // restart the iterator back at the beginning
             DB_Iterator_init( &floorDB, &floorCullingIterator );
+            continue;
             }
-        else if( valueToInt( value ) > 0 ) {
+        
+        int floorID = valueToInt( value );
+        
+        if( floorID > 0 ) {
             // next value
             
             int x = valueToInt( floorKey );
@@ -7780,7 +7802,12 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
 
             if( curTime - lastLookTime > longTermCullingSeconds ) {
                 // stale
-                setMapFloor( x, y, 0 );
+
+                if( noCullItemList.getElementIndex( floorID ) == -1 ) {
+                    // not on our no-cull list
+                    
+                    setMapFloor( x, y, 0 );
+                    }
                 }
             }
         }
