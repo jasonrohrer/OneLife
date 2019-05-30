@@ -3,6 +3,55 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 235    2019-May-29
+
+--Fixed one cause of rubber-banding player movement in client.  No need to
+  navigate all the way back to start of a new path sent by server if we're
+  closer to a spot in the middle of the path.
+
+--Fixed so that other players never slow down in their movement to match
+  server timing, but still speed up if necessary.  (It's always okay for
+  another player to arrive at their destination early, client-side.)
+
+
+
+Server Fixes
+
+--Changes to function of /DIE.  Can no longer use it to cycle through all
+  families and force yourself to be an unecessary Eve.  Eve only spawns if
+  there are really no available motehrs for an incoming baby.  /DIE adds this
+  family to your family skip list.  If you eventually cycle through all
+  families, so that you've skipped them all, and none are left, your skip list
+  is cleared.
+
+--When the server has 15 or more simultaneous players, 200 map database entries
+  are examined every periodic server step (4x per second), and any entries in
+  regions that have not been seen by players in 8 hours are set back to their
+  natural state.  Depending on the size of the database, walking through all
+  entries can take quite a while (the current bigserver2 database has 25
+  million entries, so that would take 8 hours at the current rate).  Thus, the
+  actual decay-back-to-nature time will be at least 8 hours, due to the time it
+  takes to walk through all database entries.  Also, a group of tiles will
+  potentially clear in an uneven sequence, based on their order in the
+  database.  Thus, partial ruins are possible.
+
+--Don't spawn non-cursed Eve near donkey town.
+
+--Always reset mother's birth cool down if baby does /DIE, whether ever held
+  or not.
+
+--Mother's birth cool-down instantly resets when her most-recent baby dies of
+  any cause.
+
+--Max birth cool-down for mother is 3 minutes instead of 5 (mean 1.2 minutes
+  instead of 2 minutes).
+
+--Ancient stone walls are left standing during 8-hour-no-look map culling.
+
+
+
+
 Version 234    2019-May-25
 
 --Fixed long-standing bug when something decays in the hand of a moving player,

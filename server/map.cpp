@@ -5139,100 +5139,108 @@ void checkDecayContained( int inX, int inY, int inSubCont ) {
     }
 
 
-int getMapObjectRaw( int inX, int inY ) {
-    int result = dbGet( inX, inY, 0 );
+
+
+int getTweakedBaseMap( int inX, int inY ) {
     
-    if( result == -1 ) {
-        // nothing in map
-        char wasGridPlacement = false;
+    // nothing in map
+    char wasGridPlacement = false;
         
-        result = getBaseMap( inX, inY, &wasGridPlacement );
+    int result = getBaseMap( inX, inY, &wasGridPlacement );
 
-        if( result > 0 ) {
-            ObjectRecord *o = getObject( result );
+    if( result > 0 ) {
+        ObjectRecord *o = getObject( result );
             
-            if( o->wide ) {
-                // make sure there's not possibly another wide object too close
-                int maxR = getMaxWideRadius();
+        if( o->wide ) {
+            // make sure there's not possibly another wide object too close
+            int maxR = getMaxWideRadius();
                 
-                for( int dx = -( o->leftBlockingRadius + maxR );
-                     dx <= ( o->rightBlockingRadius + maxR ); dx++ ) {
+            for( int dx = -( o->leftBlockingRadius + maxR );
+                 dx <= ( o->rightBlockingRadius + maxR ); dx++ ) {
                     
-                    if( dx != 0 ) {
-                        int nID = getBaseMap( inX + dx, inY );
+                if( dx != 0 ) {
+                    int nID = getBaseMap( inX + dx, inY );
                         
-                        if( nID > 0 ) {
-                            ObjectRecord *nO = getObject( nID );
+                    if( nID > 0 ) {
+                        ObjectRecord *nO = getObject( nID );
                             
-                            if( nO->wide ) {
+                        if( nO->wide ) {
                                 
-                                int minDist;
-                                int dist;
+                            int minDist;
+                            int dist;
                                 
-                                if( dx < 0 ) {
-                                    minDist = nO->rightBlockingRadius +
-                                        o->leftBlockingRadius;
-                                    dist = -dx;
-                                    }
-                                else {
-                                    minDist = nO->leftBlockingRadius +
-                                        o->rightBlockingRadius;
-                                    dist = dx;
-                                    }
+                            if( dx < 0 ) {
+                                minDist = nO->rightBlockingRadius +
+                                    o->leftBlockingRadius;
+                                dist = -dx;
+                                }
+                            else {
+                                minDist = nO->leftBlockingRadius +
+                                    o->rightBlockingRadius;
+                                dist = dx;
+                                }
 
-                                if( dist <= minDist ) {
-                                    // collision
-                                    // don't allow this wide object here
-                                    return 0;
-                                    }
+                            if( dist <= minDist ) {
+                                // collision
+                                // don't allow this wide object here
+                                return 0;
                                 }
                             }
                         }
                     }
                 }
-            else if( !wasGridPlacement && getObjectHeight( result ) < CELL_D ) {
-                // a short object should be here
-                // and it wasn't forced by a grid placement
-
-                // make sure there's not any semi-short objects below already
-
-                // this avoids vertical stacking of short objects
-                // and ensures that the map is sparse with short object
-                // clusters, even in very dense map areas
-                // (we don't want the floor tiled with berry bushes)
-
-                // this used to be an unintentional bug, but it was in place
-                // for a year, and we got used to it.
-
-                // when the bug was fixed, the map became way too dense
-                // in short-object areas
-                
-                // actually, fully replicate the bug for now
-                // only block short objects with objects to the south
-                // that extend above the tile midline
-
-                // So we can have clusters of very short objects, like stones
-                // but not less-short ones like berry bushes, rabbit holes, etc.
-
-                // use the old buggy "2 pixels" and "3 pixels" above the
-                // midline measure just to keep the map the same
-
-                // south
-                int sID = getBaseMap( inX, inY - 1 );
-                        
-                if( sID > 0 && getObjectHeight( sID ) >= 2 ) {
-                    return 0;
-                    }
-                
-                int s2ID = getBaseMap( inX, inY - 2 );
-                        
-                if( s2ID > 0 && getObjectHeight( s2ID ) >= 3 ) {
-                    return 0;
-                    }                
-                }
-            
             }
-        
+        else if( !wasGridPlacement && getObjectHeight( result ) < CELL_D ) {
+            // a short object should be here
+            // and it wasn't forced by a grid placement
+
+            // make sure there's not any semi-short objects below already
+
+            // this avoids vertical stacking of short objects
+            // and ensures that the map is sparse with short object
+            // clusters, even in very dense map areas
+            // (we don't want the floor tiled with berry bushes)
+
+            // this used to be an unintentional bug, but it was in place
+            // for a year, and we got used to it.
+
+            // when the bug was fixed, the map became way too dense
+            // in short-object areas
+                
+            // actually, fully replicate the bug for now
+            // only block short objects with objects to the south
+            // that extend above the tile midline
+
+            // So we can have clusters of very short objects, like stones
+            // but not less-short ones like berry bushes, rabbit holes, etc.
+
+            // use the old buggy "2 pixels" and "3 pixels" above the
+            // midline measure just to keep the map the same
+
+            // south
+            int sID = getBaseMap( inX, inY - 1 );
+                        
+            if( sID > 0 && getObjectHeight( sID ) >= 2 ) {
+                return 0;
+                }
+                
+            int s2ID = getBaseMap( inX, inY - 2 );
+                        
+            if( s2ID > 0 && getObjectHeight( s2ID ) >= 3 ) {
+                return 0;
+                }                
+            }            
+        }
+    return result;
+    }
+
+
+
+int getMapObjectRaw( int inX, int inY ) {
+    int result = dbGet( inX, inY, 0 );
+    
+    if( result == -1 ) {
+        result = getTweakedBaseMap( inX, inY );
         }
     
     return result;
@@ -7659,3 +7667,148 @@ void setGravePlayerID( int inX, int inY, int inPlayerID ) {
     DB_put( &graveDB, key, value );
     }
 
+
+
+
+
+
+static char tileCullingIteratorSet = false;
+static DB_Iterator tileCullingIterator;
+
+static char floorCullingIteratorSet = false;
+static DB_Iterator floorCullingIterator;
+
+static double lastSettingsLoadTime = 0;
+static double settingsLoadInterval = 5 * 60;
+
+static int numTilesExaminedPerCullStep = 10;
+static int longTermCullingSeconds = 3600 * 12;
+
+static int minActivePlayersForLongTermCulling = 15;
+
+static SimpleVector<int> noCullItemList;
+
+
+void stepMapLongTermCulling( int inNumCurrentPlayers ) {
+
+    double curTime = Time::getCurrentTime();
+    
+    if( curTime - lastSettingsLoadTime > settingsLoadInterval ) {
+        
+        lastSettingsLoadTime = curTime;
+        
+        numTilesExaminedPerCullStep = 
+            SettingsManager::getIntSetting( 
+                "numTilesExaminedPerCullStep", 10 );
+        longTermCullingSeconds = 
+            SettingsManager::getIntSetting( 
+                "longTermNoLookCullSeconds", 3600 * 12 );
+        minActivePlayersForLongTermCulling = 
+            SettingsManager::getIntSetting( 
+                "minActivePlayersForLongTermCulling", 15 );
+        
+        SimpleVector<int> *list = 
+            SettingsManager::getIntSettingMulti( "noCullItemList" );
+        
+        noCullItemList.deleteAll();
+        noCullItemList.push_back_other( list );
+        delete list;
+        }
+
+
+    if( minActivePlayersForLongTermCulling > inNumCurrentPlayers ) {
+        return;
+        }
+
+    
+    if( !tileCullingIteratorSet ) {
+        DB_Iterator_init( &db, &tileCullingIterator );
+        tileCullingIteratorSet = true;
+        }
+
+    unsigned char tileKey[16];
+    unsigned char floorKey[8];
+    unsigned char value[4];
+
+
+    for( int i=0; i<numTilesExaminedPerCullStep; i++ ) {        
+        int result = 
+            DB_Iterator_next( &tileCullingIterator, tileKey, value );
+
+        if( result <= 0 ) {
+            // restart the iterator back at the beginning
+            DB_Iterator_init( &db, &tileCullingIterator );
+            continue;
+            }
+
+        
+        int tileID = valueToInt( value );
+        
+        if( tileID > 0 ) {
+            // next value
+
+            int s = valueToInt( &( tileKey[8] ) );
+            int b = valueToInt( &( tileKey[12] ) );
+       
+            if( s == 0 && b == 0 ) {
+                // main object
+                int x = valueToInt( tileKey );
+                int y = valueToInt( &( tileKey[4] ) );
+                
+                timeSec_t lastLookTime = dbLookTimeGet( x, y );
+
+                if( curTime - lastLookTime > longTermCullingSeconds ) {
+                    // stale
+                    
+                    if( noCullItemList.getElementIndex( tileID ) == -1 ) {
+                        // not on our no-cull list
+                        clearAllContained( x, y );
+
+                        // put proc-genned map value in there
+                        setMapObject( x, y, getTweakedBaseMap( x, y ) );
+                        }
+                    }
+                }
+            }
+        }
+    
+    
+
+    if( !floorCullingIteratorSet ) {
+        DB_Iterator_init( &floorDB, &floorCullingIterator );
+        floorCullingIteratorSet = true;
+        }
+    
+
+    for( int i=0; i<numTilesExaminedPerCullStep; i++ ) {        
+        int result = 
+            DB_Iterator_next( &floorCullingIterator, floorKey, value );
+
+        if( result <= 0 ) {
+            // restart the iterator back at the beginning
+            DB_Iterator_init( &floorDB, &floorCullingIterator );
+            continue;
+            }
+        
+        int floorID = valueToInt( value );
+        
+        if( floorID > 0 ) {
+            // next value
+            
+            int x = valueToInt( floorKey );
+            int y = valueToInt( &( floorKey[4] ) );
+                
+            timeSec_t lastLookTime = dbLookTimeGet( x, y );
+
+            if( curTime - lastLookTime > longTermCullingSeconds ) {
+                // stale
+
+                if( noCullItemList.getElementIndex( floorID ) == -1 ) {
+                    // not on our no-cull list
+                    
+                    setMapFloor( x, y, 0 );
+                    }
+                }
+            }
+        }
+    }
