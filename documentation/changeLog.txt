@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--We now add a new Eve whenever existing families have more than 15 players
+  each on average.
+
+
+
+
 Version 235    2019-May-29
 
 --Fixed one cause of rubber-banding player movement in client.  No need to

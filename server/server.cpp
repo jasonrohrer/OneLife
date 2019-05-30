@@ -5077,6 +5077,53 @@ int processLoggedInPlayer( Socket *inSock,
         }
     
 
+    
+    if( parentChoices.size() > 0 ) {
+        // count the families
+        
+        SimpleVector<int> uniqueLines;
+        
+        int playerCount = 0;
+        
+        for( int i=0; i<numPlayers; i++ ) {
+            LiveObject *player = players.getElement( i );
+            
+            if( player->error ) {
+                continue;
+                }
+            playerCount++;
+
+            int lineageEveID = player->lineageEveID;
+            
+            if( uniqueLines.getElementIndex( lineageEveID ) == -1 ) {
+                uniqueLines.push_back( lineageEveID );
+                }
+            }
+        
+        int numLines = uniqueLines.size();
+        
+        int targetPerFamily = 
+            SettingsManager::getIntSetting( "targetPlayersPerFamily", 15 );
+        
+        int actual = playerCount / numLines;
+        
+        AppLog::infoF( "%d players on server in %d family lines, with "
+                       "%d players per family, average.  Target is %d "
+                       "per family.",
+                       playerCount, numLines, actual, targetPerFamily );
+
+        if( actual > targetPerFamily ) {
+            
+            AppLog::info( "Over target, adding a new Eve." );
+            
+            parentChoices.deleteAll();
+            forceParentChoices = true;
+            }
+        
+        }
+    
+
+
 
     newObject.parentChainLength = 1;
 
