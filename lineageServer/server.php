@@ -2574,7 +2574,7 @@ function ls_getDeathHTML( $inID, $inRelID ) {
                         if( $commentPos != FALSE ) {
                             $line = substr( $line, 0, $commentPos );
                             }
-
+                        $line = trim( $line );
                         $deathString = "Killed by $line";
                         }
                     }

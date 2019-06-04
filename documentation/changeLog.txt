@@ -9,6 +9,8 @@ Server Fixes
 --We now add a new Eve whenever existing families have more than 15 players
   each on average.
 
+--Lineage server trims newlines from death cause description.
+
 
 
 
