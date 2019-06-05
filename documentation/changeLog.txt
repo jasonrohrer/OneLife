@@ -15,6 +15,9 @@ Server Fixes
 
 --Fixed a memory leak in murderPerpEmail.
 
+--Support for 'kill' result emots that are non-lethal and don't make you drop
+  what you are holding through new no_replace tag.  Snowball splats now work
+  this way.
 
 
 

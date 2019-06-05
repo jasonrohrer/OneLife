@@ -390,7 +390,7 @@ typedef struct LiveObject {
 
         // in cases where their held wound produces a forced emot
         char emotFrozen;
-        
+        double emotUnfreezeETA;
         
         char connected;
         
@@ -5756,7 +5756,8 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.dyingETA = 0;
     
     newObject.emotFrozen = false;
-
+    newObject.emotUnfreezeETA = 0;
+    
     newObject.connected = true;
     newObject.error = false;
     newObject.errorCauseString = "";
@@ -7688,6 +7689,8 @@ void setNoLongerDying( LiveObject *inPlayer,
     inPlayer->customGraveID = -1;
     
     inPlayer->emotFrozen = false;
+    inPlayer->emotUnfreezeETA = 0;
+    
     inPlayer->foodCapModifier = 1.0;
     inPlayer->foodUpdate = true;
 
@@ -7808,6 +7811,52 @@ void addKillState( int inKillerID, int inTargetID ) {
     
 
 
+static void setPerpetratorHoldingAfterKill( LiveObject *nextPlayer,
+                                            TransRecord *woundHit,
+                                            TransRecord *rHit,
+                                            TransRecord *r ) {
+
+    int oldHolding = nextPlayer->holdingID;
+
+
+    if( rHit != NULL ) {
+        // if hit trans exist
+        // leave bloody knife or
+        // whatever in hand
+        nextPlayer->holdingID = rHit->newActor;
+        holdingSomethingNew( nextPlayer,
+                             oldHolding );
+        }
+    else if( woundHit != NULL ) {
+        // result of hit on held weapon 
+        // could also be
+        // specified in wound trans
+        nextPlayer->holdingID = 
+            woundHit->newActor;
+        holdingSomethingNew( nextPlayer,
+                             oldHolding );
+        }
+    else if( r != NULL ) {
+        nextPlayer->holdingID = r->newActor;
+        holdingSomethingNew( nextPlayer,
+                             oldHolding );
+        }
+                        
+    if( r != NULL || rHit != NULL || woundHit != NULL ) {
+        
+        nextPlayer->heldTransitionSourceID = 0;
+        
+        if( oldHolding != 
+            nextPlayer->holdingID ) {
+            
+            setFreshEtaDecayForHeld( 
+                nextPlayer );
+            }
+        }
+    }
+
+
+
 
 void executeKillAction( int inKillerIndex,
                         int inTargetIndex,
@@ -7874,7 +7923,55 @@ void executeKillAction( int inKillerIndex,
                         hitPlayer = NULL;
                         }
                     }
-                                    
+                
+
+                // special case:
+                // non-lethal no_replace ends up in victim's hand
+                // they aren't dying, but they may have an emot
+                // effect only
+                if( hitPlayer != NULL ) {
+
+                    TransRecord *woundHit = 
+                        getPTrans( nextPlayer->holdingID, 
+                                   0, true, false );
+
+                    if( woundHit != NULL && woundHit->newTarget > 0 &&
+                        strstr( getObject( woundHit->newTarget )->description,
+                                "no_replace" ) != NULL ) {
+                        
+                        
+                        TransRecord *rHit = 
+                            getPTrans( nextPlayer->holdingID, 0, false, true );
+                        
+                        TransRecord *r = 
+                            getPTrans( nextPlayer->holdingID, 0 );
+
+                        setPerpetratorHoldingAfterKill( nextPlayer,
+                                                        woundHit, rHit, r );
+                        
+                        ForcedEffects e = 
+                            checkForForcedEffects( woundHit->newTarget );
+                            
+                        // emote-effect only for no_replace
+                        // no fever or food effect
+                        if( e.emotIndex != -1 ) {
+                            hitPlayer->emotFrozen = 
+                                true;
+                            
+                            hitPlayer->emotUnfreezeETA =
+                                Time::getCurrentTime() + e.ttlSec;
+                            
+                            newEmotPlayerIDs->push_back( 
+                                hitPlayer->id );
+                            newEmotIndices->push_back( 
+                                e.emotIndex );
+                            newEmotTTLs->push_back( 
+                                e.ttlSec );
+                            }
+                        return;
+                        }
+                    }
+                
 
                 if( hitPlayer != NULL ) {
                     someoneHit = true;
@@ -8081,44 +8178,12 @@ void executeKillAction( int inKillerIndex,
                                     
 
                 int oldHolding = nextPlayer->holdingID;
+
+                setPerpetratorHoldingAfterKill( nextPlayer, 
+                                                woundHit, rHit, r );
+
                 timeSec_t oldEtaDecay = 
                     nextPlayer->holdingEtaDecay;
-
-                if( rHit != NULL ) {
-                    // if hit trans exist
-                    // leave bloody knife or
-                    // whatever in hand
-                    nextPlayer->holdingID = rHit->newActor;
-                    holdingSomethingNew( nextPlayer,
-                                         oldHolding);
-                    }
-                else if( woundHit != NULL ) {
-                    // result of hit on held weapon 
-                    // could also be
-                    // specified in wound trans
-                    nextPlayer->holdingID = 
-                        woundHit->newActor;
-                    holdingSomethingNew( nextPlayer,
-                                         oldHolding);
-                    }
-                else if( r != NULL ) {
-                    nextPlayer->holdingID = r->newActor;
-                    holdingSomethingNew( nextPlayer,
-                                         oldHolding );
-                    }
-
-
-                if( r != NULL || rHit != NULL ) {
-                                        
-                    nextPlayer->heldTransitionSourceID = 0;
-                                        
-                    if( oldHolding != 
-                        nextPlayer->holdingID ) {
-                                            
-                        setFreshEtaDecayForHeld( 
-                            nextPlayer );
-                        }
-                    }
                                     
 
                 if( r != NULL ) {
@@ -13445,7 +13510,8 @@ int main() {
                 if( killer != NULL ) {
                     // clear their emot
                     killer->emotFrozen = false;
-
+                    killer->emotUnfreezeETA = 0;
+                    
                     newEmotPlayerIDs.push_back( killer->id );
                             
                     newEmotIndices.push_back( -1 );
@@ -13506,6 +13572,16 @@ int main() {
             
             double curTime = Time::getCurrentTime();
             
+            
+            if( nextPlayer->emotFrozen && 
+                nextPlayer->emotUnfreezeETA != 0 &&
+                curTime >= nextPlayer->emotUnfreezeETA ) {
+                
+                nextPlayer->emotFrozen = false;
+                nextPlayer->emotUnfreezeETA = 0;
+                }
+            
+
             if( nextPlayer->dying && ! nextPlayer->error &&
                 curTime >= nextPlayer->dyingETA ) {
                 // finally died
