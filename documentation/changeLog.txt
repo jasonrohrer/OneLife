@@ -11,6 +11,8 @@ Server Fixes
 
 --Lineage server trims newlines from death cause description.
 
+--People without last names can be cursed.  Fixes #302
+
 
 
 

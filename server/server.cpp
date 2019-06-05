@@ -8252,10 +8252,16 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
     const char *close = 
         findCloseFirstName( name );
 
-    babyO->name = autoSprintf( "%s %s",
-                               close, 
-                               lastName );
-                                    
+    if( strcmp( lastName, "" ) != 0 ) {    
+        babyO->name = autoSprintf( "%s %s",
+                                   close, 
+                                   lastName );
+        }
+    else {
+        babyO->name = stringDuplicate( close );
+        }
+    
+    
     if( babyO->familyName == NULL &&
         nextPlayer->familyName != NULL ) {
         // mother didn't have a family 
