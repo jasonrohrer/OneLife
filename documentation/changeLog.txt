@@ -13,6 +13,8 @@ Server Fixes
 
 --People without last names can be cursed.  Fixes #302
 
+--Fixed a memory leak in murderPerpEmail.
+
 
 
 

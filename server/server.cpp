@@ -1281,6 +1281,10 @@ void quitCleanup() {
             delete [] nextPlayer->email;
             }
 
+        if( nextPlayer->murderPerpEmail != NULL  ) {
+            delete [] nextPlayer->murderPerpEmail;
+            }
+
 
         freePlayerContainedArrays( nextPlayer );
         
