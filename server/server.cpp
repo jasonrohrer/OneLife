@@ -51,6 +51,7 @@
 #include "objectSurvey.h"
 #include "language.h"
 #include "familySkipList.h"
+#include "lifeTokens.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -181,7 +182,8 @@ typedef struct FreshConnection {
         char *sequenceNumberString;
         
         WebRequest *ticketServerRequest;
-
+        char ticketServerAccepted;
+        
         double ticketServerRequestStartTime;
         
         char error;
@@ -1322,6 +1324,8 @@ void quitCleanup() {
     
     freeCurses();
     
+    freeLifeTokens();
+
     freeLifeLog();
     
     freeFoodLog();
@@ -4817,7 +4821,9 @@ int processLoggedInPlayer( Socket *inSock,
         
         if( ! o->error && ! o->connected &&
             strcmp( o->email, inEmail ) == 0 ) {
-
+            
+            // we spent a second life token for them by accident
+            refundLifeToken( inEmail );
             
             // give them this new socket and buffer
             if( o->sock != NULL ) {
@@ -8521,6 +8527,8 @@ int main() {
 
     initCurses();
     
+    initLifeTokens();
+    
 
     initLifeLog();
     //initBackup();
@@ -8778,6 +8786,8 @@ int main() {
             stepPlayerStats();
             stepLineageLog();
             stepCurseServerRequests();
+            
+            stepLifeTokens();
 
             stepMapLongTermCulling( players.size() );
             }
@@ -9113,6 +9123,7 @@ int main() {
                 // wait for email and hashes to come from client
                 // (and maybe ticket server check isn't required by settings)
                 newConnection.ticketServerRequest = NULL;
+                newConnection.ticketServerAccepted = false;
                 newConnection.error = false;
                 newConnection.errorCauseString = "";
                 
@@ -9177,7 +9188,8 @@ int main() {
                         nextConnection->curseStatus.excessPoints );
                     }
                 }
-            else if( nextConnection->ticketServerRequest != NULL ) {
+            else if( nextConnection->ticketServerRequest != NULL &&
+                     ! nextConnection->ticketServerAccepted ) {
                 
                 int result;
 
@@ -9213,60 +9225,7 @@ int main() {
                         }
                     else if( strstr( webResult, "VALID" ) != NULL ) {
                         // correct!
-
-
-                        const char *message = "ACCEPTED\n#";
-                        int messageLength = strlen( message );
-                
-                        int numSent = 
-                            nextConnection->sock->send( 
-                                (unsigned char*)message, 
-                                messageLength, 
-                                false, false );
-                        
-
-                        if( numSent != messageLength ) {
-                            AppLog::info( "Failed to write to client socket, "
-                                          "client rejected." );
-                            nextConnection->error = true;
-                            nextConnection->errorCauseString =
-                                "Socket write failed";
-
-                            }
-                        else {
-                            // ready to start normal message exchange
-                            // with client
-                            
-                            AppLog::info( "Got new player logged in" );
-                            
-                            delete nextConnection->ticketServerRequest;
-                            nextConnection->ticketServerRequest = NULL;
-
-                            delete [] nextConnection->sequenceNumberString;
-                            nextConnection->sequenceNumberString = NULL;
-                            
-                            if( nextConnection->twinCode != NULL
-                                && 
-                                nextConnection->twinCount > 0 ) {
-                                processWaitingTwinConnection( *nextConnection );
-                                }
-                            else {
-                                if( nextConnection->twinCode != NULL ) {
-                                    delete [] nextConnection->twinCode;
-                                    nextConnection->twinCode = NULL;
-                                    }
-                                
-                                processLoggedInPlayer( 
-                                    nextConnection->sock,
-                                    nextConnection->sockBuffer,
-                                    nextConnection->email,
-                                    nextConnection->tutorialNumber,
-                                    nextConnection->curseStatus );
-                                }
-                                                        
-                            newConnections.deleteElement( i );
-                            i--;
-                            }
+                        nextConnection->ticketServerAccepted = true;
                         }
                     else {
                         AppLog::errorF( 
@@ -9280,7 +9239,75 @@ int main() {
                     delete [] webResult;
                     }
                 }
-            else {
+            else if( nextConnection->ticketServerRequest != NULL &&
+                     nextConnection->ticketServerAccepted &&
+                     spendLifeToken( nextConnection->email ) == -1 ) {
+                AppLog::info( 
+                    "Failed to spend life token for client, "
+                    "client rejected." );
+                nextConnection->error = true;
+                nextConnection->errorCauseString =
+                    "Client life token spend failed";
+                }
+            else if( nextConnection->ticketServerRequest != NULL &&
+                     nextConnection->ticketServerAccepted &&
+                     spendLifeToken( nextConnection->email ) == 1 ) {
+                // token spent successfully (or token server not used)
+
+                const char *message = "ACCEPTED\n#";
+                int messageLength = strlen( message );
+                
+                int numSent = 
+                    nextConnection->sock->send( 
+                        (unsigned char*)message, 
+                        messageLength, 
+                        false, false );
+                        
+
+                if( numSent != messageLength ) {
+                    AppLog::info( "Failed to write to client socket, "
+                                  "client rejected." );
+                    nextConnection->error = true;
+                    nextConnection->errorCauseString =
+                        "Socket write failed";
+
+                    }
+                else {
+                    // ready to start normal message exchange
+                    // with client
+                            
+                    AppLog::info( "Got new player logged in" );
+                            
+                    delete nextConnection->ticketServerRequest;
+                    nextConnection->ticketServerRequest = NULL;
+
+                    delete [] nextConnection->sequenceNumberString;
+                    nextConnection->sequenceNumberString = NULL;
+                            
+                    if( nextConnection->twinCode != NULL
+                        && 
+                        nextConnection->twinCount > 0 ) {
+                        processWaitingTwinConnection( *nextConnection );
+                        }
+                    else {
+                        if( nextConnection->twinCode != NULL ) {
+                            delete [] nextConnection->twinCode;
+                            nextConnection->twinCode = NULL;
+                            }
+                                
+                        processLoggedInPlayer( 
+                            nextConnection->sock,
+                            nextConnection->sockBuffer,
+                            nextConnection->email,
+                            nextConnection->tutorialNumber,
+                            nextConnection->curseStatus );
+                        }
+                                                        
+                    newConnections.deleteElement( i );
+                    i--;
+                    }
+                }
+            else if( nextConnection->ticketServerRequest != NULL ) {
 
                 double timeDelta = Time::getCurrentTime() -
                     nextConnection->connectionStartTimeSeconds;
@@ -9432,7 +9459,8 @@ int main() {
 
                                 nextConnection->ticketServerRequest =
                                     new WebRequest( "GET", url, NULL );
-                                
+                                nextConnection->ticketServerAccepted = false;
+
                                 nextConnection->ticketServerRequestStartTime
                                     = currentTime;
 
@@ -9552,6 +9580,9 @@ int main() {
             if( ! result ) {
                 AppLog::info( "Failed to read from twin-waiting client socket, "
                               "client rejected." );
+
+                refundLifeToken( nextConnection->email );
+                
                 nextConnection->error = true;
                 nextConnection->errorCauseString =
                     "Socket read failed";

@@ -54,6 +54,7 @@ spiral.cpp \
 objectSurvey.cpp \
 language.cpp \
 familySkipList.cpp \
+lifeTokens.cpp \
 
 
 
