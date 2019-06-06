@@ -19,6 +19,9 @@ Server Fixes
   what you are holding through new no_replace tag.  Snowball splats now work
   this way.
 
+--Stone road not culled (allong with stone walls) during map reclamation by
+  nature.
+
 
 
 Version 235    2019-May-29
