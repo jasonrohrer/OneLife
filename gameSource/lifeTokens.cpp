@@ -29,7 +29,29 @@ int getNumLifeTokens() {
 
 
 char *getLifeTokenString() {
-    return autoSprintf( translate( "tokenMessage" ), 3, 3600/60, 12 );
+    
+    const char *firstLifeKey = "livesPlural";
+    
+    const char *secondLifeKey = "livesPlural";
+    
+    int lives = 3;
+    
+    int cap = 12;
+    
+    if( lives == 1 ) {
+        firstLifeKey = "lifeSingular";
+        }
+
+    if( cap == 1 ) {
+        secondLifeKey = "lifeSingular";
+        }
+    
+    
+
+    return autoSprintf( translate( "tokenMessage" ), 
+                        lives, translate( firstLifeKey ),
+                        3600/60, 
+                        cap, translate( secondLifeKey ) );
     }
 
 

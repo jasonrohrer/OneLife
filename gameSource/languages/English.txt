@@ -176,7 +176,10 @@ connectionFailed "CONNECTION FAILED"
 noLifeTokens "YOU ARE OUT OF LIVES"
 
 
-tokenMessage "%d LIVES LEFT##(NEW LIFE EVERY %d MINUTES WHEN BELOW %d LIVES)"
+tokenMessage "%d %s LEFT##(NEW LIFE EVERY %d MINUTES WHEN BELOW %d %s)"
+
+livesPlural "LIVES"
+lifeSingular "LIFE"
 
 tokenTimeMessage "NEW LIFE IN:  "
 
