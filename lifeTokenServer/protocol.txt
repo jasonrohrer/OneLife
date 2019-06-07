@@ -8,6 +8,7 @@ Return:
 token_count
 seconds_per_token_earned
 token_cap
+seconds_until_next_token
 OK
 -or-
 DENIED
@@ -20,6 +21,9 @@ Note that this call has no security token.  This simplifies the
 client code which fetches this value.  I can't imagine a situation where the 
 number of life tokens associated with an email address is valuable to an
 attacker.
+
+seconds_until_next_token is -1 if the player is not in the process of
+earning a token (for example, if they're at or above the cap already)
 
 
 

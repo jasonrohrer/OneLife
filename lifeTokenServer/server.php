@@ -672,7 +672,7 @@ function lt_spendToken() {
         }
     else {
         // are there any left
-        $count = lt_getTokenCountEmail( $email );
+        list( $count, $secondsLeft ) = lt_getTokenCountEmail( $email );
 
         if( $count <= 0 ) {
             echo "DENIED";
@@ -723,9 +723,12 @@ function lt_getTokenCountEmail( $email ) {
     $numRows = mysqli_num_rows( $result );
     
     if( $numRows == 0 ) {
-        return $startingLifeTokens;
+        return array( $startingLifeTokens, -1 );
         }
 
+    $secondsUntilToken = -1;
+    
+    
     $token_count = lt_mysqli_result( $result, 0, "token_count" );
 
     $sec_passed = lt_mysqli_result( $result, 0, "sec_passed" );
@@ -749,8 +752,15 @@ function lt_getTokenCountEmail( $email ) {
         "WHERE email = '$email';";
     $result = lt_queryDatabase( $query );
     
-        
-    return $token_count;
+
+    if( $token_count < $lifeTokenCap ) {
+        $sec_passed -= $tokensEarned * $secondsPerTokenEarned;
+
+        $secondsUntilToken = $secondsPerTokenEarned - $sec_passed;
+        }
+    
+    
+    return array( $token_count, $secondsUntilToken );
     }
 
 
@@ -764,11 +774,15 @@ function lt_getTokenCount() {
         return;
         }
 
-    $tokenCount = lt_getTokenCountEmail( $email );
+    list( $tokenCount, $secondsLeft ) = lt_getTokenCountEmail( $email );
 
     global $secondsPerTokenEarned, $lifeTokenCap;
     
-    echo "$tokenCount\n$secondsPerTokenEarned\n$lifeTokenCap\nOK";
+    echo "$tokenCount\n".
+        "$secondsPerTokenEarned\n".
+        "$lifeTokenCap\n".
+        "$secondsLeft\n".
+        "OK";
     }
 
 
