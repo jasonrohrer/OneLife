@@ -183,7 +183,8 @@ typedef struct FreshConnection {
         
         WebRequest *ticketServerRequest;
         char ticketServerAccepted;
-        
+        char lifeTokenSpent;
+
         double ticketServerRequestStartTime;
         
         char error;
@@ -9124,6 +9125,8 @@ int main() {
                 // (and maybe ticket server check isn't required by settings)
                 newConnection.ticketServerRequest = NULL;
                 newConnection.ticketServerAccepted = false;
+                newConnection.lifeTokenSpent = false;
+                
                 newConnection.error = false;
                 newConnection.errorCauseString = "";
                 
@@ -9241,17 +9244,25 @@ int main() {
                 }
             else if( nextConnection->ticketServerRequest != NULL &&
                      nextConnection->ticketServerAccepted &&
-                     spendLifeToken( nextConnection->email ) == -1 ) {
-                AppLog::info( 
-                    "Failed to spend life token for client, "
-                    "client rejected." );
-                nextConnection->error = true;
-                nextConnection->errorCauseString =
-                    "Client life token spend failed";
+                     ! nextConnection->lifeTokenSpent ) {
+
+                int spendResult = 
+                    spendLifeToken( nextConnection->email );
+                if( spendResult == -1 ) {
+                    AppLog::info( 
+                        "Failed to spend life token for client, "
+                        "client rejected." );
+                    nextConnection->error = true;
+                    nextConnection->errorCauseString =
+                        "Client life token spend failed";
+                    }
+                else if( spendResult == 1 ) {
+                    nextConnection->lifeTokenSpent = true;
+                    }
                 }
             else if( nextConnection->ticketServerRequest != NULL &&
                      nextConnection->ticketServerAccepted &&
-                     spendLifeToken( nextConnection->email ) == 1 ) {
+                     nextConnection->lifeTokenSpent ) {
                 // token spent successfully (or token server not used)
 
                 const char *message = "ACCEPTED\n#";
