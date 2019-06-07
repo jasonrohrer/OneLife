@@ -5,6 +5,8 @@
 
 #include "accountHmac.h"
 
+#include "lifeTokens.h"
+
 
 #include "minorGems/game/Font.h"
 #include "minorGems/game/game.h"
@@ -189,6 +191,9 @@ void ExistingAccountPage::showDisableCustomServerButton( char inShow ) {
 
 
 void ExistingAccountPage::makeActive( char inFresh ) {
+
+    triggerLifeTokenUpdate();
+    
 
     if( SettingsManager::getIntSetting( "tutorialDone", 0 ) ) {
         mTutorialButton.setVisible( true );
@@ -656,5 +661,11 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
         delete [] s;
         }
     
+
+
+    pos = mEmailField.getPosition();
+    pos.y += 100;
+
+    drawTokenMessage( pos );
     }
 

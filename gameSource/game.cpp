@@ -75,6 +75,7 @@ CustomRandomSource randSource( 34957197 );
 
 #include "emotion.h"
 #include "photos.h"
+#include "lifeTokens.h"
 
 
 #include "FinalMessagePage.h"
@@ -744,6 +745,7 @@ void freeFrameDrawer() {
     freeEmotion();
     
     freePhotos();
+    freeLifeTokens();
     
 
     if( reflectorURL != NULL ) {
@@ -1598,6 +1600,8 @@ void drawFrame( char inUpdate ) {
                     initEmotion();
                     initPhotos();
                     
+                    initLifeTokens();
+
                     initMusicPlayer();
                     setMusicLoudness( musicLoudness );
                     

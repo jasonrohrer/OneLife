@@ -176,6 +176,11 @@ connectionFailed "CONNECTION FAILED"
 noLifeTokens "YOU ARE OUT OF LIVES"
 
 
+tokenMessage "%d LIVES LEFT##(NEW LIFE EVERY %d MINUTES WHEN BELOW %d LIVES)"
+
+tokenTimeMessage "NEW LIFE IN:  "
+
+
 customServerMesssage "CUSTOM SERVER:  %s : %d"
 
 connecting "CONNECTING"
