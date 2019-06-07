@@ -28,12 +28,17 @@ void initLifeTokens() {
 
 static void freeRequest( OpRequest *inR ) {
     
-    delete [] inR->email;
+    if( inR->email != NULL ) {
+        delete [] inR->email;
+        inR->email = NULL;
+        }
     if( inR->seqW != NULL ) {
         delete inR->seqW;
+        inR->seqW = NULL;
         }
     if( inR->mainW != NULL ) {
         delete inR->mainW;
+        inR->mainW = NULL;
         }
     }
 
@@ -213,7 +218,6 @@ void stepLifeTokens() {
         int result = stepOpRequest( r );
         if( result != 0 ) {
             // either error or done, stop either way
-            freeRequest( r );
             refundRequests.deleteElement( i );
             i--;
             }
