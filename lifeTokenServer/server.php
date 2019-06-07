@@ -678,20 +678,29 @@ function lt_spendToken() {
             echo "DENIED";
             return;
             }
+
+        global $lifeTokenCap;
+
+        $timeUpdateClause = "";
+        
+        if( $count == $lifeTokenCap ) {
+            // we are just now spending down below cap
+            // time starts ticking again from here
+            $timeUpdateClause = " start_time = CURRENT_TIMESTAMP, ";
+            }
         
         // update the existing one
         // leave start time alone, because it's absolute
         $query = "UPDATE $tableNamePrefix"."users SET " .
             // our values might be stale, increment values in table
             "sequence_number = sequence_number + 1, ".
+            $timeUpdateClause .
             "token_count = token_count - 1 " .
             "WHERE email = '$email'; ";
         
         }
 
     lt_queryDatabase( $query );
-    
-    lt_scaleCurseScore( $email );    
     
     echo "OK";
     }
@@ -757,7 +766,9 @@ function lt_getTokenCount() {
 
     $tokenCount = lt_getTokenCountEmail( $email );
 
-    echo $tokenCount;
+    global $secondsPerTokenEarned, $lifeTokenCap;
+    
+    echo "$tokenCount\n$secondsPerTokenEarned\n$lifeTokenCap\nOK";
     }
 
 

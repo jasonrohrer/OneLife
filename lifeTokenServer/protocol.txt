@@ -6,6 +6,9 @@ server.php
 
 Return:
 token_count
+seconds_per_token_earned
+token_cap
+OK
 -or-
 DENIED
 
