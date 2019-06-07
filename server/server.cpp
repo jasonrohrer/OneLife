@@ -9178,6 +9178,9 @@ int main() {
             
             FreshConnection *nextConnection = newConnections.getElement( i );
             
+            if( nextConnection->error ) {
+                continue;
+                }
             
             if( nextConnection->email != NULL &&
                 nextConnection->curseStatus.curseLevel == -1 ) {
