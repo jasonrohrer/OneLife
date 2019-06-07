@@ -102,6 +102,12 @@ ACCEPTED
 REJECTED
 #
 
+-or-
+
+NO_LIFE_TOKENS
+REJECTED
+#
+
 
 After ACCEPTED, normal client-server messaging commences.
 

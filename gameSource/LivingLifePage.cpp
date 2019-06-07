@@ -884,6 +884,7 @@ typedef enum messageType {
     SERVER_FULL,
 	SEQUENCE_NUMBER,
     ACCEPTED,
+    NO_LIFE_TOKENS,
     REJECTED,
     MAP_CHUNK,
     MAP_CHANGE,
@@ -935,22 +936,7 @@ messageType getMessageType( char *inMessage ) {
     
     messageType returnValue = UNKNOWN;
 
-    if( strcmp( copy, "SHUTDOWN" ) == 0 ) {
-        returnValue = SHUTDOWN;
-        }
-    else if( strcmp( copy, "SERVER_FULL" ) == 0 ) {
-        returnValue = SERVER_FULL;
-        }
-    else if( strcmp( copy, "SN" ) == 0 ) {
-        returnValue = SEQUENCE_NUMBER;
-        }
-    else if( strcmp( copy, "ACCEPTED" ) == 0 ) {
-        returnValue = ACCEPTED;
-        }
-    else if( strcmp( copy, "REJECTED" ) == 0 ) {
-        returnValue = REJECTED;
-        }
-    else if( strcmp( copy, "CM" ) == 0 ) {
+    if( strcmp( copy, "CM" ) == 0 ) {
         returnValue = COMPRESSED_MESSAGE;
         }
     else if( strcmp( copy, "MC" ) == 0 ) {
@@ -1039,6 +1025,24 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "PONG" ) == 0 ) {
         returnValue = PONG;
+        }
+    else if( strcmp( copy, "SHUTDOWN" ) == 0 ) {
+        returnValue = SHUTDOWN;
+        }
+    else if( strcmp( copy, "SERVER_FULL" ) == 0 ) {
+        returnValue = SERVER_FULL;
+        }
+    else if( strcmp( copy, "SN" ) == 0 ) {
+        returnValue = SEQUENCE_NUMBER;
+        }
+    else if( strcmp( copy, "ACCEPTED" ) == 0 ) {
+        returnValue = ACCEPTED;
+        }
+    else if( strcmp( copy, "REJECTED" ) == 0 ) {
+        returnValue = REJECTED;
+        }
+    else if( strcmp( copy, "NO_LIFE_TOKENS" ) == 0 ) {
+        returnValue = NO_LIFE_TOKENS;
         }
     else if( strcmp( copy, "SD" ) == 0 ) {
         returnValue = FORCED_SHUTDOWN;
@@ -11085,6 +11089,16 @@ void LivingLifePage::step() {
             
             setWaiting( false );
             setSignal( "loginFailed" );
+            
+            delete [] message;
+            return;
+            }
+        else if( type == NO_LIFE_TOKENS ) {
+            closeSocket( mServerSocket );
+            mServerSocket = -1;
+            
+            setWaiting( false );
+            setSignal( "noLifeTokens" );
             
             delete [] message;
             return;

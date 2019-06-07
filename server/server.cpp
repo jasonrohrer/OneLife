@@ -190,6 +190,8 @@ typedef struct FreshConnection {
         char error;
         const char *errorCauseString;
         
+        double rejectedSendTime;
+
         char shutdownMode;
 
         // for tracking connections that have failed to LOGIN 
@@ -9129,6 +9131,7 @@ int main() {
                 
                 newConnection.error = false;
                 newConnection.errorCauseString = "";
+                newConnection.rejectedSendTime = 0;
                 
                 int messageLength = strlen( message );
                 
@@ -9252,6 +9255,12 @@ int main() {
                     AppLog::info( 
                         "Failed to spend life token for client, "
                         "client rejected." );
+
+                    const char *message = "NO_LIFE_TOKENS\n#";
+                    nextConnection->sock->send( (unsigned char*)message,
+                                                strlen( message ), 
+                                                false, false );
+
                     nextConnection->error = true;
                     nextConnection->errorCauseString =
                         "Client life token spend failed";
@@ -9334,6 +9343,11 @@ int main() {
                     AppLog::info( "Failed to read from client socket, "
                                   "client rejected." );
                     nextConnection->error = true;
+                    
+                    // force connection close right away
+                    // don't send REJECTED message and wait
+                    nextConnection->rejectedSendTime = 1;
+                    
                     nextConnection->errorCauseString =
                         "Socket read failed";
                     }
@@ -9595,6 +9609,11 @@ int main() {
                 refundLifeToken( nextConnection->email );
                 
                 nextConnection->error = true;
+
+                // force connection close right away
+                // don't send REJECTED message and wait
+                nextConnection->rejectedSendTime = 1;
+                    
                 nextConnection->errorCauseString =
                     "Socket read failed";
                 }
@@ -9606,6 +9625,8 @@ int main() {
         
         // FreshConnections are in two different lists
         // clean up errors in both
+        currentTime = Time::getCurrentTime();
+        
         SimpleVector<FreshConnection> *connectionLists[2] =
             { &newConnections, &waitingForTwinConnections };
         for( int c=0; c<2; c++ ) {
@@ -9617,25 +9638,34 @@ int main() {
             
                 if( nextConnection->error ) {
                 
-                    // try sending REJECTED message at end
-
-                    const char *message = "REJECTED\n#";
-                    nextConnection->sock->send( (unsigned char*)message,
-                                                strlen( message ), 
+                    if( nextConnection->rejectedSendTime == 0 ) {
+                        
+                        // try sending REJECTED message at end
+                        // give them 5 seconds to receive it before closing
+                        // the connection
+                        const char *message = "REJECTED\n#";
+                        nextConnection->sock->send( (unsigned char*)message,
+                                                    strlen( message ), 
                                                 false, false );
-
-                    AppLog::infoF( "Closing new connection on error "
-                                   "(cause: %s)",
-                                   nextConnection->errorCauseString );
-
-                    if( nextConnection->sock != NULL ) {
-                        sockPoll.removeSocket( nextConnection->sock );
+                        nextConnection->rejectedSendTime = currentTime;
                         }
-                    
-                    deleteMembers( nextConnection );
-                    
-                    list->deleteElement( i );
-                    i--;
+                    else if( currentTime - nextConnection->rejectedSendTime >
+                             5 ) {
+                        // 5 sec passed since REJECTED sent
+                        
+                        AppLog::infoF( "Closing new connection on error "
+                                       "(cause: %s)",
+                                       nextConnection->errorCauseString );
+                        
+                        if( nextConnection->sock != NULL ) {
+                            sockPoll.removeSocket( nextConnection->sock );
+                            }
+                        
+                        deleteMembers( nextConnection );
+                        
+                        list->deleteElement( i );
+                        i--;
+                        }
                     }
                 }
             }

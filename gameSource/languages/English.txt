@@ -173,6 +173,8 @@ serverFull "SERVER IS FULL"
 
 connectionFailed "CONNECTION FAILED"
 
+noLifeTokens "YOU ARE OUT OF LIVES"
+
 
 customServerMesssage "CUSTOM SERVER:  %s : %d"
 
