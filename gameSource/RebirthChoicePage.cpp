@@ -3,6 +3,8 @@
 #include "buttonStyle.h"
 #include "message.h"
 
+#include "lifeTokens.h"
+
 #include "minorGems/game/Font.h"
 #include "minorGems/game/game.h"
 
@@ -95,15 +97,18 @@ void RebirthChoicePage::actionPerformed( GUIComponent *inTarget ) {
 void RebirthChoicePage::draw( doublePair inViewCenter, 
                                   double inViewSize ) {
     
-    //doublePair pos = { 0, 200 };
+    doublePair pos = { 0, 228 };
     
     // no message for now
     //drawMessage( "", pos );
+
+    drawTokenMessage( pos );
     }
 
 
 
 void RebirthChoicePage::makeActive( char inFresh ) {
+    triggerLifeTokenUpdate();
     
     int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
     
