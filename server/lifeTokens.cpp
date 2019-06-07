@@ -120,9 +120,9 @@ static int stepOpRequest( OpRequest *inR ) {
                     
             int sequenceNumber = 0;
             
-            char *text = r->mainW->getResult();
+            char *text = r->seqW->getResult();
             
-            sscanf( text, "OK\n%d", &sequenceNumber );
+            sscanf( text, "%d\nOK", &sequenceNumber );
             
             delete [] text;
                     
@@ -188,7 +188,8 @@ static int stepOpRequest( OpRequest *inR ) {
         delete [] serverURL;
 
         r->seqW = new WebRequest( "GET", url, NULL );
-    
+        printf( "Starting new web request for %s\n", url );
+
         delete [] url;
         
         return 0;

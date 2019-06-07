@@ -9307,7 +9307,7 @@ int main() {
                     i--;
                     }
                 }
-            else if( nextConnection->ticketServerRequest != NULL ) {
+            else if( nextConnection->ticketServerRequest == NULL ) {
 
                 double timeDelta = Time::getCurrentTime() -
                     nextConnection->connectionStartTimeSeconds;
