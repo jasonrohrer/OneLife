@@ -134,6 +134,9 @@ else if( $action == "get_sequence_number" ) {
 else if( $action == "spend_token" ) {
     lt_spendToken();
     }
+else if( $action == "refund_token" ) {
+    lt_refundToken();
+    }
 else if( $action == "get_token_count" ) {
     lt_getTokenCount();
     }
@@ -607,22 +610,18 @@ function lt_getSequenceNumberForEmail( $inEmail ) {
 
 
 
+function lt_checkSeqHash( $email ) {
+    global $sharedGameServerSecret;
 
-
-
-function lt_spendToken() {
-    global $tableNamePrefix, $sharedGameServerSecret;
-
-    // no locking is done here, because action is asynchronous anyway
     // and there's no way to prevent a server from acting on a stale
     // sequence number if calls for the same email are interleaved
 
     // however, we only want to support a given email address playing on
     // one server at a time, so it's okay if some parallel lives are
     // not logged correctly
-    
 
-    $email = lt_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    global $action;
+
 
     $sequence_number = lt_requestFilter( "sequence_number", "/[0-9]+/i", "0" );
 
@@ -633,19 +632,19 @@ function lt_spendToken() {
 
     if( $email == "" ) {
 
-        lt_log( "spending token denied for bad email" );
+        lt_log( "$action token denied for bad email" );
         
         echo "DENIED";
-        return;
+        die();
         }
     
     $trueSeq = lt_getSequenceNumberForEmail( $email );
 
     if( $trueSeq > $sequence_number ) {
-        lt_log( "spending token denied for stale sequence number" );
+        lt_log( "$action denied for stale sequence number" );
 
         echo "DENIED";
-        return;
+        die();
         }
 
     $computedHashValue =
@@ -655,8 +654,25 @@ function lt_spendToken() {
         // lt_log( "curse denied for bad hash value" );
 
         echo "DENIED";
-        return;
+        die();
         }
+
+    return $trueSeq;
+    }
+
+
+
+
+function lt_spendToken() {
+    global $tableNamePrefix;
+
+    $email = lt_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+
+    
+    $trueSeq = lt_checkSeqHash( $email );
+    
+    
+    // no locking is done here, because action is asynchronous anyway
 
     if( $trueSeq == 0 ) {
         global $startingLifeTokens;
@@ -700,6 +716,38 @@ function lt_spendToken() {
         
         }
 
+    lt_queryDatabase( $query );
+    
+    echo "OK";
+    }
+
+
+
+
+function lt_refundToken() {
+    global $tableNamePrefix;
+
+    $email = lt_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+
+    
+    $trueSeq = lt_checkSeqHash( $email );
+    
+    
+    if( $trueSeq == 0 ) {
+
+        // no record of this player, can't refund
+        echo "DENIED";
+        return;
+        }
+    
+    // update the existing one
+    // leave start time alone, because it's absolute
+    $query = "UPDATE $tableNamePrefix"."users SET " .
+        // our values might be stale, increment values in table
+        "sequence_number = sequence_number + 1, ".
+        "token_count = token_count + 1 " .
+        "WHERE email = '$email'; ";
+    
     lt_queryDatabase( $query );
     
     echo "OK";

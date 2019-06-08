@@ -68,3 +68,20 @@ the game servers that have permission to spend tokens.
 
 If sequence number is <= previously used sequence number for this email address,
 request will be rejected.
+
+
+
+server.php
+?action=refund_token
+&email=[email address]
+&sequence_number=[int]
+&hash_value=[hash value]
+
+Return:
+OK
+-or-
+DENIED
+
+Used by game servers to indicate that a given email needs a token refunded.
+
+DENIED is returned if the email isn't known
