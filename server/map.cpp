@@ -6942,6 +6942,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
         
         // first try new grid placement method
+
+        
+        // actually skip this for now and go back to normal Eve spiral
+        if( false )
         if( eveLocationUsage >= maxEveLocationUsage
             && evePrimaryLocObjectID > 0 ) {
             
@@ -7120,7 +7124,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             }
         
 
-        // New method:
+        // Spiral method:
         GridPos eveLocToUse = eveLocation;
         
 

@@ -45,6 +45,10 @@ Server Fixes
   Figured leaving skip list code in place for now is fine, instead of tearing
   it out completely.
 
+--Disabled latest Eve spring grid placement close to civ, and re-enabled old
+  Eve spiral.
+
+
 
 
 Version 235    2019-May-29
