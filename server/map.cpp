@@ -193,6 +193,10 @@ static int maxEveLocationUsage = 3;
 // the spiral of the next Eve
 static double eveAngle = 2 * M_PI;
 
+static char eveStartSpiralPosSet = false;
+static GridPos eveStartSpiralPos = { 0, 0 };
+
+
 
 static int evePrimaryLocSpacing = 0;
 static int evePrimaryLocObjectID = -1;
@@ -6942,6 +6946,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
         
         // first try new grid placement method
+
+        
+        // actually skip this for now and go back to normal Eve spiral
+        if( false )
         if( eveLocationUsage >= maxEveLocationUsage
             && evePrimaryLocObjectID > 0 ) {
             
@@ -7120,7 +7128,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             }
         
 
-        // New method:
+        // Spiral method:
         GridPos eveLocToUse = eveLocation;
         
 
@@ -7166,7 +7174,41 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                 // location can move out from here
                 eveLocToUse.x = 0;
                 eveLocToUse.y = 0;
+
+                eveStartSpiralPosSet = false;
                 }
+
+
+            if( eveStartSpiralPosSet ) {
+                
+                int longTermCullingSeconds = 
+                    SettingsManager::getIntSetting( 
+                        "longTermNoLookCullSeconds", 3600 * 12 );
+                
+                // see how long center has not been seen
+                // if it's old enough, we can reset Eve angle and restart
+                // spiral there again
+                // this will bring Eves closer together again, after
+                // rim of spiral gets too far away
+                
+                timeSec_t lastLookTime = 
+                    dbLookTimeGet( eveStartSpiralPos.x,
+                                   eveStartSpiralPos.y );
+                
+                if( Time::getCurrentTime() - lastLookTime > 
+                    longTermCullingSeconds * 2 ) {
+                    // double cull start time
+                    // that should be enough for the center to actually have
+                    // started getting culled, and then some
+                    
+                    // restart the spiral
+                    eveAngle = 2 * M_PI;
+                    eveLocToUse = eveLocation;
+                    
+                    eveStartSpiralPosSet = false;
+                    }
+                }
+
             
             int jump = SettingsManager::getIntSetting( "nextEveJump", 2000 );
             
@@ -7250,6 +7292,12 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                 
                 *outX = pInt.x;
                 *outY = pInt.y;
+
+                if( ! eveStartSpiralPosSet ) {
+                    eveStartSpiralPos = pInt;
+                    eveStartSpiralPosSet = true;
+                    }
+
                 found = true;
                 }
 

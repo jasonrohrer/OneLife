@@ -51,6 +51,7 @@
 #include "objectSurvey.h"
 #include "language.h"
 #include "familySkipList.h"
+#include "lifeTokens.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -183,12 +184,16 @@ typedef struct FreshConnection {
         char *sequenceNumberString;
         
         WebRequest *ticketServerRequest;
+        char ticketServerAccepted;
+        char lifeTokenSpent;
 
         double ticketServerRequestStartTime;
         
         char error;
         const char *errorCauseString;
         
+        double rejectedSendTime;
+
         char shutdownMode;
 
         // for tracking connections that have failed to LOGIN 
@@ -392,7 +397,7 @@ typedef struct LiveObject {
 
         // in cases where their held wound produces a forced emot
         char emotFrozen;
-        
+        double emotUnfreezeETA;
         
         char connected;
         
@@ -908,8 +913,8 @@ static double pickBirthCooldownSeconds() {
     
     // v is in [0..1], the value range of Kumaraswamy
 
-    // put max at 3 minutes
-    return v * 3 * 60;
+    // put max at 5 minutes
+    return v * 5 * 60;
     }
 
 
@@ -1283,6 +1288,10 @@ void quitCleanup() {
             delete [] nextPlayer->email;
             }
 
+        if( nextPlayer->murderPerpEmail != NULL  ) {
+            delete [] nextPlayer->murderPerpEmail;
+            }
+
 
         freePlayerContainedArrays( nextPlayer );
         
@@ -1320,6 +1329,8 @@ void quitCleanup() {
     
     freeCurses();
     
+    freeLifeTokens();
+
     freeLifeLog();
     
     freeFoodLog();
@@ -4815,7 +4826,9 @@ int processLoggedInPlayer( Socket *inSock,
         
         if( ! o->error && ! o->connected &&
             strcmp( o->email, inEmail ) == 0 ) {
-
+            
+            // we spent a second life token for them by accident
+            refundLifeToken( inEmail );
             
             // give them this new socket and buffer
             if( o->sock != NULL ) {
@@ -5078,6 +5091,53 @@ int processLoggedInPlayer( Socket *inSock,
         forceParentChoices = true;
         }
     
+
+    
+    if( parentChoices.size() > 0 ) {
+        // count the families
+        
+        SimpleVector<int> uniqueLines;
+        
+        int playerCount = 0;
+        
+        for( int i=0; i<numPlayers; i++ ) {
+            LiveObject *player = players.getElement( i );
+            
+            if( player->error ) {
+                continue;
+                }
+            playerCount++;
+
+            int lineageEveID = player->lineageEveID;
+            
+            if( uniqueLines.getElementIndex( lineageEveID ) == -1 ) {
+                uniqueLines.push_back( lineageEveID );
+                }
+            }
+        
+        int numLines = uniqueLines.size();
+        
+        int targetPerFamily = 
+            SettingsManager::getIntSetting( "targetPlayersPerFamily", 15 );
+        
+        int actual = playerCount / numLines;
+        
+        AppLog::infoF( "%d players on server in %d family lines, with "
+                       "%d players per family, average.  Target is %d "
+                       "per family.",
+                       playerCount, numLines, actual, targetPerFamily );
+
+        if( actual > targetPerFamily ) {
+            
+            AppLog::info( "Over target, adding a new Eve." );
+            
+            parentChoices.deleteAll();
+            forceParentChoices = true;
+            }
+        
+        }
+    
+
 
 
     newObject.parentChainLength = 1;
@@ -5707,7 +5767,8 @@ int processLoggedInPlayer( Socket *inSock,
     newObject.dyingETA = 0;
     
     newObject.emotFrozen = false;
-
+    newObject.emotUnfreezeETA = 0;
+    
     newObject.connected = true;
     newObject.error = false;
     newObject.errorCauseString = "";
@@ -7639,6 +7700,8 @@ void setNoLongerDying( LiveObject *inPlayer,
     inPlayer->customGraveID = -1;
     
     inPlayer->emotFrozen = false;
+    inPlayer->emotUnfreezeETA = 0;
+    
     inPlayer->foodCapModifier = 1.0;
     inPlayer->foodUpdate = true;
 
@@ -7759,6 +7822,52 @@ void addKillState( int inKillerID, int inTargetID ) {
     
 
 
+static void setPerpetratorHoldingAfterKill( LiveObject *nextPlayer,
+                                            TransRecord *woundHit,
+                                            TransRecord *rHit,
+                                            TransRecord *r ) {
+
+    int oldHolding = nextPlayer->holdingID;
+
+
+    if( rHit != NULL ) {
+        // if hit trans exist
+        // leave bloody knife or
+        // whatever in hand
+        nextPlayer->holdingID = rHit->newActor;
+        holdingSomethingNew( nextPlayer,
+                             oldHolding );
+        }
+    else if( woundHit != NULL ) {
+        // result of hit on held weapon 
+        // could also be
+        // specified in wound trans
+        nextPlayer->holdingID = 
+            woundHit->newActor;
+        holdingSomethingNew( nextPlayer,
+                             oldHolding );
+        }
+    else if( r != NULL ) {
+        nextPlayer->holdingID = r->newActor;
+        holdingSomethingNew( nextPlayer,
+                             oldHolding );
+        }
+                        
+    if( r != NULL || rHit != NULL || woundHit != NULL ) {
+        
+        nextPlayer->heldTransitionSourceID = 0;
+        
+        if( oldHolding != 
+            nextPlayer->holdingID ) {
+            
+            setFreshEtaDecayForHeld( 
+                nextPlayer );
+            }
+        }
+    }
+
+
+
 
 void executeKillAction( int inKillerIndex,
                         int inTargetIndex,
@@ -7825,7 +7934,55 @@ void executeKillAction( int inKillerIndex,
                         hitPlayer = NULL;
                         }
                     }
-                                    
+                
+
+                // special case:
+                // non-lethal no_replace ends up in victim's hand
+                // they aren't dying, but they may have an emot
+                // effect only
+                if( hitPlayer != NULL ) {
+
+                    TransRecord *woundHit = 
+                        getPTrans( nextPlayer->holdingID, 
+                                   0, true, false );
+
+                    if( woundHit != NULL && woundHit->newTarget > 0 &&
+                        strstr( getObject( woundHit->newTarget )->description,
+                                "no_replace" ) != NULL ) {
+                        
+                        
+                        TransRecord *rHit = 
+                            getPTrans( nextPlayer->holdingID, 0, false, true );
+                        
+                        TransRecord *r = 
+                            getPTrans( nextPlayer->holdingID, 0 );
+
+                        setPerpetratorHoldingAfterKill( nextPlayer,
+                                                        woundHit, rHit, r );
+                        
+                        ForcedEffects e = 
+                            checkForForcedEffects( woundHit->newTarget );
+                            
+                        // emote-effect only for no_replace
+                        // no fever or food effect
+                        if( e.emotIndex != -1 ) {
+                            hitPlayer->emotFrozen = 
+                                true;
+                            
+                            hitPlayer->emotUnfreezeETA =
+                                Time::getCurrentTime() + e.ttlSec;
+                            
+                            newEmotPlayerIDs->push_back( 
+                                hitPlayer->id );
+                            newEmotIndices->push_back( 
+                                e.emotIndex );
+                            newEmotTTLs->push_back( 
+                                e.ttlSec );
+                            }
+                        return;
+                        }
+                    }
+                
 
                 if( hitPlayer != NULL ) {
                     someoneHit = true;
@@ -8032,44 +8189,12 @@ void executeKillAction( int inKillerIndex,
                                     
 
                 int oldHolding = nextPlayer->holdingID;
+
+                setPerpetratorHoldingAfterKill( nextPlayer, 
+                                                woundHit, rHit, r );
+
                 timeSec_t oldEtaDecay = 
                     nextPlayer->holdingEtaDecay;
-
-                if( rHit != NULL ) {
-                    // if hit trans exist
-                    // leave bloody knife or
-                    // whatever in hand
-                    nextPlayer->holdingID = rHit->newActor;
-                    holdingSomethingNew( nextPlayer,
-                                         oldHolding);
-                    }
-                else if( woundHit != NULL ) {
-                    // result of hit on held weapon 
-                    // could also be
-                    // specified in wound trans
-                    nextPlayer->holdingID = 
-                        woundHit->newActor;
-                    holdingSomethingNew( nextPlayer,
-                                         oldHolding);
-                    }
-                else if( r != NULL ) {
-                    nextPlayer->holdingID = r->newActor;
-                    holdingSomethingNew( nextPlayer,
-                                         oldHolding );
-                    }
-
-
-                if( r != NULL || rHit != NULL ) {
-                                        
-                    nextPlayer->heldTransitionSourceID = 0;
-                                        
-                    if( oldHolding != 
-                        nextPlayer->holdingID ) {
-                                            
-                        setFreshEtaDecayForHeld( 
-                            nextPlayer );
-                        }
-                    }
                                     
 
                 if( r != NULL ) {
@@ -8207,10 +8332,16 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
     const char *close = 
         findCloseFirstName( name );
 
-    babyO->name = autoSprintf( "%s %s",
-                               close, 
-                               lastName );
-                                    
+    if( strcmp( lastName, "" ) != 0 ) {    
+        babyO->name = autoSprintf( "%s %s",
+                                   close, 
+                                   lastName );
+        }
+    else {
+        babyO->name = stringDuplicate( close );
+        }
+    
+    
     if( babyO->familyName == NULL &&
         nextPlayer->familyName != NULL ) {
         // mother didn't have a family 
@@ -8416,6 +8547,8 @@ int main() {
     initNames();
 
     initCurses();
+    
+    initLifeTokens();
     
 
     initLifeLog();
@@ -8674,6 +8807,8 @@ int main() {
             stepPlayerStats();
             stepLineageLog();
             stepCurseServerRequests();
+            
+            stepLifeTokens();
 
             stepMapLongTermCulling( players.size() );
             }
@@ -9009,8 +9144,12 @@ int main() {
                 // wait for email and hashes to come from client
                 // (and maybe ticket server check isn't required by settings)
                 newConnection.ticketServerRequest = NULL;
+                newConnection.ticketServerAccepted = false;
+                newConnection.lifeTokenSpent = false;
+                
                 newConnection.error = false;
                 newConnection.errorCauseString = "";
+                newConnection.rejectedSendTime = 0;
                 
                 int messageLength = strlen( message );
                 
@@ -9057,6 +9196,9 @@ int main() {
             
             FreshConnection *nextConnection = newConnections.getElement( i );
             
+            if( nextConnection->error ) {
+                continue;
+                }
             
             if( nextConnection->email != NULL &&
                 nextConnection->curseStatus.curseLevel == -1 ) {
@@ -9073,7 +9215,8 @@ int main() {
                         nextConnection->curseStatus.excessPoints );
                     }
                 }
-            else if( nextConnection->ticketServerRequest != NULL ) {
+            else if( nextConnection->ticketServerRequest != NULL &&
+                     ! nextConnection->ticketServerAccepted ) {
                 
                 int result;
 
@@ -9109,60 +9252,7 @@ int main() {
                         }
                     else if( strstr( webResult, "VALID" ) != NULL ) {
                         // correct!
-
-
-                        const char *message = "ACCEPTED\n#";
-                        int messageLength = strlen( message );
-                
-                        int numSent = 
-                            nextConnection->sock->send( 
-                                (unsigned char*)message, 
-                                messageLength, 
-                                false, false );
-                        
-
-                        if( numSent != messageLength ) {
-                            AppLog::info( "Failed to write to client socket, "
-                                          "client rejected." );
-                            nextConnection->error = true;
-                            nextConnection->errorCauseString =
-                                "Socket write failed";
-
-                            }
-                        else {
-                            // ready to start normal message exchange
-                            // with client
-                            
-                            AppLog::info( "Got new player logged in" );
-                            
-                            delete nextConnection->ticketServerRequest;
-                            nextConnection->ticketServerRequest = NULL;
-
-                            delete [] nextConnection->sequenceNumberString;
-                            nextConnection->sequenceNumberString = NULL;
-                            
-                            if( nextConnection->twinCode != NULL
-                                && 
-                                nextConnection->twinCount > 0 ) {
-                                processWaitingTwinConnection( *nextConnection );
-                                }
-                            else {
-                                if( nextConnection->twinCode != NULL ) {
-                                    delete [] nextConnection->twinCode;
-                                    nextConnection->twinCode = NULL;
-                                    }
-                                
-                                processLoggedInPlayer( 
-                                    nextConnection->sock,
-                                    nextConnection->sockBuffer,
-                                    nextConnection->email,
-                                    nextConnection->tutorialNumber,
-                                    nextConnection->curseStatus );
-                                }
-                                                        
-                            newConnections.deleteElement( i );
-                            i--;
-                            }
+                        nextConnection->ticketServerAccepted = true;
                         }
                     else {
                         AppLog::errorF( 
@@ -9176,7 +9266,89 @@ int main() {
                     delete [] webResult;
                     }
                 }
-            else {
+            else if( nextConnection->ticketServerRequest != NULL &&
+                     nextConnection->ticketServerAccepted &&
+                     ! nextConnection->lifeTokenSpent ) {
+
+                int spendResult = 
+                    spendLifeToken( nextConnection->email );
+                if( spendResult == -1 ) {
+                    AppLog::info( 
+                        "Failed to spend life token for client, "
+                        "client rejected." );
+
+                    const char *message = "NO_LIFE_TOKENS\n#";
+                    nextConnection->sock->send( (unsigned char*)message,
+                                                strlen( message ), 
+                                                false, false );
+
+                    nextConnection->error = true;
+                    nextConnection->errorCauseString =
+                        "Client life token spend failed";
+                    }
+                else if( spendResult == 1 ) {
+                    nextConnection->lifeTokenSpent = true;
+                    }
+                }
+            else if( nextConnection->ticketServerRequest != NULL &&
+                     nextConnection->ticketServerAccepted &&
+                     nextConnection->lifeTokenSpent ) {
+                // token spent successfully (or token server not used)
+
+                const char *message = "ACCEPTED\n#";
+                int messageLength = strlen( message );
+                
+                int numSent = 
+                    nextConnection->sock->send( 
+                        (unsigned char*)message, 
+                        messageLength, 
+                        false, false );
+                        
+
+                if( numSent != messageLength ) {
+                    AppLog::info( "Failed to write to client socket, "
+                                  "client rejected." );
+                    nextConnection->error = true;
+                    nextConnection->errorCauseString =
+                        "Socket write failed";
+
+                    }
+                else {
+                    // ready to start normal message exchange
+                    // with client
+                            
+                    AppLog::info( "Got new player logged in" );
+                            
+                    delete nextConnection->ticketServerRequest;
+                    nextConnection->ticketServerRequest = NULL;
+
+                    delete [] nextConnection->sequenceNumberString;
+                    nextConnection->sequenceNumberString = NULL;
+                            
+                    if( nextConnection->twinCode != NULL
+                        && 
+                        nextConnection->twinCount > 0 ) {
+                        processWaitingTwinConnection( *nextConnection );
+                        }
+                    else {
+                        if( nextConnection->twinCode != NULL ) {
+                            delete [] nextConnection->twinCode;
+                            nextConnection->twinCode = NULL;
+                            }
+                                
+                        processLoggedInPlayer( 
+                            nextConnection->sock,
+                            nextConnection->sockBuffer,
+                            nextConnection->email,
+                            nextConnection->tutorialNumber,
+                            nextConnection->curseStatus );
+                        }
+                                                        
+                    newConnections.deleteElement( i );
+                    i--;
+                    }
+                }
+            else if( nextConnection->ticketServerRequest == NULL ) {
 
                 double timeDelta = Time::getCurrentTime() -
                     nextConnection->connectionStartTimeSeconds;
@@ -9192,6 +9364,11 @@ int main() {
                     AppLog::info( "Failed to read from client socket, "
                                   "client rejected." );
                     nextConnection->error = true;
+                    
+                    // force connection close right away
+                    // don't send REJECTED message and wait
+                    nextConnection->rejectedSendTime = 1;
+                    
                     nextConnection->errorCauseString =
                         "Socket read failed";
                     }
@@ -9328,7 +9505,8 @@ int main() {
 
                                 nextConnection->ticketServerRequest =
                                     new WebRequest( "GET", url, NULL );
-                                
+                                nextConnection->ticketServerAccepted = false;
+
                                 nextConnection->ticketServerRequestStartTime
                                     = currentTime;
 
@@ -9448,7 +9626,15 @@ int main() {
             if( ! result ) {
                 AppLog::info( "Failed to read from twin-waiting client socket, "
                               "client rejected." );
+
+                refundLifeToken( nextConnection->email );
+                
                 nextConnection->error = true;
+
+                // force connection close right away
+                // don't send REJECTED message and wait
+                nextConnection->rejectedSendTime = 1;
+                    
                 nextConnection->errorCauseString =
                     "Socket read failed";
                 }
@@ -9460,6 +9646,8 @@ int main() {
         
         // FreshConnections are in two different lists
         // clean up errors in both
+        currentTime = Time::getCurrentTime();
+        
         SimpleVector<FreshConnection> *connectionLists[2] =
             { &newConnections, &waitingForTwinConnections };
         for( int c=0; c<2; c++ ) {
@@ -9471,25 +9659,34 @@ int main() {
             
                 if( nextConnection->error ) {
                 
-                    // try sending REJECTED message at end
-
-                    const char *message = "REJECTED\n#";
-                    nextConnection->sock->send( (unsigned char*)message,
-                                                strlen( message ), 
+                    if( nextConnection->rejectedSendTime == 0 ) {
+                        
+                        // try sending REJECTED message at end
+                        // give them 5 seconds to receive it before closing
+                        // the connection
+                        const char *message = "REJECTED\n#";
+                        nextConnection->sock->send( (unsigned char*)message,
+                                                    strlen( message ), 
                                                 false, false );
-
-                    AppLog::infoF( "Closing new connection on error "
-                                   "(cause: %s)",
-                                   nextConnection->errorCauseString );
-
-                    if( nextConnection->sock != NULL ) {
-                        sockPoll.removeSocket( nextConnection->sock );
+                        nextConnection->rejectedSendTime = currentTime;
                         }
-                    
-                    deleteMembers( nextConnection );
-                    
-                    list->deleteElement( i );
-                    i--;
+                    else if( currentTime - nextConnection->rejectedSendTime >
+                             5 ) {
+                        // 5 sec passed since REJECTED sent
+                        
+                        AppLog::infoF( "Closing new connection on error "
+                                       "(cause: %s)",
+                                       nextConnection->errorCauseString );
+                        
+                        if( nextConnection->sock != NULL ) {
+                            sockPoll.removeSocket( nextConnection->sock );
+                            }
+                        
+                        deleteMembers( nextConnection );
+                        
+                        list->deleteElement( i );
+                        i--;
+                        }
                     }
                 }
             }
@@ -10228,21 +10425,9 @@ int main() {
                         LiveObject *parentO = 
                             getLiveObject( parentID );
                         
-                        // CHANGE:
-                        // Reset mother's cool-down whenever baby suicides
-                        // Otherwise, if DIE baby acts quick enough
-                        // they can cycle through all families, putting
-                        // each mother on cooldown, and end up as Eve
-                        // intentionally
-                        //
-                        // Old:  only if she picked up baby one time.
-                        // (also, with instant map load, it's easy
-                        //  for baby to run away before being picked
-                        //  up by a mother that wants the baby)
-                        //
-                        //if( parentO != NULL && 
-                        //    nextPlayer->everHeldByParent ) {
-                        if( parentO != NULL ) {
+                        if( parentO != NULL && nextPlayer->everHeldByParent ) {
+                            // mother picked up this SID baby at least
+                            // one time
                             // mother can have another baby right away
                             parentO->birthCoolDown = 0;
                             }
@@ -13406,7 +13591,8 @@ int main() {
                 if( killer != NULL ) {
                     // clear their emot
                     killer->emotFrozen = false;
-
+                    killer->emotUnfreezeETA = 0;
+                    
                     newEmotPlayerIDs.push_back( killer->id );
                             
                     newEmotIndices.push_back( -1 );
@@ -13467,6 +13653,16 @@ int main() {
             
             double curTime = Time::getCurrentTime();
             
+            
+            if( nextPlayer->emotFrozen && 
+                nextPlayer->emotUnfreezeETA != 0 &&
+                curTime >= nextPlayer->emotUnfreezeETA ) {
+                
+                nextPlayer->emotFrozen = false;
+                nextPlayer->emotUnfreezeETA = 0;
+                }
+            
+
             if( nextPlayer->dying && ! nextPlayer->error &&
                 curTime >= nextPlayer->dyingETA ) {
                 // finally died
@@ -13536,27 +13732,6 @@ int main() {
                                           &playerIndicesToSendUpdatesAbout );
                     }
                 
-                
-                if( nextPlayer->parentID != -1 ) {
-                    
-                    LiveObject *parentO = 
-                        getLiveObject( nextPlayer->parentID );
-                    
-                    if( parentO != NULL ) {
-                        
-                        if( parentO->babyIDs->getElementIndex( nextPlayer->id )
-                            == parentO->babyIDs->size() - 1 ) {
-                            
-                            // this mother's most-recent baby just died
-                            
-                            // mother can have another baby right away
-                            parentO->birthCoolDown = 0;
-                            }
-                        }
-                    }
-                
-                
-
 
                 newDeleteUpdates.push_back( 
                     getUpdateRecord( nextPlayer, true ) );                
@@ -13654,12 +13829,9 @@ int main() {
                         // count true murder victims here, not suicide
                         ( killerID > 0 && killerID != nextPlayer->id ),
                         // killed other or committed SID suicide
-                        // CHANGE:
-                        // no longer count SID toward lineage ban
-                        // we added this family to baby's skip
-                        // list below
-                        nextPlayer->everKilledAnyone );
-                    
+                        nextPlayer->everKilledAnyone || 
+                        nextPlayer->suicide );
+        
                     if( nextPlayer->suicide ) {
                         // add to player's skip list
                         skipFamily( nextPlayer->email, 

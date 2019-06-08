@@ -1,4 +1,4 @@
-int versionNumber = 235;
+int versionNumber = 238;
 int dataVersionNumber = 0;
 
 int binVersionNumber = versionNumber;
@@ -76,6 +76,7 @@ CustomRandomSource randSource( 34957197 );
 
 #include "emotion.h"
 #include "photos.h"
+#include "lifeTokens.h"
 
 
 #include "FinalMessagePage.h"
@@ -885,6 +886,7 @@ void freeFrameDrawer() {
     freeEmotion();
     
     freePhotos();
+    freeLifeTokens();
     
 
     if( reflectorURL != NULL ) {
@@ -1748,6 +1750,8 @@ void drawFrame( char inUpdate ) {
                     initEmotion();
                     initPhotos();
                     
+                    initLifeTokens();
+
                     initMusicPlayer();
                     setMusicLoudness( musicLoudness );
                     
@@ -1999,6 +2003,21 @@ void drawFrame( char inUpdate ) {
                 currentGamePage = existingAccountPage;
                 
                 existingAccountPage->setStatus( "loginFailed", true );
+
+                existingAccountPage->setStatusPositiion( true );
+
+                currentGamePage->base_makeActive( true );
+                }
+            else if( livingLifePage->checkSignal( "noLifeTokens" ) ) {
+                lastScreenViewCenter.x = 0;
+                lastScreenViewCenter.y = 0;
+
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                
+                currentGamePage = existingAccountPage;
+                
+                existingAccountPage->setStatus( "noLifeTokens", true );
 
                 existingAccountPage->setStatusPositiion( true );
 

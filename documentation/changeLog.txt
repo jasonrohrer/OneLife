@@ -4,6 +4,60 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 238    2019-June-8
+
+--Support for limited number of life tokens per player, with more tokens
+  earned every hour that passes.
+
+
+
+
+Server Fixes
+
+--We now add a new Eve whenever existing families have more than 15 players
+  each on average.
+
+--Lineage server trims newlines from death cause description.
+
+--People without last names can be cursed.  Fixes #302
+
+--Fixed a memory leak in murderPerpEmail.
+
+--Support for 'kill' result emots that are non-lethal and don't make you drop
+  what you are holding through new no_replace tag.  Snowball splats now work
+  this way.
+
+--Stone road not culled (allong with stone walls) during map reclamation by
+  nature.
+
+--Rolled back change 7292535f9fca5333bff52f3ba9038b530ea77273, so max birth
+  cooldown is 5 minutes again.
+
+--Rolled back changes 10e9b49dca89cd9e50895a883a0e98c9ab9e0f89 and
+  b33eae6c249103b32b4c0163bb5fe1e57c1d3a35, so mother's birth cooldown only
+  resets if she picked up a SIDS baby, and doesn't reset if most recent baby
+  died due to neglect.
+
+--Partially rolled back change 2419cdf75a3d64d2c637851434763c84efdd7649 so that
+  suicide triggers area ban like it did before, but family skip list is still
+  functioning too.  Thus, suicide has a compound effect of making you skip the
+  family until you run out of families AND ban yourself from that area.
+  Figured leaving skip list code in place for now is fine, instead of tearing
+  it out completely.
+
+--Disabled latest Eve spring grid placement close to civ, and re-enabled old
+  Eve spiral.
+
+--New Eve spiral behavior:  If center of spiral hasn't been seen in a long
+  enough time that it has likely been culled, we restart the spiral again from
+  the center.  This prevents the spiral from getting endlessly bigger, and
+  brings Eves closer together again periodically, as the center of the map gets
+  culled.
+
+
+
+
+
 Version 235    2019-May-29
 
 --Fixed one cause of rubber-banding player movement in client.  No need to

@@ -173,6 +173,19 @@ serverFull "SERVER IS FULL"
 
 connectionFailed "CONNECTION FAILED"
 
+noLifeTokens "YOU ARE OUT OF LIVES"
+
+
+tokenMessage "%d %s LEFT##(NEW LIFE EVERY %d %s WHEN BELOW %d %s)"
+
+livesPlural "LIVES"
+lifeSingular "LIFE"
+
+minutesPlural "MINUTES"
+minuteSingular "MINUTE"
+
+tokenTimeMessage "NEW LIFE IN:  "
+
 
 customServerMesssage "CUSTOM SERVER:  %s : %d"
 

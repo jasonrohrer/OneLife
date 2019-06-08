@@ -69,6 +69,7 @@ emotion.cpp \
 Picker.cpp \
 PickableStatics.cpp \
 photos.cpp \
+lifeTokens.cpp \
 
 
 GAME_GRAPHICS = \
