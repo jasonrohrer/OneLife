@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 238    2019-??
+Version 238    2019-June-8
 
 --Support for limited number of life tokens per player, with more tokens
   earned every hour that passes.
