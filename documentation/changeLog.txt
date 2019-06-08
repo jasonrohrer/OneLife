@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 238    2019-??
+
+--Support for limited number of life tokens per player, with more tokens
+  earned every hour that passes.
+
+
+
+
 Server Fixes
 
 --We now add a new Eve whenever existing families have more than 15 players
