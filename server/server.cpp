@@ -13811,12 +13811,9 @@ int main() {
                         // count true murder victims here, not suicide
                         ( killerID > 0 && killerID != nextPlayer->id ),
                         // killed other or committed SID suicide
-                        // CHANGE:
-                        // no longer count SID toward lineage ban
-                        // we added this family to baby's skip
-                        // list below
-                        nextPlayer->everKilledAnyone );
-                    
+                        nextPlayer->everKilledAnyone || 
+                        nextPlayer->suicide );
+        
                     if( nextPlayer->suicide ) {
                         // add to player's skip list
                         skipFamily( nextPlayer->email, 

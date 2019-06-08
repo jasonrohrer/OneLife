@@ -38,6 +38,8 @@ Server Fixes
   resets if she picked up a SIDS baby, and doesn't reset if most recent baby
   died due to neglect.
 
+--Partially rolled back change 2419cdf75a3d64d2c637851434763c84efdd7649 so that suicide triggers area ban like it did before, but family skip list is still functioning too.  Thus, suicide has a compound effect of making you skip the family until you run out of families AND ban yourself from that area.  Figured leaving skip list code in place for now is fine, instead of tearing it out completely.
+
 
 
 Version 235    2019-May-29
