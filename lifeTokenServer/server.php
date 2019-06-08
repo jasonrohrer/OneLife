@@ -184,9 +184,8 @@ else if( preg_match( "/server\.php/", $_SERVER[ "SCRIPT_NAME" ] ) ) {
     global $tableNamePrefix;
     
     // check if our tables exist
-    $exists = lt_doesTableExist( $tableNamePrefix . "servers" ) &&
+    $exists =
         lt_doesTableExist( $tableNamePrefix . "users" ) &&
-        lt_doesTableExist( $tableNamePrefix . "lives" ) &&
         lt_doesTableExist( $tableNamePrefix . "log" );
     
         
