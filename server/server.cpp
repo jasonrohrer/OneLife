@@ -10407,21 +10407,9 @@ int main() {
                         LiveObject *parentO = 
                             getLiveObject( parentID );
                         
-                        // CHANGE:
-                        // Reset mother's cool-down whenever baby suicides
-                        // Otherwise, if DIE baby acts quick enough
-                        // they can cycle through all families, putting
-                        // each mother on cooldown, and end up as Eve
-                        // intentionally
-                        //
-                        // Old:  only if she picked up baby one time.
-                        // (also, with instant map load, it's easy
-                        //  for baby to run away before being picked
-                        //  up by a mother that wants the baby)
-                        //
-                        //if( parentO != NULL && 
-                        //    nextPlayer->everHeldByParent ) {
-                        if( parentO != NULL ) {
+                        if( parentO != NULL && nextPlayer->everHeldByParent ) {
+                            // mother picked up this SID baby at least
+                            // one time
                             // mother can have another baby right away
                             parentO->birthCoolDown = 0;
                             }
@@ -13726,27 +13714,6 @@ int main() {
                                           &playerIndicesToSendUpdatesAbout );
                     }
                 
-                
-                if( nextPlayer->parentID != -1 ) {
-                    
-                    LiveObject *parentO = 
-                        getLiveObject( nextPlayer->parentID );
-                    
-                    if( parentO != NULL ) {
-                        
-                        if( parentO->babyIDs->getElementIndex( nextPlayer->id )
-                            == parentO->babyIDs->size() - 1 ) {
-                            
-                            // this mother's most-recent baby just died
-                            
-                            // mother can have another baby right away
-                            parentO->birthCoolDown = 0;
-                            }
-                        }
-                    }
-                
-                
-
 
                 newDeleteUpdates.push_back( 
                     getUpdateRecord( nextPlayer, true ) );                

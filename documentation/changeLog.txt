@@ -33,6 +33,10 @@ Server Fixes
 --Rolled back change 7292535f9fca5333bff52f3ba9038b530ea77273, so max birth
   cooldown is 5 minutes again.
 
+--Rolled back changes 10e9b49dca89cd9e50895a883a0e98c9ab9e0f89 and
+  b33eae6c249103b32b4c0163bb5fe1e57c1d3a35, so mother's birth cooldown only
+  resets if she picked up a SIDS baby, and doesn't reset if most recent baby
+  died due to neglect.
 
 
 
