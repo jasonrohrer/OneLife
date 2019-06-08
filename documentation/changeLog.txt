@@ -30,6 +30,10 @@ Server Fixes
 --Stone road not culled (allong with stone walls) during map reclamation by
   nature.
 
+--Rolled back change c731371c800d43ac9386bc0941e25528bf4f95d6, so max birth
+  cooldown is 5 minutes again.
+
+
 
 
 Version 235    2019-May-29

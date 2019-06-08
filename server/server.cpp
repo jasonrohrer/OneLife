@@ -911,8 +911,8 @@ static double pickBirthCooldownSeconds() {
     
     // v is in [0..1], the value range of Kumaraswamy
 
-    // put max at 3 minutes
-    return v * 3 * 60;
+    // put max at 5 minutes
+    return v * 5 * 60;
     }
 
 
