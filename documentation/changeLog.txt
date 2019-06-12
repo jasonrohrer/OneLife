@@ -10,6 +10,12 @@ Version 240    ???
   disable buttons on login page.  Fixed so that re-dectect button doesn't
   linger after visiting settings page triggers a re-measure of FPS.
 
+--There are now both Retry and Re-detect buttons when FPS mismatch occurs,
+  allowing you to re-measure right then and there without restarting the game.
+  We don't keep re-measuring every time we return to this screen, speeding up
+  player login.  We wait to fetch life token data from the server until after
+  the first FPS measurement is over, to avoid networking hiccups messing up the
+  measurment.  Fixes #330
 
 
 

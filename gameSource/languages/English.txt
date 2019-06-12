@@ -116,6 +116,7 @@ targetFPS "TARGET FRAME RATE:"
 vsyncOn "USING VSYNC:"
 vsyncYes "YES"
 vsyncNo "NO"
+retryButton "RETRY"
 redetectButton "RE-DETECT"
 
 
