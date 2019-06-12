@@ -49,6 +49,8 @@ Server Fixes
 
 --No more tutorial players in name logs.  Fixes  #333
 
+--Fixed typo in square root of two in server code.  Fixes #325
+
 
 
 
