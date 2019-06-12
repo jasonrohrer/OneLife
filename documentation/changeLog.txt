@@ -9,6 +9,14 @@ Server Fixes
 --Fixed so that empty tiles that used to contain a natural object are restored
   when map is culled back to natural state.  Thanks Alec.  Fixes #332
 
+--Reduced map database pollution with unecessary 0-values (before, we would 
+  clear a tile's contained items, setting its num-contained to 0 in the db,
+  every time an item was picked up from that tile, even if the item that was
+  picked up contained nothing---now, we check that there are contained items
+  there to clear before clearing them and inserting a 0 for num contained in
+  the database).  This cuts the number of database entries in half in many
+  situations (thus reducing the disk size of the database dramatically).
+ 
 
 
 

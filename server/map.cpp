@@ -6279,16 +6279,21 @@ int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay,
 
 
 void clearAllContained( int inX, int inY, int inSubCont ) {
+    int oldNum = getNumContained( inX, inY, inSubCont );
+
     if( inSubCont == 0 ) {
-        // clear sub container slots too
-        int oldNum = getNumContained( inX, inY, inSubCont );
+        // clear sub container slots too, if any
     
         for( int i=0; i<oldNum; i++ ) {
-            dbPut( inX, inY, NUM_CONT_SLOT, 0, i + 1 );
+            if( getNumContained( inX, inY, i + 1 ) > 0 ) {
+                dbPut( inX, inY, NUM_CONT_SLOT, 0, i + 1 );
+                }
             }
         }
     
-    dbPut( inX, inY, NUM_CONT_SLOT, 0, inSubCont );
+    if( oldNum != 0 ) {
+        dbPut( inX, inY, NUM_CONT_SLOT, 0, inSubCont );
+        }
     }
 
 
