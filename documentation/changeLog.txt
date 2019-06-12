@@ -20,6 +20,12 @@ Server Fixes
 --If you disconnect and reconnect when you have 0 lives left, you are no longer
   blocked from logging in to resume your last life.
 
+--Fixed bug where you could enter the kill-intent state against family members
+  when holding the sword, and if you ever got close enough, the server would
+  generate an endless flood of update messages for the failed kill action,
+  overload network connections, and leading to disconnects.  Now you can't even
+  enter the kill-intent state if the weapon you are holding is not applicable
+  to your target.  Thanks Laccy.  Fixes #320
 
 
 

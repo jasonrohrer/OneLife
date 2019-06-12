@@ -11490,25 +11490,50 @@ int main() {
                     else if( m.type == KILL ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         if( m.id > 0 && 
-                            nextPlayer->holdingID > 0 &&
-                            getObject( nextPlayer->holdingID )->deadlyDistance
-                            > 0 ) {
+                            nextPlayer->holdingID > 0 ) {
                             
-                            // player transitioning into kill state
+                            ObjectRecord *heldObj = 
+                                getObject( nextPlayer->holdingID );
                             
-                            LiveObject *targetPlayer =
-                                getLiveObject( m.id );
                             
-                            if( targetPlayer != NULL ) {
-                                nextPlayer->emotFrozen = true;
-                                newEmotPlayerIDs.push_back( 
-                                    nextPlayer->id );
-                                newEmotIndices.push_back( 
-                                    killEmotionIndex );
-                                newEmotTTLs.push_back( 120 );
-                                
-                                addKillState( nextPlayer->id,
-                                              targetPlayer->id );
+                            if( heldObj->deadlyDistance > 0 ) {
+                            
+                                // player transitioning into kill state?
+                            
+                                LiveObject *targetPlayer =
+                                    getLiveObject( m.id );
+                            
+                                if( targetPlayer != NULL ) {
+                                    
+                                    // block intra-family kills with
+                                    // otherFamilyOnly weapons
+                                    char weaponBlocked = false;
+                                    
+                                    if( strstr( heldObj->description,
+                                                "otherFamilyOnly" ) ) {
+                                        // make sure victim is in
+                                        // different family
+                                        
+                                        if( targetPlayer->lineageEveID ==
+                                            nextPlayer->lineageEveID ) {
+                                            
+                                            weaponBlocked = true;
+                                            }
+                                        }
+                                    
+                                    if( ! weaponBlocked ) {
+                                        
+                                        nextPlayer->emotFrozen = true;
+                                        newEmotPlayerIDs.push_back( 
+                                            nextPlayer->id );
+                                        newEmotIndices.push_back( 
+                                            killEmotionIndex );
+                                        newEmotTTLs.push_back( 120 );
+                                        
+                                        addKillState( nextPlayer->id,
+                                                      targetPlayer->id );
+                                        }
+                                    }
                                 }
                             }
                         }
