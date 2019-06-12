@@ -17,6 +17,10 @@ Server Fixes
   the database).  This cuts the number of database entries in half in many
   situations (thus reducing the disk size of the database dramatically).
  
+--If you disconnect and reconnect when you have 0 lives left, you are no longer
+  blocked from logging in to resume your last life.
+
+
 
 
 

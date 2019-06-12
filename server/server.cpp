@@ -4825,9 +4825,6 @@ int processLoggedInPlayer( Socket *inSock,
         if( ! o->error && ! o->connected &&
             strcmp( o->email, inEmail ) == 0 ) {
             
-            // we spent a second life token for them by accident
-            refundLifeToken( inEmail );
-            
             // give them this new socket and buffer
             if( o->sock != NULL ) {
                 delete o->sock;
@@ -9252,24 +9249,43 @@ int main() {
                      nextConnection->ticketServerAccepted &&
                      ! nextConnection->lifeTokenSpent ) {
 
-                int spendResult = 
-                    spendLifeToken( nextConnection->email );
-                if( spendResult == -1 ) {
-                    AppLog::info( 
-                        "Failed to spend life token for client, "
-                        "client rejected." );
-
-                    const char *message = "NO_LIFE_TOKENS\n#";
-                    nextConnection->sock->send( (unsigned char*)message,
-                                                strlen( message ), 
-                                                false, false );
-
-                    nextConnection->error = true;
-                    nextConnection->errorCauseString =
-                        "Client life token spend failed";
+                char liveButDisconnected = false;
+                
+                for( int p=0; p<players.size(); p++ ) {
+                    LiveObject *o = players.getElement( p );
+                    if( ! o->error && 
+                        ! o->connected && 
+                        strcmp( o->email, 
+                                nextConnection->email ) == 0 ) {
+                        liveButDisconnected = true;
+                        break;
+                        }
                     }
-                else if( spendResult == 1 ) {
+
+                if( liveButDisconnected ) {
+                    // spent when they first connected, don't respend now
                     nextConnection->lifeTokenSpent = true;
+                    }
+                else {
+                    int spendResult = 
+                        spendLifeToken( nextConnection->email );
+                    if( spendResult == -1 ) {
+                        AppLog::info( 
+                            "Failed to spend life token for client, "
+                            "client rejected." );
+
+                        const char *message = "NO_LIFE_TOKENS\n#";
+                        nextConnection->sock->send( (unsigned char*)message,
+                                                    strlen( message ), 
+                                                    false, false );
+
+                        nextConnection->error = true;
+                        nextConnection->errorCauseString =
+                            "Client life token spend failed";
+                        }
+                    else if( spendResult == 1 ) {
+                        nextConnection->lifeTokenSpent = true;
+                        }
                     }
                 }
             else if( nextConnection->ticketServerRequest != NULL &&
