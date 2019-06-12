@@ -11399,11 +11399,14 @@ int main() {
                                 nextPlayer->name = getUniqueCursableName( 
                                     nextPlayer->name, 
                                     &( nextPlayer->nameHasSuffix ) );
-
-                                logName( nextPlayer->id,
-                                         nextPlayer->email,
-                                         nextPlayer->name,
-                                         nextPlayer->lineageEveID );
+                                
+                                if( ! nextPlayer->isTutorial ) {    
+                                    logName( nextPlayer->id,
+                                             nextPlayer->email,
+                                             nextPlayer->name,
+                                             nextPlayer->lineageEveID );
+                                    }
+                                
                                 playerIndicesToSendNamesAbout.push_back( i );
                                 }
                             }

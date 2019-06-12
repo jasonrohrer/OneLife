@@ -31,6 +31,9 @@ Server Fixes
   unwearable state (for example, hitting crown with hammer to turn it back into
   an ingot while you're still wearing it).  Fixes #310
 
+--No more tutorial players in name logs.  Fixes  #333
+
+
 
 
 Version 238    2019-June-8
