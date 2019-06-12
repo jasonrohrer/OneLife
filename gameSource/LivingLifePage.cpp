@@ -19670,6 +19670,43 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     
                     }
                 }
+
+
+            if( !foundEmpty && 
+                ! sideAccess &&
+                nStart > 0 &&
+                destID > 0 &&
+                ! getObject( destID )->blocksWalking ) {
+                
+                // all neighbors blocked
+                // we didn't consider tile itself before
+                // but now we will, as last resort.
+
+                // consider tile itself as dest
+                int oldXD = ourLiveObject->xd;
+                int oldYD = ourLiveObject->yd;
+                        
+                // set this temporarily for pathfinding
+                ourLiveObject->xd = clickDestX;
+                ourLiveObject->yd = clickDestY;
+                        
+                computePathToDest( ourLiveObject );
+                        
+                if( ourLiveObject->pathToDest != NULL  ) {
+                            
+                    // can get there
+                    
+                    moveDestX = clickDestX;
+                    moveDestY = clickDestY;
+                            
+                    foundEmpty = true;
+                    }
+                        
+                // restore our old dest
+                ourLiveObject->xd = oldXD;
+                ourLiveObject->yd = oldYD; 
+                }
+            
             
             if( oldPathExists ) {
                 // restore it

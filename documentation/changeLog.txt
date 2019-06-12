@@ -19,6 +19,10 @@ Version 240    ???
 
 --Fixed memory leak.  Fixes #322
 
+--Fixed so that if you click on an object that is surrounded NSEW but still
+  accessible, you walk there, to that object's spot, and interact with it,
+  instead of just walking there.  Fixes #318
+
 
 
 
