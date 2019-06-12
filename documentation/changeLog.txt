@@ -53,6 +53,8 @@ Server Fixes
 
 --Fixed typo in square root of two in server code.  Fixes #325
 
+--Fixed disappearing springs caused by map cache not being aware of grid
+  placement status.  Fixes #319
 
 
 

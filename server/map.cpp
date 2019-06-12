@@ -956,6 +956,7 @@ static int yLimit = 2147481977;
 typedef struct BaseMapCacheRecord {
         int x, y;
         int id;
+        char gridPlacement;
     } BaseMapCacheRecord;
 
 
@@ -989,10 +990,13 @@ static BaseMapCacheRecord *mapCacheRecordLookup( int inX, int inY ) {
 
 
 // returns -1 if not in cache
-static int mapCacheLookup( int inX, int inY ) {
+static int mapCacheLookup( int inX, int inY, char *outGridPlacement = NULL ) {
     BaseMapCacheRecord *r = mapCacheRecordLookup( inX, inY );
     
     if( r->x == inX && r->y == inY ) {
+        if( outGridPlacement != NULL ) {
+            *outGridPlacement = r->gridPlacement;
+            }
         return r->id;
         }
 
@@ -1001,12 +1005,14 @@ static int mapCacheLookup( int inX, int inY ) {
 
 
 
-static void mapCacheInsert( int inX, int inY, int inID ) {
+static void mapCacheInsert( int inX, int inY, int inID, 
+                            char inGridPlacement = false ) {
     BaseMapCacheRecord *r = mapCacheRecordLookup( inX, inY );
     
     r->x = inX;
     r->y = inY;
     r->id = inID;
+    r->gridPlacement = inGridPlacement;
     }
 
     
@@ -1022,7 +1028,7 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
         return edgeObjectID;
         }
     
-    int cachedID = mapCacheLookup( inX, inY );
+    int cachedID = mapCacheLookup( inX, inY, outGridPlacement );
     
     if( cachedID != -1 ) {
         return cachedID;
@@ -1076,7 +1082,7 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
                 }
 
             if( gp->permittedBiomes.getElementIndex( pickedBiome ) != -1 ) {
-                mapCacheInsert( inX, inY, gp->id );
+                mapCacheInsert( inX, inY, gp->id, true );
 
                 if( outGridPlacement != NULL ) {
                     *outGridPlacement = true;
