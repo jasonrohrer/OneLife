@@ -210,6 +210,7 @@ void ExistingAccountPage::makeActive( char inFresh ) {
     
     mLoginButton.setVisible( false );
     mFriendsButton.setVisible( false );
+    mRedetectButton.setVisible( false );
     
     int skipFPSMeasure = SettingsManager::getIntSetting( "skipFPSMeasure", 0 );
     
@@ -666,6 +667,10 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
     pos = mEmailField.getPosition();
     pos.y += 100;
 
-    drawTokenMessage( pos );
+    if( ! mRedetectButton.isVisible() &&
+        ! mDisableCustomServerButton.isVisible() ) {
+        
+        drawTokenMessage( pos );
+        }
     }
 

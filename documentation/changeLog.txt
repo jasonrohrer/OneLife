@@ -4,6 +4,16 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 240    ???
+
+--Fixed so that lives-left text never overlaps with re-detect or custom-server-
+  disable buttons on login page.  Fixed so that re-dectect button doesn't
+  linger after visiting settings page triggers a re-measure of FPS.
+
+
+
+
+
 Server Fixes
 
 --Fixed so that empty tiles that used to contain a natural object are restored
