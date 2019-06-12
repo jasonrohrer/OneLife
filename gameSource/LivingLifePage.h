@@ -56,6 +56,9 @@ typedef struct LiveObject {
         
         SimpleVector<int> lineage;
         
+        int lineageEveID;
+        
+
         char outOfRange;
         char dying;
         char sick;

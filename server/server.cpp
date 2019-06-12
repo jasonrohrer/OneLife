@@ -8382,6 +8382,32 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
 
 
 
+void getLineageLineForPlayer( LiveObject *inPlayer,
+                              SimpleVector<char> *inVector ) {
+    
+    char *pID = autoSprintf( "%d", inPlayer->id );
+    inVector->appendElementString( pID );
+    delete [] pID;
+    
+    for( int j=0; j<inPlayer->lineage->size(); j++ ) {
+        char *mID = 
+            autoSprintf( 
+                " %d",
+                inPlayer->lineage->getElementDirect( j ) );
+        inVector->appendElementString( mID );
+        delete [] mID;
+        }        
+    // include eve tag at end
+    char *eveTag = autoSprintf( " eve=%d",
+                                inPlayer->lineageEveID );
+    inVector->appendElementString( eveTag );
+    delete [] eveTag;
+    
+    inVector->push_back( '\n' );            
+    }
+
+
+
 
 
 int main() {
@@ -10673,12 +10699,13 @@ int main() {
                             }
                         
                         char *message = autoSprintf(
-                            "GO\n%d %d %d %d %lf %s%s\n#",
+                            "GO\n%d %d %d %d %lf %s%s eve=%d\n#",
                             m.x - nextPlayer->birthPos.x,
                             m.y - nextPlayer->birthPos.y,
                             o->id, o->displayID, 
                             age,
-                            formattedName, linString );
+                            formattedName, linString,
+                            o->lineageEveID );
                         printf( "Processing %d,%d from birth pos %d,%d\n",
                                 m.x, m.y, nextPlayer->birthPos.x,
                                 nextPlayer->birthPos.y );
@@ -15381,20 +15408,8 @@ int main() {
                 if( nextPlayer->error ) {
                     continue;
                     }
-
-                char *pID = autoSprintf( "%d", nextPlayer->id );
-                linWorking.appendElementString( pID );
-                delete [] pID;
+                getLineageLineForPlayer( nextPlayer, &linWorking );
                 numAdded++;
-                for( int j=0; j<nextPlayer->lineage->size(); j++ ) {
-                    char *mID = 
-                        autoSprintf( 
-                            " %d",
-                            nextPlayer->lineage->getElementDirect( j ) );
-                    linWorking.appendElementString( mID );
-                    delete [] mID;
-                    }        
-                linWorking.push_back( '\n' );
                 }
             
             linWorking.push_back( '#' );
@@ -15907,20 +15922,9 @@ int main() {
                     if( o->error ) {
                         continue;
                         }
-
-                    char *pID = autoSprintf( "%d", o->id );
-                    linWorking.appendElementString( pID );
-                    delete [] pID;
+                    
+                    getLineageLineForPlayer( o, &linWorking );
                     numAdded++;
-                    for( int j=0; j<o->lineage->size(); j++ ) {
-                        char *mID = 
-                            autoSprintf( 
-                                " %d",
-                                o->lineage->getElementDirect( j ) );
-                        linWorking.appendElementString( mID );
-                        delete [] mID;
-                        }        
-                    linWorking.push_back( '\n' );
                     }
                 
                 linWorking.push_back( '#' );

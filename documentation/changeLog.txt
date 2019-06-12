@@ -23,6 +23,10 @@ Version 240    ???
   accessible, you walk there, to that object's spot, and interact with it,
   instead of just walking there.  Fixes #318
 
+--Protocol now includes lineageEveID with lineage and grave messages so that
+  client can show DISTANT RELATIVE for relatives and graves that are further
+  away than the 20 generation cuttoff.  Fixes #317
+
 
 
 

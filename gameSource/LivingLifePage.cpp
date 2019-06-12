@@ -362,7 +362,8 @@ char *getRelationName( SimpleVector<int> *ourLin,
                        SimpleVector<int> *theirLin, 
                        int ourID, int theirID,
                        int ourDisplayID, int theirDisplayID,
-                       double ourAge, double theirAge ) {
+                       double ourAge, double theirAge,
+                       int ourEveID, int theirEveID ) {
     
 
     ObjectRecord *theirDisplayO = getObject( theirDisplayID );
@@ -445,6 +446,13 @@ char *getRelationName( SimpleVector<int> *ourLin,
             }
         
         if( ourMatchIndex == -1 ) {
+            
+            if( ourEveID != -1 && theirEveID != -1 &&
+                ourEveID == theirEveID ) {
+                // no shared lineage, but same eve beyond lineage cuttoff
+                return stringDuplicate( translate( "distantRelative" ) );
+                }
+
             return NULL;
             }
         
@@ -596,17 +604,19 @@ char *getRelationName( SimpleVector<int> *ourLin,
 
 
 char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
-    SimpleVector<int> ourLin = inOurObject->lineage;
-    SimpleVector<int> theirLin = inTheirObject->lineage;
+    SimpleVector<int> *ourLin = &( inOurObject->lineage );
+    SimpleVector<int> *theirLin = &( inTheirObject->lineage );
     
     int ourID = inOurObject->id;
     int theirID = inTheirObject->id;
 
     
-    return getRelationName( &ourLin, &theirLin, ourID, theirID,
+    return getRelationName( ourLin, theirLin, ourID, theirID,
                             inOurObject->displayID, inTheirObject->displayID,
                             inOurObject->age,
-                            inTheirObject->age );
+                            inTheirObject->age,
+                            inOurObject->lineageEveID,
+                            inTheirObject->lineageEveID );
     }
 
 
@@ -11245,6 +11255,9 @@ void LivingLifePage::step() {
             int posX, posY, playerID, displayID;
             double age;
             
+            int eveID = -1;
+            
+
             char nameBuffer[200];
             
             nameBuffer[0] = '\0';
@@ -11282,8 +11295,23 @@ void LivingLifePage::step() {
                 if( numLines > 1 ) {
                     SimpleVector<char *> *tokens = 
                         tokenizeString( lines[1] );
+                    
+                    int numNormalTokens = tokens->size();
+                                
+                    if( tokens->size() > 6 ) {
+                        char *lastToken =
+                            tokens->getElementDirect( 
+                                tokens->size() - 1 );
+                                    
+                        if( strstr( lastToken, "eve=" ) ) {   
+                            // eve tag at end
+                            numNormalTokens--;
+                            
+                            sscanf( lastToken, "eve=%d", &( eveID ) );
+                            }
+                        }
 
-                    for( int t=6; t<tokens->size(); t++ ) {
+                    for( int t=6; t<numNormalTokens; t++ ) {
                         char *tok = tokens->getElementDirect( t );
                                     
                         int mID = 0;
@@ -11313,7 +11341,9 @@ void LivingLifePage::step() {
                     ourLiveObject->displayID,
                     displayID,
                     ourLiveObject->age,
-                    age );
+                    age,
+                    ourLiveObject->lineageEveID,
+                    eveID );
 
                 GraveInfo g;
                 g.worldPos.x = posX;
@@ -12844,6 +12874,8 @@ void LivingLifePage::step() {
                 o.dying = false;
                 o.sick = false;
                 
+                o.lineageEveID = -1;
+
                 o.name = NULL;
                 o.relationName = NULL;
 
@@ -15797,7 +15829,23 @@ void LivingLifePage::step() {
                                 SimpleVector<char *> *tokens = 
                                     tokenizeString( linStart );
 
-                                for( int t=0; t<tokens->size(); t++ ) {
+                                int numNormalTokens = tokens->size();
+                                
+                                if( tokens->size() > 0 ) {
+                                    char *lastToken =
+                                        tokens->getElementDirect( 
+                                            tokens->size() - 1 );
+                                    
+                                    if( strstr( lastToken, "eve=" ) ) {   
+                                        // eve tag at end
+                                        numNormalTokens--;
+
+                                        sscanf( lastToken, "eve=%d",
+                                                &( existing->lineageEveID ) );
+                                        }
+                                    }
+
+                                for( int t=0; t<numNormalTokens; t++ ) {
                                     char *tok = tokens->getElementDirect( t );
                                     
                                     int mID = 0;
