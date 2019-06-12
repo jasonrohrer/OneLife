@@ -7737,6 +7737,9 @@ static int minActivePlayersForLongTermCulling = 15;
 static SimpleVector<int> noCullItemList;
 
 
+static int numTilesSeenByIterator = 0;
+static int numFloorsSeenByIterator = 0;
+
 void stepMapLongTermCulling( int inNumCurrentPlayers ) {
 
     double curTime = Time::getCurrentTime();
@@ -7772,6 +7775,7 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
     if( !tileCullingIteratorSet ) {
         DB_Iterator_init( &db, &tileCullingIterator );
         tileCullingIteratorSet = true;
+        numTilesSeenByIterator = 0;
         }
 
     unsigned char tileKey[16];
@@ -7786,13 +7790,25 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
         if( result <= 0 ) {
             // restart the iterator back at the beginning
             DB_Iterator_init( &db, &tileCullingIterator );
-            continue;
+            if( numTilesSeenByIterator != 0 ) {
+                AppLog::infoF( "Map cull iterated through %d tile db entries.",
+                               numTilesSeenByIterator );
+                }
+            numTilesSeenByIterator = 0;
+            // end loop when we reach end of list, so we don't cycle through
+            // a short iterator list too quickly.
+            break;
+            }
+        else {
+            numTilesSeenByIterator ++;
             }
 
         
         int tileID = valueToInt( value );
         
-        if( tileID > 0 ) {
+        // consider 0-values too, where map has been cleared by players, but
+        // a natural object should be there
+        if( tileID >= 0 ) {
             // next value
 
             int s = valueToInt( &( tileKey[8] ) );
@@ -7803,17 +7819,32 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
                 int x = valueToInt( tileKey );
                 int y = valueToInt( &( tileKey[4] ) );
                 
-                timeSec_t lastLookTime = dbLookTimeGet( x, y );
-
-                if( curTime - lastLookTime > longTermCullingSeconds ) {
-                    // stale
+                int wildTile = getTweakedBaseMap( x, y );
+                
+                if( wildTile != tileID ) {
+                    // tile differs from natural tile
+                    // don't keep checking/resetting tiles that are already
+                    // in wild state
                     
-                    if( noCullItemList.getElementIndex( tileID ) == -1 ) {
-                        // not on our no-cull list
-                        clearAllContained( x, y );
+                    // NOTE that we don't check/clear container slots for 
+                    // already-wild tiles.  So a natural container 
+                    // (if one is ever
+                    // added to the game, like a hidey-hole cave) will
+                    // keep its items even after that part of the map
+                    // is culled.  Seems like okay behavior.
 
-                        // put proc-genned map value in there
-                        setMapObject( x, y, getTweakedBaseMap( x, y ) );
+                    timeSec_t lastLookTime = dbLookTimeGet( x, y );
+
+                    if( curTime - lastLookTime > longTermCullingSeconds ) {
+                        // stale
+                    
+                        if( noCullItemList.getElementIndex( tileID ) == -1 ) {
+                            // not on our no-cull list
+                            clearAllContained( x, y );
+                            
+                            // put proc-genned map value in there
+                            setMapObject( x, y, wildTile );
+                            }
                         }
                     }
                 }
@@ -7825,6 +7856,7 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
     if( !floorCullingIteratorSet ) {
         DB_Iterator_init( &floorDB, &floorCullingIterator );
         floorCullingIteratorSet = true;
+        numFloorsSeenByIterator = 0;
         }
     
 
@@ -7835,8 +7867,19 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
         if( result <= 0 ) {
             // restart the iterator back at the beginning
             DB_Iterator_init( &floorDB, &floorCullingIterator );
-            continue;
+            if( numFloorsSeenByIterator != 0 ) {
+                AppLog::infoF( "Map cull iterated through %d floor db entries.",
+                               numFloorsSeenByIterator );
+                }
+            numFloorsSeenByIterator = 0;
+            // end loop now, avoid re-cycling through a short list
+            // in same step
+            break;
             }
+        else {
+            numFloorsSeenByIterator ++;
+            }
+        
         
         int floorID = valueToInt( value );
         
