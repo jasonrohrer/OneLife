@@ -11349,6 +11349,10 @@ void LivingLifePage::step() {
                     delete [] desToDelete;
                     }
                 
+                if( relationName != NULL ) {
+                    delete [] relationName;
+                    }
+                
                 g.creationTime = 
                     game_getCurrentTime() - age / ourLiveObject->ageRate;
                 

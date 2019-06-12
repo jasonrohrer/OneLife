@@ -17,6 +17,8 @@ Version 240    ???
   the first FPS measurement is over, to avoid networking hiccups messing up the
   measurment.  Fixes #330
 
+--Fixed memory leak.  Fixes #322
+
 
 
 
