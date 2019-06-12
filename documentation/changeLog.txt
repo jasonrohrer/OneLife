@@ -27,6 +27,9 @@ Server Fixes
   enter the kill-intent state if the weapon you are holding is not applicable
   to your target.  Thanks Laccy.  Fixes #320
 
+--Can no longer trigger a transition for warn clothing that takes it to an
+  unwearable state (for example, hitting crown with hammer to turn it back into
+  an ingot while you're still wearing it).  Fixes #310
 
 
 
