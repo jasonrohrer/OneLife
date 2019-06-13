@@ -12979,12 +12979,51 @@ int main() {
                                                 clothingSlotIndex = 2;
                                                 }
                                             else {
-                                                // replace front shoe
-
-                                                clothingSlot = 
-                                                    &( targetPlayer->
-                                                       clothing.frontShoe );
-                                                clothingSlotIndex = 2;
+                                                // replace whatever shoe
+                                                // doesn't match what we're
+                                                // holding
+                                                
+                                                if( targetPlayer->
+                                                    clothing.backShoe == 
+                                                    obj ) {
+                                                    
+                                                    clothingSlot = 
+                                                        &( targetPlayer->
+                                                           clothing.frontShoe );
+                                                    clothingSlotIndex = 2;
+                                                    }
+                                                else if( targetPlayer->
+                                                         clothing.frontShoe == 
+                                                         obj ) {
+                                                    clothingSlot = 
+                                                        &( targetPlayer->
+                                                           clothing.backShoe );
+                                                    clothingSlotIndex = 3;
+                                                    }
+                                                else {
+                                                    // both shoes are
+                                                    // different from what
+                                                    // we're holding
+                                                    
+                                                    // pick shoe to swap
+                                                    // based on what we
+                                                    // clicked on
+                                                    
+                                                    if( m.i == 3 ) {
+                                                        clothingSlot = 
+                                                        &( targetPlayer->
+                                                           clothing.backShoe );
+                                                        clothingSlotIndex = 3;
+                                                        }
+                                                    else {
+                                                        // default to front
+                                                        // shoe
+                                                        clothingSlot = 
+                                                        &( targetPlayer->
+                                                           clothing.frontShoe );
+                                                        clothingSlotIndex = 2;
+                                                        }
+                                                    }
                                                 }
                                             break;
                                         }

@@ -85,6 +85,9 @@ Server Fixes
 --Fixed cause of ghost players who just stand there but aren't really there.
   Fixes #299
 
+--Smarter code when swapping shoes.  Swaps held shoe with non-matching shoe
+  first, and if both shoes are non-matching, pays attention to which shoe you
+  clicked on.  Fixes #297
 
 
 
