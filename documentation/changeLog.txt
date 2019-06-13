@@ -75,6 +75,7 @@ Server Fixes
 
 --Monument stats include year now.  Fixes #307
 
+--Fixed calculation of distance for fleeing/chasing animal movement.  Fixes #306
 
 
 Version 238    2019-June-8

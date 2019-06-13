@@ -4406,7 +4406,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     double dX = (double)p.x - (double)inX;
                     double dY = (double)p.y - (double)inY;
 
-                    double dist = sqrt( dX + dY );
+                    double dist = sqrt( dX * dX + dY * dY );
                     
                     if( dist <= 7 &&
                         ( p.x != 0 || p.y != 0 ) ) {
