@@ -19357,6 +19357,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     
             sendToServerSocket( killMessage );
 
+            delete [] killMessage;
+            
+
             // try to walk near victim right away
             killMode = true;
                     

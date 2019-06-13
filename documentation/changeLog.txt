@@ -27,6 +27,7 @@ Version 240    ???
   client can show DISTANT RELATIVE for relatives and graves that are further
   away than the 20 generation cuttoff.  Fixes #317
 
+--Fixed memory leak in killMessage.  Fixes #311
 
 
 
