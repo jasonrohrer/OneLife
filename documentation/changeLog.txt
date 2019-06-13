@@ -29,6 +29,8 @@ Version 240    ???
 
 --Fixed memory leak in killMessage.  Fixes #311
 
+--New /DISCONNECT command in client for testing.
+
 
 
 Server Fixes

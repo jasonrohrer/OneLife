@@ -663,10 +663,18 @@ static char serverSocketConnected = false;
 static float connectionMessageFade = 1.0f;
 static double connectedTime = 0;
 
+static char forceDisconnect = false;
+
 
 // reads all waiting data from socket and stores it in buffer
 // returns false on socket error
 static char readServerSocketFull( int inServerSocket ) {
+
+    if( forceDisconnect ) {
+        forceDisconnect = false;
+        return false;
+        }
+    
 
     unsigned char buffer[512];
     
@@ -20593,6 +20601,11 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 pingSentTime = game_getCurrentTime();
                                 pongDeltaTime = -1;
                                 pingDisplayStartTime = -1;
+                                }
+                            else if( strstr( typedText,
+                                             translate( "disconnectCommand" ) ) 
+                                     == typedText ) {
+                                forceDisconnect = true;
                                 }
                             else {
                                 // filter hints

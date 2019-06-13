@@ -358,6 +358,10 @@ netCommand "/NET"
 
 pingCommand "/PING"
 
+disconnectCommand "/DISCONNECT"
+
+
+
 fps "FPS"
 
 fpsPending "FPS..."
