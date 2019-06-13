@@ -13547,52 +13547,62 @@ int main() {
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
-                        char handEmpty = ( nextPlayer->holdingID == 0 );
-                        
-                        removeFromContainerToHold( nextPlayer,
-                                                   m.x, m.y, m.i );
-
-                        if( handEmpty &&
-                            nextPlayer->holdingID == 0 ) {
-                            // hand still empty?
+                        if( isGridAdjacent( m.x, m.y, 
+                                            nextPlayer->xd, 
+                                            nextPlayer->yd ) 
+                            ||
+                            ( m.x == nextPlayer->xd &&
+                              m.y == nextPlayer->yd ) ) {
                             
-                            int target = getMapObject( m.x, m.y );
+                            char handEmpty = ( nextPlayer->holdingID == 0 );
+                        
+                            removeFromContainerToHold( nextPlayer,
+                                                       m.x, m.y, m.i );
 
-                            if( target > 0 ) {
-                                ObjectRecord *targetObj = getObject( target );
+                            if( handEmpty &&
+                                nextPlayer->holdingID == 0 ) {
+                                // hand still empty?
+                            
+                                int target = getMapObject( m.x, m.y );
+
+                                if( target > 0 ) {
+                                    ObjectRecord *targetObj = 
+                                        getObject( target );
                                 
-                                if( ! targetObj->permanent &&
-                                    targetObj->minPickupAge <= 
-                                    computeAge( nextPlayer ) ) {
-                                    
-                                    // treat it like pick up   
-                                    pickupToHold( nextPlayer, m.x, m.y, 
-                                                  target );
-                                    }
-                                else if( targetObj->permanent ) {
-                                    // consider bare-hand action
-                                    TransRecord *handTrans = getPTrans(
-                                        0, target );
-                                    
-                                    // handle only simplest case here
-                                    // (to avoid side-effects)
-                                    // REMV on container stack
-                                    // (make sure they have the same
-                                    //  use parent)
-                                    if( handTrans != NULL &&
-                                        handTrans->newTarget > 0 &&
-                                        getObject( handTrans->newTarget )->
-                                        numSlots == targetObj->numSlots &&
-                                        handTrans->newActor > 0 &&
-                                        getObject( handTrans->newActor )->
-                                        minPickupAge <= 
+                                    if( ! targetObj->permanent &&
+                                        targetObj->minPickupAge <= 
                                         computeAge( nextPlayer ) ) {
+                                    
+                                        // treat it like pick up   
+                                        pickupToHold( nextPlayer, m.x, m.y, 
+                                                      target );
+                                        }
+                                    else if( targetObj->permanent ) {
+                                        // consider bare-hand action
+                                        TransRecord *handTrans = getPTrans(
+                                            0, target );
+                                    
+                                        // handle only simplest case here
+                                        // (to avoid side-effects)
+                                        // REMV on container stack
+                                        // (make sure they have the same
+                                        //  use parent)
+                                        if( handTrans != NULL &&
+                                            handTrans->newTarget > 0 &&
+                                            getObject( handTrans->newTarget )->
+                                            numSlots == targetObj->numSlots &&
+                                            handTrans->newActor > 0 &&
+                                            getObject( handTrans->newActor )->
+                                            minPickupAge <= 
+                                            computeAge( nextPlayer ) ) {
                                         
-                                        handleHoldingChange( 
-                                            nextPlayer,
-                                            handTrans->newActor );
-                                        setMapObject( m.x, m.y, 
-                                                      handTrans->newTarget );
+                                            handleHoldingChange( 
+                                                nextPlayer,
+                                                handTrans->newActor );
+                                            setMapObject( 
+                                                m.x, m.y, 
+                                                handTrans->newTarget );
+                                            }
                                         }
                                     }
                                 }

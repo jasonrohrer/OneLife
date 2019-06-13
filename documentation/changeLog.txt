@@ -70,6 +70,8 @@ Server Fixes
 
 --No language barriers on low-pop servers.  Fixes #314
 
+--Making sure REMV action is grid adjacent.  Fixes #312 
+
 
 
 Version 238    2019-June-8
