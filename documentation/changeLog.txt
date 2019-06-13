@@ -68,6 +68,8 @@ Server Fixes
   roads in natural reclamation.  However, surface non-permanent natural objects
   (stones, iron, etc.) will re-occur on top of the road.  Fixes #334
 
+--No language barriers on low-pop servers.  Fixes #314
+
 
 
 Version 238    2019-June-8

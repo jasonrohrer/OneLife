@@ -130,6 +130,9 @@ static int babyBirthFoodDecrement = 10;
 static int eatBonus = 0;
 
 
+static int minActivePlayersForLanguages = 15;
+
+
 // keep a running sequence number to challenge each connecting client
 // to produce new login hashes, avoiding replay attacks.
 static unsigned int nextSequenceNumber = 1;
@@ -4889,6 +4892,8 @@ int processLoggedInPlayer( Socket *inSock,
     eatBonus = 
         SettingsManager::getIntSetting( "eatBonus", 0 );
 
+    minActivePlayersForLanguages =
+        SettingsManager::getIntSetting( "minActivePlayersForLanguages", 15 );
 
 
     numConnections ++;
@@ -16890,9 +16895,15 @@ int main() {
                                 
                                 char *translatedPhrase;
                                 
+                                // skip language filtering in some cases
+                                // VOG can talk to anyone
+                                // also, skip in on very low pop servers
+                                // (just let everyone talk together)
                                 if( nextPlayer->vogMode || 
                                     ( speakerObj != NULL &&
-                                      speakerObj->vogMode ) ) {
+                                      speakerObj->vogMode ) ||
+                                    players.size() < 
+                                    minActivePlayersForLanguages ) {
                                     
                                     translatedPhrase =
                                         stringDuplicate( 
