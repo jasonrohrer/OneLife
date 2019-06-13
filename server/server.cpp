@@ -4811,7 +4811,8 @@ static SimpleVector<char*> tempTwinEmails;
 
 // returns ID of new player,
 // or -1 if this player reconnected to an existing ID
-int processLoggedInPlayer( Socket *inSock,
+int processLoggedInPlayer( char inAllowReconnect,
+                           Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
                            int inTutorialNumber,
@@ -4827,7 +4828,16 @@ int processLoggedInPlayer( Socket *inSock,
         
         if( ! o->error && ! o->connected &&
             strcmp( o->email, inEmail ) == 0 ) {
+
+            if( ! inAllowReconnect ) {
+                // trigger an error for them, so they die and are removed
+                o->error = true;
+                o->errorCauseString = "Reconnected as twin";
+                break;
+                }
             
+            // else allow them to reconnect to existing life
+
             // give them this new socket and buffer
             if( o->sock != NULL ) {
                 delete o->sock;
@@ -5971,7 +5981,8 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             }
         
 
-        int newID = processLoggedInPlayer( inConnection.sock,
+        int newID = processLoggedInPlayer( false,
+                                           inConnection.sock,
                                            inConnection.sockBuffer,
                                            inConnection.email,
                                            inConnection.tutorialNumber,
@@ -6041,7 +6052,8 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             FreshConnection *nextConnection = 
                 twinConnections.getElementDirect( i );
             
-            processLoggedInPlayer( nextConnection->sock,
+            processLoggedInPlayer( false, 
+                                   nextConnection->sock,
                                    nextConnection->sockBuffer,
                                    nextConnection->email,
                                    // ignore tutorial number of all but
@@ -9366,6 +9378,7 @@ int main() {
                             }
                                 
                         processLoggedInPlayer( 
+                            true,
                             nextConnection->sock,
                             nextConnection->sockBuffer,
                             nextConnection->email,
@@ -9589,7 +9602,8 @@ int main() {
                                             delete [] nextConnection->twinCode;
                                             nextConnection->twinCode = NULL;
                                             }
-                                        processLoggedInPlayer( 
+                                        processLoggedInPlayer(
+                                            true,
                                             nextConnection->sock,
                                             nextConnection->sockBuffer,
                                             nextConnection->email,

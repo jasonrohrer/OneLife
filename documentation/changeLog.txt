@@ -77,6 +77,14 @@ Server Fixes
 
 --Fixed calculation of distance for fleeing/chasing animal movement.  Fixes #306
 
+--If you quit the client to disconnect and then reconnect as a twin, it will
+  now kill your old self to make room for your twin (it used to confusingly
+  reconnect you to your old life, and let your partner through as a lone twin).
+  Fixes #305
+
+
+
+
 
 Version 238    2019-June-8
 
