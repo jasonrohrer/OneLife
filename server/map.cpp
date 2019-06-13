@@ -7855,6 +7855,16 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
                             
                             // put proc-genned map value in there
                             setMapObject( x, y, wildTile );
+
+                            if( wildTile != 0 &&
+                                getObject( wildTile )->permanent ) {
+                                // something nautural occurs here
+                                // this "breaks" any remaining floor
+                                // (which may be cull-proof on its own below).
+                                // this will effectively leave gaps in roads
+                                // with trees growing through, etc.
+                                setMapFloor( x, y, 0 );
+                                }                            
                             }
                         }
                     }

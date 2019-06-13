@@ -64,6 +64,10 @@ Server Fixes
 --Fixed disappearing springs caused by map cache not being aware of grid
   placement status.  Fixes #319
 
+--Trees and other permanent objects regrowing destroy sections of underlying
+  roads in natural reclamation.  However, surface non-permanent natural objects
+  (stones, iron, etc.) will re-occur on top of the road.  Fixes #334
+
 
 
 Version 238    2019-June-8
