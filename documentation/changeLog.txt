@@ -82,6 +82,8 @@ Server Fixes
   reconnect you to your old life, and let your partner through as a lone twin).
   Fixes #305
 
+--Fixed cause of ghost players who just stand there but aren't really there.
+  Fixes #299
 
 
 

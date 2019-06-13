@@ -2930,8 +2930,9 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
 
 
 typedef struct MoveRecord {
-    char *formatString;
-    int absoluteX, absoluteY;
+        int playerID;
+        char *formatString;
+        int absoluteX, absoluteY;
     } MoveRecord;
 
 
@@ -2943,6 +2944,7 @@ MoveRecord getMoveRecord( LiveObject *inPlayer,
                           NULL ) {
 
     MoveRecord r;
+    r.playerID = inPlayer->id;
     
     // p_id xs ys xd yd fraction_done eta_sec
     
@@ -16504,6 +16506,14 @@ int main() {
                     }
 
                 
+                // greater than maxDis but within maxDist2
+                // for either PU or PM messages
+                // (send PO for both, because we can have case
+                // were a player coninously walks through the middleDistance
+                // w/o ever stopping to create a PU message)
+                SimpleVector<int> middleDistancePlayerIDs;
+                
+
 
 
                 if( newUpdates.size() > 0 && nextPlayer->connected ) {
@@ -16611,68 +16621,6 @@ int main() {
                                 }
                             }
                         }
-                    
-
-                    if( middleDistancePlayerIDs.size() > 0 
-                        && nextPlayer->connected ) {
-
-                        unsigned char *outOfRangeMessage = NULL;
-                        int outOfRangeMessageLength = 0;
-        
-                        if( middleDistancePlayerIDs.size() > 0 ) {
-                            SimpleVector<char> messageChars;
-            
-                            messageChars.appendElementString( "PO\n" );
-            
-                            for( int i=0; 
-                                 i<middleDistancePlayerIDs.size(); i++ ) {
-                                char buffer[20];
-                                sprintf( 
-                                    buffer, "%d\n",
-                                    middleDistancePlayerIDs.
-                                    getElementDirect( i ) );
-                                
-                                messageChars.appendElementString( buffer );
-                                }
-                            messageChars.push_back( '#' );
-
-                            char *outOfRangeMessageText = 
-                                messageChars.getElementString();
-
-                            outOfRangeMessageLength = 
-                                strlen( outOfRangeMessageText );
-
-                            if( outOfRangeMessageLength < 
-                                maxUncompressedSize ) {
-                                outOfRangeMessage = 
-                                    (unsigned char*)outOfRangeMessageText;
-                                }
-                            else {
-                                // compress 
-                                outOfRangeMessage = makeCompressedMessage( 
-                                    outOfRangeMessageText, 
-                                    outOfRangeMessageLength, 
-                                    &outOfRangeMessageLength );
-                
-                                delete [] outOfRangeMessageText;
-                                }
-                            }
-                        
-                        int numSent = 
-                            nextPlayer->sock->send( 
-                                outOfRangeMessage, 
-                                outOfRangeMessageLength, 
-                                false, false );
-                        
-                        nextPlayer->gotPartOfThisFrame = true;
-
-                        delete [] outOfRangeMessage;
-
-                        if( numSent != outOfRangeMessageLength ) {
-                            setPlayerDisconnected( nextPlayer, 
-                                                   "Socket write failed" );
-                            }
-                        }
                     }
 
 
@@ -16692,9 +16640,10 @@ int main() {
                     
                         if( d < minUpdateDist ) {
                             minUpdateDist = d;
-                            if( minUpdateDist <= maxDist ) {
-                                break;
-                                }
+                            }
+                        if( d > maxDist && d <= maxDist2 ) {
+                            middleDistancePlayerIDs.push_back(
+                                moveList.getElement( u )->playerID );
                             }
                         }
 
@@ -16755,6 +16704,72 @@ int main() {
                             }
                         }
                     }
+                
+
+                
+                // now send PO for players that are out of range
+                // who are moving or updating above
+                if( middleDistancePlayerIDs.size() > 0 
+                    && nextPlayer->connected ) {
+                    
+                    unsigned char *outOfRangeMessage = NULL;
+                    int outOfRangeMessageLength = 0;
+                    
+                    if( middleDistancePlayerIDs.size() > 0 ) {
+                        SimpleVector<char> messageChars;
+            
+                        messageChars.appendElementString( "PO\n" );
+            
+                        for( int i=0; 
+                             i<middleDistancePlayerIDs.size(); i++ ) {
+                            char buffer[20];
+                            sprintf( 
+                                buffer, "%d\n",
+                                middleDistancePlayerIDs.
+                                getElementDirect( i ) );
+                                
+                            messageChars.appendElementString( buffer );
+                            }
+                        messageChars.push_back( '#' );
+
+                        char *outOfRangeMessageText = 
+                            messageChars.getElementString();
+
+                        outOfRangeMessageLength = 
+                            strlen( outOfRangeMessageText );
+
+                        if( outOfRangeMessageLength < 
+                            maxUncompressedSize ) {
+                            outOfRangeMessage = 
+                                (unsigned char*)outOfRangeMessageText;
+                            }
+                        else {
+                            // compress 
+                            outOfRangeMessage = makeCompressedMessage( 
+                                outOfRangeMessageText, 
+                                outOfRangeMessageLength, 
+                                &outOfRangeMessageLength );
+                
+                            delete [] outOfRangeMessageText;
+                            }
+                        }
+                        
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            outOfRangeMessage, 
+                            outOfRangeMessageLength, 
+                            false, false );
+                        
+                    nextPlayer->gotPartOfThisFrame = true;
+
+                    delete [] outOfRangeMessage;
+
+                    if( numSent != outOfRangeMessageLength ) {
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
+                        }
+                    }
+
 
 
                 
