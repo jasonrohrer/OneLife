@@ -977,7 +977,7 @@ float initObjectBankStep() {
                 r->spriteInvisibleWhenHolding = new char[ r->numSprites ];
                 r->spriteInvisibleWhenWorn = new int[ r->numSprites ];
                 r->spriteBehindSlots = new char[ r->numSprites ];
-
+                r->spriteInvisibleWhenContained = new char[ r->numSprites ];
 
 
                 r->spriteIsHead = new char[ r->numSprites ];
@@ -1108,7 +1108,18 @@ float initObjectBankStep() {
                     r->spriteInvisibleWhenWorn[i] = invisWornRead;
                     r->spriteBehindSlots[i] = behindSlotsRead;
                                 
-                    next++;                        
+                    next++;                       
+                    
+                    if( strstr( lines[next], "invisCont=" ) != NULL ) {
+                        invisRead = 0;
+                        sscanf( lines[next], "invisCont=%d", &invisRead );
+                        
+                        r->spriteInvisibleWhenContained[i] = invisRead;
+                        next++;
+                        }
+                    else {
+                        r->spriteInvisibleWhenContained[i] = 0;
+                        }
                     }
                 
 
@@ -1921,6 +1932,7 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->spriteInvisibleWhenHolding;
             delete [] idMap[inID]->spriteInvisibleWhenWorn;
             delete [] idMap[inID]->spriteBehindSlots;
+            delete [] idMap[inID]->spriteInvisibleWhenContained;
 
             delete [] idMap[inID]->spriteIsHead;
             delete [] idMap[inID]->spriteIsBody;
@@ -2005,6 +2017,7 @@ void freeObjectBank() {
             delete [] idMap[i]->spriteInvisibleWhenHolding;
             delete [] idMap[i]->spriteInvisibleWhenWorn;
             delete [] idMap[i]->spriteBehindSlots;
+            delete [] idMap[i]->spriteInvisibleWhenContained;
 
             delete [] idMap[i]->spriteIsHead;
             delete [] idMap[i]->spriteIsBody;
@@ -2140,6 +2153,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->spriteInvisibleWhenHolding,
                         inObject->spriteInvisibleWhenWorn,
                         inObject->spriteBehindSlots,
+                        inObject->spriteInvisibleWhenContained,
                         inObject->spriteIsHead,
                         inObject->spriteIsBody,
                         inObject->spriteIsBackFoot,
@@ -2411,6 +2425,7 @@ int addObject( const char *inDescription,
                char *inSpriteInvisibleWhenHolding,
                int *inSpriteInvisibleWhenWorn,
                char *inSpriteBehindSlots,
+               char *inSpriteInvisibleWhenContained,
                char *inSpriteIsHead,
                char *inSpriteIsBody,
                char *inSpriteIsBackFoot,
@@ -2644,6 +2659,9 @@ int addObject( const char *inDescription,
                                           inSpriteInvisibleWhenHolding[i],
                                           inSpriteInvisibleWhenWorn[i],
                                           inSpriteBehindSlots[i] ) );
+
+            lines.push_back( autoSprintf( "invisCont=%d", 
+                                          inSpriteInvisibleWhenContained[i] ) );
 
             }
         
@@ -2909,6 +2927,7 @@ int addObject( const char *inDescription,
     r->spriteInvisibleWhenHolding = new char[ inNumSprites ];
     r->spriteInvisibleWhenWorn = new int[ inNumSprites ];
     r->spriteBehindSlots = new char[ inNumSprites ];
+    r->spriteInvisibleWhenContained = new char[ inNumSprites ];
 
     r->spriteIsHead = new char[ inNumSprites ];
     r->spriteIsBody = new char[ inNumSprites ];
@@ -3003,6 +3022,9 @@ int addObject( const char *inDescription,
             inNumSprites * sizeof( int ) );
 
     memcpy( r->spriteBehindSlots, inSpriteBehindSlots, 
+            inNumSprites * sizeof( char ) );
+
+    memcpy( r->spriteInvisibleWhenContained, inSpriteInvisibleWhenContained, 
             inNumSprites * sizeof( char ) );
 
 
@@ -3116,6 +3138,13 @@ void setObjectDrawLayerCutoff( int inCutoff ) {
     }
 
 
+static char drawingContained = false;
+
+void setDrawnObjectContained( char inContained ) {
+    drawingContained = inContained;
+    }
+
+
 
 HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                        doublePair inPos,
@@ -3199,6 +3228,10 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
         if( inObject->person &&
             ! isSpriteVisibleAtAge( inObject, i, inAge ) ) {    
             // skip drawing this aging layer entirely
+            continue;
+            }
+        if( drawingContained &&
+            inObject->spriteInvisibleWhenContained[i] ) {
             continue;
             }
         if( inObject->clothing != 'n' && 
@@ -3524,6 +3557,8 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                 inClothing );
 
     
+    setDrawnObjectContained( true );
+    
     int numSlots = getNumContainerSlots( inObject->id );
     
     if( inNumContained > numSlots ) {
@@ -3656,6 +3691,8 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
         
         }
     
+    setDrawnObjectContained( false );
+
     return drawObject( inObject, 1, inPos, inRot, inWorn, inFlipH, inAge, 
                        inHideClosestArm,
                        inHideAllLimbs,

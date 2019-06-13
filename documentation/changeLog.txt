@@ -31,6 +31,8 @@ Version 240    ???
 
 --New /DISCONNECT command in client for testing.
 
+--Added support for sprites that disappear when an object is contained.
+  Fixes #282
 
 
 Server Fixes
