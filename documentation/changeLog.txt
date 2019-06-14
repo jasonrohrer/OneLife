@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 240    ???
+Version 240    2019-June-14
 
 --Fixed so that lives-left text never overlaps with re-detect or custom-server-
   disable buttons on login page.  Fixed so that re-dectect button doesn't
