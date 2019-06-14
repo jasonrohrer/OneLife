@@ -135,7 +135,8 @@ int getNameOffsetForward( char *inNameList, int inListLen, int inOffset ) {
 
 
 
-const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
+const char *findCloseName( char *inString, char *inNameList, int inListLen,
+                           int *outIndex = NULL ) {
     if( inNameList == NULL ) {
         return defaultName;
         }
@@ -298,6 +299,10 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen ) {
 
     
     delete [] tempString;
+
+    if( outIndex != NULL ) {
+        *outIndex = offset;
+        }
     
     return &( inNameList[offset] );
     }
@@ -314,3 +319,48 @@ const char *findCloseFirstName( char *inString ) {
 const char *findCloseLastName( char *inString ) {
     return findCloseName( inString, lastNames, lastNamesLen );
     }
+
+
+
+int getFirstNameIndex( char *inFirstName ) {
+    int i;
+    findCloseName( inFirstName, firstNames, firstNamesLen, &i );
+    
+    return i;
+    }
+
+
+int getLastNameIndex( char *inLastName ) {
+    int i;
+    findCloseName( inLastName, lastNames, lastNamesLen, &i );
+   
+    return i;
+    }
+
+
+
+const char *getFirstName( int inIndex, int *outNextIndex ) {
+    *outNextIndex = getNameOffsetForward( firstNames, firstNamesLen, inIndex );
+
+    if( inIndex == *outNextIndex ) {
+        // loop back around
+        *outNextIndex = 0;
+        }
+    
+    return &( firstNames[ inIndex ] );
+    }
+
+
+
+const char *getLastName( int inIndex, int *outNextIndex ) {
+    *outNextIndex = getNameOffsetForward( lastNames, lastNamesLen, inIndex );
+    
+    if( inIndex == *outNextIndex ) {
+        // loop back around
+        *outNextIndex = 0;
+        }    
+
+    return &( lastNames[ inIndex ] );
+    }
+
+

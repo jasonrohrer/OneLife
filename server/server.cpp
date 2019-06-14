@@ -7562,15 +7562,41 @@ void monumentStep() {
 // inPlayerName may be destroyed inside this function
 // returns a uniquified name, sometimes newly allocated.
 // return value destroyed by caller
-char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded ) {
+char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded,
+                             char inIsEve ) {
     
     char dup = isNameDuplicateForCurses( inPlayerName );
     
     if( ! dup ) {
         *outSuffixAdded = false;
+
+        if( inIsEve ) {
+            // make sure Eve doesn't have same last name as any living person
+            char firstName[99];
+            char lastName[99];
+            
+            sscanf( inPlayerName, "%s %s", firstName, lastName );
+            
+            for( int i=0; i<players.size(); i++ ) {
+                LiveObject *o = players.getElement( i );
+                
+                if( ! o->error && o->familyName != NULL &&
+                    strcmp( o->familyName, lastName ) == 0 ) {
+                    
+                    dup = true;
+                    break;
+                    }
+                }
+            }
+        
+
         return inPlayerName;
-        }
-    else {
+        }    
+    
+    
+    if( false ) {
+        // old code, add suffix to make unique
+
         *outSuffixAdded = true;
 
         int targetPersonNumber = 1;
@@ -7634,6 +7660,126 @@ char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded ) {
         delete [] inPlayerName;
         
         return fullName;
+        }
+    else {
+        // new code:
+        // make name unique by finding close matching name that hasn't been
+        // used recently
+        
+        *outSuffixAdded = false;
+
+        char firstName[99];
+        char lastName[99];
+        
+        int numNames = sscanf( inPlayerName, "%s %s", firstName, lastName );
+        
+        if( numNames == 1 ) {
+            // special case, find a totally unique first name for them
+            
+            int i = getFirstNameIndex( firstName );
+
+            while( dup ) {
+
+                int nextI;
+                
+                dup = isNameDuplicateForCurses( getFirstName( i, &nextI ) );
+            
+                if( dup ) {
+                    i = nextI;
+                    }
+                }
+            
+            if( dup ) {
+                // ran out of names, yikes
+                return inPlayerName;
+                }
+            else {
+                delete [] inPlayerName;
+                int nextI;
+                return stringDuplicate( getFirstName( i, &nextI ) );
+                }
+            }
+        else if( numNames == 2 ) {
+            if( inIsEve ) {
+                // cycle last names until we find one not used by any
+                // family
+                
+                int i = getLastNameIndex( lastName );
+            
+                const char *tempLastName = "";
+                
+                while( dup ) {
+                    
+                    int nextI;
+                    tempLastName = getLastName( i, &nextI );
+                    
+                    dup = false;
+
+                    for( int j=0; j<players.size(); j++ ) {
+                        LiveObject *o = players.getElement( j );
+                        
+                        if( ! o->error && 
+                            o->familyName != NULL &&
+                            strcmp( o->familyName, tempLastName ) == 0 ) {
+                    
+                            dup = true;
+                            break;
+                            }
+                        }
+                    
+                    if( dup ) {
+                        i = nextI;
+                        }
+                    }
+            
+                if( dup ) {
+                    // ran out of names, yikes
+                    return inPlayerName;
+                    }
+                else {
+                    delete [] inPlayerName;
+                    return autoSprintf( "%s %s", firstName, tempLastName );
+                    }
+                }
+            else {
+                // cycle first names until we find one
+                int i = getFirstNameIndex( firstName );
+            
+                char *tempName = NULL;
+                
+                while( dup ) {                    
+                    if( tempName != NULL ) {
+                        delete [] tempName;
+                        }
+                    
+                    int nextI;
+                    tempName = autoSprintf( "%s %s", getFirstName( i, &nextI ),
+                                            lastName );
+                    
+
+                    dup = isNameDuplicateForCurses( tempName );
+                    if( dup ) {
+                        i = nextI;
+                        }
+                    }
+            
+                if( dup ) {
+                    // ran out of names, yikes
+                    if( tempName != NULL ) {
+                        delete [] tempName;
+                        }
+                    return inPlayerName;
+                    }
+                else {
+                    delete [] inPlayerName;
+                    return tempName;
+                    }
+                }
+            }
+        else {
+            // weird case, name doesn't even have two string parts, give up
+            return inPlayerName;
+            }
         }
     
     }
@@ -8387,7 +8533,7 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
                                     
     babyO->name = getUniqueCursableName( 
         babyO->name, 
-        &( babyO->nameHasSuffix ) );
+        &( babyO->nameHasSuffix ), false );
                                     
     logName( babyO->id,
              babyO->email,
@@ -11441,13 +11587,32 @@ int main() {
                                                                 eveName, 
                                                                 close );
 
-                                nextPlayer->familyName = 
-                                    stringDuplicate( close );
                                 
                                 nextPlayer->name = getUniqueCursableName( 
                                     nextPlayer->name, 
-                                    &( nextPlayer->nameHasSuffix ) );
+                                    &( nextPlayer->nameHasSuffix ),
+                                    true );
                                 
+                                char firstName[99];
+                                char lastName[99];
+                                char suffix[99];
+
+                                if( nextPlayer->nameHasSuffix ) {
+                                    
+                                    sscanf( nextPlayer->name, 
+                                            "%s %s %s", 
+                                            firstName, lastName, suffix );
+                                    }
+                                else {
+                                    sscanf( nextPlayer->name, 
+                                            "%s %s", 
+                                            firstName, lastName );
+                                    }
+                                
+                                nextPlayer->familyName = 
+                                        stringDuplicate( lastName );
+
+
                                 if( ! nextPlayer->isTutorial ) {    
                                     logName( nextPlayer->id,
                                              nextPlayer->email,

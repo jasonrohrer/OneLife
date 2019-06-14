@@ -47,7 +47,7 @@ CurseStatus getCurseLevel( char *inPlayerEmail );
 
 
 // true if name already exists in curse system
-char isNameDuplicateForCurses( char *inPlayerName );
+char isNameDuplicateForCurses( const char *inPlayerName );
 
 
 void stepCurseServerRequests();

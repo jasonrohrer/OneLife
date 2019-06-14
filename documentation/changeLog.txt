@@ -35,6 +35,7 @@ Version 240    ???
   Fixes #282
 
 
+
 Server Fixes
 
 --Fixed so that empty tiles that used to contain a natural object are restored
@@ -92,6 +93,9 @@ Server Fixes
 --Smarter code when swapping shoes.  Swaps held shoe with non-matching shoe
   first, and if both shoes are non-matching, pays attention to which shoe you
   clicked on.  Fixes #297
+
+--If name of Eve or baby not unique within past two hours on server, closest
+  unique name chosen instead.  No more roman numeral suffixes.  Fixes #283
 
 
 
