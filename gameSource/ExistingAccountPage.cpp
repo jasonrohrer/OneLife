@@ -64,7 +64,8 @@ ExistingAccountPage::ExistingAccountPage()
                            translate( "settingsButton" ) ),
           mReviewButton( mainFont, -400, -200, 
                          translate( "postReviewButton" ) ),
-          mRedetectButton( mainFont, 0, 198, translate( "redetectButton" ) ),
+          mRetryButton( mainFont, -100, 198, translate( "retryButton" ) ),
+          mRedetectButton( mainFont, 100, 198, translate( "redetectButton" ) ),
           mViewAccountButton( mainFont, 0, 64, translate( "view" ) ),
           mTutorialButton( mainFont, 522, 300, 
                            translate( "tutorial" ) ),
@@ -98,6 +99,7 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mReviewButton );
     setButtonStyle( &mAtSignButton );
     setButtonStyle( &mPasteButton );
+    setButtonStyle( &mRetryButton );
     setButtonStyle( &mRedetectButton );
     setButtonStyle( &mViewAccountButton );
     setButtonStyle( &mTutorialButton );
@@ -119,6 +121,7 @@ ExistingAccountPage::ExistingAccountPage()
     addComponent( &mPasteButton );
     addComponent( &mEmailField );
     addComponent( &mKeyField );
+    addComponent( &mRetryButton );
     addComponent( &mRedetectButton );
     addComponent( &mDisableCustomServerButton );
 
@@ -137,6 +140,7 @@ ExistingAccountPage::ExistingAccountPage()
     mAtSignButton.addActionListener( this );
     mPasteButton.addActionListener( this );
 
+    mRetryButton.addActionListener( this );
     mRedetectButton.addActionListener( this );
 
     mViewAccountButton.addActionListener( this );
@@ -144,6 +148,7 @@ ExistingAccountPage::ExistingAccountPage()
     
     mDisableCustomServerButton.addActionListener( this );
 
+    mRetryButton.setVisible( false );
     mRedetectButton.setVisible( false );
     mDisableCustomServerButton.setVisible( false );
     
@@ -192,7 +197,6 @@ void ExistingAccountPage::showDisableCustomServerButton( char inShow ) {
 
 void ExistingAccountPage::makeActive( char inFresh ) {
 
-    triggerLifeTokenUpdate();
     
 
     if( SettingsManager::getIntSetting( "tutorialDone", 0 ) ) {
@@ -206,19 +210,39 @@ void ExistingAccountPage::makeActive( char inFresh ) {
 
     mFramesCounted = 0;
     mPageActiveStartTime = game_getCurrentTime();    
-    mFPSMeasureDone = false;
+    
+    // don't re-measure every time we return to this screen
+    // it slows the player down too much
+    // re-measure only at first-startup
+    //mFPSMeasureDone = false;
     
     mLoginButton.setVisible( false );
     mFriendsButton.setVisible( false );
+    
     
     int skipFPSMeasure = SettingsManager::getIntSetting( "skipFPSMeasure", 0 );
     
     if( skipFPSMeasure ) {
         mFPSMeasureDone = true;
-        mLoginButton.setVisible( true );
-        mFriendsButton.setVisible( true );
+        mRetryButton.setVisible( false );
+        mRedetectButton.setVisible( false );
         }
 
+    if( mFPSMeasureDone && ! mRetryButton.isVisible() ) {
+        // skipping measure OR we are returning to this page later
+        // and not measuring again
+        mLoginButton.setVisible( true );
+        mFriendsButton.setVisible( true );
+        triggerLifeTokenUpdate();
+        }
+    else if( mFPSMeasureDone && mRetryButton.isVisible() ) {
+        // left screen after failing
+        // need to measure again after returning
+        mRetryButton.setVisible( false );
+        mRedetectButton.setVisible( false );
+        mFPSMeasureDone = false;
+        }
+    
 
     int pastSuccess = SettingsManager::getIntSetting( "loginSuccess", 0 );
 
@@ -431,6 +455,16 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
     
         delete [] clipboardText;
         }
+    else if( inTarget == &mRetryButton ) {
+        mFPSMeasureDone = false;
+        mPageActiveStartTime = game_getCurrentTime();
+        mFramesCounted = 0;
+        
+        mRetryButton.setVisible( false );
+        mRedetectButton.setVisible( false );
+        
+        setStatus( NULL, false );
+        }
     else if( inTarget == &mRedetectButton ) {
         SettingsManager::setSetting( "targetFrameRate", -1 );
         SettingsManager::setSetting( "countingOnVsync", -1 );
@@ -571,6 +605,8 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
                 if( pastSuccess ) {
                     mFriendsButton.setVisible( true );
                     }
+                
+                triggerLifeTokenUpdate();
                 }
             else {
                 // show error message
@@ -581,6 +617,7 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
                 delete [] message;
 
                 setStatusPositiion( true );
+                mRetryButton.setVisible( true );
                 mRedetectButton.setVisible( true );
                 }
             
@@ -666,6 +703,11 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
     pos = mEmailField.getPosition();
     pos.y += 100;
 
-    drawTokenMessage( pos );
+    if( mFPSMeasureDone && 
+        ! mRedetectButton.isVisible() &&
+        ! mDisableCustomServerButton.isVisible() ) {
+        
+        drawTokenMessage( pos );
+        }
     }
 

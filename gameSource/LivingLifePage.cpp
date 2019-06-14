@@ -431,7 +431,8 @@ char *getRelationName( SimpleVector<int> *ourLin,
                        SimpleVector<int> *theirLin, 
                        int ourID, int theirID,
                        int ourDisplayID, int theirDisplayID,
-                       double ourAge, double theirAge ) {
+                       double ourAge, double theirAge,
+                       int ourEveID, int theirEveID ) {
     
 
     ObjectRecord *theirDisplayO = getObject( theirDisplayID );
@@ -514,6 +515,13 @@ char *getRelationName( SimpleVector<int> *ourLin,
             }
         
         if( ourMatchIndex == -1 ) {
+            
+            if( ourEveID != -1 && theirEveID != -1 &&
+                ourEveID == theirEveID ) {
+                // no shared lineage, but same eve beyond lineage cuttoff
+                return stringDuplicate( translate( "distantRelative" ) );
+                }
+
             return NULL;
             }
         
@@ -665,17 +673,19 @@ char *getRelationName( SimpleVector<int> *ourLin,
 
 
 char *getRelationName( LiveObject *inOurObject, LiveObject *inTheirObject ) {
-    SimpleVector<int> ourLin = inOurObject->lineage;
-    SimpleVector<int> theirLin = inTheirObject->lineage;
+    SimpleVector<int> *ourLin = &( inOurObject->lineage );
+    SimpleVector<int> *theirLin = &( inTheirObject->lineage );
     
     int ourID = inOurObject->id;
     int theirID = inTheirObject->id;
 
     
-    return getRelationName( &ourLin, &theirLin, ourID, theirID,
+    return getRelationName( ourLin, theirLin, ourID, theirID,
                             inOurObject->displayID, inTheirObject->displayID,
                             inOurObject->age,
-                            inTheirObject->age );
+                            inTheirObject->age,
+                            inOurObject->lineageEveID,
+                            inTheirObject->lineageEveID );
     }
 
 
@@ -722,10 +732,18 @@ static char serverSocketConnected = false;
 static float connectionMessageFade = 1.0f;
 static double connectedTime = 0;
 
+static char forceDisconnect = false;
+
 
 // reads all waiting data from socket and stores it in buffer
 // returns false on socket error
 static char readServerSocketFull( int inServerSocket ) {
+
+    if( forceDisconnect ) {
+        forceDisconnect = false;
+        return false;
+        }
+    
 
     unsigned char buffer[512];
     
@@ -11455,6 +11473,9 @@ void LivingLifePage::step() {
             int posX, posY, playerID, displayID;
             double age;
             
+            int eveID = -1;
+            
+
             char nameBuffer[200];
             
             nameBuffer[0] = '\0';
@@ -11492,8 +11513,23 @@ void LivingLifePage::step() {
                 if( numLines > 1 ) {
                     SimpleVector<char *> *tokens = 
                         tokenizeString( lines[1] );
+                    
+                    int numNormalTokens = tokens->size();
+                                
+                    if( tokens->size() > 6 ) {
+                        char *lastToken =
+                            tokens->getElementDirect( 
+                                tokens->size() - 1 );
+                                    
+                        if( strstr( lastToken, "eve=" ) ) {   
+                            // eve tag at end
+                            numNormalTokens--;
+                            
+                            sscanf( lastToken, "eve=%d", &( eveID ) );
+                            }
+                        }
 
-                    for( int t=6; t<tokens->size(); t++ ) {
+                    for( int t=6; t<numNormalTokens; t++ ) {
                         char *tok = tokens->getElementDirect( t );
                                     
                         int mID = 0;
@@ -11523,7 +11559,9 @@ void LivingLifePage::step() {
                     ourLiveObject->displayID,
                     displayID,
                     ourLiveObject->age,
-                    age );
+                    age,
+                    ourLiveObject->lineageEveID,
+                    eveID );
 
                 GraveInfo g;
                 g.worldPos.x = posX;
@@ -11557,6 +11595,10 @@ void LivingLifePage::step() {
                 
                 if( desToDelete != NULL ) {
                     delete [] desToDelete;
+                    }
+                
+                if( relationName != NULL ) {
+                    delete [] relationName;
                     }
                 
                 g.creationTime = 
@@ -13050,6 +13092,8 @@ void LivingLifePage::step() {
                 o.dying = false;
                 o.sick = false;
                 
+                o.lineageEveID = -1;
+
                 o.name = NULL;
                 o.relationName = NULL;
 
@@ -16004,7 +16048,23 @@ void LivingLifePage::step() {
                                 SimpleVector<char *> *tokens = 
                                     tokenizeString( linStart );
 
-                                for( int t=0; t<tokens->size(); t++ ) {
+                                int numNormalTokens = tokens->size();
+                                
+                                if( tokens->size() > 0 ) {
+                                    char *lastToken =
+                                        tokens->getElementDirect( 
+                                            tokens->size() - 1 );
+                                    
+                                    if( strstr( lastToken, "eve=" ) ) {   
+                                        // eve tag at end
+                                        numNormalTokens--;
+
+                                        sscanf( lastToken, "eve=%d",
+                                                &( existing->lineageEveID ) );
+                                        }
+                                    }
+
+                                for( int t=0; t<numNormalTokens; t++ ) {
                                     char *tok = tokens->getElementDirect( t );
                                     
                                     int mID = 0;
@@ -19535,6 +19595,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     
             sendToServerSocket( killMessage );
 
+            delete [] killMessage;
+            
+
             // try to walk near victim right away
             killMode = true;
                     
@@ -19896,6 +19959,43 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     
                     }
                 }
+
+
+            if( !foundEmpty && 
+                ! sideAccess &&
+                nStart > 0 &&
+                destID > 0 &&
+                ! getObject( destID )->blocksWalking ) {
+                
+                // all neighbors blocked
+                // we didn't consider tile itself before
+                // but now we will, as last resort.
+
+                // consider tile itself as dest
+                int oldXD = ourLiveObject->xd;
+                int oldYD = ourLiveObject->yd;
+                        
+                // set this temporarily for pathfinding
+                ourLiveObject->xd = clickDestX;
+                ourLiveObject->yd = clickDestY;
+                        
+                computePathToDest( ourLiveObject );
+                        
+                if( ourLiveObject->pathToDest != NULL  ) {
+                            
+                    // can get there
+                    
+                    moveDestX = clickDestX;
+                    moveDestY = clickDestY;
+                            
+                    foundEmpty = true;
+                    }
+                        
+                // restore our old dest
+                ourLiveObject->xd = oldXD;
+                ourLiveObject->yd = oldYD; 
+                }
+            
             
             if( oldPathExists ) {
                 // restore it
@@ -20808,6 +20908,11 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 pingSentTime = game_getCurrentTime();
                                 pongDeltaTime = -1;
                                 pingDisplayStartTime = -1;
+                                }
+                            else if( strstr( typedText,
+                                             translate( "disconnectCommand" ) ) 
+                                     == typedText ) {
+                                forceDisconnect = true;
                                 }
                             else {
                                 // filter hints

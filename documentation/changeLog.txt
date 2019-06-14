@@ -4,6 +4,101 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 240    2019-June-14
+
+--Fixed so that lives-left text never overlaps with re-detect or custom-server-
+  disable buttons on login page.  Fixed so that re-dectect button doesn't
+  linger after visiting settings page triggers a re-measure of FPS.
+
+--There are now both Retry and Re-detect buttons when FPS mismatch occurs,
+  allowing you to re-measure right then and there without restarting the game.
+  We don't keep re-measuring every time we return to this screen, speeding up
+  player login.  We wait to fetch life token data from the server until after
+  the first FPS measurement is over, to avoid networking hiccups messing up the
+  measurment.  Fixes #330
+
+--Fixed memory leak.  Fixes #322
+
+--Fixed so that if you click on an object that is surrounded NSEW but still
+  accessible, you walk there, to that object's spot, and interact with it,
+  instead of just walking there.  Fixes #318
+
+--Protocol now includes lineageEveID with lineage and grave messages so that
+  client can show DISTANT RELATIVE for relatives and graves that are further
+  away than the 20 generation cuttoff.  Fixes #317
+
+--Fixed memory leak in killMessage.  Fixes #311
+
+--New /DISCONNECT command in client for testing.
+
+--Added support for sprites that disappear when an object is contained.
+  Fixes #282
+
+
+
+Server Fixes
+
+--Fixed so that empty tiles that used to contain a natural object are restored
+  when map is culled back to natural state.  Thanks Alec.  Fixes #332
+
+--Reduced map database pollution with unecessary 0-values (before, we would 
+  clear a tile's contained items, setting its num-contained to 0 in the db,
+  every time an item was picked up from that tile, even if the item that was
+  picked up contained nothing---now, we check that there are contained items
+  there to clear before clearing them and inserting a 0 for num contained in
+  the database).  This cuts the number of database entries in half in many
+  situations (thus reducing the disk size of the database dramatically).
+ 
+--If you disconnect and reconnect when you have 0 lives left, you are no longer
+  blocked from logging in to resume your last life.
+
+--Fixed bug where you could enter the kill-intent state against family members
+  when holding the sword, and if you ever got close enough, the server would
+  generate an endless flood of update messages for the failed kill action,
+  overload network connections, and leading to disconnects.  Now you can't even
+  enter the kill-intent state if the weapon you are holding is not applicable
+  to your target.  Thanks Laccy.  Fixes #320
+
+--Can no longer trigger a transition for warn clothing that takes it to an
+  unwearable state (for example, hitting crown with hammer to turn it back into
+  an ingot while you're still wearing it).  Fixes #310
+
+--No more tutorial players in name logs.  Fixes  #333
+
+--Fixed typo in square root of two in server code.  Fixes #325
+
+--Fixed disappearing springs caused by map cache not being aware of grid
+  placement status.  Fixes #319
+
+--Trees and other permanent objects regrowing destroy sections of underlying
+  roads in natural reclamation.  However, surface non-permanent natural objects
+  (stones, iron, etc.) will re-occur on top of the road.  Fixes #334
+
+--No language barriers on low-pop servers.  Fixes #314
+
+--Making sure REMV action is grid adjacent.  Fixes #312 
+
+--Monument stats include year now.  Fixes #307
+
+--Fixed calculation of distance for fleeing/chasing animal movement.  Fixes #306
+
+--If you quit the client to disconnect and then reconnect as a twin, it will
+  now kill your old self to make room for your twin (it used to confusingly
+  reconnect you to your old life, and let your partner through as a lone twin).
+  Fixes #305
+
+--Fixed cause of ghost players who just stand there but aren't really there.
+  Fixes #299
+
+--Smarter code when swapping shoes.  Swaps held shoe with non-matching shoe
+  first, and if both shoes are non-matching, pays attention to which shoe you
+  clicked on.  Fixes #297
+
+--If name of Eve or baby not unique within past two hours on server, closest
+  unique name chosen instead.  No more roman numeral suffixes.  Fixes #283
+
+
+
 Version 238    2019-June-8
 
 --Support for limited number of life tokens per player, with more tokens

@@ -116,6 +116,7 @@ targetFPS "TARGET FRAME RATE:"
 vsyncOn "USING VSYNC:"
 vsyncYes "YES"
 vsyncNo "NO"
+retryButton "RETRY"
 redetectButton "RE-DETECT"
 
 
@@ -312,6 +313,8 @@ manyTimes "MANY TIMES"
 
 unrelated "NO RELATION"
 
+distantRelative "DISTANT RELATIVE"
+
 namelessPerson "NAMELESS PERSON"
 
 forgottenPerson "FORGOTTEN PERSON"
@@ -354,6 +357,10 @@ fpsCommand "/FPS"
 netCommand "/NET"
 
 pingCommand "/PING"
+
+disconnectCommand "/DISCONNECT"
+
+
 
 fps "FPS"
 

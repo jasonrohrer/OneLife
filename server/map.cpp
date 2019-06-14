@@ -956,6 +956,7 @@ static int yLimit = 2147481977;
 typedef struct BaseMapCacheRecord {
         int x, y;
         int id;
+        char gridPlacement;
     } BaseMapCacheRecord;
 
 
@@ -989,10 +990,13 @@ static BaseMapCacheRecord *mapCacheRecordLookup( int inX, int inY ) {
 
 
 // returns -1 if not in cache
-static int mapCacheLookup( int inX, int inY ) {
+static int mapCacheLookup( int inX, int inY, char *outGridPlacement = NULL ) {
     BaseMapCacheRecord *r = mapCacheRecordLookup( inX, inY );
     
     if( r->x == inX && r->y == inY ) {
+        if( outGridPlacement != NULL ) {
+            *outGridPlacement = r->gridPlacement;
+            }
         return r->id;
         }
 
@@ -1001,12 +1005,14 @@ static int mapCacheLookup( int inX, int inY ) {
 
 
 
-static void mapCacheInsert( int inX, int inY, int inID ) {
+static void mapCacheInsert( int inX, int inY, int inID, 
+                            char inGridPlacement = false ) {
     BaseMapCacheRecord *r = mapCacheRecordLookup( inX, inY );
     
     r->x = inX;
     r->y = inY;
     r->id = inID;
+    r->gridPlacement = inGridPlacement;
     }
 
     
@@ -1022,7 +1028,7 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
         return edgeObjectID;
         }
     
-    int cachedID = mapCacheLookup( inX, inY );
+    int cachedID = mapCacheLookup( inX, inY, outGridPlacement );
     
     if( cachedID != -1 ) {
         return cachedID;
@@ -1076,7 +1082,7 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
                 }
 
             if( gp->permittedBiomes.getElementIndex( pickedBiome ) != -1 ) {
-                mapCacheInsert( inX, inY, gp->id );
+                mapCacheInsert( inX, inY, gp->id, true );
 
                 if( outGridPlacement != NULL ) {
                     *outGridPlacement = true;
@@ -4400,7 +4406,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     double dX = (double)p.x - (double)inX;
                     double dY = (double)p.y - (double)inY;
 
-                    double dist = sqrt( dX + dY );
+                    double dist = sqrt( dX * dX + dY * dY );
                     
                     if( dist <= 7 &&
                         ( p.x != 0 || p.y != 0 ) ) {
@@ -6279,16 +6285,21 @@ int removeContained( int inX, int inY, int inSlot, timeSec_t *outEtaDecay,
 
 
 void clearAllContained( int inX, int inY, int inSubCont ) {
+    int oldNum = getNumContained( inX, inY, inSubCont );
+
     if( inSubCont == 0 ) {
-        // clear sub container slots too
-        int oldNum = getNumContained( inX, inY, inSubCont );
+        // clear sub container slots too, if any
     
         for( int i=0; i<oldNum; i++ ) {
-            dbPut( inX, inY, NUM_CONT_SLOT, 0, i + 1 );
+            if( getNumContained( inX, inY, i + 1 ) > 0 ) {
+                dbPut( inX, inY, NUM_CONT_SLOT, 0, i + 1 );
+                }
             }
         }
     
-    dbPut( inX, inY, NUM_CONT_SLOT, 0, inSubCont );
+    if( oldNum != 0 ) {
+        dbPut( inX, inY, NUM_CONT_SLOT, 0, inSubCont );
+        }
     }
 
 
@@ -7737,6 +7748,9 @@ static int minActivePlayersForLongTermCulling = 15;
 static SimpleVector<int> noCullItemList;
 
 
+static int numTilesSeenByIterator = 0;
+static int numFloorsSeenByIterator = 0;
+
 void stepMapLongTermCulling( int inNumCurrentPlayers ) {
 
     double curTime = Time::getCurrentTime();
@@ -7772,6 +7786,7 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
     if( !tileCullingIteratorSet ) {
         DB_Iterator_init( &db, &tileCullingIterator );
         tileCullingIteratorSet = true;
+        numTilesSeenByIterator = 0;
         }
 
     unsigned char tileKey[16];
@@ -7786,13 +7801,25 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
         if( result <= 0 ) {
             // restart the iterator back at the beginning
             DB_Iterator_init( &db, &tileCullingIterator );
-            continue;
+            if( numTilesSeenByIterator != 0 ) {
+                AppLog::infoF( "Map cull iterated through %d tile db entries.",
+                               numTilesSeenByIterator );
+                }
+            numTilesSeenByIterator = 0;
+            // end loop when we reach end of list, so we don't cycle through
+            // a short iterator list too quickly.
+            break;
+            }
+        else {
+            numTilesSeenByIterator ++;
             }
 
         
         int tileID = valueToInt( value );
         
-        if( tileID > 0 ) {
+        // consider 0-values too, where map has been cleared by players, but
+        // a natural object should be there
+        if( tileID >= 0 ) {
             // next value
 
             int s = valueToInt( &( tileKey[8] ) );
@@ -7803,17 +7830,42 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
                 int x = valueToInt( tileKey );
                 int y = valueToInt( &( tileKey[4] ) );
                 
-                timeSec_t lastLookTime = dbLookTimeGet( x, y );
-
-                if( curTime - lastLookTime > longTermCullingSeconds ) {
-                    // stale
+                int wildTile = getTweakedBaseMap( x, y );
+                
+                if( wildTile != tileID ) {
+                    // tile differs from natural tile
+                    // don't keep checking/resetting tiles that are already
+                    // in wild state
                     
-                    if( noCullItemList.getElementIndex( tileID ) == -1 ) {
-                        // not on our no-cull list
-                        clearAllContained( x, y );
+                    // NOTE that we don't check/clear container slots for 
+                    // already-wild tiles.  So a natural container 
+                    // (if one is ever
+                    // added to the game, like a hidey-hole cave) will
+                    // keep its items even after that part of the map
+                    // is culled.  Seems like okay behavior.
 
-                        // put proc-genned map value in there
-                        setMapObject( x, y, getTweakedBaseMap( x, y ) );
+                    timeSec_t lastLookTime = dbLookTimeGet( x, y );
+
+                    if( curTime - lastLookTime > longTermCullingSeconds ) {
+                        // stale
+                    
+                        if( noCullItemList.getElementIndex( tileID ) == -1 ) {
+                            // not on our no-cull list
+                            clearAllContained( x, y );
+                            
+                            // put proc-genned map value in there
+                            setMapObject( x, y, wildTile );
+
+                            if( wildTile != 0 &&
+                                getObject( wildTile )->permanent ) {
+                                // something nautural occurs here
+                                // this "breaks" any remaining floor
+                                // (which may be cull-proof on its own below).
+                                // this will effectively leave gaps in roads
+                                // with trees growing through, etc.
+                                setMapFloor( x, y, 0 );
+                                }                            
+                            }
                         }
                     }
                 }
@@ -7825,6 +7877,7 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
     if( !floorCullingIteratorSet ) {
         DB_Iterator_init( &floorDB, &floorCullingIterator );
         floorCullingIteratorSet = true;
+        numFloorsSeenByIterator = 0;
         }
     
 
@@ -7835,8 +7888,19 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
         if( result <= 0 ) {
             // restart the iterator back at the beginning
             DB_Iterator_init( &floorDB, &floorCullingIterator );
-            continue;
+            if( numFloorsSeenByIterator != 0 ) {
+                AppLog::infoF( "Map cull iterated through %d floor db entries.",
+                               numFloorsSeenByIterator );
+                }
+            numFloorsSeenByIterator = 0;
+            // end loop now, avoid re-cycling through a short list
+            // in same step
+            break;
             }
+        else {
+            numFloorsSeenByIterator ++;
+            }
+        
         
         int floorID = valueToInt( value );
         

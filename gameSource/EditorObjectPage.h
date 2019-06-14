@@ -137,6 +137,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         CheckboxButton mInvisibleWhenWornCheckbox;
         CheckboxButton mInvisibleWhenUnwornCheckbox;
+        CheckboxButton mInvisibleWhenContainedCheckbox;
 
         CheckboxButton mBehindSlotsCheckbox;
         CheckboxButton mBehindPlayerCheckbox;

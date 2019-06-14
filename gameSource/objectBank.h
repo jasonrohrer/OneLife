@@ -246,6 +246,8 @@ typedef struct ObjectRecord {
         
         char *spriteBehindSlots;
         
+        char *spriteInvisibleWhenContained;
+        
         
         // flags for sprites that are special body parts
         char *spriteIsHead;
@@ -501,6 +503,7 @@ int addObject( const char *inDescription,
                char *inSpriteInvisibleWhenHolding,
                int *inSpriteInvisibleWhenWorn,
                char *inSpriteBehindSlots,
+               char *inSpriteInvisibleWhenContained,
                char *inSpriteIsHead,
                char *inSpriteIsBody,
                char *inSpriteIsBackFoot,
@@ -526,6 +529,12 @@ typedef struct HoldingPos {
 // (can be used to draw lower layers only)
 // Defaults to -1 and resets to -1 after every call (draw all layers)
 void setObjectDrawLayerCutoff( int inCutoff );
+
+
+// the next objects drawn will be in their contained mode
+// (layers hidden when contained will be skipped)
+void setDrawnObjectContained( char inContained );
+
 
 
 

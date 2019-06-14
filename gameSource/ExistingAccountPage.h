@@ -68,6 +68,7 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         TextButton mSettingsButton;
         TextButton mReviewButton;
         
+        TextButton mRetryButton;
         TextButton mRedetectButton;
 
         TextButton mViewAccountButton;

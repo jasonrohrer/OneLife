@@ -678,7 +678,7 @@ CurseStatus getCurseLevel( char *inPlayerEmail ) {
 
 
 
-char isNameDuplicateForCurses( char *inPlayerName ) {
+char isNameDuplicateForCurses( const char *inPlayerName ) {
     int numRec = playerNames.size();
     
     for( int i=0; i<numRec; i++ ) {

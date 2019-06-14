@@ -3334,6 +3334,9 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     
     // next, draw jiggling (never rotating) objects in slots
     // can't safely rotate them, because they may be compound objects
+
+    // all of these are in contained mode
+    setDrawnObjectContained( true );
     
 
     for( int i=0; i<obj->numSlots; i++ ) {
@@ -3586,6 +3589,10 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
             }
         
         } 
+
+    // done drawing all contained/sub-contained items with drawObject calls
+    setDrawnObjectContained( false );
+
 
     // draw portion of animating object on top of contained slots
     drawObjectAnim( inObjectID, 1, inAnim, inFrameTime,
