@@ -1,4 +1,4 @@
-int versionNumber = 240;
+int versionNumber = 242;
 int dataVersionNumber = 0;
 
 int binVersionNumber = versionNumber;
@@ -89,6 +89,7 @@ CustomRandomSource randSource( 34957197 );
 #include "SettingsPage.h"
 #include "ReviewPage.h"
 #include "TwinPage.h"
+#include "PollPage.h"
 //#include "TestPage.h"
 
 #include "ServerActionPage.h"
@@ -141,6 +142,7 @@ RebirthChoicePage *rebirthChoicePage;
 SettingsPage *settingsPage;
 ReviewPage *reviewPage;
 TwinPage *twinPage;
+PollPage *pollPage;
 //TestPage *testPage = NULL;
 
 
@@ -771,9 +773,11 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
     reviewPage = new ReviewPage( reviewURL );
     
-    delete [] reviewURL;
 
     twinPage = new TwinPage();
+
+    pollPage = new PollPage( reviewURL );
+    delete [] reviewURL;
 
 
     // 0 music headroom needed, because we fade sounds before playing music
@@ -861,6 +865,7 @@ void freeFrameDrawer() {
     delete settingsPage;
     delete reviewPage;
     delete twinPage;
+    delete pollPage;
     
     //if( testPage != NULL ) {
     //    delete testPage;
@@ -1828,6 +1833,10 @@ void drawFrame( char inUpdate ) {
                 // NAMEMOD NOTE:  Change 4/5 - Take these lines during the merge process
                 freeAndQuit();
                 }
+            else if( existingAccountPage->checkSignal( "poll" ) ) {
+                currentGamePage = pollPage;
+                currentGamePage->base_makeActive( true );
+                }
             else if( existingAccountPage->checkSignal( "settings" ) ) {
                 currentGamePage = settingsPage;
                 currentGamePage->base_makeActive( true );
@@ -2161,8 +2170,14 @@ void drawFrame( char inUpdate ) {
                     currentGamePage = livingLifePage;
                     }
                 else {
-                    currentGamePage = rebirthChoicePage;
+                    currentGamePage = pollPage;
                     }
+                currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == pollPage ) {
+            if( pollPage->checkSignal( "done" ) ) {
+                currentGamePage = rebirthChoicePage;
                 currentGamePage->base_makeActive( true );
                 }
             }

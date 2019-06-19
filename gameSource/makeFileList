@@ -70,6 +70,7 @@ Picker.cpp \
 PickableStatics.cpp \
 photos.cpp \
 lifeTokens.cpp \
+PollPage.cpp \
 
 
 GAME_GRAPHICS = \

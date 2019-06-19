@@ -4,6 +4,21 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 242    2019-June-19
+
+--Client support for in-game poll feature.
+
+
+
+
+Server Fixes
+
+--Fixed a crash when a baby tries to take a sword out of a backpack they are
+  wearing.
+
+
+
+
 Version 240    2019-June-14
 
 --Fixed so that lives-left text never overlaps with re-detect or custom-server-
