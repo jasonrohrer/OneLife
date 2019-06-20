@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--Fixed issues with other forced-emots (like snowball splats) interruping the
+  KILL-state angry face.  Now the angry face comes back when the snowball splat
+  melts.
+
+
+
 Version 242    2019-June-19
 
 --Client support for in-game poll feature.

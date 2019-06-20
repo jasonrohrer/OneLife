@@ -7949,6 +7949,7 @@ typedef struct KillState {
         int killerWeaponID;
         int targetID;
         double emotStartTime;
+        int emotRefreshSeconds;
     } KillState;
 
 
@@ -7966,6 +7967,8 @@ void addKillState( int inKillerID, int inTargetID ) {
             s->killerWeaponID = getLiveObject( inKillerID )->holdingID;
             s->targetID = inTargetID;
             s->emotStartTime = Time::getCurrentTime();
+            s->emotRefreshSeconds = 30;
+            break;
             }
         }
     
@@ -7974,12 +7977,27 @@ void addKillState( int inKillerID, int inTargetID ) {
         KillState s = { inKillerID, 
                         getLiveObject( inKillerID )->holdingID,
                         inTargetID, 
-                        Time::getCurrentTime() };
+                        Time::getCurrentTime(),
+                        30 };
         activeKillStates.push_back( s );
         }
     }
 
-    
+
+
+static void interruptAnyKillEmots( int inPlayerID, 
+                                   int inInterruptingTTL ) {
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+        
+        if( s->killerID == inPlayerID ) {
+            s->emotStartTime = Time::getCurrentTime();
+            s->emotRefreshSeconds = inInterruptingTTL;
+            break;
+            }
+        }
+    }    
+
 
 
 static void setPerpetratorHoldingAfterKill( LiveObject *nextPlayer,
@@ -8138,6 +8156,9 @@ void executeKillAction( int inKillerIndex,
                                 e.emotIndex );
                             newEmotTTLs->push_back( 
                                 e.ttlSec );
+
+                            interruptAnyKillEmots( hitPlayer->id,
+                                                   e.ttlSec );
                             }
                         return;
                         }
@@ -8320,6 +8341,8 @@ void executeKillAction( int inKillerIndex,
                                     e.emotIndex );
                                 newEmotTTLs->push_back( 
                                     e.ttlSec );
+                                interruptAnyKillEmots( hitPlayer->id,
+                                                       e.ttlSec );
                                 }
                                             
                             if( e.foodModifierSet && 
@@ -10168,6 +10191,8 @@ int main() {
                                         nextPlayer->id );
                                     newEmotIndices.push_back( e.emotIndex );
                                     newEmotTTLs.push_back( e.ttlSec );
+                                    interruptAnyKillEmots( nextPlayer->id,
+                                                           e.ttlSec );
                                     }
                                 if( e.foodModifierSet && 
                                     e.foodCapModifier != 1 ) {
@@ -12895,6 +12920,8 @@ int main() {
                                             newEmotIndices.push_back( 
                                                 e.emotIndex );
                                             newEmotTTLs.push_back( e.ttlSec );
+                                            interruptAnyKillEmots( 
+                                                targetPlayer->id, e.ttlSec );
                                             }
                                         if( e.foodCapModifier != 1 ) {
                                             targetPlayer->foodCapModifier = 
@@ -13944,13 +13971,17 @@ int main() {
                 // see if we need to renew emote
                 double curTime = Time::getCurrentTime();
                 
-                if( curTime - s->emotStartTime > 30 ) {
+                if( curTime - s->emotStartTime > s->emotRefreshSeconds ) {
                     s->emotStartTime = curTime;
                     
+                    // refresh again in 30 seconds, even if we had a shorter
+                    // refresh time because of an intervening emot
+                    s->emotRefreshSeconds = 30;
+
                     newEmotPlayerIDs.push_back( killer->id );
                             
                     newEmotIndices.push_back( killEmotionIndex );
-                    newEmotTTLs.push_back( 0 );
+                    newEmotTTLs.push_back( 120 );
                     }
                 }
             }
