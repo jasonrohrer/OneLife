@@ -3122,6 +3122,10 @@ void LivingLifePage::handleAnimSound( int inObjectID, double inAge,
             
     double newTimeVal = frameRateFactor * inNewFrameCount / 60.0;
                 
+    if( inType == ground2 ) {
+        inType = ground;
+        }
+
 
     AnimationRecord *anim = getAnimation( inObjectID, inType );
     if( anim != NULL ) {
@@ -16804,7 +16808,27 @@ void LivingLifePage::step() {
                              t,
                              oldFrameCount, o->animationFrameCount,
                              pos.x,
-                             pos.y );                
+                             pos.y );    
+
+            if( o->currentEmot != NULL ) {
+                int numSlots = getEmotionNumObjectSlots();
+                
+                for( int e=0; e<numSlots; e++ ) {
+                    int oID =
+                        getEmotionObjectByIndex( o->currentEmot, e );
+                    
+                    if( oID != 0 ) {
+                        printf( "t = %d\n", t );
+                        
+                        handleAnimSound( oID,
+                                         0,
+                                         t,
+                                         oldFrameCount, o->animationFrameCount,
+                                         pos.x,
+                                         pos.y ); 
+                        }
+                    }
+                }
             }
             
         

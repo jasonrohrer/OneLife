@@ -13,6 +13,9 @@ Version 243    ???
 --Support in editor for pasting a single sound onto the end of a sound set
   without replacing it.
 
+--Client can now play animation sounds from a character's emote.
+
+
 
 
 Server Fixes
