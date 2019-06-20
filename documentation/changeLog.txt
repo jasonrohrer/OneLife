@@ -4,6 +4,15 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 243    ???
+
+--Better randomization (less repetative) of multi-sound sets by shuffling
+  sounds, playing them in that order, and then reshuffling (instead of picking
+  a different random sound each time, which can lead to lots of repeats).
+
+
+
+
 Server Fixes
 
 --Fixed issues with other forced-emots (like snowball splats) interruping the

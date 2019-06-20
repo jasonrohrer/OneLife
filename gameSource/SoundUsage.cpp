@@ -163,8 +163,96 @@ SoundUsage copyUsage( SoundUsage inUsage ) {
 
 
 
+
+#define MAX_SHUFFLE_PLAY_SOUNDS 30
+
+static 
+int shufflePlayOrdering[ MAX_SHUFFLE_PLAY_SOUNDS ][ MAX_SHUFFLE_PLAY_SOUNDS ];
+
+static char shufflePlayReady[ MAX_SHUFFLE_PLAY_SOUNDS ];
+
+static int nextShufflePlaySlot[ MAX_SHUFFLE_PLAY_SOUNDS ];
+
+static char shufflePlayInited = false;
+
+
+static void initShufflePlay() {
+    memset( shufflePlayReady, false, MAX_SHUFFLE_PLAY_SOUNDS );
+    shufflePlayInited = true;
+    }
+
+
+
+
 SoundUsagePlay playRandom( SoundUsage inUsage ) {
-    int pick = randSource.getRandomBoundedInt( 0, inUsage.numSubSounds - 1 );
+
+    if( inUsage.numSubSounds == 1 ) {
+        // no randomization necessary
+        SoundUsagePlay p = { inUsage.ids[0], inUsage.volumes[0] };
+        return p;
+        }
+    
+    if( inUsage.numSubSounds >= MAX_SHUFFLE_PLAY_SOUNDS ) {
+        // to many to shuffle, just use straight rand
+        int pick = 
+            randSource.getRandomBoundedInt( 0, inUsage.numSubSounds - 1 );
+        
+        SoundUsagePlay p = { inUsage.ids[pick], inUsage.volumes[pick] };
+        return p;
+        }
+    
+    if( ! shufflePlayInited ) {
+        initShufflePlay();
+        }
+
+
+
+    char regenOrder = false;
+    
+    if( ! shufflePlayReady[ inUsage.numSubSounds ]
+        ||
+        nextShufflePlaySlot[ inUsage.numSubSounds ] >= inUsage.numSubSounds ) {
+        
+        // never inited order for this number of sounds, or walked off end
+        regenOrder = true;
+        }
+    
+    
+
+    if( regenOrder ) {
+        
+        // Fisher Yates shuffle
+        for( int i=0; i<inUsage.numSubSounds; i++ ) {
+            shufflePlayOrdering[ inUsage.numSubSounds ][i] = i;
+            }
+
+        // shuffle them
+        // https://en.wikipedia.org/wiki/
+        //     Fisher%E2%80%93Yates_shuffle
+        
+        for( int j=inUsage.numSubSounds - 1; j >= 1; j-- ) {
+            int k = randSource.getRandomBoundedInt( 0, j );
+            
+            // swap k with j
+            int temp = shufflePlayOrdering[ inUsage.numSubSounds ][k];
+            shufflePlayOrdering[ inUsage.numSubSounds ][k] =
+                shufflePlayOrdering[ inUsage.numSubSounds ][j];
+            
+            shufflePlayOrdering[ inUsage.numSubSounds ][j] = temp;
+            }
+
+
+        shufflePlayReady[ inUsage.numSubSounds ] = true;
+        nextShufflePlaySlot[ inUsage.numSubSounds ] = 0;
+        }
+
+    int pick = 
+        shufflePlayOrdering
+            [ inUsage.numSubSounds ]
+            [ nextShufflePlaySlot[ inUsage.numSubSounds ] ];
+
+    // walk to next slot (maybe off end, caught next time
+    nextShufflePlaySlot[ inUsage.numSubSounds ] ++;
     
     SoundUsagePlay p = { inUsage.ids[pick], inUsage.volumes[pick] };
     return p;
