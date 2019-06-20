@@ -269,8 +269,41 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mPasteButton ) {
         if( sClipboardSoundUsage.numSubSounds > 0 ) {
-            mCurSoundIndex = 0;
-            setSoundInternal( sClipboardSoundUsage );
+            
+            if( sClipboardSoundUsage.numSubSounds == 1 &&
+                mCurSoundIndex == mSoundUsage.numSubSounds ) {
+                // case:
+                // pasting a single sound off end, add to this
+                // set of sounds
+                
+                SoundUsage oldUsage = copyUsage( mSoundUsage );
+                
+                
+                addSound( &mSoundUsage, 
+                          sClipboardSoundUsage.ids[0],
+                          sClipboardSoundUsage.volumes[0] );
+                
+                countLiveUse( mSoundUsage );
+                
+                unCountLiveUse( oldUsage );
+                clearSoundUsage( &oldUsage );
+                
+                // don't make record visible here
+                // wait until next step so that it won't receive this click
+                mPlayButton.setVisible( true );
+                mPlayRandButton.setVisible( true );
+                mCopyButton.setVisible( true );
+                mClearButton.setVisible( true );
+                
+                updatePasteButton();
+                nextPrevVisible();
+                fireActionPerformed( this );
+                }
+            else {
+                // replace this set of sounds
+                mCurSoundIndex = 0;
+                setSoundInternal( sClipboardSoundUsage );
+                }
             }
         }
     else if( inTarget == &mPrevSubSoundButton ) {

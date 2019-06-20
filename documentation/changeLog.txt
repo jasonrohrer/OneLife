@@ -10,6 +10,8 @@ Version 243    ???
   sounds, playing them in that order, and then reshuffling (instead of picking
   a different random sound each time, which can lead to lots of repeats).
 
+--Support in editor for pasting a single sound onto the end of a sound set
+  without replacing it.
 
 
 
