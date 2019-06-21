@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 243    ???
+Version 243    2019-June-21
 
 --Better randomization (less repetative) of multi-sound sets by shuffling
   sounds, playing them in that order, and then reshuffling (instead of picking
