@@ -16818,7 +16818,6 @@ void LivingLifePage::step() {
                         getEmotionObjectByIndex( o->currentEmot, e );
                     
                     if( oID != 0 ) {
-                        printf( "t = %d\n", t );
                         
                         handleAnimSound( oID,
                                          0,
