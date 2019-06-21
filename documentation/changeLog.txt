@@ -24,6 +24,10 @@ Server Fixes
   KILL-state angry face.  Now the angry face comes back when the snowball splat
   melts.
 
+--Admin funciton for restoring all tokens back to starting level (useful before
+  servers restart).
+
+
 
 
 Version 242    2019-June-19

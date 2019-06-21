@@ -152,6 +152,9 @@ else if( $action == "show_data" ) {
 else if( $action == "show_detail" ) {
     lt_showDetail();
     }
+else if( $action == "restore_all_tokens" ) {
+    lt_restoreAllTokens();
+    }
 else if( $action == "logout" ) {
     lt_logout();
     }
@@ -434,9 +437,10 @@ function lt_showData( $checkPassword = true ) {
 
 
 
-        // form for searching users
+        // form for searching users and resetting tokens
 ?>
         <hr>
+             <table border=0 width=100%><tr><td>
             <FORM ACTION="server.php" METHOD="post">
     <INPUT TYPE="hidden" NAME="action" VALUE="show_data">
     <INPUT TYPE="hidden" NAME="order_by" VALUE="<?php echo $order_by;?>">
@@ -444,6 +448,17 @@ function lt_showData( $checkPassword = true ) {
              VALUE="<?php echo $search;?>">
     <INPUT TYPE="Submit" VALUE="Search">
     </FORM>
+             </td>
+             <td align=right>
+             <FORM ACTION="server.php" METHOD="post">
+    <INPUT TYPE="hidden" NAME="action" VALUE="restore_all_tokens">
+    <INPUT TYPE="Submit" VALUE="Restore All Tokens">
+    <INPUT TYPE="checkbox" NAME="confirm" VALUE=1> Confirm      
+    
+    </FORM>
+             </td>
+             </tr>
+             </table>
         <hr>
 <?php
 
@@ -527,6 +542,36 @@ function lt_showData( $checkPassword = true ) {
 
 
 
+
+function lt_restoreAllTokens() {
+    if( $checkPassword ) {
+        lt_checkPassword( "restore_all_tokens" );
+        }
+
+    $confirm = lt_requestFilter( "confirm", "/[01]/" );
+
+
+    if( $confirm != 1 ) {
+        
+        echo "You must check the Confirm box to restore tokens<BR><BR>";
+        lt_showData( false );
+        return;
+        }
+    
+    global $tableNamePrefix, $startingLifeTokens;
+    
+        
+    $query = "UPDATE $tableNamePrefix"."users ".
+        "SET token_count = $startingLifeTokens;";
+
+    lt_queryDatabase( $query );
+    
+    lt_showData( false );
+    }
+
+
+
+
 function lt_showDetail( $checkPassword = true ) {
     if( $checkPassword ) {
         lt_checkPassword( "show_detail" );
@@ -546,7 +591,7 @@ function lt_showDetail( $checkPassword = true ) {
     $result = lt_queryDatabase( $query );
 
     $id = lt_mysqli_result( $result, 0, "id" );
-    $curse_score = lt_mysqli_result( $result, 0, "token_count" );
+    $token_count = lt_mysqli_result( $result, 0, "token_count" );
     $start_time =
         lt_mysqli_result( $result, 0, "start_time" );
     
