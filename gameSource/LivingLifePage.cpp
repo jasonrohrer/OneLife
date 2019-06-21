@@ -11223,10 +11223,13 @@ void LivingLifePage::step() {
             }
         else if( type == GRAVE_MOVE ) {
             int posX, posY, posXNew, posYNew;
+
+            int swapDest = 0;
             
-            int numRead = sscanf( message, "GM\n%d %d %d %d",
-                                  &posX, &posY, &posXNew, &posYNew );
-            if( numRead == 4 ) {
+            int numRead = sscanf( message, "GM\n%d %d %d %d %d",
+                                  &posX, &posY, &posXNew, &posYNew,
+                                  &swapDest );
+            if( numRead == 4 || numRead == 5 ) {
                 applyReceiveOffset( &posX, &posY );
                 applyReceiveOffset( &posXNew, &posYNew );
 
@@ -11246,6 +11249,7 @@ void LivingLifePage::step() {
                 // it will "cover up" the label of the still-matching
                 // grave further down on the list, which we will find
                 // and fix later when it fininall finishes moving.
+                char found = false;
                 for( int i=mGraveInfo.size() - 1; i >= 0; i-- ) {
                     GraveInfo *g = mGraveInfo.getElement( i );
                     
@@ -11258,8 +11262,26 @@ void LivingLifePage::step() {
                         GraveInfo gStruct = *g;
                         mGraveInfo.deleteElement( i );
                         mGraveInfo.push_front( gStruct );
+                        found = true;
                         break;
                         }    
+                    }
+                
+                if( found && ! swapDest ) {
+                    // do NOT need to keep any extra ones around
+                    // this fixes cases where old grave info is left
+                    // behind, due to decay
+                    for( int i=1; i < mGraveInfo.size(); i++ ) {
+                        GraveInfo *g = mGraveInfo.getElement( i );
+                        
+                        if( g->worldPos.x == posXNew &&
+                            g->worldPos.y == posYNew ) {
+                            
+                            // a stale match
+                            mGraveInfo.deleteElement( i );
+                            i--;
+                            }
+                        }
                     }
                 }            
             }

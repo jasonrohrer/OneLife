@@ -17,6 +17,9 @@ Version 243    ???
 
 --8/12 display for lives remaining (suggested by Dodge).
 
+--Finally fixed lurking wrong-grave-info bug (triggered when you swap a bone
+  basket with something that's on the ground where an old grave has already
+  decayed away).  Fixes #338
 
 
 

@@ -809,6 +809,7 @@ typedef struct GraveInfo {
 typedef struct GraveMoveInfo {
         GridPos posStart;
         GridPos posEnd;
+        int swapDest;
     } GraveMoveInfo;
 
 
@@ -4001,6 +4002,36 @@ static void holdingSomethingNew( LiveObject *inPlayer,
 
 
 
+static SimpleVector<GraveInfo> newGraves;
+static SimpleVector<GraveMoveInfo> newGraveMoves;
+
+
+
+static int isGraveSwapDest( int inTargetX, int inTargetY,
+                            int inDroppingPlayerID ) {
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( o->error || o->id == inDroppingPlayerID ) {
+            continue;
+            }
+        
+        if( o->holdingID > 0 && strstr( getObject( o->holdingID )->description,
+                                        "origGrave" ) != NULL ) {
+            
+            if( inTargetX == o->heldGraveOriginX &&
+                inTargetY == o->heldGraveOriginY ) {
+                return true;
+                }
+            }
+        }
+    
+    return false;
+    }
+
+
+
 // drops an object held by a player at target x,y location
 // doesn't check for adjacency (so works for thrown drops too)
 // if target spot blocked, will search for empty spot to throw object into
@@ -4204,6 +4235,30 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     
     setResponsiblePlayer( inDroppingPlayer->id );
     
+    ObjectRecord *o = getObject( inDroppingPlayer->holdingID );
+                                
+    if( strstr( o->description, "origGrave" ) 
+        != NULL ) {
+                                    
+        setGravePlayerID( 
+            targetX, targetY, inDroppingPlayer->heldGravePlayerID );
+        
+        int swapDest = isGraveSwapDest( targetX, targetY, 
+                                        inDroppingPlayer->id );
+        
+        // see if another player has target location in air
+
+
+        GraveMoveInfo g = { 
+            { inDroppingPlayer->heldGraveOriginX,
+              inDroppingPlayer->heldGraveOriginY },
+            { targetX,
+              targetY },
+            swapDest };
+        newGraveMoves.push_back( g );
+        }
+
+
     setMapObject( targetX, targetY, inDroppingPlayer->holdingID );
     setEtaDecay( targetX, targetY, inDroppingPlayer->holdingEtaDecay );
 
@@ -9992,8 +10047,6 @@ int main() {
 
         SimpleVector<int> playerIndicesToSendHealingAbout;
 
-        SimpleVector<GraveInfo> newGraves;
-        SimpleVector<GraveMoveInfo> newGraveMoves;
 
         SimpleVector<GridPos> newOwnerPos;
 
@@ -12554,11 +12607,16 @@ int main() {
                                     setGravePlayerID( 
                                         m.x, m.y, heldGravePlayerID );
                                     
+                                    int swapDest = 
+                                        isGraveSwapDest( m.x, m.y, 
+                                                         nextPlayer->id );
+
                                     GraveMoveInfo g = { 
                                         { newGroundObjectOrigin.x,
                                           newGroundObjectOrigin.y },
                                         { m.x,
-                                          m.y } };
+                                          m.y }, 
+                                        swapDest };
                                     newGraveMoves.push_back( g );
                                     }
                                 }
@@ -16443,7 +16501,7 @@ int main() {
                             < maxDist2 ) {
 
                             char *graveMessage = 
-                            autoSprintf( "GM\n%d %d %d %d\n#", 
+                            autoSprintf( "GM\n%d %d %d %d %d\n#", 
                                          g->posStart.x -
                                          nextPlayer->birthPos.x,
                                          g->posStart.y -
@@ -16451,7 +16509,8 @@ int main() {
                                          g->posEnd.x -
                                          nextPlayer->birthPos.x,
                                          g->posEnd.y -
-                                         nextPlayer->birthPos.y );
+                                         nextPlayer->birthPos.y,
+                                         g->swapDest );
                         
                             sendMessageToPlayer( nextPlayer, graveMessage,
                                                  strlen( graveMessage ) );
@@ -17648,7 +17707,8 @@ int main() {
         newLocationSpeech.deallocateStringElements();
         newLocationSpeechPos.deleteAll();
 
-
+        newGraves.deleteAll();
+        newGraveMoves.deleteAll();
         
         
 
