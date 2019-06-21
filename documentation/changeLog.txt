@@ -15,6 +15,9 @@ Version 243    ???
 
 --Client can now play animation sounds from a character's emote.
 
+--8/12 display for lives remaining (suggested by Dodge).
+
+
 
 
 

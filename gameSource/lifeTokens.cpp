@@ -150,7 +150,7 @@ char *getLifeTokenString() {
     
 
     return autoSprintf( translate( "tokenMessage" ), 
-                        numTokens, translate( firstLifeKey ),
+                        numTokens, cap, translate( firstLifeKey ),
                         minutes,
                         translate( minuteKey ),
                         cap, translate( secondLifeKey ) );
