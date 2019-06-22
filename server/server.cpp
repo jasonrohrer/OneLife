@@ -811,6 +811,7 @@ typedef struct GraveInfo {
 typedef struct GraveMoveInfo {
         GridPos posStart;
         GridPos posEnd;
+        int swapDest;
     } GraveMoveInfo;
 
 
@@ -4003,6 +4004,36 @@ static void holdingSomethingNew( LiveObject *inPlayer,
 
 
 
+static SimpleVector<GraveInfo> newGraves;
+static SimpleVector<GraveMoveInfo> newGraveMoves;
+
+
+
+static int isGraveSwapDest( int inTargetX, int inTargetY,
+                            int inDroppingPlayerID ) {
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( o->error || o->id == inDroppingPlayerID ) {
+            continue;
+            }
+        
+        if( o->holdingID > 0 && strstr( getObject( o->holdingID )->description,
+                                        "origGrave" ) != NULL ) {
+            
+            if( inTargetX == o->heldGraveOriginX &&
+                inTargetY == o->heldGraveOriginY ) {
+                return true;
+                }
+            }
+        }
+    
+    return false;
+    }
+
+
+
 // drops an object held by a player at target x,y location
 // doesn't check for adjacency (so works for thrown drops too)
 // if target spot blocked, will search for empty spot to throw object into
@@ -4206,6 +4237,30 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     
     setResponsiblePlayer( inDroppingPlayer->id );
     
+    ObjectRecord *o = getObject( inDroppingPlayer->holdingID );
+                                
+    if( strstr( o->description, "origGrave" ) 
+        != NULL ) {
+                                    
+        setGravePlayerID( 
+            targetX, targetY, inDroppingPlayer->heldGravePlayerID );
+        
+        int swapDest = isGraveSwapDest( targetX, targetY, 
+                                        inDroppingPlayer->id );
+        
+        // see if another player has target location in air
+
+
+        GraveMoveInfo g = { 
+            { inDroppingPlayer->heldGraveOriginX,
+              inDroppingPlayer->heldGraveOriginY },
+            { targetX,
+              targetY },
+            swapDest };
+        newGraveMoves.push_back( g );
+        }
+
+
     setMapObject( targetX, targetY, inDroppingPlayer->holdingID );
     setEtaDecay( targetX, targetY, inDroppingPlayer->holdingEtaDecay );
 
@@ -7951,6 +8006,7 @@ typedef struct KillState {
         int killerWeaponID;
         int targetID;
         double emotStartTime;
+        int emotRefreshSeconds;
     } KillState;
 
 
@@ -7968,6 +8024,8 @@ void addKillState( int inKillerID, int inTargetID ) {
             s->killerWeaponID = getLiveObject( inKillerID )->holdingID;
             s->targetID = inTargetID;
             s->emotStartTime = Time::getCurrentTime();
+            s->emotRefreshSeconds = 30;
+            break;
             }
         }
     
@@ -7976,12 +8034,27 @@ void addKillState( int inKillerID, int inTargetID ) {
         KillState s = { inKillerID, 
                         getLiveObject( inKillerID )->holdingID,
                         inTargetID, 
-                        Time::getCurrentTime() };
+                        Time::getCurrentTime(),
+                        30 };
         activeKillStates.push_back( s );
         }
     }
 
-    
+
+
+static void interruptAnyKillEmots( int inPlayerID, 
+                                   int inInterruptingTTL ) {
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+        
+        if( s->killerID == inPlayerID ) {
+            s->emotStartTime = Time::getCurrentTime();
+            s->emotRefreshSeconds = inInterruptingTTL;
+            break;
+            }
+        }
+    }    
+
 
 
 static void setPerpetratorHoldingAfterKill( LiveObject *nextPlayer,
@@ -8140,6 +8213,9 @@ void executeKillAction( int inKillerIndex,
                                 e.emotIndex );
                             newEmotTTLs->push_back( 
                                 e.ttlSec );
+
+                            interruptAnyKillEmots( hitPlayer->id,
+                                                   e.ttlSec );
                             }
                         return;
                         }
@@ -8322,6 +8398,8 @@ void executeKillAction( int inKillerIndex,
                                     e.emotIndex );
                                 newEmotTTLs->push_back( 
                                     e.ttlSec );
+                                interruptAnyKillEmots( hitPlayer->id,
+                                                       e.ttlSec );
                                 }
                                             
                             if( e.foodModifierSet && 
@@ -9987,8 +10065,6 @@ int main() {
 
         SimpleVector<int> playerIndicesToSendHealingAbout;
 
-        SimpleVector<GraveInfo> newGraves;
-        SimpleVector<GraveMoveInfo> newGraveMoves;
 
         SimpleVector<GridPos> newOwnerPos;
 
@@ -10186,6 +10262,8 @@ int main() {
                                         nextPlayer->id );
                                     newEmotIndices.push_back( e.emotIndex );
                                     newEmotTTLs.push_back( e.ttlSec );
+                                    interruptAnyKillEmots( nextPlayer->id,
+                                                           e.ttlSec );
                                     }
                                 if( e.foodModifierSet && 
                                     e.foodCapModifier != 1 ) {
@@ -12547,11 +12625,16 @@ int main() {
                                     setGravePlayerID( 
                                         m.x, m.y, heldGravePlayerID );
                                     
+                                    int swapDest = 
+                                        isGraveSwapDest( m.x, m.y, 
+                                                         nextPlayer->id );
+
                                     GraveMoveInfo g = { 
                                         { newGroundObjectOrigin.x,
                                           newGroundObjectOrigin.y },
                                         { m.x,
-                                          m.y } };
+                                          m.y }, 
+                                        swapDest };
                                     newGraveMoves.push_back( g );
                                     }
                                 }
@@ -12913,6 +12996,8 @@ int main() {
                                             newEmotIndices.push_back( 
                                                 e.emotIndex );
                                             newEmotTTLs.push_back( e.ttlSec );
+                                            interruptAnyKillEmots( 
+                                                targetPlayer->id, e.ttlSec );
                                             }
                                         if( e.foodCapModifier != 1 ) {
                                             targetPlayer->foodCapModifier = 
@@ -13962,13 +14047,17 @@ int main() {
                 // see if we need to renew emote
                 double curTime = Time::getCurrentTime();
                 
-                if( curTime - s->emotStartTime > 30 ) {
+                if( curTime - s->emotStartTime > s->emotRefreshSeconds ) {
                     s->emotStartTime = curTime;
                     
+                    // refresh again in 30 seconds, even if we had a shorter
+                    // refresh time because of an intervening emot
+                    s->emotRefreshSeconds = 30;
+
                     newEmotPlayerIDs.push_back( killer->id );
                             
                     newEmotIndices.push_back( killEmotionIndex );
-                    newEmotTTLs.push_back( 0 );
+                    newEmotTTLs.push_back( 120 );
                     }
                 }
             }
@@ -16430,7 +16519,7 @@ int main() {
                             < maxDist2 ) {
 
                             char *graveMessage = 
-                            autoSprintf( "GM\n%d %d %d %d\n#", 
+                            autoSprintf( "GM\n%d %d %d %d %d\n#", 
                                          g->posStart.x -
                                          nextPlayer->birthPos.x,
                                          g->posStart.y -
@@ -16438,7 +16527,8 @@ int main() {
                                          g->posEnd.x -
                                          nextPlayer->birthPos.x,
                                          g->posEnd.y -
-                                         nextPlayer->birthPos.y );
+                                         nextPlayer->birthPos.y,
+                                         g->swapDest );
                         
                             sendMessageToPlayer( nextPlayer, graveMessage,
                                                  strlen( graveMessage ) );
@@ -17635,7 +17725,8 @@ int main() {
         newLocationSpeech.deallocateStringElements();
         newLocationSpeechPos.deleteAll();
 
-
+        newGraves.deleteAll();
+        newGraveMoves.deleteAll();
         
         
 

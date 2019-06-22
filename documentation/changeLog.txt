@@ -4,6 +4,38 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 243    2019-June-21
+
+--Better randomization (less repetative) of multi-sound sets by shuffling
+  sounds, playing them in that order, and then reshuffling (instead of picking
+  a different random sound each time, which can lead to lots of repeats).
+
+--Support in editor for pasting a single sound onto the end of a sound set
+  without replacing it.
+
+--Client can now play animation sounds from a character's emote.
+
+--8/12 display for lives remaining (suggested by Dodge).
+
+--Finally fixed lurking wrong-grave-info bug (triggered when you swap a bone
+  basket with something that's on the ground where an old grave has already
+  decayed away).  Fixes #338
+
+
+
+
+Server Fixes
+
+--Fixed issues with other forced-emots (like snowball splats) interruping the
+  KILL-state angry face.  Now the angry face comes back when the snowball splat
+  melts.
+
+--Admin funciton for restoring all tokens back to starting level (useful before
+  servers restart).
+
+
+
+
 Version 242    2019-June-19
 
 --Client support for in-game poll feature.

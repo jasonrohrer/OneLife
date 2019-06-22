@@ -673,11 +673,14 @@ Grave at x y belongs to player p_id.
 
 
 GM
-xs ys xd yd
+xs ys xd yd swap_dest
 #
 
 
 Grave at xs,ys moved to xd,yd.
+
+If optional swap_dest parameter is 1, it means that some other grave at 
+destination is in mid-air.  If 0, not
 
 
 

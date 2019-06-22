@@ -181,7 +181,7 @@ connectionFailed "CONNECTION FAILED"
 noLifeTokens "YOU ARE OUT OF LIVES"
 
 
-tokenMessage "%d %s LEFT##(NEW LIFE EVERY %d %s WHEN BELOW %d %s)"
+tokenMessage "%d/%d %s LEFT##(NEW LIFE EVERY %d %s WHEN BELOW %d %s)"
 
 livesPlural "LIVES"
 lifeSingular "LIFE"
