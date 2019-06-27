@@ -712,7 +712,7 @@ function fs_getServerSequenceNumber() {
     global $tableNamePrefix;
     
 
-    $name = fs_requestFilter( "name", "/[A-Z0-9.\-]+/i", "" );
+    $name = fs_requestFilter( "server_name", "/[A-Z0-9.\-]+/i", "" );
 
     if( $name == "" ) {
         fs_log( "getServerSequenceNumber denied for bad name" );
@@ -893,7 +893,7 @@ function fs_checkAndUpdateServerSeqNumber() {
 
 
 function fs_reportDeath() {
-    fs_checkServerSeqHash();
+    fs_checkAndUpdateServerSeqNumber();
     
     
     global $tableNamePrefix;
@@ -954,7 +954,7 @@ function fs_reportDeath() {
 
 
 function fs_getScore() {
-    fs_checkServerSeqHash();
+    fs_checkAndUpdateServerSeqNumber();
 
     global $tableNamePrefix;
 

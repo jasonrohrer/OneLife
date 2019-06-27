@@ -9206,7 +9206,8 @@ int main() {
             stepCurseServerRequests();
             
             stepLifeTokens();
-
+            stepFitnessScore();
+            
             stepMapLongTermCulling( players.size() );
             }
         

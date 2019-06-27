@@ -170,7 +170,7 @@ static int stepOpRequest( OpRequest *inR ) {
             
             char *serverURL = 
                 SettingsManager::getStringSetting( 
-                    "lifeTokenServerURL", "" );
+                    "fitnessServerURL", "" );
 
             
             char *url = autoSprintf( 
