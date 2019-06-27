@@ -307,6 +307,7 @@ int getFitnessScore( char *inEmail, float *outScore ) {
 
 
 void logFitnessDeath( char *inEmail, char *inName, int inDisplayID,
+                      double inAge,
                       SimpleVector<char*> *inAncestorEmails,
                       SimpleVector<char*> *inAncestorRelNames ) {
 
@@ -317,12 +318,16 @@ void logFitnessDeath( char *inEmail, char *inName, int inDisplayID,
         }
 
     
-    // else using server, start a new refund request
+    // else using server, start a new death request
     
     OpRequest r;
     
     r.email = stringDuplicate( inEmail );
     
+
+    if( inName == NULL ) {
+        inName = "NAMELESS";
+        }
 
     char *encodedName = URLUtils::urlEncode( inName );
 
@@ -362,13 +367,15 @@ void logFitnessDeath( char *inEmail, char *inName, int inDisplayID,
 
     r.extraParams = 
         autoSprintf(
-            "action=refund_token&"
+            "action=report_death&"
             "name=%s&"
             "display_id=%d&"
             "self_rel_name=You&"
+            "age=%f&"
             "ancestor_list=%s",
             encodedName,
             inDisplayID,
+            inAge,
             encodedList );
 
     delete [] encodedName;

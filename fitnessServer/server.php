@@ -812,8 +812,8 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge ) {
     $count = fs_mysqli_result( $result, 0, 0 );
 
     if( $count == 0 ) {
-        $query = "INSERT INTOR $tableNamePrefix"."users ".
-            "SET email = '$email', lives_affecting_score = 0, score=0, ".
+        $query = "INSERT INTO $tableNamePrefix"."users ".
+            "SET email = '$inEmail', lives_affecting_score = 0, score=0, ".
             "last_action_time=CURRENT_TIMESTAMP, client_sequence_number=1;";
         
         fs_queryDatabase( $query );
@@ -831,7 +831,7 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge ) {
     global $formulaR, $formulaK;
 
 
-    $delta = $age - $old_score;
+    $delta = $inAge - $old_score;
 
     if( $formulaR != 1 ) {
         $delta = pow( $delta, $formulaR );
@@ -845,7 +845,7 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge ) {
     $query = "INSERT into $tableNamePrefix"."offspring ".
         "SET player_id = $player_id, life_id = $life_id, ".
         "relation_name = '$inRelName', old_score = $old_score,".
-        "new_score = $new_score, CURRENT_TIMESTAMP;";
+        "new_score = $new_score, death_time = CURRENT_TIMESTAMP;";
 
     fs_queryDatabase( $query );
 
@@ -884,7 +884,7 @@ function fs_checkAndUpdateServerSeqNumber() {
     else {
         $query = "UPDATE $tableNamePrefix". "servers SET " .
             "sequence_number = sequence_number + 1 ".
-            "WHERE name = $server_name;";
+            "WHERE name = '$server_name';";
         fs_queryDatabase( $query );
         }
     }
@@ -906,7 +906,7 @@ function fs_reportDeath() {
         die();
         }
 
-    $age = fs_requestFilter( "self_rel_name", "/[0-9.]+/i", "0" );
+    $age = fs_requestFilter( "age", "/[0-9.]+/i", "0" );
     $display_id = fs_requestFilter( "display_id", "/[0-9]+/i", "0" );
 
     $name = fs_requestFilter( "name", "/[A-Z ]+/i", "" );
@@ -918,6 +918,7 @@ function fs_reportDeath() {
     fs_queryDatabase( $query );
 
     
+    global $fs_mysqlLink;
     $life_id = mysqli_insert_id( $fs_mysqlLink );
     
     $self_rel_name = fs_requestFilter( "self_rel_name", "/[A-Z ]+/i", "You" );

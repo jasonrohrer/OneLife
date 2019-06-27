@@ -2162,6 +2162,8 @@ double computeAge( LiveObject *inPlayer ) {
         setDeathReason( inPlayer, "age" );
         
         inPlayer->error = true;
+        
+        age = forceDeathAge;
         }
     return age;
     }
@@ -8791,6 +8793,7 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
     
     logFitnessDeath( nextPlayer->email, 
                      nextPlayer->name, nextPlayer->displayID,
+                     computeAge( nextPlayer ),
                      &ancestorEmails, &ancestorRelNames );
     
     ancestorRelNames.deallocateStringElements();
