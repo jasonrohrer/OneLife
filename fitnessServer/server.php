@@ -188,6 +188,8 @@ else if( preg_match( "/server\.php/", $_SERVER[ "SCRIPT_NAME" ] ) ) {
         fs_doesTableExist( $tableNamePrefix . "users" ) &&
         fs_doesTableExist( $tableNamePrefix . "lives" ) &&
         fs_doesTableExist( $tableNamePrefix . "offspring" ) &&
+        fs_doesTableExist( $tableNamePrefix . "first_names" ) &&
+        fs_doesTableExist( $tableNamePrefix . "last_names" ) &&
         fs_doesTableExist( $tableNamePrefix . "log" );
     
         
@@ -222,6 +224,41 @@ fs_closeDatabase();
 
 
 
+
+function fs_populateNameTable( $inTableName, $inFileName ) {
+
+    if( $file = fopen( $inFileName, "r" ) ) {
+
+        $firstLine = true;
+
+        $query = "INSERT INTO $inTableName ( name ) VALUES ";
+
+        while( !feof( $file ) ) {
+            $line = trim( fgets( $file) );
+
+            if( $line == "" ) {
+                continue;
+                }
+            
+            if( ! $firstLine ) {
+                $query = $query . ",";
+                }
+                
+            $query = $query . " ( '$line' )";
+                
+            $firstLine = false;
+            }
+        
+        fclose( $file );
+
+        $query = $query . ";";
+
+        $result = fs_queryDatabase( $query );
+        }
+    else {
+        echo "(Failed to populate, couldn't open file $inFileName)<br>";
+        }
+    }
 
 
 
@@ -284,6 +321,7 @@ function fs_setupDatabase() {
             "id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT," .
             "email VARCHAR(254) NOT NULL," .
             "UNIQUE KEY( email )," .
+            "leaderboard_name varchar(254) NOT NULL,".
             "lives_affecting_score INT UNSIGNED NOT NULL,".
             "score FLOAT NOT NULL," .
             "index( score )," .
@@ -350,6 +388,47 @@ function fs_setupDatabase() {
     else {
         echo "<B>$tableName</B> table already exists<BR>";
         }
+
+
+    
+    $tableName = $tableNamePrefix . "first_names";
+    if( ! fs_doesTableExist( $tableName ) ) {
+
+        $query =
+            "CREATE TABLE $tableName(" .
+            "id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "name VARCHAR(245) NOT NULL );";
+
+        $result = fs_queryDatabase( $query );
+
+        echo "<B>$tableName</B> table created<BR>";
+
+        fs_populateNameTable( $tableName, "firstNames.txt" );
+        }
+    else {
+        echo "<B>$tableName</B> table already exists<BR>";
+        }
+
+
+    
+    $tableName = $tableNamePrefix . "last_names";
+    if( ! fs_doesTableExist( $tableName ) ) {
+
+        $query =
+            "CREATE TABLE $tableName(" .
+            "id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "name VARCHAR(245) NOT NULL );";
+
+        $result = fs_queryDatabase( $query );
+
+        echo "<B>$tableName</B> table created<BR>";
+
+        fs_populateNameTable( $tableName, "lastNames.txt" );
+        }
+    else {
+        echo "<B>$tableName</B> table already exists<BR>";
+        }
+
     
     }
 
@@ -577,6 +656,7 @@ function fs_showData( $checkPassword = true ) {
     echo "<tr>\n";    
     echo "<tr><td>".orderLink( "id", "ID" )."</td>\n";
     echo "<td>".orderLink( "email", "Email" )."</td>\n";
+    echo "<td>".orderLink( "leaderboard_name", "Leaderbord Name" )."</td>\n";
     echo "<td>".orderLink( "last_action_time", "Last Action" )."</td>\n";
     echo "<td>".orderLink( "score", "Score" )."</td>\n";
     echo "<td>".orderLink( "lives_affecting_score", "Lives Counted" )."</td>\n";
@@ -586,6 +666,7 @@ function fs_showData( $checkPassword = true ) {
     for( $i=0; $i<$numRows; $i++ ) {
         $id = fs_mysqli_result( $result, $i, "id" );
         $email = fs_mysqli_result( $result, $i, "email" );
+        $leaderboard_name = fs_mysqli_result( $result, $i, "leaderboard_name" );
         $last_action_time = fs_mysqli_result( $result, $i, "last_action_time" );
         $score = fs_mysqli_result( $result, $i, "score" );
         $lives_affecting_score =
@@ -600,6 +681,7 @@ function fs_showData( $checkPassword = true ) {
         echo "<td>".
             "<a href=\"server.php?action=show_detail&email=$encodedEmail\">".
             "$email</a></td>\n";
+        echo "<td>$leaderboard_name</td>\n";
         echo "<td>$last_action_time</td>\n";
         echo "<td>$score</td>\n";
         echo "<td>$lives_affecting_score</td>\n";
@@ -839,6 +921,55 @@ function fs_checkServerSeqHash( $name ) {
 
 
 
+function fs_pickLeaderboardName( $inEmail ) {
+    global $tableNamePrefix;
+
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."first_names ;";
+
+    $result = fs_queryDatabase( $query );
+    $firstCount = fs_mysqli_result( $result, 0, 0 );
+
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."last_names ;";
+
+    $result = fs_queryDatabase( $query );
+    $lastCount = fs_mysqli_result( $result, 0, 0 );
+
+    $emailHash = sha1( $inEmail );
+
+    $seedA = hexdec( substr( $emailHash, 0, 8 ) );
+    $seedB = hexdec( substr( $emailHash, 8, 8 ) );
+
+    fs_log( "Seeds:  $seedA, $seedB" );
+    
+    mt_srand( $seedA );
+
+    $firstPick = mt_rand( 1, $firstCount );
+
+    mt_srand( $seedB );
+    $lastPick = mt_rand( 1, $lastCount );
+
+
+    $query = "SELECT name FROM $tableNamePrefix"."first_names ".
+        "WHERE id = $firstPick;";
+
+    $result = fs_queryDatabase( $query );
+    $firstName = fs_mysqli_result( $result, 0, 0 );
+
+
+    $query = "SELECT name FROM $tableNamePrefix"."last_names ".
+        "WHERE id = $lastPick;";
+
+    $result = fs_queryDatabase( $query );
+    $lastName = fs_mysqli_result( $result, 0, 0 );
+
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."last_names ;";
+
+
+    return ucwords( strtolower( "$firstName $lastName" ) );
+    }
+
+
+
 
 // log a death that will affect the score of $inEmail
 function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge ) {
@@ -851,8 +982,11 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge ) {
     $count = fs_mysqli_result( $result, 0, 0 );
 
     if( $count == 0 ) {
+        $leaderboard_name = fs_pickLeaderboardName( $inEmail );
+        
         $query = "INSERT INTO $tableNamePrefix"."users ".
-            "SET email = '$inEmail', lives_affecting_score = 0, score=0, ".
+            "SET email = '$inEmail', leaderboard_name = '$leaderboard_name', ".
+            "lives_affecting_score = 0, score=0, ".
             "last_action_time=CURRENT_TIMESTAMP, client_sequence_number=1;";
         
         fs_queryDatabase( $query );
