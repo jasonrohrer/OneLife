@@ -155,6 +155,9 @@ else if( $action == "show_detail" ) {
 else if( $action == "logout" ) {
     fs_logout();
     }
+else if( $action == "show_leaderboard" ) {
+    fs_showLeaderboard();
+    }
 else if( $action == "fs_setup" ) {
     global $setup_header, $setup_footer;
     echo $setup_header; 
@@ -778,6 +781,47 @@ function fs_showDetail( $checkPassword = true ) {
         }
     echo "</table></center>";
     }
+
+
+
+
+function fs_showLeaderboard() {
+    
+    global $tableNamePrefix;
+
+    global $header, $footer;
+
+    eval( $header );
+
+    echo "<center>";
+    
+    $query = "SELECT leaderboard_name, score ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE last_action_time > DATE_SUB( NOW(), INTERVAL 48 HOUR )".
+        "ORDER BY score DESC limit 1000;";
+
+    $result = fs_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+    
+    echo "<table border=0 cellpadding=20>";
+
+    for( $i=0; $i<$numRows; $i++ ) {
+        $place = $i + 1;
+        
+        $name = fs_mysqli_result( $result, $i, "leaderboard_name" );
+        $score = fs_mysqli_result( $result, $i, "score" );
+
+        echo "<tr><td>$place.</td><td>$name</td><td>$score</td></tr>";
+        }
+    echo "</table>";
+    
+        
+    echo "</center>";
+
+    eval( $footer );
+    }
+
 
 
 
