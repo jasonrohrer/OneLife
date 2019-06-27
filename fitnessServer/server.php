@@ -637,25 +637,64 @@ function fs_showDetail( $checkPassword = true ) {
 
     $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
             
-    $query = "SELECT id, token_count, start_time ".
+    $query = "SELECT id ".
         "FROM $tableNamePrefix"."users ".
         "WHERE email = '$email';";
     $result = fs_queryDatabase( $query );
 
     $id = fs_mysqli_result( $result, 0, "id" );
-    $token_count = fs_mysqli_result( $result, 0, "token_count" );
-    $start_time =
-        fs_mysqli_result( $result, 0, "start_time" );
+
+    $query = "SELECT name, age, relation_name, ".
+        "old_score, new_score, death_time ".
+        "FROM $tableNamePrefix"."offspring AS offspring ".
+        "INNER JOIN $tableNamePrefix"."lives AS lives ".
+        "ON offspring.life_id = lives.id ".
+        "WHERE offspring.player_id = $id ORDER BY offspring.death_time DESC ".
+        "LIMIT 20";
+
+    fs_log( $query );
     
-    
+    $result = fs_queryDatabase( $query );
 
     echo "<center><table border=0><tr><td>";
     
     echo "<b>ID:</b> $id<br><br>";
     echo "<b>Email:</b> $email<br><br>";
-    echo "<b>Token Count:</b> $token_count<br><br>";
-    echo "<b>Start Time:</b> $start_time<br><br>";
-    echo "<br><br>";
+    echo "</td></tr></table>";
+
+    $numRows = mysqli_num_rows( $result );
+
+    echo "<table border=1 cellpadding=10 cellspacing=0>";
+    for( $i=0; $i<$numRows; $i++ ) {
+        $name = fs_mysqli_result( $result, $i, "name" );
+        $age = fs_mysqli_result( $result, $i, "age" );
+        $relation_name = fs_mysqli_result( $result, $i, "relation_name" );
+        $old_score = fs_mysqli_result( $result, $i, "old_score" );
+        $new_score = fs_mysqli_result( $result, $i, "new_score" );
+        $death_time = fs_mysqli_result( $result, $i, "death_time" );
+
+        $delta = $new_score - $old_score;
+
+        $deltaString;
+
+        if( $delta < 0 ) {
+            $deltaString = " - " . abs( $delta );
+            }
+        else {
+            $deltaString = " + " . $delta;
+            }
+        
+        echo "<tr>";
+
+        echo "<td>$name</td>";
+        echo "<td>$age years old</td>";
+        echo "<td>$relation_name</td>";
+        echo "<td>$old_score</td>";
+        echo "<td>$deltaString</td>";
+        echo "<td>$new_score</td>";
+        echo "<td>$death_time</td>";
+        }
+    echo "</table></center>";
     }
 
 
