@@ -253,7 +253,8 @@ int spendLifeToken( char *inEmail ) {
 
     // didn't find a match in existing requests
 
-    if( SettingsManager::getIntSetting( "useLifeTokenServer", 0 ) == 0 ) {
+    if( SettingsManager::getIntSetting( "useLifeTokenServer", 0 ) == 0 ||
+        SettingsManager::getIntSetting( "remoteReport", 0 ) == 0 ) {
         // not using server, allow all
         return 1;
         }
@@ -277,7 +278,8 @@ int spendLifeToken( char *inEmail ) {
 
 
 void refundLifeToken( char *inEmail ) {
-    if( SettingsManager::getIntSetting( "useLifeTokenServer", 0 ) == 0 ) {
+    if( SettingsManager::getIntSetting( "useLifeTokenServer", 0 ) == 0 ||
+        SettingsManager::getIntSetting( "remoteReport", 0 ) == 0 ) {
         // not using server
         return;
         }

@@ -280,8 +280,10 @@ int getFitnessScore( char *inEmail, float *outScore ) {
 
     // didn't find a match in existing requests
 
-    if( SettingsManager::getIntSetting( "useFitnessServer", 0 ) == 0 ) {
-        // not using server, allow all
+    if( SettingsManager::getIntSetting( "useFitnessServer", 0 ) == 0 ||
+        SettingsManager::getIntSetting( "remoteReport", 0 ) == 0 ) {
+        // everyone has fitness 0 (default
+        *outScore = 0;
         return 1;
         }
 
@@ -308,7 +310,8 @@ void logFitnessDeath( char *inEmail, char *inName, int inDisplayID,
                       SimpleVector<char*> *inAncestorEmails,
                       SimpleVector<char*> *inAncestorRelNames ) {
 
-    if( SettingsManager::getIntSetting( "useFitnessServer", 0 ) == 0 ) {
+    if( SettingsManager::getIntSetting( "useFitnessServer", 0 ) == 0 ||
+        SettingsManager::getIntSetting( "remoteReport", 0 ) == 0 ) {
         // not using server
         return;
         }
