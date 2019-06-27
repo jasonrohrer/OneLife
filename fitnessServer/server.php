@@ -968,10 +968,15 @@ function fs_getScore() {
         }
 
     $query = "SELECT score FROM $tableNamePrefix"."users ".
-        "WHERE email = '$inEmail';";
+        "WHERE email = '$email';";
 
     $result = fs_queryDatabase( $query );
-    $score = fs_mysqli_result( $result, 0, "score" );
+
+    $score = 0;
+
+    if( mysqli_num_rows( $result ) > 0 ) {    
+        $score = fs_mysqli_result( $result, 0, "score" );
+        }
     
     echo "$score\nOK";
     }
