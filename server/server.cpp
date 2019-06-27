@@ -52,6 +52,8 @@
 #include "language.h"
 #include "familySkipList.h"
 #include "lifeTokens.h"
+#include "fitnessScore.h"
+
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -223,6 +225,10 @@ typedef struct LiveObject {
         
         int id;
         
+        // -1 if unknown
+        float fitnessScore;
+        
+
         // object ID used to visually represent this player
         int displayID;
         
@@ -1333,6 +1339,8 @@ void quitCleanup() {
     
     freeLifeTokens();
 
+    freeFitnessScore();
+
     freeLifeLog();
     
     freeFoodLog();
@@ -2227,7 +2235,17 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
             cap = 4;
             }
         
-        returnVal = cap;
+        int lostBars = 20 - cap;
+
+        if( lostBars > 0 && inPlayer->fitnessScore > 0 ) {
+        
+            // consider effect of fitness on reducing lost bars
+
+            // for now, let's make it linear
+            lostBars -= 16 * inPlayer->fitnessScore / 60.0;
+            }
+        
+        returnVal = 20 - lostBars;
         }
 
     return ceil( returnVal * inPlayer->foodCapModifier );
@@ -4971,6 +4989,18 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     newObject.id = nextID;
     nextID++;
+
+    
+    newObject.fitnessScore = -1;
+    
+    int fitResult = getFitnessScore( inEmail, &newObject.fitnessScore );
+
+    if( fitResult == -1 ) {
+        // failed right away
+        // stop asking now
+        newObject.fitnessScore = 0;
+        }
+    
 
     SettingsManager::setSetting( "nextPlayerID",
                                  (int)nextID );
@@ -8653,6 +8683,123 @@ void getLineageLineForPlayer( LiveObject *inPlayer,
 
 
 
+void logFitnessDeath( LiveObject *nextPlayer ) {
+    
+    // log this death for fitness purposes,
+    // for both tutorial and non
+
+    SimpleVector<char*> ancestorEmails;
+    SimpleVector<char*> ancestorRelNames;
+    
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = players.getElement( j );
+        
+        if( otherPlayer->error || 
+            otherPlayer == nextPlayer ) {
+            continue;
+            }
+        
+        // a living other player
+        
+        if( ! getFemale( otherPlayer ) ) {
+            
+            // check if his mother is an ancestor
+            // (then he's an uncle
+            if( otherPlayer->parentID > 0 ) {
+                
+                // look at lineage above parent
+                // don't count brothers, only uncles
+                for( int i=1; i<nextPlayer->lineage->size(); i++ ) {
+                    
+                    if( nextPlayer->lineage->getElementDirect( i ) ==
+                        otherPlayer->parentID ) {
+                        
+                        ancestorEmails.push_back( otherPlayer->email );
+
+                        // i tells us how many greats
+                        SimpleVector<char> workingName;
+                        
+                        for( int g=2; g<=i; g++ ) {
+                            workingName.appendElementString( "Great " );
+                            }
+                        if( ! getFemale( nextPlayer ) ) {
+                            workingName.appendElementString( "Nephew" );
+                            }
+                        else {
+                            workingName.appendElementString( "Niece" );
+                            }
+
+                        ancestorRelNames.push_back(
+                            workingName.getElementString() );
+                        
+                        break;
+                        }
+                    }
+                }
+            }
+        else {
+            // females, look for direct ancestry
+
+            for( int i=0; i<nextPlayer->lineage->size(); i++ ) {
+                    
+                if( nextPlayer->lineage->getElementDirect( i ) ==
+                    otherPlayer->id ) {
+                        
+                    ancestorEmails.push_back( otherPlayer->email );
+
+                    // i tells us how many greats and grands
+                    SimpleVector<char> workingName;
+                        
+                    for( int g=1; g<=i; g++ ) {
+                        if( g == i ) {
+                            workingName.appendElementString( "Grand" );
+                            }
+                        else {
+                            workingName.appendElementString( "Great " );
+                            }
+                        }
+                    
+                    
+                    if( i != 0 ) {
+                        if( ! getFemale( nextPlayer ) ) {
+                            workingName.appendElementString( "son" );
+                            }
+                        else {
+                            workingName.appendElementString( "daughter" );
+                            }
+                        }
+                    else {
+                        // no "Grand"
+                        if( ! getFemale( nextPlayer ) ) {
+                                workingName.appendElementString( "Son" );
+                            }
+                        else {
+                            workingName.appendElementString( "Daughter" );
+                            }
+                        }
+                    
+                    
+                    ancestorRelNames.push_back(
+                        workingName.getElementString() );
+                    
+                    break;
+                    }
+                }
+            }
+        }
+    
+    
+    logFitnessDeath( nextPlayer->email, 
+                     nextPlayer->name, nextPlayer->displayID,
+                     &ancestorEmails, &ancestorRelNames );
+    
+    ancestorRelNames.deallocateStringElements();
+    }
+
+    
+    
+
+
 int main() {
 
     if( checkReadOnly() ) {
@@ -8797,6 +8944,8 @@ int main() {
     initCurses();
     
     initLifeTokens();
+    
+    initFitnessScore();
     
 
     initLifeLog();
@@ -10089,6 +10238,21 @@ int main() {
             if( nextPlayer->error ) {
                 continue;
                 }            
+
+            
+            if( nextPlayer->fitnessScore == -1 ) {
+                // see if result ready yet    
+                int fitResult = 
+                    getFitnessScore( nextPlayer->email, 
+                                     &nextPlayer->fitnessScore );
+
+                if( fitResult == -1 ) {
+                    // failed
+                    // stop asking now
+                    nextPlayer->fitnessScore = 0;
+                    }
+                }
+            
 
             double curCrossTime = Time::getCurrentTime();
 
@@ -14217,7 +14381,12 @@ int main() {
                                      nextPlayer->name,
                                      nextPlayer->lastSay,
                                      male );
+
+
+                // both tutorial and non-tutorial players
+                logFitnessDeath( nextPlayer );
                 
+
                 // don't use age here, because it unfairly gives Eve
                 // +14 years that she didn't actually live
                 // use true played years instead

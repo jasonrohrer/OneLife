@@ -14,7 +14,7 @@ typedef struct OpRequest {
         // separated by &, should end with & too
         const char *extraParams;
         char isScoreRequest;
-        int scoreResult;
+        float scoreResult;
         WebRequest *seqW;
         WebRequest *mainW;
     } OpRequest;
@@ -114,7 +114,7 @@ static int stepOpRequest( OpRequest *inR ) {
                 returnVal = -1;
                 }
             else if( r->isScoreRequest ) {
-                sscanf( text, "%d", &( r->scoreResult ) );
+                sscanf( text, "%f", &( r->scoreResult ) );
                 }
             delete [] text;
                     
@@ -253,7 +253,7 @@ void stepFitnessScore() {
 // 0 still pending
 // -1 DENIED
 // 1 score ready (and returned in outScore)
-int getFitnessScore( char *inEmail, int *outScore ) {
+int getFitnessScore( char *inEmail, float *outScore ) {
     
     for( int i=0; i<scoreRequests.size(); i++ ) {
         OpRequest *r = scoreRequests.getElement( i );
