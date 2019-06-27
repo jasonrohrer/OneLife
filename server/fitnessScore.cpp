@@ -9,7 +9,7 @@
 #include "minorGems/crypto/hashes/sha1.h"
 
 
-typedef struct OpRequest {
+typedef struct FitnessFitnessOpRequest {
         char *email;
         // separated by &, should end with & too
         const char *extraParams;
@@ -17,11 +17,11 @@ typedef struct OpRequest {
         float scoreResult;
         WebRequest *seqW;
         WebRequest *mainW;
-    } OpRequest;
+    } FitnessOpRequest;
 
-static SimpleVector<OpRequest> scoreRequests;
+static SimpleVector<FitnessOpRequest> scoreRequests;
 
-static SimpleVector<OpRequest> deathRequests;
+static SimpleVector<FitnessOpRequest> deathRequests;
 
 static char *serverID = NULL;
 
@@ -33,7 +33,7 @@ void initFitnessScore() {
 
 
 
-static void freeRequest( OpRequest *inR ) {
+static void freeRequest( FitnessOpRequest *inR ) {
     
     if( inR->extraParams != NULL ) {
         delete [] inR->extraParams;
@@ -59,14 +59,14 @@ static void freeRequest( OpRequest *inR ) {
 
 void freeFitnessScore() {
     for( int i=0; i<scoreRequests.size(); i++ ) {
-        OpRequest *r = scoreRequests.getElement( i );
+        FitnessOpRequest *r = scoreRequests.getElement( i );
         
         freeRequest( r );
         }
     scoreRequests.deleteAll();
 
     for( int i=0; i<deathRequests.size(); i++ ) {
-        OpRequest *r = deathRequests.getElement( i );
+        FitnessOpRequest *r = deathRequests.getElement( i );
         
         freeRequest( r );
         }
@@ -84,8 +84,8 @@ void freeFitnessScore() {
 // 0 if in progress, 
 // -1 if denied
 // request is freed if return value not 0 
-static int stepOpRequest( OpRequest *inR ) {
-    OpRequest *r = inR;
+static int stepOpRequest( FitnessOpRequest *inR ) {
+    FitnessOpRequest *r = inR;
     
     if( r->mainW != NULL ) {             
         
@@ -236,7 +236,7 @@ void stepFitnessScore() {
 
 
     for( int i=0; i<deathRequests.size(); i++ ) {
-        OpRequest *r = deathRequests.getElement( i );
+        FitnessOpRequest *r = deathRequests.getElement( i );
 
         int result = stepOpRequest( r );
         if( result != 0 ) {
@@ -256,7 +256,7 @@ void stepFitnessScore() {
 int getFitnessScore( char *inEmail, float *outScore ) {
     
     for( int i=0; i<scoreRequests.size(); i++ ) {
-        OpRequest *r = scoreRequests.getElement( i );
+        FitnessOpRequest *r = scoreRequests.getElement( i );
         
         if( strcmp( r->email, inEmail ) == 0 ) {
             // match
@@ -290,7 +290,7 @@ int getFitnessScore( char *inEmail, float *outScore ) {
     
     // else using server, start a new spend request
     
-    OpRequest r;
+    FitnessOpRequest r;
     
     r.email = stringDuplicate( inEmail );
     r.extraParams = stringDuplicate( "action=get_score&" );
@@ -320,13 +320,13 @@ void logFitnessDeath( char *inEmail, char *inName, int inDisplayID,
     
     // else using server, start a new death request
     
-    OpRequest r;
+    FitnessOpRequest r;
     
     r.email = stringDuplicate( inEmail );
     
 
     if( inName == NULL ) {
-        inName = "NAMELESS";
+        inName = (char*)"NAMELESS";
         }
 
     char *encodedName = URLUtils::urlEncode( inName );
