@@ -13,6 +13,12 @@ $fullServerURL = "http://localhost/jcr13/fitnessServer/server.php";
 
 
 
+// The URL of the ticket server's server.php script.
+// This is used to validate client requests.
+$ticketServerURL = "http://localhost/jcr13/ticketServer/server.php";
+
+
+
 
 // The URL of the main, public-face website
 $mainSiteURL = "http://localhost/jcr13/";

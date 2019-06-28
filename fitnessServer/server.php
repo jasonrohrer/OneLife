@@ -140,6 +140,12 @@ else if( $action == "report_death" ) {
 else if( $action == "get_score" ) {
     fs_getScore();
     }
+else if( $action == "get_client_score" ) {
+    fs_getClientScore();
+    }
+else if( $action == "get_client_score_details" ) {
+    fs_getClientScoreDetails();
+    }
 else if( $action == "show_log" ) {
     fs_showLog();
     }
@@ -965,6 +971,79 @@ function fs_checkServerSeqHash( $name ) {
 
 
 
+function fs_checkClientSeqHash( $email ) {
+    global $sharedGameServerSecret;
+
+
+    global $action;
+
+
+    $sequence_number = fs_requestFilter( "sequence_number", "/[0-9]+/i", "0" );
+
+    $hash_value = fs_requestFilter( "hash_value", "/[A-F0-9]+/i", "" );
+
+    $hash_value = strtoupper( $hash_value );
+
+
+    if( $email == "" ) {
+
+        fs_log( "checkClientSeqHash denied for bad email" );
+        
+        echo "DENIED";
+        die();
+        }
+    
+    $trueSeq = fs_getClientSequenceNumberForEmail( $email );
+
+    if( $trueSeq > $sequence_number ) {
+        fs_log( "checkClientSeqHash denied for stale sequence number" );
+
+        echo "DENIED";
+        die();
+        }
+
+    $correct = false;
+            
+    global $ticketServerURL;
+    $url = "$ticketServerURL".
+        "?action=check_ticket_hash".
+        "&email=$emailFilter".
+        "&hash_value=$ticket_hash".
+        "&string_to_hash=$sequence_number";
+            
+    $result = trim( file_get_contents( $url ) );
+            
+    if( $result == "VALID" ) {
+        $correct = true;
+        }
+
+    
+    if( ! $correct ) {
+        fs_log( "checkClientSeqHash denied, hash check failed" );
+
+        echo "DENIED";
+        die();
+        }
+    
+
+    
+    $computedHashValue =
+        strtoupper( fs_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
+
+    if( $computedHashValue != $hash_value ) {
+        // fs_log( "curse denied for bad hash value" );
+
+        echo "DENIED";
+        die();
+        }
+
+    
+    return $trueSeq;
+    }
+
+
+
+
 function fs_pickLeaderboardName( $inEmail ) {
     global $tableNamePrefix;
 
@@ -1026,14 +1105,7 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge ) {
     $count = fs_mysqli_result( $result, 0, 0 );
 
     if( $count == 0 ) {
-        $leaderboard_name = fs_pickLeaderboardName( $inEmail );
-        
-        $query = "INSERT INTO $tableNamePrefix"."users ".
-            "SET email = '$inEmail', leaderboard_name = '$leaderboard_name', ".
-            "lives_affecting_score = 0, score=0, ".
-            "last_action_time=CURRENT_TIMESTAMP, client_sequence_number=1;";
-        
-        fs_queryDatabase( $query );
+        fs_addUserRecord( $inEmail );
         }
 
     $query = "SELECT id, score FROM $tableNamePrefix"."users ".
@@ -1104,6 +1176,44 @@ function fs_checkAndUpdateServerSeqNumber() {
             "WHERE name = '$server_name';";
         fs_queryDatabase( $query );
         }
+    }
+
+
+
+function fs_checkAndUpdateClientSeqNumber() {
+    global $tableNamePrefix;
+
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+
+    $trueSeq = fs_checkClientSeqHash( $email );
+    
+    
+    // no locking is done here, because action is asynchronous anyway
+
+    if( $trueSeq == 0 ) {
+        // no record exists, add one
+        fs_addUserRecord( $inEmail );
+        }
+    else {
+        $query = "UPDATE $tableNamePrefix". "users SET " .
+            "sequence_number = sequence_number + 1 ".
+            "WHERE email = '$email';";
+        fs_queryDatabase( $query );
+        }
+    }
+
+
+
+
+function fs_addUserRecord( $inEmail ) {
+    $leaderboard_name = fs_pickLeaderboardName( $inEmail );
+        
+    $query = "INSERT INTO $tableNamePrefix"."users ".
+        "SET email = '$inEmail', leaderboard_name = '$leaderboard_name', ".
+        "lives_affecting_score = 0, score=0, ".
+        "last_action_time=CURRENT_TIMESTAMP, client_sequence_number=1;";
+    
+    fs_queryDatabase( $query );
     }
 
 
@@ -1196,6 +1306,127 @@ function fs_getScore() {
         }
     
     echo "$score\nOK";
+    }
+
+
+
+function fs_outputBasicScore( $inEmail ) {
+    global $tableNamePrefix;
+    
+    $query = "SELECT leaderboard_name, score, ".
+        "TIMESTAMPDIFF( SECOND, last_action_time, CURRENT_TIMESTAMP ) ".
+        "   as sec_passed ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE email = '$inEmail';";
+
+    $result = fs_queryDatabase( $query );
+
+    if( mysqli_num_rows( $result ) > 0 ) {    
+        $score = fs_mysqli_result( $result, 0, "score" );
+        $leaderboard_name = fs_mysqli_result( $result, 0, "leaderboard_name" );
+        $sec_passed = fs_mysqli_result( $result, 0, "sec_passed" );
+        
+        echo "$leaderboard_name\n$score\n";
+
+        // compute rank
+
+        $rank = 0;
+
+        if( $sec_passed < 3600 * 48 ) {
+        
+            $query =
+                "SELECT count(*) FROM $tableNamePrefix"."users ".
+                "WHERE last_action_time > ".
+                "DATE_SUB( NOW(), INTERVAL 48 HOUR ) ".
+                "AND score > $score;";
+
+            $result = fs_queryDatabase( $query );
+
+            $rank = 1 + fs_mysqli_result( $result, 0, 0 );
+            }
+        echo "$rank\n";
+        }
+    }
+
+
+
+
+function fs_getClientScore() {
+    fs_checkAndUpdateClientSeqNumber();
+
+    global $tableNamePrefix;
+
+
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+
+    if( $email == "" ) {
+        echo "DENIED";
+        die();
+        }
+
+    fs_outputBasicScore( $email );
+
+    echo "OK";
+    }
+
+
+
+function fs_getClientScoreDetails() {
+    fs_checkAndUpdateClientSeqNumber();
+
+    global $tableNamePrefix;
+
+
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+
+    if( $email == "" ) {
+        echo "DENIED";
+        die();
+        }
+
+    fs_outputBasicScore( $email );
+
+    // now offspring that contribute to score
+
+
+    $query = "SELECT id ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE email = '$email';";
+    $result = fs_queryDatabase( $query );
+
+    $id = fs_mysqli_result( $result, 0, "id" );
+
+    $query = "SELECT name, age, relation_name, ".
+        "old_score, new_score, ".
+        "TIMESTAMPDIFF( SECOND, death_time, CURRENT_TIMESTAMP ) ".
+        "   as died_sec_ago ".
+        "FROM $tableNamePrefix"."offspring AS offspring ".
+        "INNER JOIN $tableNamePrefix"."lives AS lives ".
+        "ON offspring.life_id = lives.id ".
+        "WHERE offspring.player_id = $id ORDER BY offspring.death_time DESC ".
+        "LIMIT 20";
+
+    fs_log( $query );
+    
+    $result = fs_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+    
+    for( $i=0; $i<$numRows; $i++ ) {
+        $name = fs_mysqli_result( $result, $i, "name" );
+        $age = fs_mysqli_result( $result, $i, "age" );
+        $relation_name = fs_mysqli_result( $result, $i, "relation_name" );
+        $old_score = fs_mysqli_result( $result, $i, "old_score" );
+        $new_score = fs_mysqli_result( $result, $i, "new_score" );
+        $died_sec_ago = fs_mysqli_result( $result, $i, "died_sec_ago" );
+        // one per line
+        // name,relation,died_sec_ago,age,old_score,new_score
+
+        echo "$name,$relation_name,$died_sec_ago,$age,$old_score,$new_score\n";
+        }
+    
+    
+    echo "OK";
     }
 
 

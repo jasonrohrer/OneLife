@@ -95,3 +95,78 @@ DENIED
 Used by game servers to request a given user's current score.
 
 DENIED is returned if the email isn't known
+
+
+
+
+
+
+
+====
+These calls are called by game clients
+====
+
+
+server.php
+?action=get_client_score
+&email=[email address]
+&sequence_number=[int]
+&hash_value=[hash value]
+
+Return:
+leaderboard_name
+score
+rank
+OK
+-or-
+DENIED
+
+Used by clients to request score information.
+
+DENIED is returned if the email isn't known or hash check fails
+
+
+
+hash_value is computed on both ends with:
+
+HMAC_SHA1( $ticket_id, $string_to_hash )
+
+Where $ticket_id has hyphens removed and is all uppercase.
+
+
+
+
+server.php
+?action=get_client_score_details
+&email=[email address]
+&sequence_number=[int]
+&hash_value=[hash value]
+
+Return:
+leaderboard_name
+score
+rank
+name,relation,died_sec_ago,age,old_score,new_score
+name,relation,died_sec_ago,age,old_score,new_score
+name,relation,died_sec_ago,age,old_score,new_score
+....
+name,relation,died_sec_ago,age,old_score,new_score
+OK
+-or-
+DENIED
+
+Used by clients to request detailed score information.
+
+DENIED is returned if the email isn't known or hash check fails
+
+Same results as get_client_score, followed by list of recent selves and
+offspring that contributed to the score
+
+
+
+
+hash_value is computed on both ends with:
+
+HMAC_SHA1( $ticket_id, $string_to_hash )
+
+Where $ticket_id has hyphens removed and is all uppercase.
