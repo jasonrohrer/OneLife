@@ -206,7 +206,7 @@ leaderboard "LEADERBOARD"
 
 scrollTip "SCROLL##WITH##ARROW##KEYS"
 
-geneticHistoryTitle "YOUR GENETIC HISTORY:"
+geneticHistoryTitle "YOUR RECENT GENETIC HISTORY:"
 
 fitnessTitle "FITNESS"
 
