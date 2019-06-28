@@ -4,6 +4,7 @@
 
 
 #include "minorGems/game/game.h"
+#include "minorGems/game/drawUtils.h"
 
 
 #include "minorGems/util/SettingsManager.h"
@@ -27,6 +28,8 @@ static int useFitnessServer = 0;
 
 
 extern char *userEmail;
+extern Font *mainFont;
+extern Font *numbersFontFixed;
 
 
 static char *leaderboardName = NULL;
@@ -169,6 +172,22 @@ void triggerFitnessScoreDetailsUpdate() {
 
 
 
+static void shortenLongString( char *inString ) {
+    
+    while( mainFont->measureString( inString ) >= 460 ) {
+        
+        // truncate by 2 each time, to speed up the process
+        int len = strlen( inString );
+        
+        inString[ len - 5 ] = '.';
+        inString[ len - 4 ] = '.';
+        inString[ len - 3 ] = '.';
+        inString[ len - 2 ] = '\0';
+        }
+    }
+            
+
+
 static void stepActiveRequest() {
     if( webRequest == -1 ) {
         return;
@@ -249,6 +268,13 @@ static void stepActiveRequest() {
         
         sscanf( readyResult, "%99s\n%lf\n%d", leaderboardName, &score, &rank );
 
+        char *leaderUpper = stringToUpperCase( leaderboardName );
+        delete [] leaderboardName;
+        
+        char found;
+        leaderboardName = replaceAll( leaderUpper, "_", " ", &found );
+        delete [] leaderUpper;
+
 
 
         if( strcmp( nextAction, "get_client_score_details" ) == 0 ) {
@@ -266,9 +292,22 @@ static void stepActiveRequest() {
                 char **parts = split( line, ",", &numParts );
                 
                 OffspringRecord r;
-                r.name = stringDuplicate( parts[0] );
-                r.relationName = stringDuplicate( parts[1] );
+                char *nameWorking = stringToUpperCase( parts[0] );
+                char *relationWorking = stringToUpperCase( parts[1] );
                 
+                char found;
+                r.name = replaceAll( nameWorking, "_", " ", &found );
+                delete [] nameWorking;
+                
+                shortenLongString( r.name );
+
+                r.relationName = 
+                    replaceAll( relationWorking, "_", " ", &found );
+                delete [] relationWorking;
+
+                shortenLongString( r.relationName );
+                
+
                 sscanf( parts[2], "%d", &( r.displayID ) );
                 sscanf( parts[3], "%d", &( r.diedSecAgo ) );
                 sscanf( parts[4], "%lf", &( r.age ) );
@@ -341,11 +380,132 @@ void drawFitnessScoreDetails( doublePair inPos ) {
 
     if( score != -1 ) {
         drawFitnessScore( inPos );
+        
+        inPos.y -= 75;
+        
+        char *leaderboardString = 
+            autoSprintf( translate( "leaderboardMessage" ), leaderboardName );
+        
+        mainFont->drawString( leaderboardString, inPos, alignCenter );
 
-        inPos.y -= 50;
+        
+
+
+        inPos.y -= 75;
         
         
-        drawMessage( "FIXME:  list goes here", inPos );
+        
+        FloatColor bgColor = { 0.2, 0.2, 0.2, 1.0 };
+        FloatColor bgColorAlt = { 0.1, 0.1, 0.1, 1.0 };
+        
+        for( int i=0; i<recentOffspring.size(); i++ ) {
+            setDrawColor( bgColor );
+            
+            OffspringRecord r = recentOffspring.getElementDirect( i );
+            
+            drawRect( inPos, 500, 40 );
+            
+            setDrawColor( 1, 1, 1, 1.0 );
+            
+            doublePair pos = inPos;
+            
+            pos.y += 16;
+            pos.x -= 480;
+
+
+            mainFont->drawString( r.name, pos, alignLeft );
+            
+            pos.y -= 32;
+            
+            mainFont->drawString( r.relationName, pos, alignLeft );
+            
+            pos.x = 0;
+            
+            int yearsAgo = r.diedSecAgo / 60;
+            
+            char *diedAgoString;
+            
+            if( yearsAgo == 1 ) {
+                diedAgoString = autoSprintf( "%s %d %s", 
+                                             translate( "died" ),
+                                             yearsAgo,
+                                             translate( "yearAgo" ) );
+                }
+            else {
+                diedAgoString = autoSprintf( "%s %d %s", 
+                                             translate( "died" ),
+                                             yearsAgo,
+                                             translate( "yearsAgo" ) );
+                }
+            
+
+            mainFont->drawString( diedAgoString, pos, alignLeft );
+            delete [] diedAgoString;
+            
+            pos.y += 32;
+            
+            char *ageString = autoSprintf( "%s %0.1f",
+                                           translate( "age" ),
+                                           r.age );
+            
+            mainFont->drawString( ageString, pos, alignLeft );
+            
+            delete [] ageString;
+            
+            pos.x = 360;
+            
+            double scoreDelt = r.newScore - r.oldScore;
+            
+            char *deltString;
+
+            if( scoreDelt > 0 ) {
+                setDrawColor( 0.0, 1.0, 0.0, 1.0 );
+            
+                deltString = autoSprintf( "+%0.2f", scoreDelt );
+                }
+            else {
+                setDrawColor( 1.0, 0.0, 0.0, 1.0 );
+            
+                deltString = autoSprintf( "%0.2f", scoreDelt );
+                }
+            
+            numbersFontFixed->drawString( deltString, pos, alignRight );
+            
+            delete [] deltString;
+
+            pos.x = 480;
+            
+            setDrawColor( 1, 1, 1, 1 );
+            
+            char *scoreString = autoSprintf( "%0.2f", r.newScore );
+            
+            numbersFontFixed->drawString( scoreString, pos, alignRight );
+
+
+            delete [] scoreString;
+            
+            
+            //swap
+            FloatColor temp = bgColor;
+            bgColor = bgColorAlt;
+            bgColorAlt = temp;
+
+            inPos.y -= 80;
+            }
+        }
+    else {
+        stepActiveRequest();
         }
     }
+
+
+
+
+char isFitnessScoreReady() {
+    if( score != -1 ) {
+        return true;
+        }
+    return false;
+    }
+
 

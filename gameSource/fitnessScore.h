@@ -11,6 +11,9 @@ void triggerFitnessScoreUpdate();
 void triggerFitnessScoreDetailsUpdate();
 
 
+// false if either have been triggered and result not ready yet
+char isFitnessScoreReady();
+
 
 // These draw nothing if latest data (after last trigger) not ready yet
 

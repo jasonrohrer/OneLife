@@ -56,6 +56,7 @@ ExistingAccountPage::ExistingAccountPage()
                                       translate( "disableCustomServer" ) ),
           mLoginButton( mainFont, 400, 0, translate( "loginButton" ) ),
           mFriendsButton( mainFont, 400, -80, translate( "friendsButton" ) ),
+          mGenesButton( mainFont, 550, 0, translate( "genesButton" ) ),
           mFamilyTreesButton( mainFont, 400, -160, translate( "familyTrees" ) ),
           mClearAccountButton( mainFont, 400, -280, 
                                translate( "clearAccount" ) ),
@@ -93,6 +94,7 @@ ExistingAccountPage::ExistingAccountPage()
 
     setButtonStyle( &mLoginButton );
     setButtonStyle( &mFriendsButton );
+    setButtonStyle( &mGenesButton );
     setButtonStyle( &mFamilyTreesButton );
     setButtonStyle( &mClearAccountButton );
     setButtonStyle( &mCancelButton );
@@ -113,6 +115,7 @@ ExistingAccountPage::ExistingAccountPage()
     
     addComponent( &mLoginButton );
     addComponent( &mFriendsButton );
+    addComponent( &mGenesButton );
     addComponent( &mFamilyTreesButton );
     addComponent( &mClearAccountButton );
     addComponent( &mCancelButton );
@@ -131,6 +134,7 @@ ExistingAccountPage::ExistingAccountPage()
     
     mLoginButton.addActionListener( this );
     mFriendsButton.addActionListener( this );
+    mGenesButton.addActionListener( this );
     mFamilyTreesButton.addActionListener( this );
     mClearAccountButton.addActionListener( this );
     
@@ -219,6 +223,7 @@ void ExistingAccountPage::makeActive( char inFresh ) {
     
     mLoginButton.setVisible( false );
     mFriendsButton.setVisible( false );
+    mGenesButton.setVisible( false );
     
     
     int skipFPSMeasure = SettingsManager::getIntSetting( "skipFPSMeasure", 0 );
@@ -381,6 +386,9 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mFriendsButton ) {
         processLogin( true, "friends" );
+        }
+    else if( inTarget == &mGenesButton ) {
+        setSignal( "genes" );
         }
     else if( inTarget == &mFamilyTreesButton ) {
         char *url = SettingsManager::getStringSetting( "lineageServerURL", "" );
@@ -722,6 +730,10 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
         pos.x -= 32;
         
         drawFitnessScore( pos );
+
+        if( isFitnessScoreReady() ) {
+            mGenesButton.setVisible( true );
+            }
         }
     }
 

@@ -44,6 +44,7 @@ atSignTip "INSERT '@' SIGN (INTL KEYBOARDS)"
 loginButton "LOGIN"
 friendsButton "FRIENDS"
 familyTrees "FAMILY TREES"
+genesButton "GENES"
 
 clearAccount "CLEAR ACCOUNT"
 settingsButton "SETTINGS"
@@ -194,6 +195,13 @@ tokenTimeMessage "NEW LIFE IN:  "
 
 scoreMessage "GENETIC FITNESS:##%0.1f (%d%s PLACE)"
 
+refreshButton "REFRESH"
+
+age "AGE"
+
+leaderboardMessage "LEADERBOARD NAME: %s"
+
+leaderboard "LEADERBOARD"
 
 
 

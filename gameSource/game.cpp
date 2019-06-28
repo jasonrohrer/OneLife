@@ -90,6 +90,7 @@ CustomRandomSource randSource( 34957197 );
 #include "ReviewPage.h"
 #include "TwinPage.h"
 #include "PollPage.h"
+#include "GeneticHistoryPage.h"
 //#include "TestPage.h"
 
 #include "ServerActionPage.h"
@@ -143,6 +144,7 @@ SettingsPage *settingsPage;
 ReviewPage *reviewPage;
 TwinPage *twinPage;
 PollPage *pollPage;
+GeneticHistoryPage *geneticHistoryPage;
 //TestPage *testPage = NULL;
 
 
@@ -638,7 +640,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
     pollPage = new PollPage( reviewURL );
     delete [] reviewURL;
-
+    
+    geneticHistoryPage = new GeneticHistoryPage();
+    
 
     // 0 music headroom needed, because we fade sounds before playing music
     setVolumeScaling( 10, 0 );
@@ -726,6 +730,7 @@ void freeFrameDrawer() {
     delete reviewPage;
     delete twinPage;
     delete pollPage;
+    delete geneticHistoryPage;
     
     //if( testPage != NULL ) {
     //    delete testPage;
@@ -1674,6 +1679,10 @@ void drawFrame( char inUpdate ) {
                 currentGamePage = pollPage;
                 currentGamePage->base_makeActive( true );
                 }
+            else if( existingAccountPage->checkSignal( "genes" ) ) {
+                currentGamePage = geneticHistoryPage;
+                currentGamePage->base_makeActive( true );
+                }
             else if( existingAccountPage->checkSignal( "settings" ) ) {
                 currentGamePage = settingsPage;
                 currentGamePage->base_makeActive( true );
@@ -2015,6 +2024,12 @@ void drawFrame( char inUpdate ) {
         else if( currentGamePage == pollPage ) {
             if( pollPage->checkSignal( "done" ) ) {
                 currentGamePage = rebirthChoicePage;
+                currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == geneticHistoryPage ) {
+            if( geneticHistoryPage->checkSignal( "done" ) ) {
+                currentGamePage = existingAccountPage;
                 currentGamePage->base_makeActive( true );
                 }
             }

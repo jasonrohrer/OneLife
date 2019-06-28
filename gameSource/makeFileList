@@ -71,6 +71,7 @@ photos.cpp \
 lifeTokens.cpp \
 PollPage.cpp \
 fitnessScore.cpp \
+GeneticHistoryPage.cpp \
 
 
 
