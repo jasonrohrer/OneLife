@@ -4,6 +4,7 @@
 
 #include "objectBank.h"
 #include "ageControl.h"
+#include "groundSprites.h"
 
 
 #include "minorGems/game/game.h"
@@ -426,7 +427,9 @@ static void drawFadeRect( doublePair inBottomLeft, doublePair inTopRight,
 
 
 
-static void drawFace( doublePair inPos, int inDisplayID, double inAge ) {
+
+static void drawFace( doublePair inPos, int inDisplayID, double inAge,
+                      int inDrawIndex ) {
     
     ObjectRecord *faceO = getObject( inDisplayID );
 
@@ -436,6 +439,20 @@ static void drawFace( doublePair inPos, int inDisplayID, double inAge ) {
     drawSquare( inPos, 28 );
     
     startDrawingThroughStencil( false );
+
+    
+    // use grass background for all
+    if( 0 < groundSpritesArraySize &&
+        groundSprites[0] != NULL ) {
+        
+        if( inDrawIndex > groundSprites[0]->numTilesHigh - 1 ) {
+            inDrawIndex = inDrawIndex % groundSprites[2]->numTilesHigh;
+            }
+        
+        SpriteHandle h = groundSprites[0]->tiles[inDrawIndex][0];
+        
+        drawSprite( h, inPos );
+        }
     
     
     int headIndex = getHeadIndex( faceO, inAge );
@@ -563,7 +580,7 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
             facePos.y -= 16;
             facePos.x -= 45;
             
-            drawFace( facePos, r.displayID, r.age );
+            drawFace( facePos, r.displayID, r.age, i );
             
             setDrawColor( 1, 1, 1, 1 );
 
