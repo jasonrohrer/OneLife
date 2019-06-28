@@ -200,11 +200,15 @@ refreshButton "REFRESH"
 
 age "AGE"
 
-leaderboardMessage "LEADERBOARD NAME: %s"
+leaderboardMessage "LEADERBOARD NAME (%d%s PLACE):##%s"
 
 leaderboard "LEADERBOARD"
 
 scrollTip "SCROLL##WITH##ARROW##KEYS"
+
+geneticHistoryTitle "YOUR GENETIC HISTORY:"
+
+fitnessTitle "FITNESS"
 
 
 

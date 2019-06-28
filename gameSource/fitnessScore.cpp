@@ -340,6 +340,30 @@ static void stepActiveRequest() {
 
 
 
+const char *getRankSuffix() {
+    
+    const char *rankSuffix = "TH";
+    
+    switch( rank % 10 ) {
+        case 1:
+            rankSuffix = "ST";
+            break;
+        case 2:
+            rankSuffix = "ND";
+            break;
+        case 3:
+            rankSuffix = "RD";
+            break;
+        default:
+            rankSuffix = "TH";
+            break;
+        }
+
+    return rankSuffix;
+    }
+
+
+
 // These draw nothing if latest data (after last trigger) not ready yet
 
 void drawFitnessScore( doublePair inPos, char inMoreDigits ) {
@@ -349,22 +373,7 @@ void drawFitnessScore( doublePair inPos, char inMoreDigits ) {
 
     if( score != -1 ) {        
         
-        const char *rankSuffix = "TH";
-        
-        switch( rank % 10 ) {
-            case 1:
-                rankSuffix = "ST";
-                break;
-            case 2:
-                rankSuffix = "ND";
-                break;
-            case 3:
-                rankSuffix = "RD";
-                break;
-            default:
-                rankSuffix = "TH";
-                break;
-            }
+        const char *rankSuffix = getRankSuffix();        
 
         char *scoreString;
         
@@ -422,19 +431,43 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
     
 
     if( score != -1 ) {
-        drawFitnessScore( inPos, true );
+        doublePair namePos = inPos;
+        namePos.x -= 150;
+        namePos.y += 8;
         
-        inPos.y -= 75;
-        
+        const char *rankSuffix = getRankSuffix();
+
         char *leaderboardString = 
-            autoSprintf( translate( "leaderboardMessage" ), leaderboardName );
+            autoSprintf( translate( "leaderboardMessage" ), 
+                         rank, rankSuffix, leaderboardName );
         
-        mainFont->drawString( leaderboardString, inPos, alignCenter );
+        drawMessage( leaderboardString, namePos );
+        delete [] leaderboardString;
 
         
+        //drawFitnessScore( scorePos, true );
+        
 
+        inPos.y -= 85;
+        
+        doublePair titlePos = inPos;
+        
+        titlePos.x -= 480;
+        
+        mainFont->drawString( 
+            translate( "geneticHistoryTitle" ), titlePos, alignLeft );
+        
+        titlePos = inPos;
 
-        inPos.y -= 75;
+        // 7 extra, to line up with fixed with number column
+        titlePos.x += 480 + 7;
+
+        
+        mainFont->drawString( 
+            translate( "fitnessTitle" ), titlePos, alignRight );
+        
+
+        inPos.y -= 65;
         
         doublePair startPos = inPos;
         
@@ -474,7 +507,7 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
             
             mainFont->drawString( r.relationName, pos, alignLeft );
             
-            pos.x = 0;
+            pos.x = inPos.x;
             
             int yearsAgo = r.diedSecAgo / 60;
             
@@ -507,7 +540,7 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
             
             delete [] ageString;
             
-            pos.x = 360;
+            pos.x = inPos.x + 360;
             
             double scoreDelt = r.newScore - r.oldScore;
             
@@ -528,7 +561,7 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
             
             delete [] deltString;
 
-            pos.x = 480;
+            pos.x = inPos.x + 480;
             
             setDrawColor( 1, 1, 1, 1 );
             
