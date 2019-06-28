@@ -41,6 +41,10 @@ static int rank = -1;
 static double triggerTime = 0;
 
 
+static float topShadingFade = 0;
+static float bottomShadingFade = 0;
+
+
 
 typedef struct OffspringRecord {
         char *name;
@@ -164,6 +168,10 @@ void triggerFitnessScoreDetailsUpdate() {
     score = -1;
     rank = -1;
     
+    topShadingFade = 0;
+    bottomShadingFade = 1;
+    
+
     freeAllOffspring();
 
     nextAction = "get_client_score_details";
@@ -371,7 +379,30 @@ void drawFitnessScore( doublePair inPos ) {
     }
 
 
-void drawFitnessScoreDetails( doublePair inPos ) {
+
+
+static void drawFadeRect( doublePair inBottomLeft, doublePair inTopRight,
+                          FloatColor inBottomColor, FloatColor inTopColor ) {
+    
+    double vert[8] = 
+        { inBottomLeft.x, inBottomLeft.y,
+          inBottomLeft.x, inTopRight.y,
+          inTopRight.x, inTopRight.y,
+          inTopRight.x, inBottomLeft.y };
+    
+    float vertColor[16] = 
+        { inBottomColor.r, inBottomColor.g, inBottomColor.b, inBottomColor.a,
+          inTopColor.r, inTopColor.g, inTopColor.b, inTopColor.a,
+          inTopColor.r, inTopColor.g, inTopColor.b, inTopColor.a,
+          inBottomColor.r, inBottomColor.g, inBottomColor.b, inBottomColor.a };
+    
+    drawQuads( 1, vert, vertColor );
+    }
+
+
+
+
+void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
     if( !useFitnessServer ) {
         return;
         }
@@ -393,12 +424,24 @@ void drawFitnessScoreDetails( doublePair inPos ) {
 
         inPos.y -= 75;
         
-        
+        doublePair startPos = inPos;
         
         FloatColor bgColor = { 0.2, 0.2, 0.2, 1.0 };
         FloatColor bgColorAlt = { 0.1, 0.1, 0.1, 1.0 };
+
+        if( inSkip % 2 == 1 ) {
+            FloatColor temp = bgColor;
+            bgColor = bgColorAlt;
+            bgColorAlt = temp;
+            }
+
+        int indLimit = recentOffspring.size();
         
-        for( int i=0; i<recentOffspring.size(); i++ ) {
+        if( indLimit - inSkip > 8 ) {
+            indLimit = inSkip + 8;
+            }
+        
+        for( int i=inSkip; i<indLimit; i++ ) {
             setDrawColor( bgColor );
             
             OffspringRecord r = recentOffspring.getElementDirect( i );
@@ -492,6 +535,68 @@ void drawFitnessScoreDetails( doublePair inPos ) {
 
             inPos.y -= 80;
             }
+
+        
+        if( recentOffspring.size() - inSkip > 6 ) {
+            // off bottom
+            
+            // instant fade-in
+            bottomShadingFade = 1;
+            }
+        else {
+            if( bottomShadingFade > 0 ) {
+                bottomShadingFade -= 0.1;
+                if( bottomShadingFade < 0 ) {
+                    bottomShadingFade = 0;
+                    }
+                }
+            }
+        
+        
+        if( bottomShadingFade ) {
+            
+            doublePair bottom  = { startPos.x - 500, startPos.y - 510 };
+            doublePair top = { startPos.x + 500, startPos.y - 400 };
+            
+            FloatColor bottomColor = { 0, 0, 0, bottomShadingFade };
+            FloatColor topColor = { 0, 0, 0, 0 };
+            
+            drawFadeRect( bottom, top,
+                          bottomColor, topColor );
+            }
+        
+
+        if( inSkip > 0 ) {
+            // off top too
+            if( topShadingFade < 1 ) {
+                topShadingFade += 0.1;
+                if( topShadingFade > 1 ) {
+                    topShadingFade = 1;
+                    }
+                }
+            }
+        else {
+            if( topShadingFade > 0 ) {
+                topShadingFade -= 0.1;
+                if( topShadingFade < 0 ) {
+                    topShadingFade = 0;
+                    }
+                }
+            }
+
+        if( topShadingFade ) {
+            
+            doublePair bottom  = { startPos.x - 500, startPos.y - 70 };
+            doublePair top = { startPos.x + 500, startPos.y + 40 };
+            
+            FloatColor bottomColor = { 0, 0, 0, 0 };
+            FloatColor topColor = { 0, 0, 0, topShadingFade };
+            
+            drawFadeRect( bottom, top,
+                          bottomColor, topColor );
+            }
+
+
         }
     else {
         stepActiveRequest();

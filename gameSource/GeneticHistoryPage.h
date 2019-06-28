@@ -22,6 +22,8 @@ class GeneticHistoryPage : public GamePage, public ActionListener {
 
         virtual void makeActive( char inFresh );
 
+        virtual void specialKeyDown( int inKeyCode );
+
     protected:
         TextButton mBackButton;
 
@@ -30,5 +32,8 @@ class GeneticHistoryPage : public GamePage, public ActionListener {
         TextButton mLeaderboardButton;
 
         double mRefreshTime;
+        
+
+        int mSkip;
         
     };

@@ -19,7 +19,9 @@ char isFitnessScoreReady();
 
 void drawFitnessScore( doublePair inPos );
 
-void drawFitnessScoreDetails( doublePair inPos );
+
+// inSkip controls paging through list 
+void drawFitnessScoreDetails( doublePair inPos, int inSkip );
 
 
 // returns true if using

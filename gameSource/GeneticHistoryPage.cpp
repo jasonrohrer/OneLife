@@ -25,7 +25,8 @@ GeneticHistoryPage::GeneticHistoryPage()
         : mBackButton( mainFont, -542, 300, translate( "backButton" ) ),
           mRefreshButton( mainFont, 542, 300, translate( "refreshButton" ) ),
           mLeaderboardButton( mainFont, 322, 300, translate( "leaderboard" ) ),
-          mRefreshTime( 0 ) {
+          mRefreshTime( 0 ),
+          mSkip( 0 ) {
 
     setButtonStyle( &mBackButton );
     setButtonStyle( &mRefreshButton );
@@ -62,6 +63,7 @@ void GeneticHistoryPage::actionPerformed( GUIComponent *inTarget ) {
         triggerFitnessScoreDetailsUpdate();
         mRefreshButton.setVisible( false );
         mRefreshTime = game_getCurrentTime();
+        mSkip = 0;
         }
     else if( inTarget == &mLeaderboardButton ) {
         char *url = SettingsManager::getStringSetting( "fitnessServerURL", "" );
@@ -93,7 +95,7 @@ void GeneticHistoryPage::draw( doublePair inViewCenter,
     
 
     doublePair pos = { 0, 300 };
-    drawFitnessScoreDetails( pos );
+    drawFitnessScoreDetails( pos, mSkip );
     }
 
 
@@ -110,6 +112,19 @@ void GeneticHistoryPage::makeActive( char inFresh ) {
         mRefreshButton.setVisible( false );
         mLeaderboardButton.setVisible( false );
         mRefreshTime = game_getCurrentTime();
+        mSkip = 0;
         }
     }
 
+
+void GeneticHistoryPage::specialKeyDown( int inKeyCode ) {
+    if( inKeyCode == MG_KEY_UP ) {
+        mSkip --;
+        if( mSkip < 0 ) {
+            mSkip = 0;
+            }
+        }
+    else if( inKeyCode == MG_KEY_DOWN ) {
+        mSkip ++;
+        }
+    };
