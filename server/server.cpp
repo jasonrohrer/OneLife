@@ -8722,7 +8722,7 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
                         SimpleVector<char> workingName;
                         
                         for( int g=2; g<=i; g++ ) {
-                            workingName.appendElementString( "Great " );
+                            workingName.appendElementString( "Great_" );
                             }
                         if( ! getFemale( nextPlayer ) ) {
                             workingName.appendElementString( "Nephew" );
@@ -8757,7 +8757,7 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
                             workingName.appendElementString( "Grand" );
                             }
                         else {
-                            workingName.appendElementString( "Great " );
+                            workingName.appendElementString( "Great_" );
                             }
                         }
                     

@@ -1237,6 +1237,11 @@ function fs_reportDeath() {
     $display_id = fs_requestFilter( "display_id", "/[0-9]+/i", "0" );
 
     $name = fs_requestFilter( "name", "/[A-Z ]+/i", "" );
+
+    $name = ucwords( strtolower( $name ) );
+    
+    $name = preg_replace( '/ /', '_', $name );
+
     
     $query = "INSERT INTO $tableNamePrefix". "lives SET " .
         "name = '$name', ".
@@ -1325,6 +1330,8 @@ function fs_outputBasicScore( $inEmail ) {
         $score = fs_mysqli_result( $result, 0, "score" );
         $leaderboard_name = fs_mysqli_result( $result, 0, "leaderboard_name" );
         $sec_passed = fs_mysqli_result( $result, 0, "sec_passed" );
+
+        $leaderboard_name = preg_replace( '/ /', '_', $leaderboard_name );
         
         echo "$leaderboard_name\n$score\n";
 
