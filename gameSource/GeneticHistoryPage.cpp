@@ -118,6 +118,10 @@ void GeneticHistoryPage::makeActive( char inFresh ) {
 
 
 void GeneticHistoryPage::specialKeyDown( int inKeyCode ) {
+    if( ! isFitnessScoreReady() ) {
+        return;
+        }
+    
     if( inKeyCode == MG_KEY_UP ) {
         mSkip --;
         if( mSkip < 0 ) {
@@ -126,5 +130,11 @@ void GeneticHistoryPage::specialKeyDown( int inKeyCode ) {
         }
     else if( inKeyCode == MG_KEY_DOWN ) {
         mSkip ++;
+
+        int max = getMaxFitnessListSkip();
+        
+        if( mSkip > max ) {
+            mSkip = max;
+            }
         }
     };

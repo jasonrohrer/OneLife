@@ -23,6 +23,9 @@ void drawFitnessScore( doublePair inPos );
 // inSkip controls paging through list 
 void drawFitnessScoreDetails( doublePair inPos, int inSkip );
 
+int getMaxFitnessListSkip();
+
+
 
 // returns true if using
 char usingFitnessServer();

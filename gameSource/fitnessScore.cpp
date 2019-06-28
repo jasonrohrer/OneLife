@@ -606,6 +606,14 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
 
 
 
+int getMaxFitnessListSkip() {
+    return recentOffspring.size() - 6;
+    }
+
+
+
+
+
 char isFitnessScoreReady() {
     if( score != -1 ) {
         return true;
