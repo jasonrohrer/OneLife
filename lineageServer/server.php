@@ -1544,12 +1544,15 @@ function ls_frontPage() {
             $string_to_hash =
                 ls_requestFilter( "string_to_hash", "/[A-Z0-9]+/i", "0" );
 
+
+            $encodedEmail = urlencode( $emailFilter );
+            
             $correct = false;
             
             global $ticketServerURL;
             $url = "$ticketServerURL".
                 "?action=check_ticket_hash".
-                "&email=$emailFilter".
+                "&email=$encodedEmail".
                 "&hash_value=$ticket_hash".
                 "&string_to_hash=$string_to_hash";
             
