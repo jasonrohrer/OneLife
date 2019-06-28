@@ -349,6 +349,11 @@ unknownPerson "UNKNOWN PERSON"
 yearAgo "YEAR AGO"
 yearsAgo "YEARS AGO"
 
+centuriesAgo "CENTURIES AGO"
+
+millenniaAgo "MILLENNIA AGO"
+
+
 died "DIED"
 
 zero "ZERO"

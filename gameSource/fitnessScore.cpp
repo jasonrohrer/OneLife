@@ -604,12 +604,25 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
                                              yearsAgo,
                                              translate( "yearAgo" ) );
                 }
-            else {
+            else if( yearsAgo < 1000 ) {
                 diedAgoString = autoSprintf( "%s %d %s", 
                                              translate( "died" ),
                                              yearsAgo,
                                              translate( "yearsAgo" ) );
                 }
+            else if( yearsAgo < 10000 ) {
+                diedAgoString = autoSprintf( "%s %d %s", 
+                                             translate( "died" ),
+                                             yearsAgo / 100,
+                                             translate( "centuriesAgo" ) );
+                }
+            else {
+                diedAgoString = autoSprintf( "%s %d %s", 
+                                             translate( "died" ),
+                                             yearsAgo / 1000,
+                                             translate( "millenniaAgo" ) );
+                }
+            
             
 
             mainFont->drawString( diedAgoString, pos, alignLeft );
