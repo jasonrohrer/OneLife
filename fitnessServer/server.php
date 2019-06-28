@@ -1396,7 +1396,7 @@ function fs_getClientScoreDetails() {
 
     $id = fs_mysqli_result( $result, 0, "id" );
 
-    $query = "SELECT name, age, relation_name, ".
+    $query = "SELECT name, age, display_id, relation_name, ".
         "old_score, new_score, ".
         "TIMESTAMPDIFF( SECOND, death_time, CURRENT_TIMESTAMP ) ".
         "   as died_sec_ago ".
@@ -1415,14 +1415,16 @@ function fs_getClientScoreDetails() {
     for( $i=0; $i<$numRows; $i++ ) {
         $name = fs_mysqli_result( $result, $i, "name" );
         $age = fs_mysqli_result( $result, $i, "age" );
+        $display_id = fs_mysqli_result( $result, $i, "display_id" );
         $relation_name = fs_mysqli_result( $result, $i, "relation_name" );
         $old_score = fs_mysqli_result( $result, $i, "old_score" );
         $new_score = fs_mysqli_result( $result, $i, "new_score" );
         $died_sec_ago = fs_mysqli_result( $result, $i, "died_sec_ago" );
         // one per line
-        // name,relation,died_sec_ago,age,old_score,new_score
+        // name,relation,display_id,died_sec_ago,age,old_score,new_score
 
-        echo "$name,$relation_name,$died_sec_ago,$age,$old_score,$new_score\n";
+        echo "$name,$relation_name,$display_id,".
+            "$died_sec_ago,$age,$old_score,$new_score\n";
         }
     
     

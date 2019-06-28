@@ -146,11 +146,11 @@ Return:
 leaderboard_name
 score
 rank
-name,relation,died_sec_ago,age,old_score,new_score
-name,relation,died_sec_ago,age,old_score,new_score
-name,relation,died_sec_ago,age,old_score,new_score
+name,relation,display_id,died_sec_ago,age,old_score,new_score
+name,relation,display_id,died_sec_ago,age,old_score,new_score
+name,relation,display_id,died_sec_ago,age,old_score,new_score
 ....
-name,relation,died_sec_ago,age,old_score,new_score
+name,relation,display_id,died_sec_ago,age,old_score,new_score
 OK
 -or-
 DENIED
