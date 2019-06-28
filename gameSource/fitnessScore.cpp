@@ -2,6 +2,9 @@
 #include "accountHmac.h"
 #include "message.h"
 
+#include "objectBank.h"
+#include "ageControl.h"
+
 
 #include "minorGems/game/game.h"
 #include "minorGems/game/drawUtils.h"
@@ -423,6 +426,60 @@ static void drawFadeRect( doublePair inBottomLeft, doublePair inTopRight,
 
 
 
+static void drawFace( doublePair inPos, int inDisplayID, double inAge ) {
+    
+    ObjectRecord *faceO = getObject( inDisplayID );
+
+    startAddingToStencil( true, true );
+    
+    setDrawColor( 1, 1, 1, 1 );
+    drawSquare( inPos, 28 );
+    
+    startDrawingThroughStencil( false );
+    
+    
+    int headIndex = getHeadIndex( faceO, inAge );
+    
+    doublePair headPos = faceO->spritePos[ headIndex ];
+    
+    
+    int frontFootIndex = getFrontFootIndex( faceO, inAge );
+    
+    doublePair frontFootPos = 
+        faceO->spritePos[ frontFootIndex ];
+    
+    
+    int bodyIndex = getBodyIndex( faceO, inAge );
+    
+    doublePair bodyPos = faceO->spritePos[ bodyIndex ];
+    
+
+    doublePair framePos = 
+        add( add( faceO->spritePos[ headIndex ],
+                  getAgeHeadOffset( inAge, headPos,
+                                    bodyPos,
+                                    frontFootPos ) ),
+             getAgeBodyOffset( inAge, bodyPos ) );
+    
+    // move face down
+    inPos = sub( inPos, framePos );
+    
+    inPos.y -= 16;
+
+    drawObject( faceO, 2,
+                inPos, 
+                0, false, false,
+                inAge,
+                0,
+                false,
+                false,
+                getEmptyClothingSet() );
+    
+    stopStencil();
+    }
+
+
+
 void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
     if( !useFitnessServer ) {
         return;
@@ -500,6 +557,15 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
             pos.y += 16;
             pos.x -= 480;
 
+
+            doublePair facePos = pos;
+            
+            facePos.y -= 16;
+            facePos.x -= 45;
+            
+            drawFace( facePos, r.displayID, r.age );
+            
+            setDrawColor( 1, 1, 1, 1 );
 
             mainFont->drawString( r.name, pos, alignLeft );
             
@@ -600,7 +666,7 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
         
         if( bottomShadingFade ) {
             
-            doublePair bottom  = { startPos.x - 500, startPos.y - 510 };
+            doublePair bottom  = { startPos.x - 560, startPos.y - 510 };
             doublePair top = { startPos.x + 500, startPos.y - 400 };
             
             FloatColor bottomColor = { 0, 0, 0, bottomShadingFade };
@@ -631,7 +697,7 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
 
         if( topShadingFade ) {
             
-            doublePair bottom  = { startPos.x - 500, startPos.y - 70 };
+            doublePair bottom  = { startPos.x - 560, startPos.y - 70 };
             doublePair top = { startPos.x + 500, startPos.y + 40 };
             
             FloatColor bottomColor = { 0, 0, 0, 0 };
