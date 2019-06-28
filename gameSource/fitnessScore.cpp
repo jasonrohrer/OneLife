@@ -303,35 +303,37 @@ static void stepActiveRequest() {
                 int numParts;
                 char **parts = split( line, ",", &numParts );
                 
-                OffspringRecord r;
-                char *nameWorking = stringToUpperCase( parts[0] );
-                char *relationWorking = stringToUpperCase( parts[1] );
-                
-                char found;
-                r.name = replaceAll( nameWorking, "_", " ", &found );
-                delete [] nameWorking;
-                
-                shortenLongString( r.name );
-
-                r.relationName = 
-                    replaceAll( relationWorking, "_", " ", &found );
-                delete [] relationWorking;
-
-                shortenLongString( r.relationName );
-                
-
-                sscanf( parts[2], "%d", &( r.displayID ) );
-                sscanf( parts[3], "%d", &( r.diedSecAgo ) );
-                sscanf( parts[4], "%lf", &( r.age ) );
-                sscanf( parts[5], "%lf", &( r.oldScore ) );
-                sscanf( parts[6], "%lf", &( r.newScore ) );
+                if( numParts == 7 ) {
+                    
+                    OffspringRecord r;
+                    char *nameWorking = stringToUpperCase( parts[0] );
+                    char *relationWorking = stringToUpperCase( parts[1] );
+                    
+                    char found;
+                    r.name = replaceAll( nameWorking, "_", " ", &found );
+                    delete [] nameWorking;
+                    
+                    shortenLongString( r.name );
+                    
+                    r.relationName = 
+                        replaceAll( relationWorking, "_", " ", &found );
+                    delete [] relationWorking;
+                    
+                    shortenLongString( r.relationName );
+                    
+                    
+                    sscanf( parts[2], "%d", &( r.displayID ) );
+                    sscanf( parts[3], "%d", &( r.diedSecAgo ) );
+                    sscanf( parts[4], "%lf", &( r.age ) );
+                    sscanf( parts[5], "%lf", &( r.oldScore ) );
+                    sscanf( parts[6], "%lf", &( r.newScore ) );
+                    recentOffspring.push_back( r );
+                    }
                 
                 for( int j=0; j<numParts; j++ ) {
                     delete [] parts[j];
                     }
                 delete [] parts;
-                
-                recentOffspring.push_back( r );
                 }
 
             lines->deallocateStringElements();
@@ -738,6 +740,14 @@ int getMaxFitnessListSkip() {
     return recentOffspring.size() - 6;
     }
 
+
+
+char canFitnessScroll() {
+    if( recentOffspring.size() > 6 ) {
+        return true;
+        }
+    return false;
+    }
 
 
 

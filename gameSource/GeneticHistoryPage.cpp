@@ -96,7 +96,9 @@ void GeneticHistoryPage::draw( doublePair inViewCenter,
         
         doublePair pos = { 570, 0 };
         
-        drawMessage( "scrollTip", pos );
+        if( canFitnessScroll() ) {
+            drawMessage( "scrollTip", pos );
+            }
         }
     
 
@@ -128,19 +130,23 @@ void GeneticHistoryPage::specialKeyDown( int inKeyCode ) {
         return;
         }
     
-    if( inKeyCode == MG_KEY_UP ) {
-        mSkip --;
-        if( mSkip < 0 ) {
-            mSkip = 0;
-            }
-        }
-    else if( inKeyCode == MG_KEY_DOWN ) {
-        mSkip ++;
-
-        int max = getMaxFitnessListSkip();
+    if( canFitnessScroll() ) {
         
-        if( mSkip > max ) {
-            mSkip = max;
+        if( inKeyCode == MG_KEY_UP ) {
+            mSkip --;
+            if( mSkip < 0 ) {
+                mSkip = 0;
+                }
+            }
+        else if( inKeyCode == MG_KEY_DOWN ) {
+            mSkip ++;
+            
+            int max = getMaxFitnessListSkip();
+            
+            if( mSkip > max ) {
+                mSkip = max;
+                }
             }
         }
+    
     };

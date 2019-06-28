@@ -25,6 +25,8 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip );
 
 int getMaxFitnessListSkip();
 
+char canFitnessScroll();
+
 
 
 // returns true if using
