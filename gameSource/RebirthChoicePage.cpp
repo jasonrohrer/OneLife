@@ -4,6 +4,7 @@
 #include "message.h"
 
 #include "lifeTokens.h"
+#include "fitnessScore.h"
 
 #include "minorGems/game/Font.h"
 #include "minorGems/game/game.h"
@@ -97,18 +98,22 @@ void RebirthChoicePage::actionPerformed( GUIComponent *inTarget ) {
 void RebirthChoicePage::draw( doublePair inViewCenter, 
                                   double inViewSize ) {
     
-    doublePair pos = { 0, 228 };
+    doublePair pos = { 0, 200 };
     
     // no message for now
     //drawMessage( "", pos );
 
     drawTokenMessage( pos );
+
+    pos.y += 104;
+    drawFitnessScore( pos );
     }
 
 
 
 void RebirthChoicePage::makeActive( char inFresh ) {
     triggerLifeTokenUpdate();
+    triggerFitnessScoreUpdate();
     
     int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
     
