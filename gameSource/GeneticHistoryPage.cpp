@@ -75,6 +75,8 @@ void GeneticHistoryPage::actionPerformed( GUIComponent *inTarget ) {
             launchURL( fullURL );
             delete [] fullURL;
             }
+        
+        delete [] url;
         }
     }
 
