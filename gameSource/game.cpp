@@ -76,6 +76,7 @@ CustomRandomSource randSource( 34957197 );
 #include "emotion.h"
 #include "photos.h"
 #include "lifeTokens.h"
+#include "fitnessScore.h"
 
 
 #include "FinalMessagePage.h"
@@ -751,7 +752,7 @@ void freeFrameDrawer() {
     
     freePhotos();
     freeLifeTokens();
-    
+    freeFitnessScore();
 
     if( reflectorURL != NULL ) {
         delete [] reflectorURL;
@@ -1606,7 +1607,8 @@ void drawFrame( char inUpdate ) {
                     initPhotos();
                     
                     initLifeTokens();
-
+                    initFitnessScore();
+                    
                     initMusicPlayer();
                     setMusicLoudness( musicLoudness );
                     

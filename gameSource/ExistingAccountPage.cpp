@@ -6,6 +6,7 @@
 #include "accountHmac.h"
 
 #include "lifeTokens.h"
+#include "fitnessScore.h"
 
 
 #include "minorGems/game/Font.h"
@@ -234,6 +235,7 @@ void ExistingAccountPage::makeActive( char inFresh ) {
         mLoginButton.setVisible( true );
         mFriendsButton.setVisible( true );
         triggerLifeTokenUpdate();
+        triggerFitnessScoreUpdate();
         }
     else if( mFPSMeasureDone && mRetryButton.isVisible() ) {
         // left screen after failing
@@ -607,6 +609,7 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
                     }
                 
                 triggerLifeTokenUpdate();
+                triggerFitnessScoreUpdate();
                 }
             else {
                 // show error message
@@ -708,6 +711,17 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
         ! mDisableCustomServerButton.isVisible() ) {
         
         drawTokenMessage( pos );
+        
+        pos = mEmailField.getPosition();
+        
+        pos.x = 
+            ( mTutorialButton.getPosition().x + 
+              mLoginButton.getPosition().x )
+            / 2;
+
+        pos.x -= 32;
+        
+        drawFitnessScore( pos );
         }
     }
 

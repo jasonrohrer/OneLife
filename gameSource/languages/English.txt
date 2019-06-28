@@ -192,7 +192,7 @@ minuteSingular "MINUTE"
 tokenTimeMessage "NEW LIFE IN:  "
 
 
-scoreMessage "GENETIC FITNESS: %0.3f (%d%s PLACE)"
+scoreMessage "GENETIC FITNESS:##%0.1f (%d%s PLACE)"
 
 
 

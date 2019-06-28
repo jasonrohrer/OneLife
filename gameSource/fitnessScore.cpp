@@ -35,6 +35,10 @@ static double score = -1;
 static int rank = -1;
 
 
+static double triggerTime = 0;
+
+
+
 typedef struct OffspringRecord {
         char *name;
         char *relationName;
@@ -112,6 +116,12 @@ static void startGettingSequenceNumber() {
         }
 
     nextSequenceNumber = -1;
+    
+    if( readyResult != NULL ) {
+        delete [] readyResult;
+        readyResult = NULL;
+        }
+    
 
     char *encodedEmail = URLUtils::urlEncode( userEmail );
 
@@ -122,7 +132,8 @@ static void startGettingSequenceNumber() {
     delete [] encodedEmail;
     
     webRequest = startWebRequest( "GET", url, NULL );
-
+    triggerTime = game_getCurrentTime();
+    
     delete [] url;
     }
 
@@ -171,14 +182,24 @@ static void stepActiveRequest() {
         return;
         }
     
+    if( result == 1 &&
+        game_getCurrentTime() - triggerTime < 1 ) {
+        // wait 1 second to avoid flicker
+        return;
+        }
+
     if( result == 1 ) {
         // done!
-        char *result = getWebResult( webRequest );
+        char *resultText = getWebResult( webRequest );
+
+        clearWebRequest( webRequest );
+        webRequest = -1;
+
 
         if( nextSequenceNumber == -1 ) {
             // fetching sequence number
-            sscanf( result, "%d", &nextSequenceNumber );
-            delete [] result;
+            sscanf( resultText, "%d", &nextSequenceNumber );
+            delete [] resultText;
 
 
             // use sequence number to make next request
@@ -195,8 +216,8 @@ static void stepActiveRequest() {
             char *encodedEmail = URLUtils::urlEncode( userEmail );
 
             char *url = autoSprintf( "%s?action=%s"
-                                     "&email=%s",
-                                     "&sequence_number=%d",
+                                     "&email=%s"
+                                     "&sequence_number=%d"
                                      "&hash_value=%s",
                                      fitnessServerURL,
                                      nextAction,
@@ -212,11 +233,9 @@ static void stepActiveRequest() {
             }
         else {
             // pass result out whole
-            readyResult = result;
-            }
-        
-        clearWebRequest( webRequest );
-        webRequest = -1;
+
+            readyResult = resultText;
+            }        
         }
 
 
@@ -228,7 +247,7 @@ static void stepActiveRequest() {
             }
         leaderboardName = new char[100];
         
-        sscanf( "%99s\n%lf\n%d", leaderboardName, &score, &rank );
+        sscanf( readyResult, "%99s\n%lf\n%d", leaderboardName, &score, &rank );
 
 
 

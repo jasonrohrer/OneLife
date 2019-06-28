@@ -1003,14 +1003,19 @@ function fs_checkClientSeqHash( $email ) {
         }
 
     $correct = false;
-            
+
+    $encodedEmail = urlencode( $email );
+
+    
     global $ticketServerURL;
     $url = "$ticketServerURL".
         "?action=check_ticket_hash".
-        "&email=$emailFilter".
-        "&hash_value=$ticket_hash".
+        "&email=$encodedEmail".
+        "&hash_value=$hash_value".
         "&string_to_hash=$sequence_number";
-            
+
+    fs_log( "Ticket server url = $url" );
+    
     $result = trim( file_get_contents( $url ) );
             
     if( $result == "VALID" ) {
@@ -1020,18 +1025,6 @@ function fs_checkClientSeqHash( $email ) {
     
     if( ! $correct ) {
         fs_log( "checkClientSeqHash denied, hash check failed" );
-
-        echo "DENIED";
-        die();
-        }
-    
-
-    
-    $computedHashValue =
-        strtoupper( fs_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
-
-    if( $computedHashValue != $hash_value ) {
-        // fs_log( "curse denied for bad hash value" );
 
         echo "DENIED";
         die();
@@ -1196,7 +1189,7 @@ function fs_checkAndUpdateClientSeqNumber() {
         }
     else {
         $query = "UPDATE $tableNamePrefix". "users SET " .
-            "sequence_number = sequence_number + 1 ".
+            "client_sequence_number = client_sequence_number + 1 ".
             "WHERE email = '$email';";
         fs_queryDatabase( $query );
         }
