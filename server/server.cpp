@@ -265,6 +265,10 @@ typedef struct LiveObject {
 
         SimpleVector<int> *lineage;
         
+        SimpleVector<char*> *ancestorEmails;
+        SimpleVector<char*> *ancestorRelNames;
+        
+
         // id of Eve that started this line
         int lineageEveID;
         
@@ -1279,6 +1283,13 @@ void quitCleanup() {
             }
 
         delete nextPlayer->lineage;
+
+        nextPlayer->ancestorEmails->deallocateStringElements();
+        delete nextPlayer->ancestorEmails;
+        
+        nextPlayer->ancestorRelNames->deallocateStringElements();
+        delete nextPlayer->ancestorRelNames;
+        
 
         if( nextPlayer->name != NULL ) {
             delete [] nextPlayer->name;
@@ -5957,6 +5968,110 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.heldOriginY = newObject.yd;
     
     newObject.actionTarget = newObject.birthPos;
+
+
+
+    newObject.ancestorEmails = new SimpleVector<char*>();
+    newObject.ancestorRelNames = new SimpleVector<char*>();
+                                                  
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = players.getElement( j );
+        
+        if( otherPlayer->error ) {
+            continue;
+            }
+        
+        // a living other player
+        
+        if( ! getFemale( otherPlayer ) ) {
+            
+            // check if his mother is an ancestor
+            // (then he's an uncle
+            if( otherPlayer->parentID > 0 ) {
+                
+                // look at lineage above parent
+                // don't count brothers, only uncles
+                for( int i=1; i<newObject.lineage->size(); i++ ) {
+                    
+                    if( newObject.lineage->getElementDirect( i ) ==
+                        otherPlayer->parentID ) {
+                        
+                        newObject.ancestorEmails->push_back( 
+                            otherPlayer->email );
+
+                        // i tells us how many greats
+                        SimpleVector<char> workingName;
+                        
+                        for( int g=2; g<=i; g++ ) {
+                            workingName.appendElementString( "Great_" );
+                            }
+                        if( ! getFemale( &newObject ) ) {
+                            workingName.appendElementString( "Nephew" );
+                            }
+                        else {
+                            workingName.appendElementString( "Niece" );
+                            }
+
+                        newObject.ancestorRelNames->push_back(
+                            workingName.getElementString() );
+                        
+                        break;
+                        }
+                    }
+                }
+            }
+        else {
+            // females, look for direct ancestry
+
+            for( int i=0; i<newObject.lineage->size(); i++ ) {
+                    
+                if( newObject.lineage->getElementDirect( i ) ==
+                    otherPlayer->id ) {
+                        
+                    newObject.ancestorEmails->push_back( otherPlayer->email );
+
+                    // i tells us how many greats and grands
+                    SimpleVector<char> workingName;
+                        
+                    for( int g=1; g<=i; g++ ) {
+                        if( g == i ) {
+                            workingName.appendElementString( "Grand" );
+                            }
+                        else {
+                            workingName.appendElementString( "Great_" );
+                            }
+                        }
+                    
+                    
+                    if( i != 0 ) {
+                        if( ! getFemale( &newObject ) ) {
+                            workingName.appendElementString( "son" );
+                            }
+                        else {
+                            workingName.appendElementString( "daughter" );
+                            }
+                        }
+                    else {
+                        // no "Grand"
+                        if( ! getFemale( &newObject ) ) {
+                                workingName.appendElementString( "Son" );
+                            }
+                        else {
+                            workingName.appendElementString( "Daughter" );
+                            }
+                        }
+                    
+                    
+                    newObject.ancestorRelNames->push_back(
+                        workingName.getElementString() );
+                    
+                    break;
+                    }
+                }
+            }
+        }
+    
+
     
 
     
@@ -8688,116 +8803,14 @@ void getLineageLineForPlayer( LiveObject *inPlayer,
 void logFitnessDeath( LiveObject *nextPlayer ) {
     
     // log this death for fitness purposes,
-    // for both tutorial and non
-
-    SimpleVector<char*> ancestorEmails;
-    SimpleVector<char*> ancestorRelNames;
-    
-    for( int j=0; j<players.size(); j++ ) {
-        LiveObject *otherPlayer = players.getElement( j );
-        
-        if( otherPlayer->error || 
-            otherPlayer == nextPlayer ) {
-            continue;
-            }
-        
-        // a living other player
-        
-        if( ! getFemale( otherPlayer ) ) {
-            
-            // check if his mother is an ancestor
-            // (then he's an uncle
-            if( otherPlayer->parentID > 0 ) {
-                
-                // look at lineage above parent
-                // don't count brothers, only uncles
-                for( int i=1; i<nextPlayer->lineage->size(); i++ ) {
-                    
-                    if( nextPlayer->lineage->getElementDirect( i ) ==
-                        otherPlayer->parentID ) {
-                        
-                        ancestorEmails.push_back( otherPlayer->email );
-
-                        // i tells us how many greats
-                        SimpleVector<char> workingName;
-                        
-                        for( int g=2; g<=i; g++ ) {
-                            workingName.appendElementString( "Great_" );
-                            }
-                        if( ! getFemale( nextPlayer ) ) {
-                            workingName.appendElementString( "Nephew" );
-                            }
-                        else {
-                            workingName.appendElementString( "Niece" );
-                            }
-
-                        ancestorRelNames.push_back(
-                            workingName.getElementString() );
-                        
-                        break;
-                        }
-                    }
-                }
-            }
-        else {
-            // females, look for direct ancestry
-
-            for( int i=0; i<nextPlayer->lineage->size(); i++ ) {
-                    
-                if( nextPlayer->lineage->getElementDirect( i ) ==
-                    otherPlayer->id ) {
-                        
-                    ancestorEmails.push_back( otherPlayer->email );
-
-                    // i tells us how many greats and grands
-                    SimpleVector<char> workingName;
-                        
-                    for( int g=1; g<=i; g++ ) {
-                        if( g == i ) {
-                            workingName.appendElementString( "Grand" );
-                            }
-                        else {
-                            workingName.appendElementString( "Great_" );
-                            }
-                        }
-                    
-                    
-                    if( i != 0 ) {
-                        if( ! getFemale( nextPlayer ) ) {
-                            workingName.appendElementString( "son" );
-                            }
-                        else {
-                            workingName.appendElementString( "daughter" );
-                            }
-                        }
-                    else {
-                        // no "Grand"
-                        if( ! getFemale( nextPlayer ) ) {
-                                workingName.appendElementString( "Son" );
-                            }
-                        else {
-                            workingName.appendElementString( "Daughter" );
-                            }
-                        }
-                    
-                    
-                    ancestorRelNames.push_back(
-                        workingName.getElementString() );
-                    
-                    break;
-                    }
-                }
-            }
-        }
-    
+    // for both tutorial and non    
     
     logFitnessDeath( players.size(),
                      nextPlayer->email, 
                      nextPlayer->name, nextPlayer->displayID,
                      computeAge( nextPlayer ),
-                     &ancestorEmails, &ancestorRelNames );
-    
-    ancestorRelNames.deallocateStringElements();
+                     nextPlayer->ancestorEmails, 
+                     nextPlayer->ancestorRelNames );
     }
 
     
@@ -17939,6 +17952,13 @@ int main() {
                 
                 delete nextPlayer->lineage;
                 
+                nextPlayer->ancestorEmails->deallocateStringElements();
+                delete nextPlayer->ancestorEmails;
+                
+                nextPlayer->ancestorRelNames->deallocateStringElements();
+                delete nextPlayer->ancestorRelNames;
+
+
                 if( nextPlayer->name != NULL ) {
                     delete [] nextPlayer->name;
                     }
