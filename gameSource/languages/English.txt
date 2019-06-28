@@ -204,6 +204,9 @@ leaderboardMessage "LEADERBOARD NAME: %s"
 
 leaderboard "LEADERBOARD"
 
+scrollTip "SCROLL##WITH##ARROW##KEYS"
+
+
 
 
 customServerMesssage "CUSTOM SERVER:  %s : %d"

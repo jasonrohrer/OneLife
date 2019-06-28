@@ -91,6 +91,10 @@ void GeneticHistoryPage::draw( doublePair inViewCenter,
 
     if( isFitnessScoreReady() ){
         mLeaderboardButton.setVisible( true );
+        
+        doublePair pos = { 570, 0 };
+        
+        drawMessage( "scrollTip", pos );
         }
     
 
