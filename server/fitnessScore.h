@@ -17,7 +17,8 @@ void stepFitnessScore();
 int getFitnessScore( char *inEmail, float *outScore );
 
 // all string params copied internally
-void logFitnessDeath( char *inEmail, char *inName, int inDisplayID,
+void logFitnessDeath( int inNumLivePlayers, 
+                      char *inEmail, char *inName, int inDisplayID,
                       double inAge,
                       SimpleVector<char*> *inAncestorEmails,
                       SimpleVector<char*> *inAncestorRelNames );

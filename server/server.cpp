@@ -8791,7 +8791,8 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
         }
     
     
-    logFitnessDeath( nextPlayer->email, 
+    logFitnessDeath( players.size(),
+                     nextPlayer->email, 
                      nextPlayer->name, nextPlayer->displayID,
                      computeAge( nextPlayer ),
                      &ancestorEmails, &ancestorRelNames );

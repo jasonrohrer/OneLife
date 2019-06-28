@@ -306,7 +306,8 @@ int getFitnessScore( char *inEmail, float *outScore ) {
 
 
 
-void logFitnessDeath( char *inEmail, char *inName, int inDisplayID,
+void logFitnessDeath( int inNumLivePlayers,
+                      char *inEmail, char *inName, int inDisplayID,
                       double inAge,
                       SimpleVector<char*> *inAncestorEmails,
                       SimpleVector<char*> *inAncestorRelNames ) {
@@ -316,6 +317,14 @@ void logFitnessDeath( char *inEmail, char *inName, int inDisplayID,
         // not using server
         return;
         }
+
+    if( inNumLivePlayers < 
+        SettingsManager::getIntSetting( "minActivePlayersForFitness", 15 ) ) {
+        // not enough players for this to count
+        return;
+        }
+    
+        
 
     
     // else using server, start a new death request
