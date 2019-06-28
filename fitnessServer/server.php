@@ -743,7 +743,6 @@ function fs_showDetail( $checkPassword = true ) {
         "WHERE offspring.player_id = $id ORDER BY offspring.death_time DESC ".
         "LIMIT 20";
 
-    fs_log( $query );
     
     $result = fs_queryDatabase( $query );
 
@@ -1014,7 +1013,6 @@ function fs_checkClientSeqHash( $email ) {
         "&hash_value=$hash_value".
         "&string_to_hash=$sequence_number";
 
-    fs_log( "Ticket server url = $url" );
     
     $result = trim( file_get_contents( $url ) );
             
@@ -1406,7 +1404,6 @@ function fs_getClientScoreDetails() {
         "WHERE offspring.player_id = $id ORDER BY offspring.death_time DESC ".
         "LIMIT 20";
 
-    fs_log( $query );
     
     $result = fs_queryDatabase( $query );
 
