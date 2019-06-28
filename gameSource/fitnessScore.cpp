@@ -342,7 +342,7 @@ static void stepActiveRequest() {
 
 // These draw nothing if latest data (after last trigger) not ready yet
 
-void drawFitnessScore( doublePair inPos ) {
+void drawFitnessScore( doublePair inPos, char inMoreDigits ) {
     if( !useFitnessServer ) {
         return;
         }
@@ -365,10 +365,22 @@ void drawFitnessScore( doublePair inPos ) {
                 rankSuffix = "TH";
                 break;
             }
+
+        char *scoreString;
+        
+        if( inMoreDigits ) {
+            scoreString = autoSprintf( "%0.2f", score );
+            }
+        else {
+            scoreString = autoSprintf( "%0.1f", score );
+            }
         
         char *message = 
-            autoSprintf( translate( "scoreMessage" ), score, rank, rankSuffix );
+            autoSprintf( translate( "scoreMessage" ), 
+                         scoreString, rank, rankSuffix );
         
+        delete [] scoreString;
+
         drawMessage( message, inPos );
 
         delete [] message;
@@ -410,7 +422,7 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
     
 
     if( score != -1 ) {
-        drawFitnessScore( inPos );
+        drawFitnessScore( inPos, true );
         
         inPos.y -= 75;
         

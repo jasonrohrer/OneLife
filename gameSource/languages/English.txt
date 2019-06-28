@@ -194,7 +194,7 @@ minuteSingular "MINUTE"
 tokenTimeMessage "NEW LIFE IN:  "
 
 
-scoreMessage "GENETIC FITNESS:##%0.1f (%d%s PLACE)"
+scoreMessage "GENETIC FITNESS:##%s (%d%s PLACE)"
 
 refreshButton "REFRESH"
 
