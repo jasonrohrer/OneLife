@@ -41,7 +41,10 @@ GeneticHistoryPage::GeneticHistoryPage()
     
     addComponent( &mBackButton );
     addComponent( &mRefreshButton );
-    addComponent( &mLeaderboardButton );
+    
+    if( !isHardToQuitMode() ) {
+        addComponent( &mLeaderboardButton );
+        }
     }
 
 

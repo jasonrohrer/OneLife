@@ -2029,7 +2029,12 @@ void drawFrame( char inUpdate ) {
             }
         else if( currentGamePage == geneticHistoryPage ) {
             if( geneticHistoryPage->checkSignal( "done" ) ) {
-                currentGamePage = existingAccountPage;
+                if( !isHardToQuitMode() ) {
+                    currentGamePage = existingAccountPage;
+                    }
+                else {
+                    currentGamePage = rebirthChoicePage;
+                    }
                 currentGamePage->base_makeActive( true );
                 }
             }
@@ -2052,6 +2057,10 @@ void drawFrame( char inUpdate ) {
                 }
             else if( rebirthChoicePage->checkSignal( "menu" ) ) {
                 currentGamePage = existingAccountPage;
+                currentGamePage->base_makeActive( true );
+                }
+            else if( rebirthChoicePage->checkSignal( "genes" ) ) {
+                currentGamePage = geneticHistoryPage;
                 currentGamePage->base_makeActive( true );
                 }
             else if( rebirthChoicePage->checkSignal( "quit" ) ) {

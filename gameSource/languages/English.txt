@@ -45,6 +45,7 @@ loginButton "LOGIN"
 friendsButton "FRIENDS"
 familyTrees "FAMILY TREES"
 genesButton "GENES"
+geneticHistoryButton "GENETIC HISTORY"
 
 clearAccount "CLEAR ACCOUNT"
 settingsButton "SETTINGS"
