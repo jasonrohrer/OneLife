@@ -70,6 +70,8 @@ PickableStatics.cpp \
 photos.cpp \
 lifeTokens.cpp \
 PollPage.cpp \
+fitnessScore.cpp \
+
 
 
 GAME_GRAPHICS = \

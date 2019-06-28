@@ -192,6 +192,11 @@ minuteSingular "MINUTE"
 tokenTimeMessage "NEW LIFE IN:  "
 
 
+scoreMessage "GENETIC FITNESS: %0.3f (%d%s PLACE)"
+
+
+
+
 customServerMesssage "CUSTOM SERVER:  %s : %d"
 
 connecting "CONNECTING"
