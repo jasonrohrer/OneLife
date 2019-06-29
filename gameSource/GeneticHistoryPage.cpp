@@ -22,7 +22,7 @@ extern Font *mainFont;
 
 
 GeneticHistoryPage::GeneticHistoryPage() 
-        : mBackButton( mainFont, -542, 300, translate( "backButton" ) ),
+        : mBackButton( mainFont, -522, 300, translate( "backButton" ) ),
           mRefreshButton( mainFont, 542, 300, translate( "refreshButton" ) ),
           mLeaderboardButton( mainFont, 322, 300, translate( "leaderboard" ) ),
           mRefreshTime( 0 ),

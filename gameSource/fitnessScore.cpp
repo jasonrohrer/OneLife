@@ -518,7 +518,7 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
 
     if( score != -1 ) {
         doublePair namePos = inPos;
-        namePos.x -= 150;
+        namePos.x -= 140;
         namePos.y += 8;
         
 
