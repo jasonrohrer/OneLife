@@ -1183,7 +1183,7 @@ function fs_checkAndUpdateClientSeqNumber() {
 
     if( $trueSeq == 0 ) {
         // no record exists, add one
-        fs_addUserRecord( $inEmail );
+        fs_addUserRecord( $email );
         }
     else {
         $query = "UPDATE $tableNamePrefix". "users SET " .
@@ -1198,7 +1198,9 @@ function fs_checkAndUpdateClientSeqNumber() {
 
 function fs_addUserRecord( $inEmail ) {
     $leaderboard_name = fs_pickLeaderboardName( $inEmail );
-        
+
+    global $tableNamePrefix;
+    
     $query = "INSERT INTO $tableNamePrefix"."users ".
         "SET email = '$inEmail', leaderboard_name = '$leaderboard_name', ".
         "lives_affecting_score = 0, score=0, ".
