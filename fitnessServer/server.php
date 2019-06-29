@@ -948,7 +948,11 @@ function fs_checkServerSeqHash( $name ) {
     $trueSeq = fs_getServerSequenceNumberForName( $name );
 
     if( $trueSeq > $sequence_number ) {
-        fs_log( "checkServerSeqHash denied for stale sequence number" );
+        global $action;
+        
+        fs_log( "checkServerSeqHash denied for stale sequence number ".
+                "$sequence_number from ".
+                "server $name (action=$action) (trueSeq=$trueSeq)");
 
         echo "DENIED";
         die();
