@@ -374,6 +374,23 @@ const char *getRankSuffix() {
             rankSuffix = "TH";
             break;
         }
+    
+    // special case:
+    // 11, 12, 13
+    if( rank > 10 ) {
+        switch( rank % 100 ) {
+            case 11:
+                rankSuffix = "TH";
+                break;
+            case 12:
+                rankSuffix = "TH";
+                break;
+            case 13:
+                rankSuffix = "TH";
+                break;
+            }
+        }
+    
 
     return rankSuffix;
     }
