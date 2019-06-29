@@ -71,6 +71,9 @@ PickableStatics.cpp \
 photos.cpp \
 lifeTokens.cpp \
 PollPage.cpp \
+fitnessScore.cpp \
+GeneticHistoryPage.cpp \
+
 
 
 GAME_GRAPHICS = \
