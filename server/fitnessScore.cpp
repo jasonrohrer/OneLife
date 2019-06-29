@@ -17,11 +17,11 @@ typedef struct FitnessFitnessOpRequest {
         float scoreResult;
         WebRequest *seqW;
         WebRequest *mainW;
+        char isDeathRequest;
+        int lastStepResult;
     } FitnessOpRequest;
 
-static SimpleVector<FitnessOpRequest> scoreRequests;
-
-static SimpleVector<FitnessOpRequest> deathRequests;
+static SimpleVector<FitnessOpRequest> allRequests;
 
 static char *serverID = NULL;
 
@@ -58,19 +58,12 @@ static void freeRequest( FitnessOpRequest *inR ) {
 
 
 void freeFitnessScore() {
-    for( int i=0; i<scoreRequests.size(); i++ ) {
-        FitnessOpRequest *r = scoreRequests.getElement( i );
+    for( int i=0; i<allRequests.size(); i++ ) {
+        FitnessOpRequest *r = allRequests.getElement( i );
         
         freeRequest( r );
         }
-    scoreRequests.deleteAll();
-
-    for( int i=0; i<deathRequests.size(); i++ ) {
-        FitnessOpRequest *r = deathRequests.getElement( i );
-        
-        freeRequest( r );
-        }
-    deathRequests.deleteAll();
+    allRequests.deleteAll();
 
     if( serverID != NULL ) {
         delete [] serverID;
@@ -98,8 +91,6 @@ static int stepOpRequest( FitnessOpRequest *inR ) {
             // error
             // maybe server is down
             // let player through anyway
-                    
-            freeRequest( r );
             return 1;
             }
         else if( result == 1 ) {
@@ -117,8 +108,6 @@ static int stepOpRequest( FitnessOpRequest *inR ) {
                 sscanf( text, "%f", &( r->scoreResult ) );
                 }
             delete [] text;
-                    
-            freeRequest( r );
             return returnVal;
             }
         
@@ -136,8 +125,6 @@ static int stepOpRequest( FitnessOpRequest *inR ) {
             // error
             // maybe server is down
             // let player through anyway
-            
-            freeRequest( r );
             
             return 1;
             }
@@ -228,21 +215,27 @@ static int stepOpRequest( FitnessOpRequest *inR ) {
 
 
 void stepFitnessScore() {
-    // only need to step death requests here, because no one is checking
-    // them
+
+    // step oldest request here that's not done/error
     
-    // score requests are checked over and over (and thus stepped)
-    // with repeated calls to getFitnessScore
+    // do NOT interleave them
+    
+    for( int i=0; i<allRequests.size(); i++ ) {
+        FitnessOpRequest *r = allRequests.getElement( i );
 
+        if( r->lastStepResult == 0 ) {
+            
+            r->lastStepResult = stepOpRequest( r );
 
-    for( int i=0; i<deathRequests.size(); i++ ) {
-        FitnessOpRequest *r = deathRequests.getElement( i );
+            if( r->isDeathRequest && r->lastStepResult != 0 ) {
+                // no one is waiting for results from death request
+                // either error or done, stop either way
 
-        int result = stepOpRequest( r );
-        if( result != 0 ) {
-            // either error or done, stop either way
-            deathRequests.deleteElement( i );
-            i--;
+                freeRequest( r );
+                allRequests.deleteElement( i );
+                }
+            // only process latest un-done request
+            break;
             }
         }
     }
@@ -254,14 +247,18 @@ void stepFitnessScore() {
 // -1 DENIED
 // 1 score ready (and returned in outScore)
 int getFitnessScore( char *inEmail, float *outScore ) {
+
+    stepFitnessScore();
     
-    for( int i=0; i<scoreRequests.size(); i++ ) {
-        FitnessOpRequest *r = scoreRequests.getElement( i );
+    
+    for( int i=0; i<allRequests.size(); i++ ) {
+        FitnessOpRequest *r = allRequests.getElement( i );
         
-        if( strcmp( r->email, inEmail ) == 0 ) {
+        if( ! r->isDeathRequest && 
+            strcmp( r->email, inEmail ) == 0 ) {
             // match
             
-            int result = stepOpRequest( r );
+            int result = r->lastStepResult;
             
             if( result == 1 ) {
                 *outScore = r->scoreResult;
@@ -269,8 +266,9 @@ int getFitnessScore( char *inEmail, float *outScore ) {
             
             
             if( result != 0 ) {
-                // done, deleted already
-                scoreRequests.deleteElement( i );
+                // done
+                freeRequest( r );
+                allRequests.deleteElement( i );
                 }
             return result;
             }
@@ -299,7 +297,10 @@ int getFitnessScore( char *inEmail, float *outScore ) {
     r.seqW = NULL;
     r.mainW = NULL;
 
-    scoreRequests.push_back( r );
+    r.isDeathRequest = false;
+    r.lastStepResult = 0;
+    
+    allRequests.push_back( r );
 
     return 0;
     }
@@ -394,7 +395,11 @@ void logFitnessDeath( int inNumLivePlayers,
 
     r.seqW = NULL;
     r.mainW = NULL;
+    
+    r.isDeathRequest = true;
+    r.lastStepResult = 0;
+    
 
-    deathRequests.push_back( r );
+    allRequests.push_back( r );
     }
 
