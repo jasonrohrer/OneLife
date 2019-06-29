@@ -7,7 +7,7 @@ http://onehouronelife.com/updateLog.php
 
 Version 246    ???
 
---Fixed crash if email blank on longin screen when score fetch attempted.
+--Fixed crash if email blank on login screen when score fetch attempted.
 
 
 
