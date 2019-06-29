@@ -390,9 +390,19 @@ void drawFitnessScore( doublePair inPos, char inMoreDigits ) {
             scoreString = autoSprintf( "%0.1f", score );
             }
         
-        char *message = 
-            autoSprintf( translate( "scoreMessage" ), 
-                         scoreString, rank, rankSuffix );
+        char *message;
+
+        if( rank != 0 ) {
+            message = 
+                autoSprintf( translate( "scoreMessage" ), 
+                             scoreString, rank, rankSuffix );
+            }
+        else {
+            // no rank
+            message = 
+                autoSprintf( translate( "scoreMessageNoRank" ), 
+                             scoreString );
+            }
         
         delete [] scoreString;
 
@@ -511,15 +521,20 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
         namePos.x -= 150;
         namePos.y += 8;
         
-        const char *rankSuffix = getRankSuffix();
 
-        char *leaderboardString = 
-            autoSprintf( translate( "leaderboardMessage" ), 
-                         rank, rankSuffix, leaderboardName );
+        if( rank > 0 ) {
+            // hide leaderboard message if unranked
+
+            const char *rankSuffix = getRankSuffix();
+            
+            char *leaderboardString = 
+                autoSprintf( translate( "leaderboardMessage" ), 
+                             rank, rankSuffix, leaderboardName );
+            
+            drawMessage( leaderboardString, namePos );
+            delete [] leaderboardString;
+            }
         
-        drawMessage( leaderboardString, namePos );
-        delete [] leaderboardString;
-
         
         //drawFitnessScore( scorePos, true );
         
@@ -638,7 +653,7 @@ void drawFitnessScoreDetails( doublePair inPos, int inSkip ) {
             
             delete [] ageString;
             
-            pos.x = inPos.x + 360;
+            pos.x = inPos.x + 350;
             
             double scoreDelt = r.newScore - r.oldScore;
             
