@@ -1048,7 +1048,12 @@ function fs_pickLeaderboardName( $inEmail ) {
     $result = fs_queryDatabase( $query );
     $lastCount = fs_mysqli_result( $result, 0, 0 );
 
-    $emailHash = sha1( $inEmail );
+    
+    // include secret in hash, so people with code can't match
+    // names to emails
+    global $sharedGameServerSecret;
+    
+    $emailHash = sha1( $inEmail . $sharedGameServerSecret );
 
     $seedA = hexdec( substr( $emailHash, 0, 8 ) );
     $seedB = hexdec( substr( $emailHash, 8, 8 ) );
