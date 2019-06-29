@@ -8810,13 +8810,29 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
     
     // log this death for fitness purposes,
     // for both tutorial and non    
+
+    SimpleVector<char*> emptyAncestorEmails;
+    SimpleVector<char*> emptyAncestorRelNames;
     
+
+    SimpleVector<char*> *ancestorEmails = nextPlayer->ancestorEmails;
+    SimpleVector<char*> *ancestorRelNames = nextPlayer->ancestorRelNames;
+    
+
+    if( nextPlayer->suicide ) {
+        // don't let this suicide death affect scores of any ancestors
+        ancestorEmails = &emptyAncestorEmails;
+        ancestorRelNames = &emptyAncestorRelNames;
+        }
+    
+
+
     logFitnessDeath( players.size(),
                      nextPlayer->email, 
                      nextPlayer->name, nextPlayer->displayID,
                      computeAge( nextPlayer ),
-                     nextPlayer->ancestorEmails, 
-                     nextPlayer->ancestorRelNames );
+                     ancestorEmails, 
+                     ancestorRelNames );
     }
 
     

@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--DIE babies don't affect genetic score of their ancestors (but affect
+  themselves).
+
+
+
 Version 245    2019-June-28
 
 --Support for new genetic fitness score across lives, ranking, leaderboard, 
