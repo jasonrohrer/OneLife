@@ -5094,7 +5094,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             char canHaveBaby = true;
 
             
-            if( false && Time::timeSec() < player->birthCoolDown ) {    
+            if( Time::timeSec() < player->birthCoolDown ) {    
                 canHaveBaby = false;
                 }
             
