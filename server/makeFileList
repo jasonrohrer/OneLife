@@ -55,6 +55,7 @@ objectSurvey.cpp \
 language.cpp \
 familySkipList.cpp \
 lifeTokens.cpp \
+fitnessScore.cpp \
 
 
 

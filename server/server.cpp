@@ -52,6 +52,8 @@
 #include "language.h"
 #include "familySkipList.h"
 #include "lifeTokens.h"
+#include "fitnessScore.h"
+
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -225,6 +227,10 @@ typedef struct LiveObject {
         
         int id;
         
+        // -1 if unknown
+        float fitnessScore;
+        
+
         // object ID used to visually represent this player
         int displayID;
         
@@ -261,6 +267,10 @@ typedef struct LiveObject {
 
         SimpleVector<int> *lineage;
         
+        SimpleVector<char*> *ancestorEmails;
+        SimpleVector<char*> *ancestorRelNames;
+        
+
         // id of Eve that started this line
         int lineageEveID;
         
@@ -1276,6 +1286,13 @@ void quitCleanup() {
 
         delete nextPlayer->lineage;
 
+        nextPlayer->ancestorEmails->deallocateStringElements();
+        delete nextPlayer->ancestorEmails;
+        
+        nextPlayer->ancestorRelNames->deallocateStringElements();
+        delete nextPlayer->ancestorRelNames;
+        
+
         if( nextPlayer->name != NULL ) {
             delete [] nextPlayer->name;
             }
@@ -1334,6 +1351,8 @@ void quitCleanup() {
     freeCurses();
     
     freeLifeTokens();
+
+    freeFitnessScore();
 
     freeLifeLog();
     
@@ -2156,6 +2175,8 @@ double computeAge( LiveObject *inPlayer ) {
         setDeathReason( inPlayer, "age" );
         
         inPlayer->error = true;
+        
+        age = forceDeathAge;
         }
     return age;
     }
@@ -2229,7 +2250,22 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
             cap = 4;
             }
         
-        returnVal = cap;
+        int lostBars = 20 - cap;
+
+        if( lostBars > 0 && inPlayer->fitnessScore > 0 ) {
+        
+            // consider effect of fitness on reducing lost bars
+
+            // for now, let's make it quadratic
+            double maxLostBars = 
+                16 - 16 * pow( inPlayer->fitnessScore / age_death, 2 );
+            
+            if( lostBars > maxLostBars ) {
+                lostBars = maxLostBars;
+                }
+            }
+        
+        returnVal = 20 - lostBars;
         }
 
     return ceil( returnVal * inPlayer->foodCapModifier );
@@ -4974,6 +5010,18 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.id = nextID;
     nextID++;
 
+    
+    newObject.fitnessScore = -1;
+    
+    int fitResult = getFitnessScore( inEmail, &newObject.fitnessScore );
+
+    if( fitResult == -1 ) {
+        // failed right away
+        // stop asking now
+        newObject.fitnessScore = 0;
+        }
+    
+
     SettingsManager::setSetting( "nextPlayerID",
                                  (int)nextID );
 
@@ -5048,7 +5096,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             char canHaveBaby = true;
 
             
-            if( Time::timeSec() < player->birthCoolDown ) {    
+            if( false && Time::timeSec() < player->birthCoolDown ) {    
                 canHaveBaby = false;
                 }
             
@@ -5927,6 +5975,111 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.heldOriginY = newObject.yd;
     
     newObject.actionTarget = newObject.birthPos;
+
+
+
+    newObject.ancestorEmails = new SimpleVector<char*>();
+    newObject.ancestorRelNames = new SimpleVector<char*>();
+                                                  
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = players.getElement( j );
+        
+        if( otherPlayer->error ) {
+            continue;
+            }
+        
+        // a living other player
+        
+        if( ! getFemale( otherPlayer ) ) {
+            
+            // check if his mother is an ancestor
+            // (then he's an uncle
+            if( otherPlayer->parentID > 0 ) {
+                
+                // look at lineage above parent
+                // don't count brothers, only uncles
+                for( int i=1; i<newObject.lineage->size(); i++ ) {
+                    
+                    if( newObject.lineage->getElementDirect( i ) ==
+                        otherPlayer->parentID ) {
+                        
+                        newObject.ancestorEmails->push_back( 
+                            stringDuplicate( otherPlayer->email ) );
+
+                        // i tells us how many greats
+                        SimpleVector<char> workingName;
+                        
+                        for( int g=2; g<=i; g++ ) {
+                            workingName.appendElementString( "Great_" );
+                            }
+                        if( ! getFemale( &newObject ) ) {
+                            workingName.appendElementString( "Nephew" );
+                            }
+                        else {
+                            workingName.appendElementString( "Niece" );
+                            }
+
+                        newObject.ancestorRelNames->push_back(
+                            workingName.getElementString() );
+                        
+                        break;
+                        }
+                    }
+                }
+            }
+        else {
+            // females, look for direct ancestry
+
+            for( int i=0; i<newObject.lineage->size(); i++ ) {
+                    
+                if( newObject.lineage->getElementDirect( i ) ==
+                    otherPlayer->id ) {
+                        
+                    newObject.ancestorEmails->push_back( 
+                        stringDuplicate( otherPlayer->email ) );
+
+                    // i tells us how many greats and grands
+                    SimpleVector<char> workingName;
+                        
+                    for( int g=1; g<=i; g++ ) {
+                        if( g == i ) {
+                            workingName.appendElementString( "Grand" );
+                            }
+                        else {
+                            workingName.appendElementString( "Great_" );
+                            }
+                        }
+                    
+                    
+                    if( i != 0 ) {
+                        if( ! getFemale( &newObject ) ) {
+                            workingName.appendElementString( "son" );
+                            }
+                        else {
+                            workingName.appendElementString( "daughter" );
+                            }
+                        }
+                    else {
+                        // no "Grand"
+                        if( ! getFemale( &newObject ) ) {
+                                workingName.appendElementString( "Son" );
+                            }
+                        else {
+                            workingName.appendElementString( "Daughter" );
+                            }
+                        }
+                    
+                    
+                    newObject.ancestorRelNames->push_back(
+                        workingName.getElementString() );
+                    
+                    break;
+                    }
+                }
+            }
+        }
+    
+
     
 
     
@@ -8655,6 +8808,22 @@ void getLineageLineForPlayer( LiveObject *inPlayer,
 
 
 
+void logFitnessDeath( LiveObject *nextPlayer ) {
+    
+    // log this death for fitness purposes,
+    // for both tutorial and non    
+    
+    logFitnessDeath( players.size(),
+                     nextPlayer->email, 
+                     nextPlayer->name, nextPlayer->displayID,
+                     computeAge( nextPlayer ),
+                     nextPlayer->ancestorEmails, 
+                     nextPlayer->ancestorRelNames );
+    }
+
+    
+    
+
 void sanityCheckSettings(const char *inSettingName) {
     FILE *fp = SettingsManager::getSettingsFile( inSettingName, "r" );
 	if( fp == NULL ) {
@@ -8815,6 +8984,8 @@ int main() {
     initCurses();
     
     initLifeTokens();
+    
+    initFitnessScore();
     
 
     initLifeLog();
@@ -9075,7 +9246,8 @@ int main() {
             stepCurseServerRequests();
             
             stepLifeTokens();
-
+            stepFitnessScore();
+            
             stepMapLongTermCulling( players.size() );
             }
         
@@ -10107,6 +10279,21 @@ int main() {
             if( nextPlayer->error ) {
                 continue;
                 }            
+
+            
+            if( nextPlayer->fitnessScore == -1 ) {
+                // see if result ready yet    
+                int fitResult = 
+                    getFitnessScore( nextPlayer->email, 
+                                     &nextPlayer->fitnessScore );
+
+                if( fitResult == -1 ) {
+                    // failed
+                    // stop asking now
+                    nextPlayer->fitnessScore = 0;
+                    }
+                }
+            
 
             double curCrossTime = Time::getCurrentTime();
 
@@ -14235,7 +14422,12 @@ int main() {
                                      nextPlayer->name,
                                      nextPlayer->lastSay,
                                      male );
+
+
+                // both tutorial and non-tutorial players
+                logFitnessDeath( nextPlayer );
                 
+
                 // don't use age here, because it unfairly gives Eve
                 // +14 years that she didn't actually live
                 // use true played years instead
@@ -17783,6 +17975,13 @@ int main() {
                 
                 delete nextPlayer->lineage;
                 
+                nextPlayer->ancestorEmails->deallocateStringElements();
+                delete nextPlayer->ancestorEmails;
+                
+                nextPlayer->ancestorRelNames->deallocateStringElements();
+                delete nextPlayer->ancestorRelNames;
+
+
                 if( nextPlayer->name != NULL ) {
                     delete [] nextPlayer->name;
                     }

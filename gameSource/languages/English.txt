@@ -44,6 +44,8 @@ atSignTip "INSERT '@' SIGN (INTL KEYBOARDS)"
 loginButton "LOGIN"
 friendsButton "FRIENDS"
 familyTrees "FAMILY TREES"
+genesButton "GENES"
+geneticHistoryButton "GENETIC HISTORY"
 
 clearAccount "CLEAR ACCOUNT"
 settingsButton "SETTINGS"
@@ -192,6 +194,29 @@ minuteSingular "MINUTE"
 tokenTimeMessage "NEW LIFE IN:  "
 
 
+scoreMessage "GENETIC FITNESS:##%s (%d%s PLACE)"
+
+scoreMessageNoRank "GENETIC FITNESS:##%s"
+
+
+
+refreshButton "REFRESH"
+
+age "AGE"
+
+leaderboardMessage "LEADERBOARD NAME (%d%s PLACE):##%s"
+
+leaderboard "LEADERBOARD"
+
+scrollTip "SCROLL##WITH##ARROW##KEYS"
+
+geneticHistoryTitle "YOUR RECENT GENETIC HISTORY:"
+
+fitnessTitle "FITNESS"
+
+
+
+
 customServerMesssage "CUSTOM SERVER:  %s : %d"
 
 connecting "CONNECTING"
@@ -327,6 +352,11 @@ unknownPerson "UNKNOWN PERSON"
 
 yearAgo "YEAR AGO"
 yearsAgo "YEARS AGO"
+
+centuriesAgo "CENTURIES AGO"
+
+millenniaAgo "MILLENNIA AGO"
+
 
 died "DIED"
 

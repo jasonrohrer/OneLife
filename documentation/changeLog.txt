@@ -4,6 +4,23 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 245    2019-June-28
+
+--Support for new genetic fitness score across lives, ranking, leaderboard, 
+  and genetic history display inside client.
+
+
+
+
+Server Fixes
+
+--Whoops... totally forgot to update killEmotionIndex.ini server setting.
+  Murder Mouth should work now.
+
+
+
+
+
 Version 243    2019-June-21
 
 --Better randomization (less repetative) of multi-sound sets by shuffling
