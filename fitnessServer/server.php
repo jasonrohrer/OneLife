@@ -1061,8 +1061,6 @@ function fs_pickLeaderboardName( $inEmail ) {
 
     $seedA = hexdec( substr( $emailHash, 0, 8 ) );
     $seedB = hexdec( substr( $emailHash, 8, 8 ) );
-
-    fs_log( "Seeds:  $seedA, $seedB" );
     
     mt_srand( $seedA );
 
