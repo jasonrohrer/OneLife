@@ -155,11 +155,16 @@ void triggerFitnessScoreUpdate() {
         return;
         }
 
-    score = -1;
-    rank = -1;
+    if( userEmail != NULL &&
+        strcmp( userEmail, "" ) != 0 ) {
+        
+        score = -1;
+        rank = -1;
+        
+        nextAction = "get_client_score";
+        startGettingSequenceNumber();
+        }
     
-    nextAction = "get_client_score";
-    startGettingSequenceNumber();
     }
 
 
@@ -169,18 +174,23 @@ void triggerFitnessScoreDetailsUpdate() {
         return;
         }
     
-    score = -1;
-    rank = -1;
-    
-    topShadingFade = 0;
-    bottomShadingFade = 1;
-    
-
-    freeAllOffspring();
-
-    nextAction = "get_client_score_details";
-    startGettingSequenceNumber();
+    if( userEmail != NULL &&
+        strcmp( userEmail, "" ) != 0 ) {
+        
+        score = -1;
+        rank = -1;
+        
+        topShadingFade = 0;
+        bottomShadingFade = 1;
+        
+        
+        freeAllOffspring();
+        
+        nextAction = "get_client_score_details";
+        startGettingSequenceNumber();
+        }
     }
+
 
 
 

@@ -4,6 +4,15 @@ http://onehouronelife.com/updateLog.php
 
 
 
+
+Version 246    ???
+
+--Fixed crash if email blank on longin screen when score fetch attempted.
+
+
+
+
+
 Server Fixes
 
 --DIE babies don't affect genetic score of their ancestors (but affect
