@@ -2254,8 +2254,13 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
         
             // consider effect of fitness on reducing lost bars
 
-            // for now, let's make it linear
-            lostBars -= 16 * inPlayer->fitnessScore / 60.0;
+            // for now, let's make it quadratic
+            double maxLostBars = 
+                16 - 16 * pow( inPlayer->fitnessScore / 60.0, 2 );
+            
+            if( lostBars > maxLostBars ) {
+                lostBars = maxLostBars;
+                }
             }
         
         returnVal = 20 - lostBars;
@@ -5089,7 +5094,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             char canHaveBaby = true;
 
             
-            if( Time::timeSec() < player->birthCoolDown ) {    
+            if( false && Time::timeSec() < player->birthCoolDown ) {    
                 canHaveBaby = false;
                 }
             
@@ -5997,7 +6002,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                         otherPlayer->parentID ) {
                         
                         newObject.ancestorEmails->push_back( 
-                            otherPlayer->email );
+                            stringDuplicate( otherPlayer->email ) );
 
                         // i tells us how many greats
                         SimpleVector<char> workingName;
@@ -6028,7 +6033,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                 if( newObject.lineage->getElementDirect( i ) ==
                     otherPlayer->id ) {
                         
-                    newObject.ancestorEmails->push_back( otherPlayer->email );
+                    newObject.ancestorEmails->push_back( 
+                        stringDuplicate( otherPlayer->email ) );
 
                     // i tells us how many greats and grands
                     SimpleVector<char> workingName;
