@@ -22,6 +22,9 @@ Server Fixes
 --Fixed bug in interleaving of requests to genetic fitness server, resulting in
   stale sequence numbers (and thus offspring not getting logged properly).
 
+--Eves and tutorial players no longer contribute to a player's genetic score.
+
+
 
 
 Version 245    2019-June-28

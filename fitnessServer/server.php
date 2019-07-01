@@ -1093,7 +1093,10 @@ function fs_pickLeaderboardName( $inEmail ) {
 
 
 // log a death that will affect the score of $inEmail
-function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge ) {
+// if $inNoScore is true, the relationship is still logged, but the
+// score change is fixed at 0
+function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
+                      $inNoScore = false ) {
     global $tableNamePrefix;
 
     $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
@@ -1125,6 +1128,10 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge ) {
         }
     $delta /= $formulaK;
 
+    if( $inNoScore ) {
+        $delta = 0;
+        }
+    
     $new_score = $old_score + $delta;
     
     
@@ -1258,9 +1265,9 @@ function fs_reportDeath() {
 
 
     
-    // log effect of own death
-    fs_logDeath( $email, $life_id, $self_rel_name, $age );
 
+
+    $numAncestors = 0;
     
     $ancestor_list = "";
     if( isset( $_REQUEST[ "ancestor_list" ] ) ) {
@@ -1276,8 +1283,22 @@ function fs_reportDeath() {
             list( $ancestorEmail, $relName ) = explode( " ", $part, 2 );
 
             fs_logDeath( $ancestorEmail, $life_id, $relName, $age );
+            $numAncestors ++;
             }
         }
+
+
+    // log effect of own death
+    $noScore = false;
+    if( $numAncestors == 0 ) {
+        // this is an Eve or a tutorial player
+        // their lifespan doesn't count toward their score
+        $noScore = true;
+        }
+    
+    fs_logDeath( $email, $life_id, $self_rel_name, $age, $noScore );
+
+    
     
     echo "OK";
     }
