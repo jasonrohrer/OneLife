@@ -1226,6 +1226,80 @@ function fs_addUserRecord( $inEmail ) {
 
 
 
+// cleans old offspring from table that count for $email
+// and deletes the lives themselves if they aren't in the offspring table
+// for anyone anymore
+function fs_cleanOldLives( $email ) {
+    global $tableNamePrefix, $maxOffspringHistoryToKeep;
+
+    $query = "SELECT id FROM $tableNamePrefix"."users ".
+        "WHERE email = '$email';";
+
+    $result = fs_queryDatabase( $query );
+    
+    if( mysqli_num_rows( $result ) == 0 ) {
+        return;
+        }
+    
+    $player_id = fs_mysqli_result( $result, 0, "id" );
+
+    // skip $maxOffspringHistoryToKeep, and get all records after that
+    $query = "SELECT life_id ".
+        "FROM $tableNamePrefix"."offspring ".
+        "WHERE player_id = $player_id ORDER BY death_time DESC ".
+        "LIMIT $maxOffspringHistoryToKeep,9999999";
+
+    $result = fs_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
+
+    $numOffspringRemoved = 0;
+    
+    $removedOffspring = array();
+    for( $i=0; $i<$numRows; $i++ ) {
+        $life_id = fs_mysqli_result( $result, 0, "life_id" );
+
+        $removedOffspring[] = $life_id;
+        
+        $query = "DELETE FROM $tableNamePrefix"."offspring ".
+            "WHERE player_id = $player_id AND life_id = $life_id;";
+        fs_queryDatabase( $query );
+        $numOffspringRemoved ++;
+        }
+
+    // now we need to check offspring table and see if any of these
+    // life_ids aren't anyone's offspring anymore
+    $numLivesRemoved = 0;
+    
+    foreach( $removedOffspring as $life_id ) {
+        $query = "SELECT COUNT(*) FROM $tableNamePrefix"."offspring ".
+            "WHERE life_id = $life_id;";
+
+        $result = fs_queryDatabase( $query );
+
+        $count = fs_mysqli_result( $result, 0, 0 );
+
+        if( $count == 0 ) {
+            // no one counting this life as an offspring anymore
+            $query = "DELETE FROM $tableNamePrefix"."lives ".
+                "WHERE id = $life_id;";
+            fs_queryDatabase( $query );
+
+            $numLivesRemoved ++;
+            }
+        }
+
+    if( $numOffspringRemoved > 0 || $numLivesRemoved > 0 ) {
+        fs_log( "Removed $numOffspringRemoved offspring for $email ".
+                "($player_id) ".
+                "resulting in $numLivesRemoved orphaned lives that ".
+                "were removed" );
+        }
+    }
+
+
+
+
 function fs_reportDeath() {
     fs_checkAndUpdateServerSeqNumber();
     
@@ -1298,7 +1372,8 @@ function fs_reportDeath() {
     
     fs_logDeath( $email, $life_id, $self_rel_name, $age, $noScore );
 
-    
+
+    fs_cleanOldLives( $email );
     
     echo "OK";
     }
