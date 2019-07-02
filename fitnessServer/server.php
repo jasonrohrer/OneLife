@@ -886,7 +886,7 @@ function fs_recomputeScores( ) {
                     $new_score =
                         fs_mysqli_result( $resultLife, 0, "new_score" );
                     $death_time =
-                        fs_mysqli_result( $resultLfe, 0, "death_time" );
+                        fs_mysqli_result( $resultLife, 0, "death_time" );
                     
                     $delta = $new_score - $old_score;
 
@@ -899,6 +899,12 @@ function fs_recomputeScores( ) {
                         "WHERE player_id = $id AND life_id = $life_id;";
                     fs_queryDatabase( $query );
 
+
+                    // this life is taken out of consideration
+                    // when we query for the next life in death_time order
+                    // because new_score == old_score now
+                    $m--;
+                    $livesToConsider--;
                     
                     // subtract this delta from all lives going forward
                     // that affect this player's score
