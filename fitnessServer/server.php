@@ -158,9 +158,6 @@ else if( $action == "show_data" ) {
 else if( $action == "show_detail" ) {
     fs_showDetail();
     }
-else if( $action == "recompute_scores" ) {
-    fs_recomputeScores();
-    } 
 else if( $action == "logout" ) {
     fs_logout();
     }
@@ -543,8 +540,6 @@ function fs_showData( $checkPassword = true ) {
     echo "<table width='100%' border=0><tr>".
         "<td>[<a href=\"server.php?action=show_data" .
             "\">Main</a>]</td>".
-        "<td align=center>[<a href=\"server.php?action=recompute_scores" .
-            "\">Recompute Scores</a>]</td>".
         "<td align=right>[<a href=\"server.php?action=logout" .
             "\">Logout</a>]</td>".
         "</tr></table><br><br><br>";
@@ -831,106 +826,6 @@ function fs_showLeaderboard() {
 
     eval( $footer );
     }
-
-
-
-function fs_recomputeScores( ) {
-    fs_checkPassword( "recompute_scores" );
-
-    $startTime = microtime( true );
-
-    global $tableNamePrefix;
-    
-    $query = "SELECT id FROM $tableNamePrefix"."users;";
-
-    $result = fs_queryDatabase( $query );
-
-    $numRows = mysqli_num_rows( $result );
-    
-    for( $i=0; $i<$numRows; $i++ ) {
-        $id = fs_mysqli_result( $result, $i, "id" );
-
-        $query = "SELECT COUNT(*) FROM $tableNamePrefix"."offspring ".
-            "WHERE player_id = $id AND relation_name = 'You' AND ".
-            "new_score != old_score;";
-
-        $resultCount = fs_queryDatabase( $query );
-        $livesToConsider = fs_mysqli_result( $resultCount, 0, 0 );
-
-        for( $m=0; $m<$livesToConsider; $m++ ) {
-            
-            $query = "SELECT * FROM $tableNamePrefix"."offspring ".
-                "WHERE player_id = $id AND relation_name = 'You' AND ".
-                "new_score != old_score ORDER BY death_time ASC limit $m,1;";
-
-            $resultLife = fs_queryDatabase( $query );
-            $numLife = mysqli_num_rows( $resultLife );
-
-            if( $numLife == 1 ) {
-                $life_id = fs_mysqli_result( $resultLife, $i, "life_id" );
-
-                $query = "SELECT COUNT(*) FROM $tableNamePrefix"."offspring ".
-                    "WHERE life_id = $life_id;";
-
-                $resultCountAncestors = fs_queryDatabase( $query );
-                $ancestorCount =
-                    fs_mysqli_result( $resultCountAncestors, 0, 0 );
-
-                echo "Ancestor count = $ancestorCount<br>";
-                
-                if( $ancestorCount == 1 ) {
-                    // case we are looking for:
-                    // They weren't the offspring of anyone
-                    $old_score =
-                        fs_mysqli_result( $resultLife, 0, "old_score" );
-                    $new_score =
-                        fs_mysqli_result( $resultLife, 0, "new_score" );
-                    $death_time =
-                        fs_mysqli_result( $resultLife, 0, "death_time" );
-                    
-                    $delta = $new_score - $old_score;
-
-                    echo "Delta = $delta<br>";
-
-                    // set this delta to 0
-                    
-                    $query = "UPDATE $tableNamePrefix"."offspring ".
-                        "SET new_score = old_score ".
-                        "WHERE player_id = $id AND life_id = $life_id;";
-                    fs_queryDatabase( $query );
-
-
-                    // this life is taken out of consideration
-                    // when we query for the next life in death_time order
-                    // because new_score == old_score now
-                    $m--;
-                    $livesToConsider--;
-                    
-                    // subtract this delta from all lives going forward
-                    // that affect this player's score
-
-                    $query = "UPDATE $tableNamePrefix"."offspring ".
-                        "SET old_score = old_score - $delta, ".
-                        "new_score = new_score - $delta ".
-                        "WHERE player_id = $id ".
-                        "AND death_time > '$death_time';";
-                    fs_queryDatabase( $query );
-                    }
-                }
-            }
-        }
-    
-    
-
-    $netTime = microtime( true ) - $startTime;
-
-
-    echo "Recomputing took $netTime seconds<br>";
-    
-
-    fs_showData( false );
-    }
-
 
 
 
