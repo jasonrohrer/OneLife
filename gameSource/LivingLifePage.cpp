@@ -19918,7 +19918,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             else if( modClick && ourLiveObject->holdingID != 0 &&
                      destID != 0 &&
                      getNumContainerSlots( destID ) > 0 &&
-                     destNumContained < getNumContainerSlots( destID ) ) {
+                     destNumContained <= getNumContainerSlots( destID ) ) {
                 action = "DROP";
                 nextActionDropping = true;
                 send = true;

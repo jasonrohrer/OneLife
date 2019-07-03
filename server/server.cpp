@@ -6384,6 +6384,93 @@ char removeFromContainerToHold( LiveObject *inPlayer,
 
 
 
+
+// find index of spot on container held item can swap with, or -1 if none found
+static int getContainerSwapIndex( LiveObject *inPlayer,
+                                  int idToAdd,
+                                  int inStillHeld,
+                                  int inSearchLimit,
+                                  int inContX, int inContY ) {
+    // take what's on bottom of container, but only if it's different
+    // from what's in our hand
+    // AND we are old enough to take it
+    double playerAge = computeAge( inPlayer );
+    
+    // if we find a same object on bottom, keep going up until
+    // we find a non-same one to swap
+    for( int botInd = 0; botInd < inSearchLimit; botInd ++ ) {
+        
+        char same = false;
+        
+        int bottomItem = 
+            getContained( inContX, inContY, botInd, 0 );
+        
+        if( bottomItem > 0 &&
+            getObject( bottomItem )->minPickupAge > playerAge ) {
+            // too young to hold!
+            same = true;
+            }
+        else if( bottomItem == idToAdd ) {
+            if( bottomItem > 0 ) {
+                // not sub conts
+                same = true;
+                }
+            else {
+                // they must contain same stuff to be same
+                int bottomNum = getNumContained( inContX, inContY,
+                                                 botInd + 1 );
+                int topNum;
+
+                if( inStillHeld ) {
+                    topNum = inPlayer->numContained;
+                    }
+                else {
+                    // already in the container
+                    topNum =  getNumContained( inContX, inContY,
+                                               inSearchLimit + 1 );
+                    }
+                
+                if( bottomNum != topNum ) {
+                    same = false;
+                    }
+                else {
+                    same = true;
+                    for( int b=0; b<bottomNum; b++ ) {
+                        int subB = getContained( inContX, inContY,
+                                                 b, botInd + 1 );
+                        int subT;
+
+                        if( inStillHeld ) {
+                            subT = inPlayer->containedIDs[b];
+                            }
+                        else {
+                            subT = getContained( inContX, inContY,
+                                                 b, inSearchLimit + 1 );
+                            }
+                        
+                                
+                        if( subB != subT ) {
+                            same = false;
+                            break;
+                            }
+                        }
+                    }
+                }
+            }
+        if( !same ) {
+            return botInd;
+            }
+        }
+    
+    return -1;
+    }
+
+    
+        
+
+
+
+
 // swap indicates that we want to put the held item at the bottom
 // of the container and take the top one
 // returns true if added
@@ -6417,8 +6504,42 @@ static char addHeldToContainer( LiveObject *inPlayer,
 
     int numIn = 
         getNumContained( inContX, inContY );
+
     
-    if( numIn < targetSlots &&
+    int isRoom = false;
+    
+
+    if( numIn < targetSlots ) {
+        isRoom = true;
+        }
+    else {
+        // container full
+        // but check if swap is possible
+
+        if( inSwap ) {
+            
+            int idToAdd = inPlayer->holdingID;
+            TransRecord *r = getPTrans( idToAdd, -1 );
+
+            if( r != NULL && r->newActor == 0 && r->newTarget > 0 ) {
+                idToAdd = r->newTarget;
+                }
+            
+            int swapInd = getContainerSwapIndex ( inPlayer,
+                                                  idToAdd,
+                                                  true,
+                                                  numIn,
+                                                  inContX, inContY );
+            if( swapInd != -1 ) {
+                isRoom = true;
+                }
+            }
+        }
+    
+
+
+    
+    if( isRoom &&
         isContainable( 
             inPlayer->holdingID ) &&
         containSize <= slotSize ) {
@@ -6520,63 +6641,19 @@ static char addHeldToContainer( LiveObject *inPlayer,
         int numInNow = getNumContained( inContX, inContY );
         
         if( inSwap &&  numInNow > 1 ) {
-            // take what's on bottom of container, but only if it's different
-            // from what's in our hand
-            // AND we are old enough to take it
-            double playerAge = computeAge( inPlayer );
             
-            // if we find a same object on bottom, keep going up until
-            // we find a non-same one to swap
-            for( int botInd = 0; botInd < numInNow - 1; botInd ++ ) {
-                
-                char same = false;
-
-                int bottomItem = 
-                    getContained( inContX, inContY, botInd, 0 );
-                
-                if( bottomItem > 0 &&
-                    getObject( bottomItem )->minPickupAge > playerAge ) {
-                    // too young to hold!
-                    same = true;
-                    }
-                else if( bottomItem == idToAdd ) {
-                    if( bottomItem > 0 ) {
-                        // not sub conts
-                        same = true;
-                        }
-                    else {
-                        // they must contain same stuff to be same
-                        int bottomNum = getNumContained( inContX, inContY,
-                                                         botInd + 1 );
-                        int topNum =  getNumContained( inContX, inContY,
-                                                       numInNow );
-                    
-                        if( bottomNum != topNum ) {
-                            same = false;
-                            }
-                        else {
-                            for( int b=0; b<bottomNum; b++ ) {
-                                int subB = getContained( inContX, inContY,
-                                                         b, botInd );
-                                int subT = getContained( inContX, inContY,
-                                                         b, numInNow );
-                                
-                                if( subB != subT ) {
-                                    same = false;
-                                    break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-            
-
-                if( ! same ) {
-                    // found one to swap
-                    removeFromContainerToHold( inPlayer, inContX, inContY, 
-                                               botInd );
-                    break;
-                    }
+            int swapInd = getContainerSwapIndex( inPlayer, 
+                                                 idToAdd,
+                                                 false,
+                                                 // don't consider top slot
+                                                 // where we just put this
+                                                 // new item
+                                                 numInNow - 1,
+                                                 inContX, inContY );
+            if( swapInd != -1 ) {
+                // found one to swap
+                removeFromContainerToHold( inPlayer, inContX, inContY, 
+                                           swapInd );
                 }
             // if we didn't remove one, it means whole container is full
             // of identical items.

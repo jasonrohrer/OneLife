@@ -13,6 +13,7 @@ Version 246    ???
 
 --Fixed client ignoring DENIED from fitness server.
 
+--Can now swap items in a full container.  Related to #340
 
 
 
