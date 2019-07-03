@@ -11,6 +11,9 @@ Version 246    ???
 
 --Fixed suffix for 11th, 12th, and 13th rankings.  Thanks Twisted.
 
+--Fixed client ignoring DENIED from fitness server.
+
+
 
 
 

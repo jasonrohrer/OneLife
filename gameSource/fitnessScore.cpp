@@ -236,6 +236,10 @@ static void stepActiveRequest() {
         clearWebRequest( webRequest );
         webRequest = -1;
 
+        if( strstr( resultText, "DENIED" ) != NULL ) {
+            delete [] resultText;
+            return;
+            }
 
         if( nextSequenceNumber == -1 ) {
             // fetching sequence number
