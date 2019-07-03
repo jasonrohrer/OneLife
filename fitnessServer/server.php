@@ -841,7 +841,8 @@ function fs_getClientSequenceNumber() {
     $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     if( $email == "" ) {
-        fs_log( "getClientSequenceNumber denied for bad email" );
+        $rawEmail = $_REQUEST[ "email" ];
+        fs_log( "getClientSequenceNumber denied for bad email '$rawEmail'" );
 
         echo "DENIED";
         return;
@@ -989,8 +990,9 @@ function fs_checkClientSeqHash( $email ) {
 
 
     if( $email == "" ) {
+        $rawEmail = $_REQUEST[ "email" ];
 
-        fs_log( "checkClientSeqHash denied for bad email" );
+        fs_log( "checkClientSeqHash denied for bad email '$rawEmail'" );
         
         echo "DENIED";
         die();
@@ -999,7 +1001,8 @@ function fs_checkClientSeqHash( $email ) {
     $trueSeq = fs_getClientSequenceNumberForEmail( $email );
 
     if( $trueSeq > $sequence_number ) {
-        fs_log( "checkClientSeqHash denied for stale sequence number" );
+        fs_log( "checkClientSeqHash denied for stale sequence number ".
+                "($email submitted $sequence_number trueSeq=$trueSeq" );
 
         echo "DENIED";
         die();
