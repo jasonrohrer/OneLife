@@ -15,6 +15,10 @@ Version 246    ???
 
 --Can now swap items in a full container.  Related to #340
 
+--Right-clicking bare ground near an object while on a horse now swaps the
+  horse with that object, making it consistent with other swapping behavior.
+  Related to #340
+
 
 
 

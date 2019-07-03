@@ -19037,6 +19037,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     int destID = 0;
     int floorDestID = 0;
     
+    int destObjInClickedTile = 0;
+
     int destNumContained = 0;
     
     int mapX = clickDestX - mMapOffsetX + mMapD / 2;
@@ -19113,6 +19115,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         destID = mMap[ mapY * mMapD + mapX ];
         floorDestID = mMapFloors[ mapY * mMapD + mapX ];
         
+        destObjInClickedTile = destID;
+
         destNumContained = mMapContainedStacks[ mapY * mMapD + mapX ].size();
         
 
@@ -19864,8 +19868,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         
                     char foundAlt = false;
                         
-                    if( held->foodValue == 0 ) {
-                            
+                    if( held->foodValue == 0 &&
+                        destObjInClickedTile == 0 ) {
+                        // a truly empty spot where use-on-bare-ground
+                        // can happen
+
                         TransRecord *r = 
                             getTrans( ourLiveObject->holdingID,
                                       -1 );
