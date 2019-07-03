@@ -944,6 +944,9 @@ static int getMapBiomeIndex( int inX, int inY,
 // at this spot, it is saved into lastCheckedBiome
 
 static int lastCheckedBiome = -1;
+static int lastCheckedBiomeX = 0;
+static int lastCheckedBiomeY = 0;
+
 
 // 1671 shy of int max
 static int xLimit = 2147481977;
@@ -1134,6 +1137,8 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
         // before examining neighboring cells if needed
         if( lastCheckedBiome == -1 ) {    
             lastCheckedBiome = biomes[pickedBiome];
+            lastCheckedBiomeX = inX;
+            lastCheckedBiomeY = inY;
             }
         
 
@@ -5403,7 +5408,9 @@ unsigned char *getChunkMessage( int inStartX, int inStartY,
             
             chunk[cI] = getMapObject( x, y );
 
-            if( lastCheckedBiome == -1 ) {
+            if( lastCheckedBiome == -1 ||
+                lastCheckedBiomeX != x ||
+                lastCheckedBiomeY != y ) {
                 // biome wasn't checked in order to compute
                 // getMapObject
 

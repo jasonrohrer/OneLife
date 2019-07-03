@@ -35,6 +35,8 @@ Server Fixes
 --Fitness server now discards old offspring records and lives that have fallen
   off the end of client's display lists anyway.
 
+--Fixed rare case of visually changing biome.  Fixes #341  Thanks Alec Y.
+
 
 
 
