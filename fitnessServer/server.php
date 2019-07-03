@@ -1257,7 +1257,7 @@ function fs_cleanOldLives( $email ) {
     
     $removedOffspring = array();
     for( $i=0; $i<$numRows; $i++ ) {
-        $life_id = fs_mysqli_result( $result, 0, "life_id" );
+        $life_id = fs_mysqli_result( $result, $i, "life_id" );
 
         $removedOffspring[] = $life_id;
         
