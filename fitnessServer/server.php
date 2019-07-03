@@ -1499,6 +1499,8 @@ function fs_getClientScoreDetails() {
 
     $id = fs_mysqli_result( $result, 0, "id" );
 
+    global $maxOffspringToShowPlayer;
+    
     $query = "SELECT name, age, display_id, relation_name, ".
         "old_score, new_score, ".
         "TIMESTAMPDIFF( SECOND, death_time, CURRENT_TIMESTAMP ) ".
@@ -1507,7 +1509,7 @@ function fs_getClientScoreDetails() {
         "INNER JOIN $tableNamePrefix"."lives AS lives ".
         "ON offspring.life_id = lives.id ".
         "WHERE offspring.player_id = $id ORDER BY offspring.death_time DESC ".
-        "LIMIT 20";
+        "LIMIT $maxOffspringToShowPlayer";
 
     
     $result = fs_queryDatabase( $query );

@@ -40,9 +40,14 @@ $formulaR = 1.0;
 $formulaK = 10.0;
 
 
+
+// maximum number of historical offspring (and selves) to report to the
+// player when they ask for details
+$maxOffspringToShowPlayer = 20;
+
 // maximum number of historical offspring (and selves) to keep on file
 // per player
-$maxOffspringHistoryToKeep = 40;
+$maxOffspringHistoryToKeep = 25;
 
 
 
