@@ -37,6 +37,10 @@ Server Fixes
 
 --Fixed rare case of visually changing biome.  Fixes #341  Thanks Alec Y.
 
+--Blocked default transitions from happening at a distance, to prevent modded
+  clients from using distant-use objects (like bows and arrows) to open doors
+  at a distance.  Fixes #342
+
 
 
 

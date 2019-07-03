@@ -12284,8 +12284,17 @@ int main() {
                                 
                                 if( r == NULL && 
                                     ( nextPlayer->holdingID != 0 || 
-                                      targetObj->permanent ) ) {
+                                      targetObj->permanent ) &&
+                                    ( isGridAdjacent( m.x, m.y,
+                                                      nextPlayer->xd, 
+                                                      nextPlayer->yd ) 
+                                      ||
+                                      ( m.x == nextPlayer->xd &&
+                                        m.y == nextPlayer->yd ) ) ) {
                                     
+                                    // block default transitions from
+                                    // happening at a distance
+
                                     // search for default 
                                     r = getPTrans( -2, target );
                                         
