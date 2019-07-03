@@ -1288,13 +1288,6 @@ function fs_cleanOldLives( $email ) {
             $numLivesRemoved ++;
             }
         }
-
-    if( $numOffspringRemoved > 0 || $numLivesRemoved > 0 ) {
-        fs_log( "Removed $numOffspringRemoved offspring for $email ".
-                "($player_id) ".
-                "resulting in $numLivesRemoved orphaned lives that ".
-                "were removed" );
-        }
     }
 
 
