@@ -110,8 +110,6 @@ char CoordinateTimeTracking::checkExists( int inX, int inY,
 
 
 void CoordinateTimeTracking::cleanStale( timeSec_t inStaleTime ) {
-    double startTime = Time::getCurrentTime();
-    
     int beforeCleanSize = mRecords.size();
     
     // pre-allocate space
@@ -127,21 +125,6 @@ void CoordinateTimeTracking::cleanStale( timeSec_t inStaleTime ) {
         }
     mRecords.deleteAll();
     mRecords.push_back_other( &temp );
-    
-
-    printf( "(%f ms ) Before cleaning, %d, after %d\n", 
-            ( Time::getCurrentTime() - startTime ) * 1000,
-            beforeCleanSize,
-            mRecords.size() );
-
-
-    if( beforeCleanSize - mRecords.size() > 100 ) {
-        printf( "After cleaning, records:\n" );
-        for( int i=0; i<mRecords.size(); i++ ) {
-            CoordinateXYRecord *r = mRecords.getElement( i );
-            printf( "%d,%d  %f\n", r->x, r->y, r->t );
-            }
-        }
     
 
     // start index over after cleaning
