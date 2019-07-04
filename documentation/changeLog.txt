@@ -54,6 +54,15 @@ Server Fixes
   come back (before, touching the object would finally trigger the pending
   transition).  Fixes #337
 
+--Handle a special clothing removal case more intelligently.  If left-click
+  does a special clothing action (like remove sword), then it used to be
+  impossible to take off the clothing (without doing the special action first),
+  because right-click was reserved for removing stuff from clothing.  Now, if
+  clothing slots are empty, and left-click maps to a special clothing action,
+  right-click will remove the clothing.  Note that it's still impossible to
+  remove clothing with full slots that also has a special bare-hand action
+  (because right and left click both do something already).
+
 
 
 

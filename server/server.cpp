@@ -6994,7 +6994,8 @@ static void pickupToHold( LiveObject *inPlayer, int inX, int inY,
     }
 
 
-static void removeFromClothingContainerToHold( LiveObject *inPlayer,
+// returns true if it worked
+static char removeFromClothingContainerToHold( LiveObject *inPlayer,
                                                int inC,
                                                int inI = -1 ) {    
     
@@ -7080,8 +7081,154 @@ static void removeFromClothingContainerToHold( LiveObject *inPlayer,
         inPlayer->heldOriginX = 0;
         inPlayer->heldOriginY = 0;
         inPlayer->heldTransitionSourceID = -1;
+        return true;
         }
+    
+    return false;
     }
+
+
+
+static ObjectRecord **getClothingSlot( LiveObject *targetPlayer, int inIndex ) {
+    
+    ObjectRecord **clothingSlot = NULL;    
+
+
+    if( inIndex == 2 &&
+        targetPlayer->clothing.frontShoe != NULL ) {
+        clothingSlot = 
+            &( targetPlayer->clothing.frontShoe );
+        }
+    else if( inIndex == 3 &&
+             targetPlayer->clothing.backShoe 
+             != NULL ) {
+        clothingSlot = 
+            &( targetPlayer->clothing.backShoe );
+        }
+    else if( inIndex == 0 && 
+             targetPlayer->clothing.hat != NULL ) {
+        clothingSlot = 
+            &( targetPlayer->clothing.hat );
+        }
+    else if( inIndex == 1 &&
+             targetPlayer->clothing.tunic 
+             != NULL ) {
+        clothingSlot = 
+            &( targetPlayer->clothing.tunic );
+        }
+    else if( inIndex == 4 &&
+             targetPlayer->clothing.bottom 
+             != NULL ) {
+        clothingSlot = 
+            &( targetPlayer->clothing.bottom );
+        }
+    else if( inIndex == 5 &&
+             targetPlayer->
+             clothing.backpack != NULL ) {
+        clothingSlot = 
+            &( targetPlayer->clothing.backpack );
+        }
+    
+    return clothingSlot;
+    }
+
+    
+
+static void removeClothingToHold( LiveObject *nextPlayer, 
+                                  LiveObject *targetPlayer,
+                                  ObjectRecord **clothingSlot,
+                                  int clothingSlotIndex ) {
+    int ind = clothingSlotIndex;
+    
+    nextPlayer->holdingID =
+        ( *clothingSlot )->id;
+    holdingSomethingNew( nextPlayer );
+    
+    *clothingSlot = NULL;
+    nextPlayer->holdingEtaDecay =
+        targetPlayer->clothingEtaDecay[ind];
+    targetPlayer->clothingEtaDecay[ind] = 0;
+    
+    nextPlayer->numContained =
+        targetPlayer->
+        clothingContained[ind].size();
+    
+    freePlayerContainedArrays( nextPlayer );
+    
+    nextPlayer->containedIDs =
+        targetPlayer->
+        clothingContained[ind].
+        getElementArray();
+    
+    targetPlayer->clothingContained[ind].
+        deleteAll();
+    
+    nextPlayer->containedEtaDecays =
+        targetPlayer->
+        clothingContainedEtaDecays[ind].
+        getElementArray();
+    
+    targetPlayer->
+        clothingContainedEtaDecays[ind].
+        deleteAll();
+    
+    // empty sub contained in clothing
+    nextPlayer->subContainedIDs =
+        new SimpleVector<int>[
+            nextPlayer->numContained ];
+    
+    nextPlayer->subContainedEtaDecays =
+        new SimpleVector<timeSec_t>[
+            nextPlayer->numContained ];
+    
+    
+    nextPlayer->heldOriginValid = 0;
+    nextPlayer->heldOriginX = 0;
+    nextPlayer->heldOriginY = 0;
+    }
+
+
+
+static TransRecord *getBareHandClothingTrans( LiveObject *nextPlayer,
+                                              ObjectRecord **clothingSlot ) {
+    TransRecord *bareHandClothingTrans = NULL;
+    
+    if( clothingSlot != NULL ) {
+        bareHandClothingTrans =
+            getPTrans( 0, ( *clothingSlot )->id );
+                                    
+        if( bareHandClothingTrans != NULL ) {
+            int na =
+                bareHandClothingTrans->newActor;
+            
+            if( na > 0 &&
+                getObject( na )->minPickupAge >
+                computeAge( nextPlayer ) ) {
+                // too young for trans
+                bareHandClothingTrans = NULL;
+                }
+            
+            if( bareHandClothingTrans != NULL ) {
+                int nt = 
+                    bareHandClothingTrans->
+                    newTarget;
+                
+                if( nt > 0 &&
+                    getObject( nt )->clothing 
+                    == 'n' ) {
+                    // don't allow transitions
+                    // that leave a non-wearable
+                    // item on your body
+                    bareHandClothingTrans = NULL;
+                    }
+                }
+            }
+        }
+    
+    return bareHandClothingTrans;
+    }
+
+
 
 
 // change held as the result of a transition
@@ -13660,86 +13807,15 @@ int main() {
                             else {
                                 // empty hand on self/baby, remove clothing
 
-                                ObjectRecord **clothingSlot = NULL;
-                                int clothingSlotIndex;
+                                int clothingSlotIndex = m.i;
                                 
-
-                                if( m.i == 2 &&
-                                    targetPlayer->clothing.frontShoe != NULL ) {
-                                    clothingSlot = 
-                                        &( targetPlayer->clothing.frontShoe );
-                                    clothingSlotIndex = 2;
-                                    }
-                                else if( m.i == 3 &&
-                                         targetPlayer->clothing.backShoe 
-                                         != NULL ) {
-                                    clothingSlot = 
-                                        &( targetPlayer->clothing.backShoe );
-                                    clothingSlotIndex = 3;
-                                    }
-                                else if( m.i == 0 && 
-                                         targetPlayer->clothing.hat != NULL ) {
-                                    clothingSlot = 
-                                        &( targetPlayer->clothing.hat );
-                                    clothingSlotIndex = 0;
-                                    }
-                                else if( m.i == 1 &&
-                                         targetPlayer->clothing.tunic 
-                                         != NULL ) {
-                                    clothingSlot = 
-                                        &( targetPlayer->clothing.tunic );
-                                    clothingSlotIndex = 1;
-                                    }
-                                else if( m.i == 4 &&
-                                         targetPlayer->clothing.bottom 
-                                         != NULL ) {
-                                    clothingSlot = 
-                                        &( targetPlayer->clothing.bottom );
-                                    clothingSlotIndex = 4;
-                                    }
-                                else if( m.i == 5 &&
-                                         targetPlayer->
-                                         clothing.backpack != NULL ) {
-                                    
-                                    clothingSlot = 
-                                        &( targetPlayer->clothing.backpack );
-                                    clothingSlotIndex = 5;
-                                    }
+                                ObjectRecord **clothingSlot = 
+                                    getClothingSlot( targetPlayer, m.i );
                                 
-                                TransRecord *bareHandClothingTrans
-                                    = NULL;
                                 
-                                if( clothingSlot != NULL ) {
-                                    bareHandClothingTrans =
-                                        getPTrans( 0, ( *clothingSlot )->id );
-                                    
-                                    if( bareHandClothingTrans != NULL ) {
-                                        int na =
-                                            bareHandClothingTrans->newActor;
-                                            
-                                        if( na > 0 &&
-                                            getObject( na )->minPickupAge >
-                                            computeAge( nextPlayer ) ) {
-                                            // too young for trans
-                                            bareHandClothingTrans = NULL;
-                                            }
-
-                                        if( bareHandClothingTrans != NULL ) {
-                                            int nt = 
-                                                bareHandClothingTrans->
-                                                newTarget;
-                                            
-                                            if( nt > 0 &&
-                                                getObject( nt )->clothing 
-                                                == 'n' ) {
-                                                // don't allow transitions
-                                                // that leave a non-wearable
-                                                // item on your body
-                                                bareHandClothingTrans = NULL;
-                                                }
-                                            }
-                                        }
-                                    }
+                                TransRecord *bareHandClothingTrans =
+                                    getBareHandClothingTrans( nextPlayer,
+                                                              clothingSlot );
                                 
 
                                 if( targetPlayer == nextPlayer &&
@@ -13787,53 +13863,10 @@ int main() {
                                 else if( clothingSlot != NULL ) {
                                     // bare hand removes clothing
                                     
-                                    int ind = clothingSlotIndex;
-                                    
-                                    nextPlayer->holdingID =
-                                        ( *clothingSlot )->id;
-                                    holdingSomethingNew( nextPlayer );
-
-                                    *clothingSlot = NULL;
-                                    nextPlayer->holdingEtaDecay =
-                                        targetPlayer->clothingEtaDecay[ind];
-                                    targetPlayer->clothingEtaDecay[ind] = 0;
-                                    
-                                    nextPlayer->numContained =
-                                        targetPlayer->
-                                        clothingContained[ind].size();
-                                    
-                                    freePlayerContainedArrays( nextPlayer );
-                                    
-                                    nextPlayer->containedIDs =
-                                        targetPlayer->
-                                        clothingContained[ind].
-                                        getElementArray();
-                                    
-                                    targetPlayer->clothingContained[ind].
-                                        deleteAll();
-                                    
-                                    nextPlayer->containedEtaDecays =
-                                        targetPlayer->
-                                        clothingContainedEtaDecays[ind].
-                                        getElementArray();
-                                    
-                                    targetPlayer->
-                                        clothingContainedEtaDecays[ind].
-                                        deleteAll();
-                                    
-                                    // empty sub contained in clothing
-                                    nextPlayer->subContainedIDs =
-                                        new SimpleVector<int>[
-                                            nextPlayer->numContained ];
-                                    
-                                    nextPlayer->subContainedEtaDecays =
-                                        new SimpleVector<timeSec_t>[
-                                            nextPlayer->numContained ];
-                                    
-
-                                    nextPlayer->heldOriginValid = 0;
-                                    nextPlayer->heldOriginX = 0;
-                                    nextPlayer->heldOriginY = 0;
+                                    removeClothingToHold( nextPlayer,
+                                                          targetPlayer,
+                                                          clothingSlot,
+                                                          clothingSlotIndex );
                                     }
                                 }
                             }
@@ -14210,6 +14243,7 @@ int main() {
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
                         // remove contained object from clothing
+                        char worked = false;
                         
                         if( m.x == nextPlayer->xd &&
                             m.y == nextPlayer->yd &&
@@ -14220,8 +14254,42 @@ int main() {
                             nextPlayer->actionTarget.y = m.y;
                             
                             if( m.c >= 0 && m.c < NUM_CLOTHING_PIECES ) {
-                                removeFromClothingContainerToHold(
+                                worked = removeFromClothingContainerToHold(
                                     nextPlayer, m.c, m.i );
+                                }
+                            }
+                        
+                        if( nextPlayer->holdingID == 0 && 
+                            m.c >= 0 && m.c < NUM_CLOTHING_PIECES  &&
+                            ! worked ) {
+
+                            // hmm... nothing to remove from slots in clothing
+                            
+                            // player is right-clicking, and maybe they
+                            // can't left-click, because there's a 
+                            // transition in the way
+                            
+                            // if so, right click should
+                            // remove the clothing itself
+                            
+                            ObjectRecord **clothingSlot = 
+                                getClothingSlot( nextPlayer, m.c );
+
+
+                            TransRecord *bareHandClothingTrans =
+                                getBareHandClothingTrans( nextPlayer,
+                                                          clothingSlot );
+                                
+                            if( bareHandClothingTrans != NULL ) {
+                                // there's a transition blocking
+                                // regular-click to remove empty
+                                // clothing.
+                                // allow right click to do it
+
+                                removeClothingToHold( nextPlayer,
+                                                      nextPlayer,
+                                                      clothingSlot,
+                                                      m.c );
                                 }
                             }
                         }
