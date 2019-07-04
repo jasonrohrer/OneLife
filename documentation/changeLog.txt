@@ -28,6 +28,8 @@ Version 246    ???
 
 --Added additional movement fix to Justin L's previous pull request.
 
+--Fixed double sound playing (2x as loud, with phase interference) when putting
+  on clothing that contains something.
 
 
 

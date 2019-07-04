@@ -14567,8 +14567,10 @@ void LivingLifePage::step() {
                                 newClothingCont, newNumClothingCont );
                             delete [] newClothingCont;
                             
-                            if( newNumClothingCont > oldNumCont ) {
-                                // insertion
+                            if( ! clothingSoundPlayed && 
+                                newNumClothingCont > oldNumCont ) {
+                                
+                                // insertion sound
                                 
                                 char soundPlayed = false;
                                 
