@@ -26,6 +26,7 @@ Version 246    ???
 --Fixed so that new graves correctly replace vanished graves at same location.
   Fixes #343  Thanks Twisted.
 
+--Added additional movement fix to Justin L's previous pull request.
 
 
 
