@@ -14,6 +14,9 @@ typedef struct CoordinateXYRecord {
 class CoordinateTimeTracking {
     public:
 
+        CoordinateTimeTracking();
+
+
         // returns true if exists, or false if not (and new record created if
         // not).  If exists, time of record will be updated to inCurTime
         char checkExists( int inX, int inY, timeSec_t inCurTime );
@@ -26,6 +29,12 @@ class CoordinateTimeTracking {
     private:
 
         SimpleVector<CoordinateXYRecord> mRecords;
+        
+        // track index across searches as starting point for next
+        // search, because usually coordinates are checked in
+        // row-major order (a rectangular look region)
+        int mNextIndex;
+        
     };
 
     
