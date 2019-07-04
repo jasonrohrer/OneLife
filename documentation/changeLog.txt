@@ -23,6 +23,9 @@ Version 246    ???
   eat.  This potentially also fixes moonwalking, but I haven't confirmed that.
   Related to #309
 
+--Fixed so that new graves correctly replace vanished graves at same location.
+  Fixes #343  Thanks Twisted.
+
 
 
 

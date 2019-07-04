@@ -11239,6 +11239,20 @@ void LivingLifePage::step() {
                         delete [] desToDelete;
                         }
                     
+                    // this grave replaces any in same location
+                    for( int i=0; i< mGraveInfo.size(); i++ ) {
+                        GraveInfo *otherG = mGraveInfo.getElement( i );
+                        
+                        if( otherG->worldPos.x == posX &&
+                            otherG->worldPos.y == posY ) {
+                            
+                            delete [] otherG->relationName;
+                            mGraveInfo.deleteElement( i );
+                            i--;
+                            }
+                        }
+                    
+
                     mGraveInfo.push_back( g );
                     }
                 }            
