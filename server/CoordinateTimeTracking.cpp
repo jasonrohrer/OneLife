@@ -28,14 +28,21 @@ void CoordinateTimeTracking::cleanStale( timeSec_t inStaleTime ) {
     
     int beforeCleanSize = mRecords.size();
     
+    // pre-allocate space
+    SimpleVector<CoordinateXYRecord> temp( beforeCleanSize );
+    
+    
     for( int i=0; i<mRecords.size(); i++ ) {
         CoordinateXYRecord *r = mRecords.getElement( i );
         
-        if( r->t <= inStaleTime ) {
-            mRecords.deleteElement( i );
-            i--;
+        if( r->t > inStaleTime ) {
+            temp.push_back( *r );
             }
         }
+    mRecords.deleteAll();
+    mRecords.push_back_other( &temp );
+    
+
     printf( "(%f ms ) Before cleaning, %d, after %d\n", 
             ( Time::getCurrentTime() - startTime ) * 1000,
             beforeCleanSize,
