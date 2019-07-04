@@ -19,6 +19,11 @@ Version 246    ???
   horse with that object, making it consistent with other swapping behavior.
   Related to #340
 
+--Fixed character getting stuck in eating animation when double-clicking to
+  eat.  This potentially also fixes moonwalking, but I haven't confirmed that.
+  Related to #309
+
+
 
 
 

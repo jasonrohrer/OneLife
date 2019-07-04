@@ -1920,6 +1920,28 @@ static void addNewAnimPlayerOnly( LiveObject *inObject, AnimType inNewAnim ) {
                     inObject->futureAnimStack->size() - 1 ) 
                 != inNewAnim ) {
                 
+                // don't push another animation after ground
+                // that animation will replace ground (no need to go to
+                // ground between animations.... can just go straight 
+                // to the next animation
+                char foundNonGround = false;
+                
+                while( ! foundNonGround &&
+                       inObject->futureAnimStack->size() > 0 ) {
+                    
+                    int prevAnim =
+                        inObject->futureAnimStack->getElementDirect(
+                            inObject->futureAnimStack->size() - 1 );
+                    
+                    if( prevAnim == ground || prevAnim == ground2 ) {
+                        inObject->futureAnimStack->deleteElement(
+                            inObject->futureAnimStack->size() - 1 );
+                        }
+                    else {
+                        foundNonGround = true;
+                        }
+                    }
+                
                 inObject->futureAnimStack->push_back( inNewAnim );
                 }
             }
