@@ -49,6 +49,10 @@ Server Fixes
   clients from using distant-use objects (like bows and arrows) to open doors
   at a distance.  Fixes #342
 
+--Fixed objects getting stuck between decay transitions when you walk away and
+  come back (before, touching the object would finally trigger the pending
+  transition).  Fixes #337
+
 
 
 
