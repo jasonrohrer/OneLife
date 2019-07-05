@@ -5,7 +5,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 246    ???
+Version 246    2019-July-5
 
 --Fixed crash if email blank on login screen when score fetch attempted.
 
