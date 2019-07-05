@@ -2,6 +2,9 @@
 #include "HashTable.h"
 #include "monument.h"
 
+#include "CoordinateTimeTracking.h"
+
+
 // cell pixel dimension on client
 #define CELL_D 128
 
@@ -344,8 +347,20 @@ static CustomRandomSource randSource( randSeed );
 // 15 minutes
 static int maxSecondsForActiveDecayTracking = 900;
 
-// 10 seconds
-static int maxSecondsNoLookDecayTracking = 10;
+// 15 seconds (before no-look regions are purged from live tracking)
+static int maxSecondsNoLookDecayTracking = 15;
+
+// live players look at their surrounding map region every 5 seconds
+// we count a region as stale after no one looks at it for 10 seconds
+// (we actually purge the live tracking of that region after 15 seconds).
+// This gives us some wiggle room with the timing, so we always make
+// sure to re-look at a region (when walking back into it) that is >10
+// seconds old, because it may (or may not) have fallen out of our live
+// tracking (if our re-look time was 15 seconds to match the time stuff actually
+// is dropped from live tracking, we might miss some stuff, depending
+// on how the check calls are interleaved time-wise).
+static int noLookCountAsStaleSeconds = 10;
+
 
 
 typedef struct LiveDecayRecord {
@@ -403,6 +418,10 @@ static ContRecord defaultContRecord = { 0, 0 };
 // indexed as x, y, 0, 0
 static HashTable<ContRecord> 
 liveDecayRecordLastLookTimeMaxContainedHashTable( 1024, defaultContRecord );
+
+
+
+static CoordinateTimeTracking lookTimeTracking;
 
 
 
@@ -944,6 +963,9 @@ static int getMapBiomeIndex( int inX, int inY,
 // at this spot, it is saved into lastCheckedBiome
 
 static int lastCheckedBiome = -1;
+static int lastCheckedBiomeX = 0;
+static int lastCheckedBiomeY = 0;
+
 
 // 1671 shy of int max
 static int xLimit = 2147481977;
@@ -1134,6 +1156,8 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
         // before examining neighboring cells if needed
         if( lastCheckedBiome == -1 ) {    
             lastCheckedBiome = biomes[pickedBiome];
+            lastCheckedBiomeX = inX;
+            lastCheckedBiomeY = inY;
             }
         
 
@@ -5265,6 +5289,59 @@ void lookAtRegion( int inXStart, int inYStart, int inXEnd, int inYEnd ) {
     for( int y=inYStart; y<=inYEnd; y++ ) {
         for( int x=inXStart; x<=inXEnd; x++ ) {
         
+            
+            if( ! lookTimeTracking.checkExists( x, y, currentTime ) ) {
+                
+                // we haven't looked at this spot in a while
+                
+                // see if any decays apply
+                // if so, get that part of the tile once to re-trigger
+                // live tracking
+
+                timeSec_t floorEtaDecay = getFloorEtaDecay( x, y );
+                
+                if( floorEtaDecay != 0 &&
+                    floorEtaDecay < 
+                    currentTime + maxSecondsForActiveDecayTracking ) {
+                
+                    getMapFloor( x, y );
+                    }
+                
+                    
+
+                timeSec_t etaDecay = getEtaDecay( x, y );
+                
+                int objID = 0;
+                
+                if( etaDecay != 0 &&
+                    etaDecay < 
+                    currentTime + maxSecondsForActiveDecayTracking ) {
+                
+                    objID = getMapObject( x, y );
+                    }
+
+                // also check all contained items to trigger
+                // live tracking of their decays too
+                if( objID != 0 ) {
+                    
+                    int numCont = getNumContained( x, y );
+                    
+                    for( int c=0; c<numCont; c++ ) {
+                        int contID = getContained( x, y, c );
+                        
+                        if( contID < 0 ) {
+                            // sub cont
+                            int numSubCont = getNumContained( x, y, c + 1 );
+                            
+                            for( int s=0; s<numSubCont; s++ ) {
+                                getContained( x, y, c, s + 1 );
+                                }
+                            }
+                        }
+                    }
+                }
+            
+
             timeSec_t *oldLookTime = 
                 liveDecayRecordLastLookTimeHashTable.lookupPointer( x, y, 
                                                                     0, 0 );
@@ -5403,7 +5480,9 @@ unsigned char *getChunkMessage( int inStartX, int inStartY,
             
             chunk[cI] = getMapObject( x, y );
 
-            if( lastCheckedBiome == -1 ) {
+            if( lastCheckedBiome == -1 ||
+                lastCheckedBiomeX != x ||
+                lastCheckedBiomeY != y ) {
                 // biome wasn't checked in order to compute
                 // getMapObject
 
@@ -6667,6 +6746,10 @@ void stepMap( SimpleVector<MapChangeRecord> *inMapChanges,
               SimpleVector<ChangePosition> *inChangePosList ) {
     
     timeSec_t curTime = MAP_TIMESEC;
+
+    
+    lookTimeTracking.cleanStale( curTime - noLookCountAsStaleSeconds );
+
 
     while( liveDecayQueue.size() > 0 && 
            liveDecayQueue.checkMinPriority() <= curTime ) {

@@ -41,6 +41,16 @@ $formulaK = 10.0;
 
 
 
+// maximum number of historical offspring (and selves) to report to the
+// player when they ask for details
+$maxOffspringToShowPlayer = 20;
+
+// maximum number of historical offspring (and selves) to keep on file
+// per player
+$maxOffspringHistoryToKeep = 25;
+
+
+
 // secret shared with trusted game servers that allows them to post
 // game stats
 

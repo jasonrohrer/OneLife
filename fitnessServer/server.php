@@ -841,7 +841,8 @@ function fs_getClientSequenceNumber() {
     $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     if( $email == "" ) {
-        fs_log( "getClientSequenceNumber denied for bad email" );
+        $rawEmail = $_REQUEST[ "email" ];
+        fs_log( "getClientSequenceNumber denied for bad email '$rawEmail'" );
 
         echo "DENIED";
         return;
@@ -948,7 +949,11 @@ function fs_checkServerSeqHash( $name ) {
     $trueSeq = fs_getServerSequenceNumberForName( $name );
 
     if( $trueSeq > $sequence_number ) {
-        fs_log( "checkServerSeqHash denied for stale sequence number" );
+        global $action;
+        
+        fs_log( "checkServerSeqHash denied for stale sequence number ".
+                "$sequence_number from ".
+                "server $name (action=$action) (trueSeq=$trueSeq)");
 
         echo "DENIED";
         die();
@@ -985,8 +990,9 @@ function fs_checkClientSeqHash( $email ) {
 
 
     if( $email == "" ) {
+        $rawEmail = $_REQUEST[ "email" ];
 
-        fs_log( "checkClientSeqHash denied for bad email" );
+        fs_log( "checkClientSeqHash denied for bad email '$rawEmail'" );
         
         echo "DENIED";
         die();
@@ -995,7 +1001,8 @@ function fs_checkClientSeqHash( $email ) {
     $trueSeq = fs_getClientSequenceNumberForEmail( $email );
 
     if( $trueSeq > $sequence_number ) {
-        fs_log( "checkClientSeqHash denied for stale sequence number" );
+        fs_log( "checkClientSeqHash denied for stale sequence number ".
+                "($email submitted $sequence_number trueSeq=$trueSeq" );
 
         echo "DENIED";
         die();
@@ -1048,12 +1055,15 @@ function fs_pickLeaderboardName( $inEmail ) {
     $result = fs_queryDatabase( $query );
     $lastCount = fs_mysqli_result( $result, 0, 0 );
 
-    $emailHash = sha1( $inEmail );
+    
+    // include secret in hash, so people with code can't match
+    // names to emails
+    global $sharedGameServerSecret;
+    
+    $emailHash = sha1( $inEmail . $sharedGameServerSecret );
 
     $seedA = hexdec( substr( $emailHash, 0, 8 ) );
     $seedB = hexdec( substr( $emailHash, 8, 8 ) );
-
-    fs_log( "Seeds:  $seedA, $seedB" );
     
     mt_srand( $seedA );
 
@@ -1086,7 +1096,10 @@ function fs_pickLeaderboardName( $inEmail ) {
 
 
 // log a death that will affect the score of $inEmail
-function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge ) {
+// if $inNoScore is true, the relationship is still logged, but the
+// score change is fixed at 0
+function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
+                      $inNoScore = false ) {
     global $tableNamePrefix;
 
     $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
@@ -1118,6 +1131,10 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge ) {
         }
     $delta /= $formulaK;
 
+    if( $inNoScore ) {
+        $delta = 0;
+        }
+    
     $new_score = $old_score + $delta;
     
     
@@ -1212,6 +1229,73 @@ function fs_addUserRecord( $inEmail ) {
 
 
 
+// cleans old offspring from table that count for $email
+// and deletes the lives themselves if they aren't in the offspring table
+// for anyone anymore
+function fs_cleanOldLives( $email ) {
+    global $tableNamePrefix, $maxOffspringHistoryToKeep;
+
+    $query = "SELECT id FROM $tableNamePrefix"."users ".
+        "WHERE email = '$email';";
+
+    $result = fs_queryDatabase( $query );
+    
+    if( mysqli_num_rows( $result ) == 0 ) {
+        return;
+        }
+    
+    $player_id = fs_mysqli_result( $result, 0, "id" );
+
+    // skip $maxOffspringHistoryToKeep, and get all records after that
+    $query = "SELECT life_id ".
+        "FROM $tableNamePrefix"."offspring ".
+        "WHERE player_id = $player_id ORDER BY death_time DESC ".
+        "LIMIT $maxOffspringHistoryToKeep,9999999";
+
+    $result = fs_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
+
+    $numOffspringRemoved = 0;
+    
+    $removedOffspring = array();
+    for( $i=0; $i<$numRows; $i++ ) {
+        $life_id = fs_mysqli_result( $result, $i, "life_id" );
+
+        $removedOffspring[] = $life_id;
+        
+        $query = "DELETE FROM $tableNamePrefix"."offspring ".
+            "WHERE player_id = $player_id AND life_id = $life_id;";
+        fs_queryDatabase( $query );
+        $numOffspringRemoved ++;
+        }
+
+    // now we need to check offspring table and see if any of these
+    // life_ids aren't anyone's offspring anymore
+    $numLivesRemoved = 0;
+    
+    foreach( $removedOffspring as $life_id ) {
+        $query = "SELECT COUNT(*) FROM $tableNamePrefix"."offspring ".
+            "WHERE life_id = $life_id;";
+
+        $result = fs_queryDatabase( $query );
+
+        $count = fs_mysqli_result( $result, 0, 0 );
+
+        if( $count == 0 ) {
+            // no one counting this life as an offspring anymore
+            $query = "DELETE FROM $tableNamePrefix"."lives ".
+                "WHERE id = $life_id;";
+            fs_queryDatabase( $query );
+
+            $numLivesRemoved ++;
+            }
+        }
+    }
+
+
+
+
 function fs_reportDeath() {
     fs_checkAndUpdateServerSeqNumber();
     
@@ -1251,9 +1335,9 @@ function fs_reportDeath() {
 
 
     
-    // log effect of own death
-    fs_logDeath( $email, $life_id, $self_rel_name, $age );
 
+
+    $numAncestors = 0;
     
     $ancestor_list = "";
     if( isset( $_REQUEST[ "ancestor_list" ] ) ) {
@@ -1269,8 +1353,23 @@ function fs_reportDeath() {
             list( $ancestorEmail, $relName ) = explode( " ", $part, 2 );
 
             fs_logDeath( $ancestorEmail, $life_id, $relName, $age );
+            $numAncestors ++;
             }
         }
+
+
+    // log effect of own death
+    $noScore = false;
+    if( $numAncestors == 0 ) {
+        // this is an Eve or a tutorial player
+        // their lifespan doesn't count toward their score
+        $noScore = true;
+        }
+    
+    fs_logDeath( $email, $life_id, $self_rel_name, $age, $noScore );
+
+
+    fs_cleanOldLives( $email );
     
     echo "OK";
     }
@@ -1396,6 +1495,8 @@ function fs_getClientScoreDetails() {
 
     $id = fs_mysqli_result( $result, 0, "id" );
 
+    global $maxOffspringToShowPlayer;
+    
     $query = "SELECT name, age, display_id, relation_name, ".
         "old_score, new_score, ".
         "TIMESTAMPDIFF( SECOND, death_time, CURRENT_TIMESTAMP ) ".
@@ -1404,7 +1505,7 @@ function fs_getClientScoreDetails() {
         "INNER JOIN $tableNamePrefix"."lives AS lives ".
         "ON offspring.life_id = lives.id ".
         "WHERE offspring.player_id = $id ORDER BY offspring.death_time DESC ".
-        "LIMIT 20";
+        "LIMIT $maxOffspringToShowPlayer";
 
     
     $result = fs_queryDatabase( $query );

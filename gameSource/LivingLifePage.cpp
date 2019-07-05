@@ -1989,6 +1989,28 @@ static void addNewAnimPlayerOnly( LiveObject *inObject, AnimType inNewAnim ) {
                     inObject->futureAnimStack->size() - 1 ) 
                 != inNewAnim ) {
                 
+                // don't push another animation after ground
+                // that animation will replace ground (no need to go to
+                // ground between animations.... can just go straight 
+                // to the next animation
+                char foundNonGround = false;
+                
+                while( ! foundNonGround &&
+                       inObject->futureAnimStack->size() > 0 ) {
+                    
+                    int prevAnim =
+                        inObject->futureAnimStack->getElementDirect(
+                            inObject->futureAnimStack->size() - 1 );
+                    
+                    if( prevAnim == ground || prevAnim == ground2 ) {
+                        inObject->futureAnimStack->deleteElement(
+                            inObject->futureAnimStack->size() - 1 );
+                        }
+                    else {
+                        foundNonGround = true;
+                        }
+                    }
+                
                 inObject->futureAnimStack->push_back( inNewAnim );
                 }
             }
@@ -2966,7 +2988,9 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
                                                 double inFade,
                                                 double inMaxWidth,
                                                 LiveObject *inSpeaker,
-                                                int inForceMinChalkBlots ) {
+                                                int inForceMinChalkBlots,
+                                                FloatColor *inForceBlotColor,
+                                                FloatColor *inForceTextColor ) {
     
     char *stringUpper = stringToUpperCase( inString );
 
@@ -2989,8 +3013,12 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         firstLineY = lastScreenViewCenter.y + recalcOffsetY( 330 ) * gui_fov_scale;
         }
 
-
-    if( inSpeaker != NULL && inSpeaker->dying ) {
+    
+    if( inForceBlotColor != NULL ) {
+        setDrawColor( *inForceBlotColor );
+        setDrawFade( inFade );
+        }
+    else if( inSpeaker != NULL && inSpeaker->dying ) {
         if( inSpeaker->sick ) {
             // sick-ish yellow
             setDrawColor( 0.874510, 0.658824, 0.168627, inFade );
@@ -3066,7 +3094,12 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
             }
         }
     
-    if( inSpeaker != NULL && inSpeaker->dying && ! inSpeaker->sick ) {
+    
+    if( inForceTextColor != NULL ) {
+        setDrawColor( *inForceTextColor );
+        setDrawFade( inFade );
+        }
+    else if( inSpeaker != NULL && inSpeaker->dying && ! inSpeaker->sick ) {
         setDrawColor( 1, 1, 1, inFade );
         }
     else if( inSpeaker != NULL && inSpeaker->curseLevel > 0 ) {
@@ -3205,6 +3238,110 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         speechMaskImage = NULL;
         }
     }
+
+
+
+
+typedef struct OffScreenSound {
+        doublePair pos;
+
+        double fade;
+        // wall clock time when should start fading
+        double fadeETATime;
+
+    } OffScreenSound;
+
+SimpleVector<OffScreenSound> offScreenSounds;
+    
+
+
+
+static void addOffScreenSound( double inPosX, double inPosY ) {
+    double fadeETATime = game_getCurrentTime() + 4;
+    
+    doublePair pos = { inPosX, inPosY };
+    
+    OffScreenSound s = { pos, 1.0, fadeETATime };
+    
+    offScreenSounds.push_back( s );
+    }
+
+
+
+void LivingLifePage::drawOffScreenSounds() {
+    
+    if( offScreenSounds.size() == 0 ) {
+        return;
+        }
+    
+    double xRadius = viewWidth / 2 - 32;
+    double yRadius = viewHeight / 2 - 32;
+    
+    FloatColor red = { 0.65, 0, 0, 1 };
+    FloatColor white = { 1, 1, 1, 1 };
+    
+
+    double curTime = game_getCurrentTime();
+    
+    for( int i=0; i<offScreenSounds.size(); i++ ) {
+        OffScreenSound *s = offScreenSounds.getElement( i );
+        
+        if( s->fadeETATime <= curTime ) {
+            s->fade -= 0.05 * frameRateFactor;
+
+            if( s->fade <= 0 ) {
+                offScreenSounds.deleteElement( i );
+                i--;
+                continue;
+                }
+            }
+
+        
+        if( fabs( s->pos.x - lastScreenViewCenter.x ) > xRadius
+            ||
+            fabs( s->pos.y - lastScreenViewCenter.y ) > yRadius ) {
+            
+            // off screen
+            
+            // relative vector
+            doublePair v = sub( s->pos, lastScreenViewCenter );
+            
+            doublePair normV = normalize( v );
+            
+            // first extend in x dir to edge
+            double xScale = fabs( xRadius / normV.x );
+            
+            doublePair edgeV = mult( normV, xScale );
+            
+
+            if( fabs( edgeV.y ) > yRadius ) {
+                // off top/bottom
+                
+                // extend in y dir instead
+                double yScale = fabs( yRadius / normV.y );
+            
+                edgeV = mult( normV, yScale );
+                }
+            
+            if( edgeV.y < -270 ) {
+                edgeV.y = -270;
+                }
+            
+
+            doublePair drawPos = add( edgeV, lastScreenViewCenter );
+
+            drawChalkBackgroundString( drawPos,
+                                       "!",
+                                       s->fade,
+                                       100,
+                                       NULL,
+                                       -1,
+                                       &red, &white );
+            }    
+        }
+    }
+
+
 
 
 
@@ -6459,7 +6596,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                    ls->fade, widthLimit );
         }
     
-
+    
+    drawOffScreenSounds();
+    
     
 
     /*
@@ -11427,6 +11566,20 @@ void LivingLifePage::step() {
                         delete [] desToDelete;
                         }
                     
+                    // this grave replaces any in same location
+                    for( int i=0; i< mGraveInfo.size(); i++ ) {
+                        GraveInfo *otherG = mGraveInfo.getElement( i );
+                        
+                        if( otherG->worldPos.x == posX &&
+                            otherG->worldPos.y == posY ) {
+                            
+                            delete [] otherG->relationName;
+                            mGraveInfo.deleteElement( i );
+                            i--;
+                            }
+                        }
+                    
+
                     mGraveInfo.push_back( g );
                     }
                 }            
@@ -14385,6 +14538,18 @@ void LivingLifePage::step() {
                                                     existing->currentPos.x, 
                                                     existing->currentPos.y ) );
                                                 creationSoundPlayed = true;
+                                                
+                                                if( strstr( 
+                                                        heldObj->description,
+                                                        "offScreenSound" )
+                                                    != NULL ) {
+                                                    
+                                                    addOffScreenSound(
+                                                      existing->currentPos.x *
+                                                      CELL_D, 
+                                                      existing->currentPos.y *
+                                                      CELL_D );
+                                                    }
                                                 }
                                             }
                                         }
@@ -14742,8 +14907,10 @@ void LivingLifePage::step() {
                                 newClothingCont, newNumClothingCont );
                             delete [] newClothingCont;
                             
-                            if( newNumClothingCont > oldNumCont ) {
-                                // insertion
+                            if( ! clothingSoundPlayed && 
+                                newNumClothingCont > oldNumCont ) {
+                                
+                                // insertion sound
                                 
                                 char soundPlayed = false;
                                 
@@ -17351,17 +17518,11 @@ void LivingLifePage::step() {
                                 o->waypointY = lrint( worldMouseY / CELL_D );
 
                                 pointerDown( fakeClick.x, fakeClick.y );
-
-                                endPos.x = (double)( fakeClick.x );
-                                endPos.y = (double)( fakeClick.y );
                                
                                 o->useWaypoint = false;
                                 }
                             else {
                                 pointerDown( worldMouseX, worldMouseY );
-
-                                endPos.x = (double)( worldMouseX );
-                                endPos.y = (double)( worldMouseY );
                                 }
                             }
                         }
@@ -17995,7 +18156,9 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
-
+    
+    offScreenSounds.deleteAll();
+    
     oldHomePosStack.deleteAll();
     
     oldHomePosStack.push_back_other( &homePosStack );
@@ -19267,6 +19430,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     int destID = 0;
     int floorDestID = 0;
     
+    int destObjInClickedTile = 0;
+
     int destNumContained = 0;
     
     int mapX = clickDestX - mMapOffsetX + mMapD / 2;
@@ -19343,6 +19508,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         destID = mMap[ mapY * mMapD + mapX ];
         floorDestID = mMapFloors[ mapY * mMapD + mapX ];
         
+        destObjInClickedTile = destID;
+
         destNumContained = mMapContainedStacks[ mapY * mMapD + mapX ].size();
         
 
@@ -20094,8 +20261,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         
                     char foundAlt = false;
                         
-                    if( held->foodValue == 0 ) {
-                            
+                    if( held->foodValue == 0 &&
+                        destObjInClickedTile == 0 ) {
+                        // a truly empty spot where use-on-bare-ground
+                        // can happen
+
                         TransRecord *r = 
                             getTrans( ourLiveObject->holdingID,
                                       -1 );
@@ -20148,7 +20318,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             else if( modClick && ourLiveObject->holdingID != 0 &&
                      destID != 0 &&
                      getNumContainerSlots( destID ) > 0 &&
-                     destNumContained < getNumContainerSlots( destID ) ) {
+                     destNumContained <= getNumContainerSlots( destID ) ) {
                 action = "DROP";
                 nextActionDropping = true;
                 send = true;

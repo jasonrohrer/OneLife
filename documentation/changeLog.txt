@@ -4,6 +4,75 @@ http://onehouronelife.com/updateLog.php
 
 
 
+
+Version 246    2019-July-5
+
+--Fixed crash if email blank on login screen when score fetch attempted.
+
+--Fixed suffix for 11th, 12th, and 13th rankings.  Thanks Twisted.
+
+--Fixed client ignoring DENIED from fitness server.
+
+--Can now swap items in a full container.  Related to #340
+
+--Right-clicking bare ground near an object while on a horse now swaps the
+  horse with that object, making it consistent with other swapping behavior.
+  Related to #340
+
+--Fixed character getting stuck in eating animation when double-clicking to
+  eat.  This potentially also fixes moonwalking, but I haven't confirmed that.
+  Related to #309
+
+--Fixed so that new graves correctly replace vanished graves at same location.
+  Fixes #343  Thanks Twisted.
+
+--Added additional movement fix to Justin L's previous pull request.
+
+--Fixed double sound playing (2x as loud, with phase interference) when putting
+  on clothing that contains something.
+
+--Added support for red ! speech balloon to accompany certain important off
+  screen sounds (like murder scream).  Fixes #349
+
+
+
+
+Server Fixes
+
+--DIE babies don't affect genetic score of their ancestors (but affect
+  themselves).
+
+--Fixed bug in interleaving of requests to genetic fitness server, resulting in
+  stale sequence numbers (and thus offspring not getting logged properly).
+
+--Eves and tutorial players no longer contribute to a player's genetic score.
+
+--Fitness server now discards old offspring records and lives that have fallen
+  off the end of client's display lists anyway.
+
+--Fixed rare case of visually changing biome.  Fixes #341  Thanks Alec Y.
+
+--Blocked default transitions from happening at a distance, to prevent modded
+  clients from using distant-use objects (like bows and arrows) to open doors
+  at a distance.  Fixes #342
+
+--Fixed objects getting stuck between decay transitions when you walk away and
+  come back (before, touching the object would finally trigger the pending
+  transition).  Fixes #337
+
+--Handle a special clothing removal case more intelligently.  If left-click
+  does a special clothing action (like remove sword), then it used to be
+  impossible to take off the clothing (without doing the special action first),
+  because right-click was reserved for removing stuff from clothing.  Now, if
+  clothing slots are empty, and left-click maps to a special clothing action,
+  right-click will remove the clothing.  Note that it's still impossible to
+  remove clothing with full slots that also has a special bare-hand action
+  (because right and left click both do something already).
+
+--Fixed row index in lineage server.  Fixes #348
+
+
+
 Version 245    2019-June-28
 
 --Support for new genetic fitness score across lives, ranking, leaderboard, 
