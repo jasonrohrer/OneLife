@@ -2894,7 +2894,9 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
                                                 double inFade,
                                                 double inMaxWidth,
                                                 LiveObject *inSpeaker,
-                                                int inForceMinChalkBlots ) {
+                                                int inForceMinChalkBlots,
+                                                FloatColor *inForceBlotColor,
+                                                FloatColor *inForceTextColor ) {
     
     char *stringUpper = stringToUpperCase( inString );
 
@@ -2916,8 +2918,12 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         firstLineY = lastScreenViewCenter.y + 330;
         }
 
-
-    if( inSpeaker != NULL && inSpeaker->dying ) {
+    
+    if( inForceBlotColor != NULL ) {
+        setDrawColor( *inForceBlotColor );
+        setDrawFade( inFade );
+        }
+    else if( inSpeaker != NULL && inSpeaker->dying ) {
         if( inSpeaker->sick ) {
             // sick-ish yellow
             setDrawColor( 0.874510, 0.658824, 0.168627, inFade );
@@ -2991,7 +2997,12 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
             }
         }
     
-    if( inSpeaker != NULL && inSpeaker->dying && ! inSpeaker->sick ) {
+    
+    if( inForceTextColor != NULL ) {
+        setDrawColor( *inForceTextColor );
+        setDrawFade( inFade );
+        }
+    else if( inSpeaker != NULL && inSpeaker->dying && ! inSpeaker->sick ) {
         setDrawColor( 1, 1, 1, inFade );
         }
     else if( inSpeaker != NULL && inSpeaker->curseLevel > 0 ) {
@@ -3130,6 +3141,110 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         speechMaskImage = NULL;
         }
     }
+
+
+
+
+typedef struct OffScreenSound {
+        doublePair pos;
+
+        double fade;
+        // wall clock time when should start fading
+        double fadeETATime;
+
+    } OffScreenSound;
+
+SimpleVector<OffScreenSound> offScreenSounds;
+    
+
+
+
+static void addOffScreenSound( double inPosX, double inPosY ) {
+    double fadeETATime = game_getCurrentTime() + 4;
+    
+    doublePair pos = { inPosX, inPosY };
+    
+    OffScreenSound s = { pos, 1.0, fadeETATime };
+    
+    offScreenSounds.push_back( s );
+    }
+
+
+
+void LivingLifePage::drawOffScreenSounds() {
+    
+    if( offScreenSounds.size() == 0 ) {
+        return;
+        }
+    
+    double xRadius = viewWidth / 2 - 32;
+    double yRadius = viewHeight / 2 - 32;
+    
+    FloatColor red = { 0.65, 0, 0, 1 };
+    FloatColor white = { 1, 1, 1, 1 };
+    
+
+    double curTime = game_getCurrentTime();
+    
+    for( int i=0; i<offScreenSounds.size(); i++ ) {
+        OffScreenSound *s = offScreenSounds.getElement( i );
+        
+        if( s->fadeETATime <= curTime ) {
+            s->fade -= 0.05 * frameRateFactor;
+
+            if( s->fade <= 0 ) {
+                offScreenSounds.deleteElement( i );
+                i--;
+                continue;
+                }
+            }
+
+        
+        if( fabs( s->pos.x - lastScreenViewCenter.x ) > xRadius
+            ||
+            fabs( s->pos.y - lastScreenViewCenter.y ) > yRadius ) {
+            
+            // off screen
+            
+            // relative vector
+            doublePair v = sub( s->pos, lastScreenViewCenter );
+            
+            doublePair normV = normalize( v );
+            
+            // first extend in x dir to edge
+            double xScale = fabs( xRadius / normV.x );
+            
+            doublePair edgeV = mult( normV, xScale );
+            
+
+            if( fabs( edgeV.y ) > yRadius ) {
+                // off top/bottom
+                
+                // extend in y dir instead
+                double yScale = fabs( yRadius / normV.y );
+            
+                edgeV = mult( normV, yScale );
+                }
+            
+            if( edgeV.y < -270 ) {
+                edgeV.y = -270;
+                }
+            
+
+            doublePair drawPos = add( edgeV, lastScreenViewCenter );
+
+            drawChalkBackgroundString( drawPos,
+                                       "!",
+                                       s->fade,
+                                       100,
+                                       NULL,
+                                       -1,
+                                       &red, &white );
+            }    
+        }
+    }
+
+
 
 
 
@@ -6356,7 +6471,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                    ls->fade, widthLimit );
         }
     
-
+    
+    drawOffScreenSounds();
+    
     
 
     /*
@@ -14210,6 +14327,18 @@ void LivingLifePage::step() {
                                                     existing->currentPos.x, 
                                                     existing->currentPos.y ) );
                                                 creationSoundPlayed = true;
+                                                
+                                                if( strstr( 
+                                                        heldObj->description,
+                                                        "offScreenSound" )
+                                                    != NULL ) {
+                                                    
+                                                    addOffScreenSound(
+                                                      existing->currentPos.x *
+                                                      CELL_D, 
+                                                      existing->currentPos.y *
+                                                      CELL_D );
+                                                    }
                                                 }
                                             }
                                         }
@@ -17815,7 +17944,9 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
-
+    
+    offScreenSounds.deleteAll();
+    
     oldHomePosStack.deleteAll();
     
     oldHomePosStack.push_back_other( &homePosStack );

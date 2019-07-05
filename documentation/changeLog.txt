@@ -31,6 +31,10 @@ Version 246    ???
 --Fixed double sound playing (2x as loud, with phase interference) when putting
   on clothing that contains something.
 
+--Added support for red ! speech balloon to accompany certain important off
+  screen sounds (like murder scream).  Fixes #349
+
+
 
 
 Server Fixes

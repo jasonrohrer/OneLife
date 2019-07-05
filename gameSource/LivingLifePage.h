@@ -849,8 +849,14 @@ class LivingLifePage : public GamePage, public ActionListener {
                                         double inFade,
                                         double inMaxWidth,
                                         LiveObject *inSpeaker = NULL,
-                                        int inForceMinChalkBlots = -1 );
+                                        int inForceMinChalkBlots = -1,
+                                        FloatColor *inForceBlotColor = NULL,
+                                        FloatColor *inForceTextColor = NULL );
         
+        
+        void drawOffScreenSounds();
+        
+
 
         // returns an animation pack that can be used to draw the
         // held object.  The pack's object ID is -1 if nothing is held
