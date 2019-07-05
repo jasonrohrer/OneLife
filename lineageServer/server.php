@@ -2353,8 +2353,8 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
 
         if( $usePhotoServer ) {
             // now real photo link to right of face
-            $serverName = ls_mysqli_result( $result, $i, "server" );
-            $player_id = ls_mysqli_result( $result, $i, "player_id" );
+            $serverName = ls_mysqli_result( $result, 0, "server" );
+            $player_id = ls_mysqli_result( $result, 0, "player_id" );
             
             $imageURL =
                 $photoServerURL .

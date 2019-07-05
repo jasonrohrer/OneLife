@@ -65,6 +65,7 @@ Server Fixes
   remove clothing with full slots that also has a special bare-hand action
   (because right and left click both do something already).
 
+--Fixed row index in lineage server.  Fixes #348
 
 
 
