@@ -136,17 +136,30 @@ echo ""
 echo "Building Steam Depot and making it public/live"
 echo ""
 
+
+oldBuildID=`~/checkout/OneLifeWorking/scripts/getLatestSteamBuildID.sh`
+
+
 steamcmd +login "jasonrohrergames" +run_app_build -desc OneLifeContent_v$newVersion ~/checkout/OneLifeWorking/build/steam/app_build_content_595690.vdf +quit
 
 
+newBuildID=`~/checkout/OneLifeWorking/scripts/getLatestSteamBuildID.sh`
 
-# two arguments means automation
-if [ $# -ne 2 ]
+
+echo ""
+echo "Old Steam build ID:  $oldBuildID"
+echo "New Steam build ID:  $newBuildID"
+echo ""
+
+
+
+if [ $newBuildID -eq $oldBuildID ]
 then
 	echo ""
 	echo ""
-	echo "Did Steam Depot build above succeed?"
-	echo "If not, build and post depot manually using another method."
+	echo "Steam buld failed!"
+	echo ""
+	echo "You must build and post depot manually using another method."
 	echo ""
 	echo -n "Hit [ENTER] when ready: "
 	read
