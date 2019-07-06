@@ -516,6 +516,22 @@ steamcmd +login "jasonrohrergames" +run_app_build -desc OneLifeContent_v$newVers
 
 
 
+# two arguments means automation
+if [ $# -ne 2 ]
+then
+	echo ""
+	echo ""
+	echo "Did Steam Depot build above succeed?"
+	echo "If not, build and post depot manually using another method."
+	echo ""
+	echo -n "Hit [ENTER] when ready: "
+	read
+fi
+
+
+
+
+
 echo "" 
 echo "Deleting temporary diffWorking directory"
 echo ""
