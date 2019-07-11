@@ -9175,7 +9175,8 @@ int LivingLifePage::getNumHints( int inObjectID ) {
     
     SimpleVector<TransRecord *> unfilteredTrans;
     SimpleVector<TransRecord *> filteredTrans;
-
+    
+    if( trans != NULL )
     for( int i = 0; i<trans->size(); i++ ) {
         TransRecord *t = trans->getElementDirect( i );
         

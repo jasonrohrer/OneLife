@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 248    ???
+
+--Fixed crash in crafting hints if an object is picked up that has no 
+  transitions.
+
+
 
 Version 246    2019-July-5
 
