@@ -11,6 +11,22 @@ Version 248    ???
 
 
 
+
+Server Fixes
+
+--Server now allows authenticated re-connect through no matter what,
+  force-disconnecting the existing connection if its still seen as connected.
+  This will eliminate LOGIN FAILED when trying to reconnect quickly (before the
+  server has seen the connection break), BUT it will also allow someone else
+  with the same login credentials (like a friend you gave your account key to)
+  to login and hijack your game (and force you to disconnect).  This is an edge
+  case that will almost never happen, so it's best to honor all connection 
+  requests and assume they came from the legit account owner.  Fixes #345
+
+
+
+
+
 Version 246    2019-July-5
 
 --Fixed crash if email blank on login screen when score fetch attempted.

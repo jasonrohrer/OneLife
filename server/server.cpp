@@ -4915,6 +4915,30 @@ int processLoggedInPlayer( char inAllowReconnect,
                            int inForceDisplayID = -1,
                            GridPos *inForcePlayerPos = NULL ) {
     
+
+    // new behavior:
+    // allow this new connection from same
+    // email (most likely a re-connect
+    // by same person, when the old connection
+    // hasn't broken on our end yet)
+    
+    // to make it work, force-mark
+    // the old connection as broken
+    for( int p=0; p<players.size(); p++ ) {
+        LiveObject *o = players.getElement( p );
+        
+        if( ! o->error && 
+            o->connected && 
+            strcmp( o->email, inEmail ) == 0 ) {
+            
+            setPlayerDisconnected( o, "Authentic reconnect received" );
+            
+            break;
+            }
+        }
+
+
+
     // see if player was previously disconnected
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *o = players.getElement( i );
@@ -10107,42 +10131,11 @@ int main() {
                                 }
                             
 
-                            char emailAlreadyLoggedIn = false;
-                            
-
-                            for( int p=0; p<players.size(); p++ ) {
-                                LiveObject *o = players.getElement( p );
-                                
-
-                                if( ! o->error && 
-                                    o->connected && 
-                                    strcmp( o->email, 
-                                            nextConnection->email ) == 0 ) {
-                                    emailAlreadyLoggedIn = true;
-                                    break;
-                                    }
-                                }
-
-                            if( emailAlreadyLoggedIn ) {
-                                AppLog::infoF( 
-                                    "Another client already "
-                                    "connected as %s, "
-                                    "client rejected.",
-                                    nextConnection->email );
-                                
-                                nextConnection->error = true;
-                                nextConnection->errorCauseString =
-                                    "Duplicate email";
-                                nextConnection->curseStatus.curseLevel = 0;
-                                nextConnection->curseStatus.excessPoints = 0;
-                                }
-                            else {
-                                // this may return -1 if curse server
-                                // request is pending
-                                // we'll catch that case later above
-                                nextConnection->curseStatus =
-                                    getCurseLevel( nextConnection->email );
-                                }
+                            // this may return -1 if curse server
+                            // request is pending
+                            // we'll catch that case later above
+                            nextConnection->curseStatus =
+                                getCurseLevel( nextConnection->email );
                             
 
                             if( requireClientPassword &&
