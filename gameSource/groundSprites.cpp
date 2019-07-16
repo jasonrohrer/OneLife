@@ -6,6 +6,7 @@
 
 #include "minorGems/graphics/filters/BoxBlurFilter.h"
 #include "minorGems/util/SimpleVector.h"
+#include "minorGems/util/SettingsManager.h"
 #include "minorGems/io/file/File.h"
 
 
@@ -22,7 +23,6 @@ GroundSpriteSet **groundSprites;
 static int nextStep;
 
 static int blurRadius = 12;
-static BoxBlurFilter blur( blurRadius );
 
 static File groundDir( NULL, "ground" );
 static File groundTileCacheDir( NULL, "groundTileCache" );
@@ -33,6 +33,9 @@ static char printSteps = false;
 
 
 int initGroundSpritesStart( char inPrintSteps ) {
+    blurRadius = SettingsManager::getIntSetting( "groundTileEdgeBlurRadius",
+                                                 12 );
+
     nextStep = 0;
     
     printSteps = inPrintSteps;
@@ -389,8 +392,11 @@ float initGroundSpritesStep() {
                                         }
                                     }
                         
-                                tileImage.filter( &blur, 3 );
-
+                                if( blurRadius > 0 ) {
+                                    BoxBlurFilter blur( blurRadius );
+                                    
+                                    tileImage.filter( &blur, 3 );
+                                    }
                                 
                                 // cache for next time
                                 

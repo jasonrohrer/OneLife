@@ -9,6 +9,8 @@ Version 248    ???
 --Fixed crash in crafting hints if an object is picked up that has no 
   transitions.
 
+--Support for adjusting ground tile edge blur at runtime in settings folder.
+
 
 
 
