@@ -6381,7 +6381,7 @@ static char directLineBlocked( GridPos inSource, GridPos inDest ) {
     else {
         double deltaErr = fabs( deltaY / (double)deltaX );
         
-        double error = deltaErr - 0.5;
+        double error = 0;
         
         int y = inSource.y;
         for( int x=inSource.x; x != inDest.x || y != inDest.y; x += xStep ) {
@@ -6391,6 +6391,17 @@ static char directLineBlocked( GridPos inSource, GridPos inDest ) {
             error += deltaErr;
             
             if( error >= 0.5 ) {
+                y += yStep;
+                error -= 1.0;
+                }
+            
+            // we may need to take multiple steps in y
+            // if line is vertically oriented
+            while( error >= 0.5 ) {
+                if( isMapSpotBlocking( x, y ) ) {
+                    return true;
+                    }
+
                 y += yStep;
                 error -= 1.0;
                 }

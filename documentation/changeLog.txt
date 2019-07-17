@@ -25,6 +25,9 @@ Server Fixes
   case that will almost never happen, so it's best to honor all connection 
   requests and assume they came from the legit account owner.  Fixes #345
 
+--Fixed implementation of Bresenham's Line Algorithm to handle cases where y
+  changes faster than x (vertically-oriented lines).  This fixes blocked kill
+  shots and long-distance item uses from tight vertical angles.  Fixes #350
 
 
 
