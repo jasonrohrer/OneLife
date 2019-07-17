@@ -29,6 +29,7 @@ Server Fixes
   changes faster than x (vertically-oriented lines).  This fixes blocked kill
   shots and long-distance item uses from tight vertical angles.  Fixes #350
 
+--Fixed rounding issues that could affect fitness ranking.  Fixes #351
 
 
 
