@@ -3963,6 +3963,16 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     SimpleVector<int> pipesIn;
     GridPos playerPos = getPlayerPos( inPlayer );
     
+    
+    if( inPlayer->heldByOther ) {    
+        LiveObject *holdingPlayer = 
+            getLiveObject( inPlayer->heldByOtherID );
+                
+        if( holdingPlayer != NULL ) {
+            playerPos = getPlayerPos( holdingPlayer );
+            }
+        }
+    
     getSpeechPipesIn( playerPos.x, playerPos.y, &pipesIn );
     
     if( pipesIn.size() > 0 ) {

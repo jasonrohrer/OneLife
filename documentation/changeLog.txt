@@ -44,6 +44,9 @@ Server Fixes
   collaboration, you can preserve each other's YUM chains while waiting for
   more yummy foods to be available.  Fixes #354
 
+--Fixed so that baby carried away from AM transmitter doesn't still transmit
+  voice.  Fixes #355
+
 
 
 Version 246    2019-July-5
