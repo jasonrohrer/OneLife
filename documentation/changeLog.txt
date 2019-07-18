@@ -37,6 +37,13 @@ Server Fixes
 --Fixed so that you can swap held items into full clothing containers.
   Fixes #353
 
+--Getting fed by someone else can never break your YUM chain.  Getting fed a
+  yummy food by someone else will increase your chain and give you the normal
+  bonus.  Getting fed a MEH food will not affect your chain, but you won't get
+  the bonus.  This means you can't grief someone's YUM chain, and through
+  collaboration, you can preserve each other's YUM chains while waiting for
+  more yummy foods to be available.  Fixes #354
+
 
 
 Version 246    2019-July-5

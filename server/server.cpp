@@ -4538,11 +4538,20 @@ static char isYummy( LiveObject *inPlayer, int inObjectID ) {
 
 
 
-static void updateYum( LiveObject *inPlayer, int inFoodEatenID ) {
+static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
+                       char inFedSelf = true ) {
 
+    char wasYummy = true;
+    
     if( ! isYummy( inPlayer, inFoodEatenID ) ) {
+        wasYummy = false;
+        
         // chain broken
-        inPlayer->yummyFoodChain.deleteAll();
+        
+        // only feeding self can break chain
+        if( inFedSelf ) {
+            inPlayer->yummyFoodChain.deleteAll();
+            }
         }
     
     
@@ -4555,8 +4564,13 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID ) {
     
     // add to chain
     // might be starting a new chain
-    inPlayer->yummyFoodChain.push_back( inFoodEatenID );
-
+    // (do this if fed yummy food by other player too)
+    if( wasYummy ||
+        inPlayer->yummyFoodChain.size() == 0 ) {
+        
+        inPlayer->yummyFoodChain.push_back( inFoodEatenID );
+        }
+    
 
     int currentBonus = inPlayer->yummyFoodChain.size() - 1;
 
@@ -4564,7 +4578,12 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID ) {
         currentBonus = 0;
         }    
 
-    inPlayer->yummyBonusStore += currentBonus;
+    if( wasYummy ) {
+        // only get bonus if actually was yummy (whether fed self or not)
+        // chain not broken if fed non-yummy by other, but don't get bonus
+        inPlayer->yummyBonusStore += currentBonus;
+        }
+    
     }
 
 
@@ -13551,7 +13570,8 @@ int main() {
                                     
                                     targetPlayer->foodStore += obj->foodValue;
                                     
-                                    updateYum( targetPlayer, obj->id );
+                                    updateYum( targetPlayer, obj->id,
+                                               targetPlayer == nextPlayer );
 
                                     logEating( obj->id,
                                                obj->foodValue,
