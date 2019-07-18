@@ -11,6 +11,9 @@ Version 248    ???
 
 --Support for adjusting ground tile edge blur at runtime in settings folder.
 
+--Fixed rapid character flipping glitch when walking on a road with a
+  wide-blocking object on it.  Fixes #352
+
 
 
 

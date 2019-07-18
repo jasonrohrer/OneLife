@@ -727,6 +727,10 @@ class LivingLifePage : public GamePage, public ActionListener {
 
 
 
+        // relative to map corner, but not necessary in bounds
+        // of locally stored map
+        GridPos getMapPos( int inWorldX, int inWorldY );
+
         // -1 if outside bounds of locally stored map
         int getMapIndex( int inWorldX, int inWorldY );
         
