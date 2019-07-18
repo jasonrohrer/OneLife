@@ -14,6 +14,8 @@ Version 248    ???
 --Fixed rapid character flipping glitch when walking on a road with a
   wide-blocking object on it.  Fixes #352
 
+--Fixed crash when specified emotion object ID does not exist.
+
 
 
 
