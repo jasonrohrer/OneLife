@@ -6896,6 +6896,9 @@ char removeFromContainerToHold( LiveObject *inPlayer,
 // to contain it)
 static char addHeldToClothingContainer( LiveObject *inPlayer, 
                                         int inC,
+                                        // true if we should over-pack
+                                        // container in anticipation of a swap
+                                        char inWillSwap = false,
                                         char *outCouldHaveGoneIn = NULL ) {    
     // drop into own clothing
     ObjectRecord *cObj = 
@@ -6925,9 +6928,11 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
             *outCouldHaveGoneIn = true;
             }
 
-        if( oldNum < cObj->numSlots &&
+        if( ( oldNum < cObj->numSlots
+              || ( oldNum == cObj->numSlots && inWillSwap ) )
+            &&
             containSize <= slotSize ) {
-            // room
+            // room (or will swap, so we can over-pack it)
             inPlayer->clothingContained[inC].
                 push_back( 
                     inPlayer->holdingID );
@@ -13497,6 +13502,7 @@ int main() {
                                     addHeldToClothingContainer( 
                                         nextPlayer,
                                         m.i,
+                                        false,
                                         &couldHaveGoneIn) ) {
                                     // worked!
                                     }
@@ -13946,7 +13952,8 @@ int main() {
                                     // first add to top of container
                                     // if possible
                                     addHeldToClothingContainer( nextPlayer,
-                                                                m.c );
+                                                                m.c,
+                                                                true );
                                     if( nextPlayer->holdingID == 0 ) {
                                         // add to top worked
 
@@ -13979,6 +13986,24 @@ int main() {
                                                     nextPlayer, m.c, s );
                                                 break;
                                                 }
+                                            }
+                                        
+                                        // check to make sure remove worked
+                                        // (otherwise swap failed)
+                                        ObjectRecord *cObj = 
+                                            clothingByIndex( 
+                                                nextPlayer->clothing, m.c );
+                                        if( nextPlayer->clothingContained[m.c].
+                                            size() > cObj->numSlots ) {
+                                            
+                                            // over-full, remove failed
+                                            
+                                            // pop top item back off into hand
+                                            removeFromClothingContainerToHold(
+                                                nextPlayer, m.c, 
+                                                nextPlayer->
+                                                clothingContained[m.c].
+                                                size() - 1 );
                                             }
                                         }
                                     

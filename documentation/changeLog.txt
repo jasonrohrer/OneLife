@@ -34,6 +34,9 @@ Server Fixes
 
 --Fixed rounding issues that could affect fitness ranking.  Fixes #351
 
+--Fixed so that you can swap held items into full clothing containers.
+  Fixes #353
+
 
 
 Version 246    2019-July-5
