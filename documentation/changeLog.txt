@@ -4,6 +4,52 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 248    2019-July-18
+
+--Fixed crash in crafting hints if an object is picked up that has no 
+  transitions.
+
+--Support for adjusting ground tile edge blur at runtime in settings folder.
+
+--Fixed rapid character flipping glitch when walking on a road with a
+  wide-blocking object on it.  Fixes #352
+
+--Fixed crash when specified emotion object ID does not exist.
+
+
+
+
+Server Fixes
+
+--Server now allows authenticated re-connect through no matter what,
+  force-disconnecting the existing connection if its still seen as connected.
+  This will eliminate LOGIN FAILED when trying to reconnect quickly (before the
+  server has seen the connection break), BUT it will also allow someone else
+  with the same login credentials (like a friend you gave your account key to)
+  to login and hijack your game (and force you to disconnect).  This is an edge
+  case that will almost never happen, so it's best to honor all connection 
+  requests and assume they came from the legit account owner.  Fixes #345
+
+--Fixed implementation of Bresenham's Line Algorithm to handle cases where y
+  changes faster than x (vertically-oriented lines).  This fixes blocked kill
+  shots and long-distance item uses from tight vertical angles.  Fixes #350
+
+--Fixed rounding issues that could affect fitness ranking.  Fixes #351
+
+--Fixed so that you can swap held items into full clothing containers.
+  Fixes #353
+
+--Getting fed by someone else can never break your YUM chain.  Getting fed a
+  yummy food by someone else will increase your chain and give you the normal
+  bonus.  Getting fed a MEH food will not affect your chain, but you won't get
+  the bonus.  This means you can't grief someone's YUM chain, and through
+  collaboration, you can preserve each other's YUM chains while waiting for
+  more yummy foods to be available.  Fixes #354
+
+--Fixed so that baby carried away from AM transmitter doesn't still transmit
+  voice.  Fixes #355
+
+
 
 Version 246    2019-July-5
 

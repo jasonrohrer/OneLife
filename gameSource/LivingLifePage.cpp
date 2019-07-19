@@ -3877,14 +3877,23 @@ FloatColor trailColor = { 0, 0.5, 0, 0.25 };
 
 
 
-int LivingLifePage::getMapIndex( int inWorldX, int inWorldY ) {
-    int mapTargetX = inWorldX - mMapOffsetX + mMapD / 2;
-    int mapTargetY = inWorldY - mMapOffsetY + mMapD / 2;
+GridPos LivingLifePage::getMapPos( int inWorldX, int inWorldY ) {
+    GridPos p =
+        { inWorldX - mMapOffsetX + mMapD / 2,
+          inWorldY - mMapOffsetY + mMapD / 2 };
+    
+    return p;
+    }
 
-    if( mapTargetY >= 0 && mapTargetY < mMapD &&
-        mapTargetX >= 0 && mapTargetX < mMapD ) {
+
+
+int LivingLifePage::getMapIndex( int inWorldX, int inWorldY ) {
+    GridPos mapTarget = getMapPos( inWorldX, inWorldY );
+    
+    if( mapTarget.y >= 0 && mapTarget.y < mMapD &&
+        mapTarget.x >= 0 && mapTarget.x < mMapD ) {
                     
-        return mapTargetY * mMapD + mapTargetX;
+        return mapTarget.y * mMapD + mapTarget.x;
         }
     return -1;
     }
@@ -9385,7 +9394,8 @@ int LivingLifePage::getNumHints( int inObjectID ) {
     
     SimpleVector<TransRecord *> unfilteredTrans;
     SimpleVector<TransRecord *> filteredTrans;
-
+    
+    if( trans != NULL )
     for( int i = 0; i<trans->size(); i++ ) {
         TransRecord *t = trans->getElementDirect( i );
         
@@ -18101,13 +18111,14 @@ char LivingLifePage::isSameFloor( int inFloor, GridPos inFloorPos,
     nextStep.y += inDY;
                             
     int nextMapI = getMapIndex( nextStep.x, nextStep.y );
-                            
+                          
+    GridPos nextMap = getMapPos( nextStep.x, nextStep.y );
+  
     if( nextMapI != -1 
-        && 
-        ( mMap[ nextMapI ] <= 0 ||
-          ! getObject( mMap[ nextMapI ] )->blocksWalking )
         &&
-        mMapFloors[ nextMapI ] == inFloor ) {
+        mMapFloors[ nextMapI ] == inFloor 
+        && 
+        ! getCellBlocksWalking( nextMap.x, nextMap.y ) ) {
         return true;
         }
     return false;

@@ -97,7 +97,11 @@ void addBaseObjectToLiveObjectSet( int inID ) {
         liveObjectSet.push_back( inID );
         
         ObjectRecord *o = getObject( inID );
-
+        
+        if( o == NULL ) {
+            return;
+            }
+        
         for( int j=0; j< o->numSprites; j++ ) {
             int spriteID = o->sprites[j];
             

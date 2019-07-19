@@ -1409,8 +1409,11 @@ function fs_getScore() {
 
 function fs_outputBasicScore( $inEmail ) {
     global $tableNamePrefix;
-    
-    $query = "SELECT leaderboard_name, score, ".
+
+    // get score with 10 precision, so that we're less likely to
+    // include ourselves when doing > comparison to compute rank
+    // (due to rounding)
+    $query = "SELECT leaderboard_name, ROUND( score, 10  ) as score, ".
         "TIMESTAMPDIFF( SECOND, last_action_time, CURRENT_TIMESTAMP ) ".
         "   as sec_passed ".
         "FROM $tableNamePrefix"."users ".
