@@ -140,10 +140,10 @@ echo ""
 oldBuildID=`~/checkout/OneLifeWorking/scripts/getLatestSteamBuildID.sh`
 
 
-steamcmd +login "jasonrohrergames" +run_app_build -desc OneLifeContent_v$newVersion ~/checkout/OneLifeWorking/build/steam/app_build_content_595690.vdf +quit
+steamcmd +login "jasonrohrergames" +run_app_build -desc OneLifeContent_v$newVersion ~/checkout/OneLifeWorking/build/steam/app_build_content_595690.vdf +quit | tee /tmp/steamBuildLog.txt
 
 
-newBuildID=`~/checkout/OneLifeWorking/scripts/getLatestSteamBuildID.sh`
+newBuildID=`grep BuildID /tmp/steamBuildLog.txt | sed "s/.*(BuildID //" | sed "s/).*//"`
 
 
 echo ""
