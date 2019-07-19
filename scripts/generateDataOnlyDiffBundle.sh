@@ -39,6 +39,23 @@ steamcmd +login "jasonrohrergames" +quit
 
 
 
+# two arguments means automation
+if [ $# -ne 2 ]
+then
+	echo ""
+	echo ""
+	lastBuildID=`~/checkout/OneLifeWorking/scripts/getLatestSteamBuildID.sh`
+	
+	echo "Seeing last Steam build ID of $lastBuildID"
+	echo ""
+	echo "Check Steamworks and verify that this is correct."
+	echo ""
+	echo -n "Hit [ENTER] when ready: "
+	read
+fi
+
+
+
 echo "" 
 echo "Updating minorGems"
 echo ""

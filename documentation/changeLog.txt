@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--Another work-around for the Steam bug.  Manually verify that the latest
+  steam build ID is correct before building.
+
+
 Version 248    2019-July-18
 
 --Fixed crash in crafting hints if an object is picked up that has no 
