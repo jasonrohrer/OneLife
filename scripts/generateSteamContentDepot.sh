@@ -153,7 +153,7 @@ echo ""
 
 
 
-if [ $newBuildID -eq $oldBuildID ]
+if [[ $newBuildID = "" || $newBuildID -le $oldBuildID ]]
 then
 	echo ""
 	echo ""

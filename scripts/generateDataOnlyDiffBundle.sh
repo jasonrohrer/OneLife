@@ -545,7 +545,7 @@ echo "Old Steam build ID:  $oldBuildID"
 echo "New Steam build ID:  $newBuildID"
 echo ""
 
-if [ $newBuildID -eq $oldBuildID ]
+if [[ $newBuildID = "" || $newBuildID -le $oldBuildID ]]
 then
 
 	echo ""
