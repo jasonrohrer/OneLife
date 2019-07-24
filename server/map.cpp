@@ -229,6 +229,9 @@ static int barrierRadius = 250;
 
 static int barrierOn = 1;
 
+static int longTermCullEnabled = 1;
+
+
 
 static SimpleVector<int> barrierItemList;
 
@@ -2580,6 +2583,9 @@ char initMap() {
     barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
     barrierOn = SettingsManager::getIntSetting( "barrierOn", 1 );
     
+    longTermCullEnabled =
+        SettingsManager::getIntSetting( "longTermNoLookCullEnabled", 1 );
+
     
     SimpleVector<int> *list = 
         SettingsManager::getIntSettingMulti( "barrierObjects" );
@@ -7327,6 +7333,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         // Spiral method:
         GridPos eveLocToUse = eveLocation;
         
+        int jumpUsed = 0;
 
         if( eveLocationUsage < maxEveLocationUsage ) {
             eveLocationUsage++;
@@ -7375,7 +7382,9 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                 }
 
 
-            if( eveStartSpiralPosSet ) {
+
+            if( eveStartSpiralPosSet &&
+                longTermCullEnabled ) {
                 
                 int longTermCullingSeconds = 
                     SettingsManager::getIntSetting( 
@@ -7407,6 +7416,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
             
             int jump = SettingsManager::getIntSetting( "nextEveJump", 2000 );
+            jumpUsed = jump;
             
             // advance eve angle along spiral
             // approximate recursive form
@@ -7426,6 +7436,26 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             eveLocToUse.y += lrint( delta.y );
             
             
+            if( barrierOn &&
+                // we use jumpUsed / 3 as randomizing radius below
+                // so jumpUsed / 2 is safe here
+                ( abs( eveLocToUse.x ) > barrierRadius - jumpUsed / 2 ||
+                  abs( eveLocToUse.y ) > barrierRadius - jumpUsed / 2 ) ) {
+                
+                // Eve has gotten too close to the barrier
+                
+                // hard reset of location back to (0,0)-centered spiral
+                eveAngle = 2 * M_PI;
+
+                eveLocation.x = 0;
+                eveLocation.y = 0;
+                eveLocToUse = eveLocation;
+
+                eveStartSpiralPosSet = false;
+                }
+            
+                  
+
 
             // but do save it as a possible post-startup location for next time
             File eveLocFile( NULL, "lastEveLocation.txt" );
@@ -7444,6 +7474,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         // put Eve in radius 50 around this location
         forceEveToBorder = true;
         currentEveRadius = 50;
+
+        if( currentEveRadius > jumpUsed / 3 ) {
+            currentEveRadius = jumpUsed / 3;
+            }
         }
     
 
@@ -7930,7 +7964,6 @@ static int longTermCullingSeconds = 3600 * 12;
 
 static int minActivePlayersForLongTermCulling = 15;
 
-static int longTermCullEnabled = 1;
 
 
 static SimpleVector<int> noCullItemList;

@@ -18,6 +18,8 @@ Server Fixes
 
 --Added an impassible barrier at a adjustable square radius.
 
+--Eve spiral resets to 0,0 when it gets too close to the barrier.
+
 
 
 
