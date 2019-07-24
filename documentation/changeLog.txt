@@ -20,6 +20,9 @@ Server Fixes
 
 --Eve spiral resets to 0,0 when it gets too close to the barrier.
 
+--Adjusted Eve spiral jump to 50 (from 250) and set barrier radius at 250
+  (500x500 square).  The smaller spiral fits nicely in the barrier square.
+
 
 
 
