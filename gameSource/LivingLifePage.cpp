@@ -11630,7 +11630,9 @@ void LivingLifePage::step() {
                     }
                 if( o == NULL ) {
                     // not found, create new
-                    OwnerInfo newO = { x, y, new SimpleVector<int>() };
+                    GridPos p = { x, y };
+                    
+                    OwnerInfo newO = { p, new SimpleVector<int>() };
                     
                     mOwnerInfo.push_back( newO );
                     o = mOwnerInfo.getElement( mOwnerInfo.size() - 1 );
