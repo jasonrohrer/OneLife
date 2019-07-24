@@ -16,6 +16,9 @@ Server Fixes
 
 --Long term non-look map culling (live reclamation by nature) disabled.
 
+--Added an impassible barrier at a adjustable square radius.
+
+
 
 
 
