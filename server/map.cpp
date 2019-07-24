@@ -7865,6 +7865,9 @@ static int longTermCullingSeconds = 3600 * 12;
 
 static int minActivePlayersForLongTermCulling = 15;
 
+static int longTermCullEnabled = 1;
+
+
 static SimpleVector<int> noCullItemList;
 
 
@@ -7889,6 +7892,11 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
             SettingsManager::getIntSetting( 
                 "minActivePlayersForLongTermCulling", 15 );
         
+        longTermCullEnabled = 
+            SettingsManager::getIntSetting( 
+                "longTermNoLookCullEnabled", 1 );
+        
+
         SimpleVector<int> *list = 
             SettingsManager::getIntSettingMulti( "noCullItemList" );
         
@@ -7898,7 +7906,8 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
         }
 
 
-    if( minActivePlayersForLongTermCulling > inNumCurrentPlayers ) {
+    if( ! longTermCullEnabled ||
+        minActivePlayersForLongTermCulling > inNumCurrentPlayers ) {
         return;
         }
 

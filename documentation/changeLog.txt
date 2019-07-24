@@ -14,6 +14,10 @@ Server Fixes
 --Another work-around for the Steam bug.  Manually verify that the latest
   steam build ID is correct before building.
 
+--Long term non-look map culling (live reclamation by nature) disabled.
+
+
+
 
 Version 248    2019-July-18
 
