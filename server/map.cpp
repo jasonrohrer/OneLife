@@ -5235,37 +5235,6 @@ void checkDecayContained( int inX, int inY, int inSubCont ) {
 
 
 int getTweakedBaseMap( int inX, int inY ) {
-
-    if( barrierOn )
-    if( inX == barrierRadius ||
-        inX == - barrierRadius ||
-        inY == barrierRadius ||
-        inY == - barrierRadius ) {
-
-        // along barrier line
-        
-        // now make sure that we don't stick out beyond square
-
-        if( inX <= barrierRadius &&
-            inX >= -barrierRadius &&
-            inY <= barrierRadius &&
-            inY >= -barrierRadius ) {
-            
-        
-            setXYRandomSeed( 9238597 );
-            
-            int numOptions = barrierItemList.size();
-            
-            int pick = floor( numOptions * getXYRandom( inX, inY ) );
-            
-            if( pick == numOptions ) {
-                pick = numOptions - 1;
-                }
-            
-            return barrierItemList.getElementDirect( pick );
-            }
-        }
-
     
     // nothing in map
     char wasGridPlacement = false;
@@ -5360,7 +5329,50 @@ int getTweakedBaseMap( int inX, int inY ) {
 
 
 
+static int getPossibleBarrier( int inX, int inY ) {
+    if( barrierOn )
+    if( inX == barrierRadius ||
+        inX == - barrierRadius ||
+        inY == barrierRadius ||
+        inY == - barrierRadius ) {
+
+        // along barrier line
+        
+        // now make sure that we don't stick out beyond square
+
+        if( inX <= barrierRadius &&
+            inX >= -barrierRadius &&
+            inY <= barrierRadius &&
+            inY >= -barrierRadius ) {
+            
+        
+            setXYRandomSeed( 9238597 );
+            
+            int numOptions = barrierItemList.size();
+            
+            int pick = floor( numOptions * getXYRandom( inX, inY ) );
+            
+            if( pick == numOptions ) {
+                pick = numOptions - 1;
+                }
+            
+            return barrierItemList.getElementDirect( pick );
+            }
+        }
+
+    return 0;
+    }
+
+
+
 int getMapObjectRaw( int inX, int inY ) {
+    
+    int barrier = getPossibleBarrier( inX, inY );
+
+    if( barrier != 0 ) {
+        return barrier;
+        }
+
     int result = dbGet( inX, inY, 0 );
     
     if( result == -1 ) {
@@ -7956,6 +7968,9 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
         noCullItemList.deleteAll();
         noCullItemList.push_back_other( list );
         delete list;
+
+        barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
+        barrierOn = SettingsManager::getIntSetting( "barrierOn", 1 );
         }
 
 
