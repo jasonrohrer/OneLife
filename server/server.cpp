@@ -9420,6 +9420,13 @@ int main() {
         
     
     // test code for printing sample eve locations
+    // direct output from server to out.txt
+    // then run:
+    // grep "Eve location" out.txt | sed -e "s/Eve location //" | 
+    //      sed -e "s/,/ /" > eveTest.txt
+    // Then in gnuplot, do:
+    //  plot "eveTest.txt" using 1:2 with linespoints;
+
     /*
     for( int i=0; i<1000; i++ ) {
         int x, y;
