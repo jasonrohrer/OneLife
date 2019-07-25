@@ -7,6 +7,9 @@ Version 249    ???
 
 --Fixed weird initialization of OwnerInfo structure.
 
+--Support for +noHighlight tag on objects (blocking mouse-over highlights,
+  which look weird on the rift object).
+
 
 
 Server Fixes

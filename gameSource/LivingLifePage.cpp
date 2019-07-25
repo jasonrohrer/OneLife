@@ -3590,6 +3590,10 @@ void LivingLifePage::drawMapCell( int inMapI,
                              pos.y / CELL_D );
             }
         
+        
+        if( highlight && obj->noHighlight ) {
+            highlight = false;
+            }
 
         
         int numPasses = 1;
