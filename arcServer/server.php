@@ -17,6 +17,7 @@ else if( $action == "report_arc_end" ) {
     }
 
 
+
 function reportArcEnd() {
     $server_name = as_requestFilter( "server_name", "/[A-Z0-9._-]+/i", "" );
 
@@ -30,15 +31,18 @@ function reportArcEnd() {
         }
 
     
-    $sequence_number = ar_requestFilter( "sequence_number", "/[0-9]+/", "0" );
+    $sequence_number = as_requestFilter( "sequence_number", "/[0-9]+/", "0" );
     
-    $hash = strtoupper( ar_requestFilter( "hash", "/[A-F0-9]+/i", "" ) );
+    $hash = strtoupper( as_requestFilter( "hash_value", "/[A-F0-9]+/i", "" ) );
 
     
     $n = getSequenceNumber();
 
     if( $sequence_number < $n ) {
-        echo "stale sequence number";
+        as_log( "reportArcEnd denied for stale sequence number ".
+                "$sequence_number, expected at least $n" );
+        
+        echo "DENIED\nstale sequence number";
         return;
         }
 
@@ -46,7 +50,11 @@ function reportArcEnd() {
         strtoupper( as_hmac_sha1( $sharedSecret, $sequence_number ) );
 
     if( $hash != $computedHashValue ) {
-        echo "DENIED";
+        as_log( "reportArcEnd denied for bad hash value $hash, ".
+                "expecting $computedHashValue hash for sequence number ".
+                "$sequence_number" );
+        
+        echo "DENIED\nBad hash value";
         return;
         }
 
@@ -58,7 +66,7 @@ function reportArcEnd() {
     
     // authorized
 
-    $seconds_per_year = ar_requestFilter( "seconds_per_year", "/[0-9]+/", "0" );
+    $seconds_per_year = as_requestFilter( "seconds_per_year", "/[0-9]+/", "0" );
 
     if( $seconds_per_year > 0 ) {
         global $secondsPerYearFile;
@@ -83,6 +91,10 @@ function reportArcEnd() {
         }
     
     file_put_contents( $lastArcEndTimeFile, "$thisTime" );
+
+    as_log( "reportArcEnd accepted from $server_name" );    
+    
+    echo "OK";
     }
 
 
@@ -141,6 +153,20 @@ function file_get_contents_safe( $inFileName ) {
         return FALSE;
         }
     }
+
+
+
+function as_log( $message ) {
+
+    $d = date('Y-m-d H:i:s');
+
+    $line = "$d: $message\n\n";
+
+    global $arcLogFile;
+    
+    file_put_contents( $arcLogFile, $line, FILE_APPEND );
+    }
+
 
 
 ?>

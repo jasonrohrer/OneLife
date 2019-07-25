@@ -16,4 +16,7 @@ $lastArcEndTimeFile = "/tmp/arcServerLastArcEndTime.txt";
 
 $lastArcStartTimeFile = "/tmp/arcServerLastArcStartTime.txt";
 
+
+$arcLogFile = "/tmp/arcServerLog.txt";
+
 ?>
