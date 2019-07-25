@@ -177,6 +177,9 @@ static const char *allowedSayChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! ";
 static int killEmotionIndex = 2;
 
 
+static double lastBabyPassedThresholdTime = 0;
+
+
 
 // for incoming socket connections that are still in the login process
 typedef struct FreshConnection {
@@ -9415,6 +9418,18 @@ int main() {
     int forceShutdownMode = 
             SettingsManager::getIntSetting( "forceShutdownMode", 0 );
         
+    
+    for( int i=0; i<1000; i++ ) {
+        int x, y;
+        
+        SimpleVector<GridPos> temp;
+        
+        getEvePosition( "test@blah", 1, &x, &y, &temp, false );
+        
+        printf( "Eve location %d,%d\n", x, y );
+        }
+    
+
 
     while( !quit ) {
 
@@ -14638,6 +14653,53 @@ int main() {
 
                 // both tutorial and non-tutorial players
                 logFitnessDeath( nextPlayer );
+                
+
+
+                if( SettingsManager::getIntSetting( 
+                        "babyApocalypsePossible", 1 ) 
+                    &&
+                    players.size() > 
+                    SettingsManager::getIntSetting(
+                        "minActivePlayersForBabyApocalypse.ini", 15 ) ) {
+                    
+                    double curTime = Time::getCurrentTime();
+                    
+                    if( ! nextPlayer->isEve ) {
+                    
+                        // player was born as a baby
+                        
+                        int threshold = SettingsManager::getIntSetting( 
+                            "babySurvivalYearsBeforeApocalypse", 15 );
+                        
+                        if( age > threshold ) {
+                            // baby passed threshold, update last-passed time
+                            lastBabyPassedThresholdTime = curTime;
+                            }
+                        else {
+                            // baby died young
+                            // check if we're due for an apocalypse
+                            
+                            if( lastBabyPassedThresholdTime > 0 &&
+                                curTime - lastBabyPassedThresholdTime >
+                                SettingsManager::getIntSetting(
+                                    "babySurvivalWindowSecondsBeforeApocalypse",
+                                    3600 ) ) {
+                                // we're outside the window
+                                // people have been dying young for a long time
+                                apocalypseTriggered = true;
+                                
+                                // reset window so we don't re-trigger
+                                lastBabyPassedThresholdTime = curTime;
+                                }
+                            }
+                        }
+                    }
+                else {
+                    // not enough players
+                    // reset window
+                    lastBabyPassedThresholdTime = curTime;
+                    }
                 
 
                 // don't use age here, because it unfairly gives Eve

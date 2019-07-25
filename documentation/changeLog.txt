@@ -23,6 +23,10 @@ Server Fixes
 --Adjusted Eve spiral jump to 50 (from 250) and set barrier radius at 250
   (500x500 square).  The smaller spiral fits nicely in the barrier square.
 
+--If no baby lives to age 15 for 60 straight minutes (on a server with at least
+  15 active players), then an apocalypse is auto-triggered.  This means the
+  barrier square is out of resources necessary for survival.
+
 
 
 
