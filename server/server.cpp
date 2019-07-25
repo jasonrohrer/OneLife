@@ -14670,7 +14670,7 @@ int main() {
                     &&
                     players.size() > 
                     SettingsManager::getIntSetting(
-                        "minActivePlayersForBabyApocalypse.ini", 15 ) ) {
+                        "minActivePlayersForBabyApocalypse", 15 ) ) {
                     
                     double curTime = Time::getCurrentTime();
                     
@@ -14699,6 +14699,13 @@ int main() {
                                 apocalypseTriggered = true;
                                 
                                 // reset window so we don't re-trigger
+                                lastBabyPassedThresholdTime = 0;
+                                }
+                            else if( lastBabyPassedThresholdTime == 0 ) {
+                                // first baby to die, and we have enough
+                                // active players.
+                                
+                                // start window now
                                 lastBabyPassedThresholdTime = curTime;
                                 }
                             }
