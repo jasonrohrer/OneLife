@@ -53,7 +53,7 @@
 #include "familySkipList.h"
 #include "lifeTokens.h"
 #include "fitnessScore.h"
-
+#include "arcReport.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -7785,6 +7785,9 @@ void apocalypseStep() {
             AppLog::info( "Apocalypse triggerered, starting it" );
 
 
+            reportArcEnd();
+            
+
             // only broadcast to reflector if apocalypseBroadcast set
             if( !apocalypseRemote &&
                 SettingsManager::getIntSetting( "remoteReport", 0 ) &&
@@ -9565,6 +9568,8 @@ int main() {
             stepFitnessScore();
             
             stepMapLongTermCulling( players.size() );
+            
+            stepArcReport();
             }
         
         
