@@ -73,7 +73,8 @@ function showLogo( $inImageFile, $inText ) {
 <td><img src=portraitLeft.jpg border=0 width=197 height=414></td>
 <td>
 <center><?php include( "lifeStats.php" ); ?><br>
-<?php include( "monumentStats.php" ); ?>
+<?php include( "monumentStats.php" ); ?><br>
+<?php include( "arcServer/arcReport.php" ); ?>
 </center>
 
 
