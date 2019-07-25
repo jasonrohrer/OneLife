@@ -9419,6 +9419,8 @@ int main() {
             SettingsManager::getIntSetting( "forceShutdownMode", 0 );
         
     
+    // test code for printing sample eve locations
+    /*
     for( int i=0; i<1000; i++ ) {
         int x, y;
         
@@ -9428,7 +9430,7 @@ int main() {
         
         printf( "Eve location %d,%d\n", x, y );
         }
-    
+    */
 
 
     while( !quit ) {
