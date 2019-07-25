@@ -14678,8 +14678,8 @@ int main() {
                     
                         // player was born as a baby
                         
-                        int threshold = SettingsManager::getIntSetting( 
-                            "babySurvivalYearsBeforeApocalypse", 15 );
+                        float threshold = SettingsManager::getFloatSetting( 
+                            "babySurvivalYearsBeforeApocalypse", 15.0f );
                         
                         if( age > threshold ) {
                             // baby passed threshold, update last-passed time
