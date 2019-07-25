@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 249    ???
+Version 251    2019-July-25
 
 --Fixed weird initialization of OwnerInfo structure.
 
