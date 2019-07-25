@@ -5366,7 +5366,12 @@ static int getPossibleBarrier( int inX, int inY ) {
                     pick = numOptions - 1;
                     }
                 
-                return barrierItemList.getElementDirect( pick );
+                int barrierID = barrierItemList.getElementDirect( pick );
+
+                if( getObject( barrierID ) != NULL ) {
+                    // actually exists
+                    return barrierID;
+                    }
                 }
             }
         }
