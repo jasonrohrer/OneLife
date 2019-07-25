@@ -5356,13 +5356,18 @@ static int getPossibleBarrier( int inX, int inY ) {
             
             int numOptions = barrierItemList.size();
             
-            int pick = floor( numOptions * getXYRandom( inX, inY ) );
-            
-            if( pick == numOptions ) {
-                pick = numOptions - 1;
+            if( numOptions > 0 ) {
+                
+                // random doesn't always look good
+                int pick =
+                    floor( numOptions * getXYRandom( inX * 10, inY * 10 ) );
+
+                if( pick >= numOptions ) {
+                    pick = numOptions - 1;
+                    }
+                
+                return barrierItemList.getElementDirect( pick );
                 }
-            
-            return barrierItemList.getElementDirect( pick );
             }
         }
 
