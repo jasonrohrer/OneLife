@@ -3579,6 +3579,9 @@ void LivingLifePage::drawMapCell( int inMapI,
             }
         
         if( ! mShowHighlights ) {
+            if( inHighlightOnly ) {
+                return;
+                }
             highlight = false;
             }
         
@@ -3592,6 +3595,9 @@ void LivingLifePage::drawMapCell( int inMapI,
         
         
         if( highlight && obj->noHighlight ) {
+            if( inHighlightOnly ) {
+                return;
+                }
             highlight = false;
             }
 
