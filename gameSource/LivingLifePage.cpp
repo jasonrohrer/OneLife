@@ -3676,6 +3676,9 @@ void LivingLifePage::drawMapCell( int inMapI,
             }
         
         if( ! mShowHighlights ) {
+            if( inHighlightOnly ) {
+                return;
+                }
             highlight = false;
             }
         
@@ -3687,6 +3690,13 @@ void LivingLifePage::drawMapCell( int inMapI,
                              pos.y / CELL_D );
             }
         
+        
+        if( highlight && obj->noHighlight ) {
+            if( inHighlightOnly ) {
+                return;
+                }
+            highlight = false;
+            }
 
         
         int numPasses = 1;
@@ -11840,7 +11850,9 @@ void LivingLifePage::step() {
                     }
                 if( o == NULL ) {
                     // not found, create new
-                    OwnerInfo newO = { x, y, new SimpleVector<int>() };
+                    GridPos p = { x, y };
+                    
+                    OwnerInfo newO = { p, new SimpleVector<int>() };
                     
                     mOwnerInfo.push_back( newO );
                     o = mOwnerInfo.getElement( mOwnerInfo.size() - 1 );

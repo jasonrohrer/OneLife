@@ -39,6 +39,23 @@ steamcmd +login "jasonrohrergames" +quit
 
 
 
+# two arguments means automation
+if [ $# -ne 2 ]
+then
+	echo ""
+	echo ""
+	lastBuildID=`~/checkout/OneLifeWorking/scripts/getLatestSteamBuildID.sh`
+	
+	echo "Seeing last Steam build ID of $lastBuildID"
+	echo ""
+	echo "Check Steamworks and verify that this is correct."
+	echo ""
+	echo -n "Hit [ENTER] when ready: "
+	read
+fi
+
+
+
 echo "" 
 echo "Updating minorGems"
 echo ""
@@ -516,10 +533,11 @@ echo ""
 oldBuildID=`~/checkout/OneLifeWorking/scripts/getLatestSteamBuildID.sh`
 
 
-steamcmd +login "jasonrohrergames" +run_app_build -desc OneLifeContent_v$newVersion ~/checkout/OneLifeWorking/build/steam/app_build_content_595690.vdf +quit
+steamcmd +login "jasonrohrergames" +run_app_build -desc OneLifeContent_v$newVersion ~/checkout/OneLifeWorking/build/steam/app_build_content_595690.vdf +quit | tee /tmp/steamBuildLog.txt
 
 
-newBuildID=`~/checkout/OneLifeWorking/scripts/getLatestSteamBuildID.sh`
+newBuildID=`grep BuildID /tmp/steamBuildLog.txt | sed "s/.*(BuildID //" | sed "s/).*//"`
+
 
 
 echo ""
@@ -527,7 +545,7 @@ echo "Old Steam build ID:  $oldBuildID"
 echo "New Steam build ID:  $newBuildID"
 echo ""
 
-if [ $newBuildID -eq $oldBuildID ]
+if [[ $newBuildID = "" || $newBuildID -le $oldBuildID ]]
 then
 
 	echo ""
@@ -538,8 +556,15 @@ then
 	echo "Remote Steam build starting"
 	echo
 
-	ssh -n build.onehouronelife.com 'cd ~/checkout/OneLifeWorking; git pull; ~/checkout/OneLifeWorking/scripts/generateSteamContentDepot.sh'
-
+    # two arguments means automation
+	if [ $# -ne 2 ]
+	then
+		# run ssh interactively so we can pause at error
+		ssh build.onehouronelife.com 'cd ~/checkout/OneLifeWorking; git pull; ~/checkout/OneLifeWorking/scripts/generateSteamContentDepot.sh'
+	else 
+		# automation, don't run ssh interactively
+		ssh -n build.onehouronelife.com 'cd ~/checkout/OneLifeWorking; git pull; ~/checkout/OneLifeWorking/scripts/generateSteamContentDepot.sh'
+	fi
 	echo
 	echo "Remote Steam build done"
 	echo

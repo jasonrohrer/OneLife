@@ -53,7 +53,7 @@
 #include "familySkipList.h"
 #include "lifeTokens.h"
 #include "fitnessScore.h"
-
+#include "arcReport.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -177,6 +177,9 @@ static const char *allowedSayChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! ";
 
 
 static int killEmotionIndex = 2;
+
+
+static double lastBabyPassedThresholdTime = 0;
 
 
 
@@ -7784,6 +7787,9 @@ void apocalypseStep() {
             AppLog::info( "Apocalypse triggerered, starting it" );
 
 
+            reportArcEnd();
+            
+
             // only broadcast to reflector if apocalypseBroadcast set
             if( !apocalypseRemote &&
                 SettingsManager::getIntSetting( "remoteReport", 0 ) &&
@@ -9432,6 +9438,27 @@ int main() {
     int forceShutdownMode = 
             SettingsManager::getIntSetting( "forceShutdownMode", 0 );
         
+    
+    // test code for printing sample eve locations
+    // direct output from server to out.txt
+    // then run:
+    // grep "Eve location" out.txt | sed -e "s/Eve location //" | 
+    //      sed -e "s/,/ /" > eveTest.txt
+    // Then in gnuplot, do:
+    //  plot "eveTest.txt" using 1:2 with linespoints;
+
+    /*
+    for( int i=0; i<1000; i++ ) {
+        int x, y;
+        
+        SimpleVector<GridPos> temp;
+        
+        getEvePosition( "test@blah", 1, &x, &y, &temp, false );
+        
+        printf( "Eve location %d,%d\n", x, y );
+        }
+    */
+
 
     while( !quit ) {
 
@@ -9558,6 +9585,8 @@ int main() {
             stepFitnessScore();
             
             stepMapLongTermCulling( players.size() );
+            
+            stepArcReport();
             }
         
         
@@ -14655,6 +14684,60 @@ int main() {
 
                 // both tutorial and non-tutorial players
                 logFitnessDeath( nextPlayer );
+                
+
+
+                if( SettingsManager::getIntSetting( 
+                        "babyApocalypsePossible", 1 ) 
+                    &&
+                    players.size() > 
+                    SettingsManager::getIntSetting(
+                        "minActivePlayersForBabyApocalypse", 15 ) ) {
+                    
+                    double curTime = Time::getCurrentTime();
+                    
+                    if( ! nextPlayer->isEve ) {
+                    
+                        // player was born as a baby
+                        
+                        float threshold = SettingsManager::getFloatSetting( 
+                            "babySurvivalYearsBeforeApocalypse", 15.0f );
+                        
+                        if( age > threshold ) {
+                            // baby passed threshold, update last-passed time
+                            lastBabyPassedThresholdTime = curTime;
+                            }
+                        else {
+                            // baby died young
+                            // check if we're due for an apocalypse
+                            
+                            if( lastBabyPassedThresholdTime > 0 &&
+                                curTime - lastBabyPassedThresholdTime >
+                                SettingsManager::getIntSetting(
+                                    "babySurvivalWindowSecondsBeforeApocalypse",
+                                    3600 ) ) {
+                                // we're outside the window
+                                // people have been dying young for a long time
+                                apocalypseTriggered = true;
+                                
+                                // reset window so we don't re-trigger
+                                lastBabyPassedThresholdTime = 0;
+                                }
+                            else if( lastBabyPassedThresholdTime == 0 ) {
+                                // first baby to die, and we have enough
+                                // active players.
+                                
+                                // start window now
+                                lastBabyPassedThresholdTime = curTime;
+                                }
+                            }
+                        }
+                    }
+                else {
+                    // not enough players
+                    // reset window
+                    lastBabyPassedThresholdTime = curTime;
+                    }
                 
 
                 // don't use age here, because it unfairly gives Eve

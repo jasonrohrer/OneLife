@@ -350,7 +350,9 @@ typedef struct ObjectRecord {
         char isFlightLanding;
         
         char isOwned;
-
+        
+        char noHighlight;
+        
     } ObjectRecord;
 
 

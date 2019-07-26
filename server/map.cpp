@@ -225,6 +225,18 @@ static int campRadius = 20;
 static float minEveCampRespawnAge = 60.0;
 
 
+static int barrierRadius = 250;
+
+static int barrierOn = 1;
+
+static int longTermCullEnabled = 1;
+
+
+
+static SimpleVector<int> barrierItemList;
+
+
+
 extern int apocalypsePossible;
 extern char apocalypseTriggered;
 extern GridPos apocalypseLocation;
@@ -1600,6 +1612,42 @@ void printBiomeSamples() {
 
 
 
+void printObjectSamples() {
+    int objectToCount = 2285;
+    
+    JenkinsRandomSource sampleRandSource;
+
+    int numSamples = 0;
+
+    int range = 500;
+
+    int count = 0;
+    
+    for( int y=-range; y<range; y++ ) {
+        for( int x=-range; x<range; x++ ) {
+            int obj = getMapObjectRaw( x, y );
+            
+            
+            if( obj == objectToCount ) {
+                count++;
+                }
+            numSamples++;
+            }
+        }
+    
+
+    int rangeSize = (range + range ) * ( range + range );
+
+    float sampleFraction = 
+        numSamples / 
+        ( float ) rangeSize;
+    
+    printf( "Counted %d objects in %d/%d samples, expect %d total\n",
+            count, numSamples, rangeSize, (int)( count / sampleFraction ) );
+    }
+
+
+
 
 
 // optimization:
@@ -2532,6 +2580,22 @@ char initMap() {
         SettingsManager::getFloatSetting( "minEveCampRespawnAge", 60.0f );
     
 
+    barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
+    barrierOn = SettingsManager::getIntSetting( "barrierOn", 1 );
+    
+    longTermCullEnabled =
+        SettingsManager::getIntSetting( "longTermNoLookCullEnabled", 1 );
+
+    
+    SimpleVector<int> *list = 
+        SettingsManager::getIntSettingMulti( "barrierObjects" );
+        
+    barrierItemList.deleteAll();
+    barrierItemList.push_back_other( list );
+    delete list;
+    
+    
+
     for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
         recentPlacements[i].pos.x = 0;
         recentPlacements[i].pos.y = 0;
@@ -3404,6 +3468,7 @@ char initMap() {
 
     
     // for debugging the map
+    // printObjectSamples();
     // printBiomeSamples();
     //outputMapImage();
 
@@ -5270,7 +5335,60 @@ int getTweakedBaseMap( int inX, int inY ) {
 
 
 
+static int getPossibleBarrier( int inX, int inY ) {
+    if( barrierOn )
+    if( inX == barrierRadius ||
+        inX == - barrierRadius ||
+        inY == barrierRadius ||
+        inY == - barrierRadius ) {
+
+        // along barrier line
+        
+        // now make sure that we don't stick out beyond square
+
+        if( inX <= barrierRadius &&
+            inX >= -barrierRadius &&
+            inY <= barrierRadius &&
+            inY >= -barrierRadius ) {
+            
+        
+            setXYRandomSeed( 9238597 );
+            
+            int numOptions = barrierItemList.size();
+            
+            if( numOptions > 0 ) {
+                
+                // random doesn't always look good
+                int pick =
+                    floor( numOptions * getXYRandom( inX * 10, inY * 10 ) );
+
+                if( pick >= numOptions ) {
+                    pick = numOptions - 1;
+                    }
+                
+                int barrierID = barrierItemList.getElementDirect( pick );
+
+                if( getObject( barrierID ) != NULL ) {
+                    // actually exists
+                    return barrierID;
+                    }
+                }
+            }
+        }
+
+    return 0;
+    }
+
+
+
 int getMapObjectRaw( int inX, int inY ) {
+    
+    int barrier = getPossibleBarrier( inX, inY );
+
+    if( barrier != 0 ) {
+        return barrier;
+        }
+
     int result = dbGet( inX, inY, 0 );
     
     if( result == -1 ) {
@@ -7225,6 +7343,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         // Spiral method:
         GridPos eveLocToUse = eveLocation;
         
+        int jumpUsed = 0;
 
         if( eveLocationUsage < maxEveLocationUsage ) {
             eveLocationUsage++;
@@ -7273,7 +7392,9 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                 }
 
 
-            if( eveStartSpiralPosSet ) {
+
+            if( eveStartSpiralPosSet &&
+                longTermCullEnabled ) {
                 
                 int longTermCullingSeconds = 
                     SettingsManager::getIntSetting( 
@@ -7305,6 +7426,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
             
             int jump = SettingsManager::getIntSetting( "nextEveJump", 2000 );
+            jumpUsed = jump;
             
             // advance eve angle along spiral
             // approximate recursive form
@@ -7324,6 +7446,26 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             eveLocToUse.y += lrint( delta.y );
             
             
+            if( barrierOn &&
+                // we use jumpUsed / 3 as randomizing radius below
+                // so jumpUsed / 2 is safe here
+                ( abs( eveLocToUse.x ) > barrierRadius - jumpUsed / 2 ||
+                  abs( eveLocToUse.y ) > barrierRadius - jumpUsed / 2 ) ) {
+                
+                // Eve has gotten too close to the barrier
+                
+                // hard reset of location back to (0,0)-centered spiral
+                eveAngle = 2 * M_PI;
+
+                eveLocation.x = 0;
+                eveLocation.y = 0;
+                eveLocToUse = eveLocation;
+
+                eveStartSpiralPosSet = false;
+                }
+            
+                  
+
 
             // but do save it as a possible post-startup location for next time
             File eveLocFile( NULL, "lastEveLocation.txt" );
@@ -7342,6 +7484,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         // put Eve in radius 50 around this location
         forceEveToBorder = true;
         currentEveRadius = 50;
+
+        if( currentEveRadius > jumpUsed / 3 ) {
+            currentEveRadius = jumpUsed / 3;
+            }
         }
     
 
@@ -7828,6 +7974,8 @@ static int longTermCullingSeconds = 3600 * 12;
 
 static int minActivePlayersForLongTermCulling = 15;
 
+
+
 static SimpleVector<int> noCullItemList;
 
 
@@ -7852,16 +8000,25 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
             SettingsManager::getIntSetting( 
                 "minActivePlayersForLongTermCulling", 15 );
         
+        longTermCullEnabled = 
+            SettingsManager::getIntSetting( 
+                "longTermNoLookCullEnabled", 1 );
+        
+
         SimpleVector<int> *list = 
             SettingsManager::getIntSettingMulti( "noCullItemList" );
         
         noCullItemList.deleteAll();
         noCullItemList.push_back_other( list );
         delete list;
+
+        barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
+        barrierOn = SettingsManager::getIntSetting( "barrierOn", 1 );
         }
 
 
-    if( minActivePlayersForLongTermCulling > inNumCurrentPlayers ) {
+    if( ! longTermCullEnabled ||
+        minActivePlayersForLongTermCulling > inNumCurrentPlayers ) {
         return;
         }
 

@@ -3,6 +3,36 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 251    2019-July-25
+
+--Fixed weird initialization of OwnerInfo structure.
+
+--Support for +noHighlight tag on objects (blocking mouse-over highlights,
+  which look weird on the rift object).
+
+
+
+Server Fixes
+
+--Another work-around for the Steam bug.  Manually verify that the latest
+  steam build ID is correct before building.
+
+--Long term non-look map culling (live reclamation by nature) disabled.
+
+--Added an impassible barrier at a adjustable square radius.
+
+--Eve spiral resets to 0,0 when it gets too close to the barrier.
+
+--Adjusted Eve spiral jump to 50 (from 250) and set barrier radius at 250
+  (500x500 square).  The smaller spiral fits nicely in the barrier square.
+
+--If no baby lives to age 15 for 60 straight minutes (on a server with at least
+  15 active players), then an apocalypse is auto-triggered.  This means the
+  barrier square is out of resources necessary for survival.
+
+
+
+
 
 Version 248    2019-July-18
 
