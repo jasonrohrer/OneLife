@@ -17,6 +17,15 @@ Server Fixes
   redhead and black mothers had 75% boy babies, now they have 50% like they
   should).
 
+--Added support for an Eve window of time at the beginning of an arc.  Eves can
+  only spawn during that time.
+
+--Disabling baby-survivial-age based apocalypse trigger, and replacing it with
+  a no-fertile-mothers-left (inside the barrier) trigger.
+
+--Outside the Eve window, incoming babies will be born to SOME fertile mother,
+  no matter what (despite lineage bans, birth cooldowns, etc.)
+
 
 
 

@@ -180,6 +180,10 @@ static int killEmotionIndex = 2;
 static double lastBabyPassedThresholdTime = 0;
 
 
+static double eveWindowStart = 0;
+
+
+
 
 // for incoming socket connections that are still in the login process
 typedef struct FreshConnection {
@@ -4915,7 +4919,76 @@ static LiveObject *getHitPlayer( int inX, int inY,
     return hitPlayer;
     }
 
+
+
+
+static int countFertileMothers() {
     
+    int barrierRadius = 
+        SettingsManager::getIntSetting( 
+            "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( 
+        "barrierOn", 1 );
+    
+    int c = 0;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( p->error ) {
+            continue;
+            }
+        
+        if( isFertileAge( p ) ) {
+            if( barrierOn ) {
+                // only fertile mothers inside the barrier
+                GridPos pos = getPlayerPos( p );
+                
+                if( abs( pos.x ) < barrierRadius &&
+                    abs( pos.y ) < barrierRadius ) {
+                    c++;
+                    }
+                }
+            else {
+                c++;
+                }
+            }
+        }
+    
+    return c;
+    }
+
+
+static char isEveWindow() {
+    
+    if( players.size() <=
+        SettingsManager::getIntSetting( "minActivePlayersForEveWindow", 15 ) ) {
+        // not enough players
+        // always Eve window
+        
+        // new window starts if we ever get enough players again
+        eveWindowStart = 0;
+        
+        return true;
+        }
+
+    if( eveWindowStart == 0 ) {
+        // start window now
+        eveWindowStart = Time::getCurrentTime();
+        return true;
+        }
+    else {
+        double secSinceStart = Time::getCurrentTime() - eveWindowStart;
+        
+        if( secSinceStart >
+            SettingsManager::getIntSetting( "eveWindowSeconds", 3600 ) ) {
+            return false;
+            }
+        return true;
+        }
+    }
+
+
 
 
 
@@ -5037,7 +5110,27 @@ int processLoggedInPlayer( char inAllowReconnect,
             return -1;
             }
         }
-             
+    
+
+
+    // a baby needs to be born
+
+    char eveWindow = isEveWindow();
+
+    if( ! eveWindow ) {
+        if( countFertileMothers() == 0 ) {
+            // no fertile mothers left inside barrier!
+            apocalypseTriggered = true;
+            // restart Eve window, and let this player be the
+            // first new Eve
+            eveWindowStart = 0;
+
+            // reset other apocalypse trigger
+            lastBabyPassedThresholdTime = 0;
+            }
+        }
+
+
 
     // reload these settings every time someone new connects
     // thus, they can be changed without restarting the server
@@ -5267,8 +5360,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     
 
     
-    if( parentChoices.size() > 0 ) {
-        // count the families
+    if( eveWindow && parentChoices.size() > 0 ) {
+        // count the families, and add new Eve if there are too
+        // few families for the playerbase (but only if in Eve window)
         
         SimpleVector<int> uniqueLines;
         
@@ -5309,6 +5403,55 @@ int processLoggedInPlayer( char inAllowReconnect,
             forceParentChoices = true;
             }
         
+        }
+    
+
+
+
+    if( ! forceParentChoices && 
+        parentChoices.size() == 0 &&
+        ! eveWindow &&
+        ! apocalypseTriggered ) {
+        
+        // outside Eve window, and no mother choices left (based on lineage
+        // bans or birth cooldowns)
+
+        // consider all fertile mothers
+        for( int i=0; i<numPlayers; i++ ) {
+            LiveObject *player = players.getElement( i );
+        
+            if( player->error ) {
+                continue;
+                }
+            
+            if( player->isTutorial ) {
+                continue;
+                }
+            
+            if( player->vogMode ) {
+                continue;
+                }
+
+            if( isFertileAge( player ) ) {
+                parentChoices.push_back( player );
+                }
+            }
+
+        if( parentChoices.size() == 0 ) {
+            // absolutely no fertile mothers on server
+            
+            // the in-barrier mother we found before must have aged out
+            // along the way
+
+            apocalypseTriggered = true;
+            
+            // restart Eve window, and let this player be the
+            // first new Eve
+            eveWindowStart = 0;
+
+            // reset other apocalypse trigger
+            lastBabyPassedThresholdTime = 0;
+            }
         }
     
 
@@ -14725,6 +14868,9 @@ int main() {
                                 
                                 // reset window so we don't re-trigger
                                 lastBabyPassedThresholdTime = 0;
+                                
+                                // reset eve window too
+                                eveWindowStart = 0;
                                 }
                             else if( lastBabyPassedThresholdTime == 0 ) {
                                 // first baby to die, and we have enough
