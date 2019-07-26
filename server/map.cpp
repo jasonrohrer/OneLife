@@ -7485,7 +7485,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         forceEveToBorder = true;
         currentEveRadius = 50;
 
-        if( currentEveRadius > jumpUsed / 3 ) {
+        if( jumpUsed > 3 && currentEveRadius > jumpUsed / 3 ) {
             currentEveRadius = jumpUsed / 3;
             }
         }
@@ -7498,6 +7498,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
     
     char found = 0;
+
+    if( currentEveRadius < 1 ) {
+        currentEveRadius = 1;
+        }
     
     while( !found ) {
         printf( "Placing new Eve:  "
