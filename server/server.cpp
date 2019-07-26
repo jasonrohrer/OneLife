@@ -4181,15 +4181,16 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
 
 
 
-        if( found ) {
+        if( found && inDroppingPlayer->holdingID > 0 ) {
             targetX = foundX;
             targetY = foundY;
             }
         else {
             // no place to drop it, it disappears
 
-            // UNLESS we're holding a baby,
+            // OR we're holding a baby,
             // then just put the baby where we are
+            // (don't ever throw babies, that's weird and exploitable)
             if( inDroppingPlayer->holdingID < 0 ) {
                 int babyID = - inDroppingPlayer->holdingID;
                 
@@ -4408,10 +4409,12 @@ static void swapHeldWithGround(
     LiveObject *inPlayer, int inTargetID, 
     int inMapX, int inMapY,
     SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout) {
-
+    
+    
     timeSec_t newHoldingEtaDecay = getEtaDecay( inMapX, inMapY );
     
     FullMapContained f = getFullMapContained( inMapX, inMapY );
+    
     
     
     clearAllContained( inMapX, inMapY );
