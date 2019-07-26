@@ -3853,7 +3853,7 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
         }
 
     if( racePersonObjectIDs[ inRace ].size() == 1 ) {
-        // no choice in this race
+        // no choice in this race, return mother
         return racePersonObjectIDs[ inRace ].getElementDirect( 0 );
         }
     
@@ -3873,52 +3873,88 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
         return racePersonObjectIDs[ inRace ].getElementDirect( nonMotherIndex );
         }
     
+    
+    // at least 3 people in this race
 
+    
     // never have offset 0, so we can't ever have ourself as a baby
     if( inFamilySpan < 1 ) {
         inFamilySpan = 1;
         }
-    int offset = randSource.getRandomBoundedInt( 1, inFamilySpan );
-    
-    if( randSource.getRandomBoolean() ) {
-        offset = -offset;
-        }
-    
-    int familyIndex = motherIndex + offset;
 
-    int indexOver = false;
+    // first, collect all people in this span
+    SimpleVector<int> spanPeople;
+    int boyCount = 0;
+    int girlCount = 0;
     
-    while( familyIndex >= racePersonObjectIDs[ inRace ].size() ) {
-        familyIndex -= racePersonObjectIDs[ inRace ].size();
-        indexOver = true;
-        }
-    while( familyIndex < 0  ) {
-        familyIndex += racePersonObjectIDs[ inRace ].size();
-        }
-    
-    
-    if( familyIndex == motherIndex ) {
-        // wrapped back around to mother
-        if( ! indexOver ) {
-            // wrapped below 0, keep going down
-            familyIndex --;
-            }
-        else if( indexOver ) {
-            // wrapped above top, keep going up
-            familyIndex ++;
-            }
+    for( int o=1; o<=inFamilySpan; o++ ) {
+        for( int s=-1; s<=1; s+=2 ) {
+            
+            int familyIndex = motherIndex + o * s;
+        
+            while( familyIndex >= racePersonObjectIDs[ inRace ].size() ) {
+                familyIndex -= racePersonObjectIDs[ inRace ].size();
+                }
+            while( familyIndex < 0 ) {
+                familyIndex += racePersonObjectIDs[ inRace ].size();
+                }
+            
+            if( familyIndex != motherIndex ) {
+                // never add mother to collection
 
-        // watch for more wrap-around after avoiding mother index
-        if( familyIndex >= racePersonObjectIDs[ inRace ].size() ) {
-            familyIndex -= racePersonObjectIDs[ inRace ].size();
-            }
-        else if( familyIndex < 0 ) {
-            familyIndex += racePersonObjectIDs[ inRace ].size();
+                int pID = 
+                    racePersonObjectIDs[ inRace ].
+                    getElementDirect( familyIndex );
+                if( spanPeople.getElementIndex( pID ) == -1 ) {
+                    // not added yet
+                    spanPeople.push_back( pID );
+                    
+                    if( getObject( pID )->male ) {
+                        boyCount++;
+                        }
+                    else {
+                        girlCount++;
+                        }
+                    }
+                }
+            }    
+        }
+    
+    // now we have a collection of unique possible offspring
+
+    while( boyCount > girlCount && girlCount >= 1 ) {
+        // duplicate a girl
+        for( int p=0; p<spanPeople.size(); p++ ) {
+            int pID = spanPeople.getElementDirect( p );
+            
+            if( ! getObject( pID )->male ) {
+                spanPeople.push_back( pID );
+                girlCount++;
+                if( girlCount == boyCount ) {
+                    break;
+                    }
+                }
             }
         }
 
+    while( girlCount > boyCount && boyCount >= 1 ) {
+        // duplicate a boy
+        for( int p=0; p<spanPeople.size(); p++ ) {
+            int pID = spanPeople.getElementDirect( p );
+            
+            if( getObject( pID )->male ) {
+                spanPeople.push_back( pID );
+                boyCount++;
+                if( girlCount == boyCount ) {
+                    break;
+                    }
+                }
+            }
+        }
+
+    int pick = randSource.getRandomBoundedInt( 0, spanPeople.size() - 1 );
     
-    return racePersonObjectIDs[ inRace ].getElementDirect( familyIndex );
+    return spanPeople.getElementDirect( pick );
     }
 
 

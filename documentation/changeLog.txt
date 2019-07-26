@@ -12,6 +12,12 @@ Server Fixes
 --Babies born outside rift area don't count toward survival requirement for
   determining group failure.
 
+--Fixed offspring selection code to balance male and female babies, even for
+  races that have different numbers of male and female characters (before,
+  redhead and black mothers had 75% boy babies, now they have 50% like they
+  should).
+
+
 
 
 Version 251    2019-July-25
