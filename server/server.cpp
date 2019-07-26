@@ -14686,15 +14686,32 @@ int main() {
                     
                         // player was born as a baby
                         
+                        int barrierRadius = 
+                            SettingsManager::getIntSetting( 
+                                "barrierRadius", 250 );
+                        int barrierOn = SettingsManager::getIntSetting( 
+                            "barrierOn", 1 );
+
+                        char insideBarrier = true;
+                        
+                        if( barrierOn &&
+                            ( abs( dropPos.x ) > barrierRadius ||
+                              abs( dropPos.y ) > barrierRadius ) ) {
+                            
+                            insideBarrier = false;
+                            }
+                              
+
                         float threshold = SettingsManager::getFloatSetting( 
                             "babySurvivalYearsBeforeApocalypse", 15.0f );
                         
-                        if( age > threshold ) {
+                        if( insideBarrier && age > threshold ) {
                             // baby passed threshold, update last-passed time
                             lastBabyPassedThresholdTime = curTime;
                             }
                         else {
                             // baby died young
+                            // OR older, outside barrier
                             // check if we're due for an apocalypse
                             
                             if( lastBabyPassedThresholdTime > 0 &&

@@ -9,6 +9,8 @@ Server Fixes
 --Fixed baby teleportation glitch.  Now if there's no place to drop a baby, 
   they go where you are standing instead of being thrown.
 
+--Babies born outside rift area don't count toward survival requirement for
+  determining group failure.
 
 
 
