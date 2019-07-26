@@ -104,6 +104,7 @@ void stepArcReport() {
             char *hash = hmac_sha1( sharedSecret,
                                     seqString );
             delete [] seqString;
+            delete [] sharedSecret;
 
             char *serverName = 
                 SettingsManager::getStringSetting( "serverID", "" );
