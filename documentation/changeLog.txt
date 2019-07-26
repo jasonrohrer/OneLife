@@ -26,6 +26,9 @@ Server Fixes
 --Outside the Eve window, incoming babies will be born to SOME fertile mother,
   no matter what (despite lineage bans, birth cooldowns, etc.)
 
+--Barrier radius 354, for roughly half a million tiles (tried 1/4 million
+  which was too small, and 1 million, which was too big).
+
 
 
 
