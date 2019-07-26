@@ -619,7 +619,8 @@ int getRandomPersonObjectOfRace( int inRace );
 
 // gets a family member near inMotherID with max distance away in family
 // spectrum 
-int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan );
+int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan,
+                           char inForceGirl = false );
 
 
 

@@ -29,6 +29,10 @@ Server Fixes
 --Barrier radius 354, for roughly half a million tiles (tried 1/4 million
   which was too small, and 1 million, which was too big).
 
+--Forcing all girls to be born if we're outside Eve window and number of
+  fertile mothers inside the barrier falls below a threshold (1/15 of the
+  population, or 2, whichever is larger).
+
 
 
 

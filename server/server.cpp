@@ -5116,9 +5116,11 @@ int processLoggedInPlayer( char inAllowReconnect,
     // a baby needs to be born
 
     char eveWindow = isEveWindow();
-
+    char forceGirl = false;
+    
     if( ! eveWindow ) {
-        if( countFertileMothers() == 0 ) {
+        int c = countFertileMothers();
+        if( c == 0 ) {
             // no fertile mothers left inside barrier!
             apocalypseTriggered = true;
             // restart Eve window, and let this player be the
@@ -5128,6 +5130,17 @@ int processLoggedInPlayer( char inAllowReconnect,
             // reset other apocalypse trigger
             lastBabyPassedThresholdTime = 0;
             }
+        else {
+            int minFertile = players.size() / 15;
+            if( minFertile < 2 ) {
+                minFertile = 2;
+                }
+            if( c < minFertile ) {
+                // less than 1/15 of the players are fertile mothers
+                forceGirl = true;
+                }
+            }
+        
         }
 
 
@@ -5774,7 +5787,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                 
                 if( childRace == parentObject->race ) {
                     newObject.displayID = getRandomFamilyMember( 
-                        parentObject->race, parent->displayID, familySpan );
+                        parentObject->race, parent->displayID, familySpan,
+                        forceGirl );
                     }
                 else {
                     newObject.displayID = 

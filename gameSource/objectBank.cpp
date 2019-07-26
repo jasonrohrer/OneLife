@@ -3842,7 +3842,8 @@ int getRandomPersonObjectOfRace( int inRace ) {
 
 
 
-int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
+int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan,
+                           char inForceGirl ) {
     
     if( inRace > MAX_RACE ) {
         inRace = MAX_RACE;
@@ -3951,6 +3952,20 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
                 }
             }
         }
+
+    
+    if( inForceGirl && girlCount > 0 ) {
+        // remove boys from list
+        for( int p=0; p<spanPeople.size(); p++ ) {
+            int pID = spanPeople.getElementDirect( p );
+            
+            if( getObject( pID )->male ) {
+                spanPeople.deleteElement( p );
+                p--;
+                }
+            }    
+        }
+    
 
     int pick = randSource.getRandomBoundedInt( 0, spanPeople.size() - 1 );
     
