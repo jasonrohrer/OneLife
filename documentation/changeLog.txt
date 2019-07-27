@@ -35,6 +35,9 @@ Server Fixes
 
 --Fixed so that donkeytown can spawn Eves even after the Eve window closes.
 
+--Fixed so that suiciding as a baby counts against your own genetic fitness
+  score (a bug was preventing it from counting).
+
 
 
 

@@ -1360,9 +1360,10 @@ function fs_reportDeath() {
 
     // log effect of own death
     $noScore = false;
-    if( $numAncestors == 0 ) {
-        // this is an Eve or a tutorial player
+    if( $numAncestors == 0 && $age > 10 ) {
+        // this is an Eve or a tutorial Eve player
         // their lifespan doesn't count toward their score
+        // all babies (even suicide babies) count, though
         $noScore = true;
         }
     
