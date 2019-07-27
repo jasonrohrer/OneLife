@@ -5421,7 +5421,8 @@ int processLoggedInPlayer( char inAllowReconnect,
 
 
 
-    if( ! forceParentChoices && 
+    if( inCurseStatus.curseLevel <= 0 &&
+        ! forceParentChoices && 
         parentChoices.size() == 0 &&
         ! eveWindow &&
         ! apocalypseTriggered ) {
