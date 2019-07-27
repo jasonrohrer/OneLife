@@ -26,6 +26,8 @@
 //#include "lineardb.h"
 #include "lineardb3.h"
 
+#include "minorGems/util/crc32.h"
+
 
 /*
 #define DB KISSDB
@@ -231,6 +233,8 @@ static int barrierOn = 1;
 
 static int longTermCullEnabled = 1;
 
+
+static unsigned int biomeRandSeed = 723;
 
 
 static SimpleVector<int> barrierItemList;
@@ -830,7 +834,7 @@ static int computeMapBiomeIndex( int inX, int inY,
     for( int i=0; i<numBiomes; i++ ) {
         int biome = biomes[i];
         
-        setXYRandomSeed( biome * 263 + 723 );
+        setXYRandomSeed( biome * 263 + biomeRandSeed );
 
         double randVal = getXYFractal(  inX,
                                         inY,
@@ -2553,9 +2557,57 @@ static void deleteFileByName( const char *inFileName ) {
     }
 
 
+void reseedMap( char inForceFresh ) {
+    
+    FILE *seedFile = NULL;
+    
+    if( ! inForceFresh ) {
+        seedFile = fopen( "biomeRandSeed.txt", "r" );
+        }
+    
+    if( seedFile != NULL ) {
+        fscanf( seedFile, "%d", &biomeRandSeed );
+        fclose( seedFile );
+        AppLog::infoF( "Reading map rand seed from file: %u\n", biomeRandSeed );
+        }
+    else {
+        // no seed set, or ignoring it, make a new one
+        
+        char *secret =
+            SettingsManager::getStringSetting( "statsServerSharedSecret", 
+                                               "secret" );
+        
+        unsigned int seedBase = 
+            crc32( (unsigned char*)secret, strlen( secret ) );
+        
+        unsigned int modTimeSeed = 
+            (unsigned int)fmod( Time::getCurrentTime() + seedBase, 
+                                4294967295U );
+        
+        JenkinsRandomSource tempRandSource( modTimeSeed );
+
+        biomeRandSeed = tempRandSource.getRandomInt();
+        
+        AppLog::infoF( "Generating fresh map rand seed and saving to file: "
+                       "%u\n", biomeRandSeed );
+
+        // and save it
+        seedFile = fopen( "biomeRandSeed.txt", "w" );
+        if( seedFile != NULL ) {
+            
+            fprintf( seedFile, "%d", biomeRandSeed );
+            fclose( seedFile );
+            }
+        }
+    }
+
+
 
 
 char initMap() {
+
+    reseedMap( false );
+    
     
     numSpeechPipes = getMaxSpeechPipeIndex() + 1;
     

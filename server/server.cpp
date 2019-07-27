@@ -8130,7 +8130,7 @@ void apocalypseStep() {
             }
 
         if( apocalypseRequest == NULL &&
-            Time::getCurrentTime() - apocalypseStartTime >= 7 ) {
+            Time::getCurrentTime() - apocalypseStartTime >= 8 ) {
             
             if( ! postApocalypseStarted  ) {
                 AppLog::infoF( "Enough warning time, %d players still alive",
@@ -8148,6 +8148,8 @@ void apocalypseStep() {
 
                 AppLog::infoF( "Apocalypse wipeMapFiles took %f sec",
                                Time::getCurrentTime() - startTime );
+                
+                reseedMap( true );
                 
                 initMap();
                 

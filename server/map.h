@@ -40,6 +40,10 @@ char initMap();
 void freeMap( char inSkipCleanup = false );
 
 
+// loads seed from file, or generates a new one and saves it to file
+void reseedMap( char inForceFresh );
+
+
 // can only be called before initMap or after freeMap
 // deletes the underlying .db files for the map 
 void wipeMapFiles();

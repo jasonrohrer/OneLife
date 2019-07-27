@@ -51,6 +51,12 @@ Server Fixes
   most kinds of useful trees (at least ones that are sensibly hardwood, like
   maple, poplar, and rubber).
 
+--Server biomes random generator reseeds itself after every map wipe.  A
+  different map every time, with one of 4 billion possible seeds.
+
+--Made server wait 8 seconds after signalling apocalypse, to give clients
+  plenty of time to white-out.
+
 
 
 
