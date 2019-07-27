@@ -799,10 +799,13 @@ function fs_showLeaderboard() {
     eval( $header );
 
     echo "<center>";
+
+    global $leaderboardHours;
     
     $query = "SELECT leaderboard_name, score ".
         "FROM $tableNamePrefix"."users ".
-        "WHERE last_action_time > DATE_SUB( NOW(), INTERVAL 48 HOUR )".
+        "WHERE last_action_time > ".
+        "   DATE_SUB( NOW(), INTERVAL $leaderboardHours HOUR )".
         "ORDER BY score DESC limit 1000;";
 
     $result = fs_queryDatabase( $query );
@@ -1422,6 +1425,8 @@ function fs_outputBasicScore( $inEmail ) {
 
     $result = fs_queryDatabase( $query );
 
+    global $leaderboardHours;
+    
     if( mysqli_num_rows( $result ) > 0 ) {    
         $score = fs_mysqli_result( $result, 0, "score" );
         $leaderboard_name = fs_mysqli_result( $result, 0, "leaderboard_name" );
@@ -1435,12 +1440,12 @@ function fs_outputBasicScore( $inEmail ) {
 
         $rank = 0;
 
-        if( $sec_passed < 3600 * 48 ) {
+        if( $sec_passed < 3600 * $leaderboardHours ) {
         
             $query =
                 "SELECT count(*) FROM $tableNamePrefix"."users ".
                 "WHERE last_action_time > ".
-                "DATE_SUB( NOW(), INTERVAL 48 HOUR ) ".
+                "DATE_SUB( NOW(), INTERVAL $leaderboardHours HOUR ) ".
                 "AND score > $score;";
 
             $result = fs_queryDatabase( $query );

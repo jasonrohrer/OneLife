@@ -38,6 +38,10 @@ Server Fixes
 --Fixed so that suiciding as a baby counts against your own genetic fitness
   score (a bug was preventing it from counting).
 
+--Made fitness leaderboard window a setting, and set it to 24 hours (was 48
+  hours before).  This is the recent-play window for displaying names on the
+  leaderboard and computing rankings.
+
 
 
 
