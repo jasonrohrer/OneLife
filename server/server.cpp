@@ -4959,6 +4959,45 @@ static int countFertileMothers() {
     }
 
 
+
+static int countHelplessBabies() {
+    
+    int barrierRadius = 
+        SettingsManager::getIntSetting( 
+            "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( 
+        "barrierOn", 1 );
+    
+    int c = 0;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( p->error ) {
+            continue;
+            }
+
+        if( computeAge( p ) < defaultActionAge ) {
+            if( barrierOn ) {
+                // only babies inside the barrier
+                GridPos pos = getPlayerPos( p );
+                
+                if( abs( pos.x ) < barrierRadius &&
+                    abs( pos.y ) < barrierRadius ) {
+                    c++;
+                    }
+                }
+            else {
+                c++;
+                }
+            }
+        }
+    
+    return c;
+    }
+
+
+
 static char isEveWindow() {
     
     if( players.size() <=
@@ -4988,6 +5027,18 @@ static char isEveWindow() {
         }
     }
 
+
+
+static void triggerApocalypseNow() {
+    apocalypseTriggered = true;
+    
+    // restart Eve window, and let this player be the
+    // first new Eve
+    eveWindowStart = 0;
+    
+    // reset other apocalypse trigger
+    lastBabyPassedThresholdTime = 0;
+    }
 
 
 
@@ -5119,23 +5170,23 @@ int processLoggedInPlayer( char inAllowReconnect,
     char forceGirl = false;
     
     if( ! eveWindow ) {
-        int c = countFertileMothers();
-        if( c == 0 ) {
-            // no fertile mothers left inside barrier!
-            apocalypseTriggered = true;
-            // restart Eve window, and let this player be the
-            // first new Eve
-            eveWindowStart = 0;
+        int cM = countFertileMothers();
+        int cB = countHelplessBabies();
+        
+        float ratio = SettingsManager::getFloatSetting( 
+            "babyMotherApocalypseRatio", 6.0 );
+        
+        if( cM == 0 || (float)cB / (float)cM >= ratio ) {
+            // too many babies per mother inside barrier
 
-            // reset other apocalypse trigger
-            lastBabyPassedThresholdTime = 0;
+            triggerApocalypseNow();
             }
         else {
             int minFertile = players.size() / 15;
             if( minFertile < 2 ) {
                 minFertile = 2;
                 }
-            if( c < minFertile ) {
+            if( cM < minFertile ) {
                 // less than 1/15 of the players are fertile mothers
                 forceGirl = true;
                 }
@@ -5454,17 +5505,10 @@ int processLoggedInPlayer( char inAllowReconnect,
         if( parentChoices.size() == 0 ) {
             // absolutely no fertile mothers on server
             
-            // the in-barrier mother we found before must have aged out
+            // the in-barrier mothers we found before must have aged out
             // along the way
-
-            apocalypseTriggered = true;
             
-            // restart Eve window, and let this player be the
-            // first new Eve
-            eveWindowStart = 0;
-
-            // reset other apocalypse trigger
-            lastBabyPassedThresholdTime = 0;
+            triggerApocalypseNow();
             }
         }
     
@@ -14879,13 +14923,8 @@ int main() {
                                     3600 ) ) {
                                 // we're outside the window
                                 // people have been dying young for a long time
-                                apocalypseTriggered = true;
                                 
-                                // reset window so we don't re-trigger
-                                lastBabyPassedThresholdTime = 0;
-                                
-                                // reset eve window too
-                                eveWindowStart = 0;
+                                triggerApocalypseNow();
                                 }
                             else if( lastBabyPassedThresholdTime == 0 ) {
                                 // first baby to die, and we have enough

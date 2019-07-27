@@ -42,6 +42,10 @@ Server Fixes
   hours before).  This is the recent-play window for displaying names on the
   leaderboard and computing rankings.
 
+--Global failure condition is now baby/mother ratio of 6 or higher (counting
+  helpless, < 3-year babies and fertile mothers).  So no more baby overload at
+  very end.
+ 
 
 
 
