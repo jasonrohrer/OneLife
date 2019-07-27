@@ -46,6 +46,11 @@ Server Fixes
   helpless, < 3-year babies and fertile mothers).  So no more baby overload at
   very end.
  
+--Support for new +hungryWork object tag, which requires and consumes a certain
+  amount of food when the object is produced.  Applying this to chopping down
+  most kinds of useful trees (at least ones that are sensibly hardwood, like
+  maple, poplar, and rubber).
+
 
 
 

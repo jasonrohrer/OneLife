@@ -12777,6 +12777,32 @@ int main() {
                                 
                                 double playerAge = computeAge( nextPlayer );
                                 
+                                int hungryWorkCost = 0;
+                                
+                                if( r != NULL && 
+                                    r->newTarget > 0 ) {
+                                    char *des =
+                                        getObject( r->newTarget )->description;
+                                    
+                                    char *desPos =
+                                        strstr( des, "+hungryWork" );
+                                    
+                                    if( desPos != NULL ) {
+                                        
+                                    
+                                        sscanf( desPos,
+                                                "+hungryWork%d", 
+                                                &hungryWorkCost );
+                                        
+                                        if( nextPlayer->foodStore < 
+                                            hungryWorkCost ) {
+                                            // block transition,
+                                            // not enough food
+                                            r = NULL;
+                                            }
+                                        }
+                                    }
+
 
                                 if( r != NULL && containmentTransfer ) {
                                     // special case contained items
@@ -12925,6 +12951,23 @@ int main() {
                                     else {    
                                         setMapObject( m.x, m.y, r->newTarget );
                                         newGroundObject = r->newTarget;
+                                        }
+                                    
+                                    if( hungryWorkCost > 0 ) {
+                                        int oldStore = nextPlayer->foodStore;
+                                        
+                                        nextPlayer->foodStore -= hungryWorkCost;
+                                        
+                                        if( nextPlayer->foodStore < 3 ) {
+                                            if( oldStore > 3  ) {
+                                                // generally leave
+                                                // player with 3 food
+                                                // unless they had less than
+                                                // 3 to start
+                                                nextPlayer->foodStore = 3;
+                                                }
+                                            }
+                                        nextPlayer->foodUpdate = true;
                                         }
                                     
                                     
