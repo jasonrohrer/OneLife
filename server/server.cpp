@@ -5496,6 +5496,10 @@ int processLoggedInPlayer( char inAllowReconnect,
             if( player->vogMode ) {
                 continue;
                 }
+            
+            if( player->curseStatus.curseLevel > 0 ) {
+                continue;
+                }
 
             if( isFertileAge( player ) ) {
                 parentChoices.push_back( player );

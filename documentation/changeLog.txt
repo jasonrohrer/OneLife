@@ -57,6 +57,9 @@ Server Fixes
 --Made server wait 8 seconds after signalling apocalypse, to give clients
   plenty of time to white-out.
 
+--Fixed so that non-cursed babies don't get born to cursed mothers after Eve
+  window closes.
+
 
 
 
