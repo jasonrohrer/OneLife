@@ -1,6 +1,7 @@
 #include "map.h"
 #include "HashTable.h"
 #include "monument.h"
+#include "arcReport.h"
 
 #include "CoordinateTimeTracking.h"
 
