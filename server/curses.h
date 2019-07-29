@@ -51,3 +51,8 @@ char isNameDuplicateForCurses( const char *inPlayerName );
 
 
 void stepCurseServerRequests();
+
+
+// check if curse system has lineage information for a given player name
+// returns -1 on failure
+int getCurseReceiverLineageEveID( char *inReceiverName );

@@ -64,6 +64,15 @@ Server Fixes
   barrier cannot have babies (so that they have to escape fresh during each
   new arc).
 
+--You can now curse people in other families, but only if you utter the curse
+  in their language.  This means that over multiple generations of
+  co-existence, where subsequent generations of babies learn more and more of
+  the language, you can curse that family in plain English, eventually, because
+  they can understand your plain English.  But before that, you can utter the
+  curse in their language directly (or join in a curse that they are carrying
+  out by repeating what they said in their language.  For example, DANCH LEASIE
+  STEADGED was one translation that I saw for CURSE TOBY JONES.)
+
 
 
 

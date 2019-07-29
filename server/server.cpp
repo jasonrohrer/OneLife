@@ -3917,7 +3917,96 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     char isCurse = false;
 
     char *cursedName = isCurseNamingSay( inToSay );
-                        
+    
+    if( cursedName != NULL ) {
+        int namedPersonLineageEveID = 
+            getCurseReceiverLineageEveID( cursedName );
+                
+        if( namedPersonLineageEveID != inPlayer->lineageEveID ) {
+            // We said the curse in plain English, but
+            // the named person is not in our lineage
+            cursedName = NULL;
+            
+            // BUT, check if this cursed phrase is correct in another language
+            // below
+            }
+        }
+    
+
+    if( cursedName != NULL ) {
+        // it's a pointer into inToSay
+        
+        // make a copy so we can delete it later
+        cursedName = stringDuplicate( cursedName );
+        }
+    
+        
+    if( cursedName == NULL &&
+        players.size() >= minActivePlayersForLanguages ) {
+        
+        // consider cursing in other languages
+
+        int speakerAge = computeAge( inPlayer );
+        
+        GridPos speakerPos = getPlayerPos( inPlayer );
+        
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *otherPlayer = players.getElement( i );
+            
+            if( otherPlayer == inPlayer ||
+                otherPlayer->error ||
+                otherPlayer->lineageEveID == inPlayer->lineageEveID ) {
+                continue;
+                }
+
+            if( distance( speakerPos, getPlayerPos( otherPlayer ) ) >
+                getMaxChunkDimension() ) {
+                // only consider nearby players
+                continue;
+                }
+                
+            char *translatedPhrase =
+                mapLanguagePhrase( 
+                    inToSay,
+                    inPlayer->lineageEveID,
+                    otherPlayer->lineageEveID,
+                    inPlayer->id,
+                    otherPlayer->id,
+                    speakerAge,
+                    computeAge( otherPlayer ),
+                    inPlayer->parentID,
+                    otherPlayer->parentID );
+            
+            cursedName = isCurseNamingSay( translatedPhrase );
+            
+            // make copy so we can delete later an delete the underlying
+            // translatedPhrase now
+            
+            if( cursedName != NULL ) {
+                cursedName = stringDuplicate( cursedName );
+                }
+
+            delete [] translatedPhrase;
+
+            if( cursedName != NULL ) {
+                int namedPersonLineageEveID = 
+                    getCurseReceiverLineageEveID( cursedName );
+                
+                if( namedPersonLineageEveID == otherPlayer->lineageEveID ) {
+                    // the named person belonged to the lineage of the 
+                    // person who spoke this language!
+                    break;
+                    }
+                // else cursed in this language, for someone outside
+                // this language's line
+                delete [] cursedName;
+                cursedName = NULL;
+                }
+            }
+        }
+
+
+
     if( cursedName != NULL && 
         strcmp( cursedName, "" ) != 0 ) {
         
@@ -3937,6 +4026,12 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             inPlayer->curseTokenUpdate = true;
             }
         }
+    
+    
+    if( cursedName != NULL ) {
+        delete [] cursedName;
+        }
+    
 
 
     int curseFlag = 0;
@@ -4501,7 +4596,9 @@ static char *getUpdateLineFromRecord(
         
         GridPos updatePos = { inRecord->absolutePosX, inRecord->absolutePosY };
         
-        if( distance( updatePos, inObserverPos ) > 64 ) {
+        if( distance( updatePos, inObserverPos ) > 
+            getMaxChunkDimension() * 2 ) {
+            
             // this update is for a far-away player
             
             // put dummy positions in to hide their coordinates
@@ -16864,7 +16961,7 @@ int main() {
 
             
             
-            double maxDist = 32;
+            double maxDist = getMaxChunkDimension();
             double maxDist2 = maxDist * 2;
 
             
@@ -17717,7 +17814,7 @@ int main() {
 
                 if( moveList.size() > 0 && nextPlayer->connected ) {
                     
-                    double minUpdateDist = 64;
+                    double minUpdateDist = getMaxChunkDimension() * 2;
                     
                     for( int u=0; u<movesPos.size(); u++ ) {
                         ChangePosition *p = movesPos.getElement( u );
@@ -17863,7 +17960,7 @@ int main() {
 
                 
                 if( mapChanges.size() > 0 && nextPlayer->connected ) {
-                    double minUpdateDist = 64;
+                    double minUpdateDist = getMaxChunkDimension() * 2;
                     
                     for( int u=0; u<mapChangesPos.size(); u++ ) {
                         ChangePosition *p = mapChangesPos.getElement( u );
@@ -17960,7 +18057,7 @@ int main() {
                         }
                     }
                 if( newSpeechPos.size() > 0 && nextPlayer->connected ) {
-                    double minUpdateDist = 64;
+                    double minUpdateDist = getMaxChunkDimension() * 2;
                     
                     for( int u=0; u<newSpeechPos.size(); u++ ) {
                         ChangePosition *p = newSpeechPos.getElement( u );
@@ -18110,7 +18207,7 @@ int main() {
 
 
                 if( newLocationSpeech.size() > 0 && nextPlayer->connected ) {
-                    double minUpdateDist = 64;
+                    double minUpdateDist = getMaxChunkDimension() * 2;
                     
                     for( int u=0; u<newLocationSpeechPos.size(); u++ ) {
                         ChangePosition *p = 
