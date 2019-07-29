@@ -1012,6 +1012,8 @@ float initObjectBankStep() {
                 r->useDummyIDs = NULL;
                 r->isUseDummy = false;
                 r->useDummyParent = 0;
+                r->thisUseDummyIndex = -1;
+                
                 r->cachedHeight = -1;
                 
                 memset( r->spriteUseVanish, false, r->numSprites );
@@ -1056,6 +1058,7 @@ float initObjectBankStep() {
                 r->variableDummyIDs = NULL;
                 r->isVariableDummy = false;
                 r->variableDummyParent = 0;
+                r->thisVariableDummyIndex = -1;
                 r->isVariableHidden = false;
                 
 
@@ -1439,6 +1442,7 @@ void initObjectBankFinish() {
                         
                         dummyO->isUseDummy = true;
                         dummyO->useDummyParent = mainID;
+                        dummyO->thisUseDummyIndex = d - 1;
                         
                         if( o->creationSoundInitialOnly && d != 1 ) {
                             // only keep creation sound for last dummy
@@ -1559,6 +1563,7 @@ void initObjectBankFinish() {
 
                         dummyO->isVariableDummy = true;
                         dummyO->variableDummyParent = mainID;
+                        dummyO->thisVariableDummyIndex = d - 1;
                         dummyO->isVariableHidden = variableHidden;
                         
                         // copy anims too
@@ -2954,6 +2959,8 @@ int addObject( const char *inDescription,
     r->useDummyIDs = NULL;
     r->isUseDummy = false;
     r->useDummyParent = 0;
+    r->thisUseDummyIndex = -1;
+    
     r->cachedHeight = newHeight;
     
     r->spriteSkipDrawing = new char[ inNumSprites ];
@@ -2995,6 +3002,7 @@ int addObject( const char *inDescription,
     r->variableDummyIDs = NULL;
     r->isVariableDummy = false;
     r->variableDummyParent = 0;
+    r->thisVariableDummyIndex = -1;
     r->isVariableHidden = false;
 
 

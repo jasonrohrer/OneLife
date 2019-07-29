@@ -73,6 +73,9 @@ Server Fixes
   out by repeating what they said in their language.  For example, DANCH LEASIE
   STEADGED was one translation that I saw for CURSE TOBY JONES.)
 
+--Server logs every player-caused change to map, for wondible's potential use
+  in time-lapses.
+
 
 
 

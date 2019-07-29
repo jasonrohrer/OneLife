@@ -240,6 +240,11 @@ static unsigned int biomeRandSeed = 723;
 static SimpleVector<int> barrierItemList;
 
 
+static FILE *mapChangeLogFile = NULL;
+
+static double mapChangeLogTimeStart = -1;
+
+
 
 extern int apocalypsePossible;
 extern char apocalypseTriggered;
@@ -2557,6 +2562,79 @@ static void deleteFileByName( const char *inFileName ) {
     }
 
 
+
+static void setupMapChangeLogFile() {
+    File logFolder( NULL, "mapChangeLogs" );
+    
+    if( ! logFolder.exists() ) {
+        logFolder.makeDirectory();
+        }
+
+
+    if( mapChangeLogFile != NULL ) {
+        fclose( mapChangeLogFile );
+        mapChangeLogFile = NULL;
+        }
+    
+
+    if( logFolder.isDirectory() ) {
+        
+        char *biomeSeedString = autoSprintf( "%d", biomeRandSeed );
+        
+        // does log file already exist?
+
+        int numFiles;
+        File **childFiles = logFolder.getChildFiles( &numFiles );
+        
+        for( int i=0; i<numFiles; i++ ) {
+            File *f = childFiles[i];
+            
+            char *name = f->getFileName();
+        
+            if( strstr( name, biomeSeedString ) != NULL ) {
+                // found!
+                char *fullFileName = f->getFullFileName();
+                mapChangeLogFile = fopen( fullFileName, "a" );
+                delete [] fullFileName;
+                }
+            delete [] name;
+            if( mapChangeLogFile != NULL ) {
+                break;
+                }
+            }
+        for( int i=0; i<numFiles; i++ ) {
+            delete childFiles[i];
+            }
+        delete [] childFiles;
+
+        delete [] biomeSeedString;
+            
+        
+        if( mapChangeLogFile == NULL ) {
+
+            // file does not exist
+            char *newFileName = autoSprintf( "%.ftime_%useed_mapLog.txt",
+                                             Time::getCurrentTime(),
+                                             biomeRandSeed );
+            
+            File *f = logFolder.getChildFile( newFileName );
+            
+            char *fullName = f->getFullFileName();
+            
+            delete f;
+        
+            mapChangeLogFile = fopen( fullName, "a" );
+            delete [] fullName;
+            }
+        }
+
+    mapChangeLogTimeStart = Time::getCurrentTime();
+    fprintf( mapChangeLogFile, "startTime: %.2f\n", mapChangeLogTimeStart );
+    }
+
+
+
+
 void reseedMap( char inForceFresh ) {
     
     FILE *seedFile = NULL;
@@ -3526,6 +3604,9 @@ char initMap() {
 
     //outputBiomeFractals();
 
+            
+    setupMapChangeLogFile();
+
     return true;
     }
 
@@ -3605,6 +3686,11 @@ static void rememberDummy( FILE *inFile, int inX, int inY,
 
 
 void freeMap( char inSkipCleanup ) {
+    if( mapChangeLogFile != NULL ) {
+        fclose( mapChangeLogFile );
+        mapChangeLogFile = NULL;
+        }
+    
     printf( "%d calls to getBaseMap\n", getBaseMapCallCount );
 
     skipTrackingMapChanges = true;
@@ -6175,6 +6261,39 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
 
 
 void setMapObject( int inX, int inY, int inID ) {
+
+    // log it?
+    if( mapChangeLogFile != NULL ) {
+        
+        ObjectRecord *o = getObject( inID );
+        if( o != NULL && o->isUseDummy ) {
+            fprintf( mapChangeLogFile, 
+                     "%.2f %d %d %du%d\n", 
+                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     inX, inY,
+                     o->useDummyParent,
+                     o->thisUseDummyIndex );
+            }
+        else if( o != NULL && o->isVariableDummy ) {
+            fprintf( mapChangeLogFile, 
+                     "%.2f %d %d %dv%d\n", 
+                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     inX, inY,
+                     o->variableDummyParent,
+                     o->thisVariableDummyIndex );
+            }
+        else {        
+            fprintf( mapChangeLogFile, 
+                     "%.2f %d %d %d\n", 
+                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     inX, inY,
+                     inID );
+            }
+        }
+    
+
+
+
     setMapObjectRaw( inX, inY, inID );
 
 
