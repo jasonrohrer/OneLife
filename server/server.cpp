@@ -5194,7 +5194,10 @@ int processLoggedInPlayer( char inAllowReconnect,
         
         }
 
-
+    
+    int barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( "barrierOn", 1 );
+    
 
     // reload these settings every time someone new connects
     // thus, they can be changed without restarting the server
@@ -5374,6 +5377,21 @@ int processLoggedInPlayer( char inAllowReconnect,
                     canHaveBaby = false;
                     }
                 }
+
+
+            if( eveWindow && barrierOn ) {
+                // only mothers inside barrier can have babies during 
+                // eveWindow (eve window happens right after an apocalypse
+                // and we need to reign people back in)
+
+                GridPos playerPos = getPlayerPos( player );
+                
+                if( abs( playerPos.x ) >= barrierRadius ||
+                    abs( playerPos.y ) >= barrierRadius ) {
+                    canHaveBaby = false;
+                    }
+                }
+
             
             if( canHaveBaby ) {
                 if( ( inCurseStatus.curseLevel <= 0 && 

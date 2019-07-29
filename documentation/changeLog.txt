@@ -60,6 +60,10 @@ Server Fixes
 --Fixed so that non-cursed babies don't get born to cursed mothers after Eve
   window closes.
 
+--Fixed so that during 2-hour eve window at start of arc, players outside
+  barrier cannot have babies (so that they have to escape fresh during each
+  new arc).
+
 
 
 
