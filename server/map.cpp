@@ -2651,6 +2651,13 @@ void reseedMap( char inForceFresh ) {
     else {
         // no seed set, or ignoring it, make a new one
         
+        if( !inForceFresh ) {
+            // not forced (not internal apocalypse)
+            // seed file wiped externally, so it's like a manual apocalypse
+            // report a fresh arc starting
+            reportArcEnd();
+            }
+
         char *secret =
             SettingsManager::getStringSetting( "statsServerSharedSecret", 
                                                "secret" );

@@ -76,6 +76,10 @@ Server Fixes
 --Server logs every player-caused change to map, for wondible's potential use
   in time-lapses.
 
+--If server starts up and finds that it's map seed file has been wiped, it
+  assumes this is a manually-started fresh arc, and reports the end of the
+  previous arc to the arc-tracking server.
+
 
 
 
