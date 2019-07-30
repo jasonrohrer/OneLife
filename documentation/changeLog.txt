@@ -80,6 +80,8 @@ Server Fixes
   assumes this is a manually-started fresh arc, and reports the end of the
   previous arc to the arc-tracking server.
 
+--Server map-change-log includes floors.
+
 
 
 

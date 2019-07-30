@@ -6268,39 +6268,52 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
 
 
 
-void setMapObject( int inX, int inY, int inID ) {
-
+static void logMapChange( int inX, int inY, int inID ) {
     // log it?
     if( mapChangeLogFile != NULL ) {
         
         ObjectRecord *o = getObject( inID );
+        
+        const char *extraFlag = "";
+        
+        if( o != NULL && o->floor ) {
+            extraFlag = "f";
+            }
+        
         if( o != NULL && o->isUseDummy ) {
             fprintf( mapChangeLogFile, 
-                     "%.2f %d %d %du%d\n", 
+                     "%.2f %d %d %s%du%d\n", 
                      Time::getCurrentTime() - mapChangeLogTimeStart,
                      inX, inY,
+                     extraFlag,
                      o->useDummyParent,
                      o->thisUseDummyIndex );
             }
         else if( o != NULL && o->isVariableDummy ) {
             fprintf( mapChangeLogFile, 
-                     "%.2f %d %d %dv%d\n", 
+                     "%.2f %d %d %s%dv%d\n", 
                      Time::getCurrentTime() - mapChangeLogTimeStart,
                      inX, inY,
+                     extraFlag,
                      o->variableDummyParent,
                      o->thisVariableDummyIndex );
             }
         else {        
             fprintf( mapChangeLogFile, 
-                     "%.2f %d %d %d\n", 
+                     "%.2f %d %d %s%d\n", 
                      Time::getCurrentTime() - mapChangeLogTimeStart,
                      inX, inY,
+                     extraFlag,
                      inID );
             }
         }
-    
+    }
 
 
+
+void setMapObject( int inX, int inY, int inID ) {
+
+    logMapChange( inX, inY, inID );
 
     setMapObjectRaw( inX, inY, inID );
 
@@ -6942,6 +6955,10 @@ int getMapFloor( int inX, int inY ) {
 
 
 void setMapFloor( int inX, int inY, int inID ) {
+    
+    logMapChange( inX, inY, inID );
+
+
     dbFloorPut( inX, inY, inID );
 
 
