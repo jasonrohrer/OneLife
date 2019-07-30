@@ -1336,8 +1336,8 @@ void outputMapImage() {
     
     // output a chunk of the map as an image
 
-    int w =  500;
-    int h = 500;
+    int w =  708;
+    int h = 708;
     
     Image objIm( w, h, 3, true );
     Image biomeIm( w, h, 3, true );
@@ -1359,9 +1359,38 @@ void outputMapImage() {
         }
 
     for( int j=0; j<numBiomes; j++ ) {        
-        Color *c = Color::makeColorFromHSV( (float)j / numBiomes, 1, 1 );
+        Color *c;
+        
+        int biomeNumber = biomes[j];
+
+        switch( biomeNumber ) {
+            case 0:
+                c = new Color( 0, 0.8, .1 );
+                break;
+            case 1:
+                c = new Color( 0.4, 0.2, 0.7 );
+                break;
+            case 2:
+                c = new Color( 1, .8, 0 );
+                break;
+            case 3:
+                c = new Color( 0.6, 0.6, 0.6 );
+                break;
+            case 4:
+                c = new Color( 1, 1, 1 );
+                break;
+            case 5:
+                c = new Color( 0.7, 0.6, 0.0 );
+                break;
+            case 6:
+                c = new Color( 0.0, 0.5, 0.0 );
+                break;
+            default:
+                c = Color::makeColorFromHSV( (float)j / numBiomes, 1, 1 );
+            }
         
         biomeColors.push_back( *c );
+        delete c;
         }
     
     /*
@@ -1413,9 +1442,9 @@ void outputMapImage() {
             */
             
             
-            int id = getBaseMap( x, y );
+            int id = getBaseMap( x - h/2, - ( y - h/2 ) );
             
-            int biomeInd = getMapBiomeIndex( x, y );
+            int biomeInd = getMapBiomeIndex( x - h/2, -( y - h/2 ) );
 
             if( id > 0 ) {
                 for( int i=0; i<allNaturalMapIDs.size(); i++ ) {
