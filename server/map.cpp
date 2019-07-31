@@ -281,6 +281,13 @@ static int *biomes;
 static float *biomeWeights;
 static float *biomeCumuWeights;
 static float biomeTotalWeight;
+static int regularBiomeLimit;
+
+static int numSpecialBiomes;
+static int *specialBiomes;
+static float *specialBiomeCumuWeights;
+static float specialBiomeTotalWeight;
+
 
 
 // one vector per biome
@@ -910,12 +917,61 @@ static int computeMapBiomeIndex( int inX, int inY,
         }
     
 
-    secondPlace = pickedBiome - 1;
-    if( secondPlace < 0 ) {
-        secondPlace = pickedBiome + 1;
-        }
-    secondPlaceGap = 0.1;
 
+    if( pickedBiome >= regularBiomeLimit && numSpecialBiomes > 0 ) {
+        // special case:  on a peak, place a special biome here
+
+        // use patches mode for these
+        pickedBiome = -1;
+
+
+        double maxValue = -10;
+        double secondMaxVal = -10;
+        
+        for( int i=regularBiomeLimit; i<numBiomes; i++ ) {
+            int biome = biomes[i];
+        
+            setXYRandomSeed( biome * 263 + biomeRandSeed + 38475 );
+
+            double randVal = getXYFractal(  inX,
+                                            inY,
+                                            0.55, 
+                                            2.4999 + 
+                                            0.2499 * numSpecialBiomes );
+        
+            if( randVal > maxValue ) {
+                if( maxValue != -10 ) {
+                    secondMaxVal = maxValue;
+                    }
+                maxValue = randVal;
+                pickedBiome = i;
+                }
+            }
+        
+        if( maxValue - secondMaxVal < 0.03 ) {
+            // close!  that means we're on a boundary between special biomes
+            
+            // stick last regular biome on this boundary, so special
+            // biomes never touch
+            secondPlace = pickedBiome;
+            secondPlaceGap = 0.1;
+            pickedBiome = regularBiomeLimit - 1;
+            }        
+        else {
+            secondPlace = regularBiomeLimit - 1;
+            secondPlaceGap = 0.1;
+            }
+        }
+    else {
+        // second place for regular biome rings
+        
+        secondPlace = pickedBiome - 1;
+        if( secondPlace < 0 ) {
+            secondPlace = pickedBiome + 1;
+            }
+        secondPlaceGap = 0.1;
+        }
+    
 
 
     biomePutCached( inX, inY, pickedBiome, secondPlace, secondPlaceGap );
@@ -3586,6 +3642,28 @@ char initMap() {
     delete biomeOrderList;
     delete biomeWeightList;
 
+
+    SimpleVector<int> *specialBiomeList =
+        SettingsManager::getIntSettingMulti( "specialBiomes" );
+    
+    numSpecialBiomes = specialBiomeList->size();
+    specialBiomes = specialBiomeList->getElementArray();
+    
+    regularBiomeLimit = numBiomes - numSpecialBiomes;
+
+    delete specialBiomeList;
+
+    specialBiomeCumuWeights = new float[ numSpecialBiomes ];
+    
+    specialBiomeTotalWeight = 0;
+    for( int i=regularBiomeLimit; i<numBiomes; i++ ) {
+        specialBiomeTotalWeight += biomeWeights[i];
+        specialBiomeCumuWeights[i-regularBiomeLimit] = specialBiomeTotalWeight;
+        }
+
+
+
+
     naturalMapIDs = new SimpleVector<int>[ numBiomes ];
     naturalMapChances = new SimpleVector<float>[ numBiomes ];
     totalChanceWeight = new float[ numBiomes ];
@@ -4175,6 +4253,8 @@ void freeMap( char inSkipCleanup ) {
     delete [] biomes;
     delete [] biomeWeights;
     delete [] biomeCumuWeights;
+    delete [] specialBiomes;
+    delete [] specialBiomeCumuWeights;
     
     delete [] naturalMapIDs;
     delete [] naturalMapChances;

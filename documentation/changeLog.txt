@@ -92,6 +92,13 @@ Server Fixes
 
 --Baby mother ratio (failure condition) reduced from 6 to 4.
 
+--New patch-based layout of special biomes (desert, snow, jungle) on
+  topographical peaks.  Regular biomes (swap, grass, prairie, mountain) are
+  still played in topographical rings.  This prevents the biomes that we need
+  less of from ending up in weird-feeling, thin topo rings.  It also adds
+  large-scale variation to the map.  This region has snowy peaks.  This other
+  region has desert peaks.
+
 
 
 
