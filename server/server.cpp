@@ -183,6 +183,41 @@ static double lastBabyPassedThresholdTime = 0;
 static double eveWindowStart = 0;
 
 
+typedef struct PeaceTreaty {
+        int lineageAEveID;
+        int lineageBEveID;
+    } PeaceTreaty;
+
+    
+
+static SimpleVector<PeaceTreaty> peaceTreaties;
+
+
+static char isPeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
+    for( int i=0; i<peaceTreaties.size(); i++ ) {
+        PeaceTreaty *p = peaceTreaties.getElement( i );
+        
+        if( ( p->lineageAEveID == inLineageAEveID &&
+              p->lineageBEveID == inLineageBEveID )
+            ||
+            ( p->lineageAEveID == inLineageBEveID &&
+              p->lineageBEveID == inLineageAEveID ) ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+static void addPeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
+    if( ! isPeaceTreaty( inLineageAEveID, inLineageBEveID ) ) {
+        PeaceTreaty p = { inLineageAEveID, inLineageBEveID };
+        
+        peaceTreaties.push_back( p );
+        }
+    }
+
+
 
 
 // for incoming socket connections that are still in the login process
@@ -8275,6 +8310,8 @@ void apocalypseStep() {
                 AppLog::infoF( "Apocalypse initMap took %f sec",
                                Time::getCurrentTime() - startTime );
                 
+                peaceTreaties.deleteAll();
+
 
                 lastRemoteApocalypseCheckTime = curTime;
                 
@@ -8938,9 +8975,13 @@ void executeKillAction( int inKillerIndex,
                             "otherFamilyOnly" ) ) {
                     // make sure victim is in
                     // different family
+                    // and no treaty
                                         
                     if( hitPlayer->lineageEveID ==
-                        nextPlayer->lineageEveID ) {
+                        nextPlayer->lineageEveID
+                        || 
+                        isPeaceTreaty( hitPlayer->lineageEveID,
+                                       nextPlayer->lineageEveID ) ) {
                                             
                         hitPlayer = NULL;
                         }
@@ -12628,9 +12669,13 @@ int main() {
                                                 "otherFamilyOnly" ) ) {
                                         // make sure victim is in
                                         // different family
-                                        
+                                        // AND that there's no peace treaty
                                         if( targetPlayer->lineageEveID ==
-                                            nextPlayer->lineageEveID ) {
+                                            nextPlayer->lineageEveID
+                                            ||
+                                            isPeaceTreaty( 
+                                                targetPlayer->lineageEveID,
+                                                nextPlayer->lineageEveID ) ) {
                                             
                                             weaponBlocked = true;
                                             }
@@ -18161,6 +18206,16 @@ int main() {
                                             listenerAge,
                                             speakerParentID,
                                             listenerParentID );
+                                    
+                                    if( speakerEveID != 
+                                        listenerEveID &&
+                                        strcmp( translatedPhrase, "PEACE" )
+                                        == 0 ) {
+                                        // said PEACE in listeners language
+                                        addPeaceTreaty( speakerEveID,
+                                                        listenerEveID );
+                                        }
+                                    
                                     }
                                 
                                 int curseFlag =

@@ -99,6 +99,11 @@ Server Fixes
   large-scale variation to the map.  This region has snowy peaks.  This other
   region has desert peaks.
 
+--Saying PEACE in a way that another family can understand (in their language,
+  or in English if you are bilingual), with one of their family members in
+  earshot, establishes a peace treaty between families, blocking the use of the
+  war sword between them.
+
 
 
 
