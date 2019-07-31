@@ -111,6 +111,7 @@ Server Fixes
   and there aren't enough fertile mothers left, and we're getting a lot of Eves
   that can't survive.
 
+--Cronjob to sync map change logs to public data server every 5 minutes.
 
 
 
