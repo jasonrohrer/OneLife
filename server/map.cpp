@@ -278,6 +278,10 @@ static double gapIntScale = 1000000.0;
 // object ids that occur naturally on map at random, per biome
 static int numBiomes;
 static int *biomes;
+static float *biomeWeights;
+static float *biomeCumuWeights;
+static float biomeTotalWeight;
+
 
 // one vector per biome
 static SimpleVector<int> *naturalMapIDs;
@@ -804,9 +808,135 @@ static void biomePutCached( int inX, int inY, int inBiome, int inSecondPlace,
 
 
 
-
-
+// new code, topographic rings
 static int computeMapBiomeIndex( int inX, int inY, 
+                                 int *outSecondPlaceIndex = NULL,
+                                 double *outSecondPlaceGap = NULL ) {
+        
+    int secondPlace = -1;
+    
+    double secondPlaceGap = 0;
+
+
+    int pickedBiome = biomeGetCached( inX, inY, &secondPlace, &secondPlaceGap );
+        
+    if( pickedBiome != -2 ) {
+        // hit cached
+
+        if( outSecondPlaceIndex != NULL ) {
+            *outSecondPlaceIndex = secondPlace;
+            }
+        if( outSecondPlaceGap != NULL ) {
+            *outSecondPlaceGap = secondPlaceGap;
+            }
+    
+        return pickedBiome;
+        }
+
+    // else cache miss
+    pickedBiome = -1;
+
+
+    // try topographical altitude mapping
+
+    setXYRandomSeed( biomeRandSeed );
+
+    double randVal = 
+        ( getXYFractal( inX, inY,
+                        0.55, 
+                        0.83332 + 0.08333 * numBiomes ) );
+
+    // push into range 0..1, based on sampled min/max values
+    randVal -= 0.099668;
+    randVal *= 1.268963;
+
+
+    // flatten middle
+    //randVal = ( pow( 2*(randVal - 0.5 ), 3 ) + 1 ) / 2;
+
+
+    // push into range 0..1 with manually tweaked values
+    // these values make it pretty even in terms of distribution:
+    //randVal -= 0.319;
+    //randVal *= 3;
+
+    
+
+    // these values are more intuitve to make a map that looks good
+    //randVal -= 0.23;
+    //randVal *= 1.9;
+    
+
+    
+
+    
+    // apply gamma correction
+    //randVal = pow( randVal, 1.5 );
+    /*
+    randVal += 0.4* sin( inX / 40.0 );
+    randVal += 0.4 *sin( inY / 40.0 );
+    
+    randVal += 0.8;
+    randVal /= 2.6;
+    */
+
+    // slow arc n to s:
+
+    // pow version has flat area in middle
+    //randVal += 0.7 * pow( ( inY / 354.0 ), 3 ) ;
+
+    // sin version 
+    //randVal += 0.3 * sin( 0.5 * M_PI * inY / 354.0 );
+    
+
+    /*
+        ( sin( M_PI * inY / 708 ) + 
+          (1/3.0) * sin( 3 * M_PI * inY / 708 ) );
+    */
+    //randVal += 0.5;
+    //randVal /= 2.0;
+
+
+    
+    float i = randVal * biomeTotalWeight;
+    
+    pickedBiome = 0;
+    while( pickedBiome < numBiomes &&
+           i > biomeCumuWeights[pickedBiome] ) {
+        pickedBiome++;
+        }
+    if( pickedBiome >= numBiomes ) {
+        pickedBiome = numBiomes - 1;
+        }
+    
+
+    secondPlace = pickedBiome - 1;
+    if( secondPlace < 0 ) {
+        secondPlace = pickedBiome + 1;
+        }
+    secondPlaceGap = 0.1;
+
+
+
+    biomePutCached( inX, inY, pickedBiome, secondPlace, secondPlaceGap );
+    
+    
+    if( outSecondPlaceIndex != NULL ) {
+        *outSecondPlaceIndex = secondPlace;
+        }
+    if( outSecondPlaceGap != NULL ) {
+        *outSecondPlaceGap = secondPlaceGap;
+        }
+    
+    return pickedBiome;
+    }
+
+
+
+
+// old code, separate height fields per biome that compete
+// and create a patchwork layout
+static int computeMapBiomeIndexOld( int inX, int inY, 
                                  int *outSecondPlaceIndex = NULL,
                                  double *outSecondPlaceGap = NULL ) {
         
@@ -1358,7 +1488,12 @@ void outputMapImage() {
         delete c;
         }
 
+    SimpleVector<int> biomeCounts;
+    int totalBiomeCount = 0;
+
     for( int j=0; j<numBiomes; j++ ) {        
+        biomeCounts.push_back( 0 );
+        
         Color *c;
         
         int biomeNumber = biomes[j];
@@ -1461,8 +1596,33 @@ void outputMapImage() {
             
             biomeIm.setColor( y * w + x,
                               biomeColors.getElementDirect( biomeInd ) );
+            ( *( biomeCounts.getElement( biomeInd ) ) ) ++;
+            totalBiomeCount++;
             }
         }
+
+
+    const char *biomeNames[] = { "Grass ",
+                                 "Swamp ",
+                                 "Yellow",
+                                 "Gray  ",
+                                 "Snow  ",
+                                 "Desert",
+                                 "Jungle" };    
+
+    for( int j=0; j<numBiomes; j++ ) {
+        const char *name = "unknwn";
+        
+        if( biomes[j] < 7 ) {
+            name = biomeNames[ biomes[j] ];
+            }
+        int c = biomeCounts.getElementDirect( j );
+        
+        printf( "Biome %d (%s) \tcount = %d\t%.1f%%\n", 
+                biomes[j], name, c, 100 * (float)c / totalBiomeCount );
+        }
+
+
     
     for( int i=0; i<allNaturalMapIDs.size(); i++ ) {
         ObjectRecord *obj = getObject( allNaturalMapIDs.getElementDirect( i ) );
@@ -3384,10 +3544,48 @@ char initMap() {
         
         }
 
+
+    // manually controll order
+    SimpleVector<int> *biomeOrderList =
+        SettingsManager::getIntSettingMulti( "biomeOrder" );
+
+    SimpleVector<float> *biomeWeightList =
+        SettingsManager::getFloatSettingMulti( "biomeWeights" );
+
+    for( int i=0; i<biomeOrderList->size(); i++ ) {
+        int b = biomeOrderList->getElementDirect( i );
+        
+        if( biomeList.getElementIndex( b ) == -1 ) {
+            biomeOrderList->deleteElement( i );
+            biomeWeightList->deleteElement( i );
+            i--;
+            }
+        }
     
-    numBiomes = biomeList.size();
-    biomes = biomeList.getElementArray();
+    // now add any discovered biomes to end of list
+    for( int i=0; i<biomeList.size(); i++ ) {
+        int b = biomeList.getElementDirect( i );
+        if( biomeOrderList->getElementIndex( b ) == -1 ) {
+            biomeOrderList->push_back( b );
+            // default weight
+            biomeWeightList->push_back( 0.1 );
+            }
+        }
     
+    numBiomes = biomeOrderList->size();
+    biomes = biomeOrderList->getElementArray();
+    biomeWeights = biomeWeightList->getElementArray();
+    biomeCumuWeights = new float[ numBiomes ];
+    
+    biomeTotalWeight = 0;
+    for( int i=0; i<numBiomes; i++ ) {
+        biomeTotalWeight += biomeWeights[i];
+        biomeCumuWeights[i] = biomeTotalWeight;
+        }
+    
+    delete biomeOrderList;
+    delete biomeWeightList;
+
     naturalMapIDs = new SimpleVector<int>[ numBiomes ];
     naturalMapChances = new SimpleVector<float>[ numBiomes ];
     totalChanceWeight = new float[ numBiomes ];
@@ -3975,6 +4173,8 @@ void freeMap( char inSkipCleanup ) {
     writeRecentPlacements();
 
     delete [] biomes;
+    delete [] biomeWeights;
+    delete [] biomeCumuWeights;
     
     delete [] naturalMapIDs;
     delete [] naturalMapChances;
