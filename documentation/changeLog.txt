@@ -104,6 +104,13 @@ Server Fixes
   earshot, establishes a peace treaty between families, blocking the use of the
   war sword between them.
 
+--Testing new arc failure condition:  We allow a normal Eve spiral always, but
+  after the initial Eve window time (currently 2 hours), we start counting
+  families.  The arc ends if we ever have too many families (more than 15),
+  because this means that the successful families have all started to fail,
+  and there aren't enough fertile mothers left, and we're getting a lot of Eves
+  that can't survive.
+
 
 
 

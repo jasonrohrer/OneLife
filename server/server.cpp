@@ -5130,6 +5130,58 @@ static int countHelplessBabies() {
 
 
 
+
+static int countFamilies() {
+    
+    int barrierRadius = 
+        SettingsManager::getIntSetting( 
+            "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( 
+        "barrierOn", 1 );
+    
+    SimpleVector<int> uniqueLines;
+
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( p->error ) {
+            continue;
+            }
+        if( p->isTutorial ) {
+            continue;
+            }    
+        if( p->vogMode ) {
+            continue;
+            }
+        if( p->curseStatus.curseLevel > 0 ) {
+            continue;
+            }
+
+        int lineageEveID = p->lineageEveID;
+            
+        if( uniqueLines.getElementIndex( lineageEveID ) == -1 ) {
+            
+            if( barrierOn ) {
+                // only those inside the barrier
+                GridPos pos = getPlayerPos( p );
+                
+                if( abs( pos.x ) < barrierRadius &&
+                    abs( pos.y ) < barrierRadius ) {
+                    uniqueLines.push_back( lineageEveID );
+                    }
+                }
+            else {
+                uniqueLines.push_back( lineageEveID );
+                }
+            }
+        }
+    
+    return uniqueLines.size();
+    }
+
+
+
 static char isEveWindow() {
     
     if( players.size() <=
@@ -5301,6 +5353,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     char eveWindow = isEveWindow();
     char forceGirl = false;
     
+    int familyLimitAfterEveWindow = SettingsManager::getIntSetting( 
+            "familyLimitAfterEveWindow", 15 );
+
     if( ! eveWindow ) {
         int cM = countFertileMothers();
         int cB = countHelplessBabies();
@@ -5323,7 +5378,21 @@ int processLoggedInPlayer( char inAllowReconnect,
                 forceGirl = true;
                 }
             }
-        
+
+        if( !apocalypseTriggered && familyLimitAfterEveWindow > 0 ) {
+            
+            // there's a family limit
+            // see if we passed it
+            
+            if( countFamilies() > familyLimitAfterEveWindow ) {
+                // too many families
+                
+                // that means we've reach a state where no one is surviving
+                // and there are lots of eves scrounging around
+                triggerApocalypseNow();
+                }
+            }
+            
         }
 
     
@@ -5574,10 +5643,13 @@ int processLoggedInPlayer( char inAllowReconnect,
     
 
     
-    if( eveWindow && parentChoices.size() > 0 ) {
+    if( ( eveWindow || familyLimitAfterEveWindow > 0 ) 
+        && parentChoices.size() > 0 ) {
         // count the families, and add new Eve if there are too
-        // few families for the playerbase (but only if in Eve window)
-        
+        // few families for the playerbase 
+        // (but only if in pure Eve window )
+        // (    OR tracking family limit after window closes)
+
         SimpleVector<int> uniqueLines;
         
         int playerCount = 0;
@@ -5625,10 +5697,12 @@ int processLoggedInPlayer( char inAllowReconnect,
     if( inCurseStatus.curseLevel <= 0 &&
         ! forceParentChoices && 
         parentChoices.size() == 0 &&
-        ! eveWindow &&
+        ! ( eveWindow || familyLimitAfterEveWindow > 0 ) &&
         ! apocalypseTriggered ) {
         
-        // outside Eve window, and no mother choices left (based on lineage
+        // outside pure Eve window (and not tracking family limit after)
+        //
+        // and no mother choices left (based on lineage 
         // bans or birth cooldowns)
 
         // consider all fertile mothers
