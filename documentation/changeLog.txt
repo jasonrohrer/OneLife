@@ -90,6 +90,9 @@ Server Fixes
 --Disabled plane flying over rift.  People escaping early makes it impossible
   to test properly.
 
+--Baby mother ratio (failure condition) reduced from 6 to 4.
+
+
 
 
 
