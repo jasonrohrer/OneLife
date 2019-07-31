@@ -87,6 +87,9 @@ Server Fixes
   surrounded by desert surrounded by jungle.  Every grassy area is a good
   settlement spot, because it's always next to a swamp.
 
+--Disabled plane flying over rift.  People escaping early makes it impossible
+  to test properly.
+
 
 
 

@@ -16003,11 +16003,24 @@ int main() {
                             
                                 doublePair takeOffDir = { xDir, yDir };
 
+                                int radiusLimit = -1;
+                                
+                                int barrierRadius = 
+                                    SettingsManager::getIntSetting( 
+                                        "barrierRadius", 250 );
+                                int barrierOn = SettingsManager::getIntSetting( 
+                                    "barrierOn", 1 );
+                                
+                                if( barrierOn ) {
+                                    radiusLimit = barrierRadius;
+                                    }
+
                                 GridPos destPos = 
                                     getNextFlightLandingPos(
                                         nextPlayer->xs,
                                         nextPlayer->ys,
-                                        takeOffDir );
+                                        takeOffDir,
+                                        radiusLimit );
                             
                                 AppLog::infoF( 
                                     "Player %d flight taking off from (%d,%d), "

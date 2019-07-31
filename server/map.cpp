@@ -8279,16 +8279,34 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
 
 
 GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY, 
-                                 doublePair inDir ) {
+                                 doublePair inDir, 
+                                 int inRadiusLimit ) {
     int closestIndex = -1;
     GridPos closestPos;
     double closestDist = DBL_MAX;
 
     GridPos curPos = { inCurrentX, inCurrentY };
 
+    char useLimit = false;
+    
+    if( abs( inCurrentX ) <= inRadiusLimit &&
+        abs( inCurrentY ) <= inRadiusLimit ) {
+        useLimit = true;
+        }
+        
+        
+
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
         
+        if( useLimit &&
+            ( abs( thisPos.x ) > inRadiusLimit ||
+              abs( thisPos.x ) > inRadiusLimit ) ) {
+            // out of bounds destination
+            continue;
+            }
+        
+              
         double dist = distSquared( curPos, thisPos );
         
         if( dist < closestDist ) {
@@ -8346,6 +8364,18 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
     
     GridPos returnVal = { eveX, eveY };
     
+    if( inRadiusLimit > 0 &&
+        ( abs( eveX ) >= inRadiusLimit ||
+          abs( eveY ) >= inRadiusLimit ) ) {
+        // even Eve pos is out of bounds
+        // stick them in center
+        returnVal.x = 0;
+        returnVal.y = 0;
+        }
+    
+          
+
+
     return returnVal;
     }
 

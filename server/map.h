@@ -291,8 +291,11 @@ int getMapObjectRaw( int inX, int inY );
 
 // next landing strip in line, in round-the-world circuit across all
 // landing positions
+// radius limit limits flights from inside that square radius
+// from leaving (though flights from outside are unrestriced)
 GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
-                                 doublePair inDir );
+                                 doublePair inDir,
+                                 int inRadiusLimit = -1 );
 
 
 // get and set player ID for grave on map
