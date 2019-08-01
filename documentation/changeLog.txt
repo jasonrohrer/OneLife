@@ -102,7 +102,7 @@ Server Fixes
 --Saying PEACE in a way that another family can understand (in their language,
   or in English if you are bilingual), with one of their family members in
   earshot, establishes a peace treaty between families, blocking the use of the
-  war sword between them.
+  war sword between them.  Only works if said in both directions, though.
 
 --Testing new arc failure condition:  We allow a normal Eve spiral always, but
   after the initial Eve window time (currently 2 hours), we start counting

@@ -186,22 +186,38 @@ static double eveWindowStart = 0;
 typedef struct PeaceTreaty {
         int lineageAEveID;
         int lineageBEveID;
+        
+        // they have to say it in both directions
+        // before it comes into effect
+        char dirAToB;
+        char dirBToA;
     } PeaceTreaty;
 
     
 
 static SimpleVector<PeaceTreaty> peaceTreaties;
 
-
-static char isPeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
+// parial treaty returned if it's requested
+static char isPeaceTreaty( int inLineageAEveID, int inLineageBEveID,
+                           PeaceTreaty **outPartialTreaty = NULL ) {
     for( int i=0; i<peaceTreaties.size(); i++ ) {
         PeaceTreaty *p = peaceTreaties.getElement( i );
         
+
         if( ( p->lineageAEveID == inLineageAEveID &&
               p->lineageBEveID == inLineageBEveID )
             ||
             ( p->lineageAEveID == inLineageBEveID &&
               p->lineageBEveID == inLineageAEveID ) ) {
+            // they match a treaty.
+
+            if( !( p->dirAToB && p->dirBToA ) ) {
+                // partial treaty
+                if( outPartialTreaty != NULL ) {
+                    *outPartialTreaty = p;
+                    }
+                return false;
+                }
             return true;
             }
         }
@@ -210,10 +226,27 @@ static char isPeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
 
 
 static void addPeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
-    if( ! isPeaceTreaty( inLineageAEveID, inLineageBEveID ) ) {
-        PeaceTreaty p = { inLineageAEveID, inLineageBEveID };
+    PeaceTreaty *partial = NULL;
+    if( ! isPeaceTreaty( inLineageAEveID, inLineageBEveID,
+                         &partial ) ) {
         
-        peaceTreaties.push_back( p );
+        if( partial != NULL ) {
+            // maybe it has been sealed in a new direction?
+            if( partial->lineageAEveID == inLineageAEveID ) {
+                partial->dirAToB = true;
+                }
+            if( partial->lineageBEveID == inLineageAEveID ) {
+                partial->dirBToA = true;
+                }
+            }
+        else {
+            // else doesn't exist, create new unidirectional
+            PeaceTreaty p = { inLineageAEveID, inLineageBEveID,
+                              true, false };
+
+            peaceTreaties.push_back( p );
+            }
+        
         }
     }
 
