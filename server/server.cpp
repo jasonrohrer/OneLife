@@ -191,15 +191,21 @@ typedef struct PeaceTreaty {
         // before it comes into effect
         char dirAToB;
         char dirBToA;
+
+        // track directions of breaking it later
+        char dirAToBBroken;
+        char dirBToABroken;
     } PeaceTreaty;
 
     
 
 static SimpleVector<PeaceTreaty> peaceTreaties;
 
-// parial treaty returned if it's requested
-static char isPeaceTreaty( int inLineageAEveID, int inLineageBEveID,
-                           PeaceTreaty **outPartialTreaty = NULL ) {
+
+// may be partial
+static PeaceTreaty *getMatchingTreaty( int inLineageAEveID, 
+                                       int inLineageBEveID ) {
+    
     for( int i=0; i<peaceTreaties.size(); i++ ) {
         PeaceTreaty *p = peaceTreaties.getElement( i );
         
@@ -210,43 +216,107 @@ static char isPeaceTreaty( int inLineageAEveID, int inLineageBEveID,
             ( p->lineageAEveID == inLineageBEveID &&
               p->lineageBEveID == inLineageAEveID ) ) {
             // they match a treaty.
-
-            if( !( p->dirAToB && p->dirBToA ) ) {
-                // partial treaty
-                if( outPartialTreaty != NULL ) {
-                    *outPartialTreaty = p;
-                    }
-                return false;
-                }
-            return true;
+            return p;
             }
+        }
+    return NULL;
+    }
+
+
+
+// parial treaty returned if it's requested
+static char isPeaceTreaty( int inLineageAEveID, int inLineageBEveID,
+                           PeaceTreaty **outPartialTreaty = NULL ) {
+    
+    PeaceTreaty *p = getMatchingTreaty( inLineageAEveID, inLineageBEveID );
+        
+    if( p != NULL ) {
+        
+        if( !( p->dirAToB && p->dirBToA ) ) {
+            // partial treaty
+            if( outPartialTreaty != NULL ) {
+                *outPartialTreaty = p;
+                }
+            return false;
+            }
+        return true;
         }
     return false;
     }
 
 
 static void addPeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
-    PeaceTreaty *partial = NULL;
-    if( ! isPeaceTreaty( inLineageAEveID, inLineageBEveID,
-                         &partial ) ) {
+    PeaceTreaty *p = getMatchingTreaty( inLineageAEveID, inLineageBEveID );
+    
+    if( p != NULL ) {
+        // maybe it has been sealed in a new direction?
+        if( p->lineageAEveID == inLineageAEveID ) {
+            p->dirAToB = true;
+            p->dirBToABroken = false;
+            }
+        if( p->lineageBEveID == inLineageAEveID ) {
+            p->dirBToA = true;
+            p->dirBToABroken = false;
+            }
+        }
+    else {
+        // else doesn't exist, create new unidirectional
+        PeaceTreaty p = { inLineageAEveID, inLineageBEveID,
+                          true, false,
+                          false, false };
         
-        if( partial != NULL ) {
-            // maybe it has been sealed in a new direction?
-            if( partial->lineageAEveID == inLineageAEveID ) {
-                partial->dirAToB = true;
+        peaceTreaties.push_back( p );
+        }
+    }
+
+
+
+static void removePeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
+    PeaceTreaty *p = getMatchingTreaty( inLineageAEveID, inLineageBEveID );
+    
+    char remove = false;
+    
+    if( p != NULL ) {
+        if( p->dirAToB && p->dirBToA ) {
+            // established
+            
+            // maybe it has been broken in a new direction?
+            if( p->lineageAEveID == inLineageAEveID ) {
+                p->dirAToBBroken = true;
                 }
-            if( partial->lineageBEveID == inLineageAEveID ) {
-                partial->dirBToA = true;
+            if( p->lineageBEveID == inLineageAEveID ) {
+                p->dirBToABroken = true;
+                }
+            
+            if( p->dirAToBBroken && p->dirBToABroken ) {
+                // fully broken
+                // remove it
+                remove = true;
                 }
             }
         else {
-            // else doesn't exist, create new unidirectional
-            PeaceTreaty p = { inLineageAEveID, inLineageBEveID,
-                              true, false };
-
-            peaceTreaties.push_back( p );
+            // not fully established
+            // remove it 
+            
+            // this means if one person says PEACE and the other
+            // responds with WAR, the first person's PEACE half-way treaty
+            // is canceled.  Both need to say PEACE again once WAR has been
+            // mentioned
+            remove = true;
             }
-        
+        }
+    
+    if( remove ) {
+        for( int i=0; i<peaceTreaties.size(); i++ ) {
+            PeaceTreaty *otherP = peaceTreaties.getElement( i );
+            
+            if( otherP->lineageAEveID == p->lineageAEveID &&
+                otherP->lineageBEveID == p->lineageBEveID ) {
+                
+                peaceTreaties.deleteElement( i );
+                return;
+                }
+            }
         }
     }
 
@@ -18315,14 +18385,28 @@ int main() {
                                             listenerParentID );
                                     
                                     if( speakerEveID != 
-                                        listenerEveID &&
-                                        strcmp( translatedPhrase, "PEACE" )
-                                        == 0 ) {
-                                        // said PEACE in listeners language
-                                        addPeaceTreaty( speakerEveID,
-                                                        listenerEveID );
+                                        listenerEveID
+                                        && speakerAge > 55 
+                                        && listenerAge > 55 ) {
+                                        
+                                        if( strcmp( translatedPhrase, "PEACE" )
+                                            == 0 ) {
+                                            // an elder speaker
+                                            // said PEACE 
+                                            // in elder listener's language
+                                            addPeaceTreaty( speakerEveID,
+                                                            listenerEveID );
+                                            }
+                                        else if( strcmp( translatedPhrase, 
+                                                         "WAR" )
+                                                 == 0 ) {
+                                            // an elder speaker
+                                            // said WAR 
+                                            // in elder listener's language
+                                            removePeaceTreaty( speakerEveID,
+                                                               listenerEveID );
+                                            }
                                         }
-                                    
                                     }
                                 
                                 int curseFlag =
