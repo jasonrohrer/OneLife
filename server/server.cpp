@@ -9003,16 +9003,25 @@ typedef struct KillState {
 SimpleVector<KillState> activeKillStates;
 
 
-void addKillState( int inKillerID, int inTargetID ) {
+void addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
     char found = false;
     
+    
+    if( distance( getPlayerPos( inKiller ), getPlayerPos( inTarget ) )
+        > 8 ) {
+        // out of range
+        return;
+        }
+    
+    
+
     for( int i=0; i<activeKillStates.size(); i++ ) {
         KillState *s = activeKillStates.getElement( i );
         
-        if( s->killerID == inKillerID ) {
+        if( s->killerID == inKiller->id ) {
             found = true;
-            s->killerWeaponID = getLiveObject( inKillerID )->holdingID;
-            s->targetID = inTargetID;
+            s->killerWeaponID = inKiller->holdingID;
+            s->targetID = inTarget->id;
             s->emotStartTime = Time::getCurrentTime();
             s->emotRefreshSeconds = 30;
             break;
@@ -9021,9 +9030,9 @@ void addKillState( int inKillerID, int inTargetID ) {
     
     if( !found ) {
         // add new
-        KillState s = { inKillerID, 
-                        getLiveObject( inKillerID )->holdingID,
-                        inTargetID, 
+        KillState s = { inKiller->id, 
+                        inKiller->holdingID,
+                        inTarget->id, 
                         Time::getCurrentTime(),
                         30 };
         activeKillStates.push_back( s );
@@ -12867,8 +12876,8 @@ int main() {
                                             killEmotionIndex );
                                         newEmotTTLs.push_back( 120 );
                                         
-                                        addKillState( nextPlayer->id,
-                                                      targetPlayer->id );
+                                        addKillState( nextPlayer,
+                                                      targetPlayer );
                                         }
                                     }
                                 }

@@ -153,6 +153,8 @@ Server Fixes
 
 --Support for special map placements.
 
+--Can only enter the kill state against a player that is no further than 8
+  tiles away.
 
 
 
