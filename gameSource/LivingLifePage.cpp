@@ -3152,6 +3152,7 @@ typedef struct OffScreenSound {
         // wall clock time when should start fading
         double fadeETATime;
 
+        char red;
     } OffScreenSound;
 
 SimpleVector<OffScreenSound> offScreenSounds;
@@ -3159,12 +3160,27 @@ SimpleVector<OffScreenSound> offScreenSounds;
 
 
 
-static void addOffScreenSound( double inPosX, double inPosY ) {
+static void addOffScreenSound( double inPosX, double inPosY,
+                               char *inDescription ) {
+
+    char red = false;
+    
+    char *stringPos = strstr( inDescription, "offScreenSound" );
+    
+    if( stringPos != NULL ) {
+        stringPos = &( stringPos[ strlen( "offScreenSound" ) ] );
+        
+        if( strstr( stringPos, "_red" ) == stringPos ) {
+            // _red flag next
+            red = true;
+            }
+        }
+    
     double fadeETATime = game_getCurrentTime() + 4;
     
     doublePair pos = { inPosX, inPosY };
     
-    OffScreenSound s = { pos, 1.0, fadeETATime };
+    OffScreenSound s = { pos, 1.0, fadeETATime, red };
     
     offScreenSounds.push_back( s );
     }
@@ -3182,6 +3198,7 @@ void LivingLifePage::drawOffScreenSounds() {
     
     FloatColor red = { 0.65, 0, 0, 1 };
     FloatColor white = { 1, 1, 1, 1 };
+    FloatColor black = { 0, 0, 0, 1 };
     
 
     double curTime = game_getCurrentTime();
@@ -3232,6 +3249,14 @@ void LivingLifePage::drawOffScreenSounds() {
             
 
             doublePair drawPos = add( edgeV, lastScreenViewCenter );
+            
+            FloatColor *textColor = &black;
+            FloatColor *bgColor = &white;
+            
+            if( s->red ) {
+                textColor = &white;
+                bgColor = &red;
+                }
 
             drawChalkBackgroundString( drawPos,
                                        "!",
@@ -3239,7 +3264,7 @@ void LivingLifePage::drawOffScreenSounds() {
                                        100,
                                        NULL,
                                        -1,
-                                       &red, &white );
+                                       bgColor, textColor );
             }    
         }
     }
@@ -14359,7 +14384,8 @@ void LivingLifePage::step() {
                                                       existing->currentPos.x *
                                                       CELL_D, 
                                                       existing->currentPos.y *
-                                                      CELL_D );
+                                                      CELL_D,
+                                                      heldObj->description );
                                                     }
                                                 }
                                             }
