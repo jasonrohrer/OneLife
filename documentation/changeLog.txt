@@ -151,6 +151,8 @@ Server Fixes
   15 active players), then an apocalypse is auto-triggered.  This means the
   barrier square is out of resources necessary for survival.
 
+--Support for special map placements.
+
 
 
 

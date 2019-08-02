@@ -3904,7 +3904,29 @@ char initMap() {
         }
 
 
+    SimpleVector<char*> *specialPlacements = 
+        SettingsManager::getSetting( "specialMapPlacements" );
+    
+    if( specialPlacements != NULL ) {
+        
+        for( int i=0; i<specialPlacements->size(); i++ ) {
+            char *line = specialPlacements->getElementDirect( i );
+            
+            int x, y, id;
+            id = -1;
+            int numRead = sscanf( line, "%d_%d_%d", &x, &y, &id );
+            
+            if( numRead == 3 && id > -1 ) {
+                
+                }
+            setMapObject( x, y, id );
+            }
 
+
+        specialPlacements->deallocateStringElements();
+        delete specialPlacements;
+        }
+    
     
     
     
