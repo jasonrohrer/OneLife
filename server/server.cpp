@@ -3528,7 +3528,7 @@ void sendPeaceWarMessage( const char *inPeaceOrWar,
             }
         }
 
-    char *message = autoSprintf( "%s BETWEEN %s AND %s FAMILIES",
+    char *message = autoSprintf( "%s BETWEEN %s**AND %s FAMILIES",
                                  inPeaceOrWar,
                                  nameA, nameB );
 
