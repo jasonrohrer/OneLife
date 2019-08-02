@@ -248,10 +248,16 @@ static char isPeaceTreaty( int inLineageAEveID, int inLineageBEveID,
     }
 
 
+void sendPeaceWarMessage( const char *inPeaceOrWar, 
+                          int inLineageAEveID, int inLineageBEveID );
+
+
 static void addPeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
     PeaceTreaty *p = getMatchingTreaty( inLineageAEveID, inLineageBEveID );
     
     if( p != NULL ) {
+        char peaceBefore = p->dirAToB && p->dirBToA;
+        
         // maybe it has been sealed in a new direction?
         if( p->lineageAEveID == inLineageAEveID ) {
             p->dirAToB = true;
@@ -260,6 +266,11 @@ static void addPeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
         if( p->lineageBEveID == inLineageAEveID ) {
             p->dirBToA = true;
             p->dirBToABroken = false;
+            }
+        if( p->dirAToB && p->dirBToA &&
+            ! peaceBefore ) {
+            // new peace!
+            sendPeaceWarMessage( "PEACE", inLineageAEveID, inLineageBEveID );
             }
         }
     else {
@@ -295,6 +306,9 @@ static void removePeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
                 // fully broken
                 // remove it
                 remove = true;
+
+                // new war!
+                sendPeaceWarMessage( "WAR", inLineageAEveID, inLineageBEveID );
                 }
             }
         else {
@@ -3455,6 +3469,74 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
         inPlayer->sockBuffer = NULL;
         }
     }
+
+
+
+
+static void sendGlobalMessage( char *inMessage ) {
+    char found;
+    char *noSpaceMessage = replaceAll( inMessage, " ", "_", &found );
+
+    char *fullMessage = autoSprintf( "MS\n%s\n#", noSpaceMessage );
+    
+    delete [] noSpaceMessage;
+
+    int len = strlen( fullMessage );
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( ! o->error && ! o->isTutorial && o->connected ) {
+            int numSent = 
+                o->sock->send( (unsigned char*)fullMessage, 
+                               len, 
+                               false, false );
+        
+            if( numSent != len ) {
+                setPlayerDisconnected( o, "Socket write failed" );
+                }
+            }
+        }
+    delete [] fullMessage;
+    }
+
+
+
+void sendPeaceWarMessage( const char *inPeaceOrWar, 
+                          int inLineageAEveID, int inLineageBEveID ) {
+    const char *nameA = "NAMELESS";
+    const char *nameB = "NAMELESS";
+    
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *o = players.getElement( j );
+                        
+        if( ! o->error && 
+            o->lineageEveID == inLineageAEveID &&
+            o->familyName != NULL ) {
+            nameA = o->familyName;
+            break;
+            }
+        }
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *o = players.getElement( j );
+                        
+        if( ! o->error && 
+            o->lineageEveID == inLineageBEveID &&
+            o->familyName != NULL ) {
+            nameB = o->familyName;
+            break;
+            }
+        }
+
+    char *message = autoSprintf( "%s BETWEEN %s AND %s FAMILIES",
+                                 inPeaceOrWar,
+                                 nameA, nameB );
+
+    sendGlobalMessage( message );
+    
+    delete [] message;
+    }
+
 
 
 
@@ -18468,29 +18550,29 @@ int main() {
                                             listenerAge,
                                             speakerParentID,
                                             listenerParentID );
+                                    }
+                                
+                                if( speakerEveID != 
+                                    listenerEveID
+                                    && speakerAge > 55 
+                                    && listenerAge > 55 ) {
                                     
-                                    if( speakerEveID != 
-                                        listenerEveID
-                                        && speakerAge > 55 
-                                        && listenerAge > 55 ) {
-                                        
-                                        if( strcmp( translatedPhrase, "PEACE" )
-                                            == 0 ) {
+                                    if( strcmp( translatedPhrase, "PEACE" )
+                                        == 0 ) {
+                                        // an elder speaker
+                                        // said PEACE 
+                                        // in elder listener's language
+                                        addPeaceTreaty( speakerEveID,
+                                                        listenerEveID );
+                                        }
+                                    else if( strcmp( translatedPhrase, 
+                                                     "WAR" )
+                                             == 0 ) {
                                             // an elder speaker
-                                            // said PEACE 
-                                            // in elder listener's language
-                                            addPeaceTreaty( speakerEveID,
-                                                            listenerEveID );
-                                            }
-                                        else if( strcmp( translatedPhrase, 
-                                                         "WAR" )
-                                                 == 0 ) {
-                                            // an elder speaker
-                                            // said WAR 
-                                            // in elder listener's language
-                                            removePeaceTreaty( speakerEveID,
-                                                               listenerEveID );
-                                            }
+                                        // said WAR 
+                                        // in elder listener's language
+                                        removePeaceTreaty( speakerEveID,
+                                                           listenerEveID );
                                         }
                                     }
                                 
