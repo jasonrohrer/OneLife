@@ -27,6 +27,7 @@ cd ../OneLifeData7
 git pull --tags
 
 rm */cache.fcz
+rm */bin_*cache.fcz
 
 
 cd ../OneLife

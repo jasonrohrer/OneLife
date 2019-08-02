@@ -35,11 +35,15 @@ mkdir $buildDir
 
 cd $sourceWorkingDir
 cp -r animations music objects sounds sprites categories transitions ground dataVersionNumber.txt ../$buildDir
-cp -r OneLifeApp graphics otherSounds languages language.txt no_copyright.txt Readme.txt settings reverbImpulseResponse.aiff reverbCache groundTileCache us_english_60.txt ../$buildDir
+cp -r OneLifeApp graphics otherSounds languages language.txt no_copyright.txt Readme.txt settings reverbImpulseResponse.aiff wordList.txt reverbCache groundTileCache us_english_60.txt ../$buildDir
 
 cd ../$buildDir
 
 ../$sourceWorkingDir/OneLife/gameSource/regenerateCaches
+
+# don't ever include bin_cache in bundles, because they are large
+# and change every update
+rm */bin_*cache.fcz
 
 
 cd ..

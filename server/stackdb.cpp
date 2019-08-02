@@ -23,7 +23,7 @@ static uint64_t STACKDB_hash( const void *inB, unsigned int inLen ) {
 
 
 
-const char *magicString = "Sdb";
+static const char *magicString = "Sdb";
 
 // Sdb magic characters plus
 // three 32-bit ints
@@ -39,6 +39,8 @@ int STACKDB_open(
     unsigned int inKeySize,
     unsigned int inValueSize ) {
 
+    inDB->maxStackDepth = 0;
+    
     inDB->hashBinBuffer = NULL;
     
     inDB->file = fopen( inPath, "r+b" );
@@ -429,6 +431,9 @@ static int findValue( STACKDB *inDB, const void *inKey,
             }
         }
 
+    if( stackPos > inDB->maxStackDepth ) {
+        inDB->maxStackDepth = stackPos;
+        }
     
 
     int numWritten;
@@ -595,6 +600,7 @@ void STACKDB_Iterator_init( STACKDB *inDB, STACKDB_Iterator *inDBi ) {
     inDBi->db = inDB;
     inDBi->hashBin = 0;
     inDBi->nextRecordLoc = 0;
+    inDBi->stackDepth = 0;
     }
 
 
@@ -660,6 +666,12 @@ int STACKDB_Iterator_next( STACKDB_Iterator *inDBi,
         return -1;
         }
 
+    inDBi->stackDepth++;
+    
+    if( inDBi->stackDepth > inDBi->db->maxStackDepth ) {
+        inDBi->db->maxStackDepth = inDBi->stackDepth;
+        }
+
 
     numRead = fread( outValue, inDBi->db->valueSize, 1, f );
     if( numRead != 1 ) {
@@ -668,6 +680,7 @@ int STACKDB_Iterator_next( STACKDB_Iterator *inDBi,
 
     if( inDBi->nextRecordLoc == 0 ) {
         inDBi->hashBin ++;
+        inDBi->stackDepth = 0;
         }
 
     return 1;    

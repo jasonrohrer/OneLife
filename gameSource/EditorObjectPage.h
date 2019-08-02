@@ -93,6 +93,9 @@ class EditorObjectPage : public GamePage, public ActionListener {
         TextField mSlotTimeStretchField;
         CheckboxButton mSlotsLockedCheckbox;
         
+        CheckboxButton mNoFlipCheckbox;
+        CheckboxButton mSideAccessCheckbox;
+        
 
         TextField mDeadlyDistanceField;
         TextField mUseDistanceField;
@@ -134,8 +137,11 @@ class EditorObjectPage : public GamePage, public ActionListener {
 
         CheckboxButton mInvisibleWhenWornCheckbox;
         CheckboxButton mInvisibleWhenUnwornCheckbox;
+        CheckboxButton mInvisibleWhenContainedCheckbox;
 
         CheckboxButton mBehindSlotsCheckbox;
+        CheckboxButton mBehindPlayerCheckbox;
+        CheckboxButton mAdditiveBlendCheckbox;
         
         TextField mAgeInField;
         TextField mAgeOutField;
@@ -217,6 +223,7 @@ class EditorObjectPage : public GamePage, public ActionListener {
         SoundWidget mDecaySoundWidget;
         
         CheckboxButton  mCreationSoundInitialOnlyCheckbox;
+        CheckboxButton  mCreationSoundForceCheckbox;
         
         char mPrintRequested;
         char mSavePrintOnly;

@@ -1,9 +1,37 @@
 This work is not copyrighted.  I place it into the public domain.
 
 Do whatever you want with it, absolutely no restrictions, and no permission 
-necessary.
+necessary, as far as copyright issues are concerned.
+
+
+In areas outside the reach of copyright, I still retain other rights.  This
+should go without saying, because this file is called "no_copyright".
+
+
+Specifically:
+
+1.  I retain my moral rights.  I am the original author of One Hour One Life,
+    and you are not, so don't claim or imply that you are.  The version of
+    One Hour One Life that I have created and released is the only version
+    specifically authorized by me, the original author, and I wanted it to be
+    just the way that it is.  Do not claim or imply that your versions or 
+    alterations are authorized by me, or take actions that would confuse
+    people about which version is the original.
+
+2.  I retain my publicity rights, and my rights against defamation.
+    Do not claim or imply that I endorse, approve, or am financially
+    connected to whatever you're doing with my work.  Do no lie about
+    me or my work, or mislead people about my work.
+
+3.  I retain my trademark rights.  The name "One Hour One Life", my logos,
+    banners, trailers, and screen shots, along with the specific graphical,
+    auditory, and character elements in the official game, are my trademarks
+    for the multiplayer online game service that I'm operating.  Do not operate
+    your own separate multiplayer online game service using any of these
+    marks, unless your service is explicitly limited to confirmed and verified
+    customers of my service.
 
 
 Jason Rohrer
 Davis, California
-March 2018
+March 2019

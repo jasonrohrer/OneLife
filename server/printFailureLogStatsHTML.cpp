@@ -246,11 +246,13 @@ void processLogFile( File *inFile ) {
             
             if( numScanned == 3 ) {
 
-                addCount( &monthRecords, actorID, targetID, count );
+                // skip this for now, to reduce CPU
+                // addCount( &monthRecords, actorID, targetID, count );
 
                 if( isThisWeek ) {
                     
-                    addCount( &weekRecords, actorID, targetID, count );
+                    // skip this for now, to reduce CPU
+                    // addCount( &weekRecords, actorID, targetID, count );
                     
                     if( isToday ) {
                         addCount( &todayRecords, actorID, targetID, count );
@@ -358,11 +360,17 @@ void processFailureLogFolder( File *inFolder ) {
     
     File **logs = inFolder->getChildFilesSorted( &numFiles );
     
-    // only process last 30 files, if there are more than 30
+    // only process last X files, if there are more than X
     int startI = 0;
+
     
-    if( numFiles > 30 ) {
-        startI = numFiles - 30;
+    // process three files to cover today and yesterday in all cases
+    // (used to process 30 files to cover entire past month)
+    int maxNumFiles = 3;
+    
+
+    if( numFiles > maxNumFiles ) {
+        startI = numFiles - maxNumFiles;
         }
 
     for( int i=startI; i<numFiles; i++ ) {
@@ -444,13 +452,15 @@ int main( int inNumArgs, char **inArgs ) {
             
             printTable( "Yesterday",
                         &objDir, outFile, &yesterdayRecords );
-            
+            /*
+              // for now, don't show results for week or month
+              // too CPU intensive to compute it
             printTable( "Past week",
                         &objDir, outFile, &weekRecords );
 
             printTable( "Past month",
                         &objDir, outFile, &monthRecords );
-        
+            */
             fclose( outFile );
             }
         

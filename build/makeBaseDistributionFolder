@@ -43,6 +43,8 @@ cp ../no_copyright.txt $baseFolder
 
 cp ../gameSource/reverbImpulseResponse.aiff $baseFolder/
 
+cp ../gameSource/wordList.txt $baseFolder/
+
 
 cp ../../OneLifeData7/sprites/* $baseFolder/sprites
 cp ../../OneLifeData7/objects/* $baseFolder/objects

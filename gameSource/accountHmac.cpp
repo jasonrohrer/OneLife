@@ -12,11 +12,15 @@ extern int accountHmacVersionNumber;
 
 
 char *getPureAccountKey() {
-    const char *codeToHash = "";
+    char *codeToHash;
 
     if( accountKey != NULL ) {
-        codeToHash = accountKey;
+        codeToHash = stringToUpperCase( accountKey );
         }
+    else {
+        codeToHash = stringDuplicate( "" );
+        }
+    
 
     
     // strip out "-" separators
@@ -30,7 +34,9 @@ char *getPureAccountKey() {
         delete [] codeParts[i];
         }
     delete [] codeParts;
-
+    
+    delete [] codeToHash;
+    
     return pureCode;
     }
 

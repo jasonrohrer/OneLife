@@ -11,6 +11,9 @@
 #include "categoryBank.h"
 
 
+
+#ifndef OHOL_NON_EDITOR
+
 #include "EditorTransitionPage.h"
 
 extern EditorTransitionPage *transPage;
@@ -24,6 +27,12 @@ extern EditorAnimationPage *animPage;
 
 extern EditorCategoryPage *categoryPage;
 
+static char deletePossible = true;
+#else 
+
+static char deletePossible = false;
+
+#endif
 
 
 
@@ -87,6 +96,7 @@ class ObjectPickable : public Pickable {
 
         virtual char canDelete( int inID ) {
             return 
+                deletePossible &&
                 ! isObjectUsed( inID ) && 
                 ! isObjectUsedInCategories( inID );
             }
@@ -99,10 +109,12 @@ class ObjectPickable : public Pickable {
             removeObjectFromAllCategories( inID );
             deleteObjectFromBank( inID );
 
+            #ifndef OHOL_NON_EDITOR
             transPage->clearUseOfObject( inID );
             animPage->clearUseOfObject( inID );
             categoryPage->clearUseOfObject( inID );
-
+            #endif
+            
             for( int i=0; i<endAnimType; i++ ) {
                 clearAnimation( inID, (AnimType)i );
                 }

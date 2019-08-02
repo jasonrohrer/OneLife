@@ -55,7 +55,7 @@ ReviewPage::ReviewPage( const char *inReviewServerURL )
     mRecommendChoice = 
         new RadioButtonSet( mainFont, 396, 258,
                             2, choiceList,
-                            false, 4 ),
+                            false, 4 );
     
     
     setButtonStyle( &mBackButton );

@@ -78,6 +78,8 @@ class EditorTransitionPage : public GamePage, public ActionListener {
 
         TextButton mSaveTransitionButton;
         Picker mObjectPicker;
+        
+        Picker mObjectPickerAlt;
 
         TextButton mObjectEditorButton;
         TextButton mCategoryEditorButton;

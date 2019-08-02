@@ -16,7 +16,7 @@ extern Font *mainFont;
 
 FinalMessagePage::FinalMessagePage()
         : mKey( "" ), mSubMessage( NULL ),
-          mQuitButton( mainFont, 0, -200, 
+          mQuitButton( mainFont, 0, -300, 
                        translate( "quit" ) ) {
 
 

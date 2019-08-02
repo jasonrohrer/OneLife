@@ -1,0 +1,35 @@
+Copy all of these files into your main OneLife folder.
+
+
+
+If the game runs in fullscreen mode, it will cover up the debugger if
+a crash is caught.
+
+So, put it in windowed mode first:
+
+Run OneLife the normal way and switch it out of fullscreen mode on the
+SETTINGS page.  Restart it, then quit.
+
+
+
+
+Now that the game is launching in windowed mode, you can debug it by
+double-clicking   debug.bat
+
+If a crash happens, a stack trace will be printed in the window and
+also output to   debugOut.txt
+
+Email debugOut.txt to me at:  jasonrohrer@fastmail.fm
+
+
+Also, before quitting the debugger, check if I'm online in Discord here:
+
+https://discord.gg/sgCSw8
+
+
+I may walk you through some interactive debugging after I look at the
+stack trace.
+
+
+
+Once you're done debugging, enter  q  at the (gdb) prompt to quit.

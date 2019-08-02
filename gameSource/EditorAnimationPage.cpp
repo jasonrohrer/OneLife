@@ -117,7 +117,9 @@ EditorAnimationPage::EditorAnimationPage()
           mSceneryID( -1 ),
           mClearSceneryButton( smallFont, 280, 220, "X Scenery" ),
           mCopyButton( smallFont, -390, 230, "Copy" ),
-          mCopyChainButton( smallFont, -390, 270, "Copy Child Chain" ),
+          mCopyChainButton( smallFont, -390, 270, "Copy Child Tree" ),
+          mCopyChainRandButton( smallFont, -390, 310, 
+                                "Copy Child Tree Rand Phase" ),
           mCopyWalkButton( smallFont, -260, 270, "Copy Walk" ),
           mCopyAllButton( smallFont, -470, 230, "Copy All" ),
           mCopyUpButton( smallFont, -500, 270, "Copy Up" ),
@@ -133,7 +135,10 @@ EditorAnimationPage::EditorAnimationPage()
           mCopyAllSoundAnimButton( smallFont, -85, -160, "Copy All" ),
           mPasteSoundAnimButton( smallFont, -155, -160, "Paste" ),
           mFullSoundCopyButton( smallFont, -300, -328, "Full Sound Copy" ),
-          mFullSoundPasteButton( smallFont, 130, -328, "Full Sound Paste" ) {
+          mFullSoundPasteButton( smallFont, 130, -328, "Full Sound Paste" ),
+          mSpeedMultField( smallFont, -500, -328, 4, false,
+                           "Speed x", "0123456789." ),
+          mSpeedMultApplyButton( smallFont, -446, -328, "Apply" ) {
     
     
     for( int i=0; i<=extraB; i++ ) {
@@ -293,6 +298,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     addComponent( &mCopyButton );
     addComponent( &mCopyChainButton );
+    addComponent( &mCopyChainRandButton );
     addComponent( &mCopyWalkButton );
     addComponent( &mCopyAllButton );
     addComponent( &mCopyUpButton );
@@ -329,6 +335,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     mCopyButton.addActionListener( this );
     mCopyChainButton.addActionListener( this );
+    mCopyChainRandButton.addActionListener( this );
     mCopyWalkButton.addActionListener( this );
     mCopyAllButton.addActionListener( this );
     mCopyUpButton.addActionListener( this );
@@ -394,7 +401,7 @@ EditorAnimationPage::EditorAnimationPage()
     
     mSliders[0] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 6, "X Osc" );
+                                   0, 8, "X Osc" );
 
     mXOffsetSlider = new ValueSlider( smallFont, x - 182, 
                                       mSliders[0]->getPosition().y, 
@@ -411,7 +418,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     mSliders[3] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 6, "Y Osc" );
+                                   0, 8, "Y Osc" );
 
     mYOffsetSlider = new ValueSlider( smallFont, x - 182, 
                                       mSliders[3]->getPosition().y, 
@@ -441,7 +448,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     mSliders[8] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 6, "Rock Osc" );
+                                   0, 8, "Rock Osc" );
     mSliders[9] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "Rock Amp" );
@@ -452,7 +459,7 @@ EditorAnimationPage::EditorAnimationPage()
 
     mSliders[11] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
-                                   0, 6, "Fade Osc" );
+                                   0, 8, "Fade Osc" );
     mSliders[12] = new ValueSlider( smallFont, x, boxY -= space, 2,
                                    100, 20,
                                    0, 1, "Fade Hard" );
@@ -510,7 +517,14 @@ EditorAnimationPage::EditorAnimationPage()
 
     addComponent( &mForceZeroStartCheckbox );
     mForceZeroStartCheckbox.addActionListener( this );
+
+
+    addComponent( &mSpeedMultField );
+    addComponent( &mSpeedMultApplyButton );
+    mSpeedMultApplyButton.addActionListener( this );
     
+    mSpeedMultField.setText( "1.0" );
+
     mClothingSet = getEmptyClothingSet();
     mNextShoeToFill = &( mClothingSet.backShoe );
     mOtherShoe = &( mClothingSet.frontShoe );
@@ -815,6 +829,7 @@ void EditorAnimationPage::checkNextPrevVisible() {
         mPickHeldButton.setVisible( false );
         
         mCopyChainButton.setVisible( false );
+        mCopyChainRandButton.setVisible( false );
         mCopyWalkButton.setVisible( false );
         mCopyUpButton.setVisible( false );
         return;
@@ -846,10 +861,12 @@ void EditorAnimationPage::checkNextPrevVisible() {
 
     if( mCurrentSpriteOrSlot < r->numSprites ) {
         mCopyChainButton.setVisible( true );
+        mCopyChainRandButton.setVisible( true );
         mCopyUpButton.setVisible( true );
         }
     else {
         mCopyChainButton.setVisible( false );
+        mCopyChainRandButton.setVisible( false );
         mCopyUpButton.setVisible( false );
         mChainCopyBuffer.deleteAll();
         }
@@ -1236,6 +1253,16 @@ void EditorAnimationPage::setNextExtraButtonColor() {
     }
 
 
+// keeps inPhase bounded by 1 with wrap-around
+static void phaseOffset( double *inPhase, double offset ) {
+    *inPhase += offset;
+    
+    if( *inPhase > 1 ) {
+        *inPhase -= 1;
+        }
+    }
+
+
 
 void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
     
@@ -1467,7 +1494,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mWalkCopied = false;
         mUpCopied = false;
         }
-    else if( inTarget == &mCopyChainButton ) {
+    else if( inTarget == &mCopyChainButton || 
+             inTarget == &mCopyChainRandButton ) {
         mWalkCopied = false;
         mUpCopied = false;
         
@@ -1487,25 +1515,40 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
         AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
 
-        while( newParent != -1 ) {
-            int oldParent = newParent;
-            newParent = -1;
+        // trace parent chain up from each sprite
+        // if we reach newParent, this sprite is in our child chain
+        for( int i=0; i<r->numSprites; i++ ) {
+            int nextParent = r->spriteParent[i];
             
-            for( int i=0; i<r->numSprites; i++ ) {
-                if( r->spriteParent[i] == oldParent ) {
-                    // found a child
-
-                    if( i < anim->numSprites ) {
-                        mChainCopyBuffer.push_back( anim->spriteAnim[i] );
-                        }
-                    
-
-                    newParent = i;
+            while( nextParent != -1 ) {
+                if( nextParent == newParent ) {
+                    mChainCopyBuffer.push_back( anim->spriteAnim[i] );
                     break;
                     }
+                nextParent = r->spriteParent[ nextParent ];
                 }
             }
         printf( "%d in copied chain\n", mChainCopyBuffer.size() );
+
+        if( inTarget == &mCopyChainRandButton ) {
+            // randomized phase
+            double phaseJump = randSource.getRandomBoundedDouble( 0, 1 );
+            
+            for( int i=0; i<mChainCopyBuffer.size(); i++ ) {
+                SpriteAnimationRecord *r = mChainCopyBuffer.getElement( i );
+                
+                if( r->xAmp > 0 )
+                    phaseOffset( &( r->xPhase ), phaseJump );
+                if( r->yAmp > 0 )
+                    phaseOffset( &( r->yPhase ), phaseJump );
+                if( r->rotPerSec > 0 )
+                    phaseOffset( &( r->rotPhase ), phaseJump );
+                if( r->rockAmp > 0 )
+                    phaseOffset( &( r->rockPhase ), phaseJump );
+                if( r->fadeOscPerSec > 0 )
+                    phaseOffset( &( r->fadePhase ), phaseJump );
+                }
+            }
         }
     else if( inTarget == &mCopyWalkButton ) {
         ObjectRecord *r = getObject( mCurrentObjectID );
@@ -1684,26 +1727,24 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             
             AnimationRecord *anim = mCurrentAnim[ mCurrentType ];
             
-            while( newParent != -1 && chainIndex < chainLength ) {
-                int oldParent = newParent;
-                newParent = -1;
+            // look at parent chain up from each sprite and see
+            // if it leads to newParent
+            // if so, paste it
+            for( int i=0; i<r->numSprites && chainIndex < chainLength; i++ ) {
+                int nextParent = r->spriteParent[i];
             
-                for( int i=0; i<r->numSprites; i++ ) {
-                    if( r->spriteParent[i] == oldParent ) {
-                        // found a child
-                        
+                while( nextParent != -1 ) {
+                    if( nextParent == newParent ) {
                         if( i < anim->numSprites ) {
-                            
                             anim->spriteAnim[i] =
                                 mChainCopyBuffer.getElementDirect( 
                                     chainIndex );
                             
                             chainIndex++;
-                            }   
-                        
-                        newParent = i;
+                            }
                         break;
                         }
+                    nextParent = r->spriteParent[ nextParent ];
                     }
                 }
             }
@@ -1920,6 +1961,39 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                         mCurrentAnim[ i ]->objectID = mCurrentObjectID;
                         }
                     }
+                else if( isLastMouseButtonRight() ) {
+                    // no direct mapping from old anim to new object
+                    // has different number of sprites
+
+                    // check if new object exists as a sub-object of
+                    // previous object
+                    SimpleVector<SubsetSpriteIndexMap> map;
+                    
+                    if( isSpriteSubset( oldID, mCurrentObjectID, &map ) ) {
+                        int newID = mCurrentObjectID;
+                        
+                        mCurrentObjectID = oldID;
+                        populateCurrentAnim();
+                        soundIndexChanged();
+                        
+                        for( int i=0; i<endAnimType; i++ ) {
+                            AnimationRecord *newR = getAnimation( newID, 
+                                                                  (AnimType)i );
+                            if( newR == NULL ) {
+                                continue;
+                                }
+                            
+                            for( int m=0; m<map.size(); m++ ) {
+                                SubsetSpriteIndexMap s = 
+                                    map.getElementDirect( m );
+                                
+                                mCurrentAnim[ i ]->spriteAnim[ s.superIndex ] =
+                                    newR->spriteAnim[ s.subIndex ];
+                                }
+                            }
+                        }
+                    }
+                
 
                 if( getObject( mCurrentObjectID )->person ) {
                     mPersonAgeSlider.setVisible( true );
@@ -2319,6 +2393,56 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
 
         mLastTestSpeed = mTestSpeedSlider.getValue();
         }
+    else if( inTarget == &mSpeedMultApplyButton ) {
+        float mult = mSpeedMultField.getFloat();
+        
+        if( mult > 0 && mult != 1.0f ) {
+
+            for( int i=0; i<mCurrentAnim[ mCurrentType ]->numSprites; i++ ) {
+                SpriteAnimationRecord *r =
+                    &( mCurrentAnim[ mCurrentType ]->spriteAnim[i] );
+                
+                r->xOscPerSec *= mult;
+                r->yOscPerSec *= mult;
+                r->rotPerSec *= mult;
+                
+                r->rockOscPerSec *= mult;
+                
+                r->fadeOscPerSec *= mult;
+                
+                if( r->pauseSec > 0 ) {
+                    r->pauseSec /= mult;
+                    r->durationSec /= mult;
+                    }
+                r->startPauseSec /= mult;
+                }
+            for( int i=0; i<mCurrentAnim[ mCurrentType ]->numSlots; i++ ) {
+                SpriteAnimationRecord *r =
+                    &( mCurrentAnim[ mCurrentType ]->slotAnim[i] );
+                
+                r->xOscPerSec *= mult;
+                r->yOscPerSec *= mult;
+                
+                if( r->pauseSec > 0 ) {
+                    r->pauseSec /= mult;
+                    r->durationSec /= mult;
+                    }
+                r->startPauseSec /= mult;
+                }
+            for( int i=0; i<mCurrentAnim[ mCurrentType ]->numSounds; i++ ) {
+                SoundAnimationRecord *r =
+                    &( mCurrentAnim[ mCurrentType ]->soundAnim[i] );
+                
+                r->repeatPerSec *= mult;
+                }
+            }
+        if( mult > 0 ) {
+            mSpeedMultField.setFloat( mult, -1, true );
+            }
+        else {
+            mSpeedMultField.setText( "1.0" );
+            }
+        }
     else {
         
         AnimType oldType = mCurrentType;
@@ -2690,7 +2814,26 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                     }
                 
                 
+                char splitHeld = false;
+                
+                if( heldObject != NULL &&
+                    heldObject->rideable &&
+                    heldObject->anySpritesBehindPlayer ) {
+                    splitHeld = true;
+                    }
+                
+                
+                ClothingSet clothingToDraw = mClothingSet;
 
+                if( splitHeld ) {
+                    // don't actually draw person now
+                    // sandwitch them in between layers of held later
+                    prepareToSkipSprites( getObject( mCurrentObjectID ),
+                                          false, true );
+                    
+                    clothingToDraw = getEmptyClothingSet();
+                    }
+                
                 HoldingPos holdingPos = 
                     drawObjectAnim( mCurrentObjectID, 2, 
                                 anim, frameTime,
@@ -2705,9 +2848,13 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                 hideClosestArm,
                                 hideAllLimbs,
                                 false,
-                                mClothingSet,
+                                clothingToDraw,
                                 NULL );
                 
+                if( splitHeld ) {
+                    restoreSkipDrawing( getObject( mCurrentObjectID ) );
+                    }
+
                 
                 if( heldObject != NULL ) {
                     
@@ -2742,6 +2889,49 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                         heldFadeTargetType = held;
                         }
                     
+                    if( splitHeld ) {
+                        // draw behind part
+                        prepareToSkipSprites( getObject( mHeldID ), true );
+                        
+                        drawObjectAnim( mHeldID, 2,  
+                                        heldAnimType, frameTime,
+                                        animFade, 
+                                        heldFadeTargetType, 
+                                        fadeTargetFrameTime, 
+                                        frozenRotFrameTime,
+                                        &mFrozenRotFrameCountUsed,
+                                        moving,
+                                        moving,
+                                        holdPos, holdRot, 
+                                        false, mFlipDraw, heldAge,
+                                        false,
+                                        false,
+                                        false,
+                                        getEmptyClothingSet(),
+                                        NULL );
+                        restoreSkipDrawing( getObject( mHeldID ) );
+                    
+                        // now draw player in between
+                        drawObjectAnim( mCurrentObjectID, 2, 
+                                anim, frameTime,
+                                animFade,
+                                fadeTargetAnim, fadeTargetFrameTime, 
+                                frozenRotFrameTime,
+                                &mFrozenRotFrameCountUsed,
+                                animRotFrozen,
+                                frozenArmAnim,
+                                frozenArmAnim,
+                                personPos, 0, false, mFlipDraw, age,
+                                hideClosestArm,
+                                hideAllLimbs,
+                                false,
+                                mClothingSet,
+                                NULL );
+                        
+                        // now draw front part of held
+                        prepareToSkipSprites( getObject( mHeldID ), false );
+                        }
+                    
                     drawObjectAnim( mHeldID, 2,  
                                     heldAnimType, frameTime,
                                     animFade, 
@@ -2756,6 +2946,10 @@ void EditorAnimationPage::drawUnderComponents( doublePair inViewCenter,
                                     false,
                                     getEmptyClothingSet(),
                                     NULL );
+                    
+                    if( splitHeld ) {
+                        restoreSkipDrawing( getObject( mHeldID ) );
+                        }
                     }
                 }
             }

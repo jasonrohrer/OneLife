@@ -6,6 +6,11 @@ global $ls_version;
 $ls_version = "1";
 
 
+// cache in each run
+global $lineageCache;
+$lineageCache = array();
+
+
 
 // edit settings.php to change server' settings
 include( "settings.php" );
@@ -158,6 +163,10 @@ else if( $action == "character_page" ) {
 else if( $action == "character_dump" ) {
     ls_characterDump();
     }
+// disable this one for now, no longer needed
+else if( false && $action == "reformat_names" ) {
+    ls_reformatNames();
+    }
 else if( $action == "ls_setup" ) {
     global $setup_header, $setup_footer;
     echo $setup_header; 
@@ -242,7 +251,8 @@ function ls_setupDatabase() {
         $query =
             "CREATE TABLE $tableName(" .
             "entry TEXT NOT NULL, ".
-            "entry_time DATETIME NOT NULL );";
+            "entry_time DATETIME NOT NULL, ".
+            "index( entry_time ) );";
 
         $result = ls_queryDatabase( $query );
 
@@ -281,6 +291,8 @@ function ls_setupDatabase() {
             "id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT," .
             "email VARCHAR(254) NOT NULL," .
             "UNIQUE KEY( email )," .
+            "email_sha1 CHAR(40) NOT NULL," .
+            "index( email_sha1 ), ".
             "sequence_number INT NOT NULL," .
             "life_count INT NOT NULL );";
 
@@ -328,20 +340,36 @@ function ls_setupDatabase() {
             // age at time of death in years
             "age FLOAT UNSIGNED NOT NULL,".
             "name VARCHAR(254) NOT NULL,".
+            "INDEX( name ),".
             // 1 if male
             "male TINYINT UNSIGNED NOT NULL,".
             "last_words VARCHAR(63) NOT NULL,".
             // -1 if not set yet
             // 0 for Eve
             "generation INT NOT NULL,".
+            // this will make queries ordering by generation and death_time fast
+            // OR just queries on generation fast.
+            // but not querys on just death_time fast
+            "INDEX( generation, death_time ),".
+            // single index on death_time to speed up queries on just death_time
+            "INDEX( death_time ),".
             // -1 if not set yet
             // 0 for Eve
             // the Eve of this family line
             "eve_life_id INT NOT NULL,".
+            "INDEX( eve_life_id ),".
             // both -1 if not set
             // 0 if set and empty
             "deepest_descendant_generation INT NOT NULL,".
-            "deepest_descendant_life_id INT NOT NULL );";
+            // this will make queries ordering by deepest_descendant_generation
+            // and death_time fast
+            // OR just queries on deepest_descendant_generation fast.
+            // but not querys on just death_time fast
+            "INDEX( deepest_descendant_generation, death_time ),".
+            "deepest_descendant_life_id INT NOT NULL," .
+            // how deep the lineage is from this point 
+            "lineage_depth INT NOT NULL," .
+            "INDEX( lineage_depth, death_time ) );";
 
         $result = ls_queryDatabase( $query );
 
@@ -357,34 +385,85 @@ function ls_setupDatabase() {
 function ls_showLog() {
     ls_checkPassword( "show_log" );
 
-     echo "[<a href=\"server.php?action=show_data" .
-         "\">Main</a>]<br><br><br>";
+    echo "[<a href=\"server.php?action=show_data" .
+        "\">Main</a>]<br><br><br>";
+
+    $entriesPerPage = 1000;
+    
+    $skip = ls_requestFilter( "skip", "/\d+/", 0 );
+
     
     global $tableNamePrefix;
 
-    $query = "SELECT * FROM $tableNamePrefix"."log ".
-        "ORDER BY entry_time DESC;";
+
+    // first, count results
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."log;";
+
+    $result = ls_queryDatabase( $query );
+    $totalEntries = ls_mysqli_result( $result, 0, 0 );
+
+
+    
+    $query = "SELECT entry, entry_time FROM $tableNamePrefix"."log ".
+        "ORDER BY entry_time DESC LIMIT $skip, $entriesPerPage;";
     $result = ls_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
 
 
 
-    echo "<a href=\"server.php?action=clear_log\">".
-        "Clear log</a>";
+    $startSkip = $skip + 1;
+    
+    $endSkip = $startSkip + $entriesPerPage - 1;
+
+    if( $endSkip > $totalEntries ) {
+        $endSkip = $totalEntries;
+        }
+
+    
+
+    
+    echo "$totalEntries Log entries".
+        " (showing $startSkip - $endSkip):<br>\n";
+
+    
+    $nextSkip = $skip + $entriesPerPage;
+
+    $prevSkip = $skip - $entriesPerPage;
+
+    if( $skip > 0 && $prevSkip < 0 ) {
+        $prevSkip = 0;
+        }
+    
+    if( $prevSkip >= 0 ) {
+        echo "[<a href=\"server.php?action=show_log" .
+            "&skip=$prevSkip\">".
+            "Previous Page</a>] ";
+        }
+    if( $nextSkip < $totalEntries ) {
+        echo "[<a href=\"server.php?action=show_log" .
+            "&skip=$nextSkip\">".
+            "Next Page</a>]";
+        }
+    
         
     echo "<hr>";
-        
-    echo "$numRows log entries:<br><br><br>\n";
-        
 
+        
+    
     for( $i=0; $i<$numRows; $i++ ) {
         $time = ls_mysqli_result( $result, $i, "entry_time" );
         $entry = htmlspecialchars( ls_mysqli_result( $result, $i, "entry" ) );
 
-        echo "<b>$time</b>:<br>$entry<hr>\n";
+        echo "<b>$time</b>:<br><pre>$entry</pre><hr>\n";
         }
+
+    echo "<br><br><hr><a href=\"server.php?action=clear_log\">".
+        "Clear log</a>";
     }
+
+
+
 
 
 
@@ -1057,6 +1136,94 @@ function ls_getAllChildren( $inServerID, $inParentID ) {
 
 
 
+
+// returns -1 on failure
+// found here:
+// https://stackoverflow.com/questions/6265596/
+//         how-to-convert-a-roman-numeral-to-integer-in-php
+function ls_romanToInt( $inRomanString ) {    
+
+    $romans = array(
+        // currently, server never uses M or D
+        /*'M' => 1000,
+          'CM' => 900,
+          'D' => 500,
+          'CD' => 400,
+        */
+        'C' => 100,
+        'XC' => 90,
+        'L' => 50,
+        'XL' => 40,
+        'X' => 10,
+        'IX' => 9,
+        'V' => 5,
+        'IV' => 4,
+        'I' => 1 );
+
+    $result = 0;
+
+    foreach( $romans as $key => $value ) {
+        while( strpos( $inRomanString, $key ) === 0 ) {
+            $result += $value;
+            $inRomanString = substr( $inRomanString, strlen( $key ) );
+            }
+        }
+
+    if( strlen( $inRomanString ) == 0 ) {
+        return $result;
+        }
+    else {
+        // unmatched characters left
+        return -1;
+        }
+    }
+
+
+
+function ls_formatName( $inName ) {
+    $inName = strtoupper( $inName );
+
+    $nameParts = preg_split( "/\s+/", $inName );
+
+    $numParts = count( $nameParts );
+
+    if( $numParts > 0 ) {
+        // first part always a name part,
+        $nameParts[0] = ucfirst( strtolower( $nameParts[0] ) );
+        }
+    
+    if( $numParts == 3 ) {
+        // second part last name
+        $nameParts[1] = ucfirst( strtolower( $nameParts[1] ) );
+        // leave suffix uppercase
+        }
+    else if( count( $nameParts ) == 2 ) {
+        // tricky case
+        // is second part suffix or last name?
+
+        $secondRoman = false;
+        
+        if( !preg_match('/[^IVCXL]/', $nameParts[1] ) ) {
+            // string contains only roman numeral digits
+            // but VIX and other last names possible
+            if( ls_romanToInt( $nameParts[1] ) > 0 ) {
+                // leave second part uppercase
+                $secondRoman = true;
+                }
+            }
+
+        if( ! $secondRoman ) {
+            // second is last name
+            $nameParts[1] = ucfirst( strtolower( $nameParts[1] ) );
+            }
+        }
+    
+    return implode( " ", $nameParts );
+    }
+
+
+
+
 function ls_logLife() {
     global $tableNamePrefix, $sharedGameServerSecret;
 
@@ -1097,7 +1264,10 @@ function ls_logLife() {
     
 
     
-    $name = ucwords( strtolower( $name ) );
+    
+    
+    
+    $name = ls_formatName( $name );
     
     $male = ls_requestFilter( "male", "/[01]/", "0" );
     
@@ -1130,16 +1300,20 @@ function ls_logLife() {
         strtoupper( ls_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
 
     if( $computedHashValue != $hash_value ) {
-        ls_log( "logLife denied for bad hash value" );
+        // ls_log( "logLife denied for bad hash value" );
 
         echo "DENIED";
         return;
         }
-
+    
+    // ls_log( "Got valid logLife call:  " . $_SERVER[ 'QUERY_STRING' ] );
+    
+    
     if( $trueSeq == 0 ) {
         // no record exists, add one
         $query = "INSERT INTO $tableNamePrefix". "users SET " .
             "email = '$email', ".
+            "email_sha1 = sha1( lower( '$email' ) ), ".
             "sequence_number = 1, ".
             "life_count = 1 ".
             "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1, ".
@@ -1192,7 +1366,8 @@ function ls_logLife() {
         "generation = '$generation', " .
         "eve_life_id = '$eve_life_id', ".
         "deepest_descendant_generation = -1, ".
-        "deepest_descendant_life_id = -1;";
+        "deepest_descendant_life_id = -1, ".
+        "lineage_depth = 0;";
 
     ls_queryDatabase( $query );
 
@@ -1264,7 +1439,9 @@ function ls_setDeepestGenerationUp( $inID,
             "deepest_descendant_generation = ".
             "  $in_deepest_descendant_generation, ".
             "deepest_descendant_life_id = ".
-            "  $in_deepest_descendant_life_id ".
+            "  $in_deepest_descendant_life_id, ".
+            "lineage_depth = ".
+            "  $in_deepest_descendant_generation - generation ".
             "WHERE id = $inID;";
         
         ls_queryDatabase( $query );
@@ -1314,22 +1491,139 @@ function ls_getFaceURLForAge( $inAge, $inDisplayID ) {
 
 function ls_frontPage() {
 
-    $emailFilter =
-        ls_requestFilter( "filter", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    // no longer accepting raw email in search box
+    $emailFilter = "";
+        //ls_requestFilter( "filter", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     $nameFilter = ls_requestFilter( "filter", "/[A-Z ]+/i", "" );
 
+    $email_sha1 = ls_requestFilter( "email_sha1", "/[a-f0-9]+/i", "" );
 
+    if( $email_sha1 != "" ) {
+        // use this to look up email
+
+        global $tableNamePrefix;
+    
+        $query = "SELECT email ".
+            "FROM $tableNamePrefix"."users WHERE email_sha1='$email_sha1';";
+    
+        $result = ls_queryDatabase( $query );
+    
+        $numRows = mysqli_num_rows( $result );
+
+        if( $numRows == 0 ) {
+            $emailFilter = "";
+            }
+        else {    
+            $emailFilter =
+                ls_mysqli_result( $result, 0, "email" );
+            }
+
+        // then clear it
+        // don't allow searching on hash directly, if it doesn't
+        // match an email
+        $email_sha1 = "";
+        }
+    
+    
     $filterClause = " WHERE 1 ";
     $filter = "";
+
+    $customFilterSet = false;
     
     if( $emailFilter != "" ) {
+
+        global $checkEmailHashes;
+
+        if( $checkEmailHashes ) {
+            
+
+            $ticket_hash =
+                ls_requestFilter( "ticket_hash", "/[a-f0-9]+/i", "" );
+
+            $string_to_hash =
+                ls_requestFilter( "string_to_hash", "/[A-Z0-9]+/i", "0" );
+
+
+            $encodedEmail = urlencode( $emailFilter );
+            
+            $correct = false;
+            
+            global $ticketServerURL;
+            $url = "$ticketServerURL".
+                "?action=check_ticket_hash".
+                "&email=$encodedEmail".
+                "&hash_value=$ticket_hash".
+                "&string_to_hash=$string_to_hash";
+            
+            $result = trim( file_get_contents( $url ) );
+            
+            if( $result == "VALID" ) {
+                $correct = true;
+                }
+            
+            if( ! $correct ) {
+                // block filtering by email if hash not correct
+                $emailFilter = "";
+                // don't default to first half of email as name filter
+                // that's confusing
+                $nameFilter = "";
+                }
+            }
+        }
+    
+
+    $tooManyNameMatches = false;
+    $numNameMatches = 0;
+
+    $forceIndexClause = "";
+    
+    
+
+    if( $email_sha1 != "" ) {
+        $email_sha1 = strtolower( $email_sha1 );
+        $filterClause = " WHERE users.email_sha1 = '$email_sha1' ";
+        $filter = "[email hash]";
+        $customFilterSet = true;
+        }
+    else if( $emailFilter != "" ) {
         $filterClause = " WHERE users.email = '$emailFilter' ";
         $filter = $emailFilter;
+        $customFilterSet = true;
         }
     else if( $nameFilter != "" ) {
-        $filterClause = " WHERE lives.name LIKE '%$nameFilter%' ";
+        // name filter is used as prefix filter for speed
+        // there's no way to make a LIKE condition fast if there's a wild
+        // card as the first character of the pattern (the entire table
+        // needs to be scanned, and the index isn't used).
+        //
+        // A full-text index is another option, but probably overkill in
+        // this case.
+        $filterClause = " WHERE lives.name LIKE '$nameFilter%' ";
         $filter = $nameFilter;
+        $customFilterSet = true;
+
+
+        // make sure there aren't too many
+        global $tableNamePrefix;
+        $query = "SELECT COUNT(*) from $tableNamePrefix"."lives as lives ".
+            "$filterClause";
+
+        $result = ls_queryDatabase( $query );
+        $numNameMatches = ls_mysqli_result( $result, 0, 0 );
+
+        if( $numNameMatches > 30000 ) {
+            $filterClause = " WHERE 1 ";
+            $tooManyNameMatches = true;
+            }
+        else {
+            // not too many
+            // force index on name to keep it fast
+            // (otherwise, we sort by another criteria on front page
+            // and may only find name matches at bottom of list of millions)
+            $forceIndexClause = " FORCE INDEX( name ) ";
+            }
+        
         }
 
     
@@ -1340,18 +1634,37 @@ function ls_frontPage() {
 
     echo "<center>";
 
+    $filterToShow = $nameFilter;
+    
+    if( ls_requestFilter( "hide_filter", "/[01]+/i", "0" ) ) {
+        $filterToShow = "-hidden-";
+        }
+    
     // form for searching
 ?>
             <FORM ACTION="server.php" METHOD="post">
     <INPUT TYPE="hidden" NAME="action" VALUE="front_page">
-             Email or Character Name:
+             Character Name:
     <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="filter"
-             VALUE="<?php echo $filter;?>">
+             VALUE="<?php echo $filterToShow;?>">
     <INPUT TYPE="Submit" VALUE="Filter">
     </FORM>
   
 <?php
 
+    $rootFilterClause = $filterClause;
+
+    if( ! $customFilterSet ) {
+        // no filter set, show only eves in this root lists
+        $rootFilterClause = " WHERE generation = 1 ";
+        }
+
+
+    if( $tooManyNameMatches ) {
+        echo "<br><br>Too many matches ($numNameMatches) for ".
+            "name '$nameFilter'<br><br>";
+        }
+    
     
     echo "<table border=0 cellpadding=20>";
 
@@ -1362,23 +1675,26 @@ function ls_frontPage() {
     echo "<tr><td colspan=6>".
         "<font size=5>Recent Elder Deaths:</font></td></tr>\n";
 
-    ls_printFrontPageRows( "$filterClause AND age >= 50", "death_time DESC",
+    ls_printFrontPageRows( $forceIndexClause,
+                           "$filterClause AND age >= 50", "death_time DESC",
                            $numPerList );
 
 
-    echo "<tr><td colspan=6><font size=5>Today's Long Lines:".
+    echo "<tr><td colspan=6><font size=5>Today's Deep Roots:".
         "</font></td></tr>\n";
     
     ls_printFrontPageRows(
-        "$filterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 DAY )",
-        "generation DESC, death_time DESC",
+        $forceIndexClause,
+        "$rootFilterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 DAY )",
+        "lineage_depth DESC, death_time DESC",
         $numPerList );
     
     
     echo "<tr><td colspan=6>".
         "<font size=5>Recent Adult Deaths:</font></td></tr>\n";
 
-    ls_printFrontPageRows( "$filterClause AND age >= 20 AND age < 50",
+    ls_printFrontPageRows( $forceIndexClause,
+                           "$filterClause AND age >= 20 AND age < 50",
                            "death_time DESC",
                            $numPerList );
 
@@ -1386,15 +1702,60 @@ function ls_frontPage() {
     echo "<tr><td colspan=6>".
         "<font size=5>Recent Youth Deaths:</font></td></tr>\n";
     
-    ls_printFrontPageRows( "$filterClause AND age < 20", "death_time DESC",
+    ls_printFrontPageRows( $forceIndexClause,
+                           "$filterClause AND age < 20", "death_time DESC",
                            $numPerList );
 
 
+    
+    echo "<tr><td colspan=6><font size=5>This Week's Deep Roots:".
+        "</font></td></tr>\n";
+    
+    ls_printFrontPageRows(
+        $forceIndexClause,
+        "$rootFilterClause AND ".
+        "death_time >= DATE_SUB( NOW(), INTERVAL 1 WEEK )",
+        "lineage_depth DESC, death_time DESC",
+        $numPerList );
+
+
+    echo "<tr><td colspan=6><font size=5>All Time Deep Roots:".
+        "</font></td></tr>\n";
+    
+    ls_printFrontPageRows(
+        $forceIndexClause,
+        $rootFilterClause,
+        "lineage_depth DESC, death_time DESC",
+        $numPerList );
+
+    
+    
+    echo "<tr><td colspan=6><font size=5>Today's Long Lines:".
+        "</font></td></tr>\n";
+
+    $specialForceIndexClause = $forceIndexClause;
+
+    if( $specialForceIndexClause == "" ) {
+        // we need to speed this query up by forcing an index on death_time
+        // otherwise, mysql orders them by generation number first, and
+        // then walks through to find $numPerList with matching death times
+        // there are way too many long lines beyond what we will have
+        // today, so this is a lot to walk through
+        $specialForceIndexClause = " FORCE INDEX( death_time ) ";
+        }
+    
+    ls_printFrontPageRows(
+        $specialForceIndexClause,
+        "$filterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 DAY )",
+        "generation DESC, death_time DESC",
+        $numPerList );
+    
     
     echo "<tr><td colspan=6><font size=5>This Week's Long Lines:".
         "</font></td></tr>\n";
     
     ls_printFrontPageRows(
+        $forceIndexClause,
         "$filterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 WEEK )",
         "generation DESC, death_time DESC",
         $numPerList );
@@ -1404,7 +1765,8 @@ function ls_frontPage() {
     echo "<tr><td colspan=6><font size=5>All-Time Long Lines:".
         "</font></td></tr>\n";
     
-    ls_printFrontPageRows( $filterClause, "generation DESC, death_time DESC",
+    ls_printFrontPageRows( $forceIndexClause,
+                           $filterClause, "generation DESC, death_time DESC",
                            $numPerList );
 
 
@@ -1433,17 +1795,27 @@ function ls_getGrayPercent( $inDeathAgoSec ) {
 
 
 
-function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
+function ls_printFrontPageRows( $inForceIndexClause,
+                                $inFilterClause, $inOrderBy, $inNumRows ) {
     global $tableNamePrefix;
+    global $photoServerURL, $usePhotoServer;
 
+    $startTime = microtime( true );
 
-    $query = "SELECT lives.id, display_id, name, ".
-        "age, generation, death_time ".
+    $query = "SELECT lives.id, display_id, player_id, name, ".
+        "age, generation, death_time, deepest_descendant_generation, ".
+        "servers.server " .
         "FROM $tableNamePrefix"."lives as lives ".
+        " $inForceIndexClause ".
         "INNER JOIN $tableNamePrefix"."users as users ".
-        "ON lives.user_id = users.id  $inFilterClause ".
+        "ON lives.user_id = users.id ".
+        "INNER JOIN $tableNamePrefix"."servers as servers ".
+        "ON lives.server_id = servers.id  ".
+        "$inFilterClause ".
         "ORDER BY $inOrderBy ".
         "LIMIT $inNumRows;";
+    
+    
     $result = ls_queryDatabase( $query );
     
     $numRows = mysqli_num_rows( $result );
@@ -1458,7 +1830,10 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
         $generation = ls_mysqli_result( $result, $i, "generation" );
         $death_time = ls_mysqli_result( $result, $i, "death_time" );
 
+        $deepest_descendant_generation =
+            ls_mysqli_result( $result, $i, "deepest_descendant_generation" );
 
+        
         $deathAgoSec = strtotime( "now" ) -
             strtotime( $death_time );
         
@@ -1467,17 +1842,30 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
         if( $generation == -1 ) {
             $generation = ls_getGeneration( $id );
             }
+
+        $generationString = $generation;
+        
         if( $generation == -1 ) {
             if( $deathAgoSec >= 3600 ) {
-                $generation = "Ancestor unknown";
+                $generationString = "Ancestor unknown";
                 }
             else {
-                $generation = "Mother still living";
+                $generationString = "Mother still living";
                 }
             }
         else {
-            $generation = "Generation: $generation";
+            $generationString = "Generation: $generation";
             }
+
+        if( $deepest_descendant_generation != -1 &&
+            $generation != -1 &&
+            $deepest_descendant_generation > $generation ) {
+
+            $descendFurther = $deepest_descendant_generation - $generation;
+            $generationString = $generationString . "<br>" .
+                "Lineage Depth: $descendFurther";
+            }
+        
         
         $age = floor( $age );
 
@@ -1504,22 +1892,60 @@ function ls_printFrontPageRows( $inFilterClause, $inOrderBy, $inNumRows ) {
             "width=100 height=98 border=0 ".
             "style='-webkit-filter:sepia($grayPercent%);'></a></td>";
 
-        echo "<td>$name</td>";
+        echo "<td>$name";
+
+        
+
+        if( $usePhotoServer ) {
+
+            $serverName = ls_mysqli_result( $result, $i, "server" );
+            $player_id = ls_mysqli_result( $result, $i, "player_id" );
+            
+            $imageURL =
+                $photoServerURL .
+                "?action=photo_link_image".
+                "&server_name=$serverName&player_id=$player_id";
+
+            $linkURL =
+                $photoServerURL .
+                "?action=photo_appearances".
+                "&server_name=$serverName&player_id=$player_id";
+
+            echo " <a href=$linkURL>".
+                "<img border=0 width=20 height=20 ".
+                "align=middle style='margin-bottom:9px; margin-left:3px' ".
+                "src=$imageURL></a>";
+            }
+        
+        echo "</td>";
         echo "<td>$age $yearWord old</td>";
-        echo "<td>$generation</td>";
+        echo "<td>$generationString</td>";
         echo "<td>Died $deathAgo ago</td>";
 
         echo "</tr>";
         }
 
+    $runTime = microtime( true ) - $startTime;
+
+    $runTimeMS = number_format( $runTime * 1000, 0 );
+    
+    $plural = "";
+    if( $runTimeMS != 1 ) {
+        $plural = "s";
+        }
+    
+    echo "<tr><td colspan=6 align=right>".
+        "(query took $runTimeMS milisecond$plural)</td></tr>";
+
+    if( $runTime > 0.5 ) {
+        ls_log( "This query took $runTimeMS miliseconds:  $query" );
+        }
     }
 
 
 
 
 
-// cache in each run
-$lineageCache = array();
 
 // gets array from $inFromID up to Eve, or limited by $inLimit steps
 function ls_getLineage( $inFromID, $inLimit ) {
@@ -1860,9 +2286,13 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
 
     global $tableNamePrefix;
 
-    $query = "SELECT id, display_id, name, ".
-        "age, last_words, generation, death_time, death_cause ".
-        "FROM $tableNamePrefix"."lives WHERE id=$inID;";
+    $query = "SELECT lives.id, display_id, player_id, name, ".
+        "age, last_words, generation, death_time, death_cause, ".
+        "servers.server " .
+        "FROM $tableNamePrefix"."lives as lives ".
+        "INNER JOIN $tableNamePrefix"."servers as servers ".
+        "ON lives.server_id = servers.id  ".
+        "WHERE lives.id=$inID;";
     
     $result = ls_queryDatabase( $query );
     
@@ -1892,15 +2322,55 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
         
         $faceURL = ls_getFaceURLForAge( $age, $display_id );
 
+
+
+        global $photoServerURL, $usePhotoServer;
+
+        if( $usePhotoServer ) {
+            // put dummy image on left of face for centering
+
+            $imageURL =
+                $photoServerURL .
+                "?action=photo_link_image".
+                "&server_name=dummy&player_id=0";
+
+
+            echo "<img border=0 width=20 height=20 align=middle src=$imageURL>";
+            }
+
+        
         echo "<a href='server.php?action=character_page&".
             "id=$id&rel_id=$inRelID'>";
 
         $grayPercent = ls_getGrayPercent( $deathAgoSec );
         
+        
         echo "<img src='$faceURL' ".
-            "width=100 height=98 border=0 ".
+            "width=100 height=98 border=0 align=middle ".
             "style='-webkit-filter:sepia($grayPercent%);'>";
 
+        
+
+        if( $usePhotoServer ) {
+            // now real photo link to right of face
+            $serverName = ls_mysqli_result( $result, 0, "server" );
+            $player_id = ls_mysqli_result( $result, 0, "player_id" );
+            
+            $imageURL =
+                $photoServerURL .
+                "?action=photo_link_image".
+                "&server_name=$serverName&player_id=$player_id";
+
+            $linkURL =
+                $photoServerURL .
+                "?action=photo_appearances".
+                "&server_name=$serverName&player_id=$player_id";
+
+            echo "<a href=$linkURL>".
+                "<img border=0 width=20 height=20 ".
+                "align=middle src=$imageURL></a>";
+            }
+        
         echo "</a>";
         
         $yearWord = "years";
@@ -1946,7 +2416,7 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
                 }
             }
 
-        $deathHTML = $deathCause;
+        $deathHTML = $death_cause;
 
         if( $deathHTML == "" ) {
             $deathHTML = ls_getDeathHTML( $inID, $inRelID );
@@ -2067,8 +2537,14 @@ function ls_getDeathHTML( $inID, $inRelID ) {
         $id = ls_mysqli_result( $result, 0, "id" );
         $name = ls_mysqli_result( $result, 0, "name" );        
 
-        return "Killed by <a href='server.php?action=character_page&".
-            "id=$id&rel_id=$inRelID'>$name</a>";
+        if( $id == $inID ) {
+            // killed self
+            return "Sudden Infant Death";
+            }
+        else {
+            return "Killed by <a href='server.php?action=character_page&".
+                "id=$id&rel_id=$inRelID'>$name</a>";
+            }
         }
     else if( $killer_id <= -1 ) {
 
@@ -2101,7 +2577,7 @@ function ls_getDeathHTML( $inID, $inRelID ) {
                         if( $commentPos != FALSE ) {
                             $line = substr( $line, 0, $commentPos );
                             }
-
+                        $line = trim( $line );
                         $deathString = "Killed by $line";
                         }
                     }
@@ -2177,7 +2653,8 @@ function ls_computeDeepestGeneration( $inID ) {
         $query = "UPDATE $tableNamePrefix"."lives ".
             "SET ".
             "deepest_descendant_generation = $deepest_descendant_generation, ".
-            "deepest_descendant_life_id = $deepest_descendant_life_id ".
+            "deepest_descendant_life_id = $deepest_descendant_life_id, ".
+            "lineage_depth = $deepest_descendant_generation - generation ".
             "WHERE id = $inID;";
         
         ls_queryDatabase( $query );  
@@ -2427,6 +2904,49 @@ function ls_characterDump() {
             }        
         }    
     }
+
+
+function ls_reformatNames() {
+    global $tableNamePrefix;
+
+    $query = "SELECT id, name FROM $tableNamePrefix"."lives ".
+            "WHERE death_time > '2018-07-06';";
+
+    $result = ls_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    echo "Processing $numRows names to reformat...<br>\n";
+
+    $touched = 0;
+    
+    for( $i=0; $i<$numRows; $i++ ) {
+        
+        $id = ls_mysqli_result( $result, $i, "id" );
+
+        
+        $name = ls_mysqli_result( $result, $i, "name" );
+
+        $oldName = $name;
+        
+
+        $name = ls_formatName( $name );
+
+        if( $oldName != $name ) {
+            echo "Old name:  $oldName :::: ";
+            echo "New name:  $name<br>\n";
+            $query = "UPDATE $tableNamePrefix"."lives SET ".
+                "name = '$name' WHERE id = '$id';";
+            ls_queryDatabase( $query );
+            $touched ++;
+            }
+        }
+
+    $notTouched = $numRows - $touched;
+    
+    echo "$touched/$numRows needed to be updated.  Done<br>\n";
+    }
+
 
 
 
@@ -2859,7 +3379,7 @@ function ls_checkPassword( $inFunctionName ) {
         
         if( $passwordSent && $enableYubikey ) {
             global $yubikeyIDs, $yubicoClientID, $yubicoSecretKey,
-                $ticketGenerationSecret;
+                $passwordHashingPepper;
             
             $yubikey = $_REQUEST[ "yubikey" ];
 
@@ -2874,10 +3394,10 @@ function ls_checkPassword( $inFunctionName ) {
                 }
             
             
-            $nonce = ls_hmac_sha1( $ticketGenerationSecret, uniqid() );
+            $nonce = ls_hmac_sha1( $passwordHashingPepper, uniqid() );
             
             $callURL =
-                "http://api2.yubico.com/wsapi/2.0/verify?id=$yubicoClientID".
+                "https://api2.yubico.com/wsapi/2.0/verify?id=$yubicoClientID".
                 "&otp=$yubikey&nonce=$nonce";
             
             $result = trim( file_get_contents( $callURL ) );

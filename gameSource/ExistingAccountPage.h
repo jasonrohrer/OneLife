@@ -60,23 +60,32 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         TextButton mDisableCustomServerButton;
         
         TextButton mLoginButton;
-        TextButton mLoginNoSaveButton;
+        TextButton mFriendsButton;
+        TextButton mGenesButton;
+        TextButton mFamilyTreesButton;
+        TextButton mClearAccountButton;
         TextButton mCancelButton;
 
         TextButton mSettingsButton;
         TextButton mReviewButton;
         
+        TextButton mRetryButton;
         TextButton mRedetectButton;
 
+        TextButton mViewAccountButton;
+        
+        TextButton mTutorialButton;
+        
 
         double mPageActiveStartTime;
         int mFramesCounted;
         char mFPSMeasureDone;
 
+        char mHideAccount;
 
         void switchFields();
         
-        void processLogin( char inStore );
+        void processLogin( char inStore, const char *inSignal );
 
     };
 

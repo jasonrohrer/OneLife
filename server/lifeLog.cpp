@@ -5,6 +5,8 @@
 #include "playerStats.h"
 #include "lineageLog.h"
 
+#include "curses.h"
+
 
 
 #include "minorGems/util/stringUtils.h"
@@ -56,8 +58,9 @@ static void openCurrentLogFiles() {
     delete newFile;
     
     if( logFile == NULL ) {
-        delete [] newFileName;
         AppLog::errorF( "Failed to open log file %s", newFileName );
+        delete [] newFileName;
+
         return;
         }
 
@@ -143,6 +146,9 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
                int inMapX, int inMapY,
                int inTotalPopulation,
                int inParentChainLength ) {
+    
+    cursesLogBirth( inPlayerEmail );
+    
     if( logFile != NULL ) {
         stepLog();
 
@@ -189,11 +195,20 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
                char inDisconnect, int inKillerID, 
                char *inKillerEmail ) {
     
+    double yearsLived = inAge;
+    if( inEve ) {
+        yearsLived -= 14;
+        }
+
+    cursesLogDeath( inPlayerEmail, yearsLived );
+
     recordPlayerLifeStats( inPlayerEmail, inSecPlayed );
     
     if( inEve ) {
         
-        mapEveDeath( inPlayerEmail, inAge );
+        GridPos deathPos = { inMapX, inMapY };
+        
+        mapEveDeath( inPlayerEmail, inAge, deathPos );
         
         if( inAge > 20 ) {
             resetEveRadius();
@@ -257,10 +272,13 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
 
 
 
-void logName( int inPlayerID, char *inName ) {
+
+void logName( int inPlayerID, char *inEmail, char *inName,
+              int inLineageEveID ) {
     if( nameLogFile != NULL ) {
         fprintf( nameLogFile, "%d %s\n", inPlayerID, inName );
         }
+    logPlayerNameForCurses( inEmail, inName, inLineageEveID );
     }
 
     

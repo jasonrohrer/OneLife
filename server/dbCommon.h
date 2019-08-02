@@ -7,4 +7,4 @@ int valueToInt( unsigned char *inValue );
 
 // converts any length email to a 50-byte key
 // outKey must be pre-allocated to 50 bytes
-void emailToKey( char *inEmail, unsigned char *outKey );
+void emailToKey( const char *inEmail, unsigned char *outKey );

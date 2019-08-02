@@ -18,6 +18,7 @@ typedef struct {
         // that bin and a 64-bit file location for the top of the stack
         unsigned int hashBinSize;
         uint8_t *hashBinBuffer;
+        int maxStackDepth;
     } STACKDB;
 
     
@@ -96,6 +97,7 @@ typedef struct {
         STACKDB *db;
         unsigned int hashBin;
         uint64_t nextRecordLoc;
+        int stackDepth;
 } STACKDB_Iterator;
 
 /**

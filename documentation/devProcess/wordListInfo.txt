@@ -1,0 +1,12 @@
+
+
+These words taken from a cognitive experiment database:
+http://www.datavis.ca/online/paivio/
+
+456 words found with these selection parameters:
+
+
+Selection parameters:
+Variable 	K-F Word frequency 	Imagery 	Concreteness 	Meaningfulness 	# Syllables 	# Letters
+Minimum 	10 	1 	1 	1 	1 	4
+Maximum 	100 	7 	7 	10 	8 	5

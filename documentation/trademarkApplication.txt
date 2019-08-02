@@ -1,0 +1,21 @@
+Registerd image:  "header" image from Steam, expanded vertically to 250 pixels:
+
+OneLifeGraphicsMasters/promo/trademarkHeader.png
+
+
+
+Literal element in the image:
+
+ONE HOUR ONE LIFE
+
+
+
+Colors:
+
+white, sepia, yellow, and light green
+
+
+
+Description:
+
+the words ONE HOUR ONE LIFE in white bold Futura font, stacked vertically with one word on each line, over a hand-drawn and hand-painted image featuring nine cartoon figures, four on the left and five on the right, with the two groups of figures facing each other.  The group on the left is colored with sepia tone, while the group on the right is full color.  The groups of figures show the same family age-progressed by thirty years.  The words separate the two versions of this family in the image.  The ground underlying the scene has yellow and green patches of watercolor paint

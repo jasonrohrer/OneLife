@@ -27,8 +27,8 @@ typedef struct SoundRecord {
 
 
 
-// returns number of reverb cache files that need to be regenerated
-int initSoundBankStart( char inPrintSteps=true );
+// returns number of sounds that need to be loaded (or reverbs regenerated)
+int initSoundBankStart( char *outRebuildingCache );
 
 
 // returns progress... ready for Finish when progress == 1.0
@@ -47,6 +47,13 @@ void freeSoundBank();
 
 // processing for dynamic, asynchronous sound loading
 void stepSoundBank();
+
+
+// returns NULL if asynchronous loading process hasn't failed
+// returns internally-allocated string (destroyed internally) if
+//    loading process fails.  String is name of file that failed to load
+char *getSoundBankLoadFailure();
+
 
 
 // music headroom is fraction of full volume reserved for music
@@ -88,6 +95,14 @@ void playSound( SoundUsage inUsage,
 // vector is in world tile units
 void playSound( SoundUsage inUsage,
                 doublePair inVectorFromCameraToSoundSource );
+
+
+// leverage stereo positioning code on a raw sound sprite
+// still offer a volume tweak on top of stereo positioning
+void playSound( SoundSpriteHandle inSoundSprite,
+                double inVolumeTweak,
+                doublePair inVectorFromCameraToSoundSource );
+
 
 
 

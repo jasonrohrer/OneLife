@@ -55,6 +55,7 @@ cp OneLife/gameSource/languages/* ./languages
 cp OneLife/gameSource/language.txt ./
 cp OneLife/gameSource/us_english_60.txt ./
 cp OneLife/gameSource/reverbImpulseResponse.aiff ./
+cp OneLife/gameSource/wordList.txt ./
 
 
 echo "Run OneLifeApp to play."

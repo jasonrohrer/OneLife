@@ -1,0 +1,24 @@
+// add 97ms latency to local loopback:
+sudo tc qdisc add dev lo root netem delay 97ms
+
+// clear extra latency
+sudo tc qdisc del dev lo root netem
+
+
+
+// variable latency:
+
+2000ms += 2000ms, with 0% correlation between last packet latency and next.
+
+sudo tc qdisc add dev lo root netem delay 2000ms 2000ms 0%
+
+
+Details here:
+
+https://calomel.org/network_loss_emulation.html
+
+
+
+Forcing connections to break:
+
+sudo tcpkill -i lo -9 port 8005

@@ -69,16 +69,22 @@ EditorImportPage::EditorImportPage()
                                  100, 20,
                                  0, 1, "Black Threshold" ),
           mBlackLineThresholdDefaultButton( smallFont, 305, 170, "D" ),
-          mSaturationSlider( smallFont, 90, 140, 2,
+          mPaperThresholdSlider( smallFont, 90, 140, 2,
+                                 100, 20,
+                                 0, 1, "Paper Threshold" ),
+          mPaperThresholdDefaultButton( smallFont, 305, 140, "D" ),
+          mSaturationSlider( smallFont, 90, 110, 2,
                              100, 20,
                              -1, 2, "Saturation" ),
-          mSaturationDefaultButton( smallFont, 305, 140, "D" ),
+          mSaturationDefaultButton( smallFont, 305, 110, "D" ),
           mSpriteTagField( mainFont, 
                            0,  -260, 6,
                            false,
                            "Tag", NULL, " " ),
           mSaveSpriteButton( mainFont, 210, -260, "Save" ),
           mSaveOverlayButton( smallFont, 310, -260, "Save Overlay" ),
+          mInvertButton( smallFont, 210, -320, "Invert" ),
+          mInvertColors( false ),
           mSpritePicker( &spritePickable, -410, 90 ),
           mOverlayPicker( &overlayPickable, 410, 90 ),
           mSpriteTrimEditorButton( mainFont, -460, 260, "Trim" ),
@@ -90,7 +96,8 @@ EditorImportPage::EditorImportPage()
           mClearScaleButton( smallFont, -400, -240, "1 Scale" ),
           mFlipOverlayButton( smallFont, -330, -280, "Flip H" ),
           mClearOverlayButton( smallFont, -330, -240, "X Ovly" ),
-          mShowTagMessage( false ) {
+          mShowTagMessage( false ),
+          mAKeyDown( false ) {
 
 
     mCenterPoint.x = 0;
@@ -105,6 +112,13 @@ EditorImportPage::EditorImportPage()
 
     addComponent( &mBlackLineThresholdDefaultButton );
     mBlackLineThresholdDefaultButton.addActionListener( this );
+
+    addComponent( &mPaperThresholdSlider );
+    mPaperThresholdSlider.setValue( 0.88 );
+    mPaperThresholdSlider.addActionListener( this );
+
+    addComponent( &mPaperThresholdDefaultButton );
+    mPaperThresholdDefaultButton.addActionListener( this );
 
 
     addComponent( &mSaturationSlider );
@@ -133,6 +147,8 @@ EditorImportPage::EditorImportPage()
     addComponent( &mSpriteTagField );
     addComponent( &mSaveSpriteButton );
     addComponent( &mSaveOverlayButton );
+    addComponent( &mInvertButton );
+    
     addComponent( &mSpritePicker );
     addComponent( &mOverlayPicker );
 
@@ -165,6 +181,9 @@ EditorImportPage::EditorImportPage()
     mSaveSpriteButton.addActionListener( this );
     mSaveOverlayButton.addActionListener( this );
     
+    mInvertButton.addActionListener( this );
+    
+
     mSpriteTrimEditorButton.addActionListener( this );
     mObjectEditorButton.addActionListener( this );
     
@@ -179,6 +198,8 @@ EditorImportPage::EditorImportPage()
 
     mSaveSpriteButton.setVisible( false );
     mSaveOverlayButton.setVisible( false );
+
+    mInvertButton.setVisible( false );
 
     mClearRotButton.setVisible( false );
     mClearScaleButton.setVisible( false );
@@ -336,6 +357,8 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
 
         mSaveSpriteButton.setVisible( false );
         mSaveOverlayButton.setVisible( false );
+        
+        mInvertButton.setVisible( false );
 
         File *importFile = NULL;
         char loadedFromCache = false;
@@ -599,6 +622,20 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
                         
                         doublePair offset = { 0, 0 };
                         
+                        if( ! mAKeyDown ) {
+                            // A pressed to add lines
+                            // if not pressed, replace
+                            
+                            for( int i=0; i<mLinesOffset.size(); i++ ) {
+                                delete mLinesImages.getElementDirect( i );
+                                freeSprite( 
+                                    mLinesSprites.getElementDirect( i ) );
+                                }
+                            mLinesOffset.deleteAll();
+                            mLinesImages.deleteAll();
+                            mLinesSprites.deleteAll();
+                            }
+                        
                         mLinesOffset.push_back( offset );
                         mLinesImages.push_back( expanded );
                         mLinesSprites.push_back( sprite );
@@ -656,6 +693,21 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             increment = +1;
             }
         
+        int scale = 1;
+        
+        if( isCommandKeyDown() ) {
+            scale = 5;
+            }
+        if( isShiftKeyDown() ) {
+            scale = 10;
+            }
+        if( isCommandKeyDown() && isShiftKeyDown() ) {
+            scale = 20;
+            }
+
+        increment *= scale;
+        
+
         const char *cacheName = "spriteImportCache";
         int *currentIndex = &mCurrentSpriteImportCacheIndex;
 
@@ -762,6 +814,13 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         mBlackLineThresholdSlider.setValue( 0.2 );
         processSelection();
         }
+    else if( inTarget == &mPaperThresholdSlider ) {
+        processSelection();
+        }
+    else if( inTarget == &mPaperThresholdDefaultButton ) {
+        mPaperThresholdSlider.setValue( 0.88 );
+        processSelection();
+        }
     else if( inTarget == &mSaturationSlider ) {
         processSelection();
         }
@@ -823,7 +882,8 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
             mProcessedShadowSprite = NULL;
 
             mSaveSpriteButton.setVisible( false );
-            
+            mInvertButton.setVisible( false );
+
             mShowTagMessage = false;
             }
         else {
@@ -857,6 +917,10 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
         
 
         delete [] tag;
+        }
+    else if( inTarget == &mInvertButton ) {
+        mInvertColors = ! mInvertColors;
+        processSelection();
         }
     else if( inTarget == &mClearRotButton ) {
         mClearRotButton.setVisible( false );
@@ -1146,6 +1210,7 @@ void EditorImportPage::makeActive( char inFresh ) {
         return;
         }
 
+    mAKeyDown = false;
     mShowTagMessage = false;
 
     mSpritePicker.redoSearch( false );
@@ -1170,7 +1235,7 @@ void EditorImportPage::pointerMove( float inX, float inY ) {
                 0.75 * mMovingOverlayScaleStart * 
                 ( pos.y - mMovingOverlayPointerStart.y ) / 100;
         
-            if( mOverlayScale.getLastElement() < 0 ) {
+            if( mOverlayScale.getLastElementDirect() < 0 ) {
                 *( mOverlayScale.getLastElement() ) = 0;
                 }
             }
@@ -1234,7 +1299,7 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
 
     // middle of screen?
     if( ( inX > -310 && inX < 310 && 
-          inY > -210 && inY < 120 ) 
+          inY > -210 && inY < 90 ) 
         || 
         // or top-left middle of screen (no gui compoents up there
         ( inX > -310 && inX < 46  && inY > 0 ) ) {
@@ -1275,6 +1340,7 @@ void EditorImportPage::pointerDown( float inX, float inY ) {
         mSelectEnd.x = inX + 1;
         mSelectEnd.y = inY - 1;
         mSelect = true;
+        mInvertColors = false;
         }
     }
 
@@ -1481,6 +1547,9 @@ void EditorImportPage::keyDown( unsigned char inASCII ) {
                 }            
             }
         }
+    else if( inASCII == 'A' || inASCII == 'a' ) {
+        mAKeyDown = true;
+        }
     }
 
 
@@ -1503,6 +1572,9 @@ void EditorImportPage::keyUp( unsigned char inASCII ) {
         }
     else if( inASCII == 'p' ) {
         mPlacingInternalPaper = false;
+        }
+    else if( inASCII == 'A' || inASCII == 'a' ) {
+        mAKeyDown = false;
         }
     }
 
@@ -1553,7 +1625,7 @@ void EditorImportPage::specialKeyDown( int inKeyCode ) {
 void EditorImportPage::processSelection() {
 
     // surrounding paper area becomes totally transparent above this brightness 
-    double paperThreshold = 0.88;
+    double paperThreshold = mPaperThresholdSlider.getValue();;
 
     
     if( mProcessedSelection != NULL ) {
@@ -1926,6 +1998,7 @@ void EditorImportPage::processSelection() {
     double *gCopy = cutImage->copyChannel( 1 );
     double *bCopy = cutImage->copyChannel( 2 );    
 
+    if( !mSelectionMultiplicative )
     for( int i=0; i<numPixels; i++ ) {
         if( whiteMap[i] == 1 ) {
             
@@ -2486,6 +2559,21 @@ void EditorImportPage::processSelection() {
         freeSprite( mProcessedSelectionSprite );
         mProcessedSelectionSprite = NULL;
         }
+
+    if( mInvertColors ) {
+        int numPixels = mProcessedSelection->getWidth() * 
+            mProcessedSelection->getHeight();
+        
+        for( int c=0; c<3; c++ ) {
+            double *chan = mProcessedSelection->getChannel( c );
+            
+            for( int i=0; i<numPixels; i++ ) {
+                chan[i] = 1.0 - chan[i];
+                }
+            }
+        }
+    
+
     mProcessedSelectionSprite = fillSprite( mProcessedSelection, false );
     
     if( mProcessedShadowSprite != NULL ) {
@@ -2496,6 +2584,8 @@ void EditorImportPage::processSelection() {
     
 
     mSaveSpriteButton.setVisible( true );
+    mInvertButton.setVisible( true );
+    
     mSaveOverlayButton.setVisible( false );
     }
 

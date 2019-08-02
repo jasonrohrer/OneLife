@@ -9,11 +9,17 @@
 
 #include "groundSprites.h"
 
+#include "binFolderCache.h"
+
 
 #include "minorGems/io/file/File.h"
 #include "minorGems/system/Thread.h"
 #include "minorGems/game/game.h"
 #include "minorGems/graphics/converters/TGAImageConverter.h"
+
+
+// dummy version number for binFolderCache.cpp
+int versionNumber = 1;
 
 
 
@@ -29,7 +35,11 @@ static void deleteCache( const char *inFolderName ) {
             cacheFile->remove();
             
             delete cacheFile;
+            cacheFile = NULL;
             }
+        
+        
+        clearAllBinCacheFiles( &folder );        
         }
     }
 
@@ -102,6 +112,8 @@ int main() {
     deleteCache( "categories" );
     deleteCache( "animations" );
     deleteCache( "transitions" );
+    deleteCache( "sounds" );
+    deleteCache( "reverbCache" );
     
     File groundTileCacheFolder( NULL, "groundTileCache" );
     
@@ -183,13 +195,10 @@ int main() {
     printf( "\n" );
 
 
-    num = initSoundBankStart( false );
+    num = initSoundBankStart( &rebuilding );
 
-    if( num > 0 ) {
+    if( rebuilding ) {
         runRebuild( "sounds", num, &initSoundBankStep );
-        }
-    else {
-        printf( "No reverbs need to be generated\n" );
         }
     initSoundBankFinish();
 
@@ -327,6 +336,21 @@ void startOutputAllFrames() {
 
 
 void stopOutputAllFrames() {
+    }
+
+void toggleAdditiveBlend( char ) {
+    }
+
+void drawSquare( doublePair, double ) {
+    }
+
+void startAddingToStencil( char, char, float ) {
+    }
+
+void startDrawingThroughStencil( char ) {
+    }
+
+void stopStencil() {
     }
 
 

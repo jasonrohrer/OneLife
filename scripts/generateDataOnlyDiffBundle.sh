@@ -1,4 +1,61 @@
 
+wipeMaps=0
+
+# two arguments means automation
+if [ $# -ne 2 ]
+then
+	echo ""
+	echo ""
+	echo "Auto wipe maps as part of process?"
+	echo ""
+	echo "Enter WIPE to wipe, or press [ENTER] to skip."
+	echo ""
+	echo -n "Wipe maps: "
+	read wipeMapsWord
+
+	if [ "$wipeMapsWord" = "WIPE" ]
+	then
+		echo
+		echo "Auto-wiping maps."
+		echo
+		wipeMaps=1
+	else
+		echo
+		echo "NOT Auto-wiping maps."
+		echo
+	fi
+fi
+
+
+
+# note that if we're running on cron-job automation, this might not work
+# in genral, we have never done cron-job automation for midnight updates
+# (because we are updating servers in batches) so it probably doesn't matter
+echo "" 
+echo "Logging in to steamcmd to make sure credentials are cached"
+echo ""
+
+steamcmd +login "jasonrohrergames" +quit
+
+
+
+# two arguments means automation
+if [ $# -ne 2 ]
+then
+	echo ""
+	echo ""
+	lastBuildID=`~/checkout/OneLifeWorking/scripts/getLatestSteamBuildID.sh`
+	
+	echo "Seeing last Steam build ID of $lastBuildID"
+	echo ""
+	echo "Check Steamworks and verify that this is correct."
+	echo ""
+	echo -n "Hit [ENTER] when ready: "
+	read
+fi
+
+
+
 echo "" 
 echo "Updating minorGems"
 echo ""
@@ -33,13 +90,25 @@ echo ""
 echo "Most recent Data git version is:  $lastTaggedDataVersion"
 echo ""
 
+baseDataVersion=$lastTaggedDataVersion
 
 
-numNewChangsets=`git log OneLife_v$lastTaggedDataVersion..HEAD | grep commit | wc -l`
+if [ $# -eq 1 ]
+then
+	echo "" 
+	echo "Overriding base data version using command line argument:  $1"
+	echo "" 
+	baseDataVersion=$1
+fi
+
+
+
+
+numNewChangsets=`git log OneLife_v$baseDataVersion..HEAD | grep commit | wc -l`
 
 
 echo "" 
-echo "Num git revisions since version:  $numNewChangsets"
+echo "Num git revisions since base data version:  $numNewChangsets"
 echo ""
 
 
@@ -101,13 +170,14 @@ echo ""
 
 
 
-# any argument means automation
-if [ $# -ne 1 ]
+# two arguments means automation
+if [ $# -ne 2 ]
 then
 	echo ""
 	echo ""
 	echo "Most recent code version $lastTaggedCodeVersion"
 	echo "Most recent data version $lastTaggedDataVersion"
+	echo "Base data version for diff bundle $baseDataVersion"
 	echo ""
 	echo "About to post and tag data with $newVersion"
 	echo ""
@@ -118,6 +188,14 @@ fi
 
 
 cd ~/checkout/OneLifeData7Latest
+
+
+# remove any old, stale directories
+# this is what got us into trouble with the v152 update
+# (the diffWorking/dataLatest directory created manually to test Steam
+#  builds was in the way)
+rm -rf ~/checkout/diffWorking
+
 
 
 mkdir ~/checkout/diffWorking
@@ -133,21 +211,23 @@ rm -rf ~/checkout/diffWorking/dataLatest/.git*
 rm ~/checkout/diffWorking/dataLatest/.hg*
 rm -rf ~/checkout/diffWorking/dataLatest/soundsRaw
 rm -rf ~/checkout/diffWorking/dataLatest/faces
+rm -rf ~/checkout/diffWorking/dataLatest/scenes
 rm -r ~/checkout/diffWorking/dataLatest/*.sh ~/checkout/diffWorking/dataLatest/working ~/checkout/diffWorking/dataLatest/overlays
 echo -n "$newVersion" > ~/checkout/diffWorking/dataLatest/dataVersionNumber.txt
 
 
 echo "" 
-echo "Exporting last tagged data for diffing"
+echo "Exporting base data for diffing"
 echo ""
 
-git checkout -q OneLife_v$lastTaggedDataVersion
+git checkout -q OneLife_v$baseDataVersion
 
 git clone . ~/checkout/diffWorking/dataLast
 rm -rf ~/checkout/diffWorking/dataLast/.git*
 rm ~/checkout/diffWorking/dataLast/.hg*
 rm -rf ~/checkout/diffWorking/dataLast/soundsRaw
 rm -rf ~/checkout/diffWorking/dataLast/faces
+rm -rf ~/checkout/diffWorking/dataLast/scenes
 rm -r ~/checkout/diffWorking/dataLast/*.sh ~/checkout/diffWorking/dataLast/working ~/checkout/diffWorking/dataLast/overlays
 
 
@@ -174,11 +254,17 @@ cd ~/checkout/diffWorking/dataLast
 cp ~/checkout/OneLifeWorking/gameSource/reverbImpulseResponse.aiff .
 ~/checkout/OneLifeWorking/gameSource/regenerateCaches
 rm reverbImpulseResponse.aiff
+# don't include bin_cache files in downloads, because they change
+# with each update, and are too big
+# cache.fcz files are full of compressed text files, so they're much smaller
+# and fine to included when they change
+rm */bin_*cache.fcz
 
 cd ~/checkout/diffWorking/dataLatest
 cp ~/checkout/OneLifeWorking/gameSource/reverbImpulseResponse.aiff .
 ~/checkout/OneLifeWorking/gameSource/regenerateCaches
 rm reverbImpulseResponse.aiff
+rm */bin_*cache.fcz
 
 
 echo "" 
@@ -188,6 +274,9 @@ echo ""
 
 rm -r ~/checkout/reverbCacheLastBundle
 cp -r ~/checkout/diffWorking/dataLatest/reverbCache ~/checkout/reverbCacheLastBundle
+
+
+
 
 
 echo "" 
@@ -235,7 +324,8 @@ done <  <( grep "" ~/diffBundles/remoteServerList.ini )
 # need to shutdown all servers first
 
 
-rm -r ~/checkout/diffWorking
+# do NOT remove diffWorking dir just yet
+# need it to build steam depot below
 
 
 
@@ -260,6 +350,7 @@ echo ""
 cd ~/checkout/OneLifeData7
 git pull
 rm */cache.fcz
+rm */bin_cache.fcz
 
 
 
@@ -407,6 +498,91 @@ done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
 
+# Decision about when to build depot and make it live is tough
+# This depot build process could take a bit of time.
+# At this moment, Even servers are down, but ready to go
+# and Odd servers are still running the old version and accepting new players
+#
+# There's no way to do this without the possibility of someone slipping through
+# the cracks and connecting to a mis-matched-version server.
+#
+# Client should catch this and display an error message when it happens.
+#
+# So, all we can do is minimize the amount of time during which this can happen.
+#
+# Since the depot build can take a while, we do it here, while Odd servers are
+# still running, so everyone can keep playing during the build.
+#
+# The shutdown operation of Odd servers should be quick, and the startup
+# operation of Even servers should be quick as well.
+#
+# During that moment, some Steam users, who already have the new version,
+# will see a SERVERS UPDATING message, because they will connect to outdated
+# Odd servers that are still running.
+#
+# The worst thing that can ever happen to Non-Steam users is that they find
+# all servers shutdown (in the moment between Odd shutdown and Even startup).
+#
+
+
+echo "" 
+echo "Building Steam Depot and making it public/live"
+echo ""
+
+
+oldBuildID=`~/checkout/OneLifeWorking/scripts/getLatestSteamBuildID.sh`
+
+
+steamcmd +login "jasonrohrergames" +run_app_build -desc OneLifeContent_v$newVersion ~/checkout/OneLifeWorking/build/steam/app_build_content_595690.vdf +quit | tee /tmp/steamBuildLog.txt
+
+
+newBuildID=`grep BuildID /tmp/steamBuildLog.txt | sed "s/.*(BuildID //" | sed "s/).*//"`
+
+
+
+echo ""
+echo "Old Steam build ID:  $oldBuildID"
+echo "New Steam build ID:  $newBuildID"
+echo ""
+
+if [[ $newBuildID = "" || $newBuildID -le $oldBuildID ]]
+then
+
+	echo ""
+	echo "Steam build failed, trying remote build as backup"
+	echo ""
+	
+	echo
+	echo "Remote Steam build starting"
+	echo
+
+    # two arguments means automation
+	if [ $# -ne 2 ]
+	then
+		# run ssh interactively so we can pause at error
+		ssh build.onehouronelife.com 'cd ~/checkout/OneLifeWorking; git pull; ~/checkout/OneLifeWorking/scripts/generateSteamContentDepot.sh'
+	else 
+		# automation, don't run ssh interactively
+		ssh -n build.onehouronelife.com 'cd ~/checkout/OneLifeWorking; git pull; ~/checkout/OneLifeWorking/scripts/generateSteamContentDepot.sh'
+	fi
+	echo
+	echo "Remote Steam build done"
+	echo
+fi
+
+
+
+
+echo "" 
+echo "Deleting temporary diffWorking directory"
+echo ""
+
+rm -r ~/checkout/diffWorking
+
+
+
+
+
 
 
 echo "" 
@@ -451,13 +627,25 @@ echo ""
 echo "Triggering EVEN remote server startups."
 echo ""
 
+
+withMapWipeNote=""
+serverStartupCommand="~/checkout/OneLife/scripts/remoteServerStartup.sh"
+
+if [ $wipeMaps -eq 1 ]
+then
+	withMapWipeNote=" (with map wipe)"
+	serverStartupCommand="~/checkout/OneLife/scripts/remoteServerWipeMap.sh"
+fi
+
+
+
 i=1
 while read user server port
 do
 	if [ $((i % 2)) -eq 0 ];
 	then
-		echo "  Triggering server startup on $server"
-		ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerStartup.sh'
+		echo "  Triggering server startup$withMapWipeNote on $server"
+		ssh -n $user@$server "$serverStartupCommand"
 	fi
 	i=$((i + 1))
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
@@ -494,8 +682,8 @@ while read user server port
 do
 	if [ $((i % 2)) -eq 1 ];
 	then
-		echo "  Triggering server startup on $server"
-		ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerStartup.sh'
+		echo "  Triggering server startup$withMapWipeNote on $server"
+		ssh -n $user@$server "$serverStartupCommand"
 	fi
 	i=$((i + 1))
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )

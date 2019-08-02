@@ -118,6 +118,9 @@ class EditorImportPage : public GamePage, public ActionListener {
         ValueSlider mBlackLineThresholdSlider;
         TextButton mBlackLineThresholdDefaultButton;
 
+        ValueSlider mPaperThresholdSlider;
+        TextButton mPaperThresholdDefaultButton;
+
         ValueSlider mSaturationSlider;
         TextButton mSaturationDefaultButton;
 
@@ -126,6 +129,10 @@ class EditorImportPage : public GamePage, public ActionListener {
         
         TextButton mSaveSpriteButton;
         TextButton mSaveOverlayButton;
+        
+        TextButton mInvertButton;
+        char mInvertColors;
+        
 
         Picker mSpritePicker;
         Picker mOverlayPicker;
@@ -193,6 +200,8 @@ class EditorImportPage : public GamePage, public ActionListener {
         KeyLegend mOverlayKeyLegend;
         
         char mShowTagMessage;
+
+        char mAKeyDown;
     };
 
 

@@ -36,6 +36,7 @@ RebirthChoicePage.cpp \
 TextField.cpp \
 LoadingPage.cpp \
 folderCache.cpp \
+binFolderCache.cpp \
 liveObjectSet.cpp \
 ../commonSource/fractalNoise.cpp \
 ExistingAccountPage.cpp \
@@ -61,6 +62,17 @@ TextArea.cpp \
 RadioButtonSet.cpp \
 spellCheck.cpp \
 SoundUsage.cpp \
+TwinPage.cpp \
+objectMetadata.cpp \
+emotion.cpp \
+Picker.cpp \
+PickableStatics.cpp \
+photos.cpp \
+lifeTokens.cpp \
+PollPage.cpp \
+fitnessScore.cpp \
+GeneticHistoryPage.cpp \
+
 
 
 GAME_GRAPHICS = \
@@ -106,6 +118,7 @@ graphics/yumSlip1.tga \
 graphics/yumSlip2.tga \
 graphics/yumSlip3.tga \
 graphics/yumSlip4.tga \
+graphics/photoBorder.tga \
 
 
 
@@ -157,4 +170,5 @@ NEEDED_MINOR_GEMS_OBJECTS = \
  ${CRYPTO_RANDOM_O} \
  ${DIFF_BUNDLE_CLIENT_O} \
  ${STRING_TREE_O} \
+ ${CRC32_O} \
 

@@ -436,6 +436,16 @@ char GamePage::checkSignal( const char *inSignalName ) {
 
 
 
+char GamePage::isAnySignalSet() {
+    if( mSignal == NULL ) {
+        return false;
+        }
+    return true;
+    }
+
+
+
+
 
 void GamePage::base_keyDown( unsigned char inASCII ) {
     PageComponent::base_keyDown( inASCII );

@@ -49,6 +49,36 @@ static SimpleVector<int> monumentCallObjectIDs;
 static SimpleVector<int> deathMarkerObjectIDs;
 
 
+// an extended list including special-case death markers 
+// (marked with fromDeath in description)
+static SimpleVector<int> allPossibleDeathMarkerIDs;
+
+
+
+
+typedef struct GlobalTrigger {
+        // meta trigger objects that are turned ON globally (triggering
+        // all corresponding transitions)
+        // when this trigger object comes into existence
+        int onTriggerID;
+    } GlobalTrigger;
+
+
+SimpleVector<GlobalTrigger> globalTriggers;
+
+
+int getNumGlobalTriggers() {
+    return globalTriggers.size();
+    }
+
+
+int getMetaTriggerObject( int inTriggerIndex ) {
+    return globalTriggers.getElementDirect( inTriggerIndex ).onTriggerID;
+    }
+
+
+
+
 
 // anything above race 100 is put in bin for race 100
 #define MAX_RACE 100
@@ -57,6 +87,11 @@ static SimpleVector<int> racePersonObjectIDs[ MAX_RACE + 1 ];
 
 static SimpleVector<int> raceList;
 
+
+// allocated space that we can use when temporarily manipulating
+// an object's skipDrawing array
+static int skipDrawingWorkingAreaSize = -1;
+static char *skipDrawingWorkingArea = NULL;
 
 
 #define MAX_BIOME 511
@@ -286,6 +321,175 @@ static void fillObjectBiomeFromString( ObjectRecord *inRecord,
 
 
 
+static void setupEyesAndMouth( ObjectRecord *inR ) {
+    ObjectRecord *r = inR;
+    
+    r->spriteIsEyes = new char[ r->numSprites ];
+    r->spriteIsMouth = new char[ r->numSprites ];
+
+    memset( r->spriteIsEyes, false, r->numSprites );
+    memset( r->spriteIsMouth, false, r->numSprites );
+
+    r->mainEyesOffset.x = 0;
+    r->mainEyesOffset.y = 0;
+
+    if( r->person && isSpriteBankLoaded() ) {
+        
+        int headIndex = getHeadIndex( r, 30 );
+
+        for( int i = 0; i < r->numSprites; i++ ) {
+            char *tag = getSpriteTag( r->sprites[i] );
+            
+            if( tag != NULL && strstr( tag, "Eyes" ) != NULL ) {
+                r->spriteIsEyes[ i ] = true;
+                }
+            if( tag != NULL && strstr( tag, "Mouth" ) != NULL ) {
+                r->spriteIsMouth[ i ] = true;
+                }
+
+            if( r->spriteIsEyes[i] && 
+                r->spriteAgeStart[i] < 30 && r->spriteAgeEnd[i] > 30 ) {
+                
+                r->mainEyesOffset = 
+                    sub( r->spritePos[i], r->spritePos[ headIndex ] );
+                }
+            }
+        } 
+    }
+
+
+
+
+static void setupObjectWritingStatus( ObjectRecord *inR ) {
+    inR->mayHaveMetadata = false;
+                
+    inR->written = false;
+    inR->writable = false;
+                
+    if( strstr( inR->description, "&" ) != NULL ) {
+        // some flags in name
+        if( strstr( inR->description, "&written" ) != NULL ) {
+            inR->written = true;
+            inR->mayHaveMetadata = true;
+            }
+        if( strstr( inR->description, "&writable" ) != NULL ) {
+            inR->writable = true;
+            inR->mayHaveMetadata = true;
+            }
+        }
+    }
+
+
+
+static void setupObjectGlobalTriggers( ObjectRecord *inR ) {
+    inR->isGlobalTriggerOn = false;
+    inR->isGlobalTriggerOff = false;
+    inR->isGlobalReceiver = false;
+
+    inR->globalTriggerIndex = -1;
+
+    if( strstr( inR->description, "*" ) != NULL ) {
+        inR->isGlobalTriggerOn = true;        
+        }
+    else if( strstr( inR->description, "!" ) != NULL ) {
+        inR->isGlobalTriggerOff = true;
+        }
+
+    char *carrotPos = strstr( inR->description, ">" );
+    if( carrotPos != NULL && carrotPos != inR->description ) {
+        // trigger receiver, and NOT a meta trigger object
+        // (meta trigger objects start with '>')
+        inR->isGlobalReceiver = true;
+        }
+    }
+
+
+
+static int maxSpeechPipeIndex = 0;
+
+
+static void setupObjectSpeechPipe( ObjectRecord *inR ) {
+    inR->speechPipeIn = false;
+    inR->speechPipeOut = false;
+    
+    inR->speechPipeIndex = -1;
+
+    if( strstr( inR->description, "speech" ) == NULL ) {
+        return;
+        }
+
+    char *inLoc = strstr( inR->description, "speechIn_" );
+    if( inLoc != NULL ) {
+        inR->speechPipeIn = true;        
+        
+        char *indexLoc = &( inLoc[ strlen( "speechIn_" ) ] );
+        
+        sscanf( indexLoc, "%d", &( inR->speechPipeIndex ) );
+        }
+    else {
+        
+        char *outLoc = strstr( inR->description, "speechOut_" );
+        if( outLoc != NULL ) {
+            inR->speechPipeOut = true;
+            
+            char *indexLoc = &( outLoc[ strlen( "speechOut_" ) ] );
+        
+            sscanf( indexLoc, "%d", &( inR->speechPipeIndex ) );
+            }
+        }
+
+    if( inR->speechPipeIndex > maxSpeechPipeIndex ) {
+        maxSpeechPipeIndex = inR->speechPipeIndex;
+        }
+    }
+
+
+
+static void setupFlight( ObjectRecord *inR ) {
+    inR->isFlying = false;
+    inR->isFlightLanding = false;
+
+    char *flyPos = strstr( inR->description, "+fly" );
+    if( flyPos != NULL ) {
+        inR->isFlying = true;
+        }
+    else {
+        char *landPos = strstr( inR->description, "+land" );
+        if( landPos != NULL ) {
+            inR->isFlightLanding = true;
+            }
+        }
+    }
+
+
+
+static void setupOwned( ObjectRecord *inR ) {
+    inR->isOwned = false;
+    
+    char *ownedPos = strstr( inR->description, "+owned" );
+    if( ownedPos != NULL ) {
+        inR->isOwned = true;
+        }
+    }
+
+
+
+static void setupNoHighlight( ObjectRecord *inR ) {
+    inR->noHighlight = false;
+    
+    if( strstr( inR->description, "+noHighlight" ) != NULL ) {
+        inR->noHighlight = true;
+        }
+    }
+
+
+
+int getMaxSpeechPipeIndex() {
+    return maxSpeechPipeIndex;
+    }
+
+
+
 float initObjectBankStep() {
         
     if( currentFile == cache.numFiles ) {
@@ -328,7 +532,21 @@ float initObjectBankStep() {
                 next++;
                             
                 r->description = stringDuplicate( lines[next] );
-                            
+                         
+
+                setupObjectWritingStatus( r );
+                
+                setupObjectGlobalTriggers( r );
+                
+                setupObjectSpeechPipe( r );
+                
+                setupFlight( r );
+                
+                setupOwned( r );
+                
+                setupNoHighlight( r );
+                
+
                 next++;
                             
                 int contRead = 0;                            
@@ -357,6 +575,35 @@ float initObjectBankStep() {
                 r->permanent = permRead;
 
                 next++;
+
+
+
+                r->noFlip = false;
+
+                if( strstr( lines[next], "noFlip=" ) != NULL ) {
+                    int noFlipRead = 0;
+                    
+                    sscanf( lines[next], "noFlip=%d", 
+                        &( noFlipRead ) );
+                            
+                    r->noFlip = noFlipRead;
+
+                    next++;
+                    }
+
+                r->sideAccess = false;
+
+                if( strstr( lines[next], "sideAccess=" ) != NULL ) {
+                    int sideAccessRead = 0;
+                    
+                    sscanf( lines[next], "sideAccess=%d", 
+                        &( sideAccessRead ) );
+                            
+                    r->sideAccess = sideAccessRead;
+
+                    next++;
+                    }
+                
 
 
 
@@ -492,6 +739,11 @@ float initObjectBankStep() {
 
                 next++;
 
+                
+                if( strstr( r->description, "fromDeath" ) != NULL ) {
+                    allPossibleDeathMarkerIDs.push_back( r->id );
+                    }
+                
 
                 r->homeMarker = false;
                 
@@ -644,6 +896,22 @@ float initObjectBankStep() {
                     r->creationSoundInitialOnly = 0;
                     }
                 
+                if( strstr( lines[next], 
+                            "creationSoundForce=" ) != NULL ) {
+                    // flag present
+                    
+                    int flagRead = 0;                            
+                    sscanf( lines[next], "creationSoundForce=%d", 
+                            &( flagRead ) );
+                    
+                    r->creationSoundForce = flagRead;
+                            
+                    next++;
+                    }
+                else {
+                    r->creationSoundForce = 0;
+                    }
+
 
                 r->numSlots = 0;
                 r->slotTimeStretch = 1.0f;
@@ -721,7 +989,7 @@ float initObjectBankStep() {
                 r->spriteInvisibleWhenHolding = new char[ r->numSprites ];
                 r->spriteInvisibleWhenWorn = new int[ r->numSprites ];
                 r->spriteBehindSlots = new char[ r->numSprites ];
-
+                r->spriteInvisibleWhenContained = new char[ r->numSprites ];
 
 
                 r->spriteIsHead = new char[ r->numSprites ];
@@ -744,6 +1012,8 @@ float initObjectBankStep() {
                 r->useDummyIDs = NULL;
                 r->isUseDummy = false;
                 r->useDummyParent = 0;
+                r->thisUseDummyIndex = -1;
+                
                 r->cachedHeight = -1;
                 
                 memset( r->spriteUseVanish, false, r->numSprites );
@@ -788,6 +1058,7 @@ float initObjectBankStep() {
                 r->variableDummyIDs = NULL;
                 r->isVariableDummy = false;
                 r->variableDummyParent = 0;
+                r->thisVariableDummyIndex = -1;
                 r->isVariableHidden = false;
                 
 
@@ -852,9 +1123,47 @@ float initObjectBankStep() {
                     r->spriteInvisibleWhenWorn[i] = invisWornRead;
                     r->spriteBehindSlots[i] = behindSlotsRead;
                                 
-                    next++;                        
+                    next++;                       
+                    
+                    if( strstr( lines[next], "invisCont=" ) != NULL ) {
+                        invisRead = 0;
+                        sscanf( lines[next], "invisCont=%d", &invisRead );
+                        
+                        r->spriteInvisibleWhenContained[i] = invisRead;
+                        next++;
+                        }
+                    else {
+                        r->spriteInvisibleWhenContained[i] = 0;
+                        }
                     }
+                
 
+                r->anySpritesBehindPlayer = false;
+                r->spriteBehindPlayer = NULL;
+
+                if( strstr( lines[next], "spritesDrawnBehind=" ) != NULL ) {
+                    r->anySpritesBehindPlayer = true;
+                    r->spriteBehindPlayer = new char[ r->numSprites ];
+                    memset( r->spriteBehindPlayer, false, r->numSprites );
+                    sparseCommaLineToBoolArray( "spritesDrawnBehind", 
+                                                lines[next],
+                                                r->spriteBehindPlayer, 
+                                                r->numSprites );
+                    next++;
+                    }
+                
+
+                r->spriteAdditiveBlend = NULL;
+
+                if( strstr( lines[next], "spritesAdditiveBlend=" ) != NULL ) {
+                    r->spriteAdditiveBlend = new char[ r->numSprites ];
+                    memset( r->spriteAdditiveBlend, false, r->numSprites );
+                    sparseCommaLineToBoolArray( "spritesAdditiveBlend", 
+                                                lines[next],
+                                                r->spriteAdditiveBlend, 
+                                                r->numSprites );
+                    next++;
+                    }
 
 
                 sparseCommaLineToBoolArray( "headIndex", lines[next],
@@ -877,6 +1186,10 @@ float initObjectBankStep() {
                                             r->spriteIsFrontFoot, 
                                             r->numSprites );
                 next++;
+                
+                
+                setupEyesAndMouth( r );
+
 
                 if( next < numLines ) {
                     // info about num uses and vanish/appear sprites
@@ -1129,6 +1442,7 @@ void initObjectBankFinish() {
                         
                         dummyO->isUseDummy = true;
                         dummyO->useDummyParent = mainID;
+                        dummyO->thisUseDummyIndex = d - 1;
                         
                         if( o->creationSoundInitialOnly && d != 1 ) {
                             // only keep creation sound for last dummy
@@ -1249,6 +1563,7 @@ void initObjectBankFinish() {
 
                         dummyO->isVariableDummy = true;
                         dummyO->variableDummyParent = mainID;
+                        dummyO->thisVariableDummyIndex = d - 1;
                         dummyO->isVariableHidden = variableHidden;
                         
                         // copy anims too
@@ -1293,6 +1608,123 @@ void initObjectBankFinish() {
         makeNewObjectsSearchable = oldSearch;
         
         printf( "  Auto-generated %d 'variable' objects\n", numAutoGenerated );
+        }
+
+    
+
+    // fill global triggers
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+            
+            if( o->isGlobalTriggerOn || o->isGlobalTriggerOff ) {
+                GlobalTrigger gRec = { -1 };
+                                
+                char *triggerName;
+
+                if( o->isGlobalTriggerOn ) {
+                    triggerName = strstr( o->description, "*" );
+                    }
+                else {
+                    triggerName = strstr( o->description, "!" );
+                    }
+                
+                if( triggerName != NULL ) {
+    
+                    triggerName = stringDuplicate( triggerName );
+
+                    // replace * (or !) with >
+                    triggerName[0] = '>';
+                    
+                    // trim after space
+                    char *spacePos = strstr( triggerName, " " );
+                    
+                    if( spacePos != NULL ) {
+                        spacePos[0] = '\0';
+                        }
+                    for( int j=0; j<mapSize; j++ ) {
+                        if( i != j && idMap[j] != NULL ) {
+                            ObjectRecord *oJ = idMap[j];
+                            if( ! oJ->isGlobalTriggerOn && 
+                                ! oJ->isGlobalTriggerOff && 
+                                ! oJ->isGlobalReceiver && 
+                                strstr( oJ->description, triggerName ) ==
+                                oJ->description ) {
+                                
+                                // starts with >triggerName
+                                // this is a meta trigger object
+                                
+                                gRec.onTriggerID = oJ->id;
+                                break;
+                                }
+                            }
+                        }
+                    
+                    // see if record matching this trigger set
+                    // already exists
+                    for( int r=0; r<globalTriggers.size(); r++ ) {
+                        GlobalTrigger *gRecOld = 
+                            globalTriggers.getElement( r );
+                        
+                        if( gRecOld->onTriggerID == gRec.onTriggerID ) {
+                            
+                            o->globalTriggerIndex = r;
+                            break;
+                            }
+                        }
+                    
+                    // if not, add new record
+                    if( o->globalTriggerIndex == -1 ) {    
+                        globalTriggers.push_back( gRec );
+                        o->globalTriggerIndex = globalTriggers.size() - 1;
+                        }
+                    
+                    delete [] triggerName;
+                    }
+                }
+            }
+        }
+    // fill global trigger receivers
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+            
+            if( o->isGlobalReceiver ) {
+                char *triggerName = strstr( o->description, ">" );
+                
+                if( triggerName != NULL ) {
+                    
+                    
+                    triggerName = stringDuplicate( triggerName );
+
+                    // replace > with * to find trigger sender (triggerOn)
+                    triggerName[0] = '*';
+                    
+                    // trim after space
+                    char *spacePos = strstr( triggerName, " " );
+                    
+                    if( spacePos != NULL ) {
+                        spacePos[0] = '\0';
+                        }
+
+                    for( int j=0; j<mapSize; j++ ) {
+                        if( i != j && idMap[j] != NULL ) {
+                            ObjectRecord *oJ = idMap[j];
+                            if( oJ->isGlobalTriggerOn
+                                && 
+                                strstr( oJ->description, triggerName ) != 
+                                NULL ) {
+                                // found this trigger sender
+                                // they share the same global trigger index
+                                o->globalTriggerIndex =
+                                    oJ->globalTriggerIndex;
+                                }
+                            }
+                        }
+                    delete [] triggerName;
+                    }
+                }
+            }
         }
     
 
@@ -1517,11 +1949,15 @@ static void freeObjectRecord( int inID ) {
             delete [] idMap[inID]->spriteInvisibleWhenHolding;
             delete [] idMap[inID]->spriteInvisibleWhenWorn;
             delete [] idMap[inID]->spriteBehindSlots;
+            delete [] idMap[inID]->spriteInvisibleWhenContained;
 
             delete [] idMap[inID]->spriteIsHead;
             delete [] idMap[inID]->spriteIsBody;
             delete [] idMap[inID]->spriteIsBackFoot;
             delete [] idMap[inID]->spriteIsFrontFoot;
+
+            delete [] idMap[inID]->spriteIsEyes;
+            delete [] idMap[inID]->spriteIsMouth;
 
             delete [] idMap[inID]->spriteUseVanish;
             delete [] idMap[inID]->spriteUseAppear;
@@ -1533,6 +1969,15 @@ static void freeObjectRecord( int inID ) {
             if( idMap[inID]->variableDummyIDs != NULL ) {
                 delete [] idMap[inID]->variableDummyIDs;
                 }
+            
+            if( idMap[inID]->spriteBehindPlayer != NULL ) {
+                delete [] idMap[inID]->spriteBehindPlayer;
+                }
+
+            if( idMap[inID]->spriteAdditiveBlend != NULL ) {
+                delete [] idMap[inID]->spriteAdditiveBlend;
+                }
+
 
             delete [] idMap[inID]->spriteSkipDrawing;
             
@@ -1549,6 +1994,7 @@ static void freeObjectRecord( int inID ) {
             femalePersonObjectIDs.deleteElementEqualTo( inID );
             monumentCallObjectIDs.deleteElementEqualTo( inID );
             deathMarkerObjectIDs.deleteElementEqualTo( inID );
+            allPossibleDeathMarkerIDs.deleteElementEqualTo( inID );
             
             if( race <= MAX_RACE ) {
                 racePersonObjectIDs[ race ].deleteElementEqualTo( inID );
@@ -1588,11 +2034,16 @@ void freeObjectBank() {
             delete [] idMap[i]->spriteInvisibleWhenHolding;
             delete [] idMap[i]->spriteInvisibleWhenWorn;
             delete [] idMap[i]->spriteBehindSlots;
+            delete [] idMap[i]->spriteInvisibleWhenContained;
 
             delete [] idMap[i]->spriteIsHead;
             delete [] idMap[i]->spriteIsBody;
             delete [] idMap[i]->spriteIsBackFoot;
             delete [] idMap[i]->spriteIsFrontFoot;
+
+            delete [] idMap[i]->spriteIsEyes;
+            delete [] idMap[i]->spriteIsMouth;
+
 
             delete [] idMap[i]->spriteUseVanish;
             delete [] idMap[i]->spriteUseAppear;
@@ -1603,6 +2054,14 @@ void freeObjectBank() {
 
             if( idMap[i]->variableDummyIDs != NULL ) {
                 delete [] idMap[i]->variableDummyIDs;
+                }
+            
+            if( idMap[i]->spriteBehindPlayer != NULL ) {
+                delete [] idMap[i]->spriteBehindPlayer;
+                }
+
+            if( idMap[i]->spriteAdditiveBlend != NULL ) {
+                delete [] idMap[i]->spriteAdditiveBlend;
                 }
 
             delete [] idMap[i]->spriteSkipDrawing;
@@ -1623,11 +2082,18 @@ void freeObjectBank() {
     femalePersonObjectIDs.deleteAll();
     monumentCallObjectIDs.deleteAll();
     deathMarkerObjectIDs.deleteAll();
+    allPossibleDeathMarkerIDs.deleteAll();
     
     for( int i=0; i<= MAX_RACE; i++ ) {
         racePersonObjectIDs[i].deleteAll();
         }
     rebuildRaceList();
+
+    if( skipDrawingWorkingArea != NULL ) {
+        delete [] skipDrawingWorkingArea;
+        }
+    skipDrawingWorkingArea = NULL;
+    skipDrawingWorkingAreaSize = -1;
     }
 
 
@@ -1649,6 +2115,8 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->containSize,
                         inObject->vertContainRotationOffset,
                         inObject->permanent,
+                        inObject->noFlip,
+                        inObject->sideAccess,
                         inObject->minPickupAge,
                         inObject->heldInHand,
                         inObject->rideable,
@@ -1656,6 +2124,8 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->leftBlockingRadius,
                         inObject->rightBlockingRadius,
                         inObject->drawBehindPlayer,
+                        inObject->spriteBehindPlayer,
+                        inObject->spriteAdditiveBlend,
                         biomeString,
                         inObject->mapChance,
                         inObject->heatValue,
@@ -1680,6 +2150,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->eatingSound,
                         inObject->decaySound,
                         inObject->creationSoundInitialOnly,
+                        inObject->creationSoundForce,
                         inObject->numSlots, 
                         inObject->slotSize, 
                         inObject->slotPos,
@@ -1699,6 +2170,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->spriteInvisibleWhenHolding,
                         inObject->spriteInvisibleWhenWorn,
                         inObject->spriteBehindSlots,
+                        inObject->spriteInvisibleWhenContained,
                         inObject->spriteIsHead,
                         inObject->spriteIsBody,
                         inObject->spriteIsBackFoot,
@@ -1749,8 +2221,12 @@ void resaveAll() {
 
 
 
+#include "objectMetadata.h"
+
 
 ObjectRecord *getObject( int inID ) {
+    inID = extractObjectID( inID );
+    
     if( inID < mapSize ) {
         if( idMap[inID] != NULL ) {
             return idMap[inID];
@@ -1915,12 +2391,16 @@ int addObject( const char *inDescription,
                float inContainSize,
                double inVertContainRotationOffset,
                char inPermanent,
+               char inNoFlip,
+               char inSideAccess,
                int inMinPickupAge,
                char inHeldInHand,
                char inRideable,
                char inBlocksWalking,
                int inLeftBlockingRadius, int inRightBlockingRadius,
                char inDrawBehindPlayer,
+               char *inSpriteBehindPlayer,
+               char *inSpriteAdditiveBlend,
                char *inBiomes,
                float inMapChance,
                int inHeatValue,
@@ -1945,6 +2425,7 @@ int addObject( const char *inDescription,
                SoundUsage inEatingSound,
                SoundUsage inDecaySound,
                char inCreationSoundInitialOnly,
+               char inCreationSoundForce,
                int inNumSlots, float inSlotSize, doublePair *inSlotPos,
                char *inSlotVert,
                int *inSlotParent,
@@ -1961,6 +2442,7 @@ int addObject( const char *inDescription,
                char *inSpriteInvisibleWhenHolding,
                int *inSpriteInvisibleWhenWorn,
                char *inSpriteBehindSlots,
+               char *inSpriteInvisibleWhenContained,
                char *inSpriteIsHead,
                char *inSpriteIsBody,
                char *inSpriteIsBackFoot,
@@ -1975,6 +2457,29 @@ int addObject( const char *inDescription,
     if( inSlotTimeStretch < 0.0001 ) {
         inSlotTimeStretch = 0.0001;
         }
+
+
+    SimpleVector<int> drawBehindIndicesList;
+    
+    if( inSpriteBehindPlayer != NULL ) {    
+        for( int i=0; i<inNumSprites; i++ ) {
+            if( inSpriteBehindPlayer[i] ) {
+                drawBehindIndicesList.push_back( i );
+                }
+            }
+        }
+
+    SimpleVector<int> additiveBlendIndicesList;
+    
+    if( inSpriteAdditiveBlend != NULL ) {    
+        for( int i=0; i<inNumSprites; i++ ) {
+            if( inSpriteAdditiveBlend[i] ) {
+                additiveBlendIndicesList.push_back( i );
+                }
+            }
+        }
+    
+    
     
     int newID = inReplaceID;
     
@@ -2042,7 +2547,10 @@ int addObject( const char *inDescription,
                                       (int)inPermanent,
                                       inMinPickupAge ) );
         
-        
+        lines.push_back( autoSprintf( "noFlip=%d", (int)inNoFlip ) );
+        lines.push_back( autoSprintf( "sideAccess=%d", (int)inSideAccess ) );
+
+
         int heldInHandNumber = 0;
         
         if( inHeldInHand ) {
@@ -2122,6 +2630,8 @@ int addObject( const char *inDescription,
 
         lines.push_back( autoSprintf( "creationSoundInitialOnly=%d", 
                                       (int)inCreationSoundInitialOnly ) );
+        lines.push_back( autoSprintf( "creationSoundForce=%d", 
+                                      (int)inCreationSoundForce ) );
         
         lines.push_back( autoSprintf( "numSlots=%d#timeStretch=%f", 
                                       inNumSlots, inSlotTimeStretch ) );
@@ -2167,11 +2677,28 @@ int addObject( const char *inDescription,
                                           inSpriteInvisibleWhenWorn[i],
                                           inSpriteBehindSlots[i] ) );
 
+            lines.push_back( autoSprintf( "invisCont=%d", 
+                                          inSpriteInvisibleWhenContained[i] ) );
+
             }
         
 
-        // FIXME
 
+        if( drawBehindIndicesList.size() > 0 ) {    
+            lines.push_back(
+                boolArrayToSparseCommaString( "spritesDrawnBehind",
+                                              inSpriteBehindPlayer, 
+                                              inNumSprites ) );
+            }
+        
+        if( additiveBlendIndicesList.size() > 0 ) {
+            lines.push_back(
+                boolArrayToSparseCommaString( "spritesAdditiveBlend",
+                                              inSpriteAdditiveBlend, 
+                                              inNumSprites ) );
+            }
+        
+        
         lines.push_back(
             boolArrayToSparseCommaString( "headIndex",
                                           inSpriteIsHead, inNumSprites ) );
@@ -2296,6 +2823,9 @@ int addObject( const char *inDescription,
     r->vertContainRotationOffset = inVertContainRotationOffset;
     
     r->permanent = inPermanent;
+    r->noFlip = inNoFlip;
+    r->sideAccess = inSideAccess;
+    
     r->minPickupAge = inMinPickupAge;
     r->heldInHand = inHeldInHand;
     r->rideable = inRideable;
@@ -2308,6 +2838,25 @@ int addObject( const char *inDescription,
     r->leftBlockingRadius = inLeftBlockingRadius;
     r->rightBlockingRadius = inRightBlockingRadius;
     r->drawBehindPlayer = inDrawBehindPlayer;
+
+
+    r->anySpritesBehindPlayer = false;
+    r->spriteBehindPlayer = NULL;
+
+    if( drawBehindIndicesList.size() > 0 ) {    
+        r->anySpritesBehindPlayer = true;
+        r->spriteBehindPlayer = new char[ inNumSprites ];
+        memcpy( r->spriteBehindPlayer, inSpriteBehindPlayer, inNumSprites );
+        }
+    
+    
+    r->spriteAdditiveBlend = NULL;
+    
+    if( additiveBlendIndicesList.size() > 0 ) {
+        r->spriteAdditiveBlend = new char[ inNumSprites ];
+        memcpy( r->spriteAdditiveBlend, inSpriteAdditiveBlend, inNumSprites );
+        }
+
     
     r->wide = ( r->leftBlockingRadius > 0 || r->rightBlockingRadius > 0 );
     
@@ -2339,11 +2888,16 @@ int addObject( const char *inDescription,
     r->deathMarker = inDeathMarker;
     
     deathMarkerObjectIDs.deleteElementEqualTo( newID );
+    allPossibleDeathMarkerIDs.deleteElementEqualTo( newID );
     
     if( r->deathMarker ) {
         deathMarkerObjectIDs.push_back( newID );
         }
-
+    if( strstr( r->description, "fromDeath" ) != NULL ) {
+        allPossibleDeathMarkerIDs.push_back( newID );
+        }
+    
+    
     r->homeMarker = inHomeMarker;
     r->floor = inFloor;
     r->floorHugging = inFloorHugging;
@@ -2359,6 +2913,7 @@ int addObject( const char *inDescription,
     r->eatingSound = copyUsage( inEatingSound );
     r->decaySound = copyUsage( inDecaySound );
     r->creationSoundInitialOnly = inCreationSoundInitialOnly;
+    r->creationSoundForce = inCreationSoundForce;
 
     r->numSlots = inNumSlots;
     r->slotSize = inSlotSize;
@@ -2389,6 +2944,7 @@ int addObject( const char *inDescription,
     r->spriteInvisibleWhenHolding = new char[ inNumSprites ];
     r->spriteInvisibleWhenWorn = new int[ inNumSprites ];
     r->spriteBehindSlots = new char[ inNumSprites ];
+    r->spriteInvisibleWhenContained = new char[ inNumSprites ];
 
     r->spriteIsHead = new char[ inNumSprites ];
     r->spriteIsBody = new char[ inNumSprites ];
@@ -2403,6 +2959,8 @@ int addObject( const char *inDescription,
     r->useDummyIDs = NULL;
     r->isUseDummy = false;
     r->useDummyParent = 0;
+    r->thisUseDummyIndex = -1;
+    
     r->cachedHeight = newHeight;
     
     r->spriteSkipDrawing = new char[ inNumSprites ];
@@ -2444,8 +3002,21 @@ int addObject( const char *inDescription,
     r->variableDummyIDs = NULL;
     r->isVariableDummy = false;
     r->variableDummyParent = 0;
+    r->thisVariableDummyIndex = -1;
     r->isVariableHidden = false;
+
+
+    setupObjectWritingStatus( r );
     
+    setupObjectGlobalTriggers( r );
+    
+    setupObjectSpeechPipe( r );
+    
+    setupFlight( r );
+    
+    setupOwned( r );
+    
+
     memset( r->spriteSkipDrawing, false, inNumSprites );
     
 
@@ -2473,6 +3044,9 @@ int addObject( const char *inDescription,
     memcpy( r->spriteBehindSlots, inSpriteBehindSlots, 
             inNumSprites * sizeof( char ) );
 
+    memcpy( r->spriteInvisibleWhenContained, inSpriteInvisibleWhenContained, 
+            inNumSprites * sizeof( char ) );
+
 
     memcpy( r->spriteIsHead, inSpriteIsHead, 
             inNumSprites * sizeof( char ) );
@@ -2485,6 +3059,10 @@ int addObject( const char *inDescription,
 
     memcpy( r->spriteIsFrontFoot, inSpriteIsFrontFoot, 
             inNumSprites * sizeof( char ) );
+
+
+    setupEyesAndMouth( r );
+    
 
 
     memcpy( r->spriteUseVanish, inSpriteUseVanish, 
@@ -2580,6 +3158,13 @@ void setObjectDrawLayerCutoff( int inCutoff ) {
     }
 
 
+static char drawingContained = false;
+
+void setDrawnObjectContained( char inContained ) {
+    drawingContained = inContained;
+    }
+
+
 
 HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                        doublePair inPos,
@@ -2590,6 +3175,10 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                        ClothingSet inClothing,
                        double inScale ) {
     
+    if( inObject->noFlip ) {
+        inFlipH = false;
+        }
+
     HoldingPos returnHoldingPos = { false, {0, 0}, 0 };
     
     SimpleVector <int> frontArmIndices;
@@ -2659,6 +3248,10 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
         if( inObject->person &&
             ! isSpriteVisibleAtAge( inObject, i, inAge ) ) {    
             // skip drawing this aging layer entirely
+            continue;
+            }
+        if( drawingContained &&
+            inObject->spriteInvisibleWhenContained[i] ) {
             continue;
             }
         if( inObject->clothing != 'n' && 
@@ -2891,7 +3484,15 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                     setDrawFade( 0.0f );
                     }
                 }
-            
+
+            char additive = false;
+            if( inObject->spriteAdditiveBlend != NULL ) {
+                additive = inObject->spriteAdditiveBlend[i];
+                }
+            if( additive ) {
+                toggleAdditiveBlend( true );
+                }
+
             drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
                         rot, 
                         logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
@@ -2900,7 +3501,9 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                 toggleMultiplicativeBlend( false );
                 toggleAdditiveTextureColoring( false );
                 }
-            
+            if( additive ) {
+                toggleAdditiveBlend( false );
+                }
             
             // this is the front-most drawn hand
             // in unanimated, unflipped object
@@ -2921,12 +3524,14 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             }
         
         // shoes on top of feet
-        if( inClothing.backShoe != NULL && i == backFootIndex ) {
+        if( ! skipSprite && 
+            inClothing.backShoe != NULL && i == backFootIndex ) {
             drawObject( inClothing.backShoe, 2,
                         backShoePos, backShoeRot, true,
                         inFlipH, -1, 0, false, false, emptyClothing );
             }
-        else if( inClothing.frontShoe != NULL && i == frontFootIndex ) {
+        else if( ! skipSprite &&
+                 inClothing.frontShoe != NULL && i == frontFootIndex ) {
             drawObject( inClothing.frontShoe, 2,
                         frontShoePos, frontShoeRot, true,
                         inFlipH, -1, 0, false, false, emptyClothing );
@@ -2971,6 +3576,8 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                 inHeldNotInPlaceYet,
                 inClothing );
 
+    
+    setDrawnObjectContained( true );
     
     int numSlots = getNumContainerSlots( inObject->id );
     
@@ -3104,6 +3711,8 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
         
         }
     
+    setDrawnObjectContained( false );
+
     return drawObject( inObject, 1, inPos, inRot, inWorn, inFlipH, inAge, 
                        inHideClosestArm,
                        inHideAllLimbs,
@@ -3214,6 +3823,15 @@ int *getRaces( int *outNumRaces ) {
 
 
 
+int getRaceSize( int inRace ) {
+    if( inRace > MAX_RACE ) {
+        return 0;
+        }
+    return racePersonObjectIDs[ inRace ].size();
+    }
+
+
+
 int getRandomPersonObjectOfRace( int inRace ) {
     if( inRace > MAX_RACE ) {
         inRace = MAX_RACE;
@@ -3232,7 +3850,8 @@ int getRandomPersonObjectOfRace( int inRace ) {
 
 
 
-int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
+int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan,
+                           char inForceGirl ) {
     
     if( inRace > MAX_RACE ) {
         inRace = MAX_RACE;
@@ -3243,7 +3862,7 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
         }
 
     if( racePersonObjectIDs[ inRace ].size() == 1 ) {
-        // no choice in this race
+        // no choice in this race, return mother
         return racePersonObjectIDs[ inRace ].getElementDirect( 0 );
         }
     
@@ -3263,52 +3882,102 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan ) {
         return racePersonObjectIDs[ inRace ].getElementDirect( nonMotherIndex );
         }
     
+    
+    // at least 3 people in this race
 
+    
     // never have offset 0, so we can't ever have ourself as a baby
     if( inFamilySpan < 1 ) {
         inFamilySpan = 1;
         }
-    int offset = randSource.getRandomBoundedInt( 1, inFamilySpan );
-    
-    if( randSource.getRandomBoolean() ) {
-        offset = -offset;
-        }
-    
-    int familyIndex = motherIndex + offset;
 
-    int indexOver = false;
+    // first, collect all people in this span
+    SimpleVector<int> spanPeople;
+    int boyCount = 0;
+    int girlCount = 0;
     
-    while( familyIndex >= racePersonObjectIDs[ inRace ].size() ) {
-        familyIndex -= racePersonObjectIDs[ inRace ].size();
-        indexOver = true;
-        }
-    while( familyIndex < 0  ) {
-        familyIndex += racePersonObjectIDs[ inRace ].size();
-        }
-    
-    
-    if( familyIndex == motherIndex ) {
-        // wrapped back around to mother
-        if( ! indexOver ) {
-            // wrapped below 0, keep going down
-            familyIndex --;
-            }
-        else if( indexOver ) {
-            // wrapped above top, keep going up
-            familyIndex ++;
-            }
+    for( int o=1; o<=inFamilySpan; o++ ) {
+        for( int s=-1; s<=1; s+=2 ) {
+            
+            int familyIndex = motherIndex + o * s;
+        
+            while( familyIndex >= racePersonObjectIDs[ inRace ].size() ) {
+                familyIndex -= racePersonObjectIDs[ inRace ].size();
+                }
+            while( familyIndex < 0 ) {
+                familyIndex += racePersonObjectIDs[ inRace ].size();
+                }
+            
+            if( familyIndex != motherIndex ) {
+                // never add mother to collection
 
-        // watch for more wrap-around after avoiding mother index
-        if( familyIndex >= racePersonObjectIDs[ inRace ].size() ) {
-            familyIndex -= racePersonObjectIDs[ inRace ].size();
+                int pID = 
+                    racePersonObjectIDs[ inRace ].
+                    getElementDirect( familyIndex );
+                if( spanPeople.getElementIndex( pID ) == -1 ) {
+                    // not added yet
+                    spanPeople.push_back( pID );
+                    
+                    if( getObject( pID )->male ) {
+                        boyCount++;
+                        }
+                    else {
+                        girlCount++;
+                        }
+                    }
+                }
+            }    
+        }
+    
+    // now we have a collection of unique possible offspring
+
+    while( boyCount > girlCount && girlCount >= 1 ) {
+        // duplicate a girl
+        for( int p=0; p<spanPeople.size(); p++ ) {
+            int pID = spanPeople.getElementDirect( p );
+            
+            if( ! getObject( pID )->male ) {
+                spanPeople.push_back( pID );
+                girlCount++;
+                if( girlCount == boyCount ) {
+                    break;
+                    }
+                }
             }
-        else if( familyIndex < 0 ) {
-            familyIndex += racePersonObjectIDs[ inRace ].size();
+        }
+
+    while( girlCount > boyCount && boyCount >= 1 ) {
+        // duplicate a boy
+        for( int p=0; p<spanPeople.size(); p++ ) {
+            int pID = spanPeople.getElementDirect( p );
+            
+            if( getObject( pID )->male ) {
+                spanPeople.push_back( pID );
+                boyCount++;
+                if( girlCount == boyCount ) {
+                    break;
+                    }
+                }
             }
         }
 
     
-    return racePersonObjectIDs[ inRace ].getElementDirect( familyIndex );
+    if( inForceGirl && girlCount > 0 ) {
+        // remove boys from list
+        for( int p=0; p<spanPeople.size(); p++ ) {
+            int pID = spanPeople.getElementDirect( p );
+            
+            if( getObject( pID )->male ) {
+                spanPeople.deleteElement( p );
+                p--;
+                }
+            }    
+        }
+    
+
+    int pick = randSource.getRandomBoundedInt( 0, spanPeople.size() - 1 );
+    
+    return spanPeople.getElementDirect( pick );
     }
 
 
@@ -3366,6 +4035,12 @@ int getRandomDeathMarker() {
     return deathMarkerObjectIDs.getElementDirect( 
         randSource.getRandomBoundedInt( 0, 
                                         deathMarkerObjectIDs.size() - 1  ) );
+    }
+
+
+
+SimpleVector<int> *getAllPossibleDeathIDs() {
+    return &allPossibleDeathMarkerIDs;
     }
 
 
@@ -3642,7 +4317,6 @@ double getClosestObjectPart( ObjectRecord *inObject,
         bodyPos = inObject->spritePos[ bodyIndex ];
         }
 
-    int backArmTopIndex = getBackArmTopIndex( inObject, inAge );
     
     char tunicChecked = false;
     char hatChecked = false;
@@ -3682,8 +4356,13 @@ double getClosestObjectPart( ObjectRecord *inObject,
                     }
                 hatChecked = true;
                 }
-            else if( i < backArmTopIndex && ! tunicChecked ) {
+            else if( !tunicChecked && i < headIndex ) {
                 // bottom, tunic, and backpack behind back arm
+                // but ignore the arm when checking for clothing hit
+                // we never want to click on arm instead of the clothing
+                
+                // don't count clicks that land on head or above
+                // (head is in front of tunic)
                 
                 
                 cObj[0] = inClothing->backpack;        
@@ -4239,12 +4918,15 @@ char isSpriteVisibleAtAge( ObjectRecord *inObject,
     }
 
 
-
+// top-most body part that is flagged
 static int getBodyPartIndex( ObjectRecord *inObject,
                              char *inBodyPartFlagArray,
                              double inAge ) {
+    if( ! inObject->person ) {
+        return 0;
+        }
     
-    for( int i=0; i< inObject->numSprites; i++ ) {
+    for( int i = inObject->numSprites - 1; i >= 0; i-- ) {
         if( inBodyPartFlagArray[i] ) {
             
             if( ! isSpriteVisibleAtAge( inObject, i, inAge ) ) {
@@ -4285,6 +4967,21 @@ int getFrontFootIndex( ObjectRecord *inObject,
                   double inAge ) {
     return getBodyPartIndex( inObject, inObject->spriteIsFrontFoot, inAge );
     }
+
+
+
+int getEyesIndex( ObjectRecord *inObject,
+                  double inAge ) {
+    return getBodyPartIndex( inObject, inObject->spriteIsEyes, inAge );
+    }
+
+
+
+int getMouthIndex( ObjectRecord *inObject,
+                   double inAge ) {
+    return getBodyPartIndex( inObject, inObject->spriteIsMouth, inAge );
+    }
+
 
 
 
@@ -4442,7 +5139,9 @@ int getMaxWideRadius() {
 
 
 
-char isSpriteSubset( int inSuperObjectID, int inSubObjectID ) {
+char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
+                     SimpleVector<SubsetSpriteIndexMap> *outMapping ) {
+
     ObjectRecord *superO = getObject( inSuperObjectID );
     ObjectRecord *subO = getObject( inSubObjectID );
     
@@ -4453,23 +5152,55 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID ) {
     if( subO->numSprites == 0 ) {
         return true;
         }
-
+    else if( subO->numSprites == 1 &&
+             superO->numSprites >= 1 ) {
+        // special case:
+        // new object is a single-sprite object
+        
+        // treat it as a subset of old object if that sprite occurs
+        // at all, regardless of rotation, position, flip, etc.
+        int spriteID = subO->sprites[0];
+        
+        for( int ss=0; ss<superO->numSprites; ss++ ) {
+            if( superO->sprites[ ss ] == spriteID ) {
+                return true;
+                }
+            }
+        // if our sub-obj's single sprite does not occur, 
+        // it's definitely not a subset
+        return false;
+        }
+    
     // allow global position adjustments, as long as all sub-sprites in same
     // relative position to each other
     
-    int spriteSubSeroID = subO->sprites[0];
-    doublePair spriteSubZeroPos = subO->spritePos[0];
+    int spriteSubZeroID = subO->sprites[0];
+    doublePair spriteSubZeroPos = subO->spritePos[0];    
+    double spriteSubZeroRot = subO->spriteRot[0];
+    char spriteSubZeroFlip = subO->spriteHFlip[0];
 
     doublePair spriteSuperZeroPos;
     
-    // find zero sprite in super
-
+    // find sub's zero sprite in super
+    // if there is more than one matching, find one that is closest
+    // to pos of sub's zero sprite
     char found = false;
+    double minDist = 9999999;
+
     for( int ss=0; ss<superO->numSprites; ss++ ) {
-        if( superO->sprites[ ss ] == spriteSubSeroID ) {
+        if( superO->sprites[ ss ] == spriteSubZeroID &&
+            superO->spriteRot[ ss ] == spriteSubZeroRot &&
+            superO->spriteHFlip[ ss ] == spriteSubZeroFlip ) {
+            
             found = true;
-            spriteSuperZeroPos = superO->spritePos[ ss ];
-            break;
+            doublePair pos = superO->spritePos[ ss ];
+
+            double d = distance( pos, spriteSubZeroPos );
+            
+            if( d < minDist ) {
+                minDist = d;
+                spriteSuperZeroPos = pos;
+                }
             }
         }
     
@@ -4503,13 +5234,19 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID ) {
                 /* &&
                    equal( superO->spriteColor[ ss ], spriteColor ) */ ) {
                 
-
+                if( outMapping != NULL ) {
+                    SubsetSpriteIndexMap m = { s, ss };
+                    outMapping->push_back( m );
+                    }
                 found = true;
                 break;
                 }
             }
 
         if( !found ) {
+            if( outMapping != NULL ) {
+                outMapping->deleteAll();
+                }
             return false;
             }
         }
@@ -4668,10 +5405,54 @@ int hideIDForClient( int inObjectID ) {
             // hide from client
             inObjectID = o->variableDummyParent;
             }
+        else {
+            // this has any metadata stripped off
+            inObjectID = o->id;
+            }
         }
     return inObjectID;
     }
 
+
+
+void prepareToSkipSprites( ObjectRecord *inObject, 
+                           char inDrawBehind, char inSkipAll ) {
+    if( skipDrawingWorkingArea != NULL ) {
+        if( skipDrawingWorkingAreaSize < inObject->numSprites ) {
+            delete [] skipDrawingWorkingArea;
+            skipDrawingWorkingArea = NULL;
+            
+            skipDrawingWorkingAreaSize = 0;
+            }
+        }
+    if( skipDrawingWorkingArea == NULL ) {
+        skipDrawingWorkingAreaSize = inObject->numSprites;
+        skipDrawingWorkingArea = new char[ skipDrawingWorkingAreaSize ];
+        }
+    
+    memcpy( skipDrawingWorkingArea, 
+            inObject->spriteSkipDrawing, inObject->numSprites );
+    
+    for( int i=0; i< inObject->numSprites; i++ ) {
+        
+        if( inSkipAll ) {
+            inObject->spriteSkipDrawing[i] = true;
+            }
+        else if( inObject->spriteBehindPlayer[i] && ! inDrawBehind ) {
+            inObject->spriteSkipDrawing[i] = true;
+            }
+        else if( ! inObject->spriteBehindPlayer[i] && inDrawBehind ) {
+            inObject->spriteSkipDrawing[i] = true;
+            }
+        }
+    }
+
+
+
+void restoreSkipDrawing( ObjectRecord *inObject ) {
+    memcpy( inObject->spriteSkipDrawing, skipDrawingWorkingArea,
+            inObject->numSprites );
+    }
 
 
 

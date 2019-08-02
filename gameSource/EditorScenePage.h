@@ -39,6 +39,7 @@ typedef struct SceneCell {
         
         double heldAge;
         ClothingSet heldClothing;
+        Emotion *heldEmotion;
         
         double returnAge;
         double returnHeldAge;
@@ -68,8 +69,13 @@ typedef struct SceneCell {
         double moveDelayTime;
         
         double moveStartTime;
+        
+        int frameCount;
+        
 
         int graveID;
+        
+        Emotion *currentEmot;
 
     } SceneCell;
 
@@ -137,6 +143,7 @@ class EditorScenePage : public GamePage, public ActionListener {
         TextField mCellMoveDelayField;
         TextField mPersonMoveDelayField;
         
+        TextField mPersonEmotField;
 
         
         SpriteHandle mCellDestSprite;
@@ -217,7 +224,6 @@ class EditorScenePage : public GamePage, public ActionListener {
         void checkNextPrevVisible();
         
         void resizeGrid( int inNewH, int inNewW );
-
     };
 
         

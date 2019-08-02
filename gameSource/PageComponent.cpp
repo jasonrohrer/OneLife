@@ -298,6 +298,14 @@ void PageComponent::addComponent( PageComponent *inComponent ){
     }
 
 
+void PageComponent::removeComponent( PageComponent *inComponent ){
+
+    mComponents.deleteElementEqualTo( inComponent );
+
+    inComponent->setParent( NULL );
+    }
+
+
 
 void PageComponent::setWaiting( char inWaiting,
                                 char inWarningOnly ) {

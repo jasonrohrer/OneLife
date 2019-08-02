@@ -190,14 +190,10 @@ int main( int inNumArgs, char **inArgs ) {
     printf( "\n" );
 
 
-    num = initSoundBankStart();
+    num = initSoundBankStart( &rebuilding );
 
-    if( num > 0 ) {
-        runSteps( "sounds", num, &initSoundBankStep );
-        }
-    else {
-        printf( "No reverbs need to be generated\n" );
-        }
+    runSteps( "sounds", num, &initSoundBankStep );
+    
     initSoundBankFinish();
 
     printf( "\n" );
@@ -646,4 +642,20 @@ void startOutputAllFrames() {
 
 
 void stopOutputAllFrames() {
+    }
+
+
+void toggleAdditiveBlend( char ) {
+    }
+
+void drawSquare( doublePair, double ) {
+    }
+
+void startAddingToStencil( char, char, float ) {
+    }
+
+void startDrawingThroughStencil( char ) {
+    }
+
+void stopStencil() {
     }

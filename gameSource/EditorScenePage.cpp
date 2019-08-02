@@ -53,6 +53,8 @@ static doublePair cornerPos = { - 704, 360 };
 
 static char copyAreaSet = false;
 static SceneCell copyArea[ copyAreaSize ][ copyAreaSize ];
+static SceneCell copyFloorArea[ copyAreaSize ][ copyAreaSize ];
+static SceneCell copyPeopleArea[ copyAreaSize ][ copyAreaSize ];
 
 
 
@@ -84,7 +86,7 @@ EditorScenePage::EditorScenePage()
           mPersonAnimFreezeSlider( smallFont, 50, -340, 2,
                                    300, 20,
                                    -2, 2, "Person Time" ),
-          mCellSpriteVanishSlider( smallFont, -450, -300, 2,
+          mCellSpriteVanishSlider( smallFont, -450, -310, 2,
                                    100, 20,
                                    0, 1, "Use" ),
           mCellXOffsetSlider( smallFont, -450, -230, 2,
@@ -105,6 +107,9 @@ EditorScenePage::EditorScenePage()
           mPersonMoveDelayField( smallFont, 200, -290, 4,
                                false, "Move Delay Sec",
                                "0123456789." ),
+          mPersonEmotField( smallFont, 360, -290, 7,
+                               true, "Emot",
+                               "/ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" ),
           mCellDestSprite( loadSprite( "centerMark.tga" ) ),
           mPersonDestSprite( loadSprite( "internalPaperMark.tga" ) ),
           mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
@@ -216,6 +221,11 @@ EditorScenePage::EditorScenePage()
     addComponent( &mCellMoveDelayField );
     addComponent( &mPersonMoveDelayField );
     
+    addComponent( &mPersonEmotField );
+    mPersonEmotField.addActionListener( this );
+    mPersonEmotField.setVisible( false );
+    
+
     mCellMoveDelayField.setText( "0.0" );
     mPersonMoveDelayField.setText( "0.0" );
     
@@ -528,7 +538,15 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         checkNextPrevVisible();
         }
     else if( inTarget == &mNextSceneButton ) {
-        mSceneID++;
+        int jump = 1;
+        if( isCommandKeyDown() ) {
+            jump *= 5;
+            }
+        if( isShiftKeyDown() ) {
+            jump *= 5;
+            }
+
+        mSceneID += jump;
         while( mSceneID < mNextSceneNumber &&
                ! tryLoadScene( mSceneID ) ) {
             mSceneID++;
@@ -540,10 +558,18 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         restartAllMoves();
         }
     else if( inTarget == &mPrevSceneButton ) {
+        int jump = 1;
+        if( isCommandKeyDown() ) {
+            jump *= 5;
+            }
+        if( isShiftKeyDown() ) {
+            jump *= 5;
+            }
+        
         if( mSceneID == -1 ) {
             mSceneID = mNextSceneNumber;
             }
-        mSceneID--;
+        mSceneID -= jump;
         while( mSceneID >= 0 &&
                ! tryLoadScene( mSceneID ) ) {
             mSceneID--;
@@ -603,6 +629,24 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mPersonMoveDelayField ) {
         p->moveDelayTime = mPersonMoveDelayField.getFloat();
         restartAllMoves();
+        }
+    else if( inTarget == &mPersonEmotField ) {
+        char *text = mPersonEmotField.getText();
+
+        if( strstr( text, "/" ) == text ) {
+            // starts with /
+            p->currentEmot = getEmotion( getEmotionIndex( text ) );
+            }
+        else {
+            // check for straight number
+            int readNum = -1;
+            sscanf( text, "%d", &readNum );
+            
+            if( readNum >= 0 ) {
+                p->currentEmot = getEmotion( readNum );
+                }
+            }
+        delete [] text;
         }
     }
 
@@ -741,6 +785,7 @@ void EditorScenePage::checkVisible() {
     mCellMoveDelayField.setVisible( true );
     mPersonMoveDelayField.setVisible( true );
     
+    mPersonEmotField.setVisible( true );
 
 
 
@@ -813,6 +858,16 @@ void EditorScenePage::checkVisible() {
         
         mPersonXOffsetSlider.setValue( p->xOffset );
         mPersonYOffsetSlider.setValue( p->yOffset );
+        
+        
+        mPersonEmotField.setVisible( true );
+
+        if( p->currentEmot != NULL ) {
+            mPersonEmotField.setText( p->currentEmot->triggerWord );
+            }
+        else {
+            mPersonEmotField.setText( "" );
+            }
         }
     else {
         mPersonAgeSlider.setVisible( false );
@@ -821,6 +876,9 @@ void EditorScenePage::checkVisible() {
         
         mPersonXOffsetSlider.setVisible( false );
         mPersonYOffsetSlider.setVisible( false );
+
+        
+        mPersonEmotField.setVisible( false );
         }
     }
 
@@ -830,6 +888,8 @@ void EditorScenePage::checkVisible() {
 static void stepMovingCell( SceneCell *inC ) {
     SceneCell *c = inC;
     
+    c->frameCount++;
+
     if( c->oID <= 0 ) {
         return;
         }
@@ -839,7 +899,7 @@ static void stepMovingCell( SceneCell *inC ) {
         }
 
     if( c->moveDelayTime > 0 ) {
-        if( c->moveStartTime + c->moveDelayTime > Time::getCurrentTime() ) {
+        if( c->moveDelayTime * 60 / frameRateFactor > c->frameCount ) {
             return;
             }
         }
@@ -881,6 +941,7 @@ static void stepMovingCell( SceneCell *inC ) {
     
     if( wrap ) {
         c->moveStartTime = Time::getCurrentTime();
+        c->frameCount = 0;
         }
 
     c->moveOffset.x = c->destCellXOffset * c->moveFractionDone * CELL_D;
@@ -900,6 +961,7 @@ static void restartCell( SceneCell *inC ) {
         c->moveOffset.x = 0;
         c->moveOffset.y = 0;
         c->moveStartTime = Time::getCurrentTime();
+        c->frameCount = 0;
         }
     }
 
@@ -972,7 +1034,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
             if( y > mCurY + 4 || 
                 y < mCurY -4 ||
                 x > mCurX + 7 || 
-                x < mCurX -6 ) {
+                x < mCurX -7 ) {
                 
                 continue;
                 }
@@ -981,7 +1043,9 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
             pos.x += mShiftX * CELL_D;
             pos.y += mShiftY * CELL_D;
 
-
+            pos.x += 32;
+            pos.y -= 32;
+            
             SceneCell *c = &( mCells[y][x] );
             
             if( c->biome != -1 ) {
@@ -1192,8 +1256,9 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
         // draw behind stuff first, b=0
         // then people, b=1, with permanent objects in front
         // then non-permanent objects, b=2
-        // then walls (floor hugging), b=3
-        for( int b=0; b<4; b++ ) {
+        // then non-container walls (floor hugging, no slots), b=3
+        // then container walls (floor hugging, some slots), b=4
+        for( int b=0; b<5; b++ ) {
             
 
             if( b == 1 ) {
@@ -1238,6 +1303,15 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             heldObject = getObject( p->heldID );
                             }
                 
+
+                        char splitHeld = false;
+                        
+                        if( heldObject != NULL &&
+                            heldObject->rideable &&
+                            heldObject->anySpritesBehindPlayer ) {
+                            splitHeld = true;
+                            }
+
                         getArmHoldingParameters( heldObject, 
                                                  &hideClosestArm, 
                                                  &hideAllLimbs );
@@ -1252,7 +1326,12 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         double thisFrameTime = p->frozenAnimTime;
                         
                         if( thisFrameTime < 0 ) {
-                            thisFrameTime = frameTime + abs( thisFrameTime );
+                            thisFrameTime = frameTime + fabs( thisFrameTime );
+                            }
+                        
+                        
+                        if( heldObject != NULL ) {
+                            thisFrameTime *= heldObject->speedMult;
                             }
                         
                         double frozenRotFrameTime = thisFrameTime;
@@ -1307,6 +1386,19 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             }
                         else {
                             
+                            setAnimationEmotion( p->currentEmot );
+                            
+                            ClothingSet clothingToDraw = p->clothing;
+                            
+                            if( splitHeld ) {
+                                // don't actually draw person now
+                                // sandwitch them in between layers of 
+                                // held later
+                                prepareToSkipSprites( getObject( p->oID ),
+                                                      false, true );
+                                clothingToDraw = getEmptyClothingSet();
+                                }
+
                             holdingPos =
                             drawObjectAnim( p->oID, 2, p->anim, 
                                             thisFrameTime, 
@@ -1325,8 +1417,13 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                             hideClosestArm,
                                             hideAllLimbs,
                                             false,
-                                            p->clothing,
+                                            clothingToDraw,
                                             NULL );
+                            if( splitHeld ) {
+                                restoreSkipDrawing( getObject( p->oID ) );
+                                }
+
+                            setAnimationEmotion( NULL );
                             }
                     
                         if( heldObject != NULL ) {
@@ -1370,6 +1467,60 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             SimpleVector<int> *subContained = 
                                 p->subContained.getElementArray();
 
+                            setAnimationEmotion( p->heldEmotion );
+                            
+                            if( splitHeld ) {
+                                // draw behind part
+                                prepareToSkipSprites( getObject( p->heldID ), 
+                                                      true );
+                                drawObjectAnim( p->heldID,  
+                                                heldAnimType, thisFrameTime,
+                                                0, 
+                                                heldFadeTargetType, 
+                                                thisFrameTime, 
+                                                heldFrozenRotFrameTime,
+                                                &used,
+                                                moving,
+                                                moving,
+                                                holdPos, holdRot, 
+                                                false, p->flipH, 
+                                                heldAge,
+                                                false,
+                                                false,
+                                                false,
+                                                heldClothing,
+                                                NULL,
+                                                p->contained.size(), contained,
+                                                subContained );
+                                restoreSkipDrawing( getObject( p->heldID ) );
+
+                                // now draw player in between
+                                drawObjectAnim( p->oID, 2, p->anim, 
+                                                thisFrameTime, 
+                                                0,
+                                                p->anim,
+                                                thisFrameTime,
+                                                frozenRotFrameTime,
+                                                &used,
+                                                frozenArmAnimType,
+                                                frozenArmAnimType,
+                                                personPos,
+                                                0,
+                                                false,
+                                                p->flipH,
+                                                p->age,
+                                                hideClosestArm,
+                                                hideAllLimbs,
+                                                false,
+                                                p->clothing,
+                                                NULL );
+
+                                // draw front part of held
+                                prepareToSkipSprites( getObject( p->heldID ), 
+                                                      false );
+                                }
+                            
+
                             drawObjectAnim( p->heldID,  
                                             heldAnimType, thisFrameTime,
                                             0, 
@@ -1389,6 +1540,12 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                             NULL,
                                             p->contained.size(), contained,
                                             subContained );
+                            
+                            if( splitHeld ) {
+                                restoreSkipDrawing( getObject( p->heldID ) );
+                                }
+
+                            setAnimationEmotion( NULL );
                             delete [] contained;
                             delete [] subContained;
                             }
@@ -1418,18 +1575,28 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     
                     ObjectRecord *o = getObject( c->oID );
                     
-                    if( ( b == 0 && ! o->drawBehindPlayer ) 
+                    if( ( b == 0 && ! ( o->drawBehindPlayer || 
+                                        o->anySpritesBehindPlayer ) )
                         ||
                         ( b != 0 && o->drawBehindPlayer ) ) {
                         continue;
                         }
-                    if( ( b == 3 && ! o->floorHugging ) 
+                    if( ( b == 3 && 
+                          ! ( o->floorHugging && o->numSlots == 0 )  ) 
                         ||
-                        ( b != 3 && o->floorHugging 
-                          && ! o->drawBehindPlayer) ) {
+                        ( b != 3 && o->floorHugging && o->numSlots == 0 
+                          && ! ( o->drawBehindPlayer || 
+                                 o->anySpritesBehindPlayer ) ) ) {
                         continue;
                         }
+
                     
+                    if( b == 4 &&
+                        ! ( o->floorHugging && o->numSlots > 0 ) ) {
+                        continue;
+                        }
+
+
                     if( ( b == 1 && ! o->permanent ) ||
                         ( b == 2 && o->permanent ) ) {
                         continue;
@@ -1448,7 +1615,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     double thisFrameTime = c->frozenAnimTime;
                         
                     if( thisFrameTime < 0 ) {
-                        thisFrameTime = frameTime + abs( thisFrameTime );
+                        thisFrameTime = frameTime + fabs( thisFrameTime );
                         }
 
                 
@@ -1471,6 +1638,17 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     
                     if( c->anim == moving ) {
                         frozenRotFrameTime = thisFrameTime;
+                        }
+                    
+
+                    char skippingSome = false;
+                    if( b == 0 && cellO->anySpritesBehindPlayer ) {
+                        prepareToSkipSprites( cellO, true );
+                        skippingSome = true;
+                        }
+                    else if( b != 0 && cellO->anySpritesBehindPlayer ) {
+                        prepareToSkipSprites( cellO, false );
+                        skippingSome = true;
                         }
 
                     drawObjectAnim( c->oID, c->anim, 
@@ -1497,6 +1675,9 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     delete [] contained;
                     delete [] subContained;
 
+                    if( skippingSome ) {
+                        restoreSkipDrawing( cellO );
+                        }
                                         
                     // restore default sprite vanish
                     if( cellO->numUses > 1 ) {
@@ -1696,7 +1877,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
     delete [] posStringY;
 
     if( c->oID > 0 ) {
-        doublePair pos = { -500, -300 };
+        doublePair pos = { -400, -290 };
         
         char *s = autoSprintf( "oID=%d  %s", c->oID,
                                getObject( c->oID )->description );
@@ -1776,6 +1957,20 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
         
         }
     
+    if( mReplaceButton.isVisible() ) {
+        
+        doublePair pos = mReplaceButton.getPosition();
+        
+        pos.y += 32;
+        pos.x -= 40;
+        
+        char *s = autoSprintf( "Scene %d", mSceneID );
+        
+        drawOutlineString( s, pos, alignLeft );
+        delete [] s;
+        }
+    
+
     }
 
 
@@ -1885,6 +2080,11 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
     if( inASCII == 'w' ) {
         mShowWhite = ! mShowWhite;
         }
+    else if( inASCII == 't' ) {
+        mFrameCount = 0;
+        restartAllMoves();
+        skipCheckVisible = true;
+        }
     else if( inASCII == 'o' ) {
         mZeroX = mCurX;
         mZeroY = mCurY;
@@ -1929,6 +2129,10 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
                 
                 copyArea[ y - mCurY ][ x - mCurX ] 
                     = mCells[ y ][ x ];
+                copyFloorArea[ y - mCurY ][ x - mCurX ] 
+                    = mFloorCells[ y ][ x ];
+                copyPeopleArea[ y - mCurY ][ x - mCurX ] 
+                    = mPersonCells[ y ][ x ];
                 }
             }
         copyAreaSet = true;
@@ -1966,6 +2170,10 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
                 
                     mCells[ y ][ x ] = 
                         copyArea[ y - mCurY ][ x - mCurX ];
+                    mFloorCells[ y ][ x ] = 
+                        copyFloorArea[ y - mCurY ][ x - mCurX ];
+                    mPersonCells[ y ][ x ] = 
+                        copyPeopleArea[ y - mCurY ][ x - mCurX ];
                     }
                 }
             }
@@ -2034,6 +2242,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
                 p->heldClothing = mCopyBuffer.clothing;
                 p->heldAge = mCopyBuffer.age;
                 p->returnHeldAge = p->heldAge;
+                p->heldEmotion = mCopyBuffer.currentEmot;
                 }
             }
         }
@@ -2095,6 +2304,8 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->clothing = getEmptyClothingSet();
     inCell->heldClothing = getEmptyClothingSet();
     
+    inCell->heldEmotion = NULL;
+    
     inCell->contained.deleteAll();
     inCell->subContained.deleteAll();    
     
@@ -2114,6 +2325,8 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->moveOffset.y = 0;
 
     inCell->moveDelayTime = 0;
+    
+    inCell->currentEmot = NULL;
     }
 
 
@@ -2558,6 +2771,7 @@ char EditorScenePage::tryLoadScene( int inSceneID ) {
     char r = false;
     
     if( f->exists() && ! f->isDirectory() ) {
+        printf( "Trying to load scene %d\n", inSceneID );
         
         
         char *fileText = f->readFileContents();

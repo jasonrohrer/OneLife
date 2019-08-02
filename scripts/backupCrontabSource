@@ -1,0 +1,4 @@
+SHELL=/bin/bash
+
+
+0 10 * * * /home/jcr13/checkout/OneLife/scripts/backupCron.sh

@@ -18,8 +18,7 @@ class HashTable {
                      char *outFound );
 
         // pointer to entry
-        Type *lookupPointer( int inKeyA, int inKeyB, int inKeyC, int inKeyD,
-                             char *outFound );
+        Type *lookupPointer( int inKeyA, int inKeyB, int inKeyC, int inKeyD );
         
         void insert( int inKeyA, int inKeyB, int inKeyC, int inKeyD,
                      Type inItem );
@@ -156,16 +155,15 @@ Type HashTable<Type>::lookup( int inKeyA, int inKeyB, int inKeyC, int inKeyD,
 
 template <class Type> 
 Type *HashTable<Type>::lookupPointer( int inKeyA, int inKeyB, int inKeyC,
-                                      int inKeyD,
-                                      char *outFound ) {
+                                      int inKeyD ) {
     
     int hashKey;
 
     int bin;
     
-    *outFound = lookupBin( inKeyA, inKeyB, inKeyC, inKeyD, &hashKey, &bin );
+    char found = lookupBin( inKeyA, inKeyB, inKeyC, inKeyD, &hashKey, &bin );
 
-    if( *outFound ) {
+    if( found ) {
                 
         return mTable[ hashKey ].getElement( bin );
         }

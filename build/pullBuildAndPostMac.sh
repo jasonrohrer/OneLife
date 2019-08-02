@@ -33,6 +33,18 @@ git pull
 
 ./configure 2
 cd gameSource
+
+
+cppFileVer=$(grep versionNumber game.cpp | head -1 | sed -e 's/[^0-9]*//g' );
+
+
+if [ $2 -ne $cppFileVer ] ; then
+   echo "game.cpp version number mismatch (found '$cppFileVer', expecting $2)."
+   exit 1
+fi
+
+
+
 make
 
 cd ../build
@@ -43,6 +55,12 @@ cd ../build
 cd mac
 
 ../../../minorGems/game/diffBundle/diffBundle OneLife_v$1 OneLife_v$2 $2_inc_mac.dbz
+
+
+echo
+echo -n "Press ENTER to scp diff bundle to web server."
+
+read userIn
 
 
 scp $2_inc_mac.dbz jcr15@onehouronelife.com:diffBundles/ 

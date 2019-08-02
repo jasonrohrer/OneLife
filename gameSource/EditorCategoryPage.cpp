@@ -47,10 +47,17 @@ char parentUnpickable( int inID ) {
     
     
 
-    if( getNumCategoriesForObject( inID ) > 0 ) {
-        // already a child, can't be a parent
-        return true;
+    int num = getNumCategoriesForObject( inID );
+    
+    for( int i=0; i<num; i++ ) {
+        if( ! 
+            getCategory( getCategoryForObject( inID, i ) )->isProbabilitySet ) {
+            
+            // already a child of a non-prob-set category, can't be a parent
+            return true;
+            }
         }
+    
     return false;
     }
 
@@ -72,7 +79,9 @@ EditorCategoryPage::EditorCategoryPage()
         : mObjectParentPicker( &objectPickableParent, -410, 90 ),
           mObjectChildPicker( &objectPickableChild, +410, 90 ),
           mTransEditorButton( mainFont, 0, 260, "Transitions" ),
-          mIsPatternCheckbox( 170, 0, 2 ) {
+          mIsPatternCheckbox( 220, 0, 2 ),
+          mIsProbSetCheckbox( 220, -20, 2 ),
+          mMakeUniformButton( smallFont, 220, -80, "Make Uniform" ) {
     
     mObjectChildPicker.addFilter( &childUnpickable );
     mObjectParentPicker.addFilter( &parentUnpickable );
@@ -82,6 +91,8 @@ EditorCategoryPage::EditorCategoryPage()
     addComponent( &mObjectParentPicker );
     addComponent( &mTransEditorButton );
     addComponent( &mIsPatternCheckbox );
+    addComponent( &mIsProbSetCheckbox );
+    addComponent( &mMakeUniformButton );
     
 
     mObjectChildPicker.addActionListener( this );
@@ -90,15 +101,20 @@ EditorCategoryPage::EditorCategoryPage()
     mTransEditorButton.addActionListener( this );
     
     mIsPatternCheckbox.addActionListener( this );
+    mIsProbSetCheckbox.addActionListener( this );
     
+    mMakeUniformButton.addActionListener( this );
+
     mIsPatternCheckbox.setVisible( false );
+    mIsProbSetCheckbox.setVisible( false );
     
+    mMakeUniformButton.setVisible( false );
 
     mCurrentObject = -1;
     mCurrentCategory = -1;
     
     mSelectionIndex = 0;
-
+    mCurrentWeightDigit = 0;
 
     addKeyClassDescription( &mKeyLegend, "Up/Down", "Change selection" );
     addKeyClassDescription( &mKeyLegend, "Pg Up/Down", "Change order" );
@@ -171,6 +187,26 @@ void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
         if( mCurrentCategory != -1 ) {
             setCategoryIsPattern( mCurrentCategory, set );
             }
+        if( set ) {
+            mIsProbSetCheckbox.setToggled( false );
+            mMakeUniformButton.setVisible( false );
+            }
+        }
+    else if( inTarget == &mIsProbSetCheckbox ) {
+        char set = mIsProbSetCheckbox.getToggled();
+        
+        if( mCurrentCategory != -1 ) {
+            setCategoryIsProbabilitySet( mCurrentCategory, set );
+            }
+        if( set ) {
+            mIsPatternCheckbox.setToggled( false );
+            }
+        mMakeUniformButton.setVisible( set && mCurrentCategory != -1);
+        }
+    else if( inTarget == &mMakeUniformButton ) {
+        if( mCurrentCategory != -1 ) {
+            makeWeightUniform( mCurrentCategory );
+            }
         }
     }
 
@@ -178,6 +214,7 @@ void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
 
 static void drawObjectList( char inCategories, 
                             SimpleVector<int> *inList,
+                            SimpleVector<float> *inWeights = NULL,
                             int inSelectionIndex = -1 ) {
 
     int num = inList->size();
@@ -233,6 +270,21 @@ static void drawObjectList( char inCategories,
             
         setDrawFade( fade );
         drawRect( pos, 150, spacing / 2  );
+
+        doublePair weightTextPos = pos;
+        
+        if( inWeights != NULL ) {
+            doublePair probBoxPos = pos;
+            
+            double probBoxWidth = 70;
+            probBoxPos.x += 150 + probBoxWidth / 2 + 2;
+            
+            drawRect( probBoxPos, probBoxWidth/2, spacing / 2  );
+            
+            weightTextPos = probBoxPos;
+            weightTextPos.x -= probBoxWidth / 2 - 10;
+            }
+
             
         FloatColor tempColor = boxColor;
         boxColor = altBoxColor;
@@ -255,6 +307,16 @@ static void drawObjectList( char inCategories,
         smallFont->drawString( getObject( objID )->description, 
                                textPos, alignLeft );
         
+        if( inWeights != NULL ) {
+            float prob = inWeights->getElementDirect( i );
+            char *probString = autoSprintf( "%.3f", prob );
+            
+            smallFont->drawString( probString, 
+                                   weightTextPos, alignLeft );
+            delete [] probString;
+            }
+
+
         if( inCategories && getCategory( objID )->isPattern ) {
             
             textPos.x -= 20;
@@ -262,6 +324,14 @@ static void drawObjectList( char inCategories,
             smallFont->drawString( "Pat", 
                                    textPos, alignRight );
             }
+        else if( inCategories && getCategory( objID )->isProbabilitySet ) {
+            
+            textPos.x -= 20;
+            
+            smallFont->drawString( "Prob", 
+                                   textPos, alignRight );
+            }
+        
         
         pos.y -= spacing;
         }
@@ -321,7 +391,7 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
             cats.push_back( getCategoryForObject( mCurrentObject, i ) );
             }
     
-        drawObjectList( true, &cats, mSelectionIndex );
+        drawObjectList( true, &cats, NULL, mSelectionIndex );
         }
     else if( mCurrentCategory != -1 ) {
         CategoryRecord *cat = getCategory( mCurrentCategory );
@@ -333,13 +403,32 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
                 pos.x -= 12;
                 smallFont->drawString( "Pattern", pos, alignRight );
                 }
+            if( mIsProbSetCheckbox.isVisible() ) {
+                pos = mIsProbSetCheckbox.getPosition();
+                pos.x -= 12;
+                smallFont->drawString( "Prob Set", pos, alignRight );
+                
+                if( mIsProbSetCheckbox.getToggled() ) {
+                    pos = mIsProbSetCheckbox.getPosition();
+                    pos.y -= 20;
+                    smallFont->drawString( "0-9 = enter prob digits", pos,
+                                           alignCenter );
+                    }
+                }
 
+            SimpleVector<float> *w = NULL;
+            if( cat->isProbabilitySet ) {
+                w = &( cat->objectWeights );
+                }
             
-            drawObjectList( false, &( cat->objectIDSet ), mSelectionIndex );
+            drawObjectList( false, &( cat->objectIDSet ), w, mSelectionIndex );
             }
         else {
             mIsPatternCheckbox.setToggled( false );
             mIsPatternCheckbox.setVisible( false );
+
+            mIsProbSetCheckbox.setToggled( false );
+            mIsProbSetCheckbox.setVisible( false );
             }
         }
     
@@ -363,6 +452,10 @@ void EditorCategoryPage::updateCheckbox() {
             if( cat->objectIDSet.size() > 0 ) {
                 mIsPatternCheckbox.setVisible( true );
                 mIsPatternCheckbox.setToggled( cat->isPattern );
+
+                mIsProbSetCheckbox.setVisible( true );
+                mIsProbSetCheckbox.setToggled( cat->isProbabilitySet );
+                mMakeUniformButton.setVisible( cat->isProbabilitySet );
                 vis = true;
                 }
             else {
@@ -378,6 +471,9 @@ void EditorCategoryPage::updateCheckbox() {
     if( vis == false ) {
         mIsPatternCheckbox.setVisible( false );
         mIsPatternCheckbox.setToggled( false );
+        mIsProbSetCheckbox.setVisible( false );
+        mIsProbSetCheckbox.setToggled( false );
+        mMakeUniformButton.setVisible( false );
         }
     }
 
@@ -388,6 +484,8 @@ void EditorCategoryPage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+    
+    mCurrentWeightDigit = 0;
     
     mObjectChildPicker.redoSearch( false );
     mObjectParentPicker.redoSearch( false );
@@ -424,6 +522,7 @@ void EditorCategoryPage::keyDown( unsigned char inASCII ) {
     
     if( inASCII == 8 ) {
         // backspace
+        mCurrentWeightDigit = 0;
         if( mCurrentObject != -1 ) {
             int catID = getCategoryForObject( mCurrentObject, mSelectionIndex );
             
@@ -460,6 +559,44 @@ void EditorCategoryPage::keyDown( unsigned char inASCII ) {
         
         updateCheckbox();
         }
+
+    if( inASCII >= '0' && inASCII <= '9' && mCurrentCategory != -1 ) {
+        CategoryRecord *r = getCategory( mCurrentCategory );
+        
+        if( r->isProbabilitySet ) {
+            
+            float oldWeight = 
+                r->objectWeights.getElementDirect( mSelectionIndex );
+            
+            char *oldString = autoSprintf( "%.3f", oldWeight );
+            
+            if( mCurrentWeightDigit > 2 ) {
+                mCurrentWeightDigit = 0;
+                }
+            
+            oldString[ mCurrentWeightDigit + 2 ] = inASCII;
+            
+            // zero out digits beyond this current one
+            // because we're typing a new value
+            for( int i=mCurrentWeightDigit + 1; i<3; i++ ) {
+                oldString[ i + 2 ] = '0';
+                }
+            
+
+            mCurrentWeightDigit++;
+            
+            float newWeight = 0.0f;
+            
+            sscanf( oldString, "%f", &newWeight );
+            
+            delete [] oldString;
+
+            setMemberWeight( mCurrentCategory, 
+                             r->objectIDSet.getElementDirect( mSelectionIndex ),
+                             newWeight );
+            }
+        }
+    
     
     }
 
@@ -485,7 +622,8 @@ void EditorCategoryPage::specialKeyDown( int inKeyCode ) {
         case MG_KEY_DOWN: {
             
             mSelectionIndex += offset;
-
+            mCurrentWeightDigit = 0;
+            
             int max = 0;
             if( mCurrentObject != -1 ) {
                 max = getNumCategoriesForObject( mCurrentObject ) - 1;
@@ -506,12 +644,18 @@ void EditorCategoryPage::specialKeyDown( int inKeyCode ) {
             }
         case MG_KEY_UP: {
             mSelectionIndex -= offset;
+            mCurrentWeightDigit = 0;
+            
             if( mSelectionIndex < 0 ) {
                 mSelectionIndex = 0;
                 }
             break;
             }
         case MG_KEY_PAGE_UP:
+            mCurrentWeightDigit = 0;
+            /*
+              the underlying implementation of this is not working
+              not written to disk
             if( mCurrentObject != -1 ) {
                 
                 int curCat = getCategoryForObject( mCurrentObject, 
@@ -525,9 +669,33 @@ void EditorCategoryPage::specialKeyDown( int inKeyCode ) {
                         mSelectionIndex = 0;
                         }
                     }
-                }    
+                }
+            */
+            if( mCurrentCategory != -1 ) {
+                
+                CategoryRecord *r = getCategory( mCurrentCategory );
+
+                if( r != NULL &&
+                    r->objectIDSet.size() > mSelectionIndex ) {
+                    
+                    int objID = 
+                        r->objectIDSet.getElementDirect( mSelectionIndex );
+                    
+                    for( int i=0; i<offset; i++ ) {
+                        mSelectionIndex --;
+                        moveCategoryMemberUp( mCurrentCategory, objID );
+                        }
+                    if( mSelectionIndex < 0 ) {
+                        mSelectionIndex = 0;
+                        }
+                    }
+                }
             break;
         case MG_KEY_PAGE_DOWN:
+            mCurrentWeightDigit = 0;
+            /*
+              the underlying implementation of this is not working
+              not written to disk
             if( mCurrentObject != -1 ) {
                 
                 int curCat = getCategoryForObject( mCurrentObject, 
@@ -542,6 +710,27 @@ void EditorCategoryPage::specialKeyDown( int inKeyCode ) {
                         
                         mSelectionIndex = 
                             getNumCategoriesForObject( mCurrentObject ) - 1;
+                        }
+                    }
+                }
+            */
+            if( mCurrentCategory != -1 ) {
+                
+                CategoryRecord *r = getCategory( mCurrentCategory );
+
+                if( r != NULL &&
+                    r->objectIDSet.size() > mSelectionIndex ) {
+                    
+                    int objID = 
+                        r->objectIDSet.getElementDirect( mSelectionIndex );
+                    
+                    for( int i=0; i<offset; i++ ) {
+                        mSelectionIndex ++;
+                        moveCategoryMemberDown( mCurrentCategory, objID );
+                        }
+                    if( mSelectionIndex > r->objectIDSet.size() - 1 ) {
+                        mSelectionIndex = 
+                            r->objectIDSet.size() - 1;
                         }
                     }
                 }

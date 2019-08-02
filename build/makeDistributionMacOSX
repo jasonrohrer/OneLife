@@ -36,6 +36,10 @@ echo "0" > settings/fullscreen.ini
 
 ../../../gameSource/regenerateCaches
 
+# don't ever include bin_cache in bundles, because they are large
+# and change every update
+rm */bin_*cache.fcz
+
 cd ../..
 
 

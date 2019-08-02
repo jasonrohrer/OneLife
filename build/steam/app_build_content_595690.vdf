@@ -1,0 +1,24 @@
+"appbuild"
+{
+	"appid"	"595690"
+
+	"desc" "Replaced On Command Line" // description for this build
+
+	"buildoutput" "/home/jcr15/steamOutput" // build output folder for .log, .csm & .csd files, relative to location of this file
+
+	"contentroot" "/home/jcr15/checkout/diffWorking/dataLatest" // root content folder, relative to location of this file
+
+	// according to answer given here, we can use setlive with special "public"
+	// alias to force a build to become live right away
+	// https://steamcommunity.com/groups/steamworks/discussions/0/3276824488719073026/
+	"setlive"	"public" // branch to set live after successful build, non if empty
+
+	"preview" "0" // to enable preview builds
+
+	"local"	""	// set to file path of local content server 
+	
+	"depots"
+	{
+		"595691" "depot_build_content_595691.vdf"
+	}
+}

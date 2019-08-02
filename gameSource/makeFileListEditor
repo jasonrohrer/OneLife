@@ -43,6 +43,7 @@ overlayBank.cpp \
 keyLegend.cpp \
 LoadingPage.cpp \
 folderCache.cpp \
+binFolderCache.cpp \
 PickableStatics.cpp \
 soundBank.cpp \
 SoundWidget.cpp \
@@ -57,6 +58,8 @@ groundSprites.cpp \
 ../commonSource/fractalNoise.cpp \
 spellCheck.cpp \
 SoundUsage.cpp \
+objectMetadata.cpp \
+emotion.cpp \
 
 
 
@@ -136,3 +139,4 @@ NEEDED_MINOR_GEMS_OBJECTS = \
  ${DIFF_BUNDLE_CLIENT_O} \
  ${STRING_TREE_O} \
  ${BINARY_SEMAPHORE_O} \
+

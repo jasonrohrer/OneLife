@@ -1,3 +1,5 @@
+<?php include( "cacheTop.php" ); ?>
+
 <?php include( "header.php" ); ?>
 
 <?php include( "reviewPages/reviewCount.php" ); ?>
@@ -28,6 +30,7 @@ function showPayLinks( $inSimple ) {
 <font size=3><ul> 
       <li>Lifetime server account
       <li>All future updates
+      <li>Unlock on Steam
       <li>Full source code
       <li>Tech support included
       </ul></font>
@@ -70,7 +73,8 @@ function showLogo( $inImageFile, $inText ) {
 <td><img src=portraitLeft.jpg border=0 width=197 height=414></td>
 <td>
 <center><?php include( "lifeStats.php" ); ?><br>
-<?php include( "monumentStats.php" ); ?>
+<?php include( "monumentStats.php" ); ?><br>
+<?php include( "arcServer/arcReport.php" ); ?>
 </center>
 
 
@@ -107,7 +111,7 @@ if( $rs_reviewCount > 0 ) {
    showPayLinks( true );
 ?>
 
-<center><iframe title="YouTube video player" width="640" height="390" src="http://www.youtube.com/embed/mT4JktcVQuE?rel=0" frameborder="0" allowfullscreen></iframe></center>
+<center><iframe title="YouTube video player" width="640" height="390" src="https://www.youtube.com/embed/mT4JktcVQuE?rel=0" frameborder="0" allowfullscreen></iframe></center>
 
 <br>
 
@@ -170,7 +174,7 @@ Sign up for release announcement emails: <input type="text" name="email" value="
 <br>
 -->
 
-<center><iframe title="YouTube video player" width="640" height="390" src="http://www.youtube.com/embed/riqu2eszsIg?rel=0" frameborder="0" allowfullscreen></iframe></center>
+<center><iframe title="YouTube video player" width="640" height="390" src="https://www.youtube.com/embed/riqu2eszsIg?rel=0" frameborder="0" allowfullscreen></iframe></center>
     
 <br><br>
     
@@ -201,7 +205,7 @@ You can take a look at the <a href="requirements.php">system requirements</a>.</
 <br>
 <br>
 
-     
+<center><iframe title="YouTube video player" width="640" height="390" src="https://www.youtube.com/embed/ym1eIhprFlU?rel=0" frameborder="0" allowfullscreen></iframe></center>   
 
 <br>
 <br>
@@ -320,6 +324,8 @@ echo "<center>[<a href=artLogPage.php>More Artwork...</a>]</center>";
 
 $numNewsPerPage = 1;
 $newsSummaryOnly = 1;
+$newsForumID = 4;
+$newsLinkPage = "newsPage.php";
 include( "news.php" );
 
 ?>
@@ -330,6 +336,44 @@ include( "news.php" );
 <br>
 
 <br>
+
+
+
+<?php
+
+$numNewsPerPage = 1;
+$newsSummaryOnly = 1;
+$newsForumID = 8;
+$newsLinkPage = "fanArtPage.php";
+include( "news.php" );
+
+?>
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+
+<?php
+
+$numNewsPerPage = 1;
+$newsSummaryOnly = 1;
+$newsForumID = 9;
+$newsLinkPage = "userStoriesPage.php";
+include( "news.php" );
+
+?>
+<br>
+
+<br>
+
+<br>
+
+<br>
+
 
 
 <center>
@@ -350,3 +394,8 @@ include( "news.php" );
 
     
 <?php include( "footer.php" ); ?>
+
+    
+<?php include( "cacheBottom.php" ); ?>
+
+    

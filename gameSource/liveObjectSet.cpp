@@ -5,6 +5,7 @@
 #include "soundBank.h"
 
 #include "transitionBank.h"
+#include "categoryBank.h"
 
 #include "animationBank.h"
 
@@ -96,7 +97,11 @@ void addBaseObjectToLiveObjectSet( int inID ) {
         liveObjectSet.push_back( inID );
         
         ObjectRecord *o = getObject( inID );
-
+        
+        if( o == NULL ) {
+            return;
+            }
+        
         for( int j=0; j< o->numSprites; j++ ) {
             int spriteID = o->sprites[j];
             
@@ -166,10 +171,30 @@ void finalizeLiveObjectSet() {
                 
                 if( t->newActor > 0 ) {
                     addBaseObjectToLiveObjectSet( t->newActor );
+                    
+                    CategoryRecord *cr = getCategory( t->newActor );
+                    if( cr != NULL && cr->isProbabilitySet ) {
+                        for( int p=0; p< cr->objectIDSet.size(); p++ ) {
+                            if( cr->objectWeights.getElementDirect( p ) > 0 ) {
+                                addBaseObjectToLiveObjectSet(
+                                    cr->objectIDSet.getElementDirect( p ) );
+                                }
+                            }
+                        }
                     }
                 
                 if( t->newTarget > 0 ) {
                     addBaseObjectToLiveObjectSet( t->newTarget );
+                    
+                    CategoryRecord *cr = getCategory( t->newTarget );
+                    if( cr != NULL && cr->isProbabilitySet ) {
+                        for( int p=0; p< cr->objectIDSet.size(); p++ ) {
+                            if( cr->objectWeights.getElementDirect( p ) > 0 ) {
+                                addBaseObjectToLiveObjectSet(
+                                    cr->objectIDSet.getElementDirect( p ) );
+                                }
+                            }
+                        }
                     }
                 }
             }

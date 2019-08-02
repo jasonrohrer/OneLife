@@ -1,5 +1,8 @@
-int versionNumber = 118;
+int versionNumber = 251;
 int dataVersionNumber = 0;
+
+int binVersionNumber = versionNumber;
+
 
 // NOTE that OneLife doesn't use account hmacs
 
@@ -38,6 +41,8 @@ int accountHmacVersionNumber = 0;
 
 #include "minorGems/system/Time.h"
 
+#include "minorGems/crypto/hashes/sha1.h"
+
 
 // static seed
 CustomRandomSource randSource( 34957197 );
@@ -68,6 +73,11 @@ CustomRandomSource randSource( 34957197 );
 
 #include "groundSprites.h"
 
+#include "emotion.h"
+#include "photos.h"
+#include "lifeTokens.h"
+#include "fitnessScore.h"
+
 
 #include "FinalMessagePage.h"
 #include "LoadingPage.h"
@@ -78,6 +88,9 @@ CustomRandomSource randSource( 34957197 );
 #include "RebirthChoicePage.h"
 #include "SettingsPage.h"
 #include "ReviewPage.h"
+#include "TwinPage.h"
+#include "PollPage.h"
+#include "GeneticHistoryPage.h"
 //#include "TestPage.h"
 
 #include "ServerActionPage.h"
@@ -94,18 +107,26 @@ static char mapPullMode = 0;
 static char autoLogIn = 0;
 
 
+char loginEditOverride = false;
+
+
 // start at reflector URL
 char *reflectorURL = NULL;
 
+char usingCustomServer = false;
 char *serverIP = NULL;
 int serverPort = 0;
 
 
 char *userEmail = NULL;
 char *accountKey = NULL;
+char *userTwinCode = NULL;
+int userTwinCount = 0;
+char userReconnect = false;
+
 
 // these are needed by ServerActionPage, but we don't use them
-int userID = 0;
+int userID = -1;
 int serverSequenceNumber = 0;
 
 
@@ -121,6 +142,9 @@ ExtendedMessagePage *extendedMessagePage;
 RebirthChoicePage *rebirthChoicePage;
 SettingsPage *settingsPage;
 ReviewPage *reviewPage;
+TwinPage *twinPage;
+PollPage *pollPage;
+GeneticHistoryPage *geneticHistoryPage;
 //TestPage *testPage = NULL;
 
 
@@ -154,7 +178,7 @@ double viewHeight = 720;
 // then we will put letterbox bars on the sides
 // Usually, if screen is not 16:9, it will be taller, not wider,
 // and we will put letterbox bars on the top and bottom 
-const double visibleViewWidth = viewWidth;
+double visibleViewWidth = viewWidth;
 
 
 
@@ -283,6 +307,8 @@ Font *numbersFontFixed;
 Font *handwritingFont;
 Font *pencilFont;
 Font *pencilErasedFont;
+
+Font *smallFont;
 
 
 char *shutdownMessage = NULL;
@@ -430,6 +456,12 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
     updateDataVersionNumber();
 
+
+    AppLog::printOutNextMessage();
+    AppLog::infoF( "OneLife client v%d (binV=%d, dataV=%d) starting up",
+                   versionNumber, binVersionNumber, dataVersionNumber );
+            
+
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
     toggleMipMapMinFilter( true );
@@ -489,6 +521,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     mainFontFixed->setMinimumPositionPrecision( 1 );
     numbersFontFixed->setMinimumPositionPrecision( 1 );
     
+    smallFont = new Font( getFontTGAFileName(), 3, 8, false, 8 );
+
+
     handwritingFont = 
         new Font( "font_handwriting_32_32.tga", 3, 6, false, 16 );
 
@@ -600,8 +635,14 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
     reviewPage = new ReviewPage( reviewURL );
     
-    delete [] reviewURL;
 
+    twinPage = new TwinPage();
+
+    pollPage = new PollPage( reviewURL );
+    delete [] reviewURL;
+    
+    geneticHistoryPage = new GeneticHistoryPage();
+    
 
     // 0 music headroom needed, because we fade sounds before playing music
     setVolumeScaling( 10, 0 );
@@ -656,7 +697,9 @@ void freeFrameDrawer() {
     delete handwritingFont;
     delete pencilFont;
     delete pencilErasedFont;
-
+    
+    delete smallFont;
+    
     if( currentUserTypedMessage != NULL ) {
         delete [] currentUserTypedMessage;
         currentUserTypedMessage = NULL;
@@ -685,6 +728,9 @@ void freeFrameDrawer() {
     delete rebirthChoicePage;
     delete settingsPage;
     delete reviewPage;
+    delete twinPage;
+    delete pollPage;
+    delete geneticHistoryPage;
     
     //if( testPage != NULL ) {
     //    delete testPage;
@@ -707,6 +753,11 @@ void freeFrameDrawer() {
     freeSoundBank();
     
     freeMusicPlayer();
+    freeEmotion();
+    
+    freePhotos();
+    freeLifeTokens();
+    freeFitnessScore();
 
     if( reflectorURL != NULL ) {
         delete [] reflectorURL;
@@ -724,6 +775,9 @@ void freeFrameDrawer() {
         }
     if( accountKey != NULL ) {
         delete [] accountKey;
+        }
+    if( userTwinCode != NULL ) {
+        delete [] userTwinCode;
         }
     }
 
@@ -1026,8 +1080,11 @@ void deleteCharFromUserTypedMessage() {
 
 
 static void startConnecting() {
+    userReconnect = false;
+    
     if( SettingsManager::getIntSetting( "useCustomServer", 0 ) ) {
-                    
+        usingCustomServer = true;
+        
         if( serverIP != NULL ) {
             delete [] serverIP;
             serverIP = NULL;
@@ -1047,11 +1104,24 @@ static void startConnecting() {
         currentGamePage->base_makeActive( true );
         }
     else {
+        usingCustomServer = false;
+        
         printf( "Starting fetching server URL from reflector %s\n",
                 reflectorURL );
                 
+        getServerAddressPage->clearActionParameters();
+        
+            
         getServerAddressPage->setActionParameter( "email", 
                                                   userEmail );
+        
+        if( userTwinCode != NULL ) {
+            char *codeHash = computeSHA1Digest( userTwinCode );
+            getServerAddressPage->setActionParameter( "twin_code", 
+                                                      codeHash );
+            delete [] codeHash;
+            }
+        
                     
         currentGamePage = getServerAddressPage;
         currentGamePage->base_makeActive( true );
@@ -1062,6 +1132,8 @@ static void startConnecting() {
 
 
 void showDiedPage() {
+    userReconnect = false;
+    
     lastScreenViewCenter.x = 0;
     lastScreenViewCenter.y = 0;
     
@@ -1083,6 +1155,33 @@ void showDiedPage() {
         delete [] reason;
         }
     
+    
+    currentGamePage->base_makeActive( true );
+    }
+
+
+
+void showReconnectPage() {
+    lastScreenViewCenter.x = 0;
+    lastScreenViewCenter.y = 0;
+    
+    setViewCenterPosition( lastScreenViewCenter.x, 
+                           lastScreenViewCenter.y );
+    
+    currentGamePage = extendedMessagePage;
+    
+    extendedMessagePage->setMessageKey( "connectionLost" );
+
+    extendedMessagePage->setSubMessage( translate( "willTryReconnect" ) );
+    
+    userReconnect = true;
+    
+    // don't reconnect as twin
+    // that will cause them to wait for their party again.
+    if( userTwinCode != NULL ) {
+        delete [] userTwinCode;
+        userTwinCode = NULL;
+        }
     
     currentGamePage->base_makeActive( true );
     }
@@ -1152,7 +1251,12 @@ void drawFrame( char inUpdate ) {
             livingLifePage->checkSignal( "died" ) ) {
             showDiedPage();
             }
-
+        if( currentGamePage == livingLifePage &&
+            livingLifePage->checkSignal( "disconnect" ) ) {
+    
+            showReconnectPage();
+            }
+        
 
         return;
         }
@@ -1234,6 +1338,9 @@ void drawFrame( char inUpdate ) {
     stepSoundBank();
     
     stepMusicPlayer();
+    
+    stepPhotos();
+    
 
     if( currentGamePage != NULL ) {
         currentGamePage->base_step();
@@ -1253,52 +1360,30 @@ void drawFrame( char inUpdate ) {
                         initSpriteBankFinish();
                         
                         loadingPhaseStartTime = Time::getCurrentTime();
-                        
-                        int numReverbs = initSoundBankStart();
-                            
-                        if( numReverbs > 0 ) {
+      
+                        char rebuilding;
+
+                        int numSounds = initSoundBankStart( &rebuilding );
+
+                        if( rebuilding ) {
                             loadingPage->setCurrentPhase( 
-                                "SOUNDS##(GENERATING REVERBS)" );
-                            loadingPage->setCurrentProgress( 0 );
-                        
-                            
-                            loadingStepBatchSize = numReverbs / numLoadingSteps;
-                            
-                            if( loadingStepBatchSize < 1 ) {
-                                loadingStepBatchSize = 1;
-                                }
-                            
-                            loadingPhase ++;
+                                translate( "soundsRebuild" ) );
                             }
                         else {
-                            // skip progress for sounds
-                            initSoundBankFinish();
-                            
-                            char rebuilding;
-                        
-                            int numAnimations = 
-                                initAnimationBankStart( &rebuilding );
-                            
-                            if( rebuilding ) {
-                                loadingPage->setCurrentPhase( 
-                                    translate( "animationsRebuild" ) );
-                                }
-                            else {
-                                loadingPage->setCurrentPhase(
-                                    translate( "animations" ) );
-                                }
-                            loadingPage->setCurrentProgress( 0 );
-                            
-                            
-                            loadingStepBatchSize = 
-                                numAnimations / numLoadingSteps;
-                            
-                            if( loadingStepBatchSize < 1 ) {
-                                loadingStepBatchSize = 1;
-                                }
-                            
-                            loadingPhase += 2;
+                            loadingPage->setCurrentPhase(
+                                translate( "sounds" ) );
                             }
+
+                        loadingPage->setCurrentProgress( 0 );
+                        
+                            
+                        loadingStepBatchSize = numSounds / numLoadingSteps;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+                        
+                        loadingPhase ++;
                         }
                     break;
                     }
@@ -1352,7 +1437,7 @@ void drawFrame( char inUpdate ) {
                         printf( "Finished loading animation bank in %f sec\n",
                                 Time::getCurrentTime() - 
                                 loadingPhaseStartTime );
-
+                        loadingPhaseStartTime = Time::getCurrentTime();
 
                         char rebuilding;
                         
@@ -1392,7 +1477,7 @@ void drawFrame( char inUpdate ) {
                         printf( "Finished loading object bank in %f sec\n",
                                 Time::getCurrentTime() - 
                                 loadingPhaseStartTime );
-
+                        loadingPhaseStartTime = Time::getCurrentTime();
 
                         char rebuilding;
                         
@@ -1432,7 +1517,7 @@ void drawFrame( char inUpdate ) {
                         printf( "Finished loading category bank in %f sec\n",
                                 Time::getCurrentTime() - 
                                 loadingPhaseStartTime );
-
+                        loadingPhaseStartTime = Time::getCurrentTime();
 
                         char rebuilding;
                         
@@ -1472,7 +1557,12 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initTransBankFinish();
+                        printf( "Finished loading transition bank in %f sec\n",
+                                Time::getCurrentTime() - 
+                                loadingPhaseStartTime );
                         
+                        loadingPhaseStartTime = Time::getCurrentTime();
+
                         loadingPage->setCurrentPhase( 
                             translate( "groundTextures" ) );
 
@@ -1496,6 +1586,12 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initGroundSpritesFinish();
+                        printf( "Finished loading ground sprites in %f sec\n",
+                                Time::getCurrentTime() - 
+                                loadingPhaseStartTime );
+                        
+                        loadingPhaseStartTime = Time::getCurrentTime();
+
                         
                         initLiveObjectSet();
 
@@ -1510,6 +1606,13 @@ void drawFrame( char inUpdate ) {
                 default:
                     // NOW game engine can start measuring frame rate
                     loadingComplete();
+                    
+
+                    initEmotion();
+                    initPhotos();
+                    
+                    initLifeTokens();
+                    initFitnessScore();
                     
                     initMusicPlayer();
                     setMusicLoudness( musicLoudness );
@@ -1529,6 +1632,16 @@ void drawFrame( char inUpdate ) {
             }
         else if( currentGamePage == settingsPage ) {
             if( settingsPage->checkSignal( "back" ) ) {
+                existingAccountPage->setStatus( NULL, false );
+                currentGamePage = existingAccountPage;
+                currentGamePage->base_makeActive( true );
+                }
+            else if( settingsPage->checkSignal( "editAccount" ) ) {
+                loginEditOverride = true;
+                
+                existingAccountPage->setStatus( "editAccountWarning", false );
+                existingAccountPage->setStatusPositiion( true );
+                
                 currentGamePage = existingAccountPage;
                 currentGamePage->base_makeActive( true );
                 }
@@ -1543,13 +1656,32 @@ void drawFrame( char inUpdate ) {
             }
         else if( currentGamePage == reviewPage ) {
             if( reviewPage->checkSignal( "back" ) ) {
+                existingAccountPage->setStatus( NULL, false );
                 currentGamePage = existingAccountPage;
                 currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == twinPage ) {
+            if( twinPage->checkSignal( "cancel" ) ) {
+                existingAccountPage->setStatus( NULL, false );
+                currentGamePage = existingAccountPage;
+                currentGamePage->base_makeActive( true );
+                }
+            else if( twinPage->checkSignal( "done" ) ) {
+                startConnecting();
                 }
             }
         else if( currentGamePage == existingAccountPage ) {    
             if( existingAccountPage->checkSignal( "quit" ) ) {
                 quitGame();
+                }
+            else if( existingAccountPage->checkSignal( "poll" ) ) {
+                currentGamePage = pollPage;
+                currentGamePage->base_makeActive( true );
+                }
+            else if( existingAccountPage->checkSignal( "genes" ) ) {
+                currentGamePage = geneticHistoryPage;
+                currentGamePage->base_makeActive( true );
                 }
             else if( existingAccountPage->checkSignal( "settings" ) ) {
                 currentGamePage = settingsPage;
@@ -1559,7 +1691,11 @@ void drawFrame( char inUpdate ) {
                 currentGamePage = reviewPage;
                 currentGamePage->base_makeActive( true );
                 }
-            else if( existingAccountPage->checkSignal( "done" ) 
+            else if( existingAccountPage->checkSignal( "friends" ) ) {
+                currentGamePage = twinPage;
+                currentGamePage->base_makeActive( true );
+                }
+            else if( existingAccountPage->checkSignal( "done" )
                      || 
                      mapPullMode || autoLogIn ) {
                 
@@ -1568,6 +1704,25 @@ void drawFrame( char inUpdate ) {
                 mapPullMode = false;
                 autoLogIn = false;
                 
+                // login button clears twin status
+                // they have to login from twin page to play as twin
+                if( userTwinCode != NULL ) {
+                    delete [] userTwinCode;
+                    userTwinCode = NULL;
+                    }
+
+                startConnecting();
+                }
+            else if( existingAccountPage->checkSignal( "tutorial" ) ) {
+                livingLifePage->runTutorial();
+
+                // tutorial button clears twin status
+                // they have to login from twin page to play as twin
+                if( userTwinCode != NULL ) {
+                    delete [] userTwinCode;
+                    userTwinCode = NULL;
+                    }
+
                 startConnecting();
                 }
             else if( autoUpdatePage->checkSignal( "relaunchFailed" ) ) {
@@ -1611,30 +1766,54 @@ void drawFrame( char inUpdate ) {
                             "requiredVersionNumber" );
                     
                     if( versionNumber < requiredVersion ) {
-                        
-                        char *autoUpdateURL = 
-                            getServerAddressPage->getResponse( 
-                                "autoUpdateURL" );
 
-                    
-                        char updateStarted = 
-                            startUpdate( autoUpdateURL, versionNumber );
-                        
-                        delete [] autoUpdateURL;
-                        
-                        if( ! updateStarted ) {
+                        if( SettingsManager::getIntSetting( 
+                                "useSteamUpdate", 0 ) ) {
+                            
+                            // flag SteamGate that app needs update
+                            FILE *f = fopen( "steamGateForceUpdate.txt", "w" );
+                            if( f != NULL ) {    
+                                fprintf( f, "1" );
+                                fclose( f );
+                                }
+                            
+                            // launch steamGateClient in parallel
+                            // it will tell Steam that the app is dirty
+                            // and needs to be updated.
+                            runSteamGateClient();
+                            
+
+                            
                             currentGamePage = finalMessagePage;
+                                
+                            finalMessagePage->setMessageKey( 
+                                "upgradeMessageSteam" );
                             
-                            finalMessagePage->setMessageKey( "upgradeMessage" );
-                            
-                            
-                            currentGamePage->base_makeActive( true );
+                            currentGamePage->base_makeActive( true );    
                             }
                         else {
-                            currentGamePage = autoUpdatePage;
-                            currentGamePage->base_makeActive( true );
-                            }
+                            char *autoUpdateURL = 
+                                getServerAddressPage->getResponse( 
+                                    "autoUpdateURL" );
+
+                            char updateStarted = 
+                                startUpdate( autoUpdateURL, versionNumber );
                         
+                            delete [] autoUpdateURL;
+                            
+                            if( ! updateStarted ) {
+                                currentGamePage = finalMessagePage;
+                                
+                                finalMessagePage->setMessageKey( 
+                                    "upgradeMessage" );
+                                
+                                currentGamePage->base_makeActive( true );
+                                }
+                            else {
+                                currentGamePage = autoUpdatePage;
+                                currentGamePage->base_makeActive( true );
+                                }
+                            }
                         }
                     else {
                         // up to date, okay to connect
@@ -1684,6 +1863,36 @@ void drawFrame( char inUpdate ) {
 
                 currentGamePage->base_makeActive( true );
                 }
+            else if( livingLifePage->checkSignal( "noLifeTokens" ) ) {
+                lastScreenViewCenter.x = 0;
+                lastScreenViewCenter.y = 0;
+
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                
+                currentGamePage = existingAccountPage;
+                
+                existingAccountPage->setStatus( "noLifeTokens", true );
+
+                existingAccountPage->setStatusPositiion( true );
+
+                currentGamePage->base_makeActive( true );
+                }
+            else if( livingLifePage->checkSignal( "connectionFailed" ) ) {
+                lastScreenViewCenter.x = 0;
+                lastScreenViewCenter.y = 0;
+
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                
+                currentGamePage = existingAccountPage;
+                
+                existingAccountPage->setStatus( "connectionFailed", true );
+
+                existingAccountPage->setStatusPositiion( true );
+
+                currentGamePage->base_makeActive( true );
+                }
             else if( livingLifePage->checkSignal( "versionMismatch" ) ) {
                 lastScreenViewCenter.x = 0;
                 lastScreenViewCenter.y = 0;
@@ -1711,6 +1920,20 @@ void drawFrame( char inUpdate ) {
 
                 currentGamePage->base_makeActive( true );
                 }
+            else if( livingLifePage->checkSignal( "twinCancel" ) ) {
+                
+                existingAccountPage->setStatus( NULL, false );
+
+                lastScreenViewCenter.x = 0;
+                lastScreenViewCenter.y = 0;
+
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                
+                currentGamePage = existingAccountPage;
+                
+                currentGamePage->base_makeActive( true );
+                }
             else if( livingLifePage->checkSignal( "serverShutdown" ) ) {
                 lastScreenViewCenter.x = 0;
                 lastScreenViewCenter.y = 0;
@@ -1721,6 +1944,21 @@ void drawFrame( char inUpdate ) {
                 currentGamePage = existingAccountPage;
                 
                 existingAccountPage->setStatus( "serverShutdown", true );
+
+                existingAccountPage->setStatusPositiion( true );
+
+                currentGamePage->base_makeActive( true );
+                }
+            else if( livingLifePage->checkSignal( "serverUpdate" ) ) {
+                lastScreenViewCenter.x = 0;
+                lastScreenViewCenter.y = 0;
+
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                
+                currentGamePage = existingAccountPage;
+                
+                existingAccountPage->setStatus( "serverUpdate", true );
 
                 existingAccountPage->setStatusPositiion( true );
 
@@ -1744,15 +1982,59 @@ void drawFrame( char inUpdate ) {
             else if( livingLifePage->checkSignal( "died" ) ) {
                 showDiedPage();
                 }
-            
+            else if( livingLifePage->checkSignal( "disconnect" ) ) {
+                showReconnectPage();
+                }
+            else if( livingLifePage->checkSignal( "loadFailure" ) ) {
+                currentGamePage = finalMessagePage;
+                        
+                finalMessagePage->setMessageKey( "loadingMapFailedMessage" );
+                
+                char *failedFileName = getSpriteBankLoadFailure();
+                if( failedFileName == NULL ) {
+                    failedFileName = getSoundBankLoadFailure();
+                    }
+
+                if( failedFileName != NULL ) {
+                    
+                    char *detailMessage = 
+                        autoSprintf( translate( "loadingMapFailedSubMessage" ), 
+                                     failedFileName );
+                    finalMessagePage->setSubMessage( detailMessage );
+                    delete [] detailMessage;
+                    }
+
+                currentGamePage->base_makeActive( true );
+                }
             }
         else if( currentGamePage == extendedMessagePage ) {
             if( extendedMessagePage->checkSignal( "done" ) ) {
                 
                 extendedMessagePage->setSubMessage( "" );
                 
+                if( userReconnect ) {
+                    currentGamePage = livingLifePage;
+                    }
+                else {
+                    currentGamePage = pollPage;
+                    }
+                currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == pollPage ) {
+            if( pollPage->checkSignal( "done" ) ) {
                 currentGamePage = rebirthChoicePage;
-                
+                currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == geneticHistoryPage ) {
+            if( geneticHistoryPage->checkSignal( "done" ) ) {
+                if( !isHardToQuitMode() ) {
+                    currentGamePage = existingAccountPage;
+                    }
+                else {
+                    currentGamePage = rebirthChoicePage;
+                    }
                 currentGamePage->base_makeActive( true );
                 }
             }
@@ -1760,14 +2042,25 @@ void drawFrame( char inUpdate ) {
             if( rebirthChoicePage->checkSignal( "reborn" ) ) {
                 // get server address again from scratch, in case
                 // the server we were on just crashed
+                
+                // but keep twin status, if set
                 startConnecting();
                 }
             else if( rebirthChoicePage->checkSignal( "tutorial" ) ) {
                 livingLifePage->runTutorial();
+                // heck, allow twins in tutorial too, for now, it's funny
                 startConnecting();
                 }
             else if( rebirthChoicePage->checkSignal( "review" ) ) {
                 currentGamePage = reviewPage;
+                currentGamePage->base_makeActive( true );
+                }
+            else if( rebirthChoicePage->checkSignal( "menu" ) ) {
+                currentGamePage = existingAccountPage;
+                currentGamePage->base_makeActive( true );
+                }
+            else if( rebirthChoicePage->checkSignal( "genes" ) ) {
+                currentGamePage = geneticHistoryPage;
                 currentGamePage->base_makeActive( true );
                 }
             else if( rebirthChoicePage->checkSignal( "quit" ) ) {

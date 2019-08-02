@@ -2,6 +2,7 @@
 
 #include "TextButton.h"
 #include "CheckboxButton.h"
+#include "RadioButtonSet.h"
 #include "ValueSlider.h"
 #include "SoundUsage.h"
 
@@ -33,6 +34,7 @@ class SettingsPage : public GamePage, public ActionListener {
     protected:
         
         int mOldFullscreenSetting;
+        int mOldBorderlessSetting;
         
         SoundUsage mTestSound;
 
@@ -40,13 +42,29 @@ class SettingsPage : public GamePage, public ActionListener {
 
 
         TextButton mBackButton;
+        TextButton mEditAccountButton;
         TextButton mRestartButton;
         TextButton mRedetectButton;
 
         CheckboxButton mFullscreenBox;
+        CheckboxButton mBorderlessBox;
         
 
         ValueSlider mMusicLoudnessSlider;
         ValueSlider mSoundEffectsLoudnessSlider;
+
+
+        CheckboxButton mUseCustomServerBox;
         
+        TextField mCustomServerAddressField;
+        TextField mCustomServerPortField;
+
+        TextButton mCopyButton;
+        TextButton mPasteButton;
+
+
+        RadioButtonSet *mCursorModeSet;
+        
+        ValueSlider mCursorScaleSlider;
+
     };

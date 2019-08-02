@@ -30,6 +30,33 @@ read
 
 
 
+wipeMaps=0
+
+echo ""
+echo ""
+echo "Auto wipe maps as part of process?"
+echo ""
+echo "Enter WIPE to wipe, or press [ENTER] to skip."
+echo ""
+echo -n "Wipe maps: "
+read wipeMapsWord
+
+if [ "$wipeMapsWord" = "WIPE" ]
+then
+	echo
+	echo "Auto-wiping maps."
+	echo
+	wipeMaps=1
+else
+	echo
+	echo "NOT Auto-wiping maps."
+	echo
+fi
+
+
+
+
+
 echo "" 
 echo "Tagging live server code with OneLife_liveServer"
 echo ""
@@ -71,7 +98,7 @@ git push origin -f --tags
 
 ~/checkout/OneLifeWorking/scripts/updateServerCodeStep1.sh
 
-~/checkout/OneLifeWorking/scripts/updateServerCodeStep2.sh
+~/checkout/OneLifeWorking/scripts/updateServerCodeStep2.sh $wipeMaps
 
 
 

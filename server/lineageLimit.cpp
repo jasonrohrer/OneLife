@@ -9,15 +9,20 @@
 #include <stdint.h>
 
 
+static double minRebirthDistance = 200;
+
+
+
 extern double secondsPerYear;
 
 
 
 typedef struct LineageTime {
-        int lineageEveID;
+        GridPos birthPos;
         double lastBornTime;
         double totalLivedThisLine;
         double totalLivedOtherLines;
+        double otherLineRequiredYears;
     } LineageTime;
     
 
@@ -69,6 +74,10 @@ static double oneLineMaxYears = 0;
 
 
 void primeLineageTest( int inNumLivePlayers ) {
+    
+    minRebirthDistance = SettingsManager::getIntSetting( "minRebirthDistance",
+                                                         200 );
+    
 
     staleTime = Time::getCurrentTime() - staleTimeout;
 
@@ -87,6 +96,14 @@ void primeLineageTest( int inNumLivePlayers ) {
         testSkipped = true;
         return;
         }
+
+
+    // keep adjusting stale timeout relative to max hours
+    // instead of 24 hours, you can live in the game 1.5 hours, or
+    // take a break from the game for 3 hours (as an example).
+    staleTimeout = hours * 2 * 3600;
+    staleTime = Time::getCurrentTime() - staleTimeout;
+
 
     testSkipped = false;
 
@@ -140,15 +157,17 @@ static HashTableEntry *lookup( const char *inPlayerEmail ) {
 
 
 
-static void insert( const char *inPlayerEmail, int inLineageEveID,
-                    double inLivedYears ) {
+static void insert( const char *inPlayerEmail, 
+                    GridPos inBirthPos,
+                    double inLivedYears, double inOtherLineRequiredYears ) {
     // new record saying player born in this line NOW
     
     double curTime = Time::getCurrentTime();
     
     SimpleVector<LineageTime> *tList = new SimpleVector<LineageTime>();
     
-    LineageTime tNew = { inLineageEveID, curTime, inLivedYears, 0 };
+    LineageTime tNew = { inBirthPos, curTime, inLivedYears, 0,
+                         inOtherLineRequiredYears };
     
     tList->push_back( tNew );
 
@@ -163,7 +182,7 @@ static void insert( const char *inPlayerEmail, int inLineageEveID,
 
 
 
-char isLinePermitted( const char *inPlayerEmail, int inLineageEveID ) {
+char isLinePermitted( const char *inPlayerEmail, GridPos inBirthPos ) {
     if( testSkipped ) {
         return true;
         }
@@ -183,20 +202,24 @@ char isLinePermitted( const char *inPlayerEmail, int inLineageEveID ) {
             e->times->deleteElement( i );
             i--;
             }
-        else if( t->lineageEveID == inLineageEveID ) {
-            // born in this lineage before, and time not stale
+        else if( distance( t->birthPos, inBirthPos ) < minRebirthDistance ) {
+            // born in this lineage area, and time not stale
 
             if( t->totalLivedThisLine < oneLineMaxYears ) {
                 // we're allowed to live more in this line
                 return true;
                 }
-            else if( t->totalLivedOtherLines >= otherLineRequiredYears ) {
+            else if( t->totalLivedOtherLines >= t->otherLineRequiredYears ) {
                 // we've lived long enough in other lines
                 // clear our count in this line
                 t->totalLivedThisLine = 0;
                 return true;
                 }
-
+            printf( "Lived %f years in this line (over %f) and only "
+                    "lived %f years in other lines (%f required), blocked\n",
+                    t->totalLivedThisLine, oneLineMaxYears,
+                    t->totalLivedOtherLines, t->otherLineRequiredYears );
+            
             // else we've lived too long in this line, and not long enough
             // in other lines
             return false;
@@ -209,19 +232,33 @@ char isLinePermitted( const char *inPlayerEmail, int inLineageEveID ) {
 
 
 
-void recordLineage( const char *inPlayerEmail, int inLineageEveID,
+void recordLineage( const char *inPlayerEmail, GridPos inBirthPos,
                     double inLivedYears, char inMurdered, 
-                    char inCommittedMurder ) {
+                    char inCommittedMurderOrSID ) {
+    double livedInThisLineYears = inLivedYears;
 
-    if( inMurdered || inCommittedMurder ) {
-        // push up over the limit no matter how long they have lived
-        inLivedYears += oneLineMaxYears;
+    double otherLineRequiredYearsThis = otherLineRequiredYears;
+
+    
+    if( inMurdered || inCommittedMurderOrSID ) {
+        // push up over the limit with fake time
+        // no matter how long they have lived
+        livedInThisLineYears += oneLineMaxYears;
         }
+
+    if( inMurdered ) {
+        // actual murder victim
+        // ban them from the line for longer
+        // Actually, don't do this for now, but the option is there
+        //otherLineRequiredYearsThis *= 2;
+        }
+    
 
     HashTableEntry *e = lookup( inPlayerEmail );
     
     if( e == NULL ) {
-        insert( inPlayerEmail, inLineageEveID, inLivedYears );
+        insert( inPlayerEmail, inBirthPos, livedInThisLineYears,
+                otherLineRequiredYearsThis );
         return;
         }
     
@@ -233,26 +270,35 @@ void recordLineage( const char *inPlayerEmail, int inLineageEveID,
     for( int i=0; i<e->times->size(); i++ ) {
         LineageTime *t = e->times->getElement( i );
         
-        if( t->lineageEveID == inLineageEveID ) {
-            // previously born in this lineage, adjust with new birth time
+        if( distance( t->birthPos, inBirthPos ) < minRebirthDistance ) {
+            // previously born in this lineage loc, adjust with new birth time
             t->lastBornTime = curTime;
-            t->totalLivedThisLine += inLivedYears;
+            t->totalLivedThisLine += livedInThisLineYears;
             
             // clear out count in other lines
             // that count only starts happening after we're done
             // living in this line
             t->totalLivedOtherLines = 0;
             
+            if( t->otherLineRequiredYears < otherLineRequiredYearsThis ) {
+                // update with larger required value
+                t->otherLineRequiredYears = otherLineRequiredYearsThis;
+                }
+
             found = true;
             }
         else {
+            // when counting "other line" time, don't include "fake"
+            // time that we may have added in above for murderers or murder
+            // victims
             t->totalLivedOtherLines += inLivedYears;
             }
         }
 
     if( !found ) {
         // not found, add new one
-        LineageTime t = { inLineageEveID, curTime, inLivedYears, 0 };
+        LineageTime t = { inBirthPos, curTime, livedInThisLineYears, 0,
+                          otherLineRequiredYearsThis };
         e->times->push_back( t );
         e->freshestTime = curTime;
         }

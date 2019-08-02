@@ -137,7 +137,7 @@ void processLogFile( File *inFile, FILE *outHTMLFile ) {
 
     char timeString[100];
 
-    strftime( timeString, 99, "%A, %B %d, %T %Z", timeStruct );
+    strftime( timeString, 99, "%A, %B %d, %Y, %T %Z", timeStruct );
     
     fprintf( outHTMLFile, "%s", timeString );
     

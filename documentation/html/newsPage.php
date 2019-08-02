@@ -5,6 +5,8 @@
 <?php 
 $newsSummaryOnly = 0;
 $numNewsPerPage = 5;
+$newsForumID = 4;
+$newsLinkPage = "newsPage.php";
 
 include( "news.php" ); 
 ?>

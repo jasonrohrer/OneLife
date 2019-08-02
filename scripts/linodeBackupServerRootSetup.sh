@@ -44,6 +44,11 @@ echo ""
 echo ""
 
 ufw allow from 72.14.184.149 to any port 22
+
+# allow inbound connection on port 22 from all, for now
+# this allows backupbox to connect
+ufw allow 22
+
 ufw --force enable
 
 

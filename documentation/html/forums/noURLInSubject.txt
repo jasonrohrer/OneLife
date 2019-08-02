@@ -1,0 +1,35 @@
+diff fluxbb-1.5.10/edit.php www/forums/edit.php
+77a78,81
+>		else if( preg_match( "/http:/i", $subject ) ||
+>                  preg_match( "/@/", $subject ) ||
+>                  preg_match( "/[^\s]\.[^\s]/i", $subject ) )
+> 				   			   					  $errors[] = $lang_post['URLs subject'];
+
+
+Do same in post.php in similar spot.
+
+
+
+diff fluxbb-1.5.10/lang/English/post.php www/forums/lang/English/post.php
+13a14
+> 'URLs subject'		=>	'Subjects cannot contain URLs.',
+
+
+
+
+Also, change parser to count "test.com" and such as URLs:
+
+
+diff include/parser.php ~/www/forums/include/parser.php
+664,669d663
+<     // special case:
+<     // numbers like 1.9 are getting picked up by other code as potential urls
+<     if( preg_match( "/^[0-9]+\.[0-9]+$/", $url ) ) {
+<         return $url;
+<         }
+<
+853c853
+<	$text = ucp_preg_replace_callback('%(?<=[\s\]\)])(<)?(\[)?(\()?([\'"]?)(www|ftp)\.(([\p{L}\p{N}\-]+\.)+[\p{L}\p{N}]+(:[0-9]+)?(/(?:[^\s\[]*[^\s.,?!\[;:-])?)?)\4(?(3)(\)))(?(2)(\]))(?(1)(>))(?![^\s]*\[/(?:url|img)\])%ui','stripslashes($matches[1].$matches[2].$matches[3].$matches[4]).handle_url_tag($matches[5].".".$matches[6], $matches[5].".".$matches[6], true).stripslashes($matches[4].forum_array_key($matches, 10).forum_array_key($matches, 11).forum_array_key($matches, 12))', $text);
+---
+>	$text = ucp_preg_replace_callback('%(?<=[\s\]\)])(<)?(\[)?(\()?([\'"]?)(www\.|ftp\.)?(([\p{L}\p{N}\-]+\.)+[\p{L}\p{N}]+(:[0-9]+)?(/(?:[^\s\[]*[^\s.,?!\[;:-])?)?)\4(?(3)(\)))(?(2)(\]))(?(1)(>))(?![^\s]*\[/(?:url|img)\])%ui','stripslashes($matches[1].$matches[2].$matches[3].$matches[4]).handle_url_tag($matches[5].$matches[6], $matches[5].$matches[6], true).stripslashes($matches[4].forum_array_key($matches, 10).forum_array_key($matches, 11).forum_array_key($matches, 12))', $text);
+

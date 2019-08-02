@@ -14,10 +14,13 @@
 
 #include "GamePage.h"
 
+#include "Picker.h"
+
 
 #include "pathFind.h"
 
 #include "animationBank.h"
+#include "emotion.h"
 
 #include "TextField.h"
 
@@ -53,12 +56,22 @@ typedef struct LiveObject {
         
         SimpleVector<int> lineage;
         
+        int lineageEveID;
+        
+
         char outOfRange;
         char dying;
+        char sick;
         
         char *name;
 
         char *relationName;
+        
+        int curseLevel;
+        
+        int excessCursePoints;
+
+        int curseTokenCount;
         
 
         // roll back age temporarily to make baby revert to crying
@@ -78,6 +91,12 @@ typedef struct LiveObject {
         // by an adult
         int heldByAdultID;
         
+        // -1 if not set
+        // otherwise, ID of adult that is holding us according to pending
+        // messages, but not according to already-played messages
+        int heldByAdultPendingID;
+        
+
         // usually 0, unless we're being held by an adult
         // and just got put down
         // then we slide back into position
@@ -90,8 +109,11 @@ typedef struct LiveObject {
         // track this so that we only send one jump message even if
         // the player clicks more than once before the server registers the
         // jump
-        char jumpOutOfArmsSent;
+        double jumpOutOfArmsSentTime;
         
+        // true if locally-controlled baby is attempting to jump out of arms
+        char babyWiggle;
+        double babyWiggleProgress;
 
         
         // usually 0, but used to slide into and out of riding position
@@ -156,6 +178,11 @@ typedef struct LiveObject {
         ClothingSet clothing;
         // stacks of items contained in each piece of clothing
         SimpleVector<int> clothingContained[ NUM_CLOTHING_PIECES ];
+
+        float clothingHighlightFades[ NUM_CLOTHING_PIECES ];
+        
+        int currentMouseOverClothingIndex;
+        
 
         // current fractional grid position and speed
         doublePair currentPos;
@@ -227,6 +254,8 @@ typedef struct LiveObject {
         
         char inMotion;
         
+        int lastMoveSequenceNumber;
+
         char displayChar;
         
         int actionTargetX;
@@ -241,7 +270,6 @@ typedef struct LiveObject {
 
         char pendingAction;
         float pendingActionAnimationProgress;
-        float pendingActionAnimationTotalProgress;
         double pendingActionAnimationStartTime;
         
         double lastActionSendStartTime;
@@ -256,6 +284,8 @@ typedef struct LiveObject {
         // wall clock time when speech should start fading
         double speechFadeETATime;
 
+        char speechIsSuccessfulCurse;
+        
 
         char shouldDrawPathMarks;
         double pathMarkFade;
@@ -266,6 +296,15 @@ typedef struct LiveObject {
         SimpleVector<char*> pendingReceivedMessages;
         char somePendingMessageIsMoreMovement;
 
+
+        // NULL if none
+        Emotion *currentEmot;
+        // wall clock time when emot clears
+        double emotClearETATime;
+
+        char killMode;
+        int killWithID;
+
     } LiveObject;
 
 
@@ -274,10 +313,30 @@ typedef struct LiveObject {
 typedef struct GraveInfo {
         GridPos worldPos;
         char *relationName;
+        // wall clock time when grave was created
+        // (for old graves, estimated based on grave age
+        // and current age rate)
+        double creationTime;
+
+        // if server sends -1 for grave age, we don't display age
+        char creationTimeUnknown;
+
+        // to prevent YEARS display from ticking up while we
+        // are still mousing over (violates the erased pencil consistency)
+        // -1 if not set
+        int lastMouseOverYears;
+        // last time we displayed a mouse-over label for this
+        // used to detect when we've moused away, even if not mousing
+        // over another grave
+        double lastMouseOverTime;
     } GraveInfo;
         
 
-
+typedef struct OwnerInfo {
+    GridPos worldPos;
+    
+    SimpleVector<int> *ownerList;
+    } OwnerInfo;
 
 
 
@@ -360,7 +419,7 @@ typedef struct ExtraMapObject {
 
 
 
-class LivingLifePage : public GamePage {
+class LivingLifePage : public GamePage, public ActionListener {
         
     public:
 
@@ -413,6 +472,9 @@ class LivingLifePage : public GamePage {
             }
 
 
+        virtual void actionPerformed( GUIComponent *inTarget );
+        
+
     protected:
 
         int mServerSocket;
@@ -426,6 +488,7 @@ class LivingLifePage : public GamePage {
         
         char mStartedLoadingFirstObjectSet;
         char mDoneLoadingFirstObjectSet;
+        double mStartedLoadingFirstObjectSetStartTime;
 
         float mFirstObjectSetLoadingProgress;
         
@@ -551,6 +614,11 @@ class LivingLifePage : public GamePage {
         SpriteHandle mHomeArrowErasedSprites[ NUM_HOME_ARROWS ];
         
         HomeArrow mHomeArrowStates[ NUM_HOME_ARROWS ];
+
+        SimpleVector<int> mCulvertStoneSpriteIDs;
+        
+        SimpleVector<char*> mPreviousHomeDistStrings;
+        SimpleVector<float> mPreviousHomeDistFades;
         
 
         // offset from current view center
@@ -580,6 +648,7 @@ class LivingLifePage : public GamePage {
         char mPulseHungerSound;
 
         SoundSpriteHandle mTutorialSound;
+        SoundSpriteHandle mCurseSound;
 
         
         SpriteHandle mHungerSlipSprites[3];
@@ -662,6 +731,10 @@ class LivingLifePage : public GamePage {
         int mLiveTutorialTriggerNumber;
 
 
+
+        // relative to map corner, but not necessary in bounds
+        // of locally stored map
+        GridPos getMapPos( int inWorldX, int inWorldY );
 
         // -1 if outside bounds of locally stored map
         int getMapIndex( int inWorldX, int inWorldY );
@@ -762,6 +835,15 @@ class LivingLifePage : public GamePage {
         double mPageStartTime;
 
         void computePathToDest( LiveObject *inObject );
+        
+        double computePathSpeedMod( LiveObject *inObject, int inPathLength );
+        
+        // check if same floor is present when we take a step in x or y
+        char isSameFloor( int inFloor, GridPos inFloorPos, int inDX, int inDY );
+        
+        // forces next pointerDown call to avoid everything but ground clicks
+        char mForceGroundClick;
+        
 
 
         LiveObject *getOurLiveObject();
@@ -770,13 +852,20 @@ class LivingLifePage : public GamePage {
 
         void clearLiveObjects();
         
+        // inSpeaker can be NULL
         void drawChalkBackgroundString( doublePair inPos, 
                                         const char *inString,
                                         double inFade,
                                         double inMaxWidth,
-                                        LiveObject *inSpeaker,
-                                        int inForceMinChalkBlots = -1 );
+                                        LiveObject *inSpeaker = NULL,
+                                        int inForceMinChalkBlots = -1,
+                                        FloatColor *inForceBlotColor = NULL,
+                                        FloatColor *inForceTextColor = NULL );
         
+        
+        void drawOffScreenSounds();
+        
+
 
         // returns an animation pack that can be used to draw the
         // held object.  The pack's object ID is -1 if nothing is held
@@ -788,14 +877,16 @@ class LivingLifePage : public GamePage {
 
         void drawMapCell( int inMapI, 
                           int inScreenX, int inScreenY,
-                          char inHighlightOnly = false );
+                          char inHighlightOnly = false,
+                          // blocks frame update for cell and animation sounds
+                          char inNoTimeEffects = false );
         
         void checkForPointerHit( PointerHitRecord *inRecord,
                                  float inX, float inY );
         
 
 
-        void handleOurDeath();
+        void handleOurDeath( char inDisconnect = false );
         
 
         char *mDeathReason;
@@ -826,7 +917,25 @@ class LivingLifePage : public GamePage {
         
 
         SimpleVector<GraveInfo> mGraveInfo;
+
+        SimpleVector<OwnerInfo> mOwnerInfo;
         
+        void clearOwnerInfo();
+    
+
+        // end the move of an extra moving object and stick it back
+        // in the map at its destination.
+        // inExtraIndex is its index in the mMapExtraMovingObjects vectors
+        void endExtraObjectMove( int inExtraIndex );
+        
+
+        char mUsingSteam;
+        char mZKeyDown;
+
+        char mPlayerInFlight;
+
+        Picker mObjectPicker;
+
     };
 
 

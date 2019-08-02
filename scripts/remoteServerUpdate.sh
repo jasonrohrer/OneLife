@@ -34,6 +34,7 @@ cd ~/checkout/OneLifeData7
 git checkout master
 git pull --tags
 rm */cache.fcz
+rm */bin_*cache.fcz
 
 
 echo "" 
@@ -44,8 +45,10 @@ cd ~/checkout/minorGems
 git pull --tags
 
 
+~/checkout/OneLife/scripts/serverPull.sh
+
 cd ~/checkout/OneLife/server
-git pull --tags
+
 
 ./configure 1
 make

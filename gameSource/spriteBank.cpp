@@ -16,6 +16,7 @@
 
 
 #include "folderCache.h"
+#include "binFolderCache.h"
 
 
 
@@ -30,7 +31,10 @@ static StringTree tree;
 
 static FolderCache cache;
 
+static BinFolderCache binCache;
+
 static int currentFile;
+static int currentBinFile;
 
 
 static SimpleVector<SpriteRecord*> records;
@@ -56,6 +60,10 @@ static SimpleVector<SpriteLoadingRecord> loadingSprites;
 static SimpleVector<int> loadedSprites;
 
 
+static char *loadingFailureFileName = NULL;
+
+
+
 
 int getMaxSpriteID() {
     return maxID;
@@ -76,15 +84,22 @@ int initSpriteBankStart( char *outRebuildingCache ) {
     maxID = 0;
     
     currentFile = 0;
+    currentBinFile = 0;
+    
+    char rebuildingA, rebuildingB;
+    cache = initFolderCache( "sprites", &rebuildingA );
 
-    cache = initFolderCache( "sprites", outRebuildingCache );
+    binCache = initBinFolderCache( "sprites", ".tga", &rebuildingB );
+
+    *outRebuildingCache = rebuildingA || rebuildingB;
+    
 
     unsigned char onePixel[4] = { 0, 0, 0, 0 };
     
 
     blankSprite = fillSprite( onePixel, 1, 1 );
     
-    return cache.numFiles;
+    return cache.numFiles + binCache.numFiles;
     }
 
 
@@ -119,161 +134,360 @@ void expandMap( char *inMap, int inW, int inH ) {
     }
 
 
+static void setLoadingFailureFileName( char *inNewFileName ) {
+    if( loadingFailureFileName != NULL ) {
+        delete [] loadingFailureFileName;
+        }
+    loadingFailureFileName = inNewFileName;
+    }
+
+
+
+
+static void loadSpriteFromRawTGAData( int inSpriteID, unsigned char *inTGAData,
+                                      int inDataLength ) {
+    
+    RawRGBAImage *spriteImage = readTGAFileRawFromBuffer( inTGAData, 
+                                                          inDataLength);
+
+    if( spriteImage != NULL && spriteImage->mNumChannels != 4 ) {
+        printf( "Sprite loading for id %d not a 4-channel image, "
+                "failed to load.\n",
+                inSpriteID );
+        delete spriteImage;
+        spriteImage = NULL;
+        
+        setLoadingFailureFileName(
+            autoSprintf( "sprites/%d.tga", inSpriteID ) );
+        }
+                            
+    if( spriteImage != NULL ) {
+        SpriteRecord *r = getSpriteRecord( inSpriteID );
+                        
+        r->sprite =
+            fillSprite( spriteImage->mRGBABytes, 
+                        spriteImage->mWidth,
+                        spriteImage->mHeight );
+        
+        r->w = spriteImage->mWidth;
+        r->h = spriteImage->mHeight;                
+        
+        doublePair offset = { (double)( r->centerAnchorXOffset ),
+                              (double)( r->centerAnchorYOffset ) };
+        
+        setSpriteCenterOffset( r->sprite, offset );
+        
+        
+        
+        r->maxD = r->w;
+        if( r->h > r->maxD ) {
+            r->maxD = r->h;
+            }        
+        
+        int numPixels = r->w * r->h;
+        r->hitMap = new char[ numPixels ];
+        
+        memset( r->hitMap, 1, numPixels );
+        
+                    
+        int numBytes = numPixels * 4;
+                    
+        unsigned char *bytes = spriteImage->mRGBABytes;
+                    
+        // track max/min x and y to compute average for center
+
+        int minX = r->w;
+        int maxX = 0;
+                    
+        int minY = r->h;
+        int maxY = 0;
+                    
+        int w = r->w;
+                    
+
+        // alpha is 4th byte
+        int p=0;
+        for( int b=3; b<numBytes; b+=4 ) {
+            if( bytes[b] < 64 ) {
+                r->hitMap[p] = 0;
+                }
+            else {
+                int y = p / w;
+                int x = p % w;
+
+                if( y < minY ) {
+                    minY = y;
+                    }
+                if( y > maxY ) {
+                    maxY = y;
+                    }
+
+                if( x < minX ) {
+                    minX = x;
+                    }
+                if( x > maxX ) {
+                    maxX = x;
+                    }
+                }
+                        
+            p++;
+            }
+                    
+        for( int e=0; e<3; e++ ) {    
+            expandMap( r->hitMap, r->w, r->h );
+            }
+
+        r->centerXOffset = 
+            ( maxX + minX ) / 2 - 
+            r->w / 2;
+
+        r->centerYOffset = 
+            ( maxY + minY ) / 2 - 
+            r->h / 2;
+                    
+        r->visibleW = maxX - minX;
+        r->visibleH = maxY - minY;
+
+        delete spriteImage;
+        }
+    }
+
+
+
+
+
+typedef struct LoadedSpritePlaceholder {
+        int id;
+        SpriteHandle sprite;
+    } LoadedSpritePlaceholder;
+    
+
+SimpleVector<LoadedSpritePlaceholder> loadedPlaceholders;
+
 
 
 float initSpriteBankStep() {
     
-    if( currentFile == cache.numFiles ) {
+    if( currentFile == cache.numFiles &&
+        currentBinFile == binCache.numFiles ) {
         return 1.0;
         }
-    
-    int i = currentFile;
 
-    char *fileName = getFileName( cache, i );
     
-    // skip all non-txt files (only read meta data files on init, 
-    // not bulk data tga files)
-    if( strstr( fileName, ".txt" ) != NULL &&
-        strcmp( fileName, "nextSpriteNumber.txt" ) != 0 ) {
+    if( currentFile < cache.numFiles ) {
+        
+        int i = currentFile;
+
+        char *fileName = getFileName( cache, i );
+    
+        // skip all non-txt files (only read meta data files on init, 
+        // not bulk data tga files)
+        if( strstr( fileName, ".txt" ) != NULL &&
+            strcmp( fileName, "nextSpriteNumber.txt" ) != 0 ) {
                             
-        //printf( "Loading sprite from path %s\n", fileName );
+            //printf( "Loading sprite from path %s\n", fileName );
 
-        SpriteRecord *r = new SpriteRecord;
+            SpriteRecord *r = new SpriteRecord;
 
 
-        r->sprite = NULL;
-        r->hitMap = NULL;
-        r->loading = false;
-        r->numStepsUnused = 0;
+            r->sprite = NULL;
+            r->hitMap = NULL;
+            r->loading = false;
+            r->numStepsUnused = 0;
         
-        r->remappable = true;
-        r->remapTarget = true;
+            r->remappable = true;
+            r->remapTarget = true;
 
-        r->maxD = 2;
+            r->maxD = 2;
         
-        // dummy values until we load the image later
-        r->w = 2;
-        r->h = 2;
+            // dummy values until we load the image later
+            r->w = 2;
+            r->h = 2;
         
-        r->visibleW = 2;
-        r->visibleH = 2;
+            r->visibleW = 2;
+            r->visibleH = 2;
 
 
-        r->id = 0;
+            r->id = 0;
         
-        sscanf( fileName, "%d.txt", &( r->id ) );
+            sscanf( fileName, "%d.txt", &( r->id ) );
                 
                 
-        char *contents = getFileContents( cache, i );
+            char *contents = getFileContents( cache, i );
                 
-        r->tag = NULL;
+            r->tag = NULL;
 
-        r->centerXOffset = 0;
-        r->centerYOffset = 0;
+            r->centerXOffset = 0;
+            r->centerYOffset = 0;
         
-        r->centerAnchorXOffset = 0;
-        r->centerAnchorYOffset = 0;
+            r->centerAnchorXOffset = 0;
+            r->centerAnchorYOffset = 0;
 
-        if( contents != NULL ) {
+            if( contents != NULL ) {
             
-            SimpleVector<char *> *tokens = tokenizeString( contents );
-            int numTokens = tokens->size();
+                SimpleVector<char *> *tokens = tokenizeString( contents );
+                int numTokens = tokens->size();
             
-            if( numTokens >= 2 ) {
+                if( numTokens >= 2 ) {
                         
-                r->tag = 
-                    stringDuplicate( tokens->getElementDirect( 0 ) );
+                    r->tag = 
+                        stringDuplicate( tokens->getElementDirect( 0 ) );
                 
-                if( strstr( r->tag, "_" ) != NULL ) {
-                    r->remapTarget = false;
-                    r->remappable = false;
-                    }
-                else if( strncmp( r->tag, "Category", 8 ) == 0 ) {
-                    r->remapTarget = false;
-                    }
-                else if( strncmp( r->tag, "BodyWhite", 9 ) == 0 ) {
-                    r->remapTarget = false;
-                    }
-                else if( strncmp( r->tag, "HeadWhite", 9 ) == 0 ) {
-                    r->remapTarget = false;
-                    }
+                    if( strstr( r->tag, "_" ) != NULL ) {
+                        r->remapTarget = false;
+                        r->remappable = false;
+                        }
+                    else if( strncmp( r->tag, "Category", 8 ) == 0 ) {
+                        r->remapTarget = false;
+                        }
+                    else if( strncmp( r->tag, "BodyWhite", 9 ) == 0 ) {
+                        r->remapTarget = false;
+                        }
+                    else if( strncmp( r->tag, "HeadWhite", 9 ) == 0 ) {
+                        r->remapTarget = false;
+                        }
                 
                 
         
-                int mult;
-                sscanf( tokens->getElementDirect( 1 ),
-                        "%d", &mult );
+                    int mult;
+                    sscanf( tokens->getElementDirect( 1 ),
+                            "%d", &mult );
                         
-                if( mult == 1 ) {
-                    r->multiplicativeBlend = true;
+                    if( mult == 1 ) {
+                        r->multiplicativeBlend = true;
+                        }
+                    else {
+                        r->multiplicativeBlend = false;
+                        }
                     }
-                else {
-                    r->multiplicativeBlend = false;
-                    }
-                }
-            if( numTokens >= 4 ) {
-                sscanf( tokens->getElementDirect( 2 ),
-                        "%d", &( r->centerAnchorXOffset ) );
+                if( numTokens >= 4 ) {
+                    sscanf( tokens->getElementDirect( 2 ),
+                            "%d", &( r->centerAnchorXOffset ) );
 
-                sscanf( tokens->getElementDirect( 3 ),
-                        "%d", &( r->centerAnchorYOffset ) );
-                }
+                    sscanf( tokens->getElementDirect( 3 ),
+                            "%d", &( r->centerAnchorYOffset ) );
+                    }
             
 
-            tokens->deallocateStringElements();
-            delete tokens;
+                tokens->deallocateStringElements();
+                delete tokens;
                     
-            delete [] contents;
-            }
+                delete [] contents;
+                }
                 
-        if( r->tag == NULL ) {
-            r->tag = stringDuplicate( "tag" );
-            r->multiplicativeBlend = false;
-            }
+            if( r->tag == NULL ) {
+                r->tag = stringDuplicate( "tag" );
+                r->multiplicativeBlend = false;
+                }
 
-        records.push_back( r );
+            records.push_back( r );
 
-        if( maxID < r->id ) {
-            maxID = r->id;
+            if( maxID < r->id ) {
+                maxID = r->id;
+                }
+            }    
+        delete [] fileName;
+
+
+        currentFile ++;
+
+
+        if( currentFile == cache.numFiles ) {
+            // done loading all .txt files
+            // ready to populate record ID map
+            mapSize = maxID + 1;
+            
+            idMap = new SpriteRecord*[ mapSize ];
+            
+            for( int i=0; i<mapSize; i++ ) {
+                idMap[i] = NULL;
+                }
+            
+            int numRecords = records.size();
+            for( int i=0; i<numRecords; i++ ) {
+                SpriteRecord *r = records.getElementDirect(i);
+                
+                idMap[ r->id ] = r;
+                
+                if( makeNewSpritesSearchable ) {    
+                    char *lower = stringToLowerCase( r->tag );
+            
+                    tree.insert( lower, r );
+                    
+                    delete [] lower;
+                    }
+                }
+            printf( "Loaded %d tagged sprites from sprites folder\n", 
+                    numRecords );
             }
         }
-    delete [] fileName;
+    else if( currentBinFile < binCache.numFiles ) {
+        // all .txt files have been loaded from cache.fcz
+        
+        // that means all sprite records have been created
+        
+        // now load all tga files from bin_cache.fcz
 
+        // and use tga data to populate sprite records with image data
+        
+        int i = currentBinFile;
 
-    currentFile ++;
-    return (float)( currentFile ) / (float)( cache.numFiles );
+        char *fileName = getFileName( binCache, i );
+    
+        // skip all non-txt files (only read meta data files on init, 
+        // not bulk data tga files)
+        if( strstr( fileName, ".tga" ) != NULL ) {
+            
+            int spriteID = 0;
+            sscanf( fileName, "%d.tga", &spriteID );
+
+            if( spriteID > 0 ) {
+                
+                int contSize;
+                unsigned char *contents = getFileContents( binCache, i,
+                                                           fileName, 
+                                                           &contSize );
+                if( contents != NULL ) {
+                    loadSpriteFromRawTGAData( spriteID, contents, contSize );
+                    
+                    SpriteRecord *r = getSpriteRecord( spriteID );
+                    
+                    r->numStepsUnused = 0;
+                    loadedSprites.push_back( spriteID );
+
+                    delete [] contents;
+                    }
+                }
+            }
+        delete [] fileName;
+        currentBinFile++;
+        }
+    
+    
+
+    return (float)( currentFile + currentBinFile ) / 
+        (float)( cache.numFiles + binCache.numFiles );
     }
+
+
+static char spriteBankLoaded = false;
 
  
 
 void initSpriteBankFinish() {    
 
     freeFolderCache( cache );
+    freeBinFolderCache( binCache );
     
-    mapSize = maxID + 1;
     
-    idMap = new SpriteRecord*[ mapSize ];
-    
-    for( int i=0; i<mapSize; i++ ) {
-        idMap[i] = NULL;
-        }
 
-    int numRecords = records.size();
-    for( int i=0; i<numRecords; i++ ) {
-        SpriteRecord *r = records.getElementDirect(i);
-        
-        idMap[ r->id ] = r;
-        
-        if( makeNewSpritesSearchable ) {    
-            char *lower = stringToLowerCase( r->tag );
-            
-            tree.insert( lower, r );
-            
-            delete [] lower;
-            }
-        }
+    spriteBankLoaded = true;
+    }
 
-    printf( "Loaded %d tagged sprites from sprites folder\n", numRecords );
+
+
+char isSpriteBankLoaded() {
+    return spriteBankLoaded;
     }
 
 
@@ -367,6 +581,11 @@ static void freeSpriteRecord( int inID ) {
 
 void freeSpriteBank() {
     
+    if( loadingFailureFileName != NULL ) {
+        delete [] loadingFailureFileName;
+        }
+    
+
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {
             
@@ -389,11 +608,28 @@ void freeSpriteBank() {
     if( blankSprite != NULL ) {
         freeSprite( blankSprite );
         }
+
+    spriteBankLoaded = false;
+    }
+
+
+
+
+
+
+char *getSpriteBankLoadFailure() {
+    return loadingFailureFileName;
     }
 
 
 
 void stepSpriteBank() {
+    // no more dynamic loading or unloading
+    // they are all loaded at startup
+    return;
+    
+    // keep this code in case we ever want to go back...
+
     for( int i=0; i<loadingSprites.size(); i++ ) {
         SpriteLoadingRecord *loadingR = loadingSprites.getElement( i );
         
@@ -408,110 +644,13 @@ void stepSpriteBank() {
             if( data == NULL ) {
                 printf( "Reading sprite data from file failed, sprite ID %d\n",
                         loadingR->spriteID );
+
+                setLoadingFailureFileName(
+                    autoSprintf( "sprites/%d.tga", loadingR->spriteID ) );
                 }
             else {
                 
-                
-                RawRGBAImage *spriteImage = readTGAFileRawFromBuffer( data, 
-                                                                      length );
-
-                if( spriteImage != NULL && spriteImage->mNumChannels != 4 ) {
-                    printf( "Sprite loading for id %d not a 4-channel image, "
-                            "failed to load.\n",
-                            loadingR->spriteID );
-                    delete spriteImage;
-                    spriteImage = NULL;
-                    }
-                            
-                if( spriteImage != NULL ) {
-                
-                        
-                    r->sprite =
-                        fillSprite( spriteImage->mRGBABytes, 
-                                    spriteImage->mWidth,
-                                    spriteImage->mHeight );
-                
-                    r->w = spriteImage->mWidth;
-                    r->h = spriteImage->mHeight;                
-                    
-                    doublePair offset = { (double)( r->centerAnchorXOffset ),
-                                          (double)( r->centerAnchorYOffset ) };
-                    
-                    setSpriteCenterOffset( r->sprite, offset );
-
-                                          
-
-                    r->maxD = r->w;
-                    if( r->h > r->maxD ) {
-                        r->maxD = r->h;
-                        }        
-                    
-                    int numPixels = r->w * r->h;
-                    r->hitMap = new char[ numPixels ];
-                    
-                    memset( r->hitMap, 1, numPixels );
-                    
-                    
-                    int numBytes = numPixels * 4;
-                    
-                    unsigned char *bytes = spriteImage->mRGBABytes;
-                    
-                    // track max/min x and y to compute average for center
-
-                    int minX = r->w;
-                    int maxX = 0;
-                    
-                    int minY = r->h;
-                    int maxY = 0;
-                    
-                    int w = r->w;
-                    
-
-                    // alpha is 4th byte
-                    int p=0;
-                    for( int b=3; b<numBytes; b+=4 ) {
-                        if( bytes[b] < 64 ) {
-                            r->hitMap[p] = 0;
-                            }
-                        else {
-                            int y = p / w;
-                            int x = p % w;
-
-                            if( y < minY ) {
-                                minY = y;
-                                }
-                            if( y > maxY ) {
-                                maxY = y;
-                                }
-
-                            if( x < minX ) {
-                                minX = x;
-                                }
-                            if( x > maxX ) {
-                                maxX = x;
-                                }
-                            }
-                        
-                        p++;
-                        }
-                    
-                    for( int e=0; e<3; e++ ) {    
-                        expandMap( r->hitMap, r->w, r->h );
-                        }
-
-                    r->centerXOffset = 
-                        ( maxX + minX ) / 2 - 
-                        r->w / 2;
-
-                    r->centerYOffset = 
-                        ( maxY + minY ) / 2 - 
-                        r->h / 2;
-                    
-                    r->visibleW = maxX - minX;
-                    r->visibleH = maxY - minY;
-
-                    delete spriteImage;
-                    }
+                loadSpriteFromRawTGAData( loadingR->spriteID, data, length );
                 
                 delete [] data;
                 }
@@ -535,12 +674,16 @@ void stepSpriteBank() {
         if( r->numStepsUnused > 600 ) {
             // 10 seconds not drawn
             
-            freeSprite( r->sprite );
-            r->sprite = NULL;
+            if( r->sprite != NULL ) {    
+                freeSprite( r->sprite );
+                r->sprite = NULL;
+                }
             
-            delete [] r->hitMap;
-            r->hitMap = NULL;
-
+            if( r->hitMap != NULL ) {
+                delete [] r->hitMap;
+                r->hitMap = NULL;
+                }
+            
             r->loading = false;
 
             loadedSprites.deleteElement( i );
@@ -560,6 +703,18 @@ SpriteRecord *getSpriteRecord( int inID ) {
     else {
         return NULL;
         }
+    }
+
+
+
+char *getSpriteTag( int inID ) {
+    SpriteRecord *r = getSpriteRecord( inID );
+    
+    if( r == NULL ) {
+        return NULL;
+        }
+    
+    return r->tag;
     }
 
 
@@ -761,6 +916,19 @@ SpriteRecord **searchSprites( const char *inSearch,
 
 
 
+static void clearCacheFiles() {
+    File *cacheFile = spritesDir.getChildFile( "cache.fcz" );
+    
+    cacheFile->remove();
+    
+    delete cacheFile;    
+    
+    clearAllBinCacheFiles( &spritesDir );
+    }
+
+
+
+
 int addSprite( const char *inTag, SpriteHandle inSprite,
                Image *inSourceImage,
                char inMultiplicativeBlending,
@@ -813,12 +981,7 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
             
         newID = nextSpriteNumber;
 
-        File *cacheFile = spritesDir.getChildFile( "cache.fcz" );
-        
-        cacheFile->remove();
-        
-        delete cacheFile;
-
+        clearCacheFiles();
 
         File *spriteFile = spritesDir.getChildFile( fileNameTGA );
             
@@ -1005,7 +1168,8 @@ int bakeSprite( const char *inTag,
                 int *inSpriteIDs,
                 doublePair *inSpritePos,
                 double *inSpriteRot,
-                char *inSpriteHFlips ) {
+                char *inSpriteHFlips,
+                FloatRGB *inSpriteColors ) {
     
     File spritesDir( NULL, "sprites" );
             
@@ -1022,18 +1186,38 @@ int bakeSprite( const char *inTag,
         yOffsets[i] = lrint( inSpritePos[i].y );
 
         SpriteRecord *r = getSpriteRecord( inSpriteIDs[i] );
-        int radiusX = r->w / 2 + 
+        int radiusXA = r->w / 2 + 
             abs( r->centerAnchorXOffset ) + 
             abs( xOffsets[i] );
-        int radiusY = r->h / 2 + 
+        
+        // consider rotations
+        int radiusXB = r->h / 2 + 
+            abs( r->centerAnchorYOffset ) + 
+            abs( xOffsets[i] );
+        
+
+        int radiusYA = r->h / 2 + 
                  abs( r->centerAnchorYOffset )  + 
                  abs( yOffsets[i] );
+
+        // consider rotations
+        int radiusYB = r->w / 2 + 
+                 abs( r->centerAnchorXOffset )  + 
+                 abs( yOffsets[i] );
+
         
-        if( radiusX > baseRadiusX ) {
-            baseRadiusX = radiusX;
+        if( radiusXA > baseRadiusX ) {
+            baseRadiusX = radiusXA;
             }
-        if( radiusY > baseRadiusY ) {
-            baseRadiusY = radiusY;
+        if( radiusYA > baseRadiusY ) {
+            baseRadiusY = radiusYA;
+            }
+        
+        if( radiusXB > baseRadiusX ) {
+            baseRadiusX = radiusXB;
+            }
+        if( radiusYB > baseRadiusY ) {
+            baseRadiusY = radiusYB;
             }
         }
 
@@ -1052,7 +1236,7 @@ int bakeSprite( const char *inTag,
             
     
     for( int i=0; i<inNumSprites; i++ ) {
-        SpriteRecord *r = getSpriteRecord( inSpriteIDs[i] );
+        SpriteRecord *spriteRec = getSpriteRecord( inSpriteIDs[i] );
         
         char *fileNameTGA = autoSprintf( "%d.tga", inSpriteIDs[i] );
         
@@ -1075,15 +1259,59 @@ int bakeSprite( const char *inTag,
             int w = image->getWidth();
             int h = image->getHeight();
 
-            int centerX = w/2 + r->centerAnchorXOffset;
-            int centerY = h/2 + r->centerAnchorYOffset;
+
+            if( inSpriteHFlips[i] ||
+                inSpriteRot[i] != 0 ) {
+                
+                // expand until square to permit rotations without
+                // getting cut off
+                
+                int newWidth = w;
+                int newHeight = h;
+                if( w < h ) {
+                    newWidth = h;
+                    }
+                else if( h < w ) {
+                    newHeight = w;
+                    }
+                
+                int totalPossibleOffset = 
+                    2 * abs( spriteRec->centerAnchorXOffset ) +
+                    2 * abs( spriteRec->centerAnchorYOffset );
+                
+                newWidth += totalPossibleOffset;
+                newHeight += totalPossibleOffset;
+
+                if( newWidth != w ||
+                    newHeight != h ) {
+                    Image *biggerImage = image->expandImage( newWidth,
+                                                             newHeight );
+                    delete image;
+                    image = biggerImage;
+                    
+                    w = newWidth;
+                    h = newHeight;
+                    }
+                }
+
+
+            int centerX = w/2 + spriteRec->centerAnchorXOffset;
+            int centerY = h/2 + spriteRec->centerAnchorYOffset;
             
 
             double *chan[4];
             for( int c=0; c<4; c++ ) {
                 chan[c] = image->getChannel( c );
                 }
-                
+            
+            FloatRGB spriteColor = inSpriteColors[i];
+
+            float spriteColorParts[3] = {
+                spriteColor.r,
+                spriteColor.g,
+                spriteColor.b };
+            
+
             // number of clockwise 90 degree rotations
             int numRotSteps = 0;
             
@@ -1157,19 +1385,34 @@ int bakeSprite( const char *inTag,
                     int i = finalY * w + finalX;
                     
                     int baseI = baseY * baseW + baseX;
-                        
-                    for( int c=0; c<3; c++ ) {
-                        // blend dest and source using source alpha
-                        // as weight
-                        baseChan[c][baseI] = 
-                            (1 - chan[3][i] ) * baseChan[c][baseI] +
-                            chan[3][i] * chan[c][i];
-                        }
                     
-                    // add alphas
-                    baseChan[3][baseI] += chan[3][i];
-                    if( baseChan[3][baseI] > 1.0 ) {
-                        baseChan[3][baseI] = 1.0;
+                    if( ! spriteRec->multiplicativeBlend ) {
+                        
+                        for( int c=0; c<3; c++ ) {
+                            // blend dest and source using source alpha
+                            // as weight
+                            baseChan[c][baseI] = 
+                                (1 - chan[3][i] ) * baseChan[c][baseI] +
+                                chan[3][i] * chan[c][i] * spriteColorParts[c];
+                            }
+                        
+                        // add alphas
+                        baseChan[3][baseI] += chan[3][i];
+                        if( baseChan[3][baseI] > 1.0 ) {
+                            baseChan[3][baseI] = 1.0;
+                            }
+                        }
+                    else {
+                        // multiplicative blend
+                        // ignore alphas
+
+                        // note that this will NOT work
+                        // if multiplicative sprite hangs out
+                        // beyond border of opaque non-multiplicative
+                        // parts below it.
+                        for( int c=0; c<3; c++ ) {
+                            baseChan[c][baseI] *= chan[c][i];
+                            }
                         }
                     }
                 }
@@ -1281,12 +1524,8 @@ void deleteSpriteFromBank( int inID ) {
         File *spriteFileTXT = spritesDir.getChildFile( fileNameTXT );
 
             
-        File *cacheFile = spritesDir.getChildFile( "cache.fcz" );
-            
-        cacheFile->remove();
+        clearCacheFiles();
         
-        delete cacheFile;
-
 
         loadedSprites.deleteElementEqualTo( inID );
         
@@ -1328,6 +1567,28 @@ char getSpriteHit( int inID, int inXCenterOffset, int inYCenterOffset ) {
     
     return false;
     }
+
+
+
+void countLoadedSprites( int *outLoaded, int *outTotal ) {
+    int loaded = 0;
+    int total = 0;
+    
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            
+            total ++;
+            if( idMap[i]->sprite != NULL ) {
+                loaded ++;
+                }
+            }
+        }
+    
+    *outLoaded = loaded;
+    *outTotal = total;
+    }
+
+    
 
 
 

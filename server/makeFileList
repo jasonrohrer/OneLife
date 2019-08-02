@@ -32,9 +32,11 @@ map.cpp \
 ../gameSource/ageControl.cpp \
 ../gameSource/folderCache.cpp \
 ../gameSource/SoundUsage.cpp \
+../gameSource/objectMetadata.cpp \
+../gameSource/GridPos.cpp \
 ../commonSource/fractalNoise.cpp \
 kissdb.cpp \
-stackdb.cpp \
+lineardb3.cpp \
 lifeLog.cpp \
 foodLog.cpp \
 backup.cpp \
@@ -46,10 +48,20 @@ failureLog.cpp \
 names.cpp \
 monument.cpp \
 lineageLimit.cpp \
+curses.cpp \
+curseLog.cpp \
+spiral.cpp \
+objectSurvey.cpp \
+language.cpp \
+familySkipList.cpp \
+lifeTokens.cpp \
+fitnessScore.cpp \
+CoordinateTimeTracking.cpp \
+arcReport.cpp \
 
 
 
-GAME_GRAPHICS = \
+GAME_GRAPHICS = 
 
 
 
@@ -84,3 +96,4 @@ NEEDED_MINOR_GEMS_OBJECTS = \
  ${PRINT_UTILS_O} \
  ${DOUBLE_PAIR_O} \
  ${STRING_TREE_O} \
+ ${CRC32_O}

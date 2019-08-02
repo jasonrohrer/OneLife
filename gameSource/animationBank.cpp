@@ -11,6 +11,7 @@
 #include "minorGems/io/file/File.h"
 
 #include "minorGems/game/gameGraphics.h"
+#include "minorGems/game/drawUtils.h"
 
 
 #include "ageControl.h"
@@ -685,7 +686,21 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
     if( newID >= mapSize ) {
         // expand map
 
-        int newMapSize = newID + 1;        
+        // when expanding by one new record, expect that more are coming soon
+        // new objects/animations are added in batches during auto-generation
+        // phase of startup.
+        
+        // would be standard-practice to double newMapSize here, but
+        // will waste a lot of space (each spot in map is 6 32-bit pointers,
+        // or 24 bytes).
+
+        // Found map expansion to be a hot spot with profiler
+        // can speed it up by a factor of X by expanding it by X
+        // For now, just speed it up by a factor of 100
+        
+        // every time it needs to grow, grow it by 100.
+        // Worst case, this will waste 99 * 24 = 2376 bytes.
+        int newMapSize = newID + 100;        
 
         
         AnimationRecord ***newMap = new AnimationRecord**[newMapSize];
@@ -721,15 +736,15 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
         }
 
     
-    // copy to add it to memory bank    
+    // copy to add it to memory bank, but do NOT count live sound uses
     
     if( inRecord->type < endAnimType ) {
-        idMap[newID][inRecord->type] = copyRecord( inRecord );
+        idMap[newID][inRecord->type] = copyRecord( inRecord, false );
         }
     else {
         // extra
 
-        AnimationRecord *r = copyRecord( inRecord );
+        AnimationRecord *r = copyRecord( inRecord, false );
         
         // make sure index is set correctly
         r->extraIndex = extraIndex;
@@ -738,15 +753,9 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
         }
     
     
-    // copyRecord triggers counting a live use of sounds
-    // that is normally correct, but here, when stored in bank,
-    // these are not live
-    //
-    // uncount them
-    for( int i=0; i<inRecord->numSounds; i++ ) {
-        unCountLiveUse( inRecord->soundAnim[i].sound );
-        }
-
+    // unCountLiveUse no longer needed here, because we're telling copyRecord
+    // to not cound these as live uses above
+    
     
     
     if( ! inNoWriteToFile ) {
@@ -1170,6 +1179,28 @@ static char logicalXOR( char inA, char inB ) {
     }
 
 
+static Emotion *drawWithEmot = NULL;
+
+void setAnimationEmotion( Emotion *inEmotion ) {
+    drawWithEmot = inEmotion;
+    }
+
+
+static float clothingHighlightFades[ NUM_CLOTHING_PIECES ];
+
+void setClothingHighlightFades( float *inFades ) {
+    if( inFades == NULL ) {
+        for( int i=0; i<NUM_CLOTHING_PIECES; i++ ) {
+            clothingHighlightFades[i] = 0;
+            }
+        }
+    else {
+        for( int i=0; i<NUM_CLOTHING_PIECES; i++ ) {
+            clothingHighlightFades[i] = inFades[i];
+            }
+        }
+    }
+
 
 
 ObjectAnimPack drawObjectAnimPacked( 
@@ -1219,7 +1250,8 @@ ObjectAnimPack drawObjectAnimPacked(
         inClothingContained,
         inNumContained,
         inContainedIDs,
-        inSubContained, 
+        inSubContained,
+        drawWithEmot,
         0 };
     
     return outPack;
@@ -1232,6 +1264,11 @@ void drawObjectAnim( ObjectAnimPack inPack ) {
     HoldingPos p;
     p.valid = false;
 
+    // set based on what's in pack, but restore main value afterward
+    Emotion *oldEmot = drawWithEmot;
+    
+    drawWithEmot = inPack.setEmot;
+    
     if( inPack.inContainedIDs == NULL ) {
         p = drawObjectAnim( 
             inPack.inObjectID,
@@ -1282,6 +1319,9 @@ void drawObjectAnim( ObjectAnimPack inPack ) {
             inPack.inContainedIDs,
             inPack.inSubContained );
         }
+    
+    drawWithEmot = oldEmot;
+    
 
     if( inPack.additionalHeldID > 0 && p.valid ) {
         doublePair holdPos;
@@ -1398,6 +1438,174 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                                inClothing,
                                inClothingContained,
                                outSlotRots, outSlotOffsets );
+        }
+    }
+
+
+
+
+void drawObjectAnimHighlighted(
+    float inHighlightFade,
+    int inObjectID, AnimType inType, double inFrameTime,
+    double inAnimFade, 
+    AnimType inFadeTargetType,
+    double inFadeTargetFrameTime,
+    double inFrozenRotFrameTime,
+    char *outFrozenRotFrameTimeUsed,
+    AnimType inFrozenArmType,
+    AnimType inFrozenArmFadeTargetType,
+    doublePair inPos,
+    double inRot,
+    char inWorn,
+    char inFlipH,
+    double inAge,
+    int inHideClosestArm,
+    char inHideAllLimbs,
+    char inHeldNotInPlaceYet,
+    ClothingSet inClothing,
+    SimpleVector<int> *inClothingContained,
+    int inNumContained, int *inContainedIDs,
+    SimpleVector<int> *inSubContained ) {
+
+    
+    // draw object normally
+    drawObjectAnim( 
+        inObjectID, inType, inFrameTime,
+        inAnimFade, 
+        inFadeTargetType,
+        inFadeTargetFrameTime,
+        inFrozenRotFrameTime,
+        outFrozenRotFrameTimeUsed,
+        inFrozenArmType,
+        inFrozenArmFadeTargetType,
+        inPos,
+        inRot,
+        inWorn,
+        inFlipH,
+        inAge,
+        inHideClosestArm,
+        inHideAllLimbs,
+        inHeldNotInPlaceYet,
+        inClothing,
+        inClothingContained,
+        inNumContained, inContainedIDs,
+        inSubContained );
+
+    if( inHighlightFade > 0 ) {
+        // draw highlight over top
+        int numPasses = 6;
+        int startPass = 1;
+        
+        for( int i=startPass; i<numPasses; i++ ) {
+            switch( i ) {
+                case 0:
+                    // normal color draw
+                    break;
+                case 1:
+                    // opaque portion
+                    startAddingToStencil( false, true, .99f );
+                    break;
+                case 2:
+                    // first fringe
+                    startAddingToStencil( false, true, .07f );
+                    break;
+                case 3:
+                    // subtract opaque from fringe to get just first fringe
+                    startAddingToStencil( false, false, .99f );
+                    break;
+                case 4:
+                    // second fringe
+                    // ignore totally transparent stuff
+                    // like invisible animation layers
+                    startAddingToStencil( false, true, 0.01f );
+                    break;
+                case 5:
+                    // subtract first fringe from fringe to get 
+                    // just secon fringe
+                    startAddingToStencil( false, false, .07f );
+                    break;
+                default:
+                    break;
+                }
+
+            drawObjectAnim( 
+                inObjectID, inType, inFrameTime,
+                inAnimFade, 
+                inFadeTargetType,
+                inFadeTargetFrameTime,
+                inFrozenRotFrameTime,
+                outFrozenRotFrameTimeUsed,
+                inFrozenArmType,
+                inFrozenArmFadeTargetType,
+                inPos,
+                inRot,
+                inWorn,
+                inFlipH,
+                inAge,
+                inHideClosestArm,
+                inHideAllLimbs,
+                inHeldNotInPlaceYet,
+                inClothing,
+                inClothingContained,
+                inNumContained, inContainedIDs,
+                inSubContained );
+            
+            
+            float mainFade = .35f;
+            
+            toggleAdditiveBlend( true );
+            
+            doublePair squarePos = inPos;
+            
+            int squareRad = 128;
+            
+            switch( i ) {
+                case 0:
+                    // normal color draw
+                    break;
+                case 1:
+                    // opaque portion
+                    startDrawingThroughStencil( false );
+
+                    setDrawColor( 1, 1, 1, inHighlightFade * mainFade );
+                    
+                    drawSquare( squarePos, squareRad );
+                    
+                    stopStencil();
+                    break;
+                case 2:
+                    // first fringe
+                    // wait until next pass to isolate fringe
+                    break;
+                case 3:
+                    // now first fringe is isolated in stencil
+                    startDrawingThroughStencil( false );
+
+                    setDrawColor( 1, 1, 1, inHighlightFade * mainFade * .5 );
+
+                    drawSquare( squarePos, squareRad );
+
+                    stopStencil();                    
+                    break;
+                case 4:
+                    // second fringe
+                    // wait until next pass to isolate fringe
+                    break;
+                case 5:
+                    // now second fringe is isolated in stencil
+                    startDrawingThroughStencil( false );
+                    
+                    setDrawColor( 1, 1, 1, inHighlightFade * mainFade *.25 );
+                    
+                    drawSquare( squarePos, squareRad );
+                    
+                    stopStencil();
+                    break;
+                default:
+                    break;
+                }
+            toggleAdditiveBlend( false );
+            }
         }
     }
 
@@ -1523,6 +1731,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
     ObjectRecord *obj = getObject( inObjectID );
     
+    if( obj->noFlip ) {
+        inFlipH = false;
+        }
+
     if( obj->numSprites > MAX_WORKING_SPRITES ) {
         // cannot animate objects with this many sprites
         
@@ -1565,6 +1777,22 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     int backFootIndex = getBackFootIndex( obj, inAge );
     int frontFootIndex = getFrontFootIndex( obj, inAge );
 
+    int eyesIndex = -1;
+    int mouthIndex = -1;
+    
+    if( drawWithEmot != NULL ) {
+        eyesIndex = getEyesIndex( obj, inAge );
+        mouthIndex = getMouthIndex( obj, inAge );
+        
+        // these are never bottom layer
+        // mark as non-existing instead
+        if( eyesIndex == 0 ) {
+            eyesIndex = -1;
+            }
+        if( mouthIndex == 0 ) {
+            mouthIndex = -1;
+            }
+        }
 
     int topBackArmIndex = -1;
     
@@ -1585,6 +1813,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
     doublePair animHeadPos = headPos;
     double animHeadRotDelta = 0;
+
+    doublePair animBodyPos = bodyPos;
+    double animBodyRotDelta = 0;
 
     
     for( int i=0; i<obj->numSprites; i++ ) {
@@ -2078,6 +2309,19 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             
             }
 
+        
+        if( i == bodyIndex ) {
+            // this is the body
+            animBodyPos = spritePos;
+            animBodyRotDelta = rot - obj->spriteRot[i];
+            
+            if( inFlipH ) {    
+                animBodyPos.x *= -1;
+                animBodyRotDelta *= -1;
+                }
+            
+            }
+
 
         if( inFlipH ) {
             spritePos.x *= -1;
@@ -2113,7 +2357,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 skipSprite = true;
                 }
             }
-
+        
+        if( i == mouthIndex && drawWithEmot != NULL &&
+            drawWithEmot->mouthEmot != 0 ) {
+            skipSprite = true;
+            }
+        
 
         if( obj->clothing != 'n' &&
             obj->spriteInvisibleWhenWorn[i] != 0 ) {
@@ -2272,6 +2521,37 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         else if( i == topBackArmIndex ) {
             // draw under top of back arm
             
+
+            // body emote above all body parts
+            if( drawWithEmot != NULL &&
+                drawWithEmot->bodyEmot != 0 &&
+                obj->person ) {
+            
+                char used;
+                drawObjectAnim( drawWithEmot->bodyEmot, 
+                                clothingAnimType, 
+                                inFrameTime,
+                                inAnimFade, 
+                                clothingFadeTargetAnimType,
+                                inFadeTargetFrameTime,
+                                inFrozenRotFrameTime,
+                                &used,
+                                endAnimType,
+                                endAnimType,
+                                add( animBodyPos, inPos ),
+                                animBodyRotDelta,
+                                true,
+                                inFlipH,
+                                -1,
+                                0,
+                                false,
+                                false,
+                                emptyClothing,
+                                NULL,
+                                0, NULL,
+                                NULL );
+                }
+
             if( inClothing.bottom != NULL ) {
                 int numCont = 0;
                 int *cont = NULL;
@@ -2282,7 +2562,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 
 
                 char used;
-                drawObjectAnim( inClothing.bottom->id, 
+                drawObjectAnimHighlighted( clothingHighlightFades[4],
+                                inClothing.bottom->id, 
                                 clothingAnimType, 
                                 inFrameTime,
                                 inAnimFade, 
@@ -2318,7 +2599,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     }
                 
                 char used;
-                drawObjectAnim( inClothing.tunic->id, 
+                drawObjectAnimHighlighted( clothingHighlightFades[1],
+                                inClothing.tunic->id, 
                                 clothingAnimType, 
                                 inFrameTime,
                                 inAnimFade, 
@@ -2354,7 +2636,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     }
 
                 char used;
-                drawObjectAnim( inClothing.backpack->id, 
+                drawObjectAnimHighlighted( clothingHighlightFades[5],
+                                inClothing.backpack->id, 
                                 clothingAnimType, 
                                 inFrameTime,
                                 inAnimFade, 
@@ -2448,6 +2731,15 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             else if( workingSpriteFade[i] < 1 ) {
                 setDrawFade( workingSpriteFade[i] );
                 }
+
+            
+            char additive = false;
+            if( obj->spriteAdditiveBlend != NULL ) {
+                additive = obj->spriteAdditiveBlend[i];
+                }
+            if( additive ) {
+                toggleAdditiveBlend( true );
+                }
             
             int spriteID = obj->sprites[i];
             
@@ -2481,6 +2773,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 toggleMultiplicativeBlend( false );
                 toggleAdditiveTextureColoring( false );
                 }
+            
+            if( additive ) {
+                toggleAdditiveBlend( false );
+                }
 
 
             // this is front-most drawn hand
@@ -2513,8 +2809,164 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             
             }
 
+
+        // eye emot on top of eyes
+        if( i == eyesIndex && drawWithEmot != NULL &&
+            drawWithEmot->eyeEmot != 0 ) {
+            
+            doublePair offset = obj->mainEyesOffset;
+
+        
+            if( inFlipH ) {
+                offset.x *= -1;
+                }                
+        
+            if( animHeadRotDelta != 0 ) {
+                offset = rotate( offset, -2 * M_PI * animHeadRotDelta );
+                }
+        
+        
+            doublePair cPos = add( animHeadPos, offset );
+
+            cPos = add( cPos, inPos );
+
+            char used;
+            drawObjectAnim( drawWithEmot->eyeEmot, 
+                            clothingAnimType, 
+                            inFrameTime,
+                            inAnimFade, 
+                            clothingFadeTargetAnimType,
+                            inFadeTargetFrameTime,
+                            inFrozenRotFrameTime,
+                            &used,
+                            endAnimType,
+                            endAnimType,
+                            cPos,
+                            animHeadRotDelta,
+                            true,
+                            inFlipH,
+                            -1,
+                            0,
+                            false,
+                            false,
+                            emptyClothing,
+                            NULL,
+                            0, NULL,
+                            NULL );
+            }
+
+
+
+        // face emot on top of eyes, if they exist, or head
+        // if not
+        if( ( ( eyesIndex != -1 && i == eyesIndex ) 
+              ||
+              ( eyesIndex == -1 && i == headIndex ) )
+            && drawWithEmot != NULL &&
+            drawWithEmot->faceEmot != 0 &&
+            obj->person ) {
+            
+            char used;
+            drawObjectAnim( drawWithEmot->faceEmot, 
+                            clothingAnimType, 
+                            inFrameTime,
+                            inAnimFade, 
+                            clothingFadeTargetAnimType,
+                            inFadeTargetFrameTime,
+                            inFrozenRotFrameTime,
+                            &used,
+                            endAnimType,
+                            endAnimType,
+                            add( animHeadPos, inPos ),
+                            animHeadRotDelta,
+                            true,
+                            inFlipH,
+                            -1,
+                            0,
+                            false,
+                            false,
+                            emptyClothing,
+                            NULL,
+                            0, NULL,
+                            NULL );
+            }
+
+
+        
+
+
+        // mouth on top of head
+        // but only if there's a mouth to be replaced
+        if( i == headIndex && drawWithEmot != NULL &&
+            drawWithEmot->mouthEmot != 0 &&
+            mouthIndex != -1 ) {
+            
+            char used;
+            drawObjectAnim( drawWithEmot->mouthEmot, 
+                            clothingAnimType, 
+                            inFrameTime,
+                            inAnimFade, 
+                            clothingFadeTargetAnimType,
+                            inFadeTargetFrameTime,
+                            inFrozenRotFrameTime,
+                            &used,
+                            endAnimType,
+                            endAnimType,
+                            add( animHeadPos, inPos ),
+                            animHeadRotDelta,
+                            true,
+                            inFlipH,
+                            -1,
+                            0,
+                            false,
+                            false,
+                            emptyClothing,
+                            NULL,
+                            0, NULL,
+                            NULL );
+            }
+        
+
+        // other emot on top of head (but make sure it only applies to people)
+        // other emote tests depend on eyes index or mouth index, which
+        // are forced to 0 for non-people (and become -1 above), but 
+        // this does not happen for headIndex
+        if( i == headIndex && drawWithEmot != NULL &&
+            drawWithEmot->otherEmot != 0 &&
+            obj->person ) {
+            
+            char used;
+            drawObjectAnim( drawWithEmot->otherEmot, 
+                            clothingAnimType, 
+                            inFrameTime,
+                            inAnimFade, 
+                            clothingFadeTargetAnimType,
+                            inFadeTargetFrameTime,
+                            inFrozenRotFrameTime,
+                            &used,
+                            endAnimType,
+                            endAnimType,
+                            add( animHeadPos, inPos ),
+                            animHeadRotDelta,
+                            true,
+                            inFlipH,
+                            -1,
+                            0,
+                            false,
+                            false,
+                            emptyClothing,
+                            NULL,
+                            0, NULL,
+                            NULL );
+            }
+
+
+
+
         // shoes on top of feet
-        if( inClothing.backShoe != NULL && i == backFootIndex ) {
+        if( ! skipSprite && 
+            inClothing.backShoe != NULL && i == backFootIndex ) {
+            
             int numCont = 0;
             int *cont = NULL;
             if( inClothingContained != NULL ) {    
@@ -2523,7 +2975,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 }
 
             char used;
-            drawObjectAnim( inClothing.backShoe->id, 
+            drawObjectAnimHighlighted( clothingHighlightFades[3],
+                            inClothing.backShoe->id, 
                             clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
@@ -2550,7 +3003,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 delete [] cont;
                 }
             }
-        else if( inClothing.frontShoe != NULL && i == frontFootIndex ) {
+        else if( ! skipSprite && 
+                 inClothing.frontShoe != NULL && i == frontFootIndex ) {
             int numCont = 0;
             int *cont = NULL;
             if( inClothingContained != NULL ) {    
@@ -2559,7 +3013,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 }
             
             char used;
-            drawObjectAnim( inClothing.frontShoe->id, 
+            drawObjectAnimHighlighted( clothingHighlightFades[2],
+                            inClothing.frontShoe->id, 
                             clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
@@ -2588,6 +3043,39 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             }
         
         } 
+    
+
+    // head emot emot on top of everything
+    // if not
+    if( drawWithEmot != NULL &&
+        drawWithEmot->headEmot != 0 &&
+        obj->person ) {
+            
+        char used;
+        drawObjectAnim( drawWithEmot->headEmot, 
+                        clothingAnimType, 
+                        inFrameTime,
+                        inAnimFade, 
+                        clothingFadeTargetAnimType,
+                        inFadeTargetFrameTime,
+                        inFrozenRotFrameTime,
+                        &used,
+                        endAnimType,
+                        endAnimType,
+                        add( animHeadPos, inPos ),
+                        animHeadRotDelta,
+                        true,
+                        inFlipH,
+                        -1,
+                        0,
+                        false,
+                        false,
+                        emptyClothing,
+                        NULL,
+                        0, NULL,
+                        NULL );
+        }
+
 
 
     if( inClothing.hat != NULL ) {
@@ -2620,7 +3108,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             }
         
         char used;
-        drawObjectAnim( inClothing.hat->id, 
+        drawObjectAnimHighlighted( clothingHighlightFades[0],
+                        inClothing.hat->id, 
                         clothingAnimType, 
                         inFrameTime,
                         inAnimFade, 
@@ -2845,6 +3334,9 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     
     // next, draw jiggling (never rotating) objects in slots
     // can't safely rotate them, because they may be compound objects
+
+    // all of these are in contained mode
+    setDrawnObjectContained( true );
     
 
     for( int i=0; i<obj->numSlots; i++ ) {
@@ -3098,6 +3590,10 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
         
         } 
 
+    // done drawing all contained/sub-contained items with drawObject calls
+    setDrawnObjectContained( false );
+
+
     // draw portion of animating object on top of contained slots
     drawObjectAnim( inObjectID, 1, inAnim, inFrameTime,
                     inAnimFade, inFadeTargetAnim, inFadeTargetFrameTime,
@@ -3115,7 +3611,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
 
 
-AnimationRecord *copyRecord( AnimationRecord *inRecord ) {
+AnimationRecord *copyRecord( AnimationRecord *inRecord,
+                             char inCountLiveSoundUses ) {
     AnimationRecord *newRecord = new AnimationRecord;
     
     newRecord->objectID = inRecord->objectID;
@@ -3130,7 +3627,8 @@ AnimationRecord *copyRecord( AnimationRecord *inRecord ) {
             sizeof( SoundAnimationRecord ) * newRecord->numSounds );
 
     for( int i=0; i<newRecord->numSounds; i++ ) {
-        newRecord->soundAnim[i] = copyRecord( inRecord->soundAnim[i] );
+        newRecord->soundAnim[i] = copyRecord( inRecord->soundAnim[i],
+                                              inCountLiveSoundUses );
         }
 
     newRecord->numSprites = inRecord->numSprites;
@@ -3162,13 +3660,16 @@ void freeRecord( AnimationRecord *inRecord ) {
 
 
 
-SoundAnimationRecord copyRecord( SoundAnimationRecord inRecord ) {
+SoundAnimationRecord copyRecord( SoundAnimationRecord inRecord,
+                                 char inCountLiveSoundUses ) {
     SoundAnimationRecord copy = inRecord;
     
     copy.sound = copyUsage( inRecord.sound );
     
-    countLiveUse( copy.sound );
-
+    if( inCountLiveSoundUses ) {
+        countLiveUse( copy.sound );
+        }
+    
     return copy;
     }
 

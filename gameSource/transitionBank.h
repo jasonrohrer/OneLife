@@ -110,6 +110,8 @@ TransRecord *getTrans( int inActor, int inTarget,
 // returned pointer managed internally
 // limit of 100 results that can be used by caller simultanously
 // (statically allocated internally)
+// metadata preserved across transition
+// Also works if newActor or newTarget is a Probability Set Category
 TransRecord *getPTrans( int inActor, int inTarget, 
                         char inLastUseActor = false,
                         char inLastUseTarget = false );

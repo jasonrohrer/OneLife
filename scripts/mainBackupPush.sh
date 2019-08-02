@@ -29,6 +29,9 @@ tar czf ~/backups/failureLog_$date.tar.gz failureLog failureLog_*
 # this bundles local failureLog and failureLog_serverX folders together
 tar czf ~/backups/monumentLogs_$date.tar.gz failureLogs failureLogs_*
 
+# this bundles local curselog and curseLog_serverX folders together
+tar czf ~/backups/curseLog_$date.tar.gz curseLog curseLog_*
+
 
 cd ~/www/reflector/
 tar czf ~/backups/apocalypseLog_$date.tar.gz apocalypseLog.txt

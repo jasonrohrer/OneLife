@@ -6,6 +6,9 @@
 #include "minorGems/system/Time.h"
 
 #include "../gameSource/GridPos.h"
+#include "../gameSource/transitionBank.h"
+
+#include "minorGems/game/doublePair.h"
 
 
 
@@ -30,10 +33,15 @@ typedef struct ChangePosition {
 
 
 
-void initMap();
+// returns true on success
+char initMap();
 
 
-void freeMap();
+void freeMap( char inSkipCleanup = false );
+
+
+// loads seed from file, or generates a new one and saves it to file
+void reseedMap( char inForceFresh );
 
 
 // can only be called before initMap or after freeMap
@@ -50,12 +58,16 @@ void resetEveRadius();
 
 
 // gets new Eve position on outskirts of civilization
-void getEvePosition( char *inEmail, int *outX, int *outY );
+// if inAllowRespawn, this player's last Eve old-age-death will be
+// considered.
+void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
+                     SimpleVector<GridPos> *inOtherPeoplePos,
+                     char inAllowRespawn = true );
 
 
 // save recent placements on Eve's death so that this player can spawn
 // near them if they are ever Eve again
-void mapEveDeath( char *inEmail, double inAge );
+void mapEveDeath( const char *inEmail, double inAge, GridPos inDeathMapPos );
 
 
 
@@ -79,6 +91,8 @@ void setResponsiblePlayer( int inPlayerID );
 
 int getMapObject( int inX, int inY );
 
+char isMapSpotBlocking( int inX, int inY );
+
 
 // is the object returned by getMapObject still in motion with
 // destination inX, inY
@@ -88,7 +102,8 @@ char isMapObjectInTransit( int inX, int inY );
 void setMapObject( int inX, int inY, int inID );
 
 
-void setEtaDecay( int inX, int inY, timeSec_t inAbsoluteTimeInSeconds );
+void setEtaDecay( int inX, int inY, timeSec_t inAbsoluteTimeInSeconds,
+                  TransRecord *inApplicableTrans = NULL );
 
 
 timeSec_t getEtaDecay( int inX, int inY );
@@ -218,10 +233,82 @@ int getMapBiome( int inX, int inY );
 
 
 
+typedef struct {
+        unsigned int uniqueLoadID;
+        char *mapFileName;
+        char fileOpened;
+        FILE *file;
+        int x, y;
+        double startTime;
+        int stepCount;
+    } TutorialLoadProgress;
+
+    
+
+
 // returns true on success
 // example:
-// loadTutorial( "tutorialA.txt", 10000, 10000 )
-char loadTutorial( const char *inMapFileName, int inX, int inY );
+// loadTutorial( newPlayer.tutorialLoad, "tutorialA.txt", 10000, 10000 )
+char loadTutorialStart( TutorialLoadProgress *inTutorialLoad,
+                        const char *inMapFileName, int inX, int inY );
+
+
+// returns true if more steps are needed
+// false if done
+char loadTutorialStep( TutorialLoadProgress *inTutorialLoad,
+                       double inTimeLimitSec );
+
+
+
+
+#define MAP_METADATA_LENGTH 128
+
+// inBuffer must be at least MAP_METADATA_LENGTH bytes
+// returns true if metadata found
+char getMetadata( int inMapID, unsigned char *inBuffer );
+
+
+// returns full map ID with embedded metadata ID for new metadata record
+int addMetadata( int inObjectID, unsigned char *inBuffer );
+    
+
+
+// gets speech pipe indices for IN pipes at or adjacent to inX,inY
+// vector passed in through outIndicies will be filled with indices
+void getSpeechPipesIn( int inX, int inY, SimpleVector<int> *outIndicies );
+
+
+// returned vector NOT destroyed or modified by caller
+SimpleVector<GridPos> *getSpeechPipesOut( int inIndex );
+
+
+
+// for performance reasons, when the true decayed version of the object
+// doesn't matter, this skips some expensive steps
+int getMapObjectRaw( int inX, int inY );
+
+
+
+// next landing strip in line, in round-the-world circuit across all
+// landing positions
+// radius limit limits flights from inside that square radius
+// from leaving (though flights from outside are unrestriced)
+GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
+                                 doublePair inDir,
+                                 int inRadiusLimit = -1 );
+
+
+// get and set player ID for grave on map
+
+// returns 0 if not found
+int getGravePlayerID( int inX, int inY );
+
+void setGravePlayerID( int inX, int inY, int inPlayerID );
+
+
+
+// culling regions of map that haven't been seen in a long time
+void stepMapLongTermCulling( int inNumCurrentPlayers );
 
 
 

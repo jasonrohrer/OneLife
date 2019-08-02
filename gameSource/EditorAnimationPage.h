@@ -249,6 +249,7 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         TextButton mCopyButton;
         TextButton mCopyChainButton;
+        TextButton mCopyChainRandButton;
         TextButton mCopyWalkButton;
         TextButton mCopyAllButton;
         TextButton mCopyUpButton;
@@ -274,6 +275,9 @@ class EditorAnimationPage : public GamePage, public ActionListener {
 
         TextButton mFullSoundCopyButton;
         TextButton mFullSoundPasteButton;
+        
+        TextField mSpeedMultField;
+        TextButton mSpeedMultApplyButton;
         
 
         void checkNextPrevVisible();

@@ -1,5 +1,8 @@
 #include "EditorSpriteTrimPage.h"
 
+#include "zoomView.h"
+#include "whiteSprites.h"
+
 
 #include "minorGems/game/Font.h"
 #include "minorGems/game/drawUtils.h"
@@ -7,6 +10,8 @@
 #include "minorGems/util/stringUtils.h"
 
 #include "minorGems/io/file/File.h"
+
+#include "minorGems/graphics/filters/InvertFilter.h"
 
 
 
@@ -25,13 +30,21 @@ static double lastMouseY = 0;
 
 
 EditorSpriteTrimPage::EditorSpriteTrimPage()
-        : mImportEditorButton( mainFont, -210, 260, "Sprites" ),
+        : mImportEditorButton( mainFont, -310, 260, "Sprites" ),
           mSaveButton( mainFont, 400, 64, "Save" ),
           mClearRectButton( mainFont, 400, -65, "X Rect" ),
+          mFreehandSplitButton( mainFont, 400, 192, "Freehand Split" ),
+          mBrushSizeSlider( smallFont, 400, 292,
+                            2, 100, 20, 1, 50, "Brush Size" ),
+          mFreehandSplitMode( false ),
           mSpritePicker( &spritePickable, -410, 90 ),
           mPickedSprite( -1 ),
-          mPickingRect( false ) {
-    
+          mPickingRect( false ),
+          mFreehandSelection( NULL ),
+          mFreehandSelectionSprite( NULL ),
+          mCursorOffsetX( 0 ),
+          mCursorOffsetY( 0 ) {
+
     addComponent( &mImportEditorButton );
     mImportEditorButton.addActionListener( this );
 
@@ -45,13 +58,49 @@ EditorSpriteTrimPage::EditorSpriteTrimPage()
     addComponent( &mClearRectButton );
     mClearRectButton.addActionListener( this );
 
+    addComponent( &mFreehandSplitButton );
+    mFreehandSplitButton.addActionListener( this );
+
+    addComponent( &mBrushSizeSlider );
+    
+    mBrushSizeSlider.forceDecimalDigits( 0 );
+    mBrushSizeSlider.setValue( 10 );
+
     mSaveButton.setVisible( false );
     mClearRectButton.setVisible( false );
+    
+    mBrushSizeSlider.setVisible( false );
+
+    mBrushSizeSlider.addActionListener( this );
     }
 
 
 
 EditorSpriteTrimPage::~EditorSpriteTrimPage() {
+    mPickedSprite = -1;
+    resetSelection();
+    }
+
+
+
+void EditorSpriteTrimPage::resetSelection() {
+    if( mFreehandSelection != NULL ) {
+        delete mFreehandSelection;
+        freeSprite( mFreehandSelectionSprite );
+        mFreehandSelectionSprite = NULL;
+        }
+    
+    if( mPickedSprite != -1 ) {
+        SpriteHandle h = getSprite( mPickedSprite );
+        
+        if( h != NULL ) {
+            
+            SpriteRecord *r = getSpriteRecord( mPickedSprite );
+            
+            mFreehandSelection = new Image( r->w, r->h, 1, true );
+            mFreehandSelectionSprite = fillWhiteSprite( mFreehandSelection );
+            }
+        }
     }
 
 
@@ -72,6 +121,57 @@ static Image *expandToPowersOfTwo( Image *inImage ) {
     }
 
 
+
+static Image *trimTrans( Image *inImage ) {
+    if( inImage->getNumChannels() < 4 ) {
+        return NULL;
+        }
+    
+    double *alpha = inImage->getChannel( 3 );
+    int w = inImage->getWidth();
+    int h = inImage->getHeight();
+    
+    int firstY = h;
+    int lastY = -1;
+    
+    int firstX = w;
+    int lastX = -1;
+
+    for( int y=0; y<h; y++ ) {
+        for( int x=0; x<w; x++ ) {
+            int i = y * w + x;
+            
+            if( alpha[i] != 0 ) {
+                if( y < firstY ) {
+                    firstY = y;
+                    }
+                if( y > lastY ) {
+                    lastY = y;
+                    }
+                if( x < firstX ) {
+                    firstX = x;
+                    }
+                if( x > lastX ) {
+                    lastX = x;
+                    }
+                }
+            }
+        }
+
+    if( firstY <= lastY &&
+        firstX <= lastX ) {
+        return inImage->getSubImage( firstX, firstY,
+                                     1 + lastX - firstX,
+                                     1 + lastY - firstY );
+        }
+    else {
+        return NULL;
+        }
+    }
+
+
+
+
 void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
     
     if( inTarget == &mImportEditorButton ) {
@@ -79,9 +179,11 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mSpritePicker ) {
         
+        int oldID = mPickedSprite;
+        
         int spriteID = mSpritePicker.getSelectedObject();
 
-        if( spriteID != -1 ) {
+        if( spriteID != -1 && oldID != spriteID ) {
             mPickedSprite = spriteID;
             
             mPickingRect = false;
@@ -89,6 +191,9 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
 
             mSaveButton.setVisible( false );
             mClearRectButton.setVisible( false );
+            }
+        if( spriteID != -1 && oldID != spriteID ) {
+            resetSelection();
             }
         }
     else if( inTarget == &mClearRectButton ) {
@@ -99,8 +204,92 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             mClearRectButton.setVisible( false );
             }
         }
-    else if( inTarget == &mSaveButton ) {
+    else if( inTarget == &mSaveButton && mFreehandSplitMode ) {
+        File spritesDir( NULL, "sprites" );
+
+        char *fileName = autoSprintf( "%d.tga", mPickedSprite );
         
+        File *spriteFile = spritesDir.getChildFile( fileName );
+            
+        delete [] fileName;
+            
+
+        char *fullName = spriteFile->getFullFileName();
+        
+        delete spriteFile;
+
+        Image *im = readTGAFileBase( fullName );
+
+        delete [] fullName;
+
+        if( im != NULL ) {
+        
+            SpriteRecord *r = getSpriteRecord( mPickedSprite );
+            
+            
+
+            im->setSelection( mFreehandSelection );
+
+            Image *imIn = im->copy();
+            
+            Image *invSel = mFreehandSelection->copy();
+            
+            InvertFilter f;
+            
+            invSel->filter( &f );
+            
+            im->setSelection( invSel );
+            
+            Image *imOut = im->copy();
+
+            im->clearSelection();
+            
+            delete invSel;
+            
+            
+            Image *imInTrim = trimTrans( imIn );
+            Image *imOutTrim = trimTrans( imOut );
+            
+            delete imIn;
+            delete imOut;
+
+            if( imInTrim != NULL ) {
+                Image *final = expandToPowersOfTwo( imInTrim );
+                
+                char *tag = autoSprintf( "%s_in", r->tag );
+                
+                SpriteHandle finalSprite = fillSprite( final );
+                
+                addSprite( tag, finalSprite, final, 
+                           r->multiplicativeBlend );
+                
+                delete [] tag;
+                delete imInTrim;
+                delete final;
+                }
+            
+            if( imOutTrim != NULL ) {
+                Image *final = expandToPowersOfTwo( imOutTrim );
+                
+                char *tag = autoSprintf( "%s_out", r->tag );
+                
+                SpriteHandle finalSprite = fillSprite( final );
+                
+                addSprite( tag, finalSprite, final, 
+                           r->multiplicativeBlend );
+                
+                delete [] tag;
+                delete imOutTrim;
+                delete final;
+                }
+            
+            mSpritePicker.redoSearch( false ); 
+            
+            delete im;
+            }
+        }
+    else if( inTarget == &mSaveButton ) {
+        // rect ssplit mode
         File spritesDir( NULL, "sprites" );
 
         char *fileName = autoSprintf( "%d.tga", mPickedSprite );
@@ -137,6 +326,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             char *spriteInvisibleWhenHolding = new char[ numSprites ];
             int *spriteInvisibleWhenWorn = new int[ numSprites ];
             char *spriteBehindSlots = new char[ numSprites ];
+            char *spriteInvisibleWhenContained = new char[ numSprites ];
             char *spriteIsHead = new char[ numSprites ];
             char *spriteIsBody = new char[ numSprites ];
             char *spriteIsBackFoot = new char[ numSprites ];
@@ -361,6 +551,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                 spriteInvisibleWhenHolding[i] = false;
                 spriteInvisibleWhenWorn[i] = false;
                 spriteBehindSlots[i] = false;
+                spriteInvisibleWhenContained[i] = false;
                 spriteIsHead[i] = false;
                 spriteIsBody[i] = false;
                 spriteIsBackFoot[i] = false;
@@ -385,10 +576,21 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             char *slotVert = new char[ 0 ];
             int *slotParent = new int[ 0 ];
 
+            char *spriteBehindPlayer = new char[ numSprites ];
+            
+            memset( spriteBehindPlayer, false, numSprites );
+
+            char *spriteAdditiveBlend = new char[ numSprites ];
+            
+            memset( spriteAdditiveBlend, false, numSprites );
+            
+            
             addObject( objName,
                        false,
                        1,
                        0,
+                       false,
+                       false,
                        false,
                        3,
                        false,
@@ -396,6 +598,8 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        false,
                        0, 0,
                        false,
+                       spriteBehindPlayer,
+                       spriteAdditiveBlend,
                        (char*)"0",
                        0,
                        0,
@@ -420,6 +624,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        blankSoundUsage,
                        blankSoundUsage,
                        0,
+                       0,
                        0, 0, slotPos,
                        slotVert,
                        slotParent,
@@ -436,6 +641,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        spriteInvisibleWhenHolding,
                        spriteInvisibleWhenWorn,
                        spriteBehindSlots,
+                       spriteInvisibleWhenContained,
                        spriteIsHead,
                        spriteIsBody,
                        spriteIsBackFoot,
@@ -445,6 +651,8 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        spriteUseVanish,
                        spriteUseAppear );
             
+            delete [] spriteBehindPlayer;
+            delete [] spriteAdditiveBlend;
 
             delete [] spriteIDs;
             delete [] spritePos;
@@ -457,6 +665,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] spriteInvisibleWhenHolding;
             delete [] spriteInvisibleWhenWorn;
             delete [] spriteBehindSlots;
+            delete [] spriteInvisibleWhenContained;
             delete [] spriteIsHead;
             delete [] spriteIsBody;
             delete [] spriteIsBackFoot;
@@ -470,6 +679,30 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
             delete [] slotVert;
             delete [] slotParent;
             }
+        }
+    else if( inTarget == &mFreehandSplitButton ) {
+        if( mFreehandSplitMode ) {
+            mFreehandSplitMode = false;
+            mFreehandSplitButton.setLabelText( "Freehand Split" );
+            mBrushSizeSlider.setVisible( false );
+            mSaveButton.setVisible( false );
+            }
+        else {
+            mFreehandSplitMode = true;
+            mFreehandSplitButton.setLabelText( "Rect Split" );
+            mBrushSizeSlider.setVisible( true );
+            
+            mRects.deleteAll();
+            mSaveButton.setVisible( false );
+            mClearRectButton.setVisible( false );
+            }
+        
+        resetSelection();
+        }
+    else if( inTarget == &mBrushSizeSlider ) {
+        // don't leave lingering focus in field, because
+        // it blocks cursor movement for making selection
+        TextField::unfocusAll();
         }
     }
 
@@ -722,6 +955,11 @@ void EditorSpriteTrimPage::drawUnderComponents( doublePair inViewCenter,
                           r.xEnd, r.yEnd );
                 }
             
+            
+            setDrawColor( 1, 0, 0, 0.5 );
+            drawSprite( mFreehandSelectionSprite, center );
+
+            doublePair mouseCenter = { lastMouseX + 1, lastMouseY - 1 };
 
             if( mPickingRect ) {
                 
@@ -739,13 +977,35 @@ void EditorSpriteTrimPage::drawUnderComponents( doublePair inViewCenter,
                           rect.xEnd, rect.yEnd );
                 }
             else {
+
+
+                if( mFreehandSplitMode ) {
+                    setDrawColor( 1, 1, 0, 0.50 );
+                    
+                    double diam = mBrushSizeSlider.getValue(); 
+                    int rA = floor( diam / 2 );
+                    int rB = ceil( diam / 2 );
+
+                    drawRect( lastMouseX + mCursorOffsetX - rA, 
+                              lastMouseY + mCursorOffsetY + rA,
+                              lastMouseX + mCursorOffsetX + rB, 
+                              lastMouseY + mCursorOffsetY - rB );
+                    }
+                
+
                 setDrawColor( 0, 0, 1, 0.50 );
             
-                doublePair mouseCenter = { lastMouseX + 1, lastMouseY - 1 };
             
                 drawRect( mouseCenter, 1000, 0.5 );
                 drawRect( mouseCenter, 0.5, 1000 );
                 }
+
+            
+            doublePair zoomPos = { lastMouseX + mCursorOffsetX, 
+                                   lastMouseY + mCursorOffsetY };
+            doublePair drawPos = { -500, -290 };
+
+            drawZoomView( zoomPos, 16, 4, drawPos );
             }
         
         }
@@ -758,6 +1018,10 @@ void EditorSpriteTrimPage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    mFreehandSplitMode = false;
+    mFreehandSplitButton.setVisible( true );
+    mFreehandSplitButton.setLabelText( "Freehand Split" );
 
     mSpritePicker.redoSearch( false );
     
@@ -774,13 +1038,8 @@ char EditorSpriteTrimPage::isPointInSprite( int inX, int inY ) {
         
         if( h != NULL ) {
             
-            doublePair boxPos = { 0, 0 };
-            
             SpriteRecord *r = getSpriteRecord( mPickedSprite );
             
-            boxPos.x += r->centerAnchorXOffset;
-            boxPos.y -= r->centerAnchorYOffset;
-
             if( inX >= - r->w / 2 && 
                 inX <= r->w / 2 &&
                 inY >= - r->h / 2 &&
@@ -796,9 +1055,54 @@ char EditorSpriteTrimPage::isPointInSprite( int inX, int inY ) {
 
 
 
+void EditorSpriteTrimPage::addPointToSelection( int inX, int inY,
+                                                double inVal ) {
+    
+    int w = mFreehandSelection->getWidth();
+    int h = mFreehandSelection->getHeight();
+
+    int imX = inX +  w / 2;
+    int imY = ( h / 2 ) - inY;
+
+    
+    double *red = mFreehandSelection->getChannel( 0 );
+        
+    double diam = mBrushSizeSlider.getValue(); 
+    int rA = floor( diam / 2 );
+    int rB = ceil( diam / 2 );
+    
+    for( int dy=-rA; dy<rB; dy++ ) {
+        for( int dx=-rA; dx<rB; dx++ ) {
+            
+            int pY = imY + dy;
+            int pX = imX + dx;
+            
+            if( pY >= 0 && pY < h &&
+                pX >= 0 && pX < w ) {
+                
+                int pI = pY * w + pX;
+                
+                red[ pI ] = inVal;
+                }
+            }
+        }
+    
+    freeSprite( mFreehandSelectionSprite );
+    mFreehandSelectionSprite = fillWhiteSprite( mFreehandSelection );
+
+    if( inVal != 0 ) {
+        mSaveButton.setVisible( true );
+        }
+    }
+
+
+
+
 void EditorSpriteTrimPage::pointerMove( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
+    mCursorOffsetX = 0;
+    mCursorOffsetY = 0;
     }
 
 
@@ -806,6 +1110,8 @@ void EditorSpriteTrimPage::pointerMove( float inX, float inY ) {
 void EditorSpriteTrimPage::pointerDown( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
+    mCursorOffsetX = 0;
+    mCursorOffsetY = 0;
     
     int x = lrint( inX );
     int y = lrint( inY );
@@ -813,11 +1119,21 @@ void EditorSpriteTrimPage::pointerDown( float inX, float inY ) {
     mPickingRect = false;
     
     if( isPointInSprite( x, y ) ) {
-        mPickingRect = true;
-        mPickStartX = x;
-        mPickStartY = y;
-        mPickEndX = x;
-        mPickEndY = y;
+    
+        if( mFreehandSplitMode ) {
+            double val = 1.0;
+            if( isLastMouseButtonRight() ) {
+                val = 0;
+                }
+            addPointToSelection( x, y, val );
+            }
+        else {
+            mPickingRect = true;
+            mPickStartX = x;
+            mPickStartY = y;
+            mPickEndX = x;
+            mPickEndY = y;
+            }
         }
     }
 
@@ -825,13 +1141,24 @@ void EditorSpriteTrimPage::pointerDown( float inX, float inY ) {
 void EditorSpriteTrimPage::pointerDrag( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
+    mCursorOffsetX = 0;
+    mCursorOffsetY = 0;
     
     int x = lrint( inX );
     int y = lrint( inY );
     
     if( isPointInSprite( x, y ) ) {
-        mPickEndX = x;
-        mPickEndY = y;
+        if( mFreehandSplitMode ) {
+            double val = 1.0;
+            if( isLastMouseButtonRight() ) {
+                val = 0;
+                }
+            addPointToSelection( x, y, val );
+            }
+        else {
+            mPickEndX = x;
+            mPickEndY = y;
+            }
         }
     }
 
@@ -839,7 +1166,9 @@ void EditorSpriteTrimPage::pointerDrag( float inX, float inY ) {
 void EditorSpriteTrimPage::pointerUp( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
-    
+    mCursorOffsetX = 0;
+    mCursorOffsetY = 0;
+
     if( mPickingRect ) {
     
         int x = lrint( inX );
@@ -875,3 +1204,66 @@ void EditorSpriteTrimPage::pointerUp( float inX, float inY ) {
     mPickingRect = false;
     }
 
+
+
+void EditorSpriteTrimPage::keyDown( unsigned char inASCII ) {
+    if( TextField::isAnyFocused() ) {
+        return;
+        }
+
+    if( mFreehandSplitMode ) {
+        
+        if( inASCII == 13 ) {
+            // enter
+            
+            addPointToSelection( lastMouseX + mCursorOffsetX,
+                                 lastMouseY + mCursorOffsetY,
+                                 1.0 );
+            }
+        else if( inASCII == 8 ) {
+            // backspace
+            addPointToSelection( lastMouseX + mCursorOffsetX,
+                                 lastMouseY + mCursorOffsetY,
+                                 0 );
+            }
+        }
+    }
+
+
+
+void EditorSpriteTrimPage::specialKeyDown( int inKeyCode ) {
+    if( TextField::isAnyFocused() ) {
+        return;
+        }
+
+    int offset = 1;
+    
+    if( isCommandKeyDown() ) {
+        offset = 2;
+        }
+    if( isShiftKeyDown() ) {
+        offset = 4;
+        }
+    if( isCommandKeyDown() && isShiftKeyDown() ) {
+        offset = 9;
+        }
+
+
+    if( mFreehandSplitMode ) {
+        
+        switch( inKeyCode ) {
+            case MG_KEY_LEFT:
+                mCursorOffsetX -= offset;
+                break;
+            case MG_KEY_RIGHT:
+                mCursorOffsetX += offset;
+                break;
+            case MG_KEY_DOWN:
+                mCursorOffsetY -= offset;
+                break;
+            case MG_KEY_UP:
+                mCursorOffsetY += offset;
+                break;
+            }
+        }    
+    }
