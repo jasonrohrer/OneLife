@@ -248,7 +248,8 @@ static char isPeaceTreaty( int inLineageAEveID, int inLineageBEveID,
     }
 
 
-void sendPeaceWarMessage( const char *inPeaceOrWar, 
+void sendPeaceWarMessage( const char *inPeaceOrWar,
+                          char inWar,
                           int inLineageAEveID, int inLineageBEveID );
 
 
@@ -270,7 +271,9 @@ static void addPeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
         if( p->dirAToB && p->dirBToA &&
             ! peaceBefore ) {
             // new peace!
-            sendPeaceWarMessage( "PEACE", inLineageAEveID, inLineageBEveID );
+            sendPeaceWarMessage( "PEACE", 
+                                 false,
+                                 p->lineageAEveID, p->lineageBEveID );
             }
         }
     else {
@@ -308,7 +311,9 @@ static void removePeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
                 remove = true;
 
                 // new war!
-                sendPeaceWarMessage( "WAR", inLineageAEveID, inLineageBEveID );
+                sendPeaceWarMessage( "WAR",
+                                     true,
+                                     p->lineageAEveID, p->lineageBEveID );
                 }
             }
         else {
@@ -3502,8 +3507,54 @@ static void sendGlobalMessage( char *inMessage ) {
 
 
 
-void sendPeaceWarMessage( const char *inPeaceOrWar, 
+typedef struct WarPeaceMessageRecord {
+        char war;
+        int lineageAEveID;
+        int lineageBEveID;
+        double t;
+    } WarPeaceMessageRecord;
+
+SimpleVector<WarPeaceMessageRecord> warPeaceRecords;
+
+
+
+void sendPeaceWarMessage( const char *inPeaceOrWar,
+                          char inWar,
                           int inLineageAEveID, int inLineageBEveID ) {
+    
+    double curTime = Time::getCurrentTime();
+    
+    for( int i=0; i<warPeaceRecords.size(); i++ ) {
+        WarPeaceMessageRecord *r = warPeaceRecords.getElement( i );
+        
+        if( inWar != r->war ) {
+            continue;
+            }
+        
+        if( ( r->lineageAEveID == inLineageAEveID &&
+              r->lineageBEveID == inLineageBEveID )
+            ||
+            ( r->lineageAEveID == inLineageBEveID &&
+              r->lineageBEveID == inLineageAEveID ) ) {
+
+            if( r->t > curTime - 3 * 60 ) {
+                // stil fresh, last similar message happened
+                // less than three minutes ago
+                return;
+                }
+            else {
+                // stale
+                // remove it
+                warPeaceRecords.deleteElement( i );
+                break;
+                }
+            }
+        }
+    WarPeaceMessageRecord r = { inWar, inLineageAEveID, inLineageBEveID,
+                                curTime };
+    warPeaceRecords.push_back( r );
+
+
     const char *nameA = "NAMELESS";
     const char *nameB = "NAMELESS";
     
