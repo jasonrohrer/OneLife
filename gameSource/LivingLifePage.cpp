@@ -18159,6 +18159,15 @@ void LivingLifePage::makeActive( char inFresh ) {
         mTutorialNumber = 1;
         mForceRunTutorial = false;
         }
+
+    mLiveTutorialSheetIndex = -1;
+    
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {    
+        mTutorialTargetOffset[i] = mTutorialHideOffset[i];
+        mTutorialPosOffset[i] = mTutorialHideOffset[i];
+        mTutorialMessage[i] = "";
+        }
+    
     
 
     savingSpeechEnabled = SettingsManager::getIntSetting( "allowSavingSpeech",
