@@ -7,6 +7,9 @@ Version 256    ???
 
 --Support for offScreenSound_red tag (other offScreenSounds are white).
 
+--Support for global messages broadcast from server to all connected clients
+  not in tutorial.  Using it to announce war/peace status.
+
 
 
 
