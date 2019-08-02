@@ -5547,6 +5547,10 @@ int processLoggedInPlayer( char inAllowReconnect,
     if( familyDataLogFile != NULL ) {
         int eveCount = 0;
         int inCount = 0;
+        
+        double ageSum = 0;
+        int ageSumCount = 0;
+        
         for( int i=0; i<players.size(); i++ ) {
             LiveObject *o = players.getElement( i );
         
@@ -5561,18 +5565,32 @@ int processLoggedInPlayer( char inAllowReconnect,
                     if( abs( pos.x ) < barrierRadius &&
                         abs( pos.y ) < barrierRadius ) {
                         inCount++;
+                        
+                        ageSum += computeAge( o );
+                        ageSumCount++;
                         }
+                    }
+                else {
+                    ageSum += computeAge( o );
+                    ageSumCount++;
                     }
                 }
             }
         
+        double averageAge = 0;
+        if( ageSumCount > 0 ) {
+            averageAge = ageSum / ageSumCount;
+            }
+        
         fprintf( familyDataLogFile,
-                 "%.2f nid:%d fam:%d mom:%d bb:%d plr:%d eve:%d rft:%d\n",
+                 "%.2f nid:%d fam:%d mom:%d bb:%d plr:%d eve:%d rft:%d "
+                 "avAge:%.2f\n",
                  Time::getCurrentTime(), newObject.id, 
                  cFam, cM, cB,
                  players.size(),
                  eveCount,
-                 inCount );
+                 inCount,
+                 averageAge );
         }
 
 
