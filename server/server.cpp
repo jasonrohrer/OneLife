@@ -66,6 +66,9 @@
 #endif
 
 
+static FILE *familyDataLogFile = NULL;
+
+
 static JenkinsRandomSource randSource;
 
 
@@ -1546,6 +1549,11 @@ void quitCleanup() {
     if( apocalypseRequest != NULL ) {
         delete apocalypseRequest;
         apocalypseRequest = NULL;
+        }
+
+    if( familyDataLogFile != NULL ) {
+        fclose( familyDataLogFile );
+        familyDataLogFile = NULL;
         }
     }
 
@@ -5459,9 +5467,11 @@ int processLoggedInPlayer( char inAllowReconnect,
     int familyLimitAfterEveWindow = SettingsManager::getIntSetting( 
             "familyLimitAfterEveWindow", 15 );
 
+    int cM = countFertileMothers();
+    int cB = countHelplessBabies();
+    int cFam = countFamilies();
+
     if( ! eveWindow ) {
-        int cM = countFertileMothers();
-        int cB = countHelplessBabies();
         
         float ratio = SettingsManager::getFloatSetting( 
             "babyMotherApocalypseRatio", 6.0 );
@@ -5487,7 +5497,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             // there's a family limit
             // see if we passed it
             
-            if( countFamilies() > familyLimitAfterEveWindow ) {
+            if( cFam > familyLimitAfterEveWindow ) {
                 // too many families
                 
                 // that means we've reach a state where no one is surviving
@@ -5530,6 +5540,41 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     newObject.id = nextID;
     nextID++;
+
+
+
+
+    if( familyDataLogFile != NULL ) {
+        int eveCount = 0;
+        int inCount = 0;
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *o = players.getElement( i );
+        
+            if( ! o->error && o->connected ) {
+                if( o->parentID == -1 ) {
+                    eveCount++;
+                    }
+                if( barrierOn ) {
+                    // only those inside the barrier
+                    GridPos pos = getPlayerPos( o );
+                
+                    if( abs( pos.x ) < barrierRadius &&
+                        abs( pos.y ) < barrierRadius ) {
+                        inCount++;
+                        }
+                    }
+                }
+            }
+        
+        fprintf( familyDataLogFile,
+                 "%.2f nid:%d fam:%d mom:%d bb:%d plr:%d eve:%d rft:%d\n",
+                 Time::getCurrentTime(), newObject.id, 
+                 cFam, cM, cB,
+                 players.size(),
+                 eveCount,
+                 inCount );
+        }
+
 
     
     newObject.fitnessScore = -1;
@@ -8470,6 +8515,12 @@ void apocalypseStep() {
                 
                 double startTime = Time::getCurrentTime();
                 
+                if( familyDataLogFile != NULL ) {
+                    fprintf( familyDataLogFile, "%.2f apocalypse triggered\n",
+                             startTime );
+                    }
+    
+
                 // clear map
                 freeMap( true );
 
@@ -9698,6 +9749,13 @@ int main() {
         return 1;
         }
     
+    familyDataLogFile = fopen( "familyDataLog.txt", "a" );
+
+    if( familyDataLogFile != NULL ) {
+        fprintf( familyDataLogFile, "%.2f server starting up\n",
+                 Time::getCurrentTime() );
+        }
+
 
     memset( allowedSayCharMap, false, 256 );
     

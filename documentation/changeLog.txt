@@ -122,6 +122,14 @@ Server Fixes
 --Cronjob to sync map change logs to public data server every 5 minutes.
 
 
+--Support for special map placements.
+
+--Can only enter the kill state against a player that is no further than 8
+  tiles away.
+
+--Family data log, tracking player population stats over time.
+
+
 
 
 Version 251    2019-July-25
@@ -150,11 +158,6 @@ Server Fixes
 --If no baby lives to age 15 for 60 straight minutes (on a server with at least
   15 active players), then an apocalypse is auto-triggered.  This means the
   barrier square is out of resources necessary for survival.
-
---Support for special map placements.
-
---Can only enter the kill state against a player that is no further than 8
-  tiles away.
 
 
 
