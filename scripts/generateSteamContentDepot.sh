@@ -74,18 +74,12 @@ echo ""
 
 
 
-# two arguments means automation
-if [ $# -ne 2 ]
-then
-	echo ""
-	echo ""
-	echo "Most recent data version $lastTaggedDataVersion"
-	echo ""
-	echo "About to post Steam content depot with $newVersion"
-	echo ""
-	echo -n "Hit [ENTER] when ready: "
-	read
-fi
+echo ""
+echo ""
+echo "Most recent data version $lastTaggedDataVersion"
+echo ""
+echo "Posting Steam content depot with $newVersion"
+echo ""
 
 
 
