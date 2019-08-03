@@ -1538,6 +1538,9 @@ void quitCleanup() {
     freeObjectBank();
     freeAnimationBank();
     
+    freeArcReport();
+    
+
     if( clientPassword != NULL ) {
         delete [] clientPassword;
         clientPassword = NULL;
@@ -10332,6 +10335,46 @@ int main() {
             stepMapLongTermCulling( players.size() );
             
             stepArcReport();
+            
+            int arcMilestone = getArcYearsToReport( secondsPerYear, 100 );
+            
+            if( arcMilestone != -1 ) {
+                int familyLimitAfterEveWindow = 
+                    SettingsManager::getIntSetting( 
+                        "familyLimitAfterEveWindow", 15 );
+                
+                char *familyLine;
+                
+                if( familyLimitAfterEveWindow > 0 &&
+                    ! isEveWindow() ) {
+                    familyLine = autoSprintf( "of %d",
+                                              familyLimitAfterEveWindow );
+                    }
+                else {
+                    familyLine = stringDuplicate( "" );
+                    }
+
+                const char *familyWord = "FAMILIES ARE";
+                
+                int numFams = countFamilies();
+                
+                if( numFams == 1 ) {
+                    familyWord = "FAMILY IS";
+                    }
+
+                char *message = autoSprintf( ":%s: ARC HAS LASTED %d YEARS**"
+                                             "%d %s %s ALIVE",
+                                             getArcName(),
+                                             arcMilestone,
+                                             numFams,
+                                             familyLine,
+                                             familyWord);
+                delete [] familyLine;
+                
+                sendGlobalMessage( message );
+                
+                delete [] message;           
+                }
             }
         
         

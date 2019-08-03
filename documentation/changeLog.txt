@@ -124,13 +124,14 @@ Server Fixes
 
 --Cronjob to sync map change logs to public data server every 5 minutes.
 
-
 --Support for special map placements.
 
 --Can only enter the kill state against a player that is no further than 8
   tiles away.
 
 --Family data log, tracking player population stats over time.
+
+--Server sends global message with arc stats every 100 years.
 
 
 
