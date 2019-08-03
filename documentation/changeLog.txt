@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Family limit failure condition set to 35 (was 23).
+
+
+
+
 Version 256    2019-August-2
 
 --Support for offScreenSound_red tag (other offScreenSounds are white).
