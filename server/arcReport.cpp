@@ -13,12 +13,27 @@ static WebRequest *webRequest = NULL;
 static int sequenceNumber = -1;
 
 
+static char *arcName = NULL;
+
+static SimpleVector<char*> wordList;
+
+static double arcStartTime;
+
+
+
 void freeArcReport() {
     if( webRequest != NULL ) {
         delete webRequest;
         webRequest = NULL;
         }
     sequenceNumber = -1;
+
+    if( arcName != NULL ) {
+        delete [] arcName;
+        }
+    arcName = NULL;
+
+    wordList.deallocateStringElements();
     }
 
 
@@ -55,6 +70,8 @@ void reportArcEnd() {
     
     webRequest = new WebRequest( "GET", url, NULL );
     delete [] url;
+
+    resetArcName();
     }
 
 
@@ -141,5 +158,124 @@ void stepArcReport() {
     
     delete [] result;
     }
+
+
+
+
+
+char *getArcName() {
+    if( arcName == NULL ) {
+        arcName = SettingsManager::getSettingContents( "arcName", "" );
+    
+        if( strcmp( arcName, "" ) == 0 ) {
+            resetArcName();
+            }
+        }
+    return arcName;
+    }
+
+
+
+#include "minorGems/util/random/JenkinsRandomSource.h"
+
+static JenkinsRandomSource randSource;
+
+void resetArcName() {
+    if( arcName != NULL ) {
+        delete [] arcName;
+        arcName = NULL;
+        }
+    
+
+    if( wordList.size() == 0 ) {
+        
+        FILE *f = fopen( "wordList.txt", "r" );
+        
+        if( f != NULL ) {
+            
+            int numRead = 1;
+            
+            char buff[100];
+            
+            while( numRead == 1 ) {
+                numRead = fscanf( f, "%99s", buff );
+                
+                if( numRead == 1 ) {
+                    wordList.push_back( stringDuplicate( buff ) );
+                    }
+                }
+            fclose( f );
+            }
+        }
+    
+    if( wordList.size() > 20 ) {
+        // enough to work with
+       
+        randSource.reseed(  
+            (unsigned int)fmod( Time::getCurrentTime(), UINT_MAX ) );
+        
+        char *pickedWord[2];
+        
+        for( int i=0; i<2; i++ ) {
+            pickedWord[i] = 
+                wordList.getElementDirect( randSource.getRandomBoundedInt( 
+                                               0, wordList.size() - 1 ) );
+            }
+        char *name = autoSprintf( "%s %s",
+                                  pickedWord[0],
+                                  pickedWord[1] );
+        arcName = stringToUpperCase( name );
+        delete [] name;
+        }
+    else {
+        arcName = stringDuplicate( "MYSTERIOUS" );
+        }
+
+    SettingsManager::setSetting( "arcName", arcName );
+
+    
+    arcStartTime = Time::getCurrentTime();
+    
+    SettingsManager::setSetting( "arcStartTime", arcStartTime );
+    }
+
+
+
+double getArcRunningSeconds() {
+    if( arcStartTime == 0 ) {
+
+        arcStartTime = SettingsManager::getFloatSetting( "arcStartTime", 0.0f );
+        
+        if( arcStartTime == 0 ) {
+            arcStartTime = Time::getCurrentTime();
+            SettingsManager::setSetting( "arcStartTime", arcStartTime );
+            }
+        }
+    return Time::getCurrentTime() - arcStartTime;
+    }
+
+
+
+// counting number of milestones
+static int lastMilestone = 0;
+
+int getArcYearsToReport( double inSecondsPerYear,
+                         int inMilestoneYears ) {
+
+    double years = getArcRunningSeconds() / inSecondsPerYear;
+    
+    int milestoneCount = lrint( floor( years / inMilestoneYears ) );
+
+    if( milestoneCount > lastMilestone ) {
+        lastMilestone = milestoneCount;
+        
+        return milestoneCount * inMilestoneYears;
+        }
+    
+    return -1;
+    }
+
+
+
 
 

@@ -3,6 +3,139 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 256    2019-August-2
+
+--Support for offScreenSound_red tag (other offScreenSounds are white).
+
+--Support for global messages broadcast from server to all connected clients
+  not in tutorial.  Using it to announce war/peace status.
+
+
+
+
+Server Fixes
+
+--Fixed baby teleportation glitch.  Now if there's no place to drop a baby, 
+  they go where you are standing instead of being thrown.
+
+--Babies born outside rift area don't count toward survival requirement for
+  determining group failure.
+
+--Fixed offspring selection code to balance male and female babies, even for
+  races that have different numbers of male and female characters (before,
+  redhead and black mothers had 75% boy babies, now they have 50% like they
+  should).
+
+--Added support for an Eve window of time at the beginning of an arc.  Eves can
+  only spawn during that time.
+
+--Disabling baby-survivial-age based apocalypse trigger, and replacing it with
+  a no-fertile-mothers-left (inside the barrier) trigger.
+
+--Outside the Eve window, incoming babies will be born to SOME fertile mother,
+  no matter what (despite lineage bans, birth cooldowns, etc.)
+
+--Barrier radius 354, for roughly half a million tiles (tried 1/4 million
+  which was too small, and 1 million, which was too big).
+
+--Forcing all girls to be born if we're outside Eve window and number of
+  fertile mothers inside the barrier falls below a threshold (1/15 of the
+  population, or 2, whichever is larger).
+
+--Fixed so that donkeytown can spawn Eves even after the Eve window closes.
+
+--Fixed so that suiciding as a baby counts against your own genetic fitness
+  score (a bug was preventing it from counting).
+
+--Made fitness leaderboard window a setting, and set it to 24 hours (was 48
+  hours before).  This is the recent-play window for displaying names on the
+  leaderboard and computing rankings.
+
+--Global failure condition is now baby/mother ratio of 6 or higher (counting
+  helpless, < 3-year babies and fertile mothers).  So no more baby overload at
+  very end.
+ 
+--Support for new +hungryWork object tag, which requires and consumes a certain
+  amount of food when the object is produced.  Applying this to chopping down
+  most kinds of useful trees (at least ones that are sensibly hardwood, like
+  maple, poplar, and rubber).
+
+--Server biomes random generator reseeds itself after every map wipe.  A
+  different map every time, with one of 4 billion possible seeds.
+
+--Made server wait 8 seconds after signalling apocalypse, to give clients
+  plenty of time to white-out.
+
+--Fixed so that non-cursed babies don't get born to cursed mothers after Eve
+  window closes.
+
+--Fixed so that during 2-hour eve window at start of arc, players outside
+  barrier cannot have babies (so that they have to escape fresh during each
+  new arc).
+
+--You can now curse people in other families, but only if you utter the curse
+  in their language.  This means that over multiple generations of
+  co-existence, where subsequent generations of babies learn more and more of
+  the language, you can curse that family in plain English, eventually, because
+  they can understand your plain English.  But before that, you can utter the
+  curse in their language directly (or join in a curse that they are carrying
+  out by repeating what they said in their language.  For example, DANCH LEASIE
+  STEADGED was one translation that I saw for CURSE TOBY JONES.)
+
+--Server logs every player-caused change to map, for wondible's potential use
+  in time-lapses.
+
+--If server starts up and finds that it's map seed file has been wiped, it
+  assumes this is a manually-started fresh arc, and reports the end of the
+  previous arc to the arc-tracking server.
+
+--Server map-change-log includes floors.
+
+--Biome map gen code overhaul.  Testing new topographical placement.  Swamps
+  surrounded by grass surrounded by prairie.  Snow surrounded by mountain
+  surrounded by desert surrounded by jungle.  Every grassy area is a good
+  settlement spot, because it's always next to a swamp.
+
+--Disabled plane flying over rift.  People escaping early makes it impossible
+  to test properly.
+
+--Baby mother ratio (failure condition) reduced from 6 to 4.
+
+--New patch-based layout of special biomes (desert, snow, jungle) on
+  topographical peaks.  Regular biomes (swap, grass, prairie, mountain) are
+  still played in topographical rings.  This prevents the biomes that we need
+  less of from ending up in weird-feeling, thin topo rings.  It also adds
+  large-scale variation to the map.  This region has snowy peaks.  This other
+  region has desert peaks.
+
+--Saying PEACE in a way that another family can understand (in their language,
+  or in English if you are bilingual), with one of their family members in
+  earshot, establishes a peace treaty between families, blocking the use of the
+  war sword between them.  Only works if said in both directions, by elders
+  over age 55.  If elders say WAR bidirectionally later, the families are no
+  longer at peace and can use war swords again.
+
+--Testing new arc failure condition:  We allow a normal Eve spiral always, but
+  after the initial Eve window time (currently 2 hours), we start counting
+  families.  The arc ends if we ever have too many families (more than 15),
+  because this means that the successful families have all started to fail,
+  and there aren't enough fertile mothers left, and we're getting a lot of Eves
+  that can't survive.
+
+--Cronjob to sync map change logs to public data server every 5 minutes.
+
+--Support for special map placements.
+
+--Can only enter the kill state against a player that is no further than 8
+  tiles away.
+
+--Family data log, tracking player population stats over time.
+
+--Server sends global message with arc stats every 100 years.
+
+
+
+
 Version 251    2019-July-25
 
 --Fixed weird initialization of OwnerInfo structure.
@@ -29,7 +162,6 @@ Server Fixes
 --If no baby lives to age 15 for 60 straight minutes (on a server with at least
   15 active players), then an apocalypse is auto-triggered.  This means the
   barrier square is out of resources necessary for survival.
-
 
 
 

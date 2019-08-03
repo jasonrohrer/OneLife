@@ -304,6 +304,11 @@ typedef struct ObjectRecord {
         
         int useDummyParent;
         
+        // which use dummy index, of parent, this is
+        // indexes in parent's useDummyIDs array
+        int thisUseDummyIndex;
+
+        
         // -1 if not set
         // used to avoid recomputing height repeatedly at client/server runtime
         int cachedHeight;
@@ -324,6 +329,11 @@ typedef struct ObjectRecord {
         
         char isVariableDummy;
         int variableDummyParent;
+
+        // which variable dummy index, of parent, this is
+        // indexes in parent's variableDummyIDs array
+        int thisVariableDummyIndex;
+
 
         char isVariableHidden;
 
@@ -619,7 +629,8 @@ int getRandomPersonObjectOfRace( int inRace );
 
 // gets a family member near inMotherID with max distance away in family
 // spectrum 
-int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan );
+int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan,
+                           char inForceGirl = false );
 
 
 

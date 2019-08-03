@@ -1,6 +1,7 @@
 #include "map.h"
 #include "HashTable.h"
 #include "monument.h"
+#include "arcReport.h"
 
 #include "CoordinateTimeTracking.h"
 
@@ -25,6 +26,8 @@
 //#include "stackdb.h"
 //#include "lineardb.h"
 #include "lineardb3.h"
+
+#include "minorGems/util/crc32.h"
 
 
 /*
@@ -232,8 +235,15 @@ static int barrierOn = 1;
 static int longTermCullEnabled = 1;
 
 
+static unsigned int biomeRandSeed = 723;
+
 
 static SimpleVector<int> barrierItemList;
+
+
+static FILE *mapChangeLogFile = NULL;
+
+static double mapChangeLogTimeStart = -1;
 
 
 
@@ -268,6 +278,17 @@ static double gapIntScale = 1000000.0;
 // object ids that occur naturally on map at random, per biome
 static int numBiomes;
 static int *biomes;
+static float *biomeWeights;
+static float *biomeCumuWeights;
+static float biomeTotalWeight;
+static int regularBiomeLimit;
+
+static int numSpecialBiomes;
+static int *specialBiomes;
+static float *specialBiomeCumuWeights;
+static float specialBiomeTotalWeight;
+
+
 
 // one vector per biome
 static SimpleVector<int> *naturalMapIDs;
@@ -794,9 +815,184 @@ static void biomePutCached( int inX, int inY, int inBiome, int inSecondPlace,
 
 
 
-
-
+// new code, topographic rings
 static int computeMapBiomeIndex( int inX, int inY, 
+                                 int *outSecondPlaceIndex = NULL,
+                                 double *outSecondPlaceGap = NULL ) {
+        
+    int secondPlace = -1;
+    
+    double secondPlaceGap = 0;
+
+
+    int pickedBiome = biomeGetCached( inX, inY, &secondPlace, &secondPlaceGap );
+        
+    if( pickedBiome != -2 ) {
+        // hit cached
+
+        if( outSecondPlaceIndex != NULL ) {
+            *outSecondPlaceIndex = secondPlace;
+            }
+        if( outSecondPlaceGap != NULL ) {
+            *outSecondPlaceGap = secondPlaceGap;
+            }
+    
+        return pickedBiome;
+        }
+
+    // else cache miss
+    pickedBiome = -1;
+
+
+    // try topographical altitude mapping
+
+    setXYRandomSeed( biomeRandSeed );
+
+    double randVal = 
+        ( getXYFractal( inX, inY,
+                        0.55, 
+                        0.83332 + 0.08333 * numBiomes ) );
+
+    // push into range 0..1, based on sampled min/max values
+    randVal -= 0.099668;
+    randVal *= 1.268963;
+
+
+    // flatten middle
+    //randVal = ( pow( 2*(randVal - 0.5 ), 3 ) + 1 ) / 2;
+
+
+    // push into range 0..1 with manually tweaked values
+    // these values make it pretty even in terms of distribution:
+    //randVal -= 0.319;
+    //randVal *= 3;
+
+    
+
+    // these values are more intuitve to make a map that looks good
+    //randVal -= 0.23;
+    //randVal *= 1.9;
+    
+
+    
+
+    
+    // apply gamma correction
+    //randVal = pow( randVal, 1.5 );
+    /*
+    randVal += 0.4* sin( inX / 40.0 );
+    randVal += 0.4 *sin( inY / 40.0 );
+    
+    randVal += 0.8;
+    randVal /= 2.6;
+    */
+
+    // slow arc n to s:
+
+    // pow version has flat area in middle
+    //randVal += 0.7 * pow( ( inY / 354.0 ), 3 ) ;
+
+    // sin version 
+    //randVal += 0.3 * sin( 0.5 * M_PI * inY / 354.0 );
+    
+
+    /*
+        ( sin( M_PI * inY / 708 ) + 
+          (1/3.0) * sin( 3 * M_PI * inY / 708 ) );
+    */
+    //randVal += 0.5;
+    //randVal /= 2.0;
+
+
+    
+    float i = randVal * biomeTotalWeight;
+    
+    pickedBiome = 0;
+    while( pickedBiome < numBiomes &&
+           i > biomeCumuWeights[pickedBiome] ) {
+        pickedBiome++;
+        }
+    if( pickedBiome >= numBiomes ) {
+        pickedBiome = numBiomes - 1;
+        }
+    
+
+
+    if( pickedBiome >= regularBiomeLimit && numSpecialBiomes > 0 ) {
+        // special case:  on a peak, place a special biome here
+
+        // use patches mode for these
+        pickedBiome = -1;
+
+
+        double maxValue = -10;
+        double secondMaxVal = -10;
+        
+        for( int i=regularBiomeLimit; i<numBiomes; i++ ) {
+            int biome = biomes[i];
+        
+            setXYRandomSeed( biome * 263 + biomeRandSeed + 38475 );
+
+            double randVal = getXYFractal(  inX,
+                                            inY,
+                                            0.55, 
+                                            2.4999 + 
+                                            0.2499 * numSpecialBiomes );
+        
+            if( randVal > maxValue ) {
+                if( maxValue != -10 ) {
+                    secondMaxVal = maxValue;
+                    }
+                maxValue = randVal;
+                pickedBiome = i;
+                }
+            }
+        
+        if( maxValue - secondMaxVal < 0.03 ) {
+            // close!  that means we're on a boundary between special biomes
+            
+            // stick last regular biome on this boundary, so special
+            // biomes never touch
+            secondPlace = pickedBiome;
+            secondPlaceGap = 0.1;
+            pickedBiome = regularBiomeLimit - 1;
+            }        
+        else {
+            secondPlace = regularBiomeLimit - 1;
+            secondPlaceGap = 0.1;
+            }
+        }
+    else {
+        // second place for regular biome rings
+        
+        secondPlace = pickedBiome - 1;
+        if( secondPlace < 0 ) {
+            secondPlace = pickedBiome + 1;
+            }
+        secondPlaceGap = 0.1;
+        }
+    
+
+
+    biomePutCached( inX, inY, pickedBiome, secondPlace, secondPlaceGap );
+    
+    
+    if( outSecondPlaceIndex != NULL ) {
+        *outSecondPlaceIndex = secondPlace;
+        }
+    if( outSecondPlaceGap != NULL ) {
+        *outSecondPlaceGap = secondPlaceGap;
+        }
+    
+    return pickedBiome;
+    }
+
+
+
+
+// old code, separate height fields per biome that compete
+// and create a patchwork layout
+static int computeMapBiomeIndexOld( int inX, int inY, 
                                  int *outSecondPlaceIndex = NULL,
                                  double *outSecondPlaceGap = NULL ) {
         
@@ -830,7 +1026,7 @@ static int computeMapBiomeIndex( int inX, int inY,
     for( int i=0; i<numBiomes; i++ ) {
         int biome = biomes[i];
         
-        setXYRandomSeed( biome * 263 + 723 );
+        setXYRandomSeed( biome * 263 + biomeRandSeed );
 
         double randVal = getXYFractal(  inX,
                                         inY,
@@ -1326,8 +1522,8 @@ void outputMapImage() {
     
     // output a chunk of the map as an image
 
-    int w =  500;
-    int h = 500;
+    int w =  708;
+    int h = 708;
     
     Image objIm( w, h, 3, true );
     Image biomeIm( w, h, 3, true );
@@ -1348,10 +1544,44 @@ void outputMapImage() {
         delete c;
         }
 
+    SimpleVector<int> biomeCounts;
+    int totalBiomeCount = 0;
+
     for( int j=0; j<numBiomes; j++ ) {        
-        Color *c = Color::makeColorFromHSV( (float)j / numBiomes, 1, 1 );
+        biomeCounts.push_back( 0 );
+        
+        Color *c;
+        
+        int biomeNumber = biomes[j];
+
+        switch( biomeNumber ) {
+            case 0:
+                c = new Color( 0, 0.8, .1 );
+                break;
+            case 1:
+                c = new Color( 0.4, 0.2, 0.7 );
+                break;
+            case 2:
+                c = new Color( 1, .8, 0 );
+                break;
+            case 3:
+                c = new Color( 0.6, 0.6, 0.6 );
+                break;
+            case 4:
+                c = new Color( 1, 1, 1 );
+                break;
+            case 5:
+                c = new Color( 0.7, 0.6, 0.0 );
+                break;
+            case 6:
+                c = new Color( 0.0, 0.5, 0.0 );
+                break;
+            default:
+                c = Color::makeColorFromHSV( (float)j / numBiomes, 1, 1 );
+            }
         
         biomeColors.push_back( *c );
+        delete c;
         }
     
     /*
@@ -1403,9 +1633,9 @@ void outputMapImage() {
             */
             
             
-            int id = getBaseMap( x, y );
+            int id = getBaseMap( x - h/2, - ( y - h/2 ) );
             
-            int biomeInd = getMapBiomeIndex( x, y );
+            int biomeInd = getMapBiomeIndex( x - h/2, -( y - h/2 ) );
 
             if( id > 0 ) {
                 for( int i=0; i<allNaturalMapIDs.size(); i++ ) {
@@ -1422,8 +1652,33 @@ void outputMapImage() {
             
             biomeIm.setColor( y * w + x,
                               biomeColors.getElementDirect( biomeInd ) );
+            ( *( biomeCounts.getElement( biomeInd ) ) ) ++;
+            totalBiomeCount++;
             }
         }
+
+
+    const char *biomeNames[] = { "Grass ",
+                                 "Swamp ",
+                                 "Yellow",
+                                 "Gray  ",
+                                 "Snow  ",
+                                 "Desert",
+                                 "Jungle" };    
+
+    for( int j=0; j<numBiomes; j++ ) {
+        const char *name = "unknwn";
+        
+        if( biomes[j] < 7 ) {
+            name = biomeNames[ biomes[j] ];
+            }
+        int c = biomeCounts.getElementDirect( j );
+        
+        printf( "Biome %d (%s) \tcount = %d\t%.1f%%\n", 
+                biomes[j], name, c, 100 * (float)c / totalBiomeCount );
+        }
+
+
     
     for( int i=0; i<allNaturalMapIDs.size(); i++ ) {
         ObjectRecord *obj = getObject( allNaturalMapIDs.getElementDirect( i ) );
@@ -2554,8 +2809,136 @@ static void deleteFileByName( const char *inFileName ) {
 
 
 
+static void setupMapChangeLogFile() {
+    File logFolder( NULL, "mapChangeLogs" );
+    
+    if( ! logFolder.exists() ) {
+        logFolder.makeDirectory();
+        }
+
+
+    if( mapChangeLogFile != NULL ) {
+        fclose( mapChangeLogFile );
+        mapChangeLogFile = NULL;
+        }
+    
+
+    if( logFolder.isDirectory() ) {
+        
+        char *biomeSeedString = autoSprintf( "%d", biomeRandSeed );
+        
+        // does log file already exist?
+
+        int numFiles;
+        File **childFiles = logFolder.getChildFiles( &numFiles );
+        
+        for( int i=0; i<numFiles; i++ ) {
+            File *f = childFiles[i];
+            
+            char *name = f->getFileName();
+        
+            if( strstr( name, biomeSeedString ) != NULL ) {
+                // found!
+                char *fullFileName = f->getFullFileName();
+                mapChangeLogFile = fopen( fullFileName, "a" );
+                delete [] fullFileName;
+                }
+            delete [] name;
+            if( mapChangeLogFile != NULL ) {
+                break;
+                }
+            }
+        for( int i=0; i<numFiles; i++ ) {
+            delete childFiles[i];
+            }
+        delete [] childFiles;
+
+        delete [] biomeSeedString;
+            
+        
+        if( mapChangeLogFile == NULL ) {
+
+            // file does not exist
+            char *newFileName = autoSprintf( "%.ftime_%useed_mapLog.txt",
+                                             Time::getCurrentTime(),
+                                             biomeRandSeed );
+            
+            File *f = logFolder.getChildFile( newFileName );
+            
+            char *fullName = f->getFullFileName();
+            
+            delete f;
+        
+            mapChangeLogFile = fopen( fullName, "a" );
+            delete [] fullName;
+            }
+        }
+
+    mapChangeLogTimeStart = Time::getCurrentTime();
+    fprintf( mapChangeLogFile, "startTime: %.2f\n", mapChangeLogTimeStart );
+    }
+
+
+
+
+void reseedMap( char inForceFresh ) {
+    
+    FILE *seedFile = NULL;
+    
+    if( ! inForceFresh ) {
+        seedFile = fopen( "biomeRandSeed.txt", "r" );
+        }
+    
+    if( seedFile != NULL ) {
+        fscanf( seedFile, "%d", &biomeRandSeed );
+        fclose( seedFile );
+        AppLog::infoF( "Reading map rand seed from file: %u\n", biomeRandSeed );
+        }
+    else {
+        // no seed set, or ignoring it, make a new one
+        
+        if( !inForceFresh ) {
+            // not forced (not internal apocalypse)
+            // seed file wiped externally, so it's like a manual apocalypse
+            // report a fresh arc starting
+            reportArcEnd();
+            }
+
+        char *secret =
+            SettingsManager::getStringSetting( "statsServerSharedSecret", 
+                                               "secret" );
+        
+        unsigned int seedBase = 
+            crc32( (unsigned char*)secret, strlen( secret ) );
+        
+        unsigned int modTimeSeed = 
+            (unsigned int)fmod( Time::getCurrentTime() + seedBase, 
+                                4294967295U );
+        
+        JenkinsRandomSource tempRandSource( modTimeSeed );
+
+        biomeRandSeed = tempRandSource.getRandomInt();
+        
+        AppLog::infoF( "Generating fresh map rand seed and saving to file: "
+                       "%u\n", biomeRandSeed );
+
+        // and save it
+        seedFile = fopen( "biomeRandSeed.txt", "w" );
+        if( seedFile != NULL ) {
+            
+            fprintf( seedFile, "%d", biomeRandSeed );
+            fclose( seedFile );
+            }
+        }
+    }
+
+
+
 
 char initMap() {
+
+    reseedMap( false );
+    
     
     numSpeechPipes = getMaxSpeechPipeIndex() + 1;
     
@@ -3217,10 +3600,70 @@ char initMap() {
         
         }
 
+
+    // manually controll order
+    SimpleVector<int> *biomeOrderList =
+        SettingsManager::getIntSettingMulti( "biomeOrder" );
+
+    SimpleVector<float> *biomeWeightList =
+        SettingsManager::getFloatSettingMulti( "biomeWeights" );
+
+    for( int i=0; i<biomeOrderList->size(); i++ ) {
+        int b = biomeOrderList->getElementDirect( i );
+        
+        if( biomeList.getElementIndex( b ) == -1 ) {
+            biomeOrderList->deleteElement( i );
+            biomeWeightList->deleteElement( i );
+            i--;
+            }
+        }
     
-    numBiomes = biomeList.size();
-    biomes = biomeList.getElementArray();
+    // now add any discovered biomes to end of list
+    for( int i=0; i<biomeList.size(); i++ ) {
+        int b = biomeList.getElementDirect( i );
+        if( biomeOrderList->getElementIndex( b ) == -1 ) {
+            biomeOrderList->push_back( b );
+            // default weight
+            biomeWeightList->push_back( 0.1 );
+            }
+        }
     
+    numBiomes = biomeOrderList->size();
+    biomes = biomeOrderList->getElementArray();
+    biomeWeights = biomeWeightList->getElementArray();
+    biomeCumuWeights = new float[ numBiomes ];
+    
+    biomeTotalWeight = 0;
+    for( int i=0; i<numBiomes; i++ ) {
+        biomeTotalWeight += biomeWeights[i];
+        biomeCumuWeights[i] = biomeTotalWeight;
+        }
+    
+    delete biomeOrderList;
+    delete biomeWeightList;
+
+
+    SimpleVector<int> *specialBiomeList =
+        SettingsManager::getIntSettingMulti( "specialBiomes" );
+    
+    numSpecialBiomes = specialBiomeList->size();
+    specialBiomes = specialBiomeList->getElementArray();
+    
+    regularBiomeLimit = numBiomes - numSpecialBiomes;
+
+    delete specialBiomeList;
+
+    specialBiomeCumuWeights = new float[ numSpecialBiomes ];
+    
+    specialBiomeTotalWeight = 0;
+    for( int i=regularBiomeLimit; i<numBiomes; i++ ) {
+        specialBiomeTotalWeight += biomeWeights[i];
+        specialBiomeCumuWeights[i-regularBiomeLimit] = specialBiomeTotalWeight;
+        }
+
+
+
+
     naturalMapIDs = new SimpleVector<int>[ numBiomes ];
     naturalMapChances = new SimpleVector<float>[ numBiomes ];
     totalChanceWeight = new float[ numBiomes ];
@@ -3461,7 +3904,29 @@ char initMap() {
         }
 
 
+    SimpleVector<char*> *specialPlacements = 
+        SettingsManager::getSetting( "specialMapPlacements" );
+    
+    if( specialPlacements != NULL ) {
+        
+        for( int i=0; i<specialPlacements->size(); i++ ) {
+            char *line = specialPlacements->getElementDirect( i );
+            
+            int x, y, id;
+            id = -1;
+            int numRead = sscanf( line, "%d_%d_%d", &x, &y, &id );
+            
+            if( numRead == 3 && id > -1 ) {
+                
+                }
+            setMapObject( x, y, id );
+            }
 
+
+        specialPlacements->deallocateStringElements();
+        delete specialPlacements;
+        }
+    
     
     
     
@@ -3473,6 +3938,9 @@ char initMap() {
     //outputMapImage();
 
     //outputBiomeFractals();
+
+            
+    setupMapChangeLogFile();
 
     return true;
     }
@@ -3553,6 +4021,11 @@ static void rememberDummy( FILE *inFile, int inX, int inY,
 
 
 void freeMap( char inSkipCleanup ) {
+    if( mapChangeLogFile != NULL ) {
+        fclose( mapChangeLogFile );
+        mapChangeLogFile = NULL;
+        }
+    
     printf( "%d calls to getBaseMap\n", getBaseMapCallCount );
 
     skipTrackingMapChanges = true;
@@ -3800,6 +4273,10 @@ void freeMap( char inSkipCleanup ) {
     writeRecentPlacements();
 
     delete [] biomes;
+    delete [] biomeWeights;
+    delete [] biomeCumuWeights;
+    delete [] specialBiomes;
+    delete [] specialBiomeCumuWeights;
     
     delete [] naturalMapIDs;
     delete [] naturalMapChances;
@@ -6122,7 +6599,53 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
 
 
 
+static void logMapChange( int inX, int inY, int inID ) {
+    // log it?
+    if( mapChangeLogFile != NULL ) {
+        
+        ObjectRecord *o = getObject( inID );
+        
+        const char *extraFlag = "";
+        
+        if( o != NULL && o->floor ) {
+            extraFlag = "f";
+            }
+        
+        if( o != NULL && o->isUseDummy ) {
+            fprintf( mapChangeLogFile, 
+                     "%.2f %d %d %s%du%d\n", 
+                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     inX, inY,
+                     extraFlag,
+                     o->useDummyParent,
+                     o->thisUseDummyIndex );
+            }
+        else if( o != NULL && o->isVariableDummy ) {
+            fprintf( mapChangeLogFile, 
+                     "%.2f %d %d %s%dv%d\n", 
+                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     inX, inY,
+                     extraFlag,
+                     o->variableDummyParent,
+                     o->thisVariableDummyIndex );
+            }
+        else {        
+            fprintf( mapChangeLogFile, 
+                     "%.2f %d %d %s%d\n", 
+                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     inX, inY,
+                     extraFlag,
+                     inID );
+            }
+        }
+    }
+
+
+
 void setMapObject( int inX, int inY, int inID ) {
+
+    logMapChange( inX, inY, inID );
+
     setMapObjectRaw( inX, inY, inID );
 
 
@@ -6763,6 +7286,10 @@ int getMapFloor( int inX, int inY ) {
 
 
 void setMapFloor( int inX, int inY, int inID ) {
+    
+    logMapChange( inX, inY, inID );
+
+
     dbFloorPut( inX, inY, inID );
 
 
@@ -7485,7 +8012,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         forceEveToBorder = true;
         currentEveRadius = 50;
 
-        if( currentEveRadius > jumpUsed / 3 ) {
+        if( jumpUsed > 3 && currentEveRadius > jumpUsed / 3 ) {
             currentEveRadius = jumpUsed / 3;
             }
         }
@@ -7498,6 +8025,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
     
     char found = 0;
+
+    if( currentEveRadius < 1 ) {
+        currentEveRadius = 1;
+        }
     
     while( !found ) {
         printf( "Placing new Eve:  "
@@ -7850,16 +8381,34 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
 
 
 GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY, 
-                                 doublePair inDir ) {
+                                 doublePair inDir, 
+                                 int inRadiusLimit ) {
     int closestIndex = -1;
     GridPos closestPos;
     double closestDist = DBL_MAX;
 
     GridPos curPos = { inCurrentX, inCurrentY };
 
+    char useLimit = false;
+    
+    if( abs( inCurrentX ) <= inRadiusLimit &&
+        abs( inCurrentY ) <= inRadiusLimit ) {
+        useLimit = true;
+        }
+        
+        
+
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
         
+        if( useLimit &&
+            ( abs( thisPos.x ) > inRadiusLimit ||
+              abs( thisPos.x ) > inRadiusLimit ) ) {
+            // out of bounds destination
+            continue;
+            }
+        
+              
         double dist = distSquared( curPos, thisPos );
         
         if( dist < closestDist ) {
@@ -7917,6 +8466,18 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
     
     GridPos returnVal = { eveX, eveY };
     
+    if( inRadiusLimit > 0 &&
+        ( abs( eveX ) >= inRadiusLimit ||
+          abs( eveY ) >= inRadiusLimit ) ) {
+        // even Eve pos is out of bounds
+        // stick them in center
+        returnVal.x = 0;
+        returnVal.y = 0;
+        }
+    
+          
+
+
     return returnVal;
     }
 

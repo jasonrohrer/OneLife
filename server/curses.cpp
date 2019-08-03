@@ -533,7 +533,10 @@ char cursePlayer( int inGiverID, int inGiverLineageEveID, char *inGiverEmail,
     
     if( receiverLineageEveID != inGiverLineageEveID ) {
         // not in the same family, can't curse
-        return false;
+        
+        // skip for now.  Filter based on language outside this call instead.
+
+        // return false;
         }
 
     if( !useCurseServer && receiverRecord->bornCursed ) {
@@ -590,6 +593,23 @@ char cursePlayer( int inGiverID, int inGiverLineageEveID, char *inGiverEmail,
 
     return true;
     }
+
+
+
+int getCurseReceiverLineageEveID( char *inReceiverName ) {
+    int receiverLineageEveID = -1;
+    
+    CurseRecord *receiverRecord = 
+        findCurseRecordByName( inReceiverName, &receiverLineageEveID );
+    
+    if( receiverRecord == NULL ) {
+        return -1;
+        }
+    
+    return receiverLineageEveID;
+    }
+
+
 
 
 
