@@ -9208,14 +9208,15 @@ typedef struct KillState {
 SimpleVector<KillState> activeKillStates;
 
 
-void addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
+// return true if it worked
+char addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
     char found = false;
     
     
     if( distance( getPlayerPos( inKiller ), getPlayerPos( inTarget ) )
         > 8 ) {
         // out of range
-        return;
+        return false;
         }
     
     
@@ -9242,6 +9243,7 @@ void addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
                         30 };
         activeKillStates.push_back( s );
         }
+    return true;
     }
 
 
@@ -13121,15 +13123,18 @@ int main() {
                                     
                                     if( ! weaponBlocked ) {
                                         
-                                        nextPlayer->emotFrozen = true;
-                                        newEmotPlayerIDs.push_back( 
-                                            nextPlayer->id );
-                                        newEmotIndices.push_back( 
-                                            killEmotionIndex );
-                                        newEmotTTLs.push_back( 120 );
+                                        char enteredState =
+                                            addKillState( nextPlayer,
+                                                          targetPlayer );
                                         
-                                        addKillState( nextPlayer,
-                                                      targetPlayer );
+                                        if( enteredState ) {
+                                            nextPlayer->emotFrozen = true;
+                                            newEmotPlayerIDs.push_back( 
+                                                nextPlayer->id );
+                                            newEmotIndices.push_back( 
+                                                killEmotionIndex );
+                                            newEmotTTLs.push_back( 120 );
+                                            }
                                         }
                                     }
                                 }

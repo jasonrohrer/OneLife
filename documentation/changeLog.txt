@@ -7,6 +7,9 @@ Server Fixes
 
 --Family limit failure condition set to 35 (was 23).
 
+--Fixed bug that caused stuck murder mouth emote if you target someone from
+  more than 8 tiles away.
+
 
 
 
