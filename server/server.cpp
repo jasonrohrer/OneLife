@@ -3594,6 +3594,78 @@ void sendPeaceWarMessage( const char *inPeaceOrWar,
 
 
 
+void checkCustomGlobalMessage() {
+    
+    if( ! SettingsManager::getIntSetting( "customGlobalMessageOn", 0 ) ) {
+        return;
+        }
+
+
+    double spacing = 
+        SettingsManager::getDoubleSetting( 
+            "customGlobalMessageSecondsSpacing", 10.0 );
+    
+    double lastTime = 
+        SettingsManager::getDoubleSetting( 
+            "customGlobalMessageLastSendTime", 0.0 );
+
+    double curTime = Time::getCurrentTime();
+    
+    if( curTime - lastTime < spacing ) {
+        return;
+        }
+        
+
+    
+    // check if there's a new custom message waiting
+    char *message = 
+        SettingsManager::getSettingContents( "customGlobalMessage", 
+                                             "" );
+    
+    if( strcmp( message, "" ) != 0 ) {
+        
+
+        int numLines;
+        
+        char **lines = split( message, "\n", &numLines );
+        
+        int nextLine = 
+            SettingsManager::getIntSetting( 
+                "customGlobalMessageNextLine", 0 );
+        
+        if( nextLine < numLines ) {
+            sendGlobalMessage( lines[nextLine] );
+            
+            nextLine++;
+            SettingsManager::setSetting( 
+                "customGlobalMessageNextLine", nextLine );
+
+            SettingsManager::setDoubleSetting( 
+                "customGlobalMessageLastSendTime", curTime );
+            }
+        else {
+            // out of lines
+            SettingsManager::setSetting( "customGlobalMessageOn", 0 );
+            SettingsManager::setSetting( "customGlobalMessageNextLine", 0 );
+            }
+
+        for( int i=0; i<numLines; i++ ) {
+            delete [] lines[i];
+            }
+        delete [] lines;
+        }
+    else {
+        // no message, disable
+        SettingsManager::setSetting( "customGlobalMessageOn", 0 );
+        }
+    
+    delete [] message;
+    }
+
+
+
+
+
 // sets lastSentMap in inO if chunk goes through
 // returns result of send, auto-marks error in inO
 int sendMapChunkMessage( LiveObject *inO, 
@@ -10377,6 +10449,9 @@ int main() {
                 
                 delete [] message;           
                 }
+
+            
+            checkCustomGlobalMessage();
             }
         
         

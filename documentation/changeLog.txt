@@ -10,6 +10,8 @@ Server Fixes
 --Fixed bug that caused stuck murder mouth emote if you target someone from
   more than 8 tiles away.
 
+--Support for custom global messages.
+
 
 
 
