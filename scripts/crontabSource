@@ -25,4 +25,7 @@ SHELL=/bin/bash
 */5 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/updateGitMirrors.sh
 
 
+*/5 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/syncMapChangeLogs.sh
+
+
 * * * * * php /home/jcr15/bulkEmailer/bulkEmailer.php

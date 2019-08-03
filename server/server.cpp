@@ -66,6 +66,9 @@
 #endif
 
 
+static FILE *familyDataLogFile = NULL;
+
+
 static JenkinsRandomSource randSource;
 
 
@@ -180,6 +183,167 @@ static int killEmotionIndex = 2;
 
 
 static double lastBabyPassedThresholdTime = 0;
+
+
+static double eveWindowStart = 0;
+
+
+typedef struct PeaceTreaty {
+        int lineageAEveID;
+        int lineageBEveID;
+        
+        // they have to say it in both directions
+        // before it comes into effect
+        char dirAToB;
+        char dirBToA;
+
+        // track directions of breaking it later
+        char dirAToBBroken;
+        char dirBToABroken;
+    } PeaceTreaty;
+
+    
+
+static SimpleVector<PeaceTreaty> peaceTreaties;
+
+
+// may be partial
+static PeaceTreaty *getMatchingTreaty( int inLineageAEveID, 
+                                       int inLineageBEveID ) {
+    
+    for( int i=0; i<peaceTreaties.size(); i++ ) {
+        PeaceTreaty *p = peaceTreaties.getElement( i );
+        
+
+        if( ( p->lineageAEveID == inLineageAEveID &&
+              p->lineageBEveID == inLineageBEveID )
+            ||
+            ( p->lineageAEveID == inLineageBEveID &&
+              p->lineageBEveID == inLineageAEveID ) ) {
+            // they match a treaty.
+            return p;
+            }
+        }
+    return NULL;
+    }
+
+
+
+// parial treaty returned if it's requested
+static char isPeaceTreaty( int inLineageAEveID, int inLineageBEveID,
+                           PeaceTreaty **outPartialTreaty = NULL ) {
+    
+    PeaceTreaty *p = getMatchingTreaty( inLineageAEveID, inLineageBEveID );
+        
+    if( p != NULL ) {
+        
+        if( !( p->dirAToB && p->dirBToA ) ) {
+            // partial treaty
+            if( outPartialTreaty != NULL ) {
+                *outPartialTreaty = p;
+                }
+            return false;
+            }
+        return true;
+        }
+    return false;
+    }
+
+
+void sendPeaceWarMessage( const char *inPeaceOrWar,
+                          char inWar,
+                          int inLineageAEveID, int inLineageBEveID );
+
+
+static void addPeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
+    PeaceTreaty *p = getMatchingTreaty( inLineageAEveID, inLineageBEveID );
+    
+    if( p != NULL ) {
+        char peaceBefore = p->dirAToB && p->dirBToA;
+        
+        // maybe it has been sealed in a new direction?
+        if( p->lineageAEveID == inLineageAEveID ) {
+            p->dirAToB = true;
+            p->dirBToABroken = false;
+            }
+        if( p->lineageBEveID == inLineageAEveID ) {
+            p->dirBToA = true;
+            p->dirBToABroken = false;
+            }
+        if( p->dirAToB && p->dirBToA &&
+            ! peaceBefore ) {
+            // new peace!
+            sendPeaceWarMessage( "PEACE", 
+                                 false,
+                                 p->lineageAEveID, p->lineageBEveID );
+            }
+        }
+    else {
+        // else doesn't exist, create new unidirectional
+        PeaceTreaty p = { inLineageAEveID, inLineageBEveID,
+                          true, false,
+                          false, false };
+        
+        peaceTreaties.push_back( p );
+        }
+    }
+
+
+
+static void removePeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
+    PeaceTreaty *p = getMatchingTreaty( inLineageAEveID, inLineageBEveID );
+    
+    char remove = false;
+    
+    if( p != NULL ) {
+        if( p->dirAToB && p->dirBToA ) {
+            // established
+            
+            // maybe it has been broken in a new direction?
+            if( p->lineageAEveID == inLineageAEveID ) {
+                p->dirAToBBroken = true;
+                }
+            if( p->lineageBEveID == inLineageAEveID ) {
+                p->dirBToABroken = true;
+                }
+            
+            if( p->dirAToBBroken && p->dirBToABroken ) {
+                // fully broken
+                // remove it
+                remove = true;
+
+                // new war!
+                sendPeaceWarMessage( "WAR",
+                                     true,
+                                     p->lineageAEveID, p->lineageBEveID );
+                }
+            }
+        else {
+            // not fully established
+            // remove it 
+            
+            // this means if one person says PEACE and the other
+            // responds with WAR, the first person's PEACE half-way treaty
+            // is canceled.  Both need to say PEACE again once WAR has been
+            // mentioned
+            remove = true;
+            }
+        }
+    
+    if( remove ) {
+        for( int i=0; i<peaceTreaties.size(); i++ ) {
+            PeaceTreaty *otherP = peaceTreaties.getElement( i );
+            
+            if( otherP->lineageAEveID == p->lineageAEveID &&
+                otherP->lineageBEveID == p->lineageBEveID ) {
+                
+                peaceTreaties.deleteElement( i );
+                return;
+                }
+            }
+        }
+    }
+
 
 
 
@@ -1376,6 +1540,9 @@ void quitCleanup() {
     freeObjectBank();
     freeAnimationBank();
     
+    freeArcReport();
+    
+
     if( clientPassword != NULL ) {
         delete [] clientPassword;
         clientPassword = NULL;
@@ -1406,6 +1573,11 @@ void quitCleanup() {
     if( apocalypseRequest != NULL ) {
         delete apocalypseRequest;
         apocalypseRequest = NULL;
+        }
+
+    if( familyDataLogFile != NULL ) {
+        fclose( familyDataLogFile );
+        familyDataLogFile = NULL;
         }
     }
 
@@ -3310,6 +3482,120 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
 
 
 
+
+static void sendGlobalMessage( char *inMessage ) {
+    char found;
+    char *noSpaceMessage = replaceAll( inMessage, " ", "_", &found );
+
+    char *fullMessage = autoSprintf( "MS\n%s\n#", noSpaceMessage );
+    
+    delete [] noSpaceMessage;
+
+    int len = strlen( fullMessage );
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( ! o->error && ! o->isTutorial && o->connected ) {
+            int numSent = 
+                o->sock->send( (unsigned char*)fullMessage, 
+                               len, 
+                               false, false );
+        
+            if( numSent != len ) {
+                setPlayerDisconnected( o, "Socket write failed" );
+                }
+            }
+        }
+    delete [] fullMessage;
+    }
+
+
+
+typedef struct WarPeaceMessageRecord {
+        char war;
+        int lineageAEveID;
+        int lineageBEveID;
+        double t;
+    } WarPeaceMessageRecord;
+
+SimpleVector<WarPeaceMessageRecord> warPeaceRecords;
+
+
+
+void sendPeaceWarMessage( const char *inPeaceOrWar,
+                          char inWar,
+                          int inLineageAEveID, int inLineageBEveID ) {
+    
+    double curTime = Time::getCurrentTime();
+    
+    for( int i=0; i<warPeaceRecords.size(); i++ ) {
+        WarPeaceMessageRecord *r = warPeaceRecords.getElement( i );
+        
+        if( inWar != r->war ) {
+            continue;
+            }
+        
+        if( ( r->lineageAEveID == inLineageAEveID &&
+              r->lineageBEveID == inLineageBEveID )
+            ||
+            ( r->lineageAEveID == inLineageBEveID &&
+              r->lineageBEveID == inLineageAEveID ) ) {
+
+            if( r->t > curTime - 3 * 60 ) {
+                // stil fresh, last similar message happened
+                // less than three minutes ago
+                return;
+                }
+            else {
+                // stale
+                // remove it
+                warPeaceRecords.deleteElement( i );
+                break;
+                }
+            }
+        }
+    WarPeaceMessageRecord r = { inWar, inLineageAEveID, inLineageBEveID,
+                                curTime };
+    warPeaceRecords.push_back( r );
+
+
+    const char *nameA = "NAMELESS";
+    const char *nameB = "NAMELESS";
+    
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *o = players.getElement( j );
+                        
+        if( ! o->error && 
+            o->lineageEveID == inLineageAEveID &&
+            o->familyName != NULL ) {
+            nameA = o->familyName;
+            break;
+            }
+        }
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *o = players.getElement( j );
+                        
+        if( ! o->error && 
+            o->lineageEveID == inLineageBEveID &&
+            o->familyName != NULL ) {
+            nameB = o->familyName;
+            break;
+            }
+        }
+
+    char *message = autoSprintf( "%s BETWEEN %s**AND %s FAMILIES",
+                                 inPeaceOrWar,
+                                 nameA, nameB );
+
+    sendGlobalMessage( message );
+    
+    delete [] message;
+    }
+
+
+
+
 // sets lastSentMap in inO if chunk goes through
 // returns result of send, auto-marks error in inO
 int sendMapChunkMessage( LiveObject *inO, 
@@ -3915,7 +4201,96 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     char isCurse = false;
 
     char *cursedName = isCurseNamingSay( inToSay );
-                        
+    
+    if( cursedName != NULL ) {
+        int namedPersonLineageEveID = 
+            getCurseReceiverLineageEveID( cursedName );
+                
+        if( namedPersonLineageEveID != inPlayer->lineageEveID ) {
+            // We said the curse in plain English, but
+            // the named person is not in our lineage
+            cursedName = NULL;
+            
+            // BUT, check if this cursed phrase is correct in another language
+            // below
+            }
+        }
+    
+
+    if( cursedName != NULL ) {
+        // it's a pointer into inToSay
+        
+        // make a copy so we can delete it later
+        cursedName = stringDuplicate( cursedName );
+        }
+    
+        
+    if( cursedName == NULL &&
+        players.size() >= minActivePlayersForLanguages ) {
+        
+        // consider cursing in other languages
+
+        int speakerAge = computeAge( inPlayer );
+        
+        GridPos speakerPos = getPlayerPos( inPlayer );
+        
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *otherPlayer = players.getElement( i );
+            
+            if( otherPlayer == inPlayer ||
+                otherPlayer->error ||
+                otherPlayer->lineageEveID == inPlayer->lineageEveID ) {
+                continue;
+                }
+
+            if( distance( speakerPos, getPlayerPos( otherPlayer ) ) >
+                getMaxChunkDimension() ) {
+                // only consider nearby players
+                continue;
+                }
+                
+            char *translatedPhrase =
+                mapLanguagePhrase( 
+                    inToSay,
+                    inPlayer->lineageEveID,
+                    otherPlayer->lineageEveID,
+                    inPlayer->id,
+                    otherPlayer->id,
+                    speakerAge,
+                    computeAge( otherPlayer ),
+                    inPlayer->parentID,
+                    otherPlayer->parentID );
+            
+            cursedName = isCurseNamingSay( translatedPhrase );
+            
+            // make copy so we can delete later an delete the underlying
+            // translatedPhrase now
+            
+            if( cursedName != NULL ) {
+                cursedName = stringDuplicate( cursedName );
+                }
+
+            delete [] translatedPhrase;
+
+            if( cursedName != NULL ) {
+                int namedPersonLineageEveID = 
+                    getCurseReceiverLineageEveID( cursedName );
+                
+                if( namedPersonLineageEveID == otherPlayer->lineageEveID ) {
+                    // the named person belonged to the lineage of the 
+                    // person who spoke this language!
+                    break;
+                    }
+                // else cursed in this language, for someone outside
+                // this language's line
+                delete [] cursedName;
+                cursedName = NULL;
+                }
+            }
+        }
+
+
+
     if( cursedName != NULL && 
         strcmp( cursedName, "" ) != 0 ) {
         
@@ -3935,6 +4310,12 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             inPlayer->curseTokenUpdate = true;
             }
         }
+    
+    
+    if( cursedName != NULL ) {
+        delete [] cursedName;
+        }
+    
 
 
     int curseFlag = 0;
@@ -4183,15 +4564,16 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
 
 
 
-        if( found ) {
+        if( found && inDroppingPlayer->holdingID > 0 ) {
             targetX = foundX;
             targetY = foundY;
             }
         else {
             // no place to drop it, it disappears
 
-            // UNLESS we're holding a baby,
+            // OR we're holding a baby,
             // then just put the baby where we are
+            // (don't ever throw babies, that's weird and exploitable)
             if( inDroppingPlayer->holdingID < 0 ) {
                 int babyID = - inDroppingPlayer->holdingID;
                 
@@ -4410,10 +4792,12 @@ static void swapHeldWithGround(
     LiveObject *inPlayer, int inTargetID, 
     int inMapX, int inMapY,
     SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout) {
-
+    
+    
     timeSec_t newHoldingEtaDecay = getEtaDecay( inMapX, inMapY );
     
     FullMapContained f = getFullMapContained( inMapX, inMapY );
+    
     
     
     clearAllContained( inMapX, inMapY );
@@ -4496,7 +4880,9 @@ static char *getUpdateLineFromRecord(
         
         GridPos updatePos = { inRecord->absolutePosX, inRecord->absolutePosY };
         
-        if( distance( updatePos, inObserverPos ) > 64 ) {
+        if( distance( updatePos, inObserverPos ) > 
+            getMaxChunkDimension() * 2 ) {
+            
             // this update is for a far-away player
             
             // put dummy positions in to hide their coordinates
@@ -4914,7 +5300,179 @@ static LiveObject *getHitPlayer( int inX, int inY,
     return hitPlayer;
     }
 
+
+
+
+static int countFertileMothers() {
     
+    int barrierRadius = 
+        SettingsManager::getIntSetting( 
+            "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( 
+        "barrierOn", 1 );
+    
+    int c = 0;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( p->error ) {
+            continue;
+            }
+        
+        if( isFertileAge( p ) ) {
+            if( barrierOn ) {
+                // only fertile mothers inside the barrier
+                GridPos pos = getPlayerPos( p );
+                
+                if( abs( pos.x ) < barrierRadius &&
+                    abs( pos.y ) < barrierRadius ) {
+                    c++;
+                    }
+                }
+            else {
+                c++;
+                }
+            }
+        }
+    
+    return c;
+    }
+
+
+
+static int countHelplessBabies() {
+    
+    int barrierRadius = 
+        SettingsManager::getIntSetting( 
+            "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( 
+        "barrierOn", 1 );
+    
+    int c = 0;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( p->error ) {
+            continue;
+            }
+
+        if( computeAge( p ) < defaultActionAge ) {
+            if( barrierOn ) {
+                // only babies inside the barrier
+                GridPos pos = getPlayerPos( p );
+                
+                if( abs( pos.x ) < barrierRadius &&
+                    abs( pos.y ) < barrierRadius ) {
+                    c++;
+                    }
+                }
+            else {
+                c++;
+                }
+            }
+        }
+    
+    return c;
+    }
+
+
+
+
+static int countFamilies() {
+    
+    int barrierRadius = 
+        SettingsManager::getIntSetting( 
+            "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( 
+        "barrierOn", 1 );
+    
+    SimpleVector<int> uniqueLines;
+
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( p->error ) {
+            continue;
+            }
+        if( p->isTutorial ) {
+            continue;
+            }    
+        if( p->vogMode ) {
+            continue;
+            }
+        if( p->curseStatus.curseLevel > 0 ) {
+            continue;
+            }
+
+        int lineageEveID = p->lineageEveID;
+            
+        if( uniqueLines.getElementIndex( lineageEveID ) == -1 ) {
+            
+            if( barrierOn ) {
+                // only those inside the barrier
+                GridPos pos = getPlayerPos( p );
+                
+                if( abs( pos.x ) < barrierRadius &&
+                    abs( pos.y ) < barrierRadius ) {
+                    uniqueLines.push_back( lineageEveID );
+                    }
+                }
+            else {
+                uniqueLines.push_back( lineageEveID );
+                }
+            }
+        }
+    
+    return uniqueLines.size();
+    }
+
+
+
+static char isEveWindow() {
+    
+    if( players.size() <=
+        SettingsManager::getIntSetting( "minActivePlayersForEveWindow", 15 ) ) {
+        // not enough players
+        // always Eve window
+        
+        // new window starts if we ever get enough players again
+        eveWindowStart = 0;
+        
+        return true;
+        }
+
+    if( eveWindowStart == 0 ) {
+        // start window now
+        eveWindowStart = Time::getCurrentTime();
+        return true;
+        }
+    else {
+        double secSinceStart = Time::getCurrentTime() - eveWindowStart;
+        
+        if( secSinceStart >
+            SettingsManager::getIntSetting( "eveWindowSeconds", 3600 ) ) {
+            return false;
+            }
+        return true;
+        }
+    }
+
+
+
+static void triggerApocalypseNow() {
+    apocalypseTriggered = true;
+    
+    // restart Eve window, and let this player be the
+    // first new Eve
+    eveWindowStart = 0;
+    
+    // reset other apocalypse trigger
+    lastBabyPassedThresholdTime = 0;
+    }
+
 
 
 
@@ -5036,7 +5594,62 @@ int processLoggedInPlayer( char inAllowReconnect,
             return -1;
             }
         }
-             
+    
+
+
+    // a baby needs to be born
+
+    char eveWindow = isEveWindow();
+    char forceGirl = false;
+    
+    int familyLimitAfterEveWindow = SettingsManager::getIntSetting( 
+            "familyLimitAfterEveWindow", 15 );
+
+    int cM = countFertileMothers();
+    int cB = countHelplessBabies();
+    int cFam = countFamilies();
+
+    if( ! eveWindow ) {
+        
+        float ratio = SettingsManager::getFloatSetting( 
+            "babyMotherApocalypseRatio", 6.0 );
+        
+        if( cM == 0 || (float)cB / (float)cM >= ratio ) {
+            // too many babies per mother inside barrier
+
+            triggerApocalypseNow();
+            }
+        else {
+            int minFertile = players.size() / 15;
+            if( minFertile < 2 ) {
+                minFertile = 2;
+                }
+            if( cM < minFertile ) {
+                // less than 1/15 of the players are fertile mothers
+                forceGirl = true;
+                }
+            }
+
+        if( !apocalypseTriggered && familyLimitAfterEveWindow > 0 ) {
+            
+            // there's a family limit
+            // see if we passed it
+            
+            if( cFam > familyLimitAfterEveWindow ) {
+                // too many families
+                
+                // that means we've reach a state where no one is surviving
+                // and there are lots of eves scrounging around
+                triggerApocalypseNow();
+                }
+            }
+            
+        }
+
+    
+    int barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( "barrierOn", 1 );
+    
 
     // reload these settings every time someone new connects
     // thus, they can be changed without restarting the server
@@ -5065,6 +5678,59 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     newObject.id = nextID;
     nextID++;
+
+
+
+
+    if( familyDataLogFile != NULL ) {
+        int eveCount = 0;
+        int inCount = 0;
+        
+        double ageSum = 0;
+        int ageSumCount = 0;
+        
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *o = players.getElement( i );
+        
+            if( ! o->error && o->connected ) {
+                if( o->parentID == -1 ) {
+                    eveCount++;
+                    }
+                if( barrierOn ) {
+                    // only those inside the barrier
+                    GridPos pos = getPlayerPos( o );
+                
+                    if( abs( pos.x ) < barrierRadius &&
+                        abs( pos.y ) < barrierRadius ) {
+                        inCount++;
+                        
+                        ageSum += computeAge( o );
+                        ageSumCount++;
+                        }
+                    }
+                else {
+                    ageSum += computeAge( o );
+                    ageSumCount++;
+                    }
+                }
+            }
+        
+        double averageAge = 0;
+        if( ageSumCount > 0 ) {
+            averageAge = ageSum / ageSumCount;
+            }
+        
+        fprintf( familyDataLogFile,
+                 "%.2f nid:%d fam:%d mom:%d bb:%d plr:%d eve:%d rft:%d "
+                 "avAge:%.2f\n",
+                 Time::getCurrentTime(), newObject.id, 
+                 cFam, cM, cB,
+                 players.size(),
+                 eveCount,
+                 inCount,
+                 averageAge );
+        }
+
 
     
     newObject.fitnessScore = -1;
@@ -5216,6 +5882,21 @@ int processLoggedInPlayer( char inAllowReconnect,
                     canHaveBaby = false;
                     }
                 }
+
+
+            if( eveWindow && barrierOn ) {
+                // only mothers inside barrier can have babies during 
+                // eveWindow (eve window happens right after an apocalypse
+                // and we need to reign people back in)
+
+                GridPos playerPos = getPlayerPos( player );
+                
+                if( abs( playerPos.x ) >= barrierRadius ||
+                    abs( playerPos.y ) >= barrierRadius ) {
+                    canHaveBaby = false;
+                    }
+                }
+
             
             if( canHaveBaby ) {
                 if( ( inCurseStatus.curseLevel <= 0 && 
@@ -5266,9 +5947,13 @@ int processLoggedInPlayer( char inAllowReconnect,
     
 
     
-    if( parentChoices.size() > 0 ) {
-        // count the families
-        
+    if( ( eveWindow || familyLimitAfterEveWindow > 0 ) 
+        && parentChoices.size() > 0 ) {
+        // count the families, and add new Eve if there are too
+        // few families for the playerbase 
+        // (but only if in pure Eve window )
+        // (    OR tracking family limit after window closes)
+
         SimpleVector<int> uniqueLines;
         
         int playerCount = 0;
@@ -5308,6 +5993,55 @@ int processLoggedInPlayer( char inAllowReconnect,
             forceParentChoices = true;
             }
         
+        }
+    
+
+
+
+    if( inCurseStatus.curseLevel <= 0 &&
+        ! forceParentChoices && 
+        parentChoices.size() == 0 &&
+        ! ( eveWindow || familyLimitAfterEveWindow > 0 ) &&
+        ! apocalypseTriggered ) {
+        
+        // outside pure Eve window (and not tracking family limit after)
+        //
+        // and no mother choices left (based on lineage 
+        // bans or birth cooldowns)
+
+        // consider all fertile mothers
+        for( int i=0; i<numPlayers; i++ ) {
+            LiveObject *player = players.getElement( i );
+        
+            if( player->error ) {
+                continue;
+                }
+            
+            if( player->isTutorial ) {
+                continue;
+                }
+            
+            if( player->vogMode ) {
+                continue;
+                }
+            
+            if( player->curseStatus.curseLevel > 0 ) {
+                continue;
+                }
+
+            if( isFertileAge( player ) ) {
+                parentChoices.push_back( player );
+                }
+            }
+
+        if( parentChoices.size() == 0 ) {
+            // absolutely no fertile mothers on server
+            
+            // the in-barrier mothers we found before must have aged out
+            // along the way
+            
+            triggerApocalypseNow();
+            }
         }
     
 
@@ -5630,7 +6364,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                 
                 if( childRace == parentObject->race ) {
                     newObject.displayID = getRandomFamilyMember( 
-                        parentObject->race, parent->displayID, familySpan );
+                        parentObject->race, parent->displayID, familySpan,
+                        forceGirl );
                     }
                 else {
                     newObject.displayID = 
@@ -7927,7 +8662,7 @@ void apocalypseStep() {
             }
 
         if( apocalypseRequest == NULL &&
-            Time::getCurrentTime() - apocalypseStartTime >= 7 ) {
+            Time::getCurrentTime() - apocalypseStartTime >= 8 ) {
             
             if( ! postApocalypseStarted  ) {
                 AppLog::infoF( "Enough warning time, %d players still alive",
@@ -7936,6 +8671,12 @@ void apocalypseStep() {
                 
                 double startTime = Time::getCurrentTime();
                 
+                if( familyDataLogFile != NULL ) {
+                    fprintf( familyDataLogFile, "%.2f apocalypse triggered\n",
+                             startTime );
+                    }
+    
+
                 // clear map
                 freeMap( true );
 
@@ -7946,11 +8687,15 @@ void apocalypseStep() {
                 AppLog::infoF( "Apocalypse wipeMapFiles took %f sec",
                                Time::getCurrentTime() - startTime );
                 
+                reseedMap( true );
+                
                 initMap();
                 
                 AppLog::infoF( "Apocalypse initMap took %f sec",
                                Time::getCurrentTime() - startTime );
                 
+                peaceTreaties.deleteAll();
+
 
                 lastRemoteApocalypseCheckTime = curTime;
                 
@@ -8465,16 +9210,25 @@ typedef struct KillState {
 SimpleVector<KillState> activeKillStates;
 
 
-void addKillState( int inKillerID, int inTargetID ) {
+void addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
     char found = false;
     
+    
+    if( distance( getPlayerPos( inKiller ), getPlayerPos( inTarget ) )
+        > 8 ) {
+        // out of range
+        return;
+        }
+    
+    
+
     for( int i=0; i<activeKillStates.size(); i++ ) {
         KillState *s = activeKillStates.getElement( i );
         
-        if( s->killerID == inKillerID ) {
+        if( s->killerID == inKiller->id ) {
             found = true;
-            s->killerWeaponID = getLiveObject( inKillerID )->holdingID;
-            s->targetID = inTargetID;
+            s->killerWeaponID = inKiller->holdingID;
+            s->targetID = inTarget->id;
             s->emotStartTime = Time::getCurrentTime();
             s->emotRefreshSeconds = 30;
             break;
@@ -8483,9 +9237,9 @@ void addKillState( int inKillerID, int inTargetID ) {
     
     if( !found ) {
         // add new
-        KillState s = { inKillerID, 
-                        getLiveObject( inKillerID )->holdingID,
-                        inTargetID, 
+        KillState s = { inKiller->id, 
+                        inKiller->holdingID,
+                        inTarget->id, 
                         Time::getCurrentTime(),
                         30 };
         activeKillStates.push_back( s );
@@ -8614,9 +9368,13 @@ void executeKillAction( int inKillerIndex,
                             "otherFamilyOnly" ) ) {
                     // make sure victim is in
                     // different family
+                    // and no treaty
                                         
                     if( hitPlayer->lineageEveID ==
-                        nextPlayer->lineageEveID ) {
+                        nextPlayer->lineageEveID
+                        || 
+                        isPeaceTreaty( hitPlayer->lineageEveID,
+                                       nextPlayer->lineageEveID ) ) {
                                             
                         hitPlayer = NULL;
                         }
@@ -9155,6 +9913,13 @@ int main() {
         return 1;
         }
     
+    familyDataLogFile = fopen( "familyDataLog.txt", "a" );
+
+    if( familyDataLogFile != NULL ) {
+        fprintf( familyDataLogFile, "%.2f server starting up\n",
+                 Time::getCurrentTime() );
+        }
+
 
     memset( allowedSayCharMap, false, 256 );
     
@@ -9587,6 +10352,46 @@ int main() {
             stepMapLongTermCulling( players.size() );
             
             stepArcReport();
+            
+            int arcMilestone = getArcYearsToReport( secondsPerYear, 100 );
+            
+            if( arcMilestone != -1 ) {
+                int familyLimitAfterEveWindow = 
+                    SettingsManager::getIntSetting( 
+                        "familyLimitAfterEveWindow", 15 );
+                
+                char *familyLine;
+                
+                if( familyLimitAfterEveWindow > 0 &&
+                    ! isEveWindow() ) {
+                    familyLine = autoSprintf( "of %d",
+                                              familyLimitAfterEveWindow );
+                    }
+                else {
+                    familyLine = stringDuplicate( "" );
+                    }
+
+                const char *familyWord = "FAMILIES ARE";
+                
+                int numFams = countFamilies();
+                
+                if( numFams == 1 ) {
+                    familyWord = "FAMILY IS";
+                    }
+
+                char *message = autoSprintf( ":%s: ARC HAS LASTED %d YEARS**"
+                                             "%d %s %s ALIVE",
+                                             getArcName(),
+                                             arcMilestone,
+                                             numFams,
+                                             familyLine,
+                                             familyWord);
+                delete [] familyLine;
+                
+                sendGlobalMessage( message );
+                
+                delete [] message;           
+                }
             }
         
         
@@ -12319,9 +13124,13 @@ int main() {
                                                 "otherFamilyOnly" ) ) {
                                         // make sure victim is in
                                         // different family
-                                        
+                                        // AND that there's no peace treaty
                                         if( targetPlayer->lineageEveID ==
-                                            nextPlayer->lineageEveID ) {
+                                            nextPlayer->lineageEveID
+                                            ||
+                                            isPeaceTreaty( 
+                                                targetPlayer->lineageEveID,
+                                                nextPlayer->lineageEveID ) ) {
                                             
                                             weaponBlocked = true;
                                             }
@@ -12336,8 +13145,8 @@ int main() {
                                             killEmotionIndex );
                                         newEmotTTLs.push_back( 120 );
                                         
-                                        addKillState( nextPlayer->id,
-                                                      targetPlayer->id );
+                                        addKillState( nextPlayer,
+                                                      targetPlayer );
                                         }
                                     }
                                 }
@@ -12589,6 +13398,32 @@ int main() {
                                 
                                 double playerAge = computeAge( nextPlayer );
                                 
+                                int hungryWorkCost = 0;
+                                
+                                if( r != NULL && 
+                                    r->newTarget > 0 ) {
+                                    char *des =
+                                        getObject( r->newTarget )->description;
+                                    
+                                    char *desPos =
+                                        strstr( des, "+hungryWork" );
+                                    
+                                    if( desPos != NULL ) {
+                                        
+                                    
+                                        sscanf( desPos,
+                                                "+hungryWork%d", 
+                                                &hungryWorkCost );
+                                        
+                                        if( nextPlayer->foodStore < 
+                                            hungryWorkCost ) {
+                                            // block transition,
+                                            // not enough food
+                                            r = NULL;
+                                            }
+                                        }
+                                    }
+
 
                                 if( r != NULL && containmentTransfer ) {
                                     // special case contained items
@@ -12737,6 +13572,23 @@ int main() {
                                     else {    
                                         setMapObject( m.x, m.y, r->newTarget );
                                         newGroundObject = r->newTarget;
+                                        }
+                                    
+                                    if( hungryWorkCost > 0 ) {
+                                        int oldStore = nextPlayer->foodStore;
+                                        
+                                        nextPlayer->foodStore -= hungryWorkCost;
+                                        
+                                        if( nextPlayer->foodStore < 3 ) {
+                                            if( oldStore > 3  ) {
+                                                // generally leave
+                                                // player with 3 food
+                                                // unless they had less than
+                                                // 3 to start
+                                                nextPlayer->foodStore = 3;
+                                                }
+                                            }
+                                        nextPlayer->foodUpdate = true;
                                         }
                                     
                                     
@@ -14700,15 +15552,32 @@ int main() {
                     
                         // player was born as a baby
                         
+                        int barrierRadius = 
+                            SettingsManager::getIntSetting( 
+                                "barrierRadius", 250 );
+                        int barrierOn = SettingsManager::getIntSetting( 
+                            "barrierOn", 1 );
+
+                        char insideBarrier = true;
+                        
+                        if( barrierOn &&
+                            ( abs( dropPos.x ) > barrierRadius ||
+                              abs( dropPos.y ) > barrierRadius ) ) {
+                            
+                            insideBarrier = false;
+                            }
+                              
+
                         float threshold = SettingsManager::getFloatSetting( 
                             "babySurvivalYearsBeforeApocalypse", 15.0f );
                         
-                        if( age > threshold ) {
+                        if( insideBarrier && age > threshold ) {
                             // baby passed threshold, update last-passed time
                             lastBabyPassedThresholdTime = curTime;
                             }
                         else {
                             // baby died young
+                            // OR older, outside barrier
                             // check if we're due for an apocalypse
                             
                             if( lastBabyPassedThresholdTime > 0 &&
@@ -14718,10 +15587,8 @@ int main() {
                                     3600 ) ) {
                                 // we're outside the window
                                 // people have been dying young for a long time
-                                apocalypseTriggered = true;
                                 
-                                // reset window so we don't re-trigger
-                                lastBabyPassedThresholdTime = 0;
+                                triggerApocalypseNow();
                                 }
                             else if( lastBabyPassedThresholdTime == 0 ) {
                                 // first baby to die, and we have enough
@@ -15636,11 +16503,24 @@ int main() {
                             
                                 doublePair takeOffDir = { xDir, yDir };
 
+                                int radiusLimit = -1;
+                                
+                                int barrierRadius = 
+                                    SettingsManager::getIntSetting( 
+                                        "barrierRadius", 250 );
+                                int barrierOn = SettingsManager::getIntSetting( 
+                                    "barrierOn", 1 );
+                                
+                                if( barrierOn ) {
+                                    radiusLimit = barrierRadius;
+                                    }
+
                                 GridPos destPos = 
                                     getNextFlightLandingPos(
                                         nextPlayer->xs,
                                         nextPlayer->ys,
-                                        takeOffDir );
+                                        takeOffDir,
+                                        radiusLimit );
                             
                                 AppLog::infoF( 
                                     "Player %d flight taking off from (%d,%d), "
@@ -16594,7 +17474,7 @@ int main() {
 
             
             
-            double maxDist = 32;
+            double maxDist = getMaxChunkDimension();
             double maxDist2 = maxDist * 2;
 
             
@@ -17447,7 +18327,7 @@ int main() {
 
                 if( moveList.size() > 0 && nextPlayer->connected ) {
                     
-                    double minUpdateDist = 64;
+                    double minUpdateDist = getMaxChunkDimension() * 2;
                     
                     for( int u=0; u<movesPos.size(); u++ ) {
                         ChangePosition *p = movesPos.getElement( u );
@@ -17593,7 +18473,7 @@ int main() {
 
                 
                 if( mapChanges.size() > 0 && nextPlayer->connected ) {
-                    double minUpdateDist = 64;
+                    double minUpdateDist = getMaxChunkDimension() * 2;
                     
                     for( int u=0; u<mapChangesPos.size(); u++ ) {
                         ChangePosition *p = mapChangesPos.getElement( u );
@@ -17690,7 +18570,7 @@ int main() {
                         }
                     }
                 if( newSpeechPos.size() > 0 && nextPlayer->connected ) {
-                    double minUpdateDist = 64;
+                    double minUpdateDist = getMaxChunkDimension() * 2;
                     
                     for( int u=0; u<newSpeechPos.size(); u++ ) {
                         ChangePosition *p = newSpeechPos.getElement( u );
@@ -17783,6 +18663,30 @@ int main() {
                                             listenerParentID );
                                     }
                                 
+                                if( speakerEveID != 
+                                    listenerEveID
+                                    && speakerAge > 55 
+                                    && listenerAge > 55 ) {
+                                    
+                                    if( strcmp( translatedPhrase, "PEACE" )
+                                        == 0 ) {
+                                        // an elder speaker
+                                        // said PEACE 
+                                        // in elder listener's language
+                                        addPeaceTreaty( speakerEveID,
+                                                        listenerEveID );
+                                        }
+                                    else if( strcmp( translatedPhrase, 
+                                                     "WAR" )
+                                             == 0 ) {
+                                            // an elder speaker
+                                        // said WAR 
+                                        // in elder listener's language
+                                        removePeaceTreaty( speakerEveID,
+                                                           listenerEveID );
+                                        }
+                                    }
+                                
                                 int curseFlag =
                                     newSpeechCurseFlags.getElementDirect( u );
 
@@ -17840,7 +18744,7 @@ int main() {
 
 
                 if( newLocationSpeech.size() > 0 && nextPlayer->connected ) {
-                    double minUpdateDist = 64;
+                    double minUpdateDist = getMaxChunkDimension() * 2;
                     
                     for( int u=0; u<newLocationSpeechPos.size(); u++ ) {
                         ChangePosition *p = 

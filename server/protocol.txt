@@ -181,6 +181,8 @@ PHOTO_SIGNATURE (PH)
 
 FORCED_SHUTDOWN (SD)
 
+GLOBAL_MESSAGE (MS)
+
 FRAME (FM)
 
 PONG
@@ -772,6 +774,14 @@ SD
 Indicates that the server is undergoing a forced shutdown.  Gives client a
 chance to hear about this and close connection before connection is
 force-closed by server.
+
+
+MS
+some_message_text_with_space_replaced_by_underscore
+#
+
+Server sending a global message to be displayed by all non-tutorial clients.
+
 
 
 

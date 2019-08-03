@@ -40,6 +40,10 @@ $formulaR = 1.0;
 $formulaK = 10.0;
 
 
+// how recently do players have to have played to count in leaderboards
+// and rankings?
+$leaderboardHours = 24;
+
 
 // maximum number of historical offspring (and selves) to report to the
 // player when they ask for details

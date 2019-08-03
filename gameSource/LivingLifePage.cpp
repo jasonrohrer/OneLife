@@ -307,6 +307,7 @@ static  GridPos *getHomeLocation() {
 
 
 
+// HOMEMARKER MOD NOTE:  Change 1/8 - Take these lines during the merge process
 static void popHomeLocation() {
     if(homePosStack.size() > 0) {
          homePosStack.deleteLastElement();
@@ -353,6 +354,18 @@ static void addHomeLocation( int inX, int inY ) {
 
 static void addAncientHomeLocation( int inX, int inY ) {
     removeHomeLocation( inX, inY );
+
+    // HOMEMARKER MOD NOTE:  Change 2/8 - Take these lines during the merge process
+    /*
+    // remove all ancient pos
+    // there can be only one ancient
+    for( int i=0; i<homePosStack.size(); i++ ) {
+        if( homePosStack.getElementDirect( i ).ancient ) {
+            homePosStack.deleteElement( i );
+            i--;
+            }
+        }
+    */
 
     GridPos newPos = { inX, inY };
     HomePos p;
@@ -418,6 +431,7 @@ static int getHomeDir( doublePair inCurrentPlayerPos,
         a += 2 * M_PI;
         }
     
+    // HOMEMARKER MOD NOTE:  Change 8/10 - Take these lines during the merge process
     int index = lrint( 360 * a / ( 2 * M_PI ) );
     
     return index;
@@ -1002,6 +1016,7 @@ typedef enum messageType {
     VOG_UPDATE,
     PHOTO_SIGNATURE,
     FORCED_SHUTDOWN,
+    GLOBAL_MESSAGE,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1133,6 +1148,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "SD" ) == 0 ) {
         returnValue = FORCED_SHUTDOWN;
+        }
+    else if( strcmp( copy, "MS" ) == 0 ) {
+        returnValue = GLOBAL_MESSAGE;
         }
     
     delete [] copy;
@@ -2208,6 +2226,8 @@ LivingLifePage::LivingLifePage()
         : mServerSocket( -1 ), 
           mForceRunTutorial( false ),
           mTutorialNumber( 0 ),
+          mGlobalMessageShowing( false ),
+          mGlobalMessageStartTime( 0 ),
           mFirstServerMessagesReceived( 0 ),
           mMapGlobalOffsetSet( false ),
           mMapD( MAP_D ),
@@ -2630,6 +2650,8 @@ LivingLifePage::~LivingLifePage() {
             numServerBytesRead, overheadServerBytesRead,
             numServerBytesSent, overheadServerBytesSent );
     
+    mGlobalMessagesToDestroy.deallocateStringElements();
+
     freeLiveTriggers();
 
     readyPendingReceivedMessages.deallocateStringElements();
@@ -3249,6 +3271,7 @@ typedef struct OffScreenSound {
         // wall clock time when should start fading
         double fadeETATime;
 
+        char red;
     } OffScreenSound;
 
 SimpleVector<OffScreenSound> offScreenSounds;
@@ -3256,12 +3279,27 @@ SimpleVector<OffScreenSound> offScreenSounds;
 
 
 
-static void addOffScreenSound( double inPosX, double inPosY ) {
+static void addOffScreenSound( double inPosX, double inPosY,
+                               char *inDescription ) {
+
+    char red = false;
+    
+    char *stringPos = strstr( inDescription, "offScreenSound" );
+    
+    if( stringPos != NULL ) {
+        stringPos = &( stringPos[ strlen( "offScreenSound" ) ] );
+        
+        if( strstr( stringPos, "_red" ) == stringPos ) {
+            // _red flag next
+            red = true;
+            }
+        }
+    
     double fadeETATime = game_getCurrentTime() + 4;
     
     doublePair pos = { inPosX, inPosY };
     
-    OffScreenSound s = { pos, 1.0, fadeETATime };
+    OffScreenSound s = { pos, 1.0, fadeETATime, red };
     
     offScreenSounds.push_back( s );
     }
@@ -3279,6 +3317,7 @@ void LivingLifePage::drawOffScreenSounds() {
     
     FloatColor red = { 0.65, 0, 0, 1 };
     FloatColor white = { 1, 1, 1, 1 };
+    FloatColor black = { 0, 0, 0, 1 };
     
 
     double curTime = game_getCurrentTime();
@@ -3329,6 +3368,14 @@ void LivingLifePage::drawOffScreenSounds() {
             
 
             doublePair drawPos = add( edgeV, lastScreenViewCenter );
+            
+            FloatColor *textColor = &black;
+            FloatColor *bgColor = &white;
+            
+            if( s->red ) {
+                textColor = &white;
+                bgColor = &red;
+                }
 
             drawChalkBackgroundString( drawPos,
                                        "!",
@@ -3336,7 +3383,7 @@ void LivingLifePage::drawOffScreenSounds() {
                                        100,
                                        NULL,
                                        -1,
-                                       &red, &white );
+                                       bgColor, textColor );
             }    
         }
     }
@@ -7374,7 +7421,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         pos.x -= 600;
         pos.y += 300;
         
-        if( mTutorialNumber > 0 ) {
+        if( mTutorialNumber > 0 || mGlobalMessageShowing ) {
             pos.y -= 50;
             }
 
@@ -7427,7 +7474,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             pos.y -= 50;
             }
         // covered by tutorial sheets
-        if( mTutorialNumber > 0 ) {
+        if( mTutorialNumber > 0 || mGlobalMessageShowing ) {
             pos.y -= 50;
             }
 
@@ -7521,7 +7568,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         pos.x += 300;
         pos.y += 300;
         
-        if( mTutorialNumber > 0 ) {
+        if( mTutorialNumber > 0 || mGlobalMessageShowing ) {
             pos.y -= 50;
             }
 
@@ -7568,11 +7615,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
             double homeDist = 0;
             
             int arrowIndex = getHomeDir( ourLiveObject->currentPos, &homeDist );
-	    float arrowRotation =0;
-	    if(arrowIndex != -1) {
-		arrowRotation = -arrowIndex/360.0f;
-		arrowIndex = 0;
-	    }
+            // HOMEMARKER MOD NOTE:  Change 4/8 - Take these lines during the merge process
+    	    float arrowRotation = 0;
+            if( arrowIndex != -1 ) {
+                arrowRotation = -arrowIndex / 360.0f;
+    	        arrowIndex = 0;
+	        }
             
             if( arrowIndex == -1 || ! mHomeArrowStates[arrowIndex].solid ) {
                 // solid change
@@ -7627,6 +7675,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 setDrawColor( 1, 1, 1, 1 );
                 
+                // HOMEMARKER MOD NOTE:  Change 5/8 - Take these lines during the merge process
                 drawSprite( mHomeArrowSprites[arrowIndex], arrowPos, gui_fov_scale_hud, arrowRotation );
                 }
                             
@@ -7638,6 +7687,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             distPos.y -= 47 * gui_fov_scale_hud;
             
+            // HOMEMARKER MOD NOTE:  Change 6/8 - Take these lines during the merge process
             if( homeDist > 10 ) {
                 drawTopAsErased = false;
                 
@@ -8054,7 +8104,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
     // now draw tutorial sheets
-    if( mTutorialNumber > 0 )
+    if( mTutorialNumber > 0 || mGlobalMessageShowing )
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
         if( ! equal( mTutorialPosOffset[i], mTutorialHideOffset[i] ) ) {
             
@@ -9906,6 +9956,30 @@ int LivingLifePage::getNumHints( int inObjectID ) {
 
 
 
+static double getLongestLine( char *inMessage ) {
+    
+    double longestLine = 0;
+    
+    int numLines;
+    char **lines = split( inMessage, 
+                          "#", &numLines );
+    
+    for( int l=0; l<numLines; l++ ) {
+        double len = handwritingFont->measureString( lines[l] );
+        
+        if( len > longestLine ) {
+            longestLine = len;
+                    }
+        delete [] lines[l];
+        }
+    delete [] lines;
+    
+    return longestLine;
+    }
+
+
+
+
 char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
 
     if( inObjectID != mLastHintSortedSourceID ) {
@@ -10356,6 +10430,21 @@ void LivingLifePage::step() {
         }
     
 
+    if( mGlobalMessageShowing ) {
+        
+        if( game_getCurrentTime() - mGlobalMessageStartTime > 10 ) {
+            mTutorialTargetOffset[ mLiveTutorialSheetIndex ] =
+                mTutorialHideOffset[ mLiveTutorialSheetIndex ];
+
+            if( mTutorialPosOffset[ mLiveTutorialSheetIndex ].y ==
+                mTutorialHideOffset[ mLiveTutorialSheetIndex ].y ) {
+                // done hiding
+                mGlobalMessageShowing = false;
+                mGlobalMessagesToDestroy.deallocateStringElements();
+                }
+            }
+        }
+    
 
     // move moving objects
     int numCells = mMapD * mMapD;
@@ -10575,6 +10664,7 @@ void LivingLifePage::step() {
         if( homeArrow != -1 && ! tooClose ) {
             mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y + 68;
             
+            // HOMEMARKER MOD NOTE:  Change 7/8 - Take these lines during the merge process
             if( homeDist > 10 ) {
                 mHomeSlipPosTargetOffset.y += 20;
                 }
@@ -10754,23 +10844,8 @@ void LivingLifePage::step() {
                                                 mHintMessageIndex[i] );
             
 
-            double longestLine = 0;
-            
-            int numLines;
-            char **lines = split( mHintMessage[i], 
-                                  "#", &numLines );
-                
-            for( int l=0; l<numLines; l++ ) {
-                double len = handwritingFont->measureString( lines[l] );
-                
-                if( len > longestLine ) {
-                    longestLine = len;
-                    }
-                delete [] lines[l];
-                }
-            delete [] lines;
 
-            mHintExtraOffset[ i ].x = - longestLine / gui_fov_scale_hud;
+            mHintExtraOffset[ i ].x = - getLongestLine( mHintMessage[i] ) / gui_fov_scale_hud;
             }
         }
     else if( ourObject != NULL && mNextHintObjectID != 0 &&
@@ -10876,7 +10951,8 @@ void LivingLifePage::step() {
 
 
     // should new tutorial sheet be shown?
-    if( mTutorialNumber > 0 && ourObject != NULL ) {
+    if( ( mTutorialNumber > 0 || mGlobalMessageShowing ) 
+        && ourObject != NULL ) {
         
         // search map for closest tutorial trigger
 
@@ -10992,22 +11068,9 @@ void LivingLifePage::step() {
             delete [] transString;
 
 
-            double longestLine = 0;
+            double longestLine = getLongestLine( 
+                (char*)( mTutorialMessage[ mLiveTutorialSheetIndex ] ) );
             
-            int numLines;
-            char **lines = split( mTutorialMessage[ mLiveTutorialSheetIndex ], 
-                                  "#", &numLines );
-                
-            for( int l=0; l<numLines; l++ ) {
-                double len = handwritingFont->measureString( lines[l] );
-                
-                if( len > longestLine ) {
-                    longestLine = len;
-                    }
-                delete [] lines[l];
-                }
-            delete [] lines;
-
             mTutorialExtraOffset[ mLiveTutorialSheetIndex ].x = longestLine / gui_fov_scale_hud;
             }
         }
@@ -11017,7 +11080,8 @@ void LivingLifePage::step() {
 
     // pos for tutorial sheets
     // don't start sliding first sheet until map loaded
-    if( mTutorialNumber > 0 && mDoneLoadingFirstObjectSet )
+    if( ( mTutorialNumber > 0 || mGlobalMessageShowing )
+        && mDoneLoadingFirstObjectSet )
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
         
         if( ! equal( mTutorialPosOffset[i], mTutorialTargetOffset[i] ) ) {
@@ -11334,6 +11398,59 @@ void LivingLifePage::step() {
             
             delete [] message;
             return;
+            }
+        else if( type == GLOBAL_MESSAGE ) {
+            if( mTutorialNumber <= 0 ) {
+                // not in tutorial
+                // display this message
+                
+                char messageFromServer[200];
+                sscanf( message, "MS\n%199s", messageFromServer );            
+                
+                char *upper = stringToUpperCase( messageFromServer );
+                
+                char found;
+
+                char *lines = replaceAll( upper, "**", "##", &found );
+                delete [] upper;
+                
+                char *spaces = replaceAll( lines, "_", " ", &found );
+                
+                delete [] lines;
+                
+
+                mGlobalMessageShowing = true;
+                mGlobalMessageStartTime = game_getCurrentTime();
+                
+                if( mLiveTutorialSheetIndex >= 0 ) {
+                    mTutorialTargetOffset[ mLiveTutorialSheetIndex ] =
+                    mTutorialHideOffset[ mLiveTutorialSheetIndex ];
+                    }
+                mLiveTutorialSheetIndex ++;
+                
+                if( mLiveTutorialSheetIndex >= NUM_HINT_SHEETS ) {
+                    mLiveTutorialSheetIndex -= NUM_HINT_SHEETS;
+                    }
+                mTutorialMessage[ mLiveTutorialSheetIndex ] = 
+                    stringDuplicate( spaces );
+                
+                // other tutorial messages don't need to be destroyed
+                mGlobalMessagesToDestroy.push_back( 
+                    (char*)( mTutorialMessage[ mLiveTutorialSheetIndex ] ) );
+
+                mTutorialTargetOffset[ mLiveTutorialSheetIndex ] =
+                    mTutorialHideOffset[ mLiveTutorialSheetIndex ];
+                
+                mTutorialTargetOffset[ mLiveTutorialSheetIndex ].y -= 100;
+
+                double longestLine = getLongestLine( 
+                    (char*)( mTutorialMessage[ mLiveTutorialSheetIndex ] ) );
+            
+                mTutorialExtraOffset[ mLiveTutorialSheetIndex ].x = longestLine;
+
+                
+                delete [] spaces;
+                }
             }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
@@ -14570,7 +14687,8 @@ void LivingLifePage::step() {
                                                       existing->currentPos.x *
                                                       CELL_D, 
                                                       existing->currentPos.y *
-                                                      CELL_D );
+                                                      CELL_D,
+                                                      heldObj->description );
                                                     }
                                                 }
                                             }
@@ -18179,6 +18297,11 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    mGlobalMessageShowing = false;
+    mGlobalMessageStartTime = 0;
+    mGlobalMessagesToDestroy.deallocateStringElements();
+    
     
     offScreenSounds.deleteAll();
     
@@ -18266,6 +18389,15 @@ void LivingLifePage::makeActive( char inFresh ) {
         mTutorialNumber = 1;
         mForceRunTutorial = false;
         }
+
+    mLiveTutorialSheetIndex = -1;
+    
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {    
+        mTutorialTargetOffset[i] = mTutorialHideOffset[i];
+        mTutorialPosOffset[i] = mTutorialHideOffset[i];
+        mTutorialMessage[i] = "";
+        }
+    
     
 
     savingSpeechEnabled = SettingsManager::getIntSetting( "allowSavingSpeech",
@@ -20788,7 +20920,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             getOurLiveObject()->age -= 1;
             break;
         */
-
+        // HOMEMARKER MOD NOTE:  Change 8/8 - Take these lines during the merge process
         case '+': {
             if(mSayField.isFocused()) {
                break;
