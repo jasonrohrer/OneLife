@@ -95,7 +95,7 @@ int babyAge = 5;
 int defaultActionAge = 3;
 
 
-double forceDeathAge = 60;
+double forceDeathAge = 120;
 
 
 double minSayGapInSeconds = 1.0;
