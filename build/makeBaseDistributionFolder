@@ -11,7 +11,7 @@ rm -rf base
 mkdir base
 
 
-baseFolder=base/OneLife_$1
+baseFolder=base/2HOL_$1
 
 mkdir $baseFolder
 mkdir $baseFolder/graphics

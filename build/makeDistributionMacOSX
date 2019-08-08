@@ -14,7 +14,7 @@ if [ $# -lt 3 ] ; then
 fi
 
 
-rm -rf mac/OneLife_$1
+rm -rf mac/2HOL_$1
 
 
 ./makeBaseDistributionFolder $1
@@ -26,7 +26,7 @@ mv base/* mac
 cd ../gameSource
 sh makeRegenerateCaches
 
-cd ../build/mac/OneLife_$1
+cd ../build/mac/2HOL_$1
 
 
 # mac version now defaults to windowed mode
@@ -43,25 +43,25 @@ rm */bin_*cache.fcz
 cd ../..
 
 
-cp -r macOSX/OneLife.app mac/OneLife_$1/OneLife_$1.app
-cp ../gameSource/OneLife mac/OneLife_$1/OneLife_$1.app/Contents/MacOS
+cp -r macOSX/OneLife.app mac/2HOL_$1/2HOL_$1.app
+cp ../gameSource/2HOL mac/2HOL_$1/2HOL_$1.app/Contents/MacOS
 
-rm -r mac/OneLife_$1/OneLife_$1.app/Contents/MacOS/empty.txt
-rm -r mac/OneLife_$1/OneLife_$1.app/Contents/Frameworks/empty.txt
+rm -r mac/2HOL_$1/2HOL_$1.app/Contents/MacOS/empty.txt
+rm -r mac/2HOL_$1/2HOL_$1.app/Contents/Frameworks/empty.txt
 
 # install SDL framework
-cp -r $3 mac/OneLife_$1/OneLife_$1.app/Contents/Frameworks/
+cp -r $3 mac/2HOL_$1/2HOL_$1.app/Contents/Frameworks/
 
 cd mac
 
 
 d=`date`
 
-echo "$1 built on $d" > OneLife_$1/binary.txt
+echo "$1 built on $d" > 2HOL_$1/binary.txt
 
 
-tar cf "OneLife_$1_$2.tar" OneLife_$1
-gzip "OneLife_$1_$2.tar"
+tar cf "2HOL_$1_$2.tar" 2HOL_$1
+gzip "2HOL_$1_$2.tar"
 
 
 
