@@ -44,7 +44,7 @@ cd ../..
 
 
 cp -r macOSX/OneLife.app mac/2HOL_$1/2HOL_$1.app
-cp ../gameSource/2HOL mac/2HOL_$1/2HOL_$1.app/Contents/MacOS
+cp ../gameSource/OneLife mac/2HOL_$1/2HOL_$1.app/Contents/MacOS
 
 rm -r mac/2HOL_$1/2HOL_$1.app/Contents/MacOS/empty.txt
 rm -r mac/2HOL_$1/2HOL_$1.app/Contents/Frameworks/empty.txt
