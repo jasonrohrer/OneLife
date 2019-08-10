@@ -39,7 +39,7 @@ rm */bin_*cache.fcz
 cd ../..
 
 
-cp ../gameSource/OneLife.exe windows/2HOL_$1/
+cp ../gameSource/OneLife.exe windows/OneLife_$1/
 
 cp win32/*.dll windows/2HOL_$1/
 
