@@ -5713,7 +5713,17 @@ int processLoggedInPlayer( char inAllowReconnect,
                 triggerApocalypseNow();
                 }
             }
-            
+
+        if( !apocalypseTriggered ) {
+            int maxSeconds =
+                SettingsManager::getIntSetting( "arcRunMaxSeconds", 0 );
+
+            if( maxSeconds > 0 &&
+                getArcRunningSeconds() > maxSeconds ) {
+                // players WON and survived past max seconds
+                triggerApocalypseNow();
+                }
+            }    
         }
 
     
