@@ -12,6 +12,9 @@ Server Fixes
 
 --Support for custom global messages.
 
+--Support for maxPickupAge on objects (so elders cannot use swords).
+
+
 
 
 

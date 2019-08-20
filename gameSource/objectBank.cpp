@@ -484,6 +484,24 @@ static void setupNoHighlight( ObjectRecord *inR ) {
 
 
 
+static void setupMaxPickupAge( ObjectRecord *inR ) {
+    inR->maxPickupAge = 9999999;
+    
+
+    const char *key = "maxPickupAge_";
+    
+    char *loc = strstr( inR->description, key );
+
+    if( loc != NULL ) {
+        
+        char *indexLoc = &( loc[ strlen( key ) ] );
+        
+        sscanf( indexLoc, "%d", &( inR->maxPickupAge ) );
+        }
+    }
+
+
+
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
     }
@@ -545,6 +563,8 @@ float initObjectBankStep() {
                 setupOwned( r );
                 
                 setupNoHighlight( r );
+                
+                setupMaxPickupAge( r );
                 
 
                 next++;
@@ -3016,6 +3036,9 @@ int addObject( const char *inDescription,
     
     setupOwned( r );
     
+    setupNoHighlight( r );
+                
+    setupMaxPickupAge( r );
 
     memset( r->spriteSkipDrawing, false, inNumSprites );
     
@@ -5456,8 +5479,16 @@ void restoreSkipDrawing( ObjectRecord *inObject ) {
 
 
 
-
-
-
-
-
+char canPickup( int inObjectID, double inPlayerAge ) {
+    ObjectRecord *o = getObject( inObjectID );
+    
+    if( o->minPickupAge > inPlayerAge ) {
+        return false;
+        }
+    
+    if( o->maxPickupAge < inPlayerAge ) {
+        return false;
+        }
+    
+    return true;
+    }
