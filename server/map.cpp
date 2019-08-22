@@ -2834,6 +2834,8 @@ static void setupMapChangeLogFile() {
             
             File *f = logFolder.getChildFile( newFileName );
             
+            delete [] newFileName;
+            
             char *fullName = f->getFullFileName();
             
             delete f;
