@@ -14,6 +14,12 @@ Server Fixes
 
 --Support for maxPickupAge on objects (so elders cannot use swords).
 
+--Local personal curses replaces centralized curse server.  Each player on a
+  server gets one token per 30 minutes (was 1 per 2 hours) to curse another
+  player.  That marks the player for 48 hours, preventing them from getting
+  born within 50 tiles of the cursing player.  If a cursed player runs out of
+  mothers inside the Eve window, they become an Eve.  If a cursed player runs
+  out of mothers outside of the Eve window, they go to donkeytown.
 
 
 

@@ -4373,6 +4373,14 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                                cursedName );
         
         if( isCurse ) {
+            char *targetEmail = getCurseReceiverEmail( cursedName );
+            if( targetEmail != NULL ) {
+                setDBCurse( inPlayer->email, targetEmail );
+                }
+            }
+        
+
+        if( isCurse ) {
             
             if( hasCurseToken( inPlayer->email ) ) {
                 inPlayer->curseTokenCount = 1;
@@ -5535,7 +5543,9 @@ static char isEveWindow() {
 
 
 
-static void triggerApocalypseNow() {
+static void triggerApocalypseNow( const char *inMessage ) {
+    AppLog::infoF( "Local apocalypse triggered:  %s\n", inMessage );
+    
     apocalypseTriggered = true;
     
     // restart Eve window, and let this player be the
@@ -5580,6 +5590,30 @@ int processLoggedInPlayer( char inAllowReconnect,
                            int inForceDisplayID = -1,
                            GridPos *inForcePlayerPos = NULL ) {
     
+
+    int usePersonalCurses = SettingsManager::getIntSetting( "usePersonalCurses",
+                                                            0 );
+    
+    if( usePersonalCurses ) {
+        // ignore what old curse system said
+        inCurseStatus.curseLevel = 0;
+        inCurseStatus.excessPoints = 0;
+        initPersonalCurseTest();
+        for( int p=0; p<players.size(); p++ ) {
+            LiveObject *o = players.getElement( p );
+        
+            if( ! o->error && 
+                ! o->isTutorial &&
+                o->curseStatus.curseLevel == 0 &&
+                strcmp( o->email, inEmail ) != 0 ) {
+
+                // non-tutorial, non-cursed, non-us player
+                addPersonToPersonalCurseTest( o->email, getPlayerPos( o ) );
+                }
+            }
+        }
+    
+
 
     // new behavior:
     // allow this new connection from same
@@ -5690,7 +5724,7 @@ int processLoggedInPlayer( char inAllowReconnect,
         if( cM == 0 || (float)cB / (float)cM >= ratio ) {
             // too many babies per mother inside barrier
 
-            triggerApocalypseNow();
+            triggerApocalypseNow( "Too many babies per mother inside barrier" );
             }
         else {
             int minFertile = players.size() / 15;
@@ -5713,7 +5747,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                 
                 // that means we've reach a state where no one is surviving
                 // and there are lots of eves scrounging around
-                triggerApocalypseNow();
+                triggerApocalypseNow( 
+                    "Too many families after Eve window closed" );
                 }
             }
 
@@ -5724,7 +5759,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             if( maxSeconds > 0 &&
                 getArcRunningSeconds() > maxSeconds ) {
                 // players WON and survived past max seconds
-                triggerApocalypseNow();
+                triggerApocalypseNow( "Arc run exceeded max seconds" );
                 }
             }    
         }
@@ -5911,6 +5946,12 @@ int processLoggedInPlayer( char inAllowReconnect,
                 // this line forbidden for new player
                 continue;
                 }
+
+            if( usePersonalCurses &&
+                isBirthLocationCurseBlocked( newObject.email, motherPos ) ) {
+                // this spot forbidden because someone nearby cursed new player
+                continue;
+                }
             
             // test any twins also
             char twinBanned = false;
@@ -6091,6 +6132,8 @@ int processLoggedInPlayer( char inAllowReconnect,
         //
         // and no mother choices left (based on lineage 
         // bans or birth cooldowns)
+        
+        char anyCurseBlocked = false;
 
         // consider all fertile mothers
         for( int i=0; i<numPlayers; i++ ) {
@@ -6111,19 +6154,36 @@ int processLoggedInPlayer( char inAllowReconnect,
             if( player->curseStatus.curseLevel > 0 ) {
                 continue;
                 }
-
+            
+            if( usePersonalCurses && 
+                isBirthLocationCurseBlocked( newObject.email, 
+                                             getPlayerPos( player ) ) ) {
+                // this spot forbidden because someone nearby cursed new player
+                anyCurseBlocked = true;
+                continue;
+                }
+            
             if( isFertileAge( player ) ) {
                 parentChoices.push_back( player );
                 }
             }
 
         if( parentChoices.size() == 0 ) {
-            // absolutely no fertile mothers on server
-            
-            // the in-barrier mothers we found before must have aged out
-            // along the way
-            
-            triggerApocalypseNow();
+            if( anyCurseBlocked ) {
+                // only fertile mothers are blocked for this cursed player
+                // send this player to donkeytown
+                inCurseStatus.curseLevel = 1;
+                inCurseStatus.excessPoints = 1;
+                }
+            else {
+                
+                // absolutely no fertile mothers on server
+                
+                // the in-barrier mothers we found before must have aged out
+                // along the way
+                
+                triggerApocalypseNow( "No fertile mothers left on server" );
+                }
             }
         }
     
@@ -15668,7 +15728,8 @@ int main() {
                                 // we're outside the window
                                 // people have been dying young for a long time
                                 
-                                triggerApocalypseNow();
+                                triggerApocalypseNow( 
+                                    "Everyone dying young for too long" );
                                 }
                             else if( lastBabyPassedThresholdTime == 0 ) {
                                 // first baby to die, and we have enough

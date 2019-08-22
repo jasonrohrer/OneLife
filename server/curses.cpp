@@ -611,6 +611,21 @@ int getCurseReceiverLineageEveID( char *inReceiverName ) {
 
 
 
+char *getCurseReceiverEmail( char *inReceiverName ) {
+    int receiverLineageEveID = -1;
+    
+    CurseRecord *receiverRecord = 
+        findCurseRecordByName( inReceiverName, &receiverLineageEveID );
+    
+    if( receiverRecord == NULL ) {
+        return NULL;
+        }
+    
+    return receiverRecord->email;
+    }
+
+
+
 
 
 void logPlayerNameForCurses( char *inPlayerEmail, char *inPlayerName,

@@ -56,3 +56,9 @@ void stepCurseServerRequests();
 // check if curse system has lineage information for a given player name
 // returns -1 on failure
 int getCurseReceiverLineageEveID( char *inReceiverName );
+
+
+
+// NOT destroyed by caller
+// NULL if not found
+char *getCurseReceiverEmail( char *inReceiverName );

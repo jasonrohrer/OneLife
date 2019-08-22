@@ -19,6 +19,7 @@ static char dbOpen = false;
 
 static double lastSettingCheckTime = 0;
 static double curseDuration = 48 * 3600;
+static int curseBlockRadius = 50;
 
 static double settingCheckInterval = 60;
 
@@ -28,7 +29,9 @@ static void checkSettings() {
     
     if( curTime - lastSettingCheckTime > settingCheckInterval ) {
         curseDuration = SettingsManager::getDoubleSetting( "curseBlockDuration",
-                                                       48 * 3600.0 );
+                                                           48 * 3600.0 );
+        curseBlockRadius = SettingsManager::getIntSetting( "curseBlockRadius",
+                                                           50);
         
         lastSettingCheckTime = curTime;
         }
@@ -212,6 +215,60 @@ char isCursed( const char *inSenderEmail, const char *inReceiverEmail ) {
     printf( "%s NOT cursed by %s\n", inReceiverEmail, inSenderEmail );
     return false;
     }
+
+
+
+
+
+
+
+typedef struct PersonRecord {
+        const char *email;
+        GridPos pos;
+        // -1 if unknown
+        int blocking;
+    } PersonRecord;
+
+    
+
+SimpleVector<PersonRecord> blockingRecords;
+
+void initPersonalCurseTest() {
+    checkSettings();
+    
+    blockingRecords.deleteAll();
+    }
+
+    
+
+void addPersonToPersonalCurseTest( const char *inEmail,
+                                   GridPos inPos ) {
+    PersonRecord r = { inEmail, inPos, -1 };
+    blockingRecords.push_back( r );
+    }
+
+
+
+char isBirthLocationCurseBlocked( const char *inTargetEmail, GridPos inPos ) {
+    for( int i=0; i<blockingRecords.size(); i++ ) {
+        PersonRecord *r = blockingRecords.getElement( i );
+        
+        if( r->blocking != 0 && 
+            distance( inPos, r->pos ) <= curseBlockRadius ) {
+            
+            // in radius, and not known to be non-blocking
+            
+            if( r->blocking == -1 ) {
+                // look it up and remember it
+                r->blocking = isCursed( r->email, inTargetEmail );
+                }
+            
+            return ( r->blocking == 1 );
+            }
+        }
+    return false;
+    }
+
 
 
 
