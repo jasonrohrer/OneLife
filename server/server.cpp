@@ -4276,16 +4276,23 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     char *cursedName = isCurseNamingSay( inToSay );
     
     if( cursedName != NULL ) {
-        int namedPersonLineageEveID = 
-            getCurseReceiverLineageEveID( cursedName );
-                
-        if( namedPersonLineageEveID != inPlayer->lineageEveID ) {
-            // We said the curse in plain English, but
-            // the named person is not in our lineage
-            cursedName = NULL;
+
+        if( ! SettingsManager::getIntSetting( 
+                "allowCrossLineageCursing", 0 ) ) {
             
-            // BUT, check if this cursed phrase is correct in another language
-            // below
+            // cross-lineage cursing in English forbidden
+
+            int namedPersonLineageEveID = 
+                getCurseReceiverLineageEveID( cursedName );
+            
+            if( namedPersonLineageEveID != inPlayer->lineageEveID ) {
+                // We said the curse in plain English, but
+                // the named person is not in our lineage
+                cursedName = NULL;
+                
+                // BUT, check if this cursed phrase is correct in 
+                // another language below
+                }
             }
         }
     

@@ -21,6 +21,9 @@ Server Fixes
   mothers inside the Eve window, they become an Eve.  If a cursed player runs
   out of mothers outside of the Eve window, they go to donkeytown.
 
+--Cross-family cursing can now be done without speaking the curse in their
+  language (local personal curses are fine across families).
+
 
 
 

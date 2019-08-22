@@ -103,6 +103,53 @@ static int useCurseServer = false;
 static char *curseServerURL = NULL;
 
 
+static double lastCurseSettingCheckTime = 0;
+
+static double curseSettingCheckInterval = 10;
+
+static double tokenTime = 7200.0;
+static double decrementTime = 3600.0;
+
+static int usePersonalCurses = 0;
+
+
+
+static void checkSettings() {
+    double curTime = Time::getCurrentTime();
+    
+    if( curTime - lastCurseSettingCheckTime > curseSettingCheckInterval ) {
+        tokenTime = SettingsManager::getFloatSetting( "curseTokenTime",
+                                                      7200.0 );
+        decrementTime = 
+            SettingsManager::getFloatSetting( "curseDecrementTime", 3600.0 );
+
+        usePersonalCurses = SettingsManager::getIntSetting( "usePersonalCurses",
+                                                            0 );
+
+        char oldVal = useCurseServer;
+        
+        useCurseServer = 
+            SettingsManager::getIntSetting( "useCurseServer", 0 ) &&
+            SettingsManager::getIntSetting( "remoteReport", 0 );
+    
+        if( useCurseServer ) {
+            if( !oldVal ) {
+                AppLog::info( "Using remote curse server." );
+                }
+            
+            if( curseServerURL != NULL ) {
+                delete [] curseServerURL;
+                }
+            
+            curseServerURL = 
+                SettingsManager::getStringSetting( "curseServerURL", "" );
+            }
+
+        
+        lastCurseSettingCheckTime = curTime;
+        }
+    }
+
 
 
 void initCurses() {
@@ -145,16 +192,7 @@ void initCurses() {
         fclose( f );
         }
 
-    useCurseServer = 
-        SettingsManager::getIntSetting( "useCurseServer", 0 ) &&
-        SettingsManager::getIntSetting( "remoteReport", 0 );
-    
-    if( useCurseServer ) {
-        AppLog::info( "Using remote curse server." );
-        
-        curseServerURL = 
-            SettingsManager::getStringSetting( "curseServerURL", "" );
-        }
+    checkSettings();
     }
 
 
@@ -222,28 +260,16 @@ void freeCurses() {
 
 
 
-static double lastCurseSettingCheckTime = 0;
-
-static double curseSettingCheckInterval = 10;
-
-static double tokenTime = 7200.0;
-static double decrementTime = 3600.0;
 
 
 static void stepCurses() {
 
+
+    checkSettings();
     
 
     double curTime = Time::getCurrentTime();
     
-    if( curTime - lastCurseSettingCheckTime > curseSettingCheckInterval ) {
-        tokenTime = SettingsManager::getFloatSetting( "curseTokenTime",
-                                                      7200.0 );
-        decrementTime = 
-            SettingsManager::getFloatSetting( "curseDecrementTime", 3600.0 );
-        
-        lastCurseSettingCheckTime = curTime;
-        }
     
 
     for( int i=0; i<playerNames.size(); i++ ) {
@@ -539,8 +565,8 @@ char cursePlayer( int inGiverID, int inGiverLineageEveID, char *inGiverEmail,
         // return false;
         }
 
-    if( !useCurseServer && receiverRecord->bornCursed ) {
-        // already getting born cursed, from local curses, 
+    if( !useCurseServer && !usePersonalCurses && receiverRecord->bornCursed ) {
+        // already getting born cursed, from local, non-personal curses, 
         // leave them alone for now
         return false;
         }
