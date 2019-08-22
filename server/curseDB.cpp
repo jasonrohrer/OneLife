@@ -185,7 +185,8 @@ void setDBCurse( const char *inSenderEmail, const char *inReceiverEmail ) {
 
     
     LINEARDB3_put( &db, key, value );
-    printf( "Setting curse for %s by %s\n", inReceiverEmail, inSenderEmail );
+    printf( "Setting personal curse for %s by %s\n", 
+            inReceiverEmail, inSenderEmail );
     }
 
 
@@ -205,14 +206,11 @@ char isCursed( const char *inSenderEmail, const char *inReceiverEmail ) {
         timeSec_t elapsedTime = Time::timeSec() - curseTime;
         
         if( elapsedTime > curseDuration ) {
-            printf( "%s NOT cursed by %s\n", inReceiverEmail, inSenderEmail );
             return false;
             }
-        printf( "%s IS cursed by %s\n", inReceiverEmail, inSenderEmail );
         return true;
         }
 
-    printf( "%s NOT cursed by %s\n", inReceiverEmail, inSenderEmail );
     return false;
     }
 
