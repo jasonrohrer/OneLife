@@ -54,6 +54,7 @@
 #include "lifeTokens.h"
 #include "fitnessScore.h"
 #include "arcReport.h"
+#include "curseDB.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -1515,6 +1516,8 @@ void quitCleanup() {
     
     freeCurses();
     
+    freeCurseDB();
+
     freeLifeTokens();
 
     freeFitnessScore();
@@ -10140,6 +10143,9 @@ int main() {
     
     initLineageLimit();
     
+    initCurseDB();
+    
+
 
     char rebuilding;
 
