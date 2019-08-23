@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 259    2019-???
+
+--Support for force-matched vertical, horizontal, and corner fences.  No more
+  manually rotating them.
+
+
+
 Server Fixes
 
 --Family limit failure condition set to 35 (was 23).
