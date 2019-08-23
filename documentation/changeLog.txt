@@ -24,6 +24,9 @@ Server Fixes
 --Cross-family cursing can now be done without speaking the curse in their
   language (local personal curses are fine across families).
 
+--Shortcuts for cursing:  CURSE YOU (closest other player) and CURSE MY BABY
+  (your youngest baby, even if recently died).
+
 
 
 

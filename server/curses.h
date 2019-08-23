@@ -24,9 +24,18 @@ void getNewCurseTokenHolders( SimpleVector<char*> *inEmailList );
 
 
 
+// spends token and registers a curse
 // returns true of curse effective
 char cursePlayer( int inGiverID, int inGiverLineageEveID, 
                   char *inGiverEmail, char *inReceiverName );
+
+
+// spends a token directly
+// returns true if spent
+char spendCurseToken( char *inGiverEmail );
+
+
+
 
 void logPlayerNameForCurses( char *inPlayerEmail, char *inPlayerName,
                              int inLineageEveID );

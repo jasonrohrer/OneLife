@@ -163,6 +163,9 @@ static SimpleVector<char*> nameGivingPhrases;
 static SimpleVector<char*> familyNameGivingPhrases;
 static SimpleVector<char*> cursingPhrases;
 
+char *curseYouPhrase = NULL;
+char *curseBabyPhrase = NULL;
+
 static SimpleVector<char*> youGivingPhrases;
 static SimpleVector<char*> namedGivingPhrases;
 
@@ -390,7 +393,10 @@ SimpleVector<FreshConnection> waitingForTwinConnections;
 
 typedef struct LiveObject {
         char *email;
-        
+        // for tracking old email after player has been deleted 
+        // but is still on list
+        char *origEmail;
+
         int id;
         
         // -1 if unknown
@@ -1474,6 +1480,9 @@ void quitCleanup() {
         if( nextPlayer->email != NULL  ) {
             delete [] nextPlayer->email;
             }
+        if( nextPlayer->origEmail != NULL  ) {
+            delete [] nextPlayer->origEmail;
+            }
 
         if( nextPlayer->murderPerpEmail != NULL  ) {
             delete [] nextPlayer->murderPerpEmail;
@@ -1566,6 +1575,16 @@ void quitCleanup() {
     youGivingPhrases.deallocateStringElements();
     namedGivingPhrases.deallocateStringElements();
     
+    if( curseYouPhrase != NULL ) {
+        delete [] curseYouPhrase;
+        curseYouPhrase = NULL;
+        }
+    if( curseBabyPhrase != NULL ) {
+        delete [] curseBabyPhrase;
+        curseBabyPhrase = NULL;
+        }
+    
+
     if( eveName != NULL ) {
         delete [] eveName;
         eveName = NULL;
@@ -4274,8 +4293,18 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     char isCurse = false;
 
     char *cursedName = isCurseNamingSay( inToSay );
+
+    char isYouShortcut = false;
+    char isBabyShortcut = false;
+    if( strcmp( inToSay, curseYouPhrase ) == 0 ) {
+        isYouShortcut = true;
+        }
+    if( strcmp( inToSay, curseBabyPhrase ) == 0 ) {
+        isBabyShortcut = true;
+        }
     
-    if( cursedName != NULL ) {
+    
+    if( cursedName != NULL || isYouShortcut ) {
 
         if( ! SettingsManager::getIntSetting( 
                 "allowCrossLineageCursing", 0 ) ) {
@@ -4289,6 +4318,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 // We said the curse in plain English, but
                 // the named person is not in our lineage
                 cursedName = NULL;
+                isYouShortcut = false;
                 
                 // BUT, check if this cursed phrase is correct in 
                 // another language below
@@ -4343,6 +4373,11 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             
             cursedName = isCurseNamingSay( translatedPhrase );
             
+            if( strcmp( translatedPhrase, curseYouPhrase ) == 0 ) {
+                // said CURSE YOU in other language
+                isYouShortcut = true;
+                }
+
             // make copy so we can delete later an delete the underlying
             // translatedPhrase now
             
@@ -4371,6 +4406,89 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
 
 
 
+    LiveObject *youCursePlayer = NULL;
+    LiveObject *babyCursePlayer = NULL;
+
+    if( isYouShortcut ) {
+        // find closest player
+        GridPos speakerPos = getPlayerPos( inPlayer );
+        
+        LiveObject *closestOther = NULL;
+        double closestDist = 9999999;
+        
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *otherPlayer = players.getElement( i );
+            
+            if( otherPlayer == inPlayer ||
+                otherPlayer->error ) {
+                continue;
+                }
+            double dist = distance( speakerPos, getPlayerPos( otherPlayer ) );
+
+            if( dist > getMaxChunkDimension() ) {
+                // only consider nearby players
+                continue;
+                }
+            if( dist < closestDist ) {
+                closestDist = dist;
+                closestOther = otherPlayer;
+                }
+            }
+
+
+        if( closestOther != NULL ) {
+            youCursePlayer = closestOther;
+            
+            if( cursedName != NULL ) {
+                delete [] cursedName;
+                cursedName = NULL;
+                }
+
+            if( youCursePlayer->name != NULL ) {
+                // allow name-based curse to go through, if possible
+                cursedName = stringDuplicate( youCursePlayer->name );
+                }
+            }
+        }
+    else if( isBabyShortcut ) {
+        LiveObject *youngestOther = NULL;
+        double youngestAge = 9999;
+        
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *otherPlayer = players.getElement( i );
+            
+            if( otherPlayer == inPlayer ) {
+                // allow error players her, to access recently-dead babies
+                continue;
+                }
+            if( otherPlayer->parentID == inPlayer->id ) {
+                double age = computeAge( otherPlayer );
+                
+                if( age < youngestAge ) {
+                    youngestAge = age;
+                    youngestOther = otherPlayer;
+                    }
+                }
+            }
+
+
+        if( youngestOther != NULL ) {
+            babyCursePlayer = youngestOther;
+            
+            if( cursedName != NULL ) {
+                delete [] cursedName;
+                cursedName = NULL;
+                }
+
+            if( babyCursePlayer->name != NULL ) {
+                // allow name-based curse to go through, if possible
+                cursedName = stringDuplicate( babyCursePlayer->name );
+                }
+            }
+        }
+
+    
+
     if( cursedName != NULL && 
         strcmp( cursedName, "" ) != 0 ) {
         
@@ -4385,18 +4503,6 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 setDBCurse( inPlayer->email, targetEmail );
                 }
             }
-        
-
-        if( isCurse ) {
-            
-            if( hasCurseToken( inPlayer->email ) ) {
-                inPlayer->curseTokenCount = 1;
-                }
-            else {
-                inPlayer->curseTokenCount = 0;
-                }
-            inPlayer->curseTokenUpdate = true;
-            }
         }
     
     
@@ -4405,6 +4511,44 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         }
     
 
+    if( !isCurse ) {
+        // named curse didn't happen above
+        // maybe we used a shortcut, and target didn't have name
+        
+        if( isYouShortcut && youCursePlayer != NULL &&
+            spendCurseToken( inPlayer->email ) ) {
+            
+            isCurse = true;
+            setDBCurse( inPlayer->email, youCursePlayer->email );
+            }
+        else if( isBabyShortcut && babyCursePlayer != NULL &&
+            spendCurseToken( inPlayer->email ) ) {
+            
+            isCurse = true;
+            char *targetEmail = babyCursePlayer->email;
+            
+            if( strcmp( targetEmail, "email_cleared" ) == 0 ) {
+                // deleted players allowed here
+                targetEmail = babyCursePlayer->origEmail;
+                }
+            if( targetEmail != NULL ) {
+                setDBCurse( inPlayer->email, targetEmail );
+                }
+            }
+        }
+
+
+    if( isCurse ) {
+        if( hasCurseToken( inPlayer->email ) ) {
+            inPlayer->curseTokenCount = 1;
+            }
+        else {
+            inPlayer->curseTokenCount = 0;
+            }
+        inPlayer->curseTokenUpdate = true;
+        }
+
+    
 
     int curseFlag = 0;
     if( isCurse ) {
@@ -5800,6 +5944,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     LiveObject newObject;
 
     newObject.email = inEmail;
+    newObject.origEmail = NULL;
     
     newObject.id = nextID;
     nextID++;
@@ -10175,6 +10320,15 @@ int main() {
     readPhrases( "youGivingPhrases", &youGivingPhrases );
     readPhrases( "namedGivingPhrases", &namedGivingPhrases );
     
+    curseYouPhrase = 
+        SettingsManager::getSettingContents( "curseYouPhrase", 
+                                             "CURSE YOU" );
+    
+    curseBabyPhrase = 
+        SettingsManager::getSettingContents( "curseBabyPhrase", 
+                                             "CURSE MY BABY" );
+
+
 
     eveName = 
         SettingsManager::getStringSetting( "eveName", "EVE" );
@@ -15814,6 +15968,11 @@ int main() {
                 // can log in again during the deleteSentDoneETA window
                 
                 if( nextPlayer->email != NULL ) {
+                    if( nextPlayer->origEmail != NULL ) {
+                        delete [] nextPlayer->origEmail;
+                        }
+                    nextPlayer->origEmail = 
+                        stringDuplicate( nextPlayer->email );
                     delete [] nextPlayer->email;
                     }
                 nextPlayer->email = stringDuplicate( "email_cleared" );
@@ -19366,6 +19525,9 @@ int main() {
 
                 if( nextPlayer->email != NULL ) {
                     delete [] nextPlayer->email;
+                    }
+                if( nextPlayer->origEmail != NULL  ) {
+                    delete [] nextPlayer->origEmail;
                     }
 
                 if( nextPlayer->murderPerpEmail != NULL ) {

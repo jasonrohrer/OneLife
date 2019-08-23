@@ -543,6 +543,28 @@ void getNewCurseTokenHolders( SimpleVector<char*> *inEmailList ) {
 
 
 
+char spendCurseToken( char *inGiverEmail ) {
+    CurseRecord *giverRecord = findCurseRecord( inGiverEmail );
+    
+    
+    if( giverRecord->tokens < 1 ) {  
+        // giver has no tokens left
+        return false;
+        }
+
+    giverRecord->tokens -= 1;
+    
+    double curTime = Time::getCurrentTime();
+
+    if( giverRecord->alive ) {
+        giverRecord->aliveStartTimeSinceTokenSpent = curTime;
+        }
+    giverRecord->livedTimeSinceTokenSpent = 0;
+    return true;
+    }
+
+
+
 
 char cursePlayer( int inGiverID, int inGiverLineageEveID, char *inGiverEmail, 
                   char *inReceiverName ) {
@@ -576,24 +598,15 @@ char cursePlayer( int inGiverID, int inGiverLineageEveID, char *inGiverEmail,
         return false;
         }
     
-    
-    CurseRecord *giverRecord = findCurseRecord( inGiverEmail );
-    
-    
-    if( giverRecord->tokens < 1 ) {  
-        // giver has no tokens left
+
+    if( !spendCurseToken( inGiverEmail ) ) {
         return false;
         }
 
-    giverRecord->tokens -= 1;
     
     double curTime = Time::getCurrentTime();
 
-    if( giverRecord->alive ) {
-        giverRecord->aliveStartTimeSinceTokenSpent = curTime;
-        }
-    giverRecord->livedTimeSinceTokenSpent = 0;
-    
+
     receiverRecord->score ++;
     receiverRecord->livedTimeSinceScoreDecrement = 0;
     
