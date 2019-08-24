@@ -3,10 +3,6 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 259    2019-???
-
---Support for force-matched vertical, horizontal, and corner fences.  No more
-  manually rotating them.
 
 
 
@@ -45,6 +41,9 @@ Server Fixes
   can only be broken by elders from both families saying WAR.  So, unilateral
   war is possible at first, but after peace is established bilaterally, it must
   be broken bilaterally.
+
+--Support for force-matched vertical, horizontal, and corner fences.  No more
+  manually rotating them.
 
 
 
