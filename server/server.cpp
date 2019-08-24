@@ -169,6 +169,9 @@ char *curseBabyPhrase = NULL;
 static SimpleVector<char*> youGivingPhrases;
 static SimpleVector<char*> namedGivingPhrases;
 
+static SimpleVector<char*> familyGivingPhrases;
+static SimpleVector<char*> offspringGivingPhrases;
+
 
 
 static char *eveName = NULL;
@@ -1660,6 +1663,10 @@ void quitCleanup() {
     youGivingPhrases.deallocateStringElements();
     namedGivingPhrases.deallocateStringElements();
     
+    familyGivingPhrases.deallocateStringElements();
+    offspringGivingPhrases.deallocateStringElements();
+    
+
     if( curseYouPhrase != NULL ) {
         delete [] curseYouPhrase;
         curseYouPhrase = NULL;
@@ -8731,7 +8738,8 @@ char *isNamedGivingSay( char *inSaidString ) {
 
 
 
-char isYouGivingSay( char *inSaidString ) {
+static char isWildcardGivingSay( char *inSaidString,
+                                 SimpleVector<char*> *inPhrases ) {
     if( inSaidString[0] == ':' ) {
         // first : indicates reading a written phrase.
         // reading written phrase aloud does not have usual effects
@@ -8739,8 +8747,8 @@ char isYouGivingSay( char *inSaidString ) {
         return false;
         }
 
-    for( int i=0; i<youGivingPhrases.size(); i++ ) {
-        char *testString = youGivingPhrases.getElementDirect( i );
+    for( int i=0; i<inPhrases->size(); i++ ) {
+        char *testString = inPhrases->getElementDirect( i );
         
         char *hitLoc = strstr( inSaidString, testString );
 
@@ -8749,6 +8757,20 @@ char isYouGivingSay( char *inSaidString ) {
             }
         }
     return false;
+    }
+
+
+
+char isYouGivingSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youGivingPhrases );
+    }
+
+char isFamilyGivingSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &familyGivingPhrases );
+    }
+
+char isOffspringGivingSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &offspringGivingPhrases );
     }
 
 
@@ -10415,6 +10437,10 @@ int main() {
     
     readPhrases( "youGivingPhrases", &youGivingPhrases );
     readPhrases( "namedGivingPhrases", &namedGivingPhrases );
+
+    readPhrases( "familyGivingPhrases", &familyGivingPhrases );
+    readPhrases( "offspringGivingPhrases", &offspringGivingPhrases );
+
     
     curseYouPhrase = 
         SettingsManager::getSettingContents( "curseYouPhrase", 
@@ -13299,7 +13325,8 @@ int main() {
                         
                         if( nextPlayer->ownedPositions.size() > 0 ) {
                             // consider phrases that assign ownership
-                            LiveObject *newOwnerPlayer = NULL;
+                            SimpleVector<LiveObject*> newOwners;
+                            
 
                             char *namedOwner = isNamedGivingSay( m.saidText );
                             
@@ -13314,19 +13341,55 @@ int main() {
                                         strcmp( otherPlayer->name, 
                                                 namedOwner ) == 0 ) {
                                         
-                                        newOwnerPlayer = otherPlayer;
+                                        newOwners.push_back( otherPlayer );
                                         break;
                                         }
                                     }
                                 delete [] namedOwner;
                                 }
-                            else if( isYouGivingSay( m.saidText ) ) {
-                                // find closest other player
-                                newOwnerPlayer = 
-                                    getClosestOtherPlayer( nextPlayer );
+
+                            if( newOwners.size() == 0 ) {
+                                
+                                if( isYouGivingSay( m.saidText ) ) {
+                                    // find closest other player
+                                    LiveObject *newOwnerPlayer = 
+                                        getClosestOtherPlayer( nextPlayer );
+                                    
+                                    if( newOwnerPlayer != NULL ) {
+                                        newOwners.push_back( newOwnerPlayer );
+                                        }
+                                    }
+                                else if( isFamilyGivingSay( m.saidText ) ) {
+                                    // add all family members
+                                    for( int n=0; n<players.size(); n++ ) {
+                                        LiveObject *o = players.getElement( n );
+                                        if( o->error || 
+                                            o->id == nextPlayer->id ) {
+                                            continue;
+                                            }
+                                        if( o->lineageEveID == 
+                                            nextPlayer->lineageEveID ) {
+                                            newOwners.push_back( o );
+                                            }
+                                        }
+                                    }
+                                else if( isOffspringGivingSay( m.saidText ) ) {
+                                    // add all offspring
+                                    for( int n=0; n<players.size(); n++ ) {
+                                        LiveObject *o = players.getElement( n );
+                                        if( o->error || 
+                                            o->id == nextPlayer->id ) {
+                                            continue;
+                                            }
+                                        if( o->parentID == nextPlayer->id ) {
+                                            newOwners.push_back( o );
+                                            }
+                                        }
+                                    }
                                 }
                             
-                            if( newOwnerPlayer != NULL ) {
+                            
+                            if( newOwners.size() > 0 ) {
                                 // find closest spot that this player owns
                                 GridPos thisPos = getPlayerPos( nextPlayer );
 
@@ -13350,12 +13413,17 @@ int main() {
 
                                 if( minDist < DBL_MAX ) {
                                     // found one
-                                    if( ! isOwned( newOwnerPlayer, 
-                                                   closePos ) ) {
-                                        newOwnerPlayer->
-                                            ownedPositions.push_back( 
-                                                closePos );
-                                        newOwnerPos.push_back( closePos );
+                                    for( int n=0; n<newOwners.size(); n++ ) {
+                                        LiveObject *newOwnerPlayer = 
+                                            newOwners.getElementDirect( n );
+                                        
+                                        if( ! isOwned( newOwnerPlayer, 
+                                                       closePos ) ) {
+                                            newOwnerPlayer->
+                                                ownedPositions.push_back( 
+                                                    closePos );
+                                            newOwnerPos.push_back( closePos );
+                                            }
                                         }
                                     }
                                 }

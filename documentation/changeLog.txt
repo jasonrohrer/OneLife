@@ -50,6 +50,9 @@ Server Fixes
 --Support for force-matched vertical, horizontal, and corner fences.  No more
   manually rotating them.
 
+--Wildcard shortcuts for giving gate ownership to all living children (MY
+  OFFSPRING OWN THIS) or all living family members (MY FAMILY OWNS THIS).
+
 
 
 
