@@ -38,6 +38,13 @@ Server Fixes
   even if baby is adopted and named by someone else.  Much less confusion about
   who is in which family line (for war and peace purposes).
 
+--Families start out in neutral state and cannot use swords against each other.
+  Unilateral war is possible when elders speak WAR in the target family's
+  language (and then both sides are at war).  Peace can be set by elders from
+  both families saying PEACE in the target language, and then that PEACE treaty
+  can only be broken by elders from both families saying WAR.  So, unilateral
+  war is possible at first, but after peace is established bilaterally, it must
+  be broken bilaterally.
 
 
 
