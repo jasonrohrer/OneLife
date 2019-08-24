@@ -5955,6 +5955,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     int familyLimitAfterEveWindow = SettingsManager::getIntSetting( 
             "familyLimitAfterEveWindow", 15 );
 
+    int minFamiliesAfterEveWindow = SettingsManager::getIntSetting( 
+        "minFamiliesAfterEveWindow", 5 );
+
     int cM = countFertileMothers();
     int cB = countHelplessBabies();
     int cFam = countFamilies();
@@ -6005,6 +6008,15 @@ int processLoggedInPlayer( char inAllowReconnect,
                 triggerApocalypseNow( "Arc run exceeded max seconds" );
                 }
             }    
+
+        if( !apocalypseTriggered && minFamiliesAfterEveWindow > 0 ) {
+            
+            if( cFam < minFamiliesAfterEveWindow ) {
+                // too many families have died out
+                triggerApocalypseNow( "Too few families left" );
+                }
+            }    
+
         }
 
     

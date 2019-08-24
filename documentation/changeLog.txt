@@ -53,6 +53,9 @@ Server Fixes
 --Wildcard shortcuts for giving gate ownership to all living children (MY
   OFFSPRING OWN THIS) or all living family members (MY FAMILY OWNS THIS).
 
+--New arc failure condition:  After Eve Window closes, there are no new Eves,
+  and arc ends when there are fewer than 5 living families.
+
 
 
 
