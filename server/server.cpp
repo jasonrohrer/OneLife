@@ -10785,10 +10785,16 @@ int main() {
                     SettingsManager::getIntSetting( 
                         "familyLimitAfterEveWindow", 15 );
                 
+                int minFamiliesAfterEveWindow = 
+                    SettingsManager::getIntSetting( 
+                        "minFamiliesAfterEveWindow", 5 );
+
+                char eveWindow = isEveWindow();
+
                 char *familyLine;
                 
                 if( familyLimitAfterEveWindow > 0 &&
-                    ! isEveWindow() ) {
+                    ! eveWindow ) {
                     familyLine = autoSprintf( "of %d",
                                               familyLimitAfterEveWindow );
                     }
@@ -10803,15 +10809,28 @@ int main() {
                 if( numFams == 1 ) {
                     familyWord = "FAMILY IS";
                     }
+                
+                char *arcEndMessage;
+                
+                if( !eveWindow && minFamiliesAfterEveWindow > 0 ) {
+                    arcEndMessage = autoSprintf( " (ARC ENDS BELOW %d)",
+                                                 minFamiliesAfterEveWindow );
+                    }
+                else {
+                    arcEndMessage = stringDuplicate( "" );
+                    }
+                
 
                 char *message = autoSprintf( ":%s: ARC HAS LASTED %d YEARS**"
-                                             "%d %s %s ALIVE",
+                                             "%d %s %s ALIVE%s",
                                              getArcName(),
                                              arcMilestone,
                                              numFams,
                                              familyLine,
-                                             familyWord);
+                                             familyWord,
+                                             arcEndMessage );
                 delete [] familyLine;
+                delete [] arcEndMessage;
                 
                 sendGlobalMessage( message );
                 

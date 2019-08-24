@@ -56,6 +56,8 @@ Server Fixes
 --New arc failure condition:  After Eve Window closes, there are no new Eves,
   and arc ends when there are fewer than 5 living families.
 
+--Arc milestone message now includes info about min family end condition.
+
 
 
 
