@@ -58,6 +58,7 @@ Server Fixes
 
 --Arc milestone message now includes info about min family end condition.
 
+--Global announcement whenever a family dies out after the Eve window closes.
 
 
 

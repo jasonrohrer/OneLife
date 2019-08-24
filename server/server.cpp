@@ -15931,7 +15931,64 @@ int main() {
                 nextPlayer->updateGlobal = true;
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
+
                 
+                // check if we should send global message about a family's
+                // demise
+                if( ! isEveWindow() ) {
+                    int minFamiliesAfterEveWindow =
+                        SettingsManager::getIntSetting( 
+                            "minFamiliesAfterEveWindow", 5 );
+                    if( minFamiliesAfterEveWindow > 0 ) {
+                        // is this the last player of this family?
+
+                        if( nextPlayer->familyName != NULL ) {
+                            int otherCount = 0;
+                            
+                            for( int n=0; n<players.size(); n++ ) {
+                                LiveObject *otherPlayer =
+                                    players.getElement( n );
+                                
+                                if( otherPlayer->error ) {
+                                    // don't worry about counting
+                                    // nextPlayer here, b/c they have an
+                                    // error set already
+                                    continue;
+                                    }
+                                if( otherPlayer->lineageEveID ==
+                                    nextPlayer->lineageEveID ) {
+                                    
+                                    otherCount++;
+                                    // actually, only need to count 1
+                                    break;
+                                    }
+                                }
+                            if( otherCount == 0 ) {
+                                // family died out!
+                                int cFam = countFamilies();
+                                
+                                const char *famWord = "FAMILIES";
+                                if( cFam == 1 ) {
+                                    famWord = "FAMILY";
+                                    }
+
+                                char *message = 
+                                    autoSprintf( "%s FAMILY JUST DIED OUT**"
+                                                 "%d %s LEFT "
+                                                 "(ARC ENDS BELOW %d)",
+                                                 nextPlayer->familyName,
+                                                 cFam,
+                                                 famWord,
+                                                 minFamiliesAfterEveWindow );
+                                
+                                sendGlobalMessage( message );
+                                delete [] message;
+                                }
+                            }
+                        }
+                    }
+                    
+
                 removeAllOwnership( nextPlayer );
                 
                 decrementLanguageCount( nextPlayer->lineageEveID );
