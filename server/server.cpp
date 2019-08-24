@@ -10018,9 +10018,17 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
     
     char *name = inName;
     
+
+    // NEW:  keep the baby's family name at all costs, even in case
+    // of adoption
+    // (if baby has no family name, then take mother's family name as last
+    // name)
     
     const char *lastName = "";
-    if( nextPlayer->name != NULL ) {
+    
+
+    // note that we skip this case now, in favor of keeping baby's family name
+    if( false && nextPlayer->name != NULL ) {
         lastName = strstr( nextPlayer->name, 
                            " " );
                                         
@@ -10064,11 +10072,11 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
                 }
             }
         }
-    else if( nextPlayer->familyName != NULL ) {
-        lastName = nextPlayer->familyName;
-        }
     else if( babyO->familyName != NULL ) {
         lastName = babyO->familyName;
+        }
+    else if( nextPlayer->familyName != NULL ) {
+        lastName = nextPlayer->familyName;
         }
                                     
 
