@@ -209,6 +209,15 @@ typedef struct PeaceTreaty {
 static SimpleVector<PeaceTreaty> peaceTreaties;
 
 
+typedef struct WarState {
+        int lineageAEveID;
+        int lineageBEveID;
+    } WarState;
+
+static SimpleVector<WarState> warStates;
+
+
+
 // may be partial
 static PeaceTreaty *getMatchingTreaty( int inLineageAEveID, 
                                        int inLineageBEveID ) {
@@ -252,6 +261,26 @@ static char isPeaceTreaty( int inLineageAEveID, int inLineageBEveID,
     }
 
 
+
+static char isWarState( int inLineageAEveID, int inLineageBEveID ) {
+    for( int i=0; i<warStates.size(); i++ ) {
+        WarState *w = warStates.getElement( i );
+        
+        
+        if( ( w->lineageAEveID == inLineageAEveID &&
+              w->lineageBEveID == inLineageBEveID )
+            ||
+            ( w->lineageAEveID == inLineageBEveID &&
+              w->lineageBEveID == inLineageAEveID ) ) {
+            
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
 void sendPeaceWarMessage( const char *inPeaceOrWar,
                           char inWar,
                           int inLineageAEveID, int inLineageBEveID );
@@ -275,6 +304,23 @@ static void addPeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
         if( p->dirAToB && p->dirBToA &&
             ! peaceBefore ) {
             // new peace!
+
+            // clear any war state
+            for( int i=0; i<warStates.size(); i++ ) {
+                WarState *w = warStates.getElement( i );
+                
+                
+                if( ( w->lineageAEveID == inLineageAEveID &&
+                      w->lineageBEveID == inLineageBEveID )
+                    ||
+                    ( w->lineageAEveID == inLineageBEveID &&
+                      w->lineageBEveID == inLineageAEveID ) ) {
+                    
+                    warStates.deleteElement( i );
+                    break;
+                    }
+                }
+
             sendPeaceWarMessage( "PEACE", 
                                  false,
                                  p->lineageAEveID, p->lineageBEveID );
@@ -297,6 +343,8 @@ static void removePeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
     
     char remove = false;
     
+    char messageSent = false;
+    
     if( p != NULL ) {
         if( p->dirAToB && p->dirBToA ) {
             // established
@@ -318,6 +366,7 @@ static void removePeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
                 sendPeaceWarMessage( "WAR",
                                      true,
                                      p->lineageAEveID, p->lineageBEveID );
+                messageSent = true;
                 }
             }
         else {
@@ -331,7 +380,43 @@ static void removePeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
             remove = true;
             }
         }
+
     
+    if( remove || p == NULL ) {
+        // no treaty exists, or it will be removed
+        
+        // some elder said "WAR"
+        // war state created if it doesn't exist
+        
+        char found = false;
+        for( int i=0; i<warStates.size(); i++ ) {
+            WarState *w = warStates.getElement( i );
+        
+
+            if( ( w->lineageAEveID == inLineageAEveID &&
+                  w->lineageBEveID == inLineageBEveID )
+                ||
+                ( w->lineageAEveID == inLineageBEveID &&
+                  w->lineageBEveID == inLineageAEveID ) ) {
+                found = true;
+                break;
+                }
+            }
+        
+        if( !found ) {
+            // add new one
+            WarState w = { inLineageAEveID, inLineageBEveID };
+            warStates.push_back( w );
+
+            if( ! messageSent ) {
+                sendPeaceWarMessage( "WAR", 
+                                     true,
+                                     inLineageAEveID, inLineageBEveID );
+                }
+            }
+        }
+    
+
     if( remove ) {
         for( int i=0; i<peaceTreaties.size(); i++ ) {
             PeaceTreaty *otherP = peaceTreaties.getElement( i );
@@ -8987,7 +9072,8 @@ void apocalypseStep() {
                                Time::getCurrentTime() - startTime );
                 
                 peaceTreaties.deleteAll();
-
+                warStates.deleteAll();
+                
 
                 lastRemoteApocalypseCheckTime = curTime;
                 
@@ -9668,8 +9754,10 @@ void executeKillAction( int inKillerIndex,
                         nextPlayer->lineageEveID
                         || 
                         isPeaceTreaty( hitPlayer->lineageEveID,
-                                       nextPlayer->lineageEveID ) ) {
-                                            
+                                       nextPlayer->lineageEveID )
+                        ||
+                        ! isWarState( hitPlayer->lineageEveID,
+                                      nextPlayer->lineageEveID ) ) {      
                         hitPlayer = NULL;
                         }
                     }
@@ -13431,6 +13519,10 @@ int main() {
                                             nextPlayer->lineageEveID
                                             ||
                                             isPeaceTreaty( 
+                                                targetPlayer->lineageEveID,
+                                                nextPlayer->lineageEveID )
+                                            ||
+                                            ! isWarState( 
                                                 targetPlayer->lineageEveID,
                                                 nextPlayer->lineageEveID ) ) {
                                             
