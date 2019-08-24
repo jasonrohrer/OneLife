@@ -13599,7 +13599,9 @@ void LivingLifePage::step() {
                     else if( existing != NULL &&
                         existing->id != ourID &&
                         existing->currentSpeed != 0 &&
-                        ! forced ) {
+                        ! forced &&
+                        ( done_moving > 0 ||
+                          existing->pendingReceivedMessages.size() > 0 ) ) {
 
                         // non-forced update about other player 
                         // while we're still playing their last movement
