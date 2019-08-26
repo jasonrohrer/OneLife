@@ -60,6 +60,9 @@ Server Fixes
 
 --Global announcement whenever a family dies out after the Eve window closes.
 
+--Link from Eve on family tree server to full tree on Wondible viewer.
+
+
 
 
 Version 256    2019-August-2
