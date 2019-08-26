@@ -2434,7 +2434,7 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
             echo "Final words: \"$last_words\"\n";
             }
 
-        if( $generation = 1 ) {
+        if( $generation == 1 ) {
             // show link to full tree on Wondible server
             $serverID = ls_mysqli_result( $result, 0, "server_id" );
             $player_id = ls_mysqli_result( $result, 0, "player_id" );
