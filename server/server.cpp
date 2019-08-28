@@ -9223,9 +9223,11 @@ void apocalypseStep() {
                 // send everyone update about everyone
                 for( int i=0; i<players.size(); i++ ) {
                     LiveObject *nextPlayer = players.getElement( i );
-                    nextPlayer->firstMessageSent = false;
-                    nextPlayer->firstMapSent = false;
-                    nextPlayer->inFlight = false;
+                    if( nextPlayer->connected ) {    
+                        nextPlayer->firstMessageSent = false;
+                        nextPlayer->firstMapSent = false;
+                        nextPlayer->inFlight = false;
+                        }
                     }
 
                 postApocalypseStarted = true;
@@ -9236,7 +9238,7 @@ void apocalypseStep() {
                 
                 for( int i=0; i<players.size(); i++ ) {
                     LiveObject *nextPlayer = players.getElement( i );
-                    if( ! nextPlayer->firstMapSent ) {
+                    if( nextPlayer->connected && ! nextPlayer->firstMapSent ) {
                         allMapAndUpdate = false;
                         break;
                         }

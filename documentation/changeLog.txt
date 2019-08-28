@@ -65,6 +65,11 @@ Server Fixes
 --Fixed rounding errors in move timing that could cause micro-managed moves to
   be faster than long paths (WASD movment catching up to mouse movement).
 
+--Fixed apocalypse frozen-whiteout bug caused by server waiting for
+  disconnected players to have been sent the map update (they are disconnected,
+  so this is never going to happen).  When this bug was triggered (by a player
+  in the disconnected state during the apocalypse), the apocalypse whiteout
+  would last until that disconnected player died.
 
 
 
