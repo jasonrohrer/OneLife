@@ -62,6 +62,9 @@ Server Fixes
 
 --Link from Eve on family tree server to full tree on Wondible viewer.
 
+--Fixed rounding errors in move timing that could cause micro-managed moves to
+  be faster than long paths (WASD movment catching up to mouse movement).
+
 
 
 
