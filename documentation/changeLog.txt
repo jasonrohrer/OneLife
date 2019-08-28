@@ -10,6 +10,10 @@ Unreleased client changes
 
 --Fixed digit in sqrt(2) constant.  Fixes #372
 
+--Editor now highlights naturally-occuring objects and deadly objects in
+  picker, so no more mistakes making something natural during object
+  duplication.
+
 
 
 

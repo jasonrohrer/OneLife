@@ -100,7 +100,23 @@ class ObjectPickable : public Pickable {
                 ! isObjectUsed( inID ) && 
                 ! isObjectUsedInCategories( inID );
             }
-        
+
+
+        virtual FloatColor getTextColor( void *inObject ) {
+            FloatColor c = { 0, 0, 0, 1 };
+
+            ObjectRecord *r = (ObjectRecord*)inObject;
+            
+            if( r->mapChance > 0 ) {
+                c.g = 0.5;
+                }
+            if( r->deadlyDistance > 0 ) {
+                c.r = 0.75;
+                }
+
+            return c;
+            }
+
 
         
         virtual void deleteID( int inID ) {
