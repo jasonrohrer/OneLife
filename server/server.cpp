@@ -14066,9 +14066,10 @@ int main() {
                                                 &hungryWorkCost );
                                         
                                         if( nextPlayer->foodStore < 
-                                            hungryWorkCost ) {
+                                            hungryWorkCost + 5 ) {
                                             // block transition,
-                                            // not enough food
+                                            // not enough food to have a
+                                            // "safe" buffer after
                                             r = NULL;
                                             }
                                         }
@@ -14223,19 +14224,24 @@ int main() {
                                         }
                                     
                                     if( hungryWorkCost > 0 ) {
-                                        int oldStore = nextPlayer->foodStore;
+                                        if( nextPlayer->yummyBonusStore > 0 ) {
+                                            if( nextPlayer->yummyBonusStore
+                                                >= hungryWorkCost ) {
+                                                nextPlayer->yummyBonusStore -=
+                                                    hungryWorkCost;
+                                                hungryWorkCost = 0;
+                                                }
+                                            else {
+                                                hungryWorkCost -= 
+                                                    nextPlayer->yummyBonusStore;
+                                                nextPlayer->yummyBonusStore = 0;
+                                                }
+                                            }
                                         
                                         nextPlayer->foodStore -= hungryWorkCost;
                                         
-                                        if( nextPlayer->foodStore < 3 ) {
-                                            if( oldStore > 3  ) {
-                                                // generally leave
-                                                // player with 3 food
-                                                // unless they had less than
-                                                // 3 to start
-                                                nextPlayer->foodStore = 3;
-                                                }
-                                            }
+                                        // we checked above, so player
+                                        // never is taken down below 5 here
                                         nextPlayer->foodUpdate = true;
                                         }
                                     

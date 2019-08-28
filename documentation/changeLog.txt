@@ -80,6 +80,9 @@ Server Fixes
 --Fixed to no longer send out arc-family death announcements for Tutorial and
   Donkeytown players.  Fixes #375.
 
+--Can spend YUM bonus to do hungry work.  Hungry worked blocked if it would
+  take you down below 5 food (to give you a safe buffer at the end).  Thus, you
+  need at least 15 food (including food and YUM) to do 10-cost hungry work.
 
 
 
