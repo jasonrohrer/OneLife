@@ -1369,7 +1369,7 @@ static GridPos sub( GridPos inA, GridPos inB ) {
 static double measurePathLength( LiveObject *inObject,
                                  int inPathLength ) {
     // diags are square root of 2 in length
-    double diagLength = 1.4142356237;
+    double diagLength = 1.41421356237;
     
 
     double totalLength = 0;

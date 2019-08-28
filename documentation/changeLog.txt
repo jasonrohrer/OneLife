@@ -8,6 +8,8 @@ Unreleased client changes
 --Fixed bug in murder weapon change not showing up on perpetrator until perp
   stops moving (in other clients other than the perp's client).
 
+--Fixed digit in sqrt(2) constant.  Fixes #372
+
 
 
 
