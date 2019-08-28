@@ -73,6 +73,10 @@ Server Fixes
   in the disconnected state during the apocalypse), the apocalypse whiteout
   would last until that disconnected player died.
 
+--Fixed to no longer send out arc-family death announcements for Tutorial and
+  Donkeytown players.  Fixes #375.
+
+
 
 
 Version 256    2019-August-2

@@ -16089,7 +16089,9 @@ int main() {
                 
                 // check if we should send global message about a family's
                 // demise
-                if( ! isEveWindow() ) {
+                if( ! nextPlayer->isTutorial && 
+                    nextPlayer->curseStatus.curseLevel == 0 &&
+                    ! isEveWindow() ) {
                     int minFamiliesAfterEveWindow =
                         SettingsManager::getIntSetting( 
                             "minFamiliesAfterEveWindow", 5 );
