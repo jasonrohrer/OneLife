@@ -14,6 +14,9 @@ Version 260    2019-August-28
   picker, so no more mistakes making something natural during object
   duplication.
 
+--More kiosk mode features.  Instructions on RebirthChoice page, friends button
+  there, and blocking various things that would return you to the login screen.
+
 
 
 
