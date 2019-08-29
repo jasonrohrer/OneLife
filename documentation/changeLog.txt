@@ -84,6 +84,14 @@ Server Fixes
   take you down below 5 food (to give you a safe buffer at the end).  Thus, you
   need at least 15 food (including food and YUM) to do 10-cost hungry work.
 
+--After Eve window closes, babies are distributed between remaining families
+  round-robin.  Within each family, when it's their turn to get a baby, heat
+  an yum fertility bonuses still affect which mother in the family is chosen.
+  Note that area/lineage bans, birth cooldowns, and other factors still apply.
+  We only send a baby to the next family, round-robin, if we can according to
+  these other factors.
+
+
 
 
 Version 256    2019-August-2
