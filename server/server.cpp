@@ -6934,6 +6934,8 @@ int processLoggedInPlayer( char inAllowReconnect,
 
             double totalWeight = 0;
             
+            SimpleVector<double> filteredParentChoiceWeights;
+            
             for( int i=0; i<filteredParentChoices.size(); i++ ) {
                 LiveObject *p = filteredParentChoices.getElementDirect( i );
 
@@ -6958,6 +6960,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                     // (they will still compete with each other)
                     thisMotherWeight *= 1000;
                     }
+                
+                filteredParentChoiceWeights.push_back( thisMotherWeight );
                 
                 totalWeight += thisMotherWeight;
                 }
@@ -6970,29 +6974,9 @@ int processLoggedInPlayer( char inAllowReconnect,
             
             for( int i=0; i<filteredParentChoices.size(); i++ ) {
                 LiveObject *p = filteredParentChoices.getElementDirect( i );
-
-                // temp part of weight
-                double thisMotherWeight = 0.5 - fabs( p->heat - 0.5 );
-
-                int yumMult = p->yummyFoodChain.size() - 1;
-                                
-                if( yumMult < 0 ) {
-                    yumMult = 0;
-                    }
-
-                // yum mult part of weight
-                thisMotherWeight += 0.5 * yumMult / (double) maxYumMult;
                 
-                if( pickedFamLineageEveID != -1 &&
-                    p->lineageEveID == pickedFamLineageEveID ) {
-                    // this is chosen family
-                    // multiply their weights by 1000x to make
-                    // them inevitable
-                    // (they will still compete with each other)
-                    thisMotherWeight *= 1000;
-                    }
-                
-                totalWeight += thisMotherWeight;
+                totalWeight += 
+                    filteredParentChoiceWeights.getElementDirect( i );
 
                 if( totalWeight >= choice ) {
                     parent = p;
