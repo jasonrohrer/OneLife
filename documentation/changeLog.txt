@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Unreleased client changes
+Version 260    2019-August-28
 
 --Fixed bug in murder weapon change not showing up on perpetrator until perp
   stops moving (in other clients other than the perp's client).
