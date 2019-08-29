@@ -91,6 +91,10 @@ Server Fixes
   We only send a baby to the next family, round-robin, if we can according to
   these other factors.
 
+--For analysis:  after Eve window, each family population is tracked separately
+  in a log over time (so we can make graphs showing family fractions of total
+  population, etc).
+
 
 
 
