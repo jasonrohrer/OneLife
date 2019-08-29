@@ -2332,10 +2332,19 @@ double computePartialMovePathStepPrecise( LiveObject *inPlayer ) {
     if( fractionDone > 1 ) {
         fractionDone = 1;
         }
+    
+    if( fractionDone < 0 ) {
+        fractionDone = 0;
+        }
 
     if( fractionDone == 1 ) {
         // at last spot in path, no partial measurment necessary
         return inPlayer->pathLength - 1;
+        }
+    
+    if( fractionDone == 0 ) {
+        // at start location, before first spot in path
+        return -1;
         }
 
     double distDone = fractionDone * inPlayer->pathDist;
@@ -13683,7 +13692,15 @@ int main() {
                                 
                                 nextPlayer->moveTotalSeconds = dist / 
                                     moveSpeed;
-                           
+                                
+                                if( nextPlayer->moveTotalSeconds <= 0.1 ) {
+                                    // never allow moveTotalSeconds to be
+                                    // 0, too small, or negative
+                                    // (we divide by it in certain 
+                                    // calculations)
+                                    nextPlayer->moveTotalSeconds = 0.1;
+                                    }
+                                
                                 double secondsAlreadyDone = distAlreadyDone / 
                                     moveSpeed;
                                 /*
