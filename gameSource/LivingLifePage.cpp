@@ -1452,7 +1452,7 @@ static GridPos sub( GridPos inA, GridPos inB ) {
 static double measurePathLength( LiveObject *inObject,
                                  int inPathLength ) {
     // diags are square root of 2 in length
-    double diagLength = 1.4142356237;
+    double diagLength = 1.41421356237;
     
 
     double totalLength = 0;
@@ -13828,7 +13828,9 @@ void LivingLifePage::step() {
                     else if( existing != NULL &&
                         existing->id != ourID &&
                         existing->currentSpeed != 0 &&
-                        ! forced ) {
+                        ! forced &&
+                        ( done_moving > 0 ||
+                          existing->pendingReceivedMessages.size() > 0 ) ) {
 
                         // non-forced update about other player 
                         // while we're still playing their last movement

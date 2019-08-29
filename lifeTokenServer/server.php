@@ -152,6 +152,9 @@ else if( $action == "show_data" ) {
 else if( $action == "show_detail" ) {
     lt_showDetail();
     }
+else if( $action == "set_player_tokens" ) {
+    lt_setPlayerTokens();
+    }
 else if( $action == "restore_all_tokens" ) {
     lt_restoreAllTokens();
     }
@@ -601,9 +604,37 @@ function lt_showDetail( $checkPassword = true ) {
     
     echo "<b>ID:</b> $id<br><br>";
     echo "<b>Email:</b> $email<br><br>";
-    echo "<b>Token Count:</b> $token_count<br><br>";
+    echo "<b>Token Count:</b> ";
+    ?>
+    <FORM ACTION="server.php" METHOD="post">
+    <INPUT TYPE="hidden" NAME="action" VALUE="set_player_tokens">
+    <INPUT TYPE="hidden" NAME="email" VALUE="<?php echo $email;?>">
+    <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="token_count"
+             VALUE="<?php echo $token_count;?>">
+    <INPUT TYPE="Submit" VALUE="Set"> <br><br>
+         <?php
     echo "<b>Start Time:</b> $start_time<br><br>";
     echo "<br><br>";
+    }
+
+
+
+function lt_setPlayerTokens() {
+    lt_checkPassword( "setPlayerToken" );
+
+    global $tableNamePrefix;
+    
+
+    $email = lt_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
+    $token_count = lt_requestFilter( "token_count", "/[0-9]+/i", 0 );
+
+    
+    $query = "UPDATE $tableNamePrefix"."users ".
+        "SET token_count = $token_count WHERE email = '$email';";
+    $result = lt_queryDatabase( $query );
+
+    echo "Updated<br>";
+    lt_showDetail( false );
     }
 
 

@@ -50,6 +50,9 @@ typedef struct ObjectRecord {
         // age you have to be to to pick something up
         int minPickupAge;
         
+        // if you're > this age, you cannot pick up this object
+        int maxPickupAge;
+        
 
         // true for smaller objects that have heldOffsets relative to
         // front, moving hand
@@ -363,6 +366,12 @@ typedef struct ObjectRecord {
         
         char noHighlight;
         
+        // for auto-orienting fences, walls, etc
+        // all three objects know the IDs of all three objects
+        int horizontalVersionID;
+        int verticalVersionID;
+        int cornerVersionID;
+
     } ObjectRecord;
 
 
@@ -821,6 +830,11 @@ int getMaxSpeechPipeIndex();
 int getNumGlobalTriggers();
 
 int getMetaTriggerObject( int inTriggerIndex );
+
+
+
+// can a player of this age pick up a given object?
+char canPickup( int inObjectID, double inPlayerAge );
 
 
 

@@ -548,37 +548,6 @@ void intPairToKey( int inX, int inY, unsigned char *outKey ) {
 
 
 
-// one timeSec_t to an 8-byte double value
-void timeToValue( timeSec_t inT, unsigned char *outValue ) {
-    
-
-    // pack double time into 8 bytes in whatever endian order the
-    // double is stored on this platform
-
-    union{ timeSec_t doubleTime; uint64_t intTime; };
-
-    doubleTime = inT;
-    
-    for( int i=0; i<8; i++ ) {
-        outValue[i] = ( intTime >> (i * 8) ) & 0xFF;
-        }    
-    }
-
-
-timeSec_t valueToTime( unsigned char *inValue ) {
-
-    union{ timeSec_t doubleTime; uint64_t intTime; };
-
-    // get bytes back out in same order they were put in
-    intTime = 
-        (uint64_t)inValue[7] << 56 | (uint64_t)inValue[6] << 48 | 
-        (uint64_t)inValue[5] << 40 | (uint64_t)inValue[4] << 32 | 
-        (uint64_t)inValue[3] << 24 | (uint64_t)inValue[2] << 16 | 
-        (uint64_t)inValue[1] << 8  | (uint64_t)inValue[0];
-    
-    // caste back to timeSec_t
-    return doubleTime;
-    }
 
 
 
@@ -2864,6 +2833,8 @@ static void setupMapChangeLogFile() {
                                              biomeRandSeed );
             
             File *f = logFolder.getChildFile( newFileName );
+            
+            delete [] newFileName;
             
             char *fullName = f->getFullFileName();
             
@@ -6350,6 +6321,79 @@ static int findGridPos( SimpleVector<GridPos> *inList, GridPos inP ) {
 
 
 
+
+// inSetO must hvae o->horizontalVersionID etc set
+// returns new ID at inX, inY
+static int neighborWallAgree( int inX, int inY, ObjectRecord *inSetO,
+                               char inRecurse ) {
+
+    // make sure this agrees with all neighbors
+    
+    int nX[4] = {-1, 1,  0, 0};
+    int nY[4] = { 0, 0, -1, 1};
+    char nSet[4] = { false, false, false, false };
+    int nID[4] = { -1, -1, -1, -1 };
+    
+    for( int n=0; n<4; n++ ) {
+        int oID = getMapObjectRaw( inX + nX[n], inY + nY[n] );
+        
+        if( oID > 0 ) {
+            if( oID == inSetO->horizontalVersionID ||
+                oID == inSetO->verticalVersionID ||
+                oID == inSetO->cornerVersionID ) {
+                nSet[n] = true;
+                nID[n] = oID;
+                }
+            }
+        }
+
+    int returnID = inSetO->id;
+    
+    if( inSetO->id != inSetO->verticalVersionID &&
+        ( nSet[2] || nSet[3] ) 
+        &&
+        ! ( nSet[0] || nSet[1] ) ) {
+        // should be vert
+        
+        returnID = inSetO->verticalVersionID;
+        }
+    else if( inSetO->id != inSetO->horizontalVersionID &&
+        ! ( nSet[2] || nSet[3] ) 
+        &&
+        ( nSet[0] || nSet[1] ) ) {
+        // should be horizontal
+        
+        returnID = inSetO->horizontalVersionID;
+        }
+    else if( inSetO->id != inSetO->cornerVersionID &&
+        ( nSet[2] || nSet[3] ) 
+        &&
+        ( nSet[0] || nSet[1] ) ) {
+        // should be corner
+        
+        returnID = inSetO->cornerVersionID;
+        }
+    
+    if( returnID != inSetO->id ) {
+        dbPut( inX, inY, 0, returnID );
+        }
+    
+    if( inRecurse ) {
+        // recurse once for each matching neighbor
+        for( int n=0; n<4; n++ ) {
+            if( nSet[n] ) {
+                neighborWallAgree( inX + nX[n], inY + nY[n], 
+                                   getObject( nID[n] ), false );
+                }
+            }
+        }
+    
+    return returnID;
+    }
+    
+
+
+
 void setMapObjectRaw( int inX, int inY, int inID ) {
     dbPut( inX, inY, 0, inID );
     
@@ -6364,6 +6408,18 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
     
     if( o == NULL ) {
         return;
+        }
+
+
+
+    if( o->horizontalVersionID != -1 &&
+        o->verticalVersionID != -1 &&
+        o->cornerVersionID != -1 ) {
+        
+        // recurse one step
+        inID = neighborWallAgree( inX, inY, o, true );
+        
+        o = getObject( inID );
         }
 
 

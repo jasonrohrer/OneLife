@@ -484,6 +484,24 @@ static void setupNoHighlight( ObjectRecord *inR ) {
 
 
 
+static void setupMaxPickupAge( ObjectRecord *inR ) {
+    inR->maxPickupAge = 9999999;
+    
+
+    const char *key = "maxPickupAge_";
+    
+    char *loc = strstr( inR->description, key );
+
+    if( loc != NULL ) {
+        
+        char *indexLoc = &( loc[ strlen( key ) ] );
+        
+        sscanf( indexLoc, "%d", &( inR->maxPickupAge ) );
+        }
+    }
+
+
+
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
     }
@@ -546,6 +564,11 @@ float initObjectBankStep() {
                 
                 setupNoHighlight( r );
                 
+                setupMaxPickupAge( r );
+                
+                r->horizontalVersionID = -1;
+                r->verticalVersionID = -1;
+                r->cornerVersionID = -1;
 
                 next++;
                             
@@ -1768,6 +1791,66 @@ void initObjectBankFinish() {
         }
 
             // resaveAll();
+
+    
+    // populate vertical and corner version pointers for walls and fences
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+            
+            const char *key = "+horizontal";
+            
+            char *pos = strstr( o->description, key );
+            
+            if( pos != NULL ) {
+                char *skipKey = &( pos[ strlen( key ) ] );
+                
+                char label[20];
+                int numRead = sscanf( skipKey, "%19s", label );
+                
+                if( numRead != 1 ) {
+                    continue;
+                    }
+
+                char *vertKey = autoSprintf( "+vertical%s", label );
+                char *cornerKey = autoSprintf( "+corner%s", label );
+                
+                for( int j=0; j<mapSize; j++ ) {
+                    if( j != i && idMap[j] != NULL ) {
+                        ObjectRecord *oOther = idMap[j];
+                        
+                        if( strstr( oOther->description, vertKey ) ) {
+                            o->verticalVersionID = oOther->id;
+                            }
+                        else if( strstr( oOther->description, cornerKey ) ) {
+                            o->cornerVersionID = oOther->id;
+                            }
+                        }
+                    }
+
+                delete [] vertKey;
+                delete [] cornerKey;
+                
+                if( o->verticalVersionID != -1 && o->cornerVersionID != -1 ) {
+                    o->horizontalVersionID = o->id;
+                    
+                    // make sure they all know about each other
+                    ObjectRecord *vertO = getObject( o->verticalVersionID );
+                    ObjectRecord *cornerO = getObject( o->cornerVersionID );
+                    
+                    vertO->horizontalVersionID = o->id;
+                    vertO->verticalVersionID = vertO->id;
+                    vertO->cornerVersionID = cornerO->id;
+
+                    cornerO->horizontalVersionID = o->id;
+                    cornerO->verticalVersionID = vertO->id;
+                    cornerO->cornerVersionID = cornerO->id;
+                    }
+                }
+            }
+        }
+
+
     }
 
 
@@ -3016,6 +3099,13 @@ int addObject( const char *inDescription,
     
     setupOwned( r );
     
+    setupNoHighlight( r );
+                
+    setupMaxPickupAge( r );
+
+    r->horizontalVersionID = -1;
+    r->verticalVersionID = -1;
+    r->cornerVersionID = -1;
 
     memset( r->spriteSkipDrawing, false, inNumSprites );
     
@@ -5456,8 +5546,16 @@ void restoreSkipDrawing( ObjectRecord *inObject ) {
 
 
 
-
-
-
-
-
+char canPickup( int inObjectID, double inPlayerAge ) {
+    ObjectRecord *o = getObject( inObjectID );
+    
+    if( o->minPickupAge > inPlayerAge ) {
+        return false;
+        }
+    
+    if( o->maxPickupAge < inPlayerAge ) {
+        return false;
+        }
+    
+    return true;
+    }

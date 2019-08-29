@@ -58,6 +58,7 @@ lifeTokens.cpp \
 fitnessScore.cpp \
 CoordinateTimeTracking.cpp \
 arcReport.cpp \
+curseDB.cpp \
 
 
 

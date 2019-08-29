@@ -3,6 +3,107 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 260    2019-August-28
+
+--Fixed bug in murder weapon change not showing up on perpetrator until perp
+  stops moving (in other clients other than the perp's client).
+
+--Fixed digit in sqrt(2) constant.  Fixes #372
+
+--Editor now highlights naturally-occuring objects and deadly objects in
+  picker, so no more mistakes making something natural during object
+  duplication.
+
+--More kiosk mode features.  Instructions on RebirthChoice page, friends button
+  there, and blocking various things that would return you to the login screen.
+
+
+
+
+Server Fixes
+
+--Family limit failure condition set to 35 (was 23).
+
+--Fixed bug that caused stuck murder mouth emote if you target someone from
+  more than 8 tiles away.
+
+--Support for custom global messages.
+
+--Support for maxPickupAge on objects (so elders cannot use swords).
+
+--Local personal curses replaces centralized curse server.  Each player on a
+  server gets one token per 30 minutes (was 1 per 2 hours) to curse another
+  player.  That marks the player for 48 hours, preventing them from getting
+  born within 50 tiles of the cursing player.  If a cursed player runs out of
+  mothers inside the Eve window, they become an Eve.  If a cursed player runs
+  out of mothers outside of the Eve window, they go to donkeytown.
+
+--Cross-family cursing can now be done without speaking the curse in their
+  language (local personal curses are fine across families).
+
+--Shortcuts for cursing:  CURSE YOU (closest other player) and CURSE MY BABY
+  (your youngest baby, even if recently died).
+
+--Change to baby last name:  now comes from biological family name, if set,
+  even if baby is adopted and named by someone else.  Much less confusion about
+  who is in which family line (for war and peace purposes).
+
+--Families start out in neutral state and cannot use swords against each other.
+  Unilateral war is possible when elders speak WAR in the target family's
+  language (and then both sides are at war).  Peace can be set by elders from
+  both families saying PEACE in the target language, and then that PEACE treaty
+  can only be broken by elders from both families saying WAR.  So, unilateral
+  war is possible at first, but after peace is established bilaterally, it must
+  be broken bilaterally.
+
+--Support for force-matched vertical, horizontal, and corner fences.  No more
+  manually rotating them.
+
+--Wildcard shortcuts for giving gate ownership to all living children (MY
+  OFFSPRING OWN THIS) or all living family members (MY FAMILY OWNS THIS).
+
+--New arc failure condition:  After Eve Window closes, there are no new Eves,
+  and arc ends when there are fewer than 5 living families.
+
+--Arc milestone message now includes info about min family end condition.
+
+--Global announcement whenever a family dies out after the Eve window closes.
+
+--Link from Eve on family tree server to full tree on Wondible viewer.
+
+--Fixed rounding errors in move timing that could cause micro-managed moves to
+  be faster than long paths (WASD movment catching up to mouse movement).
+
+--Fixed apocalypse frozen-whiteout bug caused by server waiting for
+  disconnected players to have been sent the map update (they are disconnected,
+  so this is never going to happen).  When this bug was triggered (by a player
+  in the disconnected state during the apocalypse), the apocalypse whiteout
+  would last until that disconnected player died.
+
+--Fixed to no longer send out arc-family death announcements for Tutorial and
+  Donkeytown players.  Fixes #375.
+
+--Can spend YUM bonus to do hungry work.  Hungry worked blocked if it would
+  take you down below 5 food (to give you a safe buffer at the end).  Thus, you
+  need at least 15 food (including food and YUM) to do 10-cost hungry work.
+
+--After Eve window closes, babies are distributed between remaining families
+  round-robin.  Within each family, when it's their turn to get a baby, heat
+  an yum fertility bonuses still affect which mother in the family is chosen.
+  Note that area/lineage bans, birth cooldowns, and other factors still apply.
+  We only send a baby to the next family, round-robin, if we can according to
+  these other factors.
+
+--For analysis:  after Eve window, each family population is tracked separately
+  in a log over time (so we can make graphs showing family fractions of total
+  population, etc).
+
+--Support in lifeTokenServer for manually changing an account's token count
+  (for PAX booth use).
+
+
+
+
 Version 256    2019-August-2
 
 --Support for offScreenSound_red tag (other offScreenSounds are white).
