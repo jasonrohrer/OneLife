@@ -7,6 +7,12 @@ Server Fixes
 
 --Fixed crash when moveTotalSeconds is negative.
 
+--Whoops.  For the past two months, no new players were having reviews, lives 
+  lived, or time lived logged by the review server (due to a bug in the insert 
+  query after polls were added).
+
+--Special announcement to let players know they have a PAX Expo baby.
+
 
 
 Version 260    2019-August-28
