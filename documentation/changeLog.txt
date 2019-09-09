@@ -7,6 +7,9 @@ Version 262    ???
 
 --Incorporated PAX West hotfixes to kiosk mode.
 
+--Fixed so that hitched horse cart doesn't cross objects to the left in a
+  glitchy way.  Fixes #358
+
 
 
 

@@ -138,6 +138,11 @@ typedef struct ObjectRecord {
         // them
         char floorHugging;
         
+        // for non floor-hugging objects that are still in wall layer
+        // marked in object description with +wall
+        // floorHugging objects automatically get wallLayer set to true
+        char wallLayer;
+        
         
         int foodValue;
         

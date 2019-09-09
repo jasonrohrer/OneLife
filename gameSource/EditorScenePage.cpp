@@ -1582,9 +1582,9 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         continue;
                         }
                     if( ( b == 3 && 
-                          ! ( o->floorHugging && o->numSlots == 0 )  ) 
+                          ! ( o->wallLayer && o->numSlots == 0 )  ) 
                         ||
-                        ( b != 3 && o->floorHugging && o->numSlots == 0 
+                        ( b != 3 && o->wallLayer && o->numSlots == 0 
                           && ! ( o->drawBehindPlayer || 
                                  o->anySpritesBehindPlayer ) ) ) {
                         continue;
@@ -1592,7 +1592,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
                     
                     if( b == 4 &&
-                        ! ( o->floorHugging && o->numSlots > 0 ) ) {
+                        ! ( o->wallLayer && o->numSlots > 0 ) ) {
                         continue;
                         }
 
