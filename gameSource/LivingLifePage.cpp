@@ -17486,6 +17486,9 @@ void LivingLifePage::step() {
                                 nextStep = finalStep;
                                 char foundPerp = false;
                                 
+                                int oldXDir = xDir;
+                                int oldYDir = yDir;
+
                                 // first step in same dir goes off floor
                                 // try a perp move instead
                                 if( xDir != 0 && yDir == 0 ) {
@@ -17521,6 +17524,46 @@ void LivingLifePage::step() {
                                         }
                                     }
 
+                                if( !foundPerp ) {
+                                    if( oldYDir == 0 ) {
+                                        // try diagonal in same x dir
+                                        xDir = oldXDir;
+                                        yDir = 1;
+                                        if( isSameFloor( floor, 
+                                                         finalStep, xDir,
+                                                         yDir ) ) {
+                                            foundPerp = true;
+                                            }
+                                        else {
+                                            yDir = -1;
+                                            if( isSameFloor( floor, 
+                                                             finalStep, xDir,
+                                                             yDir ) ) {
+                                                foundPerp = true;
+                                                }
+                                            }
+                                        }
+                                    else if( oldXDir == 0 ) {
+                                        // try diagonal in same y dir
+                                        yDir = oldYDir;
+                                        xDir = 1;
+                                        if( isSameFloor( floor, 
+                                                         finalStep, xDir,
+                                                         yDir ) ) {
+                                            foundPerp = true;
+                                            }
+                                        else {
+                                            xDir = -1;
+                                            if( isSameFloor( floor, 
+                                                             finalStep, xDir,
+                                                             yDir ) ) {
+                                                foundPerp = true;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                
                                 if( foundPerp ) {
                                     nextStep.x += xDir;
                                     nextStep.y += yDir;
