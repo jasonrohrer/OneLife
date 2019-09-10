@@ -12,6 +12,9 @@ Version 262    ???
 
 --Support for ctrl-v paste of text into object description in editor.
 
+--Auto-walking around all kinds of road branches (diagonals, etc.) now works
+  flawlessly.  Fixes #360
+
 
 
 

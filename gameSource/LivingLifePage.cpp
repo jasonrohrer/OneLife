@@ -17484,87 +17484,94 @@ void LivingLifePage::step() {
                                 }
                             else {
                                 nextStep = finalStep;
-                                char foundPerp = false;
+                                char foundBranch = false;
                                 
-                                int oldXDir = xDir;
-                                int oldYDir = yDir;
 
-                                // first step in same dir goes off floor
-                                // try a perp move instead
-                                if( xDir != 0 && yDir == 0 ) {
-                                    xDir = 0;
-                                    yDir = 1;
+                                // continuing in same direction goes off road
+                                // try branching off in another
+                                // direction instead
+
+                                int nX[8] = { 1, 1,  1, -1, -1, -1, 0,  0 };
+                                int nY[8] = { 1, 0, -1,  1,  0, -1, 1, -1 };
+                                
+                                SimpleVector<GridPos> allDirs;
+                                // dist of each dir from xDir,yDir
+                                SimpleVector<double> allDist;
+                                
+                                GridPos lastDir = { xDir, yDir };
+                                
+                                SimpleVector<GridPos> sortedDirs;
+                                SimpleVector<double> sortedDist;
+
+                                for( int i=0; i<8; i++ ) {
+                                    GridPos p = { nX[i], nY[i] };
+                                    
+                                    // do not include lastDir
+                                    // or completely opposite dir
+                                    if( equal( p, lastDir ) ) {
+                                        continue;
+                                        }
+                                    if( p.x == lastDir.x * -1 &&
+                                        p.y == lastDir.y * -1 ) {
+                                        continue;
+                                        }
+
+                                    allDirs.push_back( p );
+                                    allDist.push_back( 
+                                        distance2( lastDir, p ) );
+                                    }
+                                
+                                while( allDirs.size() > 0 ) {
+                                    double minDist = 99999;
+                                    int minInd = -1;
+                                    for( int i=0; i<allDirs.size(); i++ ) {
+                                        double d = 
+                                            allDist.getElementDirect( i );
+                                        if( d < minDist ) {
+                                            minDist = d;
+                                            minInd = i;
+                                            }
+                                        }
+                                    sortedDirs.push_back( 
+                                        allDirs.getElementDirect( minInd ) );
+                                    sortedDist.push_back( 
+                                        allDist.getElementDirect( minInd ) );
+                                    allDirs.deleteElement( minInd );
+                                    allDist.deleteElement( minInd );
+                                    }
+                                
+                                printf( "Last dir = %d,%d\n", xDir, yDir );
+                                for( int i=0; i<8; i++ ) {
+                                    printf( 
+                                        "  %d (dist %f):  %d,%d\n",
+                                        i, 
+                                        sortedDist.getElementDirect( i ),
+                                        sortedDirs.getElementDirect( i ).x,
+                                        sortedDirs.getElementDirect( i ).y );
+                                    }
+                                
+                                
+                                // now we have 6 dirs, sorted by 
+                                // how far off they are from lastDir 
+                                // and NOT including lastDir or its
+                                // complete opposite.
+
+                                // find the first one that continues
+                                // on the same road surface
+                                for( int i=0; i<6 && !foundBranch; i++ ) {
+                                    
+                                    GridPos d = 
+                                        sortedDirs.getElementDirect( i );
+                                    xDir = d.x;
+                                    yDir = d.y;
                                     
                                     if( isSameFloor( floor, finalStep, xDir,
                                                      yDir ) ) {
-                                        foundPerp = true;
-                                        }
-                                    else {
-                                        yDir = -1;
-                                        if( isSameFloor( floor, finalStep, xDir,
-                                                         yDir ) ) {
-                                            foundPerp = true;
-                                            }
+                                        foundBranch = true;
                                         }
                                     }
-                                else if( xDir == 0 && yDir != 0 ) {
-                                    xDir = 1;
-                                    yDir = 0;
-                                    
-                                    if( isSameFloor( floor, finalStep, xDir,
-                                                     yDir ) ) {
-                                        foundPerp = true;
-                                        }
-                                    else {
-                                        xDir = -1;
-                                        if( isSameFloor( floor, finalStep, xDir,
-                                                         yDir ) ) {
-                                            foundPerp = true;
-                                            }
-                                        }
-                                    }
-
-                                if( !foundPerp ) {
-                                    if( oldYDir == 0 ) {
-                                        // try diagonal in same x dir
-                                        xDir = oldXDir;
-                                        yDir = 1;
-                                        if( isSameFloor( floor, 
-                                                         finalStep, xDir,
-                                                         yDir ) ) {
-                                            foundPerp = true;
-                                            }
-                                        else {
-                                            yDir = -1;
-                                            if( isSameFloor( floor, 
-                                                             finalStep, xDir,
-                                                             yDir ) ) {
-                                                foundPerp = true;
-                                                }
-                                            }
-                                        }
-                                    else if( oldXDir == 0 ) {
-                                        // try diagonal in same y dir
-                                        yDir = oldYDir;
-                                        xDir = 1;
-                                        if( isSameFloor( floor, 
-                                                         finalStep, xDir,
-                                                         yDir ) ) {
-                                            foundPerp = true;
-                                            }
-                                        else {
-                                            xDir = -1;
-                                            if( isSameFloor( floor, 
-                                                             finalStep, xDir,
-                                                             yDir ) ) {
-                                                foundPerp = true;
-                                                }
-                                            }
-                                        }
-                                    }
-
                                 
-                                if( foundPerp ) {
+                                if( foundBranch ) {
                                     nextStep.x += xDir;
                                     nextStep.y += yDir;
                                     
