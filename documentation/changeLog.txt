@@ -10,6 +10,8 @@ Version 262    ???
 --Fixed so that hitched horse cart doesn't cross objects to the left in a
   glitchy way.  Fixes #358
 
+--Support for ctrl-v paste of text into object description in editor.
+
 
 
 
