@@ -15,6 +15,9 @@ Version 262    ???
 --Auto-walking around all kinds of road branches (diagonals, etc.) now works
   flawlessly.  Fixes #360
 
+--Fixed so that you can walk to and set down or swap an object on an empty
+  surrounded tile with one click.  Fixes #361
+
 
 
 
