@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 262    ???
+Version 262    2019-September-12
 
 --Incorporated PAX West hotfixes to kiosk mode.
 
