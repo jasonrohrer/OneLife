@@ -2196,6 +2196,9 @@ LivingLifePage::LivingLifePage()
     mSayField.setIgnoreArrowKeys( true );
     // drawn under world at (0,1000), don't allow click to focus
     mSayField.setIgnoreMouse( true );
+
+    // allow ctrl-v to paste into chat from clipboard
+    mSayField.usePasteShortcut( true );
     
     initLiveTriggers();
 

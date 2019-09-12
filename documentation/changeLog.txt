@@ -20,6 +20,8 @@ Version 262    ???
 
 --Removed lingering home markers after apocalypse.  Related to #363
 
+--Can now CTRL-V to paste clipboard text into chat.  Fixes #367
+
 
 
 
