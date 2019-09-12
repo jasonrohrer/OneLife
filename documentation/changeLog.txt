@@ -44,6 +44,10 @@ Server Fixes
   that we don't keep passing them on to future generations (babies hear about
   the monument that their mothers know about at age 0.5).  Fixes #363
 
+--Added sanity check so that no Eves are born outside barrier, no matter what.
+  Fixes #377
+
+
 
 
 Version 260    2019-August-28
