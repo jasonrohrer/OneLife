@@ -18,6 +18,9 @@ Version 262    ???
 --Fixed so that you can walk to and set down or swap an object on an empty
   surrounded tile with one click.  Fixes #361
 
+--Removed lingering home markers after apocalypse.  Related to #363
+
+
 
 
 

@@ -10080,9 +10080,13 @@ void LivingLifePage::step() {
         }
     
 
-    if( apocalypseInProgress ) {
+    if( apocalypseInProgress && apocalypseDisplayProgress < 1.0 ) {
         double stepSize = frameRateFactor / ( apocalypseDisplaySeconds * 60.0 );
         apocalypseDisplayProgress += stepSize;
+        
+        if( apocalypseDisplayProgress >= 1.0 ) {
+            apocalypseDisplayProgress = 1.0;
+            }
         }
     
     if( mRemapPeak > 0 ) {
@@ -10434,7 +10438,7 @@ void LivingLifePage::step() {
         int homeArrow = getHomeDir( ourObject->currentPos, &homeDist,
                                     &tooClose );
         
-        if( homeArrow != -1 && ! tooClose ) {
+        if( ! apocalypseInProgress && homeArrow != -1 && ! tooClose ) {
             mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y + 68;
             
             if( homeDist > 1000 ) {
@@ -11390,6 +11394,7 @@ void LivingLifePage::step() {
         else if( type == APOCALYPSE_DONE ) {
             apocalypseDisplayProgress = 0;
             apocalypseInProgress = false;
+            homePosStack.deleteAll();
             }
         else if( type == MONUMENT_CALL ) {
             int posX, posY, monumentID;
