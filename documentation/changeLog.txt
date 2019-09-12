@@ -3,6 +3,67 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 262    2019-September-12
+
+--Incorporated PAX West hotfixes to kiosk mode.
+
+--Fixed so that hitched horse cart doesn't cross objects to the left in a
+  glitchy way.  Fixes #358
+
+--Support for ctrl-v paste of text into object description in editor.
+
+--Auto-walking around all kinds of road branches (diagonals, etc.) now works
+  flawlessly.  Fixes #360
+
+--Fixed so that you can walk to and set down or swap an object on an empty
+  surrounded tile with one click.  Fixes #361
+
+--Removed lingering home markers after apocalypse.  Related to #363
+
+--Can now CTRL-V to paste clipboard text into chat.  Fixes #367
+
+--Added some safeguards to make sure drawn cursor size never jumps to 0. 
+  Fixes jasonrohrer/OneLife#379
+
+--Mousing over someone from another family shows their WAR or PEACE status with
+  your family (no label if neutral).  A new WAR_REPORT message from the server
+  makes this possible.
+
+
+
+
+Server Fixes
+
+--Fixed crash when moveTotalSeconds is negative.
+
+--Whoops.  For the past two months, no new players were having reviews, lives 
+  lived, or time lived logged by the review server (due to a bug in the insert 
+  query after polls were added).
+
+--Special announcement to let players know they have a PAX Expo baby.
+
+--Current move truncated when you land a kill, to prevent a long move from
+  continuing at full speed with a slow-down bloody weapon in your hand.
+  Fixes #362
+
+--Fixed so that we clear remembered monomument positions after apocalypse so
+  that we don't keep passing them on to future generations (babies hear about
+  the monument that their mothers know about at age 0.5).  Fixes #363
+
+--Added sanity check so that no Eves are born outside barrier, no matter what.
+  Fixes #377
+
+--Check min pickup age before swapping a held object (with a ground transition)
+  with another object on the ground.  A child can no longer swap a clean pad
+  with a sword, car, bow, etc.  Fixes #378
+
+--Fixed memory leak.
+
+
+
+
+
+
 Version 260    2019-August-28
 
 --Fixed bug in murder weapon change not showing up on perpetrator until perp

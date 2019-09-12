@@ -1017,6 +1017,7 @@ typedef enum messageType {
     PHOTO_SIGNATURE,
     FORCED_SHUTDOWN,
     GLOBAL_MESSAGE,
+    WAR_REPORT,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1151,6 +1152,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "MS" ) == 0 ) {
         returnValue = GLOBAL_MESSAGE;
+        }
+    else if( strcmp( copy, "WR" ) == 0 ) {
+        returnValue = WAR_REPORT;
         }
     
     delete [] copy;
@@ -2279,6 +2283,9 @@ LivingLifePage::LivingLifePage()
     mSayField.setIgnoreArrowKeys( true );
     // drawn under world at (0,1000), don't allow click to focus
     mSayField.setIgnoreMouse( true );
+
+    // allow ctrl-v to paste into chat from clipboard
+    mSayField.usePasteShortcut( true );
     
     initLiveTriggers();
 
@@ -6390,7 +6397,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         // OVER the player objects in this row (so that pick up and set down
         // looks correct, and so players are behind all same-row objects)
 
-        // we determine what counts as a wall through floorHugging
+        // we determine what counts as a wall through wallLayer flag
 
         // first permanent, non-wall objects
         for( int x=xStart; x<=xEnd; x++ ) {
@@ -6407,7 +6414,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 ObjectRecord *o = getObject( mMap[ mapI ] );
                 
                 if( ! o->drawBehindPlayer &&
-                    ! o->floorHugging &&
+                    ! o->wallLayer &&
                     o->permanent &&
                     mMapMoveSpeeds[ mapI ] == 0 ) {
                     
@@ -6443,7 +6450,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 ObjectRecord *o = getObject( mMap[ mapI ] );
                 
                 if( ! o->drawBehindPlayer &&
-                    ! o->floorHugging &&
+                    ! o->wallLayer &&
                     ! o->permanent &&
                     mMapMoveSpeeds[ mapI ] == 0 ) {
                     
@@ -6487,7 +6494,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 ObjectRecord *o = getObject( mMap[ mapI ] );
                 
                 if( ! o->drawBehindPlayer &&
-                    o->floorHugging &&
+                    o->wallLayer &&
                     o->permanent &&
                     o->numSlots == 0 &&
                     mMapMoveSpeeds[ mapI ] == 0 ) {
@@ -6523,7 +6530,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 ObjectRecord *o = getObject( mMap[ mapI ] );
                 
                 if( ! o->drawBehindPlayer &&
-                    o->floorHugging &&
+                    o->wallLayer &&
                     o->permanent &&
                     o->numSlots > 0 &&
                     mMapMoveSpeeds[ mapI ] == 0 ) {
@@ -8652,10 +8659,31 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 if( des == NULL ) {
                     des = (char*)translate( "unrelated" );
+
+                    if( otherObj != NULL && otherObj->warPeaceStatus != 0 ) {
+                        
+                        const char *key = "atWar";
+                        if( otherObj->warPeaceStatus > 0 ) {
+                            key = "atPeace";
+                            }
+                        
+                        des = autoSprintf( "%s - %s", des, translate( key ) );
+                        
+                        if( desToDelete != NULL ) {
+                            delete [] desToDelete;
+                            }
+                        
+                        desToDelete = des;
+                        }
                     }
                 if( otherObj != NULL && otherObj->name != NULL ) {
                     des = autoSprintf( "%s - %s",
                                        otherObj->name, des );
+                    
+                    if( desToDelete != NULL ) {
+                        delete [] desToDelete;
+                        }
+                    
                     desToDelete = des;
                     }
                 if( otherObj != NULL && 
@@ -10307,9 +10335,13 @@ void LivingLifePage::step() {
         }
     
 
-    if( apocalypseInProgress ) {
+    if( apocalypseInProgress && apocalypseDisplayProgress < 1.0 ) {
         double stepSize = frameRateFactor / ( apocalypseDisplaySeconds * 60.0 );
         apocalypseDisplayProgress += stepSize;
+        
+        if( apocalypseDisplayProgress >= 1.0 ) {
+            apocalypseDisplayProgress = 1.0;
+            }
         }
     
     if( mRemapPeak > 0 ) {
@@ -10661,7 +10693,7 @@ void LivingLifePage::step() {
         int homeArrow = getHomeDir( ourObject->currentPos, &homeDist,
                                     &tooClose );
         
-        if( homeArrow != -1 && ! tooClose ) {
+        if( ! apocalypseInProgress && homeArrow != -1 && ! tooClose ) {
             mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y + 68;
             
             // HOMEMARKER MOD NOTE:  Change 7/8 - Take these lines during the merge process
@@ -11452,6 +11484,65 @@ void LivingLifePage::step() {
                 delete [] spaces;
                 }
             }
+        else if( type == WAR_REPORT ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+
+            // clear war status of all
+            for( int i=0; i<gameObjects.size(); i++ ) {
+                gameObjects.getElement( i )->warPeaceStatus = 0;
+                }
+
+            int ourLineage = getOurLiveObject()->lineageEveID;
+            
+
+            if( numLines > 1 ) {
+                for( int i=1; i<numLines; i++ ) {
+                    int a = 0;
+                    int b = 0;
+                    char status[20] = "neutral";
+                    sscanf( lines[i], "%d %d %19s", &a, &b, status );
+                    
+                    int stat = 0;
+                    
+                    if( strcmp( status, "war" ) == 0 ) {
+                        stat = -1;
+                        }
+                    else if( strcmp( status, "peace" ) == 0 ) {
+                        stat = 1;
+                        }
+                    
+
+                    if( stat != 0 && a > 0 && b > 0 ) {
+                        int otherID = 0;
+                        if( a == ourLineage ) {
+                            otherID = b;
+                            }
+                        else if( b == ourLineage ) {
+                            otherID = a;
+                            }
+                        
+                        if( otherID != 0 ) {
+                            // mark players in this other line with this
+                            // status
+                            for( int i=0; i<gameObjects.size(); i++ ) {
+                                
+                                LiveObject *o = gameObjects.getElement( i );
+                                
+                                if( o->lineageEveID == otherID ) {
+                                    o->warPeaceStatus = stat;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            for( int i=0; i<numLines; i++ ) {
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
             
@@ -11618,6 +11709,7 @@ void LivingLifePage::step() {
         else if( type == APOCALYPSE_DONE ) {
             apocalypseDisplayProgress = 0;
             apocalypseInProgress = false;
+            homePosStack.deleteAll();
             }
         else if( type == MONUMENT_CALL ) {
             int posX, posY, monumentID;
@@ -13414,7 +13506,8 @@ void LivingLifePage::step() {
 
                 o.name = NULL;
                 o.relationName = NULL;
-
+                o.warPeaceStatus = 0;
+                
                 o.curseLevel = 0;
                 o.excessCursePoints = 0;
                 o.curseTokenCount = 0;
@@ -16396,6 +16489,24 @@ void LivingLifePage::step() {
 
                                         sscanf( lastToken, "eve=%d",
                                                 &( existing->lineageEveID ) );
+
+                                        if( existing->lineageEveID > 0 ) {
+                                            // copy war status from someone
+                                            // else in this lineage
+                                            for( int i=0; i<gameObjects.size();
+                                                 i++ ) {
+                                                LiveObject *other =
+                                                    gameObjects.getElement( i );
+                                                
+                                                if( other->id != existing->id &&
+                                                    other->lineageEveID ==
+                                                    existing->lineageEveID ) {
+                                                    existing->warPeaceStatus =
+                                                        other->warPeaceStatus;
+                                                    break;
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
 
@@ -17714,44 +17825,94 @@ void LivingLifePage::step() {
                                 }
                             else {
                                 nextStep = finalStep;
-                                char foundPerp = false;
+                                char foundBranch = false;
                                 
-                                // first step in same dir goes off floor
-                                // try a perp move instead
-                                if( xDir != 0 && yDir == 0 ) {
-                                    xDir = 0;
-                                    yDir = 1;
-                                    
-                                    if( isSameFloor( floor, finalStep, xDir,
-                                                     yDir ) ) {
-                                        foundPerp = true;
-                                        }
-                                    else {
-                                        yDir = -1;
-                                        if( isSameFloor( floor, finalStep, xDir,
-                                                         yDir ) ) {
-                                            foundPerp = true;
-                                            }
-                                        }
-                                    }
-                                else if( xDir == 0 && yDir != 0 ) {
-                                    xDir = 1;
-                                    yDir = 0;
-                                    
-                                    if( isSameFloor( floor, finalStep, xDir,
-                                                     yDir ) ) {
-                                        foundPerp = true;
-                                        }
-                                    else {
-                                        xDir = -1;
-                                        if( isSameFloor( floor, finalStep, xDir,
-                                                         yDir ) ) {
-                                            foundPerp = true;
-                                            }
-                                        }
-                                    }
 
-                                if( foundPerp ) {
+                                // continuing in same direction goes off road
+                                // try branching off in another
+                                // direction instead
+
+                                int nX[8] = { 1, 1,  1, -1, -1, -1, 0,  0 };
+                                int nY[8] = { 1, 0, -1,  1,  0, -1, 1, -1 };
+                                
+                                SimpleVector<GridPos> allDirs;
+                                // dist of each dir from xDir,yDir
+                                SimpleVector<double> allDist;
+                                
+                                GridPos lastDir = { xDir, yDir };
+                                
+                                SimpleVector<GridPos> sortedDirs;
+                                SimpleVector<double> sortedDist;
+
+                                for( int i=0; i<8; i++ ) {
+                                    GridPos p = { nX[i], nY[i] };
+                                    
+                                    // do not include lastDir
+                                    // or completely opposite dir
+                                    if( equal( p, lastDir ) ) {
+                                        continue;
+                                        }
+                                    if( p.x == lastDir.x * -1 &&
+                                        p.y == lastDir.y * -1 ) {
+                                        continue;
+                                        }
+
+                                    allDirs.push_back( p );
+                                    allDist.push_back( 
+                                        distance2( lastDir, p ) );
+                                    }
+                                
+                                while( allDirs.size() > 0 ) {
+                                    double minDist = 99999;
+                                    int minInd = -1;
+                                    for( int i=0; i<allDirs.size(); i++ ) {
+                                        double d = 
+                                            allDist.getElementDirect( i );
+                                        if( d < minDist ) {
+                                            minDist = d;
+                                            minInd = i;
+                                            }
+                                        }
+                                    sortedDirs.push_back( 
+                                        allDirs.getElementDirect( minInd ) );
+                                    sortedDist.push_back( 
+                                        allDist.getElementDirect( minInd ) );
+                                    allDirs.deleteElement( minInd );
+                                    allDist.deleteElement( minInd );
+                                    }
+                                
+                                printf( "Last dir = %d,%d\n", xDir, yDir );
+                                for( int i=0; i<8; i++ ) {
+                                    printf( 
+                                        "  %d (dist %f):  %d,%d\n",
+                                        i, 
+                                        sortedDist.getElementDirect( i ),
+                                        sortedDirs.getElementDirect( i ).x,
+                                        sortedDirs.getElementDirect( i ).y );
+                                    }
+                                
+                                
+                                // now we have 6 dirs, sorted by 
+                                // how far off they are from lastDir 
+                                // and NOT including lastDir or its
+                                // complete opposite.
+
+                                // find the first one that continues
+                                // on the same road surface
+                                for( int i=0; i<6 && !foundBranch; i++ ) {
+                                    
+                                    GridPos d = 
+                                        sortedDirs.getElementDirect( i );
+                                    xDir = d.x;
+                                    yDir = d.y;
+                                    
+                                    if( isSameFloor( floor, finalStep, xDir,
+                                                     yDir ) ) {
+                                        foundBranch = true;
+                                        }
+                                    }
+                                
+                                if( foundBranch ) {
                                     nextStep.x += xDir;
                                     nextStep.y += yDir;
                                     
@@ -20333,8 +20494,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( !foundEmpty && 
                 ! sideAccess &&
                 nStart > 0 &&
-                destID > 0 &&
-                ! getObject( destID )->blocksWalking ) {
+                ( destID == 0 ||
+                  ! getObject( destID )->blocksWalking ) ) {
                 
                 // all neighbors blocked
                 // we didn't consider tile itself before

@@ -48,16 +48,14 @@ RebirthChoicePage::RebirthChoicePage()
         addComponent( &mQuitButton );
         addComponent( &mReviewButton );
         addComponent( &mMenuButton );
+	addComponent( &mTutorialButton );
+	addComponent( &mGenesButton );
         }
     else {
         mRebornButton.setPosition( 0, -200 );
-        mGenesButton.setPosition( 0, 0 );
-        addComponent( &mFriendsButton );
         }
     
     addComponent( &mRebornButton );
-    addComponent( &mTutorialButton );
-    addComponent( &mGenesButton );
 
     setButtonStyle( &mQuitButton );
     setButtonStyle( &mReviewButton );
@@ -124,11 +122,17 @@ void RebirthChoicePage::draw( doublePair inViewCenter,
     
     // no message for now
     //drawMessage( "", pos );
+    
+    if( isHardToQuitMode() ) {
+        pos.y = 300;
+        drawMessage( "kioskMessage", pos );
+        }
+    else {
+        drawTokenMessage( pos );
 
-    drawTokenMessage( pos );
-
-    pos.y += 104;
-    drawFitnessScore( pos );
+        pos.y += 104;
+        drawFitnessScore( pos );
+        }
 
 
     if( isHardToQuitMode() ) {

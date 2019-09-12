@@ -287,6 +287,12 @@ static char isWarState( int inLineageAEveID, int inLineageBEveID ) {
 
 
 
+
+
+
+void sendWarReportToAll();
+
+
 void sendPeaceWarMessage( const char *inPeaceOrWar,
                           char inWar,
                           int inLineageAEveID, int inLineageBEveID );
@@ -330,6 +336,7 @@ static void addPeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
             sendPeaceWarMessage( "PEACE", 
                                  false,
                                  p->lineageAEveID, p->lineageBEveID );
+            sendWarReportToAll();
             }
         }
     else {
@@ -418,10 +425,14 @@ static void removePeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
                 sendPeaceWarMessage( "WAR", 
                                      true,
                                      inLineageAEveID, inLineageBEveID );
+                messageSent = true;
                 }
             }
         }
     
+    if( messageSent ) {
+        sendWarReportToAll();
+        }
 
     if( remove ) {
         for( int i=0; i<peaceTreaties.size(); i++ ) {
@@ -2334,10 +2345,19 @@ double computePartialMovePathStepPrecise( LiveObject *inPlayer ) {
     if( fractionDone > 1 ) {
         fractionDone = 1;
         }
+    
+    if( fractionDone < 0 ) {
+        fractionDone = 0;
+        }
 
     if( fractionDone == 1 ) {
         // at last spot in path, no partial measurment necessary
         return inPlayer->pathLength - 1;
+        }
+    
+    if( fractionDone == 0 ) {
+        // at start location, before first spot in path
+        return -1;
         }
 
     double distDone = fractionDone * inPlayer->pathDist;
@@ -2370,8 +2390,6 @@ double computePartialMovePathStepPrecise( LiveObject *inPlayer ) {
 
         if( totalLength > distDone ) {
             // add in extra
-            printf( "Total length = %f at index %d\n",
-                    totalLength, i );
             return ( i - 1 ) + (distDone - lastPosDist) / stepLen;
             }
 
@@ -2387,7 +2405,7 @@ double computePartialMovePathStepPrecise( LiveObject *inPlayer ) {
 
 int computePartialMovePathStep( LiveObject *inPlayer ) {
     return lrint( computePartialMovePathStepPrecise( inPlayer ) );
-     }
+    }
 
 
 
@@ -3877,8 +3895,9 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
 
 
 
-
-static void sendGlobalMessage( char *inMessage ) {
+// if inOnePlayerOnly set, we only send to that player
+static void sendGlobalMessage( char *inMessage,
+                               LiveObject *inOnePlayerOnly = NULL ) {
     char found;
     char *noSpaceMessage = replaceAll( inMessage, " ", "_", &found );
 
@@ -3891,6 +3910,10 @@ static void sendGlobalMessage( char *inMessage ) {
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *o = players.getElement( i );
         
+        if( inOnePlayerOnly != NULL && o != inOnePlayerOnly ) {
+            continue;
+            }
+
         if( ! o->error && ! o->isTutorial && o->connected ) {
             int numSent = 
                 o->sock->send( (unsigned char*)fullMessage, 
@@ -4345,6 +4368,59 @@ static void setFreshEtaDecayForHeld( LiveObject *inPlayer ) {
 
 
 
+
+static void truncateMove( LiveObject *otherPlayer, int blockedStep ) {
+    
+    int c = computePartialMovePathStep( otherPlayer );
+    
+    otherPlayer->pathLength
+        = blockedStep;
+    otherPlayer->pathTruncated
+        = true;
+    
+    // update timing
+    double dist = 
+        measurePathLength( otherPlayer->xs,
+                           otherPlayer->ys,
+                           otherPlayer->pathToDest,
+                           otherPlayer->pathLength );    
+    
+    double distAlreadyDone =
+        measurePathLength( otherPlayer->xs,
+                           otherPlayer->ys,
+                           otherPlayer->pathToDest,
+                           c );
+    
+    double moveSpeed = computeMoveSpeed( otherPlayer ) *
+        getPathSpeedModifier( otherPlayer->pathToDest,
+                              otherPlayer->pathLength );
+    
+    otherPlayer->moveTotalSeconds 
+        = 
+        dist / 
+        moveSpeed;
+    
+    double secondsAlreadyDone = 
+        distAlreadyDone / 
+        moveSpeed;
+    
+    otherPlayer->moveStartTime = 
+        Time::getCurrentTime() - 
+        secondsAlreadyDone;
+    
+    otherPlayer->newMove = true;
+    
+    otherPlayer->xd 
+        = otherPlayer->pathToDest[
+            blockedStep - 1].x;
+    otherPlayer->yd 
+        = otherPlayer->pathToDest[
+            blockedStep - 1].y;
+    }
+
+                        
+
+
 void handleMapChangeToPaths( 
     int inX, int inY, ObjectRecord *inNewObject,
     SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
@@ -4410,51 +4486,8 @@ void handleMapChangeToPaths(
 
                     if( blocked &&
                         blockedStep > 0 ) {
-                                                
-                        otherPlayer->pathLength
-                            = blockedStep;
-                        otherPlayer->pathTruncated
-                            = true;
-
-                        // update timing
-                        double dist = 
-                            measurePathLength( otherPlayer->xs,
-                                               otherPlayer->ys,
-                                               otherPlayer->pathToDest,
-                                               otherPlayer->pathLength );    
-                                                
-                        double distAlreadyDone =
-                            measurePathLength( otherPlayer->xs,
-                                               otherPlayer->ys,
-                                               otherPlayer->pathToDest,
-                                               c );
-                            
-                        double moveSpeed = computeMoveSpeed( otherPlayer ) *
-                            getPathSpeedModifier( otherPlayer->pathToDest,
-                                                  otherPlayer->pathLength );
-
-                        otherPlayer->moveTotalSeconds 
-                            = 
-                            dist / 
-                            moveSpeed;
-                            
-                        double secondsAlreadyDone = 
-                            distAlreadyDone / 
-                            moveSpeed;
-                                
-                        otherPlayer->moveStartTime = 
-                            Time::getCurrentTime() - 
-                            secondsAlreadyDone;
-                            
-                        otherPlayer->newMove = true;
-                                                
-                        otherPlayer->xd 
-                            = otherPlayer->pathToDest[
-                                blockedStep - 1].x;
-                        otherPlayer->yd 
-                            = otherPlayer->pathToDest[
-                                blockedStep - 1].y;
-                                                
+                        
+                        truncateMove( otherPlayer, blockedStep );
                         }
                     else if( blocked ) {
                         // cutting off path
@@ -7475,6 +7508,15 @@ int processLoggedInPlayer( char inAllowReconnect,
             newObject.lineage->push_back( 
                 parent->lineage->getElementDirect( i ) );
             }
+
+        if( strstr( newObject.email, "paxkiosk" ) ) {
+            // whoa, this baby is a PAX player!
+            // let the mother know
+            sendGlobalMessage( 
+                (char*)"YOUR BABY IS A NEW PLAYER FROM THE PAX EXPO BOOTH.**"
+                "PLEASE HELP THEM LEARN THE GAME.  THANKS!  -JASON",
+                parent );
+            }
         }
 
     newObject.birthPos.x = newObject.xd;
@@ -8963,6 +9005,78 @@ static void sendMessageToPlayer( LiveObject *inPlayer,
         delete [] message;
         }
     }
+
+
+
+// result destroyed by caller
+static char *getWarReportMessage() {
+    SimpleVector<char> workingMessage;
+    
+    SimpleVector<int> lineageEveIDs;
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( o->error ) {
+            continue;
+            }
+        
+        if( lineageEveIDs.getElementIndex( o->lineageEveID ) == -1 ) {
+            lineageEveIDs.push_back( o->lineageEveID );
+            }
+        }
+
+    workingMessage.appendElementString( "WR\n" );
+
+    // check each unique pair of families
+    for( int a=0; a<lineageEveIDs.size(); a++ ) {
+        int linA = lineageEveIDs.getElementDirect( a );
+        for( int b=a+1; b<lineageEveIDs.size(); b++ ) {
+            int linB = lineageEveIDs.getElementDirect( b );
+            
+            char *line = NULL;
+            if( isWarState( linA, linB ) ) {
+                line = autoSprintf( "%d %d war\n", linA, linB );
+                }
+            else if( isPeaceTreaty( linA, linB ) ) {
+                line = autoSprintf( "%d %d peace\n", linA, linB );
+                }
+            // no line if neutral
+            if( line != NULL ) {
+                workingMessage.appendElementString( line );
+                delete [] line;
+                }
+            }
+        }
+
+    workingMessage.appendElementString( "#" );
+
+    return workingMessage.getElementString();
+    }
+
+
+
+void sendWarReportToAll() {
+    char *w = getWarReportMessage();
+    int len = strlen( w );
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( ! o->error && o->connected ) {
+            sendMessageToPlayer( o, w, len );
+            }
+        }
+    delete [] w;
+    }
+
+
+
+static void sendWarReportToOne( LiveObject *inO ) {
+    char *w = getWarReportMessage();
+    int len = strlen( w );
+    sendMessageToPlayer( inO, w, len );
+    delete [] w;
+    }
     
 
 
@@ -9432,6 +9546,7 @@ void apocalypseStep() {
                 
                 peaceTreaties.deleteAll();
                 warStates.deleteAll();
+                warPeaceRecords.deleteAll();
                 
 
                 lastRemoteApocalypseCheckTime = curTime;
@@ -9449,6 +9564,10 @@ void apocalypseStep() {
                         nextPlayer->firstMapSent = false;
                         nextPlayer->inFlight = false;
                         }
+                    // clear monument pos post-apoc
+                    // so we don't keep passing the stale info on to
+                    // our offspring
+                    nextPlayer->monumentPosSet = false;
                     }
 
                 postApocalypseStarted = true;
@@ -10050,6 +10169,19 @@ static void setPerpetratorHoldingAfterKill( LiveObject *nextPlayer,
 
 
 
+/*
+static void printPath( LiveObject *inPlayer ) {
+    printf( "Path: " );
+    for( int i=0; i<inPlayer->pathLength; i++ ) {
+        printf( "(%d,%d) ", inPlayer->pathToDest[i].x,
+                inPlayer->pathToDest[i].y );
+        }
+    printf( "\n" );
+    }
+*/
+
+
+
 
 void executeKillAction( int inKillerIndex,
                         int inTargetIndex,
@@ -10385,6 +10517,29 @@ void executeKillAction( int inKillerIndex,
 
                 setPerpetratorHoldingAfterKill( nextPlayer, 
                                                 woundHit, rHit, r );
+
+                // if they are moving, end their move NOW
+                // (this allows their move speed to get updated
+                //  with the murder weapon before their next move)
+                // Otherwise, if their move continues, they might walk
+                // at the wrong speed with the changed weapon
+                
+                if( nextPlayer->xd != nextPlayer->xs ||
+                    nextPlayer->yd != nextPlayer->ys ) {
+                    
+                    int truncationSpot = 
+                        computePartialMovePathStep( nextPlayer );
+                    
+                    if( truncationSpot < nextPlayer->pathLength - 2 ) {
+                        
+                        // truncate a step ahead, to reduce chance 
+                        // of client-side players needing to turn-around
+                        // to reach this truncation point
+
+                        truncateMove( nextPlayer, truncationSpot + 2 );
+                        }                    
+                    }
+                
 
                 timeSec_t oldEtaDecay = 
                     nextPlayer->holdingEtaDecay;
@@ -13700,7 +13855,15 @@ int main() {
                                 
                                 nextPlayer->moveTotalSeconds = dist / 
                                     moveSpeed;
-                           
+                                
+                                if( nextPlayer->moveTotalSeconds <= 0.1 ) {
+                                    // never allow moveTotalSeconds to be
+                                    // 0, too small, or negative
+                                    // (we divide by it in certain 
+                                    // calculations)
+                                    nextPlayer->moveTotalSeconds = 0.1;
+                                    }
+                                
                                 double secondsAlreadyDone = distAlreadyDone / 
                                     moveSpeed;
                                 /*
@@ -15855,7 +16018,13 @@ int main() {
                                             // can treat it like a swap
 
                                     
-                                            if( ! targetObj->permanent ) {
+                                            if( ! targetObj->permanent
+                                                &&
+                                                canPickup( 
+                                                    targetObj->id,
+                                                    computeAge( 
+                                                        nextPlayer ) ) ) {
+                                                
                                                 // target can be picked up
 
                                                 // "set-down" type bare ground 
@@ -18762,6 +18931,10 @@ int main() {
                 
                     delete [] dyingMessage;
                     }
+                
+
+                // catch them up on war/peace states
+                sendWarReportToOne( nextPlayer );
 
                 
                 nextPlayer->firstMessageSent = true;

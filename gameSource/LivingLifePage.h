@@ -67,6 +67,12 @@ typedef struct LiveObject {
 
         char *relationName;
         
+        // -1 war
+        // 0 neutral
+        // 1 peace
+        int warPeaceStatus;
+        
+
         int curseLevel;
         
         int excessCursePoints;

@@ -238,6 +238,7 @@ EditorObjectPage::EditorObjectPage()
 
     mSetClothesPos = false;
     
+    mDescriptionField.usePasteShortcut( true );
 
     addComponent( &mDescriptionField );
     addComponent( &mMapChanceField );

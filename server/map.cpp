@@ -2882,6 +2882,8 @@ void reseedMap( char inForceFresh ) {
         unsigned int seedBase = 
             crc32( (unsigned char*)secret, strlen( secret ) );
         
+        delete [] secret;
+
         unsigned int modTimeSeed = 
             (unsigned int)fmod( Time::getCurrentTime() + seedBase, 
                                 4294967295U );
@@ -8136,6 +8138,30 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         
         }
 
+
+    // final sanity check:
+    // make sure Eves spawn outside of barrier    
+    if( barrierOn ) {
+        
+        if( abs( *outY ) >= barrierRadius ) {
+            if( *outY > 0 ) {
+                *outY = barrierRadius - 3;
+                }
+            else {
+                *outY = - barrierRadius + 3;
+                }
+            }
+        if( abs( *outX ) >= barrierRadius ) {
+            if( *outX > 0 ) {
+                *outX = barrierRadius - 3;
+                }
+            else {
+                *outX = - barrierRadius + 3;
+                }
+            }
+        }
+
+    
     // clear recent placements after placing a new Eve
     // let her make new placements in her life which we will remember
     // later
