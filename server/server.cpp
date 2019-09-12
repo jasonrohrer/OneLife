@@ -15917,7 +15917,13 @@ int main() {
                                             // can treat it like a swap
 
                                     
-                                            if( ! targetObj->permanent ) {
+                                            if( ! targetObj->permanent
+                                                &&
+                                                canPickup( 
+                                                    targetObj->id,
+                                                    computeAge( 
+                                                        nextPlayer ) ) ) {
+                                                
                                                 // target can be picked up
 
                                                 // "set-down" type bare ground 

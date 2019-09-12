@@ -47,6 +47,12 @@ Server Fixes
 --Added sanity check so that no Eves are born outside barrier, no matter what.
   Fixes #377
 
+--Check min pickup age before swapping a held object (with a ground transition)
+  with another object on the ground.  A child can no longer swap a clean pad
+  with a sword, car, bow, etc.  Fixes #378
+
+
+
 
 
 
