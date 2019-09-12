@@ -38,6 +38,9 @@ Server Fixes
   continuing at full speed with a slow-down bloody weapon in your hand.
   Fixes #362
 
+--Fixed so that we clear remembered monomument positions after apocalypse so
+  that we don't keep passing them on to future generations (babies hear about
+  the monument that their mothers know about at age 0.5).  Fixes #363
 
 
 

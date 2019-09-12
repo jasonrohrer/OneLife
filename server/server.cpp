@@ -9478,6 +9478,10 @@ void apocalypseStep() {
                         nextPlayer->firstMapSent = false;
                         nextPlayer->inFlight = false;
                         }
+                    // clear monument pos post-apoc
+                    // so we don't keep passing the stale info on to
+                    // our offspring
+                    nextPlayer->monumentPosSet = false;
                     }
 
                 postApocalypseStarted = true;
@@ -10079,6 +10083,7 @@ static void setPerpetratorHoldingAfterKill( LiveObject *nextPlayer,
 
 
 
+/*
 static void printPath( LiveObject *inPlayer ) {
     printf( "Path: " );
     for( int i=0; i<inPlayer->pathLength; i++ ) {
@@ -10087,6 +10092,8 @@ static void printPath( LiveObject *inPlayer ) {
         }
     printf( "\n" );
     }
+*/
+
 
 
 
