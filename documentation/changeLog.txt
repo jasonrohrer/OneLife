@@ -53,6 +53,8 @@ Server Fixes
   with another object on the ground.  A child can no longer swap a clean pad
   with a sword, car, bow, etc.  Fixes #378
 
+--Fixed memory leak.
+
 
 
 

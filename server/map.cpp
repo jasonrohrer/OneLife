@@ -2882,6 +2882,8 @@ void reseedMap( char inForceFresh ) {
         unsigned int seedBase = 
             crc32( (unsigned char*)secret, strlen( secret ) );
         
+        delete [] secret;
+
         unsigned int modTimeSeed = 
             (unsigned int)fmod( Time::getCurrentTime() + seedBase, 
                                 4294967295U );
