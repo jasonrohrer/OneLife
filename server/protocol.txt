@@ -183,6 +183,8 @@ FORCED_SHUTDOWN (SD)
 
 GLOBAL_MESSAGE (MS)
 
+WAR_REPORT (WR)
+
 FRAME (FM)
 
 PONG
@@ -781,6 +783,25 @@ some_message_text_with_space_replaced_by_underscore
 #
 
 Server sending a global message to be displayed by all non-tutorial clients.
+
+
+
+
+
+WR
+eve_id_a eve_id_b status
+eve_id_c eve_id_d status
+...
+eve_id_e eve_id_f status
+#
+
+Full report of families that are at war or peace.  Unlisted families are
+neutral.
+
+status is either:
+war
+peace
+
 
 
 

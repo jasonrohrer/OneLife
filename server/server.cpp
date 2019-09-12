@@ -285,6 +285,12 @@ static char isWarState( int inLineageAEveID, int inLineageBEveID ) {
 
 
 
+
+
+
+void sendWarReportToAll();
+
+
 void sendPeaceWarMessage( const char *inPeaceOrWar,
                           char inWar,
                           int inLineageAEveID, int inLineageBEveID );
@@ -328,6 +334,7 @@ static void addPeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
             sendPeaceWarMessage( "PEACE", 
                                  false,
                                  p->lineageAEveID, p->lineageBEveID );
+            sendWarReportToAll();
             }
         }
     else {
@@ -416,10 +423,14 @@ static void removePeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
                 sendPeaceWarMessage( "WAR", 
                                      true,
                                      inLineageAEveID, inLineageBEveID );
+                messageSent = true;
                 }
             }
         }
     
+    if( messageSent ) {
+        sendWarReportToAll();
+        }
 
     if( remove ) {
         for( int i=0; i<peaceTreaties.size(); i++ ) {
@@ -8992,6 +9003,78 @@ static void sendMessageToPlayer( LiveObject *inPlayer,
         delete [] message;
         }
     }
+
+
+
+// result destroyed by caller
+static char *getWarReportMessage() {
+    SimpleVector<char> workingMessage;
+    
+    SimpleVector<int> lineageEveIDs;
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( o->error ) {
+            continue;
+            }
+        
+        if( lineageEveIDs.getElementIndex( o->lineageEveID ) == -1 ) {
+            lineageEveIDs.push_back( o->lineageEveID );
+            }
+        }
+
+    workingMessage.appendElementString( "WR\n" );
+
+    // check each unique pair of families
+    for( int a=0; a<lineageEveIDs.size(); a++ ) {
+        int linA = lineageEveIDs.getElementDirect( a );
+        for( int b=a+1; b<lineageEveIDs.size(); b++ ) {
+            int linB = lineageEveIDs.getElementDirect( b );
+            
+            char *line = NULL;
+            if( isWarState( linA, linB ) ) {
+                line = autoSprintf( "%d %d war\n", linA, linB );
+                }
+            else if( isPeaceTreaty( linA, linB ) ) {
+                line = autoSprintf( "%d %d peace\n", linA, linB );
+                }
+            // no line if neutral
+            if( line != NULL ) {
+                workingMessage.appendElementString( line );
+                delete [] line;
+                }
+            }
+        }
+
+    workingMessage.appendElementString( "#" );
+
+    return workingMessage.getElementString();
+    }
+
+
+
+void sendWarReportToAll() {
+    char *w = getWarReportMessage();
+    int len = strlen( w );
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( ! o->error && o->connected ) {
+            sendMessageToPlayer( o, w, len );
+            }
+        }
+    delete [] w;
+    }
+
+
+
+static void sendWarReportToOne( LiveObject *inO ) {
+    char *w = getWarReportMessage();
+    int len = strlen( w );
+    sendMessageToPlayer( inO, w, len );
+    delete [] w;
+    }
     
 
 
@@ -9461,6 +9544,7 @@ void apocalypseStep() {
                 
                 peaceTreaties.deleteAll();
                 warStates.deleteAll();
+                warPeaceRecords.deleteAll();
                 
 
                 lastRemoteApocalypseCheckTime = curTime;
@@ -18830,6 +18914,10 @@ int main() {
                 
                     delete [] dyingMessage;
                     }
+                
+
+                // catch them up on war/peace states
+                sendWarReportToOne( nextPlayer );
 
                 
                 nextPlayer->firstMessageSent = true;

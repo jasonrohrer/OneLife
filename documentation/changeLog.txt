@@ -25,6 +25,10 @@ Version 262    ???
 --Added some safeguards to make sure drawn cursor size never jumps to 0. 
   Fixes jasonrohrer/OneLife#379
 
+--Mousing over someone from another family shows their WAR or PEACE status with
+  your family (no label if neutral).  A new WAR_REPORT message from the server
+  makes this possible.
+
 
 
 

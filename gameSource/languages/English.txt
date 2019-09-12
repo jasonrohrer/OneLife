@@ -385,6 +385,11 @@ nineteen "NINETEEN"
 twenty "TWENTY"
 
 
+atWar "AT WAR"
+
+atPeace "AT PEACE"
+
+
 
 dieCommand "/DIE"
 

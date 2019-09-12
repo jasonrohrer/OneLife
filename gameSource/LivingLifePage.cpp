@@ -934,6 +934,7 @@ typedef enum messageType {
     PHOTO_SIGNATURE,
     FORCED_SHUTDOWN,
     GLOBAL_MESSAGE,
+    WAR_REPORT,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1068,6 +1069,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "MS" ) == 0 ) {
         returnValue = GLOBAL_MESSAGE;
+        }
+    else if( strcmp( copy, "WR" ) == 0 ) {
+        returnValue = WAR_REPORT;
         }
     
     delete [] copy;
@@ -8428,10 +8432,31 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 if( des == NULL ) {
                     des = (char*)translate( "unrelated" );
+
+                    if( otherObj != NULL && otherObj->warPeaceStatus != 0 ) {
+                        
+                        const char *key = "atWar";
+                        if( otherObj->warPeaceStatus > 0 ) {
+                            key = "atPeace";
+                            }
+                        
+                        des = autoSprintf( "%s - %s", des, translate( key ) );
+                        
+                        if( desToDelete != NULL ) {
+                            delete [] desToDelete;
+                            }
+                        
+                        desToDelete = des;
+                        }
                     }
                 if( otherObj != NULL && otherObj->name != NULL ) {
                     des = autoSprintf( "%s - %s",
                                        otherObj->name, des );
+                    
+                    if( desToDelete != NULL ) {
+                        delete [] desToDelete;
+                        }
+                    
                     desToDelete = des;
                     }
                 if( otherObj != NULL && 
@@ -11231,6 +11256,65 @@ void LivingLifePage::step() {
                 delete [] spaces;
                 }
             }
+        else if( type == WAR_REPORT ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+
+            // clear war status of all
+            for( int i=0; i<gameObjects.size(); i++ ) {
+                gameObjects.getElement( i )->warPeaceStatus = 0;
+                }
+
+            int ourLineage = getOurLiveObject()->lineageEveID;
+            
+
+            if( numLines > 1 ) {
+                for( int i=1; i<numLines; i++ ) {
+                    int a = 0;
+                    int b = 0;
+                    char status[20] = "neutral";
+                    sscanf( lines[i], "%d %d %19s", &a, &b, status );
+                    
+                    int stat = 0;
+                    
+                    if( strcmp( status, "war" ) == 0 ) {
+                        stat = -1;
+                        }
+                    else if( strcmp( status, "peace" ) == 0 ) {
+                        stat = 1;
+                        }
+                    
+
+                    if( stat != 0 && a > 0 && b > 0 ) {
+                        int otherID = 0;
+                        if( a == ourLineage ) {
+                            otherID = b;
+                            }
+                        else if( b == ourLineage ) {
+                            otherID = a;
+                            }
+                        
+                        if( otherID != 0 ) {
+                            // mark players in this other line with this
+                            // status
+                            for( int i=0; i<gameObjects.size(); i++ ) {
+                                
+                                LiveObject *o = gameObjects.getElement( i );
+                                
+                                if( o->lineageEveID == otherID ) {
+                                    o->warPeaceStatus = stat;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            for( int i=0; i<numLines; i++ ) {
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
             
@@ -13194,7 +13278,8 @@ void LivingLifePage::step() {
 
                 o.name = NULL;
                 o.relationName = NULL;
-
+                o.warPeaceStatus = 0;
+                
                 o.curseLevel = 0;
                 o.excessCursePoints = 0;
                 o.curseTokenCount = 0;
@@ -16175,6 +16260,24 @@ void LivingLifePage::step() {
 
                                         sscanf( lastToken, "eve=%d",
                                                 &( existing->lineageEveID ) );
+
+                                        if( existing->lineageEveID > 0 ) {
+                                            // copy war status from someone
+                                            // else in this lineage
+                                            for( int i=0; i<gameObjects.size();
+                                                 i++ ) {
+                                                LiveObject *other =
+                                                    gameObjects.getElement( i );
+                                                
+                                                if( other->id != existing->id &&
+                                                    other->lineageEveID ==
+                                                    existing->lineageEveID ) {
+                                                    existing->warPeaceStatus =
+                                                        other->warPeaceStatus;
+                                                    break;
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
 
