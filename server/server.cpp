@@ -2377,8 +2377,6 @@ double computePartialMovePathStepPrecise( LiveObject *inPlayer ) {
 
         if( totalLength > distDone ) {
             // add in extra
-            printf( "Total length = %f at index %d\n",
-                    totalLength, i );
             return ( i - 1 ) + (distDone - lastPosDist) / stepLen;
             }
 
@@ -2394,7 +2392,7 @@ double computePartialMovePathStepPrecise( LiveObject *inPlayer ) {
 
 int computePartialMovePathStep( LiveObject *inPlayer ) {
     return lrint( computePartialMovePathStepPrecise( inPlayer ) );
-     }
+    }
 
 
 
@@ -4357,6 +4355,59 @@ static void setFreshEtaDecayForHeld( LiveObject *inPlayer ) {
 
 
 
+
+static void truncateMove( LiveObject *otherPlayer, int blockedStep ) {
+    
+    int c = computePartialMovePathStep( otherPlayer );
+    
+    otherPlayer->pathLength
+        = blockedStep;
+    otherPlayer->pathTruncated
+        = true;
+    
+    // update timing
+    double dist = 
+        measurePathLength( otherPlayer->xs,
+                           otherPlayer->ys,
+                           otherPlayer->pathToDest,
+                           otherPlayer->pathLength );    
+    
+    double distAlreadyDone =
+        measurePathLength( otherPlayer->xs,
+                           otherPlayer->ys,
+                           otherPlayer->pathToDest,
+                           c );
+    
+    double moveSpeed = computeMoveSpeed( otherPlayer ) *
+        getPathSpeedModifier( otherPlayer->pathToDest,
+                              otherPlayer->pathLength );
+    
+    otherPlayer->moveTotalSeconds 
+        = 
+        dist / 
+        moveSpeed;
+    
+    double secondsAlreadyDone = 
+        distAlreadyDone / 
+        moveSpeed;
+    
+    otherPlayer->moveStartTime = 
+        Time::getCurrentTime() - 
+        secondsAlreadyDone;
+    
+    otherPlayer->newMove = true;
+    
+    otherPlayer->xd 
+        = otherPlayer->pathToDest[
+            blockedStep - 1].x;
+    otherPlayer->yd 
+        = otherPlayer->pathToDest[
+            blockedStep - 1].y;
+    }
+
+                        
+
+
 void handleMapChangeToPaths( 
     int inX, int inY, ObjectRecord *inNewObject,
     SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
@@ -4422,51 +4473,8 @@ void handleMapChangeToPaths(
 
                     if( blocked &&
                         blockedStep > 0 ) {
-                                                
-                        otherPlayer->pathLength
-                            = blockedStep;
-                        otherPlayer->pathTruncated
-                            = true;
-
-                        // update timing
-                        double dist = 
-                            measurePathLength( otherPlayer->xs,
-                                               otherPlayer->ys,
-                                               otherPlayer->pathToDest,
-                                               otherPlayer->pathLength );    
-                                                
-                        double distAlreadyDone =
-                            measurePathLength( otherPlayer->xs,
-                                               otherPlayer->ys,
-                                               otherPlayer->pathToDest,
-                                               c );
-                            
-                        double moveSpeed = computeMoveSpeed( otherPlayer ) *
-                            getPathSpeedModifier( otherPlayer->pathToDest,
-                                                  otherPlayer->pathLength );
-
-                        otherPlayer->moveTotalSeconds 
-                            = 
-                            dist / 
-                            moveSpeed;
-                            
-                        double secondsAlreadyDone = 
-                            distAlreadyDone / 
-                            moveSpeed;
-                                
-                        otherPlayer->moveStartTime = 
-                            Time::getCurrentTime() - 
-                            secondsAlreadyDone;
-                            
-                        otherPlayer->newMove = true;
-                                                
-                        otherPlayer->xd 
-                            = otherPlayer->pathToDest[
-                                blockedStep - 1].x;
-                        otherPlayer->yd 
-                            = otherPlayer->pathToDest[
-                                blockedStep - 1].y;
-                                                
+                        
+                        truncateMove( otherPlayer, blockedStep );
                         }
                     else if( blocked ) {
                         // cutting off path
@@ -10071,6 +10079,16 @@ static void setPerpetratorHoldingAfterKill( LiveObject *nextPlayer,
 
 
 
+static void printPath( LiveObject *inPlayer ) {
+    printf( "Path: " );
+    for( int i=0; i<inPlayer->pathLength; i++ ) {
+        printf( "(%d,%d) ", inPlayer->pathToDest[i].x,
+                inPlayer->pathToDest[i].y );
+        }
+    printf( "\n" );
+    }
+
+
 
 void executeKillAction( int inKillerIndex,
                         int inTargetIndex,
@@ -10406,6 +10424,29 @@ void executeKillAction( int inKillerIndex,
 
                 setPerpetratorHoldingAfterKill( nextPlayer, 
                                                 woundHit, rHit, r );
+
+                // if they are moving, end their move NOW
+                // (this allows their move speed to get updated
+                //  with the murder weapon before their next move)
+                // Otherwise, if their move continues, they might walk
+                // at the wrong speed with the changed weapon
+                
+                if( nextPlayer->xd != nextPlayer->xs ||
+                    nextPlayer->yd != nextPlayer->ys ) {
+                    
+                    int truncationSpot = 
+                        computePartialMovePathStep( nextPlayer );
+                    
+                    if( truncationSpot < nextPlayer->pathLength - 2 ) {
+                        
+                        // truncate a step ahead, to reduce chance 
+                        // of client-side players needing to turn-around
+                        // to reach this truncation point
+
+                        truncateMove( nextPlayer, truncationSpot + 2 );
+                        }                    
+                    }
+                
 
                 timeSec_t oldEtaDecay = 
                     nextPlayer->holdingEtaDecay;

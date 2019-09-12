@@ -31,6 +31,11 @@ Server Fixes
 
 --Special announcement to let players know they have a PAX Expo baby.
 
+--Current move truncated when you land a kill, to prevent a long move from
+  continuing at full speed with a slow-down bloody weapon in your hand.
+  Fixes #362
+
+
 
 
 Version 260    2019-August-28
