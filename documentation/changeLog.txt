@@ -9,6 +9,11 @@ Server Fixes
   new chunks to be sent (so client doesn't see unknown map area when walking
   near edge of mapt chunk).
 
+--Fixed a movement bug that caused jump-back when rapidly clickly to extend a
+  path (a timing bug).  This jump-back would also cause a carried child's view
+  to scroll way off into the unknown map area and then slide back.
+
+
 
 
 Version 262    2019-September-12

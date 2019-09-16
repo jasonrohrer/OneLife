@@ -2459,10 +2459,14 @@ doublePair computePartialMoveSpotPrecise( LiveObject *inPlayer ) {
 
 
 
-GridPos computePartialMoveSpot( LiveObject *inPlayer ) {
+// if inOverrideC > -2, then it is used instead of current partial move step
+GridPos computePartialMoveSpot( LiveObject *inPlayer, int inOverrideC = -2 ) {
 
-    int c = computePartialMovePathStep( inPlayer );
-
+    int c = inOverrideC;
+    if( c < -1 ) {
+        c = computePartialMovePathStep( inPlayer );
+        }
+    
     if( c >= 0 ) {
         
         GridPos cPos = inPlayer->pathToDest[c];
@@ -13412,6 +13416,7 @@ int main() {
 
                             // where we think they are along last move path
                             GridPos cPos;
+                            int c;
                             
                             if( nextPlayer->xs != nextPlayer->xd 
                                 ||
@@ -13419,12 +13424,14 @@ int main() {
                                 
                                 // a real interrupt to a move that is
                                 // still in-progress on server
-                                cPos = computePartialMoveSpot( nextPlayer );
+                                c = computePartialMovePathStep( nextPlayer );
+                                cPos = computePartialMoveSpot( nextPlayer, c );
                                 }
                             else {
                                 // we think their last path is done
                                 cPos.x = nextPlayer->xs;
                                 cPos.y = nextPlayer->ys;
+                                c = -1;
                                 }
                             
                             /*
@@ -13504,9 +13511,7 @@ int main() {
                                 // (we may walk backward along the old
                                 //  path to do this)
                                 
-                                int c = computePartialMovePathStep( 
-                                    nextPlayer );
-                                    
+
                                 // -1 means starting, pre-path 
                                 // pos is closest
                                 // but okay to leave c at -1, because
