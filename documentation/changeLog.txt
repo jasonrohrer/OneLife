@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Fixed so that long paths that go near edge of client's known map chunk cause
+  new chunks to be sent (so client doesn't see unknown map area when walking
+  near edge of mapt chunk).
+
+
+
 Version 262    2019-September-12
 
 --Incorporated PAX West hotfixes to kiosk mode.

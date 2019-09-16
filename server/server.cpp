@@ -599,6 +599,11 @@ typedef struct LiveObject {
         int lastSentMapX;
         int lastSentMapY;
         
+        // path dest for the last full path that we checked completely
+        // for getting too close to player's known map chunk
+        GridPos mapChunkPathCheckedDest;
+        
+
         double moveTotalSeconds;
         double moveStartTime;
         
@@ -6882,6 +6887,10 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.xd = 0;
     newObject.yd = 0;
     
+    newObject.mapChunkPathCheckedDest.x = 0;
+    newObject.mapChunkPathCheckedDest.y = 0;
+    
+
     newObject.lastRegionLookTime = 0;
     newObject.playerCrossingCheckTime = 0;
     
@@ -19265,10 +19274,88 @@ int main() {
 
                         delete [] temp;
                         }
+                    
+                    // done handling sending new map chunk and player updates
+                    // for players in the new chunk
                     }
-                // done handling sending new map chunk and player updates
-                // for players in the new chunk
-                
+                else {
+                    // check if moving path goes near edge of player's
+                    // known map
+                    LiveObject *playerToCheck = nextPlayer;
+                    if( nextPlayer->heldByOther ) {
+                        LiveObject *holdingPlayer = 
+                            getLiveObject( nextPlayer->heldByOtherID );
+                        
+                        if( holdingPlayer != NULL ) { 
+                            playerToCheck = holdingPlayer;
+                            }
+                        }
+                    
+                    if( ( playerToCheck->xd != playerToCheck->xs ||
+                          playerToCheck->yd != playerToCheck->ys ) 
+                        && 
+                        playerToCheck->pathToDest != NULL 
+                        &&
+                        ( nextPlayer->mapChunkPathCheckedDest.x 
+                          != playerToCheck->xd || 
+                          nextPlayer->mapChunkPathCheckedDest.y 
+                          != playerToCheck->yd ) ) {
+                        // moving and haven't checked this path before
+                        // to see if it gets too close to the edge of the
+                        // map
+                        
+                        // remember it to not check it again
+                        nextPlayer->mapChunkPathCheckedDest.x =
+                            playerToCheck->xd;
+                        nextPlayer->mapChunkPathCheckedDest.y =
+                            playerToCheck->yd;
+
+                        // find most distant points on current path
+                            
+                        GridPos xFarPos, yFarPos;
+                        int xFarPosDist = 0;
+                        int yFarPosDist = 0;
+                            
+                        for( int i=0; i < playerToCheck->pathLength; i++ ) {
+                            GridPos p = playerToCheck->pathToDest[i];
+                                
+                            int xdist = 
+                                abs( p.x - nextPlayer->lastSentMapX );
+                            int ydist = 
+                                abs( p.y - nextPlayer->lastSentMapY );
+                                
+                            if( xdist > xFarPosDist ) {
+                                xFarPos = p;
+                                xFarPosDist = xdist;
+                                }
+                            if( ydist > yFarPosDist ) {
+                                yFarPos = p;
+                                yFarPosDist = ydist;
+                                }
+                            }
+                            
+                        if( xFarPosDist > 0 && 
+                            abs( xFarPos.x - 
+                                 nextPlayer->lastSentMapX ) > 7 ) {
+                            
+                            sendMapChunkMessage( nextPlayer,
+                                                 // override chunk pos
+                                                 true,
+                                                 xFarPos.x,
+                                                 xFarPos.y );
+                            }
+                        if( yFarPosDist > 0 &&
+                            abs( yFarPos.y - 
+                                 nextPlayer->lastSentMapY ) > 7 ) {
+                                
+                            sendMapChunkMessage( nextPlayer,
+                                                 // override chunk pos
+                                                 true,
+                                                 yFarPos.x,
+                                                 yFarPos.y );
+                            }
+                        }
+                    }
                 
 
                 // EVERYONE gets info about dying players
