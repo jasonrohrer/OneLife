@@ -34,6 +34,7 @@ Server Fixes
   blocked from being born in a given area because of curses, so are you, and
   you all go to donkeytown if there's no area for one of you.
 
+--Twins sent to donkeytown based on personal curses all have black speech.
 
 
 

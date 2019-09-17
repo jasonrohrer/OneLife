@@ -7959,6 +7959,12 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             parent = -2;
             }
 
+
+        char usePersonalCurses = 
+            SettingsManager::getIntSetting( "usePersonalCurses", 0 );
+    
+
+
         // save these out here, because newPlayer points into 
         // tutorialLoadingPlayers, which may expand during this loop,
         // invalidating that pointer
@@ -7983,6 +7989,19 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                    forcedEvePos );
             
             // just added is always last object in list
+            
+            if( usePersonalCurses ) {
+                // curse level not known until after first twin logs in
+                // their curse level is set based on blockage caused
+                // by any of the other twins in the party
+                // pass it on.
+                LiveObject *newTwinPlayer = 
+                    players.getElement( players.size() - 1 );
+                newTwinPlayer->curseStatus = newPlayer->curseStatus;
+                }
+
+
+
             LiveObject newTwinPlayer = 
                 players.getElementDirect( players.size() - 1 );
 
