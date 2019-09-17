@@ -17,6 +17,11 @@ Server Fixes
   including their time in the tutorial), their mother gets a message when they
   are born.
 
+--Personal curses now block someone from being born near you for 7 days (was 2
+  days).  Fixes #384
+
+
+
 
 
 
