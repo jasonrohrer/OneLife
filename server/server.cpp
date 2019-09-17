@@ -6811,7 +6811,8 @@ int processLoggedInPlayer( char inAllowReconnect,
         // no mother for them, send them to d-town
         
         char someFertileNotCurseBlocked = false;
-                
+        char someFertileCurseBlocked = false;
+        
         // consider all fertile mothers
         for( int i=0; i<numPlayers; i++ ) {
             LiveObject *player = players.getElement( i );
@@ -6831,20 +6832,23 @@ int processLoggedInPlayer( char inAllowReconnect,
             if( player->curseStatus.curseLevel > 0 ) {
                 continue;
                 }
-            
-            if( isBirthLocationCurseBlocked( newObject.email, 
-                                             getPlayerPos( player ) ) ) {
-                // this spot forbidden because someone nearby cursed new player
-                continue;
-                }
-            
+
             if( isFertileAge( player ) ) {
+            
+                if( isBirthLocationCurseBlocked( newObject.email, 
+                                                 getPlayerPos( player ) ) ) {
+                    // this spot forbidden because 
+                    // someone nearby cursed new player
+                    someFertileCurseBlocked = true;
+                    continue;
+                    }
+            
                 someFertileNotCurseBlocked = true;
                 break;
                 }
             }
 
-        if( ! someFertileNotCurseBlocked ) {
+        if( someFertileCurseBlocked && ! someFertileNotCurseBlocked ) {
             // they are blocked from being born EVERYWHERE by curses
 
             // d-town
