@@ -6801,6 +6801,63 @@ int processLoggedInPlayer( char inAllowReconnect,
         }
     
 
+    if( inCurseStatus.curseLevel <= 0 &&
+        ! forceParentChoices && 
+        parentChoices.size() == 0 &&
+        eveWindow &&
+        ! apocalypseTriggered &&
+        usePersonalCurses ) {
+        // still in Eve window, and found no choices for this player
+        // to be born to.
+
+        // let's check if ALL fertile mothers have them curse-blocked,
+        // currently.  If so, and that's the reason we could find
+        // no mother for them, send them to d-town
+        
+        char someFertileNotCurseBlocked = false;
+                
+        // consider all fertile mothers
+        for( int i=0; i<numPlayers; i++ ) {
+            LiveObject *player = players.getElement( i );
+        
+            if( player->error ) {
+                continue;
+                }
+            
+            if( player->isTutorial ) {
+                continue;
+                }
+            
+            if( player->vogMode ) {
+                continue;
+                }
+            
+            if( player->curseStatus.curseLevel > 0 ) {
+                continue;
+                }
+            
+            if( isBirthLocationCurseBlocked( newObject.email, 
+                                             getPlayerPos( player ) ) ) {
+                // this spot forbidden because someone nearby cursed new player
+                continue;
+                }
+            
+            if( isFertileAge( player ) ) {
+                someFertileNotCurseBlocked = true;
+                break;
+                }
+            }
+
+        if( ! someFertileNotCurseBlocked ) {
+            // they are blocked from being born EVERYWHERE by curses
+
+            // d-town
+            inCurseStatus.curseLevel = 1;
+            inCurseStatus.excessPoints = 1;
+            }
+        }
+    
+
 
 
     newObject.parentChainLength = 1;

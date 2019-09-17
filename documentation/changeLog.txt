@@ -24,6 +24,9 @@ Server Fixes
   location blocked, was only checking first player on the list.  This meant
   that personal curses didn't work correctly most of the time.
 
+--During Eve window, if all fertile mothers have a player curse-blocked, they
+  go to donkeytown (they used to spawn as Eve inside the rift barrier).
+
 
 
 
