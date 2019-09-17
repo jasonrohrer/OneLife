@@ -271,5 +271,22 @@ char isBirthLocationCurseBlocked( const char *inTargetEmail, GridPos inPos ) {
 
 
 
+char isBirthLocationCurseBlockedNoCache( const char *inTargetEmail, 
+                                         GridPos inPos ) {
+    for( int i=0; i<blockingRecords.size(); i++ ) {
+        PersonRecord *r = blockingRecords.getElement( i );
+        
+        if( distance( inPos, r->pos ) <= curseBlockRadius ) {
+            
+            // in radius
+            if( isCursed( r->email, inTargetEmail ) ) {
+                return true;
+                }
+            }
+        }
+    return false;
+    }
+
+
 
 

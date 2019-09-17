@@ -30,6 +30,10 @@ Server Fixes
 --Simplified mother picking code (without changing behavior) in anticipation of
   some additional fixes.
 
+--Fixed twin loophole in personal curse implementation.  If your twin is
+  blocked from being born in a given area because of curses, so are you, and
+  you all go to donkeytown if there's no area for one of you.
+
 
 
 

@@ -6570,6 +6570,15 @@ int processLoggedInPlayer( char inAllowReconnect,
                     twinBanned = true;
                     break;
                     }
+                if( usePersonalCurses &&
+                    // non-cached version for twin emails
+                    // (otherwise, we interfere with caching done
+                    //  for our email)
+                    isBirthLocationCurseBlockedNoCache( 
+                        tempTwinEmails.getElementDirect( s ), motherPos ) ) {
+                    twinBanned = true;
+                    break;
+                    }
                 }
             
             if( twinBanned ) {
@@ -6764,13 +6773,33 @@ int processLoggedInPlayer( char inAllowReconnect,
                 continue;
                 }
             
+            GridPos playerPos = getPlayerPos( player );
+            
             if( usePersonalCurses && 
                 isBirthLocationCurseBlocked( newObject.email, 
-                                             getPlayerPos( player ) ) ) {
+                                             playerPos ) ) {
                 // this spot forbidden because someone nearby cursed new player
                 anyCurseBlocked = true;
                 continue;
                 }
+            
+            char twinBanned = false;
+            if( usePersonalCurses ) {
+                for( int s=0; s<tempTwinEmails.size(); s++ ) {
+                    if( isBirthLocationCurseBlockedNoCache( 
+                            tempTwinEmails.getElementDirect( s ), 
+                            playerPos ) ) {
+                        twinBanned = true;
+                        break;
+                        }
+                    }
+                }
+            
+            if( twinBanned ) {
+                anyCurseBlocked = true;
+                continue;
+                }
+
             
             if( isFertileAge( player ) ) {
                 parentChoices.push_back( player );
@@ -6834,15 +6863,34 @@ int processLoggedInPlayer( char inAllowReconnect,
                 }
 
             if( isFertileAge( player ) ) {
-            
-                if( isBirthLocationCurseBlocked( newObject.email, 
-                                                 getPlayerPos( player ) ) ) {
+                GridPos playerPos = getPlayerPos( player );
+                
+                if( isBirthLocationCurseBlocked( newObject.email,
+                                                 playerPos ) ) {
                     // this spot forbidden because 
                     // someone nearby cursed new player
                     someFertileCurseBlocked = true;
                     continue;
                     }
-            
+
+                char twinBanned = false;
+                if( usePersonalCurses ) {
+                    for( int s=0; s<tempTwinEmails.size(); s++ ) {
+                        if( isBirthLocationCurseBlockedNoCache( 
+                                tempTwinEmails.getElementDirect( s ), 
+                                playerPos ) ) {
+                            twinBanned = true;
+                            break;
+                            }
+                        }
+                    }
+                
+                if( twinBanned ) {
+                    someFertileCurseBlocked = true;
+                    continue;
+                    }
+
+                
                 someFertileNotCurseBlocked = true;
                 break;
                 }
