@@ -27,6 +27,8 @@ Server Fixes
 --During Eve window, if all fertile mothers have a player curse-blocked, they
   go to donkeytown (they used to spawn as Eve inside the rift barrier).
 
+--Simplified mother picking code (without changing behavior) in anticipation of
+  some additional fixes.
 
 
 

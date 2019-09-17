@@ -6543,14 +6543,10 @@ int processLoggedInPlayer( char inAllowReconnect,
 
         if( isFertileAge( player ) ) {
             numOfAge ++;
-            
-            // make sure this woman isn't on cooldown
-            // and that she's not a bad mother
-            char canHaveBaby = true;
 
             
             if( Time::timeSec() < player->birthCoolDown ) {    
-                canHaveBaby = false;
+                continue;
                 }
             
             GridPos motherPos = getPlayerPos( player );
@@ -6584,7 +6580,7 @@ int processLoggedInPlayer( char inAllowReconnect,
 
             int numPastBabies = player->babyIDs->size();
             
-            if( canHaveBaby && numPastBabies >= badMotherLimit ) {
+            if( numPastBabies >= badMotherLimit ) {
                 int numDead = 0;
                 
                 for( int b=0; b < numPastBabies; b++ ) {
@@ -6616,7 +6612,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                 if( numDead >= badMotherLimit ) {
                     // this is a bad mother who lets all babies die
                     // don't give them more babies
-                    canHaveBaby = false;
+                    continue;
                     }
                 }
 
@@ -6630,21 +6626,21 @@ int processLoggedInPlayer( char inAllowReconnect,
                 
                 if( abs( playerPos.x ) >= barrierRadius ||
                     abs( playerPos.y ) >= barrierRadius ) {
-                    canHaveBaby = false;
+                    continue;
                     }
                 }
 
-            
-            if( canHaveBaby ) {
-                if( ( inCurseStatus.curseLevel <= 0 && 
-                      player->curseStatus.curseLevel <= 0 ) 
-                    || 
-                    ( inCurseStatus.curseLevel > 0 && 
-                      player->curseStatus.curseLevel > 0 ) ) {
-                    // cursed babies only born to cursed mothers
-                    // non-cursed babies never born to cursed mothers
-                    parentChoices.push_back( player );
-                    }
+
+            // got past all other tests
+
+            if( ( inCurseStatus.curseLevel <= 0 && 
+                  player->curseStatus.curseLevel <= 0 ) 
+                || 
+                ( inCurseStatus.curseLevel > 0 && 
+                  player->curseStatus.curseLevel > 0 ) ) {
+                // cursed babies only born to cursed mothers
+                // non-cursed babies never born to cursed mothers
+                parentChoices.push_back( player );
                 }
             }
         }
