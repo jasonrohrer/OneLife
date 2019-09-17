@@ -20,6 +20,11 @@ Server Fixes
 --Personal curses now block someone from being born near you for 7 days (was 2
   days).  Fixes #384
 
+--Fixed major bug in personal curse implementation.  When checking if birth
+  location blocked, was only checking first player on the list.  This meant
+  that personal curses didn't work correctly most of the time.
+
+
 
 
 

@@ -261,7 +261,9 @@ char isBirthLocationCurseBlocked( const char *inTargetEmail, GridPos inPos ) {
                 r->blocking = isCursed( r->email, inTargetEmail );
                 }
             
-            return ( r->blocking == 1 );
+            if( r->blocking == 1 ) {
+                return true;
+                }
             }
         }
     return false;
