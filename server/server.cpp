@@ -447,6 +447,14 @@ static void removePeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
     }
 
 
+typedef struct PastLifeStats {
+        int lifeCount;
+        int lifeTotalSeconds;
+        char error;
+    } PastLifeStats;
+
+    
+
 
 
 // for incoming socket connections that are still in the login process
@@ -478,6 +486,7 @@ typedef struct FreshConnection {
         
         int tutorialNumber;
         CurseStatus curseStatus;
+        PastLifeStats lifeStats;
         
         char *twinCode;
         int twinCount;
@@ -515,6 +524,7 @@ typedef struct LiveObject {
         char *lastSay;
 
         CurseStatus curseStatus;
+        PastLifeStats lifeStats;
         
         int curseTokenCount;
         char curseTokenUpdate;
@@ -6174,6 +6184,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                            char *inEmail,
                            int inTutorialNumber,
                            CurseStatus inCurseStatus,
+                           PastLifeStats inLifeStats,
                            // set to -2 to force Eve
                            int inForceParentID = -1,
                            int inForceDisplayID = -1,
@@ -7373,6 +7384,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.nameHasSuffix = false;
     newObject.lastSay = NULL;
     newObject.curseStatus = inCurseStatus;
+    newObject.lifeStats = inLifeStats;
     
 
     if( newObject.curseStatus.curseLevel == 0 &&
@@ -7527,6 +7539,25 @@ int processLoggedInPlayer( char inAllowReconnect,
                 (char*)"YOUR BABY IS A NEW PLAYER FROM THE PAX EXPO BOOTH.**"
                 "PLEASE HELP THEM LEARN THE GAME.  THANKS!  -JASON",
                 parent );
+            }
+        else if( isUsingStatsServer() && 
+                 ! newObject.lifeStats.error &&
+                 ( newObject.lifeStats.lifeCount < 
+                   SettingsManager::getIntSetting( "newPlayerLifeCount", 5 ) ||
+                   newObject.lifeStats.lifeTotalSeconds < 
+                   SettingsManager::getIntSetting( "newPlayerLifeTotalSeconds",
+                                                   7200 ) ) ) {
+            // a new player (not at a PAX kiosk)
+            // let mother know
+            char *motherMessage =  
+                SettingsManager::getSettingContents( 
+                    "newPlayerMessageForMother", "" );
+            
+            if( strcmp( motherMessage, "" ) != 0 ) {
+                sendGlobalMessage( motherMessage, parent );
+                }
+            
+            delete [] motherMessage;
             }
         }
 
@@ -7766,7 +7797,8 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                            inConnection.sockBuffer,
                                            inConnection.email,
                                            inConnection.tutorialNumber,
-                                           anyTwinCurseLevel );
+                                           anyTwinCurseLevel,
+                                           inConnection.lifeStats );
         tempTwinEmails.deleteAll();
         
         if( newID == -1 ) {
@@ -7840,6 +7872,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                    // first player
                                    0,
                                    anyTwinCurseLevel,
+                                   nextConnection->lifeStats,
                                    parent,
                                    displayID,
                                    forcedEvePos );
@@ -11736,6 +11769,31 @@ int main() {
                         nextConnection->curseStatus.excessPoints );
                     }
                 }
+            else if( nextConnection->email != NULL &&
+                nextConnection->lifeStats.lifeCount == -1 ) {
+                // keep checking if life stats have arrived from
+                // stats server
+                int statsResult = getPlayerLifeStats( nextConnection->email,
+                    &( nextConnection->lifeStats.lifeCount ),
+                    &( nextConnection->lifeStats.lifeTotalSeconds ) );
+                
+                if( statsResult == -1 ) {
+                    // error
+                    // it's done now!
+                    nextConnection->lifeStats.lifeCount = 0;
+                    nextConnection->lifeStats.lifeTotalSeconds = 0;
+                    nextConnection->lifeStats.error = true;
+                    }
+                else if( statsResult == 1 ) {
+                    AppLog::infoF( 
+                        "Got life stats for %s from stats server: "
+                        "%d lives, %d total seconds (%.2lf hours)",
+                        nextConnection->email,
+                        nextConnection->lifeStats.lifeCount,
+                        nextConnection->lifeStats.lifeTotalSeconds,
+                        nextConnection->lifeStats.lifeTotalSeconds / 3600.0 );
+                    }
+                }
             else if( nextConnection->ticketServerRequest != NULL &&
                      ! nextConnection->ticketServerAccepted ) {
                 
@@ -11882,7 +11940,8 @@ int main() {
                             nextConnection->sockBuffer,
                             nextConnection->email,
                             nextConnection->tutorialNumber,
-                            nextConnection->curseStatus );
+                            nextConnection->curseStatus,
+                            nextConnection->lifeStats );
                         }
                                                         
                     newConnections.deleteElement( i );
@@ -11972,7 +12031,30 @@ int main() {
                             // we'll catch that case later above
                             nextConnection->curseStatus =
                                 getCurseLevel( nextConnection->email );
+
+
+                            nextConnection->lifeStats.lifeCount = -1;
+                            nextConnection->lifeStats.lifeTotalSeconds = -1;
+                            nextConnection->lifeStats.error = false;
                             
+                            // this will leave them as -1 if request pending
+                            // we'll catch that case later above
+                            int statsResult = getPlayerLifeStats(
+                                nextConnection->email,
+                                &( nextConnection->
+                                   lifeStats.lifeCount ),
+                                &( nextConnection->
+                                   lifeStats.lifeTotalSeconds ) );
+
+                            if( statsResult == -1 ) {
+                                // error
+                                // it's done now!
+                                nextConnection->lifeStats.lifeCount = 0;
+                                nextConnection->lifeStats.lifeTotalSeconds = 0;
+                                nextConnection->lifeStats.error = true;
+                                }
+                                
+
 
                             if( requireClientPassword &&
                                 ! nextConnection->error  ) {
@@ -12076,7 +12158,8 @@ int main() {
                                             nextConnection->sockBuffer,
                                             nextConnection->email,
                                             nextConnection->tutorialNumber,
-                                            nextConnection->curseStatus );
+                                            nextConnection->curseStatus,
+                                            nextConnection->lifeStats );
                                         }
                                                                         
                                     newConnections.deleteElement( i );

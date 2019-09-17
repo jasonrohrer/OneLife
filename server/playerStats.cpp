@@ -25,14 +25,26 @@ static char *statsServerSharedSecret = NULL;
 
 typedef struct StatRecord {
         char *email;
+        // > 0 if this is a stats recording action
+        // -1 if this is a lookup action
         int numGameSeconds;
         WebRequest *request;
         // -1 until first request gets it
         int sequenceNumber;
+
+        // filled by lookup requests
+        int gameCount;
+        int gameTotalSeconds;
+        char error;
+        
+        const char *serverAction;
     } StatRecord;
 
 
 static SimpleVector<StatRecord> records;
+
+// lookups waiting to be processed
+static SimpleVector<StatRecord> doneLookups;
 
 
 
@@ -91,6 +103,12 @@ void freePlayerStats() {
         delete [] records.getElement(i)->email;
         }
     records.deleteAll();
+
+    for( int i=0; i<doneLookups.size(); i++ ) {
+        delete doneLookups.getElement(i)->request;
+        delete [] doneLookups.getElement(i)->email;
+        }
+    doneLookups.deleteAll();
     }
 
 
@@ -99,49 +117,98 @@ void freePlayerStats() {
 int getPlayerLifeStats( char *inEmail, int *outNumLives, 
                         int *outTotalSeconds ) {
     
-    unsigned char key[50];
-    
-    unsigned char value[8];
+    if( useStatsServer ) {
+        for( int i=0; i<doneLookups.size(); i++ ) {
+            StatRecord *r = doneLookups.getElement( i );
+            
+            if( strcmp( r->email, inEmail ) == 0 ) {
+                // found
 
-    emailToKey( inEmail, key );
-    
-    int result = KISSDB_get( &db, key, value );
-    
-    if( result == 0 ) {
-        // found
-        *outNumLives = valueToInt( &( value[0] ) );
-        *outTotalSeconds = valueToInt( &( value[4] ) );
+                char error = false;
+                if( r->error ) {
+                    error = true;
+                    }
+                else {
+                    *outNumLives = r->gameCount;
+                    *outTotalSeconds = r->gameTotalSeconds;
+                    }
+                
+                delete r->request;
+                delete [] r->email;
+                
+                doneLookups.deleteElement( i );
+                
+                if( error ) {
+                    return -1;
+                    }
+                else {
+                    return 1;
+                    }
+                }
+            }
         
-        return 1;
+        for( int i=0; i<records.size(); i++ ) {
+            StatRecord *r = records.getElement( i );
+            
+            if( strcmp( r->email, inEmail ) == 0 ) {
+                // still in progress
+                return 0;
+                }
+            }
+        
+        // no request exists
+
+        WebRequest *request;
+        
+        char *encodedEmail = URLUtils::urlEncode( inEmail );
+
+        char *url = autoSprintf( 
+            "%s?action=get_sequence_number"
+            "&email=%s",
+            statsServerURL,
+            encodedEmail );
+        
+        delete [] encodedEmail;
+        
+        request = new WebRequest( "GET", url, NULL );
+        printf( "Starting new web request for %s\n", url );
+        
+        delete [] url;
+
+        StatRecord r = { stringDuplicate( inEmail ), 
+                         // lookup
+                         -1, 
+                         request, -1,
+                         -1, -1, false, "get_sequence_number" };
+        records.push_back( r );
+        // in progress
+        return 0;
         }
     else {
-        return -1;
+        unsigned char key[50];
+    
+        unsigned char value[8];
+
+        emailToKey( inEmail, key );
+    
+        int result = KISSDB_get( &db, key, value );
+    
+        if( result == 0 ) {
+            // found
+            *outNumLives = valueToInt( &( value[0] ) );
+            *outTotalSeconds = valueToInt( &( value[4] ) );
+        
+            return 1;
+            }
+        else {
+            return -1;
+            }
         }
     }
-        
+
 
 
 void recordPlayerLifeStats( char *inEmail, int inNumSecondsLived ) {
-    int numLives = 0;
-    int numSec = 0;
-    
-    getPlayerLifeStats( inEmail, &numLives, &numSec );
-    
-    numLives++;
-    numSec += inNumSecondsLived;
-    
-    
-    unsigned char key[50];
-    unsigned char value[8];
-    
-
-    emailToKey( inEmail, key );
-    
-    intToValue( numLives, &( value[0] ) );
-    intToValue( numSec, &( value[4] ) );
-            
-    
-    KISSDB_put( &db, key, value );
 
     if( useStatsServer ) {
         
@@ -163,8 +230,31 @@ void recordPlayerLifeStats( char *inEmail, int inNumSecondsLived ) {
         delete [] url;
 
         StatRecord r = { stringDuplicate( inEmail ), inNumSecondsLived, 
-                         request, -1 };
+                         request, -1, 
+                         -1, -1, false, "get_sequence_number" };
         records.push_back( r );
+        }
+    else {
+        int numLives = 0;
+        int numSec = 0;
+        
+        getPlayerLifeStats( inEmail, &numLives, &numSec );
+        
+        numLives++;
+        numSec += inNumSecondsLived;
+        
+        
+        unsigned char key[50];
+        unsigned char value[8];
+        
+
+        emailToKey( inEmail, key );
+    
+        intToValue( numLives, &( value[0] ) );
+        intToValue( numSec, &( value[4] ) );
+            
+    
+        KISSDB_put( &db, key, value );
         }
     }
 
@@ -199,6 +289,7 @@ void stepPlayerStats() {
                 if( numRead != 1 ) {
                     AppLog::info( "Failed to read sequence number "
                                   "from stats server response." );
+                    r->error = true;
                     recordDone = true;
                     }
                 else {
@@ -215,17 +306,36 @@ void stepPlayerStats() {
                     
                     char *encodedEmail = URLUtils::urlEncode( r->email );
                     
-                    char *url = autoSprintf( 
-                        "%s?action=log_game"
-                        "&email=%s"
-                        "&game_seconds=%d"
-                        "&sequence_number=%d"
-                        "&hash_value=%s",
-                        statsServerURL,
-                        encodedEmail,
-                        r->numGameSeconds,
-                        r->sequenceNumber,
-                        hash );
+                    char *url;
+
+                    if( r->numGameSeconds == -1 ) {
+                        // lookup
+                        url = autoSprintf( 
+                            "%s?action=get_stats"
+                            "&email=%s"
+                            "&sequence_number=%d"
+                            "&hash_value=%s",
+                            statsServerURL,
+                            encodedEmail,
+                            r->sequenceNumber,
+                            hash );
+                        r->serverAction = "get_stats";
+                        }
+                    else {
+                        url = autoSprintf( 
+                            "%s?action=log_game"
+                            "&email=%s"
+                            "&game_seconds=%d"
+                            "&sequence_number=%d"
+                            "&hash_value=%s",
+                            statsServerURL,
+                            encodedEmail,
+                            r->numGameSeconds,
+                            r->sequenceNumber,
+                            hash );
+                        r->serverAction = "log_game";
+                        }
+                    
                     
                     delete [] encodedEmail;
                     delete [] hash;
@@ -239,9 +349,18 @@ void stepPlayerStats() {
             else {
                 
                 if( strstr( webResult, "DENIED" ) != NULL ) {
-                    AppLog::info( 
-                        "Server log_game request rejected by stats server" );
+                    AppLog::infoF( 
+                        "Server %s request rejected by stats server", 
+                        r->serverAction );
+                    r->error = true;
                     }
+                else if( r->numGameSeconds == -1 && 
+                         strstr( webResult, "OK" ) != NULL ) {
+                    // lookup result
+                    sscanf( webResult, "%d\n%d\n", 
+                            &( r->gameCount ), &( r->gameTotalSeconds ) );
+                    }
+                
                 recordDone = true;
                 }
             
@@ -249,8 +368,14 @@ void stepPlayerStats() {
             }
 
         if( recordDone ) {
-            delete r->request;
-            delete [] r->email;
+            if( r->numGameSeconds == -1 ) {
+                // done lookup request
+                doneLookups.push_back( *r );
+                }
+            else {
+                delete r->request;
+                delete [] r->email;
+                }
             
             records.deleteElement( i );
             i--;
@@ -258,3 +383,8 @@ void stepPlayerStats() {
         }
     }
 
+
+
+char isUsingStatsServer() {
+    return useStatsServer;
+    }

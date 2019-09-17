@@ -13,6 +13,10 @@ Server Fixes
   path (a timing bug).  This jump-back would also cause a carried child's view
   to scroll way off into the unknown map area and then slide back.
 
+--If a new player has played less than 5 lives or less than 2 hours total (not
+  including their time in the tutorial), their mother gets a message when they
+  are born.
+
 
 
 
