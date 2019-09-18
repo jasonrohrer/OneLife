@@ -41,6 +41,8 @@ Server Fixes
 
 --Fixed so that you can't add things to slots in DIE-baby graves.
 
+--Player counted as new if <4 hours lived in game (was 2).
+
 
 
 
