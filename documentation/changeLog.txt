@@ -43,6 +43,14 @@ Server Fixes
 
 --Player counted as new if <4 hours lived in game (was 2).
 
+--Fixed case where force-drop happens (during death or wounding) when no direct
+  bare-ground transition applies to the permanent held object (example:  cast
+  fishing pole).  In this case, we check for a timed transition first, and then
+  look for a bare-ground transition after that timed transition is applied.
+  Also, in case where bare ground transition leaves something in hand (example:
+  pole with old boot), we toss both things (before, the pole would disappear,
+  leaving only the boot).  Fixes #388
+
 
 
 

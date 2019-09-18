@@ -5149,9 +5149,48 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
         TransRecord *bareTrans =
             getPTrans( oldHoldingID, -1 );
                             
+
+        if( bareTrans == NULL ||
+            bareTrans->newTarget == 0 ) {
+            // no immediate bare ground trans
+            // check if there's a timer transition for this held object
+            // (like cast fishing pole)
+            // and force-run that transition now
+            TransRecord *timeTrans = getPTrans( -1, oldHoldingID );
+            
+            if( timeTrans != NULL && timeTrans->newTarget != 0 ) {
+                oldHoldingID = timeTrans->newTarget;
+            
+                inDroppingPlayer->holdingID = 
+                    timeTrans->newTarget;
+                holdingSomethingNew( inDroppingPlayer, oldHoldingID );
+
+                setFreshEtaDecayForHeld( inDroppingPlayer );
+                }
+
+            if( getObject( oldHoldingID )->permanent ) {
+                // still permanent after timed trans
+                
+                // check again for a bare ground trans
+                bareTrans =
+                    getPTrans( oldHoldingID, -1 );
+                }
+            }
+        
+
         if( bareTrans != NULL &&
             bareTrans->newTarget > 0 ) {
-                            
+            
+            if( bareTrans->newActor > 0 ) {
+                // something would be left in hand
+                
+                // throw it down first
+                inDroppingPlayer->holdingID = bareTrans->newActor;
+                setFreshEtaDecayForHeld( inDroppingPlayer );
+                handleDrop( inX, inY, inDroppingPlayer, 
+                            inPlayerIndicesToSendUpdatesAbout );
+                }
+
             oldHoldingID = bareTrans->newTarget;
             
             inDroppingPlayer->holdingID = 
