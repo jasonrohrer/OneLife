@@ -39,6 +39,7 @@ Server Fixes
 --Fixed a jump-back movement glitch when a slow client tries to interrupt a
   move that the server thinks is already done.
 
+--Fixed so that you can't add things to slots in DIE-baby graves.
 
 
 
