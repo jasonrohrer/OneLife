@@ -36,6 +36,9 @@ Server Fixes
 
 --Twins sent to donkeytown based on personal curses all have black speech.
 
+--Fixed a jump-back movement glitch when a slow client tries to interrupt a
+  move that the server thinks is already done.
+
 
 
 

@@ -13604,8 +13604,10 @@ int main() {
                         // path PLUS path that player is suggesting
                         SimpleVector<GridPos> unfilteredPath;
 
-                        if( nextPlayer->xs != m.x ||
-                            nextPlayer->ys != m.y ) {
+                        if( nextPlayer->pathLength > 0 &&
+                            nextPlayer->pathToDest != NULL &&
+                            ( nextPlayer->xs != m.x ||
+                              nextPlayer->ys != m.y ) ) {
                             
                             // start pos of their submitted path
                             // donesn't match where we think they are
@@ -13638,7 +13640,9 @@ int main() {
                                 // we think their last path is done
                                 cPos.x = nextPlayer->xs;
                                 cPos.y = nextPlayer->ys;
-                                c = -1;
+                                // we think they are on final destination
+                                // spot on last path
+                                c = nextPlayer->pathLength - 1;
                                 }
                             
                             /*
