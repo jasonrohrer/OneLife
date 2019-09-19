@@ -66,6 +66,9 @@ Server Fixes
   apocalypse condition).  Added a new condition:  apocalypse after Eve window
   if our player population inside the rift is ever > 33% helpless babies.
 
+--Increased death stagger time by 20 seconds (+50%) up to 60 seconds (was 40),
+  allowing more time for wounded players to be healed.
+
 
 
 
