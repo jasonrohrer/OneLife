@@ -69,6 +69,9 @@ Server Fixes
 --Increased death stagger time by 20 seconds (+50%) up to 60 seconds (was 40),
   allowing more time for wounded players to be healed.
 
+--Fixed glitch in naming an unnamed Eve so that she doesn't get your family
+  name.
+
 
 
 
