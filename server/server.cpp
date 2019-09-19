@@ -16391,6 +16391,8 @@ int main() {
                                             
                                             int oldHeld = 
                                                 nextPlayer->holdingID;
+                                            int oldNumContained =
+                                                nextPlayer->numContained;
                                             
                                             // now swap
                                             swapHeldWithGround( 
@@ -16398,7 +16400,9 @@ int main() {
                                              &playerIndicesToSendUpdatesAbout );
                                             
                                             if( oldHeld == 
-                                                nextPlayer->holdingID ) {
+                                                nextPlayer->holdingID &&
+                                                oldNumContained ==
+                                                nextPlayer->numContained ) {
                                                 // no change
                                                 // are they the same object?
                                                 if( oldHeld == target ) {

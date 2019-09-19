@@ -55,6 +55,9 @@ Server Fixes
 
 --Player counted as new if < 8 hours lived in game (was 4).
 
+--Fixed stacked basket flinging glitch.  Fixes #391
+
+
 
 
 
