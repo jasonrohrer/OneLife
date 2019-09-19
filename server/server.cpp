@@ -6365,8 +6365,18 @@ int processLoggedInPlayer( char inAllowReconnect,
         
         if( cM == 0 || (float)cB / (float)cM >= ratio ) {
             // too many babies per mother inside barrier
+            float thisRatio = 0;
+            if( cM > 0 ) {
+                thisRatio = (float)cB / (float)cM;
+                }
 
-            triggerApocalypseNow( "Too many babies per mother inside barrier" );
+            char *logMessage = autoSprintf( 
+                "Too many babies per mother inside barrier: "
+                "%d mothers, %d babies, %f ratio, %f max ratio",
+                cM, cB, thisRatio, ratio );
+            triggerApocalypseNow( logMessage );
+            
+            delete [] logMessage;
             }
         else {
             int minFertile = players.size() / 15;

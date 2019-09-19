@@ -51,6 +51,8 @@ Server Fixes
   pole with old boot), we toss both things (before, the pole would disappear,
   leaving only the boot).  Fixes #388
 
+--Better logging of too many babies per mother apocalypse trigger.
+
 
 
 
