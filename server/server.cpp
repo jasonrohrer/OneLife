@@ -6075,6 +6075,53 @@ static int countHelplessBabies() {
 
 
 
+// counts only those inside barrier, if barrier on
+// always ignores tutorial and donkytown players
+static int countLivingPlayers() {
+    
+    int barrierRadius = 
+        SettingsManager::getIntSetting( 
+            "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( 
+        "barrierOn", 1 );
+    
+    int c = 0;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( p->error ) {
+            continue;
+            }
+        if( p->isTutorial ) {
+            continue;
+            }
+        if( p->curseStatus.curseLevel > 0 ) {
+            continue;
+            }
+        if( p->vogMode ) {
+            continue;
+            }
+
+        if( barrierOn ) {
+            // only people inside the barrier
+            GridPos pos = getPlayerPos( p );
+            
+            if( abs( pos.x ) < barrierRadius &&
+                abs( pos.y ) < barrierRadius ) {
+                c++;
+                }
+            }
+        else {
+            c++;
+            }
+        }
+    
+    return c;
+    }
+
+
+
 
 static int countFamilies() {
     
@@ -6360,10 +6407,15 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     if( ! eveWindow ) {
         
-        float ratio = SettingsManager::getFloatSetting( 
+        float babyMotherRatio = SettingsManager::getFloatSetting( 
             "babyMotherApocalypseRatio", 6.0 );
         
-        if( cM == 0 || (float)cB / (float)cM >= ratio ) {
+        float babyPlayerRatio = SettingsManager::getFloatSetting( 
+            "babyToPlayerApocalypseRatio", 0.33 );
+        
+        int cP = countLivingPlayers();
+
+        if( cM == 0 || (float)cB / (float)cM >= babyMotherRatio ) {
             // too many babies per mother inside barrier
             float thisRatio = 0;
             if( cM > 0 ) {
@@ -6373,7 +6425,22 @@ int processLoggedInPlayer( char inAllowReconnect,
             char *logMessage = autoSprintf( 
                 "Too many babies per mother inside barrier: "
                 "%d mothers, %d babies, %f ratio, %f max ratio",
-                cM, cB, thisRatio, ratio );
+                cM, cB, thisRatio, babyMotherRatio );
+            triggerApocalypseNow( logMessage );
+            
+            delete [] logMessage;
+            }
+        else if( cP == 0 || (float)cB / (float)cP >= babyPlayerRatio ) {
+            // too many babies per player inside barrier
+            float thisRatio = 0;
+            if( cP > 0 ) {
+                thisRatio = (float)cB / (float)cP;
+                }
+
+            char *logMessage = autoSprintf( 
+                "Too many babies per player inside barrier: "
+                "%d players, %d babies, %f ratio, %f max ratio",
+                cP, cB, thisRatio, babyPlayerRatio );
             triggerApocalypseNow( logMessage );
             
             delete [] logMessage;

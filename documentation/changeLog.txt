@@ -62,6 +62,10 @@ Server Fixes
   number of slots in the container (like picking up the grave into a basket),
   you must empty it first.
 
+--Changed max baby/mother after Eve to 20 (to essentially disable that
+  apocalypse condition).  Added a new condition:  apocalypse after Eve window
+  if our player population inside the rift is ever > 33% helpless babies.
+
 
 
 
