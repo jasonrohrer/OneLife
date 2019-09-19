@@ -53,6 +53,8 @@ Server Fixes
 
 --Better logging of too many babies per mother apocalypse trigger.
 
+--Player counted as new if < 8 hours lived in game (was 4).
+
 
 
 
