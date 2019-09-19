@@ -14628,6 +14628,31 @@ int main() {
                                                   target );
                                     }
                                 
+                                if( r != NULL &&
+                                    targetObj->numSlots > 0 ) {
+                                    // target has number of slots
+                                    
+                                    int numContained = 
+                                        getNumContained( m.x, m.y );
+                                    
+                                    int numSlotsInNewTarget = 0;
+                                    
+                                    if( r->newTarget > 0 ) {
+                                        numSlotsInNewTarget =
+                                            getObject( r->newTarget )->numSlots;
+                                        }
+
+                                    if( numContained > numSlotsInNewTarget ) {
+                                        // would result in shrinking
+                                        // and flinging some contained
+                                        // objects
+                                        // block it.
+                                        heldCanBeUsed = false;
+                                        r = NULL;
+                                        }
+                                    }
+                                
+
                                 if( r == NULL && 
                                     ( nextPlayer->holdingID != 0 || 
                                       targetObj->permanent ) &&

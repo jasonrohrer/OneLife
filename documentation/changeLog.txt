@@ -57,6 +57,11 @@ Server Fixes
 
 --Fixed stacked basket flinging glitch.  Fixes #391
 
+--Blocked all container object from flinging stuff.  To target a container
+  object (like a grave full of belongings) in a way that would reduce the
+  number of slots in the container (like picking up the grave into a basket),
+  you must empty it first.
+
 
 
 
