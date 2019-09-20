@@ -6004,6 +6004,28 @@ static LiveObject *getHitPlayer( int inX, int inY,
 
 
 
+static int isPlayerCountable( LiveObject *p, int inLineageEveID = -1 ) {
+    if( p->error ) {
+        return false;
+        }
+    if( p->isTutorial ) {
+        return false;
+        }
+    if( p->curseStatus.curseLevel > 0 ) {
+        return false;
+        }
+    if( p->vogMode ) {
+        return false;
+        }
+    
+    if( inLineageEveID != -1 &&
+        p->lineageEveID != inLineageEveID ) {
+        return false;
+        }
+    return true;
+    }
+
+
 
 // if inLineageEveID != -1, it specifies that we count fertile mothers
 // ONLY in that family
@@ -6020,24 +6042,10 @@ static int countFertileMothers( int inLineageEveID = -1 ) {
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *p = players.getElement( i );
         
-        if( p->error ) {
-            continue;
-            }
-        if( p->isTutorial ) {
-            continue;
-            }
-        if( p->curseStatus.curseLevel > 0 ) {
-            continue;
-            }
-        if( p->vogMode ) {
+        if( ! isPlayerCountable( p, inLineageEveID ) ) {
             continue;
             }
 
-        if( inLineageEveID != -1 &&
-            p->lineageEveID != inLineageEveID ) {
-            continue;
-            }
-        
         if( isFertileAge( p ) ) {
             if( barrierOn ) {
                 // only fertile mothers inside the barrier
@@ -6074,22 +6082,8 @@ static int countGirls( int inLineageEveID = -1 ) {
     
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *p = players.getElement( i );
-        
-        if( p->error ) {
-            continue;
-            }
-        if( p->isTutorial ) {
-            continue;
-            }
-        if( p->curseStatus.curseLevel > 0 ) {
-            continue;
-            }
-        if( p->vogMode ) {
-            continue;
-            }
 
-        if( inLineageEveID != -1 &&
-            p->lineageEveID != inLineageEveID ) {
+        if( ! isPlayerCountable( p, inLineageEveID ) ) {
             continue;
             }
         
@@ -6126,17 +6120,8 @@ static int countHelplessBabies() {
     
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *p = players.getElement( i );
-        
-        if( p->error ) {
-            continue;
-            }
-        if( p->isTutorial ) {
-            continue;
-            }
-        if( p->curseStatus.curseLevel > 0 ) {
-            continue;
-            }
-        if( p->vogMode ) {
+
+        if( ! isPlayerCountable( p ) ) {
             continue;
             }
 
@@ -6175,17 +6160,8 @@ static int countLivingPlayers() {
     
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *p = players.getElement( i );
-        
-        if( p->error ) {
-            continue;
-            }
-        if( p->isTutorial ) {
-            continue;
-            }
-        if( p->curseStatus.curseLevel > 0 ) {
-            continue;
-            }
-        if( p->vogMode ) {
+
+        if( ! isPlayerCountable( p ) ) {
             continue;
             }
 
@@ -6222,17 +6198,8 @@ static int countFamilies() {
     
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *p = players.getElement( i );
-        
-        if( p->error ) {
-            continue;
-            }
-        if( p->isTutorial ) {
-            continue;
-            }    
-        if( p->vogMode ) {
-            continue;
-            }
-        if( p->curseStatus.curseLevel > 0 ) {
+
+        if( ! isPlayerCountable( p ) ) {
             continue;
             }
 
