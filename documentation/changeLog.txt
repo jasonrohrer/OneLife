@@ -76,6 +76,9 @@ Server Fixes
   hungry work.  Also brought safe buffer down to 4 pips (was 5).
   Related to #392
 
+--If family has < 3 potentially fertile females left (fertile females and girl
+  children), we force that family to have girl babies when it is their turn for
+  babies.
 
 
 

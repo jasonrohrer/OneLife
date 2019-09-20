@@ -2819,13 +2819,17 @@ char getFemale( LiveObject *inPlayer ) {
     }
 
 
+static int getFirstFertileAge() {
+    return 14;
+    }
+
 
 char isFertileAge( LiveObject *inPlayer ) {
     double age = computeAge( inPlayer );
                     
     char f = getFemale( inPlayer );
                     
-    if( age >= 14 && age <= 40 && f ) {
+    if( age >= getFirstFertileAge() && age <= 40 && f ) {
         return true;
         }
     else {
@@ -6001,7 +6005,9 @@ static LiveObject *getHitPlayer( int inX, int inY,
 
 
 
-static int countFertileMothers() {
+// if inLineageEveID != -1, it specifies that we count fertile mothers
+// ONLY in that family
+static int countFertileMothers( int inLineageEveID = -1 ) {
     
     int barrierRadius = 
         SettingsManager::getIntSetting( 
@@ -6017,10 +6023,79 @@ static int countFertileMothers() {
         if( p->error ) {
             continue;
             }
+        if( p->isTutorial ) {
+            continue;
+            }
+        if( p->curseStatus.curseLevel > 0 ) {
+            continue;
+            }
+        if( p->vogMode ) {
+            continue;
+            }
+
+        if( inLineageEveID != -1 &&
+            p->lineageEveID != inLineageEveID ) {
+            continue;
+            }
         
         if( isFertileAge( p ) ) {
             if( barrierOn ) {
                 // only fertile mothers inside the barrier
+                GridPos pos = getPlayerPos( p );
+                
+                if( abs( pos.x ) < barrierRadius &&
+                    abs( pos.y ) < barrierRadius ) {
+                    c++;
+                    }
+                }
+            else {
+                c++;
+                }
+            }
+        }
+    
+    return c;
+    }
+
+
+
+// girls are females who are not fertile yet, but will be
+// if inLineageEveID != -1, it specifies that we count girls
+// ONLY in that family
+static int countGirls( int inLineageEveID = -1 ) {
+    
+    int barrierRadius = 
+        SettingsManager::getIntSetting( 
+            "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( 
+        "barrierOn", 1 );
+    
+    int c = 0;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( p->error ) {
+            continue;
+            }
+        if( p->isTutorial ) {
+            continue;
+            }
+        if( p->curseStatus.curseLevel > 0 ) {
+            continue;
+            }
+        if( p->vogMode ) {
+            continue;
+            }
+
+        if( inLineageEveID != -1 &&
+            p->lineageEveID != inLineageEveID ) {
+            continue;
+            }
+        
+        if( getFemale( p ) && computeAge( p ) < getFirstFertileAge() ) {
+            if( barrierOn ) {
+                // only girls inside the barrier
                 GridPos pos = getPlayerPos( p );
                 
                 if( abs( pos.x ) < barrierRadius &&
@@ -6053,6 +6128,15 @@ static int countHelplessBabies() {
         LiveObject *p = players.getElement( i );
         
         if( p->error ) {
+            continue;
+            }
+        if( p->isTutorial ) {
+            continue;
+            }
+        if( p->curseStatus.curseLevel > 0 ) {
+            continue;
+            }
+        if( p->vogMode ) {
             continue;
             }
 
@@ -7262,6 +7346,20 @@ int processLoggedInPlayer( char inAllowReconnect,
                     parent = p;
                     break;
                     }                
+                }
+
+            if( parent != NULL ) {
+                // check if this family has too few potentially fertile
+                // females
+                // If so, force a girl baby.
+                // Do this regardless of whether Eve window is in effect, etc.
+                int min = SettingsManager::getIntSetting( 
+                    "minPotentialFertileFemalesPerFamily", 3 );
+                int famMothers = countFertileMothers( parent->lineageEveID );
+                int famGirls = countGirls( parent->lineageEveID );
+                if( famMothers + famGirls < min ) {
+                    forceGirl = true;
+                    }
                 }
             }
         
