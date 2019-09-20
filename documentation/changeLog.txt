@@ -115,6 +115,11 @@ Version 262    2019-September-12
   your family (no label if neutral).  A new WAR_REPORT message from the server
   makes this possible.
 
+--If you spam more than 10 emotes in a single minute, you're put on emote
+  cooldown for two minutes.  Based on the simplistic implementation, worst
+  case, you can trigger 20 emotes in a row (if you trigger 10 at the end of a
+  minute window and 10 at the beginning of the next minute window).  Fixes #396
+
 
 
 

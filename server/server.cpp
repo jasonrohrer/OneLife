@@ -101,6 +101,14 @@ double forceDeathAge = 60;
 
 double minSayGapInSeconds = 1.0;
 
+// for emote throttling
+double emoteWindowSeconds = 60.0;
+int maxEmotesInWindow = 10;
+
+double emoteCooldownSeconds = 120.0;
+
+
+
 int maxLineageTracked = 20;
 
 int apocalypsePossible = 0;
@@ -574,6 +582,12 @@ typedef struct LiveObject {
         
 
         double lastSayTimeSeconds;
+
+        double firstEmoteTimeSeconds;
+        int emoteCountInWindow;
+        char emoteCooldown;
+        double emoteCooldownStartTimeSeconds;
+
 
         // held by other player?
         char heldByOther;
@@ -6694,6 +6708,10 @@ int processLoggedInPlayer( char inAllowReconnect,
                             
 
     newObject.lastSayTimeSeconds = Time::getCurrentTime();
+    newObject.firstEmoteTimeSeconds = Time::getCurrentTime();
+    
+    newObject.emoteCountInWindow = 0;
+    newObject.emoteCooldown = false;
     
 
     newObject.heldByOther = false;
@@ -16825,12 +16843,60 @@ int main() {
                             
                             if( forbidden->getElementIndex( m.i ) == -1 ) {
                                 // not forbidden
+                                
+                                double curTime = Time::getCurrentTime();
+                                
+                                char cooldown = false;
+                                
+                                if( nextPlayer->emoteCooldown ) {
+                                    if( curTime - 
+                                        nextPlayer->
+                                        emoteCooldownStartTimeSeconds >
+                                        emoteCooldownSeconds ) {
+                                        // cooldown over
+                                        nextPlayer->emoteCooldown = false;
+                                        nextPlayer->firstEmoteTimeSeconds =
+                                            curTime;
+                                        nextPlayer->emoteCountInWindow = 0;
+                                        }
+                                    else {
+                                        cooldown = true;
+                                        }
+                                    }
+                                
+                                if( ! cooldown ) {
+                                    // fire off emote
+                                    newEmotPlayerIDs.push_back( 
+                                        nextPlayer->id );
+                                    newEmotIndices.push_back( m.i );
+                                    // player-requested emots have 
+                                    // no specific TTL
+                                    newEmotTTLs.push_back( 0 );
 
-                                newEmotPlayerIDs.push_back( nextPlayer->id );
-                            
-                                newEmotIndices.push_back( m.i );
-                                // player-requested emots have no specific TTL
-                                newEmotTTLs.push_back( 0 );
+                                    // now see if cooldown has been triggered
+                                    if( curTime - 
+                                        nextPlayer->firstEmoteTimeSeconds
+                                        > emoteWindowSeconds ) {
+                                        // window expired
+                                        // start a new one
+                                        nextPlayer->firstEmoteTimeSeconds =
+                                            curTime;
+                                        nextPlayer->emoteCountInWindow = 0;
+                                        }
+                                    else {
+                                        // in window time
+                                        nextPlayer->emoteCountInWindow ++;
+                                        
+                                        if( nextPlayer->emoteCountInWindow >
+                                            maxEmotesInWindow ) {
+                                            // put 'em on cooldown
+                                            nextPlayer->emoteCooldown = true;
+                                            nextPlayer->
+                                                emoteCooldownStartTimeSeconds =
+                                                curTime;
+                                            }
+                                        }
+                                    }
                                 }
                             delete forbidden;
                             }
