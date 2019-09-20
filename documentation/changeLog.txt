@@ -80,6 +80,11 @@ Server Fixes
   children), we force that family to have girl babies when it is their turn for
   babies.
 
+--findDropSpot code now respects rift barrier.  Flinging stuff across the
+  barrier should never be possible (last case was picking up a toddler who was
+  holding something).
+
+
 
 
 Version 262    2019-September-12

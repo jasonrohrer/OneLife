@@ -4541,6 +4541,11 @@ void handleMapChangeToPaths(
 // returns true if found
 char findDropSpot( int inX, int inY, int inSourceX, int inSourceY, 
                    GridPos *outSpot ) {
+
+    int barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( "barrierOn", 1 );
+
+
     char found = false;
     int foundX = inX;
     int foundY = inY;
@@ -4580,8 +4585,24 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
     if( yDir != 0 ) {
         yFirst = true;
         }
+
+
+    int maxR = 10;
+
+
+    if( barrierOn ) {
+        // don't bother with barrier checks in loop unless we are near
+        // barrier edge
+        if( barrierOn ) {   
+            if( abs( abs( inX ) - barrierRadius ) > maxR + 2 &&
+                abs( abs( inY ) - barrierRadius ) > maxR + 2 ) {
+                barrierOn = false;
+                }
+            }
+        }
+    
         
-    for( int d=1; d<10 && !found; d++ ) {
+    for( int d=1; d<maxR && !found; d++ ) {
             
         char doneY0 = false;
             
@@ -4638,12 +4659,20 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
                                                 
 
 
-                if( 
-                    isMapSpotEmpty( x, y ) ) {
-                                                    
+                if( isMapSpotEmpty( x, y ) ) {
                     found = true;
-                    foundX = x;
-                    foundY = y;
+                    if( barrierOn ) {    
+                        if( abs( x ) >= barrierRadius ||
+                            abs( y ) >= barrierRadius ) {
+                            // outside barrier
+                            found = false;
+                            }
+                        }
+                    
+                    if( found ) {
+                        foundX = x;
+                        foundY = y;
+                        }
                     }
                                                     
                 if( ! doneX0 ) {
