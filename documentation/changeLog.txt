@@ -84,6 +84,8 @@ Server Fixes
   barrier should never be possible (last case was picking up a toddler who was
   holding something).
 
+--Food log now includes eating bonus.  Fixes #393
+
 
 
 
