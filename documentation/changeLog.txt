@@ -72,6 +72,9 @@ Server Fixes
 --Fixed glitch in naming an unnamed Eve so that she doesn't get your family
   name.
 
+--Was not accounting for yum bonus when deciding whether we had enough food for
+  hungry work.  Also brought safe buffer down to 4 pips (was 5).
+  Related to #392
 
 
 

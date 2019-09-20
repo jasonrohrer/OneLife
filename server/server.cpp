@@ -14861,8 +14861,9 @@ int main() {
                                                 "+hungryWork%d", 
                                                 &hungryWorkCost );
                                         
-                                        if( nextPlayer->foodStore < 
-                                            hungryWorkCost + 5 ) {
+                                        if( nextPlayer->foodStore + 
+                                            nextPlayer->yummyBonusStore < 
+                                            hungryWorkCost + 4 ) {
                                             // block transition,
                                             // not enough food to have a
                                             // "safe" buffer after
