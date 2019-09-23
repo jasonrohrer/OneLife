@@ -14862,14 +14862,34 @@ int main() {
                                     int numContained = 
                                         getNumContained( m.x, m.y );
                                     
-                                    int numSlotsInNewTarget = 0;
+                                    int numSlotsInNew = 0;
                                     
                                     if( r->newTarget > 0 ) {
-                                        numSlotsInNewTarget =
+                                        numSlotsInNew =
                                             getObject( r->newTarget )->numSlots;
                                         }
+                                    
+                                    if( numContained > numSlotsInNew &&
+                                        numSlotsInNew == 0 ) {
+                                        // not enough room in new target
 
-                                    if( numContained > numSlotsInNewTarget ) {
+                                        // check if new actor will contain
+                                        // them (reverse containment transfer)
+                                        
+                                        if( r->newActor > 0 &&
+                                            nextPlayer->numContained == 0 ) {
+                                            // old actor empty
+                                            
+                                            int numSlotsNewActor =
+                                                getObject( r->newActor )->
+                                                numSlots;
+                                         
+                                            numSlotsInNew = numSlotsNewActor;
+                                            }
+                                        }
+
+
+                                    if( numContained > numSlotsInNew ) {
                                         // would result in shrinking
                                         // and flinging some contained
                                         // objects
