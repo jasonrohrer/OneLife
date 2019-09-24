@@ -95,6 +95,13 @@ Server Fixes
 --Fixed potential (though unlikely) overflow issue for long emails in local
   curse database.
 
+--Over past 21 hours, only three spawns were sent to donkeytown, and all three
+  of them were for the single player with the most curses in the game.  No one
+  else went to donkeytown.  It seems like the blocking radius for curses is
+  simply too small.  Increasing it up to 200 (was 50).
+
+
+
 
 Version 262    2019-September-12
 
