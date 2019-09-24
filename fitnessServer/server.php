@@ -1100,7 +1100,9 @@ function fs_pickLeaderboardName( $inEmail ) {
 
 // log a death that will affect the score of $inEmail
 // if $inNoScore is true, the relationship is still logged, but the
-// score change is fixed at 0
+// score change is fixed at 0 AND the last_action_time isn't updated
+// (to prevent noScore lives from bringing an expired player back to the
+//  leaderboard)
 function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
                       $inNoScore = false ) {
     global $tableNamePrefix;
@@ -1150,10 +1152,15 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
     fs_queryDatabase( $query );
 
 
+    $timeUpdateClause = "";
+
+    if( ! $inNoScore ) {
+        $timeUpdateClause = ", last_action_time = CURRENT_TIMESTAMP";
+        }
     
     $query = "UPDATE $tableNamePrefix"."users ".
         "SET lives_affecting_score = lives_affecting_score + 1, ".
-        "score = $new_score, last_action_time = CURRENT_TIMESTAMP ".
+        "score = $new_score $timeUpdateClause ".
         "WHERE email = '$inEmail';";
     
     fs_queryDatabase( $query );

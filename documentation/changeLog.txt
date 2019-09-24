@@ -108,6 +108,10 @@ Server Fixes
 --Rollback:  back to reporting tutorial lives to fitness server (all Eve lives
   were already not affecting the score, according to the fitness server code).
 
+--Fix for getting back on the leaderboard (after expiring) by playing the
+  tutorial:  lives that don't affect score (all Eve lives) don't update
+  last_action_time.
+
 
 
 
