@@ -17281,8 +17281,7 @@ int main() {
                                      male );
 
 
-                // only non-tutorial players
-                if( ! nextPlayer->isTutorial )
+                // both tutorial and non-tutorial players
                 logFitnessDeath( nextPlayer );
                 
 
