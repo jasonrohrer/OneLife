@@ -1,0 +1,1 @@
+g++ -o curseDBDump curseDBDump.cpp -I../.. lineardb3.cpp
