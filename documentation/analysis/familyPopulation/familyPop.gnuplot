@@ -3,11 +3,17 @@ set format x "%m/%d - %H:%M"
 set timefmt "%s"
 set xdata time
 
+set xtics font "Verdana,5"
+
 set xtics rotate
+
+set xlabel offset 0,3
 
 set key autotitle columnhead
 
 set key outside
+
+set bmargin 5
 
 #set terminal wxt size 800,600
 
@@ -55,7 +61,7 @@ cumulated(i)=((i>firstcol)?column(i)+cumulated(i-1):(i==firstcol)?column(i):1/0)
 # this version shows total population instead of fraction of total
 # best so far
 
-plot "1568917336_familyPopLog.txt" using 1:(cumulated(11)) title columnhead(11) with filledcurves x1, "" using 1:(cumulated(10)) title columnhead(10) with filledcurves x1, "" using 1:(cumulated(9)) title columnhead(9) with filledcurves x1, "" using 1:(cumulated(8)) title columnhead(8) with filledcurves x1, "" using 1:(cumulated(7)) title columnhead(7) with filledcurves x1, "" using 1:(cumulated(6)) title columnhead(6) with filledcurves x1, "" using 1:(cumulated(5)) title columnhead(5) with filledcurves x1, "" using 1:(cumulated(4)) title columnhead(4) with filledcurves x1, "" using 1:(cumulated(3)) title columnhead(3) with filledcurves x1, "" using 1:(cumulated(2)) title columnhead(2) with filledcurves x1,
+plot "1569203320_familyPopLog.txt" using 1:(cumulated(11)) title columnhead(11) with filledcurves x1, "" using 1:(cumulated(10)) title columnhead(10) with filledcurves x1, "" using 1:(cumulated(9)) title columnhead(9) with filledcurves x1, "" using 1:(cumulated(8)) title columnhead(8) with filledcurves x1, "" using 1:(cumulated(7)) title columnhead(7) with filledcurves x1, "" using 1:(cumulated(6)) title columnhead(6) with filledcurves x1, "" using 1:(cumulated(5)) title columnhead(5) with filledcurves x1, "" using 1:(cumulated(4)) title columnhead(4) with filledcurves x1, "" using 1:(cumulated(3)) title columnhead(3) with filledcurves x1, "" using 1:(cumulated(2)) title columnhead(2) with filledcurves x1,
 
 
 # and separate lines, if we need to show them
