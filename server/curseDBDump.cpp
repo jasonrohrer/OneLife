@@ -4,6 +4,10 @@
 
 
 
+// process dump like this:
+//
+// ./curseDBDump | sed -e "s/[^\@]*\@[^\@]*\.com//" | sort | uniq -c | sort -nr | more
+
 int main() {
     
     LINEARDB3 db;
