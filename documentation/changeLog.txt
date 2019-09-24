@@ -92,6 +92,8 @@ Server Fixes
   point where there are 2 babies for every non-baby player, things have gotten
   really bad, right?
 
+--Fixed potential (though unlikely) overflow issue for long emails in local
+  curse database.
 
 
 Version 262    2019-September-12

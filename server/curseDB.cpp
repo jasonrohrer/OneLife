@@ -165,7 +165,7 @@ static void getKey( const char *inSenderEmail, const char *inReceiverEmail,
                     unsigned char *outKey ) {
     memset( outKey, ' ', 80 );
 
-    sprintf( (char*)outKey, "%.40s%.40s", inSenderEmail, inReceiverEmail );
+    sprintf( (char*)outKey, "%.40s%.39s", inSenderEmail, inReceiverEmail );
     }
 
 
