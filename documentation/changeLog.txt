@@ -88,6 +88,9 @@ Server Fixes
 
 --Fixed frozen full horse cart bug.
 
+--Baby ratio to trigger apocalypse is now 0.66 (was 0.33).  If we get to the
+  point where there are 2 babies for every non-baby player, things have gotten
+  really bad, right?
 
 
 
