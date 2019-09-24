@@ -100,6 +100,9 @@ Server Fixes
   else went to donkeytown.  It seems like the blocking radius for curses is
   simply too small.  Increasing it up to 200 (was 50).
 
+--Your younger sibs now count toward your genetic score, closing the 'avoid 
+  having kids yourself and try to live until 60' path to a high genetic score.
+
 
 
 

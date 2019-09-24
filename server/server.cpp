@@ -8008,6 +8008,44 @@ int processLoggedInPlayer( char inAllowReconnect,
                     }
                 }
             }
+        
+        // if we got here, they aren't our mother, g-ma, g-g-ma, etc.
+        // nor are they our uncle
+
+        
+        // are they our sibling?
+        // note that this is only uni-directional
+        // (we're checking here for this new baby born)
+        // so only our OLDER sibs count as our ancestors (and thus
+        // they care about protecting us).
+
+        // this is a little weird, but it does make some sense
+        // you are more productive of little sibs
+
+        // anyway, the point of this is to close the "just care about yourself
+        // and avoid having kids" exploit.  If your mother has kids after you
+        // (which is totally out of your control), then their survival
+        // will affect your score.
+        
+        if( newObject.parentID > 0 &&
+            newObject.parentID == otherPlayer->parentID ) {
+            // sibs
+            
+            newObject.ancestorEmails->push_back( 
+                stringDuplicate( otherPlayer->email ) );
+
+            const char *relName;
+            
+            if( ! getFemale( &newObject ) ) {
+                relName = "Little_Brother";
+                }
+            else {
+                relName = "Little_Sister";
+                }
+
+            newObject.ancestorRelNames->push_back( stringDuplicate( relName ) );
+            break;
+            }
         }
     
 
