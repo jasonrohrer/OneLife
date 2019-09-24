@@ -103,6 +103,8 @@ Server Fixes
 --Your younger sibs now count toward your genetic score, closing the 'avoid 
   having kids yourself and try to live until 60' path to a high genetic score.
 
+--Tutorial lives no longer count toward genetic fitness.
+
 
 
 
