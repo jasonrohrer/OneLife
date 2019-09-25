@@ -10533,6 +10533,7 @@ typedef struct KillState {
         int killerID;
         int killerWeaponID;
         int targetID;
+        double killStartTime;
         double emotStartTime;
         int emotRefreshSeconds;
     } KillState;
@@ -10569,10 +10570,12 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
     
     if( !found ) {
         // add new
+        double curTime = Time::getCurrentTime();
         KillState s = { inKiller->id, 
                         inKiller->holdingID,
                         inTarget->id, 
-                        Time::getCurrentTime(),
+                        curTime,
+                        curTime,
                         30 };
         activeKillStates.push_back( s );
         }
@@ -17088,8 +17091,13 @@ int main() {
             
             double dist = distance( playerPos, targetPos );
             
-            if( getObject( killer->holdingID )->deadlyDistance >= dist &&
+            double curTime = Time::getCurrentTime();
+
+            if( curTime - s->killStartTime  > 3 && 
+                getObject( killer->holdingID )->deadlyDistance >= dist &&
                 ! directLineBlocked( playerPos, targetPos ) ) {
+                // enough warning time has passed
+                // and
                 // close enough to kill
                 
                 executeKillAction( getLiveObjectIndex( s->killerID ),
@@ -17103,7 +17111,6 @@ int main() {
             else {
                 // still not close enough
                 // see if we need to renew emote
-                double curTime = Time::getCurrentTime();
                 
                 if( curTime - s->emotStartTime > s->emotRefreshSeconds ) {
                     s->emotStartTime = curTime;

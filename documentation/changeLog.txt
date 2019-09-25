@@ -135,8 +135,12 @@ Server Fixes
 
 --Grave placement now respects rift barrier.
 
---Target player of murder-mouth kill targetting shows SHOCK emotion to indicate
-  that they are being targetted.  Related to #401
+--Target player of murder-mouth kill targeting shows SHOCK emotion to indicate
+  that they are being targeted.  Related to #401
+
+--3-second delay between when murder-mouth sound/anim starts and when the kill
+  window actually opens, to give the target some warning.  No more surprise
+  insta-kill when you're standing next to someone.  Fixes #401
 
 
 
