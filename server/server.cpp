@@ -4726,12 +4726,31 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
 GridPos findClosestEmptyMapSpot( int inX, int inY, int inMaxPointsToCheck,
                                  char *outFound ) {
 
+    int barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( "barrierOn", 1 );
+
+
     GridPos center = { inX, inY };
 
     for( int i=0; i<inMaxPointsToCheck; i++ ) {
         GridPos p = getSpriralPoint( center, i );
 
+        char found = false;
+        
         if( isMapSpotEmpty( p.x, p.y, false ) ) {    
+            found = true;
+            
+            if( barrierOn ) {    
+                if( abs( p.x ) >= barrierRadius ||
+                    abs( p.y ) >= barrierRadius ) {
+                    // outside barrier
+                    found = false;
+                    }
+                }
+            }
+        
+
+        if( found ) {
             *outFound = true;
             return p;
             }

@@ -133,6 +133,7 @@ Server Fixes
   fixed-length punishment, this is more like, 'you've bugged these people
   enough, try playing again later.'  Fixes #403
 
+--Grave placement now respects rift barrier.
 
 
 
