@@ -2153,6 +2153,14 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "USE" ) == 0 ) {
         m.type = USE;
+        // read optional id parameter
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.id ) );
+        
+        if( numRead != 4 ) {
+            m.id = -1;
+            }
         }
     else if( strcmp( nameBuffer, "SELF" ) == 0 ) {
         m.type = SELF;
@@ -15465,7 +15473,9 @@ int main() {
                                 ObjectRecord *obj = 
                                     getObject( nextPlayer->holdingID );
                                 
-                                if( ! usedOnFloor && obj->foodValue == 0 ) {
+                                if( ! usedOnFloor && obj->foodValue == 0 &&
+                                    // player didn't try to click something
+                                    m.id == -1 ) {
                                     
                                     // get no-target transtion
                                     // (not a food transition, since food

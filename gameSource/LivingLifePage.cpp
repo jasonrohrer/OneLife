@@ -20445,6 +20445,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 nextActionDropping = true;
                 extra = stringDuplicate( " -1" );
                 }
+
+            if( strcmp( action, "USE" ) == 0 &&
+                destID > 0 ) {
+                // optional ID param for USE, specifying that we clicked
+                // on something
+                delete [] extra;
+                extra = autoSprintf( " %d", destID );
+                }
             
             
             if( send ) {

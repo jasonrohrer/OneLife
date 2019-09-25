@@ -114,6 +114,12 @@ Server Fixes
 
 --One more basket-stacking fling case fixed.  Fixes #404
 
+--Extra ID param in USE message to differentiate between click on ground and
+  click on target object (to fix case where target animal moves out of the way
+  before server gets our message, making it look like we clicked on the ground,
+  thus mistakenly executing a use-on-ground action, like dismounting our
+  horse).  Fixes #400
+
 
 
 
