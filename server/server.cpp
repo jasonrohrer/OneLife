@@ -6388,7 +6388,9 @@ int processLoggedInPlayer( char inAllowReconnect,
         // ignore what old curse system said
         inCurseStatus.curseLevel = 0;
         inCurseStatus.excessPoints = 0;
-        initPersonalCurseTest();
+        
+        initPersonalCurseTest( inEmail );
+        
         for( int p=0; p<players.size(); p++ ) {
             LiveObject *o = players.getElement( p );
         

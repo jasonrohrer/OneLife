@@ -13,7 +13,7 @@ void setDBCurse( const char *inSenderEmail, const char *inReceiverEmail );
 char isCursed( const char *inSenderEmail, const char *inReceiverEmail );
 
 
-void initPersonalCurseTest();
+void initPersonalCurseTest( const char *inTargetEmail );
 
 void addPersonToPersonalCurseTest( const char *inEmail,
                                    GridPos inPos );

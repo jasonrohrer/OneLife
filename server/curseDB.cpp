@@ -17,6 +17,10 @@ static LINEARDB3 db;
 static char dbOpen = false;
 
 
+static LINEARDB3 dbCount;
+static char dbCountOpen = false;
+
+
 static double lastSettingCheckTime = 0;
 static double curseDuration = 48 * 3600;
 static int curseBlockRadius = 50;
@@ -120,15 +124,101 @@ static char cullStale() {
 
 
 
+// returns true if db left in an open state
+static char cullStaleCount() {
+    LINEARDB3 tempDB;
+    
+    int error = LINEARDB3_open( &tempDB, 
+                                "curseCount.db.temp", 
+                                KISSDB_OPEN_MODE_RWCREAT,
+                                10000,
+                                40, 
+                                12 );
+
+    if( error ) {
+        AppLog::errorF( "Error %d opening curseCount temp LinearDB3", error );
+        return true;
+        }
+    
+
+    LINEARDB3_Iterator dbi;
+    
+    
+    LINEARDB3_Iterator_init( &dbCount, &dbi );
+    
+    unsigned char key[40];
+    
+    unsigned char value[12];
+    
+    int total = 0;
+    int stale = 0;
+    int nonStale = 0;
+    
+    // first, just count
+    while( LINEARDB3_Iterator_next( &dbi, key, value ) > 0 ) {
+        total++;
+        
+        int count = valueToInt( value );
+
+        timeSec_t curseTime = valueToTime( &( value[4] ) );
+
+        timeSec_t elapsedTime = Time::timeSec() - curseTime;
+        
+        if( elapsedTime > curseDuration * count ) {
+            // completely decremented to 0 due to elapsed time
+            stale ++;
+            }
+        else {
+            nonStale ++;
+            LINEARDB3_put( &tempDB, key, value );
+            }
+        }
+
+    printf( "Culling curseCount.db found "
+            "%d total entries, %d stale, %d non-stale\n",
+            total, stale, nonStale );
+    
+    
+
+    LINEARDB3_close( &tempDB );
+    LINEARDB3_close( &dbCount );
+
+    
+    File dbFile( NULL, "curseCount.db" );
+    File dbTempFile( NULL, "curseCount.db.temp" );
+    
+    dbTempFile.copy( &dbFile );
+    dbTempFile.remove();
+
+    error = LINEARDB3_open( &dbCount, 
+                            "curseCount.db", 
+                            KISSDB_OPEN_MODE_RWCREAT,
+                            10000,
+                            40, 
+                            12 );
+
+    if( error ) {
+        AppLog::errorF( "Error %d re-opening curseCount LinearDB3", error );
+        return false;
+        }
+
+    return true;
+    }
+
+
+
+
 void initCurseDB() {
     int error = LINEARDB3_open( &db, 
                                 "curses.db", 
                                 KISSDB_OPEN_MODE_RWCREAT,
                                 10000,
                                 // sender email (truncated to 40 chars max)
-                                // with receiver email (trucated to 40) 
-                                // appended.
-                                // append spaces to the end if needed 
+                                // with receiver email (trucated to 39) 
+                                // appended, terminated by a NULL character
+                                // append spaces to the end if needed
+                                // (after the NULL character) to fill
+                                // the full 80 characters consistently
                                 80, 
                                 // one 64-bit double, representing the time
                                 // the cursed was placed
@@ -145,6 +235,36 @@ void initCurseDB() {
 
 
     dbOpen = cullStale();
+
+
+
+    dbCountOpen = false;
+    
+    error = LINEARDB3_open( &dbCount, 
+                            "curseCount.db", 
+                            KISSDB_OPEN_MODE_RWCREAT,
+                            10000,
+                            // receiver email (truncated to 39 chars max)
+                            // followed by a NULL character
+                            // append spaces to the end if needed, after
+                            // the NULL character, to fill the whole 40
+                            40,
+                            // one 32-bit int, representing the count
+                            //
+                            // followed by
+                            //
+                            // one 64-bit double, representing the time
+                            // the count was last incremented
+                            // in whatever binary format and byte order
+                            // "double" on the server platform uses
+                            12 );
+    
+    if( error ) {
+        AppLog::errorF( "Error %d opening curseCount LinearDB3", error );
+        return;
+        }
+    
+    dbCountOpen = cullStaleCount();
     }
 
 
@@ -154,6 +274,10 @@ void freeCurseDB() {
     if( dbOpen ) {
         LINEARDB3_close( &db );
         dbOpen = false;
+        }
+    if( dbCountOpen ) {
+        LINEARDB3_close( &dbCount );
+        dbCountOpen = false;
         }
     }
 
@@ -169,10 +293,90 @@ static void getKey( const char *inSenderEmail, const char *inReceiverEmail,
     }
 
 
+
+static void getCountKey( const char *inReceiverEmail, 
+                    unsigned char *outKey ) {
+    memset( outKey, ' ', 40 );
+
+    sprintf( (char*)outKey, "%.39s", inReceiverEmail );
+    }
+
+
+
+
+
+int getCurseCount( const char *inReceiverEmail ) {
+    unsigned char key[40];
+    unsigned char value[12];
+
+    
+    getCountKey( inReceiverEmail, key );
+
+
+    int result = LINEARDB3_get( &dbCount, key, value );
+
+    if( result == 0 ) {
+
+        int count = valueToInt( value );
+
+        timeSec_t curseTime = valueToTime( &( value[4] ) );
+
+        timeSec_t elapsedTime = Time::timeSec() - curseTime;
+        
+        if( elapsedTime > curseDuration ) {
+            // decrement by however many multiples
+
+            int decr = lrint( elapsedTime ) / lrint( curseDuration );
+
+            count -= decr;
+            
+            if( count < 0 ) {
+                count = 0;
+                }
+            }
+        
+        return count;
+        }
+    else {
+        return 0;
+        }
+    }
+
+
+
+
+void incrementCurseCount( const char *inReceiverEmail ) {
+    unsigned char key[40];
+    unsigned char value[12];
+
+    int oldCount = getCurseCount( inReceiverEmail );
+    
+    int newCount = oldCount + 1;
+
+    intToValue( newCount, value );
+
+    // reset time of increment to current time
+    timeToValue( Time::timeSec(), &( value[4] ) );
+
+    
+    getCountKey( inReceiverEmail, key );
+    
+    
+    LINEARDB3_put( &dbCount, key, value );
+    }
+
+
+
+
+
+
                     
 
 void setDBCurse( const char *inSenderEmail, const char *inReceiverEmail ) {
     checkSettings();
+
+    char alreadyCursedByThisPerson = isCursed( inSenderEmail, inReceiverEmail );
+    
 
     unsigned char key[80];
     unsigned char value[8];
@@ -187,6 +391,11 @@ void setDBCurse( const char *inSenderEmail, const char *inReceiverEmail ) {
     LINEARDB3_put( &db, key, value );
     printf( "Setting personal curse for %s by %s\n", 
             inReceiverEmail, inSenderEmail );
+
+
+    if( ! alreadyCursedByThisPerson ) {
+        incrementCurseCount( inReceiverEmail );
+        }
     }
 
 
@@ -218,6 +427,12 @@ char isCursed( const char *inSenderEmail, const char *inReceiverEmail ) {
 
 
 
+static int getCurseRadiusForEmail( const char *inTargetEmail ) {
+    int radius = curseBlockRadius * ( 1 + getCurseCount( inTargetEmail ) );
+    
+    return radius;
+    }
+
 
 
 typedef struct PersonRecord {
@@ -231,10 +446,14 @@ typedef struct PersonRecord {
 
 SimpleVector<PersonRecord> blockingRecords;
 
-void initPersonalCurseTest() {
+int personalCurseBlockRadius = 0;
+
+void initPersonalCurseTest( const char *inTargetEmail ) {
     checkSettings();
     
     blockingRecords.deleteAll();
+
+    personalCurseBlockRadius = getCurseRadiusForEmail( inTargetEmail );
     }
 
     
@@ -252,7 +471,7 @@ char isBirthLocationCurseBlocked( const char *inTargetEmail, GridPos inPos ) {
         PersonRecord *r = blockingRecords.getElement( i );
         
         if( r->blocking != 0 && 
-            distance( inPos, r->pos ) <= curseBlockRadius ) {
+            distance( inPos, r->pos ) <= personalCurseBlockRadius ) {
             
             // in radius, and not known to be non-blocking
             
@@ -273,10 +492,13 @@ char isBirthLocationCurseBlocked( const char *inTargetEmail, GridPos inPos ) {
 
 char isBirthLocationCurseBlockedNoCache( const char *inTargetEmail, 
                                          GridPos inPos ) {
+    
+    int radius = getCurseRadiusForEmail( inTargetEmail );
+    
     for( int i=0; i<blockingRecords.size(); i++ ) {
         PersonRecord *r = blockingRecords.getElement( i );
         
-        if( distance( inPos, r->pos ) <= curseBlockRadius ) {
+        if( distance( inPos, r->pos ) <= radius ) {
             
             // in radius
             if( isCursed( r->email, inTargetEmail ) ) {

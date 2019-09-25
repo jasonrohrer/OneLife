@@ -120,6 +120,20 @@ Server Fixes
   thus mistakenly executing a use-on-ground action, like dismounting our
   horse).  Fixes #400
 
+--Curse radius grows as your total curse count grows.  Starts at 200 (you must 
+  be born 200 tiles away from any living player that cursed you in the past 7
+  days), and grows by 200 with each curse you receive.  At 4 curses, your
+  curse block radius is 1000, which means you cannot be born inside the rift
+  if anyone who cursed you is currently alive.  Your total curse count goes
+  down by 1 point every 7 days.  Cursing still works effectively as a 'get
+  away from me' gesture (you'll be very unlikely to encounter this player again
+  in the next 7 days), but starts functioning more and more like a global block
+  as your curse count grows.  Even then, though, it only blocks you if the
+  people who don't like your behavior are currently playing.  As opposed to a
+  fixed-length punishment, this is more like, 'you've bugged these people
+  enough, try playing again later.'  Fixes #403
+
+
 
 
 
