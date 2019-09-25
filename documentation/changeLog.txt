@@ -135,6 +135,10 @@ Server Fixes
 
 --Grave placement now respects rift barrier.
 
+--Target player of murder-mouth kill targetting shows SHOCK emotion to indicate
+  that they are being targetted.  Related to #401
+
+
 
 
 
