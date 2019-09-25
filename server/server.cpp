@@ -16716,8 +16716,9 @@ int main() {
                                                 nextPlayer->numContained ) {
                                                 // no change
                                                 // are they the same object?
-                                                if( oldHeld == target ) {
-                                                    // try using held
+                                                if( oldNumContained == 0 && 
+                                                    oldHeld == target ) {
+                                                    // try using empty held
                                                     // on target
                                                     TransRecord *sameTrans
                                                         = getPTrans(

@@ -112,6 +112,9 @@ Server Fixes
   tutorial:  lives that don't affect score (all Eve lives) don't update
   last_action_time.
 
+--One more basket-stacking fling case fixed.  Fixes #404
+
+
 
 
 
