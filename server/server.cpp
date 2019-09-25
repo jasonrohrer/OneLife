@@ -218,6 +218,7 @@ static const char *allowedSayChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! ";
 
 
 static int killEmotionIndex = 2;
+static int victimEmotionIndex = 2;
 
 
 static double lastBabyPassedThresholdTime = 0;
@@ -638,6 +639,7 @@ typedef struct LiveObject {
         // in cases where their held wound produces a forced emot
         char emotFrozen;
         double emotUnfreezeETA;
+        int emotFrozenIndex;
         
         char connected;
         
@@ -7320,7 +7322,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     newObject.emotFrozen = false;
     newObject.emotUnfreezeETA = 0;
+    newObject.emotFrozenIndex = 0;
     
+
     newObject.connected = true;
     newObject.error = false;
     newObject.errorCauseString = "";
@@ -10238,6 +10242,7 @@ void executeKillAction( int inKillerIndex,
                         if( e.emotIndex != -1 ) {
                             hitPlayer->emotFrozen = 
                                 true;
+                            hitPlayer->emotFrozenIndex = e.emotIndex;
                             
                             hitPlayer->emotUnfreezeETA =
                                 Time::getCurrentTime() + e.ttlSec;
@@ -10427,6 +10432,8 @@ void executeKillAction( int inKillerIndex,
                             if( e.emotIndex != -1 ) {
                                 hitPlayer->emotFrozen = 
                                     true;
+                                hitPlayer->emotFrozenIndex = e.emotIndex;
+                                
                                 newEmotPlayerIDs->push_back( 
                                     hitPlayer->id );
                                 newEmotIndices->push_back( 
@@ -11145,7 +11152,9 @@ int main() {
     killEmotionIndex =
         SettingsManager::getIntSetting( "killEmotionIndex", 2 );
 
-
+    victimEmotionIndex =
+        SettingsManager::getIntSetting( "victimEmotionIndex", 2 );
+		
     FILE *f = fopen( "curseWordList.txt", "r" );
     
     if( f != NULL ) {
@@ -12746,6 +12755,8 @@ int main() {
                             
                                 if( e.emotIndex != -1 ) {
                                     nextPlayer->emotFrozen = true;
+                                    nextPlayer->emotFrozenIndex = e.emotIndex;
+                                    
                                     newEmotPlayerIDs.push_back( 
                                         nextPlayer->id );
                                     newEmotIndices.push_back( e.emotIndex );
@@ -14598,11 +14609,27 @@ int main() {
                                         
                                         if( enteredState ) {
                                             nextPlayer->emotFrozen = true;
+                                            nextPlayer->emotFrozenIndex = 
+                                                killEmotionIndex;
+                                            
                                             newEmotPlayerIDs.push_back( 
                                                 nextPlayer->id );
                                             newEmotIndices.push_back( 
                                                 killEmotionIndex );
                                             newEmotTTLs.push_back( 120 );
+                                            
+                                            if( ! targetPlayer->emotFrozen ) {
+                                                
+                                                targetPlayer->emotFrozen = true;
+                                                targetPlayer->emotFrozenIndex =
+                                                    victimEmotionIndex;
+                                                
+                                                newEmotPlayerIDs.push_back( 
+                                                    targetPlayer->id );
+                                                newEmotIndices.push_back( 
+                                                    victimEmotionIndex );
+                                                newEmotTTLs.push_back( 120 );
+                                                }
                                             }
                                         }
                                     }
@@ -16247,6 +16274,8 @@ int main() {
                             
                                         if( e.emotIndex != -1 ) {
                                             targetPlayer->emotFrozen = true;
+                                            targetPlayer->emotFrozenIndex =
+                                                e.emotIndex;
                                             newEmotPlayerIDs.push_back( 
                                                 targetPlayer->id );
                                             newEmotIndices.push_back( 
@@ -17367,6 +17396,20 @@ int main() {
                     newEmotIndices.push_back( -1 );
                     newEmotTTLs.push_back( 0 );
                     }
+
+                if( target != NULL &&
+                    target->emotFrozen &&
+                    target->emotFrozenIndex == victimEmotionIndex ) {
+                    
+                    // target's emot hasn't been replaced, end it
+                    target->emotFrozen = false;
+                    target->emotUnfreezeETA = 0;
+                    
+                    newEmotPlayerIDs.push_back( target->id );
+                            
+                    newEmotIndices.push_back( -1 );
+                    newEmotTTLs.push_back( 0 );
+                    }
                 
                 activeKillStates.deleteElement( i );
                 i--;
@@ -17408,6 +17451,11 @@ int main() {
                     newEmotPlayerIDs.push_back( killer->id );
                             
                     newEmotIndices.push_back( killEmotionIndex );
+                    newEmotTTLs.push_back( 120 );
+
+                    newEmotPlayerIDs.push_back( target->id );
+                            
+                    newEmotIndices.push_back( victimEmotionIndex );
                     newEmotTTLs.push_back( 120 );
                     }
                 }
