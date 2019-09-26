@@ -5044,7 +5044,9 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
 
 
     if( isCurse ) {
-        if( ! inPlayer->isTwin && hasCurseToken( inPlayer->email ) ) {
+        if( ! inPlayer->isTwin && 
+            inPlayer->curseStatus.curseLevel == 0 &&
+            hasCurseToken( inPlayer->email ) ) {
             inPlayer->curseTokenCount = 1;
             }
         else {
@@ -18964,7 +18966,10 @@ int main() {
                 for( int j=0; j<numLive; j++ ) {
                     LiveObject *nextPlayer = players.getElement(j);
                     
-                    if( strcmp( nextPlayer->email, email ) == 0 ) {
+                    // don't give mid-life tokens to twins or cursed players
+                    if( ! nextPlayer->isTwin &&
+                        nextPlayer->curseStatus.curseLevel == 0 &&
+                        strcmp( nextPlayer->email, email ) == 0 ) {
                         
                         nextPlayer->curseTokenCount = 1;
                         nextPlayer->curseTokenUpdate = true;
