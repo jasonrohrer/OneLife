@@ -16,6 +16,7 @@ char isCursed( const char *inSenderEmail, const char *inReceiverEmail );
 void initPersonalCurseTest( const char *inTargetEmail );
 
 void addPersonToPersonalCurseTest( const char *inEmail,
+                                   const char *inTargetEmail,
                                    GridPos inPos );
 
 char isBirthLocationCurseBlocked( const char *inTargetEmail, GridPos inPos );

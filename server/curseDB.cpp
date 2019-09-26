@@ -427,12 +427,6 @@ char isCursed( const char *inSenderEmail, const char *inReceiverEmail ) {
 
 
 
-static int getCurseRadiusForEmail( const char *inTargetEmail ) {
-    int radius = curseBlockRadius * ( 1 + getCurseCount( inTargetEmail ) );
-    
-    return radius;
-    }
-
 
 
 typedef struct PersonRecord {
@@ -446,43 +440,53 @@ typedef struct PersonRecord {
 
 SimpleVector<PersonRecord> blockingRecords;
 
-int personalCurseBlockRadius = 0;
+int personalLiveCurseCount = 0;
 
 void initPersonalCurseTest( const char *inTargetEmail ) {
     checkSettings();
     
     blockingRecords.deleteAll();
 
-    personalCurseBlockRadius = getCurseRadiusForEmail( inTargetEmail );
+    personalLiveCurseCount = 0;
     }
 
     
 
 void addPersonToPersonalCurseTest( const char *inEmail,
+                                   const char *inTargetEmail,
                                    GridPos inPos ) {
-    PersonRecord r = { inEmail, inPos, -1 };
+    
+    int blocking = isCursed( inEmail, inTargetEmail );
+
+    PersonRecord r = { inEmail, inPos, blocking };
     blockingRecords.push_back( r );
+
+    if( blocking ) {
+        personalLiveCurseCount ++;
+        }
+    }
+
+
+static int getCurseRadius( int inLiveCurseCount ) {
+    // 0 if no one live is blocking
+    return curseBlockRadius * inLiveCurseCount;
     }
 
 
 
+
 char isBirthLocationCurseBlocked( const char *inTargetEmail, GridPos inPos ) {
+    
+    int radius = getCurseRadius( personalLiveCurseCount );
+    
     for( int i=0; i<blockingRecords.size(); i++ ) {
         PersonRecord *r = blockingRecords.getElement( i );
         
-        if( r->blocking != 0 && 
-            distance( inPos, r->pos ) <= personalCurseBlockRadius ) {
+        if( r->blocking == 1 && 
+            distance( inPos, r->pos ) <= radius ) {
             
-            // in radius, and not known to be non-blocking
-            
-            if( r->blocking == -1 ) {
-                // look it up and remember it
-                r->blocking = isCursed( r->email, inTargetEmail );
-                }
-            
-            if( r->blocking == 1 ) {
-                return true;
-                }
+            // in radius, and blocking
+            return true;
             }
         }
     return false;
@@ -492,16 +496,35 @@ char isBirthLocationCurseBlocked( const char *inTargetEmail, GridPos inPos ) {
 
 char isBirthLocationCurseBlockedNoCache( const char *inTargetEmail, 
                                          GridPos inPos ) {
-    
-    int radius = getCurseRadiusForEmail( inTargetEmail );
+
+    int liveCurseCount = 0;
+
+    SimpleVector<char> curseCache;
     
     for( int i=0; i<blockingRecords.size(); i++ ) {
         PersonRecord *r = blockingRecords.getElement( i );
         
-        if( distance( inPos, r->pos ) <= radius ) {
+        if( isCursed( r->email, inTargetEmail ) ) {
+            liveCurseCount ++;
+            curseCache.push_back( true );
+            }
+        else {
+            curseCache.push_back( false );
+            }
+        }
+    
+    
+    
+    int radius = getCurseRadius( liveCurseCount );
+    
+    for( int i=0; i<blockingRecords.size(); i++ ) {
+        PersonRecord *r = blockingRecords.getElement( i );
+        
+        if( curseCache.getElementDirect( i ) ) {
+            // cursed
             
-            // in radius
-            if( isCursed( r->email, inTargetEmail ) ) {
+            if( distance( inPos, r->pos ) <= radius ) {
+                // in radius
                 return true;
                 }
             }

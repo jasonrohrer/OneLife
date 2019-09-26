@@ -6421,7 +6421,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                 strcmp( o->email, inEmail ) != 0 ) {
 
                 // non-tutorial, non-cursed, non-us player
-                addPersonToPersonalCurseTest( o->email, getPlayerPos( o ) );
+                addPersonToPersonalCurseTest( o->email, inEmail,
+                                              getPlayerPos( o ) );
                 }
             }
         }

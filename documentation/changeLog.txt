@@ -148,6 +148,16 @@ Server Fixes
 
 --Better wording so that people know what the arc name is.
 
+--Your curse block radius depends on number of living players who have you
+  cursed, not total number.  Starting radius is 100, when one living player has
+  you cursed, and it goes up by 100 for each additional living player that has
+  you cursed.  Once 5 living players have you cursed, one of them standing at
+  the center of the rift will bock you from being born and send you to
+  donkeytown.  Once 10 living players have you cursed, one of them standing at
+  the corner of the rift will block the entire rift, sending you to donkeytown
+  always, as long as those players continue living.  The worst offender
+  currently has 104 curses, and in a recent sample, 13 living players had that
+  offender cursed.
 
 
 
