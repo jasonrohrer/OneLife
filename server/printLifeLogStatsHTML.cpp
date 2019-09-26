@@ -363,6 +363,12 @@ int processLifeLogFolder( File *inFolder ) {
 
         delete logFile;
         }
+
+    char *folderName = inFolder->getFileName();
+    
+    printf( "After processing folder %s, see totalAge:%f totalLives:%d\n", 
+            folderName, totalAge, totalLives );
+    delete [] folderName;
     
 
     delete checkpointFile;
