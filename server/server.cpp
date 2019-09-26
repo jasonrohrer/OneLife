@@ -543,6 +543,8 @@ typedef struct LiveObject {
         char isEve;        
 
         char isTutorial;
+
+        char isTwin;
         
         // used to track incremental tutorial map loading
         TutorialLoadProgress tutorialLoad;
@@ -5042,7 +5044,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
 
 
     if( isCurse ) {
-        if( hasCurseToken( inPlayer->email ) ) {
+        if( ! inPlayer->isTwin && hasCurseToken( inPlayer->email ) ) {
             inPlayer->curseTokenCount = 1;
             }
         else {
@@ -6386,6 +6388,7 @@ static int tutorialCount = 0;
 // if any twin in group is banned, all should be
 static SimpleVector<char*> tempTwinEmails;
 
+static char nextLogInTwin = false;
 
 // returns ID of new player,
 // or -1 if this player reconnected to an existing ID
@@ -6655,6 +6658,13 @@ int processLoggedInPlayer( char inAllowReconnect,
     nextID++;
 
 
+    if( nextLogInTwin ) {
+        newObject.isTwin = true;
+        }
+    else {
+        newObject.isTwin = false;
+        }
+    
 
 
     if( familyDataLogFile != NULL ) {
@@ -7755,6 +7765,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     
 
     if( newObject.curseStatus.curseLevel == 0 &&
+        ! newObject.isTwin &&
         hasCurseToken( inEmail ) ) {
         newObject.curseTokenCount = 1;
         }
@@ -8198,7 +8209,8 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             tempTwinEmails.push_back( nextConnection->email );
             }
         
-
+        nextLogInTwin = true;
+        
         int newID = processLoggedInPlayer( false,
                                            inConnection.sock,
                                            inConnection.sockBuffer,
@@ -8230,6 +8242,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                 delete [] inConnection.twinCode;
                 inConnection.twinCode = NULL;
                 }
+            nextLogInTwin = false;
             return;
             }
 
@@ -8346,6 +8359,8 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             }
         
         delete [] twinCode;
+        
+        nextLogInTwin = false;
         }
     }
 

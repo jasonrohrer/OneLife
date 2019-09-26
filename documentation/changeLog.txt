@@ -159,6 +159,8 @@ Server Fixes
   currently has 104 curses, and in a recent sample, 13 living players had that
   offender cursed.
 
+--Twins/trips/quads don't get curse tokens to spend.
+
 
 
 
