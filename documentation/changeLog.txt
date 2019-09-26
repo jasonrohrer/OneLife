@@ -11,6 +11,9 @@ Version 266
   thus mistakenly executing a use-on-ground action, like dismounting our
   horse).  Fixes #400
 
+--Right-click on empty ground around an object with empty hand will pick it up.
+  Makes it easier to pick up tiny objects.
+
 
 
 Server Fixes
