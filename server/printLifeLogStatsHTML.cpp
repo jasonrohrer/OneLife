@@ -283,10 +283,6 @@ int processLifeLogFolder( File *inFolder ) {
                     &folderTotalAge, &folderTotalLives, 
                     &folderLongestFamilyChain, &folderOver55Count );
             
-            printf( "Read file:%s age:%f lives:%d from %s\n", 
-                    lastScannedFileName, folderTotalAge, folderTotalLives,
-                    fileName );
-
             totalAge += folderTotalAge;
             totalLives += folderTotalLives;
             if( folderLongestFamilyChain > longestFamilyChain ) {
@@ -363,12 +359,6 @@ int processLifeLogFolder( File *inFolder ) {
 
         delete logFile;
         }
-
-    char *folderName = inFolder->getFileName();
-    
-    printf( "After processing folder %s, see totalAge:%f totalLives:%d\n", 
-            folderName, totalAge, totalLives );
-    delete [] folderName;
     
 
     delete checkpointFile;
