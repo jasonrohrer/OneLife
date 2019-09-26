@@ -14,6 +14,10 @@ Version 266
 --Right-click on empty ground around an object with empty hand will pick it up.
   Makes it easier to pick up tiny objects.
 
+--Support for offScreenSound tag on emotes (like murder mouth and yoohoo).
+  Support for pulsing off-screen notification if an offScreenSound object emits
+  sounds during its animation (like murder mouth does).  Fixes #406
+
 
 
 Server Fixes

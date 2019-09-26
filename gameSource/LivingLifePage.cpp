@@ -3176,7 +3176,8 @@ SimpleVector<OffScreenSound> offScreenSounds;
 
 
 static void addOffScreenSound( double inPosX, double inPosY,
-                               char *inDescription ) {
+                               char *inDescription,
+                               double inFadeSec = 4 ) {
 
     char red = false;
     
@@ -3191,7 +3192,7 @@ static void addOffScreenSound( double inPosX, double inPosY,
             }
         }
     
-    double fadeETATime = game_getCurrentTime() + 4;
+    double fadeETATime = game_getCurrentTime() + inFadeSec;
     
     doublePair pos = { inPosX, inPosY };
     
@@ -3370,7 +3371,24 @@ void LivingLifePage::handleAnimSound( int inObjectID, double inAge,
                     
                     playSound( u,
                                getVectorFromCamera( inPosX, inPosY ) );
+
+                    char *des = getObject( inObjectID )->description;
                     
+                    if( strstr( des, "offScreenSound" ) != NULL ) {
+                        // this object has offscreen-visible sounds
+                        // AND its animation has sounds
+                        // renew offscreen sound for each new sound played
+                        
+                        // these have very short fade
+                        // so that we don't have a bunch of overlap
+                        addOffScreenSound(
+                            inPosX *
+                            CELL_D, 
+                            inPosY *
+                            CELL_D,
+                            des,
+                            0.5 );
+                        }
                     }
                 }
             }
@@ -16201,6 +16219,20 @@ void LivingLifePage::step() {
                                                 getVectorFromCamera( 
                                                     playerPos.x,
                                                     playerPos.y ) );
+                                            
+                                            if( strstr( 
+                                                    obj->description,
+                                                    "offScreenSound" )
+                                                != NULL ) {
+                                                    
+                                                addOffScreenSound(
+                                                    playerPos.x *
+                                                    CELL_D, 
+                                                    playerPos.y *
+                                                    CELL_D,
+                                                    obj->description );
+                                                }
+
                                             // stop after first sound played
                                             break;
                                             }
