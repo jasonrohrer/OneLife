@@ -18,6 +18,8 @@ Version 266
   Support for pulsing off-screen notification if an offScreenSound object emits
   sounds during its animation (like murder mouth does).  Fixes #406
 
+--Editor supports flipping whole object.
+
 
 
 Server Fixes
