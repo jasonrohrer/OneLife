@@ -20198,7 +20198,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     int floorDestID = 0;
     
     int destObjInClickedTile = 0;
-
+    char destObjInClickedTilePermanent = false;
+    
     int destNumContained = 0;
     
     int mapX = clickDestX - mMapOffsetX + mMapD / 2;
@@ -20277,6 +20278,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         destObjInClickedTile = destID;
 
+        if( destObjInClickedTile > 0 ) {
+            destObjInClickedTilePermanent =
+                getObject( destObjInClickedTile )->permanent;
+            }
+    
         destNumContained = mMapContainedStacks[ mapY * mMapD + mapX ].size();
         
 
@@ -20799,7 +20805,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         mustMove = true;
         }
-    else if( ( modClick && ourLiveObject->holdingID != 0 )
+    else if( ( modClick && 
+               // we can right click on an empty tile or full tile if
+               // we're holding something
+               // we can also right click with empty hand to pick something
+               // up
+               ( ourLiveObject->holdingID != 0 || 
+                 ( destObjInClickedTile > 0 && 
+                   ! destObjInClickedTilePermanent ) ) )
              || killMode
              || tryingToPickUpBaby
              || useOnBabyLater
@@ -21034,9 +21047,17 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 send = true;
                 }
             else if( modClick && destID == 0 && 
-                     ourLiveObject->holdingID != 0 ) {
-                action = "DROP";
-                nextActionDropping = true;
+                     ourLiveObject->holdingID >= 0 ) {
+                
+                if( ourLiveObject->holdingID > 0 ) {
+                    action = "DROP";
+                    nextActionDropping = true;
+                    }
+                else {
+                    action = "USE";
+                    nextActionDropping = false;
+                    }
+                
                 send = true;
 
                 // check for other special case
