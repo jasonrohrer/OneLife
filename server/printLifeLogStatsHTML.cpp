@@ -283,6 +283,10 @@ int processLifeLogFolder( File *inFolder ) {
                     &folderTotalAge, &folderTotalLives, 
                     &folderLongestFamilyChain, &folderOver55Count );
             
+            printf( "Read file:%s age:%f lives:%d from %s\n", 
+                    lastScannedFileName, folderTotalAge, folderTotalLives,
+                    fileName );
+
             totalAge += folderTotalAge;
             totalLives += folderTotalLives;
             if( folderLongestFamilyChain > longestFamilyChain ) {
