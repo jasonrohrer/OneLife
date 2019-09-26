@@ -11845,10 +11845,11 @@ int main() {
                     }
                 
 
-                char *message = autoSprintf( ":%s: ARC HAS LASTED %d YEARS**"
+                char *message = autoSprintf( "ARC HAS LASTED %d YEARS.  "
+                                             "ARC NAME IS :%s:**"
                                              "%d %s %s ALIVE%s",
-                                             getArcName(),
                                              arcMilestone,
+                                             getArcName(),
                                              numFams,
                                              familyLine,
                                              familyWord,

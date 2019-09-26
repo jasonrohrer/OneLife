@@ -3,6 +3,16 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 266
+
+--Extra ID param in USE message to differentiate between click on ground and
+  click on target object (to fix case where target animal moves out of the way
+  before server gets our message, making it look like we clicked on the ground,
+  thus mistakenly executing a use-on-ground action, like dismounting our
+  horse).  Fixes #400
+
+
+
 Server Fixes
 
 --Fixed so that long paths that go near edge of client's known map chunk cause
@@ -114,12 +124,6 @@ Server Fixes
 
 --One more basket-stacking fling case fixed.  Fixes #404
 
---Extra ID param in USE message to differentiate between click on ground and
-  click on target object (to fix case where target animal moves out of the way
-  before server gets our message, making it look like we clicked on the ground,
-  thus mistakenly executing a use-on-ground action, like dismounting our
-  horse).  Fixes #400
-
 --Curse radius grows as your total curse count grows.  Starts at 200 (you must 
   be born 200 tiles away from any living player that cursed you in the past 7
   days), and grows by 200 with each curse you receive.  At 4 curses, your
@@ -142,6 +146,7 @@ Server Fixes
   window actually opens, to give the target some warning.  No more surprise
   insta-kill when you're standing next to someone.  Fixes #401
 
+--Better wording so that people know what the arc name is.
 
 
 
