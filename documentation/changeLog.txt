@@ -179,6 +179,10 @@ Server Fixes
   lone player can still easily guard a choke point (with a short-range weapon)
   or an area (with a bow).
 
+--Improved fence auto-orientation code so that different types of fences
+  (rickety, proposed, etc.) can react to each other and auto-orient.  No more
+  out-of-whack fences caused by them being out-of-sync when placed.
+
 
 
 
