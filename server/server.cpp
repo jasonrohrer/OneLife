@@ -143,6 +143,9 @@ static int babyBirthFoodDecrement = 10;
 // makes whole server a bit easier (or harder, if negative)
 static int eatBonus = 0;
 
+static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
+
+
 
 static int minActivePlayersForLanguages = 15;
 
@@ -3002,21 +3005,17 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
             }
         }
 
-    if( inPlayer->killPosseSize != 0 ) {
+    if( inPlayer->killPosseSize > 0 ) {
         // player part of a posse
         double posseSpeedMult = 1.0;
         
-        switch( inPlayer->killPosseSize ) {
-            case 1:
-                // slow down
-                posseSpeedMult = 0.5;
-                break;
-            case 3:
-                posseSpeedMult = 1.5;
-                break;
+        if( inPlayer->killPosseSize <= 4 ) {
+            posseSpeedMult = 
+                posseSizeSpeedMultipliers[ inPlayer->killPosseSize - 1 ];
             }
-        if( inPlayer->killPosseSize >= 4 ){
-            posseSpeedMult = 2.0;
+        else {
+            // 4+ same value as 4
+            posseSpeedMult = posseSizeSpeedMultipliers[3];
             }
         speed *= posseSpeedMult;
         }
@@ -6693,6 +6692,16 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     minActivePlayersForLanguages =
         SettingsManager::getIntSetting( "minActivePlayersForLanguages", 15 );
+
+    SimpleVector<double> *multiplierList = 
+        SettingsManager::getDoubleSettingMulti( "posseSpeedMultipliers" );
+    
+    for( int i=0; i<multiplierList->size() && i < 4; i++ ) {
+        posseSizeSpeedMultipliers[i] = multiplierList->getElementDirect( i );
+        }
+    delete multiplierList;
+    
+
 
 
     numConnections ++;
