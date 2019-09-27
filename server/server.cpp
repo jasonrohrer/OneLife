@@ -601,6 +601,10 @@ typedef struct LiveObject {
         // player during current step
         int responsiblePlayerID;
 
+        // affects movement speed if part of posse
+        int killPosseSize;
+        
+
         // start and dest for a move
         // same if reached destination
         int xs;
@@ -2998,6 +3002,26 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
             }
         }
 
+    if( inPlayer->killPosseSize != 0 ) {
+        // player part of a posse
+        double posseSpeedMult = 1.0;
+        
+        switch( inPlayer->killPosseSize ) {
+            case 1:
+                // slow down
+                posseSpeedMult = 0.5;
+                break;
+            case 3:
+                posseSpeedMult = 1.5;
+                break;
+            }
+        if( inPlayer->killPosseSize >= 4 ){
+            posseSpeedMult = 2.0;
+            }
+        speed *= posseSpeedMult;
+        }
+    
+
     // never move at 0 speed, divide by 0 errors for eta times
     if( speed < 0.01 ) {
         speed = 0.01;
@@ -4465,6 +4489,28 @@ static void truncateMove( LiveObject *otherPlayer, int blockedStep ) {
     otherPlayer->yd 
         = otherPlayer->pathToDest[
             blockedStep - 1].y;
+    }
+
+
+
+
+static void endAnyMove( LiveObject *nextPlayer ) {
+    
+    if( nextPlayer->xd != nextPlayer->xs ||
+        nextPlayer->yd != nextPlayer->ys ) {
+        
+        int truncationSpot = 
+            computePartialMovePathStep( nextPlayer );
+        
+        if( truncationSpot < nextPlayer->pathLength - 2 ) {
+            
+            // truncate a step ahead, to reduce chance 
+            // of client-side players needing to turn-around
+            // to reach this truncation point
+            
+            truncateMove( nextPlayer, truncationSpot + 2 );
+            }                    
+        }
     }
 
                         
@@ -6737,6 +6783,8 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     newObject.responsiblePlayerID = -1;
     
+    newObject.killPosseSize = 0;
+
     newObject.displayID = getRandomPersonObject();
     
     newObject.isEve = false;
@@ -10559,6 +10607,60 @@ typedef struct KillState {
 
 SimpleVector<KillState> activeKillStates;
 
+SimpleVector<int> killStatePosseChangedPlayerIDs;
+
+
+static int countPosseSize( LiveObject *inTarget ) {
+    int p = 0;
+    
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+        if( s->targetID == inTarget->id ) {
+            p++;
+            }
+        }
+    return p;
+    }
+
+
+
+static void updatePosseSize( LiveObject *inTarget, 
+                             LiveObject *inPossibleLastKiller = NULL ) {
+    
+    int p = countPosseSize( inTarget );
+    
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+        
+        if( s->targetID == inTarget->id ) {
+            int killerID = s->killerID;
+            
+            LiveObject *o = getLiveObject( killerID );
+            
+            if( o != NULL ) {
+                int oldSize = o->killPosseSize;
+                o->killPosseSize = p;
+                
+                if( oldSize != p ) {
+                    killStatePosseChangedPlayerIDs.push_back( killerID );
+                    }
+                }
+            }
+        }
+
+    if( p == 0 && inPossibleLastKiller != NULL ) {
+        int oldSize = inPossibleLastKiller->killPosseSize;
+        
+        inPossibleLastKiller->killPosseSize = 0;
+        if( oldSize != 0 ) {
+            killStatePosseChangedPlayerIDs.push_back( 
+                inPossibleLastKiller->id );
+            }
+        }
+    }
+
+    
+
 
 // return true if it worked
 char addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
@@ -10597,8 +10699,28 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
                         30 };
         activeKillStates.push_back( s );
         }
+
+    updatePosseSize( inTarget );
+    
     return true;
     }
+
+
+
+static void removeKillState( LiveObject *inKiller, LiveObject *inTarget ) {
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+    
+        if( s->killerID == inKiller->id &&
+            s->targetID == inTarget->id ) {
+            activeKillStates.deleteElement( i );
+            
+            updatePosseSize( inTarget, inKiller );
+            return;
+            }
+        }
+    }
+    
 
 
 
@@ -11021,21 +11143,8 @@ void executeKillAction( int inKillerIndex,
                 // Otherwise, if their move continues, they might walk
                 // at the wrong speed with the changed weapon
                 
-                if( nextPlayer->xd != nextPlayer->xs ||
-                    nextPlayer->yd != nextPlayer->ys ) {
-                    
-                    int truncationSpot = 
-                        computePartialMovePathStep( nextPlayer );
-                    
-                    if( truncationSpot < nextPlayer->pathLength - 2 ) {
-                        
-                        // truncate a step ahead, to reduce chance 
-                        // of client-side players needing to turn-around
-                        // to reach this truncation point
 
-                        truncateMove( nextPlayer, truncationSpot + 2 );
-                        }                    
-                    }
+                endAnyMove( nextPlayer );
                 
 
                 timeSec_t oldEtaDecay = 
@@ -17097,7 +17206,7 @@ int main() {
                     newEmotTTLs.push_back( 0 );
                     }
                 
-                activeKillStates.deleteElement( i );
+                removeKillState( killer, target );
                 i--;
                 continue;
                 }
@@ -18615,6 +18724,24 @@ int main() {
                 }
             }
         
+
+        // send updates about players who have had a posse-size change
+        for( int i=0; i<killStatePosseChangedPlayerIDs.size(); i++ ) {
+            int id = killStatePosseChangedPlayerIDs.getElementDirect( i );
+            
+            int index = getLiveObjectIndex( id );
+            
+            if( index != -1 ) {
+                playerIndicesToSendUpdatesAbout.push_back( index );
+                
+                // end current move to allow move speed to change instantly
+                endAnyMove( getLiveObject( id ) );
+                }
+            }
+        
+        killStatePosseChangedPlayerIDs.deleteAll();
+        
+
 
         if( playerIndicesToSendUpdatesAbout.size() > 0 ) {
             

@@ -170,6 +170,15 @@ Server Fixes
 
 --Twins/trips/quads don't get curse tokens to spend.
 
+--How fast you run while chasing someone in the kill state now depends on the
+  size of your posse.  If you are by yourself, you run slow (0.5x speed).  A
+  posse of 2 runs at normal speed.  A posse of 3 runs at 1.5x speed.  A posse
+  of 4+ runs at 2x speed.  This makes it more difficult for a lone griefer to
+  kill someone, while also making it more difficult for a lone griefer to
+  escape the will of a determined group.  This only affects chasing speed, so a
+  lone player can still easily guard a choke point (with a short-range weapon)
+  or an area (with a bow).
+
 
 
 
