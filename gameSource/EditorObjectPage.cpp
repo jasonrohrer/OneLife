@@ -701,6 +701,7 @@ EditorObjectPage::EditorObjectPage()
     addKeyClassDescription( &mKeyLegend, "arrows", "Move layer" );
     addKeyClassDescription( &mKeyLegend, "Pg Up/Down", "Layer order" );
     addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger jumps" );
+    addKeyDescription( &mKeyLegend, 'F', "Flip whole object" );
     addKeyDescription( &mKeyLegend, 'r', "Rotate layer" );
     addKeyDescription( &mKeyLegend, 'p', "Ignore parent links" );
     addKeyClassDescription( &mKeyLegend, "c/v", "Copy/paste color" );
@@ -4253,7 +4254,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     doublePair legendPos = mImportEditorButton.getPosition();
     
     legendPos.x = -100;
-    legendPos.y += 52;
+    legendPos.y += 72;
     
     drawKeyLegend( &mKeyLegend, legendPos );
 
@@ -5267,6 +5268,17 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
             mCurrentObject.spriteUseAppear[layerToDupe];
 
         // don't dupe body part status
+        }
+    if( inASCII == 'F' ) {
+        // flip entire object
+        for( int i=0; i< mCurrentObject.numSprites; i++ ) {
+            mCurrentObject.spriteHFlip[i] =
+                ! mCurrentObject.spriteHFlip[i];
+            mCurrentObject.spritePos[i].x *= -1;
+            }
+        for( int i=0; i< mCurrentObject.numSlots; i++ ) {
+            mCurrentObject.slotPos[i].x *= -1;
+            }
         }
     if( mPickedObjectLayer != -1 && inASCII == 8 ) {
         // backspace

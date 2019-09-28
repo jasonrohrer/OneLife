@@ -3,6 +3,192 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 266    2019-September-27
+
+--Extra ID param in USE message to differentiate between click on ground and
+  click on target object (to fix case where target animal moves out of the way
+  before server gets our message, making it look like we clicked on the ground,
+  thus mistakenly executing a use-on-ground action, like dismounting our
+  horse).  Fixes #400
+
+--Right-click on empty ground around an object with empty hand will pick it up.
+  Makes it easier to pick up tiny objects.
+
+--Support for offScreenSound tag on emotes (like murder mouth and yoohoo).
+  Support for pulsing off-screen notification if an offScreenSound object emits
+  sounds during its animation (like murder mouth does).  Fixes #406
+
+--Editor supports flipping whole object.
+
+
+
+Server Fixes
+
+--Fixed so that long paths that go near edge of client's known map chunk cause
+  new chunks to be sent (so client doesn't see unknown map area when walking
+  near edge of mapt chunk).
+
+--Fixed a movement bug that caused jump-back when rapidly clickly to extend a
+  path (a timing bug).  This jump-back would also cause a carried child's view
+  to scroll way off into the unknown map area and then slide back.
+
+--If a new player has played less than 5 lives or less than 2 hours total (not
+  including their time in the tutorial), their mother gets a message when they
+  are born.
+
+--Personal curses now block someone from being born near you for 7 days (was 2
+  days).  Fixes #384
+
+--Fixed major bug in personal curse implementation.  When checking if birth
+  location blocked, was only checking first player on the list.  This meant
+  that personal curses didn't work correctly most of the time.
+
+--During Eve window, if all fertile mothers have a player curse-blocked, they
+  go to donkeytown (they used to spawn as Eve inside the rift barrier).
+
+--Simplified mother picking code (without changing behavior) in anticipation of
+  some additional fixes.
+
+--Fixed twin loophole in personal curse implementation.  If your twin is
+  blocked from being born in a given area because of curses, so are you, and
+  you all go to donkeytown if there's no area for one of you.
+
+--Twins sent to donkeytown based on personal curses all have black speech.
+
+--Fixed a jump-back movement glitch when a slow client tries to interrupt a
+  move that the server thinks is already done.
+
+--Fixed so that you can't add things to slots in DIE-baby graves.
+
+--Player counted as new if <4 hours lived in game (was 2).
+
+--Fixed case where force-drop happens (during death or wounding) when no direct
+  bare-ground transition applies to the permanent held object (example:  cast
+  fishing pole).  In this case, we check for a timed transition first, and then
+  look for a bare-ground transition after that timed transition is applied.
+  Also, in case where bare ground transition leaves something in hand (example:
+  pole with old boot), we toss both things (before, the pole would disappear,
+  leaving only the boot).  Fixes #388
+
+--Better logging of too many babies per mother apocalypse trigger.
+
+--Player counted as new if < 8 hours lived in game (was 4).
+
+--Fixed stacked basket flinging glitch.  Fixes #391
+
+--Blocked all container object from flinging stuff.  To target a container
+  object (like a grave full of belongings) in a way that would reduce the
+  number of slots in the container (like picking up the grave into a basket),
+  you must empty it first.
+
+--Changed max baby/mother after Eve to 20 (to essentially disable that
+  apocalypse condition).  Added a new condition:  apocalypse after Eve window
+  if our player population inside the rift is ever > 33% helpless babies.
+
+--Increased death stagger time by 20 seconds (+50%) up to 60 seconds (was 40),
+  allowing more time for wounded players to be healed.
+
+--Fixed glitch in naming an unnamed Eve so that she doesn't get your family
+  name.
+
+--Was not accounting for yum bonus when deciding whether we had enough food for
+  hungry work.  Also brought safe buffer down to 4 pips (was 5).
+  Related to #392
+
+--If family has < 3 potentially fertile females left (fertile females and girl
+  children), we force that family to have girl babies when it is their turn for
+  babies.
+
+--findDropSpot code now respects rift barrier.  Flinging stuff across the
+  barrier should never be possible (last case was picking up a toddler who was
+  holding something).
+
+--Food log now includes eating bonus.  Fixes #393
+
+--Fixed frozen full horse cart bug.
+
+--Baby ratio to trigger apocalypse is now 0.66 (was 0.33).  If we get to the
+  point where there are 2 babies for every non-baby player, things have gotten
+  really bad, right?
+
+--Fixed potential (though unlikely) overflow issue for long emails in local
+  curse database.
+
+--Over past 21 hours, only three spawns were sent to donkeytown, and all three
+  of them were for the single player with the most curses in the game.  No one
+  else went to donkeytown.  It seems like the blocking radius for curses is
+  simply too small.  Increasing it up to 200 (was 50).
+
+--Your younger sibs now count toward your genetic score, closing the 'avoid 
+  having kids yourself and try to live until 60' path to a high genetic score.
+
+--Tutorial lives no longer count toward genetic fitness.
+
+--Rollback:  back to reporting tutorial lives to fitness server (all Eve lives
+  were already not affecting the score, according to the fitness server code).
+
+--Fix for getting back on the leaderboard (after expiring) by playing the
+  tutorial:  lives that don't affect score (all Eve lives) don't update
+  last_action_time.
+
+--One more basket-stacking fling case fixed.  Fixes #404
+
+--Curse radius grows as your total curse count grows.  Starts at 200 (you must 
+  be born 200 tiles away from any living player that cursed you in the past 7
+  days), and grows by 200 with each curse you receive.  At 4 curses, your
+  curse block radius is 1000, which means you cannot be born inside the rift
+  if anyone who cursed you is currently alive.  Your total curse count goes
+  down by 1 point every 7 days.  Cursing still works effectively as a 'get
+  away from me' gesture (you'll be very unlikely to encounter this player again
+  in the next 7 days), but starts functioning more and more like a global block
+  as your curse count grows.  Even then, though, it only blocks you if the
+  people who don't like your behavior are currently playing.  As opposed to a
+  fixed-length punishment, this is more like, 'you've bugged these people
+  enough, try playing again later.'  Fixes #403
+
+--Grave placement now respects rift barrier.
+
+--Target player of murder-mouth kill targeting shows SHOCK emotion to indicate
+  that they are being targeted.  Related to #401
+
+--3-second delay between when murder-mouth sound/anim starts and when the kill
+  window actually opens, to give the target some warning.  No more surprise
+  insta-kill when you're standing next to someone.  Fixes #401
+
+--Better wording so that people know what the arc name is.
+
+--Your curse block radius depends on number of living players who have you
+  cursed, not total number.  Starting radius is 100, when one living player has
+  you cursed, and it goes up by 100 for each additional living player that has
+  you cursed.  Once 5 living players have you cursed, one of them standing at
+  the center of the rift will bock you from being born and send you to
+  donkeytown.  Once 10 living players have you cursed, one of them standing at
+  the corner of the rift will block the entire rift, sending you to donkeytown
+  always, as long as those players continue living.  The worst offender
+  currently has 104 curses, and in a recent sample, 13 living players had that
+  offender cursed.
+
+--Twins/trips/quads don't get curse tokens to spend.
+
+--How fast you run while chasing someone in the kill state now depends on the
+  size of your posse.  If you are by yourself, you run slow (0.75x speed).  A
+  posse of 2 runs at 1.25x speed.  A posse of 3 runs at 1.5x speed.  A posse
+  of 4+ runs at 2x speed.  This makes it more difficult for a lone griefer to
+  kill someone, while also making it more difficult for a lone griefer to
+  escape the will of a determined group.  This only affects chasing speed, so a
+  lone player can still easily guard a choke point (with a short-range weapon)
+  or an area (with a bow).
+
+--Improved fence auto-orientation code so that different types of fences
+  (rickety, proposed, etc.) can react to each other and auto-orient.  No more
+  out-of-whack fences caused by them being out-of-sync when placed.
+
+--New baby distribution method, after Eve window closes:  Instead of
+  round-robin, we pick the family with the fewest potentially fertile females
+  (fertile moms and girl children) left and send the next incoming baby there.
+
+
+
 Version 262    2019-September-12
 
 --Incorporated PAX West hotfixes to kiosk mode.
@@ -28,6 +214,11 @@ Version 262    2019-September-12
 --Mousing over someone from another family shows their WAR or PEACE status with
   your family (no label if neutral).  A new WAR_REPORT message from the server
   makes this possible.
+
+--If you spam more than 10 emotes in a single minute, you're put on emote
+  cooldown for two minutes.  Based on the simplistic implementation, worst
+  case, you can trigger 20 emotes in a row (if you trigger 10 at the end of a
+  minute window and 10 at the beginning of the next minute window).  Fixes #396
 
 
 

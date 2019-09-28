@@ -103,6 +103,14 @@ double forceDeathAge = age_death;
 
 double minSayGapInSeconds = 1.0;
 
+// for emote throttling
+double emoteWindowSeconds = 60.0;
+int maxEmotesInWindow = 10;
+
+double emoteCooldownSeconds = 120.0;
+
+
+
 int maxLineageTracked = 20;
 
 int apocalypsePossible = 0;
@@ -137,6 +145,9 @@ static int babyBirthFoodDecrement = 10;
 // makes whole server a bit easier (or harder, if negative)
 static int eatBonus = 0;
 
+static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
+
+
 
 static int minActivePlayersForLanguages = 15;
 
@@ -163,6 +174,7 @@ static int familySpan = 2;
 // phrases that trigger baby and family naming
 static SimpleVector<char*> nameGivingPhrases;
 static SimpleVector<char*> familyNameGivingPhrases;
+static SimpleVector<char*> eveNameGivingPhrases;
 static SimpleVector<char*> cursingPhrases;
 
 char *curseYouPhrase = NULL;
@@ -187,6 +199,7 @@ static const char *allowedSayChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! ";
 
 
 static int killEmotionIndex = 2;
+static int victimEmotionIndex = 2;
 
 
 static double lastBabyPassedThresholdTime = 0;
@@ -449,6 +462,14 @@ static void removePeaceTreaty( int inLineageAEveID, int inLineageBEveID ) {
     }
 
 
+typedef struct PastLifeStats {
+        int lifeCount;
+        int lifeTotalSeconds;
+        char error;
+    } PastLifeStats;
+
+    
+
 
 
 // for incoming socket connections that are still in the login process
@@ -480,6 +501,7 @@ typedef struct FreshConnection {
         
         int tutorialNumber;
         CurseStatus curseStatus;
+        PastLifeStats lifeStats;
         
         char *twinCode;
         int twinCount;
@@ -517,6 +539,7 @@ typedef struct LiveObject {
         char *lastSay;
 
         CurseStatus curseStatus;
+        PastLifeStats lifeStats;
         
         int curseTokenCount;
         char curseTokenUpdate;
@@ -525,6 +548,8 @@ typedef struct LiveObject {
         char isEve;        
 
         char isTutorial;
+
+        char isTwin;
         
         // used to track incremental tutorial map loading
         TutorialLoadProgress tutorialLoad;
@@ -566,6 +591,12 @@ typedef struct LiveObject {
 
         double lastSayTimeSeconds;
 
+        double firstEmoteTimeSeconds;
+        int emoteCountInWindow;
+        char emoteCooldown;
+        double emoteCooldownStartTimeSeconds;
+
+
         // held by other player?
         char heldByOther;
         int heldByOtherID;
@@ -574,6 +605,10 @@ typedef struct LiveObject {
         // player that's responsible for updates that happen to this
         // player during current step
         int responsiblePlayerID;
+
+        // affects movement speed if part of posse
+        int killPosseSize;
+        
 
         // start and dest for a move
         // same if reached destination
@@ -601,6 +636,11 @@ typedef struct LiveObject {
         int lastSentMapX;
         int lastSentMapY;
         
+        // path dest for the last full path that we checked completely
+        // for getting too close to player's known map chunk
+        GridPos mapChunkPathCheckedDest;
+        
+
         double moveTotalSeconds;
         double moveStartTime;
         
@@ -688,6 +728,7 @@ typedef struct LiveObject {
         // in cases where their held wound produces a forced emot
         char emotFrozen;
         double emotUnfreezeETA;
+        int emotFrozenIndex;
         
         char connected;
         
@@ -1689,6 +1730,7 @@ void quitCleanup() {
 
     nameGivingPhrases.deallocateStringElements();
     familyNameGivingPhrases.deallocateStringElements();
+    eveNameGivingPhrases.deallocateStringElements();
     cursingPhrases.deallocateStringElements();
     youGivingPhrases.deallocateStringElements();
     namedGivingPhrases.deallocateStringElements();
@@ -2124,6 +2166,14 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "USE" ) == 0 ) {
         m.type = USE;
+        // read optional id parameter
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.id ) );
+        
+        if( numRead != 4 ) {
+            m.id = -1;
+            }
         }
     else if( strcmp( nameBuffer, "SELF" ) == 0 ) {
         m.type = SELF;
@@ -2456,10 +2506,14 @@ doublePair computePartialMoveSpotPrecise( LiveObject *inPlayer ) {
 
 
 
-GridPos computePartialMoveSpot( LiveObject *inPlayer ) {
+// if inOverrideC > -2, then it is used instead of current partial move step
+GridPos computePartialMoveSpot( LiveObject *inPlayer, int inOverrideC = -2 ) {
 
-    int c = computePartialMovePathStep( inPlayer );
-
+    int c = inOverrideC;
+    if( c < -1 ) {
+        c = computePartialMovePathStep( inPlayer );
+        }
+    
     if( c >= 0 ) {
         
         GridPos cPos = inPlayer->pathToDest[c];
@@ -2615,7 +2669,7 @@ static void logFamilyCounts() {
 
 
 
-static int getNextBabyFamilyLineageEveID() {
+static int getNextBabyFamilyLineageEveIDRoundRobin() {
     nextBabyFamilyIndex++;
 
     if( nextBabyFamilyIndex >= familyCountsAfterEveWindow.size() ) {
@@ -2800,13 +2854,17 @@ char getFemale( LiveObject *inPlayer ) {
     }
 
 
+static int getFirstFertileAge() {
+    return age_fertile;
+    }
+
 
 char isFertileAge( LiveObject *inPlayer ) {
     double age = computeAge( inPlayer );
                     
     char f = getFemale( inPlayer );
                     
-    if( age >= age_fertile && age <= age_old && f ) {
+    if( age >= getFirstFertileAge() && age <= age_old && f ) {
         return true;
         }
     else {
@@ -2948,6 +3006,22 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
                 }
             }
         }
+
+    if( inPlayer->killPosseSize > 0 ) {
+        // player part of a posse
+        double posseSpeedMult = 1.0;
+        
+        if( inPlayer->killPosseSize <= 4 ) {
+            posseSpeedMult = 
+                posseSizeSpeedMultipliers[ inPlayer->killPosseSize - 1 ];
+            }
+        else {
+            // 4+ same value as 4
+            posseSpeedMult = posseSizeSpeedMultipliers[3];
+            }
+        speed *= posseSpeedMult;
+        }
+    
 
     // never move at 0 speed, divide by 0 errors for eta times
     if( speed < 0.01 ) {
@@ -4418,6 +4492,28 @@ static void truncateMove( LiveObject *otherPlayer, int blockedStep ) {
             blockedStep - 1].y;
     }
 
+
+
+
+static void endAnyMove( LiveObject *nextPlayer ) {
+    
+    if( nextPlayer->xd != nextPlayer->xs ||
+        nextPlayer->yd != nextPlayer->ys ) {
+        
+        int truncationSpot = 
+            computePartialMovePathStep( nextPlayer );
+        
+        if( truncationSpot < nextPlayer->pathLength - 2 ) {
+            
+            // truncate a step ahead, to reduce chance 
+            // of client-side players needing to turn-around
+            // to reach this truncation point
+            
+            truncateMove( nextPlayer, truncationSpot + 2 );
+            }                    
+        }
+    }
+
                         
 
 
@@ -4518,6 +4614,11 @@ void handleMapChangeToPaths(
 // returns true if found
 char findDropSpot( int inX, int inY, int inSourceX, int inSourceY, 
                    GridPos *outSpot ) {
+
+    int barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( "barrierOn", 1 );
+
+
     char found = false;
     int foundX = inX;
     int foundY = inY;
@@ -4557,8 +4658,24 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
     if( yDir != 0 ) {
         yFirst = true;
         }
+
+
+    int maxR = 10;
+
+
+    if( barrierOn ) {
+        // don't bother with barrier checks in loop unless we are near
+        // barrier edge
+        if( barrierOn ) {   
+            if( abs( abs( inX ) - barrierRadius ) > maxR + 2 &&
+                abs( abs( inY ) - barrierRadius ) > maxR + 2 ) {
+                barrierOn = false;
+                }
+            }
+        }
+    
         
-    for( int d=1; d<10 && !found; d++ ) {
+    for( int d=1; d<maxR && !found; d++ ) {
             
         char doneY0 = false;
             
@@ -4615,12 +4732,20 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
                                                 
 
 
-                if( 
-                    isMapSpotEmpty( x, y ) ) {
-                                                    
+                if( isMapSpotEmpty( x, y ) ) {
                     found = true;
-                    foundX = x;
-                    foundY = y;
+                    if( barrierOn ) {    
+                        if( abs( x ) >= barrierRadius ||
+                            abs( y ) >= barrierRadius ) {
+                            // outside barrier
+                            found = false;
+                            }
+                        }
+                    
+                    if( found ) {
+                        foundX = x;
+                        foundY = y;
+                        }
                     }
                                                     
                 if( ! doneX0 ) {
@@ -4652,12 +4777,31 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
 GridPos findClosestEmptyMapSpot( int inX, int inY, int inMaxPointsToCheck,
                                  char *outFound ) {
 
+    int barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( "barrierOn", 1 );
+
+
     GridPos center = { inX, inY };
 
     for( int i=0; i<inMaxPointsToCheck; i++ ) {
         GridPos p = getSpriralPoint( center, i );
 
+        char found = false;
+        
         if( isMapSpotEmpty( p.x, p.y, false ) ) {    
+            found = true;
+            
+            if( barrierOn ) {    
+                if( abs( p.x ) >= barrierRadius ||
+                    abs( p.y ) >= barrierRadius ) {
+                    // outside barrier
+                    found = false;
+                    }
+                }
+            }
+        
+
+        if( found ) {
             *outFound = true;
             return p;
             }
@@ -4947,7 +5091,9 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
 
 
     if( isCurse ) {
-        if( hasCurseToken( inPlayer->email ) ) {
+        if( ! inPlayer->isTwin && 
+            inPlayer->curseStatus.curseLevel == 0 &&
+            hasCurseToken( inPlayer->email ) ) {
             inPlayer->curseTokenCount = 1;
             }
         else {
@@ -5132,9 +5278,48 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
         TransRecord *bareTrans =
             getPTrans( oldHoldingID, -1 );
                             
+
+        if( bareTrans == NULL ||
+            bareTrans->newTarget == 0 ) {
+            // no immediate bare ground trans
+            // check if there's a timer transition for this held object
+            // (like cast fishing pole)
+            // and force-run that transition now
+            TransRecord *timeTrans = getPTrans( -1, oldHoldingID );
+            
+            if( timeTrans != NULL && timeTrans->newTarget != 0 ) {
+                oldHoldingID = timeTrans->newTarget;
+            
+                inDroppingPlayer->holdingID = 
+                    timeTrans->newTarget;
+                holdingSomethingNew( inDroppingPlayer, oldHoldingID );
+
+                setFreshEtaDecayForHeld( inDroppingPlayer );
+                }
+
+            if( getObject( oldHoldingID )->permanent ) {
+                // still permanent after timed trans
+                
+                // check again for a bare ground trans
+                bareTrans =
+                    getPTrans( oldHoldingID, -1 );
+                }
+            }
+        
+
         if( bareTrans != NULL &&
             bareTrans->newTarget > 0 ) {
-                            
+            
+            if( bareTrans->newActor > 0 ) {
+                // something would be left in hand
+                
+                // throw it down first
+                inDroppingPlayer->holdingID = bareTrans->newActor;
+                setFreshEtaDecayForHeld( inDroppingPlayer );
+                handleDrop( inX, inY, inDroppingPlayer, 
+                            inPlayerIndicesToSendUpdatesAbout );
+                }
+
             oldHoldingID = bareTrans->newTarget;
             
             inDroppingPlayer->holdingID = 
@@ -5942,8 +6127,32 @@ static LiveObject *getHitPlayer( int inX, int inY,
 
 
 
+static int isPlayerCountable( LiveObject *p, int inLineageEveID = -1 ) {
+    if( p->error ) {
+        return false;
+        }
+    if( p->isTutorial ) {
+        return false;
+        }
+    if( p->curseStatus.curseLevel > 0 ) {
+        return false;
+        }
+    if( p->vogMode ) {
+        return false;
+        }
+    
+    if( inLineageEveID != -1 &&
+        p->lineageEveID != inLineageEveID ) {
+        return false;
+        }
+    return true;
+    }
 
-static int countFertileMothers() {
+
+
+// if inLineageEveID != -1, it specifies that we count fertile mothers
+// ONLY in that family
+static int countFertileMothers( int inLineageEveID = -1 ) {
     
     int barrierRadius = 
         SettingsManager::getIntSetting( 
@@ -5956,13 +6165,54 @@ static int countFertileMothers() {
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *p = players.getElement( i );
         
-        if( p->error ) {
+        if( ! isPlayerCountable( p, inLineageEveID ) ) {
             continue;
             }
-        
+
         if( isFertileAge( p ) ) {
             if( barrierOn ) {
                 // only fertile mothers inside the barrier
+                GridPos pos = getPlayerPos( p );
+                
+                if( abs( pos.x ) < barrierRadius &&
+                    abs( pos.y ) < barrierRadius ) {
+                    c++;
+                    }
+                }
+            else {
+                c++;
+                }
+            }
+        }
+    
+    return c;
+    }
+
+
+
+// girls are females who are not fertile yet, but will be
+// if inLineageEveID != -1, it specifies that we count girls
+// ONLY in that family
+static int countGirls( int inLineageEveID = -1 ) {
+    
+    int barrierRadius = 
+        SettingsManager::getIntSetting( 
+            "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( 
+        "barrierOn", 1 );
+    
+    int c = 0;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+
+        if( ! isPlayerCountable( p, inLineageEveID ) ) {
+            continue;
+            }
+        
+        if( getFemale( p ) && computeAge( p ) < getFirstFertileAge() ) {
+            if( barrierOn ) {
+                // only girls inside the barrier
                 GridPos pos = getPlayerPos( p );
                 
                 if( abs( pos.x ) < barrierRadius &&
@@ -5993,8 +6243,8 @@ static int countHelplessBabies() {
     
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *p = players.getElement( i );
-        
-        if( p->error ) {
+
+        if( ! isPlayerCountable( p ) ) {
             continue;
             }
 
@@ -6019,6 +6269,44 @@ static int countHelplessBabies() {
 
 
 
+// counts only those inside barrier, if barrier on
+// always ignores tutorial and donkytown players
+static int countLivingPlayers() {
+    
+    int barrierRadius = 
+        SettingsManager::getIntSetting( 
+            "barrierRadius", 250 );
+    int barrierOn = SettingsManager::getIntSetting( 
+        "barrierOn", 1 );
+    
+    int c = 0;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+
+        if( ! isPlayerCountable( p ) ) {
+            continue;
+            }
+
+        if( barrierOn ) {
+            // only people inside the barrier
+            GridPos pos = getPlayerPos( p );
+            
+            if( abs( pos.x ) < barrierRadius &&
+                abs( pos.y ) < barrierRadius ) {
+                c++;
+                }
+            }
+        else {
+            c++;
+            }
+        }
+    
+    return c;
+    }
+
+
+
 
 static int countFamilies() {
     
@@ -6033,17 +6321,8 @@ static int countFamilies() {
     
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *p = players.getElement( i );
-        
-        if( p->error ) {
-            continue;
-            }
-        if( p->isTutorial ) {
-            continue;
-            }    
-        if( p->vogMode ) {
-            continue;
-            }
-        if( p->curseStatus.curseLevel > 0 ) {
+
+        if( ! isPlayerCountable( p ) ) {
             continue;
             }
 
@@ -6067,6 +6346,49 @@ static int countFamilies() {
         }
     
     return uniqueLines.size();
+    }
+
+
+
+
+static int getNextBabyFamilyLineageEveIDFewestFemales() {
+    SimpleVector<int> femaleCountPerFam;
+    
+    int minFemales = 999999;
+    int minFemalesLineageEveID = -1;
+
+    for( int i=0; i<familyLineageEveIDsAfterEveWindow.size(); i++ ) {
+        int lineageEveID = 
+            familyLineageEveIDsAfterEveWindow.getElementDirect( i );
+
+        int famMothers = countFertileMothers( lineageEveID );
+        int famGirls = countGirls( lineageEveID );
+        
+        int famFemales = famMothers + famGirls;
+        
+        if( famMothers > 0 ) {
+            // don't pick a fam that has no mothers at all
+            // there's no point (bb can't be born there now)
+            
+            if( famFemales < minFemales ) {
+                minFemales = famFemales;
+                minFemalesLineageEveID = lineageEveID;
+                }
+            }
+        }
+    
+    return minFemalesLineageEveID;
+    }
+
+
+
+// allows us to switch back and forth between methods 
+static int getNextBabyFamilyLineageEveID() {
+    if( false ) {
+        // suppress unused warning
+        return getNextBabyFamilyLineageEveIDRoundRobin();
+        }
+    return getNextBabyFamilyLineageEveIDFewestFemales();
     }
 
 
@@ -6158,6 +6480,7 @@ static int tutorialCount = 0;
 // if any twin in group is banned, all should be
 static SimpleVector<char*> tempTwinEmails;
 
+static char nextLogInTwin = false;
 
 // returns ID of new player,
 // or -1 if this player reconnected to an existing ID
@@ -6167,6 +6490,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                            char *inEmail,
                            int inTutorialNumber,
                            CurseStatus inCurseStatus,
+                           PastLifeStats inLifeStats,
                            // set to -2 to force Eve
                            int inForceParentID = -1,
                            int inForceDisplayID = -1,
@@ -6180,7 +6504,9 @@ int processLoggedInPlayer( char inAllowReconnect,
         // ignore what old curse system said
         inCurseStatus.curseLevel = 0;
         inCurseStatus.excessPoints = 0;
-        initPersonalCurseTest();
+        
+        initPersonalCurseTest( inEmail );
+        
         for( int p=0; p<players.size(); p++ ) {
             LiveObject *o = players.getElement( p );
         
@@ -6190,7 +6516,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                 strcmp( o->email, inEmail ) != 0 ) {
 
                 // non-tutorial, non-cursed, non-us player
-                addPersonToPersonalCurseTest( o->email, getPlayerPos( o ) );
+                addPersonToPersonalCurseTest( o->email, inEmail,
+                                              getPlayerPos( o ) );
                 }
             }
         }
@@ -6303,13 +6630,43 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     if( ! eveWindow ) {
         
-        float ratio = SettingsManager::getFloatSetting( 
+        float babyMotherRatio = SettingsManager::getFloatSetting( 
             "babyMotherApocalypseRatio", 6.0 );
         
-        if( cM == 0 || (float)cB / (float)cM >= ratio ) {
-            // too many babies per mother inside barrier
+        float babyPlayerRatio = SettingsManager::getFloatSetting( 
+            "babyToPlayerApocalypseRatio", 0.33 );
+        
+        int cP = countLivingPlayers();
 
-            triggerApocalypseNow( "Too many babies per mother inside barrier" );
+        if( cM == 0 || (float)cB / (float)cM >= babyMotherRatio ) {
+            // too many babies per mother inside barrier
+            float thisRatio = 0;
+            if( cM > 0 ) {
+                thisRatio = (float)cB / (float)cM;
+                }
+
+            char *logMessage = autoSprintf( 
+                "Too many babies per mother inside barrier: "
+                "%d mothers, %d babies, %f ratio, %f max ratio",
+                cM, cB, thisRatio, babyMotherRatio );
+            triggerApocalypseNow( logMessage );
+            
+            delete [] logMessage;
+            }
+        else if( cP == 0 || (float)cB / (float)cP >= babyPlayerRatio ) {
+            // too many babies per player inside barrier
+            float thisRatio = 0;
+            if( cP > 0 ) {
+                thisRatio = (float)cB / (float)cP;
+                }
+
+            char *logMessage = autoSprintf( 
+                "Too many babies per player inside barrier: "
+                "%d players, %d babies, %f ratio, %f max ratio",
+                cP, cB, thisRatio, babyPlayerRatio );
+            triggerApocalypseNow( logMessage );
+            
+            delete [] logMessage;
             }
         else {
             int minFertile = players.size() / 15;
@@ -6381,6 +6738,16 @@ int processLoggedInPlayer( char inAllowReconnect,
     minActivePlayersForLanguages =
         SettingsManager::getIntSetting( "minActivePlayersForLanguages", 15 );
 
+    SimpleVector<double> *multiplierList = 
+        SettingsManager::getDoubleSettingMulti( "posseSpeedMultipliers" );
+    
+    for( int i=0; i<multiplierList->size() && i < 4; i++ ) {
+        posseSizeSpeedMultipliers[i] = multiplierList->getElementDirect( i );
+        }
+    delete multiplierList;
+    
+
+
 
     numConnections ++;
                 
@@ -6393,6 +6760,13 @@ int processLoggedInPlayer( char inAllowReconnect,
     nextID++;
 
 
+    if( nextLogInTwin ) {
+        newObject.isTwin = true;
+        }
+    else {
+        newObject.isTwin = false;
+        }
+    
 
 
     if( familyDataLogFile != NULL ) {
@@ -6463,6 +6837,8 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     newObject.responsiblePlayerID = -1;
     
+    newObject.killPosseSize = 0;
+
     newObject.displayID = getRandomPersonObject();
     
     newObject.isEve = false;
@@ -6478,6 +6854,10 @@ int processLoggedInPlayer( char inAllowReconnect,
                             
 
     newObject.lastSayTimeSeconds = Time::getCurrentTime();
+    newObject.firstEmoteTimeSeconds = Time::getCurrentTime();
+    
+    newObject.emoteCountInWindow = 0;
+    newObject.emoteCooldown = false;
     
 
     newObject.heldByOther = false;
@@ -6525,14 +6905,10 @@ int processLoggedInPlayer( char inAllowReconnect,
 
         if( isFertileAge( player ) ) {
             numOfAge ++;
-            
-            // make sure this woman isn't on cooldown
-            // and that she's not a bad mother
-            char canHaveBaby = true;
 
             
             if( Time::timeSec() < player->birthCoolDown ) {    
-                canHaveBaby = false;
+                continue;
                 }
             
             GridPos motherPos = getPlayerPos( player );
@@ -6556,6 +6932,15 @@ int processLoggedInPlayer( char inAllowReconnect,
                     twinBanned = true;
                     break;
                     }
+                if( usePersonalCurses &&
+                    // non-cached version for twin emails
+                    // (otherwise, we interfere with caching done
+                    //  for our email)
+                    isBirthLocationCurseBlockedNoCache( 
+                        tempTwinEmails.getElementDirect( s ), motherPos ) ) {
+                    twinBanned = true;
+                    break;
+                    }
                 }
             
             if( twinBanned ) {
@@ -6566,7 +6951,7 @@ int processLoggedInPlayer( char inAllowReconnect,
 
             int numPastBabies = player->babyIDs->size();
             
-            if( canHaveBaby && numPastBabies >= badMotherLimit ) {
+            if( numPastBabies >= badMotherLimit ) {
                 int numDead = 0;
                 
                 for( int b=0; b < numPastBabies; b++ ) {
@@ -6598,7 +6983,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                 if( numDead >= badMotherLimit ) {
                     // this is a bad mother who lets all babies die
                     // don't give them more babies
-                    canHaveBaby = false;
+                    continue;
                     }
                 }
 
@@ -6612,21 +6997,21 @@ int processLoggedInPlayer( char inAllowReconnect,
                 
                 if( abs( playerPos.x ) >= barrierRadius ||
                     abs( playerPos.y ) >= barrierRadius ) {
-                    canHaveBaby = false;
+                    continue;
                     }
                 }
 
-            
-            if( canHaveBaby ) {
-                if( ( inCurseStatus.curseLevel <= 0 && 
-                      player->curseStatus.curseLevel <= 0 ) 
-                    || 
-                    ( inCurseStatus.curseLevel > 0 && 
-                      player->curseStatus.curseLevel > 0 ) ) {
-                    // cursed babies only born to cursed mothers
-                    // non-cursed babies never born to cursed mothers
-                    parentChoices.push_back( player );
-                    }
+
+            // got past all other tests
+
+            if( ( inCurseStatus.curseLevel <= 0 && 
+                  player->curseStatus.curseLevel <= 0 ) 
+                || 
+                ( inCurseStatus.curseLevel > 0 && 
+                  player->curseStatus.curseLevel > 0 ) ) {
+                // cursed babies only born to cursed mothers
+                // non-cursed babies never born to cursed mothers
+                parentChoices.push_back( player );
                 }
             }
         }
@@ -6750,13 +7135,33 @@ int processLoggedInPlayer( char inAllowReconnect,
                 continue;
                 }
             
+            GridPos playerPos = getPlayerPos( player );
+            
             if( usePersonalCurses && 
                 isBirthLocationCurseBlocked( newObject.email, 
-                                             getPlayerPos( player ) ) ) {
+                                             playerPos ) ) {
                 // this spot forbidden because someone nearby cursed new player
                 anyCurseBlocked = true;
                 continue;
                 }
+            
+            char twinBanned = false;
+            if( usePersonalCurses ) {
+                for( int s=0; s<tempTwinEmails.size(); s++ ) {
+                    if( isBirthLocationCurseBlockedNoCache( 
+                            tempTwinEmails.getElementDirect( s ), 
+                            playerPos ) ) {
+                        twinBanned = true;
+                        break;
+                        }
+                    }
+                }
+            
+            if( twinBanned ) {
+                anyCurseBlocked = true;
+                continue;
+                }
+
             
             if( isFertileAge( player ) ) {
                 parentChoices.push_back( player );
@@ -6779,6 +7184,86 @@ int processLoggedInPlayer( char inAllowReconnect,
                 
                 triggerApocalypseNow( "No fertile mothers left on server" );
                 }
+            }
+        }
+    
+
+    if( inCurseStatus.curseLevel <= 0 &&
+        ! forceParentChoices && 
+        parentChoices.size() == 0 &&
+        eveWindow &&
+        ! apocalypseTriggered &&
+        usePersonalCurses ) {
+        // still in Eve window, and found no choices for this player
+        // to be born to.
+
+        // let's check if ALL fertile mothers have them curse-blocked,
+        // currently.  If so, and that's the reason we could find
+        // no mother for them, send them to d-town
+        
+        char someFertileNotCurseBlocked = false;
+        char someFertileCurseBlocked = false;
+        
+        // consider all fertile mothers
+        for( int i=0; i<numPlayers; i++ ) {
+            LiveObject *player = players.getElement( i );
+        
+            if( player->error ) {
+                continue;
+                }
+            
+            if( player->isTutorial ) {
+                continue;
+                }
+            
+            if( player->vogMode ) {
+                continue;
+                }
+            
+            if( player->curseStatus.curseLevel > 0 ) {
+                continue;
+                }
+
+            if( isFertileAge( player ) ) {
+                GridPos playerPos = getPlayerPos( player );
+                
+                if( isBirthLocationCurseBlocked( newObject.email,
+                                                 playerPos ) ) {
+                    // this spot forbidden because 
+                    // someone nearby cursed new player
+                    someFertileCurseBlocked = true;
+                    continue;
+                    }
+
+                char twinBanned = false;
+                if( usePersonalCurses ) {
+                    for( int s=0; s<tempTwinEmails.size(); s++ ) {
+                        if( isBirthLocationCurseBlockedNoCache( 
+                                tempTwinEmails.getElementDirect( s ), 
+                                playerPos ) ) {
+                            twinBanned = true;
+                            break;
+                            }
+                        }
+                    }
+                
+                if( twinBanned ) {
+                    someFertileCurseBlocked = true;
+                    continue;
+                    }
+
+                
+                someFertileNotCurseBlocked = true;
+                break;
+                }
+            }
+
+        if( someFertileCurseBlocked && ! someFertileNotCurseBlocked ) {
+            // they are blocked from being born EVERYWHERE by curses
+
+            // d-town
+            inCurseStatus.curseLevel = 1;
+            inCurseStatus.excessPoints = 1;
             }
         }
     
@@ -6884,6 +7369,10 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.xd = 0;
     newObject.yd = 0;
     
+    newObject.mapChunkPathCheckedDest.x = 0;
+    newObject.mapChunkPathCheckedDest.y = 0;
+    
+
     newObject.lastRegionLookTime = 0;
     newObject.playerCrossingCheckTime = 0;
     
@@ -7017,6 +7506,20 @@ int processLoggedInPlayer( char inAllowReconnect,
                     parent = p;
                     break;
                     }                
+                }
+
+            if( parent != NULL ) {
+                // check if this family has too few potentially fertile
+                // females
+                // If so, force a girl baby.
+                // Do this regardless of whether Eve window is in effect, etc.
+                int min = SettingsManager::getIntSetting( 
+                    "minPotentialFertileFemalesPerFamily", 3 );
+                int famMothers = countFertileMothers( parent->lineageEveID );
+                int famGirls = countGirls( parent->lineageEveID );
+                if( famMothers + famGirls < min ) {
+                    forceGirl = true;
+                    }
                 }
             }
         
@@ -7362,9 +7865,11 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.nameHasSuffix = false;
     newObject.lastSay = NULL;
     newObject.curseStatus = inCurseStatus;
+    newObject.lifeStats = inLifeStats;
     
 
     if( newObject.curseStatus.curseLevel == 0 &&
+        ! newObject.isTwin &&
         hasCurseToken( inEmail ) ) {
         newObject.curseTokenCount = 1;
         }
@@ -7430,7 +7935,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     newObject.emotFrozen = false;
     newObject.emotUnfreezeETA = 0;
+    newObject.emotFrozenIndex = 0;
     
+
     newObject.connected = true;
     newObject.error = false;
     newObject.errorCauseString = "";
@@ -7516,6 +8023,25 @@ int processLoggedInPlayer( char inAllowReconnect,
                 (char*)"YOUR BABY IS A NEW PLAYER FROM THE PAX EXPO BOOTH.**"
                 "PLEASE HELP THEM LEARN THE GAME.  THANKS!  -JASON",
                 parent );
+            }
+        else if( isUsingStatsServer() && 
+                 ! newObject.lifeStats.error &&
+                 ( newObject.lifeStats.lifeCount < 
+                   SettingsManager::getIntSetting( "newPlayerLifeCount", 5 ) ||
+                   newObject.lifeStats.lifeTotalSeconds < 
+                   SettingsManager::getIntSetting( "newPlayerLifeTotalSeconds",
+                                                   7200 ) ) ) {
+            // a new player (not at a PAX kiosk)
+            // let mother know
+            char *motherMessage =  
+                SettingsManager::getSettingContents( 
+                    "newPlayerMessageForMother", "" );
+            
+            if( strcmp( motherMessage, "" ) != 0 ) {
+                sendGlobalMessage( motherMessage, parent );
+                }
+            
+            delete [] motherMessage;
             }
         }
 
@@ -7630,6 +8156,44 @@ int processLoggedInPlayer( char inAllowReconnect,
                     break;
                     }
                 }
+            }
+        
+        // if we got here, they aren't our mother, g-ma, g-g-ma, etc.
+        // nor are they our uncle
+
+        
+        // are they our sibling?
+        // note that this is only uni-directional
+        // (we're checking here for this new baby born)
+        // so only our OLDER sibs count as our ancestors (and thus
+        // they care about protecting us).
+
+        // this is a little weird, but it does make some sense
+        // you are more productive of little sibs
+
+        // anyway, the point of this is to close the "just care about yourself
+        // and avoid having kids" exploit.  If your mother has kids after you
+        // (which is totally out of your control), then their survival
+        // will affect your score.
+        
+        if( newObject.parentID > 0 &&
+            newObject.parentID == otherPlayer->parentID ) {
+            // sibs
+            
+            newObject.ancestorEmails->push_back( 
+                stringDuplicate( otherPlayer->email ) );
+
+            const char *relName;
+            
+            if( ! getFemale( &newObject ) ) {
+                relName = "Little_Brother";
+                }
+            else {
+                relName = "Little_Sister";
+                }
+
+            newObject.ancestorRelNames->push_back( stringDuplicate( relName ) );
+            break;
             }
         }
     
@@ -7749,13 +8313,15 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             tempTwinEmails.push_back( nextConnection->email );
             }
         
-
+        nextLogInTwin = true;
+        
         int newID = processLoggedInPlayer( false,
                                            inConnection.sock,
                                            inConnection.sockBuffer,
                                            inConnection.email,
                                            inConnection.tutorialNumber,
-                                           anyTwinCurseLevel );
+                                           anyTwinCurseLevel,
+                                           inConnection.lifeStats );
         tempTwinEmails.deleteAll();
         
         if( newID == -1 ) {
@@ -7780,6 +8346,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                 delete [] inConnection.twinCode;
                 inConnection.twinCode = NULL;
                 }
+            nextLogInTwin = false;
             return;
             }
 
@@ -7811,6 +8378,12 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             parent = -2;
             }
 
+
+        char usePersonalCurses = 
+            SettingsManager::getIntSetting( "usePersonalCurses", 0 );
+    
+
+
         // save these out here, because newPlayer points into 
         // tutorialLoadingPlayers, which may expand during this loop,
         // invalidating that pointer
@@ -7829,11 +8402,25 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                    // first player
                                    0,
                                    anyTwinCurseLevel,
+                                   nextConnection->lifeStats,
                                    parent,
                                    displayID,
                                    forcedEvePos );
             
             // just added is always last object in list
+            
+            if( usePersonalCurses ) {
+                // curse level not known until after first twin logs in
+                // their curse level is set based on blockage caused
+                // by any of the other twins in the party
+                // pass it on.
+                LiveObject *newTwinPlayer = 
+                    players.getElement( players.size() - 1 );
+                newTwinPlayer->curseStatus = newPlayer->curseStatus;
+                }
+
+
+
             LiveObject newTwinPlayer = 
                 players.getElementDirect( players.size() - 1 );
 
@@ -7876,6 +8463,8 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             }
         
         delete [] twinCode;
+        
+        nextLogInTwin = false;
         }
     }
 
@@ -9179,6 +9768,10 @@ char *isFamilyNamingSay( char *inSaidString ) {
     return isNamingSay( inSaidString, &familyNameGivingPhrases );
     }
 
+char *isEveNamingSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &eveNameGivingPhrases );
+    }
+
 char *isCurseNamingSay( char *inSaidString ) {
     return isNamingSay( inSaidString, &cursingPhrases );
     }
@@ -10060,12 +10653,67 @@ typedef struct KillState {
         int killerID;
         int killerWeaponID;
         int targetID;
+        double killStartTime;
         double emotStartTime;
         int emotRefreshSeconds;
     } KillState;
 
 
 SimpleVector<KillState> activeKillStates;
+
+SimpleVector<int> killStatePosseChangedPlayerIDs;
+
+
+static int countPosseSize( LiveObject *inTarget ) {
+    int p = 0;
+    
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+        if( s->targetID == inTarget->id ) {
+            p++;
+            }
+        }
+    return p;
+    }
+
+
+
+static void updatePosseSize( LiveObject *inTarget, 
+                             LiveObject *inPossibleLastKiller = NULL ) {
+    
+    int p = countPosseSize( inTarget );
+    
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+        
+        if( s->targetID == inTarget->id ) {
+            int killerID = s->killerID;
+            
+            LiveObject *o = getLiveObject( killerID );
+            
+            if( o != NULL ) {
+                int oldSize = o->killPosseSize;
+                o->killPosseSize = p;
+                
+                if( oldSize != p ) {
+                    killStatePosseChangedPlayerIDs.push_back( killerID );
+                    }
+                }
+            }
+        }
+
+    if( p == 0 && inPossibleLastKiller != NULL ) {
+        int oldSize = inPossibleLastKiller->killPosseSize;
+        
+        inPossibleLastKiller->killPosseSize = 0;
+        if( oldSize != 0 ) {
+            killStatePosseChangedPlayerIDs.push_back( 
+                inPossibleLastKiller->id );
+            }
+        }
+    }
+
+    
 
 
 // return true if it worked
@@ -10096,15 +10744,37 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
     
     if( !found ) {
         // add new
+        double curTime = Time::getCurrentTime();
         KillState s = { inKiller->id, 
                         inKiller->holdingID,
                         inTarget->id, 
-                        Time::getCurrentTime(),
+                        curTime,
+                        curTime,
                         30 };
         activeKillStates.push_back( s );
         }
+
+    updatePosseSize( inTarget );
+    
     return true;
     }
+
+
+
+static void removeKillState( LiveObject *inKiller, LiveObject *inTarget ) {
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+    
+        if( s->killerID == inKiller->id &&
+            s->targetID == inTarget->id ) {
+            activeKillStates.deleteElement( i );
+            
+            updatePosseSize( inTarget, inKiller );
+            return;
+            }
+        }
+    }
+    
 
 
 
@@ -10288,6 +10958,7 @@ void executeKillAction( int inKillerIndex,
                         if( e.emotIndex != -1 ) {
                             hitPlayer->emotFrozen = 
                                 true;
+                            hitPlayer->emotFrozenIndex = e.emotIndex;
                             
                             hitPlayer->emotUnfreezeETA =
                                 Time::getCurrentTime() + e.ttlSec;
@@ -10477,6 +11148,8 @@ void executeKillAction( int inKillerIndex,
                             if( e.emotIndex != -1 ) {
                                 hitPlayer->emotFrozen = 
                                     true;
+                                hitPlayer->emotFrozenIndex = e.emotIndex;
+                                
                                 newEmotPlayerIDs->push_back( 
                                     hitPlayer->id );
                                 newEmotIndices->push_back( 
@@ -10524,21 +11197,8 @@ void executeKillAction( int inKillerIndex,
                 // Otherwise, if their move continues, they might walk
                 // at the wrong speed with the changed weapon
                 
-                if( nextPlayer->xd != nextPlayer->xs ||
-                    nextPlayer->yd != nextPlayer->ys ) {
-                    
-                    int truncationSpot = 
-                        computePartialMovePathStep( nextPlayer );
-                    
-                    if( truncationSpot < nextPlayer->pathLength - 2 ) {
-                        
-                        // truncate a step ahead, to reduce chance 
-                        // of client-side players needing to turn-around
-                        // to reach this truncation point
 
-                        truncateMove( nextPlayer, truncationSpot + 2 );
-                        }                    
-                    }
+                endAnyMove( nextPlayer );
                 
 
                 timeSec_t oldEtaDecay = 
@@ -10612,6 +11272,48 @@ void executeKillAction( int inKillerIndex,
     }
 
 
+
+
+static void nameEve( LiveObject *nextPlayer, char *name ) {
+    
+    const char *close = findCloseLastName( name );
+    nextPlayer->name = autoSprintf( "%s %s", eveName, close );
+    
+                                
+    nextPlayer->name = getUniqueCursableName( 
+        nextPlayer->name, 
+        &( nextPlayer->nameHasSuffix ),
+        true );
+                                
+    char firstName[99];
+    char lastName[99];
+    char suffix[99];
+    
+    if( nextPlayer->nameHasSuffix ) {
+        
+        sscanf( nextPlayer->name, 
+                "%s %s %s", 
+                firstName, lastName, suffix );
+        }
+    else {
+        sscanf( nextPlayer->name, 
+                "%s %s", 
+                firstName, lastName );
+        }
+    
+    nextPlayer->familyName = 
+        stringDuplicate( lastName );
+    
+    
+    if( ! nextPlayer->isTutorial ) {    
+        logName( nextPlayer->id,
+                 nextPlayer->email,
+                 nextPlayer->name,
+                 nextPlayer->lineageEveID );
+        }
+    }
+
+                                
 
 
 void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
@@ -10936,10 +11638,30 @@ int main() {
     
     familySpan =
         SettingsManager::getIntSetting( "familySpan", 2 );
+
+    eveName = 
+        SettingsManager::getStringSetting( "eveName", "EVE" );
     
     
     readPhrases( "babyNamingPhrases", &nameGivingPhrases );
     readPhrases( "familyNamingPhrases", &familyNameGivingPhrases );
+
+    readPhrases( "babyNamingPhrases", &eveNameGivingPhrases );
+
+    // add YOU ARE EVE SMITH versions of these
+    // put them in front
+    SimpleVector<char*> oldPhrases( eveNameGivingPhrases.size() * 2 );
+    oldPhrases.push_back_other( &eveNameGivingPhrases );
+    eveNameGivingPhrases.deleteAll();
+    int numEvePhrases = oldPhrases.size();
+    for( int i=0; i<numEvePhrases; i++ ) {
+        char *phrase = oldPhrases.getElementDirect( i );
+        
+        char *newPhrase = autoSprintf( "%s %s", phrase, eveName );
+        eveNameGivingPhrases.push_back( newPhrase );
+        }
+    eveNameGivingPhrases.push_back_other( &oldPhrases );
+    
 
     readPhrases( "cursingPhrases", &cursingPhrases );
 
@@ -10961,11 +11683,12 @@ int main() {
 
 
 
-    eveName = 
-        SettingsManager::getStringSetting( "eveName", "EVE" );
     
     killEmotionIndex =
         SettingsManager::getIntSetting( "killEmotionIndex", 2 );
+
+    victimEmotionIndex =
+        SettingsManager::getIntSetting( "victimEmotionIndex", 2 );
     
 
 #ifdef WIN_32
@@ -11318,10 +12041,11 @@ int main() {
                     }
                 
 
-                char *message = autoSprintf( ":%s: ARC HAS LASTED %d YEARS**"
+                char *message = autoSprintf( "ARC HAS LASTED %d YEARS.  "
+                                             "ARC NAME IS :%s:**"
                                              "%d %s %s ALIVE%s",
-                                             getArcName(),
                                              arcMilestone,
+                                             getArcName(),
                                              numFams,
                                              familyLine,
                                              familyWord,
@@ -11740,6 +12464,31 @@ int main() {
                         nextConnection->curseStatus.excessPoints );
                     }
                 }
+            else if( nextConnection->email != NULL &&
+                nextConnection->lifeStats.lifeCount == -1 ) {
+                // keep checking if life stats have arrived from
+                // stats server
+                int statsResult = getPlayerLifeStats( nextConnection->email,
+                    &( nextConnection->lifeStats.lifeCount ),
+                    &( nextConnection->lifeStats.lifeTotalSeconds ) );
+                
+                if( statsResult == -1 ) {
+                    // error
+                    // it's done now!
+                    nextConnection->lifeStats.lifeCount = 0;
+                    nextConnection->lifeStats.lifeTotalSeconds = 0;
+                    nextConnection->lifeStats.error = true;
+                    }
+                else if( statsResult == 1 ) {
+                    AppLog::infoF( 
+                        "Got life stats for %s from stats server: "
+                        "%d lives, %d total seconds (%.2lf hours)",
+                        nextConnection->email,
+                        nextConnection->lifeStats.lifeCount,
+                        nextConnection->lifeStats.lifeTotalSeconds,
+                        nextConnection->lifeStats.lifeTotalSeconds / 3600.0 );
+                    }
+                }
             else if( nextConnection->ticketServerRequest != NULL &&
                      ! nextConnection->ticketServerAccepted ) {
                 
@@ -11886,7 +12635,8 @@ int main() {
                             nextConnection->sockBuffer,
                             nextConnection->email,
                             nextConnection->tutorialNumber,
-                            nextConnection->curseStatus );
+                            nextConnection->curseStatus,
+                            nextConnection->lifeStats );
                         }
                                                         
                     newConnections.deleteElement( i );
@@ -11976,7 +12726,30 @@ int main() {
                             // we'll catch that case later above
                             nextConnection->curseStatus =
                                 getCurseLevel( nextConnection->email );
+
+
+                            nextConnection->lifeStats.lifeCount = -1;
+                            nextConnection->lifeStats.lifeTotalSeconds = -1;
+                            nextConnection->lifeStats.error = false;
                             
+                            // this will leave them as -1 if request pending
+                            // we'll catch that case later above
+                            int statsResult = getPlayerLifeStats(
+                                nextConnection->email,
+                                &( nextConnection->
+                                   lifeStats.lifeCount ),
+                                &( nextConnection->
+                                   lifeStats.lifeTotalSeconds ) );
+
+                            if( statsResult == -1 ) {
+                                // error
+                                // it's done now!
+                                nextConnection->lifeStats.lifeCount = 0;
+                                nextConnection->lifeStats.lifeTotalSeconds = 0;
+                                nextConnection->lifeStats.error = true;
+                                }
+                                
+
 
                             if( requireClientPassword &&
                                 ! nextConnection->error  ) {
@@ -12080,7 +12853,8 @@ int main() {
                                             nextConnection->sockBuffer,
                                             nextConnection->email,
                                             nextConnection->tutorialNumber,
-                                            nextConnection->curseStatus );
+                                            nextConnection->curseStatus,
+                                            nextConnection->lifeStats );
                                         }
                                                                         
                                     newConnections.deleteElement( i );
@@ -12501,6 +13275,8 @@ int main() {
                             
                                 if( e.emotIndex != -1 ) {
                                     nextPlayer->emotFrozen = true;
+                                    nextPlayer->emotFrozenIndex = e.emotIndex;
+                                    
                                     newEmotPlayerIDs.push_back( 
                                         nextPlayer->id );
                                     newEmotIndices.push_back( e.emotIndex );
@@ -13401,8 +14177,10 @@ int main() {
                         // path PLUS path that player is suggesting
                         SimpleVector<GridPos> unfilteredPath;
 
-                        if( nextPlayer->xs != m.x ||
-                            nextPlayer->ys != m.y ) {
+                        if( nextPlayer->pathLength > 0 &&
+                            nextPlayer->pathToDest != NULL &&
+                            ( nextPlayer->xs != m.x ||
+                              nextPlayer->ys != m.y ) ) {
                             
                             // start pos of their submitted path
                             // donesn't match where we think they are
@@ -13420,6 +14198,7 @@ int main() {
 
                             // where we think they are along last move path
                             GridPos cPos;
+                            int c;
                             
                             if( nextPlayer->xs != nextPlayer->xd 
                                 ||
@@ -13427,12 +14206,16 @@ int main() {
                                 
                                 // a real interrupt to a move that is
                                 // still in-progress on server
-                                cPos = computePartialMoveSpot( nextPlayer );
+                                c = computePartialMovePathStep( nextPlayer );
+                                cPos = computePartialMoveSpot( nextPlayer, c );
                                 }
                             else {
                                 // we think their last path is done
                                 cPos.x = nextPlayer->xs;
                                 cPos.y = nextPlayer->ys;
+                                // we think they are on final destination
+                                // spot on last path
+                                c = nextPlayer->pathLength - 1;
                                 }
                             
                             /*
@@ -13512,9 +14295,7 @@ int main() {
                                 // (we may walk backward along the old
                                 //  path to do this)
                                 
-                                int c = computePartialMovePathStep( 
-                                    nextPlayer );
-                                    
+
                                 // -1 means starting, pre-path 
                                 // pos is closest
                                 // but okay to leave c at -1, because
@@ -14019,44 +14800,7 @@ int main() {
                             char *name = isFamilyNamingSay( m.saidText );
                             
                             if( name != NULL && strcmp( name, "" ) != 0 ) {
-                                const char *close = findCloseLastName( name );
-                                nextPlayer->name = autoSprintf( "%s %s",
-                                                                eveName, 
-                                                                close );
-
-                                
-                                nextPlayer->name = getUniqueCursableName( 
-                                    nextPlayer->name, 
-                                    &( nextPlayer->nameHasSuffix ),
-                                    true );
-                                
-                                char firstName[99];
-                                char lastName[99];
-                                char suffix[99];
-
-                                if( nextPlayer->nameHasSuffix ) {
-                                    
-                                    sscanf( nextPlayer->name, 
-                                            "%s %s %s", 
-                                            firstName, lastName, suffix );
-                                    }
-                                else {
-                                    sscanf( nextPlayer->name, 
-                                            "%s %s", 
-                                            firstName, lastName );
-                                    }
-                                
-                                nextPlayer->familyName = 
-                                        stringDuplicate( lastName );
-
-
-                                if( ! nextPlayer->isTutorial ) {    
-                                    logName( nextPlayer->id,
-                                             nextPlayer->email,
-                                             nextPlayer->name,
-                                             nextPlayer->lineageEveID );
-                                    }
-                                
+                                nameEve( nextPlayer, name );
                                 playerIndicesToSendNamesAbout.push_back( i );
                                 }
                             }
@@ -14093,9 +14837,28 @@ int main() {
                                                            babyAge, true );
 
                                 if( closestOther != NULL ) {
-                                    nameBaby( nextPlayer, closestOther,
-                                              name, 
-                                              &playerIndicesToSendNamesAbout );
+                                    
+                                    if( closestOther->isEve ) {
+                                        
+                                        name = isEveNamingSay( m.saidText );
+                                        
+                                        if( name != NULL && 
+                                            strcmp( name, "" ) != 0 ) {
+                                            
+                                            nameEve( closestOther, name );
+                                            playerIndicesToSendNamesAbout.
+                                                push_back( 
+                                                    getLiveObjectIndex( 
+                                                        closestOther->id ) );
+                                            }
+                                        }
+                                    else {
+                                        // non-Eve
+                                        nameBaby( 
+                                            nextPlayer, closestOther,
+                                            name, 
+                                            &playerIndicesToSendNamesAbout );
+                                        }
                                     }
                                 }
 
@@ -14190,11 +14953,27 @@ int main() {
                                         
                                         if( enteredState ) {
                                             nextPlayer->emotFrozen = true;
+                                            nextPlayer->emotFrozenIndex = 
+                                                killEmotionIndex;
+                                            
                                             newEmotPlayerIDs.push_back( 
                                                 nextPlayer->id );
                                             newEmotIndices.push_back( 
                                                 killEmotionIndex );
                                             newEmotTTLs.push_back( 120 );
+                                            
+                                            if( ! targetPlayer->emotFrozen ) {
+                                                
+                                                targetPlayer->emotFrozen = true;
+                                                targetPlayer->emotFrozenIndex =
+                                                    victimEmotionIndex;
+                                                
+                                                newEmotPlayerIDs.push_back( 
+                                                    targetPlayer->id );
+                                                newEmotIndices.push_back( 
+                                                    victimEmotionIndex );
+                                                newEmotTTLs.push_back( 120 );
+                                                }
                                             }
                                         }
                                     }
@@ -14371,6 +15150,51 @@ int main() {
                                                   target );
                                     }
                                 
+                                if( r != NULL &&
+                                    targetObj->numSlots > 0 ) {
+                                    // target has number of slots
+                                    
+                                    int numContained = 
+                                        getNumContained( m.x, m.y );
+                                    
+                                    int numSlotsInNew = 0;
+                                    
+                                    if( r->newTarget > 0 ) {
+                                        numSlotsInNew =
+                                            getObject( r->newTarget )->numSlots;
+                                        }
+                                    
+                                    if( numContained > numSlotsInNew &&
+                                        numSlotsInNew == 0 ) {
+                                        // not enough room in new target
+
+                                        // check if new actor will contain
+                                        // them (reverse containment transfer)
+                                        
+                                        if( r->newActor > 0 &&
+                                            nextPlayer->numContained == 0 ) {
+                                            // old actor empty
+                                            
+                                            int numSlotsNewActor =
+                                                getObject( r->newActor )->
+                                                numSlots;
+                                         
+                                            numSlotsInNew = numSlotsNewActor;
+                                            }
+                                        }
+
+
+                                    if( numContained > numSlotsInNew ) {
+                                        // would result in shrinking
+                                        // and flinging some contained
+                                        // objects
+                                        // block it.
+                                        heldCanBeUsed = false;
+                                        r = NULL;
+                                        }
+                                    }
+                                
+
                                 if( r == NULL && 
                                     ( nextPlayer->holdingID != 0 || 
                                       targetObj->permanent ) &&
@@ -14464,8 +15288,9 @@ int main() {
                                                 "+hungryWork%d", 
                                                 &hungryWorkCost );
                                         
-                                        if( nextPlayer->foodStore < 
-                                            hungryWorkCost + 5 ) {
+                                        if( nextPlayer->foodStore + 
+                                            nextPlayer->yummyBonusStore < 
+                                            hungryWorkCost + 4 ) {
                                             // block transition,
                                             // not enough food to have a
                                             // "safe" buffer after
@@ -14767,7 +15592,7 @@ int main() {
                                     
 
                                     logEating( targetObj->id,
-                                               targetObj->foodValue,
+                                               targetObj->foodValue + eatBonus,
                                                computeAge( nextPlayer ),
                                                m.x, m.y );
                                     
@@ -14897,7 +15722,9 @@ int main() {
                                 ObjectRecord *obj = 
                                     getObject( nextPlayer->holdingID );
                                 
-                                if( ! usedOnFloor && obj->foodValue == 0 ) {
+                                if( ! usedOnFloor && obj->foodValue == 0 &&
+                                    // player didn't try to click something
+                                    m.id == -1 ) {
                                     
                                     // get no-target transtion
                                     // (not a food transition, since food
@@ -15400,6 +16227,8 @@ int main() {
                             
                                         if( e.emotIndex != -1 ) {
                                             targetPlayer->emotFrozen = true;
+                                            targetPlayer->emotFrozenIndex =
+                                                e.emotIndex;
                                             newEmotPlayerIDs.push_back( 
                                                 targetPlayer->id );
                                             newEmotIndices.push_back( 
@@ -15538,7 +16367,7 @@ int main() {
                                                targetPlayer == nextPlayer );
 
                                     logEating( obj->id,
-                                               obj->foodValue,
+                                               obj->foodValue + eatBonus,
                                                computeAge( targetPlayer ),
                                                m.x, m.y );
                                     
@@ -16134,6 +16963,8 @@ int main() {
                                             
                                             int oldHeld = 
                                                 nextPlayer->holdingID;
+                                            int oldNumContained =
+                                                nextPlayer->numContained;
                                             
                                             // now swap
                                             swapHeldWithGround( 
@@ -16141,11 +16972,14 @@ int main() {
                                              &playerIndicesToSendUpdatesAbout );
                                             
                                             if( oldHeld == 
-                                                nextPlayer->holdingID ) {
+                                                nextPlayer->holdingID &&
+                                                oldNumContained ==
+                                                nextPlayer->numContained ) {
                                                 // no change
                                                 // are they the same object?
-                                                if( oldHeld == target ) {
-                                                    // try using held
+                                                if( oldNumContained == 0 && 
+                                                    oldHeld == target ) {
+                                                    // try using empty held
                                                     // on target
                                                     TransRecord *sameTrans
                                                         = getPTrans(
@@ -16329,12 +17163,60 @@ int main() {
                             
                             if( forbidden->getElementIndex( m.i ) == -1 ) {
                                 // not forbidden
+                                
+                                double curTime = Time::getCurrentTime();
+                                
+                                char cooldown = false;
+                                
+                                if( nextPlayer->emoteCooldown ) {
+                                    if( curTime - 
+                                        nextPlayer->
+                                        emoteCooldownStartTimeSeconds >
+                                        emoteCooldownSeconds ) {
+                                        // cooldown over
+                                        nextPlayer->emoteCooldown = false;
+                                        nextPlayer->firstEmoteTimeSeconds =
+                                            curTime;
+                                        nextPlayer->emoteCountInWindow = 0;
+                                        }
+                                    else {
+                                        cooldown = true;
+                                        }
+                                    }
+                                
+                                if( ! cooldown ) {
+                                    // fire off emote
+                                    newEmotPlayerIDs.push_back( 
+                                        nextPlayer->id );
+                                    newEmotIndices.push_back( m.i );
+                                    // player-requested emots have 
+                                    // no specific TTL
+                                    newEmotTTLs.push_back( 0 );
 
-                                newEmotPlayerIDs.push_back( nextPlayer->id );
-                            
-                                newEmotIndices.push_back( m.i );
-                                // player-requested emots have no specific TTL
-                                newEmotTTLs.push_back( 0 );
+                                    // now see if cooldown has been triggered
+                                    if( curTime - 
+                                        nextPlayer->firstEmoteTimeSeconds
+                                        > emoteWindowSeconds ) {
+                                        // window expired
+                                        // start a new one
+                                        nextPlayer->firstEmoteTimeSeconds =
+                                            curTime;
+                                        nextPlayer->emoteCountInWindow = 0;
+                                        }
+                                    else {
+                                        // in window time
+                                        nextPlayer->emoteCountInWindow ++;
+                                        
+                                        if( nextPlayer->emoteCountInWindow >
+                                            maxEmotesInWindow ) {
+                                            // put 'em on cooldown
+                                            nextPlayer->emoteCooldown = true;
+                                            nextPlayer->
+                                                emoteCooldownStartTimeSeconds =
+                                                curTime;
+                                            }
+                                        }
+                                    }
                                 }
                             delete forbidden;
                             }
@@ -16378,8 +17260,22 @@ int main() {
                     newEmotIndices.push_back( -1 );
                     newEmotTTLs.push_back( 0 );
                     }
+
+                if( target != NULL &&
+                    target->emotFrozen &&
+                    target->emotFrozenIndex == victimEmotionIndex ) {
+                    
+                    // target's emot hasn't been replaced, end it
+                    target->emotFrozen = false;
+                    target->emotUnfreezeETA = 0;
+                    
+                    newEmotPlayerIDs.push_back( target->id );
+                            
+                    newEmotIndices.push_back( -1 );
+                    newEmotTTLs.push_back( 0 );
+                    }
                 
-                activeKillStates.deleteElement( i );
+                removeKillState( killer, target );
                 i--;
                 continue;
                 }
@@ -16392,8 +17288,13 @@ int main() {
             
             double dist = distance( playerPos, targetPos );
             
-            if( getObject( killer->holdingID )->deadlyDistance >= dist &&
+            double curTime = Time::getCurrentTime();
+
+            if( curTime - s->killStartTime  > 3 && 
+                getObject( killer->holdingID )->deadlyDistance >= dist &&
                 ! directLineBlocked( playerPos, targetPos ) ) {
+                // enough warning time has passed
+                // and
                 // close enough to kill
                 
                 executeKillAction( getLiveObjectIndex( s->killerID ),
@@ -16407,7 +17308,6 @@ int main() {
             else {
                 // still not close enough
                 // see if we need to renew emote
-                double curTime = Time::getCurrentTime();
                 
                 if( curTime - s->emotStartTime > s->emotRefreshSeconds ) {
                     s->emotStartTime = curTime;
@@ -16419,6 +17319,11 @@ int main() {
                     newEmotPlayerIDs.push_back( killer->id );
                             
                     newEmotIndices.push_back( killEmotionIndex );
+                    newEmotTTLs.push_back( 120 );
+
+                    newEmotPlayerIDs.push_back( target->id );
+                            
+                    newEmotIndices.push_back( victimEmotionIndex );
                     newEmotTTLs.push_back( 120 );
                     }
                 }
@@ -17889,6 +18794,24 @@ int main() {
             }
         
 
+        // send updates about players who have had a posse-size change
+        for( int i=0; i<killStatePosseChangedPlayerIDs.size(); i++ ) {
+            int id = killStatePosseChangedPlayerIDs.getElementDirect( i );
+            
+            int index = getLiveObjectIndex( id );
+            
+            if( index != -1 ) {
+                playerIndicesToSendUpdatesAbout.push_back( index );
+                
+                // end current move to allow move speed to change instantly
+                endAnyMove( getLiveObject( id ) );
+                }
+            }
+        
+        killStatePosseChangedPlayerIDs.deleteAll();
+        
+
+
         if( playerIndicesToSendUpdatesAbout.size() > 0 ) {
             
             SimpleVector<char> updateList;
@@ -18239,7 +19162,10 @@ int main() {
                 for( int j=0; j<numLive; j++ ) {
                     LiveObject *nextPlayer = players.getElement(j);
                     
-                    if( strcmp( nextPlayer->email, email ) == 0 ) {
+                    // don't give mid-life tokens to twins or cursed players
+                    if( ! nextPlayer->isTwin &&
+                        nextPlayer->curseStatus.curseLevel == 0 &&
+                        strcmp( nextPlayer->email, email ) == 0 ) {
                         
                         nextPlayer->curseTokenCount = 1;
                         nextPlayer->curseTokenUpdate = true;
@@ -19282,10 +20208,88 @@ int main() {
 
                         delete [] temp;
                         }
+                    
+                    // done handling sending new map chunk and player updates
+                    // for players in the new chunk
                     }
-                // done handling sending new map chunk and player updates
-                // for players in the new chunk
-                
+                else {
+                    // check if moving path goes near edge of player's
+                    // known map
+                    LiveObject *playerToCheck = nextPlayer;
+                    if( nextPlayer->heldByOther ) {
+                        LiveObject *holdingPlayer = 
+                            getLiveObject( nextPlayer->heldByOtherID );
+                        
+                        if( holdingPlayer != NULL ) { 
+                            playerToCheck = holdingPlayer;
+                            }
+                        }
+                    
+                    if( ( playerToCheck->xd != playerToCheck->xs ||
+                          playerToCheck->yd != playerToCheck->ys ) 
+                        && 
+                        playerToCheck->pathToDest != NULL 
+                        &&
+                        ( nextPlayer->mapChunkPathCheckedDest.x 
+                          != playerToCheck->xd || 
+                          nextPlayer->mapChunkPathCheckedDest.y 
+                          != playerToCheck->yd ) ) {
+                        // moving and haven't checked this path before
+                        // to see if it gets too close to the edge of the
+                        // map
+                        
+                        // remember it to not check it again
+                        nextPlayer->mapChunkPathCheckedDest.x =
+                            playerToCheck->xd;
+                        nextPlayer->mapChunkPathCheckedDest.y =
+                            playerToCheck->yd;
+
+                        // find most distant points on current path
+                            
+                        GridPos xFarPos, yFarPos;
+                        int xFarPosDist = 0;
+                        int yFarPosDist = 0;
+                            
+                        for( int i=0; i < playerToCheck->pathLength; i++ ) {
+                            GridPos p = playerToCheck->pathToDest[i];
+                                
+                            int xdist = 
+                                abs( p.x - nextPlayer->lastSentMapX );
+                            int ydist = 
+                                abs( p.y - nextPlayer->lastSentMapY );
+                                
+                            if( xdist > xFarPosDist ) {
+                                xFarPos = p;
+                                xFarPosDist = xdist;
+                                }
+                            if( ydist > yFarPosDist ) {
+                                yFarPos = p;
+                                yFarPosDist = ydist;
+                                }
+                            }
+                            
+                        if( xFarPosDist > 0 && 
+                            abs( xFarPos.x - 
+                                 nextPlayer->lastSentMapX ) > 7 ) {
+                            
+                            sendMapChunkMessage( nextPlayer,
+                                                 // override chunk pos
+                                                 true,
+                                                 xFarPos.x,
+                                                 xFarPos.y );
+                            }
+                        if( yFarPosDist > 0 &&
+                            abs( yFarPos.y - 
+                                 nextPlayer->lastSentMapY ) > 7 ) {
+                                
+                            sendMapChunkMessage( nextPlayer,
+                                                 // override chunk pos
+                                                 true,
+                                                 yFarPos.x,
+                                                 yFarPos.y );
+                            }
+                        }
+                    }
                 
 
                 // EVERYONE gets info about dying players

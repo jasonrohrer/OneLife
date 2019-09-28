@@ -839,7 +839,7 @@ parameters, and no leading spaces.
 
 
 KA x y#
-USE x y#
+USE x y id#
 BABY x y#
 BABY x y id#
 SELF x y i#
@@ -881,6 +881,9 @@ DROP is for setting held object down on empty grid square OR
 USE  is for bare-hand or held-object action on target object in non-empty 
      grid square, including picking something up (if there's no bare-handed 
      action), and picking up a container.
+     id parameter is optional, and is used by server to differentiate 
+     intentional use-on-bare-ground actions from use actions (in case
+     where target animal moved out of the way).
 
 SELF is special case of USE action taken on self (to eat what we're holding
      or add/remove clothing).
