@@ -2704,7 +2704,14 @@ char isGrave( int inObjectID ) {
     if( r->deathMarker ) {
         return true;
         }
+
+    // direct results of death that aren't deathMarkers
+    SimpleVector<int> *deathMarkers = getAllPossibleDeathIDs();
+    if( deathMarkers->getElementIndex( inObjectID ) != -1 ) {
+        return true;
+        }
     
+
     // first, see if this decays into a grave in one step
 
     TransRecord *trans = getTrans( -1, inObjectID );

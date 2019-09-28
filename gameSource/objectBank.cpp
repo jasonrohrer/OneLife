@@ -585,6 +585,7 @@ float initObjectBankStep() {
                 // setupWall( r );
                 
 
+                r->isAutoOrienting = false;
                 r->horizontalVersionID = -1;
                 r->verticalVersionID = -1;
                 r->cornerVersionID = -1;
@@ -1855,6 +1856,7 @@ void initObjectBankFinish() {
                 
                 if( o->verticalVersionID != -1 && o->cornerVersionID != -1 ) {
                     o->horizontalVersionID = o->id;
+                    o->isAutoOrienting = true;
                     
                     // make sure they all know about each other
                     ObjectRecord *vertO = getObject( o->verticalVersionID );
@@ -1863,10 +1865,12 @@ void initObjectBankFinish() {
                     vertO->horizontalVersionID = o->id;
                     vertO->verticalVersionID = vertO->id;
                     vertO->cornerVersionID = cornerO->id;
+                    vertO->isAutoOrienting = true;
 
                     cornerO->horizontalVersionID = o->id;
                     cornerO->verticalVersionID = vertO->id;
                     cornerO->cornerVersionID = cornerO->id;
+                    cornerO->isAutoOrienting = true;
                     }
                 }
             }
@@ -3127,6 +3131,7 @@ int addObject( const char *inDescription,
 
     setupWall( r );
 
+    r->isAutoOrienting = false;
     r->horizontalVersionID = -1;
     r->verticalVersionID = -1;
     r->cornerVersionID = -1;

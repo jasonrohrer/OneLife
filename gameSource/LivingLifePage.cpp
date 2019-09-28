@@ -3287,7 +3287,8 @@ SimpleVector<OffScreenSound> offScreenSounds;
 
 
 static void addOffScreenSound( double inPosX, double inPosY,
-                               char *inDescription ) {
+                               char *inDescription,
+                               double inFadeSec = 4 ) {
 
     char red = false;
     
@@ -3302,7 +3303,7 @@ static void addOffScreenSound( double inPosX, double inPosY,
             }
         }
     
-    double fadeETATime = game_getCurrentTime() + 4;
+    double fadeETATime = game_getCurrentTime() + inFadeSec;
     
     doublePair pos = { inPosX, inPosY };
     
@@ -3481,7 +3482,24 @@ void LivingLifePage::handleAnimSound( int inObjectID, double inAge,
                     
                     playSound( u,
                                getVectorFromCamera( inPosX, inPosY ) );
+
+                    char *des = getObject( inObjectID )->description;
                     
+                    if( strstr( des, "offScreenSound" ) != NULL ) {
+                        // this object has offscreen-visible sounds
+                        // AND its animation has sounds
+                        // renew offscreen sound for each new sound played
+                        
+                        // these have very short fade
+                        // so that we don't have a bunch of overlap
+                        addOffScreenSound(
+                            inPosX *
+                            CELL_D, 
+                            inPosY *
+                            CELL_D,
+                            des,
+                            0.5 );
+                        }
                     }
                 }
             }
@@ -16430,6 +16448,20 @@ void LivingLifePage::step() {
                                                 getVectorFromCamera( 
                                                     playerPos.x,
                                                     playerPos.y ) );
+                                            
+                                            if( strstr( 
+                                                    obj->description,
+                                                    "offScreenSound" )
+                                                != NULL ) {
+                                                    
+                                                addOffScreenSound(
+                                                    playerPos.x *
+                                                    CELL_D, 
+                                                    playerPos.y *
+                                                    CELL_D,
+                                                    obj->description );
+                                                }
+
                                             // stop after first sound played
                                             break;
                                             }
@@ -19749,7 +19781,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     int floorDestID = 0;
     
     int destObjInClickedTile = 0;
-
+    char destObjInClickedTilePermanent = false;
+    
     int destNumContained = 0;
     
     int mapX = clickDestX - mMapOffsetX + mMapD / 2;
@@ -19828,6 +19861,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         destObjInClickedTile = destID;
 
+        if( destObjInClickedTile > 0 ) {
+            destObjInClickedTilePermanent =
+                getObject( destObjInClickedTile )->permanent;
+            }
+    
         destNumContained = mMapContainedStacks[ mapY * mMapD + mapX ].size();
         
 
@@ -20343,7 +20381,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         mustMove = true;
         }
-    else if( ( modClick && ourLiveObject->holdingID != 0 )
+    else if( ( modClick && 
+               // we can right click on an empty tile or full tile if
+               // we're holding something
+               // we can also right click with empty hand to pick something
+               // up
+               ( ourLiveObject->holdingID != 0 || 
+                 ( destObjInClickedTile > 0 && 
+                   ! destObjInClickedTilePermanent ) ) )
              || killMode
              || tryingToPickUpBaby
              || useOnBabyLater
@@ -20563,10 +20608,17 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                                      p.hitOtherPersonID );
                 send = true;
                 }
-            else if( modClick && destID == 0 && 
-                     ourLiveObject->holdingID != 0 ) {
-                action = "DROP";
-                nextActionDropping = true;
+            else if( modClick && destID == 0 ) {
+                
+                if( ourLiveObject->holdingID != 0 ) {
+                    action = "DROP";
+                    nextActionDropping = true;
+                    }
+                else {
+                    action = "USE";
+                    nextActionDropping = false;
+                    }
+                
                 send = true;
 
                 // check for other special case
@@ -20692,6 +20744,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 delete [] extra;
                 nextActionDropping = true;
                 extra = stringDuplicate( " -1" );
+                }
+
+            if( strcmp( action, "USE" ) == 0 &&
+                destID > 0 ) {
+                // optional ID param for USE, specifying that we clicked
+                // on something
+                delete [] extra;
+                extra = autoSprintf( " %d", destID );
                 }
             
             
