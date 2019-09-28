@@ -183,6 +183,9 @@ Server Fixes
   (rickety, proposed, etc.) can react to each other and auto-orient.  No more
   out-of-whack fences caused by them being out-of-sync when placed.
 
+--New baby distribution method, after Eve window closes:  Instead of
+  round-robin, we pick the family with the fewest potentially fertile females
+  (fertile moms and girl children) left and send the next incoming baby there.
 
 
 

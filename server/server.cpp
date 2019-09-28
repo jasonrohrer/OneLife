@@ -2667,7 +2667,7 @@ static void logFamilyCounts() {
 
 
 
-static int getNextBabyFamilyLineageEveID() {
+static int getNextBabyFamilyLineageEveIDRoundRobin() {
     nextBabyFamilyIndex++;
 
     if( nextBabyFamilyIndex >= familyCountsAfterEveWindow.size() ) {
@@ -6344,6 +6344,49 @@ static int countFamilies() {
         }
     
     return uniqueLines.size();
+    }
+
+
+
+
+static int getNextBabyFamilyLineageEveIDFewestFemales() {
+    SimpleVector<int> femaleCountPerFam;
+    
+    int minFemales = 999999;
+    int minFemalesLineageEveID = -1;
+
+    for( int i=0; i<familyLineageEveIDsAfterEveWindow.size(); i++ ) {
+        int lineageEveID = 
+            familyLineageEveIDsAfterEveWindow.getElementDirect( i );
+
+        int famMothers = countFertileMothers( lineageEveID );
+        int famGirls = countGirls( lineageEveID );
+        
+        int famFemales = famMothers + famGirls;
+        
+        if( famMothers > 0 ) {
+            // don't pick a fam that has no mothers at all
+            // there's no point (bb can't be born there now)
+            
+            if( famFemales < minFemales ) {
+                minFemales = famFemales;
+                minFemalesLineageEveID = lineageEveID;
+                }
+            }
+        }
+    
+    return minFemalesLineageEveID;
+    }
+
+
+
+// allows us to switch back and forth between methods 
+static int getNextBabyFamilyLineageEveID() {
+    if( false ) {
+        // suppress unused warning
+        return getNextBabyFamilyLineageEveIDRoundRobin();
+        }
+    return getNextBabyFamilyLineageEveIDFewestFemales();
     }
 
 
