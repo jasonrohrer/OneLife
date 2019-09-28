@@ -3019,6 +3019,14 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
             // 4+ same value as 4
             posseSpeedMult = posseSizeSpeedMultipliers[3];
             }
+        
+        if( inPlayer->isTwin ) {
+            // twins always run at slowest speed when trying to kill
+            // they can't form their own posse, but can join
+            // into posses to help speed up others
+            posseSpeedMult = posseSizeSpeedMultipliers[0];
+            }
+
         speed *= posseSpeedMult;
         }
     

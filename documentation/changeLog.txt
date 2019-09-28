@@ -187,6 +187,11 @@ Server Fixes
   round-robin, we pick the family with the fewest potentially fertile females
   (fertile moms and girl children) left and send the next incoming baby there.
 
+--Twins always run at posse-1 speed (0.75x) when trying to kill, no matter what
+  size of a posse they're part of.  Thus, twins can't form their own posse made
+  up just of their twin set to get a kill speedup.
+
+
 
 
 Version 262    2019-September-12
