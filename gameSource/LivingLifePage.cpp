@@ -3290,7 +3290,8 @@ void LivingLifePage::drawOffScreenSounds() {
 
 
 
-void LivingLifePage::handleAnimSound( int inObjectID, double inAge, 
+void LivingLifePage::handleAnimSound( int inSourcePlayerID, 
+                                      int inObjectID, double inAge, 
                                       AnimType inType,
                                       int inOldFrameCount, int inNewFrameCount,
                                       double inPosX, double inPosY ) {    
@@ -3374,7 +3375,8 @@ void LivingLifePage::handleAnimSound( int inObjectID, double inAge,
 
                     char *des = getObject( inObjectID )->description;
                     
-                    if( strstr( des, "offScreenSound" ) != NULL ) {
+                    if( inSourcePlayerID != ourID &&
+                        strstr( des, "offScreenSound" ) != NULL ) {
                         // this object has offscreen-visible sounds
                         // AND its animation has sounds
                         // renew offscreen sound for each new sound played
@@ -3645,7 +3647,8 @@ void LivingLifePage::drawMapCell( int inMapI,
         
 
         if( !mapPullMode && !inHighlightOnly && !inNoTimeEffects ) {
-            handleAnimSound( oID, 0, mMapCurAnimType[ inMapI ], oldFrameCount, 
+            handleAnimSound( -1,
+                             oID, 0, mMapCurAnimType[ inMapI ], oldFrameCount, 
                              mMapAnimationFrameCount[ inMapI ],
                              pos.x / CELL_D,
                              pos.y / CELL_D );
@@ -5354,7 +5357,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             
                 if( !mapPullMode ) {                    
-                    handleAnimSound( oID, 0, ground, oldFrameCount, 
+                    handleAnimSound( -1, oID, 0, ground, oldFrameCount, 
                                      mMapFloorAnimationFrameCount[ mapI ],
                                      (double)screenX / CELL_D,
                                      (double)screenY / CELL_D );
@@ -14562,7 +14565,8 @@ void LivingLifePage::step() {
                                                     existing->currentPos.y ) );
                                                 creationSoundPlayed = true;
                                                 
-                                                if( strstr( 
+                                                if( existing->id != ourID &&
+                                                    strstr( 
                                                         heldObj->description,
                                                         "offScreenSound" )
                                                     != NULL ) {
@@ -16220,7 +16224,8 @@ void LivingLifePage::step() {
                                                     playerPos.x,
                                                     playerPos.y ) );
                                             
-                                            if( strstr( 
+                                            if( existing->id != ourID &&
+                                                strstr( 
                                                     obj->description,
                                                     "offScreenSound" )
                                                 != NULL ) {
@@ -17259,7 +17264,8 @@ void LivingLifePage::step() {
                 }
             
             
-            handleAnimSound( o->displayID,
+            handleAnimSound( o->id, 
+                             o->displayID,
                              computeCurrentAge( o ),
                              t,
                              oldFrameCount, o->animationFrameCount,
@@ -17275,7 +17281,8 @@ void LivingLifePage::step() {
                     
                     if( oID != 0 ) {
                         
-                        handleAnimSound( oID,
+                        handleAnimSound( o->id,
+                                         oID,
                                          0,
                                          t,
                                          oldFrameCount, o->animationFrameCount,
@@ -17334,7 +17341,8 @@ void LivingLifePage::step() {
             }
         
         if( o->holdingID > 0 ) {
-            handleAnimSound( o->holdingID, 0, o->curHeldAnim,
+            handleAnimSound( o->id,
+                             o->holdingID, 0, o->curHeldAnim,
                              oldFrameCount, o->heldAnimationFrameCount,
                              o->currentPos.x,
                              o->currentPos.y );

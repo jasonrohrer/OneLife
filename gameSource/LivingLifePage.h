@@ -916,7 +916,9 @@ class LivingLifePage : public GamePage, public ActionListener {
         char mShowHighlights;
 
 
-        void handleAnimSound( int inObjectID, double inAge, 
+        // inSourcePlayerID -1 if animation not connected to a player
+        void handleAnimSound( int inSourcePlayerID, 
+                              int inObjectID, double inAge, 
                               AnimType inType,
                               int inOldFrameCount, int inNewFrameCount,
                               double inPosX, double inPosY );
