@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Max speech radius is now 10.  No more spying on distant speech with a zoom
+  mod.  Fixes #408
+
+
+
+
 Version 266    2019-September-27
 
 --Extra ID param in USE message to differentiate between click on ground and

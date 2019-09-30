@@ -3913,6 +3913,8 @@ GridPos getClosestPlayerPos( int inX, int inY ) {
 static int chunkDimensionX = 32;
 static int chunkDimensionY = 30;
 
+static int maxSpeechRadius = 10;
+
 
 static int getMaxChunkDimension() {
     return chunkDimensionX;
@@ -20702,7 +20704,7 @@ int main() {
                         }
                     }
                 if( newSpeechPos.size() > 0 && nextPlayer->connected ) {
-                    double minUpdateDist = getMaxChunkDimension() * 2;
+                    double minUpdateDist = maxSpeechRadius * 2;
                     
                     for( int u=0; u<newSpeechPos.size(); u++ ) {
                         ChangePosition *p = newSpeechPos.getElement( u );
@@ -20717,7 +20719,7 @@ int main() {
                             }
                         }
 
-                    if( minUpdateDist <= maxDist ) {
+                    if( minUpdateDist <= maxSpeechRadius ) {
 
                         SimpleVector<char> messageWorking;
                         messageWorking.appendElementString( "PS\n" );
@@ -20732,7 +20734,7 @@ int main() {
                             double d = intDist( p->x, p->y, 
                                                 playerXD, playerYD );
                             
-                            if( d < maxDist ) {
+                            if( d <= maxSpeechRadius ) {
 
                                 int speakerID = 
                                     newSpeechPlayerIDs.getElementDirect( u );
@@ -20876,7 +20878,7 @@ int main() {
 
 
                 if( newLocationSpeech.size() > 0 && nextPlayer->connected ) {
-                    double minUpdateDist = getMaxChunkDimension() * 2;
+                    double minUpdateDist = maxSpeechRadius * 2;
                     
                     for( int u=0; u<newLocationSpeechPos.size(); u++ ) {
                         ChangePosition *p = 
@@ -20892,7 +20894,7 @@ int main() {
                             }
                         }
 
-                    if( minUpdateDist <= maxDist ) {
+                    if( minUpdateDist <= maxSpeechRadius ) {
                         // some of location speech in range
                         
                         SimpleVector<char> working;
@@ -20903,14 +20905,20 @@ int main() {
                             ChangePosition *p = 
                                 newLocationSpeechPos.getElement( u );
                             
-                            char *line = autoSprintf( 
-                                "%d %d %s\n",
-                                p->x - nextPlayer->birthPos.x, 
-                                p->y - nextPlayer->birthPos.y,
-                                newLocationSpeech.getElementDirect( u ) );
-                            working.appendElementString( line );
+                            double d = intDist( p->x, p->y, 
+                                                playerXD, playerYD );
                             
-                            delete [] line;
+                            if( d <= maxSpeechRadius ) {
+
+                                char *line = autoSprintf( 
+                                    "%d %d %s\n",
+                                    p->x - nextPlayer->birthPos.x, 
+                                    p->y - nextPlayer->birthPos.y,
+                                    newLocationSpeech.getElementDirect( u ) );
+                                working.appendElementString( line );
+                                
+                                delete [] line;
+                                }
                             }
                         working.push_back( '#' );
                         
