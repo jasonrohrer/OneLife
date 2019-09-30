@@ -13,6 +13,10 @@ Version 268    ???
 
 --Tutorial wording reflects latest curse changes.  Fixes #407
 
+--When computing object center, don't consider worn-only sprites, since
+  centering is used for containment.  This fixes the weird containment position
+  for long dress and skirt.
+
 
 
 Server Fixes
