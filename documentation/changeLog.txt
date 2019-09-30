@@ -11,6 +11,8 @@ Version 268    ???
 --Fixed so that we don't play emote sounds (or show their off-screen icons) for
   out-of-range players.  Fixes #410
 
+--Tutorial wording reflects latest curse changes.  Fixes #407
+
 
 
 Server Fixes
