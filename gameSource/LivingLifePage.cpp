@@ -16205,7 +16205,10 @@ void LivingLifePage::step() {
                                 existing->currentEmot != NULL ) {
                                 doublePair playerPos = existing->currentPos;
                                 
-                                for( int i=0; 
+                                // play sounds for this emotion, but only
+                                // if in range
+                                if( !existing->outOfRange ) 
+                                for( int i=0;
                                      i<getEmotionNumObjectSlots(); i++ ) {
                                     
                                     int id =
@@ -17242,36 +17245,40 @@ void LivingLifePage::step() {
             }
             
         
-        if( o->curAnim != moving || !holdingRideable ) {
-            // don't play player moving sound if riding something
-
+                    
+        // no anim sounds if out of range
+        if( ! o->outOfRange ) {
             AnimType t = o->curAnim;
             doublePair pos = o->currentPos;
-            
-            if( o->heldByAdultID != -1 ) {
-                t = held;
-                
 
-                for( int j=0; j<gameObjects.size(); j++ ) {
+            if( o->curAnim != moving || !holdingRideable ) {
+                // don't play player moving sound if riding something
+                
+                
+                if( o->heldByAdultID != -1 ) {
+                    t = held;
                     
-                    LiveObject *parent = gameObjects.getElement( j );
                     
-                    if( parent->id == o->heldByAdultID ) {
+                    for( int j=0; j<gameObjects.size(); j++ ) {
                         
-                        pos = parent->currentPos;
+                        LiveObject *parent = gameObjects.getElement( j );
+                        
+                        if( parent->id == o->heldByAdultID ) {
+                            
+                            pos = parent->currentPos;
+                            }
                         }
                     }
+                
+                handleAnimSound( o->id, 
+                                 o->displayID,
+                                 computeCurrentAge( o ),
+                                 t,
+                                 oldFrameCount, o->animationFrameCount,
+                                 pos.x,
+                                 pos.y );    
                 }
             
-            
-            handleAnimSound( o->id, 
-                             o->displayID,
-                             computeCurrentAge( o ),
-                             t,
-                             oldFrameCount, o->animationFrameCount,
-                             pos.x,
-                             pos.y );    
-
             if( o->currentEmot != NULL ) {
                 int numSlots = getEmotionNumObjectSlots();
                 
