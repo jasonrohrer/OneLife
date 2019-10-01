@@ -5627,11 +5627,31 @@ static void swapHeldWithGround(
     SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout) {
     
     
+    if( inTargetID == inPlayer->holdingID &&
+        inPlayer->numContained == 0 &&
+        getNumContained( inMapX, inMapY ) == 0 ) {
+        // swap of same non-container object with self
+        // ignore this, to prevent weird case of swapping
+        // grave basket with self
+        return;
+        }
+    
+
     timeSec_t newHoldingEtaDecay = getEtaDecay( inMapX, inMapY );
     
     FullMapContained f = getFullMapContained( inMapX, inMapY );
-    
-    
+
+
+    int gravePlayerID = getGravePlayerID( inMapX, inMapY );
+        
+    if( gravePlayerID > 0 ) {
+            
+        // player action actually picked up this grave
+        
+        // clear it from ground
+        setGravePlayerID( inMapX, inMapY, 0 );
+        }
+
     
     clearAllContained( inMapX, inMapY );
     setMapObject( inMapX, inMapY, 0 );
@@ -5674,6 +5694,13 @@ static void swapHeldWithGround(
     inPlayer->heldOriginX = inMapX;
     inPlayer->heldOriginY = inMapY;
     inPlayer->heldTransitionSourceID = -1;
+
+
+    if( gravePlayerID > 0 ) {
+        inPlayer->heldGraveOriginX = inMapX;
+        inPlayer->heldGraveOriginY = inMapY;
+        inPlayer->heldGravePlayerID = gravePlayerID;
+        }
     }
 
 

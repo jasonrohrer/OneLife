@@ -26,6 +26,12 @@ Server Fixes
 
 --values.h should be replaced with limits.h  Fixes #411
 
+--Fixed grave duplication caused by swapping grave baskets with objects on the
+  ground.  Fixes #402  There is still a possible case of grave mix-up if three
+  people are moving graves around in the same area at the same time (which is
+  unlikely), but no grave duplication that I could produce even in that edge
+  case.
+
 
 
 
