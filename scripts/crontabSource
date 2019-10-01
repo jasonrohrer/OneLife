@@ -2,7 +2,7 @@ SHELL=/bin/bash
 
 0 8 * * * /home/jcr15/checkout/OneLifeWorking/scripts/generateObjectReport.sh
 0 0 * * * /home/jcr15/updateMetascores.sh
-0 9 * * * /home/jcr15/mainBackupPush.sh
+0 9 * * * echo -en "\n\nStarting mainBackupPush at " >> /var/log/mainBackupPush.log; date >> /var/log/mainBackupPush.log; /home/jcr15/mainBackupPush.sh  >> /var/log/mainBackupPush.log 2>&1
 15 9 * * * /home/jcr15/checkout/OneLifeWorking/scripts/checkForDataUpdateCron.sh
 30 9 * * * /home/jcr15/checkout/OneLifeWorking/scripts/checkForServerCodeUpdateCron.sh
 
