@@ -32,6 +32,10 @@ Server Fixes
   unlikely), but no grave duplication that I could produce even in that edge
   case.
 
+--Blocked twins/trips/quads from cursing (before, just blocked them from
+  earning tokens, but if they already had a token, they could spend it).
+
+
 
 
 

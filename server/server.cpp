@@ -4862,6 +4862,16 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     if( strcmp( inToSay, curseBabyPhrase ) == 0 ) {
         isBabyShortcut = true;
         }
+
+    
+    if( inPlayer->isTwin ) {
+        // block twins from cursing
+        cursedName = NULL;
+        
+        isYouShortcut = false;
+        isBabyShortcut = false;
+        }
+    
     
     
     if( cursedName != NULL || isYouShortcut ) {
@@ -4895,7 +4905,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         }
     
         
-    if( cursedName == NULL &&
+    if( ! inPlayer->isTwin &&
+        cursedName == NULL &&
         players.size() >= minActivePlayersForLanguages ) {
         
         // consider cursing in other languages
