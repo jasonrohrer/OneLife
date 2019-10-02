@@ -35,6 +35,12 @@ Server Fixes
 --Blocked twins/trips/quads from cursing (before, just blocked them from
   earning tokens, but if they already had a token, they could spend it).
 
+--Expanded the list of possible last names to the full list of 151,000 provided
+  by the US Census 2000.  Was using a trimmed list of 86,000 last names (from
+  the same source, but only counting names that occurred 200 or more times in
+  the year 2000).  The source list includes names that occurred 100 or more
+  times in the year 2000.
+
 
 
 
