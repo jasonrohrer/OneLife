@@ -1440,8 +1440,16 @@ function ls_setDeepestGenerationUp( $inID,
             "  $in_deepest_descendant_generation, ".
             "deepest_descendant_life_id = ".
             "  $in_deepest_descendant_life_id, ".
+            // lineage_depth unknown if generation number not known yet
             "lineage_depth = ".
-            "  $in_deepest_descendant_generation - generation ".
+            "  CASE ".
+            "  WHEN $in_deepest_descendant_generation > 0 ".
+            "       AND generation > 0 ".
+            "  THEN ".
+            "      $in_deepest_descendant_generation - generation ".
+            "  ELSE ".
+            "      0 ".
+            "  END ".
             "WHERE id = $inID;";
         
         ls_queryDatabase( $query );
@@ -2665,7 +2673,16 @@ function ls_computeDeepestGeneration( $inID ) {
             "SET ".
             "deepest_descendant_generation = $deepest_descendant_generation, ".
             "deepest_descendant_life_id = $deepest_descendant_life_id, ".
-            "lineage_depth = $deepest_descendant_generation - generation ".
+            // lineage_depth unknown if generation number not known yet
+            "lineage_depth = ".
+            "  CASE ".
+            "  WHEN $deepest_descendant_generation > 0 ".
+            "       AND generation > 0 ".
+            "  THEN ".
+            "      $deepest_descendant_generation - generation ".
+            "  ELSE ".
+            "      0 ".
+            "  END ".
             "WHERE id = $inID;";
         
         ls_queryDatabase( $query );  

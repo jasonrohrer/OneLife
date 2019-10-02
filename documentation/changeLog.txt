@@ -41,6 +41,8 @@ Server Fixes
   the year 2000).  The source list includes names that occurred 100 or more
   times in the year 2000.
 
+--Fixed glitch in lineage_depth calculation on family tree server when
+  generation is not known yet.
 
 
 
