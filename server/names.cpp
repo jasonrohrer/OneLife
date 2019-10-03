@@ -161,6 +161,8 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen,
         int prevDiff = lastDiff;
         lastDiff = strcmp( tempString, testString );
         
+        int lastUsedOffset = offset;
+        
         
         if( getSign( lastDiff ) != getSign( prevDiff ) ) {
             // overshot
@@ -190,6 +192,11 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen,
             else {
                 offset = getNameOffsetForward( inNameList, inListLen, offset );
                 hitEndCount = 0;
+                if( offset == lastUsedOffset ) {
+                    // back to same location as last time?
+                    // stuck
+                    break;
+                    }
                 }
             }
         else if( lastDiff < 0 ) {
@@ -207,6 +214,11 @@ const char *findCloseName( char *inString, char *inNameList, int inListLen,
             else {
                 hitStartCount = 0;
                 offset = getNameOffsetBack( inNameList, inListLen, offset );
+                if( offset == lastUsedOffset ) {
+                    // back to same location as last time?
+                    // stuck
+                    break;
+                    }
                 }
             }
         }

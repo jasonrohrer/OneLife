@@ -44,6 +44,9 @@ Server Fixes
 --Fixed glitch in lineage_depth calculation on family tree server when
   generation is not known yet.
 
+--Fixed major infinite loop in server name picking code.  Not sure how this was
+  never triggered, but a new name list, with a different length, triggered it.
+
 
 
 
