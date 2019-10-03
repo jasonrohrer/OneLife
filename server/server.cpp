@@ -11494,6 +11494,38 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
 
 
 
+// after person has been named, use this to filter phrase itself
+// destroys inSaidPhrase and replaces it
+void replaceNameInSaidPhrase( char *inSaidName, char **inSaidPhrase,
+                              LiveObject *inNamedPerson, 
+                              char inForceBoth = false ) {
+    char *trueName;
+    if( inForceBoth || strstr( inSaidName, " " ) != NULL ) {
+        // multi-word said name
+        // assume first and last name
+        trueName = stringDuplicate( inNamedPerson->name );
+        }
+    else {
+        // single-word said name
+        trueName = stringDuplicate( inNamedPerson->name );
+        // trim off last name, if there is one
+        char *spacePos = strstr( trueName, " " );
+        if( spacePos != NULL ) {
+            spacePos[0] = '\0';
+            }
+        }
+    char found = false;
+    char *newPhrase = replaceOnce( *inSaidPhrase, inSaidName, trueName,
+                                   &found );
+    delete [] trueName;
+    
+    delete [] (*inSaidPhrase);
+
+    *inSaidPhrase = newPhrase;
+    }
+
+
+
 
 void getLineageLineForPlayer( LiveObject *inPlayer,
                               SimpleVector<char> *inVector ) {
@@ -14837,6 +14869,10 @@ int main() {
                             if( name != NULL && strcmp( name, "" ) != 0 ) {
                                 nameEve( nextPlayer, name );
                                 playerIndicesToSendNamesAbout.push_back( i );
+                                replaceNameInSaidPhrase( 
+                                    name,
+                                    &( m.saidText ),
+                                    nextPlayer, true );
                                 }
                             }
 
@@ -14855,6 +14891,9 @@ int main() {
                                 if( name != NULL && strcmp( name, "" ) != 0 ) {
                                     nameBaby( nextPlayer, babyO, name,
                                               &playerIndicesToSendNamesAbout );
+                                    replaceNameInSaidPhrase( name,
+                                                             &( m.saidText ),
+                                                             babyO );
                                     }
                                 }
                             }
@@ -14885,6 +14924,11 @@ int main() {
                                                 push_back( 
                                                     getLiveObjectIndex( 
                                                         closestOther->id ) );
+                                    
+                                            replaceNameInSaidPhrase( 
+                                                name,
+                                                &( m.saidText ),
+                                                closestOther, true );
                                             }
                                         }
                                     else {
@@ -14893,6 +14937,11 @@ int main() {
                                             nextPlayer, closestOther,
                                             name, 
                                             &playerIndicesToSendNamesAbout );
+                                        
+                                        replaceNameInSaidPhrase( 
+                                            name,
+                                            &( m.saidText ),
+                                            closestOther, false );
                                         }
                                     }
                                 }

@@ -54,6 +54,12 @@ Server Fixes
   No more girls named Robert or boys named Mary, but both boys and girls can be
   named Charlie.  Hello Helga!
 
+--When you name your baby, the closest matching name is replaced in your said
+  text as it is displayed.  YOU ARE ROBERT for a girl is heard as YOU ARE
+  ROBERTA.  You don't need to mouse over the baby to find out what name
+  actually stuck, and there's no mismatch between what your baby hears and what
+  their name is.
+
 
 
 
