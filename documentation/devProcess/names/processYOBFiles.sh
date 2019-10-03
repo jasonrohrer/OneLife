@@ -14,5 +14,5 @@ do
 	$processApp sorted_$f male_$f female_$f 0.20
 done
 
-cat male_* | sort | uniq > maleNames.txt
-cat female_* | sort | uniq > femaleNames.txt
+cat male_* | sort | uniq | tr '[a-z]' '[A-Z]' > maleNames.txt
+cat female_* | sort | uniq | tr '[a-z]' '[A-Z]' > femaleNames.txt
