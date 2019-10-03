@@ -71,6 +71,10 @@ fi
 
 rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress thecastledoctrine.net:backups/* ~/backups/thecastledoctrine/
 
+# delete backup files older than two weeks
+find ~/backups/thecastledoctrine -mtime +14 -delete
+
+
 
 if [ ! -f ~/backups/cordialminuet ]
 then
@@ -79,6 +83,9 @@ fi
 
 rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress cordialminuet.com:backups/* ~/backups/cordialminuet/
 
+
+# delete backup files older than two weeks
+find ~/backups/cordialminuet -mtime +14 -delete
 
 
 
