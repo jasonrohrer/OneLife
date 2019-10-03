@@ -9833,7 +9833,8 @@ static double getLongestLine( char *inMessage ) {
 
 
 
-char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
+char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
+                                      int inDoNotPointAtThis ) {
 
     if( inObjectID != mLastHintSortedSourceID ) {
         getNumHints( inObjectID );
@@ -9880,8 +9881,6 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
             targetString = 
                 stringToUpperCase( getObject( target )->description );
             stripDescriptionComment( targetString );
-            
-            mCurrentHintTargetObject = target;
             }
         else if( target == -1 && actor > 0 ) {
             ObjectRecord *actorObj = getObject( actor );
@@ -9920,6 +9919,24 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
         else {
             targetString = stringDuplicate( "" );
             }
+
+
+        // never show visual pointer toward what we're holding
+        if( target > 0 && target != inObjectID && 
+            target != inDoNotPointAtThis ) {
+            printf( "\n\n\n****Setting target to TARGET (%d:%s) (no:%d)\n", 
+                    target, getObject( target )->description, 
+                    inDoNotPointAtThis );
+            mCurrentHintTargetObject = target;
+            }
+        else if( actor > 0 && actor != inObjectID &&
+                 actor != inDoNotPointAtThis ) {
+            printf( "\n\n\n****Setting target to ACTOR (%d:%s) (no:%d)\n", 
+                    actor, getObject( actor )->description, 
+                    inDoNotPointAtThis );
+            mCurrentHintTargetObject = actor;
+            }
+        
         
 
         char *resultString;
@@ -10661,6 +10678,18 @@ void LivingLifePage::step() {
             mCurrentHintIndex != mNextHintIndex ||
             mForceHintRefresh ) {
             
+            char autoHint = false;
+            
+            // hide target object indicator unless player picked this hint
+            if( mCurrentHintObjectID != mNextHintObjectID &&
+                mHintFilterString == NULL ) {
+                // they changed what they are holding
+                
+                // and they don't have a filter applied currently
+                autoHint = true;
+                }
+
+            
             mForceHintRefresh = false;
 
             int newLiveSheetIndex = 0;
@@ -10701,9 +10730,16 @@ void LivingLifePage::step() {
                 }
             
             mHintMessage[ i ] = getHintMessage( mCurrentHintObjectID, 
-                                                mHintMessageIndex[i] );
-            
+                                                mHintMessageIndex[i],
+                                                // don't set pointer
+                                                // to what we're holding
+                                                ourObject->holdingID );
 
+            if( autoHint ) {
+                // hide pointer until they start tabbing again
+                mCurrentHintTargetObject = 0;
+                }
+            
 
             mHintExtraOffset[ i ].x = - getLongestLine( mHintMessage[i] );
             }

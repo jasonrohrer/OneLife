@@ -717,7 +717,11 @@ class LivingLifePage : public GamePage, public ActionListener {
         
 
         int getNumHints( int inObjectID );
-        char *getHintMessage( int inObjectID, int inIndex );
+        
+        // inDoNotPointAtThis specifies an object that we should never
+        // add a visual pointer to (like what we are holding)
+        char *getHintMessage( int inObjectID, int inIndex,
+                              int inDoNotPointAtThis = -1 );
 
         char *mHintFilterString;
         
