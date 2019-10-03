@@ -24,6 +24,9 @@
 #include "animationBank.h"
 
 
+// supplied by animation bank
+extern void checkDrawPos( int inObjectID, doublePair inPos );
+
 
 
 
@@ -3293,6 +3296,8 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                        char inHeldNotInPlaceYet,
                        ClothingSet inClothing,
                        double inScale ) {
+
+    checkDrawPos( inObject->id, inPos );
     
     if( inObject->noFlip ) {
         inFlipH = false;

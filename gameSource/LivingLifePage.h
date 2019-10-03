@@ -702,6 +702,8 @@ class LivingLifePage : public GamePage, public ActionListener {
         int mNextHintObjectID;
         int mNextHintIndex;
 
+        int mCurrentHintTargetObject;
+
         SimpleVector<TransRecord *> mLastHintSortedList;
         int mLastHintSortedSourceID;
         char *mLastHintFilterString;

@@ -453,4 +453,12 @@ void setClothingHighlightFades( float *inFades );
 
 
 
+
+// used by game to find the closest drawn instance of a given object
+void startWatchForClosestObjectDraw( int inObjecID, doublePair inPos );
+
+doublePair getClosestObjectDraw( char *inDrawn );
+
+
+
 #endif

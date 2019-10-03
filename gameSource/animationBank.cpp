@@ -1696,6 +1696,50 @@ static double processFrameTimeWithPauses( AnimationRecord *inAnim,
 
 
 
+doublePair closestObjectDrawAnchorPos = { 0, 0 };
+
+doublePair closestObjectDrawPos = { 0, 0 };
+
+double closestObjectDrawDistance = DBL_MAX;
+
+int closestObjectDrawID = -1;
+
+void startWatchForClosestObjectDraw( int inObjecID, doublePair inPos ) {
+    closestObjectDrawDistance = DBL_MAX;
+    
+    closestObjectDrawAnchorPos = inPos;
+    closestObjectDrawID = inObjecID;
+    }
+
+
+
+doublePair getClosestObjectDraw( char *inDrawn ) {
+    if( closestObjectDrawDistance < DBL_MAX ) {
+        *inDrawn = true;
+        }
+    else {
+        *inDrawn = false;
+        }
+    return closestObjectDrawPos;
+    }
+
+
+
+void checkDrawPos( int inObjectID, doublePair inPos ) {
+    if( inObjectID != closestObjectDrawID ) return;
+    
+    double d = distance( inPos, closestObjectDrawAnchorPos );
+    
+    if( d < closestObjectDrawDistance ) {
+        closestObjectDrawDistance = d;
+        closestObjectDrawPos = inPos;
+        }
+    }
+
+
+
+
+
 
 HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                            AnimationRecord *inAnim, 
@@ -1747,6 +1791,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     inClothing );
         return returnHoldingPos;
         }
+
+
+    checkDrawPos( inObjectID, inPos );
+    
 
     SimpleVector <int> frontArmIndices;
     getFrontArmIndices( obj, inAge, &frontArmIndices );

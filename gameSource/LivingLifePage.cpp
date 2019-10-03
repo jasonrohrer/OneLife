@@ -2344,6 +2344,9 @@ LivingLifePage::LivingLifePage()
     
     mLastHintSortedSourceID = 0;
     
+    mCurrentHintTargetObject = 0;
+    
+
     int maxObjectID = getMaxObjectID();
     
     mHintBookmarks = new int[ maxObjectID + 1 ];
@@ -5510,6 +5513,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
     //toggleAdditiveTextureColoring( false );
     toggleAdditiveBlend( false );
     
+
+    LiveObject *ourLiveObject = getOurLiveObject();
+    
+    if( ourLiveObject != NULL ) {
+        startWatchForClosestObjectDraw( mCurrentHintTargetObject,
+                                        mult( ourLiveObject->currentPos,
+                                              CELL_D ) );
+        }
+
+
     
     float maxFullCellFade = 0.5;
     float maxEmptyCellFade = 0.75;
@@ -5677,7 +5690,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
     // draw long path for our character
-    LiveObject *ourLiveObject = getOurLiveObject();
     
     if( ourLiveObject != NULL ) {
         
@@ -6438,6 +6450,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
     // finally, draw any highlighted our-placements
+    if( ! takingPhoto )
     if( mCurMouseOverID > 0 && ! mCurMouseOverSelf && mCurMouseOverBehind ) {
         int worldY = mCurMouseOverSpot.y + mMapOffsetY - mMapD / 2;
         
@@ -6450,7 +6463,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
         // highlights only
         drawMapCell( mapI, screenX, screenY, true );
         }
-    
+
+    if( ! takingPhoto )
     for( int i=0; i<mPrevMouseOverSpots.size(); i++ ) {
         if( mPrevMouseOverSpotsBehind.getElementDirect( i ) ) {
                 
@@ -6469,6 +6483,22 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
     
+
+    if( ! takingPhoto && mCurrentHintTargetObject > 0 ) {
+        // draw pointer to closest hint target object
+        
+        char drawn = false;
+        doublePair targetPos = getClosestObjectDraw( &drawn );
+
+        if( drawn ) {
+            setDrawColor( 0, 0, 0, 1 );
+            mainFont->drawString( "HERE", targetPos, alignCenter );
+            }
+        }
+    
+        
+
+
     
     if( ! takingPhoto )
     for( int i=0; i<speakers.size(); i++ ) {
@@ -6524,6 +6554,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
+    if( ! takingPhoto )
     for( int i=0; i<locationSpeech.size(); i++ ) {
         LocationSpeech *ls = locationSpeech.getElement( i );
         
@@ -9840,6 +9871,8 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
         
         char eventually = false;
         
+
+        mCurrentHintTargetObject = 0;
         
         char *targetString;
         
@@ -9847,6 +9880,8 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex ) {
             targetString = 
                 stringToUpperCase( getObject( target )->description );
             stripDescriptionComment( targetString );
+            
+            mCurrentHintTargetObject = target;
             }
         else if( target == -1 && actor > 0 ) {
             ObjectRecord *actorObj = getObject( actor );
