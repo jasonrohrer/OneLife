@@ -2345,7 +2345,11 @@ LivingLifePage::LivingLifePage()
     mLastHintSortedSourceID = 0;
     
     mCurrentHintTargetObject = 0;
-    
+    mCurrentHintTargetPointerBounce = 0;
+
+    mLastHintTargetPos.x = 0;
+    mLastHintTargetPos.y = 0;
+
 
     int maxObjectID = getMaxObjectID();
     
@@ -6484,16 +6488,63 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
 
+    char pointerDrawn = false;
+
     if( ! takingPhoto && mCurrentHintTargetObject > 0 ) {
         // draw pointer to closest hint target object
         
         char drawn = false;
         doublePair targetPos = getClosestObjectDraw( &drawn );
 
+        
+
         if( drawn ) {
+            
+            // round to closest cell pos
+            targetPos.x = CELL_D * lrint( targetPos.x / CELL_D );
+            targetPos.y = CELL_D * lrint( targetPos.y / CELL_D );
+            
+            // move up
+            targetPos.y += 64;
+
+            if( !equal( targetPos, mLastHintTargetPos ) ) {
+                // reset bounce when target changes
+                mCurrentHintTargetPointerBounce = 0;
+                mLastHintTargetPos = targetPos;        
+                }
+            
+            
+            targetPos.y += 16 * cos( mCurrentHintTargetPointerBounce );
+            
+            mCurrentHintTargetPointerBounce +=
+                6 * frameRateFactor / 60.0;
+
+            setDrawColor( 1, 1, 1, 1 );
+
+            char *desNoComment = 
+                stringToUpperCase( 
+                    getObject( mCurrentHintTargetObject )->description );
+            stripDescriptionComment( desNoComment );
+
             setDrawColor( 0, 0, 0, 1 );
-            mainFont->drawString( "HERE", targetPos, alignCenter );
+            doublePair shadowPos = targetPos;
+            shadowPos.x -= 1;
+            shadowPos.y -= 1;
+            pencilFont->drawString( desNoComment, shadowPos, alignCenter );
+            
+            setDrawColor( 1, 1, 1, 1 );
+            pencilFont->drawString( desNoComment, targetPos, alignCenter );
+            
+            delete [] desNoComment;
+
+            pointerDrawn = true;
             }
+        }
+    if( ! pointerDrawn ) {
+        // reset bounce
+        mCurrentHintTargetPointerBounce = 0;
+        mLastHintTargetPos.x = 0;
+        mLastHintTargetPos.y = 0;
         }
     
         
