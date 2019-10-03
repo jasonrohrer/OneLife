@@ -10314,7 +10314,7 @@ void monumentStep() {
 // returns a uniquified name, sometimes newly allocated.
 // return value destroyed by caller
 char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded,
-                             char inIsEve ) {
+                             char inIsEve, char inFemale ) {
     
     char dup = isNameDuplicateForCurses( inPlayerName );
     
@@ -10427,13 +10427,14 @@ char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded,
         if( numNames == 1 ) {
             // special case, find a totally unique first name for them
             
-            int i = getFirstNameIndex( firstName );
+            int i = getFirstNameIndex( firstName, inFemale );
 
             while( dup ) {
 
                 int nextI;
                 
-                dup = isNameDuplicateForCurses( getFirstName( i, &nextI ) );
+                dup = isNameDuplicateForCurses( getFirstName( i, &nextI, 
+                                                              inFemale ) );
             
                 if( dup ) {
                     i = nextI;
@@ -10447,7 +10448,7 @@ char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded,
             else {
                 delete [] inPlayerName;
                 int nextI;
-                return stringDuplicate( getFirstName( i, &nextI ) );
+                return stringDuplicate( getFirstName( i, &nextI, inFemale ) );
                 }
             }
         else if( numNames == 2 ) {
@@ -10494,7 +10495,7 @@ char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded,
                 }
             else {
                 // cycle first names until we find one
-                int i = getFirstNameIndex( firstName );
+                int i = getFirstNameIndex( firstName, inFemale );
             
                 char *tempName = NULL;
                 
@@ -10504,7 +10505,8 @@ char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded,
                         }
                     
                     int nextI;
-                    tempName = autoSprintf( "%s %s", getFirstName( i, &nextI ),
+                    tempName = autoSprintf( "%s %s", getFirstName( i, &nextI,
+                                                                   inFemale ),
                                             lastName );
                     
 
@@ -11329,7 +11331,8 @@ static void nameEve( LiveObject *nextPlayer, char *name ) {
     nextPlayer->name = getUniqueCursableName( 
         nextPlayer->name, 
         &( nextPlayer->nameHasSuffix ),
-        true );
+        true,
+        getFemale( nextPlayer ) );
                                 
     char firstName[99];
     char lastName[99];
@@ -11434,7 +11437,7 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
 
 
     const char *close = 
-        findCloseFirstName( name );
+        findCloseFirstName( name, getFemale( inBaby ) );
 
     if( strcmp( lastName, "" ) != 0 ) {    
         babyO->name = autoSprintf( "%s %s",
@@ -11477,7 +11480,8 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
                                     
     babyO->name = getUniqueCursableName( 
         babyO->name, 
-        &( babyO->nameHasSuffix ), false );
+        &( babyO->nameHasSuffix ), false,
+        getFemale( babyO ) );
                                     
     logName( babyO->id,
              babyO->email,

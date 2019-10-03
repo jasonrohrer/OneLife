@@ -3,6 +3,11 @@ All US baby names for 2016 with more than 5 occurrences found here:
 https://www.ssa.gov/oact/babynames/limits.html
 
 
+Download all YOB files and then run in the folder:
+
+./OneLife/documentation/devProcess/names/processYOBFiles.sh
+
+
 
 All US last names from 2000 with more than 200 occurrences pulled from here:
 

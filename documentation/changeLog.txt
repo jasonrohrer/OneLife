@@ -47,6 +47,13 @@ Server Fixes
 --Fixed major infinite loop in server name picking code.  Not sure how this was
   never triggered, but a new name list, with a different length, triggered it.
 
+--Full list of all US first names since 1880, for roughly 100K names (was 30K),
+  and split into male and female names (for names that were always > 80% one 
+  gender in every year) and unisex names (for names that were > 20% the 
+  minority gender in some year).  Gender is enforced in baby name filtering.  
+  No more girls named Robert or boys named Mary, but both boys and girls can be
+  named Charlie.  Hello Helga!
+
 
 
 
