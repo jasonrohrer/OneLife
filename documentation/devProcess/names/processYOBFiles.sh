@@ -1,6 +1,6 @@
 pushd ~/checkout/OneLife/documentation/devProcess/names/
 
-g++ -o processNameYear processNameYear.cpp
+g++ -g -o processNameYear processNameYear.cpp
 
 popd
 

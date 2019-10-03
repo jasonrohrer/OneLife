@@ -20,7 +20,7 @@ typedef struct LineResult {
 
 
 char readNextLine( FILE *inFile, LineResult *outResult ) {
-    int numRead = fscanf( inFile, "%99s,%c,%d", outResult->name,
+    int numRead = fscanf( inFile, "%99[^,],%c,%d\n", outResult->name,
                           &( outResult->mOrF ), &( outResult->freq ) );
     
     if( numRead == 3 ) {
