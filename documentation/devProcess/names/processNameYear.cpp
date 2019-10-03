@@ -7,7 +7,7 @@ double mixedFraction = 0.05;
 
 
 void usage() {
-    printf( "Usage\n\n processNameYear in.txt maleOut.txt femaleOut.txt\n\n" );
+    printf( "Usage\n\n processNameYear in.txt maleOut.txt femaleOut.txt 0.05\n\n" );
     exit( 1 );
     }
 
@@ -34,9 +34,12 @@ char readNextLine( FILE *inFile, LineResult *outResult ) {
 
 int main( int inNumArgs, char **inArgs ) {
     
-    if( inNumArgs != 4 ) {
+    if( inNumArgs != 5 ) {
         usage();
         }
+
+    sscanf( inArgs[4], "%lf", &mixedFraction );
+    
     
     char *inFileName = inArgs[1];
     char *maleFileName = inArgs[2];

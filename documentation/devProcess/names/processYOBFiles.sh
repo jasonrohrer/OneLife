@@ -11,5 +11,8 @@ do
 	echo "Processing $f"
 	dos2unix $f
 	cat $f | sort --field-separator=',' -k1,1 -k2,2  > sorted_$f
-	$processApp sorted_$f male_$f female_$f
+	$processApp sorted_$f male_$f female_$f 0.20
 done
+
+cat male_* | sort | uniq > maleNames.txt
+cat female_* | sort | uniq > femaleNames.txt
