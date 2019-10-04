@@ -6538,7 +6538,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
             mCurrentHintTargetPointerBounce +=
                 6 * frameRateFactor / 60.0;
 
-            setDrawColor( 1, 1, 1, 1 );
+            float fade = 1.0f;
+            
+            if( mCurrentHintTargetPointerBounce < 1 ) {
+                fade = mCurrentHintTargetPointerBounce;
+                }
+            
+            setDrawColor( 1, 1, 1, fade );
 
             drawSprite( mHintArrowSprite, targetPos );
             
