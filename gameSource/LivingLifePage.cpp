@@ -9337,6 +9337,9 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         return mLastHintSortedList.size();
         }
     
+    
+    mCurrentHintTargetObject = 0;
+
 
     // else need to regenerated sorted list
 
@@ -9934,9 +9937,6 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
         
         char eventually = false;
         
-
-        mCurrentHintTargetObject = 0;
-        
         char *targetString;
         
         if( target > 0 ) {
@@ -9986,17 +9986,23 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
         // never show visual pointer toward what we're holding
         if( target > 0 && target != inObjectID && 
             target != inDoNotPointAtThis ) {
-            printf( "\n\n\n****Setting target to TARGET (%d:%s) (no:%d)\n", 
-                    target, getObject( target )->description, 
-                    inDoNotPointAtThis );
             mCurrentHintTargetObject = target;
             }
         else if( actor > 0 && actor != inObjectID &&
                  actor != inDoNotPointAtThis ) {
-            printf( "\n\n\n****Setting target to ACTOR (%d:%s) (no:%d)\n", 
-                    actor, getObject( actor )->description, 
-                    inDoNotPointAtThis );
             mCurrentHintTargetObject = actor;
+            }
+        else if( actor > 0 && target > 0 &&
+                 actor == target ) {
+            // both actor and target are same
+            // show pointer to ones that are on the ground
+            mCurrentHintTargetObject = actor;
+            }
+        else if( actor == 0 && target > 0 && 
+                 target != inDoNotPointAtThis ) {
+            // bare hand action
+            // show target even if it matches what we're giving hints about
+            mCurrentHintTargetObject = target;
             }
         
         
