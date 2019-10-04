@@ -3915,6 +3915,8 @@ GridPos getClosestPlayerPos( int inX, int inY ) {
 static int chunkDimensionX = 32;
 static int chunkDimensionY = 30;
 
+static int maxSpeechRadius = 10;
+
 
 static int getMaxChunkDimension() {
     return chunkDimensionX;
@@ -4862,6 +4864,16 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     if( strcmp( inToSay, curseBabyPhrase ) == 0 ) {
         isBabyShortcut = true;
         }
+
+    
+    if( inPlayer->isTwin ) {
+        // block twins from cursing
+        cursedName = NULL;
+        
+        isYouShortcut = false;
+        isBabyShortcut = false;
+        }
+    
     
     
     if( cursedName != NULL || isYouShortcut ) {
@@ -4895,7 +4907,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         }
     
         
-    if( cursedName == NULL &&
+    if( ! inPlayer->isTwin &&
+        cursedName == NULL &&
         players.size() >= minActivePlayersForLanguages ) {
         
         // consider cursing in other languages
@@ -5627,11 +5640,31 @@ static void swapHeldWithGround(
     SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout) {
     
     
+    if( inTargetID == inPlayer->holdingID &&
+        inPlayer->numContained == 0 &&
+        getNumContained( inMapX, inMapY ) == 0 ) {
+        // swap of same non-container object with self
+        // ignore this, to prevent weird case of swapping
+        // grave basket with self
+        return;
+        }
+    
+
     timeSec_t newHoldingEtaDecay = getEtaDecay( inMapX, inMapY );
     
     FullMapContained f = getFullMapContained( inMapX, inMapY );
-    
-    
+
+
+    int gravePlayerID = getGravePlayerID( inMapX, inMapY );
+        
+    if( gravePlayerID > 0 ) {
+            
+        // player action actually picked up this grave
+        
+        // clear it from ground
+        setGravePlayerID( inMapX, inMapY, 0 );
+        }
+
     
     clearAllContained( inMapX, inMapY );
     setMapObject( inMapX, inMapY, 0 );
@@ -5674,6 +5707,13 @@ static void swapHeldWithGround(
     inPlayer->heldOriginX = inMapX;
     inPlayer->heldOriginY = inMapY;
     inPlayer->heldTransitionSourceID = -1;
+
+
+    if( gravePlayerID > 0 ) {
+        inPlayer->heldGraveOriginX = inMapX;
+        inPlayer->heldGraveOriginY = inMapY;
+        inPlayer->heldGravePlayerID = gravePlayerID;
+        }
     }
 
 
@@ -10276,7 +10316,7 @@ void monumentStep() {
 // returns a uniquified name, sometimes newly allocated.
 // return value destroyed by caller
 char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded,
-                             char inIsEve ) {
+                             char inIsEve, char inFemale ) {
     
     char dup = isNameDuplicateForCurses( inPlayerName );
     
@@ -10389,13 +10429,14 @@ char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded,
         if( numNames == 1 ) {
             // special case, find a totally unique first name for them
             
-            int i = getFirstNameIndex( firstName );
+            int i = getFirstNameIndex( firstName, inFemale );
 
             while( dup ) {
 
                 int nextI;
                 
-                dup = isNameDuplicateForCurses( getFirstName( i, &nextI ) );
+                dup = isNameDuplicateForCurses( getFirstName( i, &nextI, 
+                                                              inFemale ) );
             
                 if( dup ) {
                     i = nextI;
@@ -10409,7 +10450,7 @@ char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded,
             else {
                 delete [] inPlayerName;
                 int nextI;
-                return stringDuplicate( getFirstName( i, &nextI ) );
+                return stringDuplicate( getFirstName( i, &nextI, inFemale ) );
                 }
             }
         else if( numNames == 2 ) {
@@ -10456,7 +10497,7 @@ char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded,
                 }
             else {
                 // cycle first names until we find one
-                int i = getFirstNameIndex( firstName );
+                int i = getFirstNameIndex( firstName, inFemale );
             
                 char *tempName = NULL;
                 
@@ -10466,7 +10507,8 @@ char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded,
                         }
                     
                     int nextI;
-                    tempName = autoSprintf( "%s %s", getFirstName( i, &nextI ),
+                    tempName = autoSprintf( "%s %s", getFirstName( i, &nextI,
+                                                                   inFemale ),
                                             lastName );
                     
 
@@ -11291,7 +11333,8 @@ static void nameEve( LiveObject *nextPlayer, char *name ) {
     nextPlayer->name = getUniqueCursableName( 
         nextPlayer->name, 
         &( nextPlayer->nameHasSuffix ),
-        true );
+        true,
+        getFemale( nextPlayer ) );
                                 
     char firstName[99];
     char lastName[99];
@@ -11396,7 +11439,7 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
 
 
     const char *close = 
-        findCloseFirstName( name );
+        findCloseFirstName( name, getFemale( inBaby ) );
 
     if( strcmp( lastName, "" ) != 0 ) {    
         babyO->name = autoSprintf( "%s %s",
@@ -11439,7 +11482,8 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
                                     
     babyO->name = getUniqueCursableName( 
         babyO->name, 
-        &( babyO->nameHasSuffix ), false );
+        &( babyO->nameHasSuffix ), false,
+        getFemale( babyO ) );
                                     
     logName( babyO->id,
              babyO->email,
@@ -11448,6 +11492,38 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
                                     
     playerIndicesToSendNamesAbout->push_back( 
         getLiveObjectIndex( babyO->id ) );
+    }
+
+
+
+// after person has been named, use this to filter phrase itself
+// destroys inSaidPhrase and replaces it
+void replaceNameInSaidPhrase( char *inSaidName, char **inSaidPhrase,
+                              LiveObject *inNamedPerson, 
+                              char inForceBoth = false ) {
+    char *trueName;
+    if( inForceBoth || strstr( inSaidName, " " ) != NULL ) {
+        // multi-word said name
+        // assume first and last name
+        trueName = stringDuplicate( inNamedPerson->name );
+        }
+    else {
+        // single-word said name
+        trueName = stringDuplicate( inNamedPerson->name );
+        // trim off last name, if there is one
+        char *spacePos = strstr( trueName, " " );
+        if( spacePos != NULL ) {
+            spacePos[0] = '\0';
+            }
+        }
+    char found = false;
+    char *newPhrase = replaceOnce( *inSaidPhrase, inSaidName, trueName,
+                                   &found );
+    delete [] trueName;
+    
+    delete [] (*inSaidPhrase);
+
+    *inSaidPhrase = newPhrase;
     }
 
 
@@ -14810,6 +14886,10 @@ int main() {
                             if( name != NULL && strcmp( name, "" ) != 0 ) {
                                 nameEve( nextPlayer, name );
                                 playerIndicesToSendNamesAbout.push_back( i );
+                                replaceNameInSaidPhrase( 
+                                    name,
+                                    &( m.saidText ),
+                                    nextPlayer, true );
                                 }
                             }
 
@@ -14828,6 +14908,9 @@ int main() {
                                 if( name != NULL && strcmp( name, "" ) != 0 ) {
                                     nameBaby( nextPlayer, babyO, name,
                                               &playerIndicesToSendNamesAbout );
+                                    replaceNameInSaidPhrase( name,
+                                                             &( m.saidText ),
+                                                             babyO );
                                     }
                                 }
                             }
@@ -14858,6 +14941,11 @@ int main() {
                                                 push_back( 
                                                     getLiveObjectIndex( 
                                                         closestOther->id ) );
+                                    
+                                            replaceNameInSaidPhrase( 
+                                                name,
+                                                &( m.saidText ),
+                                                closestOther, true );
                                             }
                                         }
                                     else {
@@ -14866,6 +14954,11 @@ int main() {
                                             nextPlayer, closestOther,
                                             name, 
                                             &playerIndicesToSendNamesAbout );
+                                        
+                                        replaceNameInSaidPhrase( 
+                                            name,
+                                            &( m.saidText ),
+                                            closestOther, false );
                                         }
                                     }
                                 }
@@ -20719,7 +20812,7 @@ int main() {
                         }
                     }
                 if( newSpeechPos.size() > 0 && nextPlayer->connected ) {
-                    double minUpdateDist = getMaxChunkDimension() * 2;
+                    double minUpdateDist = maxSpeechRadius * 2;
                     
                     for( int u=0; u<newSpeechPos.size(); u++ ) {
                         ChangePosition *p = newSpeechPos.getElement( u );
@@ -20734,7 +20827,7 @@ int main() {
                             }
                         }
 
-                    if( minUpdateDist <= maxDist ) {
+                    if( minUpdateDist <= maxSpeechRadius ) {
 
                         SimpleVector<char> messageWorking;
                         messageWorking.appendElementString( "PS\n" );
@@ -20749,7 +20842,7 @@ int main() {
                             double d = intDist( p->x, p->y, 
                                                 playerXD, playerYD );
                             
-                            if( d < maxDist ) {
+                            if( d <= maxSpeechRadius ) {
 
                                 int speakerID = 
                                     newSpeechPlayerIDs.getElementDirect( u );
@@ -20893,7 +20986,7 @@ int main() {
 
 
                 if( newLocationSpeech.size() > 0 && nextPlayer->connected ) {
-                    double minUpdateDist = getMaxChunkDimension() * 2;
+                    double minUpdateDist = maxSpeechRadius * 2;
                     
                     for( int u=0; u<newLocationSpeechPos.size(); u++ ) {
                         ChangePosition *p = 
@@ -20909,7 +21002,7 @@ int main() {
                             }
                         }
 
-                    if( minUpdateDist <= maxDist ) {
+                    if( minUpdateDist <= maxSpeechRadius ) {
                         // some of location speech in range
                         
                         SimpleVector<char> working;
@@ -20920,14 +21013,20 @@ int main() {
                             ChangePosition *p = 
                                 newLocationSpeechPos.getElement( u );
                             
-                            char *line = autoSprintf( 
-                                "%d %d %s\n",
-                                p->x - nextPlayer->birthPos.x, 
-                                p->y - nextPlayer->birthPos.y,
-                                newLocationSpeech.getElementDirect( u ) );
-                            working.appendElementString( line );
+                            double d = intDist( p->x, p->y, 
+                                                playerXD, playerYD );
                             
-                            delete [] line;
+                            if( d <= maxSpeechRadius ) {
+
+                                char *line = autoSprintf( 
+                                    "%d %d %s\n",
+                                    p->x - nextPlayer->birthPos.x, 
+                                    p->y - nextPlayer->birthPos.y,
+                                    newLocationSpeech.getElementDirect( u ) );
+                                working.appendElementString( line );
+                                
+                                delete [] line;
+                                }
                             }
                         working.push_back( '#' );
                         

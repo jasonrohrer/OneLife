@@ -1696,6 +1696,95 @@ static double processFrameTimeWithPauses( AnimationRecord *inAnim,
 
 
 
+doublePair closestObjectDrawAnchorPos = { 0, 0 };
+
+doublePair closestObjectDrawPos = { 0, 0 };
+
+double closestObjectDrawDistance = DBL_MAX;
+
+int closestObjectDrawID = -1;
+
+char useFixedWatchedDrawPos = false;
+doublePair fixedWatchedDrawPos;
+
+char ignoreWatchedObjectDrawOn = false;
+
+
+void fixWatchedObjectDrawPos( doublePair inPos ) {
+    useFixedWatchedDrawPos = true;
+    fixedWatchedDrawPos = inPos;
+    }
+
+
+
+void unfixWatchedObjectDrawPos() {
+    useFixedWatchedDrawPos = false;
+    }
+
+
+void ignoreWatchedObjectDraw( char inIgnore ) {
+    ignoreWatchedObjectDrawOn = inIgnore;
+    }
+
+
+
+
+void startWatchForClosestObjectDraw( int inObjecID, doublePair inPos ) {
+    closestObjectDrawDistance = DBL_MAX;
+    
+    closestObjectDrawAnchorPos = inPos;
+    closestObjectDrawID = inObjecID;
+    }
+
+
+
+doublePair getClosestObjectDraw( char *inDrawn ) {
+    if( closestObjectDrawDistance < DBL_MAX ) {
+        *inDrawn = true;
+        }
+    else {
+        *inDrawn = false;
+        }
+    return closestObjectDrawPos;
+    }
+
+
+
+void checkDrawPos( int inObjectID, doublePair inPos ) {
+    if( ignoreWatchedObjectDrawOn ) return;
+    
+    if( inObjectID != closestObjectDrawID ) {
+        ObjectRecord *o = getObject( inObjectID );
+        
+        if( o->isUseDummy ) {
+            inObjectID = o->useDummyParent;
+            }
+        else if( o->isVariableDummy ) {
+            inObjectID = o->variableDummyParent;
+            }
+
+        if( inObjectID != closestObjectDrawID ) return;
+        }
+    
+    
+    doublePair posToUse = inPos;
+    
+    if( useFixedWatchedDrawPos ) {
+        posToUse = fixedWatchedDrawPos;
+        }
+
+    double d = distance( posToUse, closestObjectDrawAnchorPos );
+    
+    if( d < closestObjectDrawDistance ) {
+        closestObjectDrawDistance = d;
+        closestObjectDrawPos = posToUse;
+        }
+    }
+
+
+
+
+
 
 HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                            AnimationRecord *inAnim, 
@@ -1747,6 +1836,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     inClothing );
         return returnHoldingPos;
         }
+
+
+    checkDrawPos( inObjectID, inPos );
+    
 
     SimpleVector <int> frontArmIndices;
     getFrontArmIndices( obj, inAge, &frontArmIndices );

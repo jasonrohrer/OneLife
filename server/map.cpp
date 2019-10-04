@@ -115,7 +115,7 @@
 
 #include <stdarg.h>
 #include <math.h>
-#include <values.h>
+#include <limits.h>
 #include <stdint.h>
 
 

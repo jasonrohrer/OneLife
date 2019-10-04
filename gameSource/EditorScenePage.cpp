@@ -109,7 +109,7 @@ EditorScenePage::EditorScenePage()
                                "0123456789." ),
           mPersonEmotField( smallFont, 360, -290, 7,
                                true, "Emot",
-                               "/ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" ),
+                               "*/ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" ),
           mCellDestSprite( loadSprite( "centerMark.tga" ) ),
           mPersonDestSprite( loadSprite( "internalPaperMark.tga" ) ),
           mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
@@ -633,8 +633,9 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mPersonEmotField ) {
         char *text = mPersonEmotField.getText();
 
-        if( strstr( text, "/" ) == text ) {
-            // starts with /
+        if( strstr( text, "/" ) == text ||
+            strstr( text, "*" ) == text ) {
+            // starts with / or *
             p->currentEmot = getEmotion( getEmotionIndex( text ) );
             }
         else {
