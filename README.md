@@ -2,6 +2,15 @@
 
 A lightly modified client for [One Hour One Life](http://onehouronelife.com), a cross-platform and open-source multiplayer survival game of parenting and civilization building by [Jason Rohrer](http://hcsoftware.sf.net/jason-rohrer).
 
+**NOTE**:  This mod is no longer being actively developed, meaning that it's likely that new features won't be added.  However, I will continue updating the current mod packages to stay current with Jason's revisions.  Meanwhile, if you seek additional features, be sure to check out these fantastic mods:
+* [Milkweed's OHOL++](https://github.com/MilkweedOHOL/OneLifeClient) (The "spiritual successor" of this mod.)
+  - https://onehouronelife.com/forums/viewtopic.php?id=7946
+* [PXShadow's OpenLife](https://github.com/PXshadow/OpenLife)
+* [Whatever's Hetuw](https://github.com/hetuw/OneLife)
+  - https://onehouronelife.com/forums/viewtopic.php?id=5923
+* [Wondible's Client](https://wondible-com-wonlife.s3.amazonaws.com/WonLife-latest.zip)
+  - https://onehouronelife.com/forums/viewtopic.php?id=4402
+
 <p align="center">
     <table>
         <tr>

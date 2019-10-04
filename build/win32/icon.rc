@@ -1,6 +1,6 @@
 IDI_ICON1 ICON DISCARDABLE "icon.ico"
 1 VERSIONINFO
-PRODUCTVERSION  212
+PRODUCTVERSION  268
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
@@ -12,7 +12,7 @@ BEGIN
       VALUE "LegalCopyright", "Jason Rohrer - Public Domain"
       VALUE "OriginalFilename", "OneLife+.exe"
       VALUE "ProductName", "One Hour One Life"
-      VALUE "ProductVersion", "212"
+      VALUE "ProductVersion", "268"
     END
   END
   BLOCK "VarFileInfo"
