@@ -3564,6 +3564,8 @@ void LivingLifePage::drawMapCell( int inMapI,
             ( mMapMoveOffsets[ inMapI ].x != 0 ||
               mMapMoveOffsets[ inMapI ].y != 0  ) ) {
 
+            ignoreWatchedObjectDraw( true );
+
             pos = add( pos, mult( mMapMoveOffsets[ inMapI ], CELL_D ) );
             }
         

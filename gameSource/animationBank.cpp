@@ -1753,7 +1753,19 @@ doublePair getClosestObjectDraw( char *inDrawn ) {
 void checkDrawPos( int inObjectID, doublePair inPos ) {
     if( ignoreWatchedObjectDrawOn ) return;
     
-    if( inObjectID != closestObjectDrawID ) return;
+    if( inObjectID != closestObjectDrawID ) {
+        ObjectRecord *o = getObject( inObjectID );
+        
+        if( o->isUseDummy ) {
+            inObjectID = o->useDummyParent;
+            }
+        else if( o->isVariableDummy ) {
+            inObjectID = o->variableDummyParent;
+            }
+
+        if( inObjectID != closestObjectDrawID ) return;
+        }
+    
     
     doublePair posToUse = inPos;
     
