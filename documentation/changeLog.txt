@@ -17,6 +17,9 @@ Version 268    ???
   centering is used for containment.  This fixes the weird containment position
   for long dress and skirt.
 
+--Hint arrow shows nearby objects that are relevant to current tip (activate by
+  actively tabbing through hints, or having a hint filter set).
+
 
 
 Server Fixes
