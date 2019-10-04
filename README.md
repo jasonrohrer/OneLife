@@ -6,6 +6,7 @@ A lightly modified client for [One Hour One Life](http://onehouronelife.com), a 
 * [Milkweed's OHOL++](https://github.com/MilkweedOHOL/OneLifeClient) (The "spiritual successor" of this mod.)
   - https://onehouronelife.com/forums/viewtopic.php?id=7946
 * [PXShadow's OpenLife](https://github.com/PXshadow/OpenLife)
+  - https://onehouronelife.com/forums/viewtopic.php?id=7943
 * [Whatever's Hetuw](https://github.com/hetuw/OneLife)
   - https://onehouronelife.com/forums/viewtopic.php?id=5923
 * [Wondible's Client](https://wondible-com-wonlife.s3.amazonaws.com/WonLife-latest.zip)
