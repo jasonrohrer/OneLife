@@ -2162,6 +2162,7 @@ LivingLifePage::LivingLifePage()
           mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
           mCellBorderSprite( loadWhiteSprite( "cellBorder.tga" ) ),
           mCellFillSprite( loadWhiteSprite( "cellFill.tga" ) ),
+          mHintArrowSprite( loadSprite( "hintArrow.tga" ) ),
           mHomeSlipSprite( loadSprite( "homeSlip.tga", false ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
@@ -2666,7 +2667,8 @@ LivingLifePage::~LivingLifePage() {
     
     freeSprite( mCellBorderSprite );
     freeSprite( mCellFillSprite );
-    
+    freeSprite( mHintArrowSprite );
+
     freeSprite( mNotePaperSprite );
     freeSprite( mChalkBlotSprite );
     freeSprite( mPathMarkSprite );
@@ -6521,22 +6523,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             setDrawColor( 1, 1, 1, 1 );
 
-            char *desNoComment = 
-                stringToUpperCase( 
-                    getObject( mCurrentHintTargetObject )->description );
-            stripDescriptionComment( desNoComment );
-
-            setDrawColor( 0, 0, 0, 1 );
-            doublePair shadowPos = targetPos;
-            shadowPos.x -= 1;
-            shadowPos.y -= 1;
-            pencilFont->drawString( desNoComment, shadowPos, alignCenter );
+            drawSprite( mHintArrowSprite, targetPos );
             
-            setDrawColor( 1, 1, 1, 1 );
-            pencilFont->drawString( desNoComment, targetPos, alignCenter );
-            
-            delete [] desNoComment;
-
             pointerDrawn = true;
             }
         }
