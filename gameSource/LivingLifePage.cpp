@@ -3485,9 +3485,14 @@ void LivingLifePage::drawMapCell( int inMapI,
         doublePair pos = { (double)inScreenX, (double)inScreenY };
         double rot = 0;
         
+        fixWatchedObjectDrawPos( pos );
+
         if( mMapDropOffsets[ inMapI ].x != 0 ||
             mMapDropOffsets[ inMapI ].y != 0 ) {
-                    
+            
+            // ignore objects sliding into place until they come to rest
+            ignoreWatchedObjectDraw( true );
+            
             doublePair nullOffset = { 0, 0 };
                     
 
@@ -3839,6 +3844,7 @@ void LivingLifePage::drawMapCell( int inMapI,
             }
         
         
+        ignoreWatchedObjectDraw( false );
         
         }
     else if( oID == -1 ) {
@@ -6224,6 +6230,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             if( drawRec.person ) {
                 LiveObject *o = drawRec.personO;
                 
+                ignoreWatchedObjectDraw( true );
+
                 ObjectAnimPack heldPack =
                     drawLiveObject( o, &speakers, &speakersPos );
                 
@@ -6269,8 +6277,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         heldToDrawOnTop.push_back( heldPack );
                         }
                     }
+                ignoreWatchedObjectDraw( false );
                 }
             else if( drawRec.extraMovingObj ) {
+                ignoreWatchedObjectDraw( true );
+                
                 ExtraMapObject *mO = mMapExtraMovingObjects.getElement(
                     drawRec.extraMovingIndex );
                 
@@ -6288,6 +6299,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                 // put original one back
                 putInMap( drawRec.mapI, &curO );
+                
+                ignoreWatchedObjectDraw( false );
                 }
             else {
                 drawMapCell( drawRec.mapI, drawRec.screenX, drawRec.screenY );
@@ -6375,9 +6388,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         // now draw held flying objects on top of objects in this row
         // but still behind walls in this row
+        ignoreWatchedObjectDraw( true );
         for( int i=0; i<heldToDrawOnTop.size(); i++ ) {
             drawObjectAnim( heldToDrawOnTop.getElementDirect( i ) );
             }
+        ignoreWatchedObjectDraw( false );
 
 
 

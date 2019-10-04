@@ -1704,6 +1704,31 @@ double closestObjectDrawDistance = DBL_MAX;
 
 int closestObjectDrawID = -1;
 
+char useFixedWatchedDrawPos = false;
+doublePair fixedWatchedDrawPos;
+
+char ignoreWatchedObjectDrawOn = false;
+
+
+void fixWatchedObjectDrawPos( doublePair inPos ) {
+    useFixedWatchedDrawPos = true;
+    fixedWatchedDrawPos = inPos;
+    }
+
+
+
+void unfixWatchedObjectDrawPos() {
+    useFixedWatchedDrawPos = false;
+    }
+
+
+void ignoreWatchedObjectDraw( char inIgnore ) {
+    ignoreWatchedObjectDrawOn = inIgnore;
+    }
+
+
+
+
 void startWatchForClosestObjectDraw( int inObjecID, doublePair inPos ) {
     closestObjectDrawDistance = DBL_MAX;
     
@@ -1726,13 +1751,21 @@ doublePair getClosestObjectDraw( char *inDrawn ) {
 
 
 void checkDrawPos( int inObjectID, doublePair inPos ) {
+    if( ignoreWatchedObjectDrawOn ) return;
+    
     if( inObjectID != closestObjectDrawID ) return;
     
-    double d = distance( inPos, closestObjectDrawAnchorPos );
+    doublePair posToUse = inPos;
+    
+    if( useFixedWatchedDrawPos ) {
+        posToUse = fixedWatchedDrawPos;
+        }
+
+    double d = distance( posToUse, closestObjectDrawAnchorPos );
     
     if( d < closestObjectDrawDistance ) {
         closestObjectDrawDistance = d;
-        closestObjectDrawPos = inPos;
+        closestObjectDrawPos = posToUse;
         }
     }
 
