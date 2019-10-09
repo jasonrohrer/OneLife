@@ -9939,6 +9939,17 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         mLastHintSortedList.push_back( queue.removeMin() );
         }
     
+    if( mLastHintFilterString != NULL && numFilterHits > 0 ) {
+        // reverse the order
+        SimpleVector< TransRecord *> revList( mLastHintSortedList.size() );
+        
+        for( int i=mLastHintSortedList.size()-1; i >= 0; i-- ) {
+            revList.push_back( mLastHintSortedList.getElementDirect( i ) );
+            }
+        mLastHintSortedList.deleteAll();
+        mLastHintSortedList.push_back_other( &revList );
+        }
+    
     
     return mLastHintSortedList.size();
     }
