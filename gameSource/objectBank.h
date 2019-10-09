@@ -844,4 +844,15 @@ char canPickup( int inObjectID, double inPlayerAge );
 
 
 
+
+SimpleVector<int> findObjectsMatchingWords( char *inWords, 
+                                            int inIgnoreObjectID,
+                                            int inLimit,
+                                            int *outNumFilterHits );
+
+
+// terminates string to remove comment
+void stripDescriptionComment( char *inString );
+
+
 #endif

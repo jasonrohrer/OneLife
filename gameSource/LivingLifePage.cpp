@@ -873,16 +873,6 @@ static double computeCurrentAge( LiveObject *inObj ) {
 
 
 
-static void stripDescriptionComment( char *inString ) {
-    // pound sign is used for trailing developer comments
-    // that aren't show to end user, cut them off if they exist
-    char *firstPound = strstr( inString, "#" );
-            
-    if( firstPound != NULL ) {
-        firstPound[0] = '\0';
-        }
-    }
-
 
 
 static char *getDisplayObjectDescription( int inID ) {
@@ -9387,118 +9377,23 @@ int LivingLifePage::getNumHints( int inObjectID ) {
     int numFilterHits = 0;
 
 
-    if( mLastHintFilterString != NULL && filteredTrans.size() > 0 ) {        
-        unsigned int filterLength = strlen( mLastHintFilterString );
-        
-        int numHits = 0;
-        int numRemain = 0;
-        ObjectRecord **hits = searchObjects( mLastHintFilterString,
-                                             0,
-                                             200,
-                                             &numHits, &numRemain );
-        
-        SimpleVector<int> hitMatchIDs;
 
-        numFilterHits = numHits;
-
-        SimpleVector<int> exactHitMatchIDs;
+    // old logic:
+    // filter hints for held object based on steps along way to filter
+    // target
+    //
+    // see new logic below
+    if( false )
+    if( mLastHintFilterString != NULL && filteredTrans.size() > 0 ) {
         
-
-        for( int i=0; i<numHits; i++ ) {
-            if( hits[i]->id == inObjectID ) {
-                // don't count the object itself as a hit
-                continue;
-                }
-            char *des = stringToUpperCase( hits[i]->description );
-            
-            stripDescriptionComment( des );
-        
-            if( strcmp( des, mLastHintFilterString ) == 0 ) {
-                exactHitMatchIDs.push_back( hits[i]->id );
-                }
-
-            char *searchPos = strstr( des, mLastHintFilterString );
-            
-            // only count if occurrence of filter string matches whole words
-            // not partial words
-            if( searchPos != NULL && strlen( searchPos ) >= filterLength ) {
-                
-                unsigned int remainLen = strlen( searchPos );
-
-                char frontOK = false;
-                char backOK = false;
-                
-                // space or start of string in front of search phrase
-                if( searchPos == des ||
-                    searchPos[-1] == ' ' ) {
-                    frontOK = true;
-                    }
-                
-                // space or end of string after search phrase
-                if( remainLen == filterLength ||
-                    searchPos[filterLength] == ' ' ) {
-                    backOK = true;
-                    }
-
-                if( frontOK && backOK ) {
-                    hitMatchIDs.push_back( hits[i]->id );
-                    }
-                }
-            
-            delete [] des;
-            }
-        
-        
-        // now find shallowest matching objects
-
-        numHits = hitMatchIDs.size();
-        
-        int startDepth = getObjectDepth( inObjectID );
-        
-        ObjectRecord *startObject = getObject( inObjectID );
-        if( startObject->isUseDummy ) {
-            startDepth = getObjectDepth( startObject->useDummyParent );
-            }
+        SimpleVector<int> hitIDs = findObjectsMatchingWords(
+            mLastHintFilterString,
+            inObjectID,
+            200,
+            &numFilterHits );
         
 
-        int shallowestDepth = UNREACHABLE;
-       
-        for( int i=0; i<numHits; i++ ) {
-            
-            int depth = getObjectDepth( hitMatchIDs.getElementDirect( i ) );
-            
-            if( depth >= startDepth && depth < shallowestDepth ) {
-                shallowestDepth = depth;
-                }
-            }
-
-        SimpleVector<int> hitIDs;
-
-        for( int i=0; i<numHits; i++ ) {
-            int id = hitMatchIDs.getElementDirect( i );
-            
-            int depth = getObjectDepth( id );
-            
-            if( depth == shallowestDepth ) {
-                hitIDs.push_back( id );
-                }
-            }
-        
-
-        if( hits != NULL ) {    
-            delete [] hits;
-            }
-        
-        // there are exact matches
-        // use those instead
-        if( exactHitMatchIDs.size() > 0 ) {
-            hitIDs.deleteAll();
-            hitIDs.push_back_other( &exactHitMatchIDs );
-            }
-        
-
-
-        numHits = hitIDs.size();
+        int numHits = hitIDs.size();
 
         // list of IDs that are used to make hit objects
         SimpleVector<int> precursorIDs;
@@ -9707,8 +9602,128 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             }
 
         }
-
     
+
+
+
+    // new logic:
+    // show all trans leading to this target object
+    if( mLastHintFilterString != NULL ) {
+        
+        SimpleVector<int> hitIDs = findObjectsMatchingWords(
+            mLastHintFilterString,
+            0, // don't filter out what we're holding
+            200,
+            &numFilterHits );
+
+        if( numFilterHits > 0 && numFilterHits < 10 ) {
+            filteredTrans.deleteAll();
+            unfilteredTrans.deleteAll();
+            
+            SimpleVector<int> frontier;
+            
+            SimpleVector<int> alreadySeenObjects;
+
+            frontier.push_back_other( &hitIDs );
+            
+            while( frontier.size() > 0 ) {
+                printf( "Frontier = " );
+                for( int i=0; i<frontier.size(); i++ ) {
+                    printf( " [ %s ]  ",
+                            getObject( frontier.getElementDirect( i ) )->
+                            description );
+                    }
+                printf( "\n" );
+
+                SimpleVector<int> newFrontier;
+                
+                for( int i=0; i<frontier.size(); i++ ) {
+                    int oID = frontier.getElementDirect( i );
+                    int oD = getObjectDepth( oID );
+                    
+                    int numResults = 0;
+                    int numRemain = 0;
+                    TransRecord **prodTrans =
+                        searchProduces( oID, 
+                                        0,
+                                        200,
+                                        &numResults, &numRemain );
+                    
+                    if( prodTrans != NULL ) {
+                        TransRecord *minDepthTrans = NULL;
+                        int minDepth = UNREACHABLE;
+                        
+                        for( int r=0; r<numResults; r++ ) {
+                            
+                            int actor = prodTrans[r]->actor;
+                            int target = prodTrans[r]->target;
+
+                            int actorD = 0;
+                            int targetD = 0;
+                            
+                            if( actor > 0 ) {
+                                actorD = getObjectDepth( actor );
+                                }
+                            if( target > 0 ) {
+                                targetD = getObjectDepth( target );
+                                }
+
+                            if( actor >= 0 && 
+                                ( actor == 0 || actorD < oD ) 
+                                &&
+                                target > 0 && targetD < oD 
+                                &&
+                                filteredTrans.getElementIndex( prodTrans[r] ) 
+                                == -1 ) {
+                                
+                                int maxDepth = actorD;
+                                if( targetD > maxDepth ) {
+                                    maxDepth = targetD;
+                                    }
+                                
+                                if( maxDepth < minDepth ) {
+                                    minDepth = maxDepth;
+                                    minDepthTrans = prodTrans[r];
+                                    }
+                                }
+                            }
+                        if( minDepthTrans != NULL ) {
+                            int actor = minDepthTrans->actor;
+                            int target = minDepthTrans->target;
+
+                            if( actor > 0 ) {
+                                if( alreadySeenObjects.getElementIndex( actor )
+                                    == -1 ) {
+                                    newFrontier.push_back( actor );
+                                    alreadySeenObjects.push_back( actor );
+                                    }
+                                }
+                            
+                            if( alreadySeenObjects.getElementIndex( target )
+                                == -1 ) {
+                                newFrontier.push_back( target );
+                                alreadySeenObjects.push_back( target );
+                                }
+                            
+                            filteredTrans.push_back( minDepthTrans );
+                            }
+                        
+                        delete [] prodTrans;
+                        }
+                    }
+                frontier.deleteAll();
+                frontier.push_back_other( &newFrontier );
+                }
+            unfilteredTrans.push_back_other( &filteredTrans );
+            }
+        else {
+            // matches too many things, ignore
+            numFilterHits = 0;
+            }
+        }
+    
+
+
     int numTrans = filteredTrans.size();
 
     int numRelevant = numTrans;
@@ -9799,6 +9814,27 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         else if( tr->target > 0 && tr->target != inObjectID ) {
             depth = getObjectDepth( tr->target );
             }
+
+
+        if( mLastHintFilterString != NULL ) {
+            // new logic:
+            // show all trans leading to this target object
+            
+            // sort by largest depth
+
+            if( tr->actor > 0 ) {
+                depth = getObjectDepth( tr->actor );
+                }
+
+            if( tr->target > 0 ) {
+                int depthT = getObjectDepth( tr->target );
+                if( depthT > depth ) {
+                    depth = depthT;
+                    }
+                }
+            }
+        
+
             
             
         char stringAlreadyPresent = false;
