@@ -10939,6 +10939,38 @@ void LivingLifePage::step() {
             // even in case where filter set, update this
             mCurrentHintObjectID = mNextHintObjectID;
             }
+
+
+
+        if( mHintFilterString != NULL &&
+            mCurrentHintIndex >= 0 ) {
+            // special case
+            // always show pointers to objects for current hint, unless
+            // we're holding one
+            
+            TransRecord *t = 
+                mLastHintSortedList.getElementDirect( mCurrentHintIndex );
+            int heldID = ourObject->holdingID;
+            
+            if( heldID > 0 ) {
+                ObjectRecord *heldO = getObject( heldID );
+                if( heldO->isUseDummy ) {
+                    heldID = heldO->useDummyParent;
+                    }
+                else if( heldO->isVariableDummy ) {
+                    heldID = heldO->variableDummyParent;
+                    }
+                }
+            
+            if( t->actor != heldID ) {
+                mCurrentHintTargetObject[0] = t->actor;
+                }
+            if( t->target != heldID ) {
+                mCurrentHintTargetObject[1] = t->target;
+                }
+            }
+
+
         }
     else if( ourObject != NULL && mNextHintObjectID != 0 &&
              getNumHints( mNextHintObjectID ) == 0 ) {
