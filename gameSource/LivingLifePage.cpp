@@ -10829,7 +10829,39 @@ void LivingLifePage::step() {
     
     if( ourObject != NULL && mNextHintObjectID != 0 &&
         getNumHints( mNextHintObjectID ) > 0 ) {
+
+
         
+        if( mHintFilterString != NULL &&
+            mCurrentHintObjectID != mNextHintObjectID ) {
+            // check if we should jump the hint index to hint about this
+            // thing we just picked up relative to our goal object
+            
+            int matchID = mNextHintObjectID;
+            
+            ObjectRecord *o = getObject( matchID );
+            
+            if( o->isUseDummy ) {
+                matchID = o->useDummyParent;
+                }
+            else if( o->isVariableDummy ) {
+                matchID = o->variableDummyParent;
+                }
+
+            for( int i=0; i<mLastHintSortedList.size(); i++ ) {
+                TransRecord *t = mLastHintSortedList.getElementDirect( i );
+                
+                if( t->actor == matchID ||
+                    t->target == matchID ) {
+                    
+                    mNextHintIndex = i;
+                    break;
+                    }
+                }
+            }
+        
+
+
         if( ( mHintFilterString == NULL &&
               mCurrentHintObjectID != mNextHintObjectID ) ||
             mCurrentHintIndex != mNextHintIndex ||
@@ -10902,6 +10934,10 @@ void LivingLifePage::step() {
             
 
             mHintExtraOffset[ i ].x = - getLongestLine( mHintMessage[i] );
+            }
+        else {
+            // even in case where filter set, update this
+            mCurrentHintObjectID = mNextHintObjectID;
             }
         }
     else if( ourObject != NULL && mNextHintObjectID != 0 &&
