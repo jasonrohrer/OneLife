@@ -6523,6 +6523,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                 if( !equal( targetPos, mLastHintTargetPos[i] ) ) {
                     // reset bounce when target changes
+                    pushOldHintArrow( i );
                     mCurrentHintTargetPointerBounce[i] = 0;
                     mCurrentHintTargetPointerFade[i] = 0;
                     mLastHintTargetPos[i] = targetPos;        
@@ -6569,6 +6570,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         if( ! pointerDrawn[i] ) {
             // reset bounce
+            pushOldHintArrow( i );
             mCurrentHintTargetPointerBounce[i] = 0;
             mCurrentHintTargetPointerFade[i] = 0;
             mLastHintTargetPos[i].x = 0;
@@ -6576,6 +6578,45 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
     
+    if( !takingPhoto ) {
+        for( int i=0; i<mOldHintArrows.size(); i++ ) {
+            OldHintArrow *h = mOldHintArrows.getElement( i );
+
+            // make sure it hasn't been blocked by reposition of real hint arrow
+            if( ( mCurrentHintTargetObject[0] > 0 &&
+                  equal( h->pos, mLastHintTargetPos[0] ) )
+                ||
+                ( mCurrentHintTargetObject[1] > 0 &&
+                  equal( h->pos, mLastHintTargetPos[1] ) ) ) {
+                
+                mOldHintArrows.deleteElement( i );
+                i--;
+                continue;
+                }
+            doublePair targetPos = h->pos;
+            
+            targetPos.y += 16 * cos( h->bounce );
+            
+            // twice as fast as fade-in
+            double deltaRate = 2 * 6 * frameRateFactor / 60.0; 
+
+            h->bounce += deltaRate;
+            
+            if( h->fade > 0 ) {
+                h->fade -= deltaRate;
+                }
+            
+            if( h->fade <= 0 ) {
+                mOldHintArrows.deleteElement( i );
+                i--;
+                continue;
+                }
+            
+            setDrawColor( 1, 1, 1, h->fade );
+
+            drawSprite( mHintArrowSprite, targetPos );
+            }
+        }
         
 
 
@@ -18601,6 +18642,8 @@ void LivingLifePage::makeActive( char inFresh ) {
         return;
         }
 
+    mOldHintArrows.deleteAll();
+
     mGlobalMessageShowing = false;
     mGlobalMessageStartTime = 0;
     mGlobalMessagesToDestroy.deallocateStringElements();
@@ -21846,3 +21889,14 @@ void LivingLifePage::putInMap( int inMapI, ExtraMapObject *inObj ) {
     mMapSubContainedStacks[ inMapI ] = inObj->subContainedStack;
     }
 
+
+
+void LivingLifePage::pushOldHintArrow( int inIndex ) {
+    int i = inIndex;
+    if( mCurrentHintTargetPointerFade[i] > 0 ) {
+        OldHintArrow h = { mLastHintTargetPos[i],
+                           mCurrentHintTargetPointerBounce[i],
+                           mCurrentHintTargetPointerFade[i] };
+        mOldHintArrows.push_back( h );
+        }
+    }
