@@ -2335,12 +2335,14 @@ LivingLifePage::LivingLifePage()
     
     mLastHintSortedSourceID = 0;
     
-    mCurrentHintTargetObject = 0;
-    mCurrentHintTargetPointerBounce = 0;
-
-    mLastHintTargetPos.x = 0;
-    mLastHintTargetPos.y = 0;
-
+    for( int i=0; i<2; i++ ) {
+        mCurrentHintTargetObject[i] = 0;
+        mCurrentHintTargetPointerBounce[i] = 0;
+        
+        mLastHintTargetPos[i].x = 0;
+        mLastHintTargetPos[i].y = 0;
+        }
+    
 
     int maxObjectID = getMaxObjectID();
     
@@ -6499,53 +6501,58 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     char pointerDrawn = false;
 
-    if( ! takingPhoto && mCurrentHintTargetObject > 0 ) {
-        // draw pointer to closest hint target object
+    for( int i=0; i<2; i++ ) {
         
-        char drawn = false;
-        doublePair targetPos = getClosestObjectDraw( &drawn );
+        if( ! takingPhoto && mCurrentHintTargetObject[i] > 0 ) {
+            // draw pointer to closest hint target object
+        
+            char drawn = false;
+            doublePair targetPos = getClosestObjectDraw( &drawn, i );
 
         
 
-        if( drawn ) {
+            if( drawn ) {
             
-            // round to closest cell pos
-            targetPos.x = CELL_D * lrint( targetPos.x / CELL_D );
-            targetPos.y = CELL_D * lrint( targetPos.y / CELL_D );
-            
-            // move up
-            targetPos.y += 64;
+                // round to closest cell pos
+                targetPos.x = CELL_D * lrint( targetPos.x / CELL_D );
+                targetPos.y = CELL_D * lrint( targetPos.y / CELL_D );
+                
+                // move up
+                targetPos.y += 64;
 
-            if( !equal( targetPos, mLastHintTargetPos ) ) {
-                // reset bounce when target changes
-                mCurrentHintTargetPointerBounce = 0;
-                mLastHintTargetPos = targetPos;        
+                if( !equal( targetPos, mLastHintTargetPos[i] ) ) {
+                    // reset bounce when target changes
+                    mCurrentHintTargetPointerBounce[i] = 0;
+                    mLastHintTargetPos[i] = targetPos;        
+                    }
+            
+            
+                targetPos.y += 16 * cos( mCurrentHintTargetPointerBounce[i] );
+            
+                mCurrentHintTargetPointerBounce[i] +=
+                    6 * frameRateFactor / 60.0;
+                
+                float fade = 1.0f;
+            
+                if( mCurrentHintTargetPointerBounce[i] < 1 ) {
+                    fade = mCurrentHintTargetPointerBounce[i];
+                    }
+            
+                setDrawColor( 1, 1, 1, fade );
+
+                drawSprite( mHintArrowSprite, targetPos );
+            
+                pointerDrawn = true;
                 }
-            
-            
-            targetPos.y += 16 * cos( mCurrentHintTargetPointerBounce );
-            
-            mCurrentHintTargetPointerBounce +=
-                6 * frameRateFactor / 60.0;
-
-            float fade = 1.0f;
-            
-            if( mCurrentHintTargetPointerBounce < 1 ) {
-                fade = mCurrentHintTargetPointerBounce;
-                }
-            
-            setDrawColor( 1, 1, 1, fade );
-
-            drawSprite( mHintArrowSprite, targetPos );
-            
-            pointerDrawn = true;
             }
         }
     if( ! pointerDrawn ) {
         // reset bounce
-        mCurrentHintTargetPointerBounce = 0;
-        mLastHintTargetPos.x = 0;
-        mLastHintTargetPos.y = 0;
+        for( int i=0; i<2; i++ ) {        
+            mCurrentHintTargetPointerBounce[i] = 0;
+            mLastHintTargetPos[i].x = 0;
+            mLastHintTargetPos[i].y = 0;
+            }
         }
     
         
@@ -9328,7 +9335,8 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         }
     
     
-    mCurrentHintTargetObject = 0;
+    mCurrentHintTargetObject[0] = 0;
+    mCurrentHintTargetObject[1] = 0;
 
 
     // else need to regenerated sorted list
@@ -10019,26 +10027,32 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
             }
 
 
+        mCurrentHintTargetObject[0] = 0;
+        mCurrentHintTargetObject[1] = 0;
+
         // never show visual pointer toward what we're holding
         if( target > 0 && target != inObjectID && 
             target != inDoNotPointAtThis ) {
-            mCurrentHintTargetObject = target;
+            mCurrentHintTargetObject[1] = target;
             }
-        else if( actor > 0 && actor != inObjectID &&
+        if( actor > 0 && actor != inObjectID &&
                  actor != inDoNotPointAtThis ) {
-            mCurrentHintTargetObject = actor;
+            mCurrentHintTargetObject[0] = actor;
             }
-        else if( actor > 0 && target > 0 &&
-                 actor == target ) {
+        
+        if( actor > 0 && target > 0 &&
+            actor == target ) {
             // both actor and target are same
             // show pointer to ones that are on the ground
-            mCurrentHintTargetObject = actor;
+            mCurrentHintTargetObject[0] = actor;
+            mCurrentHintTargetObject[1] = 0;
             }
         else if( actor == 0 && target > 0 && 
                  target != inDoNotPointAtThis ) {
             // bare hand action
             // show target even if it matches what we're giving hints about
-            mCurrentHintTargetObject = target;
+            mCurrentHintTargetObject[0] = target;
+            mCurrentHintTargetObject[1] = 0;
             }
         
         
@@ -10841,7 +10855,8 @@ void LivingLifePage::step() {
 
             if( autoHint ) {
                 // hide pointer until they start tabbing again
-                mCurrentHintTargetObject = 0;
+                mCurrentHintTargetObject[0] = 0;
+                mCurrentHintTargetObject[1] = 0;
                 }
             
 

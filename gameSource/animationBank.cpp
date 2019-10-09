@@ -1698,11 +1698,11 @@ static double processFrameTimeWithPauses( AnimationRecord *inAnim,
 
 doublePair closestObjectDrawAnchorPos = { 0, 0 };
 
-doublePair closestObjectDrawPos = { 0, 0 };
+doublePair closestObjectDrawPos[2] = { { 0, 0 }, { 0, 0 } };
 
-double closestObjectDrawDistance = DBL_MAX;
+double closestObjectDrawDistance[2] = { DBL_MAX, DBL_MAX };
 
-int closestObjectDrawID = -1;
+int closestObjectDrawID[2] = { -1, -1 };
 
 char useFixedWatchedDrawPos = false;
 doublePair fixedWatchedDrawPos;
@@ -1729,23 +1729,25 @@ void ignoreWatchedObjectDraw( char inIgnore ) {
 
 
 
-void startWatchForClosestObjectDraw( int inObjecID, doublePair inPos ) {
-    closestObjectDrawDistance = DBL_MAX;
+void startWatchForClosestObjectDraw( int inObjecID[2], doublePair inPos ) {
+    closestObjectDrawDistance[0] = DBL_MAX;
+    closestObjectDrawDistance[1] = DBL_MAX;
     
     closestObjectDrawAnchorPos = inPos;
-    closestObjectDrawID = inObjecID;
+    closestObjectDrawID[0] = inObjecID[0];
+    closestObjectDrawID[1] = inObjecID[1];
     }
 
 
 
-doublePair getClosestObjectDraw( char *inDrawn ) {
-    if( closestObjectDrawDistance < DBL_MAX ) {
+doublePair getClosestObjectDraw( char *inDrawn, int inIndex ) {
+    if( closestObjectDrawDistance[ inIndex ] < DBL_MAX ) {
         *inDrawn = true;
         }
     else {
         *inDrawn = false;
         }
-    return closestObjectDrawPos;
+    return closestObjectDrawPos[ inIndex ];
     }
 
 
@@ -1753,7 +1755,8 @@ doublePair getClosestObjectDraw( char *inDrawn ) {
 void checkDrawPos( int inObjectID, doublePair inPos ) {
     if( ignoreWatchedObjectDrawOn ) return;
     
-    if( inObjectID != closestObjectDrawID ) {
+    if( inObjectID != closestObjectDrawID[0] &&
+        inObjectID != closestObjectDrawID[1] ) {
         ObjectRecord *o = getObject( inObjectID );
         
         if( o->isUseDummy ) {
@@ -1763,9 +1766,14 @@ void checkDrawPos( int inObjectID, doublePair inPos ) {
             inObjectID = o->variableDummyParent;
             }
 
-        if( inObjectID != closestObjectDrawID ) return;
+        if( inObjectID != closestObjectDrawID[0] &&
+            inObjectID != closestObjectDrawID[1] ) return;
         }
-    
+
+    int index = 0;
+    if( inObjectID == closestObjectDrawID[1] ) {
+        index = 1;
+        }
     
     doublePair posToUse = inPos;
     
@@ -1775,9 +1783,9 @@ void checkDrawPos( int inObjectID, doublePair inPos ) {
 
     double d = distance( posToUse, closestObjectDrawAnchorPos );
     
-    if( d < closestObjectDrawDistance ) {
-        closestObjectDrawDistance = d;
-        closestObjectDrawPos = posToUse;
+    if( d < closestObjectDrawDistance[index] ) {
+        closestObjectDrawDistance[index] = d;
+        closestObjectDrawPos[index] = posToUse;
         }
     }
 

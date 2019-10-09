@@ -704,10 +704,10 @@ class LivingLifePage : public GamePage, public ActionListener {
         int mNextHintObjectID;
         int mNextHintIndex;
 
-        int mCurrentHintTargetObject;
+        int mCurrentHintTargetObject[2];
 
-        double mCurrentHintTargetPointerBounce;
-        doublePair mLastHintTargetPos;
+        double mCurrentHintTargetPointerBounce[2];
+        doublePair mLastHintTargetPos[2];
 
 
         SimpleVector<TransRecord *> mLastHintSortedList;
