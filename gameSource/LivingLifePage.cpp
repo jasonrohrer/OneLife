@@ -9624,7 +9624,7 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             200,
             &numFilterHits );
 
-        if( numFilterHits > 0 && numFilterHits < 10 ) {
+        if( hitIDs.size() > 0 && hitIDs.size() < 10 ) {
             filteredTrans.deleteAll();
             unfilteredTrans.deleteAll();
             
