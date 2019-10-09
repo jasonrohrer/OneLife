@@ -9684,6 +9684,25 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                                 filteredTrans.getElementIndex( prodTrans[r] ) 
                                 == -1 ) {
                                 
+                                if( prodTrans[r]->lastUseTarget ||
+                                    prodTrans[r]->lastUseActor ) {
+                                    // skip last use transitions
+                                    continue;
+                                    }
+
+                                // skip dummy versions of transitions, too
+                                if( actor > 0 &&
+                                    ( getObject( actor )->isUseDummy ||
+                                      getObject( actor )->isVariableDummy ) ) {
+                                    continue;
+                                    }
+                                if( target > 0 &&
+                                    ( getObject( target )->isUseDummy ||
+                                      getObject( target )->isVariableDummy ) ) {
+                                    continue;
+                                    }                                
+                             
+                                
                                 int maxDepth = actorD;
                                 if( targetD > maxDepth ) {
                                     maxDepth = targetD;
@@ -9846,7 +9865,11 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             
             
         char stringAlreadyPresent = false;
-            
+        
+        // new logic:
+        // show all that we found if filtering
+        // but still remove duplicates if we're not filtering
+        if( mLastHintFilterString == NULL )
         if( tr->actor > 0 && tr->actor != inObjectID ) {
             ObjectRecord *otherObj = getObject( tr->actor );
                 
@@ -9872,6 +9895,10 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                 }
             }
             
+        // new logic:
+        // show all that we found if filtering
+        // but still remove duplicates if we're not filtering
+        if( mLastHintFilterString == NULL )
         if( tr->target > 0 && tr->target != inObjectID ) {
             ObjectRecord *otherObj = getObject( tr->target );
                 
