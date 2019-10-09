@@ -707,6 +707,7 @@ class LivingLifePage : public GamePage, public ActionListener {
         int mCurrentHintTargetObject[2];
 
         double mCurrentHintTargetPointerBounce[2];
+        float mCurrentHintTargetPointerFade[2];
         doublePair mLastHintTargetPos[2];
 
 

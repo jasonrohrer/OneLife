@@ -2338,6 +2338,7 @@ LivingLifePage::LivingLifePage()
     for( int i=0; i<2; i++ ) {
         mCurrentHintTargetObject[i] = 0;
         mCurrentHintTargetPointerBounce[i] = 0;
+        mCurrentHintTargetPointerFade[i] = 0;
         
         mLastHintTargetPos[i].x = 0;
         mLastHintTargetPos[i].y = 0;
@@ -6499,7 +6500,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
 
-    char pointerDrawn = false;
+    char pointerDrawn[2] = { false, false };
 
     for( int i=0; i<2; i++ ) {
         
@@ -6523,33 +6524,53 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 if( !equal( targetPos, mLastHintTargetPos[i] ) ) {
                     // reset bounce when target changes
                     mCurrentHintTargetPointerBounce[i] = 0;
+                    mCurrentHintTargetPointerFade[i] = 0;
                     mLastHintTargetPos[i] = targetPos;        
                     }
             
+                if( mCurrentHintTargetPointerFade[i] == 0 ) {
+                    // invisible
+                    // take this opportunity to hard-sync with the other
+                    // arrow
+                    if( i == 0 ) {
+                        mCurrentHintTargetPointerBounce[i] =
+                            mCurrentHintTargetPointerBounce[1] +
+                            M_PI / 2;
+                        }
+                    else {
+                        mCurrentHintTargetPointerBounce[i] =
+                            mCurrentHintTargetPointerBounce[0] +
+                            M_PI / 2;
+                        }
+                    }
+                
             
                 targetPos.y += 16 * cos( mCurrentHintTargetPointerBounce[i] );
             
-                mCurrentHintTargetPointerBounce[i] +=
-                    6 * frameRateFactor / 60.0;
+                double deltaRate = 6 * frameRateFactor / 60.0; 
+
+                mCurrentHintTargetPointerBounce[i] += deltaRate;
                 
-                float fade = 1.0f;
-            
-                if( mCurrentHintTargetPointerBounce[i] < 1 ) {
-                    fade = mCurrentHintTargetPointerBounce[i];
+                if( mCurrentHintTargetPointerFade[i] < 1 ) {
+                    mCurrentHintTargetPointerFade[i] += deltaRate;
+                    
+                    if( mCurrentHintTargetPointerFade[i] > 1 ) {
+                        mCurrentHintTargetPointerFade[i] = 1;
+                        }
                     }
-            
-                setDrawColor( 1, 1, 1, fade );
+                    
+                setDrawColor( 1, 1, 1, mCurrentHintTargetPointerFade[i] );
 
                 drawSprite( mHintArrowSprite, targetPos );
             
-                pointerDrawn = true;
+                pointerDrawn[i] = true;
                 }
             }
-        }
-    if( ! pointerDrawn ) {
-        // reset bounce
-        for( int i=0; i<2; i++ ) {        
+
+        if( ! pointerDrawn[i] ) {
+            // reset bounce
             mCurrentHintTargetPointerBounce[i] = 0;
+            mCurrentHintTargetPointerFade[i] = 0;
             mLastHintTargetPos[i].x = 0;
             mLastHintTargetPos[i].y = 0;
             }
