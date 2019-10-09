@@ -10830,7 +10830,8 @@ void LivingLifePage::step() {
     if( ourObject != NULL && mNextHintObjectID != 0 &&
         getNumHints( mNextHintObjectID ) > 0 ) {
         
-        if( mCurrentHintObjectID != mNextHintObjectID ||
+        if( ( mHintFilterString == NULL &&
+              mCurrentHintObjectID != mNextHintObjectID ) ||
             mCurrentHintIndex != mNextHintIndex ||
             mForceHintRefresh ) {
             
@@ -10876,8 +10877,10 @@ void LivingLifePage::step() {
             mCurrentHintObjectID = mNextHintObjectID;
             mCurrentHintIndex = mNextHintIndex;
             
-            mHintBookmarks[ mCurrentHintObjectID ] = mCurrentHintIndex;
-
+            if( mHintFilterString == NULL ) {
+                mHintBookmarks[ mCurrentHintObjectID ] = mCurrentHintIndex;
+                }
+            
             mNumTotalHints[ i ] = 
                 getNumHints( mCurrentHintObjectID );
 
@@ -14147,8 +14150,11 @@ void LivingLifePage::step() {
                             // hint about it
                             
                             mNextHintObjectID = existing->holdingID;
-                            mNextHintIndex = 
-                                mHintBookmarks[ mNextHintObjectID ];
+                            
+                            if( mHintFilterString == NULL ) {
+                                mNextHintIndex = 
+                                    mHintBookmarks[ mNextHintObjectID ];
+                                }
                             }
                         
 
@@ -19989,18 +19995,24 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( tr == NULL || tr->newTarget == destID ) {
                 // give hint about dest object which will be unchanged 
                 mNextHintObjectID = destID;
-                mNextHintIndex = mHintBookmarks[ destID ];
+                if( mHintFilterString == NULL ) {
+                    mNextHintIndex = mHintBookmarks[ destID ];
+                    }
                 }
             else if( tr->newActor > 0 && 
                      ourLiveObject->holdingID != tr->newActor ) {
                 // give hint about how what we're holding will change
                 mNextHintObjectID = tr->newActor;
-                mNextHintIndex = mHintBookmarks[ tr->newTarget ];
+                if( mHintFilterString == NULL ) {
+                    mNextHintIndex = mHintBookmarks[ tr->newTarget ];
+                    }
                 }
             else if( tr->newTarget > 0 ) {
                 // give hint about changed target after we act on it
                 mNextHintObjectID = tr->newTarget;
-                mNextHintIndex = mHintBookmarks[ tr->newTarget ];
+                if( mHintFilterString == NULL ) {
+                    mNextHintIndex = mHintBookmarks[ tr->newTarget ];
+                    }
                 }
             }
         else {
@@ -20009,7 +20021,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
             if( getTrans( 0, destID ) == NULL ) {
                 mNextHintObjectID = destID;
-                mNextHintIndex = mHintBookmarks[ destID ];
+                if( mHintFilterString == NULL ) {
+                    mNextHintIndex = mHintBookmarks[ destID ];
+                    }
                 }
             }
         }
