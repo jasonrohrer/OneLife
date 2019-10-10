@@ -10072,8 +10072,12 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
             actorString = stringToUpperCase( getObject( actor )->description );
             stripDescriptionComment( actorString );
             }
-        else if( actor == 0 ) {
+        else if( actor == 0 || actor == -2 ) {
+            // show bare hand for default actions too
             actorString = stringDuplicate( translate( "bareHandHint" ) );
+            }
+        else if( actor == -1 ) {
+            actorString = stringDuplicate( translate( "timeHint" ) );
             }
         else {
             actorString = stringDuplicate( "" );
