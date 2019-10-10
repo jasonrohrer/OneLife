@@ -5715,6 +5715,32 @@ SimpleVector<int> findObjectsMatchingWords( char *inWords,
             hitIDs.push_back( id );
             }
         }
+
+
+
+    int shallowestExactDepth = UNREACHABLE;
+       
+    for( int i=0; i<exactHitMatchIDs.size(); i++ ) {
+            
+        int depth = getObjectDepth( exactHitMatchIDs.getElementDirect( i ) );
+            
+        if( depth >= startDepth && depth < shallowestExactDepth ) {
+            shallowestExactDepth = depth;
+            }
+        }
+
+    SimpleVector<int> exactHitIDs;
+
+    for( int i=0; i<exactHitMatchIDs.size(); i++ ) {
+        int id = exactHitMatchIDs.getElementDirect( i );
+            
+        int depth = getObjectDepth( id );
+            
+        if( depth == shallowestExactDepth ) {
+            exactHitIDs.push_back( id );
+            }
+        }
+    
         
 
     if( hits != NULL ) {    
@@ -5723,9 +5749,9 @@ SimpleVector<int> findObjectsMatchingWords( char *inWords,
         
     // there are exact matches
     // use those instead
-    if( exactHitMatchIDs.size() > 0 ) {
+    if( exactHitIDs.size() > 0 ) {
         hitIDs.deleteAll();
-        hitIDs.push_back_other( &exactHitMatchIDs );
+        hitIDs.push_back_other( &exactHitIDs );
         }
         
 
