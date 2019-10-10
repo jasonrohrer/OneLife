@@ -10911,14 +10911,22 @@ void LivingLifePage::step() {
                 matchID = o->variableDummyParent;
                 }
 
-            for( int i=0; i<mLastHintSortedList.size(); i++ ) {
-                TransRecord *t = mLastHintSortedList.getElementDirect( i );
+            // don't switch if we're already matched
+            TransRecord *currHintTrans = 
+                mLastHintSortedList.getElementDirect( mCurrentHintIndex );
+            
+            if( currHintTrans->actor != matchID && 
+                currHintTrans->target != matchID ) {
                 
-                if( t->actor == matchID ||
-                    t->target == matchID ) {
+                for( int i=0; i<mLastHintSortedList.size(); i++ ) {
+                    TransRecord *t = mLastHintSortedList.getElementDirect( i );
                     
-                    mNextHintIndex = i;
-                    break;
+                    if( t->actor == matchID ||
+                        t->target == matchID ) {
+                        
+                        mNextHintIndex = i;
+                        break;
+                        }
                     }
                 }
             }
