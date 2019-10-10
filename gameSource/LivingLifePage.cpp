@@ -9741,7 +9741,7 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                             if( actor >= 0 && 
                                 ( actor == 0 || actorD < oD ) 
                                 &&
-                                target > 0 && targetD < oD 
+                                target != 0 && targetD < oD 
                                 &&
                                 filteredTrans.getElementIndex( prodTrans[r] ) 
                                 == -1 ) {
@@ -9788,7 +9788,8 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                                     }
                                 }
                             
-                            if( alreadySeenObjects.getElementIndex( target )
+                            if( target > 0 &&
+                                alreadySeenObjects.getElementIndex( target )
                                 == -1 ) {
                                 newFrontier.push_back( target );
                                 alreadySeenObjects.push_back( target );
