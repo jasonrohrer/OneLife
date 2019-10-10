@@ -9738,8 +9738,8 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                                 targetD = getObjectDepth( target );
                                 }
 
-                            if( actor >= 0 && 
-                                ( actor == 0 || actorD < oD ) 
+                            if( actor >= -1 && 
+                                ( actor <= 0 || actorD < oD ) 
                                 &&
                                 target != 0 && targetD < oD 
                                 &&
