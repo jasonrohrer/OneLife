@@ -5528,19 +5528,25 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         int heldID = getObjectParent( ourLiveObject->holdingID );            
 
-        // are we holding the target of our current hint?
-        // if so, hide hint arrows
-        TransRecord *t = 
-            mLastHintSortedList.getElementDirect( mCurrentHintIndex );
-
         char hit = false;
 
-        if( t->newActor > 0 && t->newActor == heldID ) {
-            hit = true;
+        // are we holding the target of our current hint?
+        // if so, hide hint arrows
+        if( mLastHintSortedList.size() > mCurrentHintIndex ) {    
+            TransRecord *t = 
+                mLastHintSortedList.getElementDirect( mCurrentHintIndex );
+            
+            
+            if( t->newActor > 0 && 
+                t->newActor == heldID  && t->actor != heldID ) {
+                hit = true;
+                }
+            else if( t->newTarget > 0 && 
+                     t->newTarget == heldID && t->target != heldID ) {
+                hit = true;
+                }
             }
-        else if( t->newTarget > 0 && t->newTarget == heldID ) {
-            hit = true;
-            }
+        
 
 
         if( ! hit ) {
@@ -18692,6 +18698,10 @@ void LivingLifePage::makeActive( char inFresh ) {
     mGlobalMessageShowing = false;
     mGlobalMessageStartTime = 0;
     mGlobalMessagesToDestroy.deallocateStringElements();
+    
+
+    mCurrentHintTargetObject[0] = 0;
+    mCurrentHintTargetObject[1] = 0;
     
     
     offScreenSounds.deleteAll();
