@@ -3483,9 +3483,6 @@ void LivingLifePage::drawMapCell( int inMapI,
         if( mMapDropOffsets[ inMapI ].x != 0 ||
             mMapDropOffsets[ inMapI ].y != 0 ) {
             
-            // ignore objects sliding into place until they come to rest
-            ignoreWatchedObjectDraw( true );
-            
             doublePair nullOffset = { 0, 0 };
                     
 
@@ -5524,7 +5521,22 @@ void LivingLifePage::draw( doublePair inViewCenter,
     LiveObject *ourLiveObject = getOurLiveObject();
     
     if( ourLiveObject != NULL ) {
-        startWatchForClosestObjectDraw( mCurrentHintTargetObject,
+        // remove any of our held object from the list
+        // so that we don't show a bouncing arrow on the ground
+        // for something that we're currently holding
+        int actualWatchTargets[2] = { 0, 0 };
+        
+        int heldID = getObjectParent( ourLiveObject->holdingID );            
+
+        for( int i=0; i<2; i++ ) {
+            
+            if( heldID != mCurrentHintTargetObject[i] ) {
+                actualWatchTargets[i] = mCurrentHintTargetObject[i];
+                }
+            }
+        
+        
+        startWatchForClosestObjectDraw( actualWatchTargets,
                                         mult( ourLiveObject->currentPos,
                                               CELL_D ) );
         }
@@ -11025,17 +11037,8 @@ void LivingLifePage::step() {
             
             TransRecord *t = 
                 mLastHintSortedList.getElementDirect( mCurrentHintIndex );
-            int heldID = ourObject->holdingID;
+            int heldID = getObjectParent( ourObject->holdingID );
             
-            if( heldID > 0 ) {
-                ObjectRecord *heldO = getObject( heldID );
-                if( heldO->isUseDummy ) {
-                    heldID = heldO->useDummyParent;
-                    }
-                else if( heldO->isVariableDummy ) {
-                    heldID = heldO->variableDummyParent;
-                    }
-                }
             
             if( t->actor != heldID ) {
                 mCurrentHintTargetObject[0] = t->actor;

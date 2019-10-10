@@ -5526,6 +5526,25 @@ char bothSameUseParent( int inAObjectID, int inBObjectID ) {
 
 
 
+int getObjectParent( int inObjectID ) {
+    if( inObjectID > 0 ) {    
+        ObjectRecord *o = getObject( inObjectID );
+        
+        if( o != NULL ) {
+            if( o->isUseDummy ) {
+                return o->useDummyParent;
+                }
+            if( o->isVariableDummy ) {
+                return o->variableDummyParent;
+                }
+            }
+        }
+    
+    return inObjectID;
+    }
+
+
+
 
 int hideIDForClient( int inObjectID ) {    
     if( inObjectID > 0 ) {

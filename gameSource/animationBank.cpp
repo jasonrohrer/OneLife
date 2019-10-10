@@ -1757,15 +1757,9 @@ void checkDrawPos( int inObjectID, doublePair inPos ) {
     
     if( inObjectID != closestObjectDrawID[0] &&
         inObjectID != closestObjectDrawID[1] ) {
-        ObjectRecord *o = getObject( inObjectID );
         
-        if( o->isUseDummy ) {
-            inObjectID = o->useDummyParent;
-            }
-        else if( o->isVariableDummy ) {
-            inObjectID = o->variableDummyParent;
-            }
-
+        inObjectID = getObjectParent( inObjectID );
+        
         if( inObjectID != closestObjectDrawID[0] &&
             inObjectID != closestObjectDrawID[1] ) return;
         }
