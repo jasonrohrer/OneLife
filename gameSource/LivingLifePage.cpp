@@ -5520,18 +5520,47 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     LiveObject *ourLiveObject = getOurLiveObject();
     
-    if( ourLiveObject != NULL ) {
-        // remove any of our held object from the list
-        // so that we don't show a bouncing arrow on the ground
-        // for something that we're currently holding
+    if( ourLiveObject != NULL &&
+        ( mCurrentHintTargetObject[0] > 0 ||
+          mCurrentHintTargetObject[1] > 0 ) ) {
+
         int actualWatchTargets[2] = { 0, 0 };
         
         int heldID = getObjectParent( ourLiveObject->holdingID );            
 
-        for( int i=0; i<2; i++ ) {
+        // are we holding the target of our current hint?
+        // if so, hide hint arrows
+        TransRecord *t = 
+            mLastHintSortedList.getElementDirect( mCurrentHintIndex );
+
+        char hit = false;
+
+        if( t->newActor > 0 && t->newActor == heldID ) {
+            hit = true;
+            }
+        else if( t->newTarget > 0 && t->newTarget == heldID ) {
+            hit = true;
+            }
+
+
+        if( ! hit ) {
+            // remove any of our held object from the list
+            // so that we don't show a bouncing arrow on the ground
+            // for something that we're currently holding
+
+            char forceShow = false;
+            if( mCurrentHintTargetObject[0] == mCurrentHintTargetObject[1] ) {
+                // both are the same, need to use A on A for result
+                // thus, even if holding A, show arrow pointing at neares
+                // other A
+                forceShow = true;
+                }
             
-            if( heldID != mCurrentHintTargetObject[i] ) {
-                actualWatchTargets[i] = mCurrentHintTargetObject[i];
+            for( int i=0; i<2; i++ ) {
+                
+                if( forceShow || heldID != mCurrentHintTargetObject[i] ) {
+                    actualWatchTargets[i] = mCurrentHintTargetObject[i];
+                    }
                 }
             }
         
