@@ -184,6 +184,8 @@ static SimpleVector<char*> namedGivingPhrases;
 static SimpleVector<char*> familyGivingPhrases;
 static SimpleVector<char*> offspringGivingPhrases;
 
+static SimpleVector<char*> posseJoiningPhrases;
+
 
 
 static char *eveName = NULL;
@@ -1735,6 +1737,8 @@ void quitCleanup() {
     
     familyGivingPhrases.deallocateStringElements();
     offspringGivingPhrases.deallocateStringElements();
+    
+    posseJoiningPhrases.deallocateStringElements();
     
 
     if( curseYouPhrase != NULL ) {
@@ -9863,6 +9867,10 @@ char isOffspringGivingSay( char *inSaidString ) {
     return isWildcardGivingSay( inSaidString, &offspringGivingPhrases );
     }
 
+char isPosseJoiningSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &posseJoiningPhrases );
+    }
+
 
 
 
@@ -10765,11 +10773,13 @@ static void updatePosseSize( LiveObject *inTarget,
 
 
 // return true if it worked
-char addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
+char addKillState( LiveObject *inKiller, LiveObject *inTarget,
+                   char inInfiniteRange = false ) {
     char found = false;
     
     
-    if( distance( getPlayerPos( inKiller ), getPlayerPos( inTarget ) )
+    if( ! inInfiniteRange && 
+        distance( getPlayerPos( inKiller ), getPlayerPos( inTarget ) )
         > 8 ) {
         // out of range
         return false;
@@ -11738,6 +11748,9 @@ int main() {
 
     readPhrases( "familyGivingPhrases", &familyGivingPhrases );
     readPhrases( "offspringGivingPhrases", &offspringGivingPhrases );
+
+
+    readPhrases( "posseJoiningPhrases", &posseJoiningPhrases );
 
     
     curseYouPhrase = 
@@ -14862,6 +14875,54 @@ int main() {
                             }
 
 
+                        // they must be holding something to join a posse
+                        if( nextPlayer->holdingID > 0 && 
+                            isPosseJoiningSay( m.saidText ) ) {
+                            
+                            GridPos ourPos = getPlayerPos( nextPlayer );
+                            
+                            // find closest player who is part of a KILL
+                            // record
+                            KillState *closestState = NULL;
+                            double closestDist = DBL_MAX;
+                            for( int i=0; i<activeKillStates.size(); i++ ) {
+                                KillState *s = activeKillStates.getElement( i );
+                                LiveObject *killer = 
+                                    getLiveObject( s->killerID );
+                                
+                                GridPos killerPos = getPlayerPos( killer );
+                                
+                                double d = distance( killerPos, ourPos );
+                                
+                                if( d < 8 &&
+                                    d < closestDist ) {
+                                    // in range and closer
+                                    closestState = s;
+                                    closestDist = d;
+                                    }
+                                }
+                            if( closestState != NULL ) {
+                                // they are joining
+                                // infinite range
+                                char enteredState = addKillState( 
+                                    nextPlayer, 
+                                    getLiveObject( closestState->targetID ),
+                                    true ); 
+                                if( enteredState ) {
+                                    nextPlayer->emotFrozen = true;
+                                    nextPlayer->emotFrozenIndex = 
+                                        killEmotionIndex;
+                                    
+                                    newEmotPlayerIDs.push_back( 
+                                        nextPlayer->id );
+                                    newEmotIndices.push_back( 
+                                        killEmotionIndex );
+                                    newEmotTTLs.push_back( 120 );
+                                    }
+                                }
+                            }
+                        
+
                         
                         if( nextPlayer->isEve && nextPlayer->name == NULL ) {
                             char *name = isFamilyNamingSay( m.saidText );
@@ -17345,7 +17406,15 @@ int main() {
                     newEmotTTLs.push_back( 0 );
                     }
 
-                if( target != NULL &&
+                removeKillState( killer, target );
+
+                int newPosseSize = 0;
+                if( target != NULL ) {
+                    newPosseSize = countPosseSize( target );
+                    }
+                
+                if( newPosseSize == 0 &&
+                    target != NULL &&
                     target->emotFrozen &&
                     target->emotFrozenIndex == victimEmotionIndex ) {
                     
@@ -17358,8 +17427,7 @@ int main() {
                     newEmotIndices.push_back( -1 );
                     newEmotTTLs.push_back( 0 );
                     }
-                
-                removeKillState( killer, target );
+
                 i--;
                 continue;
                 }

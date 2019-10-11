@@ -7,6 +7,24 @@ Version 270    ???
 
 --Editor can copy slot movements relative to saved position.
 
+--New hint filter system.  When you target an object to make (like /HATCHET),
+  you see an reverse-ordered list of steps, starting with the target and going
+  simpler, as you TAB.  Each step shows you hint arrows for nearby ingredients,
+  and when you pick up an ingredient object, the list automatically jumps to
+  the most relevant hint for that ingredient.
+
+
+Server Fixes
+
+--Saying I JOIN YOU near a posse member with something in your hand causes you 
+ to join that posse, even if you're not holding a weapon and haven't managed to
+ shift-right-click on the target person yourself.  You can do this while
+ holding a branch or whatever, and though you can't kill with a non-weapon,
+ your posse membership can help to speed up the posse.  This makes groups much
+ more powerful against hit-and-run griefers, who are difficult for the whole
+ group to target.
+
+
 
 
 Version 268    2019-October-3
