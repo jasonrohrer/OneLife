@@ -20521,11 +20521,7 @@ int main() {
 
                 if( newUpdates.size() > 0 && nextPlayer->connected ) {
 
-                    double minUpdateDist = maxDist2 * 2;
-                    
-                    // greater than maxDis but within maxDist2
-                    SimpleVector<int> middleDistancePlayerIDs;
-                    
+                    double minUpdateDist = maxDist2 * 2;                    
 
                     for( int u=0; u<newUpdatesPos.size(); u++ ) {
                         ChangePosition *p = newUpdatesPos.getElement( u );
@@ -20569,6 +20565,14 @@ int main() {
                                 // skip this one, too far away
                                 continue;
                                 }
+
+                            if( p->global &&  d > maxDist ) {
+                                // out of range global updates should
+                                // also be followed by PO message
+                                middleDistancePlayerIDs.push_back(
+                                    newUpdatePlayerIDs.getElementDirect( u ) );
+                                }
+                            
                             
                             char *line =
                                 getUpdateLineFromRecord( 

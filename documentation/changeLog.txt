@@ -30,6 +30,12 @@ Server Fixes
 --Rift barrier no longer blocks plane flights, and this setting is configurable
   live, without restarting the server.
 
+--Fixed another cause of out-of-range ghost players.  Updates for midrange
+  players weren't getting PO messages correctly, nor were global updates for
+  new players.  These players were seen as in-range, which triggered (!) emote
+  notifications and a ghost player standing there if you ever travelled to
+  their original location.  Fixes #410
+
 
 
 
