@@ -7038,10 +7038,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                 }
 
 
-            if( eveWindow && barrierOn ) {
-                // only mothers inside barrier can have babies during 
-                // eveWindow (eve window happens right after an apocalypse
-                // and we need to reign people back in)
+            if( barrierOn ) {
+                // only mothers inside barrier can have babies
 
                 GridPos playerPos = getPlayerPos( player );
                 

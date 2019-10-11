@@ -24,6 +24,9 @@ Server Fixes
  more powerful against hit-and-run griefers, who are difficult for the whole
  group to target.
 
+--Blocked births outside of rift barrier (before, was only blocking outside
+  births during Eve window).
+
 
 
 
