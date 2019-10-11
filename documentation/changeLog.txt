@@ -27,6 +27,9 @@ Server Fixes
 --Blocked births outside of rift barrier (before, was only blocking outside
   births during Eve window).
 
+--Rift barrier no longer blocks plane flights, and this setting is configurable
+  live, without restarting the server.
+
 
 
 

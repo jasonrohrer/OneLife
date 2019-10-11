@@ -18703,13 +18703,16 @@ int main() {
 
                                 int radiusLimit = -1;
                                 
-                                int barrierRadius = 
-                                    SettingsManager::getIntSetting( 
-                                        "barrierRadius", 250 );
                                 int barrierOn = SettingsManager::getIntSetting( 
                                     "barrierOn", 1 );
+                                int barrierBlocksPlanes = 
+                                    SettingsManager::getIntSetting( 
+                                    "barrierBlocksPlanes", 1 );
                                 
-                                if( barrierOn ) {
+                                if( barrierOn && barrierBlocksPlanes ) {
+                                    int barrierRadius = 
+                                        SettingsManager::getIntSetting( 
+                                            "barrierRadius", 250 );
                                     radiusLimit = barrierRadius;
                                     }
 
