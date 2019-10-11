@@ -7210,6 +7210,16 @@ int processLoggedInPlayer( char inAllowReconnect,
                 continue;
                 }
 
+
+            if( barrierOn ) {
+                // only mothers inside barrier can have babies
+                
+                if( abs( playerPos.x ) >= barrierRadius ||
+                    abs( playerPos.y ) >= barrierRadius ) {
+                    continue;
+                    }
+                }
+            
             
             if( isFertileAge( player ) ) {
                 parentChoices.push_back( player );
