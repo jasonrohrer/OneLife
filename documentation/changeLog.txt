@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 270    ???
+Version 270    2019-October-12
 
 --Editor can copy slot movements relative to saved position.
 
