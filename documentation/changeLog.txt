@@ -40,6 +40,8 @@ Server Fixes
   spots, to ensure that there are exactly 5 of them inside the rift barrier in
   snowy biomes only.
 
+--EVE was on list of female and last names.  Whoops.
+
 
 
 
