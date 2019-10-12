@@ -3649,6 +3649,8 @@ char initMap() {
 
     CustomRandomSource phaseRandSource( randSeed );
 
+    CustomRandomSource placementRandSource( randSeed );
+
     
     for( int i=0; i<numObjects; i++ ) {
         ObjectRecord *o = allObjects[i];
@@ -3670,6 +3672,9 @@ char initMap() {
 
             char *gridPlacementLoc =
                 strstr( o->description, "gridPlacement" );
+
+            char *randPlacementLoc =
+                strstr( o->description, "randPlacement" );
                 
             if( gridPlacementLoc != NULL ) {
                 // special grid placement
@@ -3729,6 +3734,43 @@ char initMap() {
                       permittedBiomes };
                 
                 gridPlacements.push_back( gp );
+                }
+            else if( randPlacementLoc != NULL ) {
+                // special random placement
+                
+                int count = 10;                
+                sscanf( randPlacementLoc, "randPlacement%d", &count );
+                
+                printf( "Placing %d random occurences of %d (%s) "
+                        "inside %d square radius:\n",
+                        count, id, o->description, barrierRadius );
+                for( int p=0; p<count; p++ ) {
+                    // sample until we find target biome
+                    int safeR = barrierRadius - 2;
+
+                    char placed = false;
+                    while( ! placed ) {                    
+                        int pickX = 
+                            placementRandSource.
+                            getRandomBoundedInt( -safeR, safeR );
+                        int pickY = 
+                            placementRandSource.
+                            getRandomBoundedInt( -safeR, safeR );
+                        
+                        int pickB = getMapBiome( pickX, pickY );
+                            
+                        for( int j=0; j< o->numBiomes; j++ ) {
+                            int b = o->biomes[j];
+                            
+                            if( b == pickB ) {
+                                // hit
+                                placed = true;
+                                printf( "  (%d,%d)\n", pickX, pickY );
+                                setMapObject( pickX, pickY, id );
+                                }
+                            }
+                        }
+                    }
                 }
             else {
                 // regular fractal placement
