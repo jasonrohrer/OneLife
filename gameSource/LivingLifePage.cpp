@@ -22352,6 +22352,8 @@ void LivingLifePage::pushOldHintArrow( int inIndex ) {
                            mCurrentHintTargetPointerBounce[i],
                            mCurrentHintTargetPointerFade[i] };
         mOldHintArrows.push_back( h );
+        }
+    }
 
 int getRandomIndex( char *inNameList, int inListLen ) {
 	int limit = inListLen - 1;
