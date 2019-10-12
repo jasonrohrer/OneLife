@@ -810,6 +810,11 @@ void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
 char bothSameUseParent( int inAObjectID, int inBObjectID );
 
 
+// if this ID is a use dummy, gets the parent object ID
+int getObjectParent( int inObjectID );
+
+
+
 
 // processes object ID for client consumption
 // hiding hidden variable object ids behind parent ID
@@ -842,6 +847,17 @@ int getMetaTriggerObject( int inTriggerIndex );
 // can a player of this age pick up a given object?
 char canPickup( int inObjectID, double inPlayerAge );
 
+
+
+
+SimpleVector<int> findObjectsMatchingWords( char *inWords, 
+                                            int inIgnoreObjectID,
+                                            int inLimit,
+                                            int *outNumFilterHits );
+
+
+// terminates string to remove comment
+void stripDescriptionComment( char *inString );
 
 
 #endif

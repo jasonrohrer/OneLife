@@ -5187,25 +5187,44 @@ void EditorObjectPage::keyDown( unsigned char inASCII ) {
             }
         pickedLayerChanged();
         }
-    if( mPickedObjectLayer != -1 && inASCII == 'C' ) {
+    if( inASCII == 'C' ) {
         ObjectRecord *saved = getObject( mCurrentObject.id );
         
-        if( saved != NULL && saved->numSprites > mPickedObjectLayer ) {
-            mSaveDeltaPosClipboard = 
-                sub( mCurrentObject.spritePos[ mPickedObjectLayer ],
-                     saved->spritePos[ mPickedObjectLayer ] );
-            
-            mSaveDeltaRotClipboard = 
-                mCurrentObject.spriteRot[ mPickedObjectLayer ] -
-                saved->spriteRot[ mPickedObjectLayer ];
+        if( mPickedObjectLayer != -1 ) {
+            if( saved != NULL && saved->numSprites > mPickedObjectLayer ) {
+                mSaveDeltaPosClipboard = 
+                    sub( mCurrentObject.spritePos[ mPickedObjectLayer ],
+                         saved->spritePos[ mPickedObjectLayer ] );
+                
+                mSaveDeltaRotClipboard = 
+                    mCurrentObject.spriteRot[ mPickedObjectLayer ] -
+                    saved->spriteRot[ mPickedObjectLayer ];
+                }
+            }
+        else if( mPickedSlot != -1 ) {
+            if( saved != NULL && saved->numSlots > mPickedSlot ) {
+                mSaveDeltaPosClipboard = 
+                    sub( mCurrentObject.slotPos[ mPickedSlot ],
+                         saved->slotPos[ mPickedSlot ] );
+                
+                mSaveDeltaRotClipboard = 0;
+                }
             }
         }
-    if( mPickedObjectLayer != -1 && inASCII == 'V' ) {
-        mCurrentObject.spritePos[ mPickedObjectLayer ] = 
-            add( mCurrentObject.spritePos[ mPickedObjectLayer ],
-                 mSaveDeltaPosClipboard );
-        mCurrentObject.spriteRot[ mPickedObjectLayer ] += 
-            mSaveDeltaRotClipboard;
+    if( inASCII == 'V' ) {
+        if( mPickedObjectLayer != -1 ) {
+            mCurrentObject.spritePos[ mPickedObjectLayer ] = 
+                add( mCurrentObject.spritePos[ mPickedObjectLayer ],
+                     mSaveDeltaPosClipboard );
+            mCurrentObject.spriteRot[ mPickedObjectLayer ] += 
+                mSaveDeltaRotClipboard;
+            }
+        
+        else if( mPickedSlot != -1 ) {
+            mCurrentObject.slotPos[ mPickedSlot ] = 
+                add( mCurrentObject.slotPos[ mPickedSlot ],
+                     mSaveDeltaPosClipboard );
+            }
         pickedLayerChanged();
         }
     

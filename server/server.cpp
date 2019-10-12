@@ -186,6 +186,8 @@ static SimpleVector<char*> namedGivingPhrases;
 static SimpleVector<char*> familyGivingPhrases;
 static SimpleVector<char*> offspringGivingPhrases;
 
+static SimpleVector<char*> posseJoiningPhrases;
+
 
 
 static char *eveName = NULL;
@@ -1737,6 +1739,8 @@ void quitCleanup() {
     
     familyGivingPhrases.deallocateStringElements();
     offspringGivingPhrases.deallocateStringElements();
+    
+    posseJoiningPhrases.deallocateStringElements();
     
 
     if( curseYouPhrase != NULL ) {
@@ -7036,10 +7040,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                 }
 
 
-            if( eveWindow && barrierOn ) {
-                // only mothers inside barrier can have babies during 
-                // eveWindow (eve window happens right after an apocalypse
-                // and we need to reign people back in)
+            if( barrierOn ) {
+                // only mothers inside barrier can have babies
 
                 GridPos playerPos = getPlayerPos( player );
                 
@@ -7210,6 +7212,16 @@ int processLoggedInPlayer( char inAllowReconnect,
                 continue;
                 }
 
+
+            if( barrierOn ) {
+                // only mothers inside barrier can have babies
+                
+                if( abs( playerPos.x ) >= barrierRadius ||
+                    abs( playerPos.y ) >= barrierRadius ) {
+                    continue;
+                    }
+                }
+            
             
             if( isFertileAge( player ) ) {
                 parentChoices.push_back( player );
@@ -9865,6 +9877,10 @@ char isOffspringGivingSay( char *inSaidString ) {
     return isWildcardGivingSay( inSaidString, &offspringGivingPhrases );
     }
 
+char isPosseJoiningSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &posseJoiningPhrases );
+    }
+
 
 
 
@@ -10767,11 +10783,13 @@ static void updatePosseSize( LiveObject *inTarget,
 
 
 // return true if it worked
-char addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
+char addKillState( LiveObject *inKiller, LiveObject *inTarget,
+                   char inInfiniteRange = false ) {
     char found = false;
     
     
-    if( distance( getPlayerPos( inKiller ), getPlayerPos( inTarget ) )
+    if( ! inInfiniteRange && 
+        distance( getPlayerPos( inKiller ), getPlayerPos( inTarget ) )
         > 8 ) {
         // out of range
         return false;
@@ -11755,6 +11773,9 @@ int main() {
 
     readPhrases( "familyGivingPhrases", &familyGivingPhrases );
     readPhrases( "offspringGivingPhrases", &offspringGivingPhrases );
+
+
+    readPhrases( "posseJoiningPhrases", &posseJoiningPhrases );
 
     
     curseYouPhrase = 
@@ -14879,6 +14900,54 @@ int main() {
                             }
 
 
+                        // they must be holding something to join a posse
+                        if( nextPlayer->holdingID > 0 && 
+                            isPosseJoiningSay( m.saidText ) ) {
+                            
+                            GridPos ourPos = getPlayerPos( nextPlayer );
+                            
+                            // find closest player who is part of a KILL
+                            // record
+                            KillState *closestState = NULL;
+                            double closestDist = DBL_MAX;
+                            for( int i=0; i<activeKillStates.size(); i++ ) {
+                                KillState *s = activeKillStates.getElement( i );
+                                LiveObject *killer = 
+                                    getLiveObject( s->killerID );
+                                
+                                GridPos killerPos = getPlayerPos( killer );
+                                
+                                double d = distance( killerPos, ourPos );
+                                
+                                if( d < 8 &&
+                                    d < closestDist ) {
+                                    // in range and closer
+                                    closestState = s;
+                                    closestDist = d;
+                                    }
+                                }
+                            if( closestState != NULL ) {
+                                // they are joining
+                                // infinite range
+                                char enteredState = addKillState( 
+                                    nextPlayer, 
+                                    getLiveObject( closestState->targetID ),
+                                    true ); 
+                                if( enteredState ) {
+                                    nextPlayer->emotFrozen = true;
+                                    nextPlayer->emotFrozenIndex = 
+                                        killEmotionIndex;
+                                    
+                                    newEmotPlayerIDs.push_back( 
+                                        nextPlayer->id );
+                                    newEmotIndices.push_back( 
+                                        killEmotionIndex );
+                                    newEmotTTLs.push_back( 120 );
+                                    }
+                                }
+                            }
+                        
+
                         
                         if( nextPlayer->isEve && nextPlayer->name == NULL ) {
                             char *name = isFamilyNamingSay( m.saidText );
@@ -17362,7 +17431,15 @@ int main() {
                     newEmotTTLs.push_back( 0 );
                     }
 
-                if( target != NULL &&
+                removeKillState( killer, target );
+
+                int newPosseSize = 0;
+                if( target != NULL ) {
+                    newPosseSize = countPosseSize( target );
+                    }
+                
+                if( newPosseSize == 0 &&
+                    target != NULL &&
                     target->emotFrozen &&
                     target->emotFrozenIndex == victimEmotionIndex ) {
                     
@@ -17375,8 +17452,7 @@ int main() {
                     newEmotIndices.push_back( -1 );
                     newEmotTTLs.push_back( 0 );
                     }
-                
-                removeKillState( killer, target );
+
                 i--;
                 continue;
                 }
@@ -18644,13 +18720,16 @@ int main() {
 
                                 int radiusLimit = -1;
                                 
-                                int barrierRadius = 
-                                    SettingsManager::getIntSetting( 
-                                        "barrierRadius", 250 );
                                 int barrierOn = SettingsManager::getIntSetting( 
                                     "barrierOn", 1 );
+                                int barrierBlocksPlanes = 
+                                    SettingsManager::getIntSetting( 
+                                    "barrierBlocksPlanes", 1 );
                                 
-                                if( barrierOn ) {
+                                if( barrierOn && barrierBlocksPlanes ) {
+                                    int barrierRadius = 
+                                        SettingsManager::getIntSetting( 
+                                            "barrierRadius", 250 );
                                     radiusLimit = barrierRadius;
                                     }
 
@@ -20459,11 +20538,7 @@ int main() {
 
                 if( newUpdates.size() > 0 && nextPlayer->connected ) {
 
-                    double minUpdateDist = maxDist2 * 2;
-                    
-                    // greater than maxDis but within maxDist2
-                    SimpleVector<int> middleDistancePlayerIDs;
-                    
+                    double minUpdateDist = maxDist2 * 2;                    
 
                     for( int u=0; u<newUpdatesPos.size(); u++ ) {
                         ChangePosition *p = newUpdatesPos.getElement( u );
@@ -20507,6 +20582,14 @@ int main() {
                                 // skip this one, too far away
                                 continue;
                                 }
+
+                            if( p->global &&  d > maxDist ) {
+                                // out of range global updates should
+                                // also be followed by PO message
+                                middleDistancePlayerIDs.push_back(
+                                    newUpdatePlayerIDs.getElementDirect( u ) );
+                                }
+                            
                             
                             char *line =
                                 getUpdateLineFromRecord( 
