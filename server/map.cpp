@@ -204,7 +204,8 @@ static GridPos eveStartSpiralPos = { 0, 0 };
 
 
 
-static int evePrimaryLocSpacing = 0;
+static int evePrimaryLocSpacingX = 0;
+static int evePrimaryLocSpacingY = 0;
 static int evePrimaryLocObjectID = -1;
 static SimpleVector<int> eveSecondaryLocObjectIDs;
 
@@ -296,9 +297,9 @@ static SimpleVector<float> *naturalMapChances;
 
 typedef struct MapGridPlacement {
         int id;
-        int spacing;
-        int phase;
-        int wiggleScale;
+        int spacingX, spacingY;
+        int phaseX, phaseY;
+        int wiggleScaleX, wiggleScaleY;
         SimpleVector<int> permittedBiomes;
     } MapGridPlacement;
 
@@ -1249,22 +1250,22 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
 
 
         /*
-        double gridWiggleX = getXYFractal( inX / gp->spacing, 
-                                           inY / gp->spacing, 
+        double gridWiggleX = getXYFractal( inX / gp->spacingX, 
+                                           inY / gp->spacingY, 
                                            0.1, 0.25 );
         
-        double gridWiggleY = getXYFractal( inX / gp->spacing, 
-                                           inY / gp->spacing + 392387, 
+        double gridWiggleY = getXYFractal( inX / gp->spacingX, 
+                                           inY / gp->spacingY + 392387, 
                                            0.1, 0.25 );
         */
         // turn wiggle off for now
         double gridWiggleX = 0;
         double gridWiggleY = 0;
 
-        if( ( inX + gp->phase + lrint( gridWiggleX * gp->wiggleScale ) ) 
-            % gp->spacing == 0 &&
-            ( inY + gp->phase + lrint( gridWiggleY * gp->wiggleScale ) ) 
-            % gp->spacing == 0 ) {
+        if( ( inX + gp->phaseX + lrint( gridWiggleX * gp->wiggleScaleX ) ) 
+            % gp->spacingX == 0 &&
+            ( inY + gp->phaseY + lrint( gridWiggleY * gp->wiggleScaleY ) ) 
+            % gp->spacingY == 0 ) {
             
             // hits this grid
 
@@ -1843,7 +1844,7 @@ void printObjectSamples() {
 
     int numSamples = 0;
 
-    int range = 500;
+    int range = 354;
 
     int count = 0;
     
@@ -3648,6 +3649,8 @@ char initMap() {
 
     CustomRandomSource phaseRandSource( randSeed );
 
+    CustomRandomSource placementRandSource( randSeed );
+
     
     for( int i=0; i<numObjects; i++ ) {
         ObjectRecord *o = allObjects[i];
@@ -3669,16 +3672,37 @@ char initMap() {
 
             char *gridPlacementLoc =
                 strstr( o->description, "gridPlacement" );
+
+            char *randPlacementLoc =
+                strstr( o->description, "randPlacement" );
                 
             if( gridPlacementLoc != NULL ) {
                 // special grid placement
                 
-                int spacing = 10;
-                sscanf( gridPlacementLoc, "gridPlacement%d", &spacing );
+                int spacingX = 10;
+                int spacingY = 10;
+                int phaseX = 0;
+                int phaseY = 0;
                 
+                int numRead = sscanf( gridPlacementLoc, 
+                                      "gridPlacement%d,%d,p%d,p%d", 
+                                      &spacingX, &spacingY,
+                                      &phaseX, &phaseY );
+                if( numRead < 2 ) {
+                    // only X specified, square grid
+                    spacingY = spacingX;
+                    }
+                if( numRead < 4 ) {
+                    // only X specified, square grid
+                    phaseY = phaseX;
+                    }
+                
+                
+
                 if( strstr( o->description, "evePrimaryLoc" ) != NULL ) {
                     evePrimaryLocObjectID = id;
-                    evePrimaryLocSpacing = spacing;
+                    evePrimaryLocSpacingX = spacingX;
+                    evePrimaryLocSpacingY = spacingY;
                     }
 
                 SimpleVector<int> permittedBiomes;
@@ -3687,21 +3711,66 @@ char initMap() {
                         getBiomeIndex( o->biomes[ b ] ) );
                     }
 
-                int wiggleScale = 4;
+                int wiggleScaleX = 4;
+                int wiggleScaleY = 4;
                 
-                if( spacing > 12 ) {
-                    wiggleScale = spacing / 3;
+                if( spacingX > 12 ) {
+                    wiggleScaleX = spacingX / 3;
+                    }
+                if( spacingY > 12 ) {
+                    wiggleScaleY = spacingY / 3;
                     }
                 
                 MapGridPlacement gp =
-                    { id, spacing,
-                      0,
+                    { id, 
+                      spacingX, spacingY,
+                      phaseX, phaseY,
                       //phaseRandSource.getRandomBoundedInt( 0, 
-                      //                                     spacing - 1 ),
-                      wiggleScale,
+                      //                                     spacingX - 1 ),
+                      //phaseRandSource.getRandomBoundedInt( 0, 
+                      //                                     spacingY - 1 ),
+                      wiggleScaleX,
+                      wiggleScaleY,
                       permittedBiomes };
                 
                 gridPlacements.push_back( gp );
+                }
+            else if( randPlacementLoc != NULL ) {
+                // special random placement
+                
+                int count = 10;                
+                sscanf( randPlacementLoc, "randPlacement%d", &count );
+                
+                printf( "Placing %d random occurences of %d (%s) "
+                        "inside %d square radius:\n",
+                        count, id, o->description, barrierRadius );
+                for( int p=0; p<count; p++ ) {
+                    // sample until we find target biome
+                    int safeR = barrierRadius - 2;
+
+                    char placed = false;
+                    while( ! placed ) {                    
+                        int pickX = 
+                            placementRandSource.
+                            getRandomBoundedInt( -safeR, safeR );
+                        int pickY = 
+                            placementRandSource.
+                            getRandomBoundedInt( -safeR, safeR );
+                        
+                        int pickB = getMapBiome( pickX, pickY );
+                            
+                        for( int j=0; j< o->numBiomes; j++ ) {
+                            int b = o->biomes[j];
+                            
+                            if( b == pickB ) {
+                                // hit
+                                placed = true;
+                                printf( "  (%d,%d)\n", pickX, pickY );
+                                setMapObject( pickX, pickY, id );
+                                }
+                            }
+                        }
+                    }
                 }
             else {
                 // regular fractal placement
@@ -7757,11 +7826,11 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                         0, inOtherPeoplePos->size() - 1 ) );
                 
                 // round to nearest whole spacing multiple
-                centerP.x /= evePrimaryLocSpacing;
-                centerP.y /= evePrimaryLocSpacing;
+                centerP.x /= evePrimaryLocSpacingX;
+                centerP.y /= evePrimaryLocSpacingY;
                 
-                centerP.x *= evePrimaryLocSpacing;
-                centerP.y *= evePrimaryLocSpacing;
+                centerP.x *= evePrimaryLocSpacingX;
+                centerP.y *= evePrimaryLocSpacingY;
                 }
             
 
@@ -7815,8 +7884,8 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                     for( int x=-r; x<=r; x++ ) {
                         tryP = centerP;
                         
-                        tryP.x += x * evePrimaryLocSpacing;
-                        tryP.y += y * evePrimaryLocSpacing;
+                        tryP.x += x * evePrimaryLocSpacingX;
+                        tryP.y += y * evePrimaryLocSpacingY;
                         
                         char existsAlready = false;
 
@@ -7939,15 +8008,15 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
             // remember it for when we exhaust it
             if( evePrimaryLocObjectID > 0 &&
-                evePrimaryLocSpacing > 0 ) {
+                ( evePrimaryLocSpacingX > 0 || evePrimaryLocSpacingY > 0 ) ) {
 
                 lastEvePrimaryLocation = eveLocation;
                 // round to nearest whole spacing multiple
-                lastEvePrimaryLocation.x /= evePrimaryLocSpacing;
-                lastEvePrimaryLocation.y /= evePrimaryLocSpacing;
+                lastEvePrimaryLocation.x /= evePrimaryLocSpacingX;
+                lastEvePrimaryLocation.y /= evePrimaryLocSpacingY;
                 
-                lastEvePrimaryLocation.x *= evePrimaryLocSpacing;
-                lastEvePrimaryLocation.y *= evePrimaryLocSpacing;
+                lastEvePrimaryLocation.x *= evePrimaryLocSpacingX;
+                lastEvePrimaryLocation.y *= evePrimaryLocSpacingY;
             
                 printf( "Saving eve start-up location close grid pos "
                         "of %d,%d for later\n",

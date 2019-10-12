@@ -227,19 +227,14 @@ typedef struct TransIDPair {
     
 
 
-void initTransBankFinish() {
-    
-    freeFolderCache( cache );
+
+static void regenUsesAndProducesMaps() {
+    for( int i=0; i<mapSize; i++ ) {
+        usesMap[i].deleteAll();
+        producesMap[i].deleteAll();
+        }
 
 
-    mapSize = maxID + 1;
-    
-
-    usesMap = new SimpleVector<TransRecord *>[ mapSize ];
-        
-    producesMap = new SimpleVector<TransRecord *>[ mapSize ];
-    
-    
     int numRecords = records.size();
     
     for( int i=0; i<numRecords; i++ ) {
@@ -264,6 +259,28 @@ void initTransBankFinish() {
             producesMap[t->newTarget].push_back( t );
             }
         }
+    }
+
+
+
+
+void initTransBankFinish() {
+    
+    freeFolderCache( cache );
+
+
+    mapSize = maxID + 1;
+    
+
+    usesMap = new SimpleVector<TransRecord *>[ mapSize ];
+        
+    producesMap = new SimpleVector<TransRecord *>[ mapSize ];
+
+    
+    regenUsesAndProducesMaps();
+    
+
+    int numRecords = records.size();    
     
     printf( "Loaded %d transitions from transitions folder\n", numRecords );
 
@@ -1463,6 +1480,14 @@ void initTransBankFinish() {
         }
 
 
+    if( autoGenerateVariableTransitions ||
+        autoGenerateUsedObjectTransitions ||
+        autoGenerateGenericUseTransitions ||
+        autoGenerateCategoryTransitions ) {
+        
+        regenUsesAndProducesMaps();
+        }
+    
 
 
     regenerateDepthMap();

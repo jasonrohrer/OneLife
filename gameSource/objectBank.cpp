@@ -5526,6 +5526,25 @@ char bothSameUseParent( int inAObjectID, int inBObjectID ) {
 
 
 
+int getObjectParent( int inObjectID ) {
+    if( inObjectID > 0 ) {    
+        ObjectRecord *o = getObject( inObjectID );
+        
+        if( o != NULL ) {
+            if( o->isUseDummy ) {
+                return o->useDummyParent;
+                }
+            if( o->isVariableDummy ) {
+                return o->variableDummyParent;
+                }
+            }
+        }
+    
+    return inObjectID;
+    }
+
+
+
 
 int hideIDForClient( int inObjectID ) {    
     if( inObjectID > 0 ) {
@@ -5597,4 +5616,166 @@ char canPickup( int inObjectID, double inPlayerAge ) {
         }
     
     return true;
+    }
+
+
+
+void stripDescriptionComment( char *inString ) {
+    // pound sign is used for trailing developer comments
+    // that aren't show to end user, cut them off if they exist
+    char *firstPound = strstr( inString, "#" );
+            
+    if( firstPound != NULL ) {
+        firstPound[0] = '\0';
+        }
+    }
+
+
+SimpleVector<int> findObjectsMatchingWords( char *inWords, 
+                                            int inIgnoreObjectID,
+                                            int inLimit,
+                                            int *outNumFilterHits ) {
+    unsigned int filterLength = strlen( inWords );
+        
+    int numHits = 0;
+    int numRemain = 0;
+    ObjectRecord **hits = searchObjects( inWords,
+                                         0,
+                                         inLimit,
+                                         &numHits, &numRemain );
+        
+    SimpleVector<int> hitMatchIDs;
+
+    *outNumFilterHits = numHits;
+
+    SimpleVector<int> exactHitMatchIDs;
+        
+
+    for( int i=0; i<numHits; i++ ) {
+        if( hits[i]->id == inIgnoreObjectID ) {
+            // don't count the object itself as a hit
+            continue;
+            }
+        char *des = stringToUpperCase( hits[i]->description );
+            
+        stripDescriptionComment( des );
+        
+        if( strcmp( des, inWords ) == 0 ) {
+            exactHitMatchIDs.push_back( hits[i]->id );
+            }
+
+        char *searchPos = strstr( des, inWords );
+            
+        // only count if occurrence of filter string matches whole words
+        // not partial words
+        if( searchPos != NULL && strlen( searchPos ) >= filterLength ) {
+                
+            unsigned int remainLen = strlen( searchPos );
+
+            char frontOK = false;
+            char backOK = false;
+                
+            // space or start of string in front of search phrase
+            if( searchPos == des ||
+                searchPos[-1] == ' ' ) {
+                frontOK = true;
+                }
+                
+            // space or end of string after search phrase
+            if( remainLen == filterLength ||
+                searchPos[filterLength] == ' ' ) {
+                backOK = true;
+                }
+
+            if( frontOK && backOK ) {
+                hitMatchIDs.push_back( hits[i]->id );
+                }
+            }
+            
+        delete [] des;
+        }
+        
+        
+    // now find shallowest matching objects
+
+    numHits = hitMatchIDs.size();
+        
+    int startDepth = 0;
+
+    if( inIgnoreObjectID > 0 ) {
+        startDepth = getObjectDepth( inIgnoreObjectID );
+        
+        ObjectRecord *startObject = getObject( inIgnoreObjectID );
+        if( startObject->isUseDummy ) {
+            startDepth = getObjectDepth( startObject->useDummyParent );
+            }
+        }
+        
+
+    int shallowestDepth = UNREACHABLE;
+       
+    for( int i=0; i<numHits; i++ ) {
+            
+        int depth = getObjectDepth( hitMatchIDs.getElementDirect( i ) );
+            
+        if( depth >= startDepth && depth < shallowestDepth ) {
+            shallowestDepth = depth;
+            }
+        }
+
+    SimpleVector<int> hitIDs;
+
+    for( int i=0; i<numHits; i++ ) {
+        int id = hitMatchIDs.getElementDirect( i );
+            
+        int depth = getObjectDepth( id );
+            
+        if( depth == shallowestDepth ) {
+            hitIDs.push_back( id );
+            }
+        }
+
+
+
+    int shallowestExactDepth = UNREACHABLE;
+       
+    for( int i=0; i<exactHitMatchIDs.size(); i++ ) {
+            
+        int depth = getObjectDepth( exactHitMatchIDs.getElementDirect( i ) );
+            
+        if( depth >= startDepth && depth < shallowestExactDepth ) {
+            shallowestExactDepth = depth;
+            }
+        }
+
+    SimpleVector<int> exactHitIDs;
+
+    for( int i=0; i<exactHitMatchIDs.size(); i++ ) {
+        int id = exactHitMatchIDs.getElementDirect( i );
+            
+        int depth = getObjectDepth( id );
+            
+        if( depth == shallowestExactDepth ) {
+            exactHitIDs.push_back( id );
+            }
+        }
+    
+        
+
+    if( hits != NULL ) {    
+        delete [] hits;
+        }
+        
+    // there are exact matches
+    // use those instead
+    if( exactHitIDs.size() > 0 ) {
+        hitIDs.deleteAll();
+        hitIDs.push_back_other( &exactHitIDs );
+        }
+        
+
+
+    numHits = hitIDs.size();
+
+    return hitIDs;
     }

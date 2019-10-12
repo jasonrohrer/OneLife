@@ -956,16 +956,6 @@ static double computeCurrentAge( LiveObject *inObj ) {
 
 
 
-static void stripDescriptionComment( char *inString ) {
-    // pound sign is used for trailing developer comments
-    // that aren't show to end user, cut them off if they exist
-    char *firstPound = strstr( inString, "#" );
-            
-    if( firstPound != NULL ) {
-        firstPound[0] = '\0';
-        }
-    }
-
 
 
 static char *getDisplayObjectDescription( int inID ) {
@@ -2428,12 +2418,15 @@ LivingLifePage::LivingLifePage()
     
     mLastHintSortedSourceID = 0;
     
-    mCurrentHintTargetObject = 0;
-    mCurrentHintTargetPointerBounce = 0;
-
-    mLastHintTargetPos.x = 0;
-    mLastHintTargetPos.y = 0;
-
+    for( int i=0; i<2; i++ ) {
+        mCurrentHintTargetObject[i] = 0;
+        mCurrentHintTargetPointerBounce[i] = 0;
+        mCurrentHintTargetPointerFade[i] = 0;
+        
+        mLastHintTargetPos[i].x = 0;
+        mLastHintTargetPos[i].y = 0;
+        }
+    
 
     int maxObjectID = getMaxObjectID();
     
@@ -3600,9 +3593,6 @@ void LivingLifePage::drawMapCell( int inMapI,
 
         if( mMapDropOffsets[ inMapI ].x != 0 ||
             mMapDropOffsets[ inMapI ].y != 0 ) {
-            
-            // ignore objects sliding into place until they come to rest
-            ignoreWatchedObjectDraw( true );
             
             doublePair nullOffset = { 0, 0 };
                     
@@ -5667,8 +5657,58 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     LiveObject *ourLiveObject = getOurLiveObject();
     
-    if( ourLiveObject != NULL ) {
-        startWatchForClosestObjectDraw( mCurrentHintTargetObject,
+    if( ourLiveObject != NULL &&
+        ( mCurrentHintTargetObject[0] > 0 ||
+          mCurrentHintTargetObject[1] > 0 ) ) {
+
+        int actualWatchTargets[2] = { 0, 0 };
+        
+        int heldID = getObjectParent( ourLiveObject->holdingID );            
+
+        char hit = false;
+
+        // are we holding the target of our current hint?
+        // if so, hide hint arrows
+        if( mLastHintSortedList.size() > mCurrentHintIndex ) {    
+            TransRecord *t = 
+                mLastHintSortedList.getElementDirect( mCurrentHintIndex );
+            
+            
+            if( t->newActor > 0 && 
+                t->newActor == heldID  && t->actor != heldID ) {
+                hit = true;
+                }
+            else if( t->newTarget > 0 && 
+                     t->newTarget == heldID && t->target != heldID ) {
+                hit = true;
+                }
+            }
+        
+
+
+        if( ! hit ) {
+            // remove any of our held object from the list
+            // so that we don't show a bouncing arrow on the ground
+            // for something that we're currently holding
+
+            char forceShow = false;
+            if( mCurrentHintTargetObject[0] == mCurrentHintTargetObject[1] ) {
+                // both are the same, need to use A on A for result
+                // thus, even if holding A, show arrow pointing at neares
+                // other A
+                forceShow = true;
+                }
+            
+            for( int i=0; i<2; i++ ) {
+                
+                if( forceShow || heldID != mCurrentHintTargetObject[i] ) {
+                    actualWatchTargets[i] = mCurrentHintTargetObject[i];
+                    }
+                }
+            }
+        
+        
+        startWatchForClosestObjectDraw( actualWatchTargets,
                                         mult( ourLiveObject->currentPos,
                                               CELL_D ) );
         }
@@ -6644,57 +6684,123 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
 
-    char pointerDrawn = false;
+    char pointerDrawn[2] = { false, false };
 
-    if( ! takingPhoto && mCurrentHintTargetObject > 0 ) {
-        // draw pointer to closest hint target object
+    for( int i=0; i<2; i++ ) {
         
-        char drawn = false;
-        doublePair targetPos = getClosestObjectDraw( &drawn );
+        if( ! takingPhoto && mCurrentHintTargetObject[i] > 0 ) {
+            // draw pointer to closest hint target object
+        
+            char drawn = false;
+            doublePair targetPos = getClosestObjectDraw( &drawn, i );
 
         
 
-        if( drawn ) {
+            if( drawn ) {
             
-            // round to closest cell pos
-            targetPos.x = CELL_D * lrint( targetPos.x / CELL_D );
-            targetPos.y = CELL_D * lrint( targetPos.y / CELL_D );
-            
-            // move up
-            targetPos.y += 64;
+                // round to closest cell pos
+                targetPos.x = CELL_D * lrint( targetPos.x / CELL_D );
+                targetPos.y = CELL_D * lrint( targetPos.y / CELL_D );
+                
+                // move up
+                targetPos.y += 64;
 
-            if( !equal( targetPos, mLastHintTargetPos ) ) {
-                // reset bounce when target changes
-                mCurrentHintTargetPointerBounce = 0;
-                mLastHintTargetPos = targetPos;        
+                if( !equal( targetPos, mLastHintTargetPos[i] ) ) {
+                    // reset bounce when target changes
+                    pushOldHintArrow( i );
+                    mCurrentHintTargetPointerBounce[i] = 0;
+                    mCurrentHintTargetPointerFade[i] = 0;
+                    mLastHintTargetPos[i] = targetPos;        
+                    }
+            
+                if( mCurrentHintTargetPointerFade[i] == 0 ) {
+                    // invisible
+                    // take this opportunity to hard-sync with the other
+                    // arrow
+                    if( i == 0 ) {
+                        mCurrentHintTargetPointerBounce[i] =
+                            mCurrentHintTargetPointerBounce[1] +
+                            M_PI / 2;
+                        }
+                    else {
+                        mCurrentHintTargetPointerBounce[i] =
+                            mCurrentHintTargetPointerBounce[0] +
+                            M_PI / 2;
+                        }
+                    }
+                
+            
+                targetPos.y += 16 * cos( mCurrentHintTargetPointerBounce[i] );
+            
+                double deltaRate = 6 * frameRateFactor / 60.0; 
+
+                mCurrentHintTargetPointerBounce[i] += deltaRate;
+                
+                if( mCurrentHintTargetPointerFade[i] < 1 ) {
+                    mCurrentHintTargetPointerFade[i] += deltaRate;
+                    
+                    if( mCurrentHintTargetPointerFade[i] > 1 ) {
+                        mCurrentHintTargetPointerFade[i] = 1;
+                        }
+                    }
+                    
+                setDrawColor( 1, 1, 1, mCurrentHintTargetPointerFade[i] );
+
+                drawSprite( mHintArrowSprite, targetPos );
+            
+                pointerDrawn[i] = true;
                 }
-            
-            
-            targetPos.y += 16 * cos( mCurrentHintTargetPointerBounce );
-            
-            mCurrentHintTargetPointerBounce +=
-                6 * frameRateFactor / 60.0;
+            }
 
-            float fade = 1.0f;
-            
-            if( mCurrentHintTargetPointerBounce < 1 ) {
-                fade = mCurrentHintTargetPointerBounce;
-                }
-            
-            setDrawColor( 1, 1, 1, fade );
-
-            drawSprite( mHintArrowSprite, targetPos );
-            
-            pointerDrawn = true;
+        if( ! pointerDrawn[i] ) {
+            // reset bounce
+            pushOldHintArrow( i );
+            mCurrentHintTargetPointerBounce[i] = 0;
+            mCurrentHintTargetPointerFade[i] = 0;
+            mLastHintTargetPos[i].x = 0;
+            mLastHintTargetPos[i].y = 0;
             }
         }
-    if( ! pointerDrawn ) {
-        // reset bounce
-        mCurrentHintTargetPointerBounce = 0;
-        mLastHintTargetPos.x = 0;
-        mLastHintTargetPos.y = 0;
-        }
     
+    if( !takingPhoto ) {
+        for( int i=0; i<mOldHintArrows.size(); i++ ) {
+            OldHintArrow *h = mOldHintArrows.getElement( i );
+
+            // make sure it hasn't been blocked by reposition of real hint arrow
+            if( ( mCurrentHintTargetObject[0] > 0 &&
+                  equal( h->pos, mLastHintTargetPos[0] ) )
+                ||
+                ( mCurrentHintTargetObject[1] > 0 &&
+                  equal( h->pos, mLastHintTargetPos[1] ) ) ) {
+                
+                mOldHintArrows.deleteElement( i );
+                i--;
+                continue;
+                }
+            doublePair targetPos = h->pos;
+            
+            targetPos.y += 16 * cos( h->bounce );
+            
+            // twice as fast as fade-in
+            double deltaRate = 2 * 6 * frameRateFactor / 60.0; 
+
+            h->bounce += deltaRate;
+            
+            if( h->fade > 0 ) {
+                h->fade -= deltaRate;
+                }
+            
+            if( h->fade <= 0 ) {
+                mOldHintArrows.deleteElement( i );
+                i--;
+                continue;
+                }
+            
+            setDrawColor( 1, 1, 1, h->fade );
+
+            drawSprite( mHintArrowSprite, targetPos );
+            }
+        }
         
 
 
@@ -9565,7 +9671,8 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         }
     
     
-    mCurrentHintTargetObject = 0;
+    mCurrentHintTargetObject[0] = 0;
+    mCurrentHintTargetObject[1] = 0;
 
 
     // else need to regenerated sorted list
@@ -9614,118 +9721,23 @@ int LivingLifePage::getNumHints( int inObjectID ) {
     int numFilterHits = 0;
 
 
-    if( mLastHintFilterString != NULL && filteredTrans.size() > 0 ) {        
-        unsigned int filterLength = strlen( mLastHintFilterString );
-        
-        int numHits = 0;
-        int numRemain = 0;
-        ObjectRecord **hits = searchObjects( mLastHintFilterString,
-                                             0,
-                                             200,
-                                             &numHits, &numRemain );
-        
-        SimpleVector<int> hitMatchIDs;
 
-        numFilterHits = numHits;
-
-        SimpleVector<int> exactHitMatchIDs;
+    // old logic:
+    // filter hints for held object based on steps along way to filter
+    // target
+    //
+    // see new logic below
+    if( false )
+    if( mLastHintFilterString != NULL && filteredTrans.size() > 0 ) {
         
-
-        for( int i=0; i<numHits; i++ ) {
-            if( hits[i]->id == inObjectID ) {
-                // don't count the object itself as a hit
-                continue;
-                }
-            char *des = stringToUpperCase( hits[i]->description );
-            
-            stripDescriptionComment( des );
-        
-            if( strcmp( des, mLastHintFilterString ) == 0 ) {
-                exactHitMatchIDs.push_back( hits[i]->id );
-                }
-
-            char *searchPos = strstr( des, mLastHintFilterString );
-            
-            // only count if occurrence of filter string matches whole words
-            // not partial words
-            if( searchPos != NULL && strlen( searchPos ) >= filterLength ) {
-                
-                unsigned int remainLen = strlen( searchPos );
-
-                char frontOK = false;
-                char backOK = false;
-                
-                // space or start of string in front of search phrase
-                if( searchPos == des ||
-                    searchPos[-1] == ' ' ) {
-                    frontOK = true;
-                    }
-                
-                // space or end of string after search phrase
-                if( remainLen == filterLength ||
-                    searchPos[filterLength] == ' ' ) {
-                    backOK = true;
-                    }
-
-                if( frontOK && backOK ) {
-                    hitMatchIDs.push_back( hits[i]->id );
-                    }
-                }
-            
-            delete [] des;
-            }
-        
-        
-        // now find shallowest matching objects
-
-        numHits = hitMatchIDs.size();
-        
-        int startDepth = getObjectDepth( inObjectID );
-        
-        ObjectRecord *startObject = getObject( inObjectID );
-        if( startObject->isUseDummy ) {
-            startDepth = getObjectDepth( startObject->useDummyParent );
-            }
+        SimpleVector<int> hitIDs = findObjectsMatchingWords(
+            mLastHintFilterString,
+            inObjectID,
+            200,
+            &numFilterHits );
         
 
-        int shallowestDepth = UNREACHABLE;
-       
-        for( int i=0; i<numHits; i++ ) {
-            
-            int depth = getObjectDepth( hitMatchIDs.getElementDirect( i ) );
-            
-            if( depth >= startDepth && depth < shallowestDepth ) {
-                shallowestDepth = depth;
-                }
-            }
-
-        SimpleVector<int> hitIDs;
-
-        for( int i=0; i<numHits; i++ ) {
-            int id = hitMatchIDs.getElementDirect( i );
-            
-            int depth = getObjectDepth( id );
-            
-            if( depth == shallowestDepth ) {
-                hitIDs.push_back( id );
-                }
-            }
-        
-
-        if( hits != NULL ) {    
-            delete [] hits;
-            }
-        
-        // there are exact matches
-        // use those instead
-        if( exactHitMatchIDs.size() > 0 ) {
-            hitIDs.deleteAll();
-            hitIDs.push_back_other( &exactHitMatchIDs );
-            }
-        
-
-
-        numHits = hitIDs.size();
+        int numHits = hitIDs.size();
 
         // list of IDs that are used to make hit objects
         SimpleVector<int> precursorIDs;
@@ -9934,8 +9946,148 @@ int LivingLifePage::getNumHints( int inObjectID ) {
             }
 
         }
-
     
+
+
+
+    // new logic:
+    // show all trans leading to this target object
+    if( mLastHintFilterString != NULL ) {
+        
+        SimpleVector<int> hitIDs = findObjectsMatchingWords(
+            mLastHintFilterString,
+            0, // don't filter out what we're holding
+            200,
+            &numFilterHits );
+
+        if( hitIDs.size() > 0 && hitIDs.size() < 10 ) {
+            filteredTrans.deleteAll();
+            unfilteredTrans.deleteAll();
+            
+            SimpleVector<int> frontier;
+            
+            SimpleVector<int> alreadySeenObjects;
+
+            frontier.push_back_other( &hitIDs );
+            
+            while( frontier.size() > 0 ) {
+                printf( "Frontier = " );
+                for( int i=0; i<frontier.size(); i++ ) {
+                    printf( " [ %s ]  ",
+                            getObject( frontier.getElementDirect( i ) )->
+                            description );
+                    }
+                printf( "\n" );
+
+                SimpleVector<int> newFrontier;
+                
+                for( int i=0; i<frontier.size(); i++ ) {
+                    int oID = frontier.getElementDirect( i );
+                    int oD = getObjectDepth( oID );
+                    
+                    int numResults = 0;
+                    int numRemain = 0;
+                    TransRecord **prodTrans =
+                        searchProduces( oID, 
+                                        0,
+                                        200,
+                                        &numResults, &numRemain );
+                    
+                    if( prodTrans != NULL ) {
+                        TransRecord *minDepthTrans = NULL;
+                        int minDepth = UNREACHABLE;
+                        
+                        for( int r=0; r<numResults; r++ ) {
+                            
+                            int actor = prodTrans[r]->actor;
+                            int target = prodTrans[r]->target;
+
+                            int actorD = 0;
+                            int targetD = 0;
+                            
+                            if( actor > 0 ) {
+                                actorD = getObjectDepth( actor );
+                                }
+                            if( target > 0 ) {
+                                targetD = getObjectDepth( target );
+                                }
+
+                            if( actor >= -1 && 
+                                ( actor <= 0 || actorD < oD ) 
+                                &&
+                                target != 0 && targetD < oD 
+                                &&
+                                filteredTrans.getElementIndex( prodTrans[r] ) 
+                                == -1 ) {
+                                
+                                if( prodTrans[r]->lastUseTarget ||
+                                    prodTrans[r]->lastUseActor ) {
+                                    // skip last use transitions
+                                    continue;
+                                    }
+
+                                // skip dummy versions of transitions, too
+                                if( actor > 0 &&
+                                    ( getObject( actor )->isUseDummy ||
+                                      getObject( actor )->isVariableDummy ) ) {
+                                    continue;
+                                    }
+                                if( target > 0 &&
+                                    ( getObject( target )->isUseDummy ||
+                                      getObject( target )->isVariableDummy ) ) {
+                                    continue;
+                                    }                                
+                             
+                                
+                                int maxDepth = actorD;
+                                if( targetD > maxDepth ) {
+                                    maxDepth = targetD;
+                                    }
+                                
+                                if( maxDepth < minDepth ) {
+                                    minDepth = maxDepth;
+                                    minDepthTrans = prodTrans[r];
+                                    }
+                                }
+                            }
+                        if( minDepthTrans != NULL ) {
+                            int actor = minDepthTrans->actor;
+                            int target = minDepthTrans->target;
+
+                            if( actor > 0 ) {
+                                if( alreadySeenObjects.getElementIndex( actor )
+                                    == -1 ) {
+                                    newFrontier.push_back( actor );
+                                    alreadySeenObjects.push_back( actor );
+                                    }
+                                }
+                            
+                            if( target > 0 &&
+                                alreadySeenObjects.getElementIndex( target )
+                                == -1 ) {
+                                newFrontier.push_back( target );
+                                alreadySeenObjects.push_back( target );
+                                }
+                            
+                            filteredTrans.push_back( minDepthTrans );
+                            }
+                        
+                        delete [] prodTrans;
+                        }
+                    }
+                frontier.deleteAll();
+                frontier.push_back_other( &newFrontier );
+                }
+            unfilteredTrans.push_back_other( &filteredTrans );
+            }
+        else {
+            // matches too many things, ignore
+            numFilterHits = 0;
+            }
+        }
+    
+
+
     int numTrans = filteredTrans.size();
 
     int numRelevant = numTrans;
@@ -10026,10 +10178,35 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         else if( tr->target > 0 && tr->target != inObjectID ) {
             depth = getObjectDepth( tr->target );
             }
+
+
+        if( mLastHintFilterString != NULL ) {
+            // new logic:
+            // show all trans leading to this target object
+            
+            // sort by largest depth
+
+            if( tr->actor > 0 ) {
+                depth = getObjectDepth( tr->actor );
+                }
+
+            if( tr->target > 0 ) {
+                int depthT = getObjectDepth( tr->target );
+                if( depthT > depth ) {
+                    depth = depthT;
+                    }
+                }
+            }
+        
+
             
             
         char stringAlreadyPresent = false;
-            
+        
+        // new logic:
+        // show all that we found if filtering
+        // but still remove duplicates if we're not filtering
+        if( mLastHintFilterString == NULL )
         if( tr->actor > 0 && tr->actor != inObjectID ) {
             ObjectRecord *otherObj = getObject( tr->actor );
                 
@@ -10055,6 +10232,10 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                 }
             }
             
+        // new logic:
+        // show all that we found if filtering
+        // but still remove duplicates if we're not filtering
+        if( mLastHintFilterString == NULL )
         if( tr->target > 0 && tr->target != inObjectID ) {
             ObjectRecord *otherObj = getObject( tr->target );
                 
@@ -10093,6 +10274,17 @@ int LivingLifePage::getNumHints( int inObjectID ) {
     
     for( int i=0; i<numInQueue; i++ ) {
         mLastHintSortedList.push_back( queue.removeMin() );
+        }
+    
+    if( mLastHintFilterString != NULL && numFilterHits > 0 ) {
+        // reverse the order
+        SimpleVector< TransRecord *> revList( mLastHintSortedList.size() );
+        
+        for( int i=mLastHintSortedList.size()-1; i >= 0; i-- ) {
+            revList.push_back( mLastHintSortedList.getElementDirect( i ) );
+            }
+        mLastHintSortedList.deleteAll();
+        mLastHintSortedList.push_back_other( &revList );
         }
     
     
@@ -10154,8 +10346,12 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
             actorString = stringToUpperCase( getObject( actor )->description );
             stripDescriptionComment( actorString );
             }
-        else if( actor == 0 ) {
+        else if( actor == 0 || actor == -2 ) {
+            // show bare hand for default actions too
             actorString = stringDuplicate( translate( "bareHandHint" ) );
+            }
+        else if( actor == -1 ) {
+            actorString = stringDuplicate( translate( "timeHint" ) );
             }
         else {
             actorString = stringDuplicate( "" );
@@ -10210,26 +10406,32 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
             }
 
 
+        mCurrentHintTargetObject[0] = 0;
+        mCurrentHintTargetObject[1] = 0;
+
         // never show visual pointer toward what we're holding
         if( target > 0 && target != inObjectID && 
             target != inDoNotPointAtThis ) {
-            mCurrentHintTargetObject = target;
+            mCurrentHintTargetObject[1] = target;
             }
-        else if( actor > 0 && actor != inObjectID &&
+        if( actor > 0 && actor != inObjectID &&
                  actor != inDoNotPointAtThis ) {
-            mCurrentHintTargetObject = actor;
+            mCurrentHintTargetObject[0] = actor;
             }
-        else if( actor > 0 && target > 0 &&
-                 actor == target ) {
+        
+        if( actor > 0 && target > 0 &&
+            actor == target ) {
             // both actor and target are same
             // show pointer to ones that are on the ground
-            mCurrentHintTargetObject = actor;
+            mCurrentHintTargetObject[0] = actor;
+            mCurrentHintTargetObject[1] = 0;
             }
         else if( actor == 0 && target > 0 && 
                  target != inDoNotPointAtThis ) {
             // bare hand action
             // show target even if it matches what we're giving hints about
-            mCurrentHintTargetObject = target;
+            mCurrentHintTargetObject[0] = target;
+            mCurrentHintTargetObject[1] = 0;
             }
         
         
@@ -10969,8 +11171,49 @@ void LivingLifePage::step() {
     
     if( ourObject != NULL && mNextHintObjectID != 0 &&
         getNumHints( mNextHintObjectID ) > 0 ) {
+
+
         
-        if( mCurrentHintObjectID != mNextHintObjectID ||
+        if( mHintFilterString != NULL &&
+            mCurrentHintObjectID != mNextHintObjectID ) {
+            // check if we should jump the hint index to hint about this
+            // thing we just picked up relative to our goal object
+            
+            int matchID = mNextHintObjectID;
+            
+            ObjectRecord *o = getObject( matchID );
+            
+            if( o->isUseDummy ) {
+                matchID = o->useDummyParent;
+                }
+            else if( o->isVariableDummy ) {
+                matchID = o->variableDummyParent;
+                }
+
+            // don't switch if we're already matched
+            TransRecord *currHintTrans = 
+                mLastHintSortedList.getElementDirect( mCurrentHintIndex );
+            
+            if( currHintTrans->actor != matchID && 
+                currHintTrans->target != matchID ) {
+                
+                for( int i=0; i<mLastHintSortedList.size(); i++ ) {
+                    TransRecord *t = mLastHintSortedList.getElementDirect( i );
+                    
+                    if( t->actor == matchID ||
+                        t->target == matchID ) {
+                        
+                        mNextHintIndex = i;
+                        break;
+                        }
+                    }
+                }
+            }
+        
+
+
+        if( ( mHintFilterString == NULL &&
+              mCurrentHintObjectID != mNextHintObjectID ) ||
             mCurrentHintIndex != mNextHintIndex ||
             mForceHintRefresh ) {
             
@@ -11016,8 +11259,10 @@ void LivingLifePage::step() {
             mCurrentHintObjectID = mNextHintObjectID;
             mCurrentHintIndex = mNextHintIndex;
             
-            mHintBookmarks[ mCurrentHintObjectID ] = mCurrentHintIndex;
-
+            if( mHintFilterString == NULL ) {
+                mHintBookmarks[ mCurrentHintObjectID ] = mCurrentHintIndex;
+                }
+            
             mNumTotalHints[ i ] = 
                 getNumHints( mCurrentHintObjectID );
 
@@ -11033,12 +11278,40 @@ void LivingLifePage::step() {
 
             if( autoHint ) {
                 // hide pointer until they start tabbing again
-                mCurrentHintTargetObject = 0;
+                mCurrentHintTargetObject[0] = 0;
+                mCurrentHintTargetObject[1] = 0;
                 }
             
 
-            mHintExtraOffset[ i ].x = - getLongestLine( mHintMessage[i] ) / gui_fov_scale_hud;
+            mHintExtraOffset[ i ].x = - getLongestLine( mHintMessage[i] );
             }
+        else {
+            // even in case where filter set, update this
+            mCurrentHintObjectID = mNextHintObjectID;
+            }
+
+
+
+        if( mHintFilterString != NULL &&
+            mCurrentHintIndex >= 0 ) {
+            // special case
+            // always show pointers to objects for current hint, unless
+            // we're holding one
+            
+            TransRecord *t = 
+                mLastHintSortedList.getElementDirect( mCurrentHintIndex );
+            int heldID = getObjectParent( ourObject->holdingID );
+            
+            
+            if( t->actor != heldID ) {
+                mCurrentHintTargetObject[0] = t->actor;
+                }
+            if( t->target != heldID ) {
+                mCurrentHintTargetObject[1] = t->target;
+                }
+            }
+
+
         }
     else if( ourObject != NULL && mNextHintObjectID != 0 &&
              getNumHints( mNextHintObjectID ) == 0 ) {
@@ -14287,8 +14560,11 @@ void LivingLifePage::step() {
                             // hint about it
                             
                             mNextHintObjectID = existing->holdingID;
-                            mNextHintIndex = 
-                                mHintBookmarks[ mNextHintObjectID ];
+                            
+                            if( mHintFilterString == NULL ) {
+                                mNextHintIndex = 
+                                    mHintBookmarks[ mNextHintObjectID ];
+                                }
                             }
                         
 
@@ -18647,9 +18923,15 @@ void LivingLifePage::makeActive( char inFresh ) {
         return;
         }
 
+    mOldHintArrows.deleteAll();
+
     mGlobalMessageShowing = false;
     mGlobalMessageStartTime = 0;
     mGlobalMessagesToDestroy.deallocateStringElements();
+    
+
+    mCurrentHintTargetObject[0] = 0;
+    mCurrentHintTargetObject[1] = 0;
     
     
     offScreenSounds.deleteAll();
@@ -20148,18 +20430,24 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( tr == NULL || tr->newTarget == destID ) {
                 // give hint about dest object which will be unchanged 
                 mNextHintObjectID = destID;
-                mNextHintIndex = mHintBookmarks[ destID ];
+                if( mHintFilterString == NULL ) {
+                    mNextHintIndex = mHintBookmarks[ destID ];
+                    }
                 }
             else if( tr->newActor > 0 && 
                      ourLiveObject->holdingID != tr->newActor ) {
                 // give hint about how what we're holding will change
                 mNextHintObjectID = tr->newActor;
-                mNextHintIndex = mHintBookmarks[ tr->newTarget ];
+                if( mHintFilterString == NULL ) {
+                    mNextHintIndex = mHintBookmarks[ tr->newTarget ];
+                    }
                 }
             else if( tr->newTarget > 0 ) {
                 // give hint about changed target after we act on it
                 mNextHintObjectID = tr->newTarget;
-                mNextHintIndex = mHintBookmarks[ tr->newTarget ];
+                if( mHintFilterString == NULL ) {
+                    mNextHintIndex = mHintBookmarks[ tr->newTarget ];
+                    }
                 }
             }
         else {
@@ -20168,7 +20456,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
             if( getTrans( 0, destID ) == NULL ) {
                 mNextHintObjectID = destID;
-                mNextHintIndex = mHintBookmarks[ destID ];
+                if( mHintFilterString == NULL ) {
+                    mNextHintIndex = mHintBookmarks[ destID ];
+                    }
                 }
             }
         }
@@ -22055,6 +22345,13 @@ void LivingLifePage::putInMap( int inMapI, ExtraMapObject *inObj ) {
     mMapSubContainedStacks[ inMapI ] = inObj->subContainedStack;
     }
 
+void LivingLifePage::pushOldHintArrow( int inIndex ) {
+    int i = inIndex;
+    if( mCurrentHintTargetPointerFade[i] > 0 ) {
+        OldHintArrow h = { mLastHintTargetPos[i],
+                           mCurrentHintTargetPointerBounce[i],
+                           mCurrentHintTargetPointerFade[i] };
+        mOldHintArrows.push_back( h );
 
 int getRandomIndex( char *inNameList, int inListLen ) {
 	int limit = inListLen - 1;
