@@ -1,0 +1,43 @@
+
+
+
+To isolate 504 Gateway errors, each separate section of website should use a separate PHP FPM proces pool.
+
+
+For each one, make a config file in here, like this:
+
+/etc/php/5.6/fpm/pool.d/reflector.conf
+
+
+In this conf file, define the listen unix socket like this:
+
+listen = /run/php/php5.6-fpm-reflector.sock
+
+
+After doing this, run:
+
+service php5.6-fpm  reload
+
+Then check that the socket file has been created.
+
+
+
+Next, edit this:
+
+/etc/nginx/sites-available/default
+
+
+Add this to the "server {" block:
+
+        location ^~ /updateServer {                                             
+                 location ~ \.php$ {                                            
+                          include snippets/fastcgi-php.conf;                    
+                          fastcgi_pass unix:/run/php/php5.6-fpm-updateServer.so\
+ck;                                                                             
+                 }                                                              
+        } 
+
+
+Then call:
+
+service nginx  reload
