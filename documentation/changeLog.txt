@@ -7,6 +7,9 @@ Version 272    ???
 
 --Fixed crash when switching hint target object with a non-matching filter.
 
+--Fixed when hint filter string doesn't match anything, so that non-matching
+  filter doesn't interfere with normal hint behavior.
+
 
 
 

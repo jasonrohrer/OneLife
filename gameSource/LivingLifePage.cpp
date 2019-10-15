@@ -2354,6 +2354,8 @@ LivingLifePage::LivingLifePage()
         }
     
     mHintFilterString = NULL;
+    mHintFilterStringNoMatch = false;
+    
     mLastHintFilterString = NULL;
     mPendingFilterString = NULL;
     
@@ -9886,6 +9888,9 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         mPendingFilterString = NULL;
         }
 
+
+    mHintFilterStringNoMatch = false;
+
     if( mLastHintFilterString != NULL ) {
 
         if( mPendingFilterString != NULL ) {
@@ -9901,6 +9906,7 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                 // exist
                 key = "noMatch";
                 reasonString = stringDuplicate( translate( key ) );
+                mHintFilterStringNoMatch = true;
                 }
             else {
                 const char *formatString = translate( key );
@@ -10946,7 +10952,7 @@ void LivingLifePage::step() {
 
 
         
-        if( mHintFilterString != NULL &&
+        if( ! isHintFilterStringInvalid() &&
             mCurrentHintObjectID != mNextHintObjectID ) {
             // check if we should jump the hint index to hint about this
             // thing we just picked up relative to our goal object
@@ -10987,7 +10993,7 @@ void LivingLifePage::step() {
         
 
 
-        if( ( mHintFilterString == NULL &&
+        if( ( isHintFilterStringInvalid() &&
               mCurrentHintObjectID != mNextHintObjectID ) ||
             mCurrentHintIndex != mNextHintIndex ||
             mForceHintRefresh ) {
@@ -10996,7 +11002,7 @@ void LivingLifePage::step() {
             
             // hide target object indicator unless player picked this hint
             if( mCurrentHintObjectID != mNextHintObjectID &&
-                mHintFilterString == NULL ) {
+                isHintFilterStringInvalid() ) {
                 // they changed what they are holding
                 
                 // and they don't have a filter applied currently
@@ -11034,7 +11040,7 @@ void LivingLifePage::step() {
             mCurrentHintObjectID = mNextHintObjectID;
             mCurrentHintIndex = mNextHintIndex;
             
-            if( mHintFilterString == NULL ) {
+            if( isHintFilterStringInvalid() ) {
                 mHintBookmarks[ mCurrentHintObjectID ] = mCurrentHintIndex;
                 }
             
@@ -11067,7 +11073,7 @@ void LivingLifePage::step() {
 
 
 
-        if( mHintFilterString != NULL &&
+        if( ! isHintFilterStringInvalid() &&
             mCurrentHintIndex >= 0 ) {
             // special case
             // always show pointers to objects for current hint, unless
@@ -14337,7 +14343,7 @@ void LivingLifePage::step() {
                             
                             mNextHintObjectID = existing->holdingID;
                             
-                            if( mHintFilterString == NULL ) {
+                            if( isHintFilterStringInvalid() ) {
                                 mNextHintIndex = 
                                     mHintBookmarks[ mNextHintObjectID ];
                                 }
@@ -20187,7 +20193,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( tr == NULL || tr->newTarget == destID ) {
                 // give hint about dest object which will be unchanged 
                 mNextHintObjectID = destID;
-                if( mHintFilterString == NULL ) {
+                if( isHintFilterStringInvalid() ) {
                     mNextHintIndex = mHintBookmarks[ destID ];
                     }
                 }
@@ -20195,14 +20201,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                      ourLiveObject->holdingID != tr->newActor ) {
                 // give hint about how what we're holding will change
                 mNextHintObjectID = tr->newActor;
-                if( mHintFilterString == NULL ) {
+                if( isHintFilterStringInvalid() ) {
                     mNextHintIndex = mHintBookmarks[ tr->newTarget ];
                     }
                 }
             else if( tr->newTarget > 0 ) {
                 // give hint about changed target after we act on it
                 mNextHintObjectID = tr->newTarget;
-                if( mHintFilterString == NULL ) {
+                if( isHintFilterStringInvalid() ) {
                     mNextHintIndex = mHintBookmarks[ tr->newTarget ];
                     }
                 }
@@ -20213,7 +20219,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
             if( getTrans( 0, destID ) == NULL ) {
                 mNextHintObjectID = destID;
-                if( mHintFilterString == NULL ) {
+                if( isHintFilterStringInvalid() ) {
                     mNextHintIndex = mHintBookmarks[ destID ];
                     }
                 }
@@ -21959,4 +21965,10 @@ void LivingLifePage::pushOldHintArrow( int inIndex ) {
                            mCurrentHintTargetPointerFade[i] };
         mOldHintArrows.push_back( h );
         }
+    }
+
+
+
+char LivingLifePage::isHintFilterStringInvalid() {
+    return mHintFilterString == NULL || mHintFilterStringNoMatch;
     }
