@@ -3,6 +3,16 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+
+Server Fixes
+
+--Added utility program for dumping map value at coordinates at a given
+  location on a live server.
+
+
+
+
 Version 270    2019-October-12
 
 --Editor can copy slot movements relative to saved position.
@@ -12,6 +22,8 @@ Version 270    2019-October-12
   simpler, as you TAB.  Each step shows you hint arrows for nearby ingredients,
   and when you pick up an ingredient object, the list automatically jumps to
   the most relevant hint for that ingredient.
+
+
 
 
 Server Fixes
