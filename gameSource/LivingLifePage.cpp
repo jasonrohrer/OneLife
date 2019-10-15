@@ -10962,21 +10962,24 @@ void LivingLifePage::step() {
                 matchID = o->variableDummyParent;
                 }
 
-            // don't switch if we're already matched
-            TransRecord *currHintTrans = 
-                mLastHintSortedList.getElementDirect( mCurrentHintIndex );
-            
-            if( currHintTrans->actor != matchID && 
-                currHintTrans->target != matchID ) {
+            if( mLastHintSortedList.size() > mCurrentHintIndex ) {
+                // don't switch if we're already matched
+                TransRecord *currHintTrans = 
+                    mLastHintSortedList.getElementDirect( mCurrentHintIndex );
                 
-                for( int i=0; i<mLastHintSortedList.size(); i++ ) {
-                    TransRecord *t = mLastHintSortedList.getElementDirect( i );
+                if( currHintTrans->actor != matchID && 
+                    currHintTrans->target != matchID ) {
                     
-                    if( t->actor == matchID ||
-                        t->target == matchID ) {
+                    for( int i=0; i<mLastHintSortedList.size(); i++ ) {
+                        TransRecord *t = 
+                            mLastHintSortedList.getElementDirect( i );
                         
-                        mNextHintIndex = i;
-                        break;
+                        if( t->actor == matchID ||
+                            t->target == matchID ) {
+                            
+                            mNextHintIndex = i;
+                            break;
+                            }
                         }
                     }
                 }
@@ -11070,16 +11073,18 @@ void LivingLifePage::step() {
             // always show pointers to objects for current hint, unless
             // we're holding one
             
-            TransRecord *t = 
-                mLastHintSortedList.getElementDirect( mCurrentHintIndex );
-            int heldID = getObjectParent( ourObject->holdingID );
-            
-            
-            if( t->actor != heldID ) {
-                mCurrentHintTargetObject[0] = t->actor;
-                }
-            if( t->target != heldID ) {
-                mCurrentHintTargetObject[1] = t->target;
+            if( mLastHintSortedList.size() > mCurrentHintIndex ) {
+                TransRecord *t = 
+                    mLastHintSortedList.getElementDirect( mCurrentHintIndex );
+                int heldID = getObjectParent( ourObject->holdingID );
+                
+                
+                if( t->actor != heldID ) {
+                    mCurrentHintTargetObject[0] = t->actor;
+                    }
+                if( t->target != heldID ) {
+                    mCurrentHintTargetObject[1] = t->target;
+                    }
                 }
             }
 
