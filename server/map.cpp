@@ -6700,6 +6700,15 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                 }
             }
         }
+    else if( o->isTapOutTrigger ) {
+        // this object, when created, taps out other objects in grid around
+        
+        // FIXME:
+        // get record
+        // process cells in map according to transition of
+        // this new object applied to old contents of cell
+        }
+    
     }
 
 
