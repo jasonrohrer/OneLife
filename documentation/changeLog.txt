@@ -20,6 +20,11 @@ Version 272    ???
 --Fixed a crash when server (mistakenly) tells us we're responsible for an
   object change happening off of our known map area.
 
+--Map implementation.  Holding a blank map and charcoal and speaking a map name
+  creates a marked map to your current location.  Picking up a marked map
+  causes you to speak the map name and set your home arrow to the map's
+  destination.
+
 
 
 

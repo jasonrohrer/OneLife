@@ -222,6 +222,7 @@ static void clearLocationSpeech() {
 typedef struct {
         GridPos pos;
         char ancient;
+        char temporary;
     } HomePos;
 
     
@@ -261,16 +262,45 @@ static void removeHomeLocation( int inX, int inY ) {
     }
 
 
+static void removeAllTempHomeLocations() {
+    for( int i=0; i<homePosStack.size(); i++ ) {
+        if( homePosStack.getElementDirect( i ).temporary ) {
+            homePosStack.deleteElement( i );
+            i --;
+            break;
+            }
+        }
+    }
+
+
 
 static void addHomeLocation( int inX, int inY ) {
+    removeAllTempHomeLocations();
+
     removeHomeLocation( inX, inY );
     GridPos newPos = { inX, inY };
     HomePos p;
     p.pos = newPos;
     p.ancient = false;
+    p.temporary = false;
     
     homePosStack.push_back( p );
     }
+
+
+
+static void addTempHomeLocation( int inX, int inY ) {
+    removeAllTempHomeLocations();
+    
+    GridPos newPos = { inX, inY };
+    HomePos p;
+    p.pos = newPos;
+    p.ancient = false;
+    p.temporary = true;
+    
+    homePosStack.push_back( p );
+    }
+
 
 
 static void addAncientHomeLocation( int inX, int inY ) {
@@ -289,6 +319,7 @@ static void addAncientHomeLocation( int inX, int inY ) {
     HomePos p;
     p.pos = newPos;
     p.ancient = true;
+    p.temporary = false;
     
     homePosStack.push_front( p );
     }
@@ -16527,6 +16558,28 @@ void LivingLifePage::step() {
                                         getVectorFromCamera( 
                                             existing->currentPos.x, 
                                             existing->currentPos.y ) );
+                                    }
+
+                                if( existing->id == ourID ) {
+                                    // look for map metadata
+                                    char *starPos =
+                                        strstr( existing->currentSpeech,
+                                                " *map" );
+                                    
+                                    if( starPos != NULL ) {
+                                        
+                                        int mapX, mapY;
+                                        
+                                        int numRead = sscanf( starPos,
+                                                              " *map %d %d",
+                                                              &mapX, &mapY );
+                                        if( numRead == 2 ) {
+                                            addTempHomeLocation( mapX, mapY );
+                                            }
+
+                                        // trim it off
+                                        starPos[0] ='\0';
+                                        }
                                     }
                                 }
                             
