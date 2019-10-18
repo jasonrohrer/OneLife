@@ -5221,6 +5221,14 @@ static void holdingSomethingNew( LiveObject *inPlayer,
                     metaData[ sayLimit + 1 ] = '.';
                     metaData[ sayLimit + 2 ] = '.';
                     metaData[ sayLimit + 3 ] = '\0';
+
+                    // watch for truncated map metadata
+                    // trim it off (too young to read maps)
+                    char *starLoc = strstr( metaData, " *" );
+                    
+                    if( starLoc != NULL ) {
+                        starLoc[0] = '\0';
+                        }
                     }
                 char *quotedPhrase = autoSprintf( ":%s", metaData );
                 makePlayerSay( inPlayer, quotedPhrase );
@@ -15027,9 +15035,40 @@ int main() {
                                 ! getMetadata( nextPlayer->holdingID, 
                                                metaData ) ) {
 
-                                memset( metaData, 0, MAP_METADATA_LENGTH );
-                                memcpy( metaData, m.saidText, len + 1 );
+                                char *textToAdd = NULL;
                                 
+
+                                if( strstr( 
+                                        getObject( nextPlayer->holdingID )->
+                                        description,
+                                        "+map" ) != NULL ) {
+                                    // holding a potential map
+                                    // add coordinates to where we're standing
+                                    GridPos p = getPlayerPos( nextPlayer );
+                                    
+                                    textToAdd = autoSprintf( 
+                                        "%s *map %d %d",
+                                        m.saidText, p.x, p.y );
+                                    
+                                    if( strlen( textToAdd ) >= 
+                                        MAP_METADATA_LENGTH ) {
+                                        // too long once coords added
+                                        // skip adding
+                                        delete [] textToAdd;
+                                        textToAdd = 
+                                            stringDuplicate( m.saidText );
+                                        }
+                                    }
+                                else {
+                                    textToAdd = stringDuplicate( m.saidText );
+                                    }
+
+                                memset( metaData, 0, MAP_METADATA_LENGTH );
+                                memcpy( metaData, textToAdd, 
+                                        strlen( textToAdd ) + 1 );
+                                
+                                delete [] textToAdd;
+
                                 nextPlayer->holdingID = 
                                     addMetadata( nextPlayer->holdingID,
                                                  metaData );
@@ -20938,6 +20977,45 @@ int main() {
                                     speakerAge = listenerAge;
                                     }
                                 
+
+                                char *trimmedPhrase =
+                                    stringDuplicate( newSpeechPhrases.
+                                                     getElementDirect( u ) );
+
+                                char *starLoc = 
+                                    strstr( trimmedPhrase, " *map" );
+                                    
+                                if( starLoc != NULL ) {
+                                    if( speakerID != listenerID ) {
+                                        // only send map metadata through
+                                        // if we picked up the map ourselves
+                                        // trim it otherwise
+                                        
+                                        starLoc[0] = '\0';
+                                        }
+                                    else {
+                                        // make coords birth-relative
+                                        // to person reading map
+                                        int mapX, mapY;
+                                        
+                                        int numRead = 
+                                            sscanf( starLoc, 
+                                                    " *map %d %d",
+                                                    &mapX, &mapY );
+                                        if( numRead == 2 ) {
+                                            starLoc[0] = '\0';
+                                            char *newTrimmed = autoSprintf( 
+                                                "%s *map %d %d",
+                                                trimmedPhrase,
+                                                mapX - nextPlayer->birthPos.x, 
+                                                mapY - nextPlayer->birthPos.y );
+                                            
+                                            delete [] trimmedPhrase;
+                                            trimmedPhrase = newTrimmed;
+                                            }
+                                        }
+                                    }
+
                                 
                                 char *translatedPhrase;
                                 
@@ -20952,15 +21030,12 @@ int main() {
                                     minActivePlayersForLanguages ) {
                                     
                                     translatedPhrase =
-                                        stringDuplicate( 
-                                            newSpeechPhrases.
-                                            getElementDirect( u ) );
+                                        stringDuplicate( trimmedPhrase );
                                     }
                                 else {
                                     translatedPhrase =
                                         mapLanguagePhrase( 
-                                            newSpeechPhrases.
-                                                getElementDirect( u ),
+                                            trimmedPhrase,
                                             speakerEveID,
                                             listenerEveID,
                                             speakerID,
@@ -21003,6 +21078,7 @@ int main() {
                                                           curseFlag,
                                                           translatedPhrase );
                                 delete [] translatedPhrase;
+                                delete [] trimmedPhrase;
                                 
                                 messageWorking.appendElementString( line );
                                 
