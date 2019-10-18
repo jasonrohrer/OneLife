@@ -14903,6 +14903,12 @@ int main() {
                             double closestDist = DBL_MAX;
                             for( int i=0; i<activeKillStates.size(); i++ ) {
                                 KillState *s = activeKillStates.getElement( i );
+
+                                if( s->targetID == nextPlayer->id ) {
+                                    // can't join posse targetting self
+                                    continue;
+                                    }
+                                
                                 LiveObject *killer = 
                                     getLiveObject( s->killerID );
                                 

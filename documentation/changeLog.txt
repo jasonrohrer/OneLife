@@ -37,6 +37,9 @@ Server Fixes
   nearby objects on a grid pattern with a given radius.  Used for shallow wells
   that tapout all spring heads in an 80-tile radius.
 
+--Can't join posse targeting yourself.  Related to #426
+
+
 
 
 
