@@ -17,6 +17,9 @@ Version 272    ???
   chisel has become partially used).  Before, there was no complete crafting
   process hinted for Lock and Key Parts because of this.
 
+--Fixed a crash when server (mistakenly) tells us we're responsible for an
+  object change happening off of our known map area.
+
 
 
 
@@ -24,6 +27,10 @@ Server Fixes
 
 --Added utility program for dumping map value at coordinates at a given
   location on a live server.
+
+--Tapout trigger implementation.  Upon construction, a given object can tapout
+  nearby objects on a grid pattern with a given radius.  Used for shallow wells
+  that tapout all spring heads in an 80-tile radius.
 
 
 

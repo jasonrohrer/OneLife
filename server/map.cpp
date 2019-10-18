@@ -6702,11 +6702,37 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
         }
     else if( o->isTapOutTrigger ) {
         // this object, when created, taps out other objects in grid around
+
+        // don't make current player responsible for all these changes
+        int restoreResponsiblePlayer = currentResponsiblePlayer;
+        currentResponsiblePlayer = -1;        
         
-        // FIXME:
-        // get record
-        // process cells in map according to transition of
-        // this new object applied to old contents of cell
+        TapoutRecord *r = getTapoutRecord( inID );
+        
+        if( r != NULL ) {
+            for( int y =  inY - r->limitY; 
+                     y <= inY + r->limitY; 
+                     y += r->gridSpacingY ) {
+                
+                for( int x =  inX - r->limitX; 
+                         x <= inX + r->limitX; 
+                         x += r->gridSpacingX ) {
+                    
+                    int id = getMapObjectRaw( x, y );
+                    
+                    // change triggered by tapout represented by 
+                    // tapoutTrigger object getting used as actor
+                    // on tapoutTarget
+                    TransRecord *t = getPTrans( inID, id );
+                    
+                    if( t != NULL ) {
+                        setMapObjectRaw( x, y, t->newTarget );
+                        }
+                    }
+                }
+            }
+        
+        currentResponsiblePlayer = restoreResponsiblePlayer;
         }
     
     }
