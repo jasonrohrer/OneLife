@@ -6498,24 +6498,6 @@ static void triggerApocalypseNow( const char *inMessage ) {
     AppLog::infoF( "Local apocalypse triggered:  %s\n", inMessage );
     
     apocalypseTriggered = true;
-    
-    // restart Eve window, and let this player be the
-    // first new Eve
-    eveWindowStart = 0;
-    
-    // reset other apocalypse trigger
-    lastBabyPassedThresholdTime = 0;
-    
-    // repopulate this list later when next Eve window ends
-    familyNamesAfterEveWindow.deallocateStringElements();
-    familyLineageEveIDsAfterEveWindow.deleteAll();
-    familyCountsAfterEveWindow.deleteAll();
-    nextBabyFamilyIndex = 0;
-    
-    if( postWindowFamilyLogFile != NULL ) {
-        fclose( postWindowFamilyLogFile );
-        postWindowFamilyLogFile = NULL;
-        }
     }
 
 
@@ -10033,6 +10015,24 @@ void apocalypseStep() {
                 }
             
             AppLog::info( "Apocalypse triggerered, starting it" );
+
+            // restart Eve window, and let this player be the
+            // first new Eve
+            eveWindowStart = 0;
+    
+            // reset other apocalypse trigger
+            lastBabyPassedThresholdTime = 0;
+            
+            // repopulate this list later when next Eve window ends
+            familyNamesAfterEveWindow.deallocateStringElements();
+            familyLineageEveIDsAfterEveWindow.deleteAll();
+            familyCountsAfterEveWindow.deleteAll();
+            nextBabyFamilyIndex = 0;
+            
+            if( postWindowFamilyLogFile != NULL ) {
+                fclose( postWindowFamilyLogFile );
+                postWindowFamilyLogFile = NULL;
+                }
 
 
             reportArcEnd();

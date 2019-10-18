@@ -41,6 +41,10 @@ Server Fixes
 
 --Fixed so that leaving a posse clears your speed boost.  Fixes #426
 
+--Fixed so that endtower apocalypse trigger restarts eve window and does other
+  necessary bookkeeping steps.  Fixes #428
+
+
 
 
 
