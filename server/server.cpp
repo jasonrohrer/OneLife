@@ -10751,7 +10751,7 @@ static int countPosseSize( LiveObject *inTarget ) {
 
 
 static void updatePosseSize( LiveObject *inTarget, 
-                             LiveObject *inPossibleLastKiller = NULL ) {
+                             LiveObject *inRemovedKiller = NULL ) {
     
     int p = countPosseSize( inTarget );
     
@@ -10774,13 +10774,13 @@ static void updatePosseSize( LiveObject *inTarget,
             }
         }
 
-    if( p == 0 && inPossibleLastKiller != NULL ) {
-        int oldSize = inPossibleLastKiller->killPosseSize;
+    if( inRemovedKiller != NULL ) {
+        int oldSize = inRemovedKiller->killPosseSize;
         
-        inPossibleLastKiller->killPosseSize = 0;
+        inRemovedKiller->killPosseSize = 0;
         if( oldSize != 0 ) {
             killStatePosseChangedPlayerIDs.push_back( 
-                inPossibleLastKiller->id );
+                inRemovedKiller->id );
             }
         }
     }

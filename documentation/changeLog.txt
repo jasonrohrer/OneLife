@@ -39,6 +39,7 @@ Server Fixes
 
 --Can't join posse targeting yourself.  Related to #426
 
+--Fixed so that leaving a posse clears your speed boost.  Fixes #426
 
 
 
