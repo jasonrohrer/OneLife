@@ -16636,6 +16636,17 @@ void LivingLifePage::step() {
                                 strlen( ls.speech ) / 5;
 
                             locationSpeech.push_back( ls );
+
+                            // remove old location speech at same pos
+                            for( int i=0; i<locationSpeech.size() - 1; i++ ) {
+                                LocationSpeech other = 
+                                    locationSpeech.getElementDirect( i );
+                                if( other.pos.x == ls.pos.x &&
+                                    other.pos.y == ls.pos.y ) {
+                                    locationSpeech.deleteElement( i );
+                                    i--;
+                                    }
+                                }
                             }
                         }
                     }
