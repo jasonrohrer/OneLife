@@ -13312,13 +13312,13 @@ void LivingLifePage::step() {
                                 
                                 char addedOrRemoved = false;
                                 
-                                if( newID != 0 &&
+                                if( newID > 0 &&
                                     getObject( newID )->homeMarker ) {
                                     
                                     addHomeLocation( x, y );
                                     addedOrRemoved = true;
                                     }
-                                else if( old != 0 &&
+                                else if( old > 0 &&
                                          getObject( old )->homeMarker ) {
                                     removeHomeLocation( x, y );
                                     addedOrRemoved = true;
