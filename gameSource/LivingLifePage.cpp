@@ -5256,7 +5256,37 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             }
                         }
                     else {
-                        drawSprite( s->tiles[setY][setX], pos );
+                        // non-square piece
+                        // avoid drawing if completely overdrawn by floors
+                        // in 3x3 grid around
+                        
+                        char floorL = false;
+                        char floorA = false;
+                        char floorAL = false;
+                        char floorAR = false;
+                        char floorBL = false;
+                    
+                        if( isInBounds( x -1, y, mMapD ) ) {    
+                            floorL = mMapFloors[ mapI - 1 ] > 0;
+                            }
+                        if( isInBounds( x, y+1, mMapD ) ) {    
+                            floorA = mMapFloors[ mapI + mMapD ] > 0;
+                            }
+                        if( isInBounds( x-1, y+1, mMapD ) ) {    
+                            floorAL = mMapFloors[ mapI + mMapD - 1 ] > 0;
+                            }
+                        if( isInBounds( x+1, y+1, mMapD ) ) {    
+                            floorAR = mMapFloors[ mapI + mMapD + 1 ] > 0;
+                            }
+                        if( isInBounds( x-1, y-1, mMapD ) ) {    
+                            floorBL = mMapFloors[ mapI - mMapD - 1 ] > 0;
+                            }
+
+                        if( !( floorAt && floorR && floorB && floorBR &&
+                               floorL && floorA && floorAL && floorAR &&
+                               floorBL ) ) {
+                            drawSprite( s->tiles[setY][setX], pos );
+                            }
                         }
                     if( inBounds ) {
                         mMapCellDrawnFlags[mapI] = true;

@@ -27,6 +27,9 @@ Version 272    ???
 
 --VOG text at same location replaces previous text instead of overlapping.
 
+--Improved frame rate in cities by reducing overdraw.  Biome tiles that are
+  compltely covered by floors don't need to be drawn.
+
 
 
 
