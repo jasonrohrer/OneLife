@@ -23,7 +23,8 @@ Version 272    ???
 --Map implementation.  Holding a blank map and charcoal and speaking a map name
   creates a marked map to your current location.  Picking up a marked map
   causes you to speak the map name and set your home arrow to the map's
-  destination.
+  destination for the next 60 seconds, or as long as you continue to hold the
+  map.
 
 --VOG text at same location replaces previous text instead of overlapping.
 
