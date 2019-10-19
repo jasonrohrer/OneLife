@@ -5225,6 +5225,23 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         diagB = mMapBiomes[ mapI + mMapD + 1 ];
                         }
                     
+                    char floorAt = mMapFloors[ mapI ] > 0;
+                    char floorR = false;
+                    char floorB = false;
+                    char floorBR = false;
+                    
+                    if( isInBounds( x +1, y, mMapD ) ) {    
+                        floorR = mMapFloors[ mapI + 1 ] > 0;
+                        }
+                    if( isInBounds( x, y - 1, mMapD ) ) {    
+                        floorB = mMapFloors[ mapI - mMapD ] > 0;
+                        }
+                    if( isInBounds( x +1, y - 1, mMapD ) ) {    
+                        floorBR = mMapFloors[ mapI - mMapD + 1 ] > 0;
+                        }
+
+
+
                     if( leftB == b &&
                         aboveB == b &&
                         diagB == b ) {
@@ -5232,7 +5249,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         // surrounded by same biome above and to left
                         // AND diagonally to the above-right
                         // draw square tile here to save pixel fill time
-                        drawSprite( s->squareTiles[setY][setX], pos );
+                        
+                        // skip if biome square completely covered by floors
+                        if( !( floorAt && floorR && floorB && floorBR ) ) {
+                            drawSprite( s->squareTiles[setY][setX], pos );
+                            }
                         }
                     else {
                         drawSprite( s->tiles[setY][setX], pos );
