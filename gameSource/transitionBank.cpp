@@ -253,11 +253,24 @@ static void regenUsesAndProducesMaps() {
         if( t->newActor != 0 ) {
             producesMap[t->newActor].push_back( t );
             }
+
+        if( t->actorChangeChance < 1.0 && t->newActorNoChange != 0 &&
+            t->newActorNoChange != t->newActor ) {
+            producesMap[t->newActorNoChange].push_back( t );
+            }
         
         // no duplicate records
         if( t->newTarget != 0 && t->newTarget != t->newActor ) {    
             producesMap[t->newTarget].push_back( t );
             }
+
+        if( t->targetChangeChance < 1.0 && t->newTargetNoChange != 0 &&
+            t->newTargetNoChange != t->newTarget &&
+            t->newTargetNoChange != t->newActor &&
+            t->newTargetNoChange != t->newActorNoChange ) {
+            producesMap[t->newTargetNoChange].push_back( t );
+            }
+        
         }
     }
 

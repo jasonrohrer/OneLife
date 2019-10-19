@@ -280,6 +280,9 @@ static doublePair recalcOffset( doublePair ofs, bool force = false ) {
 typedef struct {
         GridPos pos;
         char ancient;
+        char temporary;
+        // 0 if not set
+        double temporaryExpireETA;
     } HomePos;
 
     
@@ -293,12 +296,27 @@ static int lastPlayerID = -1;
 
 
 
-// returns pointer to record, NOT destroyed by caller, or NULL if 
-// home unknown
-static  GridPos *getHomeLocation() {
+static void processHomePosStack() {
     int num = homePosStack.size();
     if( num > 0 ) {
-        return &( homePosStack.getElement( num - 1 )->pos );
+        HomePos *r = homePosStack.getElement( num - 1 );
+        
+        if( r->temporary && r->temporaryExpireETA != 0 &&
+            game_getCurrentTime() > r->temporaryExpireETA ) {
+            // expired
+            homePosStack.deleteElement( num - 1 );
+            }
+        }
+    }
+
+
+
+static HomePos *getHomePosRecord() {
+    processHomePosStack();
+    
+    int num = homePosStack.size();
+    if( num > 0 ) {
+        return homePosStack.getElement( num - 1 );
         }
     else {
         return NULL;
@@ -306,6 +324,22 @@ static  GridPos *getHomeLocation() {
     }
 
 
+// returns pointer to record, NOT destroyed by caller, or NULL if 
+// home unknown
+static  GridPos *getHomeLocation( char *outTemp ) {
+    *outTemp = false;
+    
+    HomePos *r = getHomePosRecord();
+
+    if( r != NULL ) {
+        *outTemp = r->temporary;
+
+        return &( r->pos );
+        }
+    else {
+        return NULL;
+        }
+    }
 
 // HOMEMARKER MOD NOTE:  Change 1/8 - Take these lines during the merge process
 static void popHomeLocation() {
@@ -340,16 +374,48 @@ static void removeHomeLocation( int inX, int inY ) {
     }
 
 
+static void removeAllTempHomeLocations() {
+    for( int i=0; i<homePosStack.size(); i++ ) {
+        if( homePosStack.getElementDirect( i ).temporary ) {
+            homePosStack.deleteElement( i );
+            i --;
+            break;
+            }
+        }
+    }
+
+
 
 static void addHomeLocation( int inX, int inY ) {
+    removeAllTempHomeLocations();
+
     removeHomeLocation( inX, inY );
     GridPos newPos = { inX, inY };
     HomePos p;
     p.pos = newPos;
     p.ancient = false;
+    p.temporary = false;
     
     homePosStack.push_back( p );
     }
+
+
+
+static void addTempHomeLocation( int inX, int inY ) {
+    removeAllTempHomeLocations();
+    
+    GridPos newPos = { inX, inY };
+    HomePos p;
+    p.pos = newPos;
+    p.ancient = false;
+    p.temporary = true;
+    // no expiration for now
+    // until we drop the map
+    p.temporaryExpireETA = 0;
+    
+    homePosStack.push_back( p );
+    }
+
 
 
 static void addAncientHomeLocation( int inX, int inY ) {
@@ -371,6 +437,7 @@ static void addAncientHomeLocation( int inX, int inY ) {
     HomePos p;
     p.pos = newPos;
     p.ancient = true;
+    p.temporary = false;
     
     homePosStack.push_front( p );
     }
@@ -384,13 +451,19 @@ static void addAncientHomeLocation( int inX, int inY ) {
 // otherwise, returns 0..7 index of arrow
 static int getHomeDir( doublePair inCurrentPlayerPos, 
                        double *outTileDistance = NULL,
-                       char *outTooClose = NULL ) {
-    GridPos *p = getHomeLocation();
+                       char *outTooClose = NULL,
+                       char *outTemp = NULL ) {
+    char temporary = false;
+    
+    GridPos *p = getHomeLocation( &temporary );
     
     if( p == NULL ) {
         return -1;
         }
     
+    if( outTemp != NULL ) {
+        *outTemp = temporary;
+        }
     
     if( outTooClose != NULL ) {
         *outTooClose = false;
@@ -2437,6 +2510,8 @@ LivingLifePage::LivingLifePage()
         }
     
     mHintFilterString = NULL;
+    mHintFilterStringNoMatch = false;
+    
     mLastHintFilterString = NULL;
     mPendingFilterString = NULL;
     
@@ -4909,6 +4984,8 @@ char blackBorder = false;
                                 
 char whiteBorder = true;
 
+static char mapHintEverDrawn = false;
+
 // FOVMOD NOTE:  Change 7/27 - Take these lines during the merge process
 static void drawHUDBarPart( double x, double y, double width, double height ) {
     doublePair barPos[4] = {
@@ -5329,6 +5406,23 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         diagB = mMapBiomes[ mapI + mMapD + 1 ];
                         }
                     
+                    char floorAt = mMapFloors[ mapI ] > 0;
+                    char floorR = false;
+                    char floorB = false;
+                    char floorBR = false;
+                    
+                    if( isInBounds( x +1, y, mMapD ) ) {    
+                        floorR = mMapFloors[ mapI + 1 ] > 0;
+                        }
+                    if( isInBounds( x, y - 1, mMapD ) ) {    
+                        floorB = mMapFloors[ mapI - mMapD ] > 0;
+                        }
+                    if( isInBounds( x +1, y - 1, mMapD ) ) {    
+                        floorBR = mMapFloors[ mapI - mMapD + 1 ] > 0;
+                        }
+
+
+
                     if( leftB == b &&
                         aboveB == b &&
                         diagB == b ) {
@@ -5336,10 +5430,44 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         // surrounded by same biome above and to left
                         // AND diagonally to the above-right
                         // draw square tile here to save pixel fill time
-                        drawSprite( s->squareTiles[setY][setX], pos );
+                        
+                        // skip if biome square completely covered by floors
+                        if( !( floorAt && floorR && floorB && floorBR ) ) {
+                            drawSprite( s->squareTiles[setY][setX], pos );
+                            }
                         }
                     else {
-                        drawSprite( s->tiles[setY][setX], pos );
+                        // non-square piece
+                        // avoid drawing if completely overdrawn by floors
+                        // in 3x3 grid around
+                        
+                        char floorL = false;
+                        char floorA = false;
+                        char floorAL = false;
+                        char floorAR = false;
+                        char floorBL = false;
+                    
+                        if( isInBounds( x -1, y, mMapD ) ) {    
+                            floorL = mMapFloors[ mapI - 1 ] > 0;
+                            }
+                        if( isInBounds( x, y+1, mMapD ) ) {    
+                            floorA = mMapFloors[ mapI + mMapD ] > 0;
+                            }
+                        if( isInBounds( x-1, y+1, mMapD ) ) {    
+                            floorAL = mMapFloors[ mapI + mMapD - 1 ] > 0;
+                            }
+                        if( isInBounds( x+1, y+1, mMapD ) ) {    
+                            floorAR = mMapFloors[ mapI + mMapD + 1 ] > 0;
+                            }
+                        if( isInBounds( x-1, y-1, mMapD ) ) {    
+                            floorBL = mMapFloors[ mapI - mMapD - 1 ] > 0;
+                            }
+
+                        if( !( floorAt && floorR && floorB && floorBR &&
+                               floorL && floorA && floorAL && floorAR &&
+                               floorBL ) ) {
+                            drawSprite( s->tiles[setY][setX], pos );
+                            }
                         }
                     if( inBounds ) {
                         mMapCellDrawnFlags[mapI] = true;
@@ -7840,8 +7968,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
         if( ourLiveObject != NULL ) {
             
             double homeDist = 0;
+            char tooClose = false;
+            char temporary = false;
             
-            int arrowIndex = getHomeDir( ourLiveObject->currentPos, &homeDist );
+            int arrowIndex = getHomeDir( ourLiveObject->currentPos, &homeDist,
+                                         &tooClose, &temporary );
             // HOMEMARKER MOD NOTE:  Change 4/8 - Take these lines during the merge process
     	    float arrowRotation = 0;
             if( arrowIndex != -1 ) {
@@ -7914,7 +8045,23 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             distPos.y -= 47 * gui_fov_scale_hud;
             
-            // HOMEMARKER MOD NOTE:  Change 6/8 - Take these lines during the merge process
+            doublePair mapHintPos = arrowPos;
+            mapHintPos.y -= 47;
+
+            setDrawColor( 0, 0, 0, 1 );
+
+            if( temporary ) {
+                // push distance label further down
+                distPos.y -= 20;
+                mapHintEverDrawn = true;
+                pencilFont->drawString( "MAP", mapHintPos, alignCenter );
+                }
+            else if( mapHintEverDrawn ) {
+                distPos.y -= 20;
+                pencilErasedFont->drawString( "MAP", mapHintPos, alignCenter );
+                }
+            
+
             if( homeDist > 10 ) {
                 drawTopAsErased = false;
                 
@@ -10113,6 +10260,9 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         mPendingFilterString = NULL;
         }
 
+
+    mHintFilterStringNoMatch = false;
+
     if( mLastHintFilterString != NULL ) {
 
         if( mPendingFilterString != NULL ) {
@@ -10128,6 +10278,7 @@ int LivingLifePage::getNumHints( int inObjectID ) {
                 // exist
                 key = "noMatch";
                 reasonString = stringDuplicate( translate( key ) );
+                mHintFilterStringNoMatch = true;
                 }
             else {
                 const char *formatString = translate( key );
@@ -11032,15 +11183,21 @@ void LivingLifePage::step() {
     if( ourObject != NULL ) {    
         char tooClose = false;
         double homeDist = 0;
+        char temporary = false;
         
         int homeArrow = getHomeDir( ourObject->currentPos, &homeDist,
-                                    &tooClose );
+                                    &tooClose, &temporary );
         
         if( ! apocalypseInProgress && homeArrow != -1 && ! tooClose ) {
             mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y + 68;
             
             // HOMEMARKER MOD NOTE:  Change 7/8 - Take these lines during the merge process
-            if( homeDist > 10 ) {
+            char longDistance = homeDist > 10;
+
+            if( longDistance ) {
+                mHomeSlipPosTargetOffset.y += 20;
+                }
+            if( temporary || ( mapHintEverDrawn && longDistance ) ) {
                 mHomeSlipPosTargetOffset.y += 20;
                 }
             }
@@ -11119,6 +11276,15 @@ void LivingLifePage::step() {
         
         if( d <= 1 ) {
             mHomeSlipPosOffset = mHomeSlipPosTargetOffset;
+            if( equal( mHomeSlipPosTargetOffset, mHomeSlipHideOffset ) ) {
+                // fully hidden
+                // clear all arrow states
+                for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
+                    mHomeArrowStates[i].solid = false;
+                    mHomeArrowStates[i].fade = 0;
+                    }
+                mapHintEverDrawn = false;
+                }
             }
         else {
             int speed = frameRateFactor * 4;
@@ -11141,14 +11307,6 @@ void LivingLifePage::step() {
                 add( mHomeSlipPosOffset,
                      mult( dir, speed ) );
             }        
-        if( equal( mHomeSlipPosTargetOffset, mHomeSlipHideOffset ) ) {
-            // fully hidden
-            // clear all arrow states
-            for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
-                mHomeArrowStates[i].solid = false;
-                    mHomeArrowStates[i].fade = 0;
-                }
-            }
         }
     
     
@@ -11174,7 +11332,7 @@ void LivingLifePage::step() {
 
 
         
-        if( mHintFilterString != NULL &&
+        if( ! isHintFilterStringInvalid() &&
             mCurrentHintObjectID != mNextHintObjectID ) {
             // check if we should jump the hint index to hint about this
             // thing we just picked up relative to our goal object
@@ -11190,21 +11348,24 @@ void LivingLifePage::step() {
                 matchID = o->variableDummyParent;
                 }
 
-            // don't switch if we're already matched
-            TransRecord *currHintTrans = 
-                mLastHintSortedList.getElementDirect( mCurrentHintIndex );
-            
-            if( currHintTrans->actor != matchID && 
-                currHintTrans->target != matchID ) {
+            if( mLastHintSortedList.size() > mCurrentHintIndex ) {
+                // don't switch if we're already matched
+                TransRecord *currHintTrans = 
+                    mLastHintSortedList.getElementDirect( mCurrentHintIndex );
                 
-                for( int i=0; i<mLastHintSortedList.size(); i++ ) {
-                    TransRecord *t = mLastHintSortedList.getElementDirect( i );
+                if( currHintTrans->actor != matchID && 
+                    currHintTrans->target != matchID ) {
                     
-                    if( t->actor == matchID ||
-                        t->target == matchID ) {
+                    for( int i=0; i<mLastHintSortedList.size(); i++ ) {
+                        TransRecord *t = 
+                            mLastHintSortedList.getElementDirect( i );
                         
-                        mNextHintIndex = i;
-                        break;
+                        if( t->actor == matchID ||
+                            t->target == matchID ) {
+                            
+                            mNextHintIndex = i;
+                            break;
+                            }
                         }
                     }
                 }
@@ -11212,7 +11373,7 @@ void LivingLifePage::step() {
         
 
 
-        if( ( mHintFilterString == NULL &&
+        if( ( isHintFilterStringInvalid() &&
               mCurrentHintObjectID != mNextHintObjectID ) ||
             mCurrentHintIndex != mNextHintIndex ||
             mForceHintRefresh ) {
@@ -11221,7 +11382,7 @@ void LivingLifePage::step() {
             
             // hide target object indicator unless player picked this hint
             if( mCurrentHintObjectID != mNextHintObjectID &&
-                mHintFilterString == NULL ) {
+                isHintFilterStringInvalid() ) {
                 // they changed what they are holding
                 
                 // and they don't have a filter applied currently
@@ -11259,7 +11420,7 @@ void LivingLifePage::step() {
             mCurrentHintObjectID = mNextHintObjectID;
             mCurrentHintIndex = mNextHintIndex;
             
-            if( mHintFilterString == NULL ) {
+            if( isHintFilterStringInvalid() ) {
                 mHintBookmarks[ mCurrentHintObjectID ] = mCurrentHintIndex;
                 }
             
@@ -11292,22 +11453,24 @@ void LivingLifePage::step() {
 
 
 
-        if( mHintFilterString != NULL &&
+        if( ! isHintFilterStringInvalid() &&
             mCurrentHintIndex >= 0 ) {
             // special case
             // always show pointers to objects for current hint, unless
             // we're holding one
             
-            TransRecord *t = 
-                mLastHintSortedList.getElementDirect( mCurrentHintIndex );
-            int heldID = getObjectParent( ourObject->holdingID );
-            
-            
-            if( t->actor != heldID ) {
-                mCurrentHintTargetObject[0] = t->actor;
-                }
-            if( t->target != heldID ) {
-                mCurrentHintTargetObject[1] = t->target;
+            if( mLastHintSortedList.size() > mCurrentHintIndex ) {
+                TransRecord *t = 
+                    mLastHintSortedList.getElementDirect( mCurrentHintIndex );
+                int heldID = getObjectParent( ourObject->holdingID );
+                
+                
+                if( t->actor != heldID ) {
+                    mCurrentHintTargetObject[0] = t->actor;
+                    }
+                if( t->target != heldID ) {
+                    mCurrentHintTargetObject[1] = t->target;
+                    }
                 }
             }
 
@@ -13529,13 +13692,13 @@ void LivingLifePage::step() {
                                 
                                 char addedOrRemoved = false;
                                 
-                                if( newID != 0 &&
+                                if( newID > 0 &&
                                     getObject( newID )->homeMarker ) {
                                     
                                     addHomeLocation( x, y );
                                     addedOrRemoved = true;
                                     }
-                                else if( old != 0 &&
+                                else if( old > 0 &&
                                          getObject( old )->homeMarker ) {
                                     removeHomeLocation( x, y );
                                     addedOrRemoved = true;
@@ -14194,6 +14357,21 @@ void LivingLifePage::step() {
                     if( existing != NULL &&
                         existing->id == ourID ) {
                         // got a PU for self
+
+                        if( existing->holdingID != o.holdingID ) {
+                            // holding change
+                            // if we have a temp home arrow
+                            // we've now dropped the map
+                            // start a fade-out timer
+                            HomePos *r = getHomePosRecord();
+                            
+                            if( r != NULL && r->temporary &&
+                                r->temporaryExpireETA == 0 ) {
+                                r->temporaryExpireETA = 
+                                    game_getCurrentTime() + 60;
+                                }
+                            }
+                        
                         
                         mYumSlipPosTargetOffset[2] = mYumSlipHideOffset[2];
                         mYumSlipPosTargetOffset[3] = mYumSlipHideOffset[3];
@@ -14561,7 +14739,7 @@ void LivingLifePage::step() {
                             
                             mNextHintObjectID = existing->holdingID;
                             
-                            if( mHintFilterString == NULL ) {
+                            if( isHintFilterStringInvalid() ) {
                                 mNextHintIndex = 
                                     mHintBookmarks[ mNextHintObjectID ];
                                 }
@@ -16746,6 +16924,28 @@ void LivingLifePage::step() {
                                             existing->currentPos.x, 
                                             existing->currentPos.y ) );
                                     }
+
+                                if( existing->id == ourID ) {
+                                    // look for map metadata
+                                    char *starPos =
+                                        strstr( existing->currentSpeech,
+                                                " *map" );
+                                    
+                                    if( starPos != NULL ) {
+                                        
+                                        int mapX, mapY;
+                                        
+                                        int numRead = sscanf( starPos,
+                                                              " *map %d %d",
+                                                              &mapX, &mapY );
+                                        if( numRead == 2 ) {
+                                            addTempHomeLocation( mapX, mapY );
+                                            }
+
+                                        // trim it off
+                                        starPos[0] ='\0';
+                                        }
+                                    }
                                 }
                             
                             break;
@@ -16801,6 +17001,17 @@ void LivingLifePage::step() {
                                 strlen( ls.speech ) / 5;
 
                             locationSpeech.push_back( ls );
+
+                            // remove old location speech at same pos
+                            for( int i=0; i<locationSpeech.size() - 1; i++ ) {
+                                LocationSpeech other = 
+                                    locationSpeech.getElementDirect( i );
+                                if( other.pos.x == ls.pos.x &&
+                                    other.pos.y == ls.pos.y ) {
+                                    locationSpeech.deleteElement( i );
+                                    i--;
+                                    }
+                                }
                             }
                         }
                     }
@@ -18923,6 +19134,9 @@ void LivingLifePage::makeActive( char inFresh ) {
         return;
         }
 
+    mapHintEverDrawn = false;
+    
+
     mOldHintArrows.deleteAll();
 
     mGlobalMessageShowing = false;
@@ -20430,7 +20644,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( tr == NULL || tr->newTarget == destID ) {
                 // give hint about dest object which will be unchanged 
                 mNextHintObjectID = destID;
-                if( mHintFilterString == NULL ) {
+                if( isHintFilterStringInvalid() ) {
                     mNextHintIndex = mHintBookmarks[ destID ];
                     }
                 }
@@ -20438,14 +20652,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                      ourLiveObject->holdingID != tr->newActor ) {
                 // give hint about how what we're holding will change
                 mNextHintObjectID = tr->newActor;
-                if( mHintFilterString == NULL ) {
+                if( isHintFilterStringInvalid() ) {
                     mNextHintIndex = mHintBookmarks[ tr->newTarget ];
                     }
                 }
             else if( tr->newTarget > 0 ) {
                 // give hint about changed target after we act on it
                 mNextHintObjectID = tr->newTarget;
-                if( mHintFilterString == NULL ) {
+                if( isHintFilterStringInvalid() ) {
                     mNextHintIndex = mHintBookmarks[ tr->newTarget ];
                     }
                 }
@@ -20456,7 +20670,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
             if( getTrans( 0, destID ) == NULL ) {
                 mNextHintObjectID = destID;
-                if( mHintFilterString == NULL ) {
+                if( isHintFilterStringInvalid() ) {
                     mNextHintIndex = mHintBookmarks[ destID ];
                     }
                 }
@@ -22345,6 +22559,8 @@ void LivingLifePage::putInMap( int inMapI, ExtraMapObject *inObj ) {
     mMapSubContainedStacks[ inMapI ] = inObj->subContainedStack;
     }
 
+
+
 void LivingLifePage::pushOldHintArrow( int inIndex ) {
     int i = inIndex;
     if( mCurrentHintTargetPointerFade[i] > 0 ) {
@@ -22353,6 +22569,12 @@ void LivingLifePage::pushOldHintArrow( int inIndex ) {
                            mCurrentHintTargetPointerFade[i] };
         mOldHintArrows.push_back( h );
         }
+    }
+
+
+
+char LivingLifePage::isHintFilterStringInvalid() {
+    return mHintFilterString == NULL || mHintFilterStringNoMatch;
     }
 
 int getRandomIndex( char *inNameList, int inListLen ) {
