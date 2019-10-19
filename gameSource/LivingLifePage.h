@@ -740,7 +740,7 @@ class LivingLifePage : public GamePage, public ActionListener {
                               int inDoNotPointAtThis = -1 );
 
         char *mHintFilterString;
-        
+        char mHintFilterStringNoMatch;
 
         
         // offset from current view center
@@ -985,6 +985,10 @@ class LivingLifePage : public GamePage, public ActionListener {
 
 
         void pushOldHintArrow( int inIndex );
+
+
+        char isHintFilterStringInvalid();
+        
 
     };
 

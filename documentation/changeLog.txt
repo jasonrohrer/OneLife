@@ -3,6 +3,61 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 272    2019-October-19
+
+--Fixed crash when switching hint target object with a non-matching filter.
+
+--Fixed when hint filter string doesn't match anything, so that non-matching
+  filter doesn't interfere with normal hint behavior.
+
+--Fixed missing links in crafting hints due to not handling probabalistic
+  transitions when fleshing out producesMap.  Example:  Lock and Key Parts
+  with Chisel is only made sometimes, only if the use state transition isn't
+  triggered to make Lock and Key Parts with Chisel# use 4 (the state where the
+  chisel has become partially used).  Before, there was no complete crafting
+  process hinted for Lock and Key Parts because of this.
+
+--Fixed a crash when server (mistakenly) tells us we're responsible for an
+  object change happening off of our known map area.
+
+--Map implementation.  Holding a blank map and charcoal and speaking a map name
+  creates a marked map to your current location.  Picking up a marked map
+  causes you to speak the map name and set your home arrow to the map's
+  destination for the next 60 seconds, or as long as you continue to hold the
+  map.
+
+--VOG text at same location replaces previous text instead of overlapping.
+
+--Improved frame rate in cities by reducing overdraw.  Biome tiles that are
+  compltely covered by floors don't need to be drawn.
+
+--Editor obeys alpha channel when baking a multiplicative layer to mask the
+  affected area (some multiplicative sprites had invisible black areas---not
+  sure why).
+
+
+
+
+Server Fixes
+
+--Added utility program for dumping map value at coordinates at a given
+  location on a live server.
+
+--Tapout trigger implementation.  Upon construction, a given object can tapout
+  nearby objects on a grid pattern with a given radius.  Used for shallow wells
+  that tapout all spring heads in an 80-tile radius.
+
+--Can't join posse targeting yourself.  Related to #426
+
+--Fixed so that leaving a posse clears your speed boost.  Fixes #426
+
+--Fixed so that endtower apocalypse trigger restarts eve window and does other
+  necessary bookkeeping steps.  Fixes #428
+
+
+
+
+
 Version 270    2019-October-12
 
 --Editor can copy slot movements relative to saved position.
@@ -12,6 +67,8 @@ Version 270    2019-October-12
   simpler, as you TAB.  Each step shows you hint arrows for nearby ingredients,
   and when you pick up an ingredient object, the list automatically jumps to
   the most relevant hint for that ingredient.
+
+
 
 
 Server Fixes
