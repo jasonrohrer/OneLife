@@ -30,6 +30,10 @@ Version 272    ???
 --Improved frame rate in cities by reducing overdraw.  Biome tiles that are
   compltely covered by floors don't need to be drawn.
 
+--Editor obeys alpha channel when baking a multiplicative layer to mask the
+  affected area (some multiplicative sprites had invisible black areas---not
+  sure why).
+
 
 
 
