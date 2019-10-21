@@ -4,28 +4,49 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 void usage() {
     printf( "Usage:\n\n"
             "dumpMapCoord x y\n\n" );
+    printf( "Pipe usage:\n\n"
+            "genCoordsList | dumpMapCoord -\n\n" );
     exit( 1 );
     }
 
 
 int main( int inNumArgs, char **inArgs ) {
-    if( inNumArgs != 3 ) {
+    char pipeRead = false;
+    
+    if( inNumArgs == 2 &&
+        strcmp( inArgs[1], "-" ) == 0 ) {
+        pipeRead = true;
+        }
+    else if( inNumArgs != 3 ) {
         usage();
         }
     
     int x = 0;
     int y = 0;
-    int numRead = sscanf( inArgs[1], "%d", &x );
-    numRead += sscanf( inArgs[2], "%d", &y );
-    
-    if( numRead != 2 ) {
-        usage();
+
+    if( ! pipeRead ) {
+        int numRead = sscanf( inArgs[1], "%d", &x );
+        numRead += sscanf( inArgs[2], "%d", &y );
+        
+        if( numRead != 2 ) {
+            usage();
+            }
         }
+    else {
+        int numRead = scanf( "%d", &x );
+        numRead += scanf( "%d", &y );
+        
+        if( numRead != 2 ) {
+            usage();
+            }
+        }
+    
     
     LINEARDB3 db;
 
@@ -66,23 +87,38 @@ int main( int inNumArgs, char **inArgs ) {
         usage();
         }
     
+    char inputDone = false;
 
-
-    unsigned char key[16];
-    unsigned char value[4];
-
-    intQuadToKey( x, y, 0, 0, key );
-    
-    int result = LINEARDB3_get( &db, key, value );
-    
-    if( result == 0 ) {
-        // found
-        int val = valueToInt( value );
-        printf( "%d\n", val );
+    while( !inputDone ) {
+        unsigned char key[16];
+        unsigned char value[4];
+        
+        intQuadToKey( x, y, 0, 0, key );
+        
+        int result = LINEARDB3_get( &db, key, value );
+        
+        if( result == 0 ) {
+            // found
+            int val = valueToInt( value );
+            printf( "%d\n", val );
+            }
+        else {
+            printf( "0\n" );
+            }
+        
+        if( pipeRead ) {
+            int numRead = scanf( "%d", &x );
+            numRead += scanf( "%d", &y );
+        
+            if( numRead != 2 ) {
+                inputDone = true;
+                }
+            }
+        else {
+            inputDone = true;
+            }
         }
-    else {
-        printf( "0\n" );
-        }
+    
     
     LINEARDB3_close( &db );
 

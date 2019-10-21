@@ -1,1 +1,1 @@
-g++ -I../.. -o dumpMapCoord dumpMapCoord.cpp dbCommon.cpp lineardb3.cpp
+g++ -I../.. -o dumpMapCoord dumpMapCoord.cpp dbCommon.cpp lineardb3.cpp 
