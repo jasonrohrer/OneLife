@@ -4,11 +4,11 @@ for ((y=-320;y<=320;y+=40)); do
 	for ((x=-320;x<=320;x+=40)); do
 		id=`./dumpMapCoord $x $y`
 		
-		if [[ $id == 0 ]];
+		if [[ -f objects/$id.txt ]];
 		then
-			name="Empty Spot"
-		else
 			name=$(cat objects/$id.txt | sed -n 2p );
+		else
+			name="ID: $id"
 		fi
 		echo $name
 	done
