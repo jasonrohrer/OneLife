@@ -158,7 +158,35 @@ static double frameBatchMeasureStartTime = -1;
 static int framesInBatch = 0;
 static double fpsToDraw = -1;
 
+#define MEASURE_TIME_NUM_CATEGORIES 3
+
+
+static double timeMeasures[ MEASURE_TIME_NUM_CATEGORIES ];
+
+    
+    
+static const char *timeMeasureNames[ MEASURE_TIME_NUM_CATEGORIES ] = 
+{ "message",
+  "updates",
+  "drawing" };
+
+static FloatColor timeMeasureGraphColors[ MEASURE_TIME_NUM_CATEGORIES ] = 
+{ { 1, 1, 0, 1 },
+  { 0, 1, 0, 1 },
+  { 1, 0, 0, 1 } };
+
+
+static double timeMeasureToDraw[ MEASURE_TIME_NUM_CATEGORIES ];
+
+
+typedef struct TimeMeasureRecord {
+        double timeMeasureAverage[ MEASURE_TIME_NUM_CATEGORIES ];
+        double total;
+    } TimeMeasureRecord;
+
+
 static SimpleVector<double> fpsHistoryGraph;
+static SimpleVector<TimeMeasureRecord> timeMeasureHistoryGraph;
 
 
 static char showNet = false;
@@ -4788,19 +4816,47 @@ static char isInBounds( int inX, int inY, int inMapD ) {
 
 static void drawFixedShadowString( const char *inString, doublePair inPos ) {
     
+    FloatColor faceColor = getDrawColor();
+    
     setDrawColor( 0, 0, 0, 1 );
     numbersFontFixed->drawString( inString, inPos, alignLeft );
             
-    setDrawColor( 1, 1, 1, 1 );
-            
+    setDrawColor( faceColor );
+    
     inPos.x += 2;
     inPos.y -= 2;
     numbersFontFixed->drawString( inString, inPos, alignLeft );
     }
 
 
+
+static void drawFixedShadowStringWhite( const char *inString, 
+                                        doublePair inPos ) {
+    setDrawColor( 1, 1, 1, 1 );
+    drawFixedShadowString( inString, inPos );
+    }
+
+
+
 static void addToGraph( SimpleVector<double> *inHistory, double inValue ) {
     inHistory->push_back( inValue );
+                
+    while( inHistory->size() > historyGraphLength ) {
+        inHistory->deleteElement( 0 );
+        }
+    }
+
+
+static void addToGraph( SimpleVector<TimeMeasureRecord> *inHistory, 
+                        double inValue[ MEASURE_TIME_NUM_CATEGORIES ] ) {
+    TimeMeasureRecord r;
+    r.total = 0;
+    for( int i=0; i<MEASURE_TIME_NUM_CATEGORIES; i++ ) {
+        r.timeMeasureAverage[i] = inValue[i];
+        r.total += inValue[i];
+        }
+    
+    inHistory->push_back( r );
                 
     while( inHistory->size() > historyGraphLength ) {
         inHistory->deleteElement( 0 );
@@ -4845,6 +4901,56 @@ static void drawGraph( SimpleVector<double> *inHistory, doublePair inPos,
 
 
 
+
+static void drawGraph( SimpleVector<TimeMeasureRecord> *inHistory, 
+                       doublePair inPos,
+                       FloatColor inColor[MEASURE_TIME_NUM_CATEGORIES] ) {
+    double max = 0;
+    for( int i=0; i<inHistory->size(); i++ ) {
+        double val = inHistory->getElementDirect( i ).total;
+        if( val > max ) {
+            max = val;
+            }
+        }
+
+    setDrawColor( 0, 0, 0, 0.5 );
+
+    double graphHeight = 40;
+
+    drawRect( inPos.x - 2, 
+              inPos.y - 2,
+              inPos.x + historyGraphLength + 2,
+              inPos.y + graphHeight + 2 );
+        
+    
+
+    for( int i=0; i<inHistory->size(); i++ ) {
+
+        for( int m=MEASURE_TIME_NUM_CATEGORIES - 1; m >= 0; m-- ) {
+            
+            double sum = 0;
+            
+            for( int n=m; n>=0; n-- ) {
+            
+                sum += inHistory->getElementDirect( i ).timeMeasureAverage[n];
+                }
+
+            FloatColor c = timeMeasureGraphColors[m];
+            
+            setDrawColor( c.r, c.g, c.b, 0.75 );
+            
+            double scaledVal = sum / max;
+            
+            drawRect( inPos.x + i, 
+                      inPos.y,
+                      inPos.x + i + 1,
+                      inPos.y + scaledVal * graphHeight );
+            }
+        }
+    }
+
+
+
 typedef struct DrawOrderRecord {
         char person;
         // if person
@@ -4879,6 +4985,9 @@ static char mapHintEverDrawn = false;
 void LivingLifePage::draw( doublePair inViewCenter, 
                            double inViewSize ) {
     
+    double drawStartTime = showFPS ? game_getCurrentTime() : 0;
+
+
     setViewCenterPosition( lastScreenViewCenter.x,
                            lastScreenViewCenter.y );
 
@@ -7655,14 +7764,28 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 // new batch
                 frameBatchMeasureStartTime = game_getCurrentTime();
                 framesInBatch = 0;
+                
+                // average time measures
+                for( int i=0; i<MEASURE_TIME_NUM_CATEGORIES; i++ ) {
+                    timeMeasures[i] /= 30;
+                    timeMeasureToDraw[i] = timeMeasures[i];
+                    }
+                
+                
+                addToGraph( &timeMeasureHistoryGraph, timeMeasures );
+                
+                // start measuring again
+                for( int i=0; i<MEASURE_TIME_NUM_CATEGORIES; i++ ) {
+                    timeMeasures[i] = 0;
+                    }
                 }
             }
         if( fpsToDraw != -1 ) {
         
             char *fpsString = 
-                autoSprintf( "%.1f %s", fpsToDraw, translate( "fps" ) );
+                autoSprintf( "%5.1f %s", fpsToDraw, translate( "fps" ) );
             
-            drawFixedShadowString( fpsString, pos );
+            drawFixedShadowStringWhite( fpsString, pos );
             
             pos.x += 20 + numbersFontFixed->measureString( fpsString );
             pos.y -= 20;
@@ -7671,9 +7794,41 @@ void LivingLifePage::draw( doublePair inViewCenter,
             drawGraph( &fpsHistoryGraph, pos, yellow );
 
             delete [] fpsString;
+
+            pos.x += 120;
+            pos.y += 60;
+            
+            double maxStringW = 0;
+
+            
+            for( int i=MEASURE_TIME_NUM_CATEGORIES - 1; i>=0; i-- ) {
+                
+                char *timeString = 
+                    autoSprintf( "%4.1f %s %s", 
+                                 timeMeasureToDraw[i] * 1000,
+                                 timeMeasureNames[i],
+                                 translate( "ms/frame" ) );
+                pos.y -= 20;
+                
+                setDrawColor( timeMeasureGraphColors[i] );
+                drawFixedShadowString( timeString, pos );
+
+                double w = numbersFontFixed->measureString( timeString );
+                if( w > maxStringW ) {
+                    maxStringW = w;
+                    }
+                
+                delete [] timeString;
+                }
+
+            pos.y += 0;
+            
+            pos.x += 20 + maxStringW;
+
+            drawGraph( &timeMeasureHistoryGraph, pos, timeMeasureGraphColors );
             }
         else {
-            drawFixedShadowString( translate( "fpsPending" ), pos );
+            drawFixedShadowStringWhite( translate( "fpsPending" ), pos );
             }
         }
     
@@ -7733,7 +7888,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 autoSprintf( translate( "netStringB" ), 
                              bytesOutPerSec, bytesInPerSec );
             
-            drawFixedShadowString( netStringA, pos );
+            drawFixedShadowStringWhite( netStringA, pos );
             
             doublePair graphPos = pos;
             
@@ -7748,7 +7903,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             pos.y -= 50;
             
-            drawFixedShadowString( netStringB, pos );
+            drawFixedShadowStringWhite( netStringB, pos );
             
             graphPos = pos;
             
@@ -7766,7 +7921,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             delete [] netStringB;
             }
         else {
-            drawFixedShadowString( translate( "netPending" ), pos );
+            drawFixedShadowStringWhite( translate( "netPending" ), pos );
             }
         }
     
@@ -7797,7 +7952,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                              translate( "ms" ) );
             }
 
-        drawFixedShadowString( pingString, pos );
+        drawFixedShadowStringWhite( pingString, pos );
             
         delete [] pingString;
     
@@ -9218,6 +9373,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
         // draw again, so we can see picker
         PageComponent::base_draw( inViewCenter, inViewSize );
         }
+
+    if( showFPS ) {
+        timeMeasures[2] += game_getCurrentTime() - drawStartTime;
+        }
+    
     }
 
 
@@ -10686,10 +10846,17 @@ void LivingLifePage::step() {
             }
         }
     
-
+    
+    double messageProcessStartTime = showFPS ? game_getCurrentTime() : 0;
+    
     // first, read all available data from server
     char readSuccess = readServerSocketFull( mServerSocket );
     
+    if( showFPS ) {
+        timeMeasures[0] += game_getCurrentTime() - messageProcessStartTime;
+        }
+    
+
 
     if( ! readSuccess ) {
         
@@ -10722,6 +10889,11 @@ void LivingLifePage::step() {
             }
         return;
         }
+
+
+
+    double updateStartTime = showFPS ? game_getCurrentTime() : 0;
+
     
     if( mLastMouseOverID != 0 ) {
         mLastMouseOverFade -= 0.01 * frameRateFactor;
@@ -11764,6 +11936,14 @@ void LivingLifePage::step() {
         }
     
 
+    if( showFPS ) {
+        timeMeasures[1] += game_getCurrentTime() - updateStartTime;
+        }
+    
+
+
+    messageProcessStartTime = showFPS ? game_getCurrentTime() : 0;
+    
 
     char *message = getNextServerMessage();
 
@@ -17552,6 +17732,16 @@ void LivingLifePage::step() {
         message = getNextServerMessage();
         }
     
+    
+    if( showFPS ) {
+        timeMeasures[0] += game_getCurrentTime() - messageProcessStartTime;
+        }
+    
+
+
+
+    updateStartTime = showFPS ? game_getCurrentTime() : 0;;
+
 
     if( mapPullMode && mapPullCurrentSaved && ! mapPullCurrentSent ) {
         char *message = autoSprintf( "MAP %d %d#",
@@ -18824,6 +19014,11 @@ void LivingLifePage::step() {
             mStartedLoadingFirstObjectSet = true;
             mStartedLoadingFirstObjectSetStartTime = game_getCurrentTime();
             }
+        }
+
+
+    if( showFPS ) {
+        timeMeasures[1] += game_getCurrentTime() - updateStartTime;
         }
     
     }
