@@ -6560,7 +6560,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         for( int q=0; q<numQueued; q++ ) {
             DrawOrderRecord drawRec = drawQueue.removeMin();
             
-            if( drawRec.person && ! mXKeyDown ) {
+            if( drawRec.person ) {
                 LiveObject *o = drawRec.personO;
                 
                 ignoreWatchedObjectDraw( true );
@@ -20379,8 +20379,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     checkForPointerHit( &p, inX, inY );
 
-    mXKeyDown = false;
-    
+
 
     // new semantics
     // as soon as we trigger a kill attempt, we go into kill mode
