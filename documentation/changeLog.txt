@@ -8,6 +8,9 @@ Version 274   ???
 
 --/FPS graph in client now shows frame timing breakdown.
 
+--Holding 'x' key hides all people on the screen until next click.  Allows you
+  to interact with objects behind self and others.
+
 
 
 Server Fixes
