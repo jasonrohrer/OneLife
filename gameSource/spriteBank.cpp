@@ -24,6 +24,7 @@ static int mapSize;
 // maps IDs to records
 // sparse, so some entries are NULL
 static SpriteRecord **idMap;
+static char *spriteDrawnMap;
 
 
 static StringTree tree;
@@ -403,6 +404,9 @@ float initSpriteBankStep() {
                 idMap[i] = NULL;
                 }
             
+            spriteDrawnMap = new char[mapSize];
+            
+
             int numRecords = records.size();
             for( int i=0; i<numRecords; i++ ) {
                 SpriteRecord *r = records.getElementDirect(i);
@@ -758,6 +762,27 @@ void setRemapFraction( double inFraction ) {
 
 
 
+static char countingSpriteDraws = false;
+
+void startCountingUniqueSpriteDraws() {
+    memset( spriteDrawnMap, 0, mapSize );
+    countingSpriteDraws = true;
+    }
+
+
+unsigned int endCountingUniqueSpriteDraws() {
+    unsigned int c = 0;
+    for( int i=0; i<mapSize; i++ ) {
+        if( spriteDrawnMap[i] ) {
+            c ++;
+            }
+        }
+    countingSpriteDraws = false;
+    return c;
+    }
+
+
+
 SpriteHandle getSprite( int inID ) {
     if( inID >= mapSize || idMap[ inID ] == NULL ) {
         return NULL;
@@ -807,6 +832,10 @@ SpriteHandle getSprite( int inID ) {
     if( idMap[inID]->sprite == NULL ) {
         loadSpriteImage( inID );
         return blankSprite;
+        }
+    
+    if( countingSpriteDraws ) {
+        spriteDrawnMap[inID] = true;
         }
             
     idMap[inID]->numStepsUnused = 0;
@@ -1050,6 +1079,9 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
         delete [] idMap;
         idMap = newMap;
         mapSize = newMapSize;
+        
+        delete [] spriteDrawnMap;
+        spriteDrawnMap = new char[ mapSize ];
         }
 
     SpriteRecord *r = new SpriteRecord;

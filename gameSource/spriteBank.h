@@ -101,6 +101,13 @@ char getUsesMultiplicativeBlending( int inID );
 char *getSpriteTag( int inID );
 
 
+// these count calls to getSprite, which we assume are invoked
+// once per sprite draw
+void startCountingUniqueSpriteDraws();
+
+unsigned int endCountingUniqueSpriteDraws();
+
+
 SpriteHandle getSprite( int inID );
 
 

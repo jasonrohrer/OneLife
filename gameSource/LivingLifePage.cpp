@@ -185,8 +185,13 @@ typedef struct TimeMeasureRecord {
     } TimeMeasureRecord;
 
 
+double spriteCountToDraw = 0;
+double uniqueSpriteCountToDraw = 0;
+
 static SimpleVector<double> fpsHistoryGraph;
 static SimpleVector<TimeMeasureRecord> timeMeasureHistoryGraph;
+static SimpleVector<double> spriteCountHistoryGraph;
+static SimpleVector<double> uniqueSpriteHistoryGraph;
 
 
 static char showNet = false;
@@ -7778,6 +7783,21 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 for( int i=0; i<MEASURE_TIME_NUM_CATEGORIES; i++ ) {
                     timeMeasures[i] = 0;
                     }
+
+                double uniqueDrawn = endCountingUniqueSpriteDraws();
+                double spritesDrawn = endCountingSpritesDrawn();
+                
+                spriteCountToDraw = spritesDrawn / 30;
+                // this is uniq count drawn in whole 30-frame batch
+                // not an average
+                uniqueSpriteCountToDraw = uniqueDrawn;
+                
+                addToGraph( &spriteCountHistoryGraph, spriteCountToDraw );
+                addToGraph( &uniqueSpriteHistoryGraph, 
+                            uniqueSpriteCountToDraw );
+                
+                startCountingSpritesDrawn();
+                startCountingUniqueSpriteDraws();
                 }
             }
         if( fpsToDraw != -1 ) {
@@ -7807,7 +7827,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     autoSprintf( "%4.1f %s %s", 
                                  timeMeasureToDraw[i] * 1000,
                                  timeMeasureNames[i],
-                                 translate( "ms/frame" ) );
+                                 translate( "ms/f" ) );
                 pos.y -= 20;
                 
                 setDrawColor( timeMeasureGraphColors[i] );
@@ -7826,6 +7846,40 @@ void LivingLifePage::draw( doublePair inViewCenter,
             pos.x += 20 + maxStringW;
 
             drawGraph( &timeMeasureHistoryGraph, pos, timeMeasureGraphColors );
+
+            
+            pos.x += 120;
+
+            drawGraph( &spriteCountHistoryGraph, pos, yellow );
+
+
+            pos.x -= 60;
+            pos.y += 60;
+            char *spriteString = 
+                autoSprintf( "%6.0f %s", spriteCountToDraw, 
+                             translate( "spritesDrawn" ) );
+            
+            drawFixedShadowStringWhite( spriteString, pos );
+
+            delete [] spriteString;
+
+            pos.x += 60;
+            pos.y -= 60;
+
+
+            pos.x += 120;
+            drawGraph( &uniqueSpriteHistoryGraph, pos, yellow );
+
+            pos.x -= 60;
+            pos.y -= 20;
+
+            char *unqString = 
+                autoSprintf( "%6.0f %s", uniqueSpriteCountToDraw, 
+                             translate( "uniqueSprites" ) );
+            
+            drawFixedShadowStringWhite( unqString, pos );
+
+            delete [] unqString;
             }
         else {
             drawFixedShadowStringWhite( translate( "fpsPending" ), pos );
@@ -22001,6 +22055,14 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 frameBatchMeasureStartTime = -1;
                                 framesInBatch = 0;
                                 fpsToDraw = -1;
+                                if( showFPS ) {
+                                    startCountingUniqueSpriteDraws();
+                                    startCountingSpritesDrawn();
+                                    }
+                                else {
+                                    endCountingUniqueSpriteDraws();
+                                    endCountingSpritesDrawn();
+                                    }
                                 }
                             else if( strstr( typedText,
                                              translate( "netCommand" ) ) 
