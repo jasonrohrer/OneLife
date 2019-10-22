@@ -17,6 +17,9 @@ Server Fixes
   tap out springs in an 80-radius area.  6th+ shallow well taps out springs in
   an 800-radius area.
 
+--Fixed bug in replacing oil wells with tarry spots on server restart, and also
+  no longer using same random seed for placement of tarry spots in each arc.
+
 
 
 

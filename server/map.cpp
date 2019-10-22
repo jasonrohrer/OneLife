@@ -2883,6 +2883,64 @@ void reseedMap( char inForceFresh ) {
             fprintf( seedFile, "%d", biomeRandSeed );
             fclose( seedFile );
             }
+
+
+
+        // re-place rand placement objects
+        CustomRandomSource placementRandSource( biomeRandSeed );
+
+        int numObjects;
+        ObjectRecord **allObjects = getAllObjects( &numObjects );
+    
+        for( int i=0; i<numObjects; i++ ) {
+            ObjectRecord *o = allObjects[i];
+
+            float p = o->mapChance;
+            if( p > 0 ) {
+                int id = o->id;
+            
+                char *randPlacementLoc =
+                    strstr( o->description, "randPlacement" );
+                
+                if( randPlacementLoc != NULL ) {
+                    // special random placement
+                
+                    int count = 10;                
+                    sscanf( randPlacementLoc, "randPlacement%d", &count );
+                
+                    printf( "Placing %d random occurences of %d (%s) "
+                            "inside %d square radius:\n",
+                            count, id, o->description, barrierRadius );
+                    for( int p=0; p<count; p++ ) {
+                        // sample until we find target biome
+                        int safeR = barrierRadius - 2;
+                        
+                        char placed = false;
+                        while( ! placed ) {                    
+                            int pickX = 
+                                placementRandSource.
+                                getRandomBoundedInt( -safeR, safeR );
+                            int pickY = 
+                                placementRandSource.
+                                getRandomBoundedInt( -safeR, safeR );
+                            
+                            int pickB = getMapBiome( pickX, pickY );
+                            
+                            for( int j=0; j< o->numBiomes; j++ ) {
+                                int b = o->biomes[j];
+                                
+                                if( b == pickB ) {
+                                    // hit
+                                    placed = true;
+                                    printf( "  (%d,%d)\n", pickX, pickY );
+                                    setMapObject( pickX, pickY, id );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -2891,7 +2949,6 @@ void reseedMap( char inForceFresh ) {
 
 char initMap() {
 
-    reseedMap( false );
     
     
     numSpeechPipes = getMaxSpeechPipeIndex() + 1;
@@ -3629,8 +3686,6 @@ char initMap() {
 
     CustomRandomSource phaseRandSource( randSeed );
 
-    CustomRandomSource placementRandSource( randSeed );
-
     
     for( int i=0; i<numObjects; i++ ) {
         ObjectRecord *o = allObjects[i];
@@ -3718,39 +3773,8 @@ char initMap() {
             else if( randPlacementLoc != NULL ) {
                 // special random placement
                 
-                int count = 10;                
-                sscanf( randPlacementLoc, "randPlacement%d", &count );
-                
-                printf( "Placing %d random occurences of %d (%s) "
-                        "inside %d square radius:\n",
-                        count, id, o->description, barrierRadius );
-                for( int p=0; p<count; p++ ) {
-                    // sample until we find target biome
-                    int safeR = barrierRadius - 2;
-
-                    char placed = false;
-                    while( ! placed ) {                    
-                        int pickX = 
-                            placementRandSource.
-                            getRandomBoundedInt( -safeR, safeR );
-                        int pickY = 
-                            placementRandSource.
-                            getRandomBoundedInt( -safeR, safeR );
-                        
-                        int pickB = getMapBiome( pickX, pickY );
-                            
-                        for( int j=0; j< o->numBiomes; j++ ) {
-                            int b = o->biomes[j];
-                            
-                            if( b == pickB ) {
-                                // hit
-                                placed = true;
-                                printf( "  (%d,%d)\n", pickX, pickY );
-                                setMapObject( pickX, pickY, id );
-                                }
-                            }
-                        }
-                    }
+                // don't actually place these now, do it on reseed
+                // but skip adding them to list of natural objects
                 }
             else {
                 // regular fractal placement
@@ -3950,7 +3974,8 @@ char initMap() {
         }
     
     
-    
+    reseedMap( false );
+        
     
 
     
