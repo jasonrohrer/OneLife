@@ -531,11 +531,19 @@ static void setupTapout( ObjectRecord *inR ) {
     if( triggerPos != NULL ) {
         int xGrid, yGrid;
         int xLimit, yLimit;
+        int buildCountLimit = -1;
+        int postBuildLimitX = 0;
+        int postBuildLimitY = 0;
+        
         int numRead = sscanf( triggerPos, 
-                              "+tapoutTrigger,%d,%d,%d,%d",
+                              "+tapoutTrigger,%d,%d,%d,%d,"
+                              "%d,%d,%d",
                               &xGrid, &yGrid,
-                              &xLimit, &yLimit );
-        if( numRead == 4 ) {
+                              &xLimit, &yLimit,
+                              &buildCountLimit,
+                              &postBuildLimitX,
+                              &postBuildLimitY );
+        if( numRead == 4 || numRead == 7 ) {
             // valid tapout trigger
             TapoutRecord r;
             
@@ -544,6 +552,11 @@ static void setupTapout( ObjectRecord *inR ) {
             r.gridSpacingY = yGrid;
             r.limitX = xLimit;
             r.limitY = yLimit;
+            
+            r.buildCountLimit = buildCountLimit;
+            r.buildCount = 0;
+            r.postBuildLimitX = postBuildLimitX;
+            r.postBuildLimitY = postBuildLimitY;
             
             tapoutRecords.push_back( r );
             

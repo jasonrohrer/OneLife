@@ -23,6 +23,11 @@ typedef struct TapoutRecord {
         int gridSpacingX, gridSpacingY;
         // how far to reach in +/- x and y when tapping out
         int limitX, limitY;
+        int buildCount;
+        int buildCountLimit;
+        // how far to reach in +/- x and y when tapping out
+        // after build count limit reached
+        int postBuildLimitX, postBuildLimitY;
     } TapoutRecord;
     
 

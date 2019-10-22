@@ -6443,6 +6443,46 @@ static int neighborWallAgree( int inX, int inY, ObjectRecord *inSetO,
 
 
 
+static void runTapoutOperation( int inX, int inY, 
+                                int inRadiusX, int inRadiusY,
+                                int inSpacingX, int inSpacingY,
+                                int inTriggerID,
+                                char inIsPost = false ) {
+    for( int y =  inY - inRadiusY; 
+         y <= inY + inRadiusY; 
+         y += inSpacingY ) {
+    
+        for( int x =  inX - inRadiusX; 
+             x <= inX + inRadiusX; 
+             x += inSpacingX ) {
+            
+            int id = getMapObjectRaw( x, y );
+                    
+            // change triggered by tapout represented by 
+            // tapoutTrigger object getting used as actor
+            // on tapoutTarget
+            TransRecord *t = NULL;
+            
+            if( inIsPost ) {
+                // last use target signifies what happens in post
+                t = getPTrans( inTriggerID, id, false, true );
+                }
+
+            if( t == NULL ) {
+                // not post or last-use-target trans undefined
+                t = getPTrans( inTriggerID, id );
+                }
+            
+            if( t != NULL ) {
+                setMapObjectRaw( x, y, t->newTarget );
+                }
+            }
+        }
+    }
+
+
+
+
 void setMapObjectRaw( int inX, int inY, int inID ) {
     dbPut( inX, inY, 0, inID );
     
@@ -6710,25 +6750,23 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
         TapoutRecord *r = getTapoutRecord( inID );
         
         if( r != NULL ) {
-            for( int y =  inY - r->limitY; 
-                     y <= inY + r->limitY; 
-                     y += r->gridSpacingY ) {
-                
-                for( int x =  inX - r->limitX; 
-                         x <= inX + r->limitX; 
-                         x += r->gridSpacingX ) {
-                    
-                    int id = getMapObjectRaw( x, y );
-                    
-                    // change triggered by tapout represented by 
-                    // tapoutTrigger object getting used as actor
-                    // on tapoutTarget
-                    TransRecord *t = getPTrans( inID, id );
-                    
-                    if( t != NULL ) {
-                        setMapObjectRaw( x, y, t->newTarget );
-                        }
-                    }
+
+            runTapoutOperation( inX, inY, 
+                                r->limitX, r->limitY,
+                                r->gridSpacingX, r->gridSpacingY, 
+                                inID );
+            
+            
+            r->buildCount++;
+            
+            if( r->buildCountLimit != -1 &&
+                r->buildCount >= r->buildCountLimit ) {
+                // hit limit!
+                // tapout a larger radius now
+                runTapoutOperation( inX, inY, 
+                                    r->postBuildLimitX, r->postBuildLimitY,
+                                    r->gridSpacingX, r->gridSpacingY, 
+                                    inID, true );
                 }
             }
         

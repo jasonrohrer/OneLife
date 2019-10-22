@@ -10,6 +10,17 @@ Version 274   ???
 
 
 
+Server Fixes
+
+--Support for upper limit on number of tapout triggers that can be built
+  followed by a larger tapout radius.  Example:  first 5 shallow wells built
+  tap out springs in an 80-radius area.  6th+ shallow well taps out springs in
+  an 800-radius area.
+
+
+
+
+
 Version 272    2019-October-19
 
 --Fixed crash when switching hint target object with a non-matching filter.
