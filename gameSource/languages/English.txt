@@ -410,6 +410,10 @@ fps "FPS"
 
 fpsPending "FPS..."
 
+spritesDrawn       "spt drw"
+uniqueSprites "unq drw"
+pixelsDrawn "pixels"
+
 netPending "NET..."
 netStringA "MSG/SEC:   %3d UP : %4d DN" 
 netStringB "BYTES/SEC: %3d UP : %4d DN" 
