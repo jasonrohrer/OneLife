@@ -20,6 +20,8 @@ Server Fixes
 --Fixed bug in replacing oil wells with tarry spots on server restart, and also
   no longer using same random seed for placement of tarry spots in each arc.
 
+--If you are < 3 years old when one of your descendants die, they will not
+  count toward your genetic score (because you were helpless yourself).
 
 
 

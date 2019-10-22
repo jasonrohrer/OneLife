@@ -568,7 +568,7 @@ typedef struct LiveObject {
         
         SimpleVector<char*> *ancestorEmails;
         SimpleVector<char*> *ancestorRelNames;
-        
+        SimpleVector<double> *ancestorLifeStartTimeSeconds;
 
         // id of Eve that started this line
         int lineageEveID;
@@ -1622,6 +1622,8 @@ void quitCleanup() {
         
         nextPlayer->ancestorRelNames->deallocateStringElements();
         delete nextPlayer->ancestorRelNames;
+        
+        delete nextPlayer->ancestorLifeStartTimeSeconds;
         
 
         if( nextPlayer->name != NULL ) {
@@ -8108,7 +8110,8 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     newObject.ancestorEmails = new SimpleVector<char*>();
     newObject.ancestorRelNames = new SimpleVector<char*>();
-                                                  
+    newObject.ancestorLifeStartTimeSeconds = new SimpleVector<double>();
+    
     for( int j=0; j<players.size(); j++ ) {
         LiveObject *otherPlayer = players.getElement( j );
         
@@ -8149,6 +8152,9 @@ int processLoggedInPlayer( char inAllowReconnect,
 
                         newObject.ancestorRelNames->push_back(
                             workingName.getElementString() );
+                        
+                        newObject.ancestorLifeStartTimeSeconds->push_back(
+                            otherPlayer->lifeStartTimeSeconds );
                         
                         break;
                         }
@@ -8201,6 +8207,9 @@ int processLoggedInPlayer( char inAllowReconnect,
                     newObject.ancestorRelNames->push_back(
                         workingName.getElementString() );
                     
+                    newObject.ancestorLifeStartTimeSeconds->push_back(
+                            otherPlayer->lifeStartTimeSeconds );
+                        
                     break;
                     }
                 }
@@ -8217,7 +8226,7 @@ int processLoggedInPlayer( char inAllowReconnect,
         // they care about protecting us).
 
         // this is a little weird, but it does make some sense
-        // you are more productive of little sibs
+        // you are more protective of little sibs
 
         // anyway, the point of this is to close the "just care about yourself
         // and avoid having kids" exploit.  If your mother has kids after you
@@ -8241,6 +8250,10 @@ int processLoggedInPlayer( char inAllowReconnect,
                 }
 
             newObject.ancestorRelNames->push_back( stringDuplicate( relName ) );
+            
+            newObject.ancestorLifeStartTimeSeconds->push_back(
+                otherPlayer->lifeStartTimeSeconds );
+                        
             break;
             }
         }
@@ -11588,18 +11601,51 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
 
     SimpleVector<char*> emptyAncestorEmails;
     SimpleVector<char*> emptyAncestorRelNames;
+    SimpleVector<double> emptyAncestorLifeStartTimeSeconds;
     
 
     SimpleVector<char*> *ancestorEmails = nextPlayer->ancestorEmails;
     SimpleVector<char*> *ancestorRelNames = nextPlayer->ancestorRelNames;
+    SimpleVector<double> *ancestorLifeStartTimeSeconds = 
+        nextPlayer->ancestorLifeStartTimeSeconds;
     
 
     if( nextPlayer->suicide ) {
         // don't let this suicide death affect scores of any ancestors
         ancestorEmails = &emptyAncestorEmails;
         ancestorRelNames = &emptyAncestorRelNames;
+        ancestorLifeStartTimeSeconds = &emptyAncestorLifeStartTimeSeconds;
         }
-    
+    else {
+        // any that never made it to age 3+ by the time this person died
+        // should not be counted.  What could they have done to keep us alive
+        // Note that this misses one case... an older sib that died at age 2.5
+        // and then we died at age 10 or whatever.  They are age "12.5" right
+        // now, even though they are dead.  We're not still tracking them,
+        // though, so we don't know.
+        double curTime = Time::getCurrentTime();
+        
+        double ageRate = getAgeRate();
+        
+        for( int i=0; i<ancestorEmails->size(); i++ ) {
+            double startTime = 
+                ancestorLifeStartTimeSeconds->getElementDirect( i );
+            
+            if( ageRate * ( curTime - startTime ) < defaultActionAge ) {
+                // too young to have taken action to help this person
+                delete [] ancestorEmails->getElementDirect( i );
+                ancestorEmails->deleteElement( i );
+                
+                delete [] ancestorRelNames->getElementDirect( i );
+                ancestorRelNames->deleteElement( i );
+                
+                ancestorLifeStartTimeSeconds->deleteElement( i );
+                
+                i--;
+                }
+            }
+        
+        }    
 
 
     logFitnessDeath( players.size(),
@@ -21592,7 +21638,9 @@ int main() {
                 
                 nextPlayer->ancestorRelNames->deallocateStringElements();
                 delete nextPlayer->ancestorRelNames;
-
+                
+                delete nextPlayer->ancestorLifeStartTimeSeconds;
+                
 
                 if( nextPlayer->name != NULL ) {
                     delete [] nextPlayer->name;
