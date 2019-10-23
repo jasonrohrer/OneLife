@@ -15039,6 +15039,19 @@ int main() {
                                     name,
                                     &( m.saidText ),
                                     nextPlayer, true );
+
+                                if( strstr( m.saidText, "EVE EVE" ) != NULL ) {
+                                    // their naming phrase was I AM EVE SMITH
+                                    // already
+                                    char found;
+                                    char *fixed =
+                                        replaceOnce( m.saidText, 
+                                                     "EVE EVE",
+                                                     "EVE",
+                                                     &found );
+                                    delete [] m.saidText;
+                                    m.saidText = fixed;
+                                    }
                                 }
                             }
 

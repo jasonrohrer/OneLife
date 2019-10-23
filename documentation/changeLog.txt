@@ -33,6 +33,9 @@ Server Fixes
 
 --Fixed so that curse radius is correctly limited to 32 tiles.
 
+--Fixed so that saying I AM EVE SMITH doesn't result in redundant name
+  insertion in broadcast speech of I AM EVE EVE SMITH.
+
 
 
 Version 272    2019-October-19
