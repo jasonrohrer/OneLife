@@ -28,6 +28,8 @@ Server Fixes
 --If you are < 3 years old when one of your descendants die, they will not
   count toward your genetic score (because you were helpless yourself).
 
+--Reseeding map now depends on map being inited, so switched order in
+  apocalypse step.
 
 
 

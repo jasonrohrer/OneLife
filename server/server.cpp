@@ -10213,9 +10213,9 @@ void apocalypseStep() {
                 AppLog::infoF( "Apocalypse wipeMapFiles took %f sec",
                                Time::getCurrentTime() - startTime );
                 
-                reseedMap( true );
-                
                 initMap();
+
+                reseedMap( true );
                 
                 AppLog::infoF( "Apocalypse initMap took %f sec",
                                Time::getCurrentTime() - startTime );
