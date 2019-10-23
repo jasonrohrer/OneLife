@@ -5064,6 +5064,41 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             }
         }
 
+
+    // make sure, no matter what, we can't curse living 
+    // people at a great distance
+    // note that, sice we're not tracking dead people here
+    // that case will be caught below, since the curses.h tracks death
+    // locations
+    GridPos speakerPos = getPlayerPos( inPlayer );
+    
+    if( cursedName != NULL &&
+        strcmp( cursedName, "" ) != 0 ) {
+
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *otherPlayer = players.getElement( i );
+            
+            if( otherPlayer == inPlayer ||
+                otherPlayer->error ) {
+                continue;
+                }
+            if( otherPlayer->name != NULL &&
+                strcmp( otherPlayer->name, cursedName ) == 0 ) {
+                // matching player
+                
+                double dist = 
+                    distance( speakerPos, getPlayerPos( otherPlayer ) );
+
+                if( dist > getMaxChunkDimension() ) {
+                    // too far
+                    delete [] cursedName;
+                    cursedName = NULL;
+                    }
+                break;
+                }
+            }
+        }
+    
     
 
     if( cursedName != NULL && 
@@ -5072,6 +5107,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         isCurse = cursePlayer( inPlayer->id,
                                inPlayer->lineageEveID,
                                inPlayer->email,
+                               speakerPos,
+                               getMaxChunkDimension(),
                                cursedName );
         
         if( isCurse ) {
@@ -17610,6 +17647,8 @@ int main() {
 
                 
                 if( ! nextPlayer->isTutorial ) {
+                    GridPos deathPos = 
+                        getPlayerPos( nextPlayer );
                     logDeath( nextPlayer->id,
                               nextPlayer->email,
                               nextPlayer->isEve,
@@ -17617,7 +17656,7 @@ int main() {
                               getSecondsPlayed( 
                                   nextPlayer ),
                               ! getFemale( nextPlayer ),
-                              nextPlayer->xd, nextPlayer->yd,
+                              deathPos.x, deathPos.y,
                               players.size() - 1,
                               false,
                               nextPlayer->murderPerpID,

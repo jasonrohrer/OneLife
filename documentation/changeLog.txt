@@ -31,6 +31,8 @@ Server Fixes
 --Reseeding map now depends on map being inited, so switched order in
   apocalypse step.
 
+--Fixed so that curse radius is correctly limited to 32 tiles.
+
 
 
 Version 272    2019-October-19
