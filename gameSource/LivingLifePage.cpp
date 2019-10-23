@@ -12042,6 +12042,13 @@ void LivingLifePage::step() {
         else if( type == APOCALYPSE_DONE ) {
             apocalypseDisplayProgress = 0;
             apocalypseInProgress = false;
+            homePosStack.deleteAll();
+            
+            // cancel all emots
+            for( int i=0; i<gameObjects.size(); i++ ) {
+                LiveObject *p = gameObjects.getElement( i );
+                p->currentEmot = NULL;
+                }
             }
         else if( type == MONUMENT_CALL ) {
             int posX, posY, monumentID;
