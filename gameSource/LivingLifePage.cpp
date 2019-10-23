@@ -8481,7 +8481,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
         mLastKnownNoteLines.deallocateStringElements();
         }
     
-
+    
+    const char *shiftHintKey = "shiftHint";
+    if( mUsingSteam ) {
+        shiftHintKey = "zHint";
+        }
+    
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
         if( ! equal( mHintPosOffset[i], mHintHideOffset[i] ) 
             &&
@@ -8508,9 +8513,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
                 double extraB = 
                     handwritingFont->measureString( translate( "tabHint" ) );
+
+                double extraC = 
+                    handwritingFont->measureString( translate( shiftHintKey ) );
                 
                 if( extraB > extraA ) {
                     extraA = extraB;
+                    }
+                if( extraC > extraA ) {
+                    extraA = extraC;
                     }
                 
                 pageNumExtra = extraA;
@@ -8576,13 +8587,24 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 handwritingFont->drawString( pageNum, lineStart, alignLeft );
                 
-                delete [] pageNum;
                 
-                lineStart.y -= 2 * lineSpacing;
+                lineStart.y -= lineSpacing;
                 
                 lineStart.x += pageNumExtra;
+
+                // center shift and tab hints under page number, which is always
+                // bigger
+                lineStart.x -= 0.5 * handwritingFont->measureString( pageNum );
+                
+                delete [] pageNum;
+                
+                handwritingFont->drawString( translate( shiftHintKey ), 
+                                             lineStart, alignCenter );
+                
+                lineStart.y -= lineSpacing;
+                
                 handwritingFont->drawString( translate( "tabHint" ), 
-                                             lineStart, alignRight );
+                                             lineStart, alignCenter );
                 }
             }
         }

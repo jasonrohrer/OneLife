@@ -11,6 +11,8 @@ Version 274   ???
 --Holding 'x' key lets you click through people.  Allows you
   to interact with objects behind self and others.
 
+--Showing explicit hint for [SHIFT]-[TAB] on hint sheets (paging backwards).
+
 
 
 Server Fixes
