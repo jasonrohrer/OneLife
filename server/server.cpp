@@ -1122,6 +1122,9 @@ static void backToBasics( LiveObject *inPlayer ) {
         p->clothingContained[c].deleteAll();
         p->clothingContainedEtaDecays[c].deleteAll();
         }
+
+    p->emotFrozen = false;
+    p->emotUnfreezeETA = 0;
     }
 
 
@@ -9975,6 +9978,21 @@ int readIntFromFile( const char *inFileName, int inDefaultValue ) {
 
 
 
+typedef struct KillState {
+        int killerID;
+        int killerWeaponID;
+        int targetID;
+        double killStartTime;
+        double emotStartTime;
+        int emotRefreshSeconds;
+    } KillState;
+
+
+SimpleVector<KillState> activeKillStates;
+
+
+
+
 void apocalypseStep() {
     
     double curTime = Time::getCurrentTime();
@@ -10260,7 +10278,7 @@ void apocalypseStep() {
                 peaceTreaties.deleteAll();
                 warStates.deleteAll();
                 warPeaceRecords.deleteAll();
-                
+                activeKillStates.deleteAll();
 
                 lastRemoteApocalypseCheckTime = curTime;
                 
@@ -10771,17 +10789,6 @@ typedef struct FlightDest {
         
 
 
-typedef struct KillState {
-        int killerID;
-        int killerWeaponID;
-        int targetID;
-        double killStartTime;
-        double emotStartTime;
-        int emotRefreshSeconds;
-    } KillState;
-
-
-SimpleVector<KillState> activeKillStates;
 
 SimpleVector<int> killStatePosseChangedPlayerIDs;
 

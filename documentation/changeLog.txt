@@ -13,6 +13,8 @@ Version 274   ???
 
 --Showing explicit hint for [SHIFT]-[TAB] on hint sheets (paging backwards).
 
+--Fixed stuck murder mouth after apocalypse.
+
 
 
 Server Fixes
@@ -35,6 +37,7 @@ Server Fixes
 
 --Fixed so that saying I AM EVE SMITH doesn't result in redundant name
   insertion in broadcast speech of I AM EVE EVE SMITH.
+
 
 
 
