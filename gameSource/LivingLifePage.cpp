@@ -7045,6 +7045,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     if( showFPS ) runningPixelCount += endCountingSpritePixelsDrawn();
 
     
+    if( ! takingPhoto )
     drawOffScreenSounds();
     
     

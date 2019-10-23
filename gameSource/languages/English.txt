@@ -270,6 +270,8 @@ noHint "NO INFORMATION"
 
 ofHint "OF"
 tabHint "[TAB]"
+shiftHint "[SHIFT]"
+zHint "[Z]"
 
 enterHint "[ENTER]"
 
