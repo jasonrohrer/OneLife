@@ -27,6 +27,9 @@ typedef struct PlayerRecord {
 
 StringTree emailIndex;
 
+SimpleVector<int*> indexPointers;
+
+
 SimpleVector<PlayerRecord> records;
 
 
@@ -39,7 +42,7 @@ int findIndex( char *inEmail ) {
     if( numMatch == 0 ) {
         return -1;
         }
-    return (int)( val );
+    return *( (int*)val );
     }
 
 
@@ -64,8 +67,12 @@ PlayerRecord *findRecord( char *inEmail ) {
     records.push_back( r );
 
     index = records.size() - 1;
+
+    int *intPointer = new int;
+    *intPointer = index;
+    indexPointers.push_back( intPointer );
     
-    emailIndex.insert( inEmail, (void*)index );
+    emailIndex.insert( inEmail, (void*)intPointer );
     
     return records.getElement( index );
     }
@@ -292,7 +299,15 @@ int main( int inNumArgs, char **inArgs ) {
             }
         }
     
+    
+    for( int i=0; i<indexPointers.size(); i++ ) {
+        delete indexPointers.getElementDirect( i );
+        }
 
+    for( int i=0; i<records.size(); i++ ) {
+        PlayerRecord *r = records.getElement( i );
+        delete [] r->email;
+        }
     
     return 0;
     }
