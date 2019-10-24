@@ -140,20 +140,17 @@ void processFile( File *inFile ) {
 
 
 void processSubDir( File *inFile ) {
-    char *fileName = inFile->getFullFileName();
+    char *fileName = inFile->getFileName();
     
     char nonLog = false;
     if( strstr( fileName, "lifeLog" ) != fileName ) {
         nonLog = true;
         }
-    
-    delete [] fileName;
-    
-    if( nonLog ) {
-        return;
-        }
 
-    if( inFile->isDirectory() ) {
+    if( ! nonLog && inFile->isDirectory() ) {
+        
+        printf( "Processing dir %s\n", fileName );
+            
         
         int numChildFiles;
         
@@ -166,6 +163,7 @@ void processSubDir( File *inFile ) {
             }
         delete [] childFiles;
         }
+    delete [] fileName;
     }
 
 
@@ -205,6 +203,7 @@ int main( int inNumArgs, char **inArgs ) {
         }
 
     // process once to get first life time for each player
+    printf( "First pass\n" );
     processDir( &dirFile );
     
     
@@ -216,6 +215,7 @@ int main( int inNumArgs, char **inArgs ) {
         }
     
     // process again here
+    printf( "Second pass\n" );
     processDir( &dirFile );
 
     
