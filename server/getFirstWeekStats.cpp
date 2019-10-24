@@ -157,11 +157,15 @@ void processSubDir( File *inFile ) {
         File **childFiles = inFile->getChildFiles( &numChildFiles );
         
         for( int i=0; i<numChildFiles; i++ ) {
+            printf("\r%5d/%d", i, numChildFiles );
+            fflush( stdout );
+            
             processFile( childFiles[i] );
             
             delete childFiles[i];
             }
         delete [] childFiles;
+        printf( "\n" );
         }
     delete [] fileName;
     }
