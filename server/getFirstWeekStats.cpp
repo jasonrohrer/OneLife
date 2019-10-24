@@ -21,6 +21,7 @@ typedef struct PlayerRecord {
         char *email;
         double firstGameTimeSeconds;
         double lastGameTimeSeconds;
+        double totalGameTimeSecondsInBin;
         double totalGameTimeSeconds;
 
         double lastBirthTimeSeconds;
@@ -213,19 +214,19 @@ void addDeath( char *inEmail, double inDeathTimeSeconds, int inID ) {
         r->lastGameTimeSeconds = inDeathTimeSeconds;
         }
 
-    // only add to total if this death is within bin for this player
-    
-    if( inDeathTimeSeconds > r->firstGameTimeSeconds &&
-        inDeathTimeSeconds - r->firstGameTimeSeconds < binSeconds ) {
+    // ignore ID mismatch
+    // this means a death with no matching birth
+    if( r->lastBirthTimeSeconds > 0  &&
+        inID == r->lastBirthID ) {
+        
+        double lifeSeconds = inDeathTimeSeconds - r->lastBirthTimeSeconds;
 
-        // ignore ID mismatch
-        // this means a death with no matching birth
-        if( r->lastBirthTimeSeconds > 0  &&
-            inID == r->lastBirthID ) {
-
-            r->totalGameTimeSeconds += 
-                inDeathTimeSeconds - r->lastBirthTimeSeconds;
+        // only add to total if this death is within bin for this player
+        if( inDeathTimeSeconds - r->firstGameTimeSeconds < binSeconds ) {
+            r->totalGameTimeSecondsInBin += lifeSeconds;
             }
+
+        r->totalGameTimeSeconds += lifeSeconds;
         }
     
     
@@ -369,6 +370,7 @@ int main( int inNumArgs, char **inArgs ) {
     for( int i=0; i<records.size(); i++ ) {
         PlayerRecord *r = records.getElement( i );
         r->totalGameTimeSeconds = 0;
+        r->totalGameTimeSecondsInBin = 0;
         r->lastBirthTimeSeconds = 0;
         r->lastBirthID = -1;
         }
@@ -387,12 +389,21 @@ int main( int inNumArgs, char **inArgs ) {
     double yearMonthSums[YEARS][MONTHS];
     int yearMonthCounts[YEARS][MONTHS];
     int yearMonthQuitCounts[YEARS][MONTHS];
+
+    #define HOUR_BINS 9
+    int hourBins[ HOUR_BINS ] = { 1, 5, 10, 20, 50, 100, 200, 500, 1000 };
+    
+    int yearMonthHourCounts[YEARS][MONTHS][ HOUR_BINS ];
+    
     
     for( int y=0; y<YEARS; y++ ) {
         for( int m=0; m<MONTHS; m++ ) {
             yearMonthSums[y][m] = 0;
             yearMonthCounts[y][m] = 0;
             yearMonthQuitCounts[y][m] = 0;
+            for( int h=0; h<HOUR_BINS; h++ ) {
+                yearMonthHourCounts[y][m][h] = 0;
+                }
             }
         }
     
@@ -409,16 +420,32 @@ int main( int inNumArgs, char **inArgs ) {
         int y = ts.tm_year;
         int m = ts.tm_mon;
         
-        yearMonthSums[y][m] += r->totalGameTimeSeconds;
+        yearMonthSums[y][m] += r->totalGameTimeSecondsInBin;
         yearMonthCounts[y][m] += 1;
 
         if( r->lastGameTimeSeconds - r->firstGameTimeSeconds < binSeconds ) {
             // they quit playing within this window
             yearMonthQuitCounts[y][m] += 1;
             }
+
+        double totalHours = r->totalGameTimeSeconds / 3600;
+        
+        for( int h=0; h<HOUR_BINS; h++ ) {
+            if( totalHours > hourBins[h] ) {
+                yearMonthHourCounts[y][m][h] += 1;
+                }
+            }
         }
 
     printf( "\n\n%d-day Report:\n", binSeconds / ( 3600 * 24 ) );
+    
+    printf( "date, aveHrInWind, plrCnt, quitCnt, quitFrct, " );
+    
+    for( int h=0; h<HOUR_BINS; h++ ) {
+        printf( ">-%d-hrFrct, ", hourBins[ h ] );
+        }
+    printf( "\n" );
+    
     for( int y=0; y<YEARS; y++ ) {
         for( int m=0; m<MONTHS; m++ ) {
             if( yearMonthCounts[y][m] > 0 ) {
@@ -428,11 +455,21 @@ int main( int inNumArgs, char **inArgs ) {
                 double quitFraction = 
                     yearMonthQuitCounts[y][m] / (double) yearMonthCounts[y][m];
 
-                printf( "%4d-%02d %9lf %6d %6d %9f\n", y + 1900, m + 1, 
+                printf( "%4d-%02d %5.3lf %6d %6d %5.3f ", y + 1900, m + 1, 
                         ave / 3600.0,
                         yearMonthCounts[y][m],
                         yearMonthQuitCounts[y][m],
-                        quitFraction);
+                        quitFraction );
+
+                for( int h=0; h<HOUR_BINS; h++ ) {
+                    double hourFraction =
+                        yearMonthHourCounts[y][m][h] / 
+                        (double) yearMonthCounts[y][m];
+                
+                    printf( "%5.3f ", hourFraction );
+                    }
+                
+                printf( "\n" );
                 }
             }
         }
