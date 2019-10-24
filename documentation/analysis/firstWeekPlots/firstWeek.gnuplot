@@ -7,9 +7,15 @@ set xtics rotate
 
 set grid
 
-system "cat firstTwoMonths.txt | head -n -3 > firstTwoMonths.tmp"
-system "cat firstMonth.txt | head -n -2 > firstMonth.tmp"
-system "cat firstWeek.txt | head -n -1 > firstWeek.tmp"
+# strip off last lines where we don't have enough data
+#system "cat firstTwoMonths.txt | head -n -3 > firstTwoMonths.tmp"
+#system "cat firstMonth.txt | head -n -2 > firstMonth.tmp"
+#system "cat firstWeek.txt | head -n -1 > firstWeek.tmp"
+
+# show last lines, so natural decline can be seen 
+system "cat firstTwoMonths.txt > firstTwoMonths.tmp"
+system "cat firstMonth.txt > firstMonth.tmp"
+system "cat firstWeek.txt > firstWeek.tmp"
 
 plot "firstTwoMonths.tmp"  using 1:2 with linespoints title "Hours played in first two months of ownership", "firstMonth.tmp"  using 1:2 with linespoints title "Hours played in first month of ownership",  "firstWeek.tmp"  using 1:2 with linespoints title "Hours played in first week of ownership", "firstDay.txt"  using 1:2 with linespoints title "Hours played in first day of ownership", "firstHour.txt"  using 1:2 with linespoints title "Hours played in first hour of ownership"
 
