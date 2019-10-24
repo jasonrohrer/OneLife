@@ -23,6 +23,7 @@ typedef struct PlayerRecord {
         double totalGameTimeSeconds;
 
         double lastBirthTimeSeconds;
+        int lastBirthID;
     } PlayerRecord;
 
 
@@ -166,7 +167,8 @@ PlayerRecord *findRecord( char *inEmail ) {
     PlayerRecord r = { stringDuplicate( inEmail ),
                        DBL_MAX,
                        0,
-                       0 };
+                       0,
+                       -1 };
     records.push_back( r );
 
     totalEmailAllocation += strlen( inEmail );
@@ -181,18 +183,19 @@ PlayerRecord *findRecord( char *inEmail ) {
 
 
 
-void addBirth( char *inEmail, double inBirthTimeSeconds ) {
+void addBirth( char *inEmail, double inBirthTimeSeconds, int inID ) {
     PlayerRecord *r = findRecord( inEmail );
     
     if( r->firstGameTimeSeconds > inBirthTimeSeconds ) {
         r->firstGameTimeSeconds = inBirthTimeSeconds;
         }
-    r->lastBirthTimeSeconds = inBirthTimeSeconds;    
+    r->lastBirthTimeSeconds = inBirthTimeSeconds;
+    r->lastBirthID = inID;
     }
 
 
 
-void addDeath( char *inEmail, double inDeathTimeSeconds ) {
+void addDeath( char *inEmail, double inDeathTimeSeconds, int inID ) {
 
     PlayerRecord *r = findRecord( inEmail );
 
@@ -204,8 +207,12 @@ void addDeath( char *inEmail, double inDeathTimeSeconds ) {
     
     if( inDeathTimeSeconds > r->firstGameTimeSeconds &&
         inDeathTimeSeconds - r->firstGameTimeSeconds < binSeconds ) {
-        
-        if( r->lastBirthTimeSeconds > 0 ) {
+
+        // ignore ID mismatch
+        // this means a death with no matching birth
+        if( r->lastBirthTimeSeconds > 0  &&
+            inID == r->lastBirthID ) {
+
             r->totalGameTimeSeconds += 
                 inDeathTimeSeconds - r->lastBirthTimeSeconds;
             }
@@ -249,11 +256,11 @@ void processFile( File *inFile ) {
 
                     if( bOrD == 'B' ) {
                         numBirths++;
-                        addBirth( emailBuffer, t );
+                        addBirth( emailBuffer, t, id );
                         }
                     else if( bOrD == 'D' ) {
                         numDeaths++;
-                        addDeath( emailBuffer, t );                        
+                        addDeath( emailBuffer, t, id );                        
                         }
 
                     // skip rest of line
@@ -353,6 +360,7 @@ int main( int inNumArgs, char **inArgs ) {
         PlayerRecord *r = records.getElement( i );
         r->totalGameTimeSeconds = 0;
         r->lastBirthTimeSeconds = 0;
+        r->lastBirthID = -1;
         }
     
     // process again here
