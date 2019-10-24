@@ -1,1 +1,1 @@
-g++ -g -I../.. -o getFirstWeekStats getFirstWeekStats.cpp ../../minorGems/io/file/linux/PathLinux.cpp
+g++ -g -I../.. -o getFirstWeekStats getFirstWeekStats.cpp ../../minorGems/io/file/linux/PathLinux.cpp ../../minorGems/util/StringTree.cpp

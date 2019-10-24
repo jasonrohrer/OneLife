@@ -4,6 +4,7 @@
 
 #include "minorGems/io/file/File.h"
 #include "minorGems/util/SimpleVector.h"
+#include "minorGems/util/StringTree.h"
 
 
 int binSeconds = 3600 * 24 * 7;
@@ -24,13 +25,32 @@ typedef struct PlayerRecord {
     } PlayerRecord;
 
 
+StringTree emailIndex;
+
 SimpleVector<PlayerRecord> records;
 
 
+
+int findIndex( char *inEmail ) {
+    void *val;
+    
+    int numMatch = emailIndex.getMatches( inEmail, 0, 1, &val );
+    
+    if( numMatch == 0 ) {
+        return -1;
+        }
+    return (int)( val );
+    }
+
+
+
 PlayerRecord *findRecord( char *inEmail ) {
-    for( int i=0; i<records.size(); i++ ) {
-        PlayerRecord *r = records.getElement( i );
-        
+
+    int index = findIndex( inEmail );
+    
+    if( index != -1 ) {
+        PlayerRecord *r = records.getElement( index );
+
         if( strcmp( inEmail, r->email ) == 0 ) {
             return r;
             }
@@ -42,8 +62,12 @@ PlayerRecord *findRecord( char *inEmail ) {
                        0,
                        0 };
     records.push_back( r );
+
+    index = records.size() - 1;
     
-    return records.getElement( records.size() - 1 );
+    emailIndex.insert( inEmail, (void*)index );
+    
+    return records.getElement( index );
     }
 
 
