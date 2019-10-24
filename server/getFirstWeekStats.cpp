@@ -361,7 +361,7 @@ int main( int inNumArgs, char **inArgs ) {
         }
 
     // process once to get first life time for each player
-    printf( "First pass\n" );
+    printf( "\n\nFirst pass\n" );
     processDir( &dirFile );
     
     
@@ -374,7 +374,7 @@ int main( int inNumArgs, char **inArgs ) {
         }
     
     // process again here
-    printf( "Second pass\n" );
+    printf( "\n\nSecond pass\n" );
     processDir( &dirFile );
 
     
@@ -418,17 +418,21 @@ int main( int inNumArgs, char **inArgs ) {
             }
         }
 
-
+    printf( "\n\n%d-day Report:\n", binSeconds / ( 3600 * 24 ) );
     for( int y=0; y<YEARS; y++ ) {
         for( int m=0; m<MONTHS; m++ ) {
             if( yearMonthCounts[y][m] > 0 ) {
                 
                 double ave = yearMonthSums[y][m] / yearMonthCounts[y][m];
                 
-                printf( "%d-%02d %lf %d %d\n", y + 1900, m + 1, 
+                double quitFraction = 
+                    yearMonthQuitCounts[y][m] / yearMonthCounts[y][m];
+
+                printf( "%4d-%02d %9lf %6d %6d %9f\n", y + 1900, m + 1, 
                         ave / 3600.0,
                         yearMonthCounts[y][m],
-                        yearMonthQuitCounts[y][m] );
+                        yearMonthQuitCounts[y][m],
+                        quitFraction);
                 }
             }
         }
