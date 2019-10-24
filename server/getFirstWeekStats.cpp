@@ -188,7 +188,8 @@ void processSubDir( File *inFile ) {
         File **childFiles = inFile->getChildFiles( &numChildFiles );
         
         for( int i=0; i<numChildFiles; i++ ) {
-            printf("\r%5d/%d", i, numChildFiles );
+            printf("\r%5d/%d (%5d unique records)", i, numChildFiles,
+                   records.size() );
             fflush( stdout );
             
             processFile( childFiles[i] );
