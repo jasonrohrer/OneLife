@@ -20,6 +20,7 @@ void usage() {
 typedef struct PlayerRecord {
         char *email;
         double firstGameTimeSeconds;
+        double lastGameTimeSeconds;
         double totalGameTimeSeconds;
 
         double lastBirthTimeSeconds;
@@ -168,6 +169,7 @@ PlayerRecord *findRecord( char *inEmail ) {
                        DBL_MAX,
                        0,
                        0,
+                       0,
                        -1 };
     records.push_back( r );
 
@@ -189,6 +191,10 @@ void addBirth( char *inEmail, double inBirthTimeSeconds, int inID ) {
     if( r->firstGameTimeSeconds > inBirthTimeSeconds ) {
         r->firstGameTimeSeconds = inBirthTimeSeconds;
         }
+    if( inBirthTimeSeconds > r->lastGameTimeSeconds ) {
+        r->lastGameTimeSeconds = inBirthTimeSeconds;
+        }
+
     r->lastBirthTimeSeconds = inBirthTimeSeconds;
     r->lastBirthID = inID;
     }
@@ -201,6 +207,10 @@ void addDeath( char *inEmail, double inDeathTimeSeconds, int inID ) {
 
     if( r->firstGameTimeSeconds > inDeathTimeSeconds ) {
         r->firstGameTimeSeconds = inDeathTimeSeconds;
+        }
+
+    if( inDeathTimeSeconds > r->lastGameTimeSeconds ) {
+        r->lastGameTimeSeconds = inDeathTimeSeconds;
         }
 
     // only add to total if this death is within bin for this player
@@ -355,7 +365,7 @@ int main( int inNumArgs, char **inArgs ) {
     processDir( &dirFile );
     
     
-    // now clean all records of everything BUT first life time
+    // now clean all records of everything BUT first and last life time
     for( int i=0; i<records.size(); i++ ) {
         PlayerRecord *r = records.getElement( i );
         r->totalGameTimeSeconds = 0;
@@ -372,13 +382,17 @@ int main( int inNumArgs, char **inArgs ) {
     // each player's first game
 
     // will work up to year 3900
-    double yearMonthSums[3000][12];
-    int yearMonthCounts[3000][12];
+    #define YEARS 3000
+    #define MONTHS 12
+    double yearMonthSums[YEARS][MONTHS];
+    int yearMonthCounts[YEARS][MONTHS];
+    int yearMonthQuitCounts[YEARS][MONTHS];
     
-    for( int y=0; y<3000; y++ ) {
-        for( int m=0; m<12; m++ ) {
+    for( int y=0; y<YEARS; y++ ) {
+        for( int m=0; m<MONTHS; m++ ) {
             yearMonthSums[y][m] = 0;
             yearMonthCounts[y][m] = 0;
+            yearMonthQuitCounts[y][m] = 0;
             }
         }
     
@@ -397,18 +411,24 @@ int main( int inNumArgs, char **inArgs ) {
         
         yearMonthSums[y][m] += r->totalGameTimeSeconds;
         yearMonthCounts[y][m] += 1;
+
+        if( r->lastGameTimeSeconds - r->firstGameTimeSeconds < binSeconds ) {
+            // they quit playing within this window
+            yearMonthQuitCounts[y][m] += 1;
+            }
         }
 
 
-    for( int y=0; y<3000; y++ ) {
-        for( int m=0; m<12; m++ ) {
+    for( int y=0; y<YEARS; y++ ) {
+        for( int m=0; m<MONTHS; m++ ) {
             if( yearMonthCounts[y][m] > 0 ) {
                 
                 double ave = yearMonthSums[y][m] / yearMonthCounts[y][m];
                 
-                printf( "%d-%02d %lf %d\n", y + 1900, m + 1, 
+                printf( "%d-%02d %lf %d %d\n", y + 1900, m + 1, 
                         ave / 3600.0,
-                        yearMonthCounts[y][m] );
+                        yearMonthCounts[y][m],
+                        yearMonthQuitCounts[y][m] );
                 }
             }
         }
