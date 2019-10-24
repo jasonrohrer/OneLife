@@ -140,6 +140,19 @@ void processFile( File *inFile ) {
 
 
 void processSubDir( File *inFile ) {
+    char *fileName = inFile->getFullFileName();
+    
+    char nonLog = false;
+    if( strstr( fileName, "lifeLog" ) != fileName ) {
+        nonLog = true;
+        }
+    
+    delete [] fileName;
+    
+    if( nonLog ) {
+        return;
+        }
+
     if( inFile->isDirectory() ) {
         
         int numChildFiles;
