@@ -439,12 +439,8 @@ int main( int inNumArgs, char **inArgs ) {
 
     printf( "\n\n%d-day Report:\n", binSeconds / ( 3600 * 24 ) );
     
-    printf( "date, aveHrInWind, plrCnt, quitCnt, quitFrct, " );
+    printf( "date, aveHrInWind, plrCnt, quitCnt, quitFrct\n" );
     
-    for( int h=0; h<HOUR_BINS; h++ ) {
-        printf( ">-%d-hrFrct, ", hourBins[ h ] );
-        }
-    printf( "\n" );
     
     for( int y=0; y<YEARS; y++ ) {
         for( int m=0; m<MONTHS; m++ ) {
@@ -455,17 +451,34 @@ int main( int inNumArgs, char **inArgs ) {
                 double quitFraction = 
                     yearMonthQuitCounts[y][m] / (double) yearMonthCounts[y][m];
 
-                printf( "%4d-%02d %5.3lf %6d %6d %5.3f ", y + 1900, m + 1, 
+                printf( "%4d-%02d %5.3lf %6d %6d %5.3f\n", y + 1900, m + 1, 
                         ave / 3600.0,
                         yearMonthCounts[y][m],
                         yearMonthQuitCounts[y][m],
                         quitFraction );
+                }
+            }
+        }
+    
 
+    printf( "\n\nHour bin report:\n" );
+    printf( "date, " );
+    for( int h=0; h<HOUR_BINS; h++ ) {
+        printf( ">-%d-hrFrct, ", hourBins[ h ] );
+        }
+    printf( "\n" );
+
+    for( int y=0; y<YEARS; y++ ) {
+        for( int m=0; m<MONTHS; m++ ) {
+            if( yearMonthCounts[y][m] > 0 ) {
+                
+                printf( "%4d-%02d ", y + 1900, m + 1 );
+                
                 for( int h=0; h<HOUR_BINS; h++ ) {
                     double hourFraction =
                         yearMonthHourCounts[y][m][h] / 
                         (double) yearMonthCounts[y][m];
-                
+                    
                     printf( "%5.3f ", hourFraction );
                     }
                 
@@ -473,6 +486,7 @@ int main( int inNumArgs, char **inArgs ) {
                 }
             }
         }
+
     
     
 
