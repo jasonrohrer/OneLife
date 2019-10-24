@@ -394,6 +394,13 @@ int main( int inNumArgs, char **inArgs ) {
     int hourBins[ HOUR_BINS ] = { 1, 5, 10, 20, 50, 100, 200, 500, 1000 };
     
     int yearMonthHourCounts[YEARS][MONTHS][ HOUR_BINS ];
+
+
+    // spans in days
+    #define SPAN_BINS 9
+    int spanBins[ SPAN_BINS ] = { 1, 5, 10, 30, 60, 90, 182, 365 };
+    
+    int yearMonthSpanCounts[YEARS][MONTHS][ SPAN_BINS ];
     
     
     for( int y=0; y<YEARS; y++ ) {
@@ -403,6 +410,9 @@ int main( int inNumArgs, char **inArgs ) {
             yearMonthQuitCounts[y][m] = 0;
             for( int h=0; h<HOUR_BINS; h++ ) {
                 yearMonthHourCounts[y][m][h] = 0;
+                }
+            for( int s=0; s<SPAN_BINS; s++ ) {
+                yearMonthSpanCounts[y][m][s] = 0;
                 }
             }
         }
@@ -433,6 +443,17 @@ int main( int inNumArgs, char **inArgs ) {
         for( int h=0; h<HOUR_BINS; h++ ) {
             if( totalHours > hourBins[h] ) {
                 yearMonthHourCounts[y][m][h] += 1;
+                }
+            }
+
+        
+        double daySpan = 
+            ( r->lastGameTimeSeconds - r->firstGameTimeSeconds ) / 
+            ( 3600 * 24 );
+        
+        for( int s=0; s<SPAN_BINS; s++ ) {
+            if( daySpan > spanBins[s] ) {
+                yearMonthSpanCounts[y][m][s] += 1;
                 }
             }
         }
@@ -480,6 +501,33 @@ int main( int inNumArgs, char **inArgs ) {
                         (double) yearMonthCounts[y][m];
                     
                     printf( "%5.3f ", hourFraction );
+                    }
+                
+                printf( "\n" );
+                }
+            }
+        }
+
+
+    printf( "\n\nDay-span bin report:\n" );
+    printf( "date, " );
+    for( int s=0; s<SPAN_BINS; s++ ) {
+        printf( ">-%d-days, ", spanBins[ s ] );
+        }
+    printf( "\n" );
+
+    for( int y=0; y<YEARS; y++ ) {
+        for( int m=0; m<MONTHS; m++ ) {
+            if( yearMonthCounts[y][m] > 0 ) {
+                
+                printf( "%4d-%02d ", y + 1900, m + 1 );
+                
+                for( int s=0; s<SPAN_BINS; s++ ) {
+                    double spanFraction =
+                        yearMonthSpanCounts[y][m][s] / 
+                        (double) yearMonthCounts[y][m];
+                    
+                    printf( "%5.3f ", spanFraction );
                     }
                 
                 printf( "\n" );
