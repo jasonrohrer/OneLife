@@ -506,6 +506,8 @@ typedef struct FreshConnection {
         char *twinCode;
         int twinCount;
 
+        char *clientTag;
+
     } FreshConnection;
 
 
@@ -1560,6 +1562,10 @@ static void deleteMembers( FreshConnection *inConnection ) {
     
     if( inConnection->twinCode != NULL ) {
         delete [] inConnection->twinCode;
+        }
+
+    if( inConnection->clientTag != NULL ) {
+        delete [] inConnection->clientTag;
         }
     }
 
@@ -11700,7 +11706,26 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
                      ancestorRelNames );
     }
 
+
+
+
+static void logClientTag( FreshConnection *inConnection ) {
+    const char *tagToLog = "no_tag";
     
+    if( inConnection->clientTag != NULL ) {
+        tagToLog = inConnection->clientTag;
+        }
+    
+    FILE *log = fopen( "clientTagLog.txt", "a" );
+    
+    if( log != NULL ) {
+        fprintf( log, "%.0f %s %s\n", Time::getCurrentTime(),
+                 inConnection->email, tagToLog );
+        
+        fclose( log );
+        }
+    }
+
     
 
 
@@ -12524,6 +12549,7 @@ int main() {
                 newConnection.twinCode = NULL;
                 newConnection.twinCount = 0;
                 
+                newConnection.clientTag = NULL;
                 
                 nextSequenceNumber ++;
                 
@@ -12797,7 +12823,8 @@ int main() {
                     // with client
                             
                     AppLog::info( "Got new player logged in" );
-                            
+                    logClientTag( nextConnection );
+
                     delete nextConnection->ticketServerRequest;
                     nextConnection->ticketServerRequest = NULL;
 
@@ -12873,6 +12900,18 @@ int main() {
                         SimpleVector<char *> *tokens =
                             tokenizeString( message );
                         
+                        if( strstr( message, "client_" ) != NULL ) {
+                            // new client_ parameter
+                            
+                            // it is the first parameter after LOGIN
+                            
+                            // save and remove it
+                            nextConnection->clientTag = 
+                                tokens->getElementDirect( 1 );
+                            
+                            tokens->deleteElement( 1 );
+                            }
+
                         if( tokens->size() == 4 || tokens->size() == 5 ||
                             tokens->size() == 7 ) {
                             
@@ -13013,6 +13052,7 @@ int main() {
                                     // with client
                             
                                     AppLog::info( "Got new player logged in" );
+                                    logClientTag( nextConnection );
                                     
                                     delete nextConnection->ticketServerRequest;
                                     nextConnection->ticketServerRequest = NULL;

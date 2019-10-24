@@ -60,6 +60,9 @@ static ObjectPickable objectPickable;
 extern int versionNumber;
 extern int dataVersionNumber;
 
+extern const char *clientTag;
+
+
 extern double frameRateFactor;
 
 extern Font *mainFont;
@@ -12348,8 +12351,8 @@ void LivingLifePage::step() {
             
 
             if( strlen( userEmail ) <= 80 ) {    
-                outMessage = autoSprintf( "LOGIN %-80s %s %s %d%s#",
-                                          tempEmail, pwHash, keyHash,
+                outMessage = autoSprintf( "LOGIN %s %-80s %s %s %d%s#",
+                                          clientTag, tempEmail, pwHash, keyHash,
                                           mTutorialNumber, twinExtra );
                 }
             else {
@@ -12357,8 +12360,8 @@ void LivingLifePage::step() {
                 // don't cut it off.
                 // but note that the playback will fail if email.ini
                 // doesn't match on the playback machine
-                outMessage = autoSprintf( "LOGIN %s %s %s %d%s#",
-                                          tempEmail, pwHash, keyHash,
+                outMessage = autoSprintf( "LOGIN %s %s %s %s %d%s#",
+                                          clientTag, tempEmail, pwHash, keyHash,
                                           mTutorialNumber, twinExtra );
                 }
             
