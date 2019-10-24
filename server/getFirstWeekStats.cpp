@@ -33,6 +33,8 @@ SimpleVector<int*> indexPointers;
 SimpleVector<PlayerRecord> records;
 
 
+int totalEmailAllocation = 0;
+
 
 int findIndex( char *inEmail ) {
     void *val;
@@ -65,6 +67,8 @@ PlayerRecord *findRecord( char *inEmail ) {
                        0,
                        0 };
     records.push_back( r );
+
+    totalEmailAllocation += strlen( inEmail );
 
     index = records.size() - 1;
 
@@ -188,8 +192,10 @@ void processSubDir( File *inFile ) {
         File **childFiles = inFile->getChildFiles( &numChildFiles );
         
         for( int i=0; i<numChildFiles; i++ ) {
-            printf("\r%5d/%d (%5d unique records)", i, numChildFiles,
-                   records.size() );
+            printf("\r%5d/%d (%5d unique records) (%7d total email bytes)", 
+                   i, numChildFiles,
+                   records.size(),
+                   totalEmailAllocation );
             fflush( stdout );
             
             processFile( childFiles[i] );
