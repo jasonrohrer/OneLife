@@ -5,6 +5,7 @@
 #include "minorGems/io/file/File.h"
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/StringTree.h"
+#include "minorGems/util/crc32.h"
 
 
 int binSeconds = 3600 * 24 * 7;
@@ -25,9 +26,6 @@ typedef struct PlayerRecord {
     } PlayerRecord;
 
 
-StringTree emailIndex;
-
-SimpleVector<int*> indexPointers;
 
 
 SimpleVector<PlayerRecord> records;
@@ -36,24 +34,116 @@ SimpleVector<PlayerRecord> records;
 int totalEmailAllocation = 0;
 
 
-int findIndex( char *inEmail ) {
-    void *val;
-    
-    int numMatch = emailIndex.getMatches( inEmail, 0, 1, &val );
-    
-    if( numMatch == 0 ) {
-        return -1;
-        }
-    return *( (int*)val );
+int hashTableSize = 10000;
+
+typedef struct HashRecord {
+        char *email;
+        int index;
+    } HashRecord;
+      
+HashRecord *hashTable = new HashRecord[ hashTableSize ];
+
+int hashElements = 0;
+
+void hashTableInit() {
+    memset( hashTable, 0, hashTableSize * sizeof( HashRecord ) );
     }
 
 
-void addIndex( char *inEmail, int inIndex ) {
-    int *intPointer = new int;
-    *intPointer = inIndex;
-    indexPointers.push_back( intPointer );
+
+int getHashKey( char *inEmail ) {
+    return (int)( crc32( (unsigned char*)inEmail, 
+                         strlen( inEmail ) ) % hashTableSize );
+    }
+
+
+
+
+void insertRecord( HashRecord inR ) {
+    int k = getHashKey( inR.email );
     
-    emailIndex.insert( inEmail, (void*)intPointer );
+    while( hashTable[k].email != NULL ) {
+        
+        k++;
+        if( k >= hashTableSize ) {
+            k -= hashTableSize;
+            }
+        }
+
+    // found empty
+    hashTable[k] = inR;
+    }
+
+
+
+void expandHashTable() {
+    int oldSize = hashTableSize;
+    HashRecord *oldTable = hashTable;
+    
+    hashTableSize *= 2;
+    hashTable = new HashRecord[ hashTableSize ];
+    hashTableInit();
+    
+    for( int i=0; i<oldSize; i++ ) {
+        
+        HashRecord r = oldTable[i];
+        
+        insertRecord( r );
+        }
+    }
+
+
+
+HashRecord *findHashRecord( char *inEmail ) {
+    
+    int k = getHashKey( inEmail );
+    
+    HashRecord *r = &( hashTable[ k ] );
+
+    while( r->email == NULL ||
+           strcmp( r->email, inEmail ) != 0 ) {
+        
+        if( r->email == NULL ) {
+            // not found
+            return NULL;
+            }
+        
+        // try next
+        k++;
+        if( k >= hashTableSize ) {
+            k -= hashTableSize;
+            }
+        r = &( hashTable[ k ] );
+        }
+
+    return r;
+    }
+
+
+
+int findIndex( char *inEmail ) {
+    HashRecord *r = findHashRecord( inEmail );
+    
+    if( r == NULL ) {
+        return -1;
+        }
+    return r->index;
+    }
+
+
+
+void addIndex( char *inEmail, int inIndex ) {
+    HashRecord r = { stringDuplicate( inEmail ), inIndex };
+    
+    insertRecord( r );
+
+    hashElements ++;
+    
+    if( hashElements > hashTableSize / 2 ) {
+        // half full, expand
+        expandHashTable();
+        }
+    
     }
 
 
@@ -232,6 +322,7 @@ void processDir( File *inDir ) {
 
 int main( int inNumArgs, char **inArgs ) {
 
+    hashTableInit();
     
     if( inNumArgs != 2 && inNumArgs != 3 ) {
         usage();
@@ -313,14 +404,19 @@ int main( int inNumArgs, char **inArgs ) {
         }
     
     
-    for( int i=0; i<indexPointers.size(); i++ ) {
-        delete indexPointers.getElementDirect( i );
-        }
 
     for( int i=0; i<records.size(); i++ ) {
         PlayerRecord *r = records.getElement( i );
         delete [] r->email;
         }
+
     
+    for( int i=0; i<hashTableSize; i++ ) {
+        if( hashTable[i].email != NULL ) {
+            delete [] hashTable[i].email;
+            }
+        }
+    delete [] hashTable;
+
     return 0;
     }
