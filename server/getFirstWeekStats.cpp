@@ -426,7 +426,7 @@ int main( int inNumArgs, char **inArgs ) {
                 double ave = yearMonthSums[y][m] / yearMonthCounts[y][m];
                 
                 double quitFraction = 
-                    yearMonthQuitCounts[y][m] / yearMonthCounts[y][m];
+                    yearMonthQuitCounts[y][m] / (double) yearMonthCounts[y][m];
 
                 printf( "%4d-%02d %9lf %6d %6d %9f\n", y + 1900, m + 1, 
                         ave / 3600.0,
