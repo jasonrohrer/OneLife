@@ -88,7 +88,9 @@ void expandHashTable() {
         
         HashRecord r = oldTable[i];
         
-        insertRecord( r );
+        if( r.email != NULL ) {
+            insertRecord( r );
+            }
         }
     }
 
