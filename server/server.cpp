@@ -5767,7 +5767,13 @@ static void swapHeldWithGround(
     inPlayer->heldTransitionSourceID = -1;
 
 
-    if( gravePlayerID > 0 ) {
+    inPlayer->heldGravePlayerID = 0;
+
+    if( inPlayer->holdingID > 0 &&
+        strstr( getObject( inPlayer->holdingID )->description, 
+                "origGrave" ) != NULL &&
+        gravePlayerID > 0 ) {
+    
         inPlayer->heldGraveOriginX = inMapX;
         inPlayer->heldGraveOriginY = inMapY;
         inPlayer->heldGravePlayerID = gravePlayerID;
@@ -9217,14 +9223,23 @@ static void setHeldGraveOrigin( LiveObject *inPlayer, int inX, int inY,
         // make sure that that there was a grave there before
         int gravePlayerID = getGravePlayerID( inX, inY );
         
+        // clear it
+        inPlayer->heldGravePlayerID = 0;
+            
+
         if( gravePlayerID > 0 ) {
             
             // player action actually picked up this grave
             
-            inPlayer->heldGraveOriginX = inX;
-            inPlayer->heldGraveOriginY = inY;
-            
-            inPlayer->heldGravePlayerID = getGravePlayerID( inX, inY );
+            if( inPlayer->holdingID > 0 &&
+                strstr( getObject( inPlayer->holdingID )->description, 
+                        "origGrave" ) != NULL ) {
+                
+                inPlayer->heldGraveOriginX = inX;
+                inPlayer->heldGraveOriginY = inY;
+                
+                inPlayer->heldGravePlayerID = getGravePlayerID( inX, inY );
+                }
             
             // clear it from ground
             setGravePlayerID( inX, inY, 0 );
