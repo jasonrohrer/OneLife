@@ -397,7 +397,7 @@ int main( int inNumArgs, char **inArgs ) {
 
 
     // spans in days
-    #define SPAN_BINS 9
+    #define SPAN_BINS 8
     int spanBins[ SPAN_BINS ] = { 1, 5, 10, 30, 60, 90, 182, 365 };
     
     int yearMonthSpanCounts[YEARS][MONTHS][ SPAN_BINS ];
