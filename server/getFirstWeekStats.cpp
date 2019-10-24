@@ -48,6 +48,15 @@ int findIndex( char *inEmail ) {
     }
 
 
+void addIndex( char *inEmail, int inIndex ) {
+    int *intPointer = new int;
+    *intPointer = inIndex;
+    indexPointers.push_back( intPointer );
+    
+    emailIndex.insert( inEmail, (void*)intPointer );
+    }
+
+
 
 PlayerRecord *findRecord( char *inEmail ) {
 
@@ -72,11 +81,8 @@ PlayerRecord *findRecord( char *inEmail ) {
 
     index = records.size() - 1;
 
-    int *intPointer = new int;
-    *intPointer = index;
-    indexPointers.push_back( intPointer );
+    addIndex( inEmail, index );
     
-    emailIndex.insert( inEmail, (void*)intPointer );
     
     return records.getElement( index );
     }
