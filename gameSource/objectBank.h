@@ -395,6 +395,9 @@ typedef struct ObjectRecord {
         
 
         char isTapOutTrigger;
+
+        int toolSetIndex;
+
     } ObjectRecord;
 
 

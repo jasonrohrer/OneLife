@@ -84,6 +84,41 @@ int getMetaTriggerObject( int inTriggerIndex ) {
 
 
 
+typedef struct ToolSetRecord {
+        // can be null for a single-tool set
+        char *setTag;
+    } ToolSetRecord;
+
+
+SimpleVector<ToolSetRecord> toolSetRecords;
+
+
+// inSetTage destroyed interally, NOT by caller
+static int getToolSetIndex( char *inSetTag = NULL ) {
+    if( inSetTag != NULL ) {
+        
+        for( int i=0; i<toolSetRecords.size(); i++ ) {
+            ToolSetRecord *r = toolSetRecords.getElement( i );
+            
+            if( r->setTag != NULL ) {
+                
+                if( strcmp( inSetTag, r->setTag ) == 0 ) {
+                    return i;
+                    }
+                }
+            }
+        }
+    
+    // need to return a new record
+    ToolSetRecord r = { inSetTag };
+    
+    toolSetRecords.push_back( r );
+    
+    return toolSetRecords.size() - 1;
+    }
+
+
+
 
 
 // anything above race 100 is put in bin for race 100
@@ -565,6 +600,35 @@ static void setupTapout( ObjectRecord *inR ) {
         }
     }
 
+
+
+
+static void setupToolSet( ObjectRecord *inR ) {
+    inR->toolSetIndex = -1;
+
+    char *toolPos = strstr( inR->description, "+tool" );
+                
+    if( toolPos != NULL ) {
+        
+        char *skipPos = &( toolPos[5] );
+        
+        char *setTag = NULL;
+
+        if( skipPos[0] != ' ' &&
+            skipPos[0] != '\0' ) {
+            
+            char tag[100];
+
+            int numRead = sscanf( skipPos, "%99s", tag );
+            
+            if( numRead == 1 ) {
+                setTag = stringDuplicate( tag );
+                }
+            }
+        
+        inR->toolSetIndex = getToolSetIndex( setTag );
+        }
+    }
 
 
 
@@ -1322,6 +1386,7 @@ float initObjectBankStep() {
                     next++;
                     }       
                 
+                r->toolSetIndex = -1;
 
                     
                 records.push_back( r );
@@ -1930,6 +1995,41 @@ void initObjectBankFinish() {
         }
 
 
+    // generate all tool sets
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+
+            if( ! o->isUseDummy && ! o->isVariableDummy ) {
+                
+                setupToolSet( o );
+                
+                if( o->toolSetIndex != -1 ) {
+
+                    printf( "Object %s (%d) has tool set index %d\n",
+                            o->description, i, o->toolSetIndex );
+                    
+                    
+                    if( o->numUses > 1 && o->useDummyIDs != NULL ) {
+                        for( int d=0; d < o->numUses - 1; d++ ) {
+                            int dID = o->useDummyIDs[d];
+                            
+                            getObject( dID )->toolSetIndex = o->toolSetIndex;
+                            }
+                        }
+                    if( o->numVariableDummyIDs > 1 && 
+                        o->variableDummyIDs != NULL ) {
+                        
+                        for( int d=0; d < o->numVariableDummyIDs; d++ ) {
+                            int dID = o->variableDummyIDs[d];
+                            
+                            getObject( dID )->toolSetIndex = o->toolSetIndex;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
 
@@ -2256,6 +2356,17 @@ void freeObjectBank() {
         }
     skipDrawingWorkingArea = NULL;
     skipDrawingWorkingAreaSize = -1;
+
+
+    for( int i=0; i<toolSetRecords.size(); i++ ) {
+        ToolSetRecord *r = toolSetRecords.getElement( i );
+        
+        if( r->setTag != NULL ) {
+            delete [] r->setTag;
+            }
+        }
+    toolSetRecords.deleteAll();
+    
     }
 
 

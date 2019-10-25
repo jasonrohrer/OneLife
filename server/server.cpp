@@ -528,6 +528,11 @@ typedef struct LiveObject {
         // -1 if unknown
         float fitnessScore;
         
+        int numToolSlots;
+        // these aren't object IDs but tool set index numbers
+        // some tools are grouped together
+        SimpleVector<int> learnedTools;
+
 
         // object ID used to visually represent this player
         int displayID;
@@ -6556,6 +6561,23 @@ static void triggerApocalypseNow( const char *inMessage ) {
 
 
 
+static void setupToolSlots( LiveObject *inPlayer ) {
+    int min = SettingsManager::getIntSetting( "minToolSlotsPerPlayer", 6 );
+    int max = SettingsManager::getIntSetting( "maxToolSlotsPerPlayer", 12 );
+    
+    
+    int slots = min;
+    
+    if( inPlayer->fitnessScore != -1 ) {    
+        // similar quadratic formula to food bars lost in old age
+        slots += ( max - min ) * pow( inPlayer->fitnessScore / 60, 2 );
+        }
+
+    inPlayer->numToolSlots = slots;
+    }
+
+
+
 
 // for placement of tutorials out of the way 
 static int maxPlacementX = 5000000;
@@ -6923,7 +6945,10 @@ int processLoggedInPlayer( char inAllowReconnect,
         // stop asking now
         newObject.fitnessScore = 0;
         }
-    
+
+    setupToolSlots( &newObject );
+
+
 
     SettingsManager::setSetting( "nextPlayerID",
                                  (int)nextID );
@@ -13364,6 +13389,10 @@ int main() {
                     // failed
                     // stop asking now
                     nextPlayer->fitnessScore = 0;
+                    }
+
+                if( nextPlayer->fitnessScore != -1 ) {
+                    setupToolSlots( nextPlayer );
                     }
                 }
             
