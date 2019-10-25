@@ -6562,7 +6562,7 @@ static void triggerApocalypseNow( const char *inMessage ) {
 
 
 static void setupToolSlots( LiveObject *inPlayer ) {
-    int min = SettingsManager::getIntSetting( "minToolSlotsPerPlayer", 6 );
+    int min = SettingsManager::getIntSetting( "baseToolSlotsPerPlayer", 6 );
     int max = SettingsManager::getIntSetting( "maxToolSlotsPerPlayer", 12 );
     
     
@@ -11768,6 +11768,40 @@ static void logClientTag( FreshConnection *inConnection ) {
         }
     }
 
+
+
+static char canPlayerUseTool( LiveObject *inPlayer, int inToolID ) {
+    ObjectRecord *toolO = getObject( inToolID );
+                                    
+    // is it a marked tool?
+    int toolSet = toolO->toolSetIndex;
+    
+    if( toolSet != -1 &&
+        inPlayer->learnedTools.getElementIndex( toolSet ) == -1 ) {
+        // not in player's learned tool set
+        return false;
+        }
+    
+    return true;
+    }
+
+
+static char learnTool( LiveObject *inPlayer, int inToolID ) {
+    ObjectRecord *toolO = getObject( inToolID );
+                                    
+    // is it a marked tool?
+    int toolSet = toolO->toolSetIndex;
+    
+    if( toolSet != -1 &&
+        inPlayer->learnedTools.getElementIndex( toolSet ) == -1 &&
+        inPlayer->numToolSlots > inPlayer->learnedTools.size() ) {
+        
+        inPlayer->learnedTools.push_back( toolSet );
+        return true;
+        }
+    return false;
+    }
+
     
 
 
@@ -12872,7 +12906,10 @@ int main() {
 
                     delete [] nextConnection->sequenceNumberString;
                     nextConnection->sequenceNumberString = NULL;
-                            
+                    
+                    delete [] nextConnection->clientTag;
+                    nextConnection->clientTag = NULL;
+
                     if( nextConnection->twinCode != NULL
                         && 
                         nextConnection->twinCount > 0 ) {
@@ -13102,6 +13139,9 @@ int main() {
                                     delete [] 
                                         nextConnection->sequenceNumberString;
                                     nextConnection->sequenceNumberString = NULL;
+
+                                    delete [] nextConnection->clientTag;
+                                    nextConnection->clientTag = NULL;
 
 
                                     if( nextConnection->twinCode != NULL
@@ -15536,6 +15576,23 @@ int main() {
                                     r = getPTrans( nextPlayer->holdingID,
                                                   target );
                                     }
+
+                                char blockedTool = false;
+                                
+                                if( nextPlayer->holdingID > 0 &&
+                                    r != NULL ) {
+                                    // make sure player can use this tool
+                                    
+                                    if( ! canPlayerUseTool( 
+                                            nextPlayer,
+                                            nextPlayer->holdingID ) &&
+                                        ! learnTool( nextPlayer,
+                                                     nextPlayer->holdingID ) ) {
+                                        r = NULL;
+                                        blockedTool = true;
+                                        }
+                                    }
+                                
                                 
                                 if( r != NULL &&
                                     targetObj->numSlots > 0 ) {
@@ -15649,7 +15706,8 @@ int main() {
                                 
 
                                 if( r == NULL && 
-                                    nextPlayer->holdingID > 0 ) {
+                                    nextPlayer->holdingID > 0 &&
+                                    ! blockedTool ) {
                                     
                                     logTransitionFailure( 
                                         nextPlayer->holdingID,
@@ -16039,7 +16097,25 @@ int main() {
                                         getPTrans( nextPlayer->holdingID,
                                                   floorID );
                                 
-                                    if( r == NULL ) {
+                                    char blockedTool = false;
+                                    
+                                    if( nextPlayer->holdingID > 0 &&
+                                        r != NULL ) {
+                                        // make sure player can use this tool
+                                    
+                                        if( ! canPlayerUseTool( 
+                                                nextPlayer,
+                                                nextPlayer->holdingID ) &&
+                                            ! learnTool( nextPlayer,
+                                                         nextPlayer->
+                                                         holdingID ) ) {
+                                            r = NULL;
+                                            blockedTool = true;
+                                            }
+                                        }
+
+
+                                    if( r == NULL && ! blockedTool ) {
                                         logTransitionFailure( 
                                             nextPlayer->holdingID,
                                             floorID );

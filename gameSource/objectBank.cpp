@@ -102,7 +102,14 @@ static int getToolSetIndex( char *inSetTag = NULL ) {
             
             if( r->setTag != NULL ) {
                 
+                char found = false;
                 if( strcmp( inSetTag, r->setTag ) == 0 ) {
+                    found = true;
+                    }
+                
+                delete [] inSetTag;
+
+                if( found ) {
                     return i;
                     }
                 }
