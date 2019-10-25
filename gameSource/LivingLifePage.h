@@ -374,6 +374,7 @@ typedef struct PointerHitRecord {
         // true if hitOurPlacement happened THROUGH another non-person object
         char hitOurPlacementBehind;
         
+        int hitObjectID;
 
     } PointerHitRecord;
 
