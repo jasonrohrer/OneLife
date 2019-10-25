@@ -15,6 +15,10 @@ Version 274   ???
 
 --Fixed stuck murder mouth after apocalypse.
 
+--Shift-right-clicking an animal with a valid weapon no longer puts you into
+  kill mode against closest person.  A lot of new players were confused by this.
+
+
 
 
 Server Fixes
