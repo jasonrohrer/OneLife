@@ -42,6 +42,9 @@ Server Fixes
 
 --Fixed some grave-tracking inconsistencies.
 
+--Limit on well placements wasn't resetting with apocalypse, causing limit of
+  only one well in next run.
+
 
 
 
