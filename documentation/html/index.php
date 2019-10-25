@@ -190,7 +190,6 @@ Sign up for release announcement emails: <input type="text" name="email" value="
 <table border=0><tr><td>
 <font size=3><ul>
 <li>Windows build</li>
-<li>MacOS build (10.5 and later Intel)</li>
 <li>GNU/Linux build (compiled on 32-bit Ubuntu 14.04)</li>
 <li>Full source code bundle (compile it yourself)</li>
 </ul></font>
