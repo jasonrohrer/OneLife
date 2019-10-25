@@ -5847,5 +5847,14 @@ TapoutRecord *getTapoutRecord( int inObjectID ) {
     return NULL;
     }
 
+
+void clearTapoutCounts() {
+    for( int i=0; i<tapoutRecords.size(); i++ ) {
+        TapoutRecord *r = tapoutRecords.getElement( i );
+        r->buildCount = 0;
+        }
+    }
+
+
     
     

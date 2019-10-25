@@ -881,5 +881,8 @@ void stripDescriptionComment( char *inString );
 TapoutRecord *getTapoutRecord( int inObjectID );
 
 
+void clearTapoutCounts();
+
+
 
 #endif

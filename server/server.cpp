@@ -10296,6 +10296,8 @@ void apocalypseStep() {
                 AppLog::infoF( "Apocalypse initMap took %f sec",
                                Time::getCurrentTime() - startTime );
                 
+                clearTapoutCounts();
+
                 peaceTreaties.deleteAll();
                 warStates.deleteAll();
                 warPeaceRecords.deleteAll();
