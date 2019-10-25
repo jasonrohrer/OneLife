@@ -11802,6 +11802,14 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
     return false;
     }
 
+
+static char canPlayerUseOrLearnTool( LiveObject *inPlayer, int inToolID ) {
+    if( ! canPlayerUseTool( inPlayer, inToolID ) ) {
+        return learnTool( inPlayer, inToolID );
+        }
+    return true;
+    }
+
     
 
 
@@ -15333,7 +15341,9 @@ int main() {
                     else if( m.type == KILL ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         if( m.id > 0 && 
-                            nextPlayer->holdingID > 0 ) {
+                            nextPlayer->holdingID > 0 &&
+                            canPlayerUseOrLearnTool( nextPlayer,
+                                                     nextPlayer->holdingID ) ) {
                             
                             ObjectRecord *heldObj = 
                                 getObject( nextPlayer->holdingID );
@@ -15583,11 +15593,20 @@ int main() {
                                     r != NULL ) {
                                     // make sure player can use this tool
                                     
-                                    if( ! canPlayerUseTool( 
+                                    if( ! canPlayerUseOrLearnTool( 
                                             nextPlayer,
-                                            nextPlayer->holdingID ) &&
-                                        ! learnTool( nextPlayer,
-                                                     nextPlayer->holdingID ) ) {
+                                            nextPlayer->holdingID ) ) {
+                                        r = NULL;
+                                        blockedTool = true;
+                                        }
+                                    }
+                                
+                                if( target > 0 && 
+                                    r != NULL ) {
+                                    // make sure player can use this ground-tool
+                                    if( ! canPlayerUseOrLearnTool( 
+                                            nextPlayer,
+                                            target ) ) {
                                         r = NULL;
                                         blockedTool = true;
                                         }
@@ -16103,12 +16122,18 @@ int main() {
                                         r != NULL ) {
                                         // make sure player can use this tool
                                     
-                                        if( ! canPlayerUseTool( 
+                                        if( ! canPlayerUseOrLearnTool( 
                                                 nextPlayer,
-                                                nextPlayer->holdingID ) &&
-                                            ! learnTool( nextPlayer,
-                                                         nextPlayer->
-                                                         holdingID ) ) {
+                                                nextPlayer->holdingID ) ) {
+                                            r = NULL;
+                                            blockedTool = true;
+                                            }
+                                        }
+                                    
+                                    // floor might be a tool too
+                                    if( r != NULL ) {
+                                        if( ! canPlayerUseOrLearnTool( 
+                                                nextPlayer, floorID ) ) {
                                             r = NULL;
                                             blockedTool = true;
                                             }
