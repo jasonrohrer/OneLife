@@ -3,6 +3,10 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Boiling the frog:  6-12 tool slots (was 8-16).
+
 
 Version 276   2019-October-25
 
