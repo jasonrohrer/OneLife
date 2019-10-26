@@ -397,6 +397,7 @@ typedef struct ObjectRecord {
         char isTapOutTrigger;
 
         int toolSetIndex;
+        char toolLearned;
 
     } ObjectRecord;
 
@@ -886,6 +887,13 @@ TapoutRecord *getTapoutRecord( int inObjectID );
 
 void clearTapoutCounts();
 
+
+void clearToolLearnedStatus();
+
+
+// gets object IDs that belong to a tool set
+void getToolSetMembership( int inToolSetIndex, 
+                           SimpleVector<int> *outListToFill );
 
 
 #endif

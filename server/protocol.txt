@@ -203,6 +203,8 @@ GLOBAL_MESSAGE (MS)
 
 WAR_REPORT (WR)
 
+LEARNED_TOOL_REPORT (LR)
+
 FRAME (FM)
 
 PONG
@@ -822,6 +824,14 @@ peace
 
 
 
+
+LR
+tool_id tool_id ... tool_id 
+#
+
+Report about new tool objects that have just been learned
+
+Each tool_id is an object id.
 
 
 

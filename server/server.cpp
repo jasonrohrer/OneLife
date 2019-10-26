@@ -11798,6 +11798,30 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
         
         inPlayer->learnedTools.push_back( toolSet );
         
+        SimpleVector<int> setList;
+        
+        getToolSetMembership( toolSet, &( setList ) );
+        
+        // send LR message to let client know that these tools are learned now
+        SimpleVector<char> messageWorking;
+        
+        messageWorking.appendElementString( "LR\n" );
+        for( int i=0; i<setList.size(); i++ ) {
+            if( i > 0 ) {
+                messageWorking.appendElementString( " " );
+                }
+            char *idString = autoSprintf( "%d", 
+                                          setList.getElementDirect( i ) );
+            messageWorking.appendElementString( idString );
+            }
+        messageWorking.appendElementString( "\n#" );
+        char *lrMessage = messageWorking.getElementString();
+        
+        sendMessageToPlayer( inPlayer, lrMessage, strlen( lrMessage ) );
+        delete [] lrMessage;
+        
+        
+        // now send DING message
         const char *article = "THE ";
         
         char *des = stringToUpperCase( toolO->description );
@@ -11809,13 +11833,22 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
             article = "";
             }
 
-        char *message =
-            autoSprintf( "YOU LEARNED %s%s**"
-                         "%d OF %d TOOL SLOTS LEFT", 
-                         article, des,
-                         inPlayer->numToolSlots - inPlayer->learnedTools.size(),
-                         inPlayer->numToolSlots );
+        char *message;
         
+        int numLeft = inPlayer->numToolSlots - inPlayer->learnedTools.size();
+        
+        if( numLeft > 0 ) {
+            message = autoSprintf( "YOU LEARNED %s%s.**"
+                                   "%d OF %d TOOL SLOTS ARE LEFT.", 
+                                   article, des,
+                                   numLeft,
+                                   inPlayer->numToolSlots );
+            }
+        else {
+            message = autoSprintf( "YOU LEARNED %s%s.**"
+                                   "ALL OF YOUR TOOL SLOTS HAVE BEEN USED.", 
+                                   article, des );            
+            }
         
         sendGlobalMessage( message, inPlayer );
         

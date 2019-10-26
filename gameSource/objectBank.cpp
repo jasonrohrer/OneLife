@@ -87,6 +87,8 @@ int getMetaTriggerObject( int inTriggerIndex ) {
 typedef struct ToolSetRecord {
         // can be null for a single-tool set
         char *setTag;
+        
+        SimpleVector<int> setMembership;
     } ToolSetRecord;
 
 
@@ -122,6 +124,13 @@ static int getToolSetIndex( char *inSetTag = NULL ) {
     toolSetRecords.push_back( r );
     
     return toolSetRecords.size() - 1;
+    }
+
+
+static void addToolSetMembership( int inToolSetIndex, int inObjectID ) {
+    ToolSetRecord *r = toolSetRecords.getElement( inToolSetIndex );
+    
+    r->setMembership.push_back( inObjectID );
     }
 
 
@@ -612,7 +621,8 @@ static void setupTapout( ObjectRecord *inR ) {
 
 static void setupToolSet( ObjectRecord *inR ) {
     inR->toolSetIndex = -1;
-
+    inR->toolLearned = false;
+    
     char *toolPos = strstr( inR->description, "+tool" );
                 
     if( toolPos != NULL ) {
@@ -634,6 +644,7 @@ static void setupToolSet( ObjectRecord *inR ) {
             }
         
         inR->toolSetIndex = getToolSetIndex( setTag );
+        addToolSetMembership( inR->toolSetIndex, inR->id );
         }
     }
 
@@ -2022,6 +2033,7 @@ void initObjectBankFinish() {
                             int dID = o->useDummyIDs[d];
                             
                             getObject( dID )->toolSetIndex = o->toolSetIndex;
+                            addToolSetMembership( o->toolSetIndex, dID );
                             }
                         }
                     if( o->numVariableDummyIDs > 1 && 
@@ -2031,6 +2043,7 @@ void initObjectBankFinish() {
                             int dID = o->variableDummyIDs[d];
                             
                             getObject( dID )->toolSetIndex = o->toolSetIndex;
+                            addToolSetMembership( o->toolSetIndex, dID );
                             }
                         }
                     }
@@ -5966,11 +5979,33 @@ TapoutRecord *getTapoutRecord( int inObjectID ) {
     }
 
 
+
 void clearTapoutCounts() {
     for( int i=0; i<tapoutRecords.size(); i++ ) {
         TapoutRecord *r = tapoutRecords.getElement( i );
         r->buildCount = 0;
         }
+    }
+
+
+
+void clearToolLearnedStatus() {
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+
+            o->toolLearned = false;
+            }
+        }
+    }
+
+
+
+void getToolSetMembership( int inToolSetIndex, 
+                           SimpleVector<int> *outListToFill ) {
+    ToolSetRecord *r = toolSetRecords.getElement( inToolSetIndex );
+    
+    outListToFill->push_back_other( &( r->setMembership ) );
     }
 
 

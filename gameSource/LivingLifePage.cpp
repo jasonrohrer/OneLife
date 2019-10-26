@@ -1043,6 +1043,7 @@ typedef enum messageType {
     FORCED_SHUTDOWN,
     GLOBAL_MESSAGE,
     WAR_REPORT,
+    LEARNED_TOOL_REPORT,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1180,6 +1181,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "WR" ) == 0 ) {
         returnValue = WAR_REPORT;
+        }
+    else if( strcmp( copy, "LR" ) == 0 ) {
+        returnValue = LEARNED_TOOL_REPORT;
         }
     
     delete [] copy;
@@ -9400,6 +9404,24 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         desToDelete = des;
                         }
                     }
+
+                
+                if( o->toolSetIndex != -1 ) {                
+                    const char *status = "TOOL - ";
+                    
+                    if( ! o->toolLearned ) {
+                        status = "UNLEARNED TOOL - ";
+                        }
+                
+                    char *newDes = autoSprintf( "%s%s", status, des );
+                    
+                    if( desToDelete != NULL ) {
+                        delete [] desToDelete;
+                        }
+                    des = newDes;
+                    desToDelete = des;
+                    }
+
                 }
             
             char *stringUpper = stringToUpperCase( des );
@@ -12248,6 +12270,28 @@ void LivingLifePage::step() {
                 delete [] lines[i];
                 }
             delete [] lines;
+            }
+        else if( type == LEARNED_TOOL_REPORT ) {
+            SimpleVector<char *> *tokens = 
+                tokenizeString( message );
+            
+            // first token is LR
+            // rest are learned IDs
+            for( int i=1; i < tokens->size(); i++ ) {
+                char *tok = tokens->getElementDirect( i );
+                
+                int id = 0;
+                sscanf( tok, "%d", &id );
+                if( id > 0 ) {
+                    ObjectRecord *o = getObject( id );
+                    
+                    if( o != NULL ) {
+                        o->toolLearned = true;
+                        }
+                    }
+                }
+            tokens->deallocateStringElements();
+            delete tokens;
             }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
@@ -19264,6 +19308,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+    
+    clearToolLearnedStatus();
 
     mapHintEverDrawn = false;
     
