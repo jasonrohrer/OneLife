@@ -6615,44 +6615,48 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             if( heldO->toolSetIndex != -1 &&
                                 ! o->heldLearned ) {
                                 // unleared tool
-                                // rotate 180
-                                
-                                doublePair newCenterOffset = 
-                                    getObjectCenterOffset( heldO );
-                                
-                                if( heldPack.inFlipH ) {
-                                    newCenterOffset.x *= -1;
-                                    }
-                                newCenterOffset = 
-                                    rotate( newCenterOffset,
-                                            - heldPack.inRot * 2 *  M_PI );
-                                
-                                heldPack.inPos =
-                                    add( heldPack.inPos,
-                                         mult( newCenterOffset, 2 ) );
-                                
-                                
-                                doublePair newHeldOffset = heldO->heldOffset;
-                                
-                                if( heldPack.inFlipH ) {
-                                    newHeldOffset.x *= -1;
-                                    }
-                                
-                                // add a small tweak here, because
-                                // held offset is relative to wrist of
-                                // character, not center of hand
-                                newHeldOffset.y += 3;
 
-                                newHeldOffset =
-                                    rotate( newHeldOffset,
-                                            - heldPack.inRot * 2 *  M_PI );
-                                
-                                heldPack.inPos =
-                                    sub( heldPack.inPos, 
-                                         mult( newHeldOffset, 2 ) );
-                                
 
-                                heldPack.inRot += .5;
+                                if( heldO->heldInHand ) {
+                                    // rotate 180
+                                    
+                                    doublePair newCenterOffset = 
+                                        getObjectCenterOffset( heldO );
+                                    
+                                    if( heldPack.inFlipH ) {
+                                        newCenterOffset.x *= -1;
+                                        }
+                                    newCenterOffset = 
+                                        rotate( newCenterOffset,
+                                                - heldPack.inRot * 2 *  M_PI );
+                                    
+                                    heldPack.inPos =
+                                        add( heldPack.inPos,
+                                             mult( newCenterOffset, 2 ) );
+                                    
+                                    
+                                    doublePair newHeldOffset = heldO->heldOffset;
+                                    
+                                    if( heldPack.inFlipH ) {
+                                        newHeldOffset.x *= -1;
+                                        }
+                                    
+                                    // add a small tweak here, because
+                                    // held offset is relative to wrist of
+                                    // character, not center of hand
+                                    newHeldOffset.y += 3;
+                                    
+                                    newHeldOffset =
+                                        rotate( newHeldOffset,
+                                                - heldPack.inRot * 2 *  M_PI );
+                                    
+                                    heldPack.inPos =
+                                        sub( heldPack.inPos, 
+                                             mult( newHeldOffset, 2 ) );
+                                    
+                                    
+                                    heldPack.inRot += .5;
+                                    }
                                 }
                             }
 
