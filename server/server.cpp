@@ -11770,6 +11770,37 @@ static void logClientTag( FreshConnection *inConnection ) {
 
 
 
+static void sendLearnedToolMessage( LiveObject *inPlayer,
+                                    SimpleVector<int> *inNewToolSets ) {
+    SimpleVector<int> setList;
+    
+    for( int i=0; i < inNewToolSets->size(); i++ ) {
+        getToolSetMembership( inNewToolSets->getElementDirect(i), 
+                              &( setList ) );
+        }
+
+    // send LR message to let client know that these tools are learned now
+    SimpleVector<char> messageWorking;
+    
+    messageWorking.appendElementString( "LR\n" );
+    for( int i=0; i<setList.size(); i++ ) {
+        if( i > 0 ) {
+            messageWorking.appendElementString( " " );
+            }
+        char *idString = autoSprintf( "%d", 
+                                      setList.getElementDirect( i ) );
+        messageWorking.appendElementString( idString );
+        }
+    messageWorking.appendElementString( "\n#" );
+    char *lrMessage = messageWorking.getElementString();
+    
+    sendMessageToPlayer( inPlayer, lrMessage, strlen( lrMessage ) );
+    delete [] lrMessage;
+    }
+
+
+    
+    
 static char canPlayerUseTool( LiveObject *inPlayer, int inToolID ) {
     ObjectRecord *toolO = getObject( inToolID );
                                     
@@ -11798,27 +11829,10 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
         
         inPlayer->learnedTools.push_back( toolSet );
         
-        SimpleVector<int> setList;
+        SimpleVector<int> newToolSets;
+        newToolSets.push_back( toolSet );
         
-        getToolSetMembership( toolSet, &( setList ) );
-        
-        // send LR message to let client know that these tools are learned now
-        SimpleVector<char> messageWorking;
-        
-        messageWorking.appendElementString( "LR\n" );
-        for( int i=0; i<setList.size(); i++ ) {
-            if( i > 0 ) {
-                messageWorking.appendElementString( " " );
-                }
-            char *idString = autoSprintf( "%d", 
-                                          setList.getElementDirect( i ) );
-            messageWorking.appendElementString( idString );
-            }
-        messageWorking.appendElementString( "\n#" );
-        char *lrMessage = messageWorking.getElementString();
-        
-        sendMessageToPlayer( inPlayer, lrMessage, strlen( lrMessage ) );
-        delete [] lrMessage;
+        sendLearnedToolMessage( inPlayer, &newToolSets );
         
         
         // now send DING message
@@ -20098,6 +20112,11 @@ int main() {
             
             if( ! nextPlayer->firstMessageSent ) {
                 
+                // send them their learned tool set
+                // in case they are reconnecting and already know some tools
+                sendLearnedToolMessage( nextPlayer, 
+                                        &( nextPlayer->learnedTools ) );
+
 
                 // first, send the map chunk around them
                 
