@@ -104,14 +104,8 @@ static int getToolSetIndex( char *inSetTag = NULL ) {
             
             if( r->setTag != NULL ) {
                 
-                char found = false;
                 if( strcmp( inSetTag, r->setTag ) == 0 ) {
-                    found = true;
-                    }
-                
-                delete [] inSetTag;
-
-                if( found ) {
+                    delete [] inSetTag;
                     return i;
                     }
                 }
@@ -622,6 +616,10 @@ static void setupTapout( ObjectRecord *inR ) {
 static void setupToolSet( ObjectRecord *inR ) {
     inR->toolSetIndex = -1;
     inR->toolLearned = false;
+    
+    if( inR->id == 850 ) {
+        printf( "Hey\n" );
+        }
     
     char *toolPos = strstr( inR->description, "+tool" );
                 
