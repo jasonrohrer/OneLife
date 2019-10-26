@@ -3317,6 +3317,8 @@ int addObject( const char *inDescription,
 
     setupTapout( r );
     
+    r->toolSetIndex = -1;
+    
 
     r->isAutoOrienting = false;
     r->horizontalVersionID = -1;
