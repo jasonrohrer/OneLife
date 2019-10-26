@@ -11797,6 +11797,32 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
         inPlayer->numToolSlots > inPlayer->learnedTools.size() ) {
         
         inPlayer->learnedTools.push_back( toolSet );
+        
+        const char *article = "THE ";
+        
+        char *des = stringToUpperCase( toolO->description );
+        stripDescriptionComment( des );
+
+        if( des[ strlen( des ) - 1 ] == 'S' ) {
+            // use THE for singular tools like YOU LEARNED THE AXE
+            // no article for plural tools like YOU LEARNED KNITTING NEEDLES
+            article = "";
+            }
+
+        char *message =
+            autoSprintf( "YOU LEARNED %s%s**"
+                         "%d OF %d TOOL SLOTS LEFT", 
+                         article, des,
+                         inPlayer->numToolSlots - inPlayer->learnedTools.size(),
+                         inPlayer->numToolSlots );
+        
+        
+        sendGlobalMessage( message, inPlayer );
+        
+        delete [] des;
+        delete [] message;
+
+
         return true;
         }
     return false;
