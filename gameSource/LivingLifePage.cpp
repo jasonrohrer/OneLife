@@ -6613,14 +6613,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 getObject( heldPack.inObjectID );
                             
                             if( heldO->toolSetIndex != -1 &&
-                                ! heldO->toolLearned ) {
+                                ! o->heldLearned ) {
                                 // unleared tool
                                 // rotate 180
                                 
-                                doublePair centerOffset =
-                                    getObjectCenterOffset( heldO );
-                                
-
                                 doublePair newCenterOffset = 
                                     getObjectCenterOffset( heldO );
                                 
@@ -14296,6 +14292,7 @@ void LivingLifePage::step() {
                 o.allSpritesLoaded = false;
                 
                 o.holdingID = 0;
+                o.heldLearned = 0;
                 
                 o.useWaypoint = false;
 
@@ -14405,7 +14402,8 @@ void LivingLifePage::step() {
                 int responsiblePlayerID = -1;
                 
                 int heldYum = 0;
-
+                int heldLearned = 1;
+                
                 int numRead = sscanf( lines[i], 
                                       "%d %d "
                                       "%d "
@@ -14413,7 +14411,7 @@ void LivingLifePage::step() {
                                       "%d %d "
                                       "%499s %d %d %d %d %f %d %d %d %d "
                                       "%lf %lf %lf %499s %d %d %d "
-                                      "%d",
+                                      "%d %d",
                                       &( o.id ),
                                       &( o.displayID ),
                                       &facingOverride,
@@ -14437,10 +14435,12 @@ void LivingLifePage::step() {
                                       &justAte,
                                       &justAteID,
                                       &responsiblePlayerID,
-                                      &heldYum);
+                                      &heldYum,
+                                      &heldLearned );
                 
                 
                 // heldYum is 24th value, optional
+                // heldLearned is 26th value, optional
                 if( numRead >= 23 ) {
 
                     applyReceiveOffset( &actionTargetX, &actionTargetY );
@@ -14566,6 +14566,12 @@ void LivingLifePage::step() {
                             break;
                             }
                         }
+
+                    
+                    if( existing != NULL ) {
+                        existing->heldLearned = heldLearned;
+                        }
+                    
 
                     if( existing != NULL &&
                         existing->id == ourID ) {

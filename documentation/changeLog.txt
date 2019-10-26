@@ -18,6 +18,10 @@ Version 274   ???
 --Shift-right-clicking an animal with a valid weapon no longer puts you into
   kill mode against closest person.  A lot of new players were confused by this.
 
+--Implementation of limited number of tool learning slots per player, complete
+  with messaging about how many slots are left and backwards holding of
+  unlearned tools.
+
 
 
 

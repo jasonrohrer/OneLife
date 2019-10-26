@@ -5931,6 +5931,21 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
 
 
 
+static char canPlayerUseTool( LiveObject *inPlayer, int inToolID ) {
+    ObjectRecord *toolO = getObject( inToolID );
+                                    
+    // is it a marked tool?
+    int toolSet = toolO->toolSetIndex;
+    
+    if( toolSet != -1 &&
+        inPlayer->learnedTools.getElementIndex( toolSet ) == -1 ) {
+        // not in player's learned tool set
+        return false;
+        }
+    
+    return true;
+    }
+
 
 
 static UpdateRecord getUpdateRecord( 
@@ -6047,10 +6062,17 @@ static UpdateRecord getUpdateRecord(
         heldYum = 1;
         }
 
+    int heldLearned = 0;
+    
+    if( inPlayer->holdingID > 0 &&
+        canPlayerUseTool( inPlayer, inPlayer->holdingID ) ) {
+        heldLearned = 1;
+        }
+        
 
     r.formatString = autoSprintf( 
         "%d %d %d %d %%d %%d %s %d %%d %%d %d "
-        "%.2f %s %.2f %.2f %.2f %s %d %d %d %d%s\n",
+        "%.2f %s %.2f %.2f %.2f %s %d %d %d %d %d%s\n",
         inPlayer->id,
         inPlayer->displayID,
         inPlayer->facingOverride,
@@ -6072,6 +6094,7 @@ static UpdateRecord getUpdateRecord(
         hideIDForClient( inPlayer->justAteID ),
         inPlayer->responsiblePlayerID,
         heldYum,
+        heldLearned,
         deathReason );
     
     delete [] deathReason;
@@ -11801,20 +11824,6 @@ static void sendLearnedToolMessage( LiveObject *inPlayer,
 
     
     
-static char canPlayerUseTool( LiveObject *inPlayer, int inToolID ) {
-    ObjectRecord *toolO = getObject( inToolID );
-                                    
-    // is it a marked tool?
-    int toolSet = toolO->toolSetIndex;
-    
-    if( toolSet != -1 &&
-        inPlayer->learnedTools.getElementIndex( toolSet ) == -1 ) {
-        // not in player's learned tool set
-        return false;
-        }
-    
-    return true;
-    }
 
 
 static char learnTool( LiveObject *inPlayer, int inToolID ) {

@@ -133,6 +133,10 @@ typedef struct LiveObject {
         int lastHoldingID;
 
         char holdingFlip;
+        
+        // if not learned, held flipped 180 degrees
+        char heldLearned;
+
 
         char heldPosOverride;
         char heldPosOverrideAlmostOver;
