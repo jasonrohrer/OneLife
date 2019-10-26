@@ -15684,7 +15684,8 @@ int main() {
                                         }
                                     }
                                 
-                                if( target > 0 && 
+                                if( target > 0 &&
+                                    getObject( target )->permanent &&
                                     r != NULL ) {
                                     // make sure player can use this ground-tool
                                     if( ! canPlayerUseOrLearnTool( 
