@@ -133,6 +133,10 @@ typedef struct LiveObject {
         int lastHoldingID;
 
         char holdingFlip;
+        
+        // if not learned, held flipped 180 degrees
+        char heldLearned;
+
 
         char heldPosOverride;
         char heldPosOverrideAlmostOver;
@@ -374,6 +378,7 @@ typedef struct PointerHitRecord {
         // true if hitOurPlacement happened THROUGH another non-person object
         char hitOurPlacementBehind;
         
+        int hitObjectID;
 
     } PointerHitRecord;
 
@@ -961,6 +966,8 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         char mUsingSteam;
         char mZKeyDown;
+        
+        char mXKeyDown;
 
         char mPlayerInFlight;
 

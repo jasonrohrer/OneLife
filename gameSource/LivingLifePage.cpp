@@ -64,6 +64,9 @@ extern int dataVersionNumber;
 extern int clientVersionNumber;
 extern int expectedVersionNumber;
 
+extern const char *clientTag;
+
+
 extern double frameRateFactor;
 
 extern Font *mainFont;
@@ -184,7 +187,47 @@ static double frameBatchMeasureStartTime = -1;
 static int framesInBatch = 0;
 static double fpsToDraw = -1;
 
+#define MEASURE_TIME_NUM_CATEGORIES 3
+
+
+static double timeMeasures[ MEASURE_TIME_NUM_CATEGORIES ];
+
+    
+    
+static const char *timeMeasureNames[ MEASURE_TIME_NUM_CATEGORIES ] = 
+{ "message",
+  "updates",
+  "drawing" };
+
+static FloatColor timeMeasureGraphColors[ MEASURE_TIME_NUM_CATEGORIES ] = 
+{ { 1, 1, 0, 1 },
+  { 0, 1, 0, 1 },
+  { 1, 0, 0, 1 } };
+
+
+static double timeMeasureToDraw[ MEASURE_TIME_NUM_CATEGORIES ];
+
+
+typedef struct TimeMeasureRecord {
+        double timeMeasureAverage[ MEASURE_TIME_NUM_CATEGORIES ];
+        double total;
+    } TimeMeasureRecord;
+
+
+double runningPixelCount = 0;
+
+double spriteCountToDraw = 0;
+double uniqueSpriteCountToDraw = 0;
+
+double pixelCountToDraw = 0;
+
+
+
 static SimpleVector<double> fpsHistoryGraph;
+static SimpleVector<TimeMeasureRecord> timeMeasureHistoryGraph;
+static SimpleVector<double> spriteCountHistoryGraph;
+static SimpleVector<double> uniqueSpriteHistoryGraph;
+static SimpleVector<double> pixelCountHistoryGraph;
 
 
 static char showNet = false;
@@ -1081,6 +1124,7 @@ typedef enum messageType {
     FORCED_SHUTDOWN,
     GLOBAL_MESSAGE,
     WAR_REPORT,
+    LEARNED_TOOL_REPORT,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1218,6 +1262,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "WR" ) == 0 ) {
         returnValue = WAR_REPORT;
+        }
+    else if( strcmp( copy, "LR" ) == 0 ) {
+        returnValue = LEARNED_TOOL_REPORT;
         }
     
     delete [] copy;
@@ -2320,6 +2367,7 @@ LivingLifePage::LivingLifePage()
           mShowHighlights( true ),
           mUsingSteam( false ),
           mZKeyDown( false ),
+          mXKeyDown( false ),
           mObjectPicker( &objectPickable, +510, 90 ) {
 
 
@@ -4899,19 +4947,47 @@ static char isInBounds( int inX, int inY, int inMapD ) {
 
 static void drawFixedShadowString( const char *inString, doublePair inPos ) {
     
+    FloatColor faceColor = getDrawColor();
+    
     setDrawColor( 0, 0, 0, 1 );
     numbersFontFixed->drawString( inString, inPos, alignLeft );
             
-    setDrawColor( 1, 1, 1, 1 );
-            
+    setDrawColor( faceColor );
+    
     inPos.x += 2;
     inPos.y -= 2;
     numbersFontFixed->drawString( inString, inPos, alignLeft );
     }
 
 
+
+static void drawFixedShadowStringWhite( const char *inString, 
+                                        doublePair inPos ) {
+    setDrawColor( 1, 1, 1, 1 );
+    drawFixedShadowString( inString, inPos );
+    }
+
+
+
 static void addToGraph( SimpleVector<double> *inHistory, double inValue ) {
     inHistory->push_back( inValue );
+                
+    while( inHistory->size() > historyGraphLength ) {
+        inHistory->deleteElement( 0 );
+        }
+    }
+
+
+static void addToGraph( SimpleVector<TimeMeasureRecord> *inHistory, 
+                        double inValue[ MEASURE_TIME_NUM_CATEGORIES ] ) {
+    TimeMeasureRecord r;
+    r.total = 0;
+    for( int i=0; i<MEASURE_TIME_NUM_CATEGORIES; i++ ) {
+        r.timeMeasureAverage[i] = inValue[i];
+        r.total += inValue[i];
+        }
+    
+    inHistory->push_back( r );
                 
     while( inHistory->size() > historyGraphLength ) {
         inHistory->deleteElement( 0 );
@@ -4953,6 +5029,89 @@ static void drawGraph( SimpleVector<double> *inHistory, doublePair inPos,
                   inPos.y + scaledVal * graphHeight );
         }
     }
+
+
+
+
+static void drawGraph( SimpleVector<TimeMeasureRecord> *inHistory, 
+                       doublePair inPos,
+                       FloatColor inColor[MEASURE_TIME_NUM_CATEGORIES] ) {
+    double max = 0;
+    for( int i=0; i<inHistory->size(); i++ ) {
+        double val = inHistory->getElementDirect( i ).total;
+        if( val > max ) {
+            max = val;
+            }
+        }
+
+    setDrawColor( 0, 0, 0, 0.5 );
+
+    double graphHeight = 40;
+
+    drawRect( inPos.x - 2, 
+              inPos.y - 2,
+              inPos.x + historyGraphLength + 2,
+              inPos.y + graphHeight + 2 );
+        
+    
+
+    for( int i=0; i<inHistory->size(); i++ ) {
+
+        for( int m=MEASURE_TIME_NUM_CATEGORIES - 1; m >= 0; m-- ) {
+            
+            double sum = 0;
+            
+            for( int n=m; n>=0; n-- ) {
+            
+                sum += inHistory->getElementDirect( i ).timeMeasureAverage[n];
+                }
+
+            FloatColor c = timeMeasureGraphColors[m];
+            
+            setDrawColor( c.r, c.g, c.b, 0.75 );
+            
+            double scaledVal = sum / max;
+            
+            drawRect( inPos.x + i, 
+                      inPos.y,
+                      inPos.x + i + 1,
+                      inPos.y + scaledVal * graphHeight );
+            }
+        }
+    }
+
+
+// found here:
+// https://stackoverflow.com/questions/1449805/how-to-format-a-number-from-1123456789-to-1-123-456-789-in-c/24795133#24795133
+size_t stringFormatIntGrouped( char dst[16], int num ) {
+    char src[16];
+    char *p_src = src;
+    char *p_dst = dst;
+
+    const char separator = ',';
+    int num_len, commas;
+
+    num_len = sprintf( src, "%d", num );
+
+    if( *p_src == '-' ) {
+        *p_dst++ = *p_src++;
+        num_len--;
+        }
+
+    for( commas = 2 - num_len % 3;
+         *p_src;
+         commas = (commas + 1) % 3 ) {
+        
+        *p_dst++ = *p_src++;
+        if( commas == 1 ) {
+            *p_dst++ = separator;
+            }
+        }
+    *--p_dst = '\0';
+
+    return (size_t)( p_dst - dst );
+    }
+
 
 
 
@@ -5007,6 +5166,9 @@ static void drawHUDBarPart( double x, double y, double width, double height ) {
 void LivingLifePage::draw( doublePair inViewCenter, 
                            double inViewSize ) {
     
+    double drawStartTime = showFPS ? game_getCurrentTime() : 0;
+
+
     setViewCenterPosition( lastScreenViewCenter.x,
                            lastScreenViewCenter.y );
 
@@ -5525,6 +5687,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
 
+    if( showFPS ) startCountingSpritePixelsDrawn();
 
     double hugR = CELL_D * 0.6;
 
@@ -5680,6 +5843,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
     
+    if( showFPS ) runningPixelCount += endCountingSpritePixelsDrawn();
+
 
 
     // draw overlay evenly over all floors and biomes
@@ -5841,6 +6006,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                               CELL_D ) );
         }
 
+
+
+    if( showFPS ) startCountingSpritePixelsDrawn();
 
     
     float maxFullCellFade = 0.5;
@@ -6574,6 +6742,60 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 getObject( heldPack.inObjectID ),
                                 false );
                             }
+
+                        if( heldPack.inObjectID > 0 ) {
+                            ObjectRecord *heldO = 
+                                getObject( heldPack.inObjectID );
+                            
+                            if( heldO->toolSetIndex != -1 &&
+                                ! o->heldLearned ) {
+                                // unleared tool
+
+
+                                if( heldO->heldInHand ) {
+                                    // rotate 180
+                                    
+                                    doublePair newCenterOffset = 
+                                        getObjectCenterOffset( heldO );
+                                    
+                                    if( heldPack.inFlipH ) {
+                                        newCenterOffset.x *= -1;
+                                        }
+                                    newCenterOffset = 
+                                        rotate( newCenterOffset,
+                                                - heldPack.inRot * 2 *  M_PI );
+                                    
+                                    heldPack.inPos =
+                                        add( heldPack.inPos,
+                                             mult( newCenterOffset, 2 ) );
+                                    
+                                    
+                                    doublePair newHeldOffset = heldO->heldOffset;
+                                    
+                                    if( heldPack.inFlipH ) {
+                                        newHeldOffset.x *= -1;
+                                        }
+                                    
+                                    // add a small tweak here, because
+                                    // held offset is relative to wrist of
+                                    // character, not center of hand
+                                    newHeldOffset.y += 3;
+                                    
+                                    newHeldOffset =
+                                        rotate( newHeldOffset,
+                                                - heldPack.inRot * 2 *  M_PI );
+                                    
+                                    heldPack.inPos =
+                                        sub( heldPack.inPos, 
+                                             mult( newHeldOffset, 2 ) );
+                                    
+                                    
+                                    heldPack.inRot += .5;
+                                    }
+                                }
+                            }
+
+
                         drawObjectAnim( heldPack );
                         if( skippingSome ) {
                             restoreSkipDrawing( 
@@ -7017,7 +7239,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                    ls->fade, widthLimit );
         }
     
+
+    if( showFPS ) runningPixelCount += endCountingSpritePixelsDrawn();
+
     
+    if( ! takingPhoto )
     drawOffScreenSounds();
     
     
@@ -7798,14 +8024,48 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 // new batch
                 frameBatchMeasureStartTime = game_getCurrentTime();
                 framesInBatch = 0;
+                
+                // average time measures
+                for( int i=0; i<MEASURE_TIME_NUM_CATEGORIES; i++ ) {
+                    timeMeasures[i] /= 30;
+                    timeMeasureToDraw[i] = timeMeasures[i];
+                    }
+                
+                
+                addToGraph( &timeMeasureHistoryGraph, timeMeasures );
+                
+                // start measuring again
+                for( int i=0; i<MEASURE_TIME_NUM_CATEGORIES; i++ ) {
+                    timeMeasures[i] = 0;
+                    }
+
+                double uniqueDrawn = endCountingUniqueSpriteDraws();
+                double spritesDrawn = endCountingSpritesDrawn();
+                
+                spriteCountToDraw = spritesDrawn / 30;
+                // this is uniq count drawn in whole 30-frame batch
+                // not an average
+                uniqueSpriteCountToDraw = uniqueDrawn;
+                
+                pixelCountToDraw = runningPixelCount / 30;
+
+                addToGraph( &spriteCountHistoryGraph, spriteCountToDraw );
+                addToGraph( &uniqueSpriteHistoryGraph, 
+                            uniqueSpriteCountToDraw );
+                
+                addToGraph( &pixelCountHistoryGraph, pixelCountToDraw );
+                
+                startCountingSpritesDrawn();
+                startCountingUniqueSpriteDraws();
+                runningPixelCount = 0;
                 }
             }
         if( fpsToDraw != -1 ) {
         
             char *fpsString = 
-                autoSprintf( "%.1f %s", fpsToDraw, translate( "fps" ) );
+                autoSprintf( "%5.1f %s", fpsToDraw, translate( "fps" ) );
             
-            drawFixedShadowString( fpsString, pos );
+            drawFixedShadowStringWhite( fpsString, pos );
             
             pos.x += 20 + numbersFontFixed->measureString( fpsString );
             pos.y -= 20;
@@ -7814,9 +8074,95 @@ void LivingLifePage::draw( doublePair inViewCenter,
             drawGraph( &fpsHistoryGraph, pos, yellow );
 
             delete [] fpsString;
+
+            pos.x += 120;
+            pos.y += 60;
+            
+            double maxStringW = 0;
+
+            
+            for( int i=MEASURE_TIME_NUM_CATEGORIES - 1; i>=0; i-- ) {
+                
+                char *timeString = 
+                    autoSprintf( "%4.1f %s %s", 
+                                 timeMeasureToDraw[i] * 1000,
+                                 timeMeasureNames[i],
+                                 translate( "ms/f" ) );
+                pos.y -= 20;
+                
+                setDrawColor( timeMeasureGraphColors[i] );
+                drawFixedShadowString( timeString, pos );
+
+                double w = numbersFontFixed->measureString( timeString );
+                if( w > maxStringW ) {
+                    maxStringW = w;
+                    }
+                
+                delete [] timeString;
+                }
+
+            pos.y += 0;
+            
+            pos.x += 20 + maxStringW;
+
+            drawGraph( &timeMeasureHistoryGraph, pos, timeMeasureGraphColors );
+
+            
+            pos.x += 120;
+
+            drawGraph( &spriteCountHistoryGraph, pos, yellow );
+
+
+            pos.x -= 60;
+            pos.y += 60;
+            char *spriteString = 
+                autoSprintf( "%6.0f %s", spriteCountToDraw, 
+                             translate( "spritesDrawn" ) );
+            
+            drawFixedShadowStringWhite( spriteString, pos );
+
+            delete [] spriteString;
+
+            pos.x += 60;
+            pos.y -= 60;
+
+
+            pos.x += 120;
+            drawGraph( &uniqueSpriteHistoryGraph, pos, yellow );
+
+            pos.x -= 60;
+            pos.y -= 20;
+
+            char *unqString = 
+                autoSprintf( "%6.0f %s", uniqueSpriteCountToDraw, 
+                             translate( "uniqueSprites" ) );
+            
+            drawFixedShadowStringWhite( unqString, pos );
+
+            delete [] unqString;
+
+
+            pos.y -= 80;
+            drawGraph( &pixelCountHistoryGraph, pos, yellow );
+
+            pos.x -= 60;
+            pos.y -= 20;
+
+            char pixBuffer[16];
+            
+            stringFormatIntGrouped( pixBuffer, (int)pixelCountToDraw ); 
+
+            
+            char *pixString = 
+                autoSprintf( "%9s %s", pixBuffer, 
+                             translate( "pixelsDrawn" ) );
+            
+            drawFixedShadowStringWhite( pixString, pos );
+
+            delete [] pixString;
             }
         else {
-            drawFixedShadowString( translate( "fpsPending" ), pos );
+            drawFixedShadowStringWhite( translate( "fpsPending" ), pos );
             }
         }
     
@@ -7876,7 +8222,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 autoSprintf( translate( "netStringB" ), 
                              bytesOutPerSec, bytesInPerSec );
             
-            drawFixedShadowString( netStringA, pos );
+            drawFixedShadowStringWhite( netStringA, pos );
             
             doublePair graphPos = pos;
             
@@ -7891,7 +8237,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             pos.y -= 50;
             
-            drawFixedShadowString( netStringB, pos );
+            drawFixedShadowStringWhite( netStringB, pos );
             
             graphPos = pos;
             
@@ -7909,7 +8255,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             delete [] netStringB;
             }
         else {
-            drawFixedShadowString( translate( "netPending" ), pos );
+            drawFixedShadowStringWhite( translate( "netPending" ), pos );
             }
         }
     
@@ -7940,7 +8286,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                              translate( "ms" ) );
             }
 
-        drawFixedShadowString( pingString, pos );
+        drawFixedShadowStringWhite( pingString, pos );
             
         delete [] pingString;
     
@@ -8349,7 +8695,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
         mLastKnownNoteLines.deallocateStringElements();
         }
     
-
+    
+    const char *shiftHintKey = "shiftHint";
+    if( mUsingSteam ) {
+        shiftHintKey = "zHint";
+        }
+    
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
         if( ! equal( mHintPosOffset[i], mHintHideOffset[i] ) 
             &&
@@ -8376,9 +8727,15 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
                 double extraB = 
                     handwritingFont->measureString( translate( "tabHint" ) );
+
+                double extraC = 
+                    handwritingFont->measureString( translate( shiftHintKey ) );
                 
                 if( extraB > extraA ) {
                     extraA = extraB;
+                    }
+                if( extraC > extraA ) {
+                    extraA = extraC;
                     }
                 
                 pageNumExtra = extraA;
@@ -8464,13 +8821,24 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 handwritingFont->drawString( pageNum, lineStart, alignLeft );
                 
-                delete [] pageNum;
                 
-                lineStart.y -= 2 * lineSpacing;
+                lineStart.y -= lineSpacing;
                 
                 lineStart.x += pageNumExtra;
+
+                // center shift and tab hints under page number, which is always
+                // bigger
+                lineStart.x -= 0.5 * handwritingFont->measureString( pageNum );
+                
+                delete [] pageNum;
+                
+                handwritingFont->drawString( translate( shiftHintKey ), 
+                                             lineStart, alignCenter );
+                
+                lineStart.y -= lineSpacing;
+                
                 handwritingFont->drawString( translate( "tabHint" ), 
-                                             lineStart, alignRight );
+                                             lineStart, alignCenter );
                 }
             }
         }
@@ -9314,6 +9682,24 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         desToDelete = des;
                         }
                     }
+
+                
+                if( o->toolSetIndex != -1 ) {                
+                    const char *status = "TOOL - ";
+                    
+                    if( ! o->toolLearned ) {
+                        status = "UNLEARNED TOOL - ";
+                        }
+                
+                    char *newDes = autoSprintf( "%s%s", status, des );
+                    
+                    if( desToDelete != NULL ) {
+                        delete [] desToDelete;
+                        }
+                    des = newDes;
+                    desToDelete = des;
+                    }
+
                 }
             
             char *stringUpper = stringToUpperCase( des );
@@ -9442,6 +9828,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
         // draw again, so we can see picker
         PageComponent::base_draw( inViewCenter, inViewSize );
         }
+
+    if( showFPS ) {
+        timeMeasures[2] += game_getCurrentTime() - drawStartTime;
+        }
+    
     }
 
 
@@ -10910,10 +11301,17 @@ void LivingLifePage::step() {
             }
         }
     
-
+    
+    double messageProcessStartTime = showFPS ? game_getCurrentTime() : 0;
+    
     // first, read all available data from server
     char readSuccess = readServerSocketFull( mServerSocket );
     
+    if( showFPS ) {
+        timeMeasures[0] += game_getCurrentTime() - messageProcessStartTime;
+        }
+    
+
 
     if( ! readSuccess ) {
         
@@ -10946,6 +11344,11 @@ void LivingLifePage::step() {
             }
         return;
         }
+
+
+
+    double updateStartTime = showFPS ? game_getCurrentTime() : 0;
+
     
     if( mLastMouseOverID != 0 ) {
         mLastMouseOverFade -= 0.01 * frameRateFactor;
@@ -11989,6 +12392,14 @@ void LivingLifePage::step() {
         }
     
 
+    if( showFPS ) {
+        timeMeasures[1] += game_getCurrentTime() - updateStartTime;
+        }
+    
+
+
+    messageProcessStartTime = showFPS ? game_getCurrentTime() : 0;
+    
 
     char *message = getNextServerMessage();
 
@@ -12139,6 +12550,28 @@ void LivingLifePage::step() {
                 }
             delete [] lines;
             }
+        else if( type == LEARNED_TOOL_REPORT ) {
+            SimpleVector<char *> *tokens = 
+                tokenizeString( message );
+            
+            // first token is LR
+            // rest are learned IDs
+            for( int i=1; i < tokens->size(); i++ ) {
+                char *tok = tokens->getElementDirect( i );
+                
+                int id = 0;
+                sscanf( tok, "%d", &id );
+                if( id > 0 ) {
+                    ObjectRecord *o = getObject( id );
+                    
+                    if( o != NULL ) {
+                        o->toolLearned = true;
+                        }
+                    }
+                }
+            tokens->deallocateStringElements();
+            delete tokens;
+            }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
             
@@ -12241,8 +12674,8 @@ void LivingLifePage::step() {
             
 
             if( strlen( userEmail ) <= 80 ) {    
-                outMessage = autoSprintf( "LOGIN %-80s %s %s %d%s#",
-                                          tempEmail, pwHash, keyHash,
+                outMessage = autoSprintf( "LOGIN %s %-80s %s %s %d%s#",
+                                          clientTag, tempEmail, pwHash, keyHash,
                                           mTutorialNumber, twinExtra );
                 }
             else {
@@ -12250,8 +12683,8 @@ void LivingLifePage::step() {
                 // don't cut it off.
                 // but note that the playback will fail if email.ini
                 // doesn't match on the playback machine
-                outMessage = autoSprintf( "LOGIN %s %s %s %d%s#",
-                                          tempEmail, pwHash, keyHash,
+                outMessage = autoSprintf( "LOGIN %s %s %s %s %d%s#",
+                                          clientTag, tempEmail, pwHash, keyHash,
                                           mTutorialNumber, twinExtra );
                 }
             
@@ -12306,6 +12739,12 @@ void LivingLifePage::step() {
             apocalypseDisplayProgress = 0;
             apocalypseInProgress = false;
             homePosStack.deleteAll();
+            
+            // cancel all emots
+            for( int i=0; i<gameObjects.size(); i++ ) {
+                LiveObject *p = gameObjects.getElement( i );
+                p->currentEmot = NULL;
+                }
             }
         else if( type == MONUMENT_CALL ) {
             int posX, posY, monumentID;
@@ -14082,6 +14521,7 @@ void LivingLifePage::step() {
                 o.allSpritesLoaded = false;
                 
                 o.holdingID = 0;
+                o.heldLearned = 0;
                 
                 o.useWaypoint = false;
 
@@ -14192,7 +14632,8 @@ void LivingLifePage::step() {
                 int responsiblePlayerID = -1;
                 
                 int heldYum = 0;
-
+                int heldLearned = 1;
+                
                 int numRead = sscanf( lines[i], 
                                       "%d %d "
                                       "%d "
@@ -14200,7 +14641,7 @@ void LivingLifePage::step() {
                                       "%d %d "
                                       "%499s %d %d %d %d %f %d %d %d %d "
                                       "%lf %lf %lf %499s %d %d %d "
-                                      "%d",
+                                      "%d %d",
                                       &( o.id ),
                                       &( o.displayID ),
                                       &facingOverride,
@@ -14224,10 +14665,12 @@ void LivingLifePage::step() {
                                       &justAte,
                                       &justAteID,
                                       &responsiblePlayerID,
-                                      &heldYum);
+                                      &heldYum,
+                                      &heldLearned );
                 
                 
                 // heldYum is 24th value, optional
+                // heldLearned is 26th value, optional
                 if( numRead >= 23 ) {
 
                     applyReceiveOffset( &actionTargetX, &actionTargetY );
@@ -14353,6 +14796,12 @@ void LivingLifePage::step() {
                             break;
                             }
                         }
+
+                    
+                    if( existing != NULL ) {
+                        existing->heldLearned = heldLearned;
+                        }
+                    
 
                     if( existing != NULL &&
                         existing->id == ourID ) {
@@ -17778,6 +18227,16 @@ void LivingLifePage::step() {
         message = getNextServerMessage();
         }
     
+    
+    if( showFPS ) {
+        timeMeasures[0] += game_getCurrentTime() - messageProcessStartTime;
+        }
+    
+
+
+
+    updateStartTime = showFPS ? game_getCurrentTime() : 0;;
+
 
     if( mapPullMode && mapPullCurrentSaved && ! mapPullCurrentSent ) {
         char *message = autoSprintf( "MAP %d %d#",
@@ -19052,6 +19511,11 @@ void LivingLifePage::step() {
             mStartedLoadingFirstObjectSetStartTime = game_getCurrentTime();
             }
         }
+
+
+    if( showFPS ) {
+        timeMeasures[1] += game_getCurrentTime() - updateStartTime;
+        }
     
     }
 
@@ -19097,6 +19561,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     // unhold E key
     mEKeyDown = false;
     mZKeyDown = false;
+    mXKeyDown = false;
+    
     mouseDown = false;
     shouldMoveCamera = true;
     
@@ -19133,6 +19599,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+    
+    clearToolLearnedStatus();
 
     mapHintEverDrawn = false;
     
@@ -19522,6 +19990,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                 p->hitSlotIndex = sl;
                 
                 p->hitAnObject = true;
+                p->hitObjectID = oID;
                 }
             }
         }
@@ -19611,6 +20080,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                         p->hitSlotIndex = sl;
 
                         p->hitAnObject = true;
+                        p->hitObjectID = oID;
                         }
                     }
                 }
@@ -19619,6 +20089,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
         // don't worry about p->hitOurPlacement when checking them
         // next, people in this row
         // recently dropped babies are in front and tested first
+        if( ! mXKeyDown )
         for( int d=0; d<2 && ! p->hit; d++ )
         for( int x=clickDestX+1; x>=clickDestX-1 && ! p->hit; x-- ) {
             float clickOffsetX = ( clickDestX  - x ) * CELL_D + clickExtraX;
@@ -19787,6 +20258,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                         p->hitSlotIndex = sl;
                         
                         p->hitAnObject = true;
+                        p->hitObjectID = oID;                
                         }
                     }
                 }
@@ -19805,7 +20277,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
 
 
 
-    
+    if( !mXKeyDown )
     if( p->hit && p->hitAnObject && ! p->hitOtherPerson && ! p->hitSelf ) {
         // hit an object
         
@@ -20316,76 +20788,88 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         // everything good to go for a kill-click, but they missed
         // hitting someone (and maybe they clicked on an object instead)
 
-        // find closest person for them to hit
-        
-        doublePair clickPos = { inX, inY };
-        
-        
-        int closePersonID = -1;
-        double closeDistance = DBL_MAX;
-        
-        for( int i=gameObjects.size()-1; i>=0; i-- ) {
-        
-            LiveObject *o = gameObjects.getElement( i );
 
-            if( o->id == ourID ) {
-                // don't consider ourself as a kill target
-                continue;
-                }
+        // make sure they didn't target some animal that their weapon
+        // can work on
+        if( p.hitAnObject && p.hitObjectID > 0 &&
+            getTrans( ourLiveObject->holdingID, p.hitObjectID ) != NULL ) {
             
-            if( o->outOfRange ) {
-                // out of range, but this was their last known position
-                // don't draw now
-                continue;
-                }
+            // a transition exists for this weapon on the destination
+            // object
+            }
+        else {
+            // clicked on nothing relevant
+
+            // find closest person for them to hit
+        
+            doublePair clickPos = { inX, inY };
+        
+        
+            int closePersonID = -1;
+            double closeDistance = DBL_MAX;
+        
+            for( int i=gameObjects.size()-1; i>=0; i-- ) {
+        
+                LiveObject *o = gameObjects.getElement( i );
+
+                if( o->id == ourID ) {
+                    // don't consider ourself as a kill target
+                    continue;
+                    }
             
-            if( o->heldByAdultID != -1 ) {
-                // held by someone else, can't click on them
-                continue;
-                }
+                if( o->outOfRange ) {
+                    // out of range, but this was their last known position
+                    // don't draw now
+                    continue;
+                    }
             
-            if( o->heldByDropOffset.x != 0 ||
-                o->heldByDropOffset.y != 0 ) {
-                // recently dropped baby, skip
-                continue;
-                }
+                if( o->heldByAdultID != -1 ) {
+                    // held by someone else, can't click on them
+                    continue;
+                    }
+            
+                if( o->heldByDropOffset.x != 0 ||
+                    o->heldByDropOffset.y != 0 ) {
+                    // recently dropped baby, skip
+                    continue;
+                    }
                 
                 
-            double oX = o->xd;
-            double oY = o->yd;
+                double oX = o->xd;
+                double oY = o->yd;
                 
-            if( o->currentSpeed != 0 && o->pathToDest != NULL ) {
-                oX = o->currentPos.x;
-                oY = o->currentPos.y;
+                if( o->currentSpeed != 0 && o->pathToDest != NULL ) {
+                    oX = o->currentPos.x;
+                    oY = o->currentPos.y;
+                    }
+
+                oY *= CELL_D;
+                oX *= CELL_D;
+            
+
+                // center of body up from feet position in tile
+                oY += CELL_D / 2;
+            
+                doublePair oPos = { oX, oY };
+            
+
+                double thisDistance = distance( clickPos, oPos );
+            
+                if( thisDistance < closeDistance ) {
+                    closeDistance = thisDistance;
+                    closePersonID = o->id;
+                    }
                 }
 
-            oY *= CELL_D;
-            oX *= CELL_D;
-            
-
-            // center of body up from feet position in tile
-            oY += CELL_D / 2;
-            
-            doublePair oPos = { oX, oY };
-            
-
-            double thisDistance = distance( clickPos, oPos );
-            
-            if( thisDistance < closeDistance ) {
-                closeDistance = thisDistance;
-                closePersonID = o->id;
+            if( closePersonID != -1 && closeDistance < 4 * CELL_D ) {
+                // somewhat close to clicking on someone
+                p.hitOtherPerson = true;
+                p.hitOtherPersonID = closePersonID;
+                p.hitAnObject = false;
+                p.hit = true;
+                killMode = true;
                 }
             }
-
-        if( closePersonID != -1 && closeDistance < 4 * CELL_D ) {
-            // somewhat close to clicking on someone
-            p.hitOtherPerson = true;
-            p.hitOtherPersonID = closePersonID;
-            p.hitAnObject = false;
-            p.hit = true;
-            killMode = true;
-            }
-        
         }
 
 
@@ -21903,6 +22387,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 }
             break;
         case 'x':
+        case 'X':
             if( userTwinCode != NULL &&
                 ! mStartedLoadingFirstObjectSet ) {
                 
@@ -21911,6 +22396,9 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 
                 setWaiting( false );
                 setSignal( "twinCancel" );
+                }
+            else if( ! mSayField.isFocused() ) {
+                mXKeyDown = true;
                 }
             break;
         /*
@@ -22036,6 +22524,10 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             break;
         case '/':
             if( ! mSayField.isFocused() ) {
+                mEKeyDown = false;
+                mZKeyDown = false;
+                mXKeyDown = false;
+
                 // start typing a filter
                 mSayField.setText( "/" );
                 mSayField.focus();
@@ -22044,7 +22536,10 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         case 13:  // enter
             // speak
             if( ! TextField::isAnyFocused() ) {
-                
+                mEKeyDown = false;
+                mZKeyDown = false;
+                mXKeyDown = false;
+
                 mSayField.setText( "" );
                 mSayField.focus();
                 }
@@ -22128,6 +22623,14 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 frameBatchMeasureStartTime = -1;
                                 framesInBatch = 0;
                                 fpsToDraw = -1;
+                                if( showFPS ) {
+                                    startCountingUniqueSpriteDraws();
+                                    startCountingSpritesDrawn();
+                                    }
+                                else {
+                                    endCountingUniqueSpriteDraws();
+                                    endCountingSpritesDrawn();
+                                    }
                                 }
                             else if( strstr( typedText,
                                              translate( "netCommand" ) ) 
@@ -22379,6 +22882,9 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
                 mSayField.setText( "" );
                 }
             mSayField.focus();
+            mEKeyDown = false;
+            mZKeyDown = false;
+            mXKeyDown = false;
             }
         else {
             char *curText = mSayField.getText();
@@ -22488,6 +22994,10 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
         case 'z':
         case 'Z':
             mZKeyDown = false;
+            break;
+        case 'x':
+        case 'X':
+            mXKeyDown = false;
             break;
         case ' ':
             shouldMoveCamera = true;

@@ -23,6 +23,11 @@ typedef struct TapoutRecord {
         int gridSpacingX, gridSpacingY;
         // how far to reach in +/- x and y when tapping out
         int limitX, limitY;
+        int buildCount;
+        int buildCountLimit;
+        // how far to reach in +/- x and y when tapping out
+        // after build count limit reached
+        int postBuildLimitX, postBuildLimitY;
     } TapoutRecord;
     
 
@@ -390,6 +395,10 @@ typedef struct ObjectRecord {
         
 
         char isTapOutTrigger;
+
+        int toolSetIndex;
+        char toolLearned;
+
     } ObjectRecord;
 
 
@@ -875,6 +884,16 @@ void stripDescriptionComment( char *inString );
 
 TapoutRecord *getTapoutRecord( int inObjectID );
 
+
+void clearTapoutCounts();
+
+
+void clearToolLearnedStatus();
+
+
+// gets object IDs that belong to a tool set
+void getToolSetMembership( int inToolSetIndex, 
+                           SimpleVector<int> *outListToFill );
 
 
 #endif

@@ -3,6 +3,61 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 276   2019-October-25
+
+--/FPS graph in client now shows frame timing breakdown.
+
+--Holding 'x' key lets you click through people.  Allows you
+  to interact with objects behind self and others.
+
+--Showing explicit hint for [SHIFT]-[TAB] on hint sheets (paging backwards).
+
+--Fixed stuck murder mouth after apocalypse.
+
+--Shift-right-clicking an animal with a valid weapon no longer puts you into
+  kill mode against closest person.  A lot of new players were confused by this.
+
+--Implementation of limited number of tool learning slots per player, complete
+  with messaging about how many slots are left and backwards holding of
+  unlearned tools.
+
+--Support for bigger jumps in picker paging.
+
+
+
+
+Server Fixes
+
+--Support for upper limit on number of tapout triggers that can be built
+  followed by a larger tapout radius.  Example:  first 5 shallow wells built
+  tap out springs in an 80-radius area.  6th+ shallow well taps out springs in
+  an 800-radius area.
+
+--Fixed bug in replacing oil wells with tarry spots on server restart, and also
+  no longer using same random seed for placement of tarry spots in each arc.
+
+--If you are < 3 years old when one of your descendants die, they will not
+  count toward your genetic score (because you were helpless yourself).
+
+--Reseeding map now depends on map being inited, so switched order in
+  apocalypse step.
+
+--Fixed so that curse radius is correctly limited to 32 tiles.
+
+--Fixed so that saying I AM EVE SMITH doesn't result in redundant name
+  insertion in broadcast speech of I AM EVE EVE SMITH.
+
+--Client tag as part of protocol, along with server-side logging.
+
+--Fixed some grave-tracking inconsistencies.
+
+--Limit on well placements wasn't resetting with apocalypse, causing limit of
+  only one well in next run.
+
+
+
+
 Version 272    2019-October-19
 
 --Fixed crash when switching hint target object with a non-matching filter.

@@ -1,7 +1,14 @@
-int versionNumber = 272;
+int versionNumber = 276;
 int dataVersionNumber = 0;
 
 int binVersionNumber = versionNumber;
+
+// Note to modders:
+// Please use this tag to describe your client honestly and uniquely
+// client_official is reserved for the unmodded client
+// do not include whitespace in your tag
+const char *clientTag = "client_official";
+
 
 
 int expectedVersionNumber = 0;

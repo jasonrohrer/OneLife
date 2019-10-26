@@ -508,6 +508,8 @@ typedef struct FreshConnection {
         char *twinCode;
         int twinCount;
 
+        char *clientTag;
+
     } FreshConnection;
 
 
@@ -528,6 +530,11 @@ typedef struct LiveObject {
         // -1 if unknown
         float fitnessScore;
         
+        int numToolSlots;
+        // these aren't object IDs but tool set index numbers
+        // some tools are grouped together
+        SimpleVector<int> learnedTools;
+
 
         // object ID used to visually represent this player
         int displayID;
@@ -570,7 +577,7 @@ typedef struct LiveObject {
         
         SimpleVector<char*> *ancestorEmails;
         SimpleVector<char*> *ancestorRelNames;
-        
+        SimpleVector<double> *ancestorLifeStartTimeSeconds;
 
         // id of Eve that started this line
         int lineageEveID;
@@ -1124,6 +1131,9 @@ static void backToBasics( LiveObject *inPlayer ) {
         p->clothingContained[c].deleteAll();
         p->clothingContainedEtaDecays[c].deleteAll();
         }
+
+    p->emotFrozen = false;
+    p->emotUnfreezeETA = 0;
     }
 
 
@@ -1560,6 +1570,10 @@ static void deleteMembers( FreshConnection *inConnection ) {
     if( inConnection->twinCode != NULL ) {
         delete [] inConnection->twinCode;
         }
+
+    if( inConnection->clientTag != NULL ) {
+        delete [] inConnection->clientTag;
+        }
     }
 
 
@@ -1624,6 +1638,8 @@ void quitCleanup() {
         
         nextPlayer->ancestorRelNames->deallocateStringElements();
         delete nextPlayer->ancestorRelNames;
+        
+        delete nextPlayer->ancestorLifeStartTimeSeconds;
         
 
         if( nextPlayer->name != NULL ) {
@@ -5064,6 +5080,41 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             }
         }
 
+
+    // make sure, no matter what, we can't curse living 
+    // people at a great distance
+    // note that, sice we're not tracking dead people here
+    // that case will be caught below, since the curses.h tracks death
+    // locations
+    GridPos speakerPos = getPlayerPos( inPlayer );
+    
+    if( cursedName != NULL &&
+        strcmp( cursedName, "" ) != 0 ) {
+
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *otherPlayer = players.getElement( i );
+            
+            if( otherPlayer == inPlayer ||
+                otherPlayer->error ) {
+                continue;
+                }
+            if( otherPlayer->name != NULL &&
+                strcmp( otherPlayer->name, cursedName ) == 0 ) {
+                // matching player
+                
+                double dist = 
+                    distance( speakerPos, getPlayerPos( otherPlayer ) );
+
+                if( dist > getMaxChunkDimension() ) {
+                    // too far
+                    delete [] cursedName;
+                    cursedName = NULL;
+                    }
+                break;
+                }
+            }
+        }
+    
     
 
     if( cursedName != NULL && 
@@ -5072,6 +5123,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         isCurse = cursePlayer( inPlayer->id,
                                inPlayer->lineageEveID,
                                inPlayer->email,
+                               speakerPos,
+                               getMaxChunkDimension(),
                                cursedName );
         
         if( isCurse ) {
@@ -5721,7 +5774,13 @@ static void swapHeldWithGround(
     inPlayer->heldTransitionSourceID = -1;
 
 
-    if( gravePlayerID > 0 ) {
+    inPlayer->heldGravePlayerID = 0;
+
+    if( inPlayer->holdingID > 0 &&
+        strstr( getObject( inPlayer->holdingID )->description, 
+                "origGrave" ) != NULL &&
+        gravePlayerID > 0 ) {
+    
         inPlayer->heldGraveOriginX = inMapX;
         inPlayer->heldGraveOriginY = inMapY;
         inPlayer->heldGravePlayerID = gravePlayerID;
@@ -5874,6 +5933,21 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
 
 
 
+static char canPlayerUseTool( LiveObject *inPlayer, int inToolID ) {
+    ObjectRecord *toolO = getObject( inToolID );
+                                    
+    // is it a marked tool?
+    int toolSet = toolO->toolSetIndex;
+    
+    if( toolSet != -1 &&
+        inPlayer->learnedTools.getElementIndex( toolSet ) == -1 ) {
+        // not in player's learned tool set
+        return false;
+        }
+    
+    return true;
+    }
+
 
 
 static UpdateRecord getUpdateRecord( 
@@ -5990,10 +6064,17 @@ static UpdateRecord getUpdateRecord(
         heldYum = 1;
         }
 
+    int heldLearned = 0;
+    
+    if( inPlayer->holdingID > 0 &&
+        canPlayerUseTool( inPlayer, inPlayer->holdingID ) ) {
+        heldLearned = 1;
+        }
+        
 
     r.formatString = autoSprintf( 
         "%d %d %d %d %%d %%d %s %d %%d %%d %d "
-        "%.2f %s %.2f %.2f %.2f %s %d %d %d %d%s\n",
+        "%.2f %s %.2f %.2f %.2f %s %d %d %d %d %d%s\n",
         inPlayer->id,
         inPlayer->displayID,
         inPlayer->facingOverride,
@@ -6015,6 +6096,7 @@ static UpdateRecord getUpdateRecord(
         hideIDForClient( inPlayer->justAteID ),
         inPlayer->responsiblePlayerID,
         heldYum,
+        heldLearned,
         deathReason );
     
     delete [] deathReason;
@@ -6504,6 +6586,28 @@ static void triggerApocalypseNow( const char *inMessage ) {
 
 
 
+static void setupToolSlots( LiveObject *inPlayer ) {
+    int min = SettingsManager::getIntSetting( "baseToolSlotsPerPlayer", 6 );
+    int max = SettingsManager::getIntSetting( "maxToolSlotsPerPlayer", 12 );
+    
+    
+    int slots = min;
+    
+    if( inPlayer->fitnessScore != -1 ) {    
+        // similar quadratic formula to food bars lost in old age
+        slots += ( max - min ) * pow( inPlayer->fitnessScore / 60, 2 );
+        }
+
+    inPlayer->numToolSlots = slots;
+
+    if( inPlayer->isTutorial && inPlayer->learnedTools.size() == 0 ) {
+        // tutorial players know all tools
+        getAllToolSets( &( inPlayer->learnedTools ) );
+        }
+    }
+
+
+
 
 // for placement of tutorials out of the way 
 static int maxPlacementX = 5000000;
@@ -6871,7 +6975,8 @@ int processLoggedInPlayer( char inAllowReconnect,
         // stop asking now
         newObject.fitnessScore = 0;
         }
-    
+
+
 
     SettingsManager::setSetting( "nextPlayerID",
                                  (int)nextID );
@@ -8110,7 +8215,8 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     newObject.ancestorEmails = new SimpleVector<char*>();
     newObject.ancestorRelNames = new SimpleVector<char*>();
-                                                  
+    newObject.ancestorLifeStartTimeSeconds = new SimpleVector<double>();
+    
     for( int j=0; j<players.size(); j++ ) {
         LiveObject *otherPlayer = players.getElement( j );
         
@@ -8151,6 +8257,9 @@ int processLoggedInPlayer( char inAllowReconnect,
 
                         newObject.ancestorRelNames->push_back(
                             workingName.getElementString() );
+                        
+                        newObject.ancestorLifeStartTimeSeconds->push_back(
+                            otherPlayer->lifeStartTimeSeconds );
                         
                         break;
                         }
@@ -8203,6 +8312,9 @@ int processLoggedInPlayer( char inAllowReconnect,
                     newObject.ancestorRelNames->push_back(
                         workingName.getElementString() );
                     
+                    newObject.ancestorLifeStartTimeSeconds->push_back(
+                            otherPlayer->lifeStartTimeSeconds );
+                        
                     break;
                     }
                 }
@@ -8219,7 +8331,7 @@ int processLoggedInPlayer( char inAllowReconnect,
         // they care about protecting us).
 
         // this is a little weird, but it does make some sense
-        // you are more productive of little sibs
+        // you are more protective of little sibs
 
         // anyway, the point of this is to close the "just care about yourself
         // and avoid having kids" exploit.  If your mother has kids after you
@@ -8243,6 +8355,10 @@ int processLoggedInPlayer( char inAllowReconnect,
                 }
 
             newObject.ancestorRelNames->push_back( stringDuplicate( relName ) );
+            
+            newObject.ancestorLifeStartTimeSeconds->push_back(
+                otherPlayer->lifeStartTimeSeconds );
+                        
             break;
             }
         }
@@ -8254,6 +8370,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     // parent pointer possibly no longer valid after push_back, which
     // can resize the vector
     parent = NULL;
+
+    setupToolSlots( &newObject );
 
 
     if( newObject.isTutorial ) {
@@ -9160,14 +9278,23 @@ static void setHeldGraveOrigin( LiveObject *inPlayer, int inX, int inY,
         // make sure that that there was a grave there before
         int gravePlayerID = getGravePlayerID( inX, inY );
         
+        // clear it
+        inPlayer->heldGravePlayerID = 0;
+            
+
         if( gravePlayerID > 0 ) {
             
             // player action actually picked up this grave
             
-            inPlayer->heldGraveOriginX = inX;
-            inPlayer->heldGraveOriginY = inY;
-            
-            inPlayer->heldGravePlayerID = getGravePlayerID( inX, inY );
+            if( inPlayer->holdingID > 0 &&
+                strstr( getObject( inPlayer->holdingID )->description, 
+                        "origGrave" ) != NULL ) {
+                
+                inPlayer->heldGraveOriginX = inX;
+                inPlayer->heldGraveOriginY = inY;
+                
+                inPlayer->heldGravePlayerID = getGravePlayerID( inX, inY );
+                }
             
             // clear it from ground
             setGravePlayerID( inX, inY, 0 );
@@ -9927,6 +10054,21 @@ int readIntFromFile( const char *inFileName, int inDefaultValue ) {
 
 
 
+typedef struct KillState {
+        int killerID;
+        int killerWeaponID;
+        int targetID;
+        double killStartTime;
+        double emotStartTime;
+        int emotRefreshSeconds;
+    } KillState;
+
+
+SimpleVector<KillState> activeKillStates;
+
+
+
+
 void apocalypseStep() {
     
     double curTime = Time::getCurrentTime();
@@ -10202,17 +10344,19 @@ void apocalypseStep() {
                 AppLog::infoF( "Apocalypse wipeMapFiles took %f sec",
                                Time::getCurrentTime() - startTime );
                 
-                reseedMap( true );
-                
                 initMap();
+
+                reseedMap( true );
                 
                 AppLog::infoF( "Apocalypse initMap took %f sec",
                                Time::getCurrentTime() - startTime );
                 
+                clearTapoutCounts();
+
                 peaceTreaties.deleteAll();
                 warStates.deleteAll();
                 warPeaceRecords.deleteAll();
-                
+                activeKillStates.deleteAll();
 
                 lastRemoteApocalypseCheckTime = curTime;
                 
@@ -10723,17 +10867,6 @@ typedef struct FlightDest {
         
 
 
-typedef struct KillState {
-        int killerID;
-        int killerWeaponID;
-        int targetID;
-        double killStartTime;
-        double emotStartTime;
-        int emotRefreshSeconds;
-    } KillState;
-
-
-SimpleVector<KillState> activeKillStates;
 
 SimpleVector<int> killStatePosseChangedPlayerIDs;
 
@@ -11590,18 +11723,51 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
 
     SimpleVector<char*> emptyAncestorEmails;
     SimpleVector<char*> emptyAncestorRelNames;
+    SimpleVector<double> emptyAncestorLifeStartTimeSeconds;
     
 
     SimpleVector<char*> *ancestorEmails = nextPlayer->ancestorEmails;
     SimpleVector<char*> *ancestorRelNames = nextPlayer->ancestorRelNames;
+    SimpleVector<double> *ancestorLifeStartTimeSeconds = 
+        nextPlayer->ancestorLifeStartTimeSeconds;
     
 
     if( nextPlayer->suicide ) {
         // don't let this suicide death affect scores of any ancestors
         ancestorEmails = &emptyAncestorEmails;
         ancestorRelNames = &emptyAncestorRelNames;
+        ancestorLifeStartTimeSeconds = &emptyAncestorLifeStartTimeSeconds;
         }
-    
+    else {
+        // any that never made it to age 3+ by the time this person died
+        // should not be counted.  What could they have done to keep us alive
+        // Note that this misses one case... an older sib that died at age 2.5
+        // and then we died at age 10 or whatever.  They are age "12.5" right
+        // now, even though they are dead.  We're not still tracking them,
+        // though, so we don't know.
+        double curTime = Time::getCurrentTime();
+        
+        double ageRate = getAgeRate();
+        
+        for( int i=0; i<ancestorEmails->size(); i++ ) {
+            double startTime = 
+                ancestorLifeStartTimeSeconds->getElementDirect( i );
+            
+            if( ageRate * ( curTime - startTime ) < defaultActionAge ) {
+                // too young to have taken action to help this person
+                delete [] ancestorEmails->getElementDirect( i );
+                ancestorEmails->deleteElement( i );
+                
+                delete [] ancestorRelNames->getElementDirect( i );
+                ancestorRelNames->deleteElement( i );
+                
+                ancestorLifeStartTimeSeconds->deleteElement( i );
+                
+                i--;
+                }
+            }
+        
+        }    
 
 
     logFitnessDeath( players.size(),
@@ -11612,7 +11778,128 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
                      ancestorRelNames );
     }
 
+
+
+
+static void logClientTag( FreshConnection *inConnection ) {
+    const char *tagToLog = "no_tag";
     
+    if( inConnection->clientTag != NULL ) {
+        tagToLog = inConnection->clientTag;
+        }
+    
+    FILE *log = fopen( "clientTagLog.txt", "a" );
+    
+    if( log != NULL ) {
+        fprintf( log, "%.0f %s %s\n", Time::getCurrentTime(),
+                 inConnection->email, tagToLog );
+        
+        fclose( log );
+        }
+    }
+
+
+
+static void sendLearnedToolMessage( LiveObject *inPlayer,
+                                    SimpleVector<int> *inNewToolSets ) {
+    SimpleVector<int> setList;
+    
+    for( int i=0; i < inNewToolSets->size(); i++ ) {
+        getToolSetMembership( inNewToolSets->getElementDirect(i), 
+                              &( setList ) );
+        }
+
+    // send LR message to let client know that these tools are learned now
+    SimpleVector<char> messageWorking;
+    
+    messageWorking.appendElementString( "LR\n" );
+    for( int i=0; i<setList.size(); i++ ) {
+        if( i > 0 ) {
+            messageWorking.appendElementString( " " );
+            }
+        char *idString = autoSprintf( "%d", 
+                                      setList.getElementDirect( i ) );
+        messageWorking.appendElementString( idString );
+        delete [] idString;
+        }
+    messageWorking.appendElementString( "\n#" );
+    char *lrMessage = messageWorking.getElementString();
+    
+    sendMessageToPlayer( inPlayer, lrMessage, strlen( lrMessage ) );
+    delete [] lrMessage;
+    }
+
+
+    
+    
+
+
+static char learnTool( LiveObject *inPlayer, int inToolID ) {
+    ObjectRecord *toolO = getObject( inToolID );
+                                    
+    // is it a marked tool?
+    int toolSet = toolO->toolSetIndex;
+    
+    if( toolSet != -1 &&
+        inPlayer->learnedTools.getElementIndex( toolSet ) == -1 &&
+        inPlayer->numToolSlots > inPlayer->learnedTools.size() ) {
+        
+        inPlayer->learnedTools.push_back( toolSet );
+        
+        SimpleVector<int> newToolSets;
+        newToolSets.push_back( toolSet );
+        
+        sendLearnedToolMessage( inPlayer, &newToolSets );
+        
+        
+        // now send DING message
+        const char *article = "THE ";
+        
+        char *des = stringToUpperCase( toolO->description );
+        stripDescriptionComment( des );
+
+        if( des[ strlen( des ) - 1 ] == 'S' ) {
+            // use THE for singular tools like YOU LEARNED THE AXE
+            // no article for plural tools like YOU LEARNED KNITTING NEEDLES
+            article = "";
+            }
+
+        char *message;
+        
+        int numLeft = inPlayer->numToolSlots - inPlayer->learnedTools.size();
+        
+        if( numLeft > 0 ) {
+            message = autoSprintf( "YOU LEARNED %s%s.**"
+                                   "%d OF %d TOOL SLOTS ARE LEFT.", 
+                                   article, des,
+                                   numLeft,
+                                   inPlayer->numToolSlots );
+            }
+        else {
+            message = autoSprintf( "YOU LEARNED %s%s.**"
+                                   "ALL OF YOUR TOOL SLOTS HAVE BEEN USED.", 
+                                   article, des );            
+            }
+        
+        sendGlobalMessage( message, inPlayer );
+        
+        delete [] des;
+        delete [] message;
+
+
+        return true;
+        }
+    return false;
+    }
+
+
+static char canPlayerUseOrLearnTool( LiveObject *inPlayer, int inToolID ) {
+    if( ! canPlayerUseTool( inPlayer, inToolID ) ) {
+        return learnTool( inPlayer, inToolID );
+        }
+    return true;
+    }
+
     
 
 void sanityCheckSettings(const char *inSettingName) {
@@ -12451,6 +12738,7 @@ int main() {
                 newConnection.twinCode = NULL;
                 newConnection.twinCount = 0;
                 
+                newConnection.clientTag = NULL;
                 
                 nextSequenceNumber ++;
                 
@@ -12724,13 +13012,17 @@ int main() {
                     // with client
                             
                     AppLog::info( "Got new player logged in" );
-                            
+                    logClientTag( nextConnection );
+
                     delete nextConnection->ticketServerRequest;
                     nextConnection->ticketServerRequest = NULL;
 
                     delete [] nextConnection->sequenceNumberString;
                     nextConnection->sequenceNumberString = NULL;
-                            
+                    
+                    delete [] nextConnection->clientTag;
+                    nextConnection->clientTag = NULL;
+
                     if( nextConnection->twinCode != NULL
                         && 
                         nextConnection->twinCount > 0 ) {
@@ -12800,6 +13092,18 @@ int main() {
                         SimpleVector<char *> *tokens =
                             tokenizeString( message );
                         
+                        if( strstr( message, "client_" ) != NULL ) {
+                            // new client_ parameter
+                            
+                            // it is the first parameter after LOGIN
+                            
+                            // save and remove it
+                            nextConnection->clientTag = 
+                                tokens->getElementDirect( 1 );
+                            
+                            tokens->deleteElement( 1 );
+                            }
+
                         if( tokens->size() == 4 || tokens->size() == 5 ||
                             tokens->size() == 7 ) {
                             
@@ -12940,6 +13244,7 @@ int main() {
                                     // with client
                             
                                     AppLog::info( "Got new player logged in" );
+                                    logClientTag( nextConnection );
                                     
                                     delete nextConnection->ticketServerRequest;
                                     nextConnection->ticketServerRequest = NULL;
@@ -12947,6 +13252,9 @@ int main() {
                                     delete [] 
                                         nextConnection->sequenceNumberString;
                                     nextConnection->sequenceNumberString = NULL;
+
+                                    delete [] nextConnection->clientTag;
+                                    nextConnection->clientTag = NULL;
 
 
                                     if( nextConnection->twinCode != NULL
@@ -13234,6 +13542,10 @@ int main() {
                     // failed
                     // stop asking now
                     nextPlayer->fitnessScore = 0;
+                    }
+
+                if( nextPlayer->fitnessScore != -1 ) {
+                    setupToolSlots( nextPlayer );
                     }
                 }
             
@@ -14973,6 +15285,19 @@ int main() {
                                     name,
                                     &( m.saidText ),
                                     nextPlayer, true );
+
+                                if( strstr( m.saidText, "EVE EVE" ) != NULL ) {
+                                    // their naming phrase was I AM EVE SMITH
+                                    // already
+                                    char found;
+                                    char *fixed =
+                                        replaceOnce( m.saidText, 
+                                                     "EVE EVE",
+                                                     "EVE",
+                                                     &found );
+                                    delete [] m.saidText;
+                                    m.saidText = fixed;
+                                    }
                                 }
                             }
 
@@ -15121,7 +15446,9 @@ int main() {
                     else if( m.type == KILL ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         if( m.id > 0 && 
-                            nextPlayer->holdingID > 0 ) {
+                            nextPlayer->holdingID > 0 &&
+                            canPlayerUseOrLearnTool( nextPlayer,
+                                                     nextPlayer->holdingID ) ) {
                             
                             ObjectRecord *heldObj = 
                                 getObject( nextPlayer->holdingID );
@@ -15364,6 +15691,33 @@ int main() {
                                     r = getPTrans( nextPlayer->holdingID,
                                                   target );
                                     }
+
+                                char blockedTool = false;
+                                
+                                if( nextPlayer->holdingID > 0 &&
+                                    r != NULL ) {
+                                    // make sure player can use this tool
+                                    
+                                    if( ! canPlayerUseOrLearnTool( 
+                                            nextPlayer,
+                                            nextPlayer->holdingID ) ) {
+                                        r = NULL;
+                                        blockedTool = true;
+                                        }
+                                    }
+                                
+                                if( target > 0 &&
+                                    getObject( target )->permanent &&
+                                    r != NULL ) {
+                                    // make sure player can use this ground-tool
+                                    if( ! canPlayerUseOrLearnTool( 
+                                            nextPlayer,
+                                            target ) ) {
+                                        r = NULL;
+                                        blockedTool = true;
+                                        }
+                                    }
+                                
                                 
                                 if( r != NULL &&
                                     targetObj->numSlots > 0 ) {
@@ -15477,7 +15831,8 @@ int main() {
                                 
 
                                 if( r == NULL && 
-                                    nextPlayer->holdingID > 0 ) {
+                                    nextPlayer->holdingID > 0 &&
+                                    ! blockedTool ) {
                                     
                                     logTransitionFailure( 
                                         nextPlayer->holdingID,
@@ -15867,7 +16222,31 @@ int main() {
                                         getPTrans( nextPlayer->holdingID,
                                                   floorID );
                                 
-                                    if( r == NULL ) {
+                                    char blockedTool = false;
+                                    
+                                    if( nextPlayer->holdingID > 0 &&
+                                        r != NULL ) {
+                                        // make sure player can use this tool
+                                    
+                                        if( ! canPlayerUseOrLearnTool( 
+                                                nextPlayer,
+                                                nextPlayer->holdingID ) ) {
+                                            r = NULL;
+                                            blockedTool = true;
+                                            }
+                                        }
+                                    
+                                    // floor might be a tool too
+                                    if( r != NULL ) {
+                                        if( ! canPlayerUseOrLearnTool( 
+                                                nextPlayer, floorID ) ) {
+                                            r = NULL;
+                                            blockedTool = true;
+                                            }
+                                        }
+
+
+                                    if( r == NULL && ! blockedTool ) {
                                         logTransitionFailure( 
                                             nextPlayer->holdingID,
                                             floorID );
@@ -17581,6 +17960,8 @@ int main() {
 
                 
                 if( ! nextPlayer->isTutorial ) {
+                    GridPos deathPos = 
+                        getPlayerPos( nextPlayer );
                     logDeath( nextPlayer->id,
                               nextPlayer->email,
                               nextPlayer->isEve,
@@ -17588,7 +17969,7 @@ int main() {
                               getSecondsPlayed( 
                                   nextPlayer ),
                               ! getFemale( nextPlayer ),
-                              nextPlayer->xd, nextPlayer->yd,
+                              deathPos.x, deathPos.y,
                               players.size() - 1,
                               false,
                               nextPlayer->murderPerpID,
@@ -19764,6 +20145,11 @@ int main() {
             
             if( ! nextPlayer->firstMessageSent ) {
                 
+                // send them their learned tool set
+                // in case they are reconnecting and already know some tools
+                sendLearnedToolMessage( nextPlayer, 
+                                        &( nextPlayer->learnedTools ) );
+
 
                 // first, send the map chunk around them
                 
@@ -21609,7 +21995,9 @@ int main() {
                 
                 nextPlayer->ancestorRelNames->deallocateStringElements();
                 delete nextPlayer->ancestorRelNames;
-
+                
+                delete nextPlayer->ancestorLifeStartTimeSeconds;
+                
 
                 if( nextPlayer->name != NULL ) {
                     delete [] nextPlayer->name;

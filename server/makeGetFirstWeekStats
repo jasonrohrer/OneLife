@@ -1,0 +1,1 @@
+g++ -g -I../.. -o getFirstWeekStats getFirstWeekStats.cpp ../../minorGems/io/file/linux/PathLinux.cpp ../../minorGems/util/crc32.cpp

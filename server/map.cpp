@@ -2883,6 +2883,64 @@ void reseedMap( char inForceFresh ) {
             fprintf( seedFile, "%d", biomeRandSeed );
             fclose( seedFile );
             }
+
+
+
+        // re-place rand placement objects
+        CustomRandomSource placementRandSource( biomeRandSeed );
+
+        int numObjects;
+        ObjectRecord **allObjects = getAllObjects( &numObjects );
+    
+        for( int i=0; i<numObjects; i++ ) {
+            ObjectRecord *o = allObjects[i];
+
+            float p = o->mapChance;
+            if( p > 0 ) {
+                int id = o->id;
+            
+                char *randPlacementLoc =
+                    strstr( o->description, "randPlacement" );
+                
+                if( randPlacementLoc != NULL ) {
+                    // special random placement
+                
+                    int count = 10;                
+                    sscanf( randPlacementLoc, "randPlacement%d", &count );
+                
+                    printf( "Placing %d random occurences of %d (%s) "
+                            "inside %d square radius:\n",
+                            count, id, o->description, barrierRadius );
+                    for( int p=0; p<count; p++ ) {
+                        // sample until we find target biome
+                        int safeR = barrierRadius - 2;
+                        
+                        char placed = false;
+                        while( ! placed ) {                    
+                            int pickX = 
+                                placementRandSource.
+                                getRandomBoundedInt( -safeR, safeR );
+                            int pickY = 
+                                placementRandSource.
+                                getRandomBoundedInt( -safeR, safeR );
+                            
+                            int pickB = getMapBiome( pickX, pickY );
+                            
+                            for( int j=0; j< o->numBiomes; j++ ) {
+                                int b = o->biomes[j];
+                                
+                                if( b == pickB ) {
+                                    // hit
+                                    placed = true;
+                                    printf( "  (%d,%d)\n", pickX, pickY );
+                                    setMapObject( pickX, pickY, id );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -2891,7 +2949,6 @@ void reseedMap( char inForceFresh ) {
 
 char initMap() {
 
-    reseedMap( false );
     
     
     numSpeechPipes = getMaxSpeechPipeIndex() + 1;
@@ -3629,8 +3686,6 @@ char initMap() {
 
     CustomRandomSource phaseRandSource( randSeed );
 
-    CustomRandomSource placementRandSource( randSeed );
-
     
     for( int i=0; i<numObjects; i++ ) {
         ObjectRecord *o = allObjects[i];
@@ -3718,39 +3773,8 @@ char initMap() {
             else if( randPlacementLoc != NULL ) {
                 // special random placement
                 
-                int count = 10;                
-                sscanf( randPlacementLoc, "randPlacement%d", &count );
-                
-                printf( "Placing %d random occurences of %d (%s) "
-                        "inside %d square radius:\n",
-                        count, id, o->description, barrierRadius );
-                for( int p=0; p<count; p++ ) {
-                    // sample until we find target biome
-                    int safeR = barrierRadius - 2;
-
-                    char placed = false;
-                    while( ! placed ) {                    
-                        int pickX = 
-                            placementRandSource.
-                            getRandomBoundedInt( -safeR, safeR );
-                        int pickY = 
-                            placementRandSource.
-                            getRandomBoundedInt( -safeR, safeR );
-                        
-                        int pickB = getMapBiome( pickX, pickY );
-                            
-                        for( int j=0; j< o->numBiomes; j++ ) {
-                            int b = o->biomes[j];
-                            
-                            if( b == pickB ) {
-                                // hit
-                                placed = true;
-                                printf( "  (%d,%d)\n", pickX, pickY );
-                                setMapObject( pickX, pickY, id );
-                                }
-                            }
-                        }
-                    }
+                // don't actually place these now, do it on reseed
+                // but skip adding them to list of natural objects
                 }
             else {
                 // regular fractal placement
@@ -3950,7 +3974,8 @@ char initMap() {
         }
     
     
-    
+    reseedMap( false );
+        
     
 
     
@@ -6443,6 +6468,46 @@ static int neighborWallAgree( int inX, int inY, ObjectRecord *inSetO,
 
 
 
+static void runTapoutOperation( int inX, int inY, 
+                                int inRadiusX, int inRadiusY,
+                                int inSpacingX, int inSpacingY,
+                                int inTriggerID,
+                                char inIsPost = false ) {
+    for( int y =  inY - inRadiusY; 
+         y <= inY + inRadiusY; 
+         y += inSpacingY ) {
+    
+        for( int x =  inX - inRadiusX; 
+             x <= inX + inRadiusX; 
+             x += inSpacingX ) {
+            
+            int id = getMapObjectRaw( x, y );
+                    
+            // change triggered by tapout represented by 
+            // tapoutTrigger object getting used as actor
+            // on tapoutTarget
+            TransRecord *t = NULL;
+            
+            if( inIsPost ) {
+                // last use target signifies what happens in post
+                t = getPTrans( inTriggerID, id, false, true );
+                }
+
+            if( t == NULL ) {
+                // not post or last-use-target trans undefined
+                t = getPTrans( inTriggerID, id );
+                }
+            
+            if( t != NULL ) {
+                setMapObjectRaw( x, y, t->newTarget );
+                }
+            }
+        }
+    }
+
+
+
+
 void setMapObjectRaw( int inX, int inY, int inID ) {
     dbPut( inX, inY, 0, inID );
     
@@ -6710,25 +6775,23 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
         TapoutRecord *r = getTapoutRecord( inID );
         
         if( r != NULL ) {
-            for( int y =  inY - r->limitY; 
-                     y <= inY + r->limitY; 
-                     y += r->gridSpacingY ) {
-                
-                for( int x =  inX - r->limitX; 
-                         x <= inX + r->limitX; 
-                         x += r->gridSpacingX ) {
-                    
-                    int id = getMapObjectRaw( x, y );
-                    
-                    // change triggered by tapout represented by 
-                    // tapoutTrigger object getting used as actor
-                    // on tapoutTarget
-                    TransRecord *t = getPTrans( inID, id );
-                    
-                    if( t != NULL ) {
-                        setMapObjectRaw( x, y, t->newTarget );
-                        }
-                    }
+
+            runTapoutOperation( inX, inY, 
+                                r->limitX, r->limitY,
+                                r->gridSpacingX, r->gridSpacingY, 
+                                inID );
+            
+            
+            r->buildCount++;
+            
+            if( r->buildCountLimit != -1 &&
+                r->buildCount >= r->buildCountLimit ) {
+                // hit limit!
+                // tapout a larger radius now
+                runTapoutOperation( inX, inY, 
+                                    r->postBuildLimitX, r->postBuildLimitY,
+                                    r->gridSpacingX, r->gridSpacingY, 
+                                    inID, true );
                 }
             }
         

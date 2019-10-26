@@ -84,6 +84,51 @@ int getMetaTriggerObject( int inTriggerIndex ) {
 
 
 
+typedef struct ToolSetRecord {
+        // can be null for a single-tool set
+        char *setTag;
+        
+        SimpleVector<int> setMembership;
+    } ToolSetRecord;
+
+
+SimpleVector<ToolSetRecord> toolSetRecords;
+
+
+// inSetTage destroyed interally, NOT by caller
+static int getToolSetIndex( char *inSetTag = NULL ) {
+    if( inSetTag != NULL ) {
+        
+        for( int i=0; i<toolSetRecords.size(); i++ ) {
+            ToolSetRecord *r = toolSetRecords.getElement( i );
+            
+            if( r->setTag != NULL ) {
+                
+                if( strcmp( inSetTag, r->setTag ) == 0 ) {
+                    delete [] inSetTag;
+                    return i;
+                    }
+                }
+            }
+        }
+    
+    // need to return a new record
+    ToolSetRecord r = { inSetTag };
+    
+    toolSetRecords.push_back( r );
+    
+    return toolSetRecords.size() - 1;
+    }
+
+
+static void addToolSetMembership( int inToolSetIndex, int inObjectID ) {
+    ToolSetRecord *r = toolSetRecords.getElement( inToolSetIndex );
+    
+    r->setMembership.push_back( inObjectID );
+    }
+
+
+
 
 
 // anything above race 100 is put in bin for race 100
@@ -531,11 +576,19 @@ static void setupTapout( ObjectRecord *inR ) {
     if( triggerPos != NULL ) {
         int xGrid, yGrid;
         int xLimit, yLimit;
+        int buildCountLimit = -1;
+        int postBuildLimitX = 0;
+        int postBuildLimitY = 0;
+        
         int numRead = sscanf( triggerPos, 
-                              "+tapoutTrigger,%d,%d,%d,%d",
+                              "+tapoutTrigger,%d,%d,%d,%d,"
+                              "%d,%d,%d",
                               &xGrid, &yGrid,
-                              &xLimit, &yLimit );
-        if( numRead == 4 ) {
+                              &xLimit, &yLimit,
+                              &buildCountLimit,
+                              &postBuildLimitX,
+                              &postBuildLimitY );
+        if( numRead == 4 || numRead == 7 ) {
             // valid tapout trigger
             TapoutRecord r;
             
@@ -545,6 +598,11 @@ static void setupTapout( ObjectRecord *inR ) {
             r.limitX = xLimit;
             r.limitY = yLimit;
             
+            r.buildCountLimit = buildCountLimit;
+            r.buildCount = 0;
+            r.postBuildLimitX = postBuildLimitX;
+            r.postBuildLimitY = postBuildLimitY;
+            
             tapoutRecords.push_back( r );
             
             inR->isTapOutTrigger = true;
@@ -552,6 +610,41 @@ static void setupTapout( ObjectRecord *inR ) {
         }
     }
 
+
+
+
+static void setupToolSet( ObjectRecord *inR ) {
+    inR->toolSetIndex = -1;
+    inR->toolLearned = false;
+    
+    if( inR->id == 850 ) {
+        printf( "Hey\n" );
+        }
+    
+    char *toolPos = strstr( inR->description, "+tool" );
+                
+    if( toolPos != NULL ) {
+        
+        char *skipPos = &( toolPos[5] );
+        
+        char *setTag = NULL;
+
+        if( skipPos[0] != ' ' &&
+            skipPos[0] != '\0' ) {
+            
+            char tag[100];
+
+            int numRead = sscanf( skipPos, "%99s", tag );
+            
+            if( numRead == 1 ) {
+                setTag = stringDuplicate( tag );
+                }
+            }
+        
+        inR->toolSetIndex = getToolSetIndex( setTag );
+        addToolSetMembership( inR->toolSetIndex, inR->id );
+        }
+    }
 
 
 
@@ -1309,6 +1402,7 @@ float initObjectBankStep() {
                     next++;
                     }       
                 
+                r->toolSetIndex = -1;
 
                     
                 records.push_back( r );
@@ -1917,6 +2011,39 @@ void initObjectBankFinish() {
         }
 
 
+    // generate all tool sets
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+
+            if( ! o->isUseDummy && ! o->isVariableDummy ) {
+                
+                setupToolSet( o );
+                
+                if( o->toolSetIndex != -1 ) {                    
+                    
+                    if( o->numUses > 1 && o->useDummyIDs != NULL ) {
+                        for( int d=0; d < o->numUses - 1; d++ ) {
+                            int dID = o->useDummyIDs[d];
+                            
+                            getObject( dID )->toolSetIndex = o->toolSetIndex;
+                            addToolSetMembership( o->toolSetIndex, dID );
+                            }
+                        }
+                    if( o->numVariableDummyIDs > 1 && 
+                        o->variableDummyIDs != NULL ) {
+                        
+                        for( int d=0; d < o->numVariableDummyIDs; d++ ) {
+                            int dID = o->variableDummyIDs[d];
+                            
+                            getObject( dID )->toolSetIndex = o->toolSetIndex;
+                            addToolSetMembership( o->toolSetIndex, dID );
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
 
@@ -2243,6 +2370,17 @@ void freeObjectBank() {
         }
     skipDrawingWorkingArea = NULL;
     skipDrawingWorkingAreaSize = -1;
+
+
+    for( int i=0; i<toolSetRecords.size(); i++ ) {
+        ToolSetRecord *r = toolSetRecords.getElement( i );
+        
+        if( r->setTag != NULL ) {
+            delete [] r->setTag;
+            }
+        }
+    toolSetRecords.deleteAll();
+    
     }
 
 
@@ -3172,6 +3310,8 @@ int addObject( const char *inDescription,
     setupWall( r );
 
     setupTapout( r );
+    
+    r->toolSetIndex = -1;
     
 
     r->isAutoOrienting = false;
@@ -5833,6 +5973,46 @@ TapoutRecord *getTapoutRecord( int inObjectID ) {
         }
     return NULL;
     }
+
+
+
+void clearTapoutCounts() {
+    for( int i=0; i<tapoutRecords.size(); i++ ) {
+        TapoutRecord *r = tapoutRecords.getElement( i );
+        r->buildCount = 0;
+        }
+    }
+
+
+
+void clearToolLearnedStatus() {
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+
+            o->toolLearned = false;
+            }
+        }
+    }
+
+
+
+void getToolSetMembership( int inToolSetIndex, 
+                           SimpleVector<int> *outListToFill ) {
+    ToolSetRecord *r = toolSetRecords.getElement( inToolSetIndex );
+    
+    outListToFill->push_back_other( &( r->setMembership ) );
+    }
+
+
+
+void getAllToolSets( SimpleVector<int> *outListToFill ) {
+    for( int i=0; i<toolSetRecords.size(); i++ ) {
+        outListToFill->push_back( i );
+        }
+    }
+
+
 
     
     
