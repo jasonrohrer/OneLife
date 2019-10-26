@@ -22,6 +22,7 @@ Version 274   ???
   with messaging about how many slots are left and backwards holding of
   unlearned tools.
 
+--Support for bigger jumps in picker paging.
 
 
 
