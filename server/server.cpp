@@ -11813,6 +11813,7 @@ static void sendLearnedToolMessage( LiveObject *inPlayer,
         char *idString = autoSprintf( "%d", 
                                       setList.getElementDirect( i ) );
         messageWorking.appendElementString( idString );
+        delete [] idString;
         }
     messageWorking.appendElementString( "\n#" );
     char *lrMessage = messageWorking.getElementString();
