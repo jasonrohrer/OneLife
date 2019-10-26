@@ -2020,11 +2020,7 @@ void initObjectBankFinish() {
                 
                 setupToolSet( o );
                 
-                if( o->toolSetIndex != -1 ) {
-
-                    printf( "Object %s (%d) has tool set index %d\n",
-                            o->description, i, o->toolSetIndex );
-                    
+                if( o->toolSetIndex != -1 ) {                    
                     
                     if( o->numUses > 1 && o->useDummyIDs != NULL ) {
                         for( int d=0; d < o->numUses - 1; d++ ) {
@@ -6007,6 +6003,15 @@ void getToolSetMembership( int inToolSetIndex,
     
     outListToFill->push_back_other( &( r->setMembership ) );
     }
+
+
+
+void getAllToolSets( SimpleVector<int> *outListToFill ) {
+    for( int i=0; i<toolSetRecords.size(); i++ ) {
+        outListToFill->push_back( i );
+        }
+    }
+
 
 
     

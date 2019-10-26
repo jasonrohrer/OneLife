@@ -6597,6 +6597,11 @@ static void setupToolSlots( LiveObject *inPlayer ) {
         }
 
     inPlayer->numToolSlots = slots;
+
+    if( inPlayer->isTutorial && inPlayer->learnedTools.size() == 0 ) {
+        // tutorial players know all tools
+        getAllToolSets( &( inPlayer->learnedTools ) );
+        }
     }
 
 
@@ -6968,8 +6973,6 @@ int processLoggedInPlayer( char inAllowReconnect,
         // stop asking now
         newObject.fitnessScore = 0;
         }
-
-    setupToolSlots( &newObject );
 
 
 
@@ -8365,6 +8368,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     // parent pointer possibly no longer valid after push_back, which
     // can resize the vector
     parent = NULL;
+
+    setupToolSlots( &newObject );
 
 
     if( newObject.isTutorial ) {
