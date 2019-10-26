@@ -896,4 +896,9 @@ void getToolSetMembership( int inToolSetIndex,
                            SimpleVector<int> *outListToFill );
 
 
+// gets indices of all tool sets
+void getAllToolSets( SimpleVector<int> *outListToFill );
+
+
+
 #endif
