@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 274   ???
+Version 276   2019-October-25
 
 --/FPS graph in client now shows frame timing breakdown.
 
@@ -23,6 +23,7 @@ Version 274   ???
   unlearned tools.
 
 --Support for bigger jumps in picker paging.
+
 
 
 
