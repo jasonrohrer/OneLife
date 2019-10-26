@@ -6607,6 +6607,60 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                 getObject( heldPack.inObjectID ),
                                 false );
                             }
+
+                        if( heldPack.inObjectID > 0 ) {
+                            ObjectRecord *heldO = 
+                                getObject( heldPack.inObjectID );
+                            
+                            if( heldO->toolSetIndex != -1 &&
+                                ! heldO->toolLearned ) {
+                                // unleared tool
+                                // rotate 180
+                                
+                                doublePair centerOffset =
+                                    getObjectCenterOffset( heldO );
+                                
+
+                                doublePair newCenterOffset = 
+                                    getObjectCenterOffset( heldO );
+                                
+                                if( heldPack.inFlipH ) {
+                                    newCenterOffset.x *= -1;
+                                    }
+                                newCenterOffset = 
+                                    rotate( newCenterOffset,
+                                            - heldPack.inRot * 2 *  M_PI );
+                                
+                                heldPack.inPos =
+                                    add( heldPack.inPos,
+                                         mult( newCenterOffset, 2 ) );
+                                
+                                
+                                doublePair newHeldOffset = heldO->heldOffset;
+                                
+                                if( heldPack.inFlipH ) {
+                                    newHeldOffset.x *= -1;
+                                    }
+                                
+                                // add a small tweak here, because
+                                // held offset is relative to wrist of
+                                // character, not center of hand
+                                newHeldOffset.y += 3;
+
+                                newHeldOffset =
+                                    rotate( newHeldOffset,
+                                            - heldPack.inRot * 2 *  M_PI );
+                                
+                                heldPack.inPos =
+                                    sub( heldPack.inPos, 
+                                         mult( newHeldOffset, 2 ) );
+                                
+
+                                heldPack.inRot += .5;
+                                }
+                            }
+
+
                         drawObjectAnim( heldPack );
                         if( skippingSome ) {
                             restoreSkipDrawing( 
