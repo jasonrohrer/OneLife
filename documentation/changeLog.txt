@@ -7,6 +7,12 @@ Server Fixes
 
 --Boiling the frog:  6-12 tool slots (was 8-16).
 
+--Boiling the frog:  5-10 tool slots (was 6-12).
+
+--Min fertile girls per fam 6 (was 3).  This should help to prop up struggling
+  families and prolong the arc.
+
+
 
 Version 276   2019-October-25
 
