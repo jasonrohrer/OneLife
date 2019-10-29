@@ -7,6 +7,10 @@ Version 277   ???
 
 --Added an early exit hallway to make the tutorial optional.
 
+--Off-screen speech now drawn on left, right, and bottom of screen (before, was
+  top of screen only).  Server sends speech in radius of 16 to facilitate this
+  (was 10).
+
 
 
 Server Fixes

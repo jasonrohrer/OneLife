@@ -3933,7 +3933,7 @@ GridPos getClosestPlayerPos( int inX, int inY ) {
 static int chunkDimensionX = 32;
 static int chunkDimensionY = 30;
 
-static int maxSpeechRadius = 10;
+static int maxSpeechRadius = 16;
 
 
 static int getMaxChunkDimension() {
