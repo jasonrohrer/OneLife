@@ -47,6 +47,8 @@ Server Fixes
   Message is skipped if your fitness score is too low to grant you any bonus
   tool slots.
 
+--Support for forced spawns for specific accounts.
+
 
 
 

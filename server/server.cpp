@@ -6626,6 +6626,92 @@ static void setupToolSlots( LiveObject *inPlayer ) {
     }
 
 
+typedef struct ForceSpawnRecord {
+        GridPos pos;
+        double age;
+        char *firstName;
+        char *lastName;
+        int displayID;
+        int hatID;
+        int tunicID;
+        int bottomID;
+        int frontShoeID;
+        int backShoeID;
+    } ForceSpawnRecord;
+
+
+
+// strings in outRecordToFill destroyed by caller
+char getForceSpawn( char *inEmail, ForceSpawnRecord *outRecordToFill ) {
+    char *cont = SettingsManager::getSettingContents( "forceSpawnAccounts" );
+    
+    if( cont == NULL ) {
+        return false;
+        }
+    int numParts;
+    char **lines = split( cont, "\n", &numParts );
+
+    delete [] cont;
+    
+    char found = false;
+
+    for( int i=0; i<numParts; i++ ) {
+        
+        if( strstr( lines[i], inEmail ) == lines[i] ) {
+            // matches email
+
+            char emailBuff[100];
+            
+            int on = 0;
+            
+            sscanf( lines[i],
+                    "%99s %d", emailBuff, &on );
+
+            if( on == 1 ) {
+                
+                outRecordToFill->firstName = new char[20];
+                outRecordToFill->lastName = new char[20];
+                
+
+                int numRead = sscanf( 
+                    lines[i],
+                    "%99s %d %d,%d %lf %19s %19s %d %d %d %d %d %d", 
+                    emailBuff, &on,
+                    &outRecordToFill->pos.x,
+                    &outRecordToFill->pos.y,
+                    &outRecordToFill->age,
+                    outRecordToFill->firstName,
+                    outRecordToFill->lastName,
+                    &outRecordToFill->displayID,
+                    &outRecordToFill->hatID,
+                    &outRecordToFill->tunicID,
+                    &outRecordToFill->bottomID,
+                    &outRecordToFill->frontShoeID,
+                    &outRecordToFill->backShoeID );
+                
+                if( numRead == 13 ) {
+                    found = true;
+                    }
+                else {
+                    delete [] outRecordToFill->firstName;
+                    delete [] outRecordToFill->lastName;
+                    }
+                }
+            break;
+            }
+        }
+
+
+    for( int i=0; i<numParts; i++ ) {
+        delete [] lines[i];
+        }
+    delete [] lines;
+    
+    return found;
+    }
+
+
+
 
 
 // for placement of tutorials out of the way 
@@ -7208,11 +7294,23 @@ int processLoggedInPlayer( char inAllowReconnect,
         }
     
     
+    char forceSpawn = false;
+    ForceSpawnRecord forceSpawnInfo;
+    
     if( SettingsManager::getIntSetting( "forceAllPlayersEve", 0 ) ) {
         parentChoices.deleteAll();
         forceParentChoices = true;
         }
+    else {
+        forceSpawn = getForceSpawn( inEmail, &forceSpawnInfo );
     
+        if( forceSpawn ) {
+            parentChoices.deleteAll();
+            forceParentChoices = true;
+            }
+        }
+    
+
 
     
     if( ( eveWindow || familyLimitAfterEveWindow > 0 ) 
@@ -8218,6 +8316,34 @@ int processLoggedInPlayer( char inAllowReconnect,
             delete [] motherMessage;
             }
         }
+
+    if( forceSpawn ) {
+        newObject.xs = forceSpawnInfo.pos.x;
+        newObject.ys = forceSpawnInfo.pos.y;
+        newObject.xd = forceSpawnInfo.pos.x;
+        newObject.yd = forceSpawnInfo.pos.y;
+        
+        newObject.birthPos = forceSpawnInfo.pos;
+        
+        newObject.lifeStartTimeSeconds = 
+            Time::getCurrentTime() -
+            forceSpawnInfo.age * ( 1.0 / getAgeRate() );
+        
+        newObject.name = autoSprintf( "%s %s", 
+                                      forceSpawnInfo.firstName,
+                                      forceSpawnInfo.lastName );
+        newObject.displayID = forceSpawnInfo.displayID;
+        
+        newObject.clothing.hat = getObject( forceSpawnInfo.hatID );
+        newObject.clothing.tunic = getObject( forceSpawnInfo.tunicID );
+        newObject.clothing.bottom = getObject( forceSpawnInfo.bottomID );
+        newObject.clothing.frontShoe = getObject( forceSpawnInfo.frontShoeID );
+        newObject.clothing.backShoe = getObject( forceSpawnInfo.backShoeID );
+
+        delete [] forceSpawnInfo.firstName;
+        delete [] forceSpawnInfo.lastName;
+        }
+    
 
     newObject.birthPos.x = newObject.xd;
     newObject.birthPos.y = newObject.yd;
