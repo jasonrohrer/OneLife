@@ -25,6 +25,7 @@ Server Fixes
 --Fixed kill-target swapping bug.  Fixes #420.  Delay before landing kill is
   now 6 seconds (was 3).
 
+--Holding a baby now cancels any kill target actions against it.  Fixes #421
 
 
 
