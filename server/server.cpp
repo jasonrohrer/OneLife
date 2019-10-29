@@ -10091,6 +10091,9 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
                         Time::getCurrentTime(),
                         30 };
         activeKillStates.push_back( s );
+
+        // force target to gasp
+        makePlayerSay( inTarget, (char*)"[GASP]" );
         }
     return true;
     }
