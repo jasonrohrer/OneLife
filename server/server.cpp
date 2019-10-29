@@ -17457,8 +17457,10 @@ int main() {
             
             if( killer == NULL || target == NULL ||
                 killer->error || target->error ||
-                killer->holdingID != s->killerWeaponID ) {
+                killer->holdingID != s->killerWeaponID ||
+                target->heldByOther ) {
                 // either player dead, or held-weapon change
+                // or target baby now picked up (safe)
                 
                 // kill request done
                 
