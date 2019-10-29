@@ -34,6 +34,10 @@ Server Fixes
 --New map change log is started correctly when a biome reseed happens.
   Fixes #434
 
+--Server forces player to say [GASP] when they are targetted by a killer.
+  Along with the shocked face, this makes it harder to ignore the fact that you
+  are targetted.  Related to #433
+
 
 
 

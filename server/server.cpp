@@ -10970,6 +10970,9 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                         curTime,
                         30 };
         activeKillStates.push_back( s );
+
+        // force target to gasp
+        makePlayerSay( inTarget, (char*)"[GASP]" );
         }
 
     updatePosseSize( inTarget );
@@ -21454,11 +21457,16 @@ int main() {
                                 // VOG can talk to anyone
                                 // also, skip in on very low pop servers
                                 // (just let everyone talk together)
+                                // also in case where speach is server-forced
+                                // sound representations (like [GASP])
+                                // but NOT for reading written words
                                 if( nextPlayer->vogMode || 
                                     ( speakerObj != NULL &&
                                       speakerObj->vogMode ) ||
                                     players.size() < 
-                                    minActivePlayersForLanguages ) {
+                                    minActivePlayersForLanguages ||
+                                    strlen( trimmedPhrase ) == 0 ||
+                                    trimmedPhrase[0] == '[' ) {
                                     
                                     translatedPhrase =
                                         stringDuplicate( trimmedPhrase );
