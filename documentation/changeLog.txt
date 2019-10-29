@@ -27,6 +27,10 @@ Server Fixes
 
 --Holding a baby now cancels any kill target actions against it.  Fixes #421
 
+--Changed definition of hand tool use to require something left in the hand
+  after the action.  So putting a sterile pad back in a bowl doesn't count.
+  Fixes #435
+
 
 
 Version 276   2019-October-25

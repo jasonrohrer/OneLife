@@ -15740,9 +15740,14 @@ int main() {
                                 char blockedTool = false;
                                 
                                 if( nextPlayer->holdingID > 0 &&
-                                    r != NULL ) {
+                                    r != NULL &&
+                                    r->newActor != 0 ) {
                                     // make sure player can use this tool
-                                    
+                                    // only counts as a real use if something
+                                    // is left in the hand
+                                    // otherwise, it could be a stacking action
+                                    // (like putting a wool pad in a bowl)
+
                                     if( ! canPlayerUseOrLearnTool( 
                                             nextPlayer,
                                             nextPlayer->holdingID ) ) {
