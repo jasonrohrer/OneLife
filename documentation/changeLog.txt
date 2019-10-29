@@ -31,6 +31,11 @@ Server Fixes
   after the action.  So putting a sterile pad back in a bowl doesn't count.
   Fixes #435
 
+--New map change log is started correctly when a biome reseed happens.
+  Fixes #434
+
+
+
 
 
 Version 276   2019-October-25

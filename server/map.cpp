@@ -2942,6 +2942,9 @@ void reseedMap( char inForceFresh ) {
                 }
             }
         }
+
+                
+    setupMapChangeLogFile();
     }
 
 
@@ -3986,8 +3989,6 @@ char initMap() {
 
     //outputBiomeFractals();
 
-            
-    setupMapChangeLogFile();
 
     return true;
     }
