@@ -3057,9 +3057,36 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     double firstLineY =  inPos.y + ( lines->size() - 1 ) * lineSpacing;
     
     if( firstLineY > lastScreenViewCenter.y + 330 ) {
+        // off top of screen
         firstLineY = lastScreenViewCenter.y + 330;
         }
+    
+    if( inPos.y < lastScreenViewCenter.y - 280 ) {
+        // off bottom of screen
+        double lastLineY = lastScreenViewCenter.y - 280;
+        
+        firstLineY = lastLineY + ( lines->size() - 1 ) * lineSpacing;
+        }
+    
 
+    double widestLine = 0;
+    for( int i=0; i<lines->size(); i++ ) {
+        char *line = lines->getElementDirect( i );
+
+        double length = handwritingFont->measureString( line );
+        if( length > widestLine ) {
+            widestLine = length;
+            }
+        }
+    
+    if( inPos.x < lastScreenViewCenter.x - 615 ) {
+        inPos.x = lastScreenViewCenter.x - 615;
+        }
+    if( inPos.x + widestLine > lastScreenViewCenter.x + 610 ) {
+        inPos.x = lastScreenViewCenter.x + 610 - widestLine;
+        }
+    
+    
     
     if( inForceBlotColor != NULL ) {
         setDrawColor( *inForceBlotColor );
