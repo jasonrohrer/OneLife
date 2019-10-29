@@ -10975,6 +10975,13 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
         makePlayerSay( inTarget, (char*)"[GASP]" );
         }
 
+    if( inTarget != NULL ) {
+        char *message = autoSprintf( "PJ\n%d %d\n#", 
+                                     inKiller->id, inTarget->id );
+        sendMessageToPlayer( inTarget, message, strlen( message ) );
+        delete [] message;
+        }
+    
     updatePosseSize( inTarget );
     
     return true;
@@ -11025,6 +11032,15 @@ static void removeKillState( LiveObject *inKiller, LiveObject *inTarget ) {
         newEmotIndices.push_back( -1 );
         newEmotTTLs.push_back( 0 );
         }
+
+    // killer has left posse
+    if( inTarget != NULL ) {
+        char *message = autoSprintf( "PJ\n%d 0\n#", 
+                                     inKiller->id );
+        sendMessageToPlayer( inTarget, message, strlen( message ) );
+        delete [] message;
+        }
+    
     }
 
 

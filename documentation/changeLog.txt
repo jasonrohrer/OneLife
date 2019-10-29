@@ -11,6 +11,11 @@ Version 277   ???
   top of screen only).  Server sends speech in radius of 16 to facilitate this
   (was 10).
 
+--Now off-screen sounds for posse targetting you show double exclamation marks,
+  where off-screen sounds that aren't for your posse show the normal single
+  exclamation mark.  Facilitated by the new PJ (POSSE_JOIN) protocol message.
+  Fixes #433
+
 
 
 Server Fixes

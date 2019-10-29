@@ -1031,6 +1031,7 @@ typedef enum messageType {
     APOCALYPSE_DONE,
     DYING,
     HEALED,
+    POSSE_JOIN,
     MONUMENT_CALL,
     GRAVE,
     GRAVE_MOVE,
@@ -1124,6 +1125,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "HE" ) == 0 ) {
         returnValue = HEALED;
+        }
+    else if( strcmp( copy, "PJ" ) == 0 ) {
+        returnValue = POSSE_JOIN;
         }
     else if( strcmp( copy, "MN" ) == 0 ) {
         returnValue = MONUMENT_CALL;
@@ -3322,6 +3326,8 @@ typedef struct OffScreenSound {
         double fadeETATime;
 
         char red;
+        
+        int sourcePlayerID;
     } OffScreenSound;
 
 SimpleVector<OffScreenSound> offScreenSounds;
@@ -3329,7 +3335,8 @@ SimpleVector<OffScreenSound> offScreenSounds;
 
 
 
-static void addOffScreenSound( double inPosX, double inPosY,
+static void addOffScreenSound( int inSourcePlayerID,
+                               double inPosX, double inPosY,
                                char *inDescription,
                                double inFadeSec = 4 ) {
 
@@ -3350,7 +3357,7 @@ static void addOffScreenSound( double inPosX, double inPosY,
     
     doublePair pos = { inPosX, inPosY };
     
-    OffScreenSound s = { pos, 1.0, fadeETATime, red };
+    OffScreenSound s = { pos, 1.0, fadeETATime, red, inSourcePlayerID };
     
     offScreenSounds.push_back( s );
     }
@@ -3427,9 +3434,21 @@ void LivingLifePage::drawOffScreenSounds() {
                 textColor = &white;
                 bgColor = &red;
                 }
+            
+            const char *stringToDraw = "!";
+            
+            if( s->sourcePlayerID != -1 ) {
+                // are they in the posse chasing us?
+                LiveObject *o = getGameObject( s->sourcePlayerID );
+                
+                if( o->chasingUs ) {
+                    stringToDraw = "! !";
+                    }
+                }
+            
 
             drawChalkBackgroundString( drawPos,
-                                       "!",
+                                       stringToDraw,
                                        s->fade,
                                        100,
                                        NULL,
@@ -3538,6 +3557,7 @@ void LivingLifePage::handleAnimSound( int inSourcePlayerID,
                         // these have very short fade
                         // so that we don't have a bunch of overlap
                         addOffScreenSound(
+                            inSourcePlayerID,
                             inPosX *
                             CELL_D, 
                             inPosY *
@@ -14408,6 +14428,7 @@ void LivingLifePage::step() {
                 
                 o.killMode = false;
                 o.killWithID = -1;
+                o.chasingUs = false;
                 
 
                 int forced = 0;
@@ -15644,6 +15665,7 @@ void LivingLifePage::step() {
                                                     != NULL ) {
                                                     
                                                     addOffScreenSound(
+                                                      existing->id,
                                                       existing->currentPos.x *
                                                       CELL_D, 
                                                       existing->currentPos.y *
@@ -17339,6 +17361,7 @@ void LivingLifePage::step() {
                                                 != NULL ) {
                                                     
                                                 addOffScreenSound(
+                                                    existing->id,
                                                     playerPos.x *
                                                     CELL_D, 
                                                     playerPos.y *
@@ -17676,6 +17699,24 @@ void LivingLifePage::step() {
                 delete [] lines[i];
                 }
             delete [] lines;
+            }
+        else if( type == POSSE_JOIN ) {
+            int killer = 0;
+            int target = 0;
+            sscanf( message, "PJ\n%d %d", &killer, &target );
+            
+            if( killer > 0 ) {
+                LiveObject *k = getGameObject( killer );
+                
+                if( target == ourID ) {
+                    // they are chasing us
+                    k->chasingUs = true;
+                    }
+                else {
+                    // no longer chasing us
+                    k->chasingUs = false;
+                    }
+                }
             }
         else if( type == PLAYER_OUT_OF_RANGE ) {
             int numLines;

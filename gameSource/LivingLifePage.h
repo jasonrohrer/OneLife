@@ -314,7 +314,9 @@ typedef struct LiveObject {
 
         char killMode;
         int killWithID;
-
+        
+        char chasingUs;
+        
     } LiveObject;
 
 

@@ -173,6 +173,8 @@ DYING (DY)
 
 HEALED (HE)
 
+POSSE_JOIN (PJ)
+
 MONUMENT_CALL (MN)
 
 GRAVE (GV)
@@ -672,6 +674,13 @@ p_id
 Indicates that the listed players have been healed and are no longer dying.
 
 
+
+PJ
+p_id_killer p_id_target
+#
+
+Indicates that killer joined posse of target.
+If target = 0, killer has left the posse.
 
 
 
