@@ -6596,6 +6596,27 @@ static void setupToolSlots( LiveObject *inPlayer ) {
         slots += ( max - min ) * pow( inPlayer->fitnessScore / 60, 2 );
         }
 
+
+    if( slots > min ) {
+        const char *slotWord = "SLOTS";
+        
+        if( slots - min == 1 ) {
+            slotWord = "SLOT";
+            }
+        
+        char *message = autoSprintf( "YOUR GENETIC FITNESS SCORE IS %.1lf**"
+                                     "YOU GET %d BONUS TOOL %s.",
+                                     inPlayer->fitnessScore,
+                                     slots - min,
+                                     slotWord );
+        
+        sendGlobalMessage( message, inPlayer );
+        
+        delete [] message;
+        }
+
+    
+
     inPlayer->numToolSlots = slots;
 
     if( inPlayer->isTutorial && inPlayer->learnedTools.size() == 0 ) {

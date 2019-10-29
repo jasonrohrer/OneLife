@@ -43,6 +43,10 @@ Server Fixes
   Along with the shocked face, this makes it harder to ignore the fact that you
   are targetted.  Related to #433
 
+--Message on birth explaining your bonus tool slots due to your fitness score.
+  Message is skipped if your fitness score is too low to grant you any bonus
+  tool slots.
+
 
 
 
