@@ -10918,6 +10918,13 @@ static void updatePosseSize( LiveObject *inTarget,
         }
     }
 
+
+
+static SimpleVector<int> newEmotPlayerIDs;
+static SimpleVector<int> newEmotIndices;
+// 0 if no ttl specified
+static SimpleVector<int> newEmotTTLs;
+
     
 
 
@@ -10943,7 +10950,11 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
             found = true;
             s->killerWeaponID = inKiller->holdingID;
             s->targetID = inTarget->id;
-            s->emotStartTime = Time::getCurrentTime();
+
+            double curTime = Time::getCurrentTime();
+            s->emotStartTime = curTime;
+            s->killStartTime = curTime;
+
             s->emotRefreshSeconds = 30;
             break;
             }
@@ -10977,11 +10988,61 @@ static void removeKillState( LiveObject *inKiller, LiveObject *inTarget ) {
             activeKillStates.deleteElement( i );
             
             updatePosseSize( inTarget, inKiller );
-            return;
+            break;
+            }
+        }
+
+    if( inKiller != NULL ) {
+        // clear their emot
+        inKiller->emotFrozen = false;
+        inKiller->emotUnfreezeETA = 0;
+        
+        newEmotPlayerIDs.push_back( inKiller->id );
+        
+        newEmotIndices.push_back( -1 );
+        newEmotTTLs.push_back( 0 );
+        }
+
+    int newPosseSize = 0;
+    if( inTarget != NULL ) {
+        newPosseSize = countPosseSize( inTarget );
+        }
+    
+    if( newPosseSize == 0 &&
+        inTarget != NULL &&
+        inTarget->emotFrozen &&
+        inTarget->emotFrozenIndex == victimEmotionIndex ) {
+        
+        // inTarget's emot hasn't been replaced, end it
+        inTarget->emotFrozen = false;
+        inTarget->emotUnfreezeETA = 0;
+        
+        newEmotPlayerIDs.push_back( inTarget->id );
+        
+        newEmotIndices.push_back( -1 );
+        newEmotTTLs.push_back( 0 );
+        }
+    }
+
+
+
+static void removeAnyKillState( LiveObject *inKiller ) {
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+    
+        if( s->killerID == inKiller->id ) {
+            
+            LiveObject *target = getLiveObject( s->targetID );
+            
+            if( target != NULL ) {
+                removeKillState( inKiller, target );
+                i--;
+                }
             }
         }
     }
-    
+
+            
 
 
 
@@ -13476,12 +13537,6 @@ int main() {
 
         newOwnerPos.push_back_other( &recentlyRemovedOwnerPos );
         recentlyRemovedOwnerPos.deleteAll();
-        
-
-        SimpleVector<int> newEmotPlayerIDs;
-        SimpleVector<int> newEmotIndices;
-        // 0 if no ttl specified
-        SimpleVector<int> newEmotTTLs;
 
 
         SimpleVector<UpdateRecord> newUpdates;
@@ -15220,6 +15275,10 @@ int main() {
                                     // can't join posse targetting self
                                     continue;
                                     }
+                                if( s->killerID == nextPlayer->id ) {
+                                    // can't join posse that we're already in
+                                    continue;
+                                    }
                                 
                                 LiveObject *killer = 
                                     getLiveObject( s->killerID );
@@ -15238,6 +15297,8 @@ int main() {
                             if( closestState != NULL ) {
                                 // they are joining
                                 // infinite range
+                                removeAnyKillState( nextPlayer );
+                                
                                 char enteredState = addKillState( 
                                     nextPlayer, 
                                     getLiveObject( closestState->targetID ),
@@ -15471,6 +15532,7 @@ int main() {
                                         }
                                     
                                     if( ! weaponBlocked ) {
+                                        removeAnyKillState( nextPlayer );
                                         
                                         char enteredState =
                                             addKillState( nextPlayer,
@@ -17827,38 +17889,8 @@ int main() {
                 // either player dead, or held-weapon change
                 
                 // kill request done
-                if( killer != NULL ) {
-                    // clear their emot
-                    killer->emotFrozen = false;
-                    killer->emotUnfreezeETA = 0;
-                    
-                    newEmotPlayerIDs.push_back( killer->id );
-                            
-                    newEmotIndices.push_back( -1 );
-                    newEmotTTLs.push_back( 0 );
-                    }
-
-                removeKillState( killer, target );
-
-                int newPosseSize = 0;
-                if( target != NULL ) {
-                    newPosseSize = countPosseSize( target );
-                    }
                 
-                if( newPosseSize == 0 &&
-                    target != NULL &&
-                    target->emotFrozen &&
-                    target->emotFrozenIndex == victimEmotionIndex ) {
-                    
-                    // target's emot hasn't been replaced, end it
-                    target->emotFrozen = false;
-                    target->emotUnfreezeETA = 0;
-                    
-                    newEmotPlayerIDs.push_back( target->id );
-                            
-                    newEmotIndices.push_back( -1 );
-                    newEmotTTLs.push_back( 0 );
-                    }
+                removeKillState( killer, target );
 
                 i--;
                 continue;
@@ -17874,7 +17906,7 @@ int main() {
             
             double curTime = Time::getCurrentTime();
 
-            if( curTime - s->killStartTime  > 3 && 
+            if( curTime - s->killStartTime  > 6 && 
                 getObject( killer->holdingID )->deadlyDistance >= dist &&
                 ! directLineBlocked( playerPos, targetPos ) ) {
                 // enough warning time has passed
@@ -21918,6 +21950,10 @@ int main() {
         newGraves.deleteAll();
         newGraveMoves.deleteAll();
         
+        
+        newEmotPlayerIDs.deleteAll();
+        newEmotIndices.deleteAll();
+        newEmotTTLs.deleteAll();
         
 
         

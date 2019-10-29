@@ -22,6 +22,10 @@ Server Fixes
 --Min fertile girls per fam 6 (was 3).  This should help to prop up struggling
   families and prolong the arc.
 
+--Fixed kill-target swapping bug.  Fixes #420.  Delay before landing kill is
+  now 6 seconds (was 3).
+
+
 
 
 Version 276   2019-October-25
