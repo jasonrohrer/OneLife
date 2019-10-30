@@ -40,7 +40,7 @@ $mainSiteURL = "http://localhost/jcr13/";
 // of even R that would normally make negatives positve
 
 $formulaR = 1.0;
-$formulaK = 10.0;
+$formulaK = 46.5;
 
 
 // how recently do players have to have played to count in leaderboards

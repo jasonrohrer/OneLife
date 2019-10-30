@@ -57,6 +57,11 @@ Server Fixes
 
 --Fixed a sign issue in fitness server in the case of even R parameter.
 
+--K parameter for genetic fitness score is now 46.5 (was 10).  This value was
+  discovered empirically through simulation of 100 births with various infant
+  death rates to find a K-value that balanced fast convergence with low score
+  range overlap between player skill tiers.  This means that scores go up and
+  down 4.65x slower than before.
 
 
 
