@@ -1132,6 +1132,8 @@ static void backToBasics( LiveObject *inPlayer ) {
 
     p->emotFrozen = false;
     p->emotUnfreezeETA = 0;
+
+    p->learnedTools.deleteAll();
     }
 
 

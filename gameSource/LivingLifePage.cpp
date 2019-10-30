@@ -12561,7 +12561,9 @@ void LivingLifePage::step() {
             apocalypseDisplayProgress = 0;
             apocalypseInProgress = false;
             homePosStack.deleteAll();
-            
+
+            clearToolLearnedStatus();
+
             // cancel all emots
             for( int i=0; i<gameObjects.size(); i++ ) {
                 LiveObject *p = gameObjects.getElement( i );

@@ -19,6 +19,8 @@ Version 277   ???
 --Head emots (like heart for /LOVE) are shown above hat layer (were covered by
   hat).
 
+--Apocalypse clears your tool learning slots.
+
 
 
 Server Fixes
