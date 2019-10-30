@@ -6489,13 +6489,14 @@ static void runTapoutOperation( int inX, int inY,
             // on tapoutTarget
             TransRecord *t = NULL;
             
-            if( inIsPost ) {
-                // last use target signifies what happens in post
+            if( ! inIsPost && y == inY ) {
+                // last use target signifies what happens in 
+                // same row as inX, inY
                 t = getPTrans( inTriggerID, id, false, true );
                 }
 
             if( t == NULL ) {
-                // not post or last-use-target trans undefined
+                // not same row or post or last-use-target trans undefined
                 t = getPTrans( inTriggerID, id );
                 }
             

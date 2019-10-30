@@ -65,6 +65,11 @@ Server Fixes
   range overlap between player skill tiers.  This means that scores go up and
   down 4.65x slower than before.
 
+--New hints to find wells:  when well taps out area, it leaves thoroughly dry
+  springs in same row as well, and regular dry springs elswhere.  So if you
+  ever find a thoroughly dry spring, you know you can find a well by walking E
+  or W.
+
 
 
 
