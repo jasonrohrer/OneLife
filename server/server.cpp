@@ -8433,13 +8433,16 @@ int processLoggedInPlayer( char inAllowReconnect,
 
                     // i tells us how many greats and grands
                     SimpleVector<char> workingName;
-                        
+                    SimpleVector<char> workingMotherName;
+                    
                     for( int g=1; g<=i; g++ ) {
                         if( g == i ) {
                             workingName.appendElementString( "Grand" );
+                            workingMotherName.appendElementString( "Grand" );
                             }
                         else {
                             workingName.appendElementString( "Great_" );
+                            workingMotherName.appendElementString( "Great_" );
                             }
                         }
                     
@@ -8451,6 +8454,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                         else {
                             workingName.appendElementString( "daughter" );
                             }
+                        workingMotherName.appendElementString( "mother" );
                         }
                     else {
                         // no "Grand"
@@ -8460,6 +8464,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                         else {
                             workingName.appendElementString( "Daughter" );
                             }
+                        workingMotherName.appendElementString( "Mother" );
                         }
                     
                     
@@ -8468,7 +8473,18 @@ int processLoggedInPlayer( char inAllowReconnect,
                     
                     newObject.ancestorLifeStartTimeSeconds->push_back(
                             otherPlayer->lifeStartTimeSeconds );
-                        
+                    
+                    // this is the only case of bi-directionality
+                    // players should try to prevent their mothers, gma,
+                    // ggma, etc from dying
+
+                    otherPlayer->ancestorEmails->push_back( 
+                        stringDuplicate( newObject.email ) );
+                    otherPlayer->ancestorRelNames->push_back( 
+                        workingMotherName.getElementString() );
+                    otherPlayer->ancestorLifeStartTimeSeconds->push_back(
+                        newObject.lifeStartTimeSeconds );
+                    
                     break;
                     }
                 }

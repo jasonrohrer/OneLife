@@ -23,6 +23,7 @@ Version 277   ???
 
 
 
+
 Server Fixes
 
 --Boiling the frog:  6-12 tool slots (was 8-16).
@@ -70,6 +71,11 @@ Server Fixes
   ever find a thoroughly dry spring, you know you can find a well by walking E
   or W.
 
+--Mothers and Gmas and GGmas now count toward your genetic fitness score,
+  assuming that you are at least 3 years old (or would have been) at their time
+  of their death.  This closes the 'kill your mom to prevent younger sibs'
+  exploit.
+ 
 
 
 
