@@ -16,6 +16,9 @@ Version 277   ???
   exclamation mark.  Facilitated by the new PJ (POSSE_JOIN) protocol message.
   Fixes #433
 
+--Head emots (like heart for /LOVE) are shown above hat layer (were covered by
+  hat).
+
 
 
 Server Fixes
