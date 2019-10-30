@@ -6596,6 +6596,13 @@ static void setupToolSlots( LiveObject *inPlayer ) {
         slots += ( max - min ) * pow( inPlayer->fitnessScore / 60, 2 );
         }
 
+    if( inPlayer->fitnessScore > 0 ) {
+        // give everyone 1 bonus slot who has some genetic score
+        // this allows us to show the fitness message to everyone
+        // without hammering them with "0 bonus slots"
+        slots ++;
+        }
+    
 
     if( slots > min ) {
         const char *slotWord = "SLOTS";

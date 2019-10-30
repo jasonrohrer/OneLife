@@ -49,6 +49,9 @@ Server Fixes
 
 --Support for forced spawns for specific accounts.
 
+--Everyone with fitness score over 0 gets one bonus slot, so genetic fitness
+  message on birth can be shown to almost everyone.
+
 
 
 
