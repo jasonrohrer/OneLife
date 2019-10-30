@@ -55,6 +55,8 @@ Server Fixes
 --Everyone with fitness score over 0 gets one bonus slot, so genetic fitness
   message on birth can be shown to almost everyone.
 
+--Fixed a sign issue in fitness server in the case of even R parameter.
+
 
 
 
