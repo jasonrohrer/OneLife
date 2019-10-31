@@ -24,6 +24,9 @@ Version 277   ???
 --Babies can't move at all for first 12 seconds of life, and lay on the ground,
   but react to mouse clicks by wiggling.
 
+--Spring tapouts now leave E or W gradient dry springs along ley line to W or E
+  of well.  You can follow these gradients to find the well.
+
 
 
 
