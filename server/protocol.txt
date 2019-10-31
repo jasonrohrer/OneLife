@@ -149,6 +149,8 @@ PLAYER_MOVES_START (PM)
 
 PLAYER_OUT_OF_RANGE (PO)
 
+BABY_WIGGLE (BW)
+
 PLAYER_SAYS (PS)
 
 LOCATION_SAYS (LS)
@@ -425,6 +427,15 @@ they have moved out of range.
 
 
 
+
+BW
+p_id
+p_id
+...
+p_id
+#
+
+A list of player IDs that are babies who just started wiggling.
 
 
 
@@ -976,6 +987,7 @@ JUMP is used by a baby to jump out of its mother's arms.  The x and y
      MOVE ambiguous in the case of jump-out (for example, if the baby
      has already been dropped by the time the MOVE arrives, the server will
      interpret it as a legitimate move attempt).
+     JUMP is also used to make an immobile baby wiggle on the ground.
 
 EMOT is used to specify an emotion to display.  The x and y coordinates are
      ignored.  e is the emotion index.

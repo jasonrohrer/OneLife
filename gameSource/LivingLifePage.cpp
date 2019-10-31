@@ -150,6 +150,9 @@ static int photoSequenceNumber = -1;
 static char waitingForPhotoSig = false;
 static char *photoSig = NULL;
 
+// no moving for first 20 seconds of life
+static double noMoveAge = 0.20;
+
 
 static double emotDuration = 10;
 
@@ -957,6 +960,17 @@ static void removeDoubleBacksFromPath( GridPos **inPath, int *inLength ) {
 
 
 
+static double computeCurrentAgeNoOverride( LiveObject *inObj ) {
+    if( inObj->finalAgeSet ) {
+        return inObj->age;
+        }
+    else {
+        return inObj->age + 
+            inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
+        }
+    }
+
+
 
 
 static double computeCurrentAge( LiveObject *inObj ) {
@@ -981,9 +995,7 @@ static double computeCurrentAge( LiveObject *inObj ) {
                 }
             }
         
-        // update age using clock
-        return inObj->age + 
-            inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
+        return computeCurrentAgeNoOverride( inObj );
         }
     
     }
@@ -1017,6 +1029,7 @@ typedef enum messageType {
     PLAYER_UPDATE,
     PLAYER_MOVES_START,
     PLAYER_OUT_OF_RANGE,
+    BABY_WIGGLE,
     PLAYER_SAYS,
     LOCATION_SAYS,
     PLAYER_EMOT,
@@ -1083,6 +1096,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "PO" ) == 0 ) {
         returnValue = PLAYER_OUT_OF_RANGE;
+        }
+    else if( strcmp( copy, "BW" ) == 0 ) {
+        returnValue = BABY_WIGGLE;
         }
     else if( strcmp( copy, "PS" ) == 0 ) {
         returnValue = PLAYER_SAYS;
@@ -4342,6 +4358,33 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
         setAnimationEmotion( inObj->currentEmot );
         
+        // draw young baby lying flat
+        double rot = 0;
+        if( computeCurrentAgeNoOverride( inObj ) < noMoveAge ) {
+            hidePersonShadows( true );
+            
+            double shiftScale = 1.0;
+            
+            // slide into the "lying down" shift as they finish getting dropped
+            if( inObj->heldByDropOffset.x != 0 ||
+                inObj->heldByDropOffset.y != 0 ) {
+                doublePair z = { 0, 0 };
+                
+                double d = distance( z, inObj->heldByDropOffset );
+                
+                if( d > 0.5 ) {
+                    shiftScale = 0;
+                    }
+                else {
+                    shiftScale = ( 0.5 - d ) / 0.5;
+                    }
+                }
+            
+
+            rot = shiftScale * 0.25;
+            personPos.x -= shiftScale * 32;
+            }
+        
         holdingPos =
             drawObjectAnim( inObj->displayID, 2, curType, 
                             timeVal,
@@ -4353,7 +4396,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             frozenArmType,
                             frozenArmFadeTargetType,
                             personPos,
-                            0,
+                            rot,
                             false,
                             inObj->holdingFlip,
                             age,
@@ -4365,6 +4408,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             ! inObj->heldPosOverrideAlmostOver,
                             inObj->clothing,
                             inObj->clothingContained );
+        hidePersonShadows( false );
         
         setAnimationEmotion( NULL );
         }
@@ -14392,7 +14436,6 @@ void LivingLifePage::step() {
                 o.heldByDropOffset.x = 0;
                 o.heldByDropOffset.y = 0;
                 
-                o.jumpOutOfArmsSentTime = 0;
                 o.babyWiggle = false;
 
                 o.ridingOffset.x = 0;
@@ -16399,8 +16442,6 @@ void LivingLifePage::step() {
                         babyO->heldByAdultPendingID = -1;
                         }
                     
-                    babyO->jumpOutOfArmsSentTime = 0;
-                    
                     // stop crying when held
                     babyO->tempAgeOverrideSet = false;
                     
@@ -17751,6 +17792,46 @@ void LivingLifePage::step() {
                                 }
 
                             break;
+                            }
+                        }
+                    }
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
+        else if( type == BABY_WIGGLE ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                int id;
+                int numRead = sscanf( lines[i], "%d ",
+                                      &( id ) );
+
+                if( numRead == 1 ) {
+                    if( id != ourID ) {
+                        LiveObject *existing = getLiveObject( id );
+                        
+                        if( existing != NULL ) {
+                            if( existing->heldByAdultID != -1 ) {
+                                // wiggle in arms
+                                existing->babyWiggle = true;
+                                existing->babyWiggleProgress = 0;
+                                }
+                            else {
+                                // wiggle on ground
+                                existing->holdingFlip = ! existing->holdingFlip;
+                                
+                                addNewAnimPlayerOnly( existing, moving );
+                                addNewAnimPlayerOnly( existing, ground );
+                                }
                             }
                         }
                     }
@@ -19986,6 +20067,22 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                     personClickOffsetX = clickOffsetX - personClickOffsetX;
                     personClickOffsetY = clickOffsetY - personClickOffsetY;
 
+                    if( computeCurrentAgeNoOverride( o ) < noMoveAge ) {
+                        // laying on ground
+                        
+                        // rotate
+                        doublePair c = { personClickOffsetX, 
+                                         personClickOffsetY };
+                        c = rotate( c, 0.25 * 2 * M_PI );
+                        
+                        personClickOffsetX = c.x;
+                        personClickOffsetY = c.y;
+                        
+                        // offset
+                        personClickOffsetY += 32;
+                        }
+
+
                     ObjectRecord *obj = getObject( o->displayID );
                     
                     int sp, cl, sl;
@@ -20549,17 +20646,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     if( ourLiveObject->heldByAdultID != -1 ) {
         // click from a held baby
 
-        // only send once every 5 seconds, even on multiple clicks
-        double curTime = game_getCurrentTime();
-        
-        if( ourLiveObject->jumpOutOfArmsSentTime < curTime - 5 ) {
+        // no longer limiting frequency of JUMP messages
+        // limit them by previous wiggle animation ending
+        // this makes the visuals on the parent and child client as close
+        // as possible
+        if( ! ourLiveObject->babyWiggle ) {
             // send new JUMP message instead of ambigous MOVE message
             sendToServerSocket( (char*)"JUMP 0 0#" );
             
-            ourLiveObject->jumpOutOfArmsSentTime = curTime;
-            }
-        
-        if( ! ourLiveObject->babyWiggle ) {
             // start new wiggle
             ourLiveObject->babyWiggle = true;
             ourLiveObject->babyWiggleProgress = 0;
@@ -20568,16 +20662,21 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         return;
         }
-    else if( computeCurrentAge( ourLiveObject ) < 0.0833 ) {
+    else if( computeCurrentAgeNoOverride( ourLiveObject ) < noMoveAge ) {
         // to young to even move
         // ignore click
 
         printf( "Skipping click, too young to move\n" );
         
-        // flip to at least register click
-        // FIXME... something better here...
+        // flip and animate to at least register click
         ourLiveObject->holdingFlip = ! ourLiveObject->holdingFlip;
         
+        addNewAnimPlayerOnly( ourLiveObject, moving );
+        addNewAnimPlayerOnly( ourLiveObject, ground );
+        
+        // JUMP message also tells server we're wiggling on the ground
+        sendToServerSocket( (char*)"JUMP 0 0#" );
+
         return;
         }
     

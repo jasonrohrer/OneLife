@@ -95,8 +95,8 @@ int babyAge = 5;
 // age when bare-hand actions become available to a baby (opening doors, etc.)
 int defaultActionAge = 3;
 
-// can't walk for first 5 seconds
-double startWalkingAge = 0.0833;
+// can't walk for first 12 seconds
+double startWalkingAge = 0.20;
 
 
 
@@ -840,6 +840,9 @@ typedef struct LiveObject {
         char updateSent;
         char updateGlobal;
         
+        char wiggleUpdate;
+        
+
         // babies born to this player
         SimpleVector<timeSec_t> *babyBirthTimes;
         SimpleVector<int> *babyIDs;
@@ -8244,6 +8247,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.updateSent = false;
     newObject.updateGlobal = false;
     
+    newObject.wiggleUpdate = false;
+
     newObject.babyBirthTimes = new SimpleVector<timeSec_t>();
     newObject.babyIDs = new SimpleVector<int>();
     
@@ -14783,10 +14788,19 @@ int main() {
                                     nextPlayer,
                                     &playerIndicesToSendUpdatesAbout );
                                 }
+                            else {
+                                // baby wiggles
+                                nextPlayer->wiggleUpdate = true;
+                                }
                             }
                         
                         // ignore their move requests while
                         // in-arms, until they JUMP out
+                        }
+                    else if( m.type == JUMP &&
+                             computeAge( nextPlayer ) < startWalkingAge ) {
+                        // tiny infant wiggling on ground
+                        nextPlayer->wiggleUpdate = true;
                         }
                     else if( m.type == MOVE && 
                              computeAge( nextPlayer ) < startWalkingAge ) {
@@ -20316,6 +20330,38 @@ int main() {
             }
 
 
+        SimpleVector<char> babyWiggleLines;
+        for( int i=0; i<players.size(); i++ ) {
+
+            LiveObject *nextPlayer = players.getElement(i);
+        
+            if( nextPlayer->error ) {
+                continue;
+                }
+            if( nextPlayer->wiggleUpdate ) {
+                
+                char *idString = autoSprintf( "%d\n", nextPlayer->id );
+                babyWiggleLines.appendElementString( idString );
+                delete [] idString;
+
+                nextPlayer->wiggleUpdate = false;
+                }
+            }
+
+
+        char *wiggleMessage = NULL;
+        int wiggleMessageLength = 0;
+
+        if( babyWiggleLines.size() > 0 ) {
+            char *lines = babyWiggleLines.getElementString();
+            
+            wiggleMessage = autoSprintf( "BW\n%s#", lines );
+            wiggleMessageLength = strlen( wiggleMessage );
+            
+            delete [] lines;
+            }
+        
+        
 
         
         // send moves and updates to clients
@@ -21176,6 +21222,24 @@ int main() {
                                                "Socket write failed" );
                         }
                     }
+                
+
+                // everyone gets wiggle message
+                if( wiggleMessage != NULL && nextPlayer->connected ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            (unsigned char*)wiggleMessage, 
+                            wiggleMessageLength, 
+                            false, false );
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
+                    if( numSent != wiggleMessageLength ) {
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
+                        }
+                    }
+                
 
                 
                 // greater than maxDis but within maxDist2
@@ -22143,6 +22207,9 @@ int main() {
             }
         if( emotMessage != NULL ) {
             delete [] emotMessage;
+            }
+        if( wiggleMessage != NULL ) {
+            delete [] wiggleMessage;
             }
         
         

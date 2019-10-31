@@ -1203,6 +1203,15 @@ void setClothingHighlightFades( float *inFades ) {
 
 
 
+static char shouldHidePersonShadows = false;
+
+void hidePersonShadows( char inHide ) {
+    shouldHidePersonShadows = inHide;
+    }
+
+
+
+
 ObjectAnimPack drawObjectAnimPacked( 
     int inObjectID,
     AnimType inType, double inFrameTime, 
@@ -2350,6 +2359,14 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             // skip drawing this aging layer entirely
             continue;
             }
+        
+        
+        if( obj->person && shouldHidePersonShadows &&
+            strstr( getSpriteRecord( obj->sprites[i] )->tag, 
+                    "Shadow" ) != NULL ) {
+            continue;
+            }
+        
 
         
         doublePair spritePos = workingSpritePos[i];
