@@ -95,6 +95,10 @@ int babyAge = 5;
 // age when bare-hand actions become available to a baby (opening doors, etc.)
 int defaultActionAge = 3;
 
+// can't walk for first 5 seconds
+double startWalkingAge = 0.0833;
+
+
 
 double forceDeathAge = 60;
 
@@ -14783,6 +14787,10 @@ int main() {
                         
                         // ignore their move requests while
                         // in-arms, until they JUMP out
+                        }
+                    else if( m.type == MOVE && 
+                             computeAge( nextPlayer ) < startWalkingAge ) {
+                        // ignore moves for the tiniest infants
                         }
                     else if( m.type == MOVE && nextPlayer->holdingID > 0 &&
                              getObject( nextPlayer->holdingID )->

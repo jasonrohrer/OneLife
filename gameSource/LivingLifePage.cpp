@@ -20568,6 +20568,18 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         return;
         }
+    else if( computeCurrentAge( ourLiveObject ) < 0.0833 ) {
+        // to young to even move
+        // ignore click
+
+        printf( "Skipping click, too young to move\n" );
+        
+        // flip to at least register click
+        // FIXME... something better here...
+        ourLiveObject->holdingFlip = ! ourLiveObject->holdingFlip;
+        
+        return;
+        }
     
 
     // consider 3x4 area around click and test true object pixel

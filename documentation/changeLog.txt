@@ -21,6 +21,8 @@ Version 277   ???
 
 --Apocalypse clears your tool learning slots.
 
+--Babies can't move at all for first 5 seconds of life.
+
 
 
 
