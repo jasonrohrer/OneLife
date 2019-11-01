@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes
+
+--Fixed bug in tapout triggers that were counting uses (of shallow well, for
+  example) as tapouts.
+
+
+
 Version 278   2019-October-31
 
 --Added an early exit hallway to make the tutorial optional.
