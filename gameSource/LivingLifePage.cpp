@@ -3457,7 +3457,7 @@ void LivingLifePage::drawOffScreenSounds() {
                 // are they in the posse chasing us?
                 LiveObject *o = getGameObject( s->sourcePlayerID );
                 
-                if( o->chasingUs ) {
+                if( o != NULL && o->chasingUs ) {
                     stringToDraw = "! !";
                     }
                 }

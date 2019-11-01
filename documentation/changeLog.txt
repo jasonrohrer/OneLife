@@ -3,11 +3,18 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 280   ??
+
+--Fixed crash when person making an off-screen sound dies.
+
+
+
 
 Server Fixes
 
 --Fixed bug in tapout triggers that were counting uses (of shallow well, for
   example) as tapouts.
+
 
 
 
