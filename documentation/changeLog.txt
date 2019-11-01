@@ -9,6 +9,10 @@ Version 280   ??
 
 --Fixed so that filtering for /HUBBARD SQUASH doesn't trigger /HUBBA emote.
 
+--Handling probability sets in object depth measurement and produces map so
+  that /HUBBARD SQUASH and /PUMPKIN filters work (and other objects that pass
+  through a probability set along the way).
+
 
 
 
