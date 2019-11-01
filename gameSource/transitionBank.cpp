@@ -233,6 +233,30 @@ void initTransBankFinish() {
     
     freeFolderCache( cache );
 
+static void handleWhatProbSetProduces( int inPossibleSetID,
+                                       TransRecord *inT ) {
+    
+    CategoryRecord *cr = getCategory( inPossibleSetID );
+    
+    if( cr != NULL &&
+        cr->isProbabilitySet ) {
+        for( int i=0; i< cr->objectIDSet.size(); i++ ) {
+            if( cr->objectWeights.getElementDirect( i ) > 0 ) {
+                int oID = cr->objectIDSet.getElementDirect( i );
+                
+                producesMap[ oID ].push_back( inT );
+                }
+            }
+        }
+    }
+
+
+
+static void regenUsesAndProducesMaps() {
+    for( int i=0; i<mapSize; i++ ) {
+        usesMap[i].deleteAll();
+        producesMap[i].deleteAll();
+        }
 
     mapSize = maxID + 1;
     
@@ -259,12 +283,29 @@ void initTransBankFinish() {
         
         if( t->newActor != 0 ) {
             producesMap[t->newActor].push_back( t );
+            handleWhatProbSetProduces( t->newActor, t );
+            }
+
+        if( t->actorChangeChance < 1.0 && t->newActorNoChange != 0 &&
+            t->newActorNoChange != t->newActor ) {
+            producesMap[t->newActorNoChange].push_back( t );
+            handleWhatProbSetProduces( t->newActorNoChange, t );
             }
         
         // no duplicate records
         if( t->newTarget != 0 && t->newTarget != t->newActor ) {    
             producesMap[t->newTarget].push_back( t );
+            handleWhatProbSetProduces( t->newTarget, t );
             }
+
+        if( t->targetChangeChance < 1.0 && t->newTargetNoChange != 0 &&
+            t->newTargetNoChange != t->newTarget &&
+            t->newTargetNoChange != t->newActor &&
+            t->newTargetNoChange != t->newActorNoChange ) {
+            producesMap[t->newTargetNoChange].push_back( t );
+            handleWhatProbSetProduces( t->newTargetNoChange, t );
+            }
+        
         }
     
     printf( "Loaded %d transitions from transitions folder\n", numRecords );
@@ -1579,15 +1620,47 @@ void regenerateDepthMap() {
             if( nextDepth < UNREACHABLE ) {
                     
                 if( tr->newActor > 0 ) {
-                    if( depthMap[ tr->newActor ] == UNREACHABLE ) {
-                        depthMap[ tr->newActor ] = nextDepth;
-                        treeHorizon.push_back( tr->newActor );
+                    CategoryRecord *cr = getCategory( tr->newActor );
+                    
+                    if( cr != NULL && cr->isProbabilitySet ) {
+                        for( int s=0; s<cr->objectIDSet.size(); s++ ) {
+                            if( cr->objectWeights.getElementDirect( s ) > 0 ) {
+                                int oID = cr->objectIDSet.getElementDirect( s );
+                                
+                                if( depthMap[ oID ] == UNREACHABLE ) {
+                                    depthMap[ oID ] = nextDepth;
+                                    treeHorizon.push_back( oID );
+                                    }
+                                }
+                            }
+                        }
+                    else {
+                        if( depthMap[ tr->newActor ] == UNREACHABLE ) {
+                            depthMap[ tr->newActor ] = nextDepth;
+                            treeHorizon.push_back( tr->newActor );
+                            }
                         }
                     }
                 if( tr->newTarget > 0 ) {
-                    if( depthMap[ tr->newTarget ] == UNREACHABLE ) {
-                        depthMap[ tr->newTarget ] = nextDepth;
-                        treeHorizon.push_back( tr->newTarget );
+                    CategoryRecord *cr = getCategory( tr->newTarget );
+                    
+                    if( cr != NULL && cr->isProbabilitySet ) {
+                        for( int s=0; s<cr->objectIDSet.size(); s++ ) {
+                            if( cr->objectWeights.getElementDirect( s ) > 0 ) {
+                                int oID = cr->objectIDSet.getElementDirect( s );
+                                
+                                if( depthMap[ oID ] == UNREACHABLE ) {
+                                    depthMap[ oID ] = nextDepth;
+                                    treeHorizon.push_back( oID );
+                                    }
+                                }
+                            }
+                        }
+                    else {
+                        if( depthMap[ tr->newTarget ] == UNREACHABLE ) {
+                            depthMap[ tr->newTarget ] = nextDepth;
+                            treeHorizon.push_back( tr->newTarget );
+                            }
                         }
                     }
                 }
