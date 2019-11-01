@@ -7,6 +7,8 @@ Version 280   ??
 
 --Fixed crash when person making an off-screen sound dies.
 
+--Fixed so that filtering for /HUBBARD SQUASH doesn't trigger /HUBBA emote.
+
 
 
 
