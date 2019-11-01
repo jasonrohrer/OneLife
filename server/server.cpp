@@ -6621,10 +6621,11 @@ static void setupToolSlots( LiveObject *inPlayer ) {
             }
         
         char *message = autoSprintf( "YOUR GENETIC FITNESS SCORE IS %.1lf**"
-                                     "YOU GET %d BONUS TOOL %s.",
+                                     "YOU GET %d BONUS TOOL %s, "
+                                     "FOR A TOTAL OF %d SLOTS.",
                                      inPlayer->fitnessScore,
                                      slots - min,
-                                     slotWord );
+                                     slotWord, slots );
         
         sendGlobalMessage( message, inPlayer );
         
