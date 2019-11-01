@@ -36,8 +36,11 @@ $mainSiteURL = "http://localhost/jcr13/";
 // formula for adjusting score after a life/offspring lifespan is
 // new_score = old_score + ( ( lifespan - old_score ) ^ R ) / K
 
+// note that the sign of ( lifespan - old_score ) is preserved in the case
+// of even R that would normally make negatives positve
+
 $formulaR = 1.0;
-$formulaK = 10.0;
+$formulaK = 46.5;
 
 
 // how recently do players have to have played to count in leaderboards

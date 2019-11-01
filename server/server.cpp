@@ -97,6 +97,10 @@ int babyAge = 5;
 // age when bare-hand actions become available to a baby (opening doors, etc.)
 int defaultActionAge = 3;
 
+// can't walk for first 12 seconds
+double startWalkingAge = 0.20;
+
+
 
 double forceDeathAge = age_death;
 
@@ -838,6 +842,9 @@ typedef struct LiveObject {
         char updateSent;
         char updateGlobal;
         
+        char wiggleUpdate;
+        
+
         // babies born to this player
         SimpleVector<timeSec_t> *babyBirthTimes;
         SimpleVector<int> *babyIDs;
@@ -1134,6 +1141,8 @@ static void backToBasics( LiveObject *inPlayer ) {
 
     p->emotFrozen = false;
     p->emotUnfreezeETA = 0;
+
+    p->learnedTools.deleteAll();
     }
 
 
@@ -3935,7 +3944,7 @@ GridPos getClosestPlayerPos( int inX, int inY ) {
 static int chunkDimensionX = 32;
 static int chunkDimensionY = 30;
 
-static int maxSpeechRadius = 10;
+static int maxSpeechRadius = 16;
 
 
 static int getMaxChunkDimension() {
@@ -6598,6 +6607,34 @@ static void setupToolSlots( LiveObject *inPlayer ) {
         slots += ( max - min ) * pow( inPlayer->fitnessScore / 60, 2 );
         }
 
+    if( inPlayer->fitnessScore > 0 ) {
+        // give everyone 1 bonus slot who has some genetic score
+        // this allows us to show the fitness message to everyone
+        // without hammering them with "0 bonus slots"
+        slots ++;
+        }
+    
+
+    if( slots > min ) {
+        const char *slotWord = "SLOTS";
+        
+        if( slots - min == 1 ) {
+            slotWord = "SLOT";
+            }
+        
+        char *message = autoSprintf( "YOUR GENETIC FITNESS SCORE IS %.1lf**"
+                                     "YOU GET %d BONUS TOOL %s.",
+                                     inPlayer->fitnessScore,
+                                     slots - min,
+                                     slotWord );
+        
+        sendGlobalMessage( message, inPlayer );
+        
+        delete [] message;
+        }
+
+    
+
     inPlayer->numToolSlots = slots;
 
     if( inPlayer->isTutorial && inPlayer->learnedTools.size() == 0 ) {
@@ -6605,6 +6642,92 @@ static void setupToolSlots( LiveObject *inPlayer ) {
         getAllToolSets( &( inPlayer->learnedTools ) );
         }
     }
+
+
+typedef struct ForceSpawnRecord {
+        GridPos pos;
+        double age;
+        char *firstName;
+        char *lastName;
+        int displayID;
+        int hatID;
+        int tunicID;
+        int bottomID;
+        int frontShoeID;
+        int backShoeID;
+    } ForceSpawnRecord;
+
+
+
+// strings in outRecordToFill destroyed by caller
+char getForceSpawn( char *inEmail, ForceSpawnRecord *outRecordToFill ) {
+    char *cont = SettingsManager::getSettingContents( "forceSpawnAccounts" );
+    
+    if( cont == NULL ) {
+        return false;
+        }
+    int numParts;
+    char **lines = split( cont, "\n", &numParts );
+
+    delete [] cont;
+    
+    char found = false;
+
+    for( int i=0; i<numParts; i++ ) {
+        
+        if( strstr( lines[i], inEmail ) == lines[i] ) {
+            // matches email
+
+            char emailBuff[100];
+            
+            int on = 0;
+            
+            sscanf( lines[i],
+                    "%99s %d", emailBuff, &on );
+
+            if( on == 1 ) {
+                
+                outRecordToFill->firstName = new char[20];
+                outRecordToFill->lastName = new char[20];
+                
+
+                int numRead = sscanf( 
+                    lines[i],
+                    "%99s %d %d,%d %lf %19s %19s %d %d %d %d %d %d", 
+                    emailBuff, &on,
+                    &outRecordToFill->pos.x,
+                    &outRecordToFill->pos.y,
+                    &outRecordToFill->age,
+                    outRecordToFill->firstName,
+                    outRecordToFill->lastName,
+                    &outRecordToFill->displayID,
+                    &outRecordToFill->hatID,
+                    &outRecordToFill->tunicID,
+                    &outRecordToFill->bottomID,
+                    &outRecordToFill->frontShoeID,
+                    &outRecordToFill->backShoeID );
+                
+                if( numRead == 13 ) {
+                    found = true;
+                    }
+                else {
+                    delete [] outRecordToFill->firstName;
+                    delete [] outRecordToFill->lastName;
+                    }
+                }
+            break;
+            }
+        }
+
+
+    for( int i=0; i<numParts; i++ ) {
+        delete [] lines[i];
+        }
+    delete [] lines;
+    
+    return found;
+    }
+
 
 
 
@@ -7189,11 +7312,23 @@ int processLoggedInPlayer( char inAllowReconnect,
         }
     
     
+    char forceSpawn = false;
+    ForceSpawnRecord forceSpawnInfo;
+    
     if( SettingsManager::getIntSetting( "forceAllPlayersEve", 0 ) ) {
         parentChoices.deleteAll();
         forceParentChoices = true;
         }
+    else {
+        forceSpawn = getForceSpawn( inEmail, &forceSpawnInfo );
     
+        if( forceSpawn ) {
+            parentChoices.deleteAll();
+            forceParentChoices = true;
+            }
+        }
+    
+
 
     
     if( ( eveWindow || familyLimitAfterEveWindow > 0 ) 
@@ -8114,6 +8249,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.updateSent = false;
     newObject.updateGlobal = false;
     
+    newObject.wiggleUpdate = false;
+
     newObject.babyBirthTimes = new SimpleVector<timeSec_t>();
     newObject.babyIDs = new SimpleVector<int>();
     
@@ -8200,6 +8337,34 @@ int processLoggedInPlayer( char inAllowReconnect,
             }
         }
 
+    if( forceSpawn ) {
+        newObject.xs = forceSpawnInfo.pos.x;
+        newObject.ys = forceSpawnInfo.pos.y;
+        newObject.xd = forceSpawnInfo.pos.x;
+        newObject.yd = forceSpawnInfo.pos.y;
+        
+        newObject.birthPos = forceSpawnInfo.pos;
+        
+        newObject.lifeStartTimeSeconds = 
+            Time::getCurrentTime() -
+            forceSpawnInfo.age * ( 1.0 / getAgeRate() );
+        
+        newObject.name = autoSprintf( "%s %s", 
+                                      forceSpawnInfo.firstName,
+                                      forceSpawnInfo.lastName );
+        newObject.displayID = forceSpawnInfo.displayID;
+        
+        newObject.clothing.hat = getObject( forceSpawnInfo.hatID );
+        newObject.clothing.tunic = getObject( forceSpawnInfo.tunicID );
+        newObject.clothing.bottom = getObject( forceSpawnInfo.bottomID );
+        newObject.clothing.frontShoe = getObject( forceSpawnInfo.frontShoeID );
+        newObject.clothing.backShoe = getObject( forceSpawnInfo.backShoeID );
+
+        delete [] forceSpawnInfo.firstName;
+        delete [] forceSpawnInfo.lastName;
+        }
+    
+
     newObject.birthPos.x = newObject.xd;
     newObject.birthPos.y = newObject.yd;
     
@@ -8279,13 +8444,16 @@ int processLoggedInPlayer( char inAllowReconnect,
 
                     // i tells us how many greats and grands
                     SimpleVector<char> workingName;
-                        
+                    SimpleVector<char> workingMotherName;
+                    
                     for( int g=1; g<=i; g++ ) {
                         if( g == i ) {
                             workingName.appendElementString( "Grand" );
+                            workingMotherName.appendElementString( "Grand" );
                             }
                         else {
                             workingName.appendElementString( "Great_" );
+                            workingMotherName.appendElementString( "Great_" );
                             }
                         }
                     
@@ -8297,6 +8465,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                         else {
                             workingName.appendElementString( "daughter" );
                             }
+                        workingMotherName.appendElementString( "mother" );
                         }
                     else {
                         // no "Grand"
@@ -8306,6 +8475,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                         else {
                             workingName.appendElementString( "Daughter" );
                             }
+                        workingMotherName.appendElementString( "Mother" );
                         }
                     
                     
@@ -8314,7 +8484,18 @@ int processLoggedInPlayer( char inAllowReconnect,
                     
                     newObject.ancestorLifeStartTimeSeconds->push_back(
                             otherPlayer->lifeStartTimeSeconds );
-                        
+                    
+                    // this is the only case of bi-directionality
+                    // players should try to prevent their mothers, gma,
+                    // ggma, etc from dying
+
+                    otherPlayer->ancestorEmails->push_back( 
+                        stringDuplicate( newObject.email ) );
+                    otherPlayer->ancestorRelNames->push_back( 
+                        workingMotherName.getElementString() );
+                    otherPlayer->ancestorLifeStartTimeSeconds->push_back(
+                        newObject.lifeStartTimeSeconds );
+                    
                     break;
                     }
                 }
@@ -10920,6 +11101,13 @@ static void updatePosseSize( LiveObject *inTarget,
         }
     }
 
+
+
+static SimpleVector<int> newEmotPlayerIDs;
+static SimpleVector<int> newEmotIndices;
+// 0 if no ttl specified
+static SimpleVector<int> newEmotTTLs;
+
     
 
 
@@ -10945,7 +11133,11 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
             found = true;
             s->killerWeaponID = inKiller->holdingID;
             s->targetID = inTarget->id;
-            s->emotStartTime = Time::getCurrentTime();
+
+            double curTime = Time::getCurrentTime();
+            s->emotStartTime = curTime;
+            s->killStartTime = curTime;
+
             s->emotRefreshSeconds = 30;
             break;
             }
@@ -10961,8 +11153,18 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                         curTime,
                         30 };
         activeKillStates.push_back( s );
+
+        // force target to gasp
+        makePlayerSay( inTarget, (char*)"[GASP]" );
         }
 
+    if( inTarget != NULL ) {
+        char *message = autoSprintf( "PJ\n%d %d\n#", 
+                                     inKiller->id, inTarget->id );
+        sendMessageToPlayer( inTarget, message, strlen( message ) );
+        delete [] message;
+        }
+    
     updatePosseSize( inTarget );
     
     return true;
@@ -10979,11 +11181,70 @@ static void removeKillState( LiveObject *inKiller, LiveObject *inTarget ) {
             activeKillStates.deleteElement( i );
             
             updatePosseSize( inTarget, inKiller );
-            return;
+            break;
+            }
+        }
+
+    if( inKiller != NULL ) {
+        // clear their emot
+        inKiller->emotFrozen = false;
+        inKiller->emotUnfreezeETA = 0;
+        
+        newEmotPlayerIDs.push_back( inKiller->id );
+        
+        newEmotIndices.push_back( -1 );
+        newEmotTTLs.push_back( 0 );
+        }
+
+    int newPosseSize = 0;
+    if( inTarget != NULL ) {
+        newPosseSize = countPosseSize( inTarget );
+        }
+    
+    if( newPosseSize == 0 &&
+        inTarget != NULL &&
+        inTarget->emotFrozen &&
+        inTarget->emotFrozenIndex == victimEmotionIndex ) {
+        
+        // inTarget's emot hasn't been replaced, end it
+        inTarget->emotFrozen = false;
+        inTarget->emotUnfreezeETA = 0;
+        
+        newEmotPlayerIDs.push_back( inTarget->id );
+        
+        newEmotIndices.push_back( -1 );
+        newEmotTTLs.push_back( 0 );
+        }
+
+    // killer has left posse
+    if( inTarget != NULL ) {
+        char *message = autoSprintf( "PJ\n%d 0\n#", 
+                                     inKiller->id );
+        sendMessageToPlayer( inTarget, message, strlen( message ) );
+        delete [] message;
+        }
+    
+    }
+
+
+
+static void removeAnyKillState( LiveObject *inKiller ) {
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+    
+        if( s->killerID == inKiller->id ) {
+            
+            LiveObject *target = getLiveObject( s->targetID );
+            
+            if( target != NULL ) {
+                removeKillState( inKiller, target );
+                i--;
+                }
             }
         }
     }
-    
+
+            
 
 
 
@@ -13493,12 +13754,6 @@ int main() {
 
         newOwnerPos.push_back_other( &recentlyRemovedOwnerPos );
         recentlyRemovedOwnerPos.deleteAll();
-        
-
-        SimpleVector<int> newEmotPlayerIDs;
-        SimpleVector<int> newEmotIndices;
-        // 0 if no ttl specified
-        SimpleVector<int> newEmotTTLs;
 
 
         SimpleVector<UpdateRecord> newUpdates;
@@ -14550,10 +14805,23 @@ int main() {
                                     nextPlayer,
                                     &playerIndicesToSendUpdatesAbout );
                                 }
+                            else {
+                                // baby wiggles
+                                nextPlayer->wiggleUpdate = true;
+                                }
                             }
                         
                         // ignore their move requests while
                         // in-arms, until they JUMP out
+                        }
+                    else if( m.type == JUMP &&
+                             computeAge( nextPlayer ) < startWalkingAge ) {
+                        // tiny infant wiggling on ground
+                        nextPlayer->wiggleUpdate = true;
+                        }
+                    else if( m.type == MOVE && 
+                             computeAge( nextPlayer ) < startWalkingAge ) {
+                        // ignore moves for the tiniest infants
                         }
                     else if( m.type == MOVE && nextPlayer->holdingID > 0 &&
                              getObject( nextPlayer->holdingID )->
@@ -15237,6 +15505,10 @@ int main() {
                                     // can't join posse targetting self
                                     continue;
                                     }
+                                if( s->killerID == nextPlayer->id ) {
+                                    // can't join posse that we're already in
+                                    continue;
+                                    }
                                 
                                 LiveObject *killer = 
                                     getLiveObject( s->killerID );
@@ -15255,6 +15527,8 @@ int main() {
                             if( closestState != NULL ) {
                                 // they are joining
                                 // infinite range
+                                removeAnyKillState( nextPlayer );
+                                
                                 char enteredState = addKillState( 
                                     nextPlayer, 
                                     getLiveObject( closestState->targetID ),
@@ -15488,6 +15762,7 @@ int main() {
                                         }
                                     
                                     if( ! weaponBlocked ) {
+                                        removeAnyKillState( nextPlayer );
                                         
                                         char enteredState =
                                             addKillState( nextPlayer,
@@ -15695,9 +15970,14 @@ int main() {
                                 char blockedTool = false;
                                 
                                 if( nextPlayer->holdingID > 0 &&
-                                    r != NULL ) {
+                                    r != NULL &&
+                                    r->newActor != 0 ) {
                                     // make sure player can use this tool
-                                    
+                                    // only counts as a real use if something
+                                    // is left in the hand
+                                    // otherwise, it could be a stacking action
+                                    // (like putting a wool pad in a bowl)
+
                                     if( ! canPlayerUseOrLearnTool( 
                                             nextPlayer,
                                             nextPlayer->holdingID ) ) {
@@ -17840,42 +18120,14 @@ int main() {
             
             if( killer == NULL || target == NULL ||
                 killer->error || target->error ||
-                killer->holdingID != s->killerWeaponID ) {
+                killer->holdingID != s->killerWeaponID ||
+                target->heldByOther ) {
                 // either player dead, or held-weapon change
+                // or target baby now picked up (safe)
                 
                 // kill request done
-                if( killer != NULL ) {
-                    // clear their emot
-                    killer->emotFrozen = false;
-                    killer->emotUnfreezeETA = 0;
-                    
-                    newEmotPlayerIDs.push_back( killer->id );
-                            
-                    newEmotIndices.push_back( -1 );
-                    newEmotTTLs.push_back( 0 );
-                    }
-
-                removeKillState( killer, target );
-
-                int newPosseSize = 0;
-                if( target != NULL ) {
-                    newPosseSize = countPosseSize( target );
-                    }
                 
-                if( newPosseSize == 0 &&
-                    target != NULL &&
-                    target->emotFrozen &&
-                    target->emotFrozenIndex == victimEmotionIndex ) {
-                    
-                    // target's emot hasn't been replaced, end it
-                    target->emotFrozen = false;
-                    target->emotUnfreezeETA = 0;
-                    
-                    newEmotPlayerIDs.push_back( target->id );
-                            
-                    newEmotIndices.push_back( -1 );
-                    newEmotTTLs.push_back( 0 );
-                    }
+                removeKillState( killer, target );
 
                 i--;
                 continue;
@@ -17891,7 +18143,7 @@ int main() {
             
             double curTime = Time::getCurrentTime();
 
-            if( curTime - s->killStartTime  > 3 && 
+            if( curTime - s->killStartTime  > 6 && 
                 getObject( killer->holdingID )->deadlyDistance >= dist &&
                 ! directLineBlocked( playerPos, targetPos ) ) {
                 // enough warning time has passed
@@ -20095,6 +20347,38 @@ int main() {
             }
 
 
+        SimpleVector<char> babyWiggleLines;
+        for( int i=0; i<players.size(); i++ ) {
+
+            LiveObject *nextPlayer = players.getElement(i);
+        
+            if( nextPlayer->error ) {
+                continue;
+                }
+            if( nextPlayer->wiggleUpdate ) {
+                
+                char *idString = autoSprintf( "%d\n", nextPlayer->id );
+                babyWiggleLines.appendElementString( idString );
+                delete [] idString;
+
+                nextPlayer->wiggleUpdate = false;
+                }
+            }
+
+
+        char *wiggleMessage = NULL;
+        int wiggleMessageLength = 0;
+
+        if( babyWiggleLines.size() > 0 ) {
+            char *lines = babyWiggleLines.getElementString();
+            
+            wiggleMessage = autoSprintf( "BW\n%s#", lines );
+            wiggleMessageLength = strlen( wiggleMessage );
+            
+            delete [] lines;
+            }
+        
+        
 
         
         // send moves and updates to clients
@@ -20955,6 +21239,24 @@ int main() {
                                                "Socket write failed" );
                         }
                     }
+                
+
+                // everyone gets wiggle message
+                if( wiggleMessage != NULL && nextPlayer->connected ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            (unsigned char*)wiggleMessage, 
+                            wiggleMessageLength, 
+                            false, false );
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
+                    if( numSent != wiggleMessageLength ) {
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
+                        }
+                    }
+                
 
                 
                 // greater than maxDis but within maxDist2
@@ -21432,11 +21734,16 @@ int main() {
                                 // VOG can talk to anyone
                                 // also, skip in on very low pop servers
                                 // (just let everyone talk together)
+                                // also in case where speach is server-forced
+                                // sound representations (like [GASP])
+                                // but NOT for reading written words
                                 if( nextPlayer->vogMode || 
                                     ( speakerObj != NULL &&
                                       speakerObj->vogMode ) ||
                                     players.size() < 
-                                    minActivePlayersForLanguages ) {
+                                    minActivePlayersForLanguages ||
+                                    strlen( trimmedPhrase ) == 0 ||
+                                    trimmedPhrase[0] == '[' ) {
                                     
                                     translatedPhrase =
                                         stringDuplicate( trimmedPhrase );
@@ -21918,6 +22225,9 @@ int main() {
         if( emotMessage != NULL ) {
             delete [] emotMessage;
             }
+        if( wiggleMessage != NULL ) {
+            delete [] wiggleMessage;
+            }
         
         
         newOwnerStrings.deallocateStringElements();
@@ -21935,6 +22245,10 @@ int main() {
         newGraves.deleteAll();
         newGraveMoves.deleteAll();
         
+        
+        newEmotPlayerIDs.deleteAll();
+        newEmotIndices.deleteAll();
+        newEmotTTLs.deleteAll();
         
 
         

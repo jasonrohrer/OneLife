@@ -112,11 +112,6 @@ typedef struct LiveObject {
         char lastHeldByRawPosSet;
         doublePair lastHeldByRawPos;
         
-        // track this so that we only send one jump message even if
-        // the player clicks more than once before the server registers the
-        // jump
-        double jumpOutOfArmsSentTime;
-        
         // true if locally-controlled baby is attempting to jump out of arms
         char babyWiggle;
         double babyWiggleProgress;
@@ -314,7 +309,9 @@ typedef struct LiveObject {
 
         char killMode;
         int killWithID;
-
+        
+        char chasingUs;
+        
     } LiveObject;
 
 

@@ -2942,6 +2942,9 @@ void reseedMap( char inForceFresh ) {
                 }
             }
         }
+
+                
+    setupMapChangeLogFile();
     }
 
 
@@ -3986,8 +3989,6 @@ char initMap() {
 
     //outputBiomeFractals();
 
-            
-    setupMapChangeLogFile();
 
     return true;
     }
@@ -5516,7 +5517,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 // no move happened
 
                 // just set change in DB
-                dbPut( inX, inY, 0, newID );
+                setMapObjectRaw( inX, inY, newID );
                 }
             
                 
@@ -6488,18 +6489,40 @@ static void runTapoutOperation( int inX, int inY,
             // on tapoutTarget
             TransRecord *t = NULL;
             
-            if( inIsPost ) {
-                // last use target signifies what happens in post
+            int newTarget = -1;
+
+            if( ! inIsPost && y == inY ) {
+                // last use target signifies what happens in 
+                // same row as inX, inY
                 t = getPTrans( inTriggerID, id, false, true );
+
+                if( t != NULL ) {
+                    newTarget = t->newTarget;
+                    }
+                
+
+                if( x > inX && newTarget > 0) {
+                    // apply result to itself to flip it 
+                    // and point gradient in other direction
+                    TransRecord *flipTrans = getPTrans( newTarget, newTarget );
+                    
+                    if( flipTrans != NULL ) {
+                        newTarget = flipTrans->newTarget;
+                        }
+                    }
                 }
 
-            if( t == NULL ) {
-                // not post or last-use-target trans undefined
+            if( newTarget == -1 ) {
+                // not same row or post or last-use-target trans undefined
                 t = getPTrans( inTriggerID, id );
+                
+                if( t != NULL ) {
+                    newTarget = t->newTarget;
+                    }
                 }
             
-            if( t != NULL ) {
-                setMapObjectRaw( x, y, t->newTarget );
+            if( newTarget != -1 ) {
+                setMapObjectRaw( x, y, newTarget );
                 }
             }
         }

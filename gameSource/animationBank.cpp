@@ -1203,6 +1203,15 @@ void setClothingHighlightFades( float *inFades ) {
 
 
 
+static char shouldHidePersonShadows = false;
+
+void hidePersonShadows( char inHide ) {
+    shouldHidePersonShadows = inHide;
+    }
+
+
+
+
 ObjectAnimPack drawObjectAnimPacked( 
     int inObjectID,
     AnimType inType, double inFrameTime, 
@@ -2350,6 +2359,14 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             // skip drawing this aging layer entirely
             continue;
             }
+        
+        
+        if( obj->person && shouldHidePersonShadows &&
+            strstr( getSpriteRecord( obj->sprites[i] )->tag, 
+                    "Shadow" ) != NULL ) {
+            continue;
+            }
+        
 
         
         doublePair spritePos = workingSpritePos[i];
@@ -3140,36 +3157,6 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         } 
     
 
-    // head emot emot on top of everything
-    // if not
-    if( drawWithEmot != NULL &&
-        drawWithEmot->headEmot != 0 &&
-        obj->person ) {
-            
-        char used;
-        drawObjectAnim( drawWithEmot->headEmot, 
-                        clothingAnimType, 
-                        inFrameTime,
-                        inAnimFade, 
-                        clothingFadeTargetAnimType,
-                        inFadeTargetFrameTime,
-                        inFrozenRotFrameTime,
-                        &used,
-                        endAnimType,
-                        endAnimType,
-                        add( animHeadPos, inPos ),
-                        animHeadRotDelta,
-                        true,
-                        inFlipH,
-                        -1,
-                        0,
-                        false,
-                        false,
-                        emptyClothing,
-                        NULL,
-                        0, NULL,
-                        NULL );
-        }
 
 
 
@@ -3231,6 +3218,40 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             delete [] cont;
             }
         }
+
+
+
+    // head emot on top of everything, including hat
+    if( drawWithEmot != NULL &&
+        drawWithEmot->headEmot != 0 &&
+        obj->person ) {
+            
+        char used;
+        drawObjectAnim( drawWithEmot->headEmot, 
+                        clothingAnimType, 
+                        inFrameTime,
+                        inAnimFade, 
+                        clothingFadeTargetAnimType,
+                        inFadeTargetFrameTime,
+                        inFrozenRotFrameTime,
+                        &used,
+                        endAnimType,
+                        endAnimType,
+                        add( animHeadPos, inPos ),
+                        animHeadRotDelta,
+                        true,
+                        inFlipH,
+                        -1,
+                        0,
+                        false,
+                        false,
+                        emptyClothing,
+                        NULL,
+                        0, NULL,
+                        NULL );
+        }
+
+
     
     if( animLayerFades != NULL ) {
         delete [] animLayerFades;

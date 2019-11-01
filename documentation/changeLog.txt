@@ -3,6 +3,88 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 278   2019-October-31
+
+--Added an early exit hallway to make the tutorial optional.
+
+--Off-screen speech now drawn on left, right, and bottom of screen (before, was
+  top of screen only).  Server sends speech in radius of 16 to facilitate this
+  (was 10).
+
+--Now off-screen sounds for posse targetting you show double exclamation marks,
+  where off-screen sounds that aren't for your posse show the normal single
+  exclamation mark.  Facilitated by the new PJ (POSSE_JOIN) protocol message.
+  Fixes #433
+
+--Head emots (like heart for /LOVE) are shown above hat layer (were covered by
+  hat).
+
+--Apocalypse clears your tool learning slots.
+
+--Babies can't move at all for first 12 seconds of life, and lay on the ground,
+  but react to mouse clicks by wiggling.
+
+--Spring tapouts now leave E or W gradient dry springs along ley line to W or E
+  of well.  You can follow these gradients to find the well.
+
+
+
+
+
+Server Fixes
+
+--Boiling the frog:  6-12 tool slots (was 8-16).
+
+--Boiling the frog:  5-10 tool slots (was 6-12).
+
+--Min fertile girls per fam 6 (was 3).  This should help to prop up struggling
+  families and prolong the arc.
+
+--Fixed kill-target swapping bug.  Fixes #420.  Delay before landing kill is
+  now 6 seconds (was 3).
+
+--Holding a baby now cancels any kill target actions against it.  Fixes #421
+
+--Changed definition of hand tool use to require something left in the hand
+  after the action.  So putting a sterile pad back in a bowl doesn't count.
+  Fixes #435
+
+--New map change log is started correctly when a biome reseed happens.
+  Fixes #434
+
+--Server forces player to say [GASP] when they are targetted by a killer.
+  Along with the shocked face, this makes it harder to ignore the fact that you
+  are targetted.  Related to #433
+
+--Message on birth explaining your bonus tool slots due to your fitness score.
+  Message is skipped if your fitness score is too low to grant you any bonus
+  tool slots.
+
+--Support for forced spawns for specific accounts.
+
+--Everyone with fitness score over 0 gets one bonus slot, so genetic fitness
+  message on birth can be shown to almost everyone.
+
+--Fixed a sign issue in fitness server in the case of even R parameter.
+
+--K parameter for genetic fitness score is now 46.5 (was 10).  This value was
+  discovered empirically through simulation of 100 births with various infant
+  death rates to find a K-value that balanced fast convergence with low score
+  range overlap between player skill tiers.  This means that scores go up and
+  down 4.65x slower than before.
+
+--New hints to find wells:  when well taps out area, it leaves thoroughly dry
+  springs in same row as well, and regular dry springs elswhere.  So if you
+  ever find a thoroughly dry spring, you know you can find a well by walking E
+  or W.
+
+--Mothers and Gmas and GGmas now count toward your genetic fitness score,
+  assuming that you are at least 3 years old (or would have been) at their time
+  of their death.  This closes the 'kill your mom to prevent younger sibs'
+  exploit.
+ 
+
+
 
 Version 276   2019-October-25
 
