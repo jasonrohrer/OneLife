@@ -17,6 +17,8 @@ Server Fixes
 
 --Welcome message now shows total tool slots along with bonus slots.
 
+--Force-spawns can speak to everyone in shared language.
+
 
 
 
