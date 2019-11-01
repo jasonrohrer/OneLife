@@ -176,6 +176,9 @@ static int photoSequenceNumber = -1;
 static char waitingForPhotoSig = false;
 static char *photoSig = NULL;
 
+// no moving for first 20 seconds of life
+static double noMoveAge = 0.20;
+
 
 static double emotDuration = 10;
 
@@ -1038,6 +1041,17 @@ static void removeDoubleBacksFromPath( GridPos **inPath, int *inLength ) {
 
 
 
+static double computeCurrentAgeNoOverride( LiveObject *inObj ) {
+    if( inObj->finalAgeSet ) {
+        return inObj->age;
+        }
+    else {
+        return inObj->age + 
+            inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
+        }
+    }
+
+
 
 
 static double computeCurrentAge( LiveObject *inObj ) {
@@ -1062,9 +1076,7 @@ static double computeCurrentAge( LiveObject *inObj ) {
                 }
             }
         
-        // update age using clock
-        return inObj->age + 
-            inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
+        return computeCurrentAgeNoOverride( inObj );
         }
     
     }
@@ -1098,6 +1110,7 @@ typedef enum messageType {
     PLAYER_UPDATE,
     PLAYER_MOVES_START,
     PLAYER_OUT_OF_RANGE,
+    BABY_WIGGLE,
     PLAYER_SAYS,
     LOCATION_SAYS,
     PLAYER_EMOT,
@@ -1112,6 +1125,7 @@ typedef enum messageType {
     APOCALYPSE_DONE,
     DYING,
     HEALED,
+    POSSE_JOIN,
     MONUMENT_CALL,
     GRAVE,
     GRAVE_MOVE,
@@ -1164,6 +1178,9 @@ messageType getMessageType( char *inMessage ) {
     else if( strcmp( copy, "PO" ) == 0 ) {
         returnValue = PLAYER_OUT_OF_RANGE;
         }
+    else if( strcmp( copy, "BW" ) == 0 ) {
+        returnValue = BABY_WIGGLE;
+        }
     else if( strcmp( copy, "PS" ) == 0 ) {
         returnValue = PLAYER_SAYS;
         }
@@ -1205,6 +1222,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "HE" ) == 0 ) {
         returnValue = HEALED;
+        }
+    else if( strcmp( copy, "PJ" ) == 0 ) {
+        returnValue = POSSE_JOIN;
         }
     else if( strcmp( copy, "MN" ) == 0 ) {
         returnValue = MONUMENT_CALL;
@@ -3164,9 +3184,36 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     double firstLineY =  inPos.y + ( lines->size() - 1 ) * lineSpacing;
     
     if( firstLineY > lastScreenViewCenter.y + recalcOffsetY( 330 ) * gui_fov_scale ) {
+        // off top of screen
         firstLineY = lastScreenViewCenter.y + recalcOffsetY( 330 ) * gui_fov_scale;
         }
+    
+    if( inPos.y < lastScreenViewCenter.y - recalcOffsetY( 280 ) * gui_fov_scale ) {
+        // off bottom of screen
+        double lastLineY = lastScreenViewCenter.y - recalcOffsetY ( 280 ) * gui_fov_scale;
+        
+        firstLineY = lastLineY + ( lines->size() - 1 ) * lineSpacing;
+        }
+    
 
+    double widestLine = 0;
+    for( int i=0; i<lines->size(); i++ ) {
+        char *line = lines->getElementDirect( i );
+
+        double length = handwritingFont->measureString( line );
+        if( length > widestLine ) {
+            widestLine = length;
+            }
+        }
+    
+    if( inPos.x < lastScreenViewCenter.x - recalcOffsetX ( 615 ) * gui_fov_scale ) {
+        inPos.x = lastScreenViewCenter.x - recalcOffsetX ( 615 ) * gui_fov_scale;
+        }
+    if( inPos.x + widestLine > lastScreenViewCenter.x + recalcOffsetX ( 610 ) * gui_fov_scale ) {
+        inPos.x = lastScreenViewCenter.x + recalcOffsetX ( 610 - widestLine ) * gui_fov_scale;
+        }
+    
+    
     
     if( inForceBlotColor != NULL ) {
         setDrawColor( *inForceBlotColor );
@@ -3404,6 +3451,8 @@ typedef struct OffScreenSound {
         double fadeETATime;
 
         char red;
+        
+        int sourcePlayerID;
     } OffScreenSound;
 
 SimpleVector<OffScreenSound> offScreenSounds;
@@ -3411,7 +3460,8 @@ SimpleVector<OffScreenSound> offScreenSounds;
 
 
 
-static void addOffScreenSound( double inPosX, double inPosY,
+static void addOffScreenSound( int inSourcePlayerID,
+                               double inPosX, double inPosY,
                                char *inDescription,
                                double inFadeSec = 4 ) {
 
@@ -3432,7 +3482,7 @@ static void addOffScreenSound( double inPosX, double inPosY,
     
     doublePair pos = { inPosX, inPosY };
     
-    OffScreenSound s = { pos, 1.0, fadeETATime, red };
+    OffScreenSound s = { pos, 1.0, fadeETATime, red, inSourcePlayerID };
     
     offScreenSounds.push_back( s );
     }
@@ -3509,9 +3559,21 @@ void LivingLifePage::drawOffScreenSounds() {
                 textColor = &white;
                 bgColor = &red;
                 }
+            
+            const char *stringToDraw = "!";
+            
+            if( s->sourcePlayerID != -1 ) {
+                // are they in the posse chasing us?
+                LiveObject *o = getGameObject( s->sourcePlayerID );
+                
+                if( o->chasingUs ) {
+                    stringToDraw = "! !";
+                    }
+                }
+            
 
             drawChalkBackgroundString( drawPos,
-                                       "!",
+                                       stringToDraw,
                                        s->fade,
                                        100,
                                        NULL,
@@ -3620,6 +3682,7 @@ void LivingLifePage::handleAnimSound( int inSourcePlayerID,
                         // these have very short fade
                         // so that we don't have a bunch of overlap
                         addOffScreenSound(
+                            inSourcePlayerID,
                             inPosX *
                             CELL_D, 
                             inPosY *
@@ -4404,6 +4467,33 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
         setAnimationEmotion( inObj->currentEmot );
         
+        // draw young baby lying flat
+        double rot = 0;
+        if( computeCurrentAgeNoOverride( inObj ) < noMoveAge ) {
+            hidePersonShadows( true );
+            
+            double shiftScale = 1.0;
+            
+            // slide into the "lying down" shift as they finish getting dropped
+            if( inObj->heldByDropOffset.x != 0 ||
+                inObj->heldByDropOffset.y != 0 ) {
+                doublePair z = { 0, 0 };
+                
+                double d = distance( z, inObj->heldByDropOffset );
+                
+                if( d > 0.5 ) {
+                    shiftScale = 0;
+                    }
+                else {
+                    shiftScale = ( 0.5 - d ) / 0.5;
+                    }
+                }
+            
+
+            rot = shiftScale * 0.25;
+            personPos.x -= shiftScale * 32;
+            }
+        
         holdingPos =
             drawObjectAnim( inObj->displayID, 2, curType, 
                             timeVal,
@@ -4415,7 +4505,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             frozenArmType,
                             frozenArmFadeTargetType,
                             personPos,
-                            0,
+                            rot,
                             false,
                             inObj->holdingFlip,
                             age,
@@ -4427,6 +4517,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             ! inObj->heldPosOverrideAlmostOver,
                             inObj->clothing,
                             inObj->clothingContained );
+        hidePersonShadows( false );
         
         setAnimationEmotion( NULL );
         }
@@ -12739,7 +12830,9 @@ void LivingLifePage::step() {
             apocalypseDisplayProgress = 0;
             apocalypseInProgress = false;
             homePosStack.deleteAll();
-            
+
+            clearToolLearnedStatus();
+
             // cancel all emots
             for( int i=0; i<gameObjects.size(); i++ ) {
                 LiveObject *p = gameObjects.getElement( i );
@@ -14568,7 +14661,6 @@ void LivingLifePage::step() {
                 o.heldByDropOffset.x = 0;
                 o.heldByDropOffset.y = 0;
                 
-                o.jumpOutOfArmsSentTime = 0;
                 o.babyWiggle = false;
 
                 o.ridingOffset.x = 0;
@@ -14606,6 +14698,7 @@ void LivingLifePage::step() {
                 
                 o.killMode = false;
                 o.killWithID = -1;
+                o.chasingUs = false;
                 
 
                 int forced = 0;
@@ -15843,6 +15936,7 @@ void LivingLifePage::step() {
                                                     != NULL ) {
                                                     
                                                     addOffScreenSound(
+                                                      existing->id,
                                                       existing->currentPos.x *
                                                       CELL_D, 
                                                       existing->currentPos.y *
@@ -16573,8 +16667,6 @@ void LivingLifePage::step() {
                         // pending held finally happened
                         babyO->heldByAdultPendingID = -1;
                         }
-                    
-                    babyO->jumpOutOfArmsSentTime = 0;
                     
                     // stop crying when held
                     babyO->tempAgeOverrideSet = false;
@@ -17538,6 +17630,7 @@ void LivingLifePage::step() {
                                                 != NULL ) {
                                                     
                                                 addOffScreenSound(
+                                                    existing->id,
                                                     playerPos.x *
                                                     CELL_D, 
                                                     playerPos.y *
@@ -17876,6 +17969,24 @@ void LivingLifePage::step() {
                 }
             delete [] lines;
             }
+        else if( type == POSSE_JOIN ) {
+            int killer = 0;
+            int target = 0;
+            sscanf( message, "PJ\n%d %d", &killer, &target );
+            
+            if( killer > 0 ) {
+                LiveObject *k = getGameObject( killer );
+                
+                if( target == ourID ) {
+                    // they are chasing us
+                    k->chasingUs = true;
+                    }
+                else {
+                    // no longer chasing us
+                    k->chasingUs = false;
+                    }
+                }
+            }
         else if( type == PLAYER_OUT_OF_RANGE ) {
             int numLines;
             char **lines = split( message, "\n", &numLines );
@@ -17907,6 +18018,46 @@ void LivingLifePage::step() {
                                 }
 
                             break;
+                            }
+                        }
+                    }
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
+        else if( type == BABY_WIGGLE ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            
+            for( int i=1; i<numLines; i++ ) {
+
+                int id;
+                int numRead = sscanf( lines[i], "%d ",
+                                      &( id ) );
+
+                if( numRead == 1 ) {
+                    if( id != ourID ) {
+                        LiveObject *existing = getLiveObject( id );
+                        
+                        if( existing != NULL ) {
+                            if( existing->heldByAdultID != -1 ) {
+                                // wiggle in arms
+                                existing->babyWiggle = true;
+                                existing->babyWiggleProgress = 0;
+                                }
+                            else {
+                                // wiggle on ground
+                                existing->holdingFlip = ! existing->holdingFlip;
+                                
+                                addNewAnimPlayerOnly( existing, moving );
+                                addNewAnimPlayerOnly( existing, ground );
+                                }
                             }
                         }
                     }
@@ -20143,6 +20294,22 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                     personClickOffsetX = clickOffsetX - personClickOffsetX;
                     personClickOffsetY = clickOffsetY - personClickOffsetY;
 
+                    if( computeCurrentAgeNoOverride( o ) < noMoveAge ) {
+                        // laying on ground
+                        
+                        // rotate
+                        doublePair c = { personClickOffsetX, 
+                                         personClickOffsetY };
+                        c = rotate( c, 0.25 * 2 * M_PI );
+                        
+                        personClickOffsetX = c.x;
+                        personClickOffsetY = c.y;
+                        
+                        // offset
+                        personClickOffsetY += 32;
+                        }
+
+
                     ObjectRecord *obj = getObject( o->displayID );
                     
                     int sp, cl, sl;
@@ -20724,23 +20891,37 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     if( ourLiveObject->heldByAdultID != -1 ) {
         // click from a held baby
 
-        // only send once every 5 seconds, even on multiple clicks
-        double curTime = game_getCurrentTime();
-        
-        if( ourLiveObject->jumpOutOfArmsSentTime < curTime - 5 ) {
+        // no longer limiting frequency of JUMP messages
+        // limit them by previous wiggle animation ending
+        // this makes the visuals on the parent and child client as close
+        // as possible
+        if( ! ourLiveObject->babyWiggle ) {
             // send new JUMP message instead of ambigous MOVE message
             sendToServerSocket( (char*)"JUMP 0 0#" );
             
-            ourLiveObject->jumpOutOfArmsSentTime = curTime;
-            }
-        
-        if( ! ourLiveObject->babyWiggle ) {
             // start new wiggle
             ourLiveObject->babyWiggle = true;
             ourLiveObject->babyWiggleProgress = 0;
             }
         
         
+        return;
+        }
+    else if( computeCurrentAgeNoOverride( ourLiveObject ) < noMoveAge ) {
+        // to young to even move
+        // ignore click
+
+        printf( "Skipping click, too young to move\n" );
+        
+        // flip and animate to at least register click
+        ourLiveObject->holdingFlip = ! ourLiveObject->holdingFlip;
+        
+        addNewAnimPlayerOnly( ourLiveObject, moving );
+        addNewAnimPlayerOnly( ourLiveObject, ground );
+        
+        // JUMP message also tells server we're wiggling on the ground
+        sendToServerSocket( (char*)"JUMP 0 0#" );
+
         return;
         }
     

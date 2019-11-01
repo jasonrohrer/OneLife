@@ -1098,6 +1098,12 @@ function fs_pickLeaderboardName( $inEmail ) {
 
 
 
+function sign( $n ) {
+    return ( $n > 0 ) - ( $n < 0 );
+    }
+
+
+
 // log a death that will affect the score of $inEmail
 // if $inNoScore is true, the relationship is still logged, but the
 // score change is fixed at 0 AND the last_action_time isn't updated
@@ -1132,7 +1138,16 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
     $delta = $inAge - $old_score;
 
     if( $formulaR != 1 ) {
+        // preserve sign after power operation
+        $s = sign( $delta );
+
+        // remove any negative
+        $delta *= $s;
+        
         $delta = pow( $delta, $formulaR );
+
+        // restore any negative
+        $delta *= $s;
         }
     $delta /= $formulaK;
 
