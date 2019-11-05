@@ -13,6 +13,8 @@ Version 280   ??
   that /HUBBARD SQUASH and /PUMPKIN filters work (and other objects that pass
   through a probability set along the way).
 
+--Fixed off-possion emotes for babies that are lying down.
+
 
 
 
