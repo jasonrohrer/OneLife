@@ -25,6 +25,12 @@ Server Fixes
 
 --Force-spawns can speak to everyone in shared language.
 
+--Fixed failed insert condition on fitness server when a life is both your
+  daughter (from your previous life) and your mother (from this life).
+  Double-counting is now correctly prevented without a fatal insert error that
+  blocks the rest of the (non-double) life scoring from happening for that
+  life.  This clears up a major cause of the skipped-scoring bug.
+
 
 
 
