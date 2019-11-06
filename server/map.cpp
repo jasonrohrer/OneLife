@@ -6482,6 +6482,11 @@ static void runTapoutOperation( int inX, int inY,
              x <= inX + inRadiusX; 
              x += inSpacingX ) {
             
+            if( inX == x && inY == y ) {
+                // skip center
+                continue;
+                }
+
             int id = getMapObjectRaw( x, y );
                     
             // change triggered by tapout represented by 
@@ -6491,9 +6496,11 @@ static void runTapoutOperation( int inX, int inY,
             
             int newTarget = -1;
 
-            if( ! inIsPost && y == inY ) {
+            if( ! inIsPost && ( y == inY || x == inX ) ) {
                 // last use target signifies what happens in 
-                // same row as inX, inY
+                // same row or column as inX, inY
+                
+                // get eastward
                 t = getPTrans( inTriggerID, id, false, true );
 
                 if( t != NULL ) {
@@ -6501,13 +6508,40 @@ static void runTapoutOperation( int inX, int inY,
                     }
                 
 
-                if( x > inX && newTarget > 0) {
+                if( x >= inX && newTarget > 0 ) {
                     // apply result to itself to flip it 
                     // and point gradient in other direction
+                
+                    // eastward + eastward = westward
                     TransRecord *flipTrans = getPTrans( newTarget, newTarget );
                     
                     if( flipTrans != NULL ) {
                         newTarget = flipTrans->newTarget;
+                        
+
+                        if( x == inX && newTarget > 0 ) {
+                            // same column
+
+                            // westward + westward = southward
+                            flipTrans = 
+                                getPTrans( newTarget, newTarget );
+
+                            if( flipTrans != NULL ) {
+                                newTarget = flipTrans->newTarget;
+                        
+                                if( y < inY && newTarget > 0 ) {
+                                    // below
+
+                                    // southward + southward = northward
+                                    flipTrans = 
+                                        getPTrans( newTarget, newTarget );
+                                    
+                                    if( flipTrans != NULL ) {
+                                        newTarget = flipTrans->newTarget;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

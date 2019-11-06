@@ -35,6 +35,8 @@ Server Fixes
   blocks the rest of the (non-double) life scoring from happening for that
   life.  This clears up a major cause of the skipped-scoring bug.
 
+--Support for northward and southward gradient markers in same column as tapout.
+
 
 
 
