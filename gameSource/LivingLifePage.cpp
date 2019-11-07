@@ -9210,8 +9210,22 @@ void LivingLifePage::draw( doublePair inViewCenter,
             toggleMultiplicativeBlend( false );
             }
 
+
+        doublePair tipPos = { lastScreenViewCenter.x, 
+                           lastScreenViewCenter.y - 313 };
+
+        char overTempMeter = false;
         
-        if( mCurMouseOverID != 0 || mLastMouseOverID != 0 ) {
+        doublePair mousePos = { lastMouseX, lastMouseY };
+        
+        if( mousePos.y < tipPos.y + 13 &&
+            mousePos.x > tipPos.x + 480 &&
+            mousePos.x < tipPos.x + 607 ) {
+            overTempMeter = true;
+            }
+
+        
+        if( overTempMeter || mCurMouseOverID != 0 || mLastMouseOverID != 0 ) {
             int idToDescribe = mCurMouseOverID;
             
             if( mCurMouseOverID == 0 ) {
@@ -9220,13 +9234,50 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             
             
-            doublePair pos = { lastScreenViewCenter.x, 
-                               lastScreenViewCenter.y - 313 };
 
             char *des = NULL;
             char *desToDelete = NULL;
             
-            if( idToDescribe == -99 ) {
+
+            
+            if( overTempMeter && ourLiveObject->foodDrainTime > 0 ) {
+                // don't replace old until next mouse over
+                // otherwise, it gets redrawn constantly as value
+                // changes
+                if( mCurrentDes == NULL ||
+                    strstr( mCurrentDes,
+                            translate( "foodTimeString" ) ) == NULL ) {
+                    
+                    
+                    char *indoorBonusString;
+                    double mainSeconds = ourLiveObject->foodDrainTime;
+                    
+                    if( ourLiveObject->indoorBonusTime > 0 ) {
+                        indoorBonusString = 
+                            autoSprintf( 
+                                translate( "indoorBonusFormatString" ),
+                                ourLiveObject->indoorBonusTime );
+                        mainSeconds -= ourLiveObject->indoorBonusTime;
+                        }
+                    else {
+                        indoorBonusString = stringDuplicate( "" );
+                        }
+                    
+                    
+                    des = autoSprintf( translate( "foodTimeFormatString" ),
+                                       translate( "foodTimeString" ),
+                                       ourLiveObject->foodDrainTime,
+                                       indoorBonusString );
+                    delete [] indoorBonusString;
+                    
+                    desToDelete = des;
+                    }
+                else {
+                    des = stringDuplicate( mCurrentDes );
+                    desToDelete = des;
+                    }
+                }
+            else if( idToDescribe == -99 ) {
                 if( ourLiveObject->holdingID > 0 &&
                     getObject( ourLiveObject->holdingID )->foodValue > 0 ) {
                     
@@ -9620,7 +9671,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             
             setDrawColor( 0, 0, 0, 1 );
-            pencilFont->drawString( stringUpper, pos, alignCenter );
+            pencilFont->drawString( stringUpper, tipPos, alignCenter );
             
             delete [] stringUpper;
             }
@@ -16172,6 +16223,8 @@ void LivingLifePage::step() {
                         o.futureHeldAnimStack = 
                             new SimpleVector<AnimType>();
                         
+                        o.foodDrainTime = -1;
+                        o.indoorBonusTime = 0;
                         
                         ObjectRecord *obj = getObject( o.displayID );
                         
@@ -18138,8 +18191,10 @@ void LivingLifePage::step() {
             LiveObject *ourLiveObject = getOurLiveObject();
             
             if( ourLiveObject != NULL ) {
-                sscanf( message, "HX\n%f", 
-                        &( ourLiveObject->heat ) );
+                sscanf( message, "HX\n%f %f %f", 
+                        &( ourLiveObject->heat ),
+                        &( ourLiveObject->foodDrainTime ),
+                        &( ourLiveObject->indoorBonusTime ) );
                 
                 }
             }

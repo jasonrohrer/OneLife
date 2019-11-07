@@ -17,6 +17,10 @@ Version 280   ??
 
 --Finally fixed main cause of moon-walking glitch.  Fixes #309
 
+--New indoor food drain bonus (currently +20 seconds per pip).  Only affects
+  people over 3 years old.  Mousing over your temp meter explains your current
+  food drain rate.
+
 
 
 

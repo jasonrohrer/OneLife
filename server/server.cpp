@@ -141,6 +141,8 @@ int monumentCallID = 0;
 
 static double minFoodDecrementSeconds = 5.0;
 static double maxFoodDecrementSeconds = 20;
+static double indoorFoodDecrementSecondsBonus = 20.0;
+
 static int babyBirthFoodDecrement = 10;
 
 // bonus applied to all foods
@@ -795,6 +797,8 @@ typedef struct LiveObject {
         // true if heat map features player surrounded by walls
         char isIndoors;
         
+        double foodDrainTime;
+        double indoorBonusTime;
 
 
         int foodStore;
@@ -2760,6 +2764,7 @@ void forcePlayerAge( const char *inEmail, double inAge ) {
 
 
 
+double computeAge( LiveObject *inPlayer );
 
 
 double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
@@ -2775,6 +2780,18 @@ double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
     
     // all player temp effects push us up above min
     value += minFoodDecrementSeconds;
+
+    inPlayer->indoorBonusTime = 0;
+    
+    if( inPlayer->isIndoors &&
+        computeAge( inPlayer ) > defaultActionAge ) {
+        
+        // non-babies get a bonus for being indoors
+        value += indoorFoodDecrementSecondsBonus;
+        inPlayer->indoorBonusTime = indoorFoodDecrementSecondsBonus;
+        }
+    
+    inPlayer->foodDrainTime = value;
 
     return value;
     }
@@ -7001,6 +7018,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
 
+    indoorFoodDecrementSecondsBonus = SettingsManager::getFloatSetting( 
+        "indoorFoodDecrementSecondsBonus", 20 );
+
 
     eatBonus = 
         SettingsManager::getIntSetting( "eatBonus", 0 );
@@ -7636,6 +7656,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.lastHeatUpdate = Time::getCurrentTime();
     newObject.isIndoors = false;
     
+    newObject.foodDrainTime = 0;
+    newObject.indoorBonusTime = 0;
+
 
     newObject.foodDecrementETASeconds =
         Time::getCurrentTime() + 
@@ -12246,6 +12269,9 @@ int main() {
 
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
+
+    indoorFoodDecrementSecondsBonus = SettingsManager::getFloatSetting( 
+        "indoorFoodDecrementSecondsBonus", 20 );
 
 
     eatBonus = 
@@ -22096,10 +22122,16 @@ int main() {
                 if( nextPlayer->heatUpdate && nextPlayer->connected ) {
                     // send this player a heat status change
                     
+                    // recompute now to update their decrement time
+                    // and indoor bonus for this message
+                    computeFoodDecrementTimeSeconds( nextPlayer );
+                    
                     char *heatMessage = autoSprintf( 
                         "HX\n"
-                        "%.2f#",
-                        nextPlayer->heat );
+                        "%.2f %.2f %.2f#",
+                        nextPlayer->heat,
+                        nextPlayer->foodDrainTime,
+                        nextPlayer->indoorBonusTime );
                      
                     int messageLength = strlen( heatMessage );
                     
