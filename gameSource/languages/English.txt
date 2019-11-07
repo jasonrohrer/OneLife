@@ -256,6 +256,11 @@ yum "YUM"
 meh "MEH"
 
 
+foodTimeString "SECONDS PER FOOD PIP"
+foodTimeFormatString "%s:  %0.1f%s"
+indoorBonusFormatString " + %0.1f INDOOR BONUS"
+
+
 eatHint "MOUTH"
 bareHandHint "BARE HAND"
 bareGroundHint "BARE GROUND"
