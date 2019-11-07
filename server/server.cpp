@@ -2966,10 +2966,10 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
 
 
 int computeOverflowFoodCapacity( int inBaseCapacity ) {
-    // even littlest baby has +2 overflow, to get everyone used to the
+    // even littlest baby has +1 overflow, to get everyone used to the
     // concept.
-    // by adulthood (when base cap is 20), overflow cap is 91.6
-    return 2 + pow( inBaseCapacity, 8 ) * 0.0000000035;
+    // by adulthood (when base cap is 20), overflow cap is 90.6
+    return 1 + pow( inBaseCapacity, 8 ) * 0.0000000035;
     }
 
 
