@@ -2965,6 +2965,17 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
 
 
 
+int computeOverflowFoodCapacity( int inBaseCapacity ) {
+    // even littlest baby has +2 overflow, to get everyone used to the
+    // concept.
+    // by adulthood (when base cap is 20), overflow cap is 91.6
+    return 2 + pow( inBaseCapacity, 8 ) * 0.0000000035;
+    }
+
+
+
+
+
 // with 128-wide tiles, character moves at 480 pixels per second
 // at 60 fps, this is 8 pixels per frame
 // important that it's a whole number of pixels for smooth camera movement
@@ -16467,7 +16478,18 @@ int main() {
                                         computeFoodCapacity( nextPlayer );
                                     
                                     if( nextPlayer->foodStore > cap ) {
+    
+                                        int over = nextPlayer->foodStore - cap;
+                                        
                                         nextPlayer->foodStore = cap;
+
+                                        int overflowCap = 
+                                            computeOverflowFoodCapacity( cap );
+
+                                        if( over > overflowCap ) {
+                                            over = overflowCap;
+                                            }
+                                        nextPlayer->yummyBonusStore += over;
                                         }
 
                                     
@@ -17264,7 +17286,18 @@ int main() {
 
                                     
                                     if( targetPlayer->foodStore > cap ) {
+                                        int over = 
+                                            targetPlayer->foodStore - cap;
+                                        
                                         targetPlayer->foodStore = cap;
+
+                                        int overflowCap = 
+                                            computeOverflowFoodCapacity( cap );
+
+                                        if( over > overflowCap ) {
+                                            over = overflowCap;
+                                            }
+                                        targetPlayer->yummyBonusStore += over;
                                         }
                                     targetPlayer->foodDecrementETASeconds =
                                         Time::getCurrentTime() +

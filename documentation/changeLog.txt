@@ -41,6 +41,14 @@ Server Fixes
 
 --Support for northward and southward gradient markers in same column as tapout.
 
+--Excess from eating a big food item now goes into bonus overflow food points
+  (same bin as Yum bonus points, with +13 or whatever next to food meter).
+  Overflow capacity starts at 2 and goes up non-linearly to 91.6, based on base
+  stomach size.  So newborn babies and unfit elderly have 2 overflow capacity,
+  and adults have 91.6 overflow capacity (and more fit elderly have more
+  overflow capacity than 2).  This increases the potential beneficial size
+  range of large foods, like feasts.  The non-linear formuala, based on Miska's
+  suggestion, is 2 + pow( inBaseCapacity, 8 ) * 0.0000000035.
 
 
 
