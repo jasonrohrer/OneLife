@@ -11282,6 +11282,24 @@ static void removeAnyKillState( LiveObject *inKiller ) {
         }
     }
 
+
+
+static char isAlreadyInKillState( LiveObject *inKiller ) {
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+    
+        if( s->killerID == inKiller->id ) {
+            
+            LiveObject *target = getLiveObject( s->targetID );
+            
+            if( target != NULL ) {
+                return true;
+                }
+            }
+        }
+    return false;
+    }
+
             
 
 
@@ -15550,8 +15568,11 @@ int main() {
                                     closestDist = d;
                                     }
                                 }
-                            if( closestState != NULL ) {
-                                // they are joining
+
+                            if( closestState != NULL &&
+                                ! isAlreadyInKillState( nextPlayer ) ) {
+                                // they are joining, and they aren't already
+                                // in one.
                                 // infinite range
                                 removeAnyKillState( nextPlayer );
                                 
@@ -15787,7 +15808,10 @@ int main() {
                                             }
                                         }
                                     
-                                    if( ! weaponBlocked ) {
+                                    if( ! weaponBlocked  &&
+                                        ! isAlreadyInKillState( nextPlayer ) ) {
+                                        // they aren't already in one
+                                        
                                         removeAnyKillState( nextPlayer );
                                         
                                         char enteredState =

@@ -50,6 +50,12 @@ Server Fixes
   range of large foods, like feasts.  The non-linear formuala, based on Miska's
   suggestion, is 1 + pow( inBaseCapacity, 8 ) * 0.0000000035.
 
+--End of posse/kill joining spam.  You must end your current targetting (by
+  dropping your weapon) in order to start another targetting.  You can't keep
+  spam-targetting the same person, nor can you spam toggle back and forth
+  between targetting two people, unless you drop and re-grab your weapon.
+  Fixes #439
+
 
 
 Version 278   2019-October-31
