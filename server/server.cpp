@@ -490,6 +490,8 @@ typedef struct FreshConnection {
         char ticketServerAccepted;
         char lifeTokenSpent;
 
+        float fitnessScore;
+
         double ticketServerRequestStartTime;
         
         char error;
@@ -6761,6 +6763,90 @@ char getForceSpawn( char *inEmail, ForceSpawnRecord *outRecordToFill ) {
 
 
 
+static char shouldBeEveInjection( float inFitnessScore ) {
+
+    // if we exceed our baby ratio, we're in an emergency situation and
+    // need a new eve NOW
+
+    // so this player is the lucky winner, even if their fitness score
+    // isn't high enough
+    int cMom = countFertileMothers();
+    
+    int cBaby = countHelplessBabies();
+
+    // this player would be a new baby if not Eve
+    cBaby ++;
+
+
+    float maxBabyRatio = 
+        SettingsManager::getFloatSetting( "eveInjectionBabyRatio", 3.0f );
+
+    float babyRatio = cBaby / (float)cMom;
+
+    if( babyRatio > maxBabyRatio ) {
+        AppLog::infoF( "Injecting Eve:  "
+                       "%d babies, %d moms, ratio %f, max ratio %f",
+                       cBaby, cMom, babyRatio, maxBabyRatio );
+        return true;
+        }
+
+    
+
+    // for other case (not enough families) the situation isn't dire
+    // we can wait for someone to come along with a high fitness score
+    
+
+    // how many recent players do we look at?
+    int eveFitnessWindow =
+        SettingsManager::getIntSetting( "eveInjectionFitnessWindow", 10 );
+
+    int numPlayers = players.size();
+    float maxFitnessSeen = 0;
+    
+    for( int i = numPlayers - 1; 
+         i >= numPlayers - eveFitnessWindow && i >= 0;
+         i -- ) {
+        
+        LiveObject *o = players.getElement( i );
+        if( o->fitnessScore > maxFitnessSeen ) {
+            maxFitnessSeen = o->fitnessScore;
+            }
+        }
+
+    if( inFitnessScore < maxFitnessSeen ) {
+        // this player not fit enough to be Eve
+        return false;
+        }
+    
+    int lp = countLivingPlayers();
+    
+    int cFam = countFamilies();
+
+    // this player would add to the player count if not Eve
+    lp ++;
+
+    float maxFamRatio = 
+        SettingsManager::getFloatSetting( "eveInjectionFamilyRatio", 9.0f );
+    
+    float famRatio = lp / (float)cFam;
+    
+    if( famRatio > maxFamRatio ) {
+        // not enough fams
+        AppLog::infoF( "Injecting Eve:  "
+                       "%d players, %d families, ratio %f, max ratio %f",
+                       lp, cFam, famRatio, maxFamRatio );
+        return true;
+        }
+    
+
+    return false;
+    }
+
+
+
+
+
+
 // for placement of tutorials out of the way 
 static int maxPlacementX = 5000000;
 
@@ -6789,6 +6875,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                            int inTutorialNumber,
                            CurseStatus inCurseStatus,
                            PastLifeStats inLifeStats,
+                           float inFitnessScore,
                            // set to -2 to force Eve
                            int inForceParentID = -1,
                            int inForceDisplayID = -1,
@@ -6916,6 +7003,10 @@ int processLoggedInPlayer( char inAllowReconnect,
     char eveWindow = isEveWindow();
     char forceGirl = false;
     
+
+    char eveInjectionOn = SettingsManager::getIntSetting( "eveInjectionOn", 0 );
+    
+
     int familyLimitAfterEveWindow = SettingsManager::getIntSetting( 
             "familyLimitAfterEveWindow", 15 );
 
@@ -6926,7 +7017,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     int cB = countHelplessBabies();
     int cFam = countFamilies();
 
-    if( ! eveWindow ) {
+    if( ! eveWindow && ! eveInjectionOn ) {
         
         float babyMotherRatio = SettingsManager::getFloatSetting( 
             "babyMotherApocalypseRatio", 6.0 );
@@ -7121,15 +7212,8 @@ int processLoggedInPlayer( char inAllowReconnect,
 
 
     
-    newObject.fitnessScore = -1;
+    newObject.fitnessScore = inFitnessScore;
     
-    int fitResult = getFitnessScore( inEmail, &newObject.fitnessScore );
-
-    if( fitResult == -1 ) {
-        // failed right away
-        // stop asking now
-        newObject.fitnessScore = 0;
-        }
 
 
 
@@ -7167,6 +7251,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     
 
     int numOfAge = 0;
+
+    int numBirthLocationsCurseChecked = 0;
+    int numBirthLocationsCurseBlocked = 0;
                             
     int numPlayers = players.size();
                             
@@ -7219,10 +7306,13 @@ int processLoggedInPlayer( char inAllowReconnect,
                 // this line forbidden for new player
                 continue;
                 }
-
+            
+            numBirthLocationsCurseChecked ++;
+            
             if( usePersonalCurses &&
                 isBirthLocationCurseBlocked( newObject.email, motherPos ) ) {
                 // this spot forbidden because someone nearby cursed new player
+                numBirthLocationsCurseBlocked++;
                 continue;
                 }
             
@@ -7241,6 +7331,9 @@ int processLoggedInPlayer( char inAllowReconnect,
                     isBirthLocationCurseBlockedNoCache( 
                         tempTwinEmails.getElementDirect( s ), motherPos ) ) {
                     twinBanned = true;
+                    
+                    numBirthLocationsCurseBlocked++;
+                    
                     break;
                     }
                 }
@@ -7355,6 +7448,22 @@ int processLoggedInPlayer( char inAllowReconnect,
         forceSpawn = getForceSpawn( inEmail, &forceSpawnInfo );
     
         if( forceSpawn ) {
+            parentChoices.deleteAll();
+            forceParentChoices = true;
+            }
+        }
+    
+
+
+
+    if( ! eveWindow && eveInjectionOn &&
+        ! forceParentChoices &&
+        // this player not curse blocked by all possible mothers
+        ( numBirthLocationsCurseBlocked == 0 ||
+          numBirthLocationsCurseBlocked < numBirthLocationsCurseChecked ) ) {
+        
+        // should we spawn a new "special" eve outside of Eve window?
+        if( shouldBeEveInjection( newObject.fitnessScore ) ) {
             parentChoices.deleteAll();
             forceParentChoices = true;
             }
@@ -8590,8 +8699,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     // can resize the vector
     parent = NULL;
 
-    setupToolSlots( &newObject );
-
+    newObject.numToolSlots = 0;
+    
 
     if( newObject.isTutorial ) {
         AppLog::infoF( "New player %s pending tutorial load (tutorial=%d)",
@@ -8708,7 +8817,8 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                            inConnection.email,
                                            inConnection.tutorialNumber,
                                            anyTwinCurseLevel,
-                                           inConnection.lifeStats );
+                                           inConnection.lifeStats,
+                                           inConnection.fitnessScore );
         tempTwinEmails.deleteAll();
         
         if( newID == -1 ) {
@@ -8790,6 +8900,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                    0,
                                    anyTwinCurseLevel,
                                    nextConnection->lifeStats,
+                                   nextConnection->fitnessScore,
                                    parent,
                                    displayID,
                                    forcedEvePos );
@@ -13102,6 +13213,8 @@ int main() {
                 newConnection.ticketServerAccepted = false;
                 newConnection.lifeTokenSpent = false;
                 
+                newConnection.fitnessScore = -1;
+
                 newConnection.error = false;
                 newConnection.errorCauseString = "";
                 newConnection.rejectedSendTime = 0;
@@ -13193,6 +13306,19 @@ int main() {
                         nextConnection->lifeStats.lifeCount,
                         nextConnection->lifeStats.lifeTotalSeconds,
                         nextConnection->lifeStats.lifeTotalSeconds / 3600.0 );
+                    }
+                }
+            else if( nextConnection->email != NULL &&
+                     nextConnection->fitnessScore == -1 ) {
+                // still waiting for fitness score
+                int fitResult = 
+                    getFitnessScore( nextConnection->email, 
+                                     &nextConnection->fitnessScore );
+                
+                if( fitResult == -1 ) {
+                    // failed
+                    // stop asking now
+                    nextConnection->fitnessScore = 0;
                     }
                 }
             else if( nextConnection->ticketServerRequest != NULL &&
@@ -13346,7 +13472,8 @@ int main() {
                             nextConnection->email,
                             nextConnection->tutorialNumber,
                             nextConnection->curseStatus,
-                            nextConnection->lifeStats );
+                            nextConnection->lifeStats,
+                            nextConnection->fitnessScore );
                         }
                                                         
                     newConnections.deleteElement( i );
@@ -13580,7 +13707,8 @@ int main() {
                                             nextConnection->email,
                                             nextConnection->tutorialNumber,
                                             nextConnection->curseStatus,
-                                            nextConnection->lifeStats );
+                                            nextConnection->lifeStats,
+                                            nextConnection->fitnessScore );
                                         }
                                                                         
                                     newConnections.deleteElement( i );
@@ -13828,26 +13956,13 @@ int main() {
 
             if( nextPlayer->error ) {
                 continue;
-                }            
-
-            
-            if( nextPlayer->fitnessScore == -1 ) {
-                // see if result ready yet    
-                int fitResult = 
-                    getFitnessScore( nextPlayer->email, 
-                                     &nextPlayer->fitnessScore );
-
-                if( fitResult == -1 ) {
-                    // failed
-                    // stop asking now
-                    nextPlayer->fitnessScore = 0;
-                    }
-
-                if( nextPlayer->fitnessScore != -1 ) {
-                    setupToolSlots( nextPlayer );
-                    }
                 }
             
+            if( nextPlayer->numToolSlots == 0 ) {
+                
+                setupToolSlots( nextPlayer );
+                }
+
 
             double curCrossTime = Time::getCurrentTime();
 

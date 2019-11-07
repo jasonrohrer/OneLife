@@ -60,6 +60,12 @@ Server Fixes
 
 --Boundless world:  Eve window set to 1 second.
 
+--Boundless world:  We inject a new Eve if a new baby would be born pushing the
+  baby-to-mother ratio above 3.0.  We also inject a new Eve if the player-to-
+  family ratio ever exceeds 9.0, but in that case, since it's not an emergency,
+  we wait for a player who has a fitness score matching or exceeding the
+  highest fitness score seen for the 10 most-recently-joined living players.
+
 
 
 
