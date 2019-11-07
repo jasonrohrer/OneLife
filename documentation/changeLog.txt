@@ -56,6 +56,11 @@ Server Fixes
   between targetting two people, unless you drop and re-grab your weapon.
   Fixes #439
 
+--Boundless world:  barrier off.
+
+--Boundless world:  Eve window set to 1 second.
+
+
 
 
 Version 278   2019-October-31
