@@ -66,6 +66,13 @@ Server Fixes
   we wait for a player who has a fitness score matching or exceeding the
   highest fitness score seen for the 10 most-recently-joined living players.
 
+--Boundless world:  Eves placed on a persisent, moving, zig-zag grid.  Each
+  grid point is 320 tiles away from other grid points to NSEW.  Grid columns
+  are 5 points tall, with new columns distributed further to the west.  Thus,
+  Eves are placed in a horizontal band that grows toward the west.  Walk east
+  to find older parts of civilization.  Walk north or south to find endless
+  wilderness.
+
 
 
 

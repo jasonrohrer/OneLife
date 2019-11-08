@@ -5,6 +5,8 @@
 
 #include "CoordinateTimeTracking.h"
 
+#include "eveMovingGrid.h"
+
 
 // cell pixel dimension on client
 #define CELL_D 128
@@ -7935,6 +7937,13 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         ave.x = pX;
         ave.y = pY;
         currentEveRadius = pR;
+        }
+    else if( SettingsManager::getIntSetting( "useEveMovingGrid", 0 ) ) {
+
+        getEveMovingGridPosition( & eveLocation.x, & eveLocation.y );
+        
+        forceEveToBorder = true;
+        currentEveRadius = 50;
         }
     else {
         // player has never been an Eve that survived to old age before
