@@ -174,6 +174,8 @@ typedef struct LiveObject {
         
 
         float heat;
+        float foodDrainTime;
+        float indoorBonusTime;
         
 
         int numContained;

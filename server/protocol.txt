@@ -590,9 +590,13 @@ when the next yummy food is eaten.
 
 
 HX
-heat#
+heat food_time indoor_bonus#
 
-Tells player about their current heat value.
+Tells player about their current heat value, food drain time, and indoor bonus.
+
+Food drain time and indoor bonus are in seconds.
+
+Food drain time is total including bonus.
 
 
 
