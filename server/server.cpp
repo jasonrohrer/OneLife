@@ -8159,7 +8159,7 @@ int processLoggedInPlayer( char inAllowReconnect,
         if( numOfAge >= 4 ) {
             // there are at least 4 fertile females on the server
             // why is this player spawning as Eve?
-            // they must be on lineage ban everywhere
+            // they must be on lineage ban everywhere OR a forced Eve injection
             // (and they are NOT a solo player on an empty server)
             // don't allow them to spawn back at their last old-age Eve death
             // location.

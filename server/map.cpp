@@ -7923,7 +7923,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
     doublePair ave = { 0, 0 };
 
-    printf( "Placing new Eve:  " );
+    printf( "Placing new Eve...\n" );
     
     
     int pX, pY, pR;
@@ -7931,7 +7931,8 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
     int result = eveDBGet( inEmail, &pX, &pY, &pR );
     
     if( inAllowRespawn && result == 1 && pR > 0 ) {
-        printf( "Found camp center (%d,%d) r=%d in db for %s\n",
+        printf( "Placing new Eve:  "
+                "Found camp center (%d,%d) r=%d in db for %s\n",
                 pX, pY, pR, inEmail );
         
         ave.x = pX;
@@ -7939,8 +7940,13 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         currentEveRadius = pR;
         }
     else if( SettingsManager::getIntSetting( "useEveMovingGrid", 0 ) ) {
+        printf( "Placing new Eve:  "
+                "using Eve moving grid method\n" );
 
         getEveMovingGridPosition( & eveLocation.x, & eveLocation.y );
+        
+        ave.x = eveLocation.x;
+        ave.y = eveLocation.y;
         
         forceEveToBorder = true;
         currentEveRadius = 50;
@@ -7951,6 +7957,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
         maxEveLocationUsage = 
             SettingsManager::getIntSetting( "maxEveStartupLocationUsage", 10 );
+
+
+        printf( "Placing new Eve:  "
+                "using Eve spiral method\n" );
 
         
         // first try new grid placement method
@@ -8371,6 +8381,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                 }
             }
         }
+
+    printf( "Placing new Eve:  "
+            "Final location (%d,%d)\n", *outX, *outY );
+
 
     
     // clear recent placements after placing a new Eve
