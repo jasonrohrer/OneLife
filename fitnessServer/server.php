@@ -1131,6 +1131,23 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
     $old_score = fs_mysqli_result( $result, 0, "score" );
 
 
+    $query = "SELECT COUNT(*) from $tableNamePrefix"."offspring ".
+        "WHERE player_id = $player_id AND life_id = $life_id;";
+    $result = fs_queryDatabase( $query );
+
+    $count = fs_mysqli_result( $result, 0, 0 );
+
+    if( $count > 0 ) {
+        // this life has already been counted toward the score of this
+        // email address
+        // (perhaps this life was our daughter in a previous life
+        //  and our mother in this life---we've already counted the score
+        //  from this life as our daughter.)
+        // Don't double-count.
+        return;
+        }
+    
+    
     // score update
     global $formulaR, $formulaK;
 

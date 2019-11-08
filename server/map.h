@@ -298,6 +298,12 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
                                  int inRadiusLimit = -1 );
 
 
+
+GridPos getClosestLandingPos( GridPos inTargetPos, char *outFound );
+
+
+
+
 // get and set player ID for grave on map
 
 // returns 0 if not found

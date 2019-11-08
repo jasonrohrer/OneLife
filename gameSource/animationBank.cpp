@@ -2418,7 +2418,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 animHeadPos.x *= -1;
                 animHeadRotDelta *= -1;
                 }
-            
+            if( inRot != 0 ) {
+                animHeadPos = rotate( animHeadPos, -2 * M_PI * inRot );
+                animHeadRotDelta += inRot;
+                }            
             }
 
         
@@ -2432,6 +2435,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 animBodyRotDelta *= -1;
                 }
             
+            if( inRot != 0 ) {
+                animBodyPos = rotate( animBodyPos, -2 * M_PI * inRot );
+                animBodyRotDelta += inRot;
+                }
             }
 
 

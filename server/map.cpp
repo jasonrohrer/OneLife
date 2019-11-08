@@ -5,6 +5,8 @@
 
 #include "CoordinateTimeTracking.h"
 
+#include "eveMovingGrid.h"
+
 
 // cell pixel dimension on client
 #define CELL_D 128
@@ -6482,6 +6484,11 @@ static void runTapoutOperation( int inX, int inY,
              x <= inX + inRadiusX; 
              x += inSpacingX ) {
             
+            if( inX == x && inY == y ) {
+                // skip center
+                continue;
+                }
+
             int id = getMapObjectRaw( x, y );
                     
             // change triggered by tapout represented by 
@@ -6491,9 +6498,11 @@ static void runTapoutOperation( int inX, int inY,
             
             int newTarget = -1;
 
-            if( ! inIsPost && y == inY ) {
+            if( ! inIsPost && ( y == inY || x == inX ) ) {
                 // last use target signifies what happens in 
-                // same row as inX, inY
+                // same row or column as inX, inY
+                
+                // get eastward
                 t = getPTrans( inTriggerID, id, false, true );
 
                 if( t != NULL ) {
@@ -6501,13 +6510,40 @@ static void runTapoutOperation( int inX, int inY,
                     }
                 
 
-                if( x > inX && newTarget > 0) {
+                if( x >= inX && newTarget > 0 ) {
                     // apply result to itself to flip it 
                     // and point gradient in other direction
+                
+                    // eastward + eastward = westward
                     TransRecord *flipTrans = getPTrans( newTarget, newTarget );
                     
                     if( flipTrans != NULL ) {
                         newTarget = flipTrans->newTarget;
+                        
+
+                        if( x == inX && newTarget > 0 ) {
+                            // same column
+
+                            // westward + westward = southward
+                            flipTrans = 
+                                getPTrans( newTarget, newTarget );
+
+                            if( flipTrans != NULL ) {
+                                newTarget = flipTrans->newTarget;
+                        
+                                if( y < inY && newTarget > 0 ) {
+                                    // below
+
+                                    // southward + southward = northward
+                                    flipTrans = 
+                                        getPTrans( newTarget, newTarget );
+                                    
+                                    if( flipTrans != NULL ) {
+                                        newTarget = flipTrans->newTarget;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -7887,7 +7923,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
     doublePair ave = { 0, 0 };
 
-    printf( "Placing new Eve:  " );
+    printf( "Placing new Eve...\n" );
     
     
     int pX, pY, pR;
@@ -7895,12 +7931,25 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
     int result = eveDBGet( inEmail, &pX, &pY, &pR );
     
     if( inAllowRespawn && result == 1 && pR > 0 ) {
-        printf( "Found camp center (%d,%d) r=%d in db for %s\n",
+        printf( "Placing new Eve:  "
+                "Found camp center (%d,%d) r=%d in db for %s\n",
                 pX, pY, pR, inEmail );
         
         ave.x = pX;
         ave.y = pY;
         currentEveRadius = pR;
+        }
+    else if( SettingsManager::getIntSetting( "useEveMovingGrid", 0 ) ) {
+        printf( "Placing new Eve:  "
+                "using Eve moving grid method\n" );
+
+        getEveMovingGridPosition( & eveLocation.x, & eveLocation.y );
+        
+        ave.x = eveLocation.x;
+        ave.y = eveLocation.y;
+        
+        forceEveToBorder = true;
+        currentEveRadius = 50;
         }
     else {
         // player has never been an Eve that survived to old age before
@@ -7908,6 +7957,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
         maxEveLocationUsage = 
             SettingsManager::getIntSetting( "maxEveStartupLocationUsage", 10 );
+
+
+        printf( "Placing new Eve:  "
+                "using Eve spiral method\n" );
 
         
         // first try new grid placement method
@@ -8329,6 +8382,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             }
         }
 
+    printf( "Placing new Eve:  "
+            "Final location (%d,%d)\n", *outX, *outY );
+
+
     
     // clear recent placements after placing a new Eve
     // let her make new placements in her life which we will remember
@@ -8613,6 +8670,49 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
                 closestPos = thisPos;
                 closestIndex = i;
                 }
+            }
+        }
+    
+    if( closestIndex == -1 ) {
+        *outFound = false;
+        }
+    else {
+        *outFound = true;
+        }
+    
+    return closestPos;
+    }
+
+
+
+
+GridPos getClosestLandingPos( GridPos inTargetPos, char *outFound ) {
+
+    int closestIndex = -1;
+    GridPos closestPos;
+    double closestDist = DBL_MAX;
+    
+    for( int i=0; i<flightLandingPos.size(); i++ ) {
+        GridPos thisPos = flightLandingPos.getElementDirect( i );
+
+        
+        double dist = distSquared( inTargetPos, thisPos );
+        
+        if( dist < closestDist ) {
+            // check if this is still a valid landing pos
+            int oID = getMapObject( thisPos.x, thisPos.y );
+            
+            if( oID <=0 ||
+                ! getObject( oID )->isFlightLanding ) {
+                
+                // not even a valid landing pos anymore
+                flightLandingPos.deleteElement( i );
+                i--;
+                continue;
+                }
+            closestDist = dist;
+            closestPos = thisPos;
+            closestIndex = i;
             }
         }
     
