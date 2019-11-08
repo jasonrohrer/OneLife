@@ -36,6 +36,8 @@ A lightly modified client for [One Hour One Life](http://onehouronelife.com), a 
 # Installation
 Download the [latest release](https://github.com/Awbz/OneLife/releases/latest) for your OS and extract all 5 files from the zip file into the folder where your game is installed.  There should be 1 executable and 4 text documents.  That's it!
 
+***IMPORTANT NOTE FOR MAC USERS:*** Jason has officially dropped support for macOS, so the installation is slightly different as there are no longer auto-updates.  This macOS release is now a full client, compiled for 64-bit, and the entire OneLife_v### directory within the macOS zip file should be copied into your Applications folder.
+
 Now just launch the game with OneLife+.exe for Windows, OneLife_v###+.app on macOS (where ### is the client version), or OneLife+ on Linux.
 
 
