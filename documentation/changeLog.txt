@@ -80,6 +80,9 @@ Server Fixes
 
 --Getting yellow fever clears yummy bonus food store.
 
+--Boundless world:  turned min family limit off, so that arc messages don't
+  mention it.
+
 
 
 
