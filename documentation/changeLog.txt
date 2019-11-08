@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 280   ??
+Version 280   2019-November-8
 
 --Fixed crash when person making an off-screen sound dies.
 
