@@ -11825,7 +11825,7 @@ void executeKillAction( int inKillerIndex,
                                             
                             if( e.foodModifierSet && 
                                 e.foodCapModifier != 1 ) {
-                                                
+                                hitPlayer->yummyBonusStore = 0;
                                 hitPlayer->
                                     foodCapModifier = 
                                     e.foodCapModifier;
@@ -14151,7 +14151,7 @@ int main() {
                                     }
                                 if( e.foodModifierSet && 
                                     e.foodCapModifier != 1 ) {
-                                
+                                    nextPlayer->yummyBonusStore = 0;
                                     nextPlayer->foodCapModifier = 
                                         e.foodCapModifier;
                                     nextPlayer->foodUpdate = true;
@@ -17324,6 +17324,7 @@ int main() {
                                                 targetPlayer->id, e.ttlSec );
                                             }
                                         if( e.foodCapModifier != 1 ) {
+                                            targetPlayer->yummyBonusStore = 0;
                                             targetPlayer->foodCapModifier = 
                                                 e.foodCapModifier;
                                             targetPlayer->foodUpdate = true;

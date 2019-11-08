@@ -78,6 +78,7 @@ Server Fixes
   flights much more reliable and much less griefable with cargo-cult trap
   strips.  Poor five oz. of vodka on the sidewalk for our fallen comrade Tarr.
 
+--Getting yellow fever clears yummy bonus food store.
 
 
 
