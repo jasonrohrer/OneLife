@@ -2620,7 +2620,6 @@ static void restockPostWindowFamilies() {
         if( ! o->error &&
             ! o->isTutorial &&
             o->curseStatus.curseLevel == 0 &&
-            o->familyName != NULL &&
             familyLineageEveIDsAfterEveWindow.getElementIndex( 
                 o->lineageEveID ) == -1 ) {
             // haven't seen this family before
@@ -2638,15 +2637,26 @@ static void restockPostWindowFamilies() {
 
             familyLineageEveIDsAfterEveWindow.push_back( 
                 o->lineageEveID );
-            familyNamesAfterEveWindow.push_back(
-                stringDuplicate( o->familyName ) );
+
+            char *nameCopy = NULL;
+
+            if( o->familyName != NULL ) {
+                nameCopy = stringDuplicate( o->familyName );
+                }
+            else {
+                // don't skip tracking families that have no names
+                nameCopy = autoSprintf( "UNNAMED_%d", o->lineageEveID );
+                }
+            
+            familyNamesAfterEveWindow.push_back( nameCopy );
+        
 
             // start with estimate of one person per family
             familyCountsAfterEveWindow.push_back( 1 );
             
             
             if( postWindowFamilyLogFile != NULL ) {
-                fprintf( postWindowFamilyLogFile, "\"%s\" ", o->familyName );
+                fprintf( postWindowFamilyLogFile, "\"%s\" ", nameCopy );
                 }
             }
         }
@@ -6533,14 +6543,26 @@ static int countFamilies() {
 
 
 static int getNextBabyFamilyLineageEveIDFewestFemales() {
-    SimpleVector<int> femaleCountPerFam;
+    SimpleVector<int> uniqueFams;
     
     int minFemales = 999999;
     int minFemalesLineageEveID = -1;
 
-    for( int i=0; i<familyLineageEveIDsAfterEveWindow.size(); i++ ) {
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+
+        if( ! isPlayerCountable( p ) ) {
+            continue;
+            }
+        if( uniqueFams.getElementIndex( p->lineageEveID ) == -1 ) {
+            uniqueFams.push_back( p->lineageEveID );
+            }
+        }
+    
+
+    for( int i=0; i<uniqueFams.size(); i++ ) {
         int lineageEveID = 
-            familyLineageEveIDsAfterEveWindow.getElementDirect( i );
+            uniqueFams.getElementDirect( i );
 
         int famMothers = countFertileMothers( lineageEveID );
         int famGirls = countGirls( lineageEveID );
@@ -15721,6 +15743,11 @@ int main() {
                                     name,
                                     &( m.saidText ),
                                     nextPlayer, true );
+                                
+                                if( ! isEveWindow() ) {
+                                    // new family name created
+                                    restockPostWindowFamilies();
+                                    }        
 
                                 if( strstr( m.saidText, "EVE EVE" ) != NULL ) {
                                     // their naming phrase was I AM EVE SMITH
@@ -15790,6 +15817,11 @@ int main() {
                                                 name,
                                                 &( m.saidText ),
                                                 closestOther, true );
+                                            
+                                            if( ! isEveWindow() ) {
+                                                // new family name created
+                                                restockPostWindowFamilies();
+                                                }
                                             }
                                         }
                                     else {
