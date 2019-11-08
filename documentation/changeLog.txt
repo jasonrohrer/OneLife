@@ -13,7 +13,7 @@ Version 280   ??
   that /HUBBARD SQUASH and /PUMPKIN filters work (and other objects that pass
   through a probability set along the way).
 
---Fixed off-possion emotes for babies that are lying down.
+--Fixed off-position emotes for babies that are lying down.
 
 --Finally fixed main cause of moon-walking glitch.  Fixes #309
 
@@ -47,13 +47,13 @@ Server Fixes
   stomach size.  So newborn babies and unfit elderly have 1 overflow capacity,
   and adults have 90.6 overflow capacity (and more fit elderly have more
   overflow capacity than 1).  This increases the potential beneficial size
-  range of large foods, like feasts.  The non-linear formuala, based on Miska's
+  range of large foods, like feasts.  The non-linear formula, based on Miska's
   suggestion, is 1 + pow( inBaseCapacity, 8 ) * 0.0000000035.
 
---End of posse/kill joining spam.  You must end your current targetting (by
-  dropping your weapon) in order to start another targetting.  You can't keep
-  spam-targetting the same person, nor can you spam toggle back and forth
-  between targetting two people, unless you drop and re-grab your weapon.
+--End of posse/kill joining spam.  You must end your current targeting (by
+  dropping your weapon) in order to start another target-ting.  You can't keep
+  spam-target-ting the same person, nor can you spam toggle back and forth
+  between target-ting two people, unless you drop and re-grab your weapon.
   Fixes #439
 
 --Boundless world:  barrier off.
@@ -66,12 +66,18 @@ Server Fixes
   we wait for a player who has a fitness score matching or exceeding the
   highest fitness score seen for the 10 most-recently-joined living players.
 
---Boundless world:  Eves placed on a persisent, moving, zig-zag grid.  Each
+--Boundless world:  Eves placed on a persistent, moving, zig-zag grid.  Each
   grid point is 320 tiles away from other grid points to NSEW.  Grid columns
   are 5 points tall, with new columns distributed further to the west.  Thus,
   Eves are placed in a horizontal band that grows toward the west.  Walk east
   to find older parts of civilization.  Walk north or south to find endless
   wilderness.
+
+--Reading a map within 30 seconds before taking off in a plane causes you to
+  land at the closest landing strip to the map's destination.  This makes plane
+  flights much more reliable and much less griefable with cargo-cult trap
+  strips.  Poor five oz. of vodka on the sidewalk for our fallen comrade Tarr.
+
 
 
 

@@ -887,6 +887,9 @@ typedef struct LiveObject {
         // list of owned positions that this player has heard about
         SimpleVector<GridPos> knownOwnedPositions;
 
+        GridPos forceFlightDest;
+        double forceFlightDestSetTime;
+        
     } LiveObject;
 
 
@@ -8433,6 +8436,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     newObject.forceSpawn = false;
 
+    newObject.forceFlightDestSetTime = 0;
                 
     for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
         newObject.heatMap[i] = 0;
@@ -19630,20 +19634,50 @@ int main() {
                                     radiusLimit = barrierRadius;
                                     }
 
-                                GridPos destPos = 
-                                    getNextFlightLandingPos(
+                                GridPos destPos = { -1, -1 };
+                                
+                                char foundMap = false;
+                                if( Time::getCurrentTime() - 
+                                    nextPlayer->forceFlightDestSetTime
+                                    < 30 ) {
+                                    // map fresh in memory
+
+                                    
+                                    destPos = getClosestLandingPos( 
+                                        nextPlayer->forceFlightDest,
+                                        &foundMap );
+                                    
+                                    // find strip closest to last
+                                    // read map position
+                                    AppLog::infoF( 
+                                    "Player %d flight taking off from (%d,%d), "
+                                    "map dest (%d,%d), found=%d, found (%d,%d)",
+                                    nextPlayer->id,
+                                    nextPlayer->xs, nextPlayer->ys,
+                                    nextPlayer->forceFlightDest.x,
+                                    nextPlayer->forceFlightDest.y,
+                                    foundMap,
+                                    destPos.x, destPos.y );
+                                    }                                
+                                if( ! foundMap ) {
+                                    // find strip in flight direction
+                                    
+                                    destPos = getNextFlightLandingPos(
                                         nextPlayer->xs,
                                         nextPlayer->ys,
                                         takeOffDir,
                                         radiusLimit );
-                            
-                                AppLog::infoF( 
-                                    "Player %d flight taking off from (%d,%d), "
+                                    
+                                    AppLog::infoF( 
+                                    "Player %d non-map flight taking off "
+                                    "from (%d,%d), "
                                     "flightDir (%f,%f), dest (%d,%d)",
                                     nextPlayer->id,
                                     nextPlayer->xs, nextPlayer->ys,
                                     xDir, yDir,
                                     destPos.x, destPos.y );
+                                    }
+                                
                                 
                                 
                             
@@ -21942,6 +21976,16 @@ int main() {
                                             
                                             delete [] trimmedPhrase;
                                             trimmedPhrase = newTrimmed;
+
+                                            if( speakerObj != NULL ) {
+                                                speakerObj->forceFlightDest.x
+                                                    = mapX;
+                                                speakerObj->forceFlightDest.y
+                                                    = mapY;
+                                                speakerObj->
+                                                    forceFlightDestSetTime
+                                                    = Time::getCurrentTime();
+                                                }
                                             }
                                         }
                                     }

@@ -8683,6 +8683,49 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
     return closestPos;
     }
 
+
+
+
+GridPos getClosestLandingPos( GridPos inTargetPos, char *outFound ) {
+
+    int closestIndex = -1;
+    GridPos closestPos;
+    double closestDist = DBL_MAX;
+    
+    for( int i=0; i<flightLandingPos.size(); i++ ) {
+        GridPos thisPos = flightLandingPos.getElementDirect( i );
+
+        
+        double dist = distSquared( inTargetPos, thisPos );
+        
+        if( dist < closestDist ) {
+            // check if this is still a valid landing pos
+            int oID = getMapObject( thisPos.x, thisPos.y );
+            
+            if( oID <=0 ||
+                ! getObject( oID )->isFlightLanding ) {
+                
+                // not even a valid landing pos anymore
+                flightLandingPos.deleteElement( i );
+                i--;
+                continue;
+                }
+            closestDist = dist;
+            closestPos = thisPos;
+            closestIndex = i;
+            }
+        }
+    
+    if( closestIndex == -1 ) {
+        *outFound = false;
+        }
+    else {
+        *outFound = true;
+        }
+    
+    return closestPos;
+    }
+
                 
 
 
