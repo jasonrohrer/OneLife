@@ -6544,6 +6544,60 @@ static int countFamilies() {
 
 
 
+// make sure same family isn't picked too often to get a baby
+// don't hammer Eve even though her fam is currently the weakest
+typedef struct FamilyPickedRecord {
+        int lineageEveID;
+        double lastPickTime;
+    } FamilyPickedRecord;
+
+
+static SimpleVector<FamilyPickedRecord> familiesRecentlyPicked;
+
+
+static char isFamilyTooRecent( int inLineageEveID, int inMomCount ) {
+    double curTime = Time::getCurrentTime();
+    
+    // let one mom wait 1.5 minutes between BB
+    double waitTime = 1.5 * 60.0 / inMomCount;
+    
+
+    for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
+        FamilyPickedRecord *r = familiesRecentlyPicked.getElement( i );
+        if( r->lineageEveID == inLineageEveID ) {
+            if( curTime - r->lastPickTime < waitTime ) {
+                // fam got BB too recently
+                return true;
+                }
+            else {
+                return false;
+                }
+            }
+        }
+    
+    return false;
+    }
+
+
+
+static void markFamilyGotBabyNow( int inLineageEveID ) {
+    double curTime = Time::getCurrentTime();
+    
+    for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
+        FamilyPickedRecord *r = familiesRecentlyPicked.getElement( i );
+        if( r->lineageEveID == inLineageEveID ) {
+            r->lastPickTime = curTime;
+            return;
+            }
+        }
+    
+    // not found
+    FamilyPickedRecord r = { inLineageEveID, curTime };
+    familiesRecentlyPicked.push_back( r );
+    }
+
+
+
 
 static int getNextBabyFamilyLineageEveIDFewestFemales() {
     SimpleVector<int> uniqueFams;
@@ -6563,11 +6617,31 @@ static int getNextBabyFamilyLineageEveIDFewestFemales() {
         }
     
 
+
+    // clear stale family records
+    for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
+        FamilyPickedRecord *r = familiesRecentlyPicked.getElement( i );
+        
+        if( uniqueFams.getElementIndex( r->lineageEveID ) == -1 ) {
+            // stale
+            familiesRecentlyPicked.deleteElement( i );
+            i--;
+            }
+        }
+    
+
+
     for( int i=0; i<uniqueFams.size(); i++ ) {
         int lineageEveID = 
             uniqueFams.getElementDirect( i );
 
         int famMothers = countFertileMothers( lineageEveID );
+
+        if( isFamilyTooRecent( lineageEveID, famMothers ) ) {
+            continue;
+            }
+
+
         int famGirls = countGirls( lineageEveID );
         
         int famFemales = famMothers + famGirls;
@@ -6581,6 +6655,10 @@ static int getNextBabyFamilyLineageEveIDFewestFemales() {
                 minFemalesLineageEveID = lineageEveID;
                 }
             }
+        }
+
+    if( minFemalesLineageEveID != -1 ) {
+        markFamilyGotBabyNow( minFemalesLineageEveID );
         }
     
     return minFemalesLineageEveID;

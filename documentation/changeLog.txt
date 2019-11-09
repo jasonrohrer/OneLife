@@ -3,6 +3,16 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes
+
+--Fixed so that one weak family isn't hammered with too many incoming babies.
+  Let 1.5 minutes pass bewteen each baby per mother.  Otherwise, Eve, who is
+  always the weakest family, gets hammered with incoming babies.
+
+
+
+
 Version 280   2019-November-8
 
 --Fixed crash when person making an off-screen sound dies.
