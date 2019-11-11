@@ -30,7 +30,8 @@ typedef struct FolderCache {
 
 
 FolderCache initFolderCache( const char *inFolderName,
-                             char *outRebuildingCache );
+                             char *outRebuildingCache,
+                             char inForceRebuild = false );
 
 
 // both results destroyed by caller

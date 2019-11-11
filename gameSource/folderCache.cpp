@@ -13,7 +13,8 @@
 
 
 FolderCache initFolderCache( const char *inFolderName, 
-                             char *outRebuildingCache ) {
+                             char *outRebuildingCache,
+                             char inForceRebuild ) {
     *outRebuildingCache = false;
     
     File *folderDir = new File( NULL, inFolderName );
@@ -27,6 +28,13 @@ FolderCache initFolderCache( const char *inFolderName,
     
     File *cacheFile = folderDir->getChildFile( "cache.fcz" );
     
+    if( inForceRebuild && cacheFile->exists() ) {
+        printf( "Forcing remove/rebuild of cache.fcz in %s folder\n",
+                inFolderName );
+
+        cacheFile->remove();
+        }
+
 
     FolderCache c;
     c.folderDir = folderDir;

@@ -8,6 +8,9 @@ Version 283   ???
 --Fixed crash when sprite .tga file exists but .txt file doesn't (either in
   folder or in stale caches).
 
+--Sane behavior in unexpected situation:  clear sprite .txt file cache.fcz
+  whenver we rebuild .tga file bin_cache.fcz  There's a chance that Steam
+  doesn't properly update cache.fcz, leaving it outdated.
 
 
 

@@ -88,9 +88,18 @@ int initSpriteBankStart( char *outRebuildingCache ) {
     currentBinFile = 0;
     
     char rebuildingA, rebuildingB;
-    cache = initFolderCache( "sprites", &rebuildingA );
+    
 
     binCache = initBinFolderCache( "sprites", ".tga", &rebuildingB );
+
+    char forceRebuild = false;
+
+    if( rebuildingB ) {
+        forceRebuild = true;
+        }
+
+    cache = initFolderCache( "sprites", &rebuildingA, forceRebuild );
+    
 
     *outRebuildingCache = rebuildingA || rebuildingB;
     
