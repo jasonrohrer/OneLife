@@ -29,8 +29,12 @@ typedef struct FolderCache {
 
 
 
+// inInclusionTest is a function that takes a file name and returns
+// true if the file should be included in the cache
+
 FolderCache initFolderCache( const char *inFolderName,
                              char *outRebuildingCache,
+                             char (*inInclusionTest)( char *inFileName ),
                              char inForceRebuild = false );
 
 

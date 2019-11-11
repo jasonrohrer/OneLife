@@ -164,7 +164,8 @@ int initAnimationBankStart( char *outRebuildingCache ) {
     currentFile = 0;
 
     
-    cache = initFolderCache( "animations", outRebuildingCache );
+    cache = initFolderCache( "animations", outRebuildingCache,
+                             shouldFileBeCached );
 
     return cache.numFiles;
     }

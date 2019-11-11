@@ -109,7 +109,8 @@ int initSpriteBankStart( char *outRebuildingCache ) {
         forceRebuild = true;
         }
 
-    cache = initFolderCache( "sprites", &rebuildingA, forceRebuild );
+    cache = initFolderCache( "sprites", &rebuildingA, shouldFileBeCached,
+                             forceRebuild );
     
 
     *outRebuildingCache = rebuildingA || rebuildingB;

@@ -15,6 +15,10 @@ Version 283   ???
 --More graceful handling of objects that refer to sprites that don't exist.
   Draw them without that sprite.  Used to wait forever for that sprite to load.
 
+--Making sure cache.fcz has exactly same list of files as corresponding folder.
+  Checks file names only, not contents.  On mismatch, cache.fcz is rebuilt.
+
+
 
 
 Server Fixes

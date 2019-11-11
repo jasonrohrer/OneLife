@@ -59,7 +59,8 @@ int initCategoryBankStart( char *outRebuildingCache ) {
     currentFile = 0;
     
 
-    cache = initFolderCache( "categories", outRebuildingCache );
+    cache = initFolderCache( "categories", outRebuildingCache,
+                             shouldFileBeCached );
 
     return cache.numFiles;
     }
