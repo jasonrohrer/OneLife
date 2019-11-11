@@ -12,6 +12,8 @@ Server Fixes
 
 --Max baby/mom ratio before eve injection now 2 (was 3).
 
+--Max player/fam ratio pushed up to 13 (was 9), meaning fewer, bigger families.
+
 
 
 
