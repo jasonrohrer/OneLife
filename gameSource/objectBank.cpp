@@ -621,11 +621,7 @@ static void setupTapout( ObjectRecord *inR ) {
 
 static void setupToolSet( ObjectRecord *inR ) {
     inR->toolSetIndex = -1;
-    inR->toolLearned = false;
-    
-    if( inR->id == 850 ) {
-        printf( "Hey\n" );
-        }
+    inR->toolLearned = false;    
     
     char *toolPos = strstr( inR->description, "+tool" );
                 
@@ -3807,9 +3803,12 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                 toggleAdditiveBlend( true );
                 }
 
-            drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
-                        rot, 
-                        logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
+            SpriteHandle sh = getSprite( inObject->sprites[i] );
+            if( sh != NULL ) {
+                drawSprite( sh, pos, inScale,
+                            rot, 
+                            logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
+                }
             
             if( multiplicative ) {
                 toggleMultiplicativeBlend( false );
@@ -4804,6 +4803,10 @@ double getClosestObjectPart( ObjectRecord *inObject,
         
         SpriteRecord *sr = getSpriteRecord( inObject->sprites[i] );
         
+        if( sr == NULL ) {
+            continue;
+            }
+
         if( !inConsiderTransparent &&
             sr->multiplicativeBlend ){
             // skip this transparent sprite

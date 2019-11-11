@@ -19409,6 +19409,12 @@ void LivingLifePage::step() {
                         if( markSpriteLive( displayObj->sprites[s] ) ) {
                             numLoaded ++;
                             }
+                        else if( getSpriteRecord( displayObj->sprites[s] )
+                                 == NULL ) {
+                            // object references sprite that doesn't exist
+                            // count as loaded
+                            numLoaded ++;
+                            }
                         }
                     
                     if( numLoaded == displayObj->numSprites ) {

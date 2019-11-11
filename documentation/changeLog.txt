@@ -12,6 +12,9 @@ Version 283   ???
   whenver we rebuild .tga file bin_cache.fcz  There's a chance that Steam
   doesn't properly update cache.fcz, leaving it outdated.
 
+--More graceful handling of objects that refer to sprites that don't exist.
+  Draw them without that sprite.  Used to wait forever for that sprite to load.
+
 
 
 Server Fixes

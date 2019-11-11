@@ -2884,8 +2884,11 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     }
                 }
             else {
-                drawSprite( getSprite( spriteID ), pos, 1.0, rot, 
-                            logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+                SpriteHandle sh = getSprite( spriteID );
+                if( sh != NULL ) {
+                    drawSprite( sh, pos, 1.0, rot, 
+                                logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+                    }
                 }
             
             if( multiplicative ) {

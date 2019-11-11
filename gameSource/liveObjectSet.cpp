@@ -106,9 +106,13 @@ void addBaseObjectToLiveObjectSet( int inID ) {
             int spriteID = o->sprites[j];
             
             if( ! liveSpriteIDMap[ spriteID ] ) {
-
-                liveSpriteIDMap[ spriteID ] = true;
-                liveSpriteSet.push_back( spriteID );
+                
+                // only if it exists as a sprite record
+                // otherwise, object refers to a sprite that doesn't exist
+                if( getSpriteRecord( spriteID ) != NULL ) {
+                    liveSpriteIDMap[ spriteID ] = true;
+                    liveSpriteSet.push_back( spriteID );
+                    }
                 }
             }
         
