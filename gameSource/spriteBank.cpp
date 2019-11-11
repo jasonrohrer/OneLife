@@ -80,6 +80,17 @@ void enableSpriteSearch( char inEnable ) {
 
 
 
+// skip all non-txt files (only read meta data files on init, 
+// not bulk data tga files)
+static char shouldFileBeCached( char *inFileName ) {
+    if( strstr( inFileName, ".txt" ) != NULL &&
+        strcmp( inFileName, "nextSpriteNumber.txt" ) != 0 ) {
+        return true;
+        }
+    return false;
+    }
+
+
 
 int initSpriteBankStart( char *outRebuildingCache ) {
     maxID = 0;
@@ -290,10 +301,7 @@ float initSpriteBankStep() {
 
         char *fileName = getFileName( cache, i );
     
-        // skip all non-txt files (only read meta data files on init, 
-        // not bulk data tga files)
-        if( strstr( fileName, ".txt" ) != NULL &&
-            strcmp( fileName, "nextSpriteNumber.txt" ) != 0 ) {
+        if( shouldFileBeCached( fileName ) ) {
                             
             //printf( "Loading sprite from path %s\n", fileName );
 

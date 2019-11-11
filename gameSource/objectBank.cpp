@@ -255,6 +255,17 @@ void setDrawColor( FloatRGB inColor ) {
 
 
 
+static char shouldFileBeCached( char *inFileName ) {
+    if( strstr( inFileName, ".txt" ) != NULL &&
+        strstr( inFileName, "groundHeat_" ) == NULL &&
+        strcmp( inFileName, "nextObjectNumber.txt" ) != 0 ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
 static char autoGenerateUsedObjects = false;
 static char autoGenerateVariableObjects = false;
 
@@ -667,9 +678,7 @@ float initObjectBankStep() {
                 
     char *txtFileName = getFileName( cache, i );
             
-    if( strstr( txtFileName, ".txt" ) != NULL &&
-        strstr( txtFileName, "groundHeat_" ) == NULL &&
-        strcmp( txtFileName, "nextObjectNumber.txt" ) != 0 ) {
+    if( shouldFileBeCached( txtFileName ) ) {
                             
         // an object txt file!
                     

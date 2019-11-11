@@ -43,6 +43,14 @@ static int maxID;
 static int maxObjectID;
 
 
+static char shouldFileBeCached( char *inFileName ) {
+    if( strstr( inFileName, ".txt" ) != NULL ) {
+        return true;
+        }
+    return false;
+    }
+
+
 
 int initCategoryBankStart( char *outRebuildingCache ) {
     maxID = 0;
@@ -70,7 +78,7 @@ float initCategoryBankStep() {
                 
     char *txtFileName = getFileName( cache, i );
             
-    if( strstr( txtFileName, ".txt" ) != NULL ) {
+    if( shouldFileBeCached( txtFileName ) ) {
                             
         // a category txt file!
                     

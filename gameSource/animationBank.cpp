@@ -69,6 +69,14 @@ static char mouthFrameOutputStarted = false;
 
 
 
+static char shouldFileBeCached( char *inFileName ) {
+    if( strstr( inFileName, ".txt" ) != NULL ) {
+        return true;
+        }
+    return false;
+    }
+
+
 
 
 int initAnimationBankStart( char *outRebuildingCache ) {
@@ -174,7 +182,7 @@ float initAnimationBankStep() {
 
     char *txtFileName = getFileName( cache, i );
                         
-    if( strstr( txtFileName, ".txt" ) != NULL ) {
+    if( shouldFileBeCached( txtFileName ) ) {
         
         // every .txt file is an animation file
 
