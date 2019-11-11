@@ -456,25 +456,27 @@ float initSpriteBankStep() {
 
             if( spriteID > 0 ) {
                 
-                SpriteRecord *r = getSpriteRecord( spriteID );
-                
-                // there might be tga file that we have no .txt file, and thus
-                // no record, for
-                if( r != NULL ) {
-                    int contSize;
-                    unsigned char *contents = getFileContents( binCache, i,
-                                                               fileName, 
-                                                               &contSize );
-                    if( contents != NULL ) {
-                        
+                int contSize;
+                unsigned char *contents = getFileContents( binCache, i,
+                                                           fileName, 
+                                                           &contSize );
+                if( contents != NULL ) {
+                    
+                    // there might be tga file that we have no .txt file, 
+                    // and thus no record
+                    // Note that we still must read content for such a file,
+                    // because binCache must be read in order.
+                    SpriteRecord *r = getSpriteRecord( spriteID );
+                    
+                    if( r != NULL ) {
                         loadSpriteFromRawTGAData( 
                             spriteID, contents, contSize );
                     
                         r->numStepsUnused = 0;
                         loadedSprites.push_back( spriteID );
-                        
-                        delete [] contents;
                         }
+                    
+                    delete [] contents;
                     }
                 }
             }
