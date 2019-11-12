@@ -39,6 +39,8 @@ Server Fixes
 --Biome placement on map now uses a 64-bit seed (was 32-bits) to make brute-
   force seed guessing, based on map samples, impractical.
 
+--Fixed a memory leak in map reseeding.
+
 
 
 
