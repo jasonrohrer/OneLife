@@ -41,6 +41,8 @@ Server Fixes
 
 --Fixed a memory leak in map reseeding.
 
+--Map change logs now roll over every 24 hours and don't include biome seed.
+
 
 
 

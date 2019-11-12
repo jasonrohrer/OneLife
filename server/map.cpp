@@ -2770,6 +2770,7 @@ static void setupMapChangeLogFile() {
         logFolder.makeDirectory();
         }
 
+    // always close file and start a new one when this is called
 
     if( mapChangeLogFile != NULL ) {
         fclose( mapChangeLogFile );
@@ -2779,46 +2780,12 @@ static void setupMapChangeLogFile() {
 
     if( logFolder.isDirectory() ) {
         
-        char *biomeSeedString = autoSprintf( "%u_%u", 
-                                             biomeRandSeedA,
-                                             biomeRandSeedB );
-        
-        // does log file already exist?
-
-        int numFiles;
-        File **childFiles = logFolder.getChildFiles( &numFiles );
-        
-        for( int i=0; i<numFiles; i++ ) {
-            File *f = childFiles[i];
-            
-            char *name = f->getFileName();
-        
-            if( strstr( name, biomeSeedString ) != NULL ) {
-                // found!
-                char *fullFileName = f->getFullFileName();
-                mapChangeLogFile = fopen( fullFileName, "a" );
-                delete [] fullFileName;
-                }
-            delete [] name;
-            if( mapChangeLogFile != NULL ) {
-                break;
-                }
-            }
-        for( int i=0; i<numFiles; i++ ) {
-            delete childFiles[i];
-            }
-        delete [] childFiles;
-
-        delete [] biomeSeedString;
-            
-        
         if( mapChangeLogFile == NULL ) {
 
             // file does not exist
             char *newFileName = 
-                autoSprintf( "%.ftime_%useedA_%useedB_mapLog.txt",
-                             Time::getCurrentTime(),
-                             biomeRandSeedA, biomeRandSeedB );
+                autoSprintf( "%.ftime_mapLog.txt",
+                             Time::getCurrentTime() );
             
             File *f = logFolder.getChildFile( newFileName );
             
@@ -3007,6 +2974,7 @@ void reseedMap( char inForceFresh ) {
                     }
                 }
             }
+        delete [] allObjects;
         }
 
                 
@@ -6929,6 +6897,16 @@ static void logMapChange( int inX, int inY, int inID ) {
     // log it?
     if( mapChangeLogFile != NULL ) {
         
+        double timeDelta = Time::getCurrentTime() - mapChangeLogTimeStart;
+
+        if( timeDelta > 3600 * 24 ) {
+            // break logs int 24-hour chunks
+            setupMapChangeLogFile();
+            timeDelta = Time::getCurrentTime() - mapChangeLogTimeStart;
+            }
+        
+        
+
         ObjectRecord *o = getObject( inID );
         
         const char *extraFlag = "";
@@ -6945,8 +6923,8 @@ static void logMapChange( int inX, int inY, int inID ) {
 
         if( o != NULL && o->isUseDummy ) {
             fprintf( mapChangeLogFile, 
-                     "%.2f %d %d %s%du%d %d\n", 
-                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     "%.2f %d %d %s%du%d %d\n",
+                     timeDelta,
                      inX, inY,
                      extraFlag,
                      o->useDummyParent,
@@ -6956,7 +6934,7 @@ static void logMapChange( int inX, int inY, int inID ) {
         else if( o != NULL && o->isVariableDummy ) {
             fprintf( mapChangeLogFile, 
                      "%.2f %d %d %s%dv%d %d\n", 
-                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     timeDelta,
                      inX, inY,
                      extraFlag,
                      o->variableDummyParent,
@@ -6966,7 +6944,7 @@ static void logMapChange( int inX, int inY, int inID ) {
         else {        
             fprintf( mapChangeLogFile, 
                      "%.2f %d %d %s%d %d\n", 
-                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     timeDelta,
                      inX, inY,
                      extraFlag,
                      inID,
