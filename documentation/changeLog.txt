@@ -18,6 +18,9 @@ Version 283   ???
 --Making sure cache.fcz has exactly same list of files as corresponding folder.
   Checks file names only, not contents.  On mismatch, cache.fcz is rebuilt.
 
+--No more crash if server sends us an unknown object ID.  Instead, we show a
+  MISSING OBJECT placeholder in client.  This is an extremely unlikely case,
+  but could happen if there's some error in the update process.
 
 
 
