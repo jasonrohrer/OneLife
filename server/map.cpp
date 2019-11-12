@@ -6873,31 +6873,40 @@ static void logMapChange( int inX, int inY, int inID ) {
             extraFlag = "f";
             }
         
+        int respPlayer = currentResponsiblePlayer;
+        
+        if( respPlayer != -1 && respPlayer < 0 ) {
+            respPlayer = - respPlayer;
+            }
+
         if( o != NULL && o->isUseDummy ) {
             fprintf( mapChangeLogFile, 
-                     "%.2f %d %d %s%du%d\n", 
+                     "%.2f %d %d %s%du%d %d\n", 
                      Time::getCurrentTime() - mapChangeLogTimeStart,
                      inX, inY,
                      extraFlag,
                      o->useDummyParent,
-                     o->thisUseDummyIndex );
+                     o->thisUseDummyIndex,
+                     respPlayer );
             }
         else if( o != NULL && o->isVariableDummy ) {
             fprintf( mapChangeLogFile, 
-                     "%.2f %d %d %s%dv%d\n", 
+                     "%.2f %d %d %s%dv%d %d\n", 
                      Time::getCurrentTime() - mapChangeLogTimeStart,
                      inX, inY,
                      extraFlag,
                      o->variableDummyParent,
-                     o->thisVariableDummyIndex );
+                     o->thisVariableDummyIndex,
+                     respPlayer );
             }
         else {        
             fprintf( mapChangeLogFile, 
-                     "%.2f %d %d %s%d\n", 
+                     "%.2f %d %d %s%d %d\n", 
                      Time::getCurrentTime() - mapChangeLogTimeStart,
                      inX, inY,
                      extraFlag,
-                     inID );
+                     inID,
+                     respPlayer );
             }
         }
     }
