@@ -238,7 +238,8 @@ static int barrierOn = 1;
 static int longTermCullEnabled = 1;
 
 
-static unsigned int biomeRandSeed = 723;
+static unsigned int biomeRandSeedA = 727;
+static unsigned int biomeRandSeedB = 941;
 
 
 static SimpleVector<int> barrierItemList;
@@ -798,7 +799,7 @@ static int computeMapBiomeIndex( int inX, int inY,
 
     // try topographical altitude mapping
 
-    setXYRandomSeed( biomeRandSeed );
+    setXYRandomSeed( biomeRandSeedA, biomeRandSeedB );
 
     double randVal = 
         ( getXYFractal( inX, inY,
@@ -883,7 +884,8 @@ static int computeMapBiomeIndex( int inX, int inY,
         for( int i=regularBiomeLimit; i<numBiomes; i++ ) {
             int biome = biomes[i];
         
-            setXYRandomSeed( biome * 263 + biomeRandSeed + 38475 );
+            setXYRandomSeed( biome * 263 + biomeRandSeedA + 38475,
+                             biomeRandSeedB );
 
             double randVal = getXYFractal(  inX,
                                             inY,
@@ -978,7 +980,7 @@ static int computeMapBiomeIndexOld( int inX, int inY,
     for( int i=0; i<numBiomes; i++ ) {
         int biome = biomes[i];
         
-        setXYRandomSeed( biome * 263 + biomeRandSeed );
+        setXYRandomSeed( biome * 263 + biomeRandSeedA, biomeRandSeedB );
 
         double randVal = getXYFractal(  inX,
                                         inY,
@@ -2777,7 +2779,9 @@ static void setupMapChangeLogFile() {
 
     if( logFolder.isDirectory() ) {
         
-        char *biomeSeedString = autoSprintf( "%d", biomeRandSeed );
+        char *biomeSeedString = autoSprintf( "%u_%u", 
+                                             biomeRandSeedA,
+                                             biomeRandSeedB );
         
         // does log file already exist?
 
@@ -2811,9 +2815,10 @@ static void setupMapChangeLogFile() {
         if( mapChangeLogFile == NULL ) {
 
             // file does not exist
-            char *newFileName = autoSprintf( "%.ftime_%useed_mapLog.txt",
-                                             Time::getCurrentTime(),
-                                             biomeRandSeed );
+            char *newFileName = 
+                autoSprintf( "%.ftime_%useedA_%useedB_mapLog.txt",
+                             Time::getCurrentTime(),
+                             biomeRandSeedA, biomeRandSeedB );
             
             File *f = logFolder.getChildFile( newFileName );
             
@@ -2843,12 +2848,24 @@ void reseedMap( char inForceFresh ) {
         seedFile = fopen( "biomeRandSeed.txt", "r" );
         }
     
+
+    char set = false;
+    
     if( seedFile != NULL ) {
-        fscanf( seedFile, "%d", &biomeRandSeed );
+        int numRead = 
+            fscanf( seedFile, "%d %d", &biomeRandSeedA, &biomeRandSeedB );
         fclose( seedFile );
-        AppLog::infoF( "Reading map rand seed from file: %u\n", biomeRandSeed );
+        
+        if( numRead == 2 ) {
+            AppLog::infoF( "Reading map rand seed from file: %u %u\n", 
+                           biomeRandSeedA, biomeRandSeedB );
+            set = true;
+            }
         }
-    else {
+    
+
+
+    if( !set ) {
         // no seed set, or ignoring it, make a new one
         
         if( !inForceFresh ) {
@@ -2858,38 +2875,85 @@ void reseedMap( char inForceFresh ) {
             reportArcEnd();
             }
 
-        char *secret =
+        char *secretA =
             SettingsManager::getStringSetting( "statsServerSharedSecret", 
                                                "secret" );
+        int secretALen = strlen( secretA );
         
-        unsigned int seedBase = 
-            crc32( (unsigned char*)secret, strlen( secret ) );
+        unsigned int seedBaseA = 
+            crc32( (unsigned char*)secretA, secretALen );
         
-        delete [] secret;
+        const char *nonce = 
+            "8TX8sr7weEK8UIqrE0xV"
+            "voZgafknTgZAVQCTD8UG"
+            "6FKWSgi9N1wDhUQ7VCuw"
+            "uJbKsMAnOzLwbnnB7nQs"
+            "a6mI5rjqijo1oMjPiYbk"
+            "uezCnYjrn744AvSP7Zux"
+            "wOiZLLDUn5tUe1Ym3vTG"
+            "0I80QFzhFPht5TOiiYqT"
+            "jeZx0k9reFeknKkGUac3"
+            "fHlp0rg1PEOtZZ0LZsme";
+        
+        // assumption:  secret has way more than 32 bits of entropy
+        // crc32 only extracts 32 bits, though.
+        
+        // by XORing secret with a random nonce and passing through crc32
+        // again, we get another 32 bits of entropy out of it.
 
-        unsigned int modTimeSeed = 
-            (unsigned int)fmod( Time::getCurrentTime() + seedBase, 
+        // Not the best way of doing this, but it is probably sufficient
+        // to prevent brute-force test-guessing of the map seed based
+        // on sample map data.
+
+        char *secretB = stringDuplicate( secretA );
+        
+        int nonceLen = strlen( nonce );
+        
+        for( int i=0; i<secretALen; i++ ) {
+            if( i > nonceLen ) {
+                break;
+                }
+            secretB[i] = secretB[i] ^ nonce[i];
+            }
+
+        unsigned int seedBaseB = 
+            crc32( (unsigned char*)secretB, secretALen );
+
+
+        delete [] secretA;
+        delete [] secretB;
+
+        unsigned int modTimeSeedA = 
+            (unsigned int)fmod( Time::getCurrentTime() + seedBaseA, 
                                 4294967295U );
         
-        JenkinsRandomSource tempRandSource( modTimeSeed );
+        JenkinsRandomSource tempRandSourceA( modTimeSeedA );
 
-        biomeRandSeed = tempRandSource.getRandomInt();
+        biomeRandSeedA = tempRandSourceA.getRandomInt();
+
+        unsigned int modTimeSeedB = 
+            (unsigned int)fmod( Time::getCurrentTime() + seedBaseB, 
+                                4294967295U );
         
-        AppLog::infoF( "Generating fresh map rand seed and saving to file: "
-                       "%u\n", biomeRandSeed );
+        JenkinsRandomSource tempRandSourceB( modTimeSeedB );
+
+        biomeRandSeedB = tempRandSourceB.getRandomInt();
+        
+        AppLog::infoF( "Generating fresh map rand seeds and saving to file: "
+                       "%u %u\n", biomeRandSeedA, biomeRandSeedB );
 
         // and save it
         seedFile = fopen( "biomeRandSeed.txt", "w" );
         if( seedFile != NULL ) {
             
-            fprintf( seedFile, "%d", biomeRandSeed );
+            fprintf( seedFile, "%u %u", biomeRandSeedA, biomeRandSeedB );
             fclose( seedFile );
             }
 
 
 
         // re-place rand placement objects
-        CustomRandomSource placementRandSource( biomeRandSeed );
+        CustomRandomSource placementRandSource( biomeRandSeedA );
 
         int numObjects;
         ObjectRecord **allObjects = getAllObjects( &numObjects );
