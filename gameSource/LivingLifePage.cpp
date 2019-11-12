@@ -9434,8 +9434,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
 
 
+        // FOVMOD NOTE:  Change 23/27 - Take these lines during the merge process
         doublePair tipPos = { lastScreenViewCenter.x, 
-                           lastScreenViewCenter.y - 313 };
+                           lastScreenViewCenter.y - ( recalcOffsetY( 313 ) * gui_fov_scale ) };
 
         char overTempMeter = false;
         
@@ -9459,9 +9460,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
             
             
-            // FOVMOD NOTE:  Change 23/27 - Take these lines during the merge process
-            doublePair pos = { lastScreenViewCenter.x, 
-                               lastScreenViewCenter.y - ( recalcOffsetY( 313 ) * gui_fov_scale )};
 
             char *des = NULL;
             char *desToDelete = NULL;
