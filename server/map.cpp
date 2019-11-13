@@ -2831,7 +2831,7 @@ void reseedMap( char inForceFresh ) {
     
     if( seedFile != NULL ) {
         int numRead = 
-            fscanf( seedFile, "%d %d", &biomeRandSeedA, &biomeRandSeedB );
+            fscanf( seedFile, "%u %u", &biomeRandSeedA, &biomeRandSeedB );
         fclose( seedFile );
         
         if( numRead == 2 ) {
@@ -2990,6 +2990,32 @@ void reseedMap( char inForceFresh ) {
 
                 
     setupMapChangeLogFile();
+
+    if( !set && mapChangeLogFile != NULL ) {
+        // whenever we actually change the seed, save it to a separate
+        // file in log folder
+
+        File logFolder( NULL, "mapChangeLogs" );
+        
+        char *newFileName = 
+            autoSprintf( "%.ftime_mapSeed.txt",
+                         Time::getCurrentTime() );
+            
+        File *f = logFolder.getChildFile( newFileName );
+            
+        delete [] newFileName;
+        
+        char *fullName = f->getFullFileName();
+        
+        delete f;
+        
+        FILE *seedFile = fopen( fullName, "w" );
+        delete [] fullName;
+        
+        fprintf( seedFile, "%u %u", biomeRandSeedA, biomeRandSeedB );
+        
+        fclose( seedFile );
+        }
     }
 
 

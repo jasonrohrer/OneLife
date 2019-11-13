@@ -43,6 +43,13 @@ Server Fixes
 
 --Map change logs now roll over every 24 hours and don't include biome seed.
 
+--Fixed cache size inconsistency.
+
+--Map biome seed now logged in separate file along with map change logs, but
+  that seed file is only published after the map is reseeded (if it ever is,
+  due to a wipe or player-triggered apocalypse).
+
+
 
 
 
