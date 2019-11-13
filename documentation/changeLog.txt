@@ -51,6 +51,8 @@ Server Fixes
 
 --Min fertile females per family (when girl babies are forces) is 4 (was 6).
 
+--Eve moving grid jump is now 200 (was 320), making it a perfect tight fit with
+  well tap-out of 160.
 
 
 
