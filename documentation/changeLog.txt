@@ -49,6 +49,8 @@ Server Fixes
   that seed file is only published after the map is reseeded (if it ever is,
   due to a wipe or player-triggered apocalypse).
 
+--Min fertile females per family (when girl babies are forces) is 4 (was 6).
+
 
 
 
