@@ -1889,6 +1889,17 @@ static int computeDBCacheHash( int inKeyA, int inKeyB,
 
 
 
+static int computeBLCacheHash( int inKeyA, int inKeyB ) {
+    
+    int hashKey = ( inKeyA * CACHE_PRIME_A + 
+                    inKeyB * CACHE_PRIME_B ) % DB_CACHE_SIZE;
+    if( hashKey < 0 ) {
+        hashKey += DB_CACHE_SIZE;
+        }
+    return hashKey;
+    }
+
+
 
 typedef struct DBTimeCacheRecord {
         int x, y, slot, subCont;
@@ -1990,7 +2001,7 @@ static void dbTimePutCached( int inX, int inY, int inSlot, int inSubCont,
 // returns -1 on miss
 static char blockingGetCached( int inX, int inY ) {
     BlockingCacheRecord r =
-        blockingCache[ computeXYCacheHash( inX, inY ) ];
+        blockingCache[ computeBLCacheHash( inX, inY ) ];
 
     if( r.x == inX && r.y == inY &&
         r.blocking != -1 ) {
@@ -2006,14 +2017,14 @@ static char blockingGetCached( int inX, int inY ) {
 static void blockingPutCached( int inX, int inY, char inBlocking ) {
     BlockingCacheRecord r = { inX, inY, inBlocking };
     
-    blockingCache[ computeXYCacheHash( inX, inY ) ] = r;
+    blockingCache[ computeBLCacheHash( inX, inY ) ] = r;
     }
 
 
 static void blockingClearCached( int inX, int inY ) {
     
     BlockingCacheRecord *r =
-        &( blockingCache[ computeXYCacheHash( inX, inY ) ] );
+        &( blockingCache[ computeBLCacheHash( inX, inY ) ] );
 
     if( r->x == inX && r->y == inY ) {
         r->blocking = -1;
