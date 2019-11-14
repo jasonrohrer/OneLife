@@ -12,6 +12,9 @@ typedef struct SpecialBiome {
         int specialistRace;
         // -1 if not set
         int sicknessObjectID;
+        
+        // -1 if not set
+        int reliefEmotIndex;
     } SpecialBiome;
 
 
@@ -46,6 +49,7 @@ void updateSpecialBiomes( int inNumPlayers ) {
     for( int i=0; i < MAX_BIOME_NUMBER; i++ ) {
         specialBiomes[i].specialistRace = -1;
         specialBiomes[i].sicknessObjectID = -1;
+        specialBiomes[i].reliefEmotIndex = -1;
         }
     
     SimpleVector<char *> *parts = 
@@ -75,25 +79,32 @@ void updateSpecialBiomes( int inNumPlayers ) {
     parts = 
         SettingsManager::getSetting( "specialBiomeSicknesses" );
 
-    if( parts->size() % 2 == 0 ) {
+    if( parts->size() % 3 == 0 ) {
         
-        for( int i=0; i<parts->size() - 1; i += 2 ) {
+        for( int i=0; i<parts->size() - 1; i += 3 ) {
             char *numberA = parts->getElementDirect( i );
             char *numberB = parts->getElementDirect( i + 1 );
+            char *numberC = parts->getElementDirect( i + 2 );
             
             int biomeNumber = 0;
             sscanf( numberA, "%d", &biomeNumber );
 
             int sickID = 0;
             sscanf( numberB, "%d", &sickID );
+
+            int reliefIndex = -1;
+            sscanf( numberC, "%d", &reliefIndex );
             
             if( biomeNumber >= 0 && biomeNumber < MAX_BIOME_NUMBER &&
                 getObject( sickID ) != NULL ) {
                 specialBiomes[biomeNumber].sicknessObjectID = sickID;
+                specialBiomes[biomeNumber].reliefEmotIndex = reliefIndex;
                 }
             }
         }
     parts->deallocateStringElements();
+    
+    delete parts;
     }
 
 
@@ -163,5 +174,15 @@ int getBiomeSickness( int inDisplayID, int inX, int inY ) {
         }
     
     return r.sicknessObjectID;
+    }
+
+
+int getBiomeReliefEmot( int inSicknessObjectID ) {
+    for( int i=0; i < MAX_BIOME_NUMBER; i++ ) {
+        if( specialBiomes[i].sicknessObjectID == inSicknessObjectID ) {
+            return specialBiomes[i].reliefEmotIndex;
+            }
+        }
+    return -1;
     }
 

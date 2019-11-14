@@ -709,6 +709,8 @@ typedef struct LiveObject {
         int murderSourceID;
         char holdingWound;
 
+        char holdingBiomeSickness;
+
         // who killed them?
         int murderPerpID;
         char *murderPerpEmail;
@@ -8452,6 +8454,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.embeddedWeaponEtaDecay = 0;
     newObject.murderSourceID = 0;
     newObject.holdingWound = false;
+    newObject.holdingBiomeSickness = false;
     
     newObject.murderPerpID = 0;
     newObject.murderPerpEmail = NULL;
@@ -15623,6 +15626,101 @@ int main() {
                                     secondsAlreadyDone;
                             
                                 nextPlayer->newMove = true;
+
+                                
+                                // check if this move goes into a bad biome
+                                // and makes them sick
+                                int sicknessObjectID =
+                                    getBiomeSickness( nextPlayer->displayID, 
+                                                      nextPlayer->xd,
+                                                      nextPlayer->yd );
+                                
+                                if( sicknessObjectID > 0 &&
+                                    nextPlayer->holdingID != 
+                                    sicknessObjectID ) {
+                                    
+                                    // drop what they are holding
+                                    if( nextPlayer->holdingID != 0 ) {
+                                        // never drop held wounds
+                                        // they are the only thing a baby can
+                                        // while held
+                                        if( ! nextPlayer->holdingWound &&
+                                            ! nextPlayer->holdingBiomeSickness 
+                                            &&
+                                            nextPlayer->holdingID > 0 ) {
+                                            handleDrop( 
+                                             m.x, m.y, nextPlayer,
+                                             &playerIndicesToSendUpdatesAbout );
+                                            }
+                                        }
+                                    
+                                    if( nextPlayer->holdingID == 0 ) {
+                                        
+                                        nextPlayer->holdingID = 
+                                            sicknessObjectID;
+                                        playerIndicesToSendUpdatesAbout.
+                                            push_back( i );
+
+                                        nextPlayer->holdingBiomeSickness = true;
+
+                                        ForcedEffects e = 
+                                            checkForForcedEffects( 
+                                                nextPlayer->holdingID );
+                            
+                                        if( e.emotIndex != -1 ) {
+                                            nextPlayer->emotFrozen = true;
+                                            nextPlayer->emotFrozenIndex =
+                                                e.emotIndex;
+                                            newEmotPlayerIDs.push_back( 
+                                                nextPlayer->id );
+                                            newEmotIndices.push_back( 
+                                                e.emotIndex );
+                                            newEmotTTLs.push_back( e.ttlSec );
+                                            interruptAnyKillEmots( 
+                                                nextPlayer->id, e.ttlSec );
+                                            }
+                                        }
+                                    }
+                                else if( sicknessObjectID == -1 &&
+                                         nextPlayer->holdingBiomeSickness ) {
+                                    
+                                    int oldSickness = -1;
+                                    
+                                    if( ! nextPlayer->holdingWound ) {
+                                        // back to holding nothing
+                                        oldSickness = nextPlayer->holdingID;
+                                        
+                                        nextPlayer->holdingID = 0;
+                                        
+                                        playerIndicesToSendUpdatesAbout.
+                                            push_back( i );
+                                        }
+                                    
+                                    nextPlayer->holdingBiomeSickness = 
+                                            false;
+
+                                    // relief emot
+                                    nextPlayer->emotFrozen = false;
+                                    nextPlayer->emotUnfreezeETA = 0;
+        
+                                    newEmotPlayerIDs.push_back( 
+                                        nextPlayer->id );
+        
+                                    int newEmot = 
+                                        getBiomeReliefEmot( oldSickness );
+                                    
+                                    if( newEmot != -1 ) {
+                                        newEmotIndices.push_back( newEmot );
+                                        // 3 sec
+                                        newEmotTTLs.push_back( 3 );
+                                        }
+                                    else {
+                                        // clear
+                                        newEmotIndices.push_back( -1 );
+                                        // 3 sec
+                                        newEmotTTLs.push_back( 0 );
+                                        }
+                                    }
                                 }
                             }
                         }

@@ -17,3 +17,8 @@ char isBiomeAllowed( int inDisplayID, int inX, int inY );
 // get sickness they should hold when stepping into biome
 // -1 if no sickness or biome allowed
 int getBiomeSickness( int inDisplayID, int inX, int inY );
+
+
+// get emotion index of relief from biome sickness
+// returns -1 if not set
+int getBiomeReliefEmot( int inSicknessObjectID );
