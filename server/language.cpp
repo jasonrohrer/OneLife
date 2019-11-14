@@ -333,8 +333,8 @@ static const char *clusterMap(
             inDestClusters[ inSetIndex ][ inClusterIndex ];
         
         if( inCanLearnB &&
-            randSource.getRandomDouble() > 0.5 ) {
-            // coin flipped heads
+            randSource.getRandomDouble() > 1.0 - languageLearningRate ) {
+            // weighted coin flipped heads
             
             // B learns this for the future
             inLearnB->allMappings[inSetIndex][inClusterIndex] = true;
@@ -757,12 +757,7 @@ static LanguageLearningMap *getPlayerLearningMap( int inEveIDA, int inEveIDB,
 void initLanguage() {
     initMapping( &blankLearningMap, 0, 0, 0 );
 
-    maxLanguageLearningAge = 
-        SettingsManager::getFloatSetting( "maxLanguageLearningAge", 3.0 );
-    languageLearningRate = 
-        SettingsManager::getFloatSetting( "languageLearningRate", 0.5 );
-    languageLearningRepetitionLimit = 
-        SettingsManager::getIntSetting( "languageLearningRepetitionLimit", 20 );
+    stepLanguage();
     }
 
 
@@ -891,6 +886,14 @@ void decrementLanguageCount( int inEveID ) {
 
 
 void stepLanguage() {
+    // reload settings
+    maxLanguageLearningAge = 
+        SettingsManager::getFloatSetting( "maxLanguageLearningAge", 3.0 );
+    languageLearningRate = 
+        SettingsManager::getFloatSetting( "languageLearningRate", 0.5 );
+    languageLearningRepetitionLimit = 
+        SettingsManager::getIntSetting( "languageLearningRepetitionLimit", 20 );
+
     // see if there's one mapping that needs generating
     // spread the work out for generating mappings
     for( int e=0; e<langRecords.size(); e++ ) {
