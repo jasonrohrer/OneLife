@@ -43,7 +43,7 @@ void updateSpecialBiomes( int inNumPlayers ) {
         SettingsManager::getIntSetting( 
             "minActivePlayersForSpecialBiomes", 15 );
     
-    for( int i=0; i<=MAX_BIOME_NUMBER; i++ ) {
+    for( int i=0; i < MAX_BIOME_NUMBER; i++ ) {
         specialBiomes[i].specialistRace = -1;
         specialBiomes[i].sicknessObjectID = -1;
         }
