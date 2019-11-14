@@ -55,6 +55,7 @@
 #include "fitnessScore.h"
 #include "arcReport.h"
 #include "curseDB.h"
+#include "specialBiomes.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -1737,6 +1738,9 @@ void quitCleanup() {
     freeFamilySkipList();
 
     freeTriggers();
+
+    freeSpecialBiomes();
+    
 
     freeMap();
 
@@ -12683,6 +12687,9 @@ int main() {
     
     initTriggers();
 
+    initSpecialBiomes();
+    
+
 
     if( initMap() != true ) {
         // cannot continue after map init fails
@@ -12901,6 +12908,8 @@ int main() {
             
             apocalypseStep();
             monumentStep();
+            
+            updateSpecialBiomes( players.size() );
             
             //checkBackup();
 
@@ -16119,7 +16128,7 @@ int main() {
                                 }
                             }
                         
-
+                        if( isBiomeAllowed( nextPlayer->displayID, m.x, m.y ) )
                         if( distanceUseAllowed 
                             ||
                             isGridAdjacent( m.x, m.y,
@@ -17884,6 +17893,7 @@ int main() {
                             canDrop = false;
                             }
 
+                        if( isBiomeAllowed( nextPlayer->displayID, m.x, m.y ) )
                         if( ( isGridAdjacent( m.x, m.y,
                                               nextPlayer->xd, 
                                               nextPlayer->yd ) 
@@ -18209,6 +18219,7 @@ int main() {
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
+                        if( isBiomeAllowed( nextPlayer->displayID, m.x, m.y ) )
                         if( isGridAdjacent( m.x, m.y, 
                                             nextPlayer->xd, 
                                             nextPlayer->yd ) 
