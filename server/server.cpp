@@ -4706,6 +4706,7 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
     int barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
     int barrierOn = SettingsManager::getIntSetting( "barrierOn", 1 );
 
+    int targetBiome = getMapBiome( inX, inY );
 
     char found = false;
     int foundX = inX;
@@ -4820,7 +4821,9 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
                                                 
 
 
-                if( isMapSpotEmpty( x, y ) ) {
+                if( isMapSpotEmpty( x, y ) && 
+                    getMapBiome( x, y ) == targetBiome ) {
+                    
                     found = true;
                     if( barrierOn ) {    
                         if( abs( x ) >= barrierRadius ||
