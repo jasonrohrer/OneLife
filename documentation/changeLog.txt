@@ -54,6 +54,14 @@ Server Fixes
 --Eve moving grid jump is now 200 (was 320), making it a perfect tight fit with
   well tap-out of 160.
 
+--Specialty biomes limited to specific skin tones.  Other skin tones get sick 
+  there.
+
+--Language learning change:  instead of busy-work with a baby (blabbering lots
+  of phrases to cover different phonemes), each generation that is around a
+  language learns it at a fixed rate (10% of remaning phoneme clusters by
+  frequency weight).  After roughly 10 generations of coexistence, full
+  language learning will be realized.
 
 
 

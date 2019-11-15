@@ -34,9 +34,20 @@
 static int closeSetSize = 3;
 
 
+// max age where hearing an utterance in another language has impact
 static double maxLanguageLearningAge = 3.0;
+
+// fraction of each utterance that hearer learns 
+// (coin flip for each phoneme heard)
 static double languageLearningRate = 0.5;
+
+// Words repeated within the last X words are ignored for learning purposes
 static int languageLearningRepetitionLimit = 20;
+
+// When how much more of a language a learner learns when they first
+// hear the language at a young age (a sudden jump in learning before
+// more gradual learning based on learning rate.
+static double languageLearningBaseFraction = 0.1;
 
 
 
@@ -73,6 +84,8 @@ const int *allClustersFreq[ NUM_CLUSTER_SETS ] =
   vowelClustersFreq,
   middleConsonantClustersFreq };
 
+
+int allClustersFreqTotals[ NUM_CLUSTER_SETS ];
 
 
 
@@ -238,6 +251,8 @@ typedef struct LanguageLearningMap {
         // these two eves
         int playerID;
 
+        // false until first utterance heard by listener
+        char firstPhraseHeard;
         
         // these are false if the mapping is not learned, true if learned
         char startingMapping[ NUM_STARTING_CONSONANT_CLUSTERS ];
@@ -639,6 +654,7 @@ static void initMapping( LanguageLearningMap *inMap,
     inMap->eveIDA = inEveIDA;
     inMap->eveIDB = inEveIDB;
     inMap->playerID = inPlayerID;
+    inMap->firstPhraseHeard = false;
 
     inMap->allMappings[ START_I ] = inMap->startingMapping;
     inMap->allMappings[ END_I ] = inMap->endingMapping;
@@ -756,6 +772,13 @@ static LanguageLearningMap *getPlayerLearningMap( int inEveIDA, int inEveIDB,
 
 void initLanguage() {
     initMapping( &blankLearningMap, 0, 0, 0 );
+
+    for( int i=0; i<NUM_CLUSTER_SETS; i++ ) {
+        allClustersFreqTotals[ i ] = 0;
+        for( int c=0; c<allClusterSizes[i]; c++ ) {
+            allClustersFreqTotals[ i ] += allClustersFreq[i][c];
+            }
+        }
 
     stepLanguage();
     }
@@ -893,7 +916,9 @@ void stepLanguage() {
         SettingsManager::getFloatSetting( "languageLearningRate", 0.5 );
     languageLearningRepetitionLimit = 
         SettingsManager::getIntSetting( "languageLearningRepetitionLimit", 20 );
-
+    languageLearningBaseFraction = 
+        SettingsManager::getFloatSetting( "languageLearningBaseFraction", 0.1 );
+    
     // see if there's one mapping that needs generating
     // spread the work out for generating mappings
     for( int e=0; e<langRecords.size(); e++ ) {
@@ -970,7 +995,90 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
         canLearnB = false;
         }
     
+    
+    if( canLearnB && ! learnB->firstPhraseHeard &&
+        languageLearningBaseFraction > 0 ) {
+        
+        // apply base learning fraction now
+        
+        // apply fraction to each type of cluster
+        int clustersToLearn[ NUM_CLUSTER_SETS ];
+        
+        // what fraciton of total freq should we learn?
+        // learning "e" is worth learning "ui" and "ai" combined, for example
+        // once we've learned enough freq weight, we stop, even if
+        // we haven't learned our quota of clusters
+        int freqTotalToLearn[ NUM_CLUSTER_SETS ];
+        int freqTotalLearned[ NUM_CLUSTER_SETS ];
+        
+        for( int i=0; i<NUM_CLUSTER_SETS; i++ ) {
+            clustersToLearn[i] = 
+                languageLearningBaseFraction *
+                allClusterSizes[ i ];
+            freqTotalToLearn[i] = 
+                allClustersFreqTotals[i] * languageLearningBaseFraction;
+            freqTotalLearned[i] = 0;
+            }
+        
+        for( int i=0; i<NUM_CLUSTER_SETS; i++ ) {
+            printf( "Trying to base learn %d/%d clusters from set %d\n",
+                        clustersToLearn[i], allClusterSizes[i], i );
 
+            char freqOverflow = false;
+            
+            for( int c=0; c<clustersToLearn[i] && ! freqOverflow; c++ ) {
+                int freqToSkip = 
+                    randSource.getRandomBoundedInt( 0,
+                                                    allClustersFreqTotals[i] );
+                // jump into the cluster by freqToSkip amount
+                // this roughly matches picking clusters based on frequency
+                
+                int clusterHit = -1;
+                
+                int freqSkipped = 0;
+                for( int s=0; s<allClusterSizes[i]; s++ ) {
+                    freqSkipped += allClustersFreq[i][s];
+                    
+                    if( freqSkipped >= freqToSkip ) {
+                        // landed in this cluster
+                        clusterHit = s;
+                        break;
+                        }
+                    }
+                if( clusterHit != -1 ) {
+                    // walk forward from here until we find one we haven't
+                    // learned yet
+                    // give up if we hit end
+                    
+                    // (this makes it less likely that we will ever "find"
+                    //  early clusters in list and learn them, but this 
+                    //  slopiness is okay, because a bit of an accent
+                    //  can remain long-term)
+                    for( int s=clusterHit; s<allClusterSizes[i]; s++ ) {
+                        
+                        if( ! learnB->allMappings[i][s] ) {
+                            // found one!
+                            learnB->allMappings[i][s] = true;
+                            
+                            freqTotalLearned[i] += allClustersFreq[i][s];
+                            printf( "%d: learned %s (freq %d) (total %d/%d)\n", 
+                                    c, allClusters[i][s],
+                                    allClustersFreq[i][s],
+                                    freqTotalLearned[i],
+                                    freqTotalToLearn[i] );
+                            if( freqTotalLearned[i] >= freqTotalToLearn[i] ) {
+                                freqOverflow = true;
+                                }
+                            break;
+                            }
+                        }
+                    }
+                }
+            }
+        
+        learnB->firstPhraseHeard = true;
+        }
+    
 
 
     char *returnString = NULL;
