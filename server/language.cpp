@@ -999,8 +999,6 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
     if( canLearnB && ! learnB->firstPhraseHeard &&
         languageLearningBaseFraction > 0 ) {
         
-        double startTime = Time::getCurrentTime();
-        
         // apply base learning fraction now
                 
         for( int i=0; i<NUM_CLUSTER_SETS; i++ ) {
@@ -1029,10 +1027,6 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
             // to 1.
             int freqTotalToLearnThisRun = 
                 ceil( freqTotalLeftToLearn * languageLearningBaseFraction );
-            
-            printf(
-                "\n\nTrying to base learn %d/%d remaining weight from set %d\n",
-                freqTotalToLearnThisRun, freqTotalLeftToLearn, i );
 
             int freqTotalLearnedThisRun = 0;
             
@@ -1063,9 +1057,6 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
                             }
                         }
                     }
-
-                printf( "               Freq to skip = %d/%d, cluster hit = %d\n",
-                        freqToSkip, freqTotalLeftToLearn, clusterHit );
                 
                 if( clusterHit != -1 ) {
                     int s = clusterHit;
@@ -1074,13 +1065,6 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
                     freqTotalLearnedThisRun += allClustersFreq[i][s];
                     
                     freqTotalLeftToLearn -= allClustersFreq[i][s];
-                    
-                    printf( 
-                        "%d: learned (%d)%s (freq %d) (total %d/%d)\n", 
-                        c, s, allClusters[i][s],
-                        allClustersFreq[i][s],
-                        freqTotalLearnedThisRun,
-                        freqTotalToLearnThisRun );
                     }
                 else {
                     // no clusters left to learn
@@ -1091,8 +1075,6 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
             }
         
         learnB->firstPhraseHeard = true;
-        printf( "\nLearning took %f ms\n", 
-                1000 * ( Time::getCurrentTime() - startTime ) );
         }
     
 
