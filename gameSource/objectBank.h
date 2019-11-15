@@ -399,6 +399,12 @@ typedef struct ObjectRecord {
         int toolSetIndex;
         char toolLearned;
 
+        
+        char isBiomeLimited;
+        int maxBiomeMapEntry;
+        // one entry per biome
+        char *permittedBiomeMap;
+
     } ObjectRecord;
 
 
@@ -898,6 +904,10 @@ void getToolSetMembership( int inToolSetIndex,
 
 // gets indices of all tool sets
 void getAllToolSets( SimpleVector<int> *outListToFill );
+
+
+
+char canBuildInBiome( ObjectRecord *inObj, int inTargetBiome );
 
 
 

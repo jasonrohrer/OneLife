@@ -16486,17 +16486,29 @@ int main() {
                                     r->newTarget > 0 &&
                                     r->newTarget != target ) {
                                     
+                                    ObjectRecord *newTargetObj = 
+                                        getObject( r->newTarget );
+                                    
                                     // target would change here
                                     if( getMapFloor( m.x, m.y ) != 0 ) {
                                         // floor present
                                         
                                         // make sure new target allowed 
                                         // to exist on floor
-                                        if( strstr( getObject( r->newTarget )->
+                                        if( strstr( newTargetObj->
                                                     description, 
                                                     "groundOnly" ) != NULL ) {
                                             r = NULL;
                                             }
+                                        }
+                                    if( newTargetObj->isBiomeLimited &&
+                                        ! canBuildInBiome( 
+                                            newTargetObj,
+                                            getMapBiome( m.x,
+                                                         m.y ) ) ) {
+                                        // can't make this object
+                                        // in this biome
+                                        r = NULL;
                                         }
                                     }
                                 
@@ -17048,6 +17060,15 @@ int main() {
                                         
                                             // new target not allowed 
                                             // to exist on floor
+                                            canPlace = false;
+                                            }
+                                        else if( newTargetObj->isBiomeLimited &&
+                                                 ! canBuildInBiome( 
+                                                     newTargetObj,
+                                                     getMapBiome( m.x,
+                                                                  m.y ) ) ) {
+                                            // can't make this object
+                                            // in this biome
                                             canPlace = false;
                                             }
                                         }
