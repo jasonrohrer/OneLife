@@ -223,6 +223,8 @@ static double recentlyUsedPrimaryEvePositionTimeout = 3600;
 static int eveHomeMarkerObjectID = -1;
 
 
+static char allowSecondPlaceBiomes = false;
+
 
 
 // what human-placed stuff, together, counts as a camp
@@ -926,6 +928,11 @@ static int computeMapBiomeIndex( int inX, int inY,
         secondPlaceGap = 0.1;
         }
     
+
+    if( ! allowSecondPlaceBiomes ) {
+        secondPlace = pickedBiome;
+        secondPlaceGap = 1.0;
+        }
 
 
     biomePutCached( inX, inY, pickedBiome, secondPlace, secondPlaceGap );

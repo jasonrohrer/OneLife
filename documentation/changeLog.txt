@@ -63,6 +63,10 @@ Server Fixes
   frequency weight).  After roughly 10 generations of coexistence, full
   language learning will be realized.
 
+--Disabled second-place-biome object placement along biome boundaries (though
+  looking at parameters in code for ring biomes, it looks like this was
+  impossible anyway).
+
 
 
 Version 280   2019-November-8
