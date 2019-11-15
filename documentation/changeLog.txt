@@ -70,6 +70,9 @@ Server Fixes
 --Support for +biomeReq and +biomeBlock in object descriptions, only allowing
   an object to be made in specific biomes or blocking it from specific biomes.
 
+--Support for +noWait tag on 'weapons' like snowballs and tatoo needles.  No 
+  murder mouth, and no waiting period before execution.  Target still gasps.
+
 
 
 

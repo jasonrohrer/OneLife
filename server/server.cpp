@@ -10499,6 +10499,8 @@ int readIntFromFile( const char *inFileName, int inDefaultValue ) {
     }
 
 
+double killDelayTime = 6.0;
+
 
 typedef struct KillState {
         int killerID;
@@ -11373,6 +11375,12 @@ static SimpleVector<int> newEmotIndices;
 // 0 if no ttl specified
 static SimpleVector<int> newEmotTTLs;
 
+
+static char isNoWaitWeapon( int inObjectID ) {
+    return strstr( getObject( inObjectID )->description,
+                   "+noWait" ) != NULL;
+    }
+
     
 
 
@@ -11402,6 +11410,11 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
             double curTime = Time::getCurrentTime();
             s->emotStartTime = curTime;
             s->killStartTime = curTime;
+            
+            if( isNoWaitWeapon( inKiller->holdingID ) ) {
+                // allow it to happen right now
+                s->killStartTime -= killDelayTime;
+                }
 
             s->emotRefreshSeconds = 30;
             break;
@@ -11417,6 +11430,12 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                         curTime,
                         curTime,
                         30 };
+        
+        if( isNoWaitWeapon( inKiller->holdingID ) ) {
+                // allow it to happen right now
+            s.killStartTime -= killDelayTime;
+            }
+
         activeKillStates.push_back( s );
 
         // force target to gasp
@@ -16159,7 +16178,15 @@ int main() {
                                             addKillState( nextPlayer,
                                                           targetPlayer );
                                         
-                                        if( enteredState ) {
+                                        if( enteredState && 
+                                            ! isNoWaitWeapon( 
+                                                nextPlayer->holdingID ) ) {
+                                            
+                                            // no killer emote for no-wait
+                                            // weapons (these aren't
+                                            // actually weapons, like
+                                            // tattoo needles and snowballs)
+
                                             nextPlayer->emotFrozen = true;
                                             nextPlayer->emotFrozenIndex = 
                                                 killEmotionIndex;
@@ -18580,7 +18607,7 @@ int main() {
             
             double curTime = Time::getCurrentTime();
 
-            if( curTime - s->killStartTime  > 6 && 
+            if( curTime - s->killStartTime  > killDelayTime && 
                 getObject( killer->holdingID )->deadlyDistance >= dist &&
                 ! directLineBlocked( playerPos, targetPos ) ) {
                 // enough warning time has passed
