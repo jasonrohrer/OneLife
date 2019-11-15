@@ -999,84 +999,100 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
     if( canLearnB && ! learnB->firstPhraseHeard &&
         languageLearningBaseFraction > 0 ) {
         
+        double startTime = Time::getCurrentTime();
+        
         // apply base learning fraction now
-        
-        // apply fraction to each type of cluster
-        int clustersToLearn[ NUM_CLUSTER_SETS ];
-        
-        // what fraciton of total freq should we learn?
-        // learning "e" is worth learning "ui" and "ai" combined, for example
-        // once we've learned enough freq weight, we stop, even if
-        // we haven't learned our quota of clusters
-        int freqTotalToLearn[ NUM_CLUSTER_SETS ];
-        int freqTotalLearned[ NUM_CLUSTER_SETS ];
-        
+                
         for( int i=0; i<NUM_CLUSTER_SETS; i++ ) {
-            clustersToLearn[i] = 
-                languageLearningBaseFraction *
-                allClusterSizes[ i ];
-            freqTotalToLearn[i] = 
-                allClustersFreqTotals[i] * languageLearningBaseFraction;
-            freqTotalLearned[i] = 0;
-            }
-        
-        for( int i=0; i<NUM_CLUSTER_SETS; i++ ) {
-            printf( "Trying to base learn %d/%d clusters from set %d\n",
-                        clustersToLearn[i], allClusterSizes[i], i );
 
-            char freqOverflow = false;
+            // how much unlearned weight is left in this set?
+            int freqTotalLeftToLearn = 0;
+
+            for( int c=0; c<allClusterSizes[i]; c++ ) {
+                if( ! learnB->allMappings[i][c] ) {
+                    freqTotalLeftToLearn += allClustersFreq[i][c];
+                    }
+                }
             
-            for( int c=0; c<clustersToLearn[i] && ! freqOverflow; c++ ) {
+            if( freqTotalLeftToLearn == 0 ) {
+                // done learning this set entirely
+                continue;
+                }
+
+            // fraction of remaining weight
+            // for example, 10% of what's left, over and over
+            // Thus, the total weight learned is asymptotic to 100% over time
+            // but never actually gets there.
+            // We learn something like 10%, 19%, 27%, 34%, etc.
+            // it will get there at very end, once the fraction of 
+            // remaining weight left to learn is < 1, because we round up
+            // to 1.
+            int freqTotalToLearnThisRun = 
+                ceil( freqTotalLeftToLearn * languageLearningBaseFraction );
+            
+            printf(
+                "\n\nTrying to base learn %d/%d remaining weight from set %d\n",
+                freqTotalToLearnThisRun, freqTotalLeftToLearn, i );
+
+            int freqTotalLearnedThisRun = 0;
+            
+            int c = 0;
+            
+            while( freqTotalLearnedThisRun < freqTotalToLearnThisRun ) {
+                // jump into remaining clusters randomly, with
+                // our chance of landing on a given cluster based on its
+                // fraction of the remaining weight
                 int freqToSkip = 
                     randSource.getRandomBoundedInt( 0,
-                                                    allClustersFreqTotals[i] );
-                // jump into the cluster by freqToSkip amount
-                // this roughly matches picking clusters based on frequency
+                                                    freqTotalLeftToLearn );
+                // jump into the remaining clusters by freqToSkip amount
                 
                 int clusterHit = -1;
                 
                 int freqSkipped = 0;
                 for( int s=0; s<allClusterSizes[i]; s++ ) {
-                    freqSkipped += allClustersFreq[i][s];
+                    // skip already-learned clusters during this
+                    // weighted picking process
+                    if( ! learnB->allMappings[i][s] ) {
+                        freqSkipped += allClustersFreq[i][s];
                     
-                    if( freqSkipped >= freqToSkip ) {
-                        // landed in this cluster
-                        clusterHit = s;
-                        break;
-                        }
-                    }
-                if( clusterHit != -1 ) {
-                    // walk forward from here until we find one we haven't
-                    // learned yet
-                    // give up if we hit end
-                    
-                    // (this makes it less likely that we will ever "find"
-                    //  early clusters in list and learn them, but this 
-                    //  slopiness is okay, because a bit of an accent
-                    //  can remain long-term)
-                    for( int s=clusterHit; s<allClusterSizes[i]; s++ ) {
-                        
-                        if( ! learnB->allMappings[i][s] ) {
-                            // found one!
-                            learnB->allMappings[i][s] = true;
-                            
-                            freqTotalLearned[i] += allClustersFreq[i][s];
-                            printf( "%d: learned %s (freq %d) (total %d/%d)\n", 
-                                    c, allClusters[i][s],
-                                    allClustersFreq[i][s],
-                                    freqTotalLearned[i],
-                                    freqTotalToLearn[i] );
-                            if( freqTotalLearned[i] >= freqTotalToLearn[i] ) {
-                                freqOverflow = true;
-                                }
+                        if( freqSkipped >= freqToSkip ) {
+                            // landed in this cluster
+                            clusterHit = s;
                             break;
                             }
                         }
                     }
+
+                printf( "               Freq to skip = %d/%d, cluster hit = %d\n",
+                        freqToSkip, freqTotalLeftToLearn, clusterHit );
+                
+                if( clusterHit != -1 ) {
+                    int s = clusterHit;
+                    
+                    learnB->allMappings[i][s] = true;
+                    freqTotalLearnedThisRun += allClustersFreq[i][s];
+                    
+                    freqTotalLeftToLearn -= allClustersFreq[i][s];
+                    
+                    printf( 
+                        "%d: learned (%d)%s (freq %d) (total %d/%d)\n", 
+                        c, s, allClusters[i][s],
+                        allClustersFreq[i][s],
+                        freqTotalLearnedThisRun,
+                        freqTotalToLearnThisRun );
+                    }
+                else {
+                    // no clusters left to learn
+                    break;
+                    }
+                c++;
                 }
             }
         
         learnB->firstPhraseHeard = true;
+        printf( "\nLearning took %f ms\n", 
+                1000 * ( Time::getCurrentTime() - startTime ) );
         }
     
 
