@@ -15669,9 +15669,8 @@ int main() {
                                         // they are the only thing a baby can
                                         // while held
                                         if( ! nextPlayer->holdingWound &&
-                                            ! nextPlayer->holdingBiomeSickness 
-                                            &&
-                                            nextPlayer->holdingID > 0 ) {
+                                            ! nextPlayer->
+                                            holdingBiomeSickness ) {
                                             handleDrop( 
                                              m.x, m.y, nextPlayer,
                                              &playerIndicesToSendUpdatesAbout );
