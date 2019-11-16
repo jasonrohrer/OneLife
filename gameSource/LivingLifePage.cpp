@@ -1737,8 +1737,23 @@ static void fixSingleStepPath( LiveObject *inObject ) {
 
 
 
+
+char LivingLifePage::isBadBiome( int inMapI ) {
+    int b = mMapBiomes[inMapI];
+        
+    if( mMapFloors[inMapI] == 0 &&
+        mBadBiomeIndices.getElementIndex( b ) != -1 ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
 // should match limit on server
 static int pathFindingD = 32;
+
+static char isAutoClick = false;
 
 
 void LivingLifePage::computePathToDest( LiveObject *inObject ) {
@@ -1780,8 +1795,32 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
             }
         }
     
-                
+    
+    int startInd = getMapIndex( start.x, start.y );
+    
+    char startBiomeBad = false;
+    
+    if( startInd != -1 ) {
+        // count as bad if we're not already standing on edge of bad biome
+        // or in it
+        char startPointBad = isBadBiome( startInd );
+        
+        if( startPointBad ||
+            isBadBiome( startInd - 1 ) ||
+            isBadBiome( startInd - 1 ) ||
+            isBadBiome( startInd - mMapD ) ||
+            isBadBiome( startInd + mMapD ) ) {
             
+            startBiomeBad = true;
+            }
+
+        if( isAutoClick && ! startPointBad ) {
+            // don't allow auto clicking into bad biome from good
+            startBiomeBad = false;
+            }
+        }
+    
+
 
     if( inObject->pathToDest != NULL ) {
         delete [] inObject->pathToDest;
@@ -1820,6 +1859,15 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
                       ! getObject( mMap[ mapI ] )->blocksWalking ) ) {
                     
                     blockedMap[ y * pathFindingD + x ] = false;
+                    }
+
+                if( ! startBiomeBad && 
+                    mMapFloors[ mapI ] == 0 &&
+                    mBadBiomeIndices.getElementIndex( mMapBiomes[ mapI ] ) 
+                    != -1 ) {
+                    // route around bad biomes on long paths
+
+                    blockedMap[ y * pathFindingD + x ] = true;
                     }
                 }
             }
@@ -18983,12 +19031,16 @@ void LivingLifePage::step() {
                                 o->waypointX = lrint( worldMouseX / CELL_D );
                                 o->waypointY = lrint( worldMouseY / CELL_D );
 
+                                isAutoClick = true;
                                 pointerDown( fakeClick.x, fakeClick.y );
-                               
+                                isAutoClick = false;
+
                                 o->useWaypoint = false;
                                 }
                             else {
+                                isAutoClick = true;
                                 pointerDown( worldMouseX, worldMouseY );
+                                isAutoClick = false;
                                 }
                             }
                         }
@@ -22384,7 +22436,9 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
             o->currentPathStep < o->pathLength - 2 ) {
             GridPos p = o->pathToDest[ o->currentPathStep + 1 ];
         
+            isAutoClick = true;
             pointerDown( p.x * CELL_D, p.y * CELL_D );
+            isAutoClick = false;
             }
         
 

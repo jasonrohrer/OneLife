@@ -988,6 +988,9 @@ class LivingLifePage : public GamePage, public ActionListener {
         SimpleVector<int> mBadBiomeIndices;
         
         SimpleVector<char*> mBadBiomeNames;
+    
+        char isBadBiome( int inMapI );
+
     };
 
 
