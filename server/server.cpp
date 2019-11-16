@@ -791,6 +791,8 @@ typedef struct LiveObject {
 		//time when read position is expired and can be read again
 		SimpleVector<double> readPositionsETA;
 
+        SimpleVector<int> permanentEmots;
+
     } LiveObject;
 
 
@@ -19591,21 +19593,27 @@ int main() {
             for( int i=0; i<newEmotPlayerIDs.size(); i++ ) {
                 
                 int ttl = newEmotTTLs.getElementDirect( i );
-
+                int pID = newEmotPlayerIDs.getElementDirect( i );
+                int eInd = newEmotIndices.getElementDirect( i );
+                
                 char *line;
                 
                 if( ttl == 0  ) {
                     line = autoSprintf( 
-                        "%d %d\n", 
-                        newEmotPlayerIDs.getElementDirect( i ), 
-                        newEmotIndices.getElementDirect( i ) );
+                        "%d %d\n", pID, eInd );
                     }
                 else {
                     line = autoSprintf( 
-                        "%d %d %d\n", 
-                        newEmotPlayerIDs.getElementDirect( i ), 
-                        newEmotIndices.getElementDirect( i ),
-                        newEmotTTLs.getElementDirect( i ) );
+                        "%d %d %d\n", pID, eInd, ttl );
+                        
+                    if( ttl == -1 ) {
+                        // a new permanent emot
+                        LiveObject *pO = getLiveObject( pID );
+                        if( pO != NULL ) {
+                            pO->permanentEmots.push_back( eInd );
+                            }
+                        }
+                        
                     }
                 
                 numAdded++;
@@ -20021,6 +20029,36 @@ int main() {
                 
                     delete [] dyingMessage;
                     }
+
+                // tell them about all permanent emots
+                SimpleVector<char> emotMessageWorking;
+                emotMessageWorking.appendElementString( "PE\n" );
+                for( int i=0; i<numPlayers; i++ ) {
+                
+                    LiveObject *o = players.getElement( i );
+                
+                    if( o->error ) {
+                        continue;
+                        }
+                    for( int e=0; e< o->permanentEmots.size(); e ++ ) {
+                        // ttl -2 for permanent but not new
+                        char *line = autoSprintf( 
+                            "%d %d -2\n",
+                            o->id, 
+                            o->permanentEmots.getElementDirect( e ) );
+                        emotMessageWorking.appendElementString( line );
+                        delete [] line;
+                        }
+                    }
+                emotMessageWorking.push_back( '#' );
+                
+                char *emotMessage = emotMessageWorking.getElementString();
+                
+                sendMessageToPlayer( nextPlayer, emotMessage, 
+                                     strlen( emotMessage ) );
+                    
+                delete [] emotMessage;
+                    
 
                 
                 nextPlayer->firstMessageSent = true;

@@ -485,6 +485,7 @@ seconds, client-side.  If it is omitted, the client should display the emotion
 for the standard amount of time.  If ttl is -1, this emot is permanent and
 should layer with other permanent and non-permanent emots.
 
+If ttl is -2, the emot is permanent but not new, so sound shoudl be skipped.
 
 
 

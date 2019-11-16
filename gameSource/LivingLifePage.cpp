@@ -16882,7 +16882,7 @@ void LivingLifePage::step() {
                             LiveObject *existing = gameObjects.getElement(j);
                             Emotion *newEmotPlaySound = NULL;
                             
-                            if( ttlSec == -1 ) {
+                            if( ttlSec < 0 ) {
                                 // new permanent emot layer
                                 newEmotPlaySound = getEmotion( emotIndex );
 
@@ -16891,6 +16891,11 @@ void LivingLifePage::step() {
                                     
                                     existing->permanentEmots.push_back(
                                         newEmotPlaySound);
+                                    }
+                                if( ttlSec == -2 ) {
+                                    // old emot that we're just learning about
+                                    // skip sound
+                                    newEmotPlaySound = NULL;
                                     }
                                 }
                             else {
