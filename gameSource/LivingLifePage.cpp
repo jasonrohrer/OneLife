@@ -1052,6 +1052,7 @@ typedef enum messageType {
     OWNER,
     VALLEY_SPACING,
     FLIGHT_DEST,
+    BAD_BIOMES,
     VOG_UPDATE,
     PHOTO_SIGNATURE,
     FORCED_SHUTDOWN,
@@ -1165,6 +1166,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "FD" ) == 0 ) {
         returnValue = FLIGHT_DEST;
+        }
+    else if( strcmp( copy, "BB" ) == 0 ) {
+        returnValue = BAD_BIOMES;
         }
     else if( strcmp( copy, "VU" ) == 0 ) {
         returnValue = VOG_UPDATE;
@@ -2700,6 +2704,8 @@ LivingLifePage::~LivingLifePage() {
             numServerBytesRead, overheadServerBytesRead,
             numServerBytesSent, overheadServerBytesSent );
     
+    mBadBiomeNames.deallocateStringElements();
+
     mGlobalMessagesToDestroy.deallocateStringElements();
 
     freeLiveTriggers();
@@ -9225,9 +9231,17 @@ void LivingLifePage::draw( doublePair inViewCenter,
             mousePos.x < tipPos.x + 607 ) {
             overTempMeter = true;
             }
-
+        
+        char badBiome = false;
+        if( mCurMouseOverBiome != -1 &&
+            mBadBiomeIndices.getElementIndex( mCurMouseOverBiome ) 
+            != -1 ) {
+            badBiome = true;
+            mLastMouseOverID = 0;
+            }
         
         if( ( overTempMeter && ourLiveObject->foodDrainTime > 0 ) 
+            || badBiome
             || mCurMouseOverID != 0 || mLastMouseOverID != 0 ) {
             
             int idToDescribe = mCurMouseOverID;
@@ -9356,6 +9370,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     desToDelete = des;
                     }
+                }
+            else if( badBiome ) {
+                // we're over a bad biome
+                int bInd =
+                    mBadBiomeIndices.getElementIndex( mCurMouseOverBiome );
+                des = mBadBiomeNames.getElementDirect( bInd );
                 }
             else {
                 ObjectRecord *o = getObject( idToDescribe );
@@ -13098,6 +13118,38 @@ void LivingLifePage::step() {
                         }
                     }
                 }            
+            }
+        else if( type == BAD_BIOMES ) {
+            mBadBiomeIndices.deleteAll();
+            mBadBiomeNames.deallocateStringElements();
+            
+            int numLines;
+                
+            char **lines = split( message, "\n", &numLines );
+            
+            for( int i=1; i<numLines; i++ ) {
+                int index = 0;
+                char name[100];
+                
+                int numRead = sscanf( lines[i], "%d %99s", &index, name );
+                
+                if( numRead == 2 ) {
+                    int nameLen = strlen( name );
+                    for( int c=0; c<nameLen; c++ ) {
+                        if( name[c] == '_' ) {
+                            name[c] = ' ';
+                            }
+                        }
+                    
+                    mBadBiomeIndices.push_back( index );
+                    mBadBiomeNames.push_back( stringDuplicate( name ) );
+                    }
+                }
+            
+            for( int i=0; i<numLines; i++ ) {
+                delete [] lines[i];
+                }
+            delete [] lines;
             }
         else if( type == VOG_UPDATE ) {
             int posX, posY;
@@ -19582,6 +19634,7 @@ void LivingLifePage::makeActive( char inFresh ) {
 
     mLastMouseOverID = 0;
     mCurMouseOverID = 0;
+    mCurMouseOverBiome = -1;
     mCurMouseOverFade = 0;
     mCurMouseOverBehind = false;
     mCurMouseOverPerson = false;
@@ -20462,13 +20515,18 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
     
 
     int destID = 0;
-        
+    int destBiome = -1;
+    
     int mapX = clickDestX - mMapOffsetX + mMapD / 2;
     int mapY = clickDestY - mMapOffsetY + mMapD / 2;
-    if( p.hitAnObject && mapY >= 0 && mapY < mMapD &&
+    if( mapY >= 0 && mapY < mMapD &&
         mapX >= 0 && mapX < mMapD ) {
         
-        destID = mMap[ mapY * mMapD + mapX ];
+        if( p.hitAnObject ) {
+            destID = mMap[ mapY * mMapD + mapX ];
+            }
+        
+        destBiome = mMapBiomes[ mapY * mMapD + mapX ];
         }
 
 
@@ -20513,6 +20571,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             // clear when mousing over bare parts of body
             // show YOU
             mCurMouseOverID = -99;
+            mCurMouseOverBiome = -1;
             
             overNothing = false;
             
@@ -20538,9 +20597,15 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             // store negative in place so that we can show their relation
             // string
             mCurMouseOverID = - p.hitOtherPersonID;
+            mCurMouseOverBiome = -1;
             }
         }
     
+    if( destID == 0 && mCurMouseOverID == 0 ) {
+        // show biome anyway
+        mCurMouseOverBiome = destBiome;
+        }
+
 
     if( destID > 0 ) {
         mCurMouseOverSelf = false;
@@ -20554,6 +20619,8 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             }
 
         mCurMouseOverID = destID;
+        mCurMouseOverBiome = destBiome;
+        
         overNothing = false;
         
         if( p.hitSlotIndex != -1 ) {

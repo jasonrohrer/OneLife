@@ -197,6 +197,8 @@ CURSE_SCORE_CHANGE (CS)
 
 FLIGHT_DEST (FD)
 
+BAD_BIOMES (BB)
+
 VOG_UPDATE (VU)
 
 PHOTO_SIGNATURE (PH)
@@ -481,6 +483,19 @@ LS
 14034 3424 CURSE JOHN SMITH
 -342 3847 HELP ME
 #
+
+
+
+
+BB
+bID DISPLAY_NAME
+bID DISPLAY_NAME
+...
+bID DISPLAY_NAME
+#
+
+Lists bad biome IDs for a player, along with their display names IN_THIS_FORMAT
+
 
 
 

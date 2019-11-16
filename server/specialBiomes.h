@@ -25,3 +25,9 @@ int getBiomeReliefEmot( int inSicknessObjectID );
 
 
 char isPolylingual( int inDisplayID );
+
+
+// message to tell a player which biomes are bad for them
+// and what their display names are
+// destroyed by caller
+char *getBadBiomeMessage( int inDisplayID );

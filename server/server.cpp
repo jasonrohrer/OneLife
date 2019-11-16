@@ -21250,6 +21250,14 @@ int main() {
 
                 // catch them up on war/peace states
                 sendWarReportToOne( nextPlayer );
+                
+                // tell them about their own bad biomes
+                char *bbMessage = getBadBiomeMessage( nextPlayer->displayID );
+                sendMessageToPlayer( nextPlayer, bbMessage, 
+                                         strlen( bbMessage ) );
+                
+                delete [] bbMessage;
+                    
 
                 
                 nextPlayer->firstMessageSent = true;

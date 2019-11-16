@@ -1,5 +1,6 @@
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/SettingsManager.h"
+#include "minorGems/util/stringUtils.h"
 
 #include "../gameSource/objectBank.h"
 
@@ -15,6 +16,9 @@ typedef struct SpecialBiome {
         
         // -1 if not set
         int reliefEmotIndex;
+        
+        // NULL if not set
+        char *badBiomeName;
     } SpecialBiome;
 
 
@@ -32,11 +36,21 @@ static int minNumPlayers;
 
 
 void initSpecialBiomes() {
+    for( int i=0; i < MAX_BIOME_NUMBER; i++ ) {
+        specialBiomes[i].badBiomeName = NULL;
+        }
+
     updateSpecialBiomes( 0 );
     }
 
 
 void freeSpecialBiomes() {
+    for( int i=0; i < MAX_BIOME_NUMBER; i++ ) {
+        if( specialBiomes[i].badBiomeName != NULL ) {
+            delete [] specialBiomes[i].badBiomeName;
+            specialBiomes[i].badBiomeName = NULL;
+            }
+        }
     }
 
 
@@ -55,16 +69,21 @@ void updateSpecialBiomes( int inNumPlayers ) {
         specialBiomes[i].specialistRace = -1;
         specialBiomes[i].sicknessObjectID = -1;
         specialBiomes[i].reliefEmotIndex = -1;
+        if( specialBiomes[i].badBiomeName != NULL ) {
+            delete [] specialBiomes[i].badBiomeName;
+            specialBiomes[i].badBiomeName = NULL;
+            }
         }
     
     SimpleVector<char *> *parts = 
         SettingsManager::getSetting( "raceSpecialBiomes" );
 
-    if( parts->size() % 2 == 0 ) {
+    if( parts->size() % 3 == 0 ) {
         
-        for( int i=0; i<parts->size() - 1; i += 2 ) {
+        for( int i=0; i<parts->size() - 1; i += 3 ) {
             char *letter = parts->getElementDirect( i );
             char *number = parts->getElementDirect( i + 1 );
+            char *name = parts->getElementDirect( i + 2 );
 
             int raceNumber = letter[0] - 'A' + 1;
             
@@ -73,6 +92,8 @@ void updateSpecialBiomes( int inNumPlayers ) {
             
             if( biomeNumber >= 0 && biomeNumber < MAX_BIOME_NUMBER ) {
                 specialBiomes[biomeNumber].specialistRace = raceNumber;
+                specialBiomes[biomeNumber].badBiomeName = 
+                    stringDuplicate( name );
                 }
             else if( biomeNumber == -1 ) {
                 polylingualRaces.push_back( raceNumber );
@@ -213,3 +234,35 @@ char isPolylingual( int inDisplayID ) {
     
     return false;
     }
+
+
+char *getBadBiomeMessage( int inDisplayID ) {
+    if( curNumPlayers < minNumPlayers ) {
+        return stringDuplicate( "BB\n#" );
+        }
+    
+    ObjectRecord *o = getObject( inDisplayID );
+    
+    if( o->race == 0 ) {
+        return stringDuplicate( "BB\n#" );
+        }
+
+    SimpleVector<char> messageWorking;
+
+    messageWorking.appendElementString( "BB\n" );
+
+    for( int i=0; i<MAX_BIOME_NUMBER; i++ ) {
+        int r = specialBiomes[ i ].specialistRace;
+        
+        if( r != -1 && r != o->race ) {
+            char *line = 
+                autoSprintf( "%d %s\n", i, specialBiomes[i].badBiomeName );
+            messageWorking.appendElementString( line );
+            delete [] line;
+            }
+        }
+    messageWorking.push_back( '#' );
+    
+    return messageWorking.getElementString();
+    }
+

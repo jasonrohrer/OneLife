@@ -817,6 +817,8 @@ class LivingLifePage : public GamePage, public ActionListener {
         // the object that we're mousing over
         int mLastMouseOverID;
         int mCurMouseOverID;
+        int mCurMouseOverBiome;
+        
         float mCurMouseOverFade;
         
         GridPos mCurMouseOverSpot;
@@ -981,7 +983,11 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         char isHintFilterStringInvalid();
         
+        
 
+        SimpleVector<int> mBadBiomeIndices;
+        
+        SimpleVector<char*> mBadBiomeNames;
     };
 
 
