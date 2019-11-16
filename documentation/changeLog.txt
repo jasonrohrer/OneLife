@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 283   ???
+Version 283   2019-November-15
 
 --Fixed crash when sprite .tga file exists but .txt file doesn't (either in
   folder or in stale caches).
