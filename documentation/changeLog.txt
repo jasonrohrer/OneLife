@@ -75,6 +75,8 @@ Server Fixes
 --Support for +noWait tag on 'weapons' like snowballs and tatoo needles.  No 
   murder mouth, and no waiting period before execution.  Target still gasps.
 
+--Support for polylingual skin tones.
+
 
 
 

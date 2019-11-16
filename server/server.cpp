@@ -22251,7 +22251,11 @@ int main() {
                                     players.size() < 
                                     minActivePlayersForLanguages ||
                                     strlen( trimmedPhrase ) == 0 ||
-                                    trimmedPhrase[0] == '[' ) {
+                                    trimmedPhrase[0] == '[' ||
+                                    isPolylingual( nextPlayer->displayID ) ||
+                                    ( speakerObj != NULL &&
+                                      isPolylingual( 
+                                          speakerObj->displayID ) ) ) {
                                     
                                     translatedPhrase =
                                         stringDuplicate( trimmedPhrase );

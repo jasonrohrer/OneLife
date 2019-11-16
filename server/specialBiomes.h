@@ -22,3 +22,6 @@ int getBiomeSickness( int inDisplayID, int inX, int inY );
 // get emotion index of relief from biome sickness
 // returns -1 if not set
 int getBiomeReliefEmot( int inSicknessObjectID );
+
+
+char isPolylingual( int inDisplayID );

@@ -18,6 +18,9 @@ typedef struct SpecialBiome {
     } SpecialBiome;
 
 
+SimpleVector<int> polylingualRaces;
+
+
 // assume not more than 100 biomes;
 
 // mapping biome numbers 
@@ -45,6 +48,8 @@ void updateSpecialBiomes( int inNumPlayers ) {
     minNumPlayers = 
         SettingsManager::getIntSetting( 
             "minActivePlayersForSpecialBiomes", 15 );
+
+    polylingualRaces.deleteAll();
     
     for( int i=0; i < MAX_BIOME_NUMBER; i++ ) {
         specialBiomes[i].specialistRace = -1;
@@ -68,6 +73,9 @@ void updateSpecialBiomes( int inNumPlayers ) {
             
             if( biomeNumber >= 0 && biomeNumber < MAX_BIOME_NUMBER ) {
                 specialBiomes[biomeNumber].specialistRace = raceNumber;
+                }
+            else if( biomeNumber == -1 ) {
+                polylingualRaces.push_back( raceNumber );
                 }
             }
         }
@@ -186,3 +194,22 @@ int getBiomeReliefEmot( int inSicknessObjectID ) {
     return -1;
     }
 
+
+
+char isPolylingual( int inDisplayID ) {
+    if( curNumPlayers < minNumPlayers ) {
+        return false;
+        }
+    
+    ObjectRecord *o = getObject( inDisplayID );
+    
+    if( o->race == 0 ) {
+        return false;
+        }
+    
+    if( polylingualRaces.getElementIndex( o->race ) != -1 ) {
+        return true;
+        }
+    
+    return false;
+    }
