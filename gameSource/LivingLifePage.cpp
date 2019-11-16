@@ -17417,10 +17417,14 @@ void LivingLifePage::step() {
                             
                             if( ttlSec == -1 ) {
                                 // new permanent emot layer
-                                existing->permanentEmots.push_back(
-                                    getEmotion( emotIndex ) );
-                                
                                 newEmotPlaySound = getEmotion( emotIndex );
+
+                                if( existing->permanentEmots.getElementIndex(
+                                        newEmotPlaySound ) == -1 ) {
+                                    
+                                    existing->permanentEmots.push_back(
+                                        newEmotPlaySound);
+                                    }
                                 }
                             else {
                                 
