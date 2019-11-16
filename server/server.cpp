@@ -12463,6 +12463,18 @@ static char canPlayerUseOrLearnTool( LiveObject *inPlayer, int inToolID ) {
     return true;
     }
 
+
+
+static char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY ) {
+    if( inPlayer->vogMode ||
+        inPlayer->forceSpawn ||
+        inPlayer->isTutorial ) {
+        return true;
+        }
+    return isBiomeAllowed( inPlayer->displayID, inX, inY );
+    }
+
+    
     
 
 
@@ -15659,6 +15671,14 @@ int main() {
                                                       nextPlayer->xd,
                                                       nextPlayer->yd );
                                 
+                                if( nextPlayer->vogMode || 
+                                    nextPlayer->forceSpawn ||
+                                    nextPlayer->isTutorial ) {
+                                    // these special-case players never
+                                    // have biome sickness
+                                    sicknessObjectID = -1;
+                                    }
+                                
                                 if( sicknessObjectID > 0 &&
                                     nextPlayer->holdingID != 
                                     sicknessObjectID ) {
@@ -16257,7 +16277,7 @@ int main() {
                                 }
                             }
                         
-                        if( isBiomeAllowed( nextPlayer->displayID, m.x, m.y ) )
+                        if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
                         if( distanceUseAllowed 
                             ||
                             isGridAdjacent( m.x, m.y,
@@ -18043,7 +18063,7 @@ int main() {
                             canDrop = false;
                             }
 
-                        if( isBiomeAllowed( nextPlayer->displayID, m.x, m.y ) )
+                        if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
                         if( ( isGridAdjacent( m.x, m.y,
                                               nextPlayer->xd, 
                                               nextPlayer->yd ) 
@@ -18369,7 +18389,7 @@ int main() {
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
-                        if( isBiomeAllowed( nextPlayer->displayID, m.x, m.y ) )
+                        if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
                         if( isGridAdjacent( m.x, m.y, 
                                             nextPlayer->xd, 
                                             nextPlayer->yd ) 
@@ -21250,13 +21270,20 @@ int main() {
                 // catch them up on war/peace states
                 sendWarReportToOne( nextPlayer );
                 
-                // tell them about their own bad biomes
-                char *bbMessage = getBadBiomeMessage( nextPlayer->displayID );
-                sendMessageToPlayer( nextPlayer, bbMessage, 
-                                         strlen( bbMessage ) );
-                
-                delete [] bbMessage;
+                if( ! nextPlayer->isTutorial &&
+                    ! nextPlayer->forceSpawn ) {
+                    // not skipping vog mode here, b/c it's never
+                    // enabled until after first message sent
                     
+                    // tell them about their own bad biomes
+                    char *bbMessage = 
+                        getBadBiomeMessage( nextPlayer->displayID );
+                    sendMessageToPlayer( nextPlayer, bbMessage, 
+                                         strlen( bbMessage ) );
+                    
+                    delete [] bbMessage;
+                    }
+                
 
                 
                 nextPlayer->firstMessageSent = true;
