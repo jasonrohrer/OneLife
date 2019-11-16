@@ -5102,6 +5102,24 @@ size_t stringFormatIntGrouped( char dst[16], int num ) {
 
 
 
+// true if holding "sick" object
+char isSick( LiveObject *inPlayer ) {
+    if( inPlayer->holdingID <= 0 ){
+        return false;
+        }
+    ObjectRecord *o = getObject( inPlayer->holdingID );
+    
+    if( ! o->permanent ) {
+        return false;
+        }
+    if( strstr( o->description, " sick" ) != NULL ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
 
 typedef struct DrawOrderRecord {
         char person;
@@ -9305,7 +9323,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                        description );
                     desToDelete = des;
                     }
-                else if( ourLiveObject->dying &&
+                else if( ( ourLiveObject->dying || isSick( ourLiveObject ) ) 
+                         &&
                          ourLiveObject->holdingID > 0 ) {
                     des = autoSprintf( "%s %s",
                                        translate( "youWith" ),
@@ -9358,7 +9377,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     desToDelete = des;
                     }
                 if( otherObj != NULL && 
-                    otherObj->dying && otherObj->holdingID > 0 ) {
+                    ( otherObj->dying || isSick( otherObj ) )
+                    && otherObj->holdingID > 0 ) {
                     des = autoSprintf( "%s - %s %s",
                                        des,
                                        translate( "with" ),
@@ -15874,7 +15894,12 @@ void LivingLifePage::step() {
                                             // skip this if they are dying
                                             // because they may have picked
                                             // up a wound
-                                            if( !existing->dying &&
+
+                                            // also not if they are holding a 
+                                            // sickness
+                                            
+                                            if( ! existing->dying &&
+                                                ! isSick( existing ) &&
                                                 existingObj->
                                                 usingSound.numSubSounds > 0 ) {
                                     
