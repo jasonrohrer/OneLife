@@ -1133,6 +1133,7 @@ typedef enum messageType {
     OWNER,
     VALLEY_SPACING,
     FLIGHT_DEST,
+    BAD_BIOMES,
     VOG_UPDATE,
     PHOTO_SIGNATURE,
     FORCED_SHUTDOWN,
@@ -1246,6 +1247,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "FD" ) == 0 ) {
         returnValue = FLIGHT_DEST;
+        }
+    else if( strcmp( copy, "BB" ) == 0 ) {
+        returnValue = BAD_BIOMES;
         }
     else if( strcmp( copy, "VU" ) == 0 ) {
         returnValue = VOG_UPDATE;
@@ -1814,8 +1818,23 @@ static void fixSingleStepPath( LiveObject *inObject ) {
 
 
 
+
+char LivingLifePage::isBadBiome( int inMapI ) {
+    int b = mMapBiomes[inMapI];
+        
+    if( mMapFloors[inMapI] == 0 &&
+        mBadBiomeIndices.getElementIndex( b ) != -1 ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
 // should match limit on server
 static int pathFindingD = 32;
+
+static char isAutoClick = false;
 
 
 void LivingLifePage::computePathToDest( LiveObject *inObject ) {
@@ -1857,8 +1876,32 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
             }
         }
     
-                
+    
+    int startInd = getMapIndex( start.x, start.y );
+    
+    char startBiomeBad = false;
+    
+    if( startInd != -1 ) {
+        // count as bad if we're not already standing on edge of bad biome
+        // or in it
+        char startPointBad = isBadBiome( startInd );
+        
+        if( startPointBad ||
+            isBadBiome( startInd - 1 ) ||
+            isBadBiome( startInd - 1 ) ||
+            isBadBiome( startInd - mMapD ) ||
+            isBadBiome( startInd + mMapD ) ) {
             
+            startBiomeBad = true;
+            }
+
+        if( isAutoClick && ! startPointBad ) {
+            // don't allow auto clicking into bad biome from good
+            startBiomeBad = false;
+            }
+        }
+    
+
 
     if( inObject->pathToDest != NULL ) {
         delete [] inObject->pathToDest;
@@ -1897,6 +1940,15 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
                       ! getObject( mMap[ mapI ] )->blocksWalking ) ) {
                     
                     blockedMap[ y * pathFindingD + x ] = false;
+                    }
+
+                if( ! startBiomeBad && 
+                    mMapFloors[ mapI ] == 0 &&
+                    mBadBiomeIndices.getElementIndex( mMapBiomes[ mapI ] ) 
+                    != -1 ) {
+                    // route around bad biomes on long paths
+
+                    blockedMap[ y * pathFindingD + x ] = true;
                     }
                 }
             }
@@ -2801,6 +2853,8 @@ LivingLifePage::~LivingLifePage() {
             numServerBytesRead, overheadServerBytesRead,
             numServerBytesSent, overheadServerBytesSent );
     
+    mBadBiomeNames.deallocateStringElements();
+
     mGlobalMessagesToDestroy.deallocateStringElements();
 
     freeLiveTriggers();
@@ -4466,6 +4520,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
         
 
         setAnimationEmotion( inObj->currentEmot );
+        addExtraAnimationEmotions( &( inObj->permanentEmots ) );
         
         // draw young baby lying flat
         double rot = 0;
@@ -4680,7 +4735,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             personPos = add( personPos, inObj->ridingOffset );
 
             setAnimationEmotion( inObj->currentEmot );
-
+            addExtraAnimationEmotions( &( inObj->permanentEmots ) );
             
             if( heldObject->anySpritesBehindPlayer ) {
                 // draw part that is behind player
@@ -4801,7 +4856,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 
                 
                 setAnimationEmotion( babyO->currentEmot );
-                
+                addExtraAnimationEmotions( &( babyO->permanentEmots ) );
+
                 doublePair babyHeldPos = holdPos;
                 
                 if( babyO->babyWiggle ) {
@@ -5201,6 +5257,24 @@ size_t stringFormatIntGrouped( char dst[16], int num ) {
     *--p_dst = '\0';
 
     return (size_t)( p_dst - dst );
+    }
+
+
+
+// true if holding "sick" object
+char isSick( LiveObject *inPlayer ) {
+    if( inPlayer->holdingID <= 0 ){
+        return false;
+        }
+    ObjectRecord *o = getObject( inPlayer->holdingID );
+    
+    if( ! o->permanent ) {
+        return false;
+        }
+    if( strstr( o->description, " sick" ) != NULL ) {
+        return true;
+        }
+    return false;
     }
 
 
@@ -9447,9 +9521,17 @@ void LivingLifePage::draw( doublePair inViewCenter,
             mousePos.x < tipPos.x + 607 ) {
             overTempMeter = true;
             }
-
+        
+        char badBiome = false;
+        if( mCurMouseOverBiome != -1 &&
+            mBadBiomeIndices.getElementIndex( mCurMouseOverBiome ) 
+            != -1 ) {
+            badBiome = true;
+            mLastMouseOverID = 0;
+            }
         
         if( ( overTempMeter && ourLiveObject->foodDrainTime > 0 ) 
+            || badBiome
             || mCurMouseOverID != 0 || mLastMouseOverID != 0 ) {
             
             int idToDescribe = mCurMouseOverID;
@@ -9513,7 +9595,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                        description );
                     desToDelete = des;
                     }
-                else if( ourLiveObject->dying &&
+                else if( ( ourLiveObject->dying || isSick( ourLiveObject ) ) 
+                         &&
                          ourLiveObject->holdingID > 0 ) {
                     des = autoSprintf( "%s %s",
                                        translate( "youWith" ),
@@ -9566,7 +9649,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     desToDelete = des;
                     }
                 if( otherObj != NULL && 
-                    otherObj->dying && otherObj->holdingID > 0 ) {
+                    ( otherObj->dying || isSick( otherObj ) )
+                    && otherObj->holdingID > 0 ) {
                     des = autoSprintf( "%s - %s %s",
                                        des,
                                        translate( "with" ),
@@ -9578,6 +9662,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     desToDelete = des;
                     }
+                }
+            else if( badBiome ) {
+                // we're over a bad biome
+                int bInd =
+                    mBadBiomeIndices.getElementIndex( mCurMouseOverBiome );
+                des = mBadBiomeNames.getElementDirect( bInd );
                 }
             else {
                 ObjectRecord *o = getObject( idToDescribe );
@@ -13322,6 +13412,38 @@ void LivingLifePage::step() {
                     }
                 }            
             }
+        else if( type == BAD_BIOMES ) {
+            mBadBiomeIndices.deleteAll();
+            mBadBiomeNames.deallocateStringElements();
+            
+            int numLines;
+                
+            char **lines = split( message, "\n", &numLines );
+            
+            for( int i=1; i<numLines; i++ ) {
+                int index = 0;
+                char name[100];
+                
+                int numRead = sscanf( lines[i], "%d %99s", &index, name );
+                
+                if( numRead == 2 ) {
+                    int nameLen = strlen( name );
+                    for( int c=0; c<nameLen; c++ ) {
+                        if( name[c] == '_' ) {
+                            name[c] = ' ';
+                            }
+                        }
+                    
+                    mBadBiomeIndices.push_back( index );
+                    mBadBiomeNames.push_back( stringDuplicate( name ) );
+                    }
+                }
+            
+            for( int i=0; i<numLines; i++ ) {
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
         else if( type == VOG_UPDATE ) {
             int posX, posY;
             
@@ -16046,7 +16168,12 @@ void LivingLifePage::step() {
                                             // skip this if they are dying
                                             // because they may have picked
                                             // up a wound
-                                            if( !existing->dying &&
+
+                                            // also not if they are holding a 
+                                            // sickness
+                                            
+                                            if( ! existing->dying &&
+                                                ! isSick( existing ) &&
                                                 existingObj->
                                                 usingSound.numSubSounds > 0 ) {
                                     
@@ -17626,34 +17753,58 @@ void LivingLifePage::step() {
                 }            
             
             for( int i=1; i<numLines; i++ ) {
-                int id, emotIndex;
-                int ttlSec = -1;
+                int pid, emotIndex;
+                int ttlSec = 0;
                 
                 int numRead = sscanf( lines[i], "%d %d %d",
-                                      &id, &emotIndex, &ttlSec );
+                                      &pid, &emotIndex, &ttlSec );
 
                 if( numRead >= 2 ) {
                     for( int j=0; j<gameObjects.size(); j++ ) {
-                        if( gameObjects.getElement(j)->id == id ) {
-                            
+                        if( gameObjects.getElement(j)->id == pid ) {
+                                
                             LiveObject *existing = gameObjects.getElement(j);
+                            Emotion *newEmotPlaySound = NULL;
                             
-                            Emotion *oldEmot = existing->currentEmot;
-                            
-                            existing->currentEmot = getEmotion( emotIndex );
-                            
-                            if( numRead == 3 && ttlSec > 0 ) {
-                                existing->emotClearETATime = 
-                                    game_getCurrentTime() + ttlSec;
+                            if( ttlSec < 0 ) {
+                                // new permanent emot layer
+                                newEmotPlaySound = getEmotion( emotIndex );
+
+                                if( existing->permanentEmots.getElementIndex(
+                                        newEmotPlaySound ) == -1 ) {
+                                    
+                                    existing->permanentEmots.push_back(
+                                        newEmotPlaySound);
+                                    }
+                                if( ttlSec == -2 ) {
+                                    // old emot that we're just learning about
+                                    // skip sound
+                                    newEmotPlaySound = NULL;
+                                    }
                                 }
                             else {
-                                // no ttl provided by server, use default
-                                existing->emotClearETATime = 
-                                    game_getCurrentTime() + emotDuration;
+                                
+                                Emotion *oldEmot = existing->currentEmot;
+                            
+                                existing->currentEmot = getEmotion( emotIndex );
+                            
+                                if( numRead == 3 && ttlSec > 0 ) {
+                                    existing->emotClearETATime = 
+                                        game_getCurrentTime() + ttlSec;
+                                    }
+                                else {
+                                    // no ttl provided by server, use default
+                                    existing->emotClearETATime = 
+                                        game_getCurrentTime() + emotDuration;
+                                    }
+                                
+                                if( oldEmot != existing->currentEmot &&
+                                    existing->currentEmot != NULL ) {
+                                    newEmotPlaySound = existing->currentEmot;
+                                    }
                                 }
-
-                            if( oldEmot != existing->currentEmot &&
-                                existing->currentEmot != NULL ) {
+                            
+                            if( newEmotPlaySound != NULL ) {
                                 doublePair playerPos = existing->currentPos;
                                 
                                 // play sounds for this emotion, but only
@@ -17664,7 +17815,7 @@ void LivingLifePage::step() {
                                     
                                     int id =
                                         getEmotionObjectByIndex(
-                                            existing->currentEmot, i );
+                                            newEmotPlaySound, i );
                                     
                                     if( id > 0 ) {
                                         ObjectRecord *obj = getObject( id );
@@ -17699,6 +17850,8 @@ void LivingLifePage::step() {
                                         }
                                     }
                                 }
+                            // found matching player, done
+                            break;
                             }
                         }
                     }
@@ -19110,12 +19263,16 @@ void LivingLifePage::step() {
                                 o->waypointX = lrint( worldMouseX / CELL_D );
                                 o->waypointY = lrint( worldMouseY / CELL_D );
 
+                                isAutoClick = true;
                                 pointerDown( fakeClick.x, fakeClick.y );
-                               
+                                isAutoClick = false;
+
                                 o->useWaypoint = false;
                                 }
                             else {
+                                isAutoClick = true;
                                 pointerDown( worldMouseX, worldMouseY );
+                                isAutoClick = false;
                                 }
                             }
                         }
@@ -19636,6 +19793,12 @@ void LivingLifePage::step() {
                         if( markSpriteLive( displayObj->sprites[s] ) ) {
                             numLoaded ++;
                             }
+                        else if( getSpriteRecord( displayObj->sprites[s] )
+                                 == NULL ) {
+                            // object references sprite that doesn't exist
+                            // count as loaded
+                            numLoaded ++;
+                            }
                         }
                     
                     if( numLoaded == displayObj->numSprites ) {
@@ -19780,6 +19943,7 @@ void LivingLifePage::makeActive( char inFresh ) {
 
     mLastMouseOverID = 0;
     mCurMouseOverID = 0;
+    mCurMouseOverBiome = -1;
     mCurMouseOverFade = 0;
     mCurMouseOverBehind = false;
     mCurMouseOverPerson = false;
@@ -20660,13 +20824,18 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
     
 
     int destID = 0;
-        
+    int destBiome = -1;
+    
     int mapX = clickDestX - mMapOffsetX + mMapD / 2;
     int mapY = clickDestY - mMapOffsetY + mMapD / 2;
-    if( p.hitAnObject && mapY >= 0 && mapY < mMapD &&
+    if( mapY >= 0 && mapY < mMapD &&
         mapX >= 0 && mapX < mMapD ) {
         
-        destID = mMap[ mapY * mMapD + mapX ];
+        if( p.hitAnObject ) {
+            destID = mMap[ mapY * mMapD + mapX ];
+            }
+        
+        destBiome = mMapBiomes[ mapY * mMapD + mapX ];
         }
 
 
@@ -20711,6 +20880,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             // clear when mousing over bare parts of body
             // show YOU
             mCurMouseOverID = -99;
+            mCurMouseOverBiome = -1;
             
             overNothing = false;
             
@@ -20736,9 +20906,15 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             // store negative in place so that we can show their relation
             // string
             mCurMouseOverID = - p.hitOtherPersonID;
+            mCurMouseOverBiome = -1;
             }
         }
     
+    if( destID == 0 && mCurMouseOverID == 0 ) {
+        // show biome anyway
+        mCurMouseOverBiome = destBiome;
+        }
+
 
     if( destID > 0 ) {
         mCurMouseOverSelf = false;
@@ -20752,6 +20928,8 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             }
 
         mCurMouseOverID = destID;
+        mCurMouseOverBiome = destBiome;
+        
         overNothing = false;
         
         if( p.hitSlotIndex != -1 ) {
@@ -22508,7 +22686,9 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
             o->currentPathStep < o->pathLength - 2 ) {
             GridPos p = o->pathToDest[ o->currentPathStep + 1 ];
         
+            isAutoClick = true;
             pointerDown( p.x * CELL_D, p.y * CELL_D );
+            isAutoClick = false;
             }
         
 

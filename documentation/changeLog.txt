@@ -3,6 +3,83 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 283   2019-November-15
+
+--Fixed crash when sprite .tga file exists but .txt file doesn't (either in
+  folder or in stale caches).
+
+--Sane behavior in unexpected situation:  clear sprite .txt file cache.fcz
+  whenver we rebuild .tga file bin_cache.fcz  There's a chance that Steam
+  doesn't properly update cache.fcz, leaving it outdated.
+
+--More graceful handling of objects that refer to sprites that don't exist.
+  Draw them without that sprite.  Used to wait forever for that sprite to load.
+
+--Making sure cache.fcz has exactly same list of files as corresponding folder.
+  Checks file names only, not contents.  On mismatch, cache.fcz is rebuilt.
+
+--No more crash if server sends us an unknown object ID.  Instead, we show a
+  MISSING OBJECT placeholder in client.  This is an extremely unlikely case,
+  but could happen if there's some error in the update process.
+
+--Support for permanent emots, for things like tatoos, piercings, makeup, etc.
+
+
+
+Server Fixes
+
+--Fixed so that one weak family isn't hammered with too many incoming babies.
+  Let 1.5 minutes pass bewteen each baby per mother.  Otherwise, Eve, who is
+  always the weakest family, gets hammered with incoming babies.
+
+--Max baby/mom ratio before eve injection now 2 (was 3).
+
+--Max player/fam ratio pushed up to 13 (was 9), meaning fewer, bigger families.
+
+--Map change log now includes playerID responsible for each change.
+
+--Biome placement on map now uses a 64-bit seed (was 32-bits) to make brute-
+  force seed guessing, based on map samples, impractical.
+
+--Fixed a memory leak in map reseeding.
+
+--Map change logs now roll over every 24 hours and don't include biome seed.
+
+--Fixed cache size inconsistency.
+
+--Map biome seed now logged in separate file along with map change logs, but
+  that seed file is only published after the map is reseeded (if it ever is,
+  due to a wipe or player-triggered apocalypse).
+
+--Min fertile females per family (when girl babies are forces) is 4 (was 6).
+
+--Eve moving grid jump is now 200 (was 320), making it a perfect tight fit with
+  well tap-out of 160.
+
+--Specialty biomes limited to specific skin tones.  Other skin tones get sick 
+  there.
+
+--Language learning change:  instead of busy-work with a baby (blabbering lots
+  of phrases to cover different phonemes), each generation that is around a
+  language learns it at a fixed rate (10% of remaning phoneme clusters by
+  frequency weight).  After roughly 10 generations of coexistence, full
+  language learning will be realized.
+
+--Disabled second-place-biome object placement along biome boundaries (though
+  looking at parameters in code for ring biomes, it looks like this was
+  impossible anyway).
+
+--Support for +biomeReq and +biomeBlock in object descriptions, only allowing
+  an object to be made in specific biomes or blocking it from specific biomes.
+
+--Support for +noWait tag on 'weapons' like snowballs and tatoo needles.  No 
+  murder mouth, and no waiting period before execution.  Target still gasps.
+
+--Support for polylingual skin tones.
+
+
+
+
 Version 280   2019-November-8
 
 --Fixed crash when person making an off-screen sound dies.
@@ -79,6 +156,9 @@ Server Fixes
   strips.  Poor five oz. of vodka on the sidewalk for our fallen comrade Tarr.
 
 --Getting yellow fever clears yummy bonus food store.
+
+--Boundless world:  turned min family limit off, so that arc messages don't
+  mention it.
 
 
 

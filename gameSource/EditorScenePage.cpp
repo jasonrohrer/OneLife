@@ -2611,7 +2611,7 @@ void scanClothingLine( char *inLine, ObjectRecord **inSpot,
     int id = -1;
     sscanf( inLine, inFormat, &id );
     
-    if( id == -1 ) {
+    if( id <= 0 ) {
         *inSpot = NULL;
         }
     else {

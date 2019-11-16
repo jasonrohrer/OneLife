@@ -80,6 +80,17 @@ void enableSpriteSearch( char inEnable ) {
 
 
 
+// skip all non-txt files (only read meta data files on init, 
+// not bulk data tga files)
+static char shouldFileBeCached( char *inFileName ) {
+    if( strstr( inFileName, ".txt" ) != NULL &&
+        strcmp( inFileName, "nextSpriteNumber.txt" ) != 0 ) {
+        return true;
+        }
+    return false;
+    }
+
+
 
 int initSpriteBankStart( char *outRebuildingCache ) {
     maxID = 0;
@@ -88,9 +99,19 @@ int initSpriteBankStart( char *outRebuildingCache ) {
     currentBinFile = 0;
     
     char rebuildingA, rebuildingB;
-    cache = initFolderCache( "sprites", &rebuildingA );
+    
 
     binCache = initBinFolderCache( "sprites", ".tga", &rebuildingB );
+
+    char forceRebuild = false;
+
+    if( rebuildingB ) {
+        forceRebuild = true;
+        }
+
+    cache = initFolderCache( "sprites", &rebuildingA, shouldFileBeCached,
+                             forceRebuild );
+    
 
     *outRebuildingCache = rebuildingA || rebuildingB;
     
@@ -281,10 +302,7 @@ float initSpriteBankStep() {
 
         char *fileName = getFileName( cache, i );
     
-        // skip all non-txt files (only read meta data files on init, 
-        // not bulk data tga files)
-        if( strstr( fileName, ".txt" ) != NULL &&
-            strcmp( fileName, "nextSpriteNumber.txt" ) != 0 ) {
+        if( shouldFileBeCached( fileName ) ) {
                             
             //printf( "Loading sprite from path %s\n", fileName );
 
@@ -452,13 +470,21 @@ float initSpriteBankStep() {
                                                            fileName, 
                                                            &contSize );
                 if( contents != NULL ) {
-                    loadSpriteFromRawTGAData( spriteID, contents, contSize );
                     
+                    // there might be tga file that we have no .txt file, 
+                    // and thus no record
+                    // Note that we still must read content for such a file,
+                    // because binCache must be read in order.
                     SpriteRecord *r = getSpriteRecord( spriteID );
                     
-                    r->numStepsUnused = 0;
-                    loadedSprites.push_back( spriteID );
-
+                    if( r != NULL ) {
+                        loadSpriteFromRawTGAData( 
+                            spriteID, contents, contSize );
+                    
+                        r->numStepsUnused = 0;
+                        loadedSprites.push_back( spriteID );
+                        }
+                    
                     delete [] contents;
                     }
                 }

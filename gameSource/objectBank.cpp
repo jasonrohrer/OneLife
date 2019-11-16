@@ -36,6 +36,10 @@ static int mapSize;
 static ObjectRecord **idMap;
 
 
+// what object to return
+static int defaultObjectID = -1;
+
+
 static StringTree tree;
 
 
@@ -255,6 +259,17 @@ void setDrawColor( FloatRGB inColor ) {
 
 
 
+static char shouldFileBeCached( char *inFileName ) {
+    if( strstr( inFileName, ".txt" ) != NULL &&
+        strstr( inFileName, "groundHeat_" ) == NULL &&
+        strcmp( inFileName, "nextObjectNumber.txt" ) != 0 ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
 static char autoGenerateUsedObjects = false;
 static char autoGenerateVariableObjects = false;
 
@@ -267,7 +282,8 @@ int initObjectBankStart( char *outRebuildingCache,
     currentFile = 0;
     
 
-    cache = initFolderCache( "objects", outRebuildingCache );
+    cache = initFolderCache( "objects", outRebuildingCache,
+                             shouldFileBeCached );
 
     autoGenerateUsedObjects = inAutoGenerateUsedObjects;
     autoGenerateVariableObjects = inAutoGenerateVariableObjects;
@@ -621,11 +637,7 @@ static void setupTapout( ObjectRecord *inR ) {
 
 static void setupToolSet( ObjectRecord *inR ) {
     inR->toolSetIndex = -1;
-    inR->toolLearned = false;
-    
-    if( inR->id == 850 ) {
-        printf( "Hey\n" );
-        }
+    inR->toolLearned = false;    
     
     char *toolPos = strstr( inR->description, "+tool" );
                 
@@ -654,6 +666,15 @@ static void setupToolSet( ObjectRecord *inR ) {
 
 
 
+static void setupDefaultObject( ObjectRecord *inR ) {
+    if( strstr( inR->description, "+default" ) ) {
+        defaultObjectID = inR->id;
+        }
+    }
+
+
+
+
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
     }
@@ -671,9 +692,7 @@ float initObjectBankStep() {
                 
     char *txtFileName = getFileName( cache, i );
             
-    if( strstr( txtFileName, ".txt" ) != NULL &&
-        strstr( txtFileName, "groundHeat_" ) == NULL &&
-        strcmp( txtFileName, "nextObjectNumber.txt" ) != 0 ) {
+    if( shouldFileBeCached( txtFileName ) ) {
                             
         // an object txt file!
                     
@@ -1407,7 +1426,9 @@ float initObjectBankStep() {
                     }       
                 
                 r->toolSetIndex = -1;
-
+                
+                r->isBiomeLimited = false;
+                r->permittedBiomeMap = NULL;
                     
                 records.push_back( r );
 
@@ -1485,6 +1506,36 @@ static char *getVarObjectLabel( int inNumber ) {
     digits.push_front( '-' );
     
     return digits.getElementString();
+    }
+
+
+
+// returns NULL if not found
+static int *parseNumberList( char *inString, 
+                             const char *inListKey, int *outNum ) {
+    char *keyPos = strstr( inString, inListKey );
+    
+    if( keyPos == NULL ) {
+        return NULL;
+        }
+    
+    char *listStart = &keyPos[ strlen( inListKey ) ];
+    int numParts = 0;
+    
+    char **parts = split( listStart, ",", &numParts );
+    
+
+    int *list = new int[ numParts ];
+    
+    for( int i=0; i<numParts; i++ ) {
+        list[i] = 0;
+        sscanf( parts[i], "%d", &( list[i] ) );
+        delete [] parts[i];
+        }
+    delete [] parts;
+    
+    *outNum = numParts;
+    return list;
     }
 
 
@@ -1920,6 +1971,26 @@ void initObjectBankFinish() {
             }
         }
     
+    // setup default object
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+            setupDefaultObject( o );
+            }
+        }
+    
+    
+    if( defaultObjectID == -1 ) {
+        // no default defined
+        // pick first object
+        for( int i=0; i<mapSize; i++ ) {
+            if( idMap[i] != NULL ) {
+                defaultObjectID = i;
+                break;
+                }
+            }
+        }
+    
 
     for( int i=0; i<=MAX_BIOME; i++ ) {
         biomeHeatMap[ i ] = 0;
@@ -2056,6 +2127,67 @@ void initObjectBankFinish() {
                 }
             }
         }
+
+
+
+    int maxActualBiome = 0;
+    for( int i=0; i<biomes.size(); i++ ) {
+        int b =  biomes.getElementDirect( i );
+        if( b > maxActualBiome ) {
+            maxActualBiome = b;
+            }
+        }
+    
+    
+    // setup biome limitations
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+            
+            int numReq;
+            int *reqList = parseNumberList( o->description, 
+                                            "+biomeReq",
+                                            &numReq );
+            int numBlock;
+            int *blockList = parseNumberList( o->description, 
+                                            "+biomeBlock",
+                                            &numBlock );
+            
+
+            if( reqList == NULL &&
+                blockList == NULL ) {
+                continue;
+                }
+            
+            o->isBiomeLimited = true;
+            
+            o->maxBiomeMapEntry = maxActualBiome;
+            
+            o->permittedBiomeMap = new char[ maxActualBiome + 1 ];
+            memset( o->permittedBiomeMap, true, maxActualBiome + 1 );
+            
+            if( reqList!= NULL ) {
+                // all but req are blocked
+                memset( o->permittedBiomeMap, false, maxActualBiome + 1 );
+                for( int i=0; i<numReq; i++ ) {
+                    if( reqList[i] <= maxActualBiome ) {
+                        o->permittedBiomeMap[ reqList[i] ] = true;
+                        }
+                    }
+                delete [] reqList;
+                }
+            if( blockList != NULL ) {
+                // remove blocked
+                for( int i=0; i<numBlock; i++ ) {
+                    if( blockList[i] <= maxActualBiome ) {
+                        o->permittedBiomeMap[ blockList[i] ] = false;
+                        }
+                    }
+                delete [] blockList;
+                }
+            }
+        }
+    
     }
 
 
@@ -2274,6 +2406,9 @@ static void freeObjectRecord( int inID ) {
             clearSoundUsage( &( idMap[inID]->eatingSound ) );
             clearSoundUsage( &( idMap[inID]->decaySound ) );
             
+            if( idMap[inID]->permittedBiomeMap != NULL ) {
+                delete [] idMap[inID]->permittedBiomeMap;
+                }
 
             delete idMap[inID];
             idMap[inID] = NULL;
@@ -2359,6 +2494,10 @@ void freeObjectBank() {
             clearSoundUsage( &( idMap[i]->usingSound ) );
             clearSoundUsage( &( idMap[i]->eatingSound ) );
             clearSoundUsage( &( idMap[i]->decaySound ) );
+
+            if( idMap[i]->permittedBiomeMap != NULL ) {
+                delete [] idMap[i]->permittedBiomeMap;
+                }
 
             delete idMap[i];
             }
@@ -2531,6 +2670,15 @@ ObjectRecord *getObject( int inID ) {
             return idMap[inID];
             }
         }
+
+    if( defaultObjectID != -1 ) {
+        if( defaultObjectID < mapSize ) {
+            if( idMap[ defaultObjectID ] != NULL ) {
+                return idMap[ defaultObjectID ];
+                }
+            }
+        }
+    
     return NULL;
     }
 
@@ -3323,6 +3471,8 @@ int addObject( const char *inDescription,
     
     r->toolSetIndex = -1;
     
+    r->isBiomeLimited = false;
+    r->permittedBiomeMap = NULL;
 
     r->isAutoOrienting = false;
     r->horizontalVersionID = -1;
@@ -3807,9 +3957,12 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                 toggleAdditiveBlend( true );
                 }
 
-            drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
-                        rot, 
-                        logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
+            SpriteHandle sh = getSprite( inObject->sprites[i] );
+            if( sh != NULL ) {
+                drawSprite( sh, pos, inScale,
+                            rot, 
+                            logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
+                }
             
             if( multiplicative ) {
                 toggleMultiplicativeBlend( false );
@@ -4804,6 +4957,10 @@ double getClosestObjectPart( ObjectRecord *inObject,
         
         SpriteRecord *sr = getSpriteRecord( inObject->sprites[i] );
         
+        if( sr == NULL ) {
+            continue;
+            }
+
         if( !inConsiderTransparent &&
             sr->multiplicativeBlend ){
             // skip this transparent sprite
@@ -6020,6 +6177,17 @@ void getAllToolSets( SimpleVector<int> *outListToFill ) {
     for( int i=0; i<toolSetRecords.size(); i++ ) {
         outListToFill->push_back( i );
         }
+    }
+
+
+
+char canBuildInBiome( ObjectRecord *inObj, int inTargetBiome ) {
+    if( ! inObj->isBiomeLimited || inObj->permittedBiomeMap == NULL ||
+        inTargetBiome > inObj->maxBiomeMapEntry ) {
+        return true;
+        }
+    
+    return inObj->permittedBiomeMap[ inTargetBiome ];
     }
 
 

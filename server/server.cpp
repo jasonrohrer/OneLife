@@ -55,6 +55,7 @@
 #include "fitnessScore.h"
 #include "arcReport.h"
 #include "curseDB.h"
+#include "specialBiomes.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -710,6 +711,8 @@ typedef struct LiveObject {
         int murderSourceID;
         char holdingWound;
 
+        char holdingBiomeSickness;
+
         // who killed them?
         int murderPerpID;
         char *murderPerpEmail;
@@ -892,6 +895,8 @@ typedef struct LiveObject {
         GridPos forceFlightDest;
         double forceFlightDestSetTime;
         
+        SimpleVector<int> permanentEmots;
+
     } LiveObject;
 
 
@@ -1739,6 +1744,9 @@ void quitCleanup() {
     freeFamilySkipList();
 
     freeTriggers();
+
+    freeSpecialBiomes();
+    
 
     freeMap();
 
@@ -4702,7 +4710,9 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
     int barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
     int barrierOn = SettingsManager::getIntSetting( "barrierOn", 1 );
 
-
+    int targetBiome = getMapBiome( inX, inY );
+    int targetFloor = getMapFloor( inX, inY );
+    
     char found = false;
     int foundX = inX;
     int foundY = inY;
@@ -4816,7 +4826,10 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
                                                 
 
 
-                if( isMapSpotEmpty( x, y ) ) {
+                if( isMapSpotEmpty( x, y ) && 
+                    getMapBiome( x, y ) == targetBiome &&
+                    getMapFloor( x, y ) == targetFloor ) {
+                    
                     found = true;
                     if( barrierOn ) {    
                         if( abs( x ) >= barrierRadius ||
@@ -6546,6 +6559,60 @@ static int countFamilies() {
 
 
 
+// make sure same family isn't picked too often to get a baby
+// don't hammer Eve even though her fam is currently the weakest
+typedef struct FamilyPickedRecord {
+        int lineageEveID;
+        double lastPickTime;
+    } FamilyPickedRecord;
+
+
+static SimpleVector<FamilyPickedRecord> familiesRecentlyPicked;
+
+
+static char isFamilyTooRecent( int inLineageEveID, int inMomCount ) {
+    double curTime = Time::getCurrentTime();
+    
+    // let one mom wait 1.5 minutes between BB
+    double waitTime = 1.5 * 60.0 / inMomCount;
+    
+
+    for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
+        FamilyPickedRecord *r = familiesRecentlyPicked.getElement( i );
+        if( r->lineageEveID == inLineageEveID ) {
+            if( curTime - r->lastPickTime < waitTime ) {
+                // fam got BB too recently
+                return true;
+                }
+            else {
+                return false;
+                }
+            }
+        }
+    
+    return false;
+    }
+
+
+
+static void markFamilyGotBabyNow( int inLineageEveID ) {
+    double curTime = Time::getCurrentTime();
+    
+    for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
+        FamilyPickedRecord *r = familiesRecentlyPicked.getElement( i );
+        if( r->lineageEveID == inLineageEveID ) {
+            r->lastPickTime = curTime;
+            return;
+            }
+        }
+    
+    // not found
+    FamilyPickedRecord r = { inLineageEveID, curTime };
+    familiesRecentlyPicked.push_back( r );
+    }
+
+
+
 
 static int getNextBabyFamilyLineageEveIDFewestFemales() {
     SimpleVector<int> uniqueFams;
@@ -6565,11 +6632,31 @@ static int getNextBabyFamilyLineageEveIDFewestFemales() {
         }
     
 
+
+    // clear stale family records
+    for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
+        FamilyPickedRecord *r = familiesRecentlyPicked.getElement( i );
+        
+        if( uniqueFams.getElementIndex( r->lineageEveID ) == -1 ) {
+            // stale
+            familiesRecentlyPicked.deleteElement( i );
+            i--;
+            }
+        }
+    
+
+
     for( int i=0; i<uniqueFams.size(); i++ ) {
         int lineageEveID = 
             uniqueFams.getElementDirect( i );
 
         int famMothers = countFertileMothers( lineageEveID );
+
+        if( isFamilyTooRecent( lineageEveID, famMothers ) ) {
+            continue;
+            }
+
+
         int famGirls = countGirls( lineageEveID );
         
         int famFemales = famMothers + famGirls;
@@ -6583,6 +6670,10 @@ static int getNextBabyFamilyLineageEveIDFewestFemales() {
                 minFemalesLineageEveID = lineageEveID;
                 }
             }
+        }
+
+    if( minFemalesLineageEveID != -1 ) {
+        markFamilyGotBabyNow( minFemalesLineageEveID );
         }
     
     return minFemalesLineageEveID;
@@ -8372,6 +8463,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.embeddedWeaponEtaDecay = 0;
     newObject.murderSourceID = 0;
     newObject.holdingWound = false;
+    newObject.holdingBiomeSickness = false;
     
     newObject.murderPerpID = 0;
     newObject.murderPerpEmail = NULL;
@@ -10411,6 +10503,8 @@ int readIntFromFile( const char *inFileName, int inDefaultValue ) {
     }
 
 
+double killDelayTime = 6.0;
+
 
 typedef struct KillState {
         int killerID;
@@ -11285,6 +11379,12 @@ static SimpleVector<int> newEmotIndices;
 // 0 if no ttl specified
 static SimpleVector<int> newEmotTTLs;
 
+
+static char isNoWaitWeapon( int inObjectID ) {
+    return strstr( getObject( inObjectID )->description,
+                   "+noWait" ) != NULL;
+    }
+
     
 
 
@@ -11314,6 +11414,11 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
             double curTime = Time::getCurrentTime();
             s->emotStartTime = curTime;
             s->killStartTime = curTime;
+            
+            if( isNoWaitWeapon( inKiller->holdingID ) ) {
+                // allow it to happen right now
+                s->killStartTime -= killDelayTime;
+                }
 
             s->emotRefreshSeconds = 30;
             break;
@@ -11329,6 +11434,12 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                         curTime,
                         curTime,
                         30 };
+        
+        if( isNoWaitWeapon( inKiller->holdingID ) ) {
+                // allow it to happen right now
+            s.killStartTime -= killDelayTime;
+            }
+
         activeKillStates.push_back( s );
 
         // force target to gasp
@@ -12356,6 +12467,18 @@ static char canPlayerUseOrLearnTool( LiveObject *inPlayer, int inToolID ) {
     return true;
     }
 
+
+
+static char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY ) {
+    if( inPlayer->vogMode ||
+        inPlayer->forceSpawn ||
+        inPlayer->isTutorial ) {
+        return true;
+        }
+    return isBiomeAllowed( inPlayer->displayID, inX, inY );
+    }
+
+    
     
 
 void sanityCheckSettings(const char *inSettingName) {
@@ -12622,6 +12745,9 @@ int main() {
     
     initTriggers();
 
+    initSpecialBiomes();
+    
+
 
     if( initMap() != true ) {
         // cannot continue after map init fails
@@ -12840,6 +12966,8 @@ int main() {
             
             apocalypseStep();
             monumentStep();
+            
+            updateSpecialBiomes( players.size() );
             
             //checkBackup();
 
@@ -15553,6 +15681,108 @@ int main() {
                                     secondsAlreadyDone;
                             
                                 nextPlayer->newMove = true;
+
+                                
+                                // check if this move goes into a bad biome
+                                // and makes them sick
+                                int sicknessObjectID =
+                                    getBiomeSickness( nextPlayer->displayID, 
+                                                      nextPlayer->xd,
+                                                      nextPlayer->yd );
+                                
+                                if( nextPlayer->vogMode || 
+                                    nextPlayer->forceSpawn ||
+                                    nextPlayer->isTutorial ) {
+                                    // these special-case players never
+                                    // have biome sickness
+                                    sicknessObjectID = -1;
+                                    }
+                                
+                                if( sicknessObjectID > 0 &&
+                                    nextPlayer->holdingID != 
+                                    sicknessObjectID ) {
+                                    
+                                    // drop what they are holding
+                                    if( nextPlayer->holdingID != 0 ) {
+                                        // never drop held wounds
+                                        // they are the only thing a baby can
+                                        // while held
+                                        if( ! nextPlayer->holdingWound &&
+                                            ! nextPlayer->
+                                            holdingBiomeSickness ) {
+                                            handleDrop( 
+                                             m.x, m.y, nextPlayer,
+                                             &playerIndicesToSendUpdatesAbout );
+                                            }
+                                        }
+                                    
+                                    if( nextPlayer->holdingID == 0 ) {
+                                        
+                                        nextPlayer->holdingID = 
+                                            sicknessObjectID;
+                                        playerIndicesToSendUpdatesAbout.
+                                            push_back( i );
+
+                                        nextPlayer->holdingBiomeSickness = true;
+
+                                        ForcedEffects e = 
+                                            checkForForcedEffects( 
+                                                nextPlayer->holdingID );
+                            
+                                        if( e.emotIndex != -1 ) {
+                                            nextPlayer->emotFrozen = true;
+                                            nextPlayer->emotFrozenIndex =
+                                                e.emotIndex;
+                                            newEmotPlayerIDs.push_back( 
+                                                nextPlayer->id );
+                                            newEmotIndices.push_back( 
+                                                e.emotIndex );
+                                            newEmotTTLs.push_back( e.ttlSec );
+                                            interruptAnyKillEmots( 
+                                                nextPlayer->id, e.ttlSec );
+                                            }
+                                        }
+                                    }
+                                else if( sicknessObjectID == -1 &&
+                                         nextPlayer->holdingBiomeSickness ) {
+                                    
+                                    int oldSickness = -1;
+                                    
+                                    if( ! nextPlayer->holdingWound ) {
+                                        // back to holding nothing
+                                        oldSickness = nextPlayer->holdingID;
+                                        
+                                        nextPlayer->holdingID = 0;
+                                        
+                                        playerIndicesToSendUpdatesAbout.
+                                            push_back( i );
+                                        }
+                                    
+                                    nextPlayer->holdingBiomeSickness = 
+                                            false;
+
+                                    // relief emot
+                                    nextPlayer->emotFrozen = false;
+                                    nextPlayer->emotUnfreezeETA = 0;
+        
+                                    newEmotPlayerIDs.push_back( 
+                                        nextPlayer->id );
+        
+                                    int newEmot = 
+                                        getBiomeReliefEmot( oldSickness );
+                                    
+                                    if( newEmot != -1 ) {
+                                        newEmotIndices.push_back( newEmot );
+                                        // 3 sec
+                                        newEmotTTLs.push_back( 3 );
+                                        }
+                                    else {
+                                        // clear
+                                        newEmotIndices.push_back( -1 );
+                                        // 3 sec
+                                        newEmotTTLs.push_back( 0 );
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -15986,7 +16216,15 @@ int main() {
                                             addKillState( nextPlayer,
                                                           targetPlayer );
                                         
-                                        if( enteredState ) {
+                                        if( enteredState && 
+                                            ! isNoWaitWeapon( 
+                                                nextPlayer->holdingID ) ) {
+                                            
+                                            // no killer emote for no-wait
+                                            // weapons (these aren't
+                                            // actually weapons, like
+                                            // tattoo needles and snowballs)
+
                                             nextPlayer->emotFrozen = true;
                                             nextPlayer->emotFrozenIndex = 
                                                 killEmotionIndex;
@@ -16058,7 +16296,7 @@ int main() {
                                 }
                             }
                         
-
+                        if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
                         if( distanceUseAllowed 
                             ||
                             isGridAdjacent( m.x, m.y,
@@ -16313,17 +16551,29 @@ int main() {
                                     r->newTarget > 0 &&
                                     r->newTarget != target ) {
                                     
+                                    ObjectRecord *newTargetObj = 
+                                        getObject( r->newTarget );
+                                    
                                     // target would change here
                                     if( getMapFloor( m.x, m.y ) != 0 ) {
                                         // floor present
                                         
                                         // make sure new target allowed 
                                         // to exist on floor
-                                        if( strstr( getObject( r->newTarget )->
+                                        if( strstr( newTargetObj->
                                                     description, 
                                                     "groundOnly" ) != NULL ) {
                                             r = NULL;
                                             }
+                                        }
+                                    if( newTargetObj->isBiomeLimited &&
+                                        ! canBuildInBiome( 
+                                            newTargetObj,
+                                            getMapBiome( m.x,
+                                                         m.y ) ) ) {
+                                        // can't make this object
+                                        // in this biome
+                                        r = NULL;
                                         }
                                     }
                                 
@@ -16875,6 +17125,15 @@ int main() {
                                         
                                             // new target not allowed 
                                             // to exist on floor
+                                            canPlace = false;
+                                            }
+                                        else if( newTargetObj->isBiomeLimited &&
+                                                 ! canBuildInBiome( 
+                                                     newTargetObj,
+                                                     getMapBiome( m.x,
+                                                                  m.y ) ) ) {
+                                            // can't make this object
+                                            // in this biome
                                             canPlace = false;
                                             }
                                         }
@@ -17823,6 +18082,7 @@ int main() {
                             canDrop = false;
                             }
 
+                        if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
                         if( ( isGridAdjacent( m.x, m.y,
                                               nextPlayer->xd, 
                                               nextPlayer->yd ) 
@@ -18148,6 +18408,7 @@ int main() {
                         // know that action is over)
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
+                        if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
                         if( isGridAdjacent( m.x, m.y, 
                                             nextPlayer->xd, 
                                             nextPlayer->yd ) 
@@ -18384,7 +18645,7 @@ int main() {
             
             double curTime = Time::getCurrentTime();
 
-            if( curTime - s->killStartTime  > 6 && 
+            if( curTime - s->killStartTime  > killDelayTime && 
                 getObject( killer->holdingID )->deadlyDistance >= dist &&
                 ! directLineBlocked( playerPos, targetPos ) ) {
                 // enough warning time has passed
@@ -20566,21 +20827,27 @@ int main() {
             for( int i=0; i<newEmotPlayerIDs.size(); i++ ) {
                 
                 int ttl = newEmotTTLs.getElementDirect( i );
-
+                int pID = newEmotPlayerIDs.getElementDirect( i );
+                int eInd = newEmotIndices.getElementDirect( i );
+                
                 char *line;
                 
                 if( ttl == 0  ) {
                     line = autoSprintf( 
-                        "%d %d\n", 
-                        newEmotPlayerIDs.getElementDirect( i ), 
-                        newEmotIndices.getElementDirect( i ) );
+                        "%d %d\n", pID, eInd );
                     }
                 else {
                     line = autoSprintf( 
-                        "%d %d %d\n", 
-                        newEmotPlayerIDs.getElementDirect( i ), 
-                        newEmotIndices.getElementDirect( i ),
-                        newEmotTTLs.getElementDirect( i ) );
+                        "%d %d %d\n", pID, eInd, ttl );
+                        
+                    if( ttl == -1 ) {
+                        // a new permanent emot
+                        LiveObject *pO = getLiveObject( pID );
+                        if( pO != NULL ) {
+                            pO->permanentEmots.push_back( eInd );
+                            }
+                        }
+                        
                     }
                 
                 numAdded++;
@@ -21027,6 +21294,51 @@ int main() {
 
                 // catch them up on war/peace states
                 sendWarReportToOne( nextPlayer );
+                
+                if( ! nextPlayer->isTutorial &&
+                    ! nextPlayer->forceSpawn ) {
+                    // not skipping vog mode here, b/c it's never
+                    // enabled until after first message sent
+                    
+                    // tell them about their own bad biomes
+                    char *bbMessage = 
+                        getBadBiomeMessage( nextPlayer->displayID );
+                    sendMessageToPlayer( nextPlayer, bbMessage, 
+                                         strlen( bbMessage ) );
+                    
+                    delete [] bbMessage;
+                    }
+                
+                
+                // tell them about all permanent emots
+                SimpleVector<char> emotMessageWorking;
+                emotMessageWorking.appendElementString( "PE\n" );
+                for( int i=0; i<numPlayers; i++ ) {
+                
+                    LiveObject *o = players.getElement( i );
+                
+                    if( o->error ) {
+                        continue;
+                        }
+                    for( int e=0; e< o->permanentEmots.size(); e ++ ) {
+                        // ttl -2 for permanent but not new
+                        char *line = autoSprintf( 
+                            "%d %d -2\n",
+                            o->id, 
+                            o->permanentEmots.getElementDirect( e ) );
+                        emotMessageWorking.appendElementString( line );
+                        delete [] line;
+                        }
+                    }
+                emotMessageWorking.push_back( '#' );
+                
+                char *emotMessage = emotMessageWorking.getElementString();
+                
+                sendMessageToPlayer( nextPlayer, emotMessage, 
+                                     strlen( emotMessage ) );
+                    
+                delete [] emotMessage;
+                    
 
                 
                 nextPlayer->firstMessageSent = true;
@@ -22028,7 +22340,11 @@ int main() {
                                     players.size() < 
                                     minActivePlayersForLanguages ||
                                     strlen( trimmedPhrase ) == 0 ||
-                                    trimmedPhrase[0] == '[' ) {
+                                    trimmedPhrase[0] == '[' ||
+                                    isPolylingual( nextPlayer->displayID ) ||
+                                    ( speakerObj != NULL &&
+                                      isPolylingual( 
+                                          speakerObj->displayID ) ) ) {
                                     
                                     translatedPhrase =
                                         stringDuplicate( trimmedPhrase );

@@ -223,6 +223,8 @@ static double recentlyUsedPrimaryEvePositionTimeout = 3600;
 static int eveHomeMarkerObjectID = -1;
 
 
+static char allowSecondPlaceBiomes = false;
+
 
 
 // what human-placed stuff, together, counts as a camp
@@ -238,7 +240,8 @@ static int barrierOn = 1;
 static int longTermCullEnabled = 1;
 
 
-static unsigned int biomeRandSeed = 723;
+static unsigned int biomeRandSeedA = 727;
+static unsigned int biomeRandSeedB = 941;
 
 
 static SimpleVector<int> barrierItemList;
@@ -798,7 +801,7 @@ static int computeMapBiomeIndex( int inX, int inY,
 
     // try topographical altitude mapping
 
-    setXYRandomSeed( biomeRandSeed );
+    setXYRandomSeed( biomeRandSeedA, biomeRandSeedB );
 
     double randVal = 
         ( getXYFractal( inX, inY,
@@ -883,7 +886,8 @@ static int computeMapBiomeIndex( int inX, int inY,
         for( int i=regularBiomeLimit; i<numBiomes; i++ ) {
             int biome = biomes[i];
         
-            setXYRandomSeed( biome * 263 + biomeRandSeed + 38475 );
+            setXYRandomSeed( biome * 263 + biomeRandSeedA + 38475,
+                             biomeRandSeedB );
 
             double randVal = getXYFractal(  inX,
                                             inY,
@@ -924,6 +928,11 @@ static int computeMapBiomeIndex( int inX, int inY,
         secondPlaceGap = 0.1;
         }
     
+
+    if( ! allowSecondPlaceBiomes ) {
+        secondPlace = pickedBiome;
+        secondPlaceGap = 1.0;
+        }
 
 
     biomePutCached( inX, inY, pickedBiome, secondPlace, secondPlaceGap );
@@ -978,7 +987,7 @@ static int computeMapBiomeIndexOld( int inX, int inY,
     for( int i=0; i<numBiomes; i++ ) {
         int biome = biomes[i];
         
-        setXYRandomSeed( biome * 263 + biomeRandSeed );
+        setXYRandomSeed( biome * 263 + biomeRandSeedA, biomeRandSeedB );
 
         double randVal = getXYFractal(  inX,
                                         inY,
@@ -1887,6 +1896,17 @@ static int computeDBCacheHash( int inKeyA, int inKeyB,
 
 
 
+static int computeBLCacheHash( int inKeyA, int inKeyB ) {
+    
+    int hashKey = ( inKeyA * CACHE_PRIME_A + 
+                    inKeyB * CACHE_PRIME_B ) % DB_CACHE_SIZE;
+    if( hashKey < 0 ) {
+        hashKey += DB_CACHE_SIZE;
+        }
+    return hashKey;
+    }
+
+
 
 typedef struct DBTimeCacheRecord {
         int x, y, slot, subCont;
@@ -1988,7 +2008,7 @@ static void dbTimePutCached( int inX, int inY, int inSlot, int inSubCont,
 // returns -1 on miss
 static char blockingGetCached( int inX, int inY ) {
     BlockingCacheRecord r =
-        blockingCache[ computeXYCacheHash( inX, inY ) ];
+        blockingCache[ computeBLCacheHash( inX, inY ) ];
 
     if( r.x == inX && r.y == inY &&
         r.blocking != -1 ) {
@@ -2004,14 +2024,14 @@ static char blockingGetCached( int inX, int inY ) {
 static void blockingPutCached( int inX, int inY, char inBlocking ) {
     BlockingCacheRecord r = { inX, inY, inBlocking };
     
-    blockingCache[ computeXYCacheHash( inX, inY ) ] = r;
+    blockingCache[ computeBLCacheHash( inX, inY ) ] = r;
     }
 
 
 static void blockingClearCached( int inX, int inY ) {
     
     BlockingCacheRecord *r =
-        &( blockingCache[ computeXYCacheHash( inX, inY ) ] );
+        &( blockingCache[ computeBLCacheHash( inX, inY ) ] );
 
     if( r->x == inX && r->y == inY ) {
         r->blocking = -1;
@@ -2768,6 +2788,7 @@ static void setupMapChangeLogFile() {
         logFolder.makeDirectory();
         }
 
+    // always close file and start a new one when this is called
 
     if( mapChangeLogFile != NULL ) {
         fclose( mapChangeLogFile );
@@ -2777,43 +2798,12 @@ static void setupMapChangeLogFile() {
 
     if( logFolder.isDirectory() ) {
         
-        char *biomeSeedString = autoSprintf( "%d", biomeRandSeed );
-        
-        // does log file already exist?
-
-        int numFiles;
-        File **childFiles = logFolder.getChildFiles( &numFiles );
-        
-        for( int i=0; i<numFiles; i++ ) {
-            File *f = childFiles[i];
-            
-            char *name = f->getFileName();
-        
-            if( strstr( name, biomeSeedString ) != NULL ) {
-                // found!
-                char *fullFileName = f->getFullFileName();
-                mapChangeLogFile = fopen( fullFileName, "a" );
-                delete [] fullFileName;
-                }
-            delete [] name;
-            if( mapChangeLogFile != NULL ) {
-                break;
-                }
-            }
-        for( int i=0; i<numFiles; i++ ) {
-            delete childFiles[i];
-            }
-        delete [] childFiles;
-
-        delete [] biomeSeedString;
-            
-        
         if( mapChangeLogFile == NULL ) {
 
             // file does not exist
-            char *newFileName = autoSprintf( "%.ftime_%useed_mapLog.txt",
-                                             Time::getCurrentTime(),
-                                             biomeRandSeed );
+            char *newFileName = 
+                autoSprintf( "%.ftime_mapLog.txt",
+                             Time::getCurrentTime() );
             
             File *f = logFolder.getChildFile( newFileName );
             
@@ -2843,12 +2833,24 @@ void reseedMap( char inForceFresh ) {
         seedFile = fopen( "biomeRandSeed.txt", "r" );
         }
     
+
+    char set = false;
+    
     if( seedFile != NULL ) {
-        fscanf( seedFile, "%d", &biomeRandSeed );
+        int numRead = 
+            fscanf( seedFile, "%u %u", &biomeRandSeedA, &biomeRandSeedB );
         fclose( seedFile );
-        AppLog::infoF( "Reading map rand seed from file: %u\n", biomeRandSeed );
+        
+        if( numRead == 2 ) {
+            AppLog::infoF( "Reading map rand seed from file: %u %u\n", 
+                           biomeRandSeedA, biomeRandSeedB );
+            set = true;
+            }
         }
-    else {
+    
+
+
+    if( !set ) {
         // no seed set, or ignoring it, make a new one
         
         if( !inForceFresh ) {
@@ -2858,38 +2860,85 @@ void reseedMap( char inForceFresh ) {
             reportArcEnd();
             }
 
-        char *secret =
+        char *secretA =
             SettingsManager::getStringSetting( "statsServerSharedSecret", 
                                                "secret" );
+        int secretALen = strlen( secretA );
         
-        unsigned int seedBase = 
-            crc32( (unsigned char*)secret, strlen( secret ) );
+        unsigned int seedBaseA = 
+            crc32( (unsigned char*)secretA, secretALen );
         
-        delete [] secret;
+        const char *nonce = 
+            "8TX8sr7weEK8UIqrE0xV"
+            "voZgafknTgZAVQCTD8UG"
+            "6FKWSgi9N1wDhUQ7VCuw"
+            "uJbKsMAnOzLwbnnB7nQs"
+            "a6mI5rjqijo1oMjPiYbk"
+            "uezCnYjrn744AvSP7Zux"
+            "wOiZLLDUn5tUe1Ym3vTG"
+            "0I80QFzhFPht5TOiiYqT"
+            "jeZx0k9reFeknKkGUac3"
+            "fHlp0rg1PEOtZZ0LZsme";
+        
+        // assumption:  secret has way more than 32 bits of entropy
+        // crc32 only extracts 32 bits, though.
+        
+        // by XORing secret with a random nonce and passing through crc32
+        // again, we get another 32 bits of entropy out of it.
 
-        unsigned int modTimeSeed = 
-            (unsigned int)fmod( Time::getCurrentTime() + seedBase, 
+        // Not the best way of doing this, but it is probably sufficient
+        // to prevent brute-force test-guessing of the map seed based
+        // on sample map data.
+
+        char *secretB = stringDuplicate( secretA );
+        
+        int nonceLen = strlen( nonce );
+        
+        for( int i=0; i<secretALen; i++ ) {
+            if( i > nonceLen ) {
+                break;
+                }
+            secretB[i] = secretB[i] ^ nonce[i];
+            }
+
+        unsigned int seedBaseB = 
+            crc32( (unsigned char*)secretB, secretALen );
+
+
+        delete [] secretA;
+        delete [] secretB;
+
+        unsigned int modTimeSeedA = 
+            (unsigned int)fmod( Time::getCurrentTime() + seedBaseA, 
                                 4294967295U );
         
-        JenkinsRandomSource tempRandSource( modTimeSeed );
+        JenkinsRandomSource tempRandSourceA( modTimeSeedA );
 
-        biomeRandSeed = tempRandSource.getRandomInt();
+        biomeRandSeedA = tempRandSourceA.getRandomInt();
+
+        unsigned int modTimeSeedB = 
+            (unsigned int)fmod( Time::getCurrentTime() + seedBaseB, 
+                                4294967295U );
         
-        AppLog::infoF( "Generating fresh map rand seed and saving to file: "
-                       "%u\n", biomeRandSeed );
+        JenkinsRandomSource tempRandSourceB( modTimeSeedB );
+
+        biomeRandSeedB = tempRandSourceB.getRandomInt();
+        
+        AppLog::infoF( "Generating fresh map rand seeds and saving to file: "
+                       "%u %u\n", biomeRandSeedA, biomeRandSeedB );
 
         // and save it
         seedFile = fopen( "biomeRandSeed.txt", "w" );
         if( seedFile != NULL ) {
             
-            fprintf( seedFile, "%d", biomeRandSeed );
+            fprintf( seedFile, "%u %u", biomeRandSeedA, biomeRandSeedB );
             fclose( seedFile );
             }
 
 
 
         // re-place rand placement objects
-        CustomRandomSource placementRandSource( biomeRandSeed );
+        CustomRandomSource placementRandSource( biomeRandSeedA );
 
         int numObjects;
         ObjectRecord **allObjects = getAllObjects( &numObjects );
@@ -2943,10 +2992,37 @@ void reseedMap( char inForceFresh ) {
                     }
                 }
             }
+        delete [] allObjects;
         }
 
                 
     setupMapChangeLogFile();
+
+    if( !set && mapChangeLogFile != NULL ) {
+        // whenever we actually change the seed, save it to a separate
+        // file in log folder
+
+        File logFolder( NULL, "mapChangeLogs" );
+        
+        char *newFileName = 
+            autoSprintf( "%.ftime_mapSeed.txt",
+                         Time::getCurrentTime() );
+            
+        File *f = logFolder.getChildFile( newFileName );
+            
+        delete [] newFileName;
+        
+        char *fullName = f->getFullFileName();
+        
+        delete f;
+        
+        FILE *seedFile = fopen( fullName, "w" );
+        delete [] fullName;
+        
+        fprintf( seedFile, "%u %u", biomeRandSeedA, biomeRandSeedB );
+        
+        fclose( seedFile );
+        }
     }
 
 
@@ -6865,6 +6941,16 @@ static void logMapChange( int inX, int inY, int inID ) {
     // log it?
     if( mapChangeLogFile != NULL ) {
         
+        double timeDelta = Time::getCurrentTime() - mapChangeLogTimeStart;
+
+        if( timeDelta > 3600 * 24 ) {
+            // break logs int 24-hour chunks
+            setupMapChangeLogFile();
+            timeDelta = Time::getCurrentTime() - mapChangeLogTimeStart;
+            }
+        
+        
+
         ObjectRecord *o = getObject( inID );
         
         const char *extraFlag = "";
@@ -6873,31 +6959,40 @@ static void logMapChange( int inX, int inY, int inID ) {
             extraFlag = "f";
             }
         
+        int respPlayer = currentResponsiblePlayer;
+        
+        if( respPlayer != -1 && respPlayer < 0 ) {
+            respPlayer = - respPlayer;
+            }
+
         if( o != NULL && o->isUseDummy ) {
             fprintf( mapChangeLogFile, 
-                     "%.2f %d %d %s%du%d\n", 
-                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     "%.2f %d %d %s%du%d %d\n",
+                     timeDelta,
                      inX, inY,
                      extraFlag,
                      o->useDummyParent,
-                     o->thisUseDummyIndex );
+                     o->thisUseDummyIndex,
+                     respPlayer );
             }
         else if( o != NULL && o->isVariableDummy ) {
             fprintf( mapChangeLogFile, 
-                     "%.2f %d %d %s%dv%d\n", 
-                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     "%.2f %d %d %s%dv%d %d\n", 
+                     timeDelta,
                      inX, inY,
                      extraFlag,
                      o->variableDummyParent,
-                     o->thisVariableDummyIndex );
+                     o->thisVariableDummyIndex,
+                     respPlayer );
             }
         else {        
             fprintf( mapChangeLogFile, 
-                     "%.2f %d %d %s%d\n", 
-                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     "%.2f %d %d %s%d %d\n", 
+                     timeDelta,
                      inX, inY,
                      extraFlag,
-                     inID );
+                     inID,
+                     respPlayer );
             }
         }
     }

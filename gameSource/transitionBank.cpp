@@ -58,6 +58,15 @@ static char autoGenerateGenericUseTransitions = false;
 static char autoGenerateVariableTransitions = false;
 
 
+static char shouldFileBeCached( char *inFileName ) {
+    if( strstr( inFileName, ".txt" ) != NULL ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
 int initTransBankStart( char *outRebuildingCache,
                         char inAutoGenerateCategoryTransitions,
                         char inAutoGenerateUsedObjectTransitions,
@@ -74,7 +83,8 @@ int initTransBankStart( char *outRebuildingCache,
     currentFile = 0;
 
 
-    cache = initFolderCache( "transitions", outRebuildingCache );
+    cache = initFolderCache( "transitions", outRebuildingCache,
+                             shouldFileBeCached );
 
     return cache.numFiles;
     }
@@ -92,7 +102,7 @@ float initTransBankStep() {
 
     char *txtFileName = getFileName( cache, i );
                         
-    if( strstr( txtFileName, ".txt" ) != NULL ) {
+    if( shouldFileBeCached( txtFileName ) ) {
                     
         int actor = 0;
         int target = -2;
