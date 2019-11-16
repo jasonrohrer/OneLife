@@ -270,7 +270,7 @@ typedef struct ObjectAnimPack {
         int *inContainedIDs;
         SimpleVector<int> *inSubContained;
         
-        Emotion *setEmot;
+        SimpleVector<Emotion*> setEmots;
 
         // can be added by caller after this structure
         // is returned by drawObjectAnimPacked
@@ -443,7 +443,12 @@ char isSoundUsedByAnim( int inSoundID );
 
 
 // sets emotion for subsequent drawObjectAnim calls, or NULL for no emotion
+// clear extra layers
 void setAnimationEmotion( Emotion *inEmotion );
+
+// add an extra layer of emotion for drawObjectAnim calls
+void addExtraAnimationEmotions( SimpleVector<Emotion*> *inList );
+
 
 
 // sets fade values for clothing highlights of next drawn person

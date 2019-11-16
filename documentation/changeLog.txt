@@ -22,6 +22,8 @@ Version 283   ???
   MISSING OBJECT placeholder in client.  This is an extremely unlikely case,
   but could happen if there's some error in the update process.
 
+--Support for permanent emots, for things like tatoos, piercings, makeup, etc.
+
 
 
 Server Fixes

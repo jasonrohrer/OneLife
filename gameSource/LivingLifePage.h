@@ -309,6 +309,9 @@ typedef struct LiveObject {
         // wall clock time when emot clears
         double emotClearETATime;
 
+        SimpleVector<Emotion*> permanentEmots;
+        
+
         char killMode;
         int killWithID;
         

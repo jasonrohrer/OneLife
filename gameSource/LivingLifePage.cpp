@@ -4357,6 +4357,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
         
 
         setAnimationEmotion( inObj->currentEmot );
+        addExtraAnimationEmotions( &( inObj->permanentEmots ) );
         
         // draw young baby lying flat
         double rot = 0;
@@ -4571,7 +4572,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             personPos = add( personPos, inObj->ridingOffset );
 
             setAnimationEmotion( inObj->currentEmot );
-
+            addExtraAnimationEmotions( &( inObj->permanentEmots ) );
             
             if( heldObject->anySpritesBehindPlayer ) {
                 // draw part that is behind player
@@ -4692,7 +4693,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 
                 
                 setAnimationEmotion( babyO->currentEmot );
-                
+                addExtraAnimationEmotions( &( babyO->permanentEmots ) );
+
                 doublePair babyHeldPos = holdPos;
                 
                 if( babyO->babyWiggle ) {
@@ -17400,34 +17402,49 @@ void LivingLifePage::step() {
                 }            
             
             for( int i=1; i<numLines; i++ ) {
-                int id, emotIndex;
-                int ttlSec = -1;
+                int pid, emotIndex;
+                int ttlSec = 0;
                 
                 int numRead = sscanf( lines[i], "%d %d %d",
-                                      &id, &emotIndex, &ttlSec );
+                                      &pid, &emotIndex, &ttlSec );
 
                 if( numRead >= 2 ) {
                     for( int j=0; j<gameObjects.size(); j++ ) {
-                        if( gameObjects.getElement(j)->id == id ) {
-                            
+                        if( gameObjects.getElement(j)->id == pid ) {
+                                
                             LiveObject *existing = gameObjects.getElement(j);
+                            Emotion *newEmotPlaySound = NULL;
                             
-                            Emotion *oldEmot = existing->currentEmot;
-                            
-                            existing->currentEmot = getEmotion( emotIndex );
-                            
-                            if( numRead == 3 && ttlSec > 0 ) {
-                                existing->emotClearETATime = 
-                                    game_getCurrentTime() + ttlSec;
+                            if( ttlSec == -1 ) {
+                                // new permanent emot layer
+                                existing->permanentEmots.push_back(
+                                    getEmotion( emotIndex ) );
+                                
+                                newEmotPlaySound = getEmotion( emotIndex );
                                 }
                             else {
-                                // no ttl provided by server, use default
-                                existing->emotClearETATime = 
-                                    game_getCurrentTime() + emotDuration;
+                                
+                                Emotion *oldEmot = existing->currentEmot;
+                            
+                                existing->currentEmot = getEmotion( emotIndex );
+                            
+                                if( numRead == 3 && ttlSec > 0 ) {
+                                    existing->emotClearETATime = 
+                                        game_getCurrentTime() + ttlSec;
+                                    }
+                                else {
+                                    // no ttl provided by server, use default
+                                    existing->emotClearETATime = 
+                                        game_getCurrentTime() + emotDuration;
+                                    }
+                                
+                                if( oldEmot != existing->currentEmot &&
+                                    existing->currentEmot != NULL ) {
+                                    newEmotPlaySound = existing->currentEmot;
+                                    }
                                 }
-
-                            if( oldEmot != existing->currentEmot &&
-                                existing->currentEmot != NULL ) {
+                            
+                            if( newEmotPlaySound != NULL ) {
                                 doublePair playerPos = existing->currentPos;
                                 
                                 // play sounds for this emotion, but only
@@ -17438,7 +17455,7 @@ void LivingLifePage::step() {
                                     
                                     int id =
                                         getEmotionObjectByIndex(
-                                            existing->currentEmot, i );
+                                            newEmotPlaySound, i );
                                     
                                     if( id > 0 ) {
                                         ObjectRecord *obj = getObject( id );
@@ -17473,6 +17490,8 @@ void LivingLifePage::step() {
                                         }
                                     }
                                 }
+                            // found matching player, done
+                            break;
                             }
                         }
                     }
