@@ -1183,10 +1183,18 @@ static char logicalXOR( char inA, char inB ) {
     }
 
 
-static Emotion *drawWithEmot = NULL;
+static SimpleVector<Emotion *> drawWithEmots;
 
 void setAnimationEmotion( Emotion *inEmotion ) {
-    drawWithEmot = inEmotion;
+    drawWithEmots.deleteAll();
+    if( inEmotion != NULL ) {
+        drawWithEmots.push_back( inEmotion );
+        }
+    }
+
+
+void addExtraAnimationEmotions( SimpleVector<Emotion*> *inList ) {
+    drawWithEmots.push_back_other( inList );
     }
 
 
@@ -1255,7 +1263,7 @@ ObjectAnimPack drawObjectAnimPacked(
         inNumContained,
         inContainedIDs,
         inSubContained,
-        drawWithEmot,
+        drawWithEmots,
         0 };
     
     return outPack;
@@ -1269,9 +1277,9 @@ void drawObjectAnim( ObjectAnimPack inPack ) {
     p.valid = false;
 
     // set based on what's in pack, but restore main value afterward
-    Emotion *oldEmot = drawWithEmot;
+    SimpleVector<Emotion*> oldEmots = drawWithEmots;
     
-    drawWithEmot = inPack.setEmot;
+    drawWithEmots = inPack.setEmots;
     
     if( inPack.inContainedIDs == NULL ) {
         p = drawObjectAnim( 
@@ -1324,7 +1332,7 @@ void drawObjectAnim( ObjectAnimPack inPack ) {
             inPack.inSubContained );
         }
     
-    drawWithEmot = oldEmot;
+    drawWithEmots = oldEmots;
     
 
     if( inPack.additionalHeldID > 0 && p.valid ) {
@@ -1787,7 +1795,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     int eyesIndex = -1;
     int mouthIndex = -1;
     
-    if( drawWithEmot != NULL ) {
+    if( drawWithEmots.size() > 0 ) {
         eyesIndex = getEyesIndex( obj, inAge );
         mouthIndex = getMouthIndex( obj, inAge );
         
@@ -2372,16 +2380,23 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 }
             }
         
-        if( i == mouthIndex && drawWithEmot != NULL &&
-            drawWithEmot->mouthEmot != 0 ) {
-            skipSprite = true;
+        if( i == mouthIndex && drawWithEmots.size() > 0 ) {
+            for( int e=0; e<drawWithEmots.size(); e++ ) {
+                if( drawWithEmots.getElementDirect(e)->mouthEmot != 0 ) {
+                    skipSprite = true;
+                    break;
+                    }
+                }
             }
 			
-        if( i == eyesIndex && drawWithEmot != NULL &&
-            drawWithEmot->eyeEmot != 0 &&
-			strstr( getObject( drawWithEmot->eyeEmot )->description, "Eyes" )
-			) {
-            skipSprite = true;
+        if( i == eyesIndex && drawWithEmots.size() > 0 ) {
+            for( int e=0; e<drawWithEmots.size(); e++ ) {
+                if( drawWithEmots.getElementDirect(e)->eyeEmot != 0 && 
+				strstr( getObject( drawWithEmots.getElementDirect(e)->eyeEmot )->description, "Eyes" ) ) {
+                    skipSprite = true;
+                    break;
+                    }
+                }
             }
         
 
@@ -2544,12 +2559,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             
 
             // body emote above all body parts
-            if( drawWithEmot != NULL &&
-                drawWithEmot->bodyEmot != 0 &&
+            for( int e=0; e<drawWithEmots.size(); e++ )
+            if( drawWithEmots.getElementDirect( e )->bodyEmot != 0 &&
                 obj->person ) {
             
                 char used;
-                drawObjectAnim( drawWithEmot->bodyEmot, 
+                drawObjectAnim( drawWithEmots.getElementDirect( e )->bodyEmot, 
                                 clothingAnimType, 
                                 inFrameTime,
                                 inAnimFade, 
@@ -2832,8 +2847,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
 
         // eye emot on top of eyes
-        if( i == eyesIndex && drawWithEmot != NULL &&
-            drawWithEmot->eyeEmot != 0 ) {
+        if( i == eyesIndex )
+        for( int e=0; e<drawWithEmots.size(); e++ )
+        if( drawWithEmots.getElementDirect(e)->eyeEmot != 0 ) {
             
             doublePair offset = obj->mainEyesOffset;
 
@@ -2852,7 +2868,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             cPos = add( cPos, inPos );
 
             char used;
-            drawObjectAnim( drawWithEmot->eyeEmot, 
+            drawObjectAnim( drawWithEmots.getElementDirect(e)->eyeEmot, 
                             clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
@@ -2883,12 +2899,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         if( ( ( eyesIndex != -1 && i == eyesIndex ) 
               ||
               ( eyesIndex == -1 && i == headIndex ) )
-            && drawWithEmot != NULL &&
-            drawWithEmot->faceEmot != 0 &&
-            obj->person ) {
+            && obj->person )
+        for( int e=0; e<drawWithEmots.size(); e++ )
+        if( drawWithEmots.getElementDirect(e)->faceEmot != 0 ) {
             
             char used;
-            drawObjectAnim( drawWithEmot->faceEmot, 
+            drawObjectAnim( drawWithEmots.getElementDirect(e)->faceEmot, 
                             clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
@@ -2918,12 +2934,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
         // mouth on top of head
         // but only if there's a mouth to be replaced
-        if( i == headIndex && drawWithEmot != NULL &&
-            drawWithEmot->mouthEmot != 0 &&
-            mouthIndex != -1 ) {
+        if( i == headIndex && mouthIndex != -1 )
+        for( int e=0; e<drawWithEmots.size(); e++ )
+        if( drawWithEmots.getElementDirect(e)->mouthEmot != 0 ) {
             
             char used;
-            drawObjectAnim( drawWithEmot->mouthEmot, 
+            drawObjectAnim( drawWithEmots.getElementDirect(e)->mouthEmot, 
                             clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
@@ -2952,12 +2968,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         // other emote tests depend on eyes index or mouth index, which
         // are forced to 0 for non-people (and become -1 above), but 
         // this does not happen for headIndex
-        if( i == headIndex && drawWithEmot != NULL &&
-            drawWithEmot->otherEmot != 0 &&
-            obj->person ) {
+        if( i == headIndex && obj->person )
+        for( int e=0; e<drawWithEmots.size(); e++ )
+        if( drawWithEmots.getElementDirect(e)->otherEmot != 0 ) {
             
             char used;
-            drawObjectAnim( drawWithEmot->otherEmot, 
+            drawObjectAnim( drawWithEmots.getElementDirect(e)->otherEmot, 
                             clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
@@ -3131,12 +3147,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
 
     // head emot on top of everything, including hat
-    if( drawWithEmot != NULL &&
-        drawWithEmot->headEmot != 0 &&
-        obj->person ) {
+    if( obj->person )
+    for( int e=0; e<drawWithEmots.size(); e++ )
+    if( drawWithEmots.getElementDirect(e)->headEmot != 0 ) {
             
         char used;
-        drawObjectAnim( drawWithEmot->headEmot, 
+        drawObjectAnim( drawWithEmots.getElementDirect(e)->headEmot, 
                         clothingAnimType, 
                         inFrameTime,
                         inAnimFade, 

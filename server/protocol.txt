@@ -476,12 +476,14 @@ PE
 1432 4
 1501 6 30
 1448 1
+1449 17 -1
 #
 
 
 ttl_sec is optional, and specifies how long the emote should be shown, in
 seconds, client-side.  If it is omitted, the client should display the emotion
-for the standard amount of time.
+for the standard amount of time.  If ttl is -1, this emot is permanent and
+should layer with other permanent and non-permanent emots.
 
 
 
