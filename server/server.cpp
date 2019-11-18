@@ -12990,8 +12990,14 @@ int main() {
             stepArcReport();
             
             int arcMilestone = getArcYearsToReport( secondsPerYear, 100 );
+
+            // don't send global arc messages if Eve injection on
+            // arcs never end
+            int eveInjectionOn = 
+                SettingsManager::getIntSetting( "eveInjectionOn", 0 );
             
-            if( arcMilestone != -1 ) {
+            if( arcMilestone != -1 && ! eveInjectionOn ) {
+
                 int familyLimitAfterEveWindow = 
                     SettingsManager::getIntSetting( 
                         "familyLimitAfterEveWindow", 15 );

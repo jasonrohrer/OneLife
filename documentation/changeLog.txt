@@ -17,6 +17,8 @@ Server Fixes
 --Made Y placement gap between tutorials larger to make room for skip-tutorial
   hallway.  Fixes jasonrohrer/OneLifeData7#507
 
+--No more arc messages when Eve injection on.  Fixes #441
+
 
 
 
