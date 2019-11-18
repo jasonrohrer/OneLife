@@ -8220,7 +8220,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     else if( inTutorialNumber > 0 ) {
         
         int startX = maxPlacementX + tutorialOffsetX;
-        int startY = tutorialCount * 25;
+        int startY = tutorialCount * 40;
 
         newObject.xs = startX;
         newObject.ys = startY;

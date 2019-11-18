@@ -14,6 +14,10 @@ Server Fixes
   setting and set to 4 minutes (was 1.5 minutes).  Further reducing Eve getting
   hammered with too many babies.
 
+--Made Y placement gap between tutorials larger to make room for skip-tutorial
+  hallway.  Fixes #507
+
+
 
 
 Version 283   2019-November-15
