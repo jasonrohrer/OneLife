@@ -8627,11 +8627,13 @@ int processLoggedInPlayer( char inAllowReconnect,
                                       forceSpawnInfo.lastName );
         newObject.displayID = forceSpawnInfo.displayID;
         
-        newObject.clothing.hat = getObject( forceSpawnInfo.hatID );
-        newObject.clothing.tunic = getObject( forceSpawnInfo.tunicID );
-        newObject.clothing.bottom = getObject( forceSpawnInfo.bottomID );
-        newObject.clothing.frontShoe = getObject( forceSpawnInfo.frontShoeID );
-        newObject.clothing.backShoe = getObject( forceSpawnInfo.backShoeID );
+        newObject.clothing.hat = getObject( forceSpawnInfo.hatID, true );
+        newObject.clothing.tunic = getObject( forceSpawnInfo.tunicID, true );
+        newObject.clothing.bottom = getObject( forceSpawnInfo.bottomID, true );
+        newObject.clothing.frontShoe = 
+            getObject( forceSpawnInfo.frontShoeID, true );
+        newObject.clothing.backShoe = 
+            getObject( forceSpawnInfo.backShoeID, true );
 
         delete [] forceSpawnInfo.firstName;
         delete [] forceSpawnInfo.lastName;

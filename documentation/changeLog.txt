@@ -25,6 +25,8 @@ Server Fixes
 
 --No more arc messages when Eve injection on.  Fixes #441
 
+--Fixed default object behavior of force-spawn clothing.
+
 
 
 
