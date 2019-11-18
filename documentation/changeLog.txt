@@ -15,7 +15,7 @@ Server Fixes
   hammered with too many babies.
 
 --Made Y placement gap between tutorials larger to make room for skip-tutorial
-  hallway.  Fixes jasonrohrer/OneLifeData#507
+  hallway.  Fixes jasonrohrer/OneLifeData7#507
 
 
 
