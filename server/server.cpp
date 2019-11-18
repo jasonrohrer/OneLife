@@ -6568,11 +6568,15 @@ typedef struct FamilyPickedRecord {
 static SimpleVector<FamilyPickedRecord> familiesRecentlyPicked;
 
 
+// let one mom wait 1.5 minutes between BB
+static double waitSecondsPerMom = 1.5 * 60.0;
+
+
 static char isFamilyTooRecent( int inLineageEveID, int inMomCount ) {
     double curTime = Time::getCurrentTime();
     
-    // let one mom wait 1.5 minutes between BB
-    double waitTime = 1.5 * 60.0 / inMomCount;
+    
+    double waitTime = waitSecondsPerMom / inMomCount;
     
 
     for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
@@ -6643,6 +6647,10 @@ static int getNextBabyFamilyLineageEveIDFewestFemales() {
         }
     
 
+    waitSecondsPerMom = 
+        SettingsManager::getDoubleSetting(
+            "weakFamilyPickWaitSecondsPerMom", 1.5 * 3600 );
+    
 
     for( int i=0; i<uniqueFams.size(); i++ ) {
         int lineageEveID = 

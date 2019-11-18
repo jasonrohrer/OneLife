@@ -10,6 +10,9 @@ Server Fixes
 
 --Fixed new bug that was preventing animals from spawning.
 
+--Wait per mom before sending another baby to the weakest family made a live
+  setting and set to 4 minutes (was 1.5 minutes).  Further reducing Eve getting
+  hammered with too many babies.
 
 
 
