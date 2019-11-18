@@ -15697,10 +15697,22 @@ int main() {
                                 
                                 // check if this move goes into a bad biome
                                 // and makes them sick
-                                int sicknessObjectID =
-                                    getBiomeSickness( nextPlayer->displayID, 
-                                                      nextPlayer->xd,
-                                                      nextPlayer->yd );
+                                int sicknessObjectID = -1;
+                                
+                                
+                                for( int p=0; p< nextPlayer->pathLength; p++ ) {
+                                    
+                                    sicknessObjectID = 
+                                        getBiomeSickness( 
+                                            nextPlayer->displayID, 
+                                            nextPlayer->pathToDest[p].x,
+                                            nextPlayer->pathToDest[p].y );
+
+                                    if( sicknessObjectID != -1 ) {
+                                        break;
+                                        }
+                                    }
+                                
                                 
                                 if( nextPlayer->vogMode || 
                                     nextPlayer->forceSpawn ||

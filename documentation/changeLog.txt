@@ -27,6 +27,9 @@ Server Fixes
 
 --Fixed default object behavior of force-spawn clothing.
 
+--Fixed so that a long path through a bad biome that ends outside of it still
+  makes you sick.  Can no longer "skip across" a bad biome with a long path.
+
 
 
 
