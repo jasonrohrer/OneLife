@@ -930,8 +930,12 @@ static int computeMapBiomeIndex( int inX, int inY,
     
 
     if( ! allowSecondPlaceBiomes ) {
-        secondPlace = pickedBiome;
-        secondPlaceGap = 1.0;
+        // make the gap ridiculously big, so that second-place placement
+        // never happens.
+        // but keep secondPlace set different from pickedBiome
+        // (elsewhere in code, we avoid placing animals if 
+        // secondPlace == picked
+        secondPlaceGap = 10.0;
         }
 
 

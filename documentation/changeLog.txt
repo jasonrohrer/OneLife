@@ -8,6 +8,8 @@ Server Fixes
 --Support for +neverDrop object tag for murder weapons, which prevents them
   from being dropped in bad biomes.  Fixes #444
 
+--Fixed new bug that was preventing animals from spawning.
+
 
 
 

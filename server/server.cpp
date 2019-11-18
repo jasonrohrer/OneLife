@@ -12476,6 +12476,19 @@ static char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY ) {
     return isBiomeAllowed( inPlayer->displayID, inX, inY );
     }
 
+
+
+
+static char heldNeverDrop( LiveObject *inPlayer ) {
+    if( inPlayer->holdingID > 0 ) {        
+        ObjectRecord *o = getObject( inPlayer->holdingID );
+        if( strstr( o->description, "+neverDrop" ) != NULL ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
     
     
 
@@ -15688,11 +15701,12 @@ int main() {
                                     // drop what they are holding
                                     if( nextPlayer->holdingID != 0 ) {
                                         // never drop held wounds
-                                        // they are the only thing a baby can
-                                        // while held
+                                        // or neverDrop murder weapons
+
                                         if( ! nextPlayer->holdingWound &&
                                             ! nextPlayer->
-                                            holdingBiomeSickness ) {
+                                            holdingBiomeSickness &&
+                                            ! heldNeverDrop( nextPlayer ) ) {
                                             handleDrop( 
                                              m.x, m.y, nextPlayer,
                                              &playerIndicesToSendUpdatesAbout );
