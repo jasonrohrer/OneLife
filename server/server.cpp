@@ -534,7 +534,6 @@ typedef struct LiveObject {
 
         int id;
         
-        // -1 if unknown
         float fitnessScore;
         
         int numToolSlots;
@@ -6755,39 +6754,49 @@ static void setupToolSlots( LiveObject *inPlayer ) {
     
     
     int slots = min;
-    
-    if( inPlayer->fitnessScore != -1 ) {    
-        // similar quadratic formula to food bars lost in old age
-        slots += ( max - min ) * pow( inPlayer->fitnessScore / 60, 2 );
-        }
 
-    if( inPlayer->fitnessScore > 0 ) {
-        // give everyone 1 bonus slot who has some genetic score
-        // this allows us to show the fitness message to everyone
-        // without hammering them with "0 bonus slots"
-        slots ++;
+    // when this is called, we already have a valid fitness score (or 0)
+    // can be negative or positive, with no limits
+
+    // similar quadratic formula to food bars lost in old age
+    double p = pow( inPlayer->fitnessScore / 60, 2 );
+    if( inPlayer->fitnessScore < 0 && p > 0 ) {
+        // restore negative lost in power of 2
+        p *= -1;
         }
     
-
-    if( slots > min ) {
-        const char *slotWord = "SLOTS";
-        
-        if( slots - min == 1 ) {
-            slotWord = "SLOT";
-            }
-        
-        char *message = autoSprintf( "YOUR GENETIC FITNESS SCORE IS %.1lf**"
-                                     "YOU GET %d BONUS TOOL %s, "
-                                     "FOR A TOTAL OF %d SLOTS.",
-                                     inPlayer->fitnessScore,
-                                     slots - min,
-                                     slotWord, slots );
-        
-        sendGlobalMessage( message, inPlayer );
-        
-        delete [] message;
+    slots += ( max - min ) * p;
+    
+    
+    // no negative slots
+    if( slots < 0 ) {
+        slots = 0;
         }
 
+
+    const char *slotWord = "SLOTS";
+        
+    if( abs( slots - min ) == 1 ) {
+        slotWord = "SLOT";
+        }
+
+
+    const char *slotTotalWord = "SLOTS";
+        
+    if( slots == 1 ) {
+        slotTotalWord = "SLOT";
+        }
+    
+    char *message = autoSprintf( "YOUR GENETIC FITNESS SCORE IS %.1lf**"
+                                 "YOU GET %d BONUS TOOL %s, "
+                                 "FOR A TOTAL OF %d %s.",
+                                 inPlayer->fitnessScore,
+                                 slots - min, slotWord, 
+                                 slots, slotTotalWord );
+    
+    sendGlobalMessage( message, inPlayer );
+    
+    delete [] message;
     
 
     inPlayer->numToolSlots = slots;
@@ -8827,7 +8836,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     // can resize the vector
     parent = NULL;
 
-    newObject.numToolSlots = 0;
+    newObject.numToolSlots = -1;
     
 
     if( newObject.isTutorial ) {
@@ -13396,7 +13405,9 @@ int main() {
                 newConnection.ticketServerAccepted = false;
                 newConnection.lifeTokenSpent = false;
                 
-                newConnection.fitnessScore = -1;
+                // -1 is a possible score now
+                // use -99999 as still-waiting marker
+                newConnection.fitnessScore = -99999;
 
                 newConnection.error = false;
                 newConnection.errorCauseString = "";
@@ -13492,7 +13503,7 @@ int main() {
                     }
                 }
             else if( nextConnection->email != NULL &&
-                     nextConnection->fitnessScore == -1 ) {
+                     nextConnection->fitnessScore == -99999 ) {
                 // still waiting for fitness score
                 int fitResult = 
                     getFitnessScore( nextConnection->email, 
@@ -14141,7 +14152,7 @@ int main() {
                 continue;
                 }
             
-            if( nextPlayer->numToolSlots == 0 ) {
+            if( nextPlayer->numToolSlots == -1 ) {
                 
                 setupToolSlots( nextPlayer );
                 }
