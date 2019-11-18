@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Support for +neverDrop object tag for murder weapons, which prevents them
+  from being dropped in bad biomes.  Fixes #444
+
+
+
+
 Version 283   2019-November-15
 
 --Fixed crash when sprite .tga file exists but .txt file doesn't (either in
