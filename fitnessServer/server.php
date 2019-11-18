@@ -1110,6 +1110,7 @@ function sign( $n ) {
 // (to prevent noScore lives from bringing an expired player back to the
 //  leaderboard)
 function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
+                      $inDeadPersonAveAge,
                       $inNoScore = false ) {
     global $tableNamePrefix;
 
@@ -1152,7 +1153,7 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
     global $formulaR, $formulaK;
 
 
-    $delta = $inAge - $old_score;
+    $delta = $inAge - $inDeadPersonAveAge;
 
     if( $formulaR != 1 ) {
         // preserve sign after power operation
@@ -1258,11 +1259,11 @@ function fs_checkAndUpdateClientSeqNumber() {
 function fs_addUserRecord( $inEmail ) {
     $leaderboard_name = fs_pickLeaderboardName( $inEmail );
 
-    global $tableNamePrefix;
+    global $tableNamePrefix, $startingScore;
     
     $query = "INSERT INTO $tableNamePrefix"."users ".
         "SET email = '$inEmail', leaderboard_name = '$leaderboard_name', ".
-        "lives_affecting_score = 0, score=0, ".
+        "lives_affecting_score = 0, score=$startingScore, ".
         "last_action_time=CURRENT_TIMESTAMP, client_sequence_number=1;";
     
     fs_queryDatabase( $query );
@@ -1338,6 +1339,69 @@ function fs_cleanOldLives( $email ) {
 
 
 
+function fs_getAveAge( $inEmail ) {
+    global $startingScore, $tableNamePrefix;
+    
+    $query = "SELECT id FROM $tableNamePrefix"."users ".
+        "WHERE email = '$inEmail';";
+
+    $result = fs_queryDatabase( $query );
+
+    $id = -1;
+
+    if( mysqli_num_rows( $result ) > 0 ) {    
+        $id = fs_mysqli_result( $result, 0, "id" );
+        }
+
+    if( $id == -1 ) {
+        return $startingScore;
+        }
+
+    $target = 10;
+    
+    $query = "SELECT life_id FROM $tableNamePrefix"."offspring ".
+        "WHERE player_id = $id AND relation_name = 'You' ".
+        "order by death_time desc limit $target;";
+
+    $result = fs_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+    
+    $lifeTotal = 0;
+    $numCounted = 0;
+    for( $i=0; $i<$numRows; $i++ ) {
+        $life_id = fs_mysqli_result( $result, $i, "life_id" );
+
+        $query = "SELECT age FROM $tableNamePrefix"."lives ".
+            "WHERE id = $life_id;";
+
+        $resultB = fs_queryDatabase( $query );
+        
+        $numRowsB = mysqli_num_rows( $result );
+
+        if( $numRowsB > 0 ) {
+            $age = fs_mysqli_result( $resultB, $i, "age" );
+
+            $lifeTotal += $age;
+            $numCounted ++;
+            }
+        }
+
+    if( $numCounted < $target ) {
+
+        // pad average
+        for( $i=$numCounted; $i<$target; $i++ ) {
+            $lifeTotal += $startingScore;
+            }   
+        }
+
+    $ave = $lifeTotal / $target;
+
+    return $ave;
+    }
+
+
+
 function fs_reportDeath() {
     fs_checkAndUpdateServerSeqNumber();
     
@@ -1386,6 +1450,9 @@ function fs_reportDeath() {
         $ancestor_list = $_REQUEST[ "ancestor_list" ];
         }
 
+    $deadPlayerAve = fs_getAveAge( $email );
+    
+    
     if( $ancestor_list != "" ) {
         
         $listParts = explode( ",", $ancestor_list );
@@ -1394,7 +1461,9 @@ function fs_reportDeath() {
 
             list( $ancestorEmail, $relName ) = explode( " ", $part, 2 );
 
-            fs_logDeath( $ancestorEmail, $life_id, $relName, $age );
+            fs_logDeath( $ancestorEmail, $life_id, $relName, $age,
+                         $deadPlayerAve );
+            
             $numAncestors ++;
             }
         }
@@ -1409,7 +1478,8 @@ function fs_reportDeath() {
         $noScore = true;
         }
     
-    fs_logDeath( $email, $life_id, $self_rel_name, $age, $noScore );
+    fs_logDeath( $email, $life_id, $self_rel_name, $age, $deadPlayerAve,
+                 $noScore );
 
 
     fs_cleanOldLives( $email );
@@ -1439,7 +1509,9 @@ function fs_getScore() {
 
     $result = fs_queryDatabase( $query );
 
-    $score = 0;
+    global $startingScore;
+    
+    $score = $startingScore;
 
     if( mysqli_num_rows( $result ) > 0 ) {    
         $score = fs_mysqli_result( $result, 0, "score" );

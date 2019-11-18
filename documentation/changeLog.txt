@@ -30,6 +30,13 @@ Server Fixes
 --Fixed so that a long path through a bad biome that ends outside of it still
   makes you sick.  Can no longer "skip across" a bad biome with a long path.
 
+--New genetic score forumula based on offspring's lifespan compared to their
+  average lifespan.  Helping any player live longer than their normal will
+  boost your score.  Reduces randomness.  Scores no longer bounded in [0-60]
+  range.  New players start with an assumed score of 30.
+
+
+
 
 
 

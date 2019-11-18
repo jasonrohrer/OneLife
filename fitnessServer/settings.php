@@ -57,6 +57,10 @@ $maxOffspringToShowPlayer = 20;
 $maxOffspringHistoryToKeep = 25;
 
 
+// used for both starting score of a new player and assumed lifespan average
+// of player for whom we have too few lives logged
+$startingScore = 30;
+
 
 // secret shared with trusted game servers that allows them to post
 // game stats
