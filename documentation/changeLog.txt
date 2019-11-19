@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 286    ???
+Version 286    2019-November-18
 
 --Fixed client to not hang on loading if an expected sound file is missing.
 
