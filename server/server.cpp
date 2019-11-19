@@ -7850,7 +7850,72 @@ int processLoggedInPlayer( char inAllowReconnect,
         newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
 
         
-        int femaleID = getRandomFemalePersonObject();
+        // when placing eve, pick a race that is not currently
+        // represented
+        int numRaces = 0;
+        int *races = getRaces( &numRaces );
+        
+        int *counts = new int[ numRaces ];
+        
+        int foundMin = -1;
+        int minFem = 999999;
+        
+        // first, shuffle races
+        for( int r=0; r<numRaces; r++ ) {
+            int other = randSource.getRandomBoundedInt( 0, numRaces - 1 );
+            int temp = races[r];
+            races[r] = races[other];
+            races[other] = temp;
+            }
+
+        for( int r=0; r<numRaces; r++ ) {
+            counts[r] = 0;
+            for( int i=0; i<numPlayers; i++ ) {
+                LiveObject *player = players.getElement( i );
+            
+                if( isPlayerCountable( player ) && isFertileAge( player ) ) {
+                    ObjectRecord *d = getObject( player->displayID );
+                    
+                    if( d->race == races[r] ) {
+                        counts[r] ++;
+                        }
+                    }
+                }
+            if( counts[r] == 0 &&
+                getRaceSize( races[r] ) >= 2 ) {
+                foundMin = races[r];
+                break;
+                }
+            else if( counts[r] > 0 && counts[r] < minFem ) {
+                minFem = counts[r];
+                foundMin = races[r];
+                }
+            }
+        
+        delete [] races;
+        delete [] counts;
+        
+
+        int femaleID = -1;
+        
+        if( foundMin != -1 ) {
+            femaleID = getRandomPersonObjectOfRace( foundMin );
+            
+            int tryCount = 0;
+            while( getObject( femaleID )->male && tryCount < 10 ) {
+                femaleID = getRandomPersonObjectOfRace( foundMin );
+                tryCount++;
+                }
+            if( getObject( femaleID )->male ) {
+                femaleID = -1;
+                }
+            }
+
+        if( femaleID == -1 ) {       
+            // all races present, or couldn't find female character
+            // to use in weakest race
+            femaleID = getRandomFemalePersonObject();
+            }
         
         if( femaleID != -1 ) {
             newObject.displayID = femaleID;

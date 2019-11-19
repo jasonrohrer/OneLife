@@ -46,6 +46,7 @@ Server Fixes
   boost your score.  Reduces randomness.  Scores no longer bounded in [0-60]
   range.  New players start with an assumed score of 30.
 
+--New Eves always spawn in least-represented skin tones.  Fixes #446
 
 
 
