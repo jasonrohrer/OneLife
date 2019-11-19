@@ -16886,11 +16886,14 @@ void LivingLifePage::step() {
                                 // new permanent emot layer
                                 newEmotPlaySound = getEmotion( emotIndex );
 
-                                if( existing->permanentEmots.getElementIndex(
-                                        newEmotPlaySound ) == -1 ) {
+                                if( newEmotPlaySound != NULL ) {
+                                    if( existing->permanentEmots.
+                                        getElementIndex( 
+                                            newEmotPlaySound ) == -1 ) {
                                     
-                                    existing->permanentEmots.push_back(
-                                        newEmotPlaySound);
+                                        existing->permanentEmots.push_back(
+                                            newEmotPlaySound );
+                                        }
                                     }
                                 if( ttlSec == -2 ) {
                                     // old emot that we're just learning about
