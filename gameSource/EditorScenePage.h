@@ -40,6 +40,7 @@ typedef struct SceneCell {
         double heldAge;
         ClothingSet heldClothing;
         Emotion *heldEmotion;
+        SimpleVector<Emotion*> heldExtraEmotion;
         
         double returnAge;
         double returnHeldAge;
@@ -76,7 +77,8 @@ typedef struct SceneCell {
         int graveID;
         
         Emotion *currentEmot;
-
+        SimpleVector<Emotion*> extraEmot;
+        
     } SceneCell;
 
 
