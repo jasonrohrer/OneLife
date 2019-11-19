@@ -7,7 +7,7 @@ $tooFullForTwinsFraction = .75;
 
 $startSpreadingFraction = .50;
 
-$stopSpreadingFraction = .10;
+$stopSpreadingFraction = .20;
 
 
 $updateServerURL = "http://onehouronelife.com/updateServer/server.php";
