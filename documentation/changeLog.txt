@@ -11,6 +11,11 @@ Version 286    ???
 
 --Fixed mouse-over tips when mousing over floor-protected bad biome.
 
+--Character will now pathfind around bad biomes (even along roads and floors)
+  whenever possible.  The only way to enter a bad biome is to stand right at
+  the edge and click into the bad biome directly.
+
+
 
 
 Server Fixes

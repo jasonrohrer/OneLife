@@ -1799,11 +1799,12 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
     int startInd = getMapIndex( start.x, start.y );
     
     char startBiomeBad = false;
+    char startPointBad = false;
     
     if( startInd != -1 ) {
         // count as bad if we're not already standing on edge of bad biome
         // or in it
-        char startPointBad = isBadBiome( startInd );
+        startPointBad = isBadBiome( startInd );
         
         if( startPointBad ||
             isBadBiome( startInd - 1 ) ||
@@ -1820,6 +1821,10 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
             }
         }
     
+    GridPos end = { inObject->xd, inObject->yd };
+
+
+    char destBiomeBad = isBadBiome( getMapIndex( end.x, end.y ) );    
 
 
     if( inObject->pathToDest != NULL ) {
@@ -1828,7 +1833,6 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         }
 
 
-    GridPos end = { inObject->xd, inObject->yd };
         
     // window around player's start position
     int numPathMapCells = pathFindingD * pathFindingD;
@@ -1861,7 +1865,10 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
                     blockedMap[ y * pathFindingD + x ] = false;
                     }
 
-                if( ! startBiomeBad && 
+                if( ( ! startBiomeBad || ! destBiomeBad )
+                    &&
+                    ! startPointBad
+                    &&
                     mMapFloors[ mapI ] == 0 &&
                     mBadBiomeIndices.getElementIndex( mMapBiomes[ mapI ] ) 
                     != -1 ) {
