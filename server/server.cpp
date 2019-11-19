@@ -2977,6 +2977,10 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
             if( lostBars > maxLostBars ) {
                 lostBars = maxLostBars;
                 }
+
+            if( lostBars < 0 ) {
+                lostBars = 0;
+                }
             }
         
         returnVal = 20 - lostBars;
