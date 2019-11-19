@@ -1135,7 +1135,10 @@ char markSoundLive( int inID ) {
     SoundRecord *r = getSoundRecord( inID );
     
     if( r == NULL ) {
-        return false;
+        // if sound record doesn't exist, sound will never load
+        // count sound as live so that parts of code that are waiting
+        // for it to load can move on
+        return true;
         }
 
     r->numStepsUnused = 0;

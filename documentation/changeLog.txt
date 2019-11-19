@@ -3,6 +3,52 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 286    2019-November-18
+
+--Fixed client to not hang on loading if an expected sound file is missing.
+
+--Fixed crash if server sends an emot index that we don't have.
+
+--Fixed mouse-over tips when mousing over floor-protected bad biome.
+
+--Character will now pathfind around bad biomes (even along roads and floors)
+  whenever possible.  The only way to enter a bad biome is to stand right at
+  the edge and click into the bad biome directly.
+
+
+
+
+Server Fixes
+
+--Support for +neverDrop object tag for murder weapons, which prevents them
+  from being dropped in bad biomes.  Fixes #444
+
+--Fixed new bug that was preventing animals from spawning.
+
+--Wait per mom before sending another baby to the weakest family made a live
+  setting and set to 4 minutes (was 1.5 minutes).  Further reducing Eve getting
+  hammered with too many babies.
+
+--Made Y placement gap between tutorials larger to make room for skip-tutorial
+  hallway.  Fixes jasonrohrer/OneLifeData7#507
+
+--No more arc messages when Eve injection on.  Fixes #441
+
+--Fixed default object behavior of force-spawn clothing.
+
+--Fixed so that a long path through a bad biome that ends outside of it still
+  makes you sick.  Can no longer "skip across" a bad biome with a long path.
+
+--New genetic score forumula based on offspring's lifespan compared to their
+  average lifespan.  Helping any player live longer than their normal will
+  boost your score.  Reduces randomness.  Scores no longer bounded in [0-60]
+  range.  New players start with an assumed score of 30.
+
+
+
+
+
+
 Version 283   2019-November-15
 
 --Fixed crash when sprite .tga file exists but .txt file doesn't (either in

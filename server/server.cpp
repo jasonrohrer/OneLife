@@ -536,7 +536,6 @@ typedef struct LiveObject {
 
         int id;
         
-        // -1 if unknown
         float fitnessScore;
         
         int numToolSlots;
@@ -2979,6 +2978,10 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
             
             if( lostBars > maxLostBars ) {
                 lostBars = maxLostBars;
+                }
+
+            if( lostBars < 0 ) {
+                lostBars = 0;
                 }
             }
         
@@ -6570,11 +6573,15 @@ typedef struct FamilyPickedRecord {
 static SimpleVector<FamilyPickedRecord> familiesRecentlyPicked;
 
 
+// let one mom wait 1.5 minutes between BB
+static double waitSecondsPerMom = 1.5 * 60.0;
+
+
 static char isFamilyTooRecent( int inLineageEveID, int inMomCount ) {
     double curTime = Time::getCurrentTime();
     
-    // let one mom wait 1.5 minutes between BB
-    double waitTime = 1.5 * 60.0 / inMomCount;
+    
+    double waitTime = waitSecondsPerMom / inMomCount;
     
 
     for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
@@ -6645,6 +6652,10 @@ static int getNextBabyFamilyLineageEveIDFewestFemales() {
         }
     
 
+    waitSecondsPerMom = 
+        SettingsManager::getDoubleSetting(
+            "weakFamilyPickWaitSecondsPerMom", 1.5 * 3600 );
+    
 
     for( int i=0; i<uniqueFams.size(); i++ ) {
         int lineageEveID = 
@@ -6749,39 +6760,49 @@ static void setupToolSlots( LiveObject *inPlayer ) {
     
     
     int slots = min;
-    
-    if( inPlayer->fitnessScore != -1 ) {    
-        // similar quadratic formula to food bars lost in old age
-        slots += ( max - min ) * pow( inPlayer->fitnessScore / 60, 2 );
-        }
 
-    if( inPlayer->fitnessScore > 0 ) {
-        // give everyone 1 bonus slot who has some genetic score
-        // this allows us to show the fitness message to everyone
-        // without hammering them with "0 bonus slots"
-        slots ++;
+    // when this is called, we already have a valid fitness score (or 0)
+    // can be negative or positive, with no limits
+
+    // similar quadratic formula to food bars lost in old age
+    double p = pow( inPlayer->fitnessScore / 60, 2 );
+    if( inPlayer->fitnessScore < 0 && p > 0 ) {
+        // restore negative lost in power of 2
+        p *= -1;
         }
     
-
-    if( slots > min ) {
-        const char *slotWord = "SLOTS";
-        
-        if( slots - min == 1 ) {
-            slotWord = "SLOT";
-            }
-        
-        char *message = autoSprintf( "YOUR GENETIC FITNESS SCORE IS %.1lf**"
-                                     "YOU GET %d BONUS TOOL %s, "
-                                     "FOR A TOTAL OF %d SLOTS.",
-                                     inPlayer->fitnessScore,
-                                     slots - min,
-                                     slotWord, slots );
-        
-        sendGlobalMessage( message, inPlayer );
-        
-        delete [] message;
+    slots += ( max - min ) * p;
+    
+    
+    // no negative slots
+    if( slots < 0 ) {
+        slots = 0;
         }
 
+
+    const char *slotWord = "SLOTS";
+        
+    if( abs( slots - min ) == 1 ) {
+        slotWord = "SLOT";
+        }
+
+
+    const char *slotTotalWord = "SLOTS";
+        
+    if( slots == 1 ) {
+        slotTotalWord = "SLOT";
+        }
+    
+    char *message = autoSprintf( "YOUR GENETIC FITNESS SCORE IS %.1lf**"
+                                 "YOU GET %d BONUS TOOL %s, "
+                                 "FOR A TOTAL OF %d %s.",
+                                 inPlayer->fitnessScore,
+                                 slots - min, slotWord, 
+                                 slots, slotTotalWord );
+    
+    sendGlobalMessage( message, inPlayer );
+    
+    delete [] message;
     
 
     inPlayer->numToolSlots = slots;
@@ -8214,7 +8235,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     else if( inTutorialNumber > 0 ) {
         
         int startX = maxPlacementX + tutorialOffsetX;
-        int startY = tutorialCount * 25;
+        int startY = tutorialCount * 40;
 
         newObject.xs = startX;
         newObject.ys = startY;
@@ -8621,11 +8642,13 @@ int processLoggedInPlayer( char inAllowReconnect,
                                       forceSpawnInfo.lastName );
         newObject.displayID = forceSpawnInfo.displayID;
         
-        newObject.clothing.hat = getObject( forceSpawnInfo.hatID );
-        newObject.clothing.tunic = getObject( forceSpawnInfo.tunicID );
-        newObject.clothing.bottom = getObject( forceSpawnInfo.bottomID );
-        newObject.clothing.frontShoe = getObject( forceSpawnInfo.frontShoeID );
-        newObject.clothing.backShoe = getObject( forceSpawnInfo.backShoeID );
+        newObject.clothing.hat = getObject( forceSpawnInfo.hatID, true );
+        newObject.clothing.tunic = getObject( forceSpawnInfo.tunicID, true );
+        newObject.clothing.bottom = getObject( forceSpawnInfo.bottomID, true );
+        newObject.clothing.frontShoe = 
+            getObject( forceSpawnInfo.frontShoeID, true );
+        newObject.clothing.backShoe = 
+            getObject( forceSpawnInfo.backShoeID, true );
 
         delete [] forceSpawnInfo.firstName;
         delete [] forceSpawnInfo.lastName;
@@ -8819,7 +8842,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     // can resize the vector
     parent = NULL;
 
-    newObject.numToolSlots = 0;
+    newObject.numToolSlots = -1;
     
 
     if( newObject.isTutorial ) {
@@ -12478,6 +12501,19 @@ static char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY ) {
     return isBiomeAllowed( inPlayer->displayID, inX, inY );
     }
 
+
+
+
+static char heldNeverDrop( LiveObject *inPlayer ) {
+    if( inPlayer->holdingID > 0 ) {        
+        ObjectRecord *o = getObject( inPlayer->holdingID );
+        if( strstr( o->description, "+neverDrop" ) != NULL ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
     
     
 
@@ -12986,8 +13022,14 @@ int main() {
             stepArcReport();
             
             int arcMilestone = getArcYearsToReport( secondsPerYear, 100 );
+
+            // don't send global arc messages if Eve injection on
+            // arcs never end
+            int eveInjectionOn = 
+                SettingsManager::getIntSetting( "eveInjectionOn", 0 );
             
-            if( arcMilestone != -1 ) {
+            if( arcMilestone != -1 && ! eveInjectionOn ) {
+
                 int familyLimitAfterEveWindow = 
                     SettingsManager::getIntSetting( 
                         "familyLimitAfterEveWindow", 15 );
@@ -13384,7 +13426,9 @@ int main() {
                 newConnection.ticketServerAccepted = false;
                 newConnection.lifeTokenSpent = false;
                 
-                newConnection.fitnessScore = -1;
+                // -1 is a possible score now
+                // use -99999 as still-waiting marker
+                newConnection.fitnessScore = -99999;
 
                 newConnection.error = false;
                 newConnection.errorCauseString = "";
@@ -13480,7 +13524,7 @@ int main() {
                     }
                 }
             else if( nextConnection->email != NULL &&
-                     nextConnection->fitnessScore == -1 ) {
+                     nextConnection->fitnessScore == -99999 ) {
                 // still waiting for fitness score
                 int fitResult = 
                     getFitnessScore( nextConnection->email, 
@@ -14129,7 +14173,7 @@ int main() {
                 continue;
                 }
             
-            if( nextPlayer->numToolSlots == 0 ) {
+            if( nextPlayer->numToolSlots == -1 ) {
                 
                 setupToolSlots( nextPlayer );
                 }
@@ -15685,10 +15729,22 @@ int main() {
                                 
                                 // check if this move goes into a bad biome
                                 // and makes them sick
-                                int sicknessObjectID =
-                                    getBiomeSickness( nextPlayer->displayID, 
-                                                      nextPlayer->xd,
-                                                      nextPlayer->yd );
+                                int sicknessObjectID = -1;
+                                
+                                
+                                for( int p=0; p< nextPlayer->pathLength; p++ ) {
+                                    
+                                    sicknessObjectID = 
+                                        getBiomeSickness( 
+                                            nextPlayer->displayID, 
+                                            nextPlayer->pathToDest[p].x,
+                                            nextPlayer->pathToDest[p].y );
+
+                                    if( sicknessObjectID != -1 ) {
+                                        break;
+                                        }
+                                    }
+                                
                                 
                                 if( nextPlayer->vogMode || 
                                     nextPlayer->forceSpawn ||
@@ -15705,11 +15761,12 @@ int main() {
                                     // drop what they are holding
                                     if( nextPlayer->holdingID != 0 ) {
                                         // never drop held wounds
-                                        // they are the only thing a baby can
-                                        // while held
+                                        // or neverDrop murder weapons
+
                                         if( ! nextPlayer->holdingWound &&
                                             ! nextPlayer->
-                                            holdingBiomeSickness ) {
+                                            holdingBiomeSickness &&
+                                            ! heldNeverDrop( nextPlayer ) ) {
                                             handleDrop( 
                                              m.x, m.y, nextPlayer,
                                              &playerIndicesToSendUpdatesAbout );

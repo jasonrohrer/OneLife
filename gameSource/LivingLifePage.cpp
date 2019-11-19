@@ -1880,11 +1880,12 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
     int startInd = getMapIndex( start.x, start.y );
     
     char startBiomeBad = false;
+    char startPointBad = false;
     
     if( startInd != -1 ) {
         // count as bad if we're not already standing on edge of bad biome
         // or in it
-        char startPointBad = isBadBiome( startInd );
+        startPointBad = isBadBiome( startInd );
         
         if( startPointBad ||
             isBadBiome( startInd - 1 ) ||
@@ -1901,6 +1902,10 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
             }
         }
     
+    GridPos end = { inObject->xd, inObject->yd };
+
+
+    char destBiomeBad = isBadBiome( getMapIndex( end.x, end.y ) );    
 
 
     if( inObject->pathToDest != NULL ) {
@@ -1909,7 +1914,6 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         }
 
 
-    GridPos end = { inObject->xd, inObject->yd };
         
     // window around player's start position
     int numPathMapCells = pathFindingD * pathFindingD;
@@ -1942,7 +1946,10 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
                     blockedMap[ y * pathFindingD + x ] = false;
                     }
 
-                if( ! startBiomeBad && 
+                if( ( ! startBiomeBad || ! destBiomeBad )
+                    &&
+                    ! startPointBad
+                    &&
                     mMapFloors[ mapI ] == 0 &&
                     mBadBiomeIndices.getElementIndex( mMapBiomes[ mapI ] ) 
                     != -1 ) {
@@ -9528,6 +9535,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             != -1 ) {
             badBiome = true;
             mLastMouseOverID = 0;
+            mCurMouseOverID = 0;
             }
         
         if( ( overTempMeter && ourLiveObject->foodDrainTime > 0 ) 
@@ -17770,11 +17778,14 @@ void LivingLifePage::step() {
                                 // new permanent emot layer
                                 newEmotPlaySound = getEmotion( emotIndex );
 
-                                if( existing->permanentEmots.getElementIndex(
-                                        newEmotPlaySound ) == -1 ) {
+                                if( newEmotPlaySound != NULL ) {
+                                    if( existing->permanentEmots.
+                                        getElementIndex( 
+                                            newEmotPlaySound ) == -1 ) {
                                     
-                                    existing->permanentEmots.push_back(
-                                        newEmotPlaySound);
+                                        existing->permanentEmots.push_back(
+                                            newEmotPlaySound );
+                                        }
                                     }
                                 if( ttlSec == -2 ) {
                                     // old emot that we're just learning about
@@ -20825,6 +20836,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
 
     int destID = 0;
     int destBiome = -1;
+    int destFloor = 0;
     
     int mapX = clickDestX - mMapOffsetX + mMapD / 2;
     int mapY = clickDestY - mMapOffsetY + mMapD / 2;
@@ -20836,6 +20848,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             }
         
         destBiome = mMapBiomes[ mapY * mMapD + mapX ];
+        destFloor = mMapFloors[ mapY * mMapD + mapX ];
         }
 
 
@@ -20915,6 +20928,10 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         mCurMouseOverBiome = destBiome;
         }
 
+    if( destFloor != 0 ) {
+        mCurMouseOverBiome = -1;
+        }
+
 
     if( destID > 0 ) {
         mCurMouseOverSelf = false;
@@ -20928,7 +20945,9 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             }
 
         mCurMouseOverID = destID;
-        mCurMouseOverBiome = destBiome;
+        if( destFloor == 0 ) {
+            mCurMouseOverBiome = destBiome;
+            }
         
         overNothing = false;
         

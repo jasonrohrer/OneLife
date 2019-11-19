@@ -491,7 +491,8 @@ int reAddObject( ObjectRecord *inObject,
 
 
 
-ObjectRecord *getObject( int inID );
+// if inID doesn't exist, returns default object, unless inNoDefault is set
+ObjectRecord *getObject( int inID, char inNoDefault = false );
 
 
 // return array destroyed by caller, NULL if none found
