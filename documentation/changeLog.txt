@@ -9,6 +9,8 @@ Version 286    ???
 
 --Fixed crash if server sends an emot index that we don't have.
 
+--Fixed mouse-over tips when mousing over floor-protected bad biome.
+
 
 
 Server Fixes

@@ -9304,6 +9304,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             != -1 ) {
             badBiome = true;
             mLastMouseOverID = 0;
+            mCurMouseOverID = 0;
             }
         
         if( ( overTempMeter && ourLiveObject->foodDrainTime > 0 ) 
@@ -20601,6 +20602,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
 
     int destID = 0;
     int destBiome = -1;
+    int destFloor = 0;
     
     int mapX = clickDestX - mMapOffsetX + mMapD / 2;
     int mapY = clickDestY - mMapOffsetY + mMapD / 2;
@@ -20612,6 +20614,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             }
         
         destBiome = mMapBiomes[ mapY * mMapD + mapX ];
+        destFloor = mMapFloors[ mapY * mMapD + mapX ];
         }
 
 
@@ -20691,6 +20694,10 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         mCurMouseOverBiome = destBiome;
         }
 
+    if( destFloor != 0 ) {
+        mCurMouseOverBiome = -1;
+        }
+
 
     if( destID > 0 ) {
         mCurMouseOverSelf = false;
@@ -20704,7 +20711,9 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             }
 
         mCurMouseOverID = destID;
-        mCurMouseOverBiome = destBiome;
+        if( destFloor == 0 ) {
+            mCurMouseOverBiome = destBiome;
+            }
         
         overNothing = false;
         
