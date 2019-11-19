@@ -7,6 +7,8 @@ Version 286    ???
 
 --Fixed client to not hang on loading if an expected sound file is missing.
 
+--Fixed crash if server sends an emot index that we don't have.
+
 
 
 Server Fixes
