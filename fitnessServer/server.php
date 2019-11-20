@@ -382,9 +382,9 @@ function fs_setupDatabase() {
             // or Granddaughter, etc.
             "relation_name VARCHAR(254) NOT NULL,".
             // player_id's score before this offspring
-            "old_score FLOAT UNSIGNED NOT NULL,".
+            "old_score FLOAT NOT NULL,".
             // player_id's score after this offspring
-            "new_score FLOAT UNSIGNED NOT NULL,".
+            "new_score FLOAT NOT NULL,".
             "death_time DATETIME NOT NULL,".
             // for fast filtering/sorting of most-recent 20
             // offspring for a given player

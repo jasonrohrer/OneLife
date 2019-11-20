@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Support for negative scores in offspring table.  Fixes #447
+
+
+
+
 Version 286    2019-November-18
 
 --Fixed client to not hang on loading if an expected sound file is missing.
