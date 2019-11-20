@@ -353,6 +353,9 @@ function ls_setupDatabase() {
             "INDEX( generation, death_time ),".
             // single index on death_time to speed up queries on just death_time
             "INDEX( death_time ),".
+            // for users with a lot of lives, need to speed up sorting by
+            // death_time per user
+            "INDEX( user_id, death_time ),".
             // -1 if not set yet
             // 0 for Eve
             // the Eve of this family line

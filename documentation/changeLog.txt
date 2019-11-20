@@ -14,10 +14,15 @@ Server Fixes
 
 --Min food decrement time 4 (was 2.0), to help out all the new players.
 
---Suddenly some lineage server queries were using the wrong index and taking 600+ seconds to 
-  execute, bringing the whole lineage server down.  Something about the influx of new users
-  caused this, tipping MySQL's query execution strategy toward the wrong index.  Fixed this by
-  only joining on users table if we need to.
+--Suddenly some lineage server queries were using the wrong index and taking
+  600+ seconds to execute, bringing the whole lineage server down.  Something
+  about the influx of new users caused this, tipping MySQL's query execution
+  strategy toward the wrong index.  Fixed this by only joining on users table
+  if we need to.
+
+--Added a (user_id,death_time) index to speed up lineage server queries for
+  users that have a lot of lives.
+
 
 
 
