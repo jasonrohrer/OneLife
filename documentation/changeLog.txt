@@ -23,6 +23,8 @@ Server Fixes
 --Added a (user_id,death_time) index to speed up lineage server queries for
   users that have a lot of lives.
 
+--Got rid of unnecessary server table joins in lineage server.
+
 
 
 

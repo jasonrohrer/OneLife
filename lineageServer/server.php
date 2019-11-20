@@ -1835,13 +1835,10 @@ function ls_printFrontPageRows( $inForceIndexClause,
         }
     
     $query = "SELECT lives.id, display_id, player_id, name, ".
-        "age, generation, death_time, deepest_descendant_generation, ".
-        "servers.server " .
+        "age, generation, death_time, deepest_descendant_generation ".
         "FROM $tableNamePrefix"."lives as lives ".
         " $inForceIndexClause ".
         " $usersTableJoin ".
-        "INNER JOIN $tableNamePrefix"."servers as servers ".
-        "ON lives.server_id = servers.id  ".
         "$inFilterClause ".
         "ORDER BY $inOrderBy ".
         "LIMIT $inNumRows;";
@@ -2318,11 +2315,8 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
     global $tableNamePrefix;
 
     $query = "SELECT lives.id, display_id, server_id, player_id, name, ".
-        "age, last_words, generation, death_time, death_cause, ".
-        "servers.server " .
+        "age, last_words, generation, death_time, death_cause ".
         "FROM $tableNamePrefix"."lives as lives ".
-        "INNER JOIN $tableNamePrefix"."servers as servers ".
-        "ON lives.server_id = servers.id  ".
         "WHERE lives.id=$inID;";
     
     $result = ls_queryDatabase( $query );
