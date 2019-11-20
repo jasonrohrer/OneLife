@@ -7,6 +7,9 @@ Server Fixes
 
 --Support for negative scores in offspring table.  Fixes #447
 
+--Eve injection baby/mother ratio is 1.0 (was 2.0).  Reduce the number of
+  babies per mother to lighten the load of new players coming in.
+
 
 
 
