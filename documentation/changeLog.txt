@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 288    
+
+--Fixed bug in temp meter tool tip text.
+
+
+
+
 Server Fixes
 
 --Support for negative scores in offspring table.  Fixes #447
@@ -24,6 +31,10 @@ Server Fixes
   users that have a lot of lives.
 
 --Got rid of unnecessary server table joins in lineage server.
+
+--Indoor bonus no longer a fixed value, but instead based on the average
+  R-value of the surrounding walls for the room that you're in.  Better walls
+  (and doors and floors) mean a bigger indoor bonus.
 
 
 
