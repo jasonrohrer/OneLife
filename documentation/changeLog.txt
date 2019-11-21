@@ -39,6 +39,10 @@ Server Fixes
 --New foodScaleFactor server setting, allowing all food values to be scaled up
   or down.
 
+--Support for written metadata on an object that can be duplicated through a
+  transition (for copying maps onto way stones).  Support for reading
+  permanent objects by touching them.
+
 
 
 

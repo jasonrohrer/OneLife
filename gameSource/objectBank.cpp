@@ -441,7 +441,8 @@ static void setupObjectWritingStatus( ObjectRecord *inR ) {
             }
         if( strstr( inR->description, "&writable" ) != NULL ) {
             inR->writable = true;
-            inR->mayHaveMetadata = true;
+            // writable objects don't have metadata yet
+            // inR->mayHaveMetadata = true;
             }
         }
     }

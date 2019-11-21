@@ -5323,6 +5323,43 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     }
 
 
+static void forcePlayerToRead( LiveObject *inPlayer,
+                               int inObjectID ) {
+            
+    char metaData[ MAP_METADATA_LENGTH ];
+    char found = getMetadata( inObjectID, 
+                              (unsigned char*)metaData );
+
+    if( found ) {
+        // read what they picked up, subject to limit
+                
+        unsigned int sayLimit = getSayLimit( inPlayer );
+        
+        if( computeAge( inPlayer ) < 10 &&
+            strlen( metaData ) > sayLimit ) {
+            // truncate with ...
+            metaData[ sayLimit ] = '.';
+            metaData[ sayLimit + 1 ] = '.';
+            metaData[ sayLimit + 2 ] = '.';
+            metaData[ sayLimit + 3 ] = '\0';
+            
+            // watch for truncated map metadata
+            // trim it off (too young to read maps)
+            char *starLoc = strstr( metaData, " *" );
+            
+            if( starLoc != NULL ) {
+                starLoc[0] = '\0';
+                }
+            }
+        char *quotedPhrase = autoSprintf( ":%s", metaData );
+        makePlayerSay( inPlayer, quotedPhrase );
+        delete [] quotedPhrase;
+        }
+    }
+
+
+
+
 
 static void holdingSomethingNew( LiveObject *inPlayer, 
                                  int inOldHoldingID = 0 ) {
@@ -5338,36 +5375,8 @@ static void holdingSomethingNew( LiveObject *inPlayer,
         if( o->written &&
             ( oldO == NULL ||
               ! ( oldO->written || oldO->writable ) ) ) {
-            
-            char metaData[ MAP_METADATA_LENGTH ];
-            char found = getMetadata( inPlayer->holdingID, 
-                                      (unsigned char*)metaData );
 
-            if( found ) {
-                // read what they picked up, subject to limit
-                
-                unsigned int sayLimit = getSayLimit( inPlayer );
-                        
-                if( computeAge( inPlayer ) < 10 &&
-                    strlen( metaData ) > sayLimit ) {
-                    // truncate with ...
-                    metaData[ sayLimit ] = '.';
-                    metaData[ sayLimit + 1 ] = '.';
-                    metaData[ sayLimit + 2 ] = '.';
-                    metaData[ sayLimit + 3 ] = '\0';
-
-                    // watch for truncated map metadata
-                    // trim it off (too young to read maps)
-                    char *starLoc = strstr( metaData, " *" );
-                    
-                    if( starLoc != NULL ) {
-                        starLoc[0] = '\0';
-                        }
-                    }
-                char *quotedPhrase = autoSprintf( ":%s", metaData );
-                makePlayerSay( inPlayer, quotedPhrase );
-                delete [] quotedPhrase;
-                }
+            forcePlayerToRead( inPlayer, inPlayer->holdingID );
             }
 
         if( o->isFlying ) {
@@ -16487,6 +16496,16 @@ int main() {
                             else if( target != 0 ) {
                                 ObjectRecord *targetObj = getObject( target );
                                 
+                                // see if target object is permanent
+                                // and has writing on it.
+                                // if so, read by touching it
+                                
+                                if( targetObj->permanent &&
+                                    targetObj->written ) {
+                                    forcePlayerToRead( nextPlayer, target );
+                                    }
+                                
+
                                 // try using object on this target 
                                 
                                 TransRecord *r = NULL;
