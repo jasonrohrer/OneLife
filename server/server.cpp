@@ -6781,6 +6781,22 @@ static void setupToolSlots( LiveObject *inPlayer ) {
     int min = SettingsManager::getIntSetting( "baseToolSlotsPerPlayer", 6 );
     int max = SettingsManager::getIntSetting( "maxToolSlotsPerPlayer", 12 );
     
+    int minActive = 
+        SettingsManager::getIntSetting( "minActivePlayersForToolSlots", 15 );
+    
+    if( countLivingPlayers() < minActive ) {
+        // low-pop players know all tools
+        getAllToolSets( &( inPlayer->learnedTools ) );
+        
+        // slots don't matter
+        inPlayer->numToolSlots = min;
+        
+        return;
+        }
+    
+
+
+    
     
     int slots = min;
 

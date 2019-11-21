@@ -46,6 +46,9 @@ Server Fixes
   transition (for copying maps onto way stones).  Support for reading
   permanent objects by touching them.
 
+--Whoops, low pop servers now have tool learning slots disabled.
+  Thanks Spoonwood.
+
 
 
 
