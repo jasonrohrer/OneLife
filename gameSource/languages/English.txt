@@ -335,7 +335,7 @@ cousin "COUSIN"
 18th "EIGHTEENTH"
 19th "NINETEENTH"
 20th "TWENTIETH"
-twenty "TWENTY-"
+twentyHyphen "TWENTY-"
 
 distant "DISTANT"
 
@@ -393,6 +393,23 @@ seventeen "SEVENTEEN"
 eighteen "EIGHTEEN"
 nineteen "NINETEEN"
 twenty "TWENTY"
+
+thirty "THIRTY"
+forty "FORTY"
+fifty "FIFTY"
+sixty "SIXTY"
+seventy "SEVENTY"
+eighty "EIGHTY"
+ninety "NINETY"
+
+hundred "HUNDRED"
+thousand "THOUSAND"
+million "MILLION"
+billion "BILLION"
+
+and " AND"
+
+metersAway "METERS AWAY"
 
 
 atWar "AT WAR"

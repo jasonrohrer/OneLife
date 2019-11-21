@@ -7,6 +7,9 @@ Version 288
 
 --Fixed bug in temp meter tool tip text.
 
+--When reading a map or way stone, you speak a distance estimate along with
+  the map name.
+  
 
 
 
