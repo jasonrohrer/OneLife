@@ -36,6 +36,9 @@ Server Fixes
   R-value of the surrounding walls for the room that you're in.  Better walls
   (and doors and floors) mean a bigger indoor bonus.
 
+--New foodScaleFactor server setting, allowing all food values to be scaled up
+  or down.
+
 
 
 

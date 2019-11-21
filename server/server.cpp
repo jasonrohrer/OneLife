@@ -142,6 +142,8 @@ int monumentCallID = 0;
 
 static double minFoodDecrementSeconds = 5.0;
 static double maxFoodDecrementSeconds = 20;
+static double foodScaleFactor = 1.0;
+
 static double indoorFoodDecrementSecondsBonus = 20.0;
 
 static int babyBirthFoodDecrement = 10;
@@ -6003,7 +6005,12 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
     if( wasYummy ) {
         // only get bonus if actually was yummy (whether fed self or not)
         // chain not broken if fed non-yummy by other, but don't get bonus
-        inPlayer->yummyBonusStore += currentBonus;
+        
+        // apply foodScaleFactor here to scale value of YUM along with
+        // the global scale of other foods.
+        
+        inPlayer->yummyBonusStore += 
+            lrint( foodScaleFactor * currentBonus );
         }
     
     }
@@ -7262,6 +7269,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     maxFoodDecrementSeconds = 
         SettingsManager::getFloatSetting( "maxFoodDecrementSeconds", 20 );
+
+    foodScaleFactor = 
+        SettingsManager::getFloatSetting( "foodScaleFactor", 1.0 );
 
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
@@ -12667,6 +12677,9 @@ int main() {
     maxFoodDecrementSeconds = 
         SettingsManager::getFloatSetting( "maxFoodDecrementSeconds", 20 );
 
+    foodScaleFactor = 
+        SettingsManager::getFloatSetting( "foodScaleFactor", 1.0 );
+
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
 
@@ -17019,7 +17032,8 @@ int main() {
                                         nextPlayer->foodStore;
                                     
                                     nextPlayer->foodStore += 
-                                        targetObj->foodValue;
+                                        lrint( foodScaleFactor *
+                                               targetObj->foodValue );
                                     
                                     updateYum( nextPlayer, targetObj->id );
                                     
@@ -17839,7 +17853,9 @@ int main() {
                                     targetPlayer->lastAteFillMax =
                                         targetPlayer->foodStore;
                                     
-                                    targetPlayer->foodStore += obj->foodValue;
+                                    targetPlayer->foodStore += 
+                                        lrint( foodScaleFactor * 
+                                               obj->foodValue );
                                     
                                     updateYum( targetPlayer, obj->id,
                                                targetPlayer == nextPlayer );
