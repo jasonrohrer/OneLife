@@ -9,6 +9,8 @@ Version 288
 
 --When reading a map or way stone, you speak a distance estimate along with
   the map name.
+
+--Fixed kerning on _ character in Futura font.
   
 
 
