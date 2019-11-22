@@ -583,6 +583,7 @@ typedef struct LiveObject {
 
         SimpleVector<int> *lineage;
         
+        SimpleVector<int> *ancestorIDs;
         SimpleVector<char*> *ancestorEmails;
         SimpleVector<char*> *ancestorRelNames;
         SimpleVector<double> *ancestorLifeStartTimeSeconds;
@@ -1657,6 +1658,8 @@ void quitCleanup() {
             }
 
         delete nextPlayer->lineage;
+
+        delete nextPlayer->ancestorIDs;
 
         nextPlayer->ancestorEmails->deallocateStringElements();
         delete nextPlayer->ancestorEmails;
@@ -8776,6 +8779,7 @@ int processLoggedInPlayer( char inAllowReconnect,
 
 
 
+    newObject.ancestorIDs = new SimpleVector<int>();
     newObject.ancestorEmails = new SimpleVector<char*>();
     newObject.ancestorRelNames = new SimpleVector<char*>();
     newObject.ancestorLifeStartTimeSeconds = new SimpleVector<double>();
@@ -8802,6 +8806,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                     if( newObject.lineage->getElementDirect( i ) ==
                         otherPlayer->parentID ) {
                         
+                        newObject.ancestorIDs->push_back( otherPlayer->id );
+
                         newObject.ancestorEmails->push_back( 
                             stringDuplicate( otherPlayer->email ) );
 
@@ -8837,6 +8843,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                 if( newObject.lineage->getElementDirect( i ) ==
                     otherPlayer->id ) {
                         
+                    newObject.ancestorIDs->push_back( otherPlayer->id );
+
                     newObject.ancestorEmails->push_back( 
                         stringDuplicate( otherPlayer->email ) );
 
@@ -8887,6 +8895,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                     // players should try to prevent their mothers, gma,
                     // ggma, etc from dying
 
+                    otherPlayer->ancestorIDs->push_back( newObject.id );
                     otherPlayer->ancestorEmails->push_back( 
                         stringDuplicate( newObject.email ) );
                     otherPlayer->ancestorRelNames->push_back( 
@@ -8921,6 +8930,8 @@ int processLoggedInPlayer( char inAllowReconnect,
             newObject.parentID == otherPlayer->parentID ) {
             // sibs
             
+            newObject.ancestorIDs->push_back( otherPlayer->id );
+
             newObject.ancestorEmails->push_back( 
                 stringDuplicate( otherPlayer->email ) );
 
@@ -12419,11 +12430,51 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
     // log this death for fitness purposes,
     // for both tutorial and non    
 
+
+    // if this person themselves died before age 3
+    // remove them from the "ancestor" list of everyone
+
+    // This ends an exploit where people suicide as a baby
+    // yet reap genetic benefit from their mother living a long life
+    // (your mother, gma, etc count for your genetic score if you yourself
+    //  live beyond 3, so it is in your interest to protect them)
+    if( computeAge( nextPlayer ) < defaultActionAge ) {
+        for( int i=0; i<players.size(); i++ ) {
+                
+            LiveObject *o = players.getElement( i );
+            
+            if( o->error ||
+                o->isTutorial ||
+                o->id == nextPlayer->id ) {
+                continue;
+                }
+            
+            for( int e=0; e< o->ancestorIDs->size(); e++ ) {
+                if( o->ancestorIDs->getElementDirect( e ) == nextPlayer->id ) {
+                    o->ancestorIDs->deleteElement( e );
+                    
+                    delete [] o->ancestorEmails->getElementDirect( e );
+                    o->ancestorEmails->deleteElement( e );
+                
+                    delete [] o->ancestorRelNames->getElementDirect( e );
+                    o->ancestorRelNames->deleteElement( e );
+                    
+                    o->ancestorLifeStartTimeSeconds->deleteElement( e );
+
+                    break;
+                    }
+                }
+            }
+        }
+
+
+    SimpleVector<int> emptyAncestorIDs;
     SimpleVector<char*> emptyAncestorEmails;
     SimpleVector<char*> emptyAncestorRelNames;
     SimpleVector<double> emptyAncestorLifeStartTimeSeconds;
     
 
+    SimpleVector<int> *ancestorIDs = nextPlayer->ancestorIDs;
     SimpleVector<char*> *ancestorEmails = nextPlayer->ancestorEmails;
     SimpleVector<char*> *ancestorRelNames = nextPlayer->ancestorRelNames;
     SimpleVector<double> *ancestorLifeStartTimeSeconds = 
@@ -12432,6 +12483,7 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
 
     if( nextPlayer->suicide ) {
         // don't let this suicide death affect scores of any ancestors
+        ancestorIDs = &emptyAncestorIDs;
         ancestorEmails = &emptyAncestorEmails;
         ancestorRelNames = &emptyAncestorRelNames;
         ancestorLifeStartTimeSeconds = &emptyAncestorLifeStartTimeSeconds;
@@ -12453,6 +12505,8 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
             
             if( ageRate * ( curTime - startTime ) < defaultActionAge ) {
                 // too young to have taken action to help this person
+                ancestorIDs->deleteElement( i );
+                
                 delete [] ancestorEmails->getElementDirect( i );
                 ancestorEmails->deleteElement( i );
                 
@@ -23194,6 +23248,8 @@ int main() {
                     }
                 
                 delete nextPlayer->lineage;
+                
+                delete nextPlayer->ancestorIDs;
                 
                 nextPlayer->ancestorEmails->deallocateStringElements();
                 delete nextPlayer->ancestorEmails;

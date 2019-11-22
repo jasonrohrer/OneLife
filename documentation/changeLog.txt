@@ -70,6 +70,10 @@ Server Fixes
   transition is triggered when player path will cross that object.  For
   spring-loaded doors that auto-open.
 
+--Closed the exploit where you suicide as a baby to reap your mother and
+  grandmother's long life genetic score.  Now your mother and grandmother
+  (etc.) only count toward your genetic score if you survive past age 3.
+
 
 
 
