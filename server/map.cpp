@@ -6536,11 +6536,21 @@ static int neighborWallAgree( int inX, int inY, ObjectRecord *inSetO,
         }
     
     if( inRecurse ) {
-        // recurse once for each matching neighbor
+        // recurse once for each matching neighbor that has orientations
         for( int n=0; n<4; n++ ) {
             if( nSet[n] ) {
-                neighborWallAgree( inX + nX[n], inY + nY[n], 
-                                   getObject( nID[n] ), false );
+                ObjectRecord *nO = getObject( nID[n] );
+                
+                // need to check this, because nSet is true if
+                // it is auto-orienting, but not all auto-orienting
+                // objects have all three orientations defined
+                if( nO->horizontalVersionID != -1 &&
+                    nO->verticalVersionID != -1 &&
+                    nO->cornerVersionID != -1 ) {
+                 
+                    neighborWallAgree( inX + nX[n], inY + nY[n], 
+                                       nO, false );
+                    }
                 }
             }
         }

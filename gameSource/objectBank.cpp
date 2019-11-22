@@ -2057,13 +2057,19 @@ void initObjectBankFinish() {
                 char *cornerKey = autoSprintf( "+corner%s", label );
                 
                 for( int j=0; j<mapSize; j++ ) {
-                    if( j != i && idMap[j] != NULL ) {
+                    // consider self too, because horizontal and vertical
+                    // might be the same
+                    if( idMap[j] != NULL ) {
                         ObjectRecord *oOther = idMap[j];
                         
                         if( strstr( oOther->description, vertKey ) ) {
                             o->verticalVersionID = oOther->id;
                             }
-                        else if( strstr( oOther->description, cornerKey ) ) {
+                        // not else if
+                        // vert and corner might be the same
+                        // (in case of door, which doesn't have a corner
+                        //  version)
+                        if( strstr( oOther->description, cornerKey ) ) {
                             o->cornerVersionID = oOther->id;
                             }
                         }
@@ -2090,6 +2096,12 @@ void initObjectBankFinish() {
                     cornerO->cornerVersionID = cornerO->id;
                     cornerO->isAutoOrienting = true;
                     }
+                }
+            else if( strstr( o->description, "+causeAutoOrient" ) ) {
+                // an object that participates in auto-orienting
+                // but doesn't have orientation versions defined
+                // (example:  horizontal wall with shelf installed)
+                o->isAutoOrienting = true;
                 }
             }
         }

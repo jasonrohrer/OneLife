@@ -49,6 +49,10 @@ Server Fixes
 --Whoops, low pop servers now have tool learning slots disabled.
   Thanks Spoonwood.
 
+--Support for objects that affect auto-orientation of other objects without 
+  having multiple orientations themselves (example:  wall shelves).
+
+
 
 
 
