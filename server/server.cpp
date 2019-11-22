@@ -12554,11 +12554,49 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
         const char *article = "THE ";
         
         char *des = stringToUpperCase( toolO->description );
+
+
+        
+        // if it's a group of tools, like +toolSterile_Technique
+        // show the group name instead of the individual tool
+        
+        char *toolPos = strstr( des, "+TOOL" );
+        
+        if( toolPos != NULL ) {
+            char *tagPos = &( toolPos[5] );
+            
+            if( tagPos[0] != '\0' || tagPos[0] != ' ' ) {
+                int tagLen = strlen( tagPos );
+                for( int i=0; i<tagLen; i++ ) {
+                    if( tagPos[i] == ' ' ) {
+                        tagPos[i] = '\0';
+                        break;
+                        }
+                    }
+                // now replace any _ with ' '
+                tagLen = strlen( tagPos );
+                for( int i=0; i<tagLen; i++ ) {
+                    if( tagPos[i] == '_' ) {
+                        tagPos[i] = ' ';
+                        }
+                    }
+                char *newDes = stringDuplicate( tagPos );
+                delete [] des;
+                des = newDes;
+                }
+            }
+        
+        
         stripDescriptionComment( des );
 
-        if( des[ strlen( des ) - 1 ] == 'S' ) {
+        int desLen = strlen( des );
+        if( ( desLen > 0 && des[ desLen - 1 ] == 'S' ) ||
+            ( desLen > 2 && des[ desLen - 1 ] == 'G'
+              && des[ desLen - 2 ] == 'N' 
+              && des[ desLen - 3 ] == 'I' ) ) {
             // use THE for singular tools like YOU LEARNED THE AXE
             // no article for plural tools like YOU LEARNED KNITTING NEEDLES
+            // no article for activities (usually tool groups) like SEWING
             article = "";
             }
 

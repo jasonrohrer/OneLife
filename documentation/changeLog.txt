@@ -54,6 +54,10 @@ Server Fixes
 --Support for objects that affect auto-orientation of other objects without 
   having multiple orientations themselves (example:  wall shelves).
 
+--For tool groups, like +toolSewing, the group tag is used in the YOU LEARNED
+  message to avoid confusion (YOU LEARNED SEWING.).  Fixed article use (THE) in
+  messaging when tool group ends in ING.  YOU LEARNED THE BOW DRILL vs YOU
+  LEARNED SEWING.
 
 
 
