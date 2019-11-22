@@ -675,6 +675,17 @@ static void setupDefaultObject( ObjectRecord *inR ) {
 
 
 
+static void setupAutoDefaultTrans( ObjectRecord *inR ) {
+    inR->autoDefaultTrans = false;
+
+    char *pos = strstr( inR->description, "+autoDefaultTrans" );
+    if( pos != NULL ) {
+        inR->autoDefaultTrans = true;
+        }
+    }
+
+
+
 
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
@@ -738,6 +749,8 @@ float initObjectBankStep() {
                 
                 setupMaxPickupAge( r );
                 
+                setupAutoDefaultTrans( r );
+
                 // do this later, after we parse floorHugging
                 // setupWall( r );
                 
@@ -3479,6 +3492,8 @@ int addObject( const char *inDescription,
     setupNoHighlight( r );
                 
     setupMaxPickupAge( r );
+
+    setupAutoDefaultTrans( r );
 
     setupWall( r );
     

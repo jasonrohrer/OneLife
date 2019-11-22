@@ -66,6 +66,9 @@ Server Fixes
 --Riding something (horse, car) prevents you from getting sick in a bad biome.
   You cannot dismount in there, however.
 
+--Support for +autoDefaultTrans tag on objects, which means that default
+  transition is triggered when player path will cross that object.  For
+  spring-loaded doors that auto-open.
 
 
 

@@ -404,6 +404,8 @@ typedef struct ObjectRecord {
         int maxBiomeMapEntry;
         // one entry per biome
         char *permittedBiomeMap;
+        
+        char autoDefaultTrans;
 
     } ObjectRecord;
 
