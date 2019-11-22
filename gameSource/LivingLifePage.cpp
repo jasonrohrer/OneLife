@@ -1808,7 +1808,7 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         
         if( startPointBad ||
             isBadBiome( startInd - 1 ) ||
-            isBadBiome( startInd - 1 ) ||
+            isBadBiome( startInd + 1 ) ||
             isBadBiome( startInd - mMapD ) ||
             isBadBiome( startInd + mMapD ) ) {
             
@@ -1825,6 +1825,15 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
 
 
     char destBiomeBad = isBadBiome( getMapIndex( end.x, end.y ) );    
+
+    char ignoreBad = false;
+    
+    if( inObject->holdingID > 0 &&
+        getObject( inObject->holdingID )->rideable ) {
+        // ride through bad biomes without stopping at edges
+        ignoreBad = true;
+        }
+    
 
 
     if( inObject->pathToDest != NULL ) {
@@ -1865,7 +1874,9 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
                     blockedMap[ y * pathFindingD + x ] = false;
                     }
 
-                if( ( ! startBiomeBad || ! destBiomeBad )
+                if( ! ignoreBad 
+                    && 
+                    ( ! startBiomeBad || ! destBiomeBad )
                     &&
                     ! startPointBad
                     &&
