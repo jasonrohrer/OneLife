@@ -59,6 +59,9 @@ Server Fixes
   messaging when tool group ends in ING.  YOU LEARNED THE BOW DRILL vs YOU
   LEARNED SEWING.
 
+--Riding something (horse, car) prevents you from getting sick in a bad biome.
+  You cannot dismount in there, however.
+
 
 
 

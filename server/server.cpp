@@ -15888,6 +15888,15 @@ int main() {
                                     sicknessObjectID = -1;
                                     }
                                 
+                                // riding something prevents sickness
+                                if( sicknessObjectID > 0 &&
+                                    nextPlayer->holdingID > 0 &&
+                                    getObject( nextPlayer->holdingID )->
+                                    rideable ) {
+                                    
+                                    sicknessObjectID = -1;
+                                    }
+
                                 if( sicknessObjectID > 0 &&
                                     nextPlayer->holdingID != 
                                     sicknessObjectID ) {
