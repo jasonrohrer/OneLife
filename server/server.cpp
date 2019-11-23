@@ -12748,6 +12748,53 @@ static char heldNeverDrop( LiveObject *inPlayer ) {
     }
 
     
+
+
+// access blocked b/c of access direction or ownership?
+static char isAccessBlocked( LiveObject *inPlayer, 
+                             int inTargetX, int inTargetY,
+                             int inTargetID ) {
+    int target = inTargetID;
+    
+    int x = inTargetX;
+    int y = inTargetY;
+    
+
+    char wrongSide = false;
+    char ownershipBlocked = false;
+    
+    if( target > 0 ) {
+        ObjectRecord *targetObj = getObject( target );
+
+        if( isGridAdjacent( x, y,
+                            inPlayer->xd, 
+                            inPlayer->yd ) ) {
+            
+            if( targetObj->sideAccess ) {
+                
+                if( y > inPlayer->yd ||
+                    y < inPlayer->yd ) {
+                    // access from N or S
+                    wrongSide = true;
+                    }
+                }
+            else if( targetObj->noBackAccess ) {
+                if( y < inPlayer->yd ) {
+                    // access from N
+                    wrongSide = true;
+                    }
+                }
+            }
+        if( targetObj->isOwned ) {
+            // make sure player owns this pos
+            ownershipBlocked = 
+                ! isOwned( inPlayer, x, y );
+            }
+        }
+    return wrongSide || ownershipBlocked;
+    }
+
+
     
 
 
@@ -16682,35 +16729,10 @@ int main() {
                             
                             int oldHolding = nextPlayer->holdingID;
                             
-                            char wrongSide = false;
-                            char ownershipBlocked = false;
+                            char accessBlocked =
+                                isAccessBlocked( nextPlayer, m.x, m.y, target );
                             
-                            if( target != 0 ) {
-                                ObjectRecord *targetObj = getObject( target );
-
-                                if( isGridAdjacent( m.x, m.y,
-                                                    nextPlayer->xd, 
-                                                    nextPlayer->yd ) ) {
-                                    
-                                    if( targetObj->sideAccess ) {
-                                        
-                                        if( m.y > nextPlayer->yd ||
-                                            m.y < nextPlayer->yd ) {
-                                            // access from N or S
-                                            wrongSide = true;
-                                            }
-                                        }
-                                    }
-                                if( targetObj->isOwned ) {
-                                    // make sure player owns this pos
-                                    ownershipBlocked = 
-                                        ! isOwned( nextPlayer, m.x, m.y );
-                                    }
-                                }
-                            
-
-                            
-                            if( wrongSide || ownershipBlocked ) {
+                            if( accessBlocked ) {
                                 // ignore action from wrong side
                                 // or that players don't own
                                 }
@@ -18476,6 +18498,14 @@ int main() {
                             canDrop = false;
                             }
 
+                        int target = getMapObject( m.x, m.y );
+                        
+                        
+                        char accessBlocked = 
+                            isAccessBlocked( nextPlayer, 
+                                             m.x, m.y, target );
+                        
+                        if( ! accessBlocked )
                         if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
                         if( ( isGridAdjacent( m.x, m.y,
                                               nextPlayer->xd, 
@@ -18499,7 +18529,6 @@ int main() {
                                 
                                 if( nextPlayer->holdingID < 0 ) {
                                     // baby drop
-                                    int target = getMapObject( m.x, m.y );
                                     
                                     if( target == 0 // nothing here
                                         ||
@@ -18597,8 +18626,6 @@ int main() {
                                         = getObject( 
                                             nextPlayer->holdingID );
                                     
-                                    int target = getMapObject( m.x, m.y );
-                            
                                     if( target != 0 ) {
                                         
                                         ObjectRecord *targetObj =
@@ -18810,11 +18837,19 @@ int main() {
                             ( m.x == nextPlayer->xd &&
                               m.y == nextPlayer->yd ) ) {
                             
+                            int target = getMapObject( m.x, m.y );
+
+                            char accessBlocked =
+                                isAccessBlocked( nextPlayer, m.x, m.y, target );
+                            
+
                             char handEmpty = ( nextPlayer->holdingID == 0 );
-                        
+
+                            if( ! accessBlocked )                        
                             removeFromContainerToHold( nextPlayer,
                                                        m.x, m.y, m.i );
 
+                            if( ! accessBlocked )
                             if( handEmpty &&
                                 nextPlayer->holdingID == 0 ) {
                                 // hand still empty?

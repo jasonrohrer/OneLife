@@ -86,6 +86,9 @@ Server Fixes
   infinite tool slots for high scores.  Now slot range is between 5 and 19 for
   positive scores, or between 4 and 3 for negative scores.
 
+--Support for +noBackAccess tag to prevent wall shelf access through back wall.
+
+
 
 
 Version 286    2019-November-18
