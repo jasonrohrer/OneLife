@@ -144,6 +144,8 @@ int monumentCallID = 0;
 
 static double minFoodDecrementSeconds = 5.0;
 static double maxFoodDecrementSeconds = 20;
+static double foodScaleFactor = 1.0;
+
 static double indoorFoodDecrementSecondsBonus = 20.0;
 
 static int babyBirthFoodDecrement = 10;
@@ -583,6 +585,7 @@ typedef struct LiveObject {
 
         SimpleVector<int> *lineage;
         
+        SimpleVector<int> *ancestorIDs;
         SimpleVector<char*> *ancestorEmails;
         SimpleVector<char*> *ancestorRelNames;
         SimpleVector<double> *ancestorLifeStartTimeSeconds;
@@ -805,7 +808,8 @@ typedef struct LiveObject {
         
         double foodDrainTime;
         double indoorBonusTime;
-
+        double indoorBonusFraction;
+        
 
         int foodStore;
         
@@ -1656,6 +1660,8 @@ void quitCleanup() {
             }
 
         delete nextPlayer->lineage;
+
+        delete nextPlayer->ancestorIDs;
 
         nextPlayer->ancestorEmails->deallocateStringElements();
         delete nextPlayer->ancestorEmails;
@@ -2808,11 +2814,15 @@ double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
     inPlayer->indoorBonusTime = 0;
     
     if( inPlayer->isIndoors &&
+        inPlayer->indoorBonusFraction > 0 &&
         computeAge( inPlayer ) > defaultActionAge ) {
         
         // non-babies get a bonus for being indoors
-        value += indoorFoodDecrementSecondsBonus;
-        inPlayer->indoorBonusTime = indoorFoodDecrementSecondsBonus;
+        inPlayer->indoorBonusTime = 
+            indoorFoodDecrementSecondsBonus *
+            inPlayer->indoorBonusFraction;
+        
+        value += inPlayer->indoorBonusTime;
         }
     
     inPlayer->foodDrainTime = value;
@@ -3624,6 +3634,10 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
         rBoundaryAverage = rBoundarySum / rBoundarySize;
         }
 
+    if( inPlayer->isIndoors ) {
+        // the more insulating the boundary, the bigger the bonus
+        inPlayer->indoorBonusFraction = rBoundaryAverage;
+        }
     
     
 
@@ -5314,6 +5328,43 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     }
 
 
+static void forcePlayerToRead( LiveObject *inPlayer,
+                               int inObjectID ) {
+            
+    char metaData[ MAP_METADATA_LENGTH ];
+    char found = getMetadata( inObjectID, 
+                              (unsigned char*)metaData );
+
+    if( found ) {
+        // read what they picked up, subject to limit
+                
+        unsigned int sayLimit = getSayLimit( inPlayer );
+        
+        if( computeAge( inPlayer ) < 10 &&
+            strlen( metaData ) > sayLimit ) {
+            // truncate with ...
+            metaData[ sayLimit ] = '.';
+            metaData[ sayLimit + 1 ] = '.';
+            metaData[ sayLimit + 2 ] = '.';
+            metaData[ sayLimit + 3 ] = '\0';
+            
+            // watch for truncated map metadata
+            // trim it off (too young to read maps)
+            char *starLoc = strstr( metaData, " *" );
+            
+            if( starLoc != NULL ) {
+                starLoc[0] = '\0';
+                }
+            }
+        char *quotedPhrase = autoSprintf( ":%s", metaData );
+        makePlayerSay( inPlayer, quotedPhrase );
+        delete [] quotedPhrase;
+        }
+    }
+
+
+
+
 
 static void holdingSomethingNew( LiveObject *inPlayer, 
                                  int inOldHoldingID = 0 ) {
@@ -5329,36 +5380,8 @@ static void holdingSomethingNew( LiveObject *inPlayer,
         if( o->written &&
             ( oldO == NULL ||
               ! ( oldO->written || oldO->writable ) ) ) {
-            
-            char metaData[ MAP_METADATA_LENGTH ];
-            char found = getMetadata( inPlayer->holdingID, 
-                                      (unsigned char*)metaData );
 
-            if( found ) {
-                // read what they picked up, subject to limit
-                
-                unsigned int sayLimit = getSayLimit( inPlayer );
-                        
-                if( computeAge( inPlayer ) < 10 &&
-                    strlen( metaData ) > sayLimit ) {
-                    // truncate with ...
-                    metaData[ sayLimit ] = '.';
-                    metaData[ sayLimit + 1 ] = '.';
-                    metaData[ sayLimit + 2 ] = '.';
-                    metaData[ sayLimit + 3 ] = '\0';
-
-                    // watch for truncated map metadata
-                    // trim it off (too young to read maps)
-                    char *starLoc = strstr( metaData, " *" );
-                    
-                    if( starLoc != NULL ) {
-                        starLoc[0] = '\0';
-                        }
-                    }
-                char *quotedPhrase = autoSprintf( ":%s", metaData );
-                makePlayerSay( inPlayer, quotedPhrase );
-                delete [] quotedPhrase;
-                }
+            forcePlayerToRead( inPlayer, inPlayer->holdingID );
             }
 
         if( o->isFlying ) {
@@ -5996,7 +6019,12 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
     if( wasYummy ) {
         // only get bonus if actually was yummy (whether fed self or not)
         // chain not broken if fed non-yummy by other, but don't get bonus
-        inPlayer->yummyBonusStore += currentBonus;
+        
+        // apply foodScaleFactor here to scale value of YUM along with
+        // the global scale of other foods.
+        
+        inPlayer->yummyBonusStore += 
+            lrint( foodScaleFactor * currentBonus );
         }
     
     }
@@ -6758,21 +6786,59 @@ static void setupToolSlots( LiveObject *inPlayer ) {
     int min = SettingsManager::getIntSetting( "baseToolSlotsPerPlayer", 6 );
     int max = SettingsManager::getIntSetting( "maxToolSlotsPerPlayer", 12 );
     
+    int minActive = 
+        SettingsManager::getIntSetting( "minActivePlayersForToolSlots", 15 );
     
-    int slots = min;
+    if( countLivingPlayers() < minActive ) {
+        // low-pop players know all tools
+        getAllToolSets( &( inPlayer->learnedTools ) );
+        
+        // slots don't matter
+        inPlayer->numToolSlots = min;
+        
+        return;
+        }
+    
 
+
+    // this sigmoid function found in gnuplot which looks good
+    // for 10 and 5
+
+    // plot 15 / (1 + 1.03**-(x - 100)) + 4.258
+    
+    // however, actual range here is 19.258 and 5
+
+    // need to compute these parameters based on max and min
+    
+    // plot A / (1 + C**-(x - D)) + B
+    
+    double C = 1.03;
+    double D = 100;
+
+    double A = max - min;
+    
+    double valAtZero = A / ( 1 + pow( C, D ) );
+    
+    double B = min - valAtZero;
+    
+    
     // when this is called, we already have a valid fitness score (or 0)
     // can be negative or positive, with no limits
 
-    // similar quadratic formula to food bars lost in old age
-    double p = pow( inPlayer->fitnessScore / 60, 2 );
-    if( inPlayer->fitnessScore < 0 && p > 0 ) {
-        // restore negative lost in power of 2
-        p *= -1;
+    
+    int slots = 
+        lrint( 
+            A / ( 1 + pow( C, -( inPlayer->fitnessScore - D ) ) ) + B );
+    
+    if( inPlayer->fitnessScore < 0 ) {
+        // score is negative?  Auto-ding them one slot when this happens
+        slots -= 1;
+
+        // otherwise, the above formulat likely doesn't have a transition
+        // around 0
         }
     
-    slots += ( max - min ) * p;
-    
+
     
     // no negative slots
     if( slots < 0 ) {
@@ -7255,6 +7321,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     maxFoodDecrementSeconds = 
         SettingsManager::getFloatSetting( "maxFoodDecrementSeconds", 20 );
+
+    foodScaleFactor = 
+        SettingsManager::getFloatSetting( "foodScaleFactor", 1.0 );
 
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
@@ -7852,7 +7921,72 @@ int processLoggedInPlayer( char inAllowReconnect,
         newObject.lifeStartTimeSeconds -= age_fertile * ( 1.0 / getAgeRate() );
 
         
-        int femaleID = getRandomFemalePersonObject();
+        // when placing eve, pick a race that is not currently
+        // represented
+        int numRaces = 0;
+        int *races = getRaces( &numRaces );
+        
+        int *counts = new int[ numRaces ];
+        
+        int foundMin = -1;
+        int minFem = 999999;
+        
+        // first, shuffle races
+        for( int r=0; r<numRaces; r++ ) {
+            int other = randSource.getRandomBoundedInt( 0, numRaces - 1 );
+            int temp = races[r];
+            races[r] = races[other];
+            races[other] = temp;
+            }
+
+        for( int r=0; r<numRaces; r++ ) {
+            counts[r] = 0;
+            for( int i=0; i<numPlayers; i++ ) {
+                LiveObject *player = players.getElement( i );
+            
+                if( isPlayerCountable( player ) && isFertileAge( player ) ) {
+                    ObjectRecord *d = getObject( player->displayID );
+                    
+                    if( d->race == races[r] ) {
+                        counts[r] ++;
+                        }
+                    }
+                }
+            if( counts[r] == 0 &&
+                getRaceSize( races[r] ) >= 2 ) {
+                foundMin = races[r];
+                break;
+                }
+            else if( counts[r] > 0 && counts[r] < minFem ) {
+                minFem = counts[r];
+                foundMin = races[r];
+                }
+            }
+        
+        delete [] races;
+        delete [] counts;
+        
+
+        int femaleID = -1;
+        
+        if( foundMin != -1 ) {
+            femaleID = getRandomPersonObjectOfRace( foundMin );
+            
+            int tryCount = 0;
+            while( getObject( femaleID )->male && tryCount < 10 ) {
+                femaleID = getRandomPersonObjectOfRace( foundMin );
+                tryCount++;
+                }
+            if( getObject( femaleID )->male ) {
+                femaleID = -1;
+                }
+            }
+
+        if( femaleID == -1 ) {       
+            // all races present, or couldn't find female character
+            // to use in weakest race
+            femaleID = getRandomFemalePersonObject();
+            }
         
         if( femaleID != -1 ) {
             newObject.displayID = femaleID;
@@ -7917,6 +8051,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     newObject.foodDrainTime = 0;
     newObject.indoorBonusTime = 0;
+    newObject.indoorBonusFraction = 0;
 
 
     newObject.foodDecrementETASeconds =
@@ -8668,6 +8803,7 @@ int processLoggedInPlayer( char inAllowReconnect,
 
 
 
+    newObject.ancestorIDs = new SimpleVector<int>();
     newObject.ancestorEmails = new SimpleVector<char*>();
     newObject.ancestorRelNames = new SimpleVector<char*>();
     newObject.ancestorLifeStartTimeSeconds = new SimpleVector<double>();
@@ -8694,6 +8830,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                     if( newObject.lineage->getElementDirect( i ) ==
                         otherPlayer->parentID ) {
                         
+                        newObject.ancestorIDs->push_back( otherPlayer->id );
+
                         newObject.ancestorEmails->push_back( 
                             stringDuplicate( otherPlayer->email ) );
 
@@ -8729,6 +8867,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                 if( newObject.lineage->getElementDirect( i ) ==
                     otherPlayer->id ) {
                         
+                    newObject.ancestorIDs->push_back( otherPlayer->id );
+
                     newObject.ancestorEmails->push_back( 
                         stringDuplicate( otherPlayer->email ) );
 
@@ -8779,6 +8919,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                     // players should try to prevent their mothers, gma,
                     // ggma, etc from dying
 
+                    otherPlayer->ancestorIDs->push_back( newObject.id );
                     otherPlayer->ancestorEmails->push_back( 
                         stringDuplicate( newObject.email ) );
                     otherPlayer->ancestorRelNames->push_back( 
@@ -8813,6 +8954,8 @@ int processLoggedInPlayer( char inAllowReconnect,
             newObject.parentID == otherPlayer->parentID ) {
             // sibs
             
+            newObject.ancestorIDs->push_back( otherPlayer->id );
+
             newObject.ancestorEmails->push_back( 
                 stringDuplicate( otherPlayer->email ) );
 
@@ -12311,11 +12454,62 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
     // log this death for fitness purposes,
     // for both tutorial and non    
 
+
+    // if this person themselves died before their mom, gma, etc.
+    // remove them from the "ancestor" list of everyone who is older than they
+    // are and still alive
+
+    // You only get genetic points for ma, gma, and other older ancestors
+    // if you are alive when they die.
+
+    // This ends an exploit where people suicide as a baby (or young person)
+    // yet reap genetic benefit from their mother living a long life
+    // (your mother, gma, etc count for your genetic score if you yourself
+    //  live beyond 3, so it is in your interest to protect them)
+    double deadPersonAge = computeAge( nextPlayer );
+    if( deadPersonAge < forceDeathAge ) {
+        for( int i=0; i<players.size(); i++ ) {
+                
+            LiveObject *o = players.getElement( i );
+            
+            if( o->error ||
+                o->isTutorial ||
+                o->id == nextPlayer->id ) {
+                continue;
+                }
+            
+            if( computeAge( o ) < deadPersonAge ) {
+                // this person was born after the dead person
+                // thus, there's no way they are their ma, gma, etc.
+                continue;
+                }
+
+            for( int e=0; e< o->ancestorIDs->size(); e++ ) {
+                if( o->ancestorIDs->getElementDirect( e ) == nextPlayer->id ) {
+                    o->ancestorIDs->deleteElement( e );
+                    
+                    delete [] o->ancestorEmails->getElementDirect( e );
+                    o->ancestorEmails->deleteElement( e );
+                
+                    delete [] o->ancestorRelNames->getElementDirect( e );
+                    o->ancestorRelNames->deleteElement( e );
+                    
+                    o->ancestorLifeStartTimeSeconds->deleteElement( e );
+
+                    break;
+                    }
+                }
+            }
+        }
+
+
+    SimpleVector<int> emptyAncestorIDs;
     SimpleVector<char*> emptyAncestorEmails;
     SimpleVector<char*> emptyAncestorRelNames;
     SimpleVector<double> emptyAncestorLifeStartTimeSeconds;
     
 
+    SimpleVector<int> *ancestorIDs = nextPlayer->ancestorIDs;
     SimpleVector<char*> *ancestorEmails = nextPlayer->ancestorEmails;
     SimpleVector<char*> *ancestorRelNames = nextPlayer->ancestorRelNames;
     SimpleVector<double> *ancestorLifeStartTimeSeconds = 
@@ -12324,6 +12518,7 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
 
     if( nextPlayer->suicide ) {
         // don't let this suicide death affect scores of any ancestors
+        ancestorIDs = &emptyAncestorIDs;
         ancestorEmails = &emptyAncestorEmails;
         ancestorRelNames = &emptyAncestorRelNames;
         ancestorLifeStartTimeSeconds = &emptyAncestorLifeStartTimeSeconds;
@@ -12345,6 +12540,8 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
             
             if( ageRate * ( curTime - startTime ) < defaultActionAge ) {
                 // too young to have taken action to help this person
+                ancestorIDs->deleteElement( i );
+                
                 delete [] ancestorEmails->getElementDirect( i );
                 ancestorEmails->deleteElement( i );
                 
@@ -12446,11 +12643,49 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
         const char *article = "THE ";
         
         char *des = stringToUpperCase( toolO->description );
+
+
+        
+        // if it's a group of tools, like +toolSterile_Technique
+        // show the group name instead of the individual tool
+        
+        char *toolPos = strstr( des, "+TOOL" );
+        
+        if( toolPos != NULL ) {
+            char *tagPos = &( toolPos[5] );
+            
+            if( tagPos[0] != '\0' && tagPos[0] != ' ' ) {
+                int tagLen = strlen( tagPos );
+                for( int i=0; i<tagLen; i++ ) {
+                    if( tagPos[i] == ' ' ) {
+                        tagPos[i] = '\0';
+                        break;
+                        }
+                    }
+                // now replace any _ with ' '
+                tagLen = strlen( tagPos );
+                for( int i=0; i<tagLen; i++ ) {
+                    if( tagPos[i] == '_' ) {
+                        tagPos[i] = ' ';
+                        }
+                    }
+                char *newDes = stringDuplicate( tagPos );
+                delete [] des;
+                des = newDes;
+                }
+            }
+        
+        
         stripDescriptionComment( des );
 
-        if( des[ strlen( des ) - 1 ] == 'S' ) {
+        int desLen = strlen( des );
+        if( ( desLen > 0 && des[ desLen - 1 ] == 'S' ) ||
+            ( desLen > 2 && des[ desLen - 1 ] == 'G'
+              && des[ desLen - 2 ] == 'N' 
+              && des[ desLen - 3 ] == 'I' ) ) {
             // use THE for singular tools like YOU LEARNED THE AXE
             // no article for plural tools like YOU LEARNED KNITTING NEEDLES
+            // no article for activities (usually tool groups) like SEWING
             article = "";
             }
 
@@ -12515,6 +12750,53 @@ static char heldNeverDrop( LiveObject *inPlayer ) {
     }
 
     
+
+
+// access blocked b/c of access direction or ownership?
+static char isAccessBlocked( LiveObject *inPlayer, 
+                             int inTargetX, int inTargetY,
+                             int inTargetID ) {
+    int target = inTargetID;
+    
+    int x = inTargetX;
+    int y = inTargetY;
+    
+
+    char wrongSide = false;
+    char ownershipBlocked = false;
+    
+    if( target > 0 ) {
+        ObjectRecord *targetObj = getObject( target );
+
+        if( isGridAdjacent( x, y,
+                            inPlayer->xd, 
+                            inPlayer->yd ) ) {
+            
+            if( targetObj->sideAccess ) {
+                
+                if( y > inPlayer->yd ||
+                    y < inPlayer->yd ) {
+                    // access from N or S
+                    wrongSide = true;
+                    }
+                }
+            else if( targetObj->noBackAccess ) {
+                if( y < inPlayer->yd ) {
+                    // access from N
+                    wrongSide = true;
+                    }
+                }
+            }
+        if( targetObj->isOwned ) {
+            // make sure player owns this pos
+            ownershipBlocked = 
+                ! isOwned( inPlayer, x, y );
+            }
+        }
+    return wrongSide || ownershipBlocked;
+    }
+
+
     
 
 void sanityCheckSettings(const char *inSettingName) {
@@ -12608,6 +12890,9 @@ int main() {
 
     maxFoodDecrementSeconds = 
         SettingsManager::getFloatSetting( "maxFoodDecrementSeconds", 20 );
+
+    foodScaleFactor = 
+        SettingsManager::getFloatSetting( "foodScaleFactor", 1.0 );
 
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
@@ -15725,6 +16010,77 @@ int main() {
                                     secondsAlreadyDone;
                             
                                 nextPlayer->newMove = true;
+                                
+                                
+                                // check if path passes over
+                                // an object with autoDefaultTrans
+                                for( int p=0; p< nextPlayer->pathLength; p++ ) {
+                                    int x = nextPlayer->pathToDest[p].x;
+                                    int y = nextPlayer->pathToDest[p].y;
+                                    
+                                    int oID = getMapObject( x, y );
+                                    
+                                    if( oID > 0 &&
+                                        getObject( oID )->autoDefaultTrans ) {
+                                        TransRecord *t = getPTrans( -2, oID );
+                                        
+                                        if( t == NULL ) {
+                                            // also consider applying bare-hand
+                                            // action, if defined and if
+                                            // it produces nothing in the hand
+                                            t = getPTrans( 0, oID );
+                                            
+                                            if( t != NULL &&
+                                                t->newActor > 0 ) {
+                                                t = NULL;
+                                                }
+                                            }
+
+                                        if( t != NULL && t->newTarget > 0 ) {
+                                            int newTarg = t->newTarget;
+                                            setMapObject( x, y, newTarg );
+
+                                            TransRecord *timeT =
+                                                getPTrans( -1, newTarg );
+                                            
+                                            if( timeT != NULL &&
+                                                timeT->autoDecaySeconds < 20 ) {
+                                                // target will decay to
+                                                // something else in a short
+                                                // time
+                                                // Likely meant to reset
+                                                // after person passes through
+                                                
+                                                // fix the time based on our
+                                                // pass-through time
+                                                double timeLeft =
+                                                    nextPlayer->moveTotalSeconds
+                                                    - secondsAlreadyDone;
+                                                
+                                                double plannedETADecay =
+                                                    Time::getCurrentTime()
+                                                    + timeLeft 
+                                                    // pad with extra second
+                                                    + 1;
+                                                
+                                                timeSec_t actual =
+                                                    getEtaDecay( x, y );
+                                                
+                                                // don't ever shorten
+                                                // we could be interrupting
+                                                // another player who
+                                                // is on a longer path
+                                                // through the same object
+                                                if( plannedETADecay >
+                                                    actual ) {
+                                                    setEtaDecay( 
+                                                        x, y, plannedETADecay );
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
 
                                 
                                 // check if this move goes into a bad biome
@@ -15754,6 +16110,15 @@ int main() {
                                     sicknessObjectID = -1;
                                     }
                                 
+                                // riding something prevents sickness
+                                if( sicknessObjectID > 0 &&
+                                    nextPlayer->holdingID > 0 &&
+                                    getObject( nextPlayer->holdingID )->
+                                    rideable ) {
+                                    
+                                    sicknessObjectID = -1;
+                                    }
+
                                 if( sicknessObjectID > 0 &&
                                     nextPlayer->holdingID != 
                                     sicknessObjectID ) {
@@ -16381,41 +16746,26 @@ int main() {
                             
                             int oldHolding = nextPlayer->holdingID;
                             
-                            char wrongSide = false;
-                            char ownershipBlocked = false;
+                            char accessBlocked =
+                                isAccessBlocked( nextPlayer, m.x, m.y, target );
                             
-                            if( target != 0 ) {
-                                ObjectRecord *targetObj = getObject( target );
-
-                                if( isGridAdjacent( m.x, m.y,
-                                                    nextPlayer->xd, 
-                                                    nextPlayer->yd ) ) {
-                                    
-                                    if( targetObj->sideAccess ) {
-                                        
-                                        if( m.y > nextPlayer->yd ||
-                                            m.y < nextPlayer->yd ) {
-                                            // access from N or S
-                                            wrongSide = true;
-                                            }
-                                        }
-                                    }
-                                if( targetObj->isOwned ) {
-                                    // make sure player owns this pos
-                                    ownershipBlocked = 
-                                        ! isOwned( nextPlayer, m.x, m.y );
-                                    }
-                                }
-                            
-
-                            
-                            if( wrongSide || ownershipBlocked ) {
+                            if( accessBlocked ) {
                                 // ignore action from wrong side
                                 // or that players don't own
                                 }
                             else if( target != 0 ) {
                                 ObjectRecord *targetObj = getObject( target );
                                 
+                                // see if target object is permanent
+                                // and has writing on it.
+                                // if so, read by touching it
+                                
+                                if( targetObj->permanent &&
+                                    targetObj->written ) {
+                                    forcePlayerToRead( nextPlayer, target );
+                                    }
+                                
+
                                 // try using object on this target 
                                 
                                 TransRecord *r = NULL;
@@ -16499,11 +16849,34 @@ int main() {
                                         }
                                     }
                                 
-                                if( target > 0 &&
-                                    getObject( target )->permanent &&
+                                if( ! blockedTool &&
+                                    target > 0 &&
                                     r != NULL ) {
+
+                                    char couldBeTool = false;
+                                    
+                                    if( getObject( target )->permanent ) {
+                                        couldBeTool = true;
+                                        }
+                                    else {
+                                        // non-perm
+
+                                        // some tools sit loose on ground
+                                        // and then we do something to them
+                                        // to make them permanent
+                                        // (like pounding stakes)
+                                        // Check if this is the case
+                                        
+                                        if( r->newTarget > 0 &&
+                                            getObject( r->newTarget )->
+                                            permanent ) {
+                                            couldBeTool = true;
+                                            }
+                                        }
+
                                     // make sure player can use this ground-tool
-                                    if( ! canPlayerUseOrLearnTool( 
+                                    if( couldBeTool &&
+                                        ! canPlayerUseOrLearnTool( 
                                             nextPlayer,
                                             target ) ) {
                                         r = NULL;
@@ -16961,7 +17334,8 @@ int main() {
                                         nextPlayer->foodStore;
                                     
                                     nextPlayer->foodStore += 
-                                        targetObj->foodValue;
+                                        lrint( foodScaleFactor *
+                                               targetObj->foodValue );
                                     
                                     updateYum( nextPlayer, targetObj->id );
                                     
@@ -17781,7 +18155,9 @@ int main() {
                                     targetPlayer->lastAteFillMax =
                                         targetPlayer->foodStore;
                                     
-                                    targetPlayer->foodStore += obj->foodValue;
+                                    targetPlayer->foodStore += 
+                                        lrint( foodScaleFactor * 
+                                               obj->foodValue );
                                     
                                     updateYum( targetPlayer, obj->id,
                                                targetPlayer == nextPlayer );
@@ -18139,6 +18515,14 @@ int main() {
                             canDrop = false;
                             }
 
+                        int target = getMapObject( m.x, m.y );
+                        
+                        
+                        char accessBlocked = 
+                            isAccessBlocked( nextPlayer, 
+                                             m.x, m.y, target );
+                        
+                        if( ! accessBlocked )
                         if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
                         if( ( isGridAdjacent( m.x, m.y,
                                               nextPlayer->xd, 
@@ -18162,7 +18546,6 @@ int main() {
                                 
                                 if( nextPlayer->holdingID < 0 ) {
                                     // baby drop
-                                    int target = getMapObject( m.x, m.y );
                                     
                                     if( target == 0 // nothing here
                                         ||
@@ -18260,8 +18643,6 @@ int main() {
                                         = getObject( 
                                             nextPlayer->holdingID );
                                     
-                                    int target = getMapObject( m.x, m.y );
-                            
                                     if( target != 0 ) {
                                         
                                         ObjectRecord *targetObj =
@@ -18473,11 +18854,19 @@ int main() {
                             ( m.x == nextPlayer->xd &&
                               m.y == nextPlayer->yd ) ) {
                             
+                            int target = getMapObject( m.x, m.y );
+
+                            char accessBlocked =
+                                isAccessBlocked( nextPlayer, m.x, m.y, target );
+                            
+
                             char handEmpty = ( nextPlayer->holdingID == 0 );
-                        
+
+                            if( ! accessBlocked )                        
                             removeFromContainerToHold( nextPlayer,
                                                        m.x, m.y, m.i );
 
+                            if( ! accessBlocked )
                             if( handEmpty &&
                                 nextPlayer->holdingID == 0 ) {
                                 // hand still empty?
@@ -22967,6 +23356,8 @@ int main() {
                     }
                 
                 delete nextPlayer->lineage;
+                
+                delete nextPlayer->ancestorIDs;
                 
                 nextPlayer->ancestorEmails->deallocateStringElements();
                 delete nextPlayer->ancestorEmails;

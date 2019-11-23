@@ -1,0 +1,5 @@
+
+
+ALTER TABLE fitnessServer_offspring MODIFY old_score FLOAT NOT NULL;
+ALTER TABLE fitnessServer_offspring MODIFY new_score FLOAT NOT NULL;
+

@@ -3,6 +3,94 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 288     2019-November-23
+
+--Fixed bug in temp meter tool tip text.
+
+--When reading a map or way stone, you speak a distance estimate along with
+  the map name.
+
+--Fixed kerning on _ character in Futura font.
+  
+--Fixed glitch preventing intentionally entering bad biome from left side.
+
+--Client no longer makes you pause before entering bad biome when riding.
+
+
+
+
+Server Fixes
+
+--Support for negative scores in offspring table.  Fixes #447
+
+--Eve injection baby/mother ratio is 1.0 (was 2.0).  Reduce the number of
+  babies per mother to lighten the load of new players coming in.
+
+--Eating bonus 4 (was 2.0), to help out all the new players.
+
+--Min food decrement time 4 (was 2.0), to help out all the new players.
+
+--Suddenly some lineage server queries were using the wrong index and taking
+  600+ seconds to execute, bringing the whole lineage server down.  Something
+  about the influx of new users caused this, tipping MySQL's query execution
+  strategy toward the wrong index.  Fixed this by only joining on users table
+  if we need to.
+
+--Added a (user_id,death_time) index to speed up lineage server queries for
+  users that have a lot of lives.
+
+--Got rid of unnecessary server table joins in lineage server.
+
+--Indoor bonus no longer a fixed value, but instead based on the average
+  R-value of the surrounding walls for the room that you're in.  Better walls
+  (and doors and floors) mean a bigger indoor bonus.
+
+--New foodScaleFactor server setting, allowing all food values to be scaled up
+  or down.
+
+--Support for written metadata on an object that can be duplicated through a
+  transition (for copying maps onto way stones).  Support for reading
+  permanent objects by touching them.
+
+--Whoops, low pop servers now have tool learning slots disabled.
+  Thanks Spoonwood.
+
+--Support for objects that affect auto-orientation of other objects without 
+  having multiple orientations themselves (example:  wall shelves).
+
+--For tool groups, like +toolSewing, the group tag is used in the YOU LEARNED
+  message to avoid confusion (YOU LEARNED SEWING.).  Fixed article use (THE) in
+  messaging when tool group ends in ING.  YOU LEARNED THE BOW DRILL vs YOU
+  LEARNED SEWING.
+
+--Riding something (horse, car) prevents you from getting sick in a bad biome.
+  You cannot dismount in there, however.
+
+--Support for +autoDefaultTrans tag on objects, which means that default
+  transition is triggered when player path will cross that object.  For
+  spring-loaded doors that auto-open.
+
+--Closed the exploit where you suicide as a baby to reap your mother and
+  grandmother's long life genetic score.  Now your mother and grandmother
+  (etc.) only count toward your genetic score if you survive past age 3 and they
+  die while you are still alive.  Dying early on purpose won't let you reap the
+  benefit of their long lives.
+
+--Fixed so that a tool laying on the ground that is not permanent counts as a
+  used tool if it becomes permanent.  Now building stakes count as a tool
+  properly.
+
+--Personal curses now last 30 days (was 7 days).
+
+--Changed tool slot formula (based on fitness) to use a sigmoid curve and avoid
+  infinite tool slots for high scores.  Now slot range is between 5 and 19 for
+  positive scores, or between 4 and 3 for negative scores.
+
+--Support for +noBackAccess tag to prevent wall shelf access through back wall.
+
+
+
+
 Version 286    2019-November-18
 
 --Fixed client to not hang on loading if an expected sound file is missing.
@@ -46,6 +134,7 @@ Server Fixes
   boost your score.  Reduces randomness.  Scores no longer bounded in [0-60]
   range.  New players start with an assumed score of 30.
 
+--New Eves always spawn in least-represented skin tones.  Fixes #446
 
 
 

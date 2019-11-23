@@ -752,7 +752,7 @@ char *getRelationName( SimpleVector<int> *ourLin,
             }
         
         if( cousinNum > 20 && cousinNum < 30 ) {
-            buffer.appendElementString( translate( "twenty" ) );
+            buffer.appendElementString( translate( "twentyHyphen" ) );
             remainingCousinNum = cousinNum - 20;
             }
 
@@ -1889,7 +1889,7 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         
         if( startPointBad ||
             isBadBiome( startInd - 1 ) ||
-            isBadBiome( startInd - 1 ) ||
+            isBadBiome( startInd + 1 ) ||
             isBadBiome( startInd - mMapD ) ||
             isBadBiome( startInd + mMapD ) ) {
             
@@ -1906,6 +1906,15 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
 
 
     char destBiomeBad = isBadBiome( getMapIndex( end.x, end.y ) );    
+
+    char ignoreBad = false;
+    
+    if( inObject->holdingID > 0 &&
+        getObject( inObject->holdingID )->rideable ) {
+        // ride through bad biomes without stopping at edges
+        ignoreBad = true;
+        }
+    
 
 
     if( inObject->pathToDest != NULL ) {
@@ -1946,7 +1955,9 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
                     blockedMap[ y * pathFindingD + x ] = false;
                     }
 
-                if( ( ! startBiomeBad || ! destBiomeBad )
+                if( ! ignoreBad 
+                    && 
+                    ( ! startBiomeBad || ! destBiomeBad )
                     &&
                     ! startPointBad
                     &&
@@ -5282,6 +5293,296 @@ char isSick( LiveObject *inPlayer ) {
         return true;
         }
     return false;
+    }
+
+
+
+#define NUM_NUMBER_KEYS 21
+static const char *numberKeys[ NUM_NUMBER_KEYS ] = { 
+    "zero",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+    "ten",
+    "eleven",
+    "twelve",
+    "thirteen",
+    "fourteen",
+    "fifteen",
+    "sixteen",
+    "seventeen",
+    "eighteen",
+    "nineteen",
+    "twenty"
+    };
+
+
+static const char *numberTenKeys[ 8 ] = { 
+    "twenty",
+    "thirty",
+    "forty",
+    "fifty",
+    "sixty",
+    "seventy",
+    "eighty",
+    "ninety"
+    };
+
+
+
+// for numbers < 999
+char *getSmallNumberString( int inNumber, 
+                            const char *inUnits = "",
+                            const char *inPadding = "" ) {
+    
+    int numLeft = inNumber;
+    
+    int hundreds = numLeft / 100;
+    numLeft -= hundreds * 100;
+    
+    int tens = numLeft / 10;
+    
+    numLeft -= tens * 10;
+    
+    int ones = numLeft;
+
+    int tensPlusOnes = tens * 10 + ones;
+    
+    char *onesString;
+    char *tensString;
+    char *hundredsString;
+
+    if( tensPlusOnes < NUM_NUMBER_KEYS ) {
+        onesString = stringDuplicate( "" );
+        if( tensPlusOnes > 0 ) {
+            tensString = 
+                stringDuplicate( translate( numberKeys[tensPlusOnes] ) );
+            }
+        else {
+            tensString = stringDuplicate( "" );
+            }
+        }
+    else {
+        if( ones > 0 ) {
+            onesString = stringDuplicate( translate( numberKeys[ones] ) );
+            }
+        else {
+            onesString = stringDuplicate( "" );
+            }
+        
+        const char *hyphen = "";
+        if( ones > 0 ) {
+            hyphen = "-";
+            }
+        tensString = 
+            autoSprintf( "%s%s", 
+                         translate( numberTenKeys[ tens - 2 ] ),
+                         hyphen );
+        }
+    if( hundreds > 0 ) {
+        const char *andString = "";
+        const char *andSpace = "";
+        if( tens > 0 || ones > 0 ) {
+            andString = translate( "and" );
+            andSpace = " ";
+            }
+
+        char *rawHundredString;
+        // sometimes we are fed something like 2200, etc
+        if( hundreds < NUM_NUMBER_KEYS ) {
+            rawHundredString = 
+                stringDuplicate( translate( numberKeys[hundreds] ) );
+            }
+        else {
+            // recurse 
+            rawHundredString = getSmallNumberString( hundreds );
+            }
+        
+        
+        hundredsString = autoSprintf( "%s %s%s%s",
+                                      rawHundredString,
+                                      translate( "hundred" ),
+                                      andString, andSpace );
+        delete [] rawHundredString;
+        }
+    else {
+        hundredsString = stringDuplicate( "" );
+        }
+    
+    const char *unitsSpace = "";
+    if( strcmp( inUnits, "" ) != 0 ) {
+        unitsSpace = " ";
+        }
+    
+    char *final = autoSprintf( "%s%s%s%s%s%s", hundredsString, 
+                               tensString, onesString, unitsSpace,
+                               inUnits,inPadding );
+    
+    delete [] hundredsString;
+    delete [] tensString;
+    delete [] onesString;
+
+    return final;
+    }
+
+
+
+
+char *getSpokenNumber( unsigned int inNumber, int inSigFigs = 2 ) {
+    if( inNumber < NUM_NUMBER_KEYS ) {
+        return stringDuplicate( translate( numberKeys[ inNumber ] ) );
+        }
+
+    int numDigits = 0;
+    
+    unsigned int numLeft = inNumber;
+    
+    while( numLeft > 0 ) {
+        numDigits ++;
+        numLeft /= 10;
+        }
+
+    
+    // round to specified sig figs
+    
+    int figsToDiscard = numDigits - inSigFigs;
+    
+    if( figsToDiscard < 0 ) {
+        figsToDiscard = 0;
+        }
+    
+    numLeft = inNumber;
+    
+    int figsLeft = figsToDiscard;
+    while( figsLeft > 0 ) {
+        numLeft /= 10;
+        figsLeft --;
+        }
+
+    
+    // restore size
+    figsLeft = figsToDiscard;
+    while( figsLeft > 0 ) {
+        numLeft *= 10;
+        figsLeft --;
+        }
+
+    double remainder = inNumber - numLeft;
+    // turn into decimal
+    figsLeft = figsToDiscard;
+    while( figsLeft > 0 ) {
+        remainder /= 10.0;
+        figsLeft --;
+        }
+    
+    remainder = round( remainder );
+
+    if( remainder == 1 ) {
+        // round up
+        figsLeft = figsToDiscard;
+        while( figsLeft > 0 ) {
+            remainder *= 10;
+            figsLeft --;
+            }
+        numLeft += remainder;
+        }
+    
+    
+    
+    int billions = numLeft / 1000000000;
+    numLeft -= billions * 1000000000;
+    
+    int millions = numLeft / 1000000.0;
+    numLeft -= millions * 1000000;
+
+    int thousands = numLeft / 1000;
+    numLeft -= thousands * 1000;
+
+    int hundreds = numLeft;
+
+
+    if( thousands >= 1 && hundreds >= 100 && thousands <= 9 ) {
+        // roll into hundreds
+        hundreds += thousands * 1000;
+        thousands = 0;
+        }
+    
+    char *billionsString;
+    if( billions > 0 ) {
+        const char *padding = "";
+        if( millions > 0 ) {
+            padding = " ";
+            }
+        billionsString = getSmallNumberString( billions, 
+                                               translate( "billion" ),
+                                               padding );
+        }
+    else {
+        billionsString = stringDuplicate( "" );
+        }
+
+    char *millionsString;
+    if( millions > 0 ) {
+        const char *padding = "";
+        if( thousands > 0 ) {
+            padding = " ";
+            }
+        millionsString = getSmallNumberString( millions,
+                                               translate( "million" ),
+                                               padding );
+        }
+    else {
+        millionsString = stringDuplicate( "" );
+        }
+
+    char *thousandsString;
+    if( thousands > 0 ) {
+        char *padding = (char*)"";
+        char *paddingToDelete = NULL;
+        
+        if( hundreds > 0 ) {
+            padding = (char*)" ";
+            
+            if( hundreds < 100 ) {
+                padding = autoSprintf( "%s ", translate( "and" ) );
+                paddingToDelete = padding;
+                }
+            }
+        thousandsString = getSmallNumberString( thousands,
+                                                translate( "thousand" ),
+                                                padding );
+        if( paddingToDelete != NULL ) {
+            delete [] paddingToDelete;
+            }
+        }
+    else {
+        thousandsString = stringDuplicate( "" );
+        }
+
+
+    char *hundredsString;
+    if( hundreds > 0 ) {
+        hundredsString = getSmallNumberString( hundreds );
+        }
+    else {
+        hundredsString = stringDuplicate( "" );
+        }
+
+    char *result = autoSprintf( "%s%s%s%s", billionsString, millionsString,
+                                thousandsString, hundredsString );
+    
+    delete [] billionsString;
+    delete [] millionsString;
+    delete [] thousandsString;
+    delete [] hundredsString;
+    
+    return result;
     }
 
 
@@ -9582,7 +9883,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     des = autoSprintf( translate( "foodTimeFormatString" ),
                                        translate( "foodTimeString" ),
-                                       ourLiveObject->foodDrainTime,
+                                       mainSeconds,
                                        indoorBonusString );
                     delete [] indoorBonusString;
                     
@@ -9730,7 +10031,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                             
                             char *yearsString;
                             
-                            if( years > 20 ) {
+                            if( years >= NUM_NUMBER_KEYS ) {
                                 if( years > 1000000 ) {
                                     int mil = years / 1000000;
                                     int remain = years % 1000000;
@@ -9751,29 +10052,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
                                     }
                                 }
                             else {
-                                const char *numberKeys[21] = { 
-                                    "zero",
-                                    "one",
-                                    "two",
-                                    "three",
-                                    "four",
-                                    "five",
-                                    "six",
-                                    "seven",
-                                    "eight",
-                                    "nine",
-                                    "ten",
-                                    "eleven",
-                                    "twelve",
-                                    "thirteen",
-                                    "fourteen",
-                                    "fifteen",
-                                    "sixteen",
-                                    "seventeen",
-                                    "eighteen",
-                                    "nineteen",
-                                    "twenty"
-                                    };
                                 yearsString = stringDuplicate( 
                                     translate( numberKeys[ years ] ) );
                                 }
@@ -17675,6 +17953,27 @@ void LivingLifePage::step() {
 
                                         // trim it off
                                         starPos[0] ='\0';
+
+                                        doublePair dest = { (double)mapX, 
+                                                            (double)mapY };
+                                        double d = 
+                                            distance( dest,
+                                                      existing->currentPos );
+                                        
+                                        if( d >= 5 ) {
+                                            char *dString = 
+                                                getSpokenNumber( d );
+                                            char *newSpeech =
+                                                autoSprintf( 
+                                                    "%s - %s %s",
+                                                    existing->currentSpeech,
+                                                    dString,
+                                                    translate( "metersAway" ) );
+                                            delete [] dString;
+                                            delete [] existing->currentSpeech;
+                                            existing->currentSpeech =
+                                                newSpeech;
+                                            }
                                         }
                                     }
                                 }

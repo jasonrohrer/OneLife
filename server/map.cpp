@@ -6481,10 +6481,10 @@ static int findGridPos( SimpleVector<GridPos> *inList, GridPos inP ) {
 
 
 
-// inSetO must hvae o->horizontalVersionID etc set
+// inSetO must hvae isAutoOrienting set
 // returns new ID at inX, inY
 static int neighborWallAgree( int inX, int inY, ObjectRecord *inSetO,
-                               char inRecurse ) {
+                              char inRecurse ) {
 
     // make sure this agrees with all neighbors
     
@@ -6504,43 +6504,63 @@ static int neighborWallAgree( int inX, int inY, ObjectRecord *inSetO,
             }
         }
 
+    
     int returnID = inSetO->id;
+
+
+    if( inSetO->horizontalVersionID != -1 &&
+        inSetO->verticalVersionID != -1 &&
+        inSetO->cornerVersionID != -1 ) {
+        
+        // this object can react to its neighbors
+        
+        if( inSetO->id != inSetO->verticalVersionID &&
+            ( nSet[2] || nSet[3] ) 
+            &&
+            ! ( nSet[0] || nSet[1] ) ) {
+            // should be vert
+            
+            returnID = inSetO->verticalVersionID;
+            }
+        else if( inSetO->id != inSetO->horizontalVersionID &&
+                 ! ( nSet[2] || nSet[3] ) 
+                 &&
+                 ( nSet[0] || nSet[1] ) ) {
+            // should be horizontal
+            
+            returnID = inSetO->horizontalVersionID;
+            }
+        else if( inSetO->id != inSetO->cornerVersionID &&
+                 ( nSet[2] || nSet[3] ) 
+                 &&
+                 ( nSet[0] || nSet[1] ) ) {
+            // should be corner
+            
+            returnID = inSetO->cornerVersionID;
+            }
     
-    if( inSetO->id != inSetO->verticalVersionID &&
-        ( nSet[2] || nSet[3] ) 
-        &&
-        ! ( nSet[0] || nSet[1] ) ) {
-        // should be vert
-        
-        returnID = inSetO->verticalVersionID;
-        }
-    else if( inSetO->id != inSetO->horizontalVersionID &&
-        ! ( nSet[2] || nSet[3] ) 
-        &&
-        ( nSet[0] || nSet[1] ) ) {
-        // should be horizontal
-        
-        returnID = inSetO->horizontalVersionID;
-        }
-    else if( inSetO->id != inSetO->cornerVersionID &&
-        ( nSet[2] || nSet[3] ) 
-        &&
-        ( nSet[0] || nSet[1] ) ) {
-        // should be corner
-        
-        returnID = inSetO->cornerVersionID;
+        if( returnID != inSetO->id ) {
+            dbPut( inX, inY, 0, returnID );
+            }
         }
     
-    if( returnID != inSetO->id ) {
-        dbPut( inX, inY, 0, returnID );
-        }
     
     if( inRecurse ) {
-        // recurse once for each matching neighbor
+        // recurse once for each matching neighbor that has orientations
         for( int n=0; n<4; n++ ) {
             if( nSet[n] ) {
-                neighborWallAgree( inX + nX[n], inY + nY[n], 
-                                   getObject( nID[n] ), false );
+                ObjectRecord *nO = getObject( nID[n] );
+                
+                // need to check this, because nSet is true if
+                // it is auto-orienting, but not all auto-orienting
+                // objects have all three orientations defined
+                if( nO->horizontalVersionID != -1 &&
+                    nO->verticalVersionID != -1 &&
+                    nO->cornerVersionID != -1 ) {
+                 
+                    neighborWallAgree( inX + nX[n], inY + nY[n], 
+                                       nO, false );
+                    }
                 }
             }
         }
@@ -6665,9 +6685,7 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
 
 
 
-    if( o->horizontalVersionID != -1 &&
-        o->verticalVersionID != -1 &&
-        o->cornerVersionID != -1 ) {
+    if( o->isAutoOrienting ) {
         
         // recurse one step
         inID = neighborWallAgree( inX, inY, o, true );

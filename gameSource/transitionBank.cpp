@@ -1991,7 +1991,13 @@ TransRecord *getPTrans( int inActor, int inTarget,
             rStatic->newActor = packMetadataID( rStatic->newActor, 
                                                 passThroughMeta );
             }
-        else if( rStatic->newTarget > 0 &&
+        // can pass meta data through to both
+        // forking it and duplicating it
+        
+        // this allows for a piece of writing to be copied onto
+        // another object, for example
+
+        if( rStatic->newTarget > 0 &&
                  getObject( rStatic->newTarget )->mayHaveMetadata ) {
             rStatic->newTarget = packMetadataID( rStatic->newTarget, 
                                                  passThroughMeta );
