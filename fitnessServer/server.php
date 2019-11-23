@@ -858,6 +858,10 @@ function fs_resetScores( $checkPassword = true ) {
             "new_score = $targetScore, ".
             "death_time = CURRENT_TIMESTAMP; ";
         fs_queryDatabase( $query );
+        
+        $query = "UPDATE $tableNamePrefix"."users ".
+            "SET score = $targetScore WHERE id = $id;";
+        fs_queryDatabase( $query );
         }
 
     echo "<br>Processed $numRows users<br><br>";
