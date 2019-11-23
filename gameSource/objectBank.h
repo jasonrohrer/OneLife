@@ -407,6 +407,8 @@ typedef struct ObjectRecord {
         
         char autoDefaultTrans;
 
+        char noBackAccess;
+
     } ObjectRecord;
 
 

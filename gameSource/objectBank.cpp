@@ -685,6 +685,16 @@ static void setupAutoDefaultTrans( ObjectRecord *inR ) {
     }
 
 
+static void setupNoBackAccess( ObjectRecord *inR ) {
+    inR->noBackAccess = false;
+
+    char *pos = strstr( inR->description, "+noBackAccess" );
+    if( pos != NULL ) {
+        inR->noBackAccess = true;
+        }
+    }
+
+
 
 
 int getMaxSpeechPipeIndex() {
@@ -750,6 +760,8 @@ float initObjectBankStep() {
                 setupMaxPickupAge( r );
                 
                 setupAutoDefaultTrans( r );
+                
+                setupNoBackAccess( r );                
 
                 // do this later, after we parse floorHugging
                 // setupWall( r );
@@ -3494,6 +3506,8 @@ int addObject( const char *inDescription,
     setupMaxPickupAge( r );
 
     setupAutoDefaultTrans( r );
+
+    setupNoBackAccess( r );            
 
     setupWall( r );
     
