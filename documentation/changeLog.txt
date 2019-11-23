@@ -82,6 +82,9 @@ Server Fixes
 
 --Personal curses now last 30 days (was 7 days).
 
+--Changed tool slot formula (based on fitness) to use a sigmoid curve and avoid
+  infinite tool slots for high scores.  Now slot range is between 5 and 19 for
+  positive scores, or between 4 and 3 for negative scores.
 
 
 

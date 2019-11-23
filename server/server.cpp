@@ -6799,22 +6799,44 @@ static void setupToolSlots( LiveObject *inPlayer ) {
     
 
 
-    
-    
-    int slots = min;
+    // this sigmoid function found in gnuplot which looks good
+    // for 10 and 5
 
+    // plot 15 / (1 + 1.03**-(x - 100)) + 4.258
+    
+    // however, actual range here is 19.258 and 5
+
+    // need to compute these parameters based on max and min
+    
+    // plot A / (1 + C**-(x - D)) + B
+    
+    double C = 1.03;
+    double D = 100;
+
+    double A = max - min;
+    
+    double valAtZero = A / ( 1 + pow( C, D ) );
+    
+    double B = min - valAtZero;
+    
+    
     // when this is called, we already have a valid fitness score (or 0)
     // can be negative or positive, with no limits
 
-    // similar quadratic formula to food bars lost in old age
-    double p = pow( inPlayer->fitnessScore / 60, 2 );
-    if( inPlayer->fitnessScore < 0 && p > 0 ) {
-        // restore negative lost in power of 2
-        p *= -1;
+    
+    int slots = 
+        lrint( 
+            A / ( 1 + pow( C, -( inPlayer->fitnessScore - D ) ) ) + B );
+    
+    if( inPlayer->fitnessScore < 0 ) {
+        // score is negative?  Auto-ding them one slot when this happens
+        slots -= 1;
+
+        // otherwise, the above formulat likely doesn't have a transition
+        // around 0
         }
     
-    slots += ( max - min ) * p;
-    
+
     
     // no negative slots
     if( slots < 0 ) {
