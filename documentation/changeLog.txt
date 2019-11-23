@@ -88,6 +88,8 @@ Server Fixes
 
 --Support for +noBackAccess tag to prevent wall shelf access through back wall.
 
+--Fitness server now supports manual, global score reset.
+
 
 
 
