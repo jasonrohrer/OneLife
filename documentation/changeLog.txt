@@ -78,6 +78,7 @@ Server Fixes
   used tool if it becomes permanent.  Now building stakes count as a tool
   properly.
 
+--Personal curses now last 30 days (was 7 days).
 
 
 
