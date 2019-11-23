@@ -72,7 +72,9 @@ Server Fixes
 
 --Closed the exploit where you suicide as a baby to reap your mother and
   grandmother's long life genetic score.  Now your mother and grandmother
-  (etc.) only count toward your genetic score if you survive past age 3.
+  (etc.) only count toward your genetic score if you survive past age 3 and they
+  die while you are still alive.  Dying early on purpose won't let you reap the
+  benefit of their long lives.
 
 --Fixed so that a tool laying on the ground that is not permanent counts as a
   used tool if it becomes permanent.  Now building stakes count as a tool

@@ -12431,14 +12431,19 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
     // for both tutorial and non    
 
 
-    // if this person themselves died before age 3
-    // remove them from the "ancestor" list of everyone
+    // if this person themselves died before their mom, gma, etc.
+    // remove them from the "ancestor" list of everyone who is older than they
+    // are and still alive
 
-    // This ends an exploit where people suicide as a baby
+    // You only get genetic points for ma, gma, and other older ancestors
+    // if you are alive when they die.
+
+    // This ends an exploit where people suicide as a baby (or young person)
     // yet reap genetic benefit from their mother living a long life
     // (your mother, gma, etc count for your genetic score if you yourself
     //  live beyond 3, so it is in your interest to protect them)
-    if( computeAge( nextPlayer ) < defaultActionAge ) {
+    double deadPersonAge = computeAge( nextPlayer );
+    if( deadPersonAge < forceDeathAge ) {
         for( int i=0; i<players.size(); i++ ) {
                 
             LiveObject *o = players.getElement( i );
@@ -12449,6 +12454,12 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
                 continue;
                 }
             
+            if( computeAge( o ) < deadPersonAge ) {
+                // this person was born after the dead person
+                // thus, there's no way they are their ma, gma, etc.
+                continue;
+                }
+
             for( int e=0; e< o->ancestorIDs->size(); e++ ) {
                 if( o->ancestorIDs->getElementDirect( e ) == nextPlayer->id ) {
                     o->ancestorIDs->deleteElement( e );
