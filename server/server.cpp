@@ -12619,7 +12619,7 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
         if( toolPos != NULL ) {
             char *tagPos = &( toolPos[5] );
             
-            if( tagPos[0] != '\0' || tagPos[0] != ' ' ) {
+            if( tagPos[0] != '\0' && tagPos[0] != ' ' ) {
                 int tagLen = strlen( tagPos );
                 for( int i=0; i<tagLen; i++ ) {
                     if( tagPos[i] == ' ' ) {
@@ -16777,11 +16777,34 @@ int main() {
                                         }
                                     }
                                 
-                                if( target > 0 &&
-                                    getObject( target )->permanent &&
+                                if( ! blockedTool &&
+                                    target > 0 &&
                                     r != NULL ) {
+
+                                    char couldBeTool = false;
+                                    
+                                    if( getObject( target )->permanent ) {
+                                        couldBeTool = true;
+                                        }
+                                    else {
+                                        // non-perm
+
+                                        // some tools sit loose on ground
+                                        // and then we do something to them
+                                        // to make them permanent
+                                        // (like pounding stakes)
+                                        // Check if this is the case
+                                        
+                                        if( r->newTarget > 0 &&
+                                            getObject( r->newTarget )->
+                                            permanent ) {
+                                            couldBeTool = true;
+                                            }
+                                        }
+
                                     // make sure player can use this ground-tool
-                                    if( ! canPlayerUseOrLearnTool( 
+                                    if( couldBeTool &&
+                                        ! canPlayerUseOrLearnTool( 
                                             nextPlayer,
                                             target ) ) {
                                         r = NULL;
