@@ -695,6 +695,18 @@ static void setupNoBackAccess( ObjectRecord *inR ) {
     }
 
 
+static void setupAlcohol( ObjectRecord *inR ) {
+    inR->alcohol = 0;
+
+    char *pos = strstr( inR->description, "+alcohol" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+alcohol%d", &( inR->alcohol ) );
+        }
+    }
+
+
 
 
 int getMaxSpeechPipeIndex() {
@@ -762,6 +774,8 @@ float initObjectBankStep() {
                 setupAutoDefaultTrans( r );
                 
                 setupNoBackAccess( r );                
+
+                setupAlcohol( r );
 
                 // do this later, after we parse floorHugging
                 // setupWall( r );
@@ -3508,6 +3522,8 @@ int addObject( const char *inDescription,
     setupAutoDefaultTrans( r );
 
     setupNoBackAccess( r );            
+
+    setupAlcohol( r );
 
     setupWall( r );
     

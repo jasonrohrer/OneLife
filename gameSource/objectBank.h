@@ -409,6 +409,8 @@ typedef struct ObjectRecord {
 
         char noBackAccess;
 
+        int alcohol;
+
     } ObjectRecord;
 
 
