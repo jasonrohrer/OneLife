@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Not stuck dropping immobile horse after snake encounter in bad biome.  If the
+  object you're holding is permanent and has a speed multiplier of 0, you're
+  allowed to drop it in an otherwise bad biome.  Fixes #453
+
+
+
 Version 288     2019-November-23
 
 --Fixed bug in temp meter tool tip text.

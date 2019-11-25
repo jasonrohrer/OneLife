@@ -12731,6 +12731,26 @@ static char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY ) {
         inPlayer->isTutorial ) {
         return true;
         }
+
+    if( inPlayer->holdingID > 0 ) {
+        ObjectRecord *heldO = getObject( inPlayer->holdingID );
+        if( heldO->permanent &&
+            heldO->speedMult == 0 ) {
+            // what they're holding is stuck stuck stuck, and they can't
+            // move at all.
+            
+            // is there some way for them to drop it?
+            // this prevents us from mistakenly dropping wounds that
+            // don't let you move or whatever
+            TransRecord *bareGroundT = getPTrans( inPlayer->holdingID, -1 );
+            
+            if( bareGroundT != NULL && bareGroundT->newTarget > 0 ) {
+                // Don't block them from dropping this object
+                return true;
+                }
+            }
+        }
+
     return isBiomeAllowed( inPlayer->displayID, inX, inY );
     }
 
