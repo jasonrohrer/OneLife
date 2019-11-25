@@ -572,14 +572,20 @@ static void setupMaxPickupAge( ObjectRecord *inR ) {
 
 static void setupWall( ObjectRecord *inR ) {
     inR->wallLayer = inR->floorHugging;
+    inR->frontWall = false;
+
+    if( ! inR->wallLayer ) {    
+        char *wallPos = strstr( inR->description, "+wall" );
+        if( wallPos != NULL ) {
+            inR->wallLayer = true;
+            }
+        }
     
     if( inR->wallLayer ) {
-        return;
-        }
-
-    char *wallPos = strstr( inR->description, "+wall" );
-    if( wallPos != NULL ) {
-        inR->wallLayer = true;
+        char *frontWallPos = strstr( inR->description, "+frontWall" );
+        if( frontWallPos != NULL ) {
+            inR->frontWall = true;
+            }
         }
     }
 

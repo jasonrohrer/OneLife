@@ -3,6 +3,18 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 290     ???
+
+
+--Added support for +frontWall object tag, to fix glitch with open door behind
+  wall shelf.  Don't decide whether a wall should be drawn in front of other
+  walls based on whether the wall has slots.  This was the old test put in
+  place to detect wall signs, but really, slots isn't the thing... sticking out
+  beyond the normal wall boundaries is the thing.
+
+
+
+
 Server Fixes
 
 --Not stuck dropping immobile horse after snake encounter in bad biome.  If the

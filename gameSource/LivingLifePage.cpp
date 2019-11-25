@@ -7280,7 +7280,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 if( ! o->drawBehindPlayer &&
                     o->wallLayer &&
                     o->permanent &&
-                    o->numSlots == 0 &&
+                    ! o->frontWall &&
                     mMapMoveSpeeds[ mapI ] == 0 ) {
                 
                     if( o->anySpritesBehindPlayer ) {
@@ -7316,7 +7316,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 if( ! o->drawBehindPlayer &&
                     o->wallLayer &&
                     o->permanent &&
-                    o->numSlots > 0 &&
+                    o->frontWall &&
                     mMapMoveSpeeds[ mapI ] == 0 ) {
                 
                     if( o->anySpritesBehindPlayer ) {
