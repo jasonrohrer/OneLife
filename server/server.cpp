@@ -3034,7 +3034,8 @@ static void drinkAlcohol( LiveObject *inPlayer, int inAlcoholAmount ) {
 
 
 
-char *slurSpeech( char *inTranslatedPhrase, double inDrunkenness ) {
+char *slurSpeech( int inSpeakerID,
+                  char *inTranslatedPhrase, double inDrunkenness ) {
     char *working = stringDuplicate( inTranslatedPhrase );
     
     char *starPos = strstr( working, " *" );
@@ -3054,29 +3055,42 @@ char *slurSpeech( char *inTranslatedPhrase, double inDrunkenness ) {
     
     double slurChance = baseSlurChance * inDrunkenness;
 
-    // 1 in 10 words mixed up in order with 1 drunkenness
+    // 2 in 10 words mixed up in order with 6 drunkenness
     // all words mixed up at 10 drunkenness
     double baseWordSwapChance = 0.1;
-    
-    double wordSwapChance = baseWordSwapChance * inDrunkenness;
+
+    // but don't start mixing up words at all until 6 drunkenness
+    // thus, the 0 to 100% mix up range is from 6 to 10 drunkenness
+    double wordSwapChance = 2 * baseWordSwapChance * ( inDrunkenness - 5 );
+
+
 
     // first, swap word order
     SimpleVector<char *> *words = tokenizeString( working );
 
+    // always slurr exactly the same for a given speaker
+    // repeating the same phrase won't keep remapping
+    // but map different length phrases differently
+    JenkinsRandomSource slurRand( inSpeakerID + 
+                                  words->size() + 
+                                  inDrunkenness );
+    
+
     for( int i=0; i<words->size(); i++ ) {
-        if( randSource.getRandomBoundedDouble( 0, 1 ) < wordSwapChance ) {
+        if( slurRand.getRandomBoundedDouble( 0, 1 ) < wordSwapChance ) {
             char *temp = words->getElementDirect( i );
             
             // possible swap distance based on drunkenness
             
-            int maxDist = inDrunkenness;
-            
+            // again, don't start reording words until 6 drunkenness
+            int maxDist = inDrunkenness - 5;
+
             if( maxDist >= words->size() - i ) {
                 maxDist = words->size() - i - 1;
                 }
             
             if( maxDist > 0 ) {
-                int jump = randSource.getRandomBoundedInt( 0, maxDist );
+                int jump = slurRand.getRandomBoundedInt( 0, maxDist );
             
                 
                 *( words->getElement( i ) ) = 
@@ -3112,7 +3126,7 @@ char *slurSpeech( char *inTranslatedPhrase, double inDrunkenness ) {
             continue;
             }
 
-        if( randSource.getRandomBoundedDouble( 0, 1 ) < slurChance ) {
+        if( slurRand.getRandomBoundedDouble( 0, 1 ) < slurChance ) {
             slurredChars.push_back( c );
             }
         }
@@ -5164,7 +5178,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                     speakerAge,
                     computeAge( otherPlayer ),
                     inPlayer->parentID,
-                    otherPlayer->parentID );
+                    otherPlayer->parentID,
+                    inPlayer->drunkenness / 10.0 );
             
             cursedName = isCurseNamingSay( translatedPhrase );
             
@@ -22939,6 +22954,13 @@ int main() {
                                         stringDuplicate( trimmedPhrase );
                                     }
                                 else {
+                                    int speakerDrunkenness = 0;
+                                    
+                                    if( speakerObj != NULL ) {
+                                        speakerDrunkenness =
+                                            speakerObj->drunkenness;
+                                        }
+
                                     translatedPhrase =
                                         mapLanguagePhrase( 
                                             trimmedPhrase,
@@ -22949,7 +22971,8 @@ int main() {
                                             speakerAge,
                                             listenerAge,
                                             speakerParentID,
-                                            listenerParentID );
+                                            listenerParentID,
+                                            speakerDrunkenness / 10.0 );
                                     }
                                 
                                 if( speakerEveID != 
@@ -22981,7 +23004,8 @@ int main() {
                                     // slur their speech
                                     
                                     char *slurredPhrase =
-                                        slurSpeech( translatedPhrase,
+                                        slurSpeech( speakerObj->id,
+                                                    translatedPhrase,
                                                     speakerObj->drunkenness );
                                     
                                     delete [] translatedPhrase;

@@ -9,6 +9,11 @@ Server Fixes
   object you're holding is permanent and has a speed multiplier of 0, you're
   allowed to drop it in an otherwise bad biome.  Fixes #453
 
+--Support for drunkenness, which slurs and confuses speech, but also reduces
+  the language barrier.  The speech of a more and more drunk person is easier
+  and easier to understand for a foreigner.
+
+
 
 
 Version 288     2019-November-23
