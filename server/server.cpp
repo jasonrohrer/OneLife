@@ -709,6 +709,9 @@ typedef struct LiveObject {
         
         double foodCapModifier;
 
+        double drunkenness;
+
+
         double fever;
         
 
@@ -2711,6 +2714,123 @@ int computeOverflowFoodCapacity( int inBaseCapacity ) {
     // concept.
     // by adulthood (when base cap is 20), overflow cap is 91.6
     return 2 + pow( inBaseCapacity, 8 ) * 0.0000000035;
+    }
+
+
+
+static void drinkAlcohol( LiveObject *inPlayer, int inAlcoholAmount ) {
+    double doneGrowingAge = 16;
+    
+    double multiplier = 1.0;
+    
+
+    double age = computeAge( inPlayer );
+    
+    // alcohol affects a baby 2x
+    // affects an 8-y-o 1.5x
+    if( age < doneGrowingAge ) {
+        multiplier += 1.0 - age / doneGrowingAge;
+        }
+
+    double amount = inAlcoholAmount * multiplier;
+    
+    inPlayer->drunkenness += amount;
+    }
+
+
+
+char *slurSpeech( char *inTranslatedPhrase, double inDrunkenness ) {
+    char *working = stringDuplicate( inTranslatedPhrase );
+    
+    char *starPos = strstr( working, " *" );
+
+    char *extraData = NULL;
+    
+    if( starPos != NULL ) {
+        extraData = stringDuplicate( starPos );
+        starPos[0] = '\0';
+        }
+    
+    SimpleVector<char> slurredChars;
+    
+    // 1 in 10 letters slurred with 1 drunkenness
+    // all characters slurred with 10 drunkenness
+    double baseSlurChance = 0.1;
+    
+    double slurChance = baseSlurChance * inDrunkenness;
+
+    // 1 in 10 words mixed up in order with 1 drunkenness
+    // all words mixed up at 10 drunkenness
+    double baseWordSwapChance = 0.1;
+    
+    double wordSwapChance = baseWordSwapChance * inDrunkenness;
+
+    // first, swap word order
+    SimpleVector<char *> *words = tokenizeString( working );
+
+    for( int i=0; i<words->size(); i++ ) {
+        if( randSource.getRandomBoundedDouble( 0, 1 ) < wordSwapChance ) {
+            char *temp = words->getElementDirect( i );
+            
+            // possible swap distance based on drunkenness
+            
+            int maxDist = inDrunkenness;
+            
+            if( maxDist >= words->size() - i ) {
+                maxDist = words->size() - i - 1;
+                }
+            
+            if( maxDist > 0 ) {
+                int jump = randSource.getRandomBoundedInt( 0, maxDist );
+            
+                
+                *( words->getElement( i ) ) = 
+                    words->getElementDirect( i + jump );
+            
+                *( words->getElement( i + jump ) ) = temp;
+                }
+            }
+        }
+    
+
+    char **allWords = words->getElementArray();
+    char *wordsTogether = join( allWords, words->size(), " " );
+    
+    words->deallocateStringElements();
+    delete words;
+    
+    delete [] allWords;
+
+    delete [] working;
+    
+    working = wordsTogether;
+
+
+    int len = strlen( working );
+    for( int i=0; i<len; i++ ) {
+        char c = working[i];
+        
+        slurredChars.push_back( c );
+
+        if( c < 'A' || c > 'Z' ) {
+            // only A-Z, no slurred punctuation
+            continue;
+            }
+
+        if( randSource.getRandomBoundedDouble( 0, 1 ) < slurChance ) {
+            slurredChars.push_back( c );
+            }
+        }
+
+    delete [] working;
+    
+    if( extraData != NULL ) {
+        slurredChars.appendElementString( extraData );
+        delete [] extraData;
+        }
+    
+
+    return slurredChars.getElementString();
     }
 
 
@@ -6673,6 +6793,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     // start full up to capacity with food
     newObject.foodStore = computeFoodCapacity( &newObject );
 
+    newObject.drunkenness = 0;
     
 
     if( ! newObject.isEve ) {
@@ -15852,6 +15973,11 @@ int main() {
                                         
                                         }
                                     
+                                    
+                                    if( targetObj->alcohol != 0 ) {
+                                        drinkAlcohol( nextPlayer,
+                                                      targetObj->alcohol );
+                                        }
 
 
                                     nextPlayer->foodDecrementETASeconds =
@@ -16729,6 +16855,12 @@ int main() {
                                         nextPlayer->holdingEtaDecay = 0;
                                         }
                                     
+                                    if( obj->alcohol != 0 ) {
+                                        drinkAlcohol( targetPlayer,
+                                                      obj->alcohol );
+                                        }
+
+
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
                                     nextPlayer->heldOriginY = 0;
@@ -19002,6 +19134,14 @@ int main() {
                     nextPlayer->foodDecrementETASeconds = curTime +
                         computeFoodDecrementTimeSeconds( nextPlayer );
 
+                    if( nextPlayer->drunkenness > 0 ) {
+                        // for every unit of food consumed, consume one
+                        // unit of drunkenness
+                        nextPlayer->drunkenness -= 1.0;
+                        if( nextPlayer->drunkenness < 0 ) {
+                            nextPlayer->drunkenness = 0;
+                            }
+                        }
                     
 
                     if( decrementedPlayer != NULL &&
@@ -21149,6 +21289,19 @@ int main() {
                                         }
                                     }
                                 
+                                if( speakerObj != NULL &&
+                                    speakerObj->drunkenness > 0 ) {
+                                    // slur their speech
+                                    
+                                    char *slurredPhrase =
+                                        slurSpeech( translatedPhrase,
+                                                    speakerObj->drunkenness );
+                                    
+                                    delete [] translatedPhrase;
+                                    translatedPhrase = slurredPhrase;
+                                    }
+                                
+
                                 int curseFlag =
                                     newSpeechCurseFlags.getElementDirect( u );
 

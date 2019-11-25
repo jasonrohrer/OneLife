@@ -422,6 +422,8 @@ typedef struct ObjectRecord {
         SimpleVector<int> IndY;
         SimpleVector<char*> IndPass;
 
+        int alcohol;
+
     } ObjectRecord;
 
 

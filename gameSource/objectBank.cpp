@@ -678,6 +678,7 @@ static void setupNoBackAccess( ObjectRecord *inR ) {
     }
 
 
+
 static void setupBlocksMoving( ObjectRecord *inR ) {
     inR->blocksMoving = false;
     
@@ -690,6 +691,18 @@ static void setupBlocksMoving( ObjectRecord *inR ) {
 
     if( pos != NULL ) {
         inR->blocksMoving = true;
+        }
+    }
+
+
+static void setupAlcohol( ObjectRecord *inR ) {
+    inR->alcohol = 0;
+
+    char *pos = strstr( inR->description, "+alcohol" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+alcohol%d", &( inR->alcohol ) );
         }
     }
 
@@ -765,7 +778,11 @@ float initObjectBankStep() {
                 setupAutoDefaultTrans( r );
                 
                 setupNoBackAccess( r );                
-                
+
+
+                setupAlcohol( r );
+
+
                 // do this later, after we parse floorHugging
                 // setupWall( r );
                 
@@ -3337,6 +3354,8 @@ int addObject( const char *inDescription,
     setupAutoDefaultTrans( r );
 
     setupNoBackAccess( r );            
+
+    setupAlcohol( r );
 
     setupWall( r );
 
