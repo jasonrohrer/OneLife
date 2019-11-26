@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 290     ???
+Version 290     2019-November-26
 
 
 --Added support for +frontWall object tag, to fix glitch with open door behind
