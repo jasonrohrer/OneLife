@@ -158,6 +158,9 @@ else if( $action == "show_data" ) {
 else if( $action == "show_detail" ) {
     fs_showDetail();
     }
+else if( $action == "reset_scores" ) {
+    fs_resetScores();
+    }
 else if( $action == "logout" ) {
     fs_logout();
     }
@@ -700,7 +703,22 @@ function fs_showData( $checkPassword = true ) {
 
 
     echo "<hr>";
-    
+
+    global $startingScore;
+?>
+    <FORM ACTION="server.php" METHOD="post">
+         New Score: 
+    <INPUT TYPE="hidden" NAME="action" VALUE="reset_scores">
+    <INPUT TYPE="text" MAXLENGTH=10 SIZE=5 NAME="target_score"
+           VALUE="<?php echo $startingScore;?>">
+
+    <INPUT TYPE="checkbox" NAME="confirm" VALUE=1> Confirm  
+    <INPUT TYPE="Submit" VALUE="Reset All Scores">
+    </FORM>
+<?php
+
+    echo "<hr>";
+         
     echo "<a href=\"server.php?action=show_log\">".
         "Show log</a>";
     echo "<hr>";
@@ -787,6 +805,67 @@ function fs_showDetail( $checkPassword = true ) {
     echo "</table></center>";
     }
 
+
+function fs_resetScores( $checkPassword = true ) {
+    if( $checkPassword ) {
+        fs_checkPassword( "reset_scores" );
+        }
+    
+    echo "[<a href=\"server.php?action=show_data" .
+         "\">Main</a>]<br><br><br>";
+    
+    global $tableNamePrefix;
+
+    $confirm = fs_requestFilter( "confirm", "/[01]/i", 0 );
+
+    if( $confirm == 0 ) {
+        echo "Must confirm";
+        return;
+        }
+    $targetScore = fs_requestFilter( "target_score", "/[0-9\-]+/i", -999 );
+
+    if( $targetScore == -999 ) {
+        echo "Invalid target score";
+        return;
+        }
+
+    $query = "INSERT INTO $tableNamePrefix"."lives ".
+        "SET name = 'Score_Reset', age = 42.0, display_id =3201";
+
+    fs_queryDatabase( $query );
+    
+    global $fs_mysqlLink;
+    $life_id = mysqli_insert_id( $fs_mysqlLink );
+
+    
+    $query = "SELECT id, score ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE score != $targetScore;";
+
+    $result = fs_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+    
+    for( $i=0; $i<$numRows; $i++ ) {
+        
+        $id = fs_mysqli_result( $result, $i, "id" );
+        $score = fs_mysqli_result( $result, $i, "score" );
+
+        $query = "INSERT into $tableNamePrefix"."offspring ".
+            "SET player_id = $id, life_id = $life_id, ".
+            "relation_name = 'Affects_Everyone', ".
+            "old_score = $score, ".
+            "new_score = $targetScore, ".
+            "death_time = CURRENT_TIMESTAMP; ";
+        fs_queryDatabase( $query );
+        
+        $query = "UPDATE $tableNamePrefix"."users ".
+            "SET score = $targetScore WHERE id = $id;";
+        fs_queryDatabase( $query );
+        }
+
+    echo "<br>Processed $numRows users<br><br>";
+    }
 
 
 

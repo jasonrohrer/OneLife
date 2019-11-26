@@ -815,6 +815,9 @@ typedef struct LiveObject {
         
         double foodCapModifier;
 
+        double drunkenness;
+
+
         double fever;
         
 
@@ -3012,6 +3015,137 @@ int computeOverflowFoodCapacity( int inBaseCapacity ) {
 
 
 
+static void drinkAlcohol( LiveObject *inPlayer, int inAlcoholAmount ) {
+    double doneGrowingAge = 16;
+    
+    double multiplier = 1.0;
+    
+
+    double age = computeAge( inPlayer );
+    
+    // alcohol affects a baby 2x
+    // affects an 8-y-o 1.5x
+    if( age < doneGrowingAge ) {
+        multiplier += 1.0 - age / doneGrowingAge;
+        }
+
+    double amount = inAlcoholAmount * multiplier;
+    
+    inPlayer->drunkenness += amount;
+    }
+
+
+
+char *slurSpeech( int inSpeakerID,
+                  char *inTranslatedPhrase, double inDrunkenness ) {
+    char *working = stringDuplicate( inTranslatedPhrase );
+    
+    char *starPos = strstr( working, " *" );
+
+    char *extraData = NULL;
+    
+    if( starPos != NULL ) {
+        extraData = stringDuplicate( starPos );
+        starPos[0] = '\0';
+        }
+    
+    SimpleVector<char> slurredChars;
+    
+    // 1 in 10 letters slurred with 1 drunkenness
+    // all characters slurred with 10 drunkenness
+    double baseSlurChance = 0.1;
+    
+    double slurChance = baseSlurChance * inDrunkenness;
+
+    // 2 in 10 words mixed up in order with 6 drunkenness
+    // all words mixed up at 10 drunkenness
+    double baseWordSwapChance = 0.1;
+
+    // but don't start mixing up words at all until 6 drunkenness
+    // thus, the 0 to 100% mix up range is from 6 to 10 drunkenness
+    double wordSwapChance = 2 * baseWordSwapChance * ( inDrunkenness - 5 );
+
+
+
+    // first, swap word order
+    SimpleVector<char *> *words = tokenizeString( working );
+
+    // always slurr exactly the same for a given speaker
+    // repeating the same phrase won't keep remapping
+    // but map different length phrases differently
+    JenkinsRandomSource slurRand( inSpeakerID + 
+                                  words->size() + 
+                                  inDrunkenness );
+    
+
+    for( int i=0; i<words->size(); i++ ) {
+        if( slurRand.getRandomBoundedDouble( 0, 1 ) < wordSwapChance ) {
+            char *temp = words->getElementDirect( i );
+            
+            // possible swap distance based on drunkenness
+            
+            // again, don't start reording words until 6 drunkenness
+            int maxDist = inDrunkenness - 5;
+
+            if( maxDist >= words->size() - i ) {
+                maxDist = words->size() - i - 1;
+                }
+            
+            if( maxDist > 0 ) {
+                int jump = slurRand.getRandomBoundedInt( 0, maxDist );
+            
+                
+                *( words->getElement( i ) ) = 
+                    words->getElementDirect( i + jump );
+            
+                *( words->getElement( i + jump ) ) = temp;
+                }
+            }
+        }
+    
+
+    char **allWords = words->getElementArray();
+    char *wordsTogether = join( allWords, words->size(), " " );
+    
+    words->deallocateStringElements();
+    delete words;
+    
+    delete [] allWords;
+
+    delete [] working;
+    
+    working = wordsTogether;
+
+
+    int len = strlen( working );
+    for( int i=0; i<len; i++ ) {
+        char c = working[i];
+        
+        slurredChars.push_back( c );
+
+        if( c < 'A' || c > 'Z' ) {
+            // only A-Z, no slurred punctuation
+            continue;
+            }
+
+        if( slurRand.getRandomBoundedDouble( 0, 1 ) < slurChance ) {
+            slurredChars.push_back( c );
+            }
+        }
+
+    delete [] working;
+    
+    if( extraData != NULL ) {
+        slurredChars.appendElementString( extraData );
+        delete [] extraData;
+        }
+    
+
+    return slurredChars.getElementString();
+    }
+
+
+
 
 
 // with 128-wide tiles, character moves at 480 pixels per second
@@ -5046,7 +5180,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                     speakerAge,
                     computeAge( otherPlayer ),
                     inPlayer->parentID,
-                    otherPlayer->parentID );
+                    otherPlayer->parentID,
+                    inPlayer->drunkenness / 10.0 );
             
             cursedName = isCurseNamingSay( translatedPhrase );
             
@@ -8027,6 +8162,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     // start full up to capacity with food
     newObject.foodStore = computeFoodCapacity( &newObject );
 
+    newObject.drunkenness = 0;
     
 
     if( ! newObject.isEve ) {
@@ -12045,7 +12181,8 @@ void executeKillAction( int inKillerIndex,
                                             
                         // don't drop their wound
                         if( hitPlayer->holdingID != 0 &&
-                            ! hitPlayer->holdingWound ) {
+                            ! hitPlayer->holdingWound &&
+                            ! hitPlayer->holdingBiomeSickness ) {
                             handleDrop( 
                                 targetPos.x, targetPos.y, 
                                 hitPlayer,
@@ -12080,7 +12217,8 @@ void executeKillAction( int inKillerIndex,
                                             
                                             
                         hitPlayer->holdingWound = true;
-                                            
+                        hitPlayer->holdingBiomeSickness = false;
+                        
                         if( woundChange ) {
                                                 
                             ForcedEffects e = 
@@ -12733,6 +12871,26 @@ static char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY ) {
         inPlayer->isTutorial ) {
         return true;
         }
+
+    if( inPlayer->holdingID > 0 ) {
+        ObjectRecord *heldO = getObject( inPlayer->holdingID );
+        if( heldO->permanent &&
+            heldO->speedMult == 0 ) {
+            // what they're holding is stuck stuck stuck, and they can't
+            // move at all.
+            
+            // is there some way for them to drop it?
+            // this prevents us from mistakenly dropping wounds that
+            // don't let you move or whatever
+            TransRecord *bareGroundT = getPTrans( inPlayer->holdingID, -1 );
+            
+            if( bareGroundT != NULL && bareGroundT->newTarget > 0 ) {
+                // Don't block them from dropping this object
+                return true;
+                }
+            }
+        }
+
     return isBiomeAllowed( inPlayer->displayID, inX, inY );
     }
 
@@ -14591,7 +14749,8 @@ int main() {
                                 ( ! nextPlayer->holdingWound || wasSick ) ) {
                                 // don't drop their wound
                                 if( nextPlayer->holdingID != 0 &&
-                                    ! nextPlayer->holdingWound ) {
+                                    ! nextPlayer->holdingWound &&
+                                    ! nextPlayer->holdingBiomeSickness ) {
                                     handleDrop( 
                                         curPos.x, curPos.y, 
                                         nextPlayer,
@@ -14607,7 +14766,8 @@ int main() {
                                 
                                 
                                 nextPlayer->holdingWound = true;
-                            
+                                nextPlayer->holdingBiomeSickness = false;
+                                
                                 ForcedEffects e = 
                                     checkForForcedEffects( 
                                         nextPlayer->holdingID );
@@ -16120,6 +16280,7 @@ int main() {
                                     }
 
                                 if( sicknessObjectID > 0 &&
+                                    ! nextPlayer->holdingWound &&
                                     nextPlayer->holdingID != 
                                     sicknessObjectID ) {
                                     
@@ -17388,6 +17549,11 @@ int main() {
                                         
                                         }
                                     
+                                    
+                                    if( targetObj->alcohol != 0 ) {
+                                        drinkAlcohol( nextPlayer,
+                                                      targetObj->alcohol );
+                                        }
 
 
                                     nextPlayer->foodDecrementETASeconds =
@@ -17731,7 +17897,8 @@ int main() {
                                         // never drop held wounds
                                         // they are the only thing a baby can
                                         // while held
-                                        if( ! hitPlayer->holdingWound && 
+                                        if( ! hitPlayer->holdingWound &&
+                                            ! hitPlayer->holdingBiomeSickness &&
                                             hitPlayer->holdingID > 0 ) {
                                             handleDrop( 
                                                 m.x, m.y, hitPlayer,
@@ -18215,6 +18382,12 @@ int main() {
                                         nextPlayer->holdingEtaDecay = 0;
                                         }
                                     
+                                    if( obj->alcohol != 0 ) {
+                                        drinkAlcohol( targetPlayer,
+                                                      obj->alcohol );
+                                        }
+
+
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
                                     nextPlayer->heldOriginY = 0;
@@ -19769,7 +19942,8 @@ int main() {
                                 }
                             }
                         }
-                    if( nextPlayer->holdingWound ) {
+                    if( nextPlayer->holdingWound ||
+                        nextPlayer->holdingBiomeSickness ) {
                         // holding a wound from some other, non-murder cause
                         // of death
                         doNotDrop = true;
@@ -20540,6 +20714,14 @@ int main() {
                     nextPlayer->foodDecrementETASeconds = curTime +
                         computeFoodDecrementTimeSeconds( nextPlayer );
 
+                    if( nextPlayer->drunkenness > 0 ) {
+                        // for every unit of food consumed, consume one
+                        // unit of drunkenness
+                        nextPlayer->drunkenness -= 1.0;
+                        if( nextPlayer->drunkenness < 0 ) {
+                            nextPlayer->drunkenness = 0;
+                            }
+                        }
                     
 
                     if( decrementedPlayer != NULL &&
@@ -22796,6 +22978,13 @@ int main() {
                                         stringDuplicate( trimmedPhrase );
                                     }
                                 else {
+                                    int speakerDrunkenness = 0;
+                                    
+                                    if( speakerObj != NULL ) {
+                                        speakerDrunkenness =
+                                            speakerObj->drunkenness;
+                                        }
+
                                     translatedPhrase =
                                         mapLanguagePhrase( 
                                             trimmedPhrase,
@@ -22806,7 +22995,8 @@ int main() {
                                             speakerAge,
                                             listenerAge,
                                             speakerParentID,
-                                            listenerParentID );
+                                            listenerParentID,
+                                            speakerDrunkenness / 10.0 );
                                     }
                                 
                                 if( speakerEveID != 
@@ -22833,6 +23023,20 @@ int main() {
                                         }
                                     }
                                 
+                                if( speakerObj != NULL &&
+                                    speakerObj->drunkenness > 0 ) {
+                                    // slur their speech
+                                    
+                                    char *slurredPhrase =
+                                        slurSpeech( speakerObj->id,
+                                                    translatedPhrase,
+                                                    speakerObj->drunkenness );
+                                    
+                                    delete [] translatedPhrase;
+                                    translatedPhrase = slurredPhrase;
+                                    }
+                                
+
                                 int curseFlag =
                                     newSpeechCurseFlags.getElementDirect( u );
 

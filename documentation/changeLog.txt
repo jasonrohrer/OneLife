@@ -3,6 +3,36 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 290     2019-November-26
+
+
+--Added support for +frontWall object tag, to fix glitch with open door behind
+  wall shelf.  Don't decide whether a wall should be drawn in front of other
+  walls based on whether the wall has slots.  This was the old test put in
+  place to detect wall signs, but really, slots isn't the thing... sticking out
+  beyond the normal wall boundaries is the thing.
+
+--Support for +drink tag in objects, showing DRANK instead of ATE and DRINK
+  instead of ATE and EAT for tool tips in client.
+
+
+
+
+Server Fixes
+
+--Not stuck dropping immobile horse after snake encounter in bad biome.  If the
+  object you're holding is permanent and has a speed multiplier of 0, you're
+  allowed to drop it in an otherwise bad biome.  Fixes #453
+
+--Support for drunkenness, which slurs and confuses speech, but also reduces
+  the language barrier.  The speech of a more and more drunk person is easier
+  and easier to understand for a foreigner.
+
+--Fixed so you can't drop a biome sickness object on the ground.  Fixes #456
+
+
+
+
 Version 288     2019-November-23
 
 --Fixed bug in temp meter tool tip text.
@@ -87,6 +117,8 @@ Server Fixes
   positive scores, or between 4 and 3 for negative scores.
 
 --Support for +noBackAccess tag to prevent wall shelf access through back wall.
+
+--Fitness server now supports manual, global score reset.
 
 
 

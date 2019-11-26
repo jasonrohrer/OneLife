@@ -242,12 +242,14 @@ loadingMapFailedSubMessage "THE FOLLOWING FILE IS MISSING OR CORRUPTED:##%s####R
 
 
 lastAte "ATE"
+lastDrank "DRANK"
 lastAtePermanent "ATE FROM"
 
 breastMilk "DRANK BREAST MILK"
 
 you "YOU"
 eat "EAT"
+eat "DRINK"
 
 youWith "YOU WITH"
 with "WITH"

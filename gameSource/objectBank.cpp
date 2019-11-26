@@ -572,14 +572,20 @@ static void setupMaxPickupAge( ObjectRecord *inR ) {
 
 static void setupWall( ObjectRecord *inR ) {
     inR->wallLayer = inR->floorHugging;
+    inR->frontWall = false;
+
+    if( ! inR->wallLayer ) {    
+        char *wallPos = strstr( inR->description, "+wall" );
+        if( wallPos != NULL ) {
+            inR->wallLayer = true;
+            }
+        }
     
     if( inR->wallLayer ) {
-        return;
-        }
-
-    char *wallPos = strstr( inR->description, "+wall" );
-    if( wallPos != NULL ) {
-        inR->wallLayer = true;
+        char *frontWallPos = strstr( inR->description, "+frontWall" );
+        if( frontWallPos != NULL ) {
+            inR->frontWall = true;
+            }
         }
     }
 
@@ -695,6 +701,18 @@ static void setupNoBackAccess( ObjectRecord *inR ) {
     }
 
 
+static void setupAlcohol( ObjectRecord *inR ) {
+    inR->alcohol = 0;
+
+    char *pos = strstr( inR->description, "+alcohol" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+alcohol%d", &( inR->alcohol ) );
+        }
+    }
+
+
 
 
 int getMaxSpeechPipeIndex() {
@@ -762,6 +780,8 @@ float initObjectBankStep() {
                 setupAutoDefaultTrans( r );
                 
                 setupNoBackAccess( r );                
+
+                setupAlcohol( r );
 
                 // do this later, after we parse floorHugging
                 // setupWall( r );
@@ -3508,6 +3528,8 @@ int addObject( const char *inDescription,
     setupAutoDefaultTrans( r );
 
     setupNoBackAccess( r );            
+
+    setupAlcohol( r );
 
     setupWall( r );
     

@@ -1609,9 +1609,9 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         continue;
                         }
                     if( ( b == 3 && 
-                          ! ( o->wallLayer && o->numSlots == 0 )  ) 
+                          ! ( o->wallLayer && ! o->frontWall )  ) 
                         ||
-                        ( b != 3 && o->wallLayer && o->numSlots == 0 
+                        ( b != 3 && o->wallLayer && ! o->frontWall 
                           && ! ( o->drawBehindPlayer || 
                                  o->anySpritesBehindPlayer ) ) ) {
                         continue;
@@ -1619,7 +1619,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
                     
                     if( b == 4 &&
-                        ! ( o->wallLayer && o->numSlots > 0 ) ) {
+                        ! ( o->wallLayer && o->frontWall ) ) {
                         continue;
                         }
 

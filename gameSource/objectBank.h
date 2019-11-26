@@ -158,6 +158,10 @@ typedef struct ObjectRecord {
         // floorHugging objects automatically get wallLayer set to true
         char wallLayer;
         
+        // true if in wall layer, but drawn in front of other walls
+        char frontWall;
+        
+
         
         int foodValue;
         
@@ -408,6 +412,8 @@ typedef struct ObjectRecord {
         char autoDefaultTrans;
 
         char noBackAccess;
+
+        int alcohol;
 
     } ObjectRecord;
 

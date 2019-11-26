@@ -669,6 +669,21 @@ static void initMapping( LanguageLearningMap *inMap,
     }
 
 
+LanguageLearningMap *cloneMapping( LanguageLearningMap *inMapping ) {
+    LanguageLearningMap *c = new LanguageLearningMap;
+    
+    initMapping( c, inMapping->eveIDA, inMapping->eveIDB, inMapping->playerID );
+    
+    c->firstPhraseHeard = inMapping->firstPhraseHeard;
+
+    for( int s=0; s<NUM_CLUSTER_SETS; s++ ) {
+        memcpy( c->allMappings[s], inMapping->allMappings[s], 
+                allClusterSizes[s] );
+        }
+    return c;
+    }
+
+
 
 typedef struct PlayerLearningRecord {
         int playerID;
@@ -955,7 +970,8 @@ void stepLanguage() {
 char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
                          int inPlayerIDA, int inPlayerIDB,
                          double inAgeA, double inAgeB,
-                         int inParentIDA, int inParentIDB ) {
+                         int inParentIDA, int inParentIDB,
+                         double inFractionToPassThrough ) {
 
     if( inEveIDA == inEveIDB ) {
         // self, no translation
@@ -1076,7 +1092,34 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
         
         learnB->firstPhraseHeard = true;
         }
+
+
+    // temporarily replace map with a stripped one that lets more pass through
+    // but don't do this if gradual learning over time is enabled
+    char deleteMapA = false;
     
+    if( learnA != NULL && inFractionToPassThrough > 0 && 
+        languageLearningRate == 0 ) {
+        
+        LanguageLearningMap *tweakedMap = cloneMapping( learnA );
+        
+        int seed = inEveIDA + inEveIDB;
+        
+        CustomRandomSource tweakRand( seed );
+        
+        for( int s=0; s<NUM_CLUSTER_SETS; s++ ) {
+            for( int c=0; c<allClusterSizes[s]; c++ ) {   
+                if( tweakRand.getRandomDouble() <= inFractionToPassThrough ) {
+                    tweakedMap->allMappings[s][c] = true;
+                    }
+                }
+            }
+
+        
+        learnA = tweakedMap;
+
+        deleteMapA = true;
+        }
 
 
     char *returnString = NULL;
@@ -1174,7 +1217,11 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
                     
                     char *ucNew = stringToUpperCase( newPhrase );
                     delete [] newPhrase;
-
+                    
+                    if( deleteMapA ) {
+                        delete learnA;
+                        }
+                    
                     return ucNew;
                     }
                 }
@@ -1187,5 +1234,9 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
         returnString = stringDuplicate( inPhrase );
         }
     
+    if( deleteMapA ) {
+        delete learnA;
+        }            
+
     return returnString;
     }

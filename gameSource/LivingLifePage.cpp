@@ -7415,7 +7415,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 if( ! o->drawBehindPlayer &&
                     o->wallLayer &&
                     o->permanent &&
-                    o->numSlots == 0 &&
+                    ! o->frontWall &&
                     mMapMoveSpeeds[ mapI ] == 0 ) {
                 
                     if( o->anySpritesBehindPlayer ) {
@@ -7451,7 +7451,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 if( ! o->drawBehindPlayer &&
                     o->wallLayer &&
                     o->permanent &&
-                    o->numSlots > 0 &&
+                    o->frontWall &&
                     mMapMoveSpeeds[ mapI ] == 0 ) {
                 
                     if( o->anySpritesBehindPlayer ) {
@@ -9898,8 +9898,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 if( ourLiveObject->holdingID > 0 &&
                     getObject( ourLiveObject->holdingID )->foodValue > 0 ) {
                     
+                    const char *key = "eat";
+                    
+                    if( strstr( 
+                            getObject( ourLiveObject->holdingID )->description,
+                            "+drink" ) != NULL ) {
+                        key = "drink";
+                        }
+
                     des = autoSprintf( "%s %s",
-                                       translate( "eat" ),
+                                       translate( key ),
                                        getObject( ourLiveObject->holdingID )->
                                        description );
                     desToDelete = des;
@@ -18782,7 +18790,11 @@ void LivingLifePage::step() {
 
                         const char *key = "lastAte";
                         
-                        if( lastAteObj->permanent ) {
+                        if( strstr( lastAteObj->description, 
+                                    "+drink" ) != NULL ) {
+                            key = "lastDrank";
+                            }
+                        else if( lastAteObj->permanent ) {
                             key = "lastAtePermanent";
                             }
                         
