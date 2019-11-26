@@ -25,6 +25,8 @@ Server Fixes
   the language barrier.  The speech of a more and more drunk person is easier
   and easier to understand for a foreigner.
 
+--Fixed so you can't drop a biome sickness object on the ground.  Fixes #456
+
 
 
 

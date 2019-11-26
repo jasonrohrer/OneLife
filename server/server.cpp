@@ -12179,7 +12179,8 @@ void executeKillAction( int inKillerIndex,
                                             
                         // don't drop their wound
                         if( hitPlayer->holdingID != 0 &&
-                            ! hitPlayer->holdingWound ) {
+                            ! hitPlayer->holdingWound &&
+                            ! hitPlayer->holdingBiomeSickness ) {
                             handleDrop( 
                                 targetPos.x, targetPos.y, 
                                 hitPlayer,
@@ -12214,7 +12215,8 @@ void executeKillAction( int inKillerIndex,
                                             
                                             
                         hitPlayer->holdingWound = true;
-                                            
+                        hitPlayer->holdingBiomeSickness = false;
+                        
                         if( woundChange ) {
                                                 
                             ForcedEffects e = 
@@ -14730,7 +14732,8 @@ int main() {
                                 ( ! nextPlayer->holdingWound || wasSick ) ) {
                                 // don't drop their wound
                                 if( nextPlayer->holdingID != 0 &&
-                                    ! nextPlayer->holdingWound ) {
+                                    ! nextPlayer->holdingWound &&
+                                    ! nextPlayer->holdingBiomeSickness ) {
                                     handleDrop( 
                                         curPos.x, curPos.y, 
                                         nextPlayer,
@@ -14746,7 +14749,8 @@ int main() {
                                 
                                 
                                 nextPlayer->holdingWound = true;
-                            
+                                nextPlayer->holdingBiomeSickness = false;
+                                
                                 ForcedEffects e = 
                                     checkForForcedEffects( 
                                         nextPlayer->holdingID );
@@ -16259,6 +16263,7 @@ int main() {
                                     }
 
                                 if( sicknessObjectID > 0 &&
+                                    ! nextPlayer->holdingWound &&
                                     nextPlayer->holdingID != 
                                     sicknessObjectID ) {
                                     
@@ -17875,7 +17880,8 @@ int main() {
                                         // never drop held wounds
                                         // they are the only thing a baby can
                                         // while held
-                                        if( ! hitPlayer->holdingWound && 
+                                        if( ! hitPlayer->holdingWound &&
+                                            ! hitPlayer->holdingBiomeSickness &&
                                             hitPlayer->holdingID > 0 ) {
                                             handleDrop( 
                                                 m.x, m.y, hitPlayer,
@@ -19919,7 +19925,8 @@ int main() {
                                 }
                             }
                         }
-                    if( nextPlayer->holdingWound ) {
+                    if( nextPlayer->holdingWound ||
+                        nextPlayer->holdingBiomeSickness ) {
                         // holding a wound from some other, non-murder cause
                         // of death
                         doNotDrop = true;
