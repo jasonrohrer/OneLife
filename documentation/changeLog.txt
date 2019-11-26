@@ -12,6 +12,9 @@ Version 290     ???
   place to detect wall signs, but really, slots isn't the thing... sticking out
   beyond the normal wall boundaries is the thing.
 
+--Support for +drink tag in objects, showing DRANK instead of ATE and DRINK
+  instead of ATE and EAT for tool tips in client.
+
 
 
 
