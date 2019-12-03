@@ -9,6 +9,10 @@ Version 292     ???
   game launches a web browser to view family trees, and the user leaves the
   browser open after they quit the game).
 
+--Object editor allows shift-right-click to insert other object with sprites
+  interleaved with existing.  Useful for making a feasting table that gets
+  emptied evenly across the different foods in parallel.
+
 
 
 
