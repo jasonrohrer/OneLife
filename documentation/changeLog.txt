@@ -13,6 +13,8 @@ Version 292     ???
   interleaved with existing.  Useful for making a feasting table that gets
   emptied evenly across the different foods in parallel.
 
+--Fixed DRINK translation.  Fixes #457
+
 
 
 
