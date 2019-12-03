@@ -12583,6 +12583,52 @@ void getLineageLineForPlayer( LiveObject *inPlayer,
 
 
 
+static void endBiomeSickness( 
+    LiveObject *nextPlayer,
+    int i,
+    SimpleVector<int> *playerIndicesToSendUpdatesAbout ) {
+    
+    int oldSickness = -1;
+    
+    if( ! nextPlayer->holdingWound ) {
+        // back to holding nothing
+        oldSickness = nextPlayer->holdingID;
+                                        
+        nextPlayer->holdingID = 0;
+                                        
+        playerIndicesToSendUpdatesAbout->
+            push_back( i );
+        }
+                                    
+    nextPlayer->holdingBiomeSickness = 
+        false;
+
+    // relief emot
+    nextPlayer->emotFrozen = false;
+    nextPlayer->emotUnfreezeETA = 0;
+        
+    newEmotPlayerIDs.push_back( 
+        nextPlayer->id );
+        
+    int newEmot = 
+        getBiomeReliefEmot( oldSickness );
+                                    
+    if( newEmot != -1 ) {
+        newEmotIndices.push_back( newEmot );
+        // 3 sec
+        newEmotTTLs.push_back( 3 );
+        }
+    else {
+        // clear
+        newEmotIndices.push_back( -1 );
+        // 3 sec
+        newEmotTTLs.push_back( 0 );
+        }
+    }
+
+
+
+
 
 
 void logFitnessDeath( LiveObject *nextPlayer ) {
@@ -16282,7 +16328,12 @@ int main() {
                                             }
                                         }
                                     
-                                    if( nextPlayer->holdingID == 0 ) {
+                                    if( nextPlayer->holdingID == 0 ||
+                                        nextPlayer->holdingBiomeSickness ) {
+                                        // we dropped what they were holding
+                                        // or they were holding a different
+                                        // biome sickness, which we can now
+                                        // freely replace
                                         
                                         nextPlayer->holdingID = 
                                             sicknessObjectID;
@@ -16312,42 +16363,9 @@ int main() {
                                 else if( sicknessObjectID == -1 &&
                                          nextPlayer->holdingBiomeSickness ) {
                                     
-                                    int oldSickness = -1;
-                                    
-                                    if( ! nextPlayer->holdingWound ) {
-                                        // back to holding nothing
-                                        oldSickness = nextPlayer->holdingID;
-                                        
-                                        nextPlayer->holdingID = 0;
-                                        
-                                        playerIndicesToSendUpdatesAbout.
-                                            push_back( i );
-                                        }
-                                    
-                                    nextPlayer->holdingBiomeSickness = 
-                                            false;
-
-                                    // relief emot
-                                    nextPlayer->emotFrozen = false;
-                                    nextPlayer->emotUnfreezeETA = 0;
-        
-                                    newEmotPlayerIDs.push_back( 
-                                        nextPlayer->id );
-        
-                                    int newEmot = 
-                                        getBiomeReliefEmot( oldSickness );
-                                    
-                                    if( newEmot != -1 ) {
-                                        newEmotIndices.push_back( newEmot );
-                                        // 3 sec
-                                        newEmotTTLs.push_back( 3 );
-                                        }
-                                    else {
-                                        // clear
-                                        newEmotIndices.push_back( -1 );
-                                        // 3 sec
-                                        newEmotTTLs.push_back( 0 );
-                                        }
+                                    endBiomeSickness( 
+                                        nextPlayer, i,
+                                        &playerIndicesToSendUpdatesAbout );
                                     }
                                 }
                             }
@@ -20486,6 +20504,19 @@ int main() {
                             nextPlayer->posForced = true;
                             }
                         playerIndicesToSendUpdatesAbout.push_back( i );
+
+                        if( nextPlayer->holdingBiomeSickness ) {
+                            int sicknessObjectID = 
+                                getBiomeSickness( 
+                                    nextPlayer->displayID, 
+                                    nextPlayer->xs,
+                                    nextPlayer->ys );
+                            if( sicknessObjectID == -1 ) {
+                                endBiomeSickness( 
+                                    nextPlayer, i, 
+                                    &playerIndicesToSendUpdatesAbout );
+                                }
+                            }
 
                         
                         // if they went far enough and fast enough

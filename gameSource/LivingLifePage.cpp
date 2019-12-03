@@ -1801,10 +1801,16 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
     char startBiomeBad = false;
     char startPointBad = false;
     
+    int startPointBadBiome = -1;
+
     if( startInd != -1 ) {
         // count as bad if we're not already standing on edge of bad biome
         // or in it
         startPointBad = isBadBiome( startInd );
+
+        if( startPointBad ) {
+            startPointBadBiome = mMapBiomes[ startInd ];
+            }
         
         if( startPointBad ||
             isBadBiome( startInd - 1 ) ||
@@ -1885,6 +1891,17 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
                     != -1 ) {
                     // route around bad biomes on long paths
 
+                    blockedMap[ y * pathFindingD + x ] = true;
+                    }
+                else if( ! ignoreBad &&
+                         startPointBad &&
+                         startPointBadBiome != -1 &&
+                         mMapFloors[ mapI ] == 0 &&
+                         mBadBiomeIndices.getElementIndex( mMapBiomes[ mapI ] ) 
+                         != -1 
+                         && 
+                         mMapBiomes[ mapI ] != startPointBadBiome ) {
+                    // crossing from one bad biome to another
                     blockedMap[ y * pathFindingD + x ] = true;
                     }
                 }
@@ -15736,7 +15753,10 @@ void LivingLifePage::step() {
                             //existing->lastAnimFade = 0;
                             if( oldHeld != 0 ) {
                                 if( o.id == ourID ) {
-                                    addNewAnimPlayerOnly( existing, ground );
+                                    if( existing->curAnim == doing ) {
+                                        addNewAnimPlayerOnly( 
+                                            existing, ground );
+                                        }
                                     }
                                 else {
                                     if( justAte ) {

@@ -15,6 +15,13 @@ Version 292     ???
 
 --Fixed DRINK translation.  Fixes #457
 
+--Fixed remaining inconsistencies with biome-crossing sicknesses.  You now lose
+  you sickness as soon as your move ends outside a bad biome (before, unless
+  you stepped out directly from edge, sickness would linger until your next
+  move).  You now correctly change sicknesses when crossing between two bad
+  biomes (your character forces you to stop in the separating good biome before
+  entering the second bad biome).  Fixes #449
+  
 
 
 
