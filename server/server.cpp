@@ -18906,13 +18906,37 @@ int main() {
                                             if( useTrans != NULL &&
                                                 useTrans->newActor == 0 ) {
                                                 
-                                                handleHoldingChange(
-                                                    nextPlayer,
-                                                    useTrans->newActor );
+                                                char canUse = true;
                                                 
-                                                setMapObject( 
-                                                    m.x, m.y,
-                                                    useTrans->newTarget );
+                                                ObjectRecord *newTargetObj = 
+                                                    NULL;
+                                                
+                                                if( useTrans->newTarget > 0 ) {
+                                                    newTargetObj =
+                                                        getObject(
+                                                            useTrans->
+                                                            newTarget );
+                                                    }
+
+                                                if( newTargetObj != NULL &&
+                                                    newTargetObj->
+                                                    isBiomeLimited &&
+                                                    ! canBuildInBiome( 
+                                                        newTargetObj,
+                                                        getMapBiome( m.x,
+                                                                     m.y ) ) ) {
+                                                    canUse = false;
+                                                    }
+
+                                                if( canUse ) {
+                                                    handleHoldingChange(
+                                                        nextPlayer,
+                                                        useTrans->newActor );
+                                                    
+                                                    setMapObject( 
+                                                        m.x, m.y,
+                                                        useTrans->newTarget );
+                                                    }
                                                 }
                                             }
                                         else if( canDrop && 

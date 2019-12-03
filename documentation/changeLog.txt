@@ -16,6 +16,14 @@ Version 292     ???
 
 
 
+Server Fixes
+
+--Right-click-on-ground-around-permanent, which is mapped to USE, no longer
+  bypasses biome lock (example:  planting rubber cutting).  Fixes #458
+
+
+
+
 Version 290     2019-November-26
 
 
