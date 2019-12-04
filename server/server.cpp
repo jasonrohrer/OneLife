@@ -810,6 +810,7 @@ typedef struct LiveObject {
         
 
         int foodStore;
+        int foodCap;
         
         double foodCapModifier;
 
@@ -7182,6 +7183,39 @@ static char shouldBeEveInjection( float inFitnessScore ) {
 
 
 
+// Set LiveObject::foodCap by computeFoodCapacity.
+// If capacity changed by grow up, fill foodStore from yummyBonusStore.
+static void setRecomputedFoodCap( LiveObject* inPlayer ) {
+    if( inPlayer == NULL ) {
+        return;
+        }
+    int cap = computeFoodCapacity( inPlayer );
+    if( inPlayer->foodCap == cap ) {
+        return;
+        }
+    if( inPlayer->foodCap == 0 ) {
+        inPlayer->foodCap = cap;
+        return;
+        }
+
+    int foodCapLess = cap - inPlayer->foodCap;
+    inPlayer->foodCap = cap;
+    inPlayer->foodUpdate = true;
+    
+    int fillFoodStore = foodCapLess;
+    if( inPlayer->yummyBonusStore < fillFoodStore ) {
+        fillFoodStore = inPlayer->yummyBonusStore;
+        }
+    if( fillFoodStore <= 0 ) {
+        return;
+        }
+
+    inPlayer->foodStore += fillFoodStore;
+    inPlayer->yummyBonusStore -= fillFoodStore;
+    }
+
+
+
 
 
 
@@ -7303,6 +7337,9 @@ int processLoggedInPlayer( char inAllowReconnect,
             o->firstMapSent = false;
             o->firstMessageSent = false;
             o->inFlight = false;
+            
+            // resend food store
+            o->foodUpdate = true;
             
             o->connected = true;
             
@@ -8158,7 +8195,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.fever = 0;
 
     // start full up to capacity with food
-    newObject.foodStore = computeFoodCapacity( &newObject );
+    setRecomputedFoodCap( &newObject );
+    newObject.foodStore = newObject.foodCap;
 
     newObject.drunkenness = 0;
     
@@ -12244,6 +12282,7 @@ void executeKillAction( int inKillerIndex,
                                 hitPlayer->
                                     foodCapModifier = 
                                     e.foodCapModifier;
+                                setRecomputedFoodCap( hitPlayer );
                                 hitPlayer->foodUpdate = 
                                     true;
                                 }
@@ -14817,6 +14856,7 @@ int main() {
                                     nextPlayer->yummyBonusStore = 0;
                                     nextPlayer->foodCapModifier = 
                                         e.foodCapModifier;
+                                    setRecomputedFoodCap( nextPlayer );
                                     nextPlayer->foodUpdate = true;
                                     }
                                 if( e.feverSet ) {
@@ -14969,8 +15009,8 @@ int main() {
                         
                         // keep them full of food so they don't 
                         // die of hunger during the pull
-                        nextPlayer->foodStore = 
-                            computeFoodCapacity( nextPlayer );
+                        setRecomputedFoodCap( nextPlayer );
+                        nextPlayer->foodStore = nextPlayer->foodCap;
                         
 
                         int length;
@@ -17509,9 +17549,9 @@ int main() {
                                     
                                     nextPlayer->foodStore += eatBonus;
 
-                                    int cap =
-                                        computeFoodCapacity( nextPlayer );
-                                    
+                                    setRecomputedFoodCap( nextPlayer );
+                                    int cap = nextPlayer->foodCap;
+
                                     if( nextPlayer->foodStore > cap ) {
     
                                         int over = nextPlayer->foodStore - cap;
@@ -17926,8 +17966,8 @@ int main() {
                                     // if adult fertile female, baby auto-fed
                                     if( isFertileAge( nextPlayer ) ) {
                                         
-                                        hitPlayer->foodStore = 
-                                            computeFoodCapacity( hitPlayer );
+                                        setRecomputedFoodCap( hitPlayer );
+                                        hitPlayer->foodStore = hitPlayer->foodCap;
                 
                                         hitPlayer->foodUpdate = true;
                                         hitPlayer->responsiblePlayerID =
@@ -18202,6 +18242,7 @@ int main() {
                                             targetPlayer->yummyBonusStore = 0;
                                             targetPlayer->foodCapModifier = 
                                                 e.foodCapModifier;
+                                            setRecomputedFoodCap( targetPlayer );
                                             targetPlayer->foodUpdate = true;
                                             }
                                         if( e.feverSet ) {
@@ -18214,7 +18255,8 @@ int main() {
                                 ObjectRecord *obj = 
                                     getObject( nextPlayer->holdingID );
                                 
-                                int cap = computeFoodCapacity( targetPlayer );
+                                setRecomputedFoodCap( targetPlayer );
+                                int cap = targetPlayer->foodCap;
                                 
 
                                 // first case:
@@ -23333,10 +23375,11 @@ int main() {
                 
 
 
+                setRecomputedFoodCap( nextPlayer );
                 if( nextPlayer->foodUpdate ) {
                     // send this player a food status change
                     
-                    int cap = computeFoodCapacity( nextPlayer );
+                    int cap = nextPlayer->foodCap;
                     
                     if( cap < nextPlayer->foodStore ) {
                         nextPlayer->foodStore = cap;
