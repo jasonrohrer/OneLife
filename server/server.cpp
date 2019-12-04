@@ -16992,60 +16992,6 @@ int main() {
                                                   target );
                                     }
 
-                                char blockedTool = false;
-                                
-                                if( nextPlayer->holdingID > 0 &&
-                                    r != NULL &&
-                                    r->newActor != 0 ) {
-                                    // make sure player can use this tool
-                                    // only counts as a real use if something
-                                    // is left in the hand
-                                    // otherwise, it could be a stacking action
-                                    // (like putting a wool pad in a bowl)
-
-                                    if( ! canPlayerUseOrLearnTool( 
-                                            nextPlayer,
-                                            nextPlayer->holdingID ) ) {
-                                        r = NULL;
-                                        blockedTool = true;
-                                        }
-                                    }
-                                
-                                if( ! blockedTool &&
-                                    target > 0 &&
-                                    r != NULL ) {
-
-                                    char couldBeTool = false;
-                                    
-                                    if( getObject( target )->permanent ) {
-                                        couldBeTool = true;
-                                        }
-                                    else {
-                                        // non-perm
-
-                                        // some tools sit loose on ground
-                                        // and then we do something to them
-                                        // to make them permanent
-                                        // (like pounding stakes)
-                                        // Check if this is the case
-                                        
-                                        if( r->newTarget > 0 &&
-                                            getObject( r->newTarget )->
-                                            permanent ) {
-                                            couldBeTool = true;
-                                            }
-                                        }
-
-                                    // make sure player can use this ground-tool
-                                    if( couldBeTool &&
-                                        ! canPlayerUseOrLearnTool( 
-                                            nextPlayer,
-                                            target ) ) {
-                                        r = NULL;
-                                        blockedTool = true;
-                                        }
-                                    }
-                                
                                 
                                 if( r != NULL &&
                                     targetObj->numSlots > 0 ) {
@@ -17169,15 +17115,6 @@ int main() {
                                         }
                                     }
                                 
-
-                                if( r == NULL && 
-                                    nextPlayer->holdingID > 0 &&
-                                    ! blockedTool ) {
-                                    
-                                    logTransitionFailure( 
-                                        nextPlayer->holdingID,
-                                        target );
-                                    }
                                 
                                 double playerAge = computeAge( nextPlayer );
                                 
@@ -17207,6 +17144,69 @@ int main() {
                                             r = NULL;
                                             }
                                         }
+                                    }
+
+                                char blockedTool = false;
+                                
+                                if( nextPlayer->holdingID > 0 &&
+                                    r != NULL &&
+                                    r->newActor != 0 ) {
+                                    // make sure player can use this tool
+                                    // only counts as a real use if something
+                                    // is left in the hand
+                                    // otherwise, it could be a stacking action
+                                    // (like putting a wool pad in a bowl)
+
+                                    if( ! canPlayerUseOrLearnTool( 
+                                            nextPlayer,
+                                            nextPlayer->holdingID ) ) {
+                                        r = NULL;
+                                        blockedTool = true;
+                                        }
+                                    }
+                                
+                                if( ! blockedTool &&
+                                    target > 0 &&
+                                    r != NULL ) {
+
+                                    char couldBeTool = false;
+                                    
+                                    if( getObject( target )->permanent ) {
+                                        couldBeTool = true;
+                                        }
+                                    else {
+                                        // non-perm
+
+                                        // some tools sit loose on ground
+                                        // and then we do something to them
+                                        // to make them permanent
+                                        // (like pounding stakes)
+                                        // Check if this is the case
+                                        
+                                        if( r->newTarget > 0 &&
+                                            getObject( r->newTarget )->
+                                            permanent ) {
+                                            couldBeTool = true;
+                                            }
+                                        }
+
+                                    // make sure player can use this ground-tool
+                                    if( couldBeTool &&
+                                        ! canPlayerUseOrLearnTool( 
+                                            nextPlayer,
+                                            target ) ) {
+                                        r = NULL;
+                                        blockedTool = true;
+                                        }
+                                    }
+
+                                if( r == NULL && 
+                                    nextPlayer->holdingID > 0 &&
+                                    ! blockedTool ) {
+                                    
+                                    logTransitionFailure( 
+                                        nextPlayer->holdingID,
+                                        target );
                                     }
 
 
