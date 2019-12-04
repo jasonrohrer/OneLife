@@ -44,11 +44,6 @@ void getEveMovingGridPosition( int *inOutX, int *inOutY ) {
         }    
     
 
-    File eveLocFile( NULL, "lastEveLocation.txt" );
-    char *locString = autoSprintf( "%d,%d", newX, newY );
-    eveLocFile.writeToFile( locString );
-    delete [] locString;
-
     *inOutX = newX;
     *inOutY = newY;
     }

@@ -62,7 +62,7 @@ void resetEveRadius();
 // considered.
 void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                      SimpleVector<GridPos> *inOtherPeoplePos,
-                     char inAllowRespawn = true );
+                     char inAllowRespawn = true, int inCurseLevel = 0 );
 
 
 // save recent placements on Eve's death so that this player can spawn
@@ -295,7 +295,7 @@ int getMapObjectRaw( int inX, int inY );
 // from leaving (though flights from outside are unrestriced)
 GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
                                  doublePair inDir,
-                                 int inRadiusLimit = -1 );
+                                 int inRadiusLimit = -1, int inCurseLevel = 0 );
 
 
 

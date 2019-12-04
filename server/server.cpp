@@ -8592,25 +8592,8 @@ int processLoggedInPlayer( char inAllowReconnect,
         int startX, startY;
         getEvePosition( newObject.email, 
                         newObject.id, &startX, &startY, 
-                        &otherPeoplePos, allowEveRespawn );
+                        &otherPeoplePos, allowEveRespawn, inCurseStatus.curseLevel );
 
-        if( inCurseStatus.curseLevel > 0 ) {
-            // keep cursed players away
-
-            // 20K away in X and 20K away in Y, pushing out away from 0
-            // in both directions
-
-            if( startX > 0 )
-                startX += 20000;
-            else
-                startX -= 20000;
-            
-            if( startY > 0 )
-                startY += 20000;
-            else
-                startY -= 20000;
-            }
-        
 
         if( SettingsManager::getIntSetting( "forceEveLocation", 0 ) ) {
 
@@ -20603,7 +20586,8 @@ int main() {
                                         nextPlayer->xs,
                                         nextPlayer->ys,
                                         takeOffDir,
-                                        radiusLimit );
+                                        radiusLimit,
+                                        nextPlayer->curseStatus.curseLevel );
                                     
                                     AppLog::infoF( 
                                     "Player %d non-map flight taking off "

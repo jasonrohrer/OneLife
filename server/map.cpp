@@ -193,6 +193,7 @@ static int eveRadius = eveRadiusStart;
 
 
 GridPos eveLocation = { 0,0 };
+GridPos donkeytownLocation = { 0,20000 };
 static int eveLocationUsage = 0;
 static int maxEveLocationUsage = 3;
 
@@ -3115,6 +3116,17 @@ char initMap() {
 
         printf( "Loading lastEveLocation %d,%d\n", 
                 eveLocation.x, eveLocation.y );
+        }
+
+    FILE *donkeytownLocFile = fopen( "lastDonkeytownLocation.txt", "r" );
+    if( donkeytownLocFile != NULL ) {
+        
+        fscanf( donkeytownLocFile, "%d,%d", &( donkeytownLocation.x ), &( donkeytownLocation.y ) );
+
+        fclose( donkeytownLocFile );
+
+        printf( "Loading lastDonkeytownLocation %d,%d\n", 
+                donkeytownLocation.x, donkeytownLocation.y );
         }
 
     // override if shutdownLongLineagePos exists
@@ -8032,7 +8044,7 @@ extern char doesEveLineExist( int inEveID );
 
 void getEvePosition( const char *inEmail, int inID, int *outX, int *outY, 
                      SimpleVector<GridPos> *inOtherPeoplePos,
-                     char inAllowRespawn ) {
+                     char inAllowRespawn, int inCurseLevel ) {
 
     int currentEveRadius = eveRadius;
 
@@ -8060,11 +8072,29 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         printf( "Placing new Eve:  "
                 "using Eve moving grid method\n" );
 
-        getEveMovingGridPosition( & eveLocation.x, & eveLocation.y );
-        
-        ave.x = eveLocation.x;
-        ave.y = eveLocation.y;
-        
+        if( inCurseLevel <= 0 ) {
+            getEveMovingGridPosition( & eveLocation.x, & eveLocation.y );
+
+            File eveLocFile( NULL, "lastEveLocation.txt" );
+            char *locString = autoSprintf( "%d,%d", eveLocation.x, eveLocation.y );
+            eveLocFile.writeToFile( locString );
+            delete [] locString;
+            
+            ave.x = eveLocation.x;
+            ave.y = eveLocation.y;
+            }
+        else {
+            getEveMovingGridPosition( & donkeytownLocation.x, & donkeytownLocation.y );
+
+            File eveLocFile( NULL, "lastDonkeytownLocation.txt" );
+            char *locString = autoSprintf( "%d,%d", donkeytownLocation.x, donkeytownLocation.y );
+            eveLocFile.writeToFile( locString );
+            delete [] locString;
+
+            ave.x = donkeytownLocation.x;
+            ave.y = donkeytownLocation.y;
+            }
+
         forceEveToBorder = true;
         currentEveRadius = 50;
         }
@@ -8849,7 +8879,7 @@ GridPos getClosestLandingPos( GridPos inTargetPos, char *outFound ) {
 
 GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY, 
                                  doublePair inDir, 
-                                 int inRadiusLimit ) {
+                                 int inRadiusLimit, int inCurseLevel ) {
     int closestIndex = -1;
     GridPos closestPos;
     double closestDist = DBL_MAX;
@@ -8929,7 +8959,7 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
     SimpleVector<GridPos> otherPeoplePos;
     
     getEvePosition( "dummyPlaneCrashEmail@test.com", 0, &eveX, &eveY, 
-                    &otherPeoplePos, false );
+                    &otherPeoplePos, false, inCurseLevel );
     
     GridPos returnVal = { eveX, eveY };
     
