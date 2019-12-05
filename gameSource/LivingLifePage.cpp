@@ -314,12 +314,26 @@ static HomePos *getHomePosRecord() {
 
 // returns pointer to record, NOT destroyed by caller, or NULL if 
 // home unknown
-static  GridPos *getHomeLocation( char *outTemp ) {
+static  GridPos *getHomeLocation( char *outTemp, char inAncient ) {
     *outTemp = false;
     
+    if( inAncient ) {
+        GridPos *returnPos = NULL;
+        
+        if( homePosStack.size() > 0 ) {
+            HomePos *r = homePosStack.getElement( 0 );
+            if( r->ancient ) {
+                returnPos = &( r->pos );
+                }
+            }
+        return returnPos;
+        }
+        
+
     HomePos *r = getHomePosRecord();
 
-    if( r != NULL ) {
+    // don't consider ancient marker here, if it's the only one
+    if( r != NULL && ! r->ancient ) {
         *outTemp = r->temporary;
 
         return &( r->pos );
@@ -418,10 +432,12 @@ static void addAncientHomeLocation( int inX, int inY ) {
 static int getHomeDir( doublePair inCurrentPlayerPos, 
                        double *outTileDistance = NULL,
                        char *outTooClose = NULL,
-                       char *outTemp = NULL ) {
+                       char *outTemp = NULL,
+                       // 1 for ancient marker
+                       int inIndex = 0 ) {
     char temporary = false;
     
-    GridPos *p = getHomeLocation( &temporary );
+    GridPos *p = getHomeLocation( &temporary, ( inIndex == 1 ) );
     
     if( p == NULL ) {
         return -1;
@@ -2403,6 +2419,10 @@ LivingLifePage::LivingLifePage()
         mUsingSteam = true;
         }
 
+    mHomeSlipSprites[0] = mHomeSlipSprite;
+    mHomeSlipSprites[1] = mHomeSlipBlankTopSprite;
+    
+
     mForceGroundClick = false;
     
     mYumSlipSprites[0] = loadSprite( "yumSlip1.tga", false );
@@ -2481,8 +2501,15 @@ LivingLifePage::LivingLifePage()
     mNotePaperHideOffset.y = -420;
 
 
-    mHomeSlipHideOffset.x = 0;
-    mHomeSlipHideOffset.y = -360;
+    mHomeSlipHideOffset[0].x = 0;
+    mHomeSlipHideOffset[0].y = -360;
+
+    mHomeSlipHideOffset[1].x = 0;
+    mHomeSlipHideOffset[1].y = 421;
+
+    mHomeSlipShowDelta[0] = 68;
+    mHomeSlipShowDelta[1] = -50;
+    
 
 
     for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
@@ -2823,9 +2850,11 @@ LivingLifePage::~LivingLifePage() {
         closeSocket( mServerSocket );
         }
     
-    mPreviousHomeDistStrings.deallocateStringElements();
-    mPreviousHomeDistFades.deleteAll();
-
+    for( int j=0; j<2; j++ ) {
+        mPreviousHomeDistStrings[j].deallocateStringElements();
+        mPreviousHomeDistFades[j].deleteAll();
+        }
+    
     
     delete [] mMapAnimationFrameCount;
     delete [] mMapAnimationLastFrameCount;
@@ -5496,21 +5525,26 @@ char *getSpokenNumber( unsigned int inNumber, int inSigFigs = 2 ) {
 
 
 
-static char mapHintEverDrawn = false;
+static char mapHintEverDrawn[2] = { false, false };
 
 
 
-void LivingLifePage::drawHomeSlip( doublePair inSlipPos ) {
+void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
     doublePair slipPos = inSlipPos;
     
     setDrawColor( 1, 1, 1, 1 );
-    drawSprite( mHomeSlipSprite, slipPos );
+    drawSprite( mHomeSlipSprites[inIndex], slipPos );
 
         
     doublePair arrowPos = slipPos;
     
-    arrowPos.y += 35;
-
+    if( inIndex == 0 ) {
+        arrowPos.y += 35;
+        }
+    else {
+        arrowPos.y -= 35;
+        }
+    
     LiveObject *ourLiveObject = getOurLiveObject();
 
     if( ourLiveObject != NULL ) {
@@ -5520,26 +5554,27 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos ) {
         char temporary = false;
             
         int arrowIndex = getHomeDir( ourLiveObject->currentPos, &homeDist,
-                                     &tooClose, &temporary );
+                                     &tooClose, &temporary, inIndex );
             
-        if( arrowIndex == -1 || ! mHomeArrowStates[arrowIndex].solid ) {
+        if( arrowIndex == -1 || 
+            ! mHomeArrowStates[inIndex][arrowIndex].solid ) {
             // solid change
 
             // fade any solid
                 
             int foundSolid = -1;
             for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
-                if( mHomeArrowStates[i].solid ) {
-                    mHomeArrowStates[i].solid = false;
+                if( mHomeArrowStates[inIndex][i].solid ) {
+                    mHomeArrowStates[inIndex][i].solid = false;
                     foundSolid = i;
                     }
                 }
             if( foundSolid != -1 ) {
                 for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
                     if( i != foundSolid ) {
-                        mHomeArrowStates[i].fade -= 0.0625;
-                        if( mHomeArrowStates[i].fade < 0 ) {
-                            mHomeArrowStates[i].fade = 0;
+                        mHomeArrowStates[inIndex][i].fade -= 0.0625;
+                        if( mHomeArrowStates[inIndex][i].fade < 0 ) {
+                            mHomeArrowStates[inIndex][i].fade = 0;
                             }
                         }
                     }                
@@ -5547,8 +5582,8 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos ) {
             }
             
         if( arrowIndex != -1 ) {
-            mHomeArrowStates[arrowIndex].solid = true;
-            mHomeArrowStates[arrowIndex].fade = 1.0;
+            mHomeArrowStates[inIndex][arrowIndex].solid = true;
+            mHomeArrowStates[inIndex][arrowIndex].fade = 1.0;
             }
             
         toggleMultiplicativeBlend( true );
@@ -5556,7 +5591,7 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos ) {
         toggleAdditiveTextureColoring( true );
         
         for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
-            HomeArrow a = mHomeArrowStates[i];
+            HomeArrow a = mHomeArrowStates[inIndex][i];
                 
             if( ! a.solid ) {
                     
@@ -5583,22 +5618,38 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos ) {
         char drawTopAsErased = true;
             
         doublePair distPos = arrowPos;
-            
-        distPos.y -= 47;
-            
         doublePair mapHintPos = arrowPos;
-        mapHintPos.y -= 47;
+
+        if( inIndex == 0 ) {
+            distPos.y -= 47;
+            mapHintPos.y -= 47;
+            }
+        else {
+            distPos.y += 32;
+            mapHintPos.y += 32;
+            }
+        
 
         setDrawColor( 0, 0, 0, 1 );
 
         if( temporary ) {
             // push distance label further down
-            distPos.y -= 20;
-            mapHintEverDrawn = true;
+            if( inIndex == 0 ) {
+                distPos.y -= 20;
+                }
+            else {
+                distPos.y += 20;
+                }
+            mapHintEverDrawn[inIndex] = true;
             pencilFont->drawString( "MAP", mapHintPos, alignCenter );
             }
-        else if( mapHintEverDrawn ) {
-            distPos.y -= 20;
+        else if( mapHintEverDrawn[inIndex] ) {
+            if( inIndex == 0 ) {
+                distPos.y -= 20;
+                }
+            else {
+                distPos.y += 20;
+                }
             pencilErasedFont->drawString( "MAP", mapHintPos, alignCenter );
             }
             
@@ -5644,32 +5695,33 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos ) {
 
             char alreadyOld = false;
 
-            for( int i=0; i<mPreviousHomeDistStrings.size(); i++ ) {
+            for( int i=0; i<mPreviousHomeDistStrings[inIndex].size(); i++ ) {
                 char *oldString = 
-                    mPreviousHomeDistStrings.getElementDirect( i );
+                    mPreviousHomeDistStrings[inIndex].getElementDirect( i );
                     
                 if( strcmp( oldString, distString ) == 0 ) {
                     // hit
                     alreadyOld = true;
                     // move to top
-                    mPreviousHomeDistStrings.deleteElement( i );
-                    mPreviousHomeDistStrings.push_back( oldString );
+                    mPreviousHomeDistStrings[inIndex].deleteElement( i );
+                    mPreviousHomeDistStrings[inIndex].push_back( oldString );
                         
-                    mPreviousHomeDistFades.deleteElement( i );
-                    mPreviousHomeDistFades.push_back( 1.0f );
+                    mPreviousHomeDistFades[inIndex].deleteElement( i );
+                    mPreviousHomeDistFades[inIndex].push_back( 1.0f );
                     break;
                     }
                 }
                 
             if( ! alreadyOld ) {
                 // put new one top
-                mPreviousHomeDistStrings.push_back( distString );
-                mPreviousHomeDistFades.push_back( 1.0f );
+                mPreviousHomeDistStrings[inIndex].push_back( distString );
+                mPreviousHomeDistFades[inIndex].push_back( 1.0f );
                     
                 // fade old ones
-                for( int i=0; i<mPreviousHomeDistFades.size() - 1; i++ ) {
+                for( int i=0; i<mPreviousHomeDistFades[inIndex].size() - 1; 
+                     i++ ) {
                     float fade = 
-                        mPreviousHomeDistFades.getElementDirect( i );
+                        mPreviousHomeDistFades[inIndex].getElementDirect( i );
                         
                     if( fade > 0.5 ) {
                         fade -= 0.20;
@@ -5678,12 +5730,12 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos ) {
                         fade -= 0.1;
                         }
                         
-                    *( mPreviousHomeDistFades.getElement( i ) ) =
+                    *( mPreviousHomeDistFades[inIndex].getElement( i ) ) =
                         fade;
                         
                     if( fade <= 0 ) {
-                        mPreviousHomeDistFades.deleteElement( i );
-                        mPreviousHomeDistStrings.
+                        mPreviousHomeDistFades[inIndex].deleteElement( i );
+                        mPreviousHomeDistStrings[inIndex].
                             deallocateStringElement( i );
                         i--;
                         }
@@ -5694,21 +5746,21 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos ) {
                 }
             }
             
-        int numPrevious = mPreviousHomeDistStrings.size();
+        int numPrevious = mPreviousHomeDistStrings[inIndex].size();
             
         if( numPrevious > 1 ||
             ( numPrevious == 1 && drawTopAsErased ) ) {
                 
-            int limit = mPreviousHomeDistStrings.size() - 1;
+            int limit = mPreviousHomeDistStrings[inIndex].size() - 1;
                 
             if( drawTopAsErased ) {
                 limit += 1;
                 }
             for( int i=0; i<limit; i++ ) {
                 float fade = 
-                    mPreviousHomeDistFades.getElementDirect( i );
+                    mPreviousHomeDistFades[inIndex].getElementDirect( i );
                 char *string = 
-                    mPreviousHomeDistStrings.getElementDirect( i );
+                    mPreviousHomeDistStrings[inIndex].getElementDirect( i );
                     
                 setDrawColor( 0, 0, 0, fade * pencilErasedFontExtraFade );
                 pencilErasedFont->drawString( 
@@ -8871,10 +8923,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
 
-    doublePair slipPos = add( mHomeSlipPosOffset, lastScreenViewCenter );
-    
-    if( ! equal( mHomeSlipPosOffset, mHomeSlipHideOffset ) ) {
-        drawHomeSlip( slipPos );
+    for( int j=0; j<2; j++ ) {
+        doublePair slipPos = add( mHomeSlipPosOffset[j], lastScreenViewCenter );
+        
+        if( ! equal( mHomeSlipPosOffset[j], mHomeSlipHideOffset[j] ) ) {
+            drawHomeSlip( slipPos, j );
+            }
         }
 
 
@@ -11920,29 +11974,44 @@ void LivingLifePage::step() {
     LiveObject *ourObject = getOurLiveObject();
 
     if( ourObject != NULL ) {    
-        char tooClose = false;
-        double homeDist = 0;
-        char temporary = false;
         
-        int homeArrow = getHomeDir( ourObject->currentPos, &homeDist,
-                                    &tooClose, &temporary );
-        
-        if( ! apocalypseInProgress && homeArrow != -1 && ! tooClose ) {
-            mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y + 68;
+        for( int j=0; j<2; j++ ) {
+            char tooClose = false;
+            double homeDist = 0;
+            char temporary = false;
             
-            char longDistance = homeDist > 1000;
-
-            if( longDistance ) {
-                mHomeSlipPosTargetOffset.y += 20;
+            int homeArrow = getHomeDir( ourObject->currentPos, &homeDist,
+                                        &tooClose, &temporary, j );
+            
+            if( ! apocalypseInProgress && homeArrow != -1 && ! tooClose ) {
+                mHomeSlipPosTargetOffset[j].y = 
+                    mHomeSlipHideOffset[j].y + mHomeSlipShowDelta[j];
+                
+                char longDistance = homeDist > 1000;
+                
+                if( longDistance ) {
+                    if( j == 0 ) {
+                        mHomeSlipPosTargetOffset[j].y += 20;
+                        }
+                    else {
+                        mHomeSlipPosTargetOffset[j].y -= 20;
+                        }
+                    }
+                if( temporary || 
+                    ( mapHintEverDrawn[j] && longDistance ) ) {
+                    if( j == 0 ) {
+                        mHomeSlipPosTargetOffset[j].y += 20;
+                        }
+                    else {
+                        mHomeSlipPosTargetOffset[j].y -= 20;
+                        }
+                    }
                 }
-            if( temporary || ( mapHintEverDrawn && longDistance ) ) {
-                mHomeSlipPosTargetOffset.y += 20;
+            else {
+                mHomeSlipPosTargetOffset[j].y = mHomeSlipHideOffset[j].y;
                 }
             }
-        else {
-            mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y;
-            }
-
+        
         int cm = ourObject->currentMouseOverClothingIndex;
         if( cm != -1 ) {
             ourObject->clothingHighlightFades[ cm ] 
@@ -12005,23 +12074,29 @@ void LivingLifePage::step() {
 
     
     // update home slip positions
-    if( ! equal( mHomeSlipPosOffset, mHomeSlipPosTargetOffset ) ) {
+    for( int j=0; j<2; j++ )
+    if( ! equal( mHomeSlipPosOffset[j], mHomeSlipPosTargetOffset[j] ) ) {
         doublePair delta = 
-            sub( mHomeSlipPosTargetOffset, mHomeSlipPosOffset );
+            sub( mHomeSlipPosTargetOffset[j], mHomeSlipPosOffset[j] );
         
-        double d = distance( mHomeSlipPosTargetOffset, mHomeSlipPosOffset );
+        double d = distance( mHomeSlipPosTargetOffset[j], 
+                             mHomeSlipPosOffset[j] );
         
         
         if( d <= 1 ) {
-            mHomeSlipPosOffset = mHomeSlipPosTargetOffset;
-            if( equal( mHomeSlipPosTargetOffset, mHomeSlipHideOffset ) ) {
+            mHomeSlipPosOffset[j] = mHomeSlipPosTargetOffset[j];
+            if( equal( mHomeSlipPosTargetOffset[j], mHomeSlipHideOffset[j] ) ) {
                 // fully hidden
                 // clear all arrow states
                 for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
-                    mHomeArrowStates[i].solid = false;
-                    mHomeArrowStates[i].fade = 0;
+                    mHomeArrowStates[j][i].solid = false;
+                    mHomeArrowStates[j][i].fade = 0;
                     }
-                mapHintEverDrawn = false;
+                mapHintEverDrawn[j] = false;
+                
+                // clear old dist strings too
+                mPreviousHomeDistStrings[j].deallocateStringElements();
+                mPreviousHomeDistFades[j].deleteAll();
                 }
             }
         else {
@@ -12041,8 +12116,8 @@ void LivingLifePage::step() {
             
             doublePair dir = normalize( delta );
             
-            mHomeSlipPosOffset = 
-                add( mHomeSlipPosOffset,
+            mHomeSlipPosOffset[j] = 
+                add( mHomeSlipPosOffset[j],
                      mult( dir, speed ) );
             }        
         }
@@ -20104,8 +20179,9 @@ void LivingLifePage::makeActive( char inFresh ) {
     
     clearToolLearnedStatus();
 
-    mapHintEverDrawn = false;
-    
+    for( int j=0; j<2; j++ ) {
+        mapHintEverDrawn[j] = false;
+        }
 
     mOldHintArrows.deleteAll();
 
@@ -20158,9 +20234,11 @@ void LivingLifePage::makeActive( char inFresh ) {
     connectedTime = 0;
 
     
-    mPreviousHomeDistStrings.deallocateStringElements();
-    mPreviousHomeDistFades.deleteAll();
-
+    for( int j=0; j<2; j++ ) {
+        mPreviousHomeDistStrings[j].deallocateStringElements();
+        mPreviousHomeDistFades[j].deleteAll();
+        }
+    
     mForceHintRefresh = false;
     mLastHintSortedSourceID = 0;
     mLastHintSortedList.deleteAll();
@@ -20253,8 +20331,10 @@ void LivingLifePage::makeActive( char inFresh ) {
     mNotePaperPosTargetOffset = mNotePaperPosOffset;
 
     
-    mHomeSlipPosOffset = mHomeSlipHideOffset;
-    mHomeSlipPosTargetOffset = mHomeSlipPosOffset;
+    for( int j=0; j<2; j++ ) {
+        mHomeSlipPosOffset[j] = mHomeSlipHideOffset[j];
+        mHomeSlipPosTargetOffset[j] = mHomeSlipPosOffset[j];
+        }
     
 
     mLastKnownNoteLines.deallocateStringElements();
@@ -20351,9 +20431,11 @@ void LivingLifePage::makeActive( char inFresh ) {
         }
     
 
-    for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
-        mHomeArrowStates[i].solid = false;
-        mHomeArrowStates[i].fade = 0;
+    for( int j=0; j<2; j++ ) {
+        for( int i=0; i<NUM_HOME_ARROWS; i++ ) {
+            mHomeArrowStates[j][i].solid = false;
+            mHomeArrowStates[j][i].fade = 0;
+            }
         }
     }
 

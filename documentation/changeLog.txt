@@ -24,6 +24,8 @@ Version 292     ???
 
 --Fixed a bug with lingering home positions in next life.  Related to #455
   
+--Bell tower directional arrow now show separately at top of screen.
+  Fixes #455 
 
 
 
