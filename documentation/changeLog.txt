@@ -27,6 +27,8 @@ Version 292     ???
 --Bell tower directional arrow now show separately at top of screen.
   Fixes #455 
 
+--Fixed a memory leak.
+
 
 
 Server Fixes
