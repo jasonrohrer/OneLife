@@ -36,6 +36,11 @@ Server Fixes
 --Right-click-on-ground-around-permanent, which is mapped to USE, no longer
   bypasses biome lock (example:  planting rubber cutting).  Fixes #458
 
+--Fixed so that donkeytown Eve placement, tutorial twin placement, and flight
+  crash landing placement don't advance Eve placement grid.  This will prevent
+  Eves from getting more spread out than they need to be.  Fixes #442.  Similar
+  to pull request #459
+
 
 
 

@@ -8602,10 +8602,18 @@ int processLoggedInPlayer( char inAllowReconnect,
             }
         
 
+        char incrementEvePlacement = true;        
+
+        // don't increment Eve placement if this is a cursed player
+        if( inCurseStatus.curseLevel > 0 ) {
+            incrementEvePlacement = false;
+            }
+
         int startX, startY;
         getEvePosition( newObject.email, 
                         newObject.id, &startX, &startY, 
-                        &otherPeoplePos, allowEveRespawn );
+                        &otherPeoplePos, allowEveRespawn, 
+                        incrementEvePlacement );
 
         if( inCurseStatus.curseLevel > 0 ) {
             // keep cursed players away
