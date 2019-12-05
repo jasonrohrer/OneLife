@@ -21,6 +21,8 @@ Version 292     ???
   move).  You now correctly change sicknesses when crossing between two bad
   biomes (your character forces you to stop in the separating good biome before
   entering the second bad biome).  Fixes #449
+
+--Fixed a bug with lingering home positions in next life.  Related to #455
   
 
 
