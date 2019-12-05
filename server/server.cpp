@@ -8535,6 +8535,19 @@ int processLoggedInPlayer( char inAllowReconnect,
             }
         }
     
+    if( inForcePlayerPos != NULL ) {
+        placed = true;
+
+        int startX = inForcePlayerPos->x;
+        int startY = inForcePlayerPos->y;
+        
+        newObject.xs = startX;
+        newObject.ys = startY;
+        
+        newObject.xd = startX;
+        newObject.yd = startY;
+        }
+    
     
     if( !placed ) {
         // tutorial didn't happen if not placed
@@ -8637,21 +8650,6 @@ int processLoggedInPlayer( char inAllowReconnect,
         newObject.displayID = inForceDisplayID;
         }
 
-    if( inForcePlayerPos != NULL ) {
-        int startX = inForcePlayerPos->x;
-        int startY = inForcePlayerPos->y;
-        
-        newObject.xs = startX;
-        newObject.ys = startY;
-        
-        newObject.xd = startX;
-        newObject.yd = startY;
-
-        if( newObject.xs > maxPlacementX ) {
-            maxPlacementX = newObject.xs;
-            }
-        }
-    
 
     
     if( parent == NULL ) {
