@@ -632,6 +632,7 @@ class LivingLifePage : public GamePage, public ActionListener {
         
 
         SpriteHandle mHomeSlipSprite;
+        SpriteHandle mHomeSlipBlankTopSprite;
         SpriteHandle mHomeArrowSprites[ NUM_HOME_ARROWS ];
         SpriteHandle mHomeArrowErasedSprites[ NUM_HOME_ARROWS ];
         
@@ -990,6 +991,8 @@ class LivingLifePage : public GamePage, public ActionListener {
         SimpleVector<char*> mBadBiomeNames;
     
         char isBadBiome( int inMapI );
+
+        void drawHomeSlip( doublePair inSlipPos );
 
     };
 
