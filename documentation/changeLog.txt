@@ -41,6 +41,10 @@ Server Fixes
   Eves from getting more spread out than they need to be.  Fixes #442.  Similar
   to pull request #459
 
+--Fixed so that when growing, any bonus food is used to fill empty food bars
+  that are added.  This prevents building up an unnaturally huge food bonus
+  when growing.  Fixes #440.  Similar to pull request #461
+
 
 
 
