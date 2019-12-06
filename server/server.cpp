@@ -13011,6 +13011,45 @@ static char isAccessBlocked( LiveObject *inPlayer,
     }
 
 
+
+// cost set to 0 unless hungry work not blocked
+char isHungryWorkBlocked( LiveObject *inPlayer, 
+                          int inNewTarget, int *outCost ) {          
+    *outCost = 0;
+    
+    char *des =
+        getObject( inNewTarget )->description;
+                                    
+    char *desPos =
+        strstr( des, "+hungryWork" );
+    
+    if( desPos != NULL ) {
+                                        
+        int cost = 0;
+        
+        sscanf( desPos,
+                "+hungryWork%d", 
+                &cost );
+        
+        if( inPlayer->foodStore + 
+            inPlayer->yummyBonusStore < 
+            cost + 4 ) {
+            // block hungry work,
+            // not enough food to have a
+            // "safe" buffer after
+            return true;
+            }
+        
+        // can do work
+        *outCost = cost;
+        return false;
+        }
+
+    // not hungry work at all
+    return false;
+    }
+
+
     
 
 
@@ -17015,7 +17054,40 @@ int main() {
                                     // otherwise, it could be a stacking action
                                     // (like putting a wool pad in a bowl)
 
-                                    if( ! canPlayerUseOrLearnTool( 
+                                    // also, watch out for action where
+                                    // we're inserting an object into
+                                    // a container that it can also be used
+                                    // on
+                                    char insertion = false;
+                                    ObjectRecord *heldO = 
+                                        getObject( nextPlayer->holdingID );
+                                    
+                                    if( targetObj->numSlots > 0 &&
+                                        heldO->containable &&
+                                        targetObj->slotSize >=
+                                        heldO->containSize &&
+                                        getNumContained( m.x, m.y ) > 0 ) {
+                                        
+                                        insertion = true;
+                                        }
+
+                                    // also watch out for failed
+                                    // tool use due to hungry work
+                                    char hungBlocked = false;
+                                    if( ! insertion && 
+                                        r->newTarget > 0 ) {
+                                        
+                                        int hCost = 0;
+                                        hungBlocked = isHungryWorkBlocked( 
+                                            nextPlayer,
+                                            r->newTarget,
+                                            &hCost );
+                                        }
+                                    
+
+                                    if( ! insertion &&
+                                        ! hungBlocked &&
+                                        ! canPlayerUseOrLearnTool( 
                                             nextPlayer,
                                             nextPlayer->holdingID ) ) {
                                         r = NULL;
@@ -17197,27 +17269,12 @@ int main() {
                                 
                                 if( r != NULL && 
                                     r->newTarget > 0 ) {
-                                    char *des =
-                                        getObject( r->newTarget )->description;
-                                    
-                                    char *desPos =
-                                        strstr( des, "+hungryWork" );
-                                    
-                                    if( desPos != NULL ) {
-                                        
-                                    
-                                        sscanf( desPos,
-                                                "+hungryWork%d", 
-                                                &hungryWorkCost );
-                                        
-                                        if( nextPlayer->foodStore + 
-                                            nextPlayer->yummyBonusStore < 
-                                            hungryWorkCost + 4 ) {
-                                            // block transition,
-                                            // not enough food to have a
-                                            // "safe" buffer after
-                                            r = NULL;
-                                            }
+
+                                    if( isHungryWorkBlocked( 
+                                            nextPlayer,
+                                            r->newTarget,
+                                            &hungryWorkCost ) ) {
+                                        r = NULL;
                                         }
                                     }
 

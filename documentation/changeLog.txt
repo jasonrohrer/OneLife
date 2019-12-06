@@ -45,6 +45,13 @@ Server Fixes
   that are added.  This prevents building up an unnaturally huge food bonus
   when growing.  Fixes #440.  Similar to pull request #461
 
+--Fixed so that putting a tool in a container that it could be used on doesn't
+  count as using a tool slot (like putting the saw in a box).  Fixed so that
+  tool usage that's blocked due to hungryWork doesn't use a tool slot (like
+  failing to chop a tree, which used to make you learn the axe).  Similar to
+  pull request #462
+
+
 
 
 
