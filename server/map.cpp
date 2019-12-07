@@ -8032,7 +8032,8 @@ extern char doesEveLineExist( int inEveID );
 
 void getEvePosition( const char *inEmail, int inID, int *outX, int *outY, 
                      SimpleVector<GridPos> *inOtherPeoplePos,
-                     char inAllowRespawn ) {
+                     char inAllowRespawn,
+                     char inIncrementPosition ) {
 
     int currentEveRadius = eveRadius;
 
@@ -8059,14 +8060,24 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
     else if( SettingsManager::getIntSetting( "useEveMovingGrid", 0 ) ) {
         printf( "Placing new Eve:  "
                 "using Eve moving grid method\n" );
-
-        getEveMovingGridPosition( & eveLocation.x, & eveLocation.y );
         
-        ave.x = eveLocation.x;
-        ave.y = eveLocation.y;
+        int gridX = eveLocation.x;
+        int gridY = eveLocation.y;
+        
+
+        getEveMovingGridPosition( & gridX, & gridY, inIncrementPosition );
+        
+        ave.x = gridX;
+        ave.y = gridY;
         
         forceEveToBorder = true;
         currentEveRadius = 50;
+
+        if( inIncrementPosition ) {
+            // update advancing position
+            eveLocation.x = gridX;
+            eveLocation.y = gridY;
+            }
         }
     else {
         // player has never been an Eve that survived to old age before
@@ -8929,7 +8940,7 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
     SimpleVector<GridPos> otherPeoplePos;
     
     getEvePosition( "dummyPlaneCrashEmail@test.com", 0, &eveX, &eveY, 
-                    &otherPeoplePos, false );
+                    &otherPeoplePos, false, false );
     
     GridPos returnVal = { eveX, eveY };
     

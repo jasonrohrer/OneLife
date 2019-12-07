@@ -6,6 +6,10 @@ global $fs_version;
 $fs_version = "1";
 
 
+global $numLivesInAverage;
+$numLivesInAverage = 10;
+
+
 
 // edit settings.php to change server' settings
 include( "settings.php" );
@@ -745,7 +749,9 @@ function fs_showDetail( $checkPassword = true ) {
     
 
     $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
-            
+
+    $aveAge = fs_getAveAge( $email );
+    
     $query = "SELECT id ".
         "FROM $tableNamePrefix"."users ".
         "WHERE email = '$email';";
@@ -758,8 +764,7 @@ function fs_showDetail( $checkPassword = true ) {
         "FROM $tableNamePrefix"."offspring AS offspring ".
         "INNER JOIN $tableNamePrefix"."lives AS lives ".
         "ON offspring.life_id = lives.id ".
-        "WHERE offspring.player_id = $id ORDER BY offspring.death_time DESC ".
-        "LIMIT 20";
+        "WHERE offspring.player_id = $id ORDER BY offspring.death_time DESC";
 
     
     $result = fs_queryDatabase( $query );
@@ -768,10 +773,14 @@ function fs_showDetail( $checkPassword = true ) {
     
     echo "<b>ID:</b> $id<br><br>";
     echo "<b>Email:</b> $email<br><br>";
+    echo "<font color=green><b>Ave Age:</b> $aveAge</font><br><br>";
     echo "</td></tr></table>";
 
     $numRows = mysqli_num_rows( $result );
 
+    global $numLivesInAverage;
+    $numYouLives = 0;
+    
     echo "<table border=1 cellpadding=10 cellspacing=0>";
     for( $i=0; $i<$numRows; $i++ ) {
         $name = fs_mysqli_result( $result, $i, "name" );
@@ -795,7 +804,15 @@ function fs_showDetail( $checkPassword = true ) {
         echo "<tr>";
 
         echo "<td>$name</td>";
-        echo "<td>$age years old</td>";
+
+        if( $relation_name == "You" &&
+            $numYouLives < $numLivesInAverage ) {
+            echo "<td><font color=green><b>$age years old</b></font></td>";
+            $numYouLives ++;
+            }
+        else {
+            echo "<td>$age years old</td>";
+            }
         echo "<td>$relation_name</td>";
         echo "<td>$old_score</td>";
         echo "<td>$deltaString</td>";
@@ -1350,29 +1367,15 @@ function fs_addUserRecord( $inEmail ) {
 
 
 
-
-// cleans old offspring from table that count for $email
-// and deletes the lives themselves if they aren't in the offspring table
-// for anyone anymore
-function fs_cleanOldLives( $email ) {
-    global $tableNamePrefix, $maxOffspringHistoryToKeep;
-
-    $query = "SELECT id FROM $tableNamePrefix"."users ".
-        "WHERE email = '$email';";
-
-    $result = fs_queryDatabase( $query );
+function fs_cleanLifeType( $player_id, $relationNameClause, $numToKeep,
+                           $removedOffspring ) {
+    global $tableNamePrefix;
     
-    if( mysqli_num_rows( $result ) == 0 ) {
-        return;
-        }
-    
-    $player_id = fs_mysqli_result( $result, 0, "id" );
-
-    // skip $maxOffspringHistoryToKeep, and get all records after that
     $query = "SELECT life_id ".
         "FROM $tableNamePrefix"."offspring ".
-        "WHERE player_id = $player_id ORDER BY death_time DESC ".
-        "LIMIT $maxOffspringHistoryToKeep,9999999";
+        "WHERE player_id = $player_id AND $relationNameClause ".
+        "ORDER BY death_time DESC ".
+        "LIMIT $numToKeep,9999999";
 
     $result = fs_queryDatabase( $query );
     
@@ -1391,7 +1394,44 @@ function fs_cleanOldLives( $email ) {
         fs_queryDatabase( $query );
         $numOffspringRemoved ++;
         }
+    }
 
+
+
+// cleans old offspring from table that count for $email
+// and deletes the lives themselves if they aren't in the offspring table
+// for anyone anymore
+function fs_cleanOldLives( $email ) {
+    global $tableNamePrefix, $maxOffspringHistoryToKeep, $numLivesInAverage;
+
+    $query = "SELECT id FROM $tableNamePrefix"."users ".
+        "WHERE email = '$email';";
+
+    $result = fs_queryDatabase( $query );
+    
+    if( mysqli_num_rows( $result ) == 0 ) {
+        return;
+        }
+    
+    $player_id = fs_mysqli_result( $result, 0, "id" );
+
+    $removedOffspring = array();
+    
+    // skip $maxOffspringHistoryToKeep for non-You lives,
+    // and delete all non-You records after that
+    fs_cleanLifeType( $player_id,
+                      " relation_name != 'You' ",
+                      $maxOffspringHistoryToKeep,
+                      $removedOffspring );
+
+    // skip $numLivesInAverage for You lives,
+    // and delete all You records after that
+    fs_cleanLifeType( $player_id,
+                      " relation_name = 'You' ",
+                      $numLivesInAverage,
+                      $removedOffspring );
+
+    
     // now we need to check offspring table and see if any of these
     // life_ids aren't anyone's offspring anymore
     $numLivesRemoved = 0;
@@ -1436,11 +1476,12 @@ function fs_getAveAge( $inEmail ) {
         return $startingScore;
         }
 
-    $target = 10;
+    
+    global $numLivesInAverage;
     
     $query = "SELECT life_id FROM $tableNamePrefix"."offspring ".
         "WHERE player_id = $id AND relation_name = 'You' ".
-        "order by death_time desc limit $target;";
+        "order by death_time desc limit $numLivesInAverage;";
 
     $result = fs_queryDatabase( $query );
 
@@ -1466,15 +1507,15 @@ function fs_getAveAge( $inEmail ) {
             }
         }
 
-    if( $numCounted < $target ) {
+    if( $numCounted < $numLivesInAverage ) {
 
         // pad average
-        for( $i=$numCounted; $i<$target; $i++ ) {
+        for( $i=$numCounted; $i<$numLivesInAverage; $i++ ) {
             $lifeTotal += $startingScore;
             }   
         }
 
-    $ave = $lifeTotal / $target;
+    $ave = $lifeTotal / $numLivesInAverage;
 
     return $ave;
     }

@@ -3,6 +3,64 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 292     2019-December-6
+
+--Finally found a work-around for the Steam lingering process bug (when the
+  game launches a web browser to view family trees, and the user leaves the
+  browser open after they quit the game).
+
+--Object editor allows shift-right-click to insert other object with sprites
+  interleaved with existing.  Useful for making a feasting table that gets
+  emptied evenly across the different foods in parallel.
+
+--Fixed DRINK translation.  Fixes #457
+
+--Fixed remaining inconsistencies with biome-crossing sicknesses.  You now lose
+  you sickness as soon as your move ends outside a bad biome (before, unless
+  you stepped out directly from edge, sickness would linger until your next
+  move).  You now correctly change sicknesses when crossing between two bad
+  biomes (your character forces you to stop in the separating good biome before
+  entering the second bad biome).  Fixes #449
+
+--Fixed a bug with lingering home positions in next life.  Related to #455
+  
+--Bell tower directional arrow now show separately at top of screen.
+  Fixes #455 
+
+--Fixed a memory leak.
+
+
+
+Server Fixes
+
+--Right-click-on-ground-around-permanent, which is mapped to USE, no longer
+  bypasses biome lock (example:  planting rubber cutting).  Fixes #458
+
+--Fixed so that donkeytown Eve placement, tutorial twin placement, and flight
+  crash landing placement don't advance Eve placement grid.  This will prevent
+  Eves from getting more spread out than they need to be.  Fixes #442.  Similar
+  to pull request #459
+
+--Fixed so that when growing, any bonus food is used to fill empty food bars
+  that are added.  This prevents building up an unnaturally huge food bonus
+  when growing.  Fixes #440.  Similar to pull request #461
+
+--Fixed so that putting a tool in a container that it could be used on doesn't
+  count as using a tool slot (like putting the saw in a box).  Fixed so that
+  tool usage that's blocked due to hungryWork doesn't use a tool slot (like
+  failing to chop a tree, which used to make you learn the axe).  Similar to
+  pull request #462
+
+--Fixed calculation of average lifespan on genetic fitness server.  Before, we
+  were averaging past 10 lives, and padding that average with 30-year lives if
+  we didn't have 10 lives for that player.  However, we were also discarding
+  too many lives from the history buffer, generally not having 10 lives stored
+  for each player.  So most player's averages were getting padded.  Fixed by
+  keeping at least 10 lives for each player in the history buffer.  Fixes #463
+
+
+
+
 Version 290     2019-November-26
 
 
