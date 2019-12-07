@@ -566,7 +566,7 @@ static int getHomeDir( doublePair inCurrentPlayerPos,
         a += 2 * M_PI;
         }
     
-    // HOMEMARKER MOD NOTE:  Change 8/10 - Take these lines during the merge process
+    // HOMEMARKER MOD NOTE:  Change 3/8 - Take these lines during the merge process
     int index = lrint( 360 * a / ( 2 * M_PI ) );
     
     return index;
@@ -5644,16 +5644,16 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
     doublePair slipPos = inSlipPos;
     
     setDrawColor( 1, 1, 1, 1 );
-    drawSprite( mHomeSlipSprites[inIndex], slipPos );
+    drawSprite( mHomeSlipSprites[inIndex], slipPos, gui_fov_scale_hud );
 
         
     doublePair arrowPos = slipPos;
     
     if( inIndex == 0 ) {
-        arrowPos.y += 35;
+        arrowPos.y += 35 * gui_fov_scale_hud;
         }
     else {
-        arrowPos.y -= 35;
+        arrowPos.y -= 35 * gui_fov_scale_hud;
         }
     
     LiveObject *ourLiveObject = getOurLiveObject();
@@ -5666,7 +5666,14 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
             
         int arrowIndex = getHomeDir( ourLiveObject->currentPos, &homeDist,
                                      &tooClose, &temporary, inIndex );
-            
+        
+        // HOMEMARKER MOD NOTE:  Change 4/8 - Take these lines during the merge process
+        float arrowRotation = 0;
+        if( arrowIndex != -1 ) {
+            arrowRotation = -arrowIndex / 360.0f;
+            arrowIndex = 0;
+        }
+
         if( arrowIndex == -1 || 
             ! mHomeArrowStates[inIndex][arrowIndex].solid ) {
             // solid change
@@ -5708,7 +5715,8 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
                     
                 float v = 1.0 - a.fade;
                 setDrawColor( v, v, v, 1 );
-                drawSprite( mHomeArrowErasedSprites[i], arrowPos );
+                // HOMEMARKER MOD NOTE:  Change 5/8 - Take these lines during the merge process
+                drawSprite( mHomeArrowErasedSprites[i], arrowPos, gui_fov_scale_hud );
                 }
             }
             
@@ -5721,7 +5729,8 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
                 
             setDrawColor( 1, 1, 1, 1 );
                 
-            drawSprite( mHomeArrowSprites[arrowIndex], arrowPos );
+            // HOMEMARKER MOD NOTE:  Change 6/8 - Take these lines during the merge process
+            drawSprite( mHomeArrowSprites[arrowIndex], arrowPos, gui_fov_scale_hud, arrowRotation );
             }
                             
         toggleMultiplicativeBlend( false );
@@ -5732,11 +5741,11 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
         doublePair mapHintPos = arrowPos;
 
         if( inIndex == 0 ) {
-            distPos.y -= 47;
+            distPos.y -= 47 * gui_fov_scale_hud;
             mapHintPos.y -= 47;
             }
         else {
-            distPos.y += 32;
+            distPos.y += 32 * gui_fov_scale_hud;
             mapHintPos.y += 32;
             }
         
@@ -5765,7 +5774,7 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
             }
             
 
-        if( homeDist > 1000 ) {
+        if( homeDist > 10 ) {
             drawTopAsErased = false;
                 
             setDrawColor( 0, 0, 0, 1 );
@@ -5912,7 +5921,7 @@ char blackBorder = false;
 char whiteBorder = true;
 
 
-// FOVMOD NOTE:  Change 7/27 - Take these lines during the merge process
+// FOVMOD NOTE:  Change 8/27 - Take these lines during the merge process
 static void drawHUDBarPart( double x, double y, double width, double height ) {
     doublePair barPos[4] = {
         { x, y + height },
