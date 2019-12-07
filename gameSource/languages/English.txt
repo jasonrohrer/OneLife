@@ -249,7 +249,7 @@ breastMilk "DRANK BREAST MILK"
 
 you "YOU"
 eat "EAT"
-eat "DRINK"
+drink "DRINK"
 
 youWith "YOU WITH"
 with "WITH"

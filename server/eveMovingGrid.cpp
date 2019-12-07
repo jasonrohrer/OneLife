@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 
-void getEveMovingGridPosition( int *inOutX, int *inOutY ) {
+void getEveMovingGridPosition( int *inOutX, int *inOutY, char inSave ) {
     int oldX = *inOutX;
     int oldY = *inOutY;
 
@@ -44,11 +44,13 @@ void getEveMovingGridPosition( int *inOutX, int *inOutY ) {
         }    
     
 
-    File eveLocFile( NULL, "lastEveLocation.txt" );
-    char *locString = autoSprintf( "%d,%d", newX, newY );
-    eveLocFile.writeToFile( locString );
-    delete [] locString;
-
+    if( inSave ) {
+        File eveLocFile( NULL, "lastEveLocation.txt" );
+        char *locString = autoSprintf( "%d,%d", newX, newY );
+        eveLocFile.writeToFile( locString );
+        delete [] locString;
+        }
+    
     *inOutX = newX;
     *inOutY = newY;
     }

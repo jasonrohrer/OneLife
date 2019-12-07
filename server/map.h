@@ -62,7 +62,11 @@ void resetEveRadius();
 // considered.
 void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                      SimpleVector<GridPos> *inOtherPeoplePos,
-                     char inAllowRespawn = true );
+                     char inAllowRespawn = true,
+                     // true if we should increment position for advancing
+                     // eve grid or spiral placement
+                     // false to just sample the current position with no update
+                     char inIncrementPosition = true );
 
 
 // save recent placements on Eve's death so that this player can spawn

@@ -843,6 +843,10 @@ typedef struct LiveObject {
         // these are used first before food is decremented
         int yummyBonusStore;
         
+        // last time we told player their capacity in a food update
+        // what did we tell them?
+        int lastReportedFoodCapacity;
+        
 
         ClothingSet clothing;
         
@@ -8202,6 +8206,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     newObject.yummyBonusStore = 0;
 
+    newObject.lastReportedFoodCapacity = 0;
+
     newObject.clothing = getEmptyClothingSet();
 
     for( int c=0; c<NUM_CLOTHING_PIECES; c++ ) {
@@ -8537,6 +8543,19 @@ int processLoggedInPlayer( char inAllowReconnect,
             }
         }
     
+    if( inForcePlayerPos != NULL ) {
+        placed = true;
+
+        int startX = inForcePlayerPos->x;
+        int startY = inForcePlayerPos->y;
+        
+        newObject.xs = startX;
+        newObject.ys = startY;
+        
+        newObject.xd = startX;
+        newObject.yd = startY;
+        }
+    
     
     if( !placed ) {
         // tutorial didn't happen if not placed
@@ -8591,10 +8610,18 @@ int processLoggedInPlayer( char inAllowReconnect,
             }
         
 
+        char incrementEvePlacement = true;        
+
+        // don't increment Eve placement if this is a cursed player
+        if( inCurseStatus.curseLevel > 0 ) {
+            incrementEvePlacement = false;
+            }
+
         int startX, startY;
         getEvePosition( newObject.email, 
                         newObject.id, &startX, &startY, 
-                        &otherPeoplePos, allowEveRespawn );
+                        &otherPeoplePos, allowEveRespawn, 
+                        incrementEvePlacement );
 
         if( inCurseStatus.curseLevel > 0 ) {
             // keep cursed players away
@@ -8639,21 +8666,6 @@ int processLoggedInPlayer( char inAllowReconnect,
         newObject.displayID = inForceDisplayID;
         }
 
-    if( inForcePlayerPos != NULL ) {
-        int startX = inForcePlayerPos->x;
-        int startY = inForcePlayerPos->y;
-        
-        newObject.xs = startX;
-        newObject.ys = startY;
-        
-        newObject.xd = startX;
-        newObject.yd = startY;
-
-        if( newObject.xs > maxPlacementX ) {
-            maxPlacementX = newObject.xs;
-            }
-        }
-    
 
     
     if( parent == NULL ) {
@@ -12585,6 +12597,52 @@ void getLineageLineForPlayer( LiveObject *inPlayer,
 
 
 
+static void endBiomeSickness( 
+    LiveObject *nextPlayer,
+    int i,
+    SimpleVector<int> *playerIndicesToSendUpdatesAbout ) {
+    
+    int oldSickness = -1;
+    
+    if( ! nextPlayer->holdingWound ) {
+        // back to holding nothing
+        oldSickness = nextPlayer->holdingID;
+                                        
+        nextPlayer->holdingID = 0;
+                                        
+        playerIndicesToSendUpdatesAbout->
+            push_back( i );
+        }
+                                    
+    nextPlayer->holdingBiomeSickness = 
+        false;
+
+    // relief emot
+    nextPlayer->emotFrozen = false;
+    nextPlayer->emotUnfreezeETA = 0;
+        
+    newEmotPlayerIDs.push_back( 
+        nextPlayer->id );
+        
+    int newEmot = 
+        getBiomeReliefEmot( oldSickness );
+                                    
+    if( newEmot != -1 ) {
+        newEmotIndices.push_back( newEmot );
+        // 3 sec
+        newEmotTTLs.push_back( 3 );
+        }
+    else {
+        // clear
+        newEmotIndices.push_back( -1 );
+        // 3 sec
+        newEmotTTLs.push_back( 0 );
+        }
+    }
+
+
+
+
 
 
 void logFitnessDeath( LiveObject *nextPlayer ) {
@@ -12952,6 +13010,45 @@ static char isAccessBlocked( LiveObject *inPlayer,
             }
         }
     return wrongSide || ownershipBlocked;
+    }
+
+
+
+// cost set to 0 unless hungry work not blocked
+char isHungryWorkBlocked( LiveObject *inPlayer, 
+                          int inNewTarget, int *outCost ) {          
+    *outCost = 0;
+    
+    char *des =
+        getObject( inNewTarget )->description;
+                                    
+    char *desPos =
+        strstr( des, "+hungryWork" );
+    
+    if( desPos != NULL ) {
+                                        
+        int cost = 0;
+        
+        sscanf( desPos,
+                "+hungryWork%d", 
+                &cost );
+        
+        if( inPlayer->foodStore + 
+            inPlayer->yummyBonusStore < 
+            cost + 4 ) {
+            // block hungry work,
+            // not enough food to have a
+            // "safe" buffer after
+            return true;
+            }
+        
+        // can do work
+        *outCost = cost;
+        return false;
+        }
+
+    // not hungry work at all
+    return false;
     }
 
 
@@ -16299,7 +16396,12 @@ int main() {
                                             }
                                         }
                                     
-                                    if( nextPlayer->holdingID == 0 ) {
+                                    if( nextPlayer->holdingID == 0 ||
+                                        nextPlayer->holdingBiomeSickness ) {
+                                        // we dropped what they were holding
+                                        // or they were holding a different
+                                        // biome sickness, which we can now
+                                        // freely replace
                                         
                                         nextPlayer->holdingID = 
                                             sicknessObjectID;
@@ -16329,42 +16431,9 @@ int main() {
                                 else if( sicknessObjectID == -1 &&
                                          nextPlayer->holdingBiomeSickness ) {
                                     
-                                    int oldSickness = -1;
-                                    
-                                    if( ! nextPlayer->holdingWound ) {
-                                        // back to holding nothing
-                                        oldSickness = nextPlayer->holdingID;
-                                        
-                                        nextPlayer->holdingID = 0;
-                                        
-                                        playerIndicesToSendUpdatesAbout.
-                                            push_back( i );
-                                        }
-                                    
-                                    nextPlayer->holdingBiomeSickness = 
-                                            false;
-
-                                    // relief emot
-                                    nextPlayer->emotFrozen = false;
-                                    nextPlayer->emotUnfreezeETA = 0;
-        
-                                    newEmotPlayerIDs.push_back( 
-                                        nextPlayer->id );
-        
-                                    int newEmot = 
-                                        getBiomeReliefEmot( oldSickness );
-                                    
-                                    if( newEmot != -1 ) {
-                                        newEmotIndices.push_back( newEmot );
-                                        // 3 sec
-                                        newEmotTTLs.push_back( 3 );
-                                        }
-                                    else {
-                                        // clear
-                                        newEmotIndices.push_back( -1 );
-                                        // 3 sec
-                                        newEmotTTLs.push_back( 0 );
-                                        }
+                                    endBiomeSickness( 
+                                        nextPlayer, i,
+                                        &playerIndicesToSendUpdatesAbout );
                                     }
                                 }
                             }
@@ -17002,7 +17071,40 @@ int main() {
                                     // otherwise, it could be a stacking action
                                     // (like putting a wool pad in a bowl)
 
-                                    if( ! canPlayerUseOrLearnTool( 
+                                    // also, watch out for action where
+                                    // we're inserting an object into
+                                    // a container that it can also be used
+                                    // on
+                                    char insertion = false;
+                                    ObjectRecord *heldO = 
+                                        getObject( nextPlayer->holdingID );
+                                    
+                                    if( targetObj->numSlots > 0 &&
+                                        heldO->containable &&
+                                        targetObj->slotSize >=
+                                        heldO->containSize &&
+                                        getNumContained( m.x, m.y ) > 0 ) {
+                                        
+                                        insertion = true;
+                                        }
+
+                                    // also watch out for failed
+                                    // tool use due to hungry work
+                                    char hungBlocked = false;
+                                    if( ! insertion && 
+                                        r->newTarget > 0 ) {
+                                        
+                                        int hCost = 0;
+                                        hungBlocked = isHungryWorkBlocked( 
+                                            nextPlayer,
+                                            r->newTarget,
+                                            &hCost );
+                                        }
+                                    
+
+                                    if( ! insertion &&
+                                        ! hungBlocked &&
+                                        ! canPlayerUseOrLearnTool( 
                                             nextPlayer,
                                             nextPlayer->holdingID ) ) {
                                         r = NULL;
@@ -17184,27 +17286,12 @@ int main() {
                                 
                                 if( r != NULL && 
                                     r->newTarget > 0 ) {
-                                    char *des =
-                                        getObject( r->newTarget )->description;
-                                    
-                                    char *desPos =
-                                        strstr( des, "+hungryWork" );
-                                    
-                                    if( desPos != NULL ) {
-                                        
-                                    
-                                        sscanf( desPos,
-                                                "+hungryWork%d", 
-                                                &hungryWorkCost );
-                                        
-                                        if( nextPlayer->foodStore + 
-                                            nextPlayer->yummyBonusStore < 
-                                            hungryWorkCost + 4 ) {
-                                            // block transition,
-                                            // not enough food to have a
-                                            // "safe" buffer after
-                                            r = NULL;
-                                            }
+
+                                    if( isHungryWorkBlocked( 
+                                            nextPlayer,
+                                            r->newTarget,
+                                            &hungryWorkCost ) ) {
+                                        r = NULL;
                                         }
                                     }
 
@@ -17508,8 +17595,8 @@ int main() {
                                     
                                     nextPlayer->foodStore += eatBonus;
 
-                                    int cap =
-                                        computeFoodCapacity( nextPlayer );
+                                    int cap = 
+                                        nextPlayer->lastReportedFoodCapacity;
                                     
                                     if( nextPlayer->foodStore > cap ) {
     
@@ -18213,7 +18300,14 @@ int main() {
                                 ObjectRecord *obj = 
                                     getObject( nextPlayer->holdingID );
                                 
-                                int cap = computeFoodCapacity( targetPlayer );
+                                // don't use "live" computed capacity here
+                                // because that will allow player to spam
+                                // click to pack in food between food
+                                // decrements when they are growing
+                                // instead, stick to the food cap shown
+                                // in the client (what we last reported
+                                // to them)
+                                int cap = nextPlayer->lastReportedFoodCapacity;
                                 
 
                                 // first case:
@@ -18923,13 +19017,37 @@ int main() {
                                             if( useTrans != NULL &&
                                                 useTrans->newActor == 0 ) {
                                                 
-                                                handleHoldingChange(
-                                                    nextPlayer,
-                                                    useTrans->newActor );
+                                                char canUse = true;
                                                 
-                                                setMapObject( 
-                                                    m.x, m.y,
-                                                    useTrans->newTarget );
+                                                ObjectRecord *newTargetObj = 
+                                                    NULL;
+                                                
+                                                if( useTrans->newTarget > 0 ) {
+                                                    newTargetObj =
+                                                        getObject(
+                                                            useTrans->
+                                                            newTarget );
+                                                    }
+
+                                                if( newTargetObj != NULL &&
+                                                    newTargetObj->
+                                                    isBiomeLimited &&
+                                                    ! canBuildInBiome( 
+                                                        newTargetObj,
+                                                        getMapBiome( m.x,
+                                                                     m.y ) ) ) {
+                                                    canUse = false;
+                                                    }
+
+                                                if( canUse ) {
+                                                    handleHoldingChange(
+                                                        nextPlayer,
+                                                        useTrans->newActor );
+                                                    
+                                                    setMapObject( 
+                                                        m.x, m.y,
+                                                        useTrans->newTarget );
+                                                    }
                                                 }
                                             }
                                         else if( canDrop && 
@@ -20479,6 +20597,19 @@ int main() {
                             nextPlayer->posForced = true;
                             }
                         playerIndicesToSendUpdatesAbout.push_back( i );
+
+                        if( nextPlayer->holdingBiomeSickness ) {
+                            int sicknessObjectID = 
+                                getBiomeSickness( 
+                                    nextPlayer->displayID, 
+                                    nextPlayer->xs,
+                                    nextPlayer->ys );
+                            if( sicknessObjectID == -1 ) {
+                                endBiomeSickness( 
+                                    nextPlayer, i, 
+                                    &playerIndicesToSendUpdatesAbout );
+                                }
+                            }
 
                         
                         // if they went far enough and fast enough
@@ -23304,6 +23435,27 @@ int main() {
                         nextPlayer->foodStore = cap;
                         }
                     
+                    if( cap > nextPlayer->lastReportedFoodCapacity ) {
+                        
+                        // stomach grew
+                        
+                        // fill empty space from bonus store automatically
+                        int extraCap = 
+                            cap - nextPlayer->lastReportedFoodCapacity;
+                        
+                        while( nextPlayer->yummyBonusStore > 0 && 
+                               extraCap > 0 &&
+                               nextPlayer->foodStore < cap ) {
+                            nextPlayer->foodStore ++;
+                            extraCap --;
+                            nextPlayer->yummyBonusStore--;
+                            }
+                        }
+                    
+
+                    nextPlayer->lastReportedFoodCapacity = cap;
+                    
+
                     int yumMult = nextPlayer->yummyFoodChain.size() - 1;
                     
                     if( yumMult < 0 ) {
