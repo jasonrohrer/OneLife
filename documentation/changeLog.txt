@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 292     ???
+Version 292     2019-December-6
 
 --Finally found a work-around for the Steam lingering process bug (when the
   game launches a web browser to view family trees, and the user leaves the
