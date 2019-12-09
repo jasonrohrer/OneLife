@@ -187,6 +187,10 @@ GRAVE_OLD (GO)
 
 OWNER_LIST (OW)
 
+FOLLOWING (FW)
+
+EXILED (EX) 
+
 VALLEY_SPACING (VS)
 
 CURSED (CU)
@@ -775,6 +779,34 @@ x y p_id p_id p_id ... p_id
 
 
 Provides owner list for position x y
+
+
+
+
+FW
+follower_id leader_id
+follower_id leader_id
+...
+follower_id leader_id
+#
+
+Provides list of people following other people.
+If leader is -1, that person follows no one
+
+
+
+
+EX
+exile_target_id exiler_id
+exile_target_id exiler_id
+exile_target_id exiler_id
+...
+exile_target_id exiler_id
+#
+
+Provides list of people exiled by another person.
+
+
 
 
 

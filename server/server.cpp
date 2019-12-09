@@ -196,6 +196,13 @@ static SimpleVector<char*> offspringGivingPhrases;
 static SimpleVector<char*> posseJoiningPhrases;
 
 
+static SimpleVector<char*> youFollowPhrases;
+static SimpleVector<char*> namedFollowPhrases;
+
+static SimpleVector<char*> youExilePhrases;
+static SimpleVector<char*> namedExilePhrases;
+
+
 
 static char *eveName = NULL;
 
@@ -591,6 +598,18 @@ typedef struct LiveObject {
         // id of Eve that started this line
         int lineageEveID;
         
+
+        // who this player is following
+        // might be a dead player
+        // -1 means following self (no one)
+        int followingID;
+        
+        // people who have exiled this player
+        // some could be dead
+        SimpleVector<int> exiledByIDs;
+        
+        char followingUpdate;
+        char exileUpdate;
 
 
         // time that this life started (for computing age)
@@ -1796,6 +1815,13 @@ void quitCleanup() {
     
     posseJoiningPhrases.deallocateStringElements();
     
+    youFollowPhrases.deallocateStringElements();
+    namedFollowPhrases.deallocateStringElements();
+    
+    youExilePhrases.deallocateStringElements();
+    namedExilePhrases.deallocateStringElements();
+    
+
 
     if( curseYouPhrase != NULL ) {
         delete [] curseYouPhrase;
@@ -7594,7 +7620,14 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.heldByOther = false;
     newObject.everHeldByParent = false;
     
-
+    newObject.followingID = -1;
+    
+    // everyone should hear about who this player is following
+    newObject.followingUpdate = true;
+    
+    newObject.exileUpdate = false;
+    
+    
     int numOfAge = 0;
 
     int numBirthLocationsCurseChecked = 0;
@@ -8852,6 +8885,10 @@ int processLoggedInPlayer( char inAllowReconnect,
             }
 
         newObject.lineageEveID = parent->lineageEveID;
+
+        // child inherits mother's leader
+        newObject.followingID = parent->followingID;
+        
 
         newObject.parentChainLength = parent->parentChainLength + 1;
 
@@ -10758,6 +10795,26 @@ char isOffspringGivingSay( char *inSaidString ) {
 
 char isPosseJoiningSay( char *inSaidString ) {
     return isWildcardGivingSay( inSaidString, &posseJoiningPhrases );
+    }
+
+
+char isYouFollowSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youFollowPhrases );
+    }
+
+// returns pointer into inSaidString
+char *isNamedFollowSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &namedFollowPhrases );
+    }
+
+
+char isYouExileSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youExilePhrases );
+    }
+
+// returns pointer into inSaidString
+char *isNamedExileSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &namedExilePhrases );
     }
 
 
@@ -13050,6 +13107,22 @@ char isHungryWorkBlocked( LiveObject *inPlayer,
     }
 
 
+
+// returns NULL if not found
+static LiveObject *getPlayerByName( char *inName, LiveObject *inSkip ) {
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = players.getElement( j );
+        if( ! otherPlayer->error &&
+            otherPlayer != inSkip &&
+            otherPlayer->name != NULL &&
+            strcmp( otherPlayer->name, inName ) == 0 ) {
+            
+            return otherPlayer;
+            }
+        }
+    return NULL;
+    }
+
     
 
 
@@ -13212,6 +13285,13 @@ int main() {
 
 
     readPhrases( "posseJoiningPhrases", &posseJoiningPhrases );
+
+
+    readPhrases( "youFollowPhrases", &youFollowPhrases );
+    readPhrases( "namedFollowPhrases", &namedFollowPhrases );
+
+    readPhrases( "youExilePhrases", &youExilePhrases );
+    readPhrases( "namedExilePhrases", &namedExilePhrases );
 
     
     curseYouPhrase = 
@@ -16456,19 +16536,11 @@ int main() {
                             char *namedOwner = isNamedGivingSay( m.saidText );
                             
                             if( namedOwner != NULL ) {
+                                LiveObject *o =
+                                    getPlayerByName( namedOwner, nextPlayer );
                                 
-                                for( int j=0; j<players.size(); j++ ) {
-                                    LiveObject *otherPlayer = 
-                                        players.getElement( j );
-                                    if( ! otherPlayer->error &&
-                                        otherPlayer != nextPlayer &&
-                                        otherPlayer->name != NULL &&
-                                        strcmp( otherPlayer->name, 
-                                                namedOwner ) == 0 ) {
-                                        
-                                        newOwners.push_back( otherPlayer );
-                                        break;
-                                        }
+                                if( o != NULL ) {
+                                    newOwners.push_back( o );
                                     }
                                 delete [] namedOwner;
                                 }
@@ -16649,6 +16721,85 @@ int main() {
                                     }
                                 }
                             }
+
+                        
+                        LiveObject *otherToFollow = NULL;
+                        LiveObject *otherToExile = NULL;
+                        
+                        if( isYouFollowSay( m.saidText ) ) {
+                            otherToFollow = getClosestOtherPlayer( nextPlayer );
+                            }
+                        else {
+                           char *namedPlayer = isNamedFollowSay( m.saidText );
+                            
+                           if( namedPlayer != NULL ) {
+                               printf( "Named player = '%s\n", namedPlayer );
+                               otherToFollow =
+                                   getPlayerByName( namedPlayer, nextPlayer );
+                               
+                               if( otherToFollow == NULL &&
+                                   strcmp( namedPlayer, "MYSELF" ) == 0 ) {
+                                   otherToFollow = nextPlayer;
+                                   }
+                               }
+                            }
+                        
+                        if( otherToFollow != NULL ) {
+                            if( otherToFollow == nextPlayer ) {
+                                if( nextPlayer->followingID != -1 ) {
+                                    nextPlayer->followingID = -1;
+                                    nextPlayer->followingUpdate = true;
+                                    }
+                                }
+                            else if( nextPlayer->followingID != 
+                                     otherToFollow->id ) {
+                                nextPlayer->followingID = otherToFollow->id;
+                                nextPlayer->followingUpdate = true;
+                                
+                                // break any loops
+                                LiveObject *o = nextPlayer;
+                                
+                                while( o != NULL && o->followingID != -1 ) {
+                                    if( o->followingID == nextPlayer->id ) {
+                                        // loop
+                                        o->followingID = -1;
+                                        o->followingUpdate = true;
+                                        break;
+                                        }
+                                    o = getLiveObject( o->followingID );
+                                    }
+                                }
+                            }
+                        else {
+                            if( isYouExileSay( m.saidText ) ) {
+                                otherToExile = 
+                                    getClosestOtherPlayer( nextPlayer );
+                                }
+                            else {
+                                char *namedPlayer = 
+                                    isNamedExileSay( m.saidText );
+                            
+                                if( namedPlayer != NULL ) {
+                                    otherToExile =
+                                        getPlayerByName( namedPlayer, 
+                                                         nextPlayer );
+                                    }
+                                }
+                            
+                            if( otherToExile != NULL ) {
+                                if( otherToExile->
+                                    exiledByIDs.getElementIndex( 
+                                        nextPlayer->id ) == -1 ) {
+                                    otherToExile->exiledByIDs.push_back(
+                                        nextPlayer->id );
+
+                                    otherToExile->exileUpdate = true;
+                                    }
+                                }
+                            }
+                        
+                        
+
 
                         if( nextPlayer->holdingID < 0 ) {
 
@@ -21405,6 +21556,112 @@ int main() {
 
 
 
+        unsigned char *followingMessage = NULL;
+        int followingMessageLength = 0;
+        
+        SimpleVector<char> followingWorking;
+        followingWorking.appendElementString( "FW\n" );
+            
+        int numAdded = 0;
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *nextPlayer = players.getElement( i );
+            if( nextPlayer->error ||
+                ! nextPlayer->followingUpdate ) {
+                continue;
+                }
+            
+
+            char *line = autoSprintf( "%d %d\n", 
+                                      nextPlayer->id,
+                                      nextPlayer->followingID );
+                
+            followingWorking.appendElementString( line );
+            delete [] line;
+            numAdded++;
+
+            nextPlayer->followingUpdate = false;
+            }
+            
+        if( numAdded > 0 ) {
+            followingWorking.push_back( '#' );
+            
+            if( numAdded > 0 ) {
+
+                char *followingMessageText = 
+                    followingWorking.getElementString();
+                
+                followingMessageLength = strlen( followingMessageText );
+                
+                if( followingMessageLength < maxUncompressedSize ) {
+                    followingMessage = (unsigned char*)followingMessageText;
+                    }
+                else {
+                    // compress for all players once here
+                    followingMessage = makeCompressedMessage( 
+                        followingMessageText, 
+                        followingMessageLength, &followingMessageLength );
+                    
+                    delete [] followingMessageText;
+                    }
+                }
+            }
+
+
+
+        unsigned char *exileMessage = NULL;
+        int exileMessageLength = 0;
+        
+        SimpleVector<char> exileWorking;
+        exileWorking.appendElementString( "EX\n" );
+            
+        numAdded = 0;
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *nextPlayer = players.getElement( i );
+            if( nextPlayer->error ||
+                ! nextPlayer->exileUpdate ) {
+                continue;
+                }
+            
+            for( int e=0; e< nextPlayer->exiledByIDs.size(); e++ ) {
+                
+                char *line = autoSprintf( 
+                    "%d %d\n", 
+                    nextPlayer->id,
+                    nextPlayer->exiledByIDs.getElementDirect( e ) );
+                
+                exileWorking.appendElementString( line );
+                delete [] line;
+                numAdded++;
+                }
+            nextPlayer->exileUpdate = false;
+            }
+            
+        if( numAdded > 0 ) {
+            exileWorking.push_back( '#' );
+            
+            if( numAdded > 0 ) {
+
+                char *exileMessageText = 
+                    exileWorking.getElementString();
+                
+                exileMessageLength = strlen( exileMessageText );
+                
+                if( exileMessageLength < maxUncompressedSize ) {
+                    exileMessage = (unsigned char*)exileMessageText;
+                    }
+                else {
+                    // compress for all players once here
+                    exileMessage = makeCompressedMessage( 
+                        exileMessageText, 
+                        exileMessageLength, &exileMessageLength );
+                    
+                    delete [] exileMessageText;
+                    }
+                }
+            }
+
+
+
 
         unsigned char *namesMessage = NULL;
         int namesMessageLength = 0;
@@ -23374,7 +23631,7 @@ int main() {
                     }
 
 
-                // EVERYONE gets curse info for new babies
+                // EVERYONE gets curse info
                 if( cursesMessage != NULL && nextPlayer->connected ) {
                     int numSent = 
                         nextPlayer->sock->send( 
@@ -23401,6 +23658,40 @@ int main() {
                     nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != namesMessageLength ) {
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
+                        }
+                    }
+
+
+                // EVERYONE gets following message
+                if( followingMessage != NULL && nextPlayer->connected ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            followingMessage, 
+                            followingMessageLength, 
+                            false, false );
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
+                    if( numSent != followingMessageLength ) {
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
+                        }
+                    }
+
+
+                // EVERYONE gets exile message
+                if( exileMessage != NULL && nextPlayer->connected ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            exileMessage, 
+                            exileMessageLength, 
+                            false, false );
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
+                    if( numSent != exileMessageLength ) {
                         setPlayerDisconnected( nextPlayer, 
                                                "Socket write failed" );
                         }
@@ -23607,6 +23898,12 @@ int main() {
             }
         if( namesMessage != NULL ) {
             delete [] namesMessage;
+            }
+        if( followingMessage != NULL ) {
+            delete [] followingMessage;
+            }
+        if( exileMessage != NULL ) {
+            delete [] exileMessage;
             }
         if( dyingMessage != NULL ) {
             delete [] dyingMessage;
