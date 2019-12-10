@@ -317,6 +317,40 @@ typedef struct LiveObject {
         
         char chasingUs;
         
+
+
+        // id of who this player is following, or -1 if following self
+        int followingID;
+        
+        int highestLeaderID;
+
+        // list of other players who have exiled this player
+        SimpleVector<int> exiledByIDs;
+        
+        // how many tiers of people are below this person
+        // 0 if has no followers
+        // 1 if has some followers
+        // 2 if has some leaders as followers
+        // 3 if has some leader-leaders as followers
+        int leadershipLevel;
+        
+        char hasBadge;
+        // color to draw badge
+        FloatColor badgeColor;
+
+        // when person first becomes a leader, with pick the next
+        // unused color on the list for them
+        // them and their followers have this badge color
+        char hasPersonalLeadershipColor;
+        const char *personalLeadershipColorHexString;
+
+        // does the local player see this person as exiled?
+        char isExiled;
+        
+        // for mouse over, what this local player sees
+        // in front of this player's name
+        char *leadershipNameTag;
+
     } LiveObject;
 
 
@@ -998,6 +1032,10 @@ class LivingLifePage : public GamePage, public ActionListener {
         char isBadBiome( int inMapI );
 
         void drawHomeSlip( doublePair inSlipPos, int inIndex = 0 );
+        
+
+        void updateLeadership();
+        
 
     };
 

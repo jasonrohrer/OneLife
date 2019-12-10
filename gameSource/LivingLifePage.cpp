@@ -2798,6 +2798,10 @@ void LivingLifePage::clearLiveObjects() {
         if( nextObject->name != NULL ) {
             delete [] nextObject->name;
             }
+        
+        if( nextObject->leadershipNameTag != NULL ) {
+            delete [] nextObject->leadershipNameTag;
+            }
 
         delete nextObject->futureAnimStack;
         delete nextObject->futureHeldAnimStack;
@@ -15055,6 +15059,14 @@ void LivingLifePage::step() {
                 o.killMode = false;
                 o.killWithID = -1;
                 o.chasingUs = false;
+
+                o.followingID = -1;
+                o.highestLeaderID = -1;
+                o.leadershipLevel = 0;
+                o.hasBadge = false;
+                o.hasPersonalLeadershipColor = false;
+                o.isExiled = false;
+                o.leadershipNameTag = NULL;
                 
 
                 int forced = 0;
@@ -17001,6 +17013,10 @@ void LivingLifePage::step() {
 
                             if( nextObject->name != NULL ) {
                                 delete [] nextObject->name;
+                                }
+
+                            if( nextObject->leadershipNameTag != NULL ) {
+                                delete [] nextObject->leadershipNameTag;
                                 }
 
                             delete nextObject->futureAnimStack;
@@ -23623,3 +23639,214 @@ void LivingLifePage::pushOldHintArrow( int inIndex ) {
 char LivingLifePage::isHintFilterStringInvalid() {
     return mHintFilterString == NULL || mHintFilterStringNoMatch;
     }
+
+
+
+// color list from here:
+// https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
+
+
+#define NUM_BADGE_COLORS 17
+static const char *badgeColors[NUM_BADGE_COLORS] = { "#e6194B", 
+                                                     "#3cb44b", 
+                                                     "#ffe119", 
+                                                     "#4363d8", 
+                                                     "#f58231",
+                                                     
+                                                     "#42d4f4", 
+                                                     "#f032e6", 
+                                                     "#fabebe", 
+                                                     "#469990",
+                                                     "#e6beff", 
+                                                     
+                                                     "#9A6324", 
+                                                     "#fffac8", 
+                                                     "#800000", 
+                                                     "#aaffc3", 
+                                                     "#000075", 
+                                                     
+                                                     "#a9a9a9", 
+                                                     "#ffffff" };
+
+
+static const char *getUnusedLeadershipColor() {
+    // fixme
+    // look for next unused
+    return badgeColors[0];
+    }
+
+
+#define NUM_LEADERSHIP_NAMES 8
+static const char *
+leadershipNameKeys[NUM_LEADERSHIP_NAMES][2] = { { "lord",
+                                                  "lady" },
+                                                { "baron",
+                                                  "baroness" },
+                                                { "count",
+                                                  "countess" },
+                                                { "duke",
+                                                  "duchess" },
+                                                { "king",
+                                                  "queen" },
+                                                { "emperor",
+                                                  "empress" },
+                                                { "highEmperor",
+                                                  "highEmpress" },
+                                                { "supremeEmperor",
+                                                  "supremeEmpress" } };
+
+
+
+void LivingLifePage::updateLeadership() {
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+
+        if( o->followingID != -1 ) {
+            
+            LiveObject *l = getGameObject( o->followingID );
+            
+            if( l != NULL && ! l->hasPersonalLeadershipColor ) {
+                
+                l->personalLeadershipColorHexString = 
+                    getUnusedLeadershipColor();
+                }
+            }
+        
+        // reset for now
+        // we will rebuild these
+        o->leadershipLevel = 0;
+        o->highestLeaderID = -1;
+        o->hasBadge = false;
+        o->isExiled = false;
+        }
+
+
+    // compute leadership levels
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+        
+        if( o->followingID != -1 ) {
+            
+            LiveObject *l = getGameObject( o->followingID );
+            
+            if( l != NULL ) {
+                if( l->leadershipLevel <= o->leadershipLevel ) {
+                    l->leadershipLevel = o->leadershipLevel + 1;
+                    }
+                }
+            }
+        }
+    
+    // now form names based on leadership levels
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+        
+        if( o->leadershipNameTag != NULL ) {
+            delete [] o->leadershipNameTag;
+            o->leadershipNameTag = NULL;
+            }
+        
+        if( o->leadershipLevel > 0 ) {
+            
+            int lv = o->leadershipLevel;
+            
+            if( lv >= NUM_LEADERSHIP_NAMES ) {
+                lv = NUM_LEADERSHIP_NAMES - 1;
+                }
+            
+            int gIndex = 0;
+            if( ! getObject( o->displayID )->male ) {
+                gIndex = 1;
+                }
+            o->leadershipNameTag = 
+                stringDuplicate( translate( leadershipNameKeys[lv][gIndex] ) );
+            }
+        }
+
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+
+        int nextID = o->followingID;
+
+        while( nextID != -1 ) {
+            LiveObject *l = getGameObject( nextID );
+            if( l != NULL ) {
+                o->highestLeaderID = nextID;
+                
+                if( l->highestLeaderID != -1 ) {
+                    o->highestLeaderID = l->highestLeaderID;
+                    nextID = -1;
+                    }
+                else {
+                    nextID = l->followingID;
+                    }
+                }
+            else {
+                nextID = -1;
+                }
+            }
+        if( o->highestLeaderID != -1 ) {
+            LiveObject *l = getGameObject( o->highestLeaderID );
+            if( l != NULL ) {
+                o->hasBadge = true;
+                o->badgeColor = 
+                    getFloatColor( l->personalLeadershipColorHexString );
+                }
+            }
+        }
+
+    
+    SimpleVector<int> ourLeadershipChain;
+    
+    LiveObject *ourLiveObject = getOurLiveObject();
+    
+    int nextID = ourLiveObject->followingID;
+    
+    while( nextID != -1 ) {
+        ourLeadershipChain.push_back( nextID );
+        
+        LiveObject *l = getGameObject( nextID );
+
+        if( l != NULL ) {
+            nextID = l->followingID;
+
+            if( l->leadershipNameTag != NULL ) {
+                
+                char *newTag = autoSprintf( "%s %s", translate( "your" ),
+                                            l->leadershipNameTag );
+                
+                delete [] l->leadershipNameTag;
+                
+                l->leadershipNameTag = newTag;
+                }
+            }
+        else {
+            nextID = -1;
+            }
+        }
+    
+    
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+        
+        // see if any of our leaders have this person exiled
+        for( int e=0; e < o->exiledByIDs.size(); e++ ) {
+            int eID = o->exiledByIDs.getElementDirect( e );
+            
+            if( ourLeadershipChain.getElementIndex( eID ) != -1 ) {
+                o->isExiled = true;
+                
+                if( o->leadershipNameTag != NULL ) {
+                    
+                    char *newTag = autoSprintf( "%s - %s", 
+                                                translate( "exiled" ),
+                                                o->leadershipNameTag );
+                    delete [] o->leadershipNameTag;
+                    
+                    o->leadershipNameTag = newTag;
+                    }
+                }
+            }
+        }
+    }
+
