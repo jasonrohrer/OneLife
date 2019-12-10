@@ -13123,6 +13123,135 @@ static LiveObject *getPlayerByName( char *inName, LiveObject *inSkip ) {
     return NULL;
     }
 
+
+
+
+// if inAll, generates info for all players, and doesn't touch 
+//           followingUpdate flags
+// returns NULL if no following message
+static unsigned char *getFollowingMessage( char inAll, int *outLength ) {
+    unsigned char *followingMessage = NULL;
+    int followingMessageLength = 0;
+        
+    SimpleVector<char> followingWorking;
+    followingWorking.appendElementString( "FW\n" );
+            
+    int numAdded = 0;
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *nextPlayer = players.getElement( i );
+        if( nextPlayer->error ) {
+            continue;
+            }
+        
+        if( nextPlayer->followingUpdate || inAll ) {
+
+            char *line = autoSprintf( "%d %d\n", 
+                                      nextPlayer->id,
+                                      nextPlayer->followingID );
+                
+            followingWorking.appendElementString( line );
+            delete [] line;
+            numAdded++;
+
+            if( ! inAll ) {
+                nextPlayer->followingUpdate = false;
+                }
+            }
+        }
+            
+    if( numAdded > 0 ) {
+        followingWorking.push_back( '#' );
+            
+        if( numAdded > 0 ) {
+
+            char *followingMessageText = 
+                followingWorking.getElementString();
+                
+            followingMessageLength = strlen( followingMessageText );
+                
+            if( followingMessageLength < maxUncompressedSize ) {
+                followingMessage = (unsigned char*)followingMessageText;
+                }
+            else {
+                // compress for all players once here
+                followingMessage = makeCompressedMessage( 
+                    followingMessageText, 
+                    followingMessageLength, &followingMessageLength );
+                    
+                delete [] followingMessageText;
+                }
+            }
+        }
+
+    *outLength = followingMessageLength;
+    return followingMessage;
+    }
+
+
+
+// if inAll, generates info for all players, and doesn't touch exileUpdate flags
+// returns NULL if no exile message
+static unsigned char *getExileMessage( char inAll, int *outLength ) {
+    unsigned char *exileMessage = NULL;
+    int exileMessageLength = 0;
+    
+
+    SimpleVector<char> exileWorking;
+    exileWorking.appendElementString( "EX\n" );
+    
+    int numAdded = 0;
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *nextPlayer = players.getElement( i );
+        if( nextPlayer->error ) {
+            continue;
+            }
+        if( nextPlayer->exileUpdate || inAll ) {
+
+            for( int e=0; e< nextPlayer->exiledByIDs.size(); e++ ) {
+                
+                char *line = autoSprintf( 
+                    "%d %d\n", 
+                    nextPlayer->id,
+                    nextPlayer->exiledByIDs.getElementDirect( e ) );
+                
+                exileWorking.appendElementString( line );
+                delete [] line;
+                numAdded++;
+                }
+            if( ! inAll ) {
+                nextPlayer->exileUpdate = false;
+                }
+            }
+        }
+    
+    if( numAdded > 0 ) {
+        exileWorking.push_back( '#' );
+        
+        if( numAdded > 0 ) {
+            
+            char *exileMessageText = 
+                exileWorking.getElementString();
+            
+            exileMessageLength = strlen( exileMessageText );
+            
+            if( exileMessageLength < maxUncompressedSize ) {
+                exileMessage = (unsigned char*)exileMessageText;
+                }
+            else {
+                // compress for all players once here
+                exileMessage = makeCompressedMessage( 
+                    exileMessageText, 
+                    exileMessageLength, &exileMessageLength );
+                
+                delete [] exileMessageText;
+                }
+            }
+        }
+
+    *outLength = exileMessageLength;
+    return exileMessage;
+    }
+
     
 
 
@@ -21556,110 +21685,14 @@ int main() {
 
 
 
-        unsigned char *followingMessage = NULL;
         int followingMessageLength = 0;
+        unsigned char *followingMessage = 
+            getFollowingMessage( false, &followingMessageLength );
         
-        SimpleVector<char> followingWorking;
-        followingWorking.appendElementString( "FW\n" );
-            
-        int numAdded = 0;
-        for( int i=0; i<players.size(); i++ ) {
-            LiveObject *nextPlayer = players.getElement( i );
-            if( nextPlayer->error ||
-                ! nextPlayer->followingUpdate ) {
-                continue;
-                }
-            
 
-            char *line = autoSprintf( "%d %d\n", 
-                                      nextPlayer->id,
-                                      nextPlayer->followingID );
-                
-            followingWorking.appendElementString( line );
-            delete [] line;
-            numAdded++;
-
-            nextPlayer->followingUpdate = false;
-            }
-            
-        if( numAdded > 0 ) {
-            followingWorking.push_back( '#' );
-            
-            if( numAdded > 0 ) {
-
-                char *followingMessageText = 
-                    followingWorking.getElementString();
-                
-                followingMessageLength = strlen( followingMessageText );
-                
-                if( followingMessageLength < maxUncompressedSize ) {
-                    followingMessage = (unsigned char*)followingMessageText;
-                    }
-                else {
-                    // compress for all players once here
-                    followingMessage = makeCompressedMessage( 
-                        followingMessageText, 
-                        followingMessageLength, &followingMessageLength );
-                    
-                    delete [] followingMessageText;
-                    }
-                }
-            }
-
-
-
-        unsigned char *exileMessage = NULL;
         int exileMessageLength = 0;
-        
-        SimpleVector<char> exileWorking;
-        exileWorking.appendElementString( "EX\n" );
-            
-        numAdded = 0;
-        for( int i=0; i<players.size(); i++ ) {
-            LiveObject *nextPlayer = players.getElement( i );
-            if( nextPlayer->error ||
-                ! nextPlayer->exileUpdate ) {
-                continue;
-                }
-            
-            for( int e=0; e< nextPlayer->exiledByIDs.size(); e++ ) {
-                
-                char *line = autoSprintf( 
-                    "%d %d\n", 
-                    nextPlayer->id,
-                    nextPlayer->exiledByIDs.getElementDirect( e ) );
-                
-                exileWorking.appendElementString( line );
-                delete [] line;
-                numAdded++;
-                }
-            nextPlayer->exileUpdate = false;
-            }
-            
-        if( numAdded > 0 ) {
-            exileWorking.push_back( '#' );
-            
-            if( numAdded > 0 ) {
-
-                char *exileMessageText = 
-                    exileWorking.getElementString();
-                
-                exileMessageLength = strlen( exileMessageText );
-                
-                if( exileMessageLength < maxUncompressedSize ) {
-                    exileMessage = (unsigned char*)exileMessageText;
-                    }
-                else {
-                    // compress for all players once here
-                    exileMessage = makeCompressedMessage( 
-                        exileMessageText, 
-                        exileMessageLength, &exileMessageLength );
-                    
-                    delete [] exileMessageText;
-                    }
-                }
-            }
-
+        unsigned char *exileMessage = 
+            getExileMessage( false, &exileMessageLength );
 
 
 
@@ -22253,6 +22286,34 @@ int main() {
                     delete [] message;
                     }
                 
+
+                // send following status for everyone alive
+                int followL = 0;
+                unsigned char *followM = getFollowingMessage( true, &followL );
+                
+                if( followM != NULL ) {
+                    nextPlayer->sock->send( 
+                        followM, 
+                        followL, 
+                        false, false );
+                    delete [] followM;
+                    }
+
+
+
+                // send exile status for everyone alive
+                int exileL = 0;
+                unsigned char *exileM = getExileMessage( true, &exileL );
+                
+                if( exileM != NULL ) {
+                    nextPlayer->sock->send( 
+                        exileM, 
+                        exileL, 
+                        false, false );
+                    delete [] exileM;
+                    }
+                
+
 
 
 
