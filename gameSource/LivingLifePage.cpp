@@ -2400,8 +2400,6 @@ LivingLifePage::LivingLifePage()
           mHintArrowSprite( loadSprite( "hintArrow.tga" ) ),
           mHomeSlipSprite( loadSprite( "homeSlip.tga", false ) ),
           mHomeSlip2Sprite( loadSprite( "homeSlip2.tga", false ) ),
-          mHomeSlipBlankTopSprite( 
-              loadSprite( "homeSlipBlankTop.tga", false ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
@@ -2933,7 +2931,6 @@ LivingLifePage::~LivingLifePage() {
     freeSprite( mPathMarkSprite );
     freeSprite( mHomeSlipSprite );
     freeSprite( mHomeSlip2Sprite );
-    freeSprite( mHomeSlipBlankTopSprite );
     
     if( teaserVideo ) {
         freeSprite( mTeaserArrowLongSprite );

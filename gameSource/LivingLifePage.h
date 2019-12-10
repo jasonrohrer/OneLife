@@ -633,7 +633,6 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         SpriteHandle mHomeSlipSprite;
         SpriteHandle mHomeSlip2Sprite;
-        SpriteHandle mHomeSlipBlankTopSprite;
         
         SpriteHandle mHomeSlipSprites[2];
         
