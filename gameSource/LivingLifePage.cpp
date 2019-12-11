@@ -1066,6 +1066,8 @@ typedef enum messageType {
     GRAVE_MOVE,
     GRAVE_OLD,
     OWNER,
+    FOLLOWING,
+    EXILED,
     VALLEY_SPACING,
     FLIGHT_DEST,
     BAD_BIOMES,
@@ -1176,6 +1178,12 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "OW" ) == 0 ) {
         returnValue = OWNER;
+        }
+    else if( strcmp( copy, "FW" ) == 0 ) {
+        returnValue = FOLLOWING;
+        }
+    else if( strcmp( copy, "EX" ) == 0 ) {
+        returnValue = EXILED;
         }
     else if( strcmp( copy, "VS" ) == 0 ) {
         returnValue = VALLEY_SPACING;
@@ -9794,10 +9802,30 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 else {
                     des = (char*)translate( "you" );
-                    if( ourLiveObject->name != NULL ) {
-                        des = autoSprintf( "%s - %s", des, 
-                                           ourLiveObject->name );
+                    
+                    if( ourLiveObject->leadershipNameTag != NULL ||
+                        ourLiveObject->name != NULL ) {
+                        char *workingName;
+                        if( ourLiveObject->name != NULL ) {
+                            workingName = 
+                                autoSprintf( " %s", ourLiveObject->name );
+                            }
+                        else {
+                            workingName = stringDuplicate( "" );
+                            }
+                        
+                        const char *leaderString = "";
+                        
+                        if( ourLiveObject->leadershipNameTag != NULL ) {
+                            leaderString = ourLiveObject->leadershipNameTag;
+                            }
+                        
+                        
+                        des = autoSprintf( "%s - %s%s", des, 
+                                           leaderString, workingName );
                         desToDelete = des;
+
+                        delete [] workingName;
                         }
                     }
                 }
@@ -9836,6 +9864,25 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     desToDelete = des;
                     }
+                
+                if( otherObj->leadershipNameTag != NULL ) {
+                    if( otherObj->name == NULL ) {
+                        des = autoSprintf( "%s - %s",
+                                           otherObj->leadershipNameTag, des );
+                        }
+                    else {
+                        des = autoSprintf( "%s %s",
+                                           otherObj->leadershipNameTag, des );
+                        }
+                    
+                    if( desToDelete != NULL ) {
+                        delete [] desToDelete;
+                        }
+                    
+                    desToDelete = des;
+                    }
+                
+
                 if( otherObj != NULL && 
                     ( otherObj->dying || isSick( otherObj ) )
                     && otherObj->holdingID > 0 ) {
@@ -13535,6 +13582,65 @@ void LivingLifePage::step() {
             tokens->deallocateStringElements();
             delete tokens;
             }
+        else if( type == FOLLOWING ) {
+            SimpleVector<char*> *tokens = tokenizeString( message );
+            
+            if( tokens->size() >= 3 ) {
+             
+                for( int i=1; i< tokens->size() - 1; i += 2 ){
+                    
+                    int f = 0;
+                    int l = 0;
+                
+                    sscanf( tokens->getElementDirect( i ), "%d", &f );
+                    sscanf( tokens->getElementDirect( i + 1 ), "%d", &l );
+                    
+                    LiveObject *fo = getLiveObject( f );
+                    
+                    if( fo != NULL ) {
+                        if( l != 0 ) {
+                            fo->followingID = l;
+                            }
+                        else {
+                            fo->followingID = -1;
+                            }
+                        }
+                    }
+                }
+            tokens->deallocateStringElements();
+            delete tokens;
+            
+            updateLeadership();
+            }
+        else if( type == FOLLOWING ) {
+            SimpleVector<char*> *tokens = tokenizeString( message );
+            
+            if( tokens->size() >= 3 ) {
+             
+                for( int i=1; i< tokens->size() - 1; i += 2 ){
+                    
+                    // target and perp
+                    int t = 0;
+                    int p = 0;
+                
+                    sscanf( tokens->getElementDirect( i ), "%d", &t );
+                    sscanf( tokens->getElementDirect( i + 1 ), "%d", &p );
+                    
+                    LiveObject *to = getLiveObject( t );
+                    
+                    if( to != NULL && p != 0 ) {
+                        
+                        if( to->exiledByIDs.getElementIndex( p ) == -1 ) {
+                            to->exiledByIDs.push_back( p );
+                            }
+                        }
+                    }
+                }
+            tokens->deallocateStringElements();
+            delete tokens;
+            
+            updateLeadership();
+            }
         else if( type == VALLEY_SPACING ) {
             sscanf( message, "VS\n%d %d",
                     &valleySpacing, &valleyOffset );
@@ -17023,6 +17129,8 @@ void LivingLifePage::step() {
                             delete nextObject->futureHeldAnimStack;
 
                             gameObjects.deleteElement( i );
+
+                            updateLeadership();
                             break;
                             }
                         }
@@ -23672,8 +23780,35 @@ static const char *badgeColors[NUM_BADGE_COLORS] = { "#e6194B",
 static const char *getUnusedLeadershipColor() {
     // fixme
     // look for next unused
-    return badgeColors[0];
+
+    int usedCounts[ NUM_BADGE_COLORS ];
+    memset( usedCounts, 0, NUM_BADGE_COLORS * sizeof( int ) );
+    
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+
+        if( o->hasPersonalLeadershipColor ) {
+            for( int c=0; c<NUM_BADGE_COLORS; c++ ) {
+                if( o->personalLeadershipColorHexString == badgeColors[c] ) {
+                    usedCounts[c]++;
+                    }
+                }
+            }
+        }
+    
+    int minUsedCount = gameObjects.size();
+    int minUsedIndex = -1;
+    
+    for( int c=0; c<NUM_BADGE_COLORS; c++ ) {
+        if( usedCounts[c] < minUsedCount ) {
+            minUsedCount = usedCounts[c];
+            minUsedIndex = c;
+            }
+        }
+
+    return badgeColors[minUsedIndex];
     }
+
 
 
 #define NUM_LEADERSHIP_NAMES 8
@@ -23750,10 +23885,12 @@ void LivingLifePage::updateLeadership() {
             
             int lv = o->leadershipLevel;
             
-            if( lv >= NUM_LEADERSHIP_NAMES ) {
-                lv = NUM_LEADERSHIP_NAMES - 1;
+            if( lv > NUM_LEADERSHIP_NAMES ) {
+                lv = NUM_LEADERSHIP_NAMES;
                 }
             
+            lv -= 1;
+
             int gIndex = 0;
             if( ! getObject( o->displayID )->male ) {
                 gIndex = 1;
@@ -23829,11 +23966,13 @@ void LivingLifePage::updateLeadership() {
     for( int i=0; i<gameObjects.size(); i++ ) {
         LiveObject *o = gameObjects.getElement( i );
         
-        // see if any of our leaders have this person exiled
+        // see if any of our leaders (or us) have this person exiled
         for( int e=0; e < o->exiledByIDs.size(); e++ ) {
             int eID = o->exiledByIDs.getElementDirect( e );
             
-            if( ourLeadershipChain.getElementIndex( eID ) != -1 ) {
+            if( eID == ourID ||
+                ourLeadershipChain.getElementIndex( eID ) != -1 ) {
+                
                 o->isExiled = true;
                 
                 if( o->leadershipNameTag != NULL ) {

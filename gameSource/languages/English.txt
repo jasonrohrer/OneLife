@@ -419,6 +419,25 @@ atWar "AT WAR"
 atPeace "AT PEACE"
 
 
+lord "LORD"
+lady "LADY"
+baron "BARON"
+baroness "BARONESS"
+count "COUNT"
+countess "COUNTESS"
+duke "DUKE"
+duchess "DUCHESS"
+king "KING"
+queen "QUEEN"
+emperor "EMPEROR"
+empress "EMPRESS"
+highEmperor "HIGH EMPEROR"
+highEmpress "HIGH EMPRESS"
+supremeEmperor "SUPREME EMPEROR"
+supremeEmpress "SUPREME EMPRESS"
+
+exiled "EXILED"
+
 
 dieCommand "/DIE"
 
