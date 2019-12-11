@@ -23924,6 +23924,9 @@ void LivingLifePage::updateLeadership() {
                 
                 if( l->highestLeaderID != -1 ) {
                     o->highestLeaderID = l->highestLeaderID;
+                    if( l->followingUs ) {
+                        o->followingUs = true;
+                        }
                     nextID = -1;
                     }
                 else {
@@ -24022,8 +24025,10 @@ void LivingLifePage::updateLeadership() {
     if( ourLiveObject->highestLeaderID != -1 ) {
         for( int i=0; i<gameObjects.size(); i++ ) {
             LiveObject *o = gameObjects.getElement( i );
-            if( o->highestLeaderID == ourLiveObject->highestLeaderID &&
+            if( o != ourLiveObject && 
+                o->highestLeaderID == ourLiveObject->highestLeaderID &&
                 ! o->isExiled &&
+                ! o->followingUs &&
                 o->leadershipNameTag == NULL ) {
                 
                 o->leadershipNameTag = autoSprintf( "%s %s",
@@ -24043,7 +24048,7 @@ void LivingLifePage::updateLeadership() {
                             
             if( o->leadershipNameTag != NULL ) {
                 
-                newTag = autoSprintf( "%s %s", 
+                newTag = autoSprintf( "%s %s %s", 
                                       translate( "your" ),
                                       translate( "follower" ),
                                       o->leadershipNameTag );
