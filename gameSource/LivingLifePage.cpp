@@ -13612,7 +13612,7 @@ void LivingLifePage::step() {
             
             updateLeadership();
             }
-        else if( type == FOLLOWING ) {
+        else if( type == EXILED ) {
             SimpleVector<char*> *tokens = tokenizeString( message );
             
             if( tokens->size() >= 3 ) {
@@ -15172,6 +15172,7 @@ void LivingLifePage::step() {
                 o.hasBadge = false;
                 o.hasPersonalLeadershipColor = false;
                 o.isExiled = false;
+                o.followingUs = false;
                 o.leadershipNameTag = NULL;
                 
 
@@ -23853,20 +23854,27 @@ void LivingLifePage::updateLeadership() {
         o->highestLeaderID = -1;
         o->hasBadge = false;
         o->isExiled = false;
+        o->followingUs = false;
         }
 
 
     // compute leadership levels
-    for( int i=0; i<gameObjects.size(); i++ ) {
-        LiveObject *o = gameObjects.getElement( i );
-        
-        if( o->followingID != -1 ) {
+    char change = true;
+    
+    while( change ) {
+        change = false;
+        for( int i=0; i<gameObjects.size(); i++ ) {
+            LiveObject *o = gameObjects.getElement( i );
             
-            LiveObject *l = getGameObject( o->followingID );
-            
-            if( l != NULL ) {
-                if( l->leadershipLevel <= o->leadershipLevel ) {
-                    l->leadershipLevel = o->leadershipLevel + 1;
+            if( o->followingID != -1 ) {
+                
+                LiveObject *l = getGameObject( o->followingID );
+                
+                if( l != NULL ) {
+                    if( l->leadershipLevel <= o->leadershipLevel ) {
+                        l->leadershipLevel = o->leadershipLevel + 1;
+                        change = true;
+                        }
                     }
                 }
             }
@@ -23906,6 +23914,10 @@ void LivingLifePage::updateLeadership() {
         int nextID = o->followingID;
 
         while( nextID != -1 ) {
+            if( nextID == ourID ) {
+                o->followingUs = true;
+                }
+            
             LiveObject *l = getGameObject( nextID );
             if( l != NULL ) {
                 o->highestLeaderID = nextID;
@@ -23946,16 +23958,6 @@ void LivingLifePage::updateLeadership() {
 
         if( l != NULL ) {
             nextID = l->followingID;
-
-            if( l->leadershipNameTag != NULL ) {
-                
-                char *newTag = autoSprintf( "%s %s", translate( "your" ),
-                                            l->leadershipNameTag );
-                
-                delete [] l->leadershipNameTag;
-                
-                l->leadershipNameTag = newTag;
-                }
             }
         else {
             nextID = -1;
@@ -23975,17 +23977,88 @@ void LivingLifePage::updateLeadership() {
                 
                 o->isExiled = true;
                 
+                
+                char *newTag;
+                
                 if( o->leadershipNameTag != NULL ) {
+                
+                    newTag = autoSprintf( "%s %s", 
+                                          translate( "exiled" ),
+                                          o->leadershipNameTag );
                     
-                    char *newTag = autoSprintf( "%s - %s", 
-                                                translate( "exiled" ),
-                                                o->leadershipNameTag );
                     delete [] o->leadershipNameTag;
-                    
-                    o->leadershipNameTag = newTag;
                     }
+                else {
+                    newTag = autoSprintf( "%s", translate( "exiled" ) );
+                    }
+                    
+                o->leadershipNameTag = newTag;
                 }
             }
         }
+
+
+    // add YOUR in front of our leaders, even if exiled
+    for( int i=0; i<ourLeadershipChain.size(); i++ ) {
+        
+        LiveObject *l = getGameObject( 
+            ourLeadershipChain.getElementDirect( i ) );
+
+        if( l != NULL ) {
+            if( l->leadershipNameTag != NULL ) {
+                
+                char *newTag = autoSprintf( "%s %s", translate( "your" ),
+                                            l->leadershipNameTag );
+                
+                delete [] l->leadershipNameTag;
+                
+                l->leadershipNameTag = newTag;
+                }
+            }
+        }
+    
+
+    // find our allies
+    if( ourLiveObject->highestLeaderID != -1 ) {
+        for( int i=0; i<gameObjects.size(); i++ ) {
+            LiveObject *o = gameObjects.getElement( i );
+            if( o->highestLeaderID == ourLiveObject->highestLeaderID &&
+                ! o->isExiled &&
+                o->leadershipNameTag == NULL ) {
+                
+                o->leadershipNameTag = autoSprintf( "%s %s",
+                                                    translate( "your" ),
+                                                    translate( "ally" ) );
+                }
+            }
+        }
+
+    
+    // find our followers
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+        if( o->followingUs && ! o->isExiled ) {
+            
+            char *newTag;
+                            
+            if( o->leadershipNameTag != NULL ) {
+                
+                newTag = autoSprintf( "%s %s", 
+                                      translate( "your" ),
+                                      translate( "follower" ),
+                                      o->leadershipNameTag );
+                
+                delete [] o->leadershipNameTag;
+                }
+            else {
+                newTag = autoSprintf( "%s %s", 
+                                      translate( "your" ),
+                                      translate( "follower" ) );
+                }
+            
+            o->leadershipNameTag = newTag;
+            }
+        }
+    
     }
 

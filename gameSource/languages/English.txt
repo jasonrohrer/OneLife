@@ -437,7 +437,8 @@ supremeEmperor "SUPREME EMPEROR"
 supremeEmpress "SUPREME EMPRESS"
 
 exiled "EXILED"
-
+follower "FOLLOWER"
+ally "ALLY"
 
 dieCommand "/DIE"
 
