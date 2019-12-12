@@ -439,6 +439,7 @@ supremeEmpress "SUPREME EMPRESS"
 exiled "EXILED"
 follower "FOLLOWER"
 ally "ALLY"
+dubious "DUBIOUS"
 
 dieCommand "/DIE"
 

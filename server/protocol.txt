@@ -806,6 +806,12 @@ exile_target_id exiler_id
 
 Provides list of people exiled by another person.
 
+If a target is newly exiled by no one, they show up as:
+
+exile_target_id -1
+
+
+
 
 
 

@@ -13628,10 +13628,15 @@ void LivingLifePage::step() {
                     
                     LiveObject *to = getLiveObject( t );
                     
-                    if( to != NULL && p != 0 ) {
-                        
-                        if( to->exiledByIDs.getElementIndex( p ) == -1 ) {
-                            to->exiledByIDs.push_back( p );
+                    if( to != NULL ) {
+                        if( p == -1 ) {
+                            // their exile list has been cleared
+                            to->exiledByIDs.deleteAll();
+                            }
+                        else if( p > 0 ) {
+                            if( to->exiledByIDs.getElementIndex( p ) == -1 ) {
+                                to->exiledByIDs.push_back( p );
+                                }
                             }
                         }
                     }

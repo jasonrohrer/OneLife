@@ -203,6 +203,10 @@ static SimpleVector<char*> youExilePhrases;
 static SimpleVector<char*> namedExilePhrases;
 
 
+static SimpleVector<char*> youRedeemPhrases;
+static SimpleVector<char*> namedRedeemPhrases;
+
+
 
 static char *eveName = NULL;
 
@@ -1820,6 +1824,9 @@ void quitCleanup() {
     
     youExilePhrases.deallocateStringElements();
     namedExilePhrases.deallocateStringElements();
+
+    youRedeemPhrases.deallocateStringElements();
+    namedRedeemPhrases.deallocateStringElements();
     
 
 
@@ -10818,6 +10825,16 @@ char *isNamedExileSay( char *inSaidString ) {
     }
 
 
+char isYouRedeemSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youRedeemPhrases );
+    }
+
+// returns pointer into inSaidString
+char *isNamedRedeemSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &namedRedeemPhrases );
+    }
+
+
 
 
 LiveObject *getClosestOtherPlayer( LiveObject *inThisPlayer,
@@ -13218,6 +13235,19 @@ static unsigned char *getExileMessage( char inAll, int *outLength ) {
                 delete [] line;
                 numAdded++;
                 }
+            
+            if( ! inAll && 
+                nextPlayer->exiledByIDs.size() == 0 ) {
+                // player was marked for update and they have no exile flags
+                // send a line about them so client knows their exile 
+                // list is clear now
+                char *line = autoSprintf( "%d -1\n", nextPlayer->id  );
+                
+                exileWorking.appendElementString( line );
+                delete [] line;
+                numAdded++;
+                }
+
             if( ! inAll ) {
                 nextPlayer->exileUpdate = false;
                 }
@@ -13421,6 +13451,9 @@ int main() {
 
     readPhrases( "youExilePhrases", &youExilePhrases );
     readPhrases( "namedExilePhrases", &namedExilePhrases );
+
+    readPhrases( "youRedeemPhrases", &youRedeemPhrases );
+    readPhrases( "namedRedeemPhrases", &namedRedeemPhrases );
 
     
     curseYouPhrase = 
@@ -16854,6 +16887,7 @@ int main() {
                         
                         LiveObject *otherToFollow = NULL;
                         LiveObject *otherToExile = NULL;
+                        LiveObject *otherToRedeem = NULL;
                         
                         if( isYouFollowSay( m.saidText ) ) {
                             otherToFollow = getClosestOtherPlayer( nextPlayer );
@@ -16925,6 +16959,34 @@ int main() {
                                         nextPlayer->id );
 
                                     otherToExile->exileUpdate = true;
+                                    }
+                                }
+                            else {
+                                if( isYouRedeemSay( m.saidText ) ) {
+                                    otherToRedeem = 
+                                        getClosestOtherPlayer( nextPlayer );
+                                    }
+                                else {
+                                    char *namedPlayer = 
+                                        isNamedRedeemSay( m.saidText );
+                                    
+                                    if( namedPlayer != NULL ) {
+                                        otherToRedeem =
+                                            getPlayerByName( namedPlayer, 
+                                                             nextPlayer );
+                                        }
+                                    }
+                            
+                                if( otherToRedeem != NULL ) {
+                                    int exileIndex = otherToRedeem->
+                                        exiledByIDs.getElementIndex( 
+                                            nextPlayer->id );
+                                    if( exileIndex != -1 ) {
+                                        otherToRedeem->
+                                            exiledByIDs.deleteElement(
+                                            exileIndex );
+                                        otherToRedeem->exileUpdate = true;
+                                        }
                                     }
                                 }
                             }
