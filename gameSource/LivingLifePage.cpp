@@ -23966,6 +23966,34 @@ void LivingLifePage::updateLeadership() {
             nextID = -1;
             }
         }
+
+
+
+    // find our followers
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+        if( o->followingUs ) {
+            
+            char *newTag;
+                            
+            if( o->leadershipNameTag != NULL ) {
+                
+                newTag = autoSprintf( "%s %s", 
+                                      translate( "follower" ),
+                                      o->leadershipNameTag );
+                
+                delete [] o->leadershipNameTag;
+                }
+            else {
+                newTag = autoSprintf( "%s", 
+                                      translate( "follower" ) );
+                }
+            
+            o->leadershipNameTag = newTag;
+            }
+        }
+
+
     
     
     for( int i=0; i<gameObjects.size(); i++ ) {
@@ -24001,7 +24029,7 @@ void LivingLifePage::updateLeadership() {
         }
 
 
-    // add YOUR in front of our leaders, even if exiled
+    // add YOUR in front of our leaders and followers, even if exiled
     for( int i=0; i<ourLeadershipChain.size(); i++ ) {
         
         LiveObject *l = getGameObject( 
@@ -24019,6 +24047,24 @@ void LivingLifePage::updateLeadership() {
                 }
             }
         }
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+        if( o->followingUs ) {
+                            
+            if( o->leadershipNameTag != NULL ) {
+                
+                char *newTag = autoSprintf( "%s %s", 
+                                            translate( "your" ),
+                                            o->leadershipNameTag );
+                
+                delete [] o->leadershipNameTag;
+                
+                o->leadershipNameTag = newTag;
+                }            
+            }
+        }
+
+
     
 
     // find our allies
@@ -24039,31 +24085,6 @@ void LivingLifePage::updateLeadership() {
         }
 
     
-    // find our followers
-    for( int i=0; i<gameObjects.size(); i++ ) {
-        LiveObject *o = gameObjects.getElement( i );
-        if( o->followingUs && ! o->isExiled ) {
-            
-            char *newTag;
-                            
-            if( o->leadershipNameTag != NULL ) {
-                
-                newTag = autoSprintf( "%s %s %s", 
-                                      translate( "your" ),
-                                      translate( "follower" ),
-                                      o->leadershipNameTag );
-                
-                delete [] o->leadershipNameTag;
-                }
-            else {
-                newTag = autoSprintf( "%s %s", 
-                                      translate( "your" ),
-                                      translate( "follower" ) );
-                }
-            
-            o->leadershipNameTag = newTag;
-            }
-        }
     
     }
 
