@@ -13282,6 +13282,26 @@ static unsigned char *getExileMessage( char inAll, int *outLength ) {
     return exileMessage;
     }
 
+
+
+// Recursively walks up leader tree to find out if inLeader is a leader
+static char isFollower( LiveObject *inLeader, LiveObject *inTestFollower ) {
+    int nextID = inTestFollower->followingID;
+    
+    if( nextID > 0 ) {
+        if( nextID == inLeader->id ) {
+            return true;
+            }
+
+        LiveObject *next = getLiveObject( nextID );
+        
+        if( next == NULL ) {
+            return false;
+            }
+        return isFollower( inLeader, next );
+        }
+    return false;
+    }
     
 
 
@@ -16978,13 +16998,40 @@ int main() {
                                     }
                             
                                 if( otherToRedeem != NULL ) {
-                                    int exileIndex = otherToRedeem->
-                                        exiledByIDs.getElementIndex( 
-                                            nextPlayer->id );
-                                    if( exileIndex != -1 ) {
-                                        otherToRedeem->
-                                            exiledByIDs.deleteElement(
-                                            exileIndex );
+                                    char removedSome = false;
+                                    
+                                    // pass redemption downward
+                                    // clearing up exiles perpetrated by
+                                    // our followers
+                                    
+                                    for( int e=0; 
+                                         e<otherToRedeem->exiledByIDs.size();
+                                         e++ ) {
+                                        
+                                        // for
+                                        LiveObject *exiler =
+                                            getLiveObject( 
+                                                otherToRedeem->
+                                                exiledByIDs.
+                                                getElementDirect( e ) );
+                                        
+                                        if( exiler == nextPlayer ) {
+                                            
+                                            otherToRedeem->
+                                                exiledByIDs.deleteElement( e );
+                                            e--;
+                                            removedSome = true;
+                                            }
+                                        else if( isFollower( nextPlayer,
+                                                             exiler ) ) {
+                                            otherToRedeem->
+                                                exiledByIDs.deleteElement( e );
+                                            e--;
+                                            removedSome = true;
+                                            }
+                                        }
+
+                                    if( removedSome ) {
                                         otherToRedeem->exileUpdate = true;
                                         }
                                     }
