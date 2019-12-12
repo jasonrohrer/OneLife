@@ -16891,8 +16891,10 @@ int main() {
                                 while( o != NULL && o->followingID != -1 ) {
                                     if( o->followingID == nextPlayer->id ) {
                                         // loop
-                                        o->followingID = -1;
-                                        o->followingUpdate = true;
+                                        // break it by having next player's
+                                        // new leader follow no one
+                                        otherToFollow->followingID = -1;
+                                        otherToFollow->followingUpdate = true;
                                         break;
                                         }
                                     o = getLiveObject( o->followingID );
