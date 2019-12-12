@@ -15172,6 +15172,7 @@ void LivingLifePage::step() {
                 o.hasBadge = false;
                 o.hasPersonalLeadershipColor = false;
                 o.isExiled = false;
+                o.isDubious = false;
                 o.followingUs = false;
                 o.leadershipNameTag = NULL;
                 
@@ -23751,6 +23752,29 @@ char LivingLifePage::isHintFilterStringInvalid() {
 
 
 
+
+static void prependLeadershipTag( LiveObject *inPlayer, const char *inPrefix ) {
+    LiveObject *o = inPlayer;
+    
+    char *newTag;
+    
+    if( o->leadershipNameTag != NULL ) {
+        
+        newTag = autoSprintf( "%s %s", 
+                              inPrefix,
+                              o->leadershipNameTag );
+        
+        delete [] o->leadershipNameTag;
+        }
+    else {
+        newTag = autoSprintf( "%s", inPrefix );
+        }
+    
+    o->leadershipNameTag = newTag;
+    }
+
+
+
 // color list from here:
 // https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
 
@@ -23854,6 +23878,7 @@ void LivingLifePage::updateLeadership() {
         o->highestLeaderID = -1;
         o->hasBadge = false;
         o->isExiled = false;
+        o->isDubious = false;
         o->followingUs = false;
         }
 
@@ -23974,28 +23999,13 @@ void LivingLifePage::updateLeadership() {
         LiveObject *o = gameObjects.getElement( i );
         if( o->followingUs ) {
             
-            char *newTag;
-                            
-            if( o->leadershipNameTag != NULL ) {
-                
-                newTag = autoSprintf( "%s %s", 
-                                      translate( "follower" ),
-                                      o->leadershipNameTag );
-                
-                delete [] o->leadershipNameTag;
-                }
-            else {
-                newTag = autoSprintf( "%s", 
-                                      translate( "follower" ) );
-                }
-            
-            o->leadershipNameTag = newTag;
+            prependLeadershipTag( o, translate( "follower" ) );
             }
         }
 
 
     
-    
+    // find exiled people.  We might see ourselves as exiled.
     for( int i=0; i<gameObjects.size(); i++ ) {
         LiveObject *o = gameObjects.getElement( i );
         
@@ -24008,22 +24018,42 @@ void LivingLifePage::updateLeadership() {
                 
                 o->isExiled = true;
                 
-                
-                char *newTag;
-                
-                if( o->leadershipNameTag != NULL ) {
-                
-                    newTag = autoSprintf( "%s %s", 
-                                          translate( "exiled" ),
-                                          o->leadershipNameTag );
+                prependLeadershipTag( o, translate( "exiled" ) );
+                break;
+                }
+            }
+        }
+    // now find dubious people who are following those we see as exiled
+    // we can be dubious too
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+
+        if( o->isExiled ) {
+            continue;
+            }
+        
+        // not seen as exiled by us
+        
+        // follow their leadership chain up
+        // look for exiled leaders
+        int nextID = o->followingID;
+
+        while( nextID != -1 ) {
+            
+            LiveObject *l = getGameObject( nextID );
+            if( l != NULL ) {
+                if( l->isExiled ) {
                     
-                    delete [] o->leadershipNameTag;
-                    }
-                else {
-                    newTag = autoSprintf( "%s", translate( "exiled" ) );
-                    }
+                    o->isDubious = true;
                     
-                o->leadershipNameTag = newTag;
+                    prependLeadershipTag( o, translate( "dubious" ) );
+                    
+                    break;
+                    }
+                nextID = l->followingID;
+                }
+            else {
+                nextID = -1;
                 }
             }
         }
@@ -24038,12 +24068,7 @@ void LivingLifePage::updateLeadership() {
         if( l != NULL ) {
             if( l->leadershipNameTag != NULL ) {
                 
-                char *newTag = autoSprintf( "%s %s", translate( "your" ),
-                                            l->leadershipNameTag );
-                
-                delete [] l->leadershipNameTag;
-                
-                l->leadershipNameTag = newTag;
+                prependLeadershipTag( l, translate( "your" ) );
                 }
             }
         }
@@ -24053,13 +24078,7 @@ void LivingLifePage::updateLeadership() {
                             
             if( o->leadershipNameTag != NULL ) {
                 
-                char *newTag = autoSprintf( "%s %s", 
-                                            translate( "your" ),
-                                            o->leadershipNameTag );
-                
-                delete [] o->leadershipNameTag;
-                
-                o->leadershipNameTag = newTag;
+                prependLeadershipTag( o, translate( "your" ) );
                 }            
             }
         }

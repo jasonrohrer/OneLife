@@ -347,6 +347,11 @@ typedef struct LiveObject {
         // does the local player see this person as exiled?
         char isExiled;
 
+        // does the local player see this person as dubious?
+        // if they are following someone we see as exiled
+        char isDubious;
+        
+
         // does local player see this person as a follower?
         char followingUs;
         
