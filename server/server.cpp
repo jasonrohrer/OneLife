@@ -13305,6 +13305,75 @@ static char isFollower( LiveObject *inLeader, LiveObject *inTestFollower ) {
     
 
 
+// any followers switch to following the leader of this leader
+// exiles are passed down to followers
+static void leaderDied( LiveObject *inLeader ) {
+
+    SimpleVector<LiveObject*> exiledByThisLeader;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        
+        LiveObject *otherPlayer = players.getElement( i );
+        
+        if( otherPlayer != inLeader &&
+            ! otherPlayer->error ) {
+            
+            int exileIndex = otherPlayer->
+                exiledByIDs.getElementIndex( inLeader->id );
+            
+            if( exileIndex != -1 ) {
+                
+                // we have this other exiled
+                exiledByThisLeader.push_back( otherPlayer );
+                
+                // take ourselves off their list, we're dead
+                otherPlayer->exiledByIDs.deleteElement( exileIndex );
+                otherPlayer->exileUpdate = true;
+                }
+            }
+        }
+    
+        
+    for( int i=0; i<players.size(); i++ ) {
+        
+        LiveObject *otherPlayer = players.getElement( i );
+        
+        if( otherPlayer != inLeader &&
+            ! otherPlayer->error ) {
+            
+            if( otherPlayer->followingID == inLeader->id ) {
+                // they were following us
+
+                
+                // now they follow our leader
+                // (or no leader, if we had none)
+                otherPlayer->followingID = inLeader->followingID;
+                otherPlayer->followingUpdate = true;
+                
+                int oID = otherPlayer->id;
+                
+                // have them exile whoever we were exiling
+                for( int e=0; e<exiledByThisLeader.size(); e++ ) {
+                    LiveObject *eO = 
+                        exiledByThisLeader.getElementDirect( e );
+                    
+                    if( eO != NULL &&
+                        // never have them exile themselves
+                        eO->id != oID &&
+                        eO->exiledByIDs.getElementIndex( oID ) == -1 ) {
+                        // this follower is not already exiling this person
+                        eO->exiledByIDs.push_back( oID );
+                        eO->exileUpdate = true;
+                        }
+                    }
+                } 
+            }
+        }
+    
+    }
+
+
+
 int main() {
 
     if( checkReadOnly() ) {
@@ -16998,8 +17067,6 @@ int main() {
                                     }
                             
                                 if( otherToRedeem != NULL ) {
-                                    char removedSome = false;
-                                    
                                     // pass redemption downward
                                     // clearing up exiles perpetrated by
                                     // our followers
@@ -17020,19 +17087,16 @@ int main() {
                                             otherToRedeem->
                                                 exiledByIDs.deleteElement( e );
                                             e--;
-                                            removedSome = true;
+                                            otherToRedeem->exileUpdate = true;
                                             }
-                                        else if( isFollower( nextPlayer,
+                                        else if( exiler != NULL && 
+                                                 isFollower( nextPlayer,
                                                              exiler ) ) {
                                             otherToRedeem->
                                                 exiledByIDs.deleteElement( e );
                                             e--;
-                                            removedSome = true;
+                                            otherToRedeem->exileUpdate = true;
                                             }
-                                        }
-
-                                    if( removedSome ) {
-                                        otherToRedeem->exileUpdate = true;
                                         }
                                     }
                                 }
@@ -19930,7 +19994,8 @@ int main() {
                             }
                         }
                     }
-                    
+                
+                leaderDied( nextPlayer );
 
                 removeAllOwnership( nextPlayer );
                 
