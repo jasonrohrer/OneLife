@@ -6,6 +6,8 @@
 
 #include "minorGems/util/SimpleVector.h"
 
+#include "minorGems/game/gameGraphics.h"
+
 #include "objectBank.h"
 #include "emotion.h"
 
@@ -448,6 +450,12 @@ void setAnimationEmotion( Emotion *inEmotion );
 
 // add an extra layer of emotion for drawObjectAnim calls
 void addExtraAnimationEmotions( SimpleVector<Emotion*> *inList );
+
+
+// set to -1 to clear
+// drawn on top of tunic of people who are drawn
+void setAnimationBadge( int inBadgeID );
+void setAnimationBadgeColor( FloatColor inBadgeColor );
 
 
 

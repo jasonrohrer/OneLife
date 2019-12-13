@@ -1045,6 +1045,8 @@ class LivingLifePage : public GamePage, public ActionListener {
         void updateLeadership();
         
 
+        SimpleVector<int> mLeadershipBadges;
+
     };
 
 

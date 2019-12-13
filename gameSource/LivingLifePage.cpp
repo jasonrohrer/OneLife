@@ -2426,6 +2426,13 @@ LivingLifePage::LivingLifePage()
         mUsingSteam = true;
         }
 
+    SimpleVector<int> *badgeSetting = 
+        SettingsManager::getIntSettingMulti( "badgeObjects" );
+    
+    mLeadershipBadges.push_back_other( badgeSetting );
+    delete badgeSetting;
+    
+
     mHomeSlipSprites[0] = mHomeSlipSprite;
     mHomeSlipSprites[1] = mHomeSlip2Sprite;
     
@@ -4449,6 +4456,19 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
     
     HoldingPos holdingPos;
     holdingPos.valid = false;
+
+    int badge = -1;
+    if( inObj->hasBadge ) {
+        if( inObj->leadershipLevel < mLeadershipBadges.size() ) {
+            badge = mLeadershipBadges.
+                getElementDirect( inObj->leadershipLevel );
+            }
+        else if( mLeadershipBadges.size() > 0 ) {
+            badge = mLeadershipBadges.
+                getElementDirect( mLeadershipBadges.size() - 1 );
+            }
+        }
+
     
 
     if( inObj->holdingID > 0 &&
@@ -4518,6 +4538,9 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             personPos.x -= shiftScale * 32;
             }
         
+        
+        setAnimationBadge( badge );
+       
         holdingPos =
             drawObjectAnim( inObj->displayID, 2, curType, 
                             timeVal,
@@ -4542,7 +4565,9 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             inObj->clothing,
                             inObj->clothingContained );
         hidePersonShadows( false );
-        
+
+        setAnimationBadge( -1 );
+
         setAnimationEmotion( NULL );
         }
     
@@ -4753,7 +4778,9 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 
                 restoreSkipDrawing( heldObject );
                 }
+
             
+            setAnimationBadge( badge );
 
             // rideable object
             holdingPos =
@@ -4781,6 +4808,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                 inObj->clothingContained );
             
             setAnimationEmotion( NULL );
+       
+            setAnimationBadge( -1 );
             }
         
 
@@ -23974,6 +24003,12 @@ void LivingLifePage::updateLeadership() {
                 o->badgeColor = 
                     getFloatColor( l->personalLeadershipColorHexString );
                 }
+            }
+        else if( o->leadershipLevel > 0 ) {
+            // a leader with no other leaders above
+            o->hasBadge = true;
+            o->badgeColor = 
+                getFloatColor( o->personalLeadershipColorHexString );
             }
         }
 
