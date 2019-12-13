@@ -60,6 +60,7 @@ spellCheck.cpp \
 SoundUsage.cpp \
 objectMetadata.cpp \
 emotion.cpp \
+spriteDrawColorOverride.cpp \
 
 
 
