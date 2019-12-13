@@ -11,6 +11,16 @@ Version 294     ???
 
 
 
+Server Fixes
+
+--Can initiate murder mouth by holding weapon near somone and saying I WILL 
+  KILL YOU, or I WILL KILL EVE SMITH while holding a weapon from far away (and
+  a whole bunch of variations on these phrases, like DIE, EVE SMITH, EVE SMITH 
+  IS GONNA DIE, etc.).  If you know someone's name, you can resume your chase
+  after setting down your weapon to eat, or if you can't click on them because
+  they are too fast on a horse.
+
+
 
 Version 292     2019-December-6
 
