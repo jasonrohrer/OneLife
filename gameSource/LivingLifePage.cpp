@@ -2426,11 +2426,19 @@ LivingLifePage::LivingLifePage()
         mUsingSteam = true;
         }
 
-    SimpleVector<int> *badgeSetting = 
-        SettingsManager::getIntSettingMulti( "badgeObjects" );
+
+    const char *badgeSettingsNames[3] = { "badgeObjects",
+                                          "badgeObjectsHalfX",
+                                          "badgeObjectsFullX" };
+    for( int i=0; i<3; i++ ) {
+        SimpleVector<int> *badgeSetting = 
+            SettingsManager::getIntSettingMulti( badgeSettingsNames[i] );
+        
+        mLeadershipBadges[i].push_back_other( badgeSetting );
+        delete badgeSetting;
+        }
     
-    mLeadershipBadges.push_back_other( badgeSetting );
-    delete badgeSetting;
+    mFullXObjectID = SettingsManager::getIntSetting( "fullX", 0 );
     
 
     mHomeSlipSprites[0] = mHomeSlipSprite;
@@ -4459,16 +4467,27 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
     int badge = -1;
     if( inObj->hasBadge ) {
-        if( inObj->leadershipLevel < mLeadershipBadges.size() ) {
-            badge = mLeadershipBadges.
+        int badgeXIndex = 0;
+        
+        if( inObj->isDubious ) {
+            badgeXIndex = 1;
+            }
+        if( inObj->isExiled ) {
+            badgeXIndex = 2;
+            }
+        
+        if( inObj->leadershipLevel < mLeadershipBadges[badgeXIndex].size() ) {
+            badge = mLeadershipBadges[badgeXIndex].
                 getElementDirect( inObj->leadershipLevel );
             }
-        else if( mLeadershipBadges.size() > 0 ) {
-            badge = mLeadershipBadges.
-                getElementDirect( mLeadershipBadges.size() - 1 );
+        else if( mLeadershipBadges[badgeXIndex].size() > 0 ) {
+            badge = mLeadershipBadges[badgeXIndex].
+                getElementDirect( mLeadershipBadges[badgeXIndex].size() - 1 );
             }
         }
-
+    else if( inObj->isExiled ) {
+        badge = mFullXObjectID;
+        }
     
 
     if( inObj->holdingID > 0 &&
@@ -4541,7 +4560,13 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
         
         setAnimationBadge( badge );
         if( badge != -1 ) {
-            setAnimationBadgeColor( inObj->badgeColor );
+            if( badge == mFullXObjectID ) {
+                FloatColor white = { 1, 1, 1, 1 };
+                setAnimationBadgeColor( white );
+                }
+            else {
+                setAnimationBadgeColor( inObj->badgeColor );
+                }
             }
 
         holdingPos =

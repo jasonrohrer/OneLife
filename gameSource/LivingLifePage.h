@@ -1042,7 +1042,12 @@ class LivingLifePage : public GamePage, public ActionListener {
         void updateLeadership();
         
 
-        SimpleVector<int> mLeadershipBadges;
+        // 0 for normal
+        // 1 for half x
+        // 2 for full x
+        SimpleVector<int> mLeadershipBadges[3];
+
+        int mFullXObjectID;
 
     };
 
