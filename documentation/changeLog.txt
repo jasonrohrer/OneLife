@@ -9,6 +9,17 @@ Version 294     ???
   down there closer together.  Looked out of place on top.  Added BELL word to
   it to make it clear.  Thanks Twisted.
 
+--Support for voluntary hierarchical leadership.  Each player can chose a 
+  single leader by saying I FOLLOW YOU, or I FOLLOW JANE SMITH.  Go back to no
+  leader with I FOLLOW MYSELF.  You inherit your mother's leader at birth.
+  Each player can also exile other people by saying I EXILE YOU or I EXILE JANE
+  SMITH.  Your exiled players are seen as marked for you and any of the 
+  followers below you in the leadership tree.  People who are still following
+  exiled leaders are marked as dubious.  When a leader dies, they pass their
+  immediate followers up to the leader above them, if any, and their exile list
+  is passed down.  Rank and ally status is shown via colored badges on worn
+  chest clothing.
+
 
 
 Server Fixes
