@@ -19,6 +19,9 @@
 
 #include "folderCache.h"
 
+#include "spriteDrawColorOverride.h"
+
+
 
 static int mapSize;
 // maps IDs and AnimTyps to anim records
@@ -2819,6 +2822,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 numCont = 0;
                 
                 if( drawWithBadge != -1 ) {
+                    spriteColorOverrideOn = true;
+                    spriteColorOverride = drawWithBadgeColor;
+                    
                     drawObjectAnimHighlighted( clothingHighlightFades[1],
                                                drawWithBadge, 
                                                clothingAnimType, 
@@ -2842,6 +2848,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                                                NULL,
                                                numCont, cont,
                                                NULL );
+                    spriteColorOverrideOn = false;
                     }
                 }
             if( inClothing.backpack != NULL ) {
@@ -2918,7 +2925,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
 
         if( !skipSprite ) {
-            setDrawColor( obj->spriteColor[i] );
+            if( spriteColorOverrideOn ) {
+                setDrawColor( spriteColorOverride );
+                }
+            else {
+                setDrawColor( obj->spriteColor[i] );
+                }
             
             if( animLayerFades != NULL ) {
                 setDrawFade( animLayerFades[i] );

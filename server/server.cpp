@@ -85,6 +85,8 @@ float targetHeat = 10;
 double secondsPerYear = 60.0;
 
 
+#define NUM_BADGE_COLORS 17
+
 
 #define PERSON_OBJ_ID 12
 
@@ -613,6 +615,9 @@ typedef struct LiveObject {
         // -1 means following self (no one)
         int followingID;
         
+        // -1 if not set
+        int leadingColorIndex;
+
         // people who have exiled this player
         // some could be dead
         SimpleVector<int> exiledByIDs;
@@ -7638,7 +7643,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.everHeldByParent = false;
     
     newObject.followingID = -1;
-    
+    newObject.leadingColorIndex = -1;
+
     // everyone should hear about who this player is following
     newObject.followingUpdate = true;
     
@@ -13197,9 +13203,20 @@ static unsigned char *getFollowingMessage( char inAll, int *outLength ) {
         
         if( nextPlayer->followingUpdate || inAll ) {
 
-            char *line = autoSprintf( "%d %d\n", 
+            int colorIndex = -1;
+            
+            if( nextPlayer->followingID > 0 ) {
+                LiveObject *l = getLiveObject( nextPlayer->followingID );
+                
+                if( l != NULL ) {
+                    colorIndex = l->leadingColorIndex;
+                    }
+                }
+
+            char *line = autoSprintf( "%d %d %d\n", 
                                       nextPlayer->id,
-                                      nextPlayer->followingID );
+                                      nextPlayer->followingID,
+                                      colorIndex );
                 
             followingWorking.appendElementString( line );
             delete [] line;
@@ -13500,6 +13517,38 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID ) {
             }
         }
     }
+
+
+
+static int getUnusedLeadershipColor() {
+    // look for next unused
+
+    int usedCounts[ NUM_BADGE_COLORS ];
+    memset( usedCounts, 0, NUM_BADGE_COLORS * sizeof( int ) );
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+
+        if( o->leadingColorIndex != -1 ) {
+            usedCounts[ o->leadingColorIndex ] ++;
+            }
+        }
+    
+    int minUsedCount = players.size();
+    int minUsedIndex = -1;
+    
+    for( int c=0; c<NUM_BADGE_COLORS; c++ ) {
+        if( usedCounts[c] < minUsedCount ) {
+            minUsedCount = usedCounts[c];
+            minUsedIndex = c;
+            }
+        }
+
+    return minUsedIndex;
+    }
+
+
+
 
 
 int main() {
@@ -17141,6 +17190,11 @@ int main() {
                                 nextPlayer->followingID = otherToFollow->id;
                                 nextPlayer->followingUpdate = true;
                                 
+                                if( otherToFollow->leadingColorIndex == -1 ) {
+                                    otherToFollow->leadingColorIndex =
+                                        getUnusedLeadershipColor();
+                                    }
+
                                 // break any loops
                                 LiveObject *o = nextPlayer;
                                 
@@ -24412,6 +24466,9 @@ void drawSprite( void*, doublePair, double, double, char ) {
     }
 
 void setDrawColor( float inR, float inG, float inB, float inA ) {
+    }
+
+void setDrawColor( FloatColor inColor ) {
     }
 
 void setDrawFade( float ) {

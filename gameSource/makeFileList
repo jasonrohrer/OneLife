@@ -72,6 +72,7 @@ lifeTokens.cpp \
 PollPage.cpp \
 fitnessScore.cpp \
 GeneticHistoryPage.cpp \
+spriteDrawColorOverride.cpp \
 
 
 

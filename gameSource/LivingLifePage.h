@@ -338,11 +338,8 @@ typedef struct LiveObject {
         // color to draw badge
         FloatColor badgeColor;
 
-        // when person first becomes a leader, with pick the next
-        // unused color on the list for them
-        // them and their followers have this badge color
-        char hasPersonalLeadershipColor;
-        const char *personalLeadershipColorHexString;
+        FloatColor personalLeadershipColor;
+        
 
         // does the local player see this person as exiled?
         char isExiled;

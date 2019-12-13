@@ -4540,7 +4540,10 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
         
         
         setAnimationBadge( badge );
-       
+        if( badge != -1 ) {
+            setAnimationBadgeColor( inObj->badgeColor );
+            }
+
         holdingPos =
             drawObjectAnim( inObj->displayID, 2, curType, 
                             timeVal,
@@ -4781,6 +4784,9 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
             
             setAnimationBadge( badge );
+            if( badge != -1 ) {
+                setAnimationBadgeColor( inObj->badgeColor );
+                }
 
             // rideable object
             holdingPos =
@@ -11687,6 +11693,34 @@ void LivingLifePage::endExtraObjectMove( int inExtraIndex ) {
 
 
 
+// color list from here:
+// https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
+
+#define NUM_BADGE_COLORS 17
+static const char *badgeColors[NUM_BADGE_COLORS] = { "#e6194B", 
+                                                     "#3cb44b", 
+                                                     "#ffe119", 
+                                                     "#4363d8", 
+                                                     "#f58231",
+                                                     
+                                                     "#42d4f4", 
+                                                     "#f032e6", 
+                                                     "#fabebe", 
+                                                     "#469990",
+                                                     "#e6beff", 
+                                                     
+                                                     "#9A6324", 
+                                                     "#fffac8", 
+                                                     "#800000", 
+                                                     "#aaffc3", 
+                                                     "#000075", 
+                                                     
+                                                     "#a9a9a9", 
+                                                     "#ffffff" };
+
+
+
+
         
 void LivingLifePage::step() {
     
@@ -13614,15 +13648,17 @@ void LivingLifePage::step() {
         else if( type == FOLLOWING ) {
             SimpleVector<char*> *tokens = tokenizeString( message );
             
-            if( tokens->size() >= 3 ) {
+            if( tokens->size() >= 4 ) {
              
-                for( int i=1; i< tokens->size() - 1; i += 2 ){
+                for( int i=1; i< tokens->size() - 1; i += 3 ){
                     
                     int f = 0;
                     int l = 0;
-                
+                    int c = -1;
+                    
                     sscanf( tokens->getElementDirect( i ), "%d", &f );
                     sscanf( tokens->getElementDirect( i + 1 ), "%d", &l );
+                    sscanf( tokens->getElementDirect( i + 2 ), "%d", &c );
                     
                     LiveObject *fo = getLiveObject( f );
                     
@@ -13632,6 +13668,18 @@ void LivingLifePage::step() {
                             }
                         else {
                             fo->followingID = -1;
+                            }
+                        }
+                    
+                    if( l > 0 && c != -1 ) {
+                        LiveObject *lo = getLiveObject( l );
+                        if( lo != NULL ) {
+                            while( c >= NUM_BADGE_COLORS ) {
+                                // wrap around
+                                c -= NUM_BADGE_COLORS;
+                                }
+                            lo->personalLeadershipColor = getFloatColor(
+                                badgeColors[c] );
                             }
                         }
                     }
@@ -15203,8 +15251,11 @@ void LivingLifePage::step() {
                 o.followingID = -1;
                 o.highestLeaderID = -1;
                 o.leadershipLevel = 0;
+                o.personalLeadershipColor.r = 1;
+                o.personalLeadershipColor.g = 1;
+                o.personalLeadershipColor.b = 1;
+                o.personalLeadershipColor.a = 1;
                 o.hasBadge = false;
-                o.hasPersonalLeadershipColor = false;
                 o.isExiled = false;
                 o.isDubious = false;
                 o.followingUs = false;
@@ -23809,64 +23860,8 @@ static void prependLeadershipTag( LiveObject *inPlayer, const char *inPrefix ) {
 
 
 
-// color list from here:
-// https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
 
 
-#define NUM_BADGE_COLORS 17
-static const char *badgeColors[NUM_BADGE_COLORS] = { "#e6194B", 
-                                                     "#3cb44b", 
-                                                     "#ffe119", 
-                                                     "#4363d8", 
-                                                     "#f58231",
-                                                     
-                                                     "#42d4f4", 
-                                                     "#f032e6", 
-                                                     "#fabebe", 
-                                                     "#469990",
-                                                     "#e6beff", 
-                                                     
-                                                     "#9A6324", 
-                                                     "#fffac8", 
-                                                     "#800000", 
-                                                     "#aaffc3", 
-                                                     "#000075", 
-                                                     
-                                                     "#a9a9a9", 
-                                                     "#ffffff" };
-
-
-static const char *getUnusedLeadershipColor() {
-    // fixme
-    // look for next unused
-
-    int usedCounts[ NUM_BADGE_COLORS ];
-    memset( usedCounts, 0, NUM_BADGE_COLORS * sizeof( int ) );
-    
-    for( int i=0; i<gameObjects.size(); i++ ) {
-        LiveObject *o = gameObjects.getElement( i );
-
-        if( o->hasPersonalLeadershipColor ) {
-            for( int c=0; c<NUM_BADGE_COLORS; c++ ) {
-                if( o->personalLeadershipColorHexString == badgeColors[c] ) {
-                    usedCounts[c]++;
-                    }
-                }
-            }
-        }
-    
-    int minUsedCount = gameObjects.size();
-    int minUsedIndex = -1;
-    
-    for( int c=0; c<NUM_BADGE_COLORS; c++ ) {
-        if( usedCounts[c] < minUsedCount ) {
-            minUsedCount = usedCounts[c];
-            minUsedIndex = c;
-            }
-        }
-
-    return badgeColors[minUsedIndex];
-    }
 
 
 
@@ -23894,17 +23889,6 @@ leadershipNameKeys[NUM_LEADERSHIP_NAMES][2] = { { "lord",
 void LivingLifePage::updateLeadership() {
     for( int i=0; i<gameObjects.size(); i++ ) {
         LiveObject *o = gameObjects.getElement( i );
-
-        if( o->followingID != -1 ) {
-            
-            LiveObject *l = getGameObject( o->followingID );
-            
-            if( l != NULL && ! l->hasPersonalLeadershipColor ) {
-                
-                l->personalLeadershipColorHexString = 
-                    getUnusedLeadershipColor();
-                }
-            }
         
         // reset for now
         // we will rebuild these
@@ -24000,15 +23984,13 @@ void LivingLifePage::updateLeadership() {
             LiveObject *l = getGameObject( o->highestLeaderID );
             if( l != NULL ) {
                 o->hasBadge = true;
-                o->badgeColor = 
-                    getFloatColor( l->personalLeadershipColorHexString );
+                o->badgeColor = l->personalLeadershipColor;
                 }
             }
         else if( o->leadershipLevel > 0 ) {
             // a leader with no other leaders above
             o->hasBadge = true;
-            o->badgeColor = 
-                getFloatColor( o->personalLeadershipColorHexString );
+            o->badgeColor = o->personalLeadershipColor;
             }
         }
 
