@@ -13276,24 +13276,25 @@ static unsigned char *getExileMessage( char inAll, int *outLength ) {
             }
         if( nextPlayer->exileUpdate || inAll ) {
 
-            for( int e=0; e< nextPlayer->exiledByIDs.size(); e++ ) {
-                
-                char *line = autoSprintf( 
-                    "%d %d\n", 
-                    nextPlayer->id,
-                    nextPlayer->exiledByIDs.getElementDirect( e ) );
+            if( nextPlayer->exiledByIDs.size() > 0 ||
+                ( !inAll && nextPlayer->exileUpdate ) ) {
+                // send preface line for this player
+                // they have some lines coming OR we have a force-update
+                // for a player with no exile status (client-side list should
+                // be cleared)
+                char *line = autoSprintf( "%d -1\n", nextPlayer->id  );
                 
                 exileWorking.appendElementString( line );
                 delete [] line;
                 numAdded++;
                 }
             
-            if( ! inAll && 
-                nextPlayer->exiledByIDs.size() == 0 ) {
-                // player was marked for update and they have no exile flags
-                // send a line about them so client knows their exile 
-                // list is clear now
-                char *line = autoSprintf( "%d -1\n", nextPlayer->id  );
+            for( int e=0; e< nextPlayer->exiledByIDs.size(); e++ ) {
+                
+                char *line = autoSprintf( 
+                    "%d %d\n", 
+                    nextPlayer->id,
+                    nextPlayer->exiledByIDs.getElementDirect( e ) );
                 
                 exileWorking.appendElementString( line );
                 delete [] line;
