@@ -13655,6 +13655,61 @@ static void replaceOrder( LiveObject *nextPlayer, char *inFormattedOrder,
     }
 
 
+
+
+// speaker can be NULL sometimes
+static char *translatePhraseFromSpeaker( char *inPhrase,
+                                         LiveObject *speakerObj,
+                                         LiveObject *listenerObj ) {
+    char *trimmedPhrase = inPhrase;
+    LiveObject *nextPlayer = listenerObj;
+    
+    
+    // skip language filtering in some cases
+    // VOG can talk to anyone
+    // so can force spawns
+    // also, skip in on very low pop servers
+    // (just let everyone talk together)
+    // also in case where speach is server-forced
+    // sound representations (like [GASP])
+    // but NOT for reading written words
+    if( speakerObj == NULL ||
+        nextPlayer->vogMode || 
+        nextPlayer->forceSpawn || 
+        ( speakerObj != NULL &&
+          speakerObj->vogMode ) ||
+        ( speakerObj != NULL &&
+          speakerObj->forceSpawn ) ||
+        players.size() < 
+        minActivePlayersForLanguages ||
+        strlen( trimmedPhrase ) == 0 ||
+        trimmedPhrase[0] == '[' ||
+        isPolylingual( nextPlayer->displayID ) ||
+        ( speakerObj != NULL &&
+          isPolylingual( 
+              speakerObj->displayID ) ) ) {
+        
+        return stringDuplicate( trimmedPhrase );
+        }
+    else {
+        int speakerDrunkenness = speakerObj->drunkenness;
+        
+        return mapLanguagePhrase( 
+            trimmedPhrase,
+            speakerObj->lineageEveID,
+            nextPlayer->lineageEveID,
+            speakerObj->id,
+            nextPlayer->id,
+            computeAge( speakerObj ),
+            computeAge( nextPlayer ),
+            speakerObj->parentID,
+            nextPlayer->parentID,
+            speakerDrunkenness / 10.0 );
+        }
+    }
+
+
+
 static int orderDistance = 10;
 
 
@@ -13715,7 +13770,35 @@ static void checkOrderPropagation() {
 
                     // but don't actually deliver message to them if exiled
                     if( ! exiled ) {
-                        sendGlobalMessage( l->currentOrder, o );
+                        
+                        // everything after first ** should be translated
+                        
+                        char *fullOrder = stringDuplicate( l->currentOrder );
+                        
+                        char *messageStart = strstr( fullOrder, "**" );
+                        
+                        if( messageStart != NULL ) {
+                            // terminate here
+                            messageStart[0] = '\0';
+                            
+                            messageStart = &( messageStart[2] );
+                            
+                            char *transOrder = translatePhraseFromSpeaker( 
+                                messageStart,
+                                getLiveObject( l->currentOrderOriginatorID ),
+                                o );
+                            
+                            char *fullTransOrder = autoSprintf( "%s**%s",
+                                                                fullOrder,
+                                                                transOrder );
+                            delete [] transOrder;
+                            delete [] fullOrder;
+                            fullOrder = fullTransOrder;
+                            }
+                                
+
+                        sendGlobalMessage( fullOrder, o );
+                        delete [] fullOrder;
                         }
                     }
                 }
@@ -13727,56 +13810,6 @@ static void checkOrderPropagation() {
 
 
 
-// speaker can be NULL sometimes
-static char *translatePhraseFromSpeaker( char *inPhrase,
-                                         LiveObject *speakerObj,
-                                         LiveObject *listenerObj ) {
-    char *trimmedPhrase = inPhrase;
-    LiveObject *nextPlayer = listenerObj;
-    
-    
-    // skip language filtering in some cases
-    // VOG can talk to anyone
-    // so can force spawns
-    // also, skip in on very low pop servers
-    // (just let everyone talk together)
-    // also in case where speach is server-forced
-    // sound representations (like [GASP])
-    // but NOT for reading written words
-    if( speakerObj == NULL ||
-        nextPlayer->vogMode || 
-        nextPlayer->forceSpawn || 
-        ( speakerObj != NULL &&
-          speakerObj->vogMode ) ||
-        ( speakerObj != NULL &&
-          speakerObj->forceSpawn ) ||
-        players.size() < 
-        minActivePlayersForLanguages ||
-        strlen( trimmedPhrase ) == 0 ||
-        trimmedPhrase[0] == '[' ||
-        isPolylingual( nextPlayer->displayID ) ||
-        ( speakerObj != NULL &&
-          isPolylingual( 
-              speakerObj->displayID ) ) ) {
-        
-        return stringDuplicate( trimmedPhrase );
-        }
-    else {
-        int speakerDrunkenness = speakerObj->drunkenness;
-        
-        return mapLanguagePhrase( 
-            trimmedPhrase,
-            speakerObj->lineageEveID,
-            nextPlayer->lineageEveID,
-            speakerObj->id,
-            nextPlayer->id,
-            computeAge( speakerObj ),
-            computeAge( nextPlayer ),
-            speakerObj->parentID,
-            nextPlayer->parentID,
-            speakerDrunkenness / 10.0 );
-        }
-    }
 
 
 
