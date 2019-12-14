@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 294     ???
+Version 294     2019-December-13
 
 --Moved Bell home arrow to bottom of screen, by scooting other paper elements
   down there closer together.  Looked out of place on top.  Added BELL word to
