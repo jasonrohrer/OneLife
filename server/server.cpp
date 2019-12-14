@@ -217,6 +217,11 @@ static SimpleVector<char*> namedAfterKillPhrases;
 
 
 
+static int nextOrderNumber = 1;
+
+static char *orderPhrase = NULL;
+
+
 static char *eveName = NULL;
 
 
@@ -626,6 +631,11 @@ typedef struct LiveObject {
         
         char followingUpdate;
         char exileUpdate;
+
+        int currentOrderNumber;
+        // who issued this order?
+        int currentOrderOriginatorID;
+        char *currentOrder;
 
 
         // time that this life started (for computing age)
@@ -1715,6 +1725,10 @@ void quitCleanup() {
         if( nextPlayer->name != NULL ) {
             delete [] nextPlayer->name;
             }
+        
+        if( nextPlayer->currentOrder != NULL ) {
+            delete [] nextPlayer->currentOrder;
+            }
 
         if( nextPlayer->familyName != NULL ) {
             delete [] nextPlayer->familyName;
@@ -1845,6 +1859,10 @@ void quitCleanup() {
     namedKillPhrases.deallocateStringElements();
     namedAfterKillPhrases.deallocateStringElements();
     
+    if( orderPhrase != NULL ) {
+        delete [] orderPhrase;
+        orderPhrase = NULL;
+        }
 
 
     if( curseYouPhrase != NULL ) {
@@ -7651,6 +7669,10 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.followingUpdate = true;
     
     newObject.exileUpdate = false;
+    
+    newObject.currentOrderNumber = -1;
+    newObject.currentOrderOriginatorID = -1;
+    newObject.currentOrder = NULL;
     
     
     int numOfAge = 0;
@@ -13552,6 +13574,247 @@ static int getUnusedLeadershipColor() {
 
 
 
+#define NUM_LEADERSHIP_NAMES 8
+static const char *
+leadershipNames[NUM_LEADERSHIP_NAMES][2] = { { "LORD",
+                                               "LADY" },
+                                             { "BARON",
+                                               "BARONESS" },
+                                             { "COUNT",
+                                               "COUNTESS" },
+                                             { "DUKE",
+                                               "DUCHESS" },
+                                             { "KING",
+                                               "QUEEN" },
+                                             { "EMPEROR",
+                                               "EMPRESS" },
+                                             { "HIGH EMPEROR",
+                                               "HIGH EMPRESS" },
+                                             { "SUPREME EMPEROR",
+                                               "SUPREME EMPRESS" } };
+
+
+static char *getLeadershipName( LiveObject *nextPlayer ) {
+    
+    int level = 0;
+    
+    LiveObject *possibleLeader = nextPlayer;
+    
+    while( possibleLeader != NULL ) {
+        LiveObject *nextLeader = NULL;
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *o = players.getElement( i );
+            
+            if( o->error ) {
+                continue;
+                }
+            if( o->followingID == possibleLeader->id ) {
+                level ++;
+                nextLeader = o;
+                }
+            }
+        possibleLeader = nextLeader;
+        }
+
+    if( level == 0 ) {
+        // no followers
+        return NULL;
+        }
+    
+    int gender = 0;
+    if( getFemale( nextPlayer ) ) {
+        gender = 1;
+        }
+    
+    if( level > NUM_LEADERSHIP_NAMES ) {
+        level = NUM_LEADERSHIP_NAMES;
+        }
+    
+    int index = level - 1;
+    const char *title = leadershipNames[index][gender];
+    
+    if( nextPlayer->name == NULL ) {
+        return stringDuplicate( title );
+        }
+    else {
+        return autoSprintf( "%s %s", title, nextPlayer->name );
+        } 
+    }
+
+
+
+static void replaceOrder( LiveObject *nextPlayer, char *inFormattedOrder,
+                          int inOrderNumber, int inOriginatorID ) {
+    if( nextPlayer->currentOrderNumber < inOrderNumber ) {
+        nextPlayer->currentOrderNumber = inOrderNumber;
+        nextPlayer->currentOrderOriginatorID = inOriginatorID;
+        
+        if( nextPlayer->currentOrder != NULL ) {
+            delete [] nextPlayer->currentOrder;
+            }
+        nextPlayer->currentOrder = stringDuplicate( inFormattedOrder );
+        }
+    }
+
+
+
+
+// speaker can be NULL sometimes
+static char *translatePhraseFromSpeaker( char *inPhrase,
+                                         LiveObject *speakerObj,
+                                         LiveObject *listenerObj ) {
+    char *trimmedPhrase = inPhrase;
+    LiveObject *nextPlayer = listenerObj;
+    
+    
+    // skip language filtering in some cases
+    // VOG can talk to anyone
+    // so can force spawns
+    // also, skip in on very low pop servers
+    // (just let everyone talk together)
+    // also in case where speach is server-forced
+    // sound representations (like [GASP])
+    // but NOT for reading written words
+    if( speakerObj == NULL ||
+        nextPlayer->vogMode || 
+        nextPlayer->forceSpawn || 
+        ( speakerObj != NULL &&
+          speakerObj->vogMode ) ||
+        ( speakerObj != NULL &&
+          speakerObj->forceSpawn ) ||
+        players.size() < 
+        minActivePlayersForLanguages ||
+        strlen( trimmedPhrase ) == 0 ||
+        trimmedPhrase[0] == '[' ||
+        isPolylingual( nextPlayer->displayID ) ||
+        ( speakerObj != NULL &&
+          isPolylingual( 
+              speakerObj->displayID ) ) ) {
+        
+        return stringDuplicate( trimmedPhrase );
+        }
+    else {
+        int speakerDrunkenness = speakerObj->drunkenness;
+        
+        return mapLanguagePhrase( 
+            trimmedPhrase,
+            speakerObj->lineageEveID,
+            nextPlayer->lineageEveID,
+            speakerObj->id,
+            nextPlayer->id,
+            computeAge( speakerObj ),
+            computeAge( nextPlayer ),
+            speakerObj->parentID,
+            nextPlayer->parentID,
+            speakerDrunkenness / 10.0 );
+        }
+    }
+
+
+
+static int orderDistance = 10;
+
+
+static void checkOrderPropagation() {
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( o->error ) {
+            continue;
+            }
+
+        if( o->followingID != -1 ) {
+            LiveObject *l = getLiveObject( o->followingID );
+            
+            if( l != NULL && l->currentOrder != NULL && 
+                l->currentOrderNumber > o->currentOrderNumber) {
+                
+                // our leader has a new order that we don't have
+
+                // are we close enough to them?
+                
+                GridPos ourPos = getPlayerPos( o );
+                GridPos theirPos = getPlayerPos( l );
+                                
+                double d = distance( ourPos, theirPos );
+
+                if( d <= orderDistance ) {
+
+                    // close!
+
+                    // make leader doesn't see us as exiled
+                    
+                    // are they, or any of their leaders, on our exile list?
+                    
+                    LiveObject *nextToCheck = l;
+                    
+                    char exiled = false;
+                    while( nextToCheck != NULL ) {
+                        if( o->exiledByIDs.getElementIndex( nextToCheck->id )
+                            != -1 ) {
+                            exiled = true;
+                            break;
+                            }
+                        if( nextToCheck->followingID != -1 ) {
+                            nextToCheck = 
+                                getLiveObject( nextToCheck->followingID );
+                            }
+                        else {
+                            nextToCheck = NULL;
+                            }
+                        }
+
+                    // replace order even if exiled, so we don't have to keep
+                    // checking them later
+                    replaceOrder( o, l->currentOrder, 
+                                  l->currentOrderNumber,
+                                  l->currentOrderOriginatorID );
+
+                    // but don't actually deliver message to them if exiled
+                    if( ! exiled ) {
+                        
+                        // everything after first ** should be translated
+                        
+                        char *fullOrder = stringDuplicate( l->currentOrder );
+                        
+                        char *messageStart = strstr( fullOrder, "**" );
+                        
+                        if( messageStart != NULL ) {
+                            // terminate here
+                            messageStart[0] = '\0';
+                            
+                            messageStart = &( messageStart[2] );
+                            
+                            char *transOrder = translatePhraseFromSpeaker( 
+                                messageStart,
+                                getLiveObject( l->currentOrderOriginatorID ),
+                                o );
+                            
+                            char *fullTransOrder = autoSprintf( "%s**%s",
+                                                                fullOrder,
+                                                                transOrder );
+                            delete [] transOrder;
+                            delete [] fullOrder;
+                            fullOrder = fullTransOrder;
+                            }
+                                
+
+                        sendGlobalMessage( fullOrder, o );
+                        delete [] fullOrder;
+                        }
+                    }
+                }
+            } 
+        }
+    
+    }
+
+
+
+
+
+
+
 
 void sanityCheckSettings(const char *inSettingName) {
     FILE *fp = SettingsManager::getSettingsFile( inSettingName, "r" );
@@ -13744,6 +14007,14 @@ int main() {
     readPhrases( "namedKillPhrases", &namedKillPhrases );
     readPhrases( "namedAfterKillPhrases", &namedAfterKillPhrases );
 
+
+    orderPhrase = 
+        SettingsManager::getSettingContents( "orderPhrase", 
+                                             "ORDER," );
+
+    orderDistance = 
+        SettingsManager::getIntSetting( "orderDistance", 10 );
+    
     
     curseYouPhrase = 
         SettingsManager::getSettingContents( "curseYouPhrase", 
@@ -14140,7 +14411,8 @@ int main() {
                 
                 delete [] message;           
                 }
-
+            
+            checkOrderPropagation();
             
             checkCustomGlobalMessage();
             }
@@ -17308,6 +17580,37 @@ int main() {
                                     }
                                 }
                             }
+
+                        if( strstr( m.saidText, orderPhrase ) == m.saidText ) {
+                            // starts with ORDER phrase
+                            
+                            char *order = 
+                                trimWhitespace(
+                                    &( m.saidText[ strlen( orderPhrase ) ] ) );
+                            
+                            char *leadershipName = 
+                                getLeadershipName( nextPlayer );
+
+                            if( leadershipName != NULL ) {
+                                // they are a leader
+
+                                char *formattedOrder = 
+                                    autoSprintf( "ORDER FROM YOUR %s:**%s",
+                                                 leadershipName, order );
+                                
+                                delete [] leadershipName;
+                                
+                                // originated with this player
+                                replaceOrder( nextPlayer, formattedOrder,
+                                              nextOrderNumber,
+                                              nextPlayer->id );
+                                
+                                delete [] formattedOrder;
+                                nextOrderNumber++;
+                                }
+                            delete [] order;
+                            }
+                        
                         
                         if( nextPlayer->holdingID > 0 &&
                             getObject( nextPlayer->holdingID )->deadlyDistance
@@ -23635,17 +23938,14 @@ int main() {
                                 int listenerEveID = nextPlayer->lineageEveID;
                                 int listenerID = nextPlayer->id;
                                 double listenerAge = computeAge( nextPlayer );
-                                int listenerParentID = nextPlayer->parentID;
                                 
                                 int speakerEveID;
                                 double speakerAge;
-                                int speakerParentID = -1;
                                 
                                 if( speakerObj != NULL ) {
                                     speakerEveID = speakerObj->lineageEveID;
                                     speakerID = speakerObj->id;
                                     speakerAge = computeAge( speakerObj );
-                                    speakerParentID = speakerObj->parentID;
                                     }
                                 else {
                                     // speaker dead, doesn't matter what we
@@ -23705,55 +24005,9 @@ int main() {
                                     }
 
                                 
-                                char *translatedPhrase;
-                                
-                                // skip language filtering in some cases
-                                // VOG can talk to anyone
-                                // so can force spawns
-                                // also, skip in on very low pop servers
-                                // (just let everyone talk together)
-                                // also in case where speach is server-forced
-                                // sound representations (like [GASP])
-                                // but NOT for reading written words
-                                if( nextPlayer->vogMode || 
-                                    nextPlayer->forceSpawn || 
-                                    ( speakerObj != NULL &&
-                                      speakerObj->vogMode ) ||
-                                    ( speakerObj != NULL &&
-                                      speakerObj->forceSpawn ) ||
-                                    players.size() < 
-                                    minActivePlayersForLanguages ||
-                                    strlen( trimmedPhrase ) == 0 ||
-                                    trimmedPhrase[0] == '[' ||
-                                    isPolylingual( nextPlayer->displayID ) ||
-                                    ( speakerObj != NULL &&
-                                      isPolylingual( 
-                                          speakerObj->displayID ) ) ) {
-                                    
-                                    translatedPhrase =
-                                        stringDuplicate( trimmedPhrase );
-                                    }
-                                else {
-                                    int speakerDrunkenness = 0;
-                                    
-                                    if( speakerObj != NULL ) {
-                                        speakerDrunkenness =
-                                            speakerObj->drunkenness;
-                                        }
-
-                                    translatedPhrase =
-                                        mapLanguagePhrase( 
-                                            trimmedPhrase,
-                                            speakerEveID,
-                                            listenerEveID,
-                                            speakerID,
-                                            listenerID,
-                                            speakerAge,
-                                            listenerAge,
-                                            speakerParentID,
-                                            listenerParentID,
-                                            speakerDrunkenness / 10.0 );
-                                    }
+                                char *translatedPhrase = 
+                                    translatePhraseFromSpeaker(
+                                        trimmedPhrase, speakerObj, nextPlayer );
                                 
                                 if( speakerEveID != 
                                     listenerEveID
@@ -24391,6 +24645,10 @@ int main() {
 
                 if( nextPlayer->name != NULL ) {
                     delete [] nextPlayer->name;
+                    }
+
+                if( nextPlayer->currentOrder != NULL ) {
+                    delete [] nextPlayer->currentOrder;
                     }
 
                 if( nextPlayer->familyName != NULL ) {

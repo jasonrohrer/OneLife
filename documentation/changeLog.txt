@@ -3,6 +3,22 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 296    2019-December-14
+
+--Moved badges to be drawn over top of backpack strap (so not covered by strap).
+
+
+
+Server Fixes
+
+--Leaders can now issue orders that are passed through their follower tree
+  whenever followers are within 10 tiles.  You only receive such orders from
+  your own personal leader, but the orders might be passed down from higher up.
+  Leaders issue orders by saying ORDER, COME TO THE TOWN CENTER.  Orders appear
+  to followers as DING messages.
+
+
+
 Version 294     2019-December-13
 
 --Moved Bell home arrow to bottom of screen, by scooting other paper elements
