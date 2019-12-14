@@ -17173,7 +17173,9 @@ int main() {
                                    getPlayerByName( namedPlayer, nextPlayer );
                                
                                if( otherToFollow == NULL &&
-                                   strcmp( namedPlayer, "MYSELF" ) == 0 ) {
+                                   ( strcmp( namedPlayer, "MYSELF" ) == 0 ||
+                                     strcmp( namedPlayer, "NO ONE" ) == 0 ||
+                                     strcmp( namedPlayer, "NOBODY" ) == 0 ) ) {
                                    otherToFollow = nextPlayer;
                                    }
                                }
