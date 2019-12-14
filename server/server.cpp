@@ -13678,9 +13678,40 @@ static void checkOrderPropagation() {
                 double d = distance( ourPos, theirPos );
 
                 if( d <= orderDistance ) {
-                    replaceOrder( o, l->currentOrder, l->currentOrderNumber );
+
+                    // close!
+
+                    // make leader doesn't see us as exiled
                     
-                    sendGlobalMessage( l->currentOrder, o );
+                    // are they, or any of their leaders, on our exile list?
+                    
+                    LiveObject *nextToCheck = l;
+                    
+                    char exiled = false;
+                    while( nextToCheck != NULL ) {
+                        if( o->exiledByIDs.getElementIndex( nextToCheck->id )
+                            != -1 ) {
+                            exiled = true;
+                            break;
+                            }
+                        if( nextToCheck->followingID != -1 ) {
+                            nextToCheck = 
+                                getLiveObject( nextToCheck->followingID );
+                            }
+                        else {
+                            nextToCheck = NULL;
+                            }
+                        }
+
+                    // replace order even if exiled, so we don't have to keep
+                    // checking them later
+                    replaceOrder( o, l->currentOrder, 
+                                  l->currentOrderNumber );
+
+                    // but don't actually deliver message to them if exiled
+                    if( ! exiled ) {
+                        sendGlobalMessage( l->currentOrder, o );
+                        }
                     }
                 }
             } 
