@@ -2824,38 +2824,6 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     }
                 numCont = 0;
                 }
-            
-            if( drawWithBadge != -1 &&
-                ( inClothing.tunic != NULL || bareBadge ) ) {
-                spriteColorOverrideOn = true;
-                spriteColorOverride = drawWithBadgeColor;
-                
-                char used;
-                drawObjectAnimHighlighted( clothingHighlightFades[1],
-                                           drawWithBadge, 
-                                           clothingAnimType, 
-                                           inFrameTime,
-                                           inAnimFade, 
-                                           clothingFadeTargetAnimType,
-                                           inFadeTargetFrameTime,
-                                           inFrozenRotFrameTime,
-                                           &used,
-                                           endAnimType,
-                                           endAnimType,
-                                           badgePos,
-                                           badgeRot,
-                                           true,
-                                           inFlipH,
-                                           -1,
-                                           0,
-                                           false,
-                                           false,
-                                           emptyClothing,
-                                           NULL,
-                                           0, NULL,
-                                           NULL );
-                spriteColorOverrideOn = false;
-                }
             if( inClothing.backpack != NULL ) {
                 int numCont = 0;
                 int *cont = NULL;
@@ -2892,6 +2860,37 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 if( cont != NULL ) {
                     delete [] cont;
                     }
+                }            
+            if( drawWithBadge != -1 &&
+                ( inClothing.tunic != NULL || bareBadge ) ) {
+                spriteColorOverrideOn = true;
+                spriteColorOverride = drawWithBadgeColor;
+                
+                char used;
+                drawObjectAnimHighlighted( clothingHighlightFades[1],
+                                           drawWithBadge, 
+                                           clothingAnimType, 
+                                           inFrameTime,
+                                           inAnimFade, 
+                                           clothingFadeTargetAnimType,
+                                           inFadeTargetFrameTime,
+                                           inFrozenRotFrameTime,
+                                           &used,
+                                           endAnimType,
+                                           endAnimType,
+                                           badgePos,
+                                           badgeRot,
+                                           true,
+                                           inFlipH,
+                                           -1,
+                                           0,
+                                           false,
+                                           false,
+                                           emptyClothing,
+                                           NULL,
+                                           0, NULL,
+                                           NULL );
+                spriteColorOverrideOn = false;
                 }
             }
         

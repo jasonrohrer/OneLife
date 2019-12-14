@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 296    ???
+
+--Moved badges to be drawn over top of backpack strap (so not covered by strap).
+
+
+
+
 Version 294     2019-December-13
 
 --Moved Bell home arrow to bottom of screen, by scooting other paper elements
