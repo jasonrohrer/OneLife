@@ -6266,4 +6266,10 @@ char canBuildInBiome( ObjectRecord *inObj, int inTargetBiome ) {
 
 
     
-    
+
+// from spriteDrawColorOverride.h
+// instantiated here so we don't need a separate cpp file for these
+
+char spriteColorOverrideOn = false;
+
+FloatColor spriteColorOverride = {1, 1, 1, 1};
