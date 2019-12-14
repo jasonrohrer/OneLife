@@ -24,6 +24,9 @@
 #include "animationBank.h"
 
 
+#include "spriteDrawColorOverride.h"
+
+
 // supplied by animation bank
 extern void checkDrawPos( int inObjectID, doublePair inPos );
 
@@ -3983,7 +3986,13 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
         
         
         if( ! skipSprite ) {
-            setDrawColor( inObject->spriteColor[i] );
+            
+            if( spriteColorOverrideOn ) {
+                setDrawColor( spriteColorOverride );
+                }
+            else {
+                setDrawColor( inObject->spriteColor[i] );
+                }
 
             double rot = inObject->spriteRot[i];
 
@@ -6257,4 +6266,10 @@ char canBuildInBiome( ObjectRecord *inObj, int inTargetBiome ) {
 
 
     
-    
+
+// from spriteDrawColorOverride.h
+// instantiated here so we don't need a separate cpp file for these
+
+char spriteColorOverrideOn = false;
+
+FloatColor spriteColorOverride = {1, 1, 1, 1};
