@@ -317,6 +317,45 @@ typedef struct LiveObject {
         
         char chasingUs;
         
+
+
+        // id of who this player is following, or -1 if following self
+        int followingID;
+        
+        int highestLeaderID;
+
+        // list of other players who have exiled this player
+        SimpleVector<int> exiledByIDs;
+        
+        // how many tiers of people are below this person
+        // 0 if has no followers
+        // 1 if has some followers
+        // 2 if has some leaders as followers
+        // 3 if has some leader-leaders as followers
+        int leadershipLevel;
+        
+        char hasBadge;
+        // color to draw badge
+        FloatColor badgeColor;
+
+        FloatColor personalLeadershipColor;
+        
+
+        // does the local player see this person as exiled?
+        char isExiled;
+
+        // does the local player see this person as dubious?
+        // if they are following someone we see as exiled
+        char isDubious;
+        
+
+        // does local player see this person as a follower?
+        char followingUs;
+        
+        // for mouse over, what this local player sees
+        // in front of this player's name
+        char *leadershipNameTag;
+
     } LiveObject;
 
 
@@ -632,7 +671,7 @@ class LivingLifePage : public GamePage, public ActionListener {
         
 
         SpriteHandle mHomeSlipSprite;
-        SpriteHandle mHomeSlipBlankTopSprite;
+        SpriteHandle mHomeSlip2Sprite;
         
         SpriteHandle mHomeSlipSprites[2];
         
@@ -1015,6 +1054,17 @@ class LivingLifePage : public GamePage, public ActionListener {
         char isBadBiome( int inMapI );
 
         void drawHomeSlip( doublePair inSlipPos, int inIndex = 0 );
+        
+
+        void updateLeadership();
+        
+
+        // 0 for normal
+        // 1 for half x
+        // 2 for full x
+        SimpleVector<int> mLeadershipBadges[3];
+
+        int mFullXObjectID;
 
     };
 

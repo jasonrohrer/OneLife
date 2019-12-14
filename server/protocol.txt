@@ -187,6 +187,10 @@ GRAVE_OLD (GO)
 
 OWNER_LIST (OW)
 
+FOLLOWING (FW)
+
+EXILED (EX) 
+
 VALLEY_SPACING (VS)
 
 CURSED (CU)
@@ -775,6 +779,52 @@ x y p_id p_id p_id ... p_id
 
 
 Provides owner list for position x y
+
+
+
+
+FW
+follower_id leader_id leader_color_index
+follower_id leader_id leader_color_index
+...
+follower_id leader_id leader_color_index
+#
+
+Provides list of people following other people.
+If leader is -1, that person follows no one
+Leader color index specifies leader's badge color from a fixed color list
+
+
+
+
+EX
+exile_target_id exiler_id
+exile_target_id exiler_id
+exile_target_id exiler_id
+...
+exile_target_id exiler_id
+#
+
+Provides list of people exiled by another person.
+
+If someone's exile list has changed (who's exiling them), then their whole
+exile list is sent.
+
+Each target's list is prefaced by this line:
+
+exile_target_id -1
+
+This indicates that the target's complete list is coming, and the client-side
+list should be cleared in preparation for this.
+
+
+If a target is newly exiled by no one, they show up as:
+
+exile_target_id -1
+
+
+
+
 
 
 

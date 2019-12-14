@@ -85,6 +85,8 @@ float targetHeat = 10;
 double secondsPerYear = 60.0;
 
 
+#define NUM_BADGE_COLORS 17
+
 
 #define PERSON_OBJ_ID 12
 
@@ -196,6 +198,22 @@ static SimpleVector<char*> familyGivingPhrases;
 static SimpleVector<char*> offspringGivingPhrases;
 
 static SimpleVector<char*> posseJoiningPhrases;
+
+
+static SimpleVector<char*> youFollowPhrases;
+static SimpleVector<char*> namedFollowPhrases;
+
+static SimpleVector<char*> youExilePhrases;
+static SimpleVector<char*> namedExilePhrases;
+
+
+static SimpleVector<char*> youRedeemPhrases;
+static SimpleVector<char*> namedRedeemPhrases;
+
+
+static SimpleVector<char*> youKillPhrases;
+static SimpleVector<char*> namedKillPhrases;
+static SimpleVector<char*> namedAfterKillPhrases;
 
 
 
@@ -593,6 +611,21 @@ typedef struct LiveObject {
         // id of Eve that started this line
         int lineageEveID;
         
+
+        // who this player is following
+        // might be a dead player
+        // -1 means following self (no one)
+        int followingID;
+        
+        // -1 if not set
+        int leadingColorIndex;
+
+        // people who have exiled this player
+        // some could be dead
+        SimpleVector<int> exiledByIDs;
+        
+        char followingUpdate;
+        char exileUpdate;
 
 
         // time that this life started (for computing age)
@@ -1798,6 +1831,21 @@ void quitCleanup() {
     
     posseJoiningPhrases.deallocateStringElements();
     
+    youFollowPhrases.deallocateStringElements();
+    namedFollowPhrases.deallocateStringElements();
+    
+    youExilePhrases.deallocateStringElements();
+    namedExilePhrases.deallocateStringElements();
+
+    youRedeemPhrases.deallocateStringElements();
+    namedRedeemPhrases.deallocateStringElements();
+
+
+    youKillPhrases.deallocateStringElements();
+    namedKillPhrases.deallocateStringElements();
+    namedAfterKillPhrases.deallocateStringElements();
+    
+
 
     if( curseYouPhrase != NULL ) {
         delete [] curseYouPhrase;
@@ -7596,7 +7644,15 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.heldByOther = false;
     newObject.everHeldByParent = false;
     
+    newObject.followingID = -1;
+    newObject.leadingColorIndex = -1;
 
+    // everyone should hear about who this player is following
+    newObject.followingUpdate = true;
+    
+    newObject.exileUpdate = false;
+    
+    
     int numOfAge = 0;
 
     int numBirthLocationsCurseChecked = 0;
@@ -8854,6 +8910,10 @@ int processLoggedInPlayer( char inAllowReconnect,
             }
 
         newObject.lineageEveID = parent->lineageEveID;
+
+        // child inherits mother's leader
+        newObject.followingID = parent->followingID;
+        
 
         newObject.parentChainLength = parent->parentChainLength + 1;
 
@@ -10760,6 +10820,61 @@ char isOffspringGivingSay( char *inSaidString ) {
 
 char isPosseJoiningSay( char *inSaidString ) {
     return isWildcardGivingSay( inSaidString, &posseJoiningPhrases );
+    }
+
+
+char isYouFollowSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youFollowPhrases );
+    }
+
+// returns pointer into inSaidString
+char *isNamedFollowSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &namedFollowPhrases );
+    }
+
+
+char isYouExileSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youExilePhrases );
+    }
+
+// returns pointer into inSaidString
+char *isNamedExileSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &namedExilePhrases );
+    }
+
+
+char isYouRedeemSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youRedeemPhrases );
+    }
+
+// returns pointer into inSaidString
+char *isNamedRedeemSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &namedRedeemPhrases );
+    }
+
+
+
+char isYouKillSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youKillPhrases );
+    }
+
+
+// returns newly allocated string
+char *isNamedKillSay( char *inSaidString ) {
+
+    char *name = isReverseNamingSay( inSaidString, &namedAfterKillPhrases );
+
+    if( name != NULL ) {
+        return name;
+        }
+    
+    name = isNamingSay( inSaidString, &namedKillPhrases );
+    
+    if( name != NULL ) {
+        return stringDuplicate( name );
+        }
+    
+    return NULL;
     }
 
 
@@ -13052,7 +13167,391 @@ char isHungryWorkBlocked( LiveObject *inPlayer,
     }
 
 
+
+// returns NULL if not found
+static LiveObject *getPlayerByName( char *inName, LiveObject *inSkip ) {
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = players.getElement( j );
+        if( ! otherPlayer->error &&
+            otherPlayer != inSkip &&
+            otherPlayer->name != NULL &&
+            strcmp( otherPlayer->name, inName ) == 0 ) {
+            
+            return otherPlayer;
+            }
+        }
+    return NULL;
+    }
+
+
+
+
+// if inAll, generates info for all players, and doesn't touch 
+//           followingUpdate flags
+// returns NULL if no following message
+static unsigned char *getFollowingMessage( char inAll, int *outLength ) {
+    unsigned char *followingMessage = NULL;
+    int followingMessageLength = 0;
+        
+    SimpleVector<char> followingWorking;
+    followingWorking.appendElementString( "FW\n" );
+            
+    int numAdded = 0;
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *nextPlayer = players.getElement( i );
+        if( nextPlayer->error ) {
+            continue;
+            }
+        
+        if( nextPlayer->followingUpdate || inAll ) {
+
+            int colorIndex = -1;
+            
+            if( nextPlayer->followingID > 0 ) {
+                LiveObject *l = getLiveObject( nextPlayer->followingID );
+                
+                if( l != NULL ) {
+                    colorIndex = l->leadingColorIndex;
+                    }
+                }
+
+            char *line = autoSprintf( "%d %d %d\n", 
+                                      nextPlayer->id,
+                                      nextPlayer->followingID,
+                                      colorIndex );
+                
+            followingWorking.appendElementString( line );
+            delete [] line;
+            numAdded++;
+
+            if( ! inAll ) {
+                nextPlayer->followingUpdate = false;
+                }
+            }
+        }
+            
+    if( numAdded > 0 ) {
+        followingWorking.push_back( '#' );
+            
+        if( numAdded > 0 ) {
+
+            char *followingMessageText = 
+                followingWorking.getElementString();
+                
+            followingMessageLength = strlen( followingMessageText );
+                
+            if( followingMessageLength < maxUncompressedSize ) {
+                followingMessage = (unsigned char*)followingMessageText;
+                }
+            else {
+                // compress for all players once here
+                followingMessage = makeCompressedMessage( 
+                    followingMessageText, 
+                    followingMessageLength, &followingMessageLength );
+                    
+                delete [] followingMessageText;
+                }
+            }
+        }
+
+    *outLength = followingMessageLength;
+    return followingMessage;
+    }
+
+
+
+// if inAll, generates info for all players, and doesn't touch exileUpdate flags
+// returns NULL if no exile message
+static unsigned char *getExileMessage( char inAll, int *outLength ) {
+    unsigned char *exileMessage = NULL;
+    int exileMessageLength = 0;
     
+
+    SimpleVector<char> exileWorking;
+    exileWorking.appendElementString( "EX\n" );
+    
+    int numAdded = 0;
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *nextPlayer = players.getElement( i );
+        if( nextPlayer->error ) {
+            continue;
+            }
+        if( nextPlayer->exileUpdate || inAll ) {
+
+            if( nextPlayer->exiledByIDs.size() > 0 ||
+                ( !inAll && nextPlayer->exileUpdate ) ) {
+                // send preface line for this player
+                // they have some lines coming OR we have a force-update
+                // for a player with no exile status (client-side list should
+                // be cleared)
+                char *line = autoSprintf( "%d -1\n", nextPlayer->id  );
+                
+                exileWorking.appendElementString( line );
+                delete [] line;
+                numAdded++;
+                }
+            
+            for( int e=0; e< nextPlayer->exiledByIDs.size(); e++ ) {
+                
+                char *line = autoSprintf( 
+                    "%d %d\n", 
+                    nextPlayer->id,
+                    nextPlayer->exiledByIDs.getElementDirect( e ) );
+                
+                exileWorking.appendElementString( line );
+                delete [] line;
+                numAdded++;
+                }
+
+            if( ! inAll ) {
+                nextPlayer->exileUpdate = false;
+                }
+            }
+        }
+    
+    if( numAdded > 0 ) {
+        exileWorking.push_back( '#' );
+        
+        if( numAdded > 0 ) {
+            
+            char *exileMessageText = 
+                exileWorking.getElementString();
+            
+            exileMessageLength = strlen( exileMessageText );
+            
+            if( exileMessageLength < maxUncompressedSize ) {
+                exileMessage = (unsigned char*)exileMessageText;
+                }
+            else {
+                // compress for all players once here
+                exileMessage = makeCompressedMessage( 
+                    exileMessageText, 
+                    exileMessageLength, &exileMessageLength );
+                
+                delete [] exileMessageText;
+                }
+            }
+        }
+
+    *outLength = exileMessageLength;
+    return exileMessage;
+    }
+
+
+
+// Recursively walks up leader tree to find out if inLeader is a leader
+static char isFollower( LiveObject *inLeader, LiveObject *inTestFollower ) {
+    int nextID = inTestFollower->followingID;
+    
+    if( nextID > 0 ) {
+        if( nextID == inLeader->id ) {
+            return true;
+            }
+
+        LiveObject *next = getLiveObject( nextID );
+        
+        if( next == NULL ) {
+            return false;
+            }
+        return isFollower( inLeader, next );
+        }
+    return false;
+    }
+    
+
+
+// any followers switch to following the leader of this leader
+// exiles are passed down to followers
+static void leaderDied( LiveObject *inLeader ) {
+
+    SimpleVector<LiveObject*> exiledByThisLeader;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        
+        LiveObject *otherPlayer = players.getElement( i );
+        
+        if( otherPlayer != inLeader &&
+            ! otherPlayer->error ) {
+            
+            int exileIndex = otherPlayer->
+                exiledByIDs.getElementIndex( inLeader->id );
+            
+            if( exileIndex != -1 ) {
+                
+                // we have this other exiled
+                exiledByThisLeader.push_back( otherPlayer );
+                
+                // take ourselves off their list, we're dead
+                otherPlayer->exiledByIDs.deleteElement( exileIndex );
+                otherPlayer->exileUpdate = true;
+                }
+            }
+        }
+    
+        
+    for( int i=0; i<players.size(); i++ ) {
+        
+        LiveObject *otherPlayer = players.getElement( i );
+        
+        if( otherPlayer != inLeader &&
+            ! otherPlayer->error ) {
+            
+            if( otherPlayer->followingID == inLeader->id ) {
+                // they were following us
+
+                
+                // now they follow our leader
+                // (or no leader, if we had none)
+                otherPlayer->followingID = inLeader->followingID;
+                otherPlayer->followingUpdate = true;
+                
+                int oID = otherPlayer->id;
+                
+                // have them exile whoever we were exiling
+                for( int e=0; e<exiledByThisLeader.size(); e++ ) {
+                    LiveObject *eO = 
+                        exiledByThisLeader.getElementDirect( e );
+                    
+                    if( eO != NULL &&
+                        // never have them exile themselves
+                        eO->id != oID &&
+                        eO->exiledByIDs.getElementIndex( oID ) == -1 ) {
+                        // this follower is not already exiling this person
+                        eO->exiledByIDs.push_back( oID );
+                        eO->exileUpdate = true;
+                        }
+                    }
+                } 
+            }
+        }
+    
+    }
+
+
+
+
+static void tryToStartKill( LiveObject *nextPlayer, int inTargetID ) {
+    if( inTargetID > 0 && 
+        nextPlayer->holdingID > 0 &&
+        canPlayerUseOrLearnTool( nextPlayer,
+                                 nextPlayer->holdingID ) ) {
+                            
+        ObjectRecord *heldObj = 
+            getObject( nextPlayer->holdingID );
+                            
+                            
+        if( heldObj->deadlyDistance > 0 ) {
+            
+            // player transitioning into kill state?
+                            
+            LiveObject *targetPlayer =
+                getLiveObject( inTargetID );
+                            
+            if( targetPlayer != NULL ) {
+                                    
+                // block intra-family kills with
+                // otherFamilyOnly weapons
+                char weaponBlocked = false;
+                                    
+                if( strstr( heldObj->description,
+                            "otherFamilyOnly" ) ) {
+                    // make sure victim is in
+                    // different family
+                    // AND that there's no peace treaty
+                    if( targetPlayer->lineageEveID ==
+                        nextPlayer->lineageEveID
+                        ||
+                        isPeaceTreaty( 
+                            targetPlayer->lineageEveID,
+                            nextPlayer->lineageEveID )
+                        ||
+                        ! isWarState( 
+                            targetPlayer->lineageEveID,
+                            nextPlayer->lineageEveID ) ) {
+                                            
+                        weaponBlocked = true;
+                        }
+                    }
+                                    
+                if( ! weaponBlocked  &&
+                    ! isAlreadyInKillState( nextPlayer ) ) {
+                    // they aren't already in one
+                                        
+                    removeAnyKillState( nextPlayer );
+                                        
+                    char enteredState =
+                        addKillState( nextPlayer,
+                                      targetPlayer );
+                                        
+                    if( enteredState && 
+                        ! isNoWaitWeapon( 
+                            nextPlayer->holdingID ) ) {
+                                            
+                        // no killer emote for no-wait
+                        // weapons (these aren't
+                        // actually weapons, like
+                        // tattoo needles and snowballs)
+
+                        nextPlayer->emotFrozen = true;
+                        nextPlayer->emotFrozenIndex = 
+                            killEmotionIndex;
+                                            
+                        newEmotPlayerIDs.push_back( 
+                            nextPlayer->id );
+                        newEmotIndices.push_back( 
+                            killEmotionIndex );
+                        newEmotTTLs.push_back( 120 );
+                                            
+                        if( ! targetPlayer->emotFrozen ) {
+                                                
+                            targetPlayer->emotFrozen = true;
+                            targetPlayer->emotFrozenIndex =
+                                victimEmotionIndex;
+                                                
+                            newEmotPlayerIDs.push_back( 
+                                targetPlayer->id );
+                            newEmotIndices.push_back( 
+                                victimEmotionIndex );
+                            newEmotTTLs.push_back( 120 );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
+static int getUnusedLeadershipColor() {
+    // look for next unused
+
+    int usedCounts[ NUM_BADGE_COLORS ];
+    memset( usedCounts, 0, NUM_BADGE_COLORS * sizeof( int ) );
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+
+        if( o->leadingColorIndex != -1 ) {
+            usedCounts[ o->leadingColorIndex ] ++;
+            }
+        }
+    
+    int minUsedCount = players.size();
+    int minUsedIndex = -1;
+    
+    for( int c=0; c<NUM_BADGE_COLORS; c++ ) {
+        if( usedCounts[c] < minUsedCount ) {
+            minUsedCount = usedCounts[c];
+            minUsedIndex = c;
+            }
+        }
+
+    return minUsedIndex;
+    }
+
+
+
 
 void sanityCheckSettings(const char *inSettingName) {
     FILE *fp = SettingsManager::getSettingsFile( inSettingName, "r" );
@@ -13229,6 +13728,21 @@ int main() {
 
 
     readPhrases( "posseJoiningPhrases", &posseJoiningPhrases );
+
+
+    readPhrases( "youFollowPhrases", &youFollowPhrases );
+    readPhrases( "namedFollowPhrases", &namedFollowPhrases );
+
+    readPhrases( "youExilePhrases", &youExilePhrases );
+    readPhrases( "namedExilePhrases", &namedExilePhrases );
+
+    readPhrases( "youRedeemPhrases", &youRedeemPhrases );
+    readPhrases( "namedRedeemPhrases", &namedRedeemPhrases );
+
+
+    readPhrases( "youKillPhrases", &youKillPhrases );
+    readPhrases( "namedKillPhrases", &namedKillPhrases );
+    readPhrases( "namedAfterKillPhrases", &namedAfterKillPhrases );
 
     
     curseYouPhrase = 
@@ -16473,19 +16987,11 @@ int main() {
                             char *namedOwner = isNamedGivingSay( m.saidText );
                             
                             if( namedOwner != NULL ) {
+                                LiveObject *o =
+                                    getPlayerByName( namedOwner, nextPlayer );
                                 
-                                for( int j=0; j<players.size(); j++ ) {
-                                    LiveObject *otherPlayer = 
-                                        players.getElement( j );
-                                    if( ! otherPlayer->error &&
-                                        otherPlayer != nextPlayer &&
-                                        otherPlayer->name != NULL &&
-                                        strcmp( otherPlayer->name, 
-                                                namedOwner ) == 0 ) {
-                                        
-                                        newOwners.push_back( otherPlayer );
-                                        break;
-                                        }
+                                if( o != NULL ) {
+                                    newOwners.push_back( o );
                                     }
                                 delete [] namedOwner;
                                 }
@@ -16667,6 +17173,173 @@ int main() {
                                 }
                             }
 
+                        
+                        LiveObject *otherToFollow = NULL;
+                        LiveObject *otherToExile = NULL;
+                        LiveObject *otherToRedeem = NULL;
+                        
+                        if( isYouFollowSay( m.saidText ) ) {
+                            otherToFollow = getClosestOtherPlayer( nextPlayer );
+                            }
+                        else {
+                           char *namedPlayer = isNamedFollowSay( m.saidText );
+                            
+                           if( namedPlayer != NULL ) {
+                               printf( "Named player = '%s\n", namedPlayer );
+                               otherToFollow =
+                                   getPlayerByName( namedPlayer, nextPlayer );
+                               
+                               if( otherToFollow == NULL &&
+                                   ( strcmp( namedPlayer, "MYSELF" ) == 0 ||
+                                     strcmp( namedPlayer, "NO ONE" ) == 0 ||
+                                     strcmp( namedPlayer, "NOBODY" ) == 0 ) ) {
+                                   otherToFollow = nextPlayer;
+                                   }
+                               }
+                            }
+                        
+                        if( otherToFollow != NULL ) {
+                            if( otherToFollow == nextPlayer ) {
+                                if( nextPlayer->followingID != -1 ) {
+                                    nextPlayer->followingID = -1;
+                                    nextPlayer->followingUpdate = true;
+                                    }
+                                }
+                            else if( nextPlayer->followingID != 
+                                     otherToFollow->id ) {
+                                nextPlayer->followingID = otherToFollow->id;
+                                nextPlayer->followingUpdate = true;
+                                
+                                if( otherToFollow->leadingColorIndex == -1 ) {
+                                    otherToFollow->leadingColorIndex =
+                                        getUnusedLeadershipColor();
+                                    }
+
+                                // break any loops
+                                LiveObject *o = nextPlayer;
+                                
+                                while( o != NULL && o->followingID != -1 ) {
+                                    if( o->followingID == nextPlayer->id ) {
+                                        // loop
+                                        // break it by having next player's
+                                        // new leader follow no one
+                                        otherToFollow->followingID = -1;
+                                        otherToFollow->followingUpdate = true;
+                                        break;
+                                        }
+                                    o = getLiveObject( o->followingID );
+                                    }
+                                }
+                            }
+                        else {
+                            if( isYouExileSay( m.saidText ) ) {
+                                otherToExile = 
+                                    getClosestOtherPlayer( nextPlayer );
+                                }
+                            else {
+                                char *namedPlayer = 
+                                    isNamedExileSay( m.saidText );
+                            
+                                if( namedPlayer != NULL ) {
+                                    otherToExile =
+                                        getPlayerByName( namedPlayer, 
+                                                         nextPlayer );
+                                    }
+                                }
+                            
+                            if( otherToExile != NULL ) {
+                                if( otherToExile->
+                                    exiledByIDs.getElementIndex( 
+                                        nextPlayer->id ) == -1 ) {
+                                    otherToExile->exiledByIDs.push_back(
+                                        nextPlayer->id );
+
+                                    otherToExile->exileUpdate = true;
+                                    }
+                                }
+                            else {
+                                if( isYouRedeemSay( m.saidText ) ) {
+                                    otherToRedeem = 
+                                        getClosestOtherPlayer( nextPlayer );
+                                    }
+                                else {
+                                    char *namedPlayer = 
+                                        isNamedRedeemSay( m.saidText );
+                                    
+                                    if( namedPlayer != NULL ) {
+                                        otherToRedeem =
+                                            getPlayerByName( namedPlayer, 
+                                                             nextPlayer );
+                                        }
+                                    }
+                            
+                                if( otherToRedeem != NULL ) {
+                                    // pass redemption downward
+                                    // clearing up exiles perpetrated by
+                                    // our followers
+                                    
+                                    for( int e=0; 
+                                         e<otherToRedeem->exiledByIDs.size();
+                                         e++ ) {
+                                        
+                                        // for
+                                        LiveObject *exiler =
+                                            getLiveObject( 
+                                                otherToRedeem->
+                                                exiledByIDs.
+                                                getElementDirect( e ) );
+                                        
+                                        if( exiler == nextPlayer ) {
+                                            
+                                            otherToRedeem->
+                                                exiledByIDs.deleteElement( e );
+                                            e--;
+                                            otherToRedeem->exileUpdate = true;
+                                            }
+                                        else if( exiler != NULL && 
+                                                 isFollower( nextPlayer,
+                                                             exiler ) ) {
+                                            otherToRedeem->
+                                                exiledByIDs.deleteElement( e );
+                                            e--;
+                                            otherToRedeem->exileUpdate = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        
+                        if( nextPlayer->holdingID > 0 &&
+                            getObject( nextPlayer->holdingID )->deadlyDistance
+                            > 0 ) {
+                            // are they speaking intent to kill?
+
+                            LiveObject *otherToKill = NULL;
+                            
+                            if( isYouKillSay( m.saidText ) ) {
+                                otherToKill = 
+                                    getClosestOtherPlayer( nextPlayer );
+                                }
+                            else {
+                                char *namedPlayer = 
+                                    isNamedKillSay( m.saidText );
+                                    
+                                if( namedPlayer != NULL ) {
+                                    otherToKill =
+                                        getPlayerByName( namedPlayer, 
+                                                         nextPlayer );
+                                    delete [] namedPlayer;
+                                    }
+                                }
+
+                            if( otherToKill != NULL ) {
+                                playerIndicesToSendUpdatesAbout.push_back( i );
+                                tryToStartKill( nextPlayer, otherToKill->id );
+                                }
+                            }
+                        
+
+
                         if( nextPlayer->holdingID < 0 ) {
 
                             // we're holding a baby
@@ -16816,94 +17489,7 @@ int main() {
                         }
                     else if( m.type == KILL ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
-                        if( m.id > 0 && 
-                            nextPlayer->holdingID > 0 &&
-                            canPlayerUseOrLearnTool( nextPlayer,
-                                                     nextPlayer->holdingID ) ) {
-                            
-                            ObjectRecord *heldObj = 
-                                getObject( nextPlayer->holdingID );
-                            
-                            
-                            if( heldObj->deadlyDistance > 0 ) {
-                            
-                                // player transitioning into kill state?
-                            
-                                LiveObject *targetPlayer =
-                                    getLiveObject( m.id );
-                            
-                                if( targetPlayer != NULL ) {
-                                    
-                                    // block intra-family kills with
-                                    // otherFamilyOnly weapons
-                                    char weaponBlocked = false;
-                                    
-                                    if( strstr( heldObj->description,
-                                                "otherFamilyOnly" ) ) {
-                                        // make sure victim is in
-                                        // different family
-                                        // AND that there's no peace treaty
-                                        if( targetPlayer->lineageEveID ==
-                                            nextPlayer->lineageEveID
-                                            ||
-                                            isPeaceTreaty( 
-                                                targetPlayer->lineageEveID,
-                                                nextPlayer->lineageEveID )
-                                            ||
-                                            ! isWarState( 
-                                                targetPlayer->lineageEveID,
-                                                nextPlayer->lineageEveID ) ) {
-                                            
-                                            weaponBlocked = true;
-                                            }
-                                        }
-                                    
-                                    if( ! weaponBlocked  &&
-                                        ! isAlreadyInKillState( nextPlayer ) ) {
-                                        // they aren't already in one
-                                        
-                                        removeAnyKillState( nextPlayer );
-                                        
-                                        char enteredState =
-                                            addKillState( nextPlayer,
-                                                          targetPlayer );
-                                        
-                                        if( enteredState && 
-                                            ! isNoWaitWeapon( 
-                                                nextPlayer->holdingID ) ) {
-                                            
-                                            // no killer emote for no-wait
-                                            // weapons (these aren't
-                                            // actually weapons, like
-                                            // tattoo needles and snowballs)
-
-                                            nextPlayer->emotFrozen = true;
-                                            nextPlayer->emotFrozenIndex = 
-                                                killEmotionIndex;
-                                            
-                                            newEmotPlayerIDs.push_back( 
-                                                nextPlayer->id );
-                                            newEmotIndices.push_back( 
-                                                killEmotionIndex );
-                                            newEmotTTLs.push_back( 120 );
-                                            
-                                            if( ! targetPlayer->emotFrozen ) {
-                                                
-                                                targetPlayer->emotFrozen = true;
-                                                targetPlayer->emotFrozenIndex =
-                                                    victimEmotionIndex;
-                                                
-                                                newEmotPlayerIDs.push_back( 
-                                                    targetPlayer->id );
-                                                newEmotIndices.push_back( 
-                                                    victimEmotionIndex );
-                                                newEmotTTLs.push_back( 120 );
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                        tryToStartKill( nextPlayer, m.id );
                         }
                     else if( m.type == USE ) {
                         // send update even if action fails (to let them
@@ -19556,7 +20142,8 @@ int main() {
                             }
                         }
                     }
-                    
+                
+                leaderDied( nextPlayer );
 
                 removeAllOwnership( nextPlayer );
                 
@@ -21422,6 +22009,16 @@ int main() {
 
 
 
+        int followingMessageLength = 0;
+        unsigned char *followingMessage = 
+            getFollowingMessage( false, &followingMessageLength );
+        
+
+        int exileMessageLength = 0;
+        unsigned char *exileMessage = 
+            getExileMessage( false, &exileMessageLength );
+
+
 
         unsigned char *namesMessage = NULL;
         int namesMessageLength = 0;
@@ -22013,6 +22610,34 @@ int main() {
                     delete [] message;
                     }
                 
+
+                // send following status for everyone alive
+                int followL = 0;
+                unsigned char *followM = getFollowingMessage( true, &followL );
+                
+                if( followM != NULL ) {
+                    nextPlayer->sock->send( 
+                        followM, 
+                        followL, 
+                        false, false );
+                    delete [] followM;
+                    }
+
+
+
+                // send exile status for everyone alive
+                int exileL = 0;
+                unsigned char *exileM = getExileMessage( true, &exileL );
+                
+                if( exileM != NULL ) {
+                    nextPlayer->sock->send( 
+                        exileM, 
+                        exileL, 
+                        false, false );
+                    delete [] exileM;
+                    }
+                
+
 
 
 
@@ -23391,7 +24016,7 @@ int main() {
                     }
 
 
-                // EVERYONE gets curse info for new babies
+                // EVERYONE gets curse info
                 if( cursesMessage != NULL && nextPlayer->connected ) {
                     int numSent = 
                         nextPlayer->sock->send( 
@@ -23418,6 +24043,40 @@ int main() {
                     nextPlayer->gotPartOfThisFrame = true;
                     
                     if( numSent != namesMessageLength ) {
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
+                        }
+                    }
+
+
+                // EVERYONE gets following message
+                if( followingMessage != NULL && nextPlayer->connected ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            followingMessage, 
+                            followingMessageLength, 
+                            false, false );
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
+                    if( numSent != followingMessageLength ) {
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
+                        }
+                    }
+
+
+                // EVERYONE gets exile message
+                if( exileMessage != NULL && nextPlayer->connected ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            exileMessage, 
+                            exileMessageLength, 
+                            false, false );
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
+                    if( numSent != exileMessageLength ) {
                         setPlayerDisconnected( nextPlayer, 
                                                "Socket write failed" );
                         }
@@ -23625,6 +24284,12 @@ int main() {
         if( namesMessage != NULL ) {
             delete [] namesMessage;
             }
+        if( followingMessage != NULL ) {
+            delete [] followingMessage;
+            }
+        if( exileMessage != NULL ) {
+            delete [] exileMessage;
+            }
         if( dyingMessage != NULL ) {
             delete [] dyingMessage;
             }
@@ -23821,6 +24486,9 @@ void drawSprite( void*, doublePair, double, double, char ) {
     }
 
 void setDrawColor( float inR, float inG, float inB, float inA ) {
+    }
+
+void setDrawColor( FloatColor inColor ) {
     }
 
 void setDrawFade( float ) {

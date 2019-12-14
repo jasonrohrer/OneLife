@@ -3,6 +3,36 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 294     2019-December-13
+
+--Moved Bell home arrow to bottom of screen, by scooting other paper elements
+  down there closer together.  Looked out of place on top.  Added BELL word to
+  it to make it clear.  Thanks Twisted.
+
+--Support for voluntary hierarchical leadership.  Each player can chose a 
+  single leader by saying I FOLLOW YOU, or I FOLLOW JANE SMITH.  Go back to no
+  leader with I FOLLOW MYSELF.  You inherit your mother's leader at birth.
+  Each player can also exile other people by saying I EXILE YOU or I EXILE JANE
+  SMITH.  Your exiled players are seen as marked for you and any of the 
+  followers below you in the leadership tree.  People who are still following
+  exiled leaders are marked as dubious.  When a leader dies, they pass their
+  immediate followers up to the leader above them, if any, and their exile list
+  is passed down.  Rank and ally status is shown via colored badges on worn
+  chest clothing.
+
+
+
+Server Fixes
+
+--Can initiate murder mouth by holding weapon near somone and saying I WILL 
+  KILL YOU, or I WILL KILL EVE SMITH while holding a weapon from far away (and
+  a whole bunch of variations on these phrases, like DIE, EVE SMITH, EVE SMITH 
+  IS GONNA DIE, etc.).  If you know someone's name, you can resume your chase
+  after setting down your weapon to eat, or if you can't click on them because
+  they are too fast on a horse.
+
+
+
 Version 292     2019-December-6
 
 --Finally found a work-around for the Steam lingering process bug (when the
