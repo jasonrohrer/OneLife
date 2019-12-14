@@ -1207,11 +1207,13 @@ void addExtraAnimationEmotions( SimpleVector<Emotion*> *inList ) {
 
 
 static int drawWithBadge = -1;
+static char bareBadge = false;
 static FloatColor drawWithBadgeColor = { 1, 1, 1, 1 };
 
 
-void setAnimationBadge( int inBadgeID ) {
+void setAnimationBadge( int inBadgeID, char inBareBadge ) {
     drawWithBadge = inBadgeID;
+    bareBadge = inBareBadge;
     }
 
 
@@ -2618,36 +2620,37 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 cPos = add( cPos, inPos );
                 
                 tunicPos = cPos;
-
-                if( drawWithBadge != -1 ) {
-                    ObjectRecord *badgeO = getObject( drawWithBadge );
-                    doublePair offset = badgeO->clothingOffset;
+                }
             
+            if( drawWithBadge != -1 &&
+                ( inClothing.tunic != NULL || bareBadge ) ) {
+                ObjectRecord *badgeO = getObject( drawWithBadge );
+                doublePair offset = badgeO->clothingOffset;
+            
+                if( inFlipH ) {
+                    offset.x *= -1;
+                    badgeRot = -rot - obj->spriteRot[i];
+                    }
+                else {
+                    badgeRot = rot - obj->spriteRot[i];
+                    }
+                    
+                if( badgeRot != 0 ) {
                     if( inFlipH ) {
-                        offset.x *= -1;
-                        badgeRot = -rot - obj->spriteRot[i];
+                        offset = rotate( offset, 2 * M_PI * badgeRot );
+                        badgeRot *= -1;
                         }
                     else {
-                        badgeRot = rot - obj->spriteRot[i];
+                        offset = rotate( offset, -2 * M_PI * badgeRot );
                         }
-                    
-                    if( badgeRot != 0 ) {
-                        if( inFlipH ) {
-                            offset = rotate( offset, 2 * M_PI * badgeRot );
-                            badgeRot *= -1;
-                            }
-                        else {
-                            offset = rotate( offset, -2 * M_PI * badgeRot );
-                            }
-                        }
-                    
-                    
-                    doublePair cPos = add( spritePos, offset );
-                    
-                    cPos = add( cPos, inPos );
-                    
-                    badgePos = cPos;               
                     }
+                    
+                    
+                doublePair cPos = add( spritePos, offset );
+                    
+                cPos = add( cPos, inPos );
+                    
+                badgePos = cPos;               
                 }
             if( inClothing.bottom != NULL ) {
 
@@ -2820,36 +2823,38 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     cont = NULL;
                     }
                 numCont = 0;
+                }
+            
+            if( drawWithBadge != -1 &&
+                ( inClothing.tunic != NULL || bareBadge ) ) {
+                spriteColorOverrideOn = true;
+                spriteColorOverride = drawWithBadgeColor;
                 
-                if( drawWithBadge != -1 ) {
-                    spriteColorOverrideOn = true;
-                    spriteColorOverride = drawWithBadgeColor;
-                    
-                    drawObjectAnimHighlighted( clothingHighlightFades[1],
-                                               drawWithBadge, 
-                                               clothingAnimType, 
-                                               inFrameTime,
-                                               inAnimFade, 
-                                               clothingFadeTargetAnimType,
-                                               inFadeTargetFrameTime,
-                                               inFrozenRotFrameTime,
-                                               &used,
-                                               endAnimType,
-                                               endAnimType,
-                                               badgePos,
-                                               badgeRot,
-                                               true,
-                                               inFlipH,
-                                               -1,
-                                               0,
-                                               false,
-                                               false,
-                                               emptyClothing,
-                                               NULL,
-                                               numCont, cont,
-                                               NULL );
-                    spriteColorOverrideOn = false;
-                    }
+                char used;
+                drawObjectAnimHighlighted( clothingHighlightFades[1],
+                                           drawWithBadge, 
+                                           clothingAnimType, 
+                                           inFrameTime,
+                                           inAnimFade, 
+                                           clothingFadeTargetAnimType,
+                                           inFadeTargetFrameTime,
+                                           inFrozenRotFrameTime,
+                                           &used,
+                                           endAnimType,
+                                           endAnimType,
+                                           badgePos,
+                                           badgeRot,
+                                           true,
+                                           inFlipH,
+                                           -1,
+                                           0,
+                                           false,
+                                           false,
+                                           emptyClothing,
+                                           NULL,
+                                           0, NULL,
+                                           NULL );
+                spriteColorOverrideOn = false;
                 }
             if( inClothing.backpack != NULL ) {
                 int numCont = 0;

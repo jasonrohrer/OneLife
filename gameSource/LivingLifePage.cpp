@@ -4466,7 +4466,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
     holdingPos.valid = false;
 
     int badge = -1;
-    if( inObj->hasBadge ) {
+    if( inObj->hasBadge && inObj->clothing.tunic != NULL ) {
         int badgeXIndex = 0;
         
         if( inObj->isDubious ) {
@@ -4486,6 +4486,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             }
         }
     else if( inObj->isExiled ) {
+        // exiled and no badge visible
+        // show straight X
         badge = mFullXObjectID;
         }
     
@@ -4558,7 +4560,9 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             }
         
         
-        setAnimationBadge( badge );
+        // draw on bare skin only if plain X
+        setAnimationBadge( badge, 
+                           ( badge == mFullXObjectID ) );
         if( badge != -1 ) {
             if( badge == mFullXObjectID ) {
                 FloatColor white = { 1, 1, 1, 1 };

@@ -454,7 +454,8 @@ void addExtraAnimationEmotions( SimpleVector<Emotion*> *inList );
 
 // set to -1 to clear
 // drawn on top of tunic of people who are drawn
-void setAnimationBadge( int inBadgeID );
+// inBareBadge = true to draw badge on bare skin if wearing no tunic
+void setAnimationBadge( int inBadgeID, char inBareBadge = false );
 void setAnimationBadgeColor( FloatColor inBadgeColor );
 
 
