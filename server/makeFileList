@@ -34,7 +34,6 @@ map.cpp \
 ../gameSource/SoundUsage.cpp \
 ../gameSource/objectMetadata.cpp \
 ../gameSource/GridPos.cpp \
-../gameSource/spriteDrawColorOverride.cpp \
 ../commonSource/fractalNoise.cpp \
 kissdb.cpp \
 lineardb3.cpp \
