@@ -14900,12 +14900,14 @@ int main() {
                      nextConnection->ticketServerAccepted &&
                      ! nextConnection->lifeTokenSpent ) {
 
+                // this "butDisconnected" state applies even if
+                // we see them as connected, becasue they are clearly
+                // reconnecting now
                 char liveButDisconnected = false;
                 
                 for( int p=0; p<players.size(); p++ ) {
                     LiveObject *o = players.getElement( p );
                     if( ! o->error && 
-                        ! o->connected && 
                         strcmp( o->email, 
                                 nextConnection->email ) == 0 ) {
                         liveButDisconnected = true;

@@ -13,6 +13,9 @@ Server Fixes
 
 --Fixed crash when sending follow and exile messages to disconnected player.
 
+--Fixed so that we don't burn lives when reconnecting, even if server sees us
+  as still connected when we reconnect.  Fixes #443
+
 
 
 
