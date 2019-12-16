@@ -19179,7 +19179,7 @@ int main() {
                                 // instead, stick to the food cap shown
                                 // in the client (what we last reported
                                 // to them)
-                                int cap = nextPlayer->lastReportedFoodCapacity;
+                                int cap = targetPlayer->lastReportedFoodCapacity;
                                 
 
                                 // first case:
