@@ -9929,7 +9929,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     desToDelete = des;
                     }
                 
-                if( otherObj->leadershipNameTag != NULL ) {
+                if( otherObj != NULL && otherObj->leadershipNameTag != NULL ) {
                     if( otherObj->name == NULL ) {
                         des = autoSprintf( "%s - %s",
                                            otherObj->leadershipNameTag, des );

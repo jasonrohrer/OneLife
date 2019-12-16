@@ -3,9 +3,16 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 297    ???
+
+--Fixed crash when mousing over at the moment they die.  Fixes #470
+
+
+
 Server Fixes
 
 --Fixed crash when sending follow and exile messages to disconnected player.
+
 
 
 
