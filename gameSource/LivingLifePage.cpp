@@ -22241,15 +22241,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             delete [] killMessage;
             
 
-            // try to walk near victim right away
-            killMode = true;
-                    
+            // given that there's a cool-down now before killing, don't
+            // auto walk there.
+            // Player will enter kill state, and we'll let them navivate there
+            // after that.
             ourLiveObject->killMode = true;
             ourLiveObject->killWithID = ourLiveObject->holdingID;
-
-            // ignore mod-click from here on out, to avoid
-            // force-dropping weapon
-            modClick = false;
+            
+            return;
             }
         }
     

@@ -7,6 +7,10 @@ Version 297    ???
 
 --Fixed crash when mousing over at the moment they die.  Fixes #470
 
+--Entering kill mode with shift-right-click no longer causes you to move toward
+  the kill target.  Since there is a waiting period now, moving there right
+  away doesn't make sense anymore.  Fixes #430
+
 
 
 Server Fixes
