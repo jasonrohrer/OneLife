@@ -8931,8 +8931,8 @@ int processLoggedInPlayer( char inAllowReconnect,
 
         newObject.lineageEveID = parent->lineageEveID;
 
-        // child inherits mother's leader
-        newObject.followingID = parent->followingID;
+        // consider the baby abandoned until it has a name
+        newObject.followingID = -1;
         
 
         newObject.parentChainLength = parent->parentChainLength + 1;
@@ -17645,6 +17645,9 @@ int main() {
                                                              &( m.saidText ),
                                                              babyO );
                                     }
+                                    
+                                    // assume that whoever named the baby is taking care of them
+                                    baby->followingID = nextPlayer->id;
                                 }
                             }
                         else {
@@ -17698,6 +17701,9 @@ int main() {
                                             &( m.saidText ),
                                             closestOther, false );
                                         }
+                                        
+                                        // assume that whoever named the baby is taking care of them
+                                        baby->followingID = nextPlayer->id;
                                     }
                                 }
 
