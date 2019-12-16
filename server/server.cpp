@@ -22901,7 +22901,7 @@ int main() {
                 int followL = 0;
                 unsigned char *followM = getFollowingMessage( true, &followL );
                 
-                if( followM != NULL ) {
+                if( followM != NULL && nextPlayer->connected ) {
                     nextPlayer->sock->send( 
                         followM, 
                         followL, 
@@ -22915,7 +22915,7 @@ int main() {
                 int exileL = 0;
                 unsigned char *exileM = getExileMessage( true, &exileL );
                 
-                if( exileM != NULL ) {
+                if( exileM != NULL && nextPlayer->connected ) {
                     nextPlayer->sock->send( 
                         exileM, 
                         exileL, 
