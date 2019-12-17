@@ -11,6 +11,10 @@ Version 297    ???
   the kill target.  Since there is a waiting period now, moving there right
   away doesn't make sense anymore.  Fixes #430
 
+--Fixed so that when contents of a held container go through transition, the
+  generic pickup sound is correctly played (was playing container creation
+  sound by accident).  Fixes #431
+
 
 
 Server Fixes
