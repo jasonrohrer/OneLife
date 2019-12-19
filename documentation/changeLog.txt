@@ -3,6 +3,32 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 297    2019-December-18
+
+--Fixed crash when mousing over at the moment they die.  Fixes #470
+
+--Entering kill mode with shift-right-click no longer causes you to move toward
+  the kill target.  Since there is a waiting period now, moving there right
+  away doesn't make sense anymore.  Fixes #430
+
+--Fixed so that when contents of a held container go through transition, the
+  generic pickup sound is correctly played (was playing container creation
+  sound by accident).  Fixes #431
+
+
+
+
+Server Fixes
+
+--Fixed crash when sending follow and exile messages to disconnected player.
+
+--Fixed so that we don't burn lives when reconnecting, even if server sees us
+  as still connected when we reconnect.  Fixes #443
+
+
+
+
 Version 296    2019-December-14
 
 --Moved badges to be drawn over top of backpack strap (so not covered by strap).
