@@ -3,7 +3,8 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 297    ???
+
+Version 297    2019-December-18
 
 --Fixed crash when mousing over at the moment they die.  Fixes #470
 
@@ -14,6 +15,7 @@ Version 297    ???
 --Fixed so that when contents of a held container go through transition, the
   generic pickup sound is correctly played (was playing container creation
   sound by accident).  Fixes #431
+
 
 
 
