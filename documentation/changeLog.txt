@@ -26,6 +26,8 @@ Server Fixes
 --Fixed so that we don't burn lives when reconnecting, even if server sees us
   as still connected when we reconnect.  Fixes #443
 
+--Fixed float precision errors in random animation movement that made it
+  unlikely for them to move in certain non-diagonal directions.
 
 
 
