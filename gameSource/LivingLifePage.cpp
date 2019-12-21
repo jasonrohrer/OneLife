@@ -11749,6 +11749,7 @@ static const char *badgeColors[NUM_BADGE_COLORS] = { "#e6194B",
 
 
 
+static char justHitTab = false;
 
         
 void LivingLifePage::step() {
@@ -12337,7 +12338,8 @@ void LivingLifePage::step() {
         if( ( isHintFilterStringInvalid() &&
               mCurrentHintObjectID != mNextHintObjectID ) ||
             mCurrentHintIndex != mNextHintIndex ||
-            mForceHintRefresh ) {
+            mForceHintRefresh ||
+            justHitTab ) {
             
             char autoHint = false;
             
@@ -12349,7 +12351,11 @@ void LivingLifePage::step() {
                 // and they don't have a filter applied currently
                 autoHint = true;
                 }
-
+            // or they just hit TAB 
+            if( justHitTab ) {
+                autoHint = false;
+                }
+            justHitTab = false;
             
             mForceHintRefresh = false;
 
@@ -23373,6 +23379,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                     if( mNextHintIndex < 0 ) {
                         mNextHintIndex += num;
                         }
+                    justHitTab = true;
                     }
                 }
             break;

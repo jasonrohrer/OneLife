@@ -3,6 +3,12 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 298    ???
+
+--Fixed so you can TAB to show blue hint arrows for single-recipe objects.
+  Related to #418
+
+
 
 Version 297    2019-December-18
 
