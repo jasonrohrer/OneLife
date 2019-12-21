@@ -6819,17 +6819,34 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         // are we holding the target of our current hint?
         // if so, hide hint arrows
-        if( mLastHintSortedList.size() > mCurrentHintIndex ) {    
+        if( heldID > 0 &&
+            mLastHintSortedList.size() > mCurrentHintIndex ) {    
+            
             TransRecord *t = 
                 mLastHintSortedList.getElementDirect( mCurrentHintIndex );
             
+            char holdingActor = false;
+            char holdingTarget = false;
+            
+            int heldParent = getObjectParent( heldID );
+
+            if( t->actor > 0 &&
+                getObjectParent( t->actor ) == heldParent ) {
+                holdingActor = true;
+                }
+            if( t->target > 0 &&
+                getObjectParent( t->target ) == heldParent ) {
+                holdingTarget = true;
+                }
+            
+
             
             if( t->newActor > 0 && 
-                t->newActor == heldID  && t->actor != heldID ) {
+                t->newActor == heldID  && ! holdingActor ) {
                 hit = true;
                 }
             else if( t->newTarget > 0 && 
-                     t->newTarget == heldID && t->target != heldID ) {
+                     t->newTarget == heldID && ! holdingTarget ) {
                 hit = true;
                 }
             }
@@ -11687,11 +11704,12 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
         mCurrentHintTargetObject[1] = 0;
 
         // never show visual pointer toward what we're holding
-        if( target > 0 && target != inObjectID && 
+        // we handle this elsewhere too, so just obey inDoNotPoint here
+        if( target > 0 && 
             target != inDoNotPointAtThis ) {
             mCurrentHintTargetObject[1] = target;
             }
-        if( actor > 0 && actor != inObjectID &&
+        if( actor > 0 &&
                  actor != inDoNotPointAtThis ) {
             mCurrentHintTargetObject[0] = actor;
             }
@@ -11974,6 +11992,7 @@ static const char *badgeColors[NUM_BADGE_COLORS] = { "#e6194B",
 
 
 
+static char justHitTab = false;
 
         
 void LivingLifePage::step() {
@@ -12562,7 +12581,8 @@ void LivingLifePage::step() {
         if( ( isHintFilterStringInvalid() &&
               mCurrentHintObjectID != mNextHintObjectID ) ||
             mCurrentHintIndex != mNextHintIndex ||
-            mForceHintRefresh ) {
+            mForceHintRefresh ||
+            justHitTab ) {
             
             char autoHint = false;
             
@@ -12574,7 +12594,11 @@ void LivingLifePage::step() {
                 // and they don't have a filter applied currently
                 autoHint = true;
                 }
-
+            // or they just hit TAB 
+            if( justHitTab ) {
+                autoHint = false;
+                }
+            justHitTab = false;
             
             mForceHintRefresh = false;
 
@@ -23695,6 +23719,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                     if( mNextHintIndex < 0 ) {
                         mNextHintIndex += num;
                         }
+                    justHitTab = true;
                     }
                 }
             break;

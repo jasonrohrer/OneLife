@@ -3,6 +3,27 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 298    2019-December-20
+
+--Fixed so you can TAB to show blue hint arrows for single-recipe objects.
+  Related to #418
+
+--Fixed so that holding a use dummy that is both an ingredient and a target of
+  a recipe doesn't block hint arrows.  Fixes #418
+
+
+
+Server Fixes
+
+--Fixed potential gene score exploit of tutorial lives being factored into your
+  own average lifespan.  Lives that don't affect your score are no longer
+  counted in your own average.  Fixes #473
+
+--Fixed float precision errors in random animation movement that made it
+  unlikely for them to move in certain non-diagonal directions.
+
+
+
 
 Version 297    2019-December-18
 
@@ -25,7 +46,6 @@ Server Fixes
 
 --Fixed so that we don't burn lives when reconnecting, even if server sees us
   as still connected when we reconnect.  Fixes #443
-
 
 
 

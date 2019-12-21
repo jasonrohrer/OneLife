@@ -5174,6 +5174,26 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         dir,
                         2 * M_PI * 
                         randSource.getRandomBoundedInt( 0, 7 ) / 8.0 );
+
+                    // clean up rounding errors
+                    if( fabs( dir.x ) < 0.1 ) {
+                        dir.x = 0;
+                        }
+                    if( fabs( dir.y ) < 0.1 ) {
+                        dir.y = 0;
+                        }
+                    if( dir.x > 0.9 ) {
+                        dir.x = 1;
+                        }
+                    if( dir.x < - 0.9 ) {
+                        dir.x = -1;
+                        }
+                    if( dir.y > 0.9 ) {
+                        dir.y = 1;
+                        }
+                    if( dir.y < - 0.9 ) {
+                        dir.y = -1;
+                        }
                     }
                 
                 if( dir.x != 0 && dir.y != 0 ) {
