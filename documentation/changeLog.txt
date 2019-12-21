@@ -25,6 +25,10 @@ Version 297    2019-December-18
   generic pickup sound is correctly played (was playing container creation
   sound by accident).  Fixes #431
 
+--Fixed potential gene score exploit of tutorial lives being factored into your
+  own average lifespan.  Lives that don't affect your score are no longer
+  counted in your own average.  Fixes #473
+
 
 
 

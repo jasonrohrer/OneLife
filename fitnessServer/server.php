@@ -805,7 +805,8 @@ function fs_showDetail( $checkPassword = true ) {
 
         echo "<td>$name</td>";
 
-        if( $relation_name == "You" &&
+        if( $old_score != $new_score &&
+            $relation_name == "You" &&
             $numYouLives < $numLivesInAverage ) {
             echo "<td><font color=green><b>$age years old</b></font></td>";
             $numYouLives ++;
@@ -1478,9 +1479,12 @@ function fs_getAveAge( $inEmail ) {
 
     
     global $numLivesInAverage;
-    
+
+    // don't include lives in average that didn't affect our score
+    // (like Eve lives, tutorial lives, etc.)
     $query = "SELECT life_id FROM $tableNamePrefix"."offspring ".
         "WHERE player_id = $id AND relation_name = 'You' ".
+        "AND old_score != new_score ".
         "order by death_time desc limit $numLivesInAverage;";
 
     $result = fs_queryDatabase( $query );
