@@ -42,7 +42,7 @@ extern char loginEditOverride;
 
 ExistingAccountPage::ExistingAccountPage()
         : mEmailField( mainFont, 0, 128, 10, false, 
-                       translate( "email" ),
+                       translate( "user" ),
                        NULL,
                        // forbid only spaces
                        " " ),
