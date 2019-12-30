@@ -3,6 +3,12 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Fixed blank tool learning message for partially-used tools.  Fixes #475
+
+
+
 Version 298    2019-December-20
 
 --Fixed so you can TAB to show blue hint arrows for single-recipe objects.

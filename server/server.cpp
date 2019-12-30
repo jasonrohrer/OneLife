@@ -12985,10 +12985,11 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
         if( toolPos != NULL ) {
             char *tagPos = &( toolPos[5] );
             
-            if( tagPos[0] != '\0' && tagPos[0] != ' ' ) {
+            // use dummies can have # immediately after +TOOL tag
+            if( tagPos[0] != '\0' && tagPos[0] != ' ' && tagPos[0] != '#' ) {
                 int tagLen = strlen( tagPos );
                 for( int i=0; i<tagLen; i++ ) {
-                    if( tagPos[i] == ' ' ) {
+                    if( tagPos[i] == ' ' || tagPos[i] == '#' ) {
                         tagPos[i] = '\0';
                         break;
                         }
