@@ -3,6 +3,16 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 300    
+
+--Fixed another possible cause of the bouncing forever bug (wild bug):  don't
+  ever set inMotion to true unless we actually send a MOVE message to the
+  server.
+
+
+
+
 Server Fixes
 
 --Fixed blank tool learning message for partially-used tools.  Fixes #475
