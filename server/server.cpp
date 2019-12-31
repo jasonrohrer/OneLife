@@ -5567,6 +5567,9 @@ static void forcePlayerToRead( LiveObject *inPlayer,
 
 
 
+void makePlayerBiomeSick( LiveObject *nextPlayer, 
+                          int sicknessObjectID );
+
 
 
 static void holdingSomethingNew( LiveObject *inPlayer, 
@@ -5596,6 +5599,23 @@ static void holdingSomethingNew( LiveObject *inPlayer,
         }
     else {
         inPlayer->holdingFlightObject = false;
+        }
+
+    if( inOldHoldingID > 0 && getObject( inOldHoldingID )->rideable &&
+        ( inPlayer->holdingID <= 0 || 
+          ! getObject( inPlayer->holdingID )->rideable ) ) {
+        
+        // check if they are now getting biome sick after dismount
+        int sicknessObjectID = 
+            getBiomeSickness( 
+                inPlayer->displayID, 
+                inPlayer->xd,
+                inPlayer->yd );
+        
+        if( sicknessObjectID != -1 ) {
+            makePlayerBiomeSick( inPlayer, 
+                                 sicknessObjectID );
+            }
         }
     }
 
@@ -13813,6 +13833,33 @@ static void checkOrderPropagation() {
 
 
 
+void makePlayerBiomeSick( LiveObject *nextPlayer, 
+                          int sicknessObjectID ) {
+    nextPlayer->holdingID = 
+        sicknessObjectID;
+
+    nextPlayer->holdingBiomeSickness = true;
+
+    ForcedEffects e = 
+        checkForForcedEffects( 
+            nextPlayer->holdingID );
+                            
+    if( e.emotIndex != -1 ) {
+        nextPlayer->emotFrozen = true;
+        nextPlayer->emotFrozenIndex =
+            e.emotIndex;
+        newEmotPlayerIDs.push_back( 
+            nextPlayer->id );
+        newEmotIndices.push_back( 
+            e.emotIndex );
+        newEmotTTLs.push_back( e.ttlSec );
+        interruptAnyKillEmots( 
+            nextPlayer->id, e.ttlSec );
+        }
+    }
+
+
+
 
 
 
@@ -17175,29 +17222,10 @@ int main() {
                                         // biome sickness, which we can now
                                         // freely replace
                                         
-                                        nextPlayer->holdingID = 
-                                            sicknessObjectID;
+                                        makePlayerBiomeSick( nextPlayer, 
+                                                             sicknessObjectID );
                                         playerIndicesToSendUpdatesAbout.
                                             push_back( i );
-
-                                        nextPlayer->holdingBiomeSickness = true;
-
-                                        ForcedEffects e = 
-                                            checkForForcedEffects( 
-                                                nextPlayer->holdingID );
-                            
-                                        if( e.emotIndex != -1 ) {
-                                            nextPlayer->emotFrozen = true;
-                                            nextPlayer->emotFrozenIndex =
-                                                e.emotIndex;
-                                            newEmotPlayerIDs.push_back( 
-                                                nextPlayer->id );
-                                            newEmotIndices.push_back( 
-                                                e.emotIndex );
-                                            newEmotTTLs.push_back( e.ttlSec );
-                                            interruptAnyKillEmots( 
-                                                nextPlayer->id, e.ttlSec );
-                                            }
                                         }
                                     }
                                 else if( sicknessObjectID == -1 &&

@@ -17,6 +17,11 @@ Server Fixes
 
 --Fixed blank tool learning message for partially-used tools.  Fixes #475
 
+--Fixed so that dismounting at the edge of a bad biome, where you drop your
+  horse into a good biome, makes you instantly sick.  Before, you weren't sick
+  until moving, allowing you to pull items from your nearby horse cart into the
+  bad biome and trap them there.  Fixes #477
+
 
 
 Version 298    2019-December-20
