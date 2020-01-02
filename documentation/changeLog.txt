@@ -27,6 +27,9 @@ Server Fixes
 
 --Halved rate that drunkenness wears off.  Part of #481
 
+--Support for emotEat_ tag on objects to define a forced emot when eaten (used
+  to make people blush when getting drunk).  Part of #481
+
 
 
 Version 298    2019-December-20

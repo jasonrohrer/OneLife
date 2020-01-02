@@ -11849,6 +11849,34 @@ static SimpleVector<int> newEmotIndices;
 static SimpleVector<int> newEmotTTLs;
 
 
+static void checkForFoodEatingEmot( LiveObject *inPlayer,
+                                    int inEatenID ) {
+    
+    ObjectRecord *o = getObject( inEatenID );
+    
+    if( o != NULL ) {
+        char *emotPos = strstr( o->description, "emotEat_" );
+        
+        if( emotPos != NULL ) {
+            int e, t;
+            int numRead = sscanf( emotPos, "emotEat_%d_%d", &e, &t );
+
+            if( numRead == 2 ) {
+                inPlayer->emotFrozen = true;
+                inPlayer->emotFrozenIndex = e;
+                            
+                inPlayer->emotUnfreezeETA = Time::getCurrentTime() + t;
+                            
+                newEmotPlayerIDs.push_back( inPlayer->id );
+                newEmotIndices.push_back( e );
+                newEmotTTLs.push_back( t );
+                }
+            }
+        }
+    }
+
+
+
 static char isNoWaitWeapon( int inObjectID ) {
     return strstr( getObject( inObjectID )->description,
                    "+noWait" ) != NULL;
@@ -18504,6 +18532,9 @@ int main() {
                                     
                                     nextPlayer->foodStore += bonus;
 
+                                    checkForFoodEatingEmot( nextPlayer,
+                                                            targetObj->id );
+
                                     int cap = 
                                         nextPlayer->lastReportedFoodCapacity;
                                     
@@ -19345,6 +19376,8 @@ int main() {
                                     
                                     targetPlayer->foodStore += bonus;
 
+                                    checkForFoodEatingEmot( targetPlayer,
+                                                            obj->id );
                                     
                                     if( targetPlayer->foodStore > cap ) {
                                         int over = 
