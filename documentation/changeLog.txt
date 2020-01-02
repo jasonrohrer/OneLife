@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 300    
+Version 300    ???
 
 --Fixed another possible cause of the bouncing forever bug (wild bug):  don't
   ever set inMotion to true unless we actually send a MOVE message to the
@@ -21,6 +21,9 @@ Server Fixes
   horse into a good biome, makes you instantly sick.  Before, you weren't sick
   until moving, allowing you to pull items from your nearby horse cart into the
   bad biome and trap them there.  Fixes #477
+
+--Eating bonus not applied to alcohol drinks.  Trying to get drunk no longer
+  fills up your stomach so quickly.  Part of #481
 
 
 

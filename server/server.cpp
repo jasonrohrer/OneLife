@@ -18490,13 +18490,19 @@ int main() {
                                     
                                     updateYum( nextPlayer, targetObj->id );
                                     
-
+                                    
+                                    int bonus = eatBonus;
+                                    
+                                    if( targetObj->alcohol > 0 ) {
+                                        bonus = 0;
+                                        }
+                                    
                                     logEating( targetObj->id,
-                                               targetObj->foodValue + eatBonus,
+                                               targetObj->foodValue + bonus,
                                                computeAge( nextPlayer ),
                                                m.x, m.y );
                                     
-                                    nextPlayer->foodStore += eatBonus;
+                                    nextPlayer->foodStore += bonus;
 
                                     int cap = 
                                         nextPlayer->lastReportedFoodCapacity;
@@ -19326,12 +19332,18 @@ int main() {
                                     updateYum( targetPlayer, obj->id,
                                                targetPlayer == nextPlayer );
 
+                                    int bonus = eatBonus;
+                                    
+                                    if( obj->alcohol > 0 ) {
+                                        bonus = 0;
+                                        }
+
                                     logEating( obj->id,
-                                               obj->foodValue + eatBonus,
+                                               obj->foodValue + bonus,
                                                computeAge( targetPlayer ),
                                                m.x, m.y );
                                     
-                                    targetPlayer->foodStore += eatBonus;
+                                    targetPlayer->foodStore += bonus;
 
                                     
                                     if( targetPlayer->foodStore > cap ) {
