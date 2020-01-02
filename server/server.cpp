@@ -10052,6 +10052,32 @@ static SimpleVector<int> newEmotIndices;
 // 0 if no ttl specified
 static SimpleVector<int> newEmotTTLs;
 
+
+static void checkForFoodEatingEmot( LiveObject *inPlayer,
+                                    int inEatenID ) {
+    
+    ObjectRecord *o = getObject( inEatenID );
+    
+    if( o != NULL ) {
+        char *emotPos = strstr( o->description, "emotEat_" );
+        
+        if( emotPos != NULL ) {
+            int e, t;
+            int numRead = sscanf( emotPos, "emotEat_%d_%d", &e, &t );
+
+            if( numRead == 2 ) {
+                inPlayer->emotFrozen = true;
+                inPlayer->emotFrozenIndex = e;
+                            
+                inPlayer->emotUnfreezeETA = Time::getCurrentTime() + t;
+                            
+                newEmotPlayerIDs.push_back( inPlayer->id );
+                newEmotIndices.push_back( e );
+                newEmotTTLs.push_back( t );
+                }
+            }
+        }
+    }
     
 
 
@@ -15722,6 +15748,9 @@ int main() {
                                     
                                     nextPlayer->foodStore += eatBonus;
 
+                                    checkForFoodEatingEmot( nextPlayer,
+                                                            targetObj->id );
+
                                     int cap =
                                         computeFoodCapacity( nextPlayer );
                                     
@@ -16589,6 +16618,8 @@ int main() {
                                     
                                     targetPlayer->foodStore += eatBonus;
 
+                                    checkForFoodEatingEmot( targetPlayer,
+                                                            obj->id );
                                     
                                     if( targetPlayer->foodStore > cap ) {
                                         int over = 
