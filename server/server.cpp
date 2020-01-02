@@ -21763,8 +21763,8 @@ int main() {
 
                     if( nextPlayer->drunkenness > 0 ) {
                         // for every unit of food consumed, consume one
-                        // unit of drunkenness
-                        nextPlayer->drunkenness -= 1.0;
+                        // half unit of drunkenness
+                        nextPlayer->drunkenness -= 0.5;
                         if( nextPlayer->drunkenness < 0 ) {
                             nextPlayer->drunkenness = 0;
                             }

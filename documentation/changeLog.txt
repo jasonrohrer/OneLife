@@ -25,6 +25,8 @@ Server Fixes
 --Eating bonus not applied to alcohol drinks.  Trying to get drunk no longer
   fills up your stomach so quickly.  Part of #481
 
+--Halved rate that drunkenness wears off.  Part of #481
+
 
 
 Version 298    2019-December-20
