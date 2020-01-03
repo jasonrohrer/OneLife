@@ -5569,6 +5569,9 @@ static void forcePlayerToRead( LiveObject *inPlayer,
 
 
 
+void makePlayerBiomeSick( LiveObject *nextPlayer, 
+                          int sicknessObjectID );
+
 
 
 static void holdingSomethingNew( LiveObject *inPlayer, 
@@ -5598,6 +5601,23 @@ static void holdingSomethingNew( LiveObject *inPlayer,
         }
     else {
         inPlayer->holdingFlightObject = false;
+        }
+
+    if( inOldHoldingID > 0 && getObject( inOldHoldingID )->rideable &&
+        ( inPlayer->holdingID <= 0 || 
+          ! getObject( inPlayer->holdingID )->rideable ) ) {
+        
+        // check if they are now getting biome sick after dismount
+        int sicknessObjectID = 
+            getBiomeSickness( 
+                inPlayer->displayID, 
+                inPlayer->xd,
+                inPlayer->yd );
+        
+        if( sicknessObjectID != -1 ) {
+            makePlayerBiomeSick( inPlayer, 
+                                 sicknessObjectID );
+            }
         }
     }
 
@@ -11831,6 +11851,34 @@ static SimpleVector<int> newEmotIndices;
 static SimpleVector<int> newEmotTTLs;
 
 
+static void checkForFoodEatingEmot( LiveObject *inPlayer,
+                                    int inEatenID ) {
+    
+    ObjectRecord *o = getObject( inEatenID );
+    
+    if( o != NULL ) {
+        char *emotPos = strstr( o->description, "emotEat_" );
+        
+        if( emotPos != NULL ) {
+            int e, t;
+            int numRead = sscanf( emotPos, "emotEat_%d_%d", &e, &t );
+
+            if( numRead == 2 ) {
+                inPlayer->emotFrozen = true;
+                inPlayer->emotFrozenIndex = e;
+                            
+                inPlayer->emotUnfreezeETA = Time::getCurrentTime() + t;
+                            
+                newEmotPlayerIDs.push_back( inPlayer->id );
+                newEmotIndices.push_back( e );
+                newEmotTTLs.push_back( t );
+                }
+            }
+        }
+    }
+
+
+
 static char isNoWaitWeapon( int inObjectID ) {
     return strstr( getObject( inObjectID )->description,
                    "+noWait" ) != NULL;
@@ -12987,10 +13035,11 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
         if( toolPos != NULL ) {
             char *tagPos = &( toolPos[5] );
             
-            if( tagPos[0] != '\0' && tagPos[0] != ' ' ) {
+            // use dummies can have # immediately after +TOOL tag
+            if( tagPos[0] != '\0' && tagPos[0] != ' ' && tagPos[0] != '#' ) {
                 int tagLen = strlen( tagPos );
                 for( int i=0; i<tagLen; i++ ) {
-                    if( tagPos[i] == ' ' ) {
+                    if( tagPos[i] == ' ' || tagPos[i] == '#' ) {
                         tagPos[i] = '\0';
                         break;
                         }
@@ -13811,6 +13860,33 @@ static void checkOrderPropagation() {
 
 
 
+
+
+
+void makePlayerBiomeSick( LiveObject *nextPlayer, 
+                          int sicknessObjectID ) {
+    nextPlayer->holdingID = 
+        sicknessObjectID;
+
+    nextPlayer->holdingBiomeSickness = true;
+
+    ForcedEffects e = 
+        checkForForcedEffects( 
+            nextPlayer->holdingID );
+                            
+    if( e.emotIndex != -1 ) {
+        nextPlayer->emotFrozen = true;
+        nextPlayer->emotFrozenIndex =
+            e.emotIndex;
+        newEmotPlayerIDs.push_back( 
+            nextPlayer->id );
+        newEmotIndices.push_back( 
+            e.emotIndex );
+        newEmotTTLs.push_back( e.ttlSec );
+        interruptAnyKillEmots( 
+            nextPlayer->id, e.ttlSec );
+        }
+    }
 
 
 
@@ -17191,29 +17267,10 @@ int main() {
                                         // biome sickness, which we can now
                                         // freely replace
                                         
-                                        nextPlayer->holdingID = 
-                                            sicknessObjectID;
+                                        makePlayerBiomeSick( nextPlayer, 
+                                                             sicknessObjectID );
                                         playerIndicesToSendUpdatesAbout.
                                             push_back( i );
-
-                                        nextPlayer->holdingBiomeSickness = true;
-
-                                        ForcedEffects e = 
-                                            checkForForcedEffects( 
-                                                nextPlayer->holdingID );
-                            
-                                        if( e.emotIndex != -1 ) {
-                                            nextPlayer->emotFrozen = true;
-                                            nextPlayer->emotFrozenIndex =
-                                                e.emotIndex;
-                                            newEmotPlayerIDs.push_back( 
-                                                nextPlayer->id );
-                                            newEmotIndices.push_back( 
-                                                e.emotIndex );
-                                            newEmotTTLs.push_back( e.ttlSec );
-                                            interruptAnyKillEmots( 
-                                                nextPlayer->id, e.ttlSec );
-                                            }
                                         }
                                     }
                                 else if( sicknessObjectID == -1 &&
@@ -18024,7 +18081,21 @@ int main() {
                                         if( r->newTarget > 0 &&
                                             getObject( r->newTarget )->
                                             permanent ) {
-                                            couldBeTool = true;
+
+                                            // but ONLY if there's
+                                            // no bare-hand action possible
+                                            // on the result
+
+                                            // if that exists, we took
+                                            // apart the loose tool into
+                                            // a stack of parts
+
+                                            TransRecord *bareTrans =
+                                                getPTrans( 0, r->newTarget );
+                                            
+                                            if( bareTrans == NULL ) {
+                                                couldBeTool = true;
+                                                }
                                             }
                                         }
 
@@ -18478,13 +18549,22 @@ int main() {
                                     
                                     updateYum( nextPlayer, targetObj->id );
                                     
-
+                                    
+                                    int bonus = eatBonus;
+                                    
+                                    if( targetObj->alcohol > 0 ) {
+                                        bonus = 0;
+                                        }
+                                    
                                     logEating( targetObj->id,
-                                               targetObj->foodValue + eatBonus,
+                                               targetObj->foodValue + bonus,
                                                computeAge( nextPlayer ),
                                                m.x, m.y );
                                     
-                                    nextPlayer->foodStore += eatBonus;
+                                    nextPlayer->foodStore += bonus;
+
+                                    checkForFoodEatingEmot( nextPlayer,
+                                                            targetObj->id );
 
                                     int cap = 
                                         nextPlayer->lastReportedFoodCapacity;
@@ -19314,13 +19394,21 @@ int main() {
                                     updateYum( targetPlayer, obj->id,
                                                targetPlayer == nextPlayer );
 
+                                    int bonus = eatBonus;
+                                    
+                                    if( obj->alcohol > 0 ) {
+                                        bonus = 0;
+                                        }
+
                                     logEating( obj->id,
-                                               obj->foodValue + eatBonus,
+                                               obj->foodValue + bonus,
                                                computeAge( targetPlayer ),
                                                m.x, m.y );
                                     
-                                    targetPlayer->foodStore += eatBonus;
+                                    targetPlayer->foodStore += bonus;
 
+                                    checkForFoodEatingEmot( targetPlayer,
+                                                            obj->id );
                                     
                                     if( targetPlayer->foodStore > cap ) {
                                         int over = 
@@ -20669,7 +20757,9 @@ int main() {
                                   male,
                                   dropPos.x, dropPos.y,
                                   players.size() - 1,
-                                  disconnect );
+                                  disconnect,
+                                  nextPlayer->murderPerpID,
+                                  nextPlayer->murderPerpEmail );
                     
                         if( shutdownMode ) {
                             handleShutdownDeath( 
@@ -21739,8 +21829,8 @@ int main() {
 
                     if( nextPlayer->drunkenness > 0 ) {
                         // for every unit of food consumed, consume one
-                        // unit of drunkenness
-                        nextPlayer->drunkenness -= 1.0;
+                        // half unit of drunkenness
+                        nextPlayer->drunkenness -= 0.5;
                         if( nextPlayer->drunkenness < 0 ) {
                             nextPlayer->drunkenness = 0;
                             }
@@ -21794,7 +21884,9 @@ int main() {
                                       ! getFemale( decrementedPlayer ),
                                       deathPos.x, deathPos.y,
                                       players.size() - 1,
-                                      false );
+                                      false,
+                                      nextPlayer->murderPerpID,
+                                      nextPlayer->murderPerpEmail );
                             }
                         
                         if( shutdownMode &&

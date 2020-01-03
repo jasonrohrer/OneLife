@@ -23165,8 +23165,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
 
         
-        ourLiveObject->inMotion = true;
-
         
 
         computePathToDest( ourLiveObject );
@@ -23332,6 +23330,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         delete [] message;
 
         // start moving before we hear back from server
+
+        
+        ourLiveObject->inMotion = true;
+
 
 
 

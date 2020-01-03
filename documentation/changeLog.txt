@@ -3,6 +3,47 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 300    2020-January-3
+
+--Fixed another possible cause of the bouncing forever bug (wild bug):  don't
+  ever set inMotion to true unless we actually send a MOVE message to the
+  server.
+
+
+
+
+Server Fixes
+
+--Fixed blank tool learning message for partially-used tools.  Fixes #475
+
+--Fixed so that dismounting at the edge of a bad biome, where you drop your
+  horse into a good biome, makes you instantly sick.  Before, you weren't sick
+  until moving, allowing you to pull items from your nearby horse cart into the
+  bad biome and trap them there.  Fixes #477
+
+--Eating bonus not applied to alcohol drinks.  Trying to get drunk no longer
+  fills up your stomach so quickly.  Part of #481
+
+--Halved rate that drunkenness wears off.  Part of #481
+
+--Support for emotEat_ tag on objects to define a forced emot when eaten (used
+  to make people blush when getting drunk).  Part of #481
+
+--Fixed photo links on family tree server (removing join with server table
+  broke it, from commit 0788e818548de469688f816b5c81c3a8).  Fixes #482
+
+--Fixed so that murder victims that die of starvation before dying from their
+  wound are still logged as murdered in lifeLog.  Fixes #483
+
+--Fixed another case of spurious tool learning (when taking apart the knife or
+  any tool that results in a permanent stack of parts).  Check that there's no
+  bare-hand action possible on the permanent result (so pounding stakes still
+  counts as a tool use).  Fixes #485
+
+
+
+
 Version 298    2019-December-20
 
 --Fixed so you can TAB to show blue hint arrows for single-recipe objects.
