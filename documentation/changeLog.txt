@@ -33,6 +33,9 @@ Server Fixes
 --Fixed photo links on family tree server (removing join with server table
   broke it, from commit 0788e818548de469688f816b5c81c3a8).  Fixes #482
 
+--Fixed so that murder victims that die of starvation before dying from their
+  wound are still logged as murdered in lifeLog.  Fixes #483
+
 
 
 
