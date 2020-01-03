@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 300    ???
+Version 300    2020-January-3
 
 --Fixed another possible cause of the bouncing forever bug (wild bug):  don't
   ever set inMotion to true unless we actually send a MOVE message to the
