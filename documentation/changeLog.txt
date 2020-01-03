@@ -30,6 +30,10 @@ Server Fixes
 --Support for emotEat_ tag on objects to define a forced emot when eaten (used
   to make people blush when getting drunk).  Part of #481
 
+--Fixed photo links on family tree server (removing join with server table
+  broke it, from commit 0788e818548de469688f816b5c81c3a8).  Fixes #482
+
+
 
 
 Version 298    2019-December-20
