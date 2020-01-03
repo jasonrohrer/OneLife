@@ -36,6 +36,11 @@ Server Fixes
 --Fixed so that murder victims that die of starvation before dying from their
   wound are still logged as murdered in lifeLog.  Fixes #483
 
+--Fixed another case of spurious tool learning (when taking apart the knife or
+  any tool that results in a permanent stack of parts).  Check that there's no
+  bare-hand action possible on the permanent result (so pounding stakes still
+  counts as a tool use).  Fixes #485
+
 
 
 

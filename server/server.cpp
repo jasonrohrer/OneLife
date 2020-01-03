@@ -18064,7 +18064,21 @@ int main() {
                                         if( r->newTarget > 0 &&
                                             getObject( r->newTarget )->
                                             permanent ) {
-                                            couldBeTool = true;
+
+                                            // but ONLY if there's
+                                            // no bare-hand action possible
+                                            // on the result
+
+                                            // if that exists, we took
+                                            // apart the loose tool into
+                                            // a stack of parts
+
+                                            TransRecord *bareTrans =
+                                                getPTrans( 0, r->newTarget );
+                                            
+                                            if( bareTrans == NULL ) {
+                                                couldBeTool = true;
+                                                }
                                             }
                                         }
 
