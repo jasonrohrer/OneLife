@@ -4898,6 +4898,24 @@ void getAllLegIndices( ObjectRecord *inObject,
         }
     }
 
+void getAllNudeIndices( ObjectRecord *inObject,
+                        double inAge, SimpleVector<int> *outList ) {
+
+    // Nude Sprites range [592, 600]
+    int nudeLo = 592;
+    int nudeUp = 600;
+
+    for( int i = 0; i < inObject->numSprites; i++ ) {
+        // Object Sprite ID
+        int obSid = inObject->sprites[i];
+
+        if( obSid >= nudeLo && obSid <= nudeUp ) {
+            // Sprite is a nude part
+            outList->push_back(i);
+        }
+    }
+}
+
 
 
 
