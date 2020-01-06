@@ -729,6 +729,9 @@ int getBackArmTopIndex( ObjectRecord *inObject, double inAge );
 void getAllLegIndices( ObjectRecord *inObject, double inAge, 
                        SimpleVector<int> *outList );
 
+void getAllNudeIndices( ObjectRecord *inObject, double inAge,
+                       SimpleVector<int> *outList );
+
 
 int getEyesIndex( ObjectRecord *inObject, double inAge );
 
