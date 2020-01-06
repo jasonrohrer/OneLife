@@ -2349,7 +2349,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         
         if( obj->person ) {
             if( nudeIndices.getElementIndex(i) != -1 ) {
-                if( !NudeToggle )
+                if( !NudeToggle ) {
                     skipSprite = true;
                 }
             }
