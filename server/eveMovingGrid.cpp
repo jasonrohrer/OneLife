@@ -25,8 +25,14 @@ void getEveMovingGridPosition( int *inOutX, int *inOutY, char inSave ) {
         }
 
     int lastRow = abs( oldY ) / jump;
-    
-    if( lastDir == -1 && lastRow == rows - 1 ) {
+
+
+    if( lastRow >= rows ) {
+        // out of bounds
+        // force-move it back in bounds
+        newY = 0;
+        }
+    else if( lastDir == -1 && lastRow == rows - 1 ) {
         // moving down before, and in bottom row
 
         // go to next column

@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--Fixed to pull Eve grid back on track if it starts way out of bounds.
+  Fixes #486
+
+
 Version 300    2020-January-3
 
 --Fixed another possible cause of the bouncing forever bug (wild bug):  don't
