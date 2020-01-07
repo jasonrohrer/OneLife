@@ -767,10 +767,32 @@ void EditorImportPage::actionPerformed( GUIComponent *inTarget ) {
                     }
                 else {
                     delete pngFile;
-                    *currentIndex = 0;
+                    // gap?
+                    // try next one
 
-                    if( triedZero ) {
-                        break;
+                    if( increment < 0 ) {
+                        *currentIndex = *currentIndex - 1;
+                        
+                        if( *currentIndex == 0 && triedZero ) {
+                            break;
+                            }
+                        }
+                    else {
+                        *currentIndex = *currentIndex + 1;
+                        
+                        File *nextFile = cacheDir.getChildFile( "next.txt" );
+                    
+                        int maxIndex = nextFile->readFileIntContents( 1 ) - 1;
+                    
+                        delete nextFile;
+
+                        if( *currentIndex > maxIndex ) {
+                            *currentIndex = 0;
+                            }
+
+                        if( *currentIndex == 0 && triedZero ) {
+                            break;
+                            }
                         }
                     }
                 }
