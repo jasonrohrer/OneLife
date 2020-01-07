@@ -9,6 +9,10 @@ Server Fixes
 --Fixed to pull Eve grid back on track if it starts way out of bounds.
   Fixes #486
 
+--Support for moving animals that can avoid landing on floors.
+  Part of jasonrohrer/OneLifeData7#559
+
+
 
 Version 300    2020-January-3
 
