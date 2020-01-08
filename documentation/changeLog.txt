@@ -7,6 +7,9 @@ Version 302    ??
 
 --Fixed editor skipping gaps in numbering in sprite import cache.
 
+--Support for same object occurring multiple times in one pattern.  So these
+  bottles can empty as powder bottles, and these other bottles can empty as
+  liquid bottles, but the powder and liquid bottles don't need to be duplicated.
 
 
 
