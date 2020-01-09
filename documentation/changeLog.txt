@@ -3,6 +3,25 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 302    2020-January-9
+
+--Fixed editor skipping gaps in numbering in sprite import cache.
+
+--Support for same object occurring multiple times in one pattern.  So these
+  bottles can empty as powder bottles, and these other bottles can empty as
+  liquid bottles, but the powder and liquid bottles don't need to be duplicated.
+
+
+
+Server Fixes
+
+--Fixed to pull Eve grid back on track if it starts way out of bounds.
+  Fixes #486
+
+--Support for moving animals that can avoid landing on floors.
+  Part of jasonrohrer/OneLifeData7#559
+
+
 
 Version 300    2020-January-3
 
