@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 302    ??
+Version 302    2020-January-9
 
 --Fixed editor skipping gaps in numbering in sprite import cache.
 
