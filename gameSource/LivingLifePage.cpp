@@ -22012,6 +22012,15 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 if( ourLiveObject->holdingID > 0 &&
                     getObject( ourLiveObject->holdingID )->foodValue > 0 ) {
                     nextActionEating = true;
+
+                    if( p.hitClothingIndex >= 0 &&
+                        clothingByIndex( ourLiveObject->clothing,
+                                         p.hitClothingIndex )->numSlots > 0 ) {
+                        // clicked on container clothing
+                        // server interprets this as an insert request, not
+                        // an eat request
+                        nextActionEating = false;
+                        }
                     }
     
                 nextActionMessageToSend = 
