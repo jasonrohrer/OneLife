@@ -665,11 +665,12 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
         if( mHideAccount ) {
             int len = strlen( email );
             for( int i=0; i<len; i++ ) {
-                if( email[i] != '@' &&
-                    email[i] != '.' ) {
-                    email[i] = coverChar;
-                    }
-                }   
+                email[i] = coverChar;
+                }
+            if( len > 13 ) {
+                // truncate.  Don't overlap with GENETIC FITNESS
+                email[ 13 ] = '\0';
+                }
             }
         
 
