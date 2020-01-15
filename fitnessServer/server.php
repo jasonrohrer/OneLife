@@ -961,6 +961,8 @@ function fs_leaderboardDetail() {
     $leaderboard_name = fs_mysqli_result( $result, 0, "leaderboard_name" );
 
     $aveAge = fs_getAveAge( $email );
+
+    $aveAge = round( $aveAge, 3 );
     
     $query = "SELECT name, age, relation_name, ".
         "old_score, new_score, death_time ".
@@ -993,6 +995,12 @@ function fs_leaderboardDetail() {
         $new_score = fs_mysqli_result( $result, $i, "new_score" );
         $death_time = fs_mysqli_result( $result, $i, "death_time" );
 
+
+        $deathAgoSec = strtotime( "now" ) - strtotime( $death_time );
+        
+        $deathAgo = fs_secondsToAgeSummary( $deathAgoSec );
+
+        
         $delta = round( $new_score - $old_score, 3 );
 
         $deltaString;
@@ -1003,11 +1011,16 @@ function fs_leaderboardDetail() {
         else {
             $deltaString = " + " . $delta;
             }
+
+        $old_score = round( $old_score, 3 );
+        $new_score = round( $new_score, 3 );
         
         echo "<tr>";
 
         echo "<td>$name</td>";
 
+        $age = round( $age, 3 );
+        
         if( $old_score != $new_score &&
             $relation_name == "You" &&
             $numYouLives < $numLivesInAverage ) {
@@ -1019,9 +1032,9 @@ function fs_leaderboardDetail() {
             }
         echo "<td>$relation_name</td>";
         echo "<td>$old_score</td>";
-        echo "<td>$deltaString</td>";
+        echo "<td nowrap='nowrap'>$deltaString</td>";
         echo "<td>$new_score</td>";
-        echo "<td>$death_time</td>";
+        echo "<td>$deathAgo ago</td>";
         }
     echo "</table></center>";
 
