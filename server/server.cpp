@@ -2803,33 +2803,6 @@ static void logFamilyCounts() {
 
 
 
-static int getNextBabyFamilyLineageEveIDRoundRobin() {
-    nextBabyFamilyIndex++;
-
-    if( nextBabyFamilyIndex >= familyCountsAfterEveWindow.size() ) {
-        nextBabyFamilyIndex = 0;
-        }
-
-    // skip dead fams and wrap around
-    char wrapOnce = false;
-    while( familyCountsAfterEveWindow.
-           getElementDirect( nextBabyFamilyIndex ) == 0 ) {
-        nextBabyFamilyIndex++;
-        
-        if( nextBabyFamilyIndex >= familyCountsAfterEveWindow.size() ) {
-            if( wrapOnce ) {
-                // already wrapped?
-                return -1;
-                }
-            nextBabyFamilyIndex = 0;
-            wrapOnce = true;
-            }
-        }
-
-    return familyLineageEveIDsAfterEveWindow.
-        getElementDirect( nextBabyFamilyIndex );
-    }
-
 
 
 
@@ -6590,7 +6563,8 @@ static LiveObject *getHitPlayer( int inX, int inY,
 
 
 
-static int isPlayerCountable( LiveObject *p, int inLineageEveID = -1 ) {
+static int isPlayerCountable( LiveObject *p, int inLineageEveID = -1,
+                              int inRace = -1 ) {
     if( p->error ) {
         return false;
         }
@@ -6608,6 +6582,10 @@ static int isPlayerCountable( LiveObject *p, int inLineageEveID = -1 ) {
         p->lineageEveID != inLineageEveID ) {
         return false;
         }
+    if( inRace != -1 &&
+        getObject( p->displayID )->race != inRace ) {
+        return false;
+        }
     return true;
     }
 
@@ -6615,7 +6593,7 @@ static int isPlayerCountable( LiveObject *p, int inLineageEveID = -1 ) {
 
 // if inLineageEveID != -1, it specifies that we count fertile mothers
 // ONLY in that family
-static int countFertileMothers( int inLineageEveID = -1 ) {
+static int countFertileMothers( int inLineageEveID = -1, int inRace = -1 ) {
     
     int barrierRadius = 
         SettingsManager::getIntSetting( 
@@ -6628,7 +6606,7 @@ static int countFertileMothers( int inLineageEveID = -1 ) {
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *p = players.getElement( i );
         
-        if( ! isPlayerCountable( p, inLineageEveID ) ) {
+        if( ! isPlayerCountable( p, inLineageEveID, inRace ) ) {
             continue;
             }
 
@@ -6656,7 +6634,7 @@ static int countFertileMothers( int inLineageEveID = -1 ) {
 // girls are females who are not fertile yet, but will be
 // if inLineageEveID != -1, it specifies that we count girls
 // ONLY in that family
-static int countGirls( int inLineageEveID = -1 ) {
+static int countGirls( int inLineageEveID = -1, int inRace = -1 ) {
     
     int barrierRadius = 
         SettingsManager::getIntSetting( 
@@ -6669,7 +6647,7 @@ static int countGirls( int inLineageEveID = -1 ) {
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *p = players.getElement( i );
 
-        if( ! isPlayerCountable( p, inLineageEveID ) ) {
+        if( ! isPlayerCountable( p, inLineageEveID, inRace ) ) {
             continue;
             }
         
@@ -6811,146 +6789,6 @@ static int countFamilies() {
     return uniqueLines.size();
     }
 
-
-
-// make sure same family isn't picked too often to get a baby
-// don't hammer Eve even though her fam is currently the weakest
-typedef struct FamilyPickedRecord {
-        int lineageEveID;
-        double lastPickTime;
-    } FamilyPickedRecord;
-
-
-static SimpleVector<FamilyPickedRecord> familiesRecentlyPicked;
-
-
-// let one mom wait 1.5 minutes between BB
-static double waitSecondsPerMom = 1.5 * 60.0;
-
-
-static char isFamilyTooRecent( int inLineageEveID, int inMomCount ) {
-    double curTime = Time::getCurrentTime();
-    
-    
-    double waitTime = waitSecondsPerMom / inMomCount;
-    
-
-    for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
-        FamilyPickedRecord *r = familiesRecentlyPicked.getElement( i );
-        if( r->lineageEveID == inLineageEveID ) {
-            if( curTime - r->lastPickTime < waitTime ) {
-                // fam got BB too recently
-                return true;
-                }
-            else {
-                return false;
-                }
-            }
-        }
-    
-    return false;
-    }
-
-
-
-static void markFamilyGotBabyNow( int inLineageEveID ) {
-    double curTime = Time::getCurrentTime();
-    
-    for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
-        FamilyPickedRecord *r = familiesRecentlyPicked.getElement( i );
-        if( r->lineageEveID == inLineageEveID ) {
-            r->lastPickTime = curTime;
-            return;
-            }
-        }
-    
-    // not found
-    FamilyPickedRecord r = { inLineageEveID, curTime };
-    familiesRecentlyPicked.push_back( r );
-    }
-
-
-
-
-static int getNextBabyFamilyLineageEveIDFewestFemales() {
-    SimpleVector<int> uniqueFams;
-    
-    int minFemales = 999999;
-    int minFemalesLineageEveID = -1;
-
-    for( int i=0; i<players.size(); i++ ) {
-        LiveObject *p = players.getElement( i );
-
-        if( ! isPlayerCountable( p ) ) {
-            continue;
-            }
-        if( uniqueFams.getElementIndex( p->lineageEveID ) == -1 ) {
-            uniqueFams.push_back( p->lineageEveID );
-            }
-        }
-    
-
-
-    // clear stale family records
-    for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
-        FamilyPickedRecord *r = familiesRecentlyPicked.getElement( i );
-        
-        if( uniqueFams.getElementIndex( r->lineageEveID ) == -1 ) {
-            // stale
-            familiesRecentlyPicked.deleteElement( i );
-            i--;
-            }
-        }
-    
-
-    waitSecondsPerMom = 
-        SettingsManager::getDoubleSetting(
-            "weakFamilyPickWaitSecondsPerMom", 1.5 * 3600 );
-    
-
-    for( int i=0; i<uniqueFams.size(); i++ ) {
-        int lineageEveID = 
-            uniqueFams.getElementDirect( i );
-
-        int famMothers = countFertileMothers( lineageEveID );
-
-        if( isFamilyTooRecent( lineageEveID, famMothers ) ) {
-            continue;
-            }
-
-
-        int famGirls = countGirls( lineageEveID );
-        
-        int famFemales = famMothers + famGirls;
-        
-        if( famMothers > 0 ) {
-            // don't pick a fam that has no mothers at all
-            // there's no point (bb can't be born there now)
-            
-            if( famFemales < minFemales ) {
-                minFemales = famFemales;
-                minFemalesLineageEveID = lineageEveID;
-                }
-            }
-        }
-
-    if( minFemalesLineageEveID != -1 ) {
-        markFamilyGotBabyNow( minFemalesLineageEveID );
-        }
-    
-    return minFemalesLineageEveID;
-    }
-
-
-
-// allows us to switch back and forth between methods 
-static int getNextBabyFamilyLineageEveID() {
-    if( false ) {
-        // suppress unused warning
-        return getNextBabyFamilyLineageEveIDRoundRobin();
-        }
-    return getNextBabyFamilyLineageEveIDFewestFemales();
-    }
 
 
 
@@ -7191,89 +7029,6 @@ char getForceSpawn( char *inEmail, ForceSpawnRecord *outRecordToFill ) {
 
 
 
-static char shouldBeEveInjection( float inFitnessScore ) {
-
-    // if we exceed our baby ratio, we're in an emergency situation and
-    // need a new eve NOW
-
-    // so this player is the lucky winner, even if their fitness score
-    // isn't high enough
-    int cMom = countFertileMothers();
-    
-    int cBaby = countHelplessBabies();
-
-    // this player would be a new baby if not Eve
-    cBaby ++;
-
-
-    float maxBabyRatio = 
-        SettingsManager::getFloatSetting( "eveInjectionBabyRatio", 3.0f );
-
-    float babyRatio = cBaby / (float)cMom;
-
-    if( babyRatio > maxBabyRatio ) {
-        AppLog::infoF( "Injecting Eve:  "
-                       "%d babies, %d moms, ratio %f, max ratio %f",
-                       cBaby, cMom, babyRatio, maxBabyRatio );
-        return true;
-        }
-
-    
-
-    // for other case (not enough families) the situation isn't dire
-    // we can wait for someone to come along with a high fitness score
-    
-
-    // how many recent players do we look at?
-    int eveFitnessWindow =
-        SettingsManager::getIntSetting( "eveInjectionFitnessWindow", 10 );
-
-    int numPlayers = players.size();
-    float maxFitnessSeen = 0;
-    
-    for( int i = numPlayers - 1; 
-         i >= numPlayers - eveFitnessWindow && i >= 0;
-         i -- ) {
-        
-        LiveObject *o = players.getElement( i );
-        if( o->fitnessScore > maxFitnessSeen ) {
-            maxFitnessSeen = o->fitnessScore;
-            }
-        }
-
-    if( inFitnessScore < maxFitnessSeen ) {
-        // this player not fit enough to be Eve
-        return false;
-        }
-    
-    int lp = countLivingPlayers();
-    
-    int cFam = countFamilies();
-
-    // this player would add to the player count if not Eve
-    lp ++;
-
-    float maxFamRatio = 
-        SettingsManager::getFloatSetting( "eveInjectionFamilyRatio", 9.0f );
-    
-    float famRatio = lp / (float)cFam;
-    
-    if( famRatio > maxFamRatio ) {
-        // not enough fams
-        AppLog::infoF( "Injecting Eve:  "
-                       "%d players, %d families, ratio %f, max ratio %f",
-                       lp, cFam, famRatio, maxFamRatio );
-        return true;
-        }
-    
-
-    return false;
-    }
-
-
-
-
-
 
 // for placement of tutorials out of the way 
 static int maxPlacementX = 5000000;
@@ -7427,114 +7182,6 @@ int processLoggedInPlayer( char inAllowReconnect,
 
 
     // a baby needs to be born
-
-    char eveWindow = isEveWindow();
-    char forceGirl = false;
-    
-
-    char eveInjectionOn = SettingsManager::getIntSetting( "eveInjectionOn", 0 );
-    
-
-    int familyLimitAfterEveWindow = SettingsManager::getIntSetting( 
-            "familyLimitAfterEveWindow", 15 );
-
-    int minFamiliesAfterEveWindow = SettingsManager::getIntSetting( 
-        "minFamiliesAfterEveWindow", 5 );
-
-    int cM = countFertileMothers();
-    int cB = countHelplessBabies();
-    int cFam = countFamilies();
-
-    if( ! eveWindow && ! eveInjectionOn ) {
-        
-        float babyMotherRatio = SettingsManager::getFloatSetting( 
-            "babyMotherApocalypseRatio", 6.0 );
-        
-        float babyPlayerRatio = SettingsManager::getFloatSetting( 
-            "babyToPlayerApocalypseRatio", 0.33 );
-        
-        int cP = countLivingPlayers();
-
-        if( cM == 0 || (float)cB / (float)cM >= babyMotherRatio ) {
-            // too many babies per mother inside barrier
-            float thisRatio = 0;
-            if( cM > 0 ) {
-                thisRatio = (float)cB / (float)cM;
-                }
-
-            char *logMessage = autoSprintf( 
-                "Too many babies per mother inside barrier: "
-                "%d mothers, %d babies, %f ratio, %f max ratio",
-                cM, cB, thisRatio, babyMotherRatio );
-            triggerApocalypseNow( logMessage );
-            
-            delete [] logMessage;
-            }
-        else if( cP == 0 || (float)cB / (float)cP >= babyPlayerRatio ) {
-            // too many babies per player inside barrier
-            float thisRatio = 0;
-            if( cP > 0 ) {
-                thisRatio = (float)cB / (float)cP;
-                }
-
-            char *logMessage = autoSprintf( 
-                "Too many babies per player inside barrier: "
-                "%d players, %d babies, %f ratio, %f max ratio",
-                cP, cB, thisRatio, babyPlayerRatio );
-            triggerApocalypseNow( logMessage );
-            
-            delete [] logMessage;
-            }
-        else {
-            int minFertile = players.size() / 15;
-            if( minFertile < 2 ) {
-                minFertile = 2;
-                }
-            if( cM < minFertile ) {
-                // less than 1/15 of the players are fertile mothers
-                forceGirl = true;
-                }
-            }
-
-        if( !apocalypseTriggered && familyLimitAfterEveWindow > 0 ) {
-            
-            // there's a family limit
-            // see if we passed it
-            
-            if( cFam > familyLimitAfterEveWindow ) {
-                // too many families
-                
-                // that means we've reach a state where no one is surviving
-                // and there are lots of eves scrounging around
-                triggerApocalypseNow( 
-                    "Too many families after Eve window closed" );
-                }
-            }
-
-        if( !apocalypseTriggered ) {
-            int maxSeconds =
-                SettingsManager::getIntSetting( "arcRunMaxSeconds", 0 );
-
-            if( maxSeconds > 0 &&
-                getArcRunningSeconds() > maxSeconds ) {
-                // players WON and survived past max seconds
-                triggerApocalypseNow( "Arc run exceeded max seconds" );
-                }
-            }    
-
-        if( !apocalypseTriggered && minFamiliesAfterEveWindow > 0 ) {
-            
-            if( cFam < minFamiliesAfterEveWindow ) {
-                // too many families have died out
-                triggerApocalypseNow( "Too few families left" );
-                }
-            }    
-
-        }
-
-    
-    int barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
-    int barrierOn = SettingsManager::getIntSetting( "barrierOn", 1 );
     
 
     // reload these settings every time someone new connects
@@ -7594,7 +7241,6 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     if( familyDataLogFile != NULL ) {
         int eveCount = 0;
-        int inCount = 0;
         
         double ageSum = 0;
         int ageSumCount = 0;
@@ -7606,22 +7252,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                 if( o->parentID == -1 ) {
                     eveCount++;
                     }
-                if( barrierOn ) {
-                    // only those inside the barrier
-                    GridPos pos = getPlayerPos( o );
-                
-                    if( abs( pos.x ) < barrierRadius &&
-                        abs( pos.y ) < barrierRadius ) {
-                        inCount++;
-                        
-                        ageSum += computeAge( o );
-                        ageSumCount++;
-                        }
-                    }
-                else {
-                    ageSum += computeAge( o );
-                    ageSumCount++;
-                    }
+                ageSum += computeAge( o );
+                ageSumCount++;
                 }
             }
         
@@ -7630,14 +7262,16 @@ int processLoggedInPlayer( char inAllowReconnect,
             averageAge = ageSum / ageSumCount;
             }
         
+        int cFam = countFamilies();
+        int cM = countFertileMothers();
+        int cB = countHelplessBabies();
         fprintf( familyDataLogFile,
-                 "%.2f nid:%d fam:%d mom:%d bb:%d plr:%d eve:%d rft:%d "
+                 "%.2f nid:%d fam:%d mom:%d bb:%d plr:%d eve:%d "
                  "avAge:%.2f\n",
                  Time::getCurrentTime(), newObject.id, 
                  cFam, cM, cB,
                  players.size(),
                  eveCount,
-                 inCount,
                  averageAge );
         }
 
@@ -7692,180 +7326,301 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.currentOrderOriginatorID = -1;
     newObject.currentOrder = NULL;
     
-    
-    int numOfAge = 0;
 
-    int numBirthLocationsCurseChecked = 0;
-    int numBirthLocationsCurseBlocked = 0;
-                            
     int numPlayers = players.size();
-                            
+
     SimpleVector<LiveObject*> parentChoices;
     
+    int numBirthLocationsCurseBlocked = 0;
 
-    // lower the bad mother limit in low-population situations
-    // so that babies aren't stuck with the same low-skill mother over and
-    // over
-    int badMotherLimit = 2 + numPlayers / 3;
+    int numOfAge = 0;
 
-    if( badMotherLimit > 10 ) {
-        badMotherLimit = 10;
-        }
+    // first, find all mothers that could possibly have us
+
+    // two passes, once with birth cooldown limit on, once with it off
+    char checkCooldown = true;
+    for( int p=0; p<2; p++ ) {
     
-    // with new birth cooldowns, we don't need bad mother limit anymore
-    // try making it a non-factor
-    badMotherLimit = 9999999;
-    
-    
-    primeLineageTest( numPlayers );
-    
-
-    for( int i=0; i<numPlayers; i++ ) {
-        LiveObject *player = players.getElement( i );
-        
-        if( player->error ) {
-            continue;
-            }
-
-        if( player->isTutorial ) {
-            continue;
-            }
-
-        if( player->vogMode ) {
-            continue;
-            }
-
-        if( isFertileAge( player ) ) {
-            numOfAge ++;
-
+        for( int i=0; i<numPlayers; i++ ) {
+            LiveObject *player = players.getElement( i );
             
-            if( Time::timeSec() < player->birthCoolDown ) {    
+            if( player->error ) {
                 continue;
                 }
             
-            GridPos motherPos = getPlayerPos( player );
-
-            if( ! isLinePermitted( newObject.email, motherPos ) ) {
-                // this line forbidden for new player
+            if( player->isTutorial ) {
                 continue;
                 }
             
-            numBirthLocationsCurseChecked ++;
-            
-            if( usePersonalCurses &&
-                isBirthLocationCurseBlocked( newObject.email, motherPos ) ) {
-                // this spot forbidden because someone nearby cursed new player
-                numBirthLocationsCurseBlocked++;
+            if( player->vogMode ) {
                 continue;
                 }
             
-            // test any twins also
-            char twinBanned = false;
-            for( int s=0; s<tempTwinEmails.size(); s++ ) {
-                if( ! isLinePermitted( tempTwinEmails.getElementDirect( s ),
-                                       motherPos ) ) {
-                    twinBanned = true;
-                    break;
+            if( isFertileAge( player ) ) {
+                numOfAge ++;
+                
+                if( checkCooldown &&
+                    Time::timeSec() < player->birthCoolDown ) {    
+                    continue;
                     }
+                
+                GridPos motherPos = getPlayerPos( player );
+                
                 if( usePersonalCurses &&
-                    // non-cached version for twin emails
-                    // (otherwise, we interfere with caching done
-                    //  for our email)
-                    isBirthLocationCurseBlockedNoCache( 
-                        tempTwinEmails.getElementDirect( s ), motherPos ) ) {
-                    twinBanned = true;
-                    
+                    isBirthLocationCurseBlocked( newObject.email, 
+                                                 motherPos ) ) {
+                    // this spot forbidden
+                    // because someone nearby cursed new player
                     numBirthLocationsCurseBlocked++;
-                    
-                    break;
+                    continue;
                     }
-                }
             
-            if( twinBanned ) {
-                continue;
-                }
-            
-
-
-            int numPastBabies = player->babyIDs->size();
-            
-            if( numPastBabies >= badMotherLimit ) {
-                int numDead = 0;
-                
-                for( int b=0; b < numPastBabies; b++ ) {
-                    
-                    int bID = 
-                        player->babyIDs->getElementDirect( b );
-
-                    char bAlive = false;
-                    
-                    for( int j=0; j<numPlayers; j++ ) {
-                        LiveObject *otherObj = players.getElement( j );
-                    
-                        if( otherObj->error ) {
-                            continue;
-                            }
-
-                        int id = otherObj->id;
-                    
-                        if( id == bID ) {
-                            bAlive = true;
-                            break;
-                            }
-                        }
-                    if( ! bAlive ) {
-                        numDead ++;
+                // test any twins also
+                char twinBanned = false;
+                for( int s=0; s<tempTwinEmails.size(); s++ ) {
+                    if( usePersonalCurses &&
+                        // non-cached version for twin emails
+                        // (otherwise, we interfere with caching done
+                        //  for our email)
+                        isBirthLocationCurseBlockedNoCache( 
+                            tempTwinEmails.getElementDirect( s ), 
+                            motherPos ) ) {
+                        twinBanned = true;
+                        
+                        numBirthLocationsCurseBlocked++;
+                        
+                        break;
                         }
                     }
                 
-                if( numDead >= badMotherLimit ) {
-                    // this is a bad mother who lets all babies die
-                    // don't give them more babies
+                if( twinBanned ) {
                     continue;
                     }
-                }
-
-
-            if( barrierOn ) {
-                // only mothers inside barrier can have babies
-
-                GridPos playerPos = getPlayerPos( player );
                 
-                if( abs( playerPos.x ) >= barrierRadius ||
-                    abs( playerPos.y ) >= barrierRadius ) {
-                    continue;
+            
+                if( ( inCurseStatus.curseLevel <= 0 && 
+                      player->curseStatus.curseLevel <= 0 ) 
+                    || 
+                    ( inCurseStatus.curseLevel > 0 && 
+                      player->curseStatus.curseLevel > 0 ) ) {
+                    // cursed babies only born to cursed mothers
+                    // non-cursed babies never born to cursed mothers
+                    parentChoices.push_back( player );
                     }
                 }
+            }
+        
+        
 
-
-            // got past all other tests
-
-            if( ( inCurseStatus.curseLevel <= 0 && 
-                  player->curseStatus.curseLevel <= 0 ) 
-                || 
-                ( inCurseStatus.curseLevel > 0 && 
-                  player->curseStatus.curseLevel > 0 ) ) {
-                // cursed babies only born to cursed mothers
-                // non-cursed babies never born to cursed mothers
-                parentChoices.push_back( player );
+        if( p == 0 ) {
+            if( parentChoices.size() > 0 || numOfAge == 0 ) {
+                // found some mothers off-cool-down, 
+                // or there are none at all
+                // skip second pass
+                break;
+                }
+            
+            // else found no mothers (but some on cool-down?)
+            // start over with cooldowns off
+            
+            AppLog::infoF( 
+                "Trying to place new baby %s, out of %d fertile moms, "
+                "none are not on cooldown or curse blocked.  "
+                "Trying again ignoring cooldowns.", newObject.email, numOfAge );
+            
+            checkCooldown = false;
+            numBirthLocationsCurseBlocked = 0;
+            numOfAge = 0;
+            }
+        else if( p == 1 ) {
+            // had to resort to second pass with no cool-downs
+            
+            if( parentChoices.size() > 0 ) {
+                // we're about to force a baby on an overwhelmed mother
+                // how overwhelmed are they?
+                
+                int totalBabies = countHelplessBabies();
+                
+                int totalAdults = countLivingPlayers() - totalBabies;
+                
+                double ratio = (double)totalBabies / (double)totalAdults;
+                
+                if( ratio > 2 ) {
+                    // more than 2/3 of the population are helpless babies 
+                    // force an Eve spawn to compensate for this condition
+                    
+                    AppLog::infoF( 
+                        "%d babies for %d adults, forcing Eve.",
+                        totalBabies, totalAdults );
+                    
+                    // this player wasn't cursed out of all
+                    // possible birth locations
+                    numBirthLocationsCurseBlocked = 0;
+                    parentChoices.deleteAll();
+                    }
+                }
+            else {
+                AppLog::infoF( 
+                        "Even after ignoring cooldowns, "
+                        "no available mothers." );
                 }
             }
         }
-
-
-    char forceParentChoices = false;
     
+    
+
+    
+    if( parentChoices.size() > 0 ) {
+        // next, filter mothers by weakest race amoung them
+        int preFilterCount = parentChoices.size();
+        
+        SimpleVector<int> parentRaces;
+        SimpleVector<int> parentRaceFertileCounts;
+    
+        
+        for( int i=0; i<parentChoices.size(); i++ ) {
+            LiveObject *player = parentChoices.getElementDirect( i );
+            
+            int race = getObject( player->displayID )->race;
+            
+            if( parentRaces.getElementIndex( race ) == -1 ) {
+                parentRaces.push_back( race );
+                
+                parentRaceFertileCounts.push_back(
+                    countFertileMothers( -1, race ) +
+                    countGirls( -1, race ) );
+                }
+            }        
+
+
+        int weakRace = -1;
+        int weakRaceCount = 2 * players.size();
+        
+        for( int i=0; i<parentRaces.size(); i++ ) {
+            int c = parentRaceFertileCounts.getElementDirect( i );
+            
+            if( c < weakRaceCount ) {
+                weakRaceCount = c;
+                weakRace = parentRaces.getElementDirect( i );
+                }
+            }
+
+        for( int i=0; i<parentChoices.size(); i++ ) {
+            int r = 
+                getObject( 
+                    parentChoices.getElementDirect( i )->displayID )->race;
+            
+            if( r != weakRace ) {
+                parentChoices.deleteElement( i );
+                i--;
+                }
+            }
+
+        AppLog::infoF( "Filtering %d mothers for weakest race %d, and %d match",
+                       preFilterCount, weakRace, parentChoices.size() );
+        }
+
+
+    
+    if( parentChoices.size() > 0 ) {
+        int preFilterCount = parentChoices.size();
+        
+        // next, filter mothers by weakest family amoung them
+        SimpleVector<int> parentFams;
+        SimpleVector<int> parentFamFertileCounts;    
+        
+        for( int i=0; i<parentChoices.size(); i++ ) {
+            LiveObject *player = parentChoices.getElementDirect( i );
+            
+            int fam = player->lineageEveID;
+            
+            if( parentFams.getElementIndex( fam ) == -1 ) {
+                parentFams.push_back( fam );
+                
+                parentFamFertileCounts.push_back(
+                    countFertileMothers( -1, fam ) +
+                    countGirls( -1, fam ) );
+                }
+            }        
+
+
+        int weakFam = -1;
+        int weakFamCount = 2 * players.size();
+        
+        for( int i=0; i<parentFams.size(); i++ ) {
+            int c = parentFamFertileCounts.getElementDirect( i );
+            
+            if( c < weakFamCount ) {
+                weakFamCount = c;
+                weakFam = parentFams.getElementDirect( i );
+                }
+            }
+
+        for( int i=0; i<parentChoices.size(); i++ ) {
+            int f = parentChoices.getElementDirect( i )->lineageEveID;
+            
+            if( f != weakFam ) {
+                parentChoices.deleteElement( i );
+                i--;
+                }
+            }
+        AppLog::infoF( "Filtering %d mothers for weakest fam %d, and %d match",
+                       preFilterCount, weakFam, parentChoices.size() );
+        }
+
+
+
+    if( parentChoices.size() == 0 && numBirthLocationsCurseBlocked > 0 ) {
+        // they are blocked from being born EVERYWHERE by curses
+
+        AppLog::infoF( "No available mothers, and %d are curse blocked, "
+                       "sending a new Eve to donkeytown",
+                       numBirthLocationsCurseBlocked );
+
+        // d-town
+        inCurseStatus.curseLevel = 1;
+        inCurseStatus.excessPoints = 1;
+        }
+
+    
+    if( parentChoices.size() > 0 ) {
+        // make sure one race isn't entirely extinct
+        
+        if( numPlayers >= 
+            SettingsManager::getIntSetting( 
+                "minActivePlayersForSpecialBiomes", 15 ) ) {
+
+            int numRaces;
+            int *races = getRaces( &numRaces );
+        
+            for( int i=0; i<numRaces; i++ ) {
+                if( countGirls( -1, races[i] ) +
+                    countFertileMothers( -1, races[i] ) == 0 ) {
+                    AppLog::infoF( 
+                        "Race %d has no potentially fertile females, "
+                        "forcing Eve.",
+                        races[i] );
+                
+                    parentChoices.deleteAll();
+                    break;
+                    }
+                }
+            }
+        }
+    
+    
+
+
+
 
     if( inTutorialNumber > 0 ) {
         // Tutorial always played full-grown
         parentChoices.deleteAll();
-        forceParentChoices = true;
         }
 
     if( inForceParentID == -2 ) {
         // force eve
         parentChoices.deleteAll();
-        forceParentChoices = true;
         }
     else if( inForceParentID > -1 ) {
         // force parent choice
@@ -7875,7 +7630,6 @@ int processLoggedInPlayer( char inAllowReconnect,
         
         if( forcedParent != NULL ) {
             parentChoices.push_back( forcedParent );
-            forceParentChoices = true;
             }
         }
     
@@ -7885,268 +7639,21 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     if( SettingsManager::getIntSetting( "forceAllPlayersEve", 0 ) ) {
         parentChoices.deleteAll();
-        forceParentChoices = true;
         }
     else {
         forceSpawn = getForceSpawn( inEmail, &forceSpawnInfo );
     
         if( forceSpawn ) {
             parentChoices.deleteAll();
-            forceParentChoices = true;
             }
         }
-    
 
-
-
-    if( ! eveWindow && eveInjectionOn &&
-        ! forceParentChoices &&
-        // this player not curse blocked by all possible mothers
-        ( numBirthLocationsCurseBlocked == 0 ||
-          numBirthLocationsCurseBlocked < numBirthLocationsCurseChecked ) ) {
-        
-        // should we spawn a new "special" eve outside of Eve window?
-        if( shouldBeEveInjection( newObject.fitnessScore ) ) {
-            parentChoices.deleteAll();
-            forceParentChoices = true;
-            }
-        }
-    
-
-
-    
-    if( ( eveWindow || familyLimitAfterEveWindow > 0 ) 
-        && parentChoices.size() > 0 ) {
-        // count the families, and add new Eve if there are too
-        // few families for the playerbase 
-        // (but only if in pure Eve window )
-        // (    OR tracking family limit after window closes)
-
-        SimpleVector<int> uniqueLines;
-        
-        int playerCount = 0;
-        
-        for( int i=0; i<numPlayers; i++ ) {
-            LiveObject *player = players.getElement( i );
-            
-            if( player->error ) {
-                continue;
-                }
-            playerCount++;
-
-            int lineageEveID = player->lineageEveID;
-            
-            if( uniqueLines.getElementIndex( lineageEveID ) == -1 ) {
-                uniqueLines.push_back( lineageEveID );
-                }
-            }
-        
-        int numLines = uniqueLines.size();
-        
-        int targetPerFamily = 
-            SettingsManager::getIntSetting( "targetPlayersPerFamily", 15 );
-        
-        int actual = playerCount / numLines;
-        
-        AppLog::infoF( "%d players on server in %d family lines, with "
-                       "%d players per family, average.  Target is %d "
-                       "per family.",
-                       playerCount, numLines, actual, targetPerFamily );
-
-        if( actual > targetPerFamily ) {
-            
-            AppLog::info( "Over target, adding a new Eve." );
-            
-            parentChoices.deleteAll();
-            forceParentChoices = true;
-            }
-        
-        }
-    
-
-
-
-    if( inCurseStatus.curseLevel <= 0 &&
-        ! forceParentChoices && 
-        parentChoices.size() == 0 &&
-        ! ( eveWindow || familyLimitAfterEveWindow > 0 ) &&
-        ! apocalypseTriggered ) {
-        
-        // outside pure Eve window (and not tracking family limit after)
-        //
-        // and no mother choices left (based on lineage 
-        // bans or birth cooldowns)
-        
-        char anyCurseBlocked = false;
-
-        // consider all fertile mothers
-        for( int i=0; i<numPlayers; i++ ) {
-            LiveObject *player = players.getElement( i );
-        
-            if( player->error ) {
-                continue;
-                }
-            
-            if( player->isTutorial ) {
-                continue;
-                }
-            
-            if( player->vogMode ) {
-                continue;
-                }
-            
-            if( player->curseStatus.curseLevel > 0 ) {
-                continue;
-                }
-            
-            GridPos playerPos = getPlayerPos( player );
-            
-            if( usePersonalCurses && 
-                isBirthLocationCurseBlocked( newObject.email, 
-                                             playerPos ) ) {
-                // this spot forbidden because someone nearby cursed new player
-                anyCurseBlocked = true;
-                continue;
-                }
-            
-            char twinBanned = false;
-            if( usePersonalCurses ) {
-                for( int s=0; s<tempTwinEmails.size(); s++ ) {
-                    if( isBirthLocationCurseBlockedNoCache( 
-                            tempTwinEmails.getElementDirect( s ), 
-                            playerPos ) ) {
-                        twinBanned = true;
-                        break;
-                        }
-                    }
-                }
-            
-            if( twinBanned ) {
-                anyCurseBlocked = true;
-                continue;
-                }
-
-
-            if( barrierOn ) {
-                // only mothers inside barrier can have babies
-                
-                if( abs( playerPos.x ) >= barrierRadius ||
-                    abs( playerPos.y ) >= barrierRadius ) {
-                    continue;
-                    }
-                }
-            
-            
-            if( isFertileAge( player ) ) {
-                parentChoices.push_back( player );
-                }
-            }
-
-        if( parentChoices.size() == 0 ) {
-            if( anyCurseBlocked ) {
-                // only fertile mothers are blocked for this cursed player
-                // send this player to donkeytown
-                inCurseStatus.curseLevel = 1;
-                inCurseStatus.excessPoints = 1;
-                }
-            else {
-                
-                // absolutely no fertile mothers on server
-                
-                // the in-barrier mothers we found before must have aged out
-                // along the way
-                
-                triggerApocalypseNow( "No fertile mothers left on server" );
-                }
-            }
-        }
-    
-
-    if( inCurseStatus.curseLevel <= 0 &&
-        ! forceParentChoices && 
-        parentChoices.size() == 0 &&
-        eveWindow &&
-        ! apocalypseTriggered &&
-        usePersonalCurses ) {
-        // still in Eve window, and found no choices for this player
-        // to be born to.
-
-        // let's check if ALL fertile mothers have them curse-blocked,
-        // currently.  If so, and that's the reason we could find
-        // no mother for them, send them to d-town
-        
-        char someFertileNotCurseBlocked = false;
-        char someFertileCurseBlocked = false;
-        
-        // consider all fertile mothers
-        for( int i=0; i<numPlayers; i++ ) {
-            LiveObject *player = players.getElement( i );
-        
-            if( player->error ) {
-                continue;
-                }
-            
-            if( player->isTutorial ) {
-                continue;
-                }
-            
-            if( player->vogMode ) {
-                continue;
-                }
-            
-            if( player->curseStatus.curseLevel > 0 ) {
-                continue;
-                }
-
-            if( isFertileAge( player ) ) {
-                GridPos playerPos = getPlayerPos( player );
-                
-                if( isBirthLocationCurseBlocked( newObject.email,
-                                                 playerPos ) ) {
-                    // this spot forbidden because 
-                    // someone nearby cursed new player
-                    someFertileCurseBlocked = true;
-                    continue;
-                    }
-
-                char twinBanned = false;
-                if( usePersonalCurses ) {
-                    for( int s=0; s<tempTwinEmails.size(); s++ ) {
-                        if( isBirthLocationCurseBlockedNoCache( 
-                                tempTwinEmails.getElementDirect( s ), 
-                                playerPos ) ) {
-                            twinBanned = true;
-                            break;
-                            }
-                        }
-                    }
-                
-                if( twinBanned ) {
-                    someFertileCurseBlocked = true;
-                    continue;
-                    }
-
-                
-                someFertileNotCurseBlocked = true;
-                break;
-                }
-            }
-
-        if( someFertileCurseBlocked && ! someFertileNotCurseBlocked ) {
-            // they are blocked from being born EVERYWHERE by curses
-
-            // d-town
-            inCurseStatus.curseLevel = 1;
-            inCurseStatus.excessPoints = 1;
-            }
-        }
-    
 
 
 
     newObject.parentChainLength = 1;
 
-    if( parentChoices.size() == 0 || numOfAge == 0 ) {
+    if( parentChoices.size() == 0 ) {
         // new Eve
         // she starts almost full grown
 
@@ -8226,32 +7733,9 @@ int processLoggedInPlayer( char inAllowReconnect,
         if( femaleID != -1 ) {
             newObject.displayID = femaleID;
             }
-        }
-    
-
-    if( !forceParentChoices && 
-        parentChoices.size() == 0 && numOfAge == 0 && 
-        inCurseStatus.curseLevel == 0 ) {
-        // all existing babies are good spawn spot for Eve
-                    
-        for( int i=0; i<numPlayers; i++ ) {
-            LiveObject *player = players.getElement( i );
-            
-            if( player->error ) {
-                continue;
-                }
-
-            if( computeAge( player ) < babyAge ) {
-                parentChoices.push_back( player );
-                }
-            }
-        }
-    else {
-        // testing
-        //newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
-        }
-    
-                
+        }    
+         
+       
     // else player starts as newborn
                 
 
@@ -8326,6 +7810,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     LiveObject *parent = NULL;
 
     char placed = false;
+
+    char forceGirl = false;
+    
     
     if( parentChoices.size() > 0 ) {
         placed = true;
@@ -8341,31 +7828,6 @@ int processLoggedInPlayer( char inAllowReconnect,
         else {
             // baby
 
-
-            
-            // filter parent choices by this baby's skip list
-            SimpleVector<LiveObject *> 
-                filteredParentChoices( parentChoices.size() );
-            
-            for( int i=0; i<parentChoices.size(); i++ ) {
-                LiveObject *p = parentChoices.getElementDirect( i );
-                
-                if( ! isSkipped( inEmail, p->lineageEveID ) ) {
-                    filteredParentChoices.push_back( p );
-                    }
-                }
-
-            if( filteredParentChoices.size() == 0 ) {
-                // baby has skipped everyone
-                
-                // clear their list and let them start over again
-                clearSkipList( inEmail );
-                
-                filteredParentChoices.push_back_other( &parentChoices );
-                }
-            
-
-            
             // pick random mother from a weighted distribution based on 
             // each mother's temperature
             
@@ -8373,8 +7835,8 @@ int processLoggedInPlayer( char inAllowReconnect,
             
             int maxYumMult = 1;
 
-            for( int i=0; i<filteredParentChoices.size(); i++ ) {
-                LiveObject *p = filteredParentChoices.getElementDirect( i );
+            for( int i=0; i<parentChoices.size(); i++ ) {
+                LiveObject *p = parentChoices.getElementDirect( i );
                 
                 int yumMult = p->yummyFoodChain.size() - 1;
                 
@@ -8393,21 +7855,14 @@ int processLoggedInPlayer( char inAllowReconnect,
             // max YumMult worth same that perfect temp is worth (0.5 weight)
 
 
-            // after Eve window, give each baby to a different family
-            // round-robin
-            int pickedFamLineageEveID = -1;
-            
-            if( ! eveWindow && familyLimitAfterEveWindow == 0 ) {    
-                pickedFamLineageEveID = getNextBabyFamilyLineageEveID();
-                }
             
 
             double totalWeight = 0;
             
-            SimpleVector<double> filteredParentChoiceWeights;
+            SimpleVector<double> parentChoiceWeights;
             
-            for( int i=0; i<filteredParentChoices.size(); i++ ) {
-                LiveObject *p = filteredParentChoices.getElementDirect( i );
+            for( int i=0; i<parentChoices.size(); i++ ) {
+                LiveObject *p = parentChoices.getElementDirect( i );
 
                 // temp part of weight
                 double thisMotherWeight = 0.5 - fabs( p->heat - 0.5 );
@@ -8422,16 +7877,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                 // yum mult part of weight
                 thisMotherWeight += 0.5 * yumMult / (double) maxYumMult;
                 
-                if( pickedFamLineageEveID != -1 &&
-                    p->lineageEveID == pickedFamLineageEveID ) {
-                    // this is chosen family
-                    // multiply their weights by 1000x to make
-                    // them inevitable
-                    // (they will still compete with each other)
-                    thisMotherWeight *= 1000;
-                    }
-                
-                filteredParentChoiceWeights.push_back( thisMotherWeight );
+                parentChoiceWeights.push_back( thisMotherWeight );
                 
                 totalWeight += thisMotherWeight;
                 }
@@ -8442,11 +7888,11 @@ int processLoggedInPlayer( char inAllowReconnect,
             
             totalWeight = 0;
             
-            for( int i=0; i<filteredParentChoices.size(); i++ ) {
-                LiveObject *p = filteredParentChoices.getElementDirect( i );
+            for( int i=0; i<parentChoices.size(); i++ ) {
+                LiveObject *p = parentChoices.getElementDirect( i );
                 
                 totalWeight += 
-                    filteredParentChoiceWeights.getElementDirect( i );
+                    parentChoiceWeights.getElementDirect( i );
 
                 if( totalWeight >= choice ) {
                     parent = p;
