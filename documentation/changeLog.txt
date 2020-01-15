@@ -23,9 +23,9 @@ Server Fixes
   weighted by Yum and warmth.  If there exist some fertile mothers, but all of
   them are curse-blocked, the player goes to d-town.  If there are absolutely
   no fertile mothers, or if > 2/3 of the player population are helpless babies,
-  we spawn an Eve of the weakest race.  We also force-spawn an Eve for any
-  non-existant race if specialty biomes are in effect (when we have >= 15 
-  players).  Fixes #493
+  or if there are > 4 babies per mother on the server, we spawn an Eve of the 
+  weakest race.  We also force-spawn an Eve for any non-existant race if 
+  specialty biomes are in effect (when we have >= 15 players).  Fixes #493
 
 
 

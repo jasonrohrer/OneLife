@@ -7495,6 +7495,26 @@ int processLoggedInPlayer( char inAllowReconnect,
                     numBirthLocationsCurseBlocked = 0;
                     parentChoices.deleteAll();
                     }
+                else {
+                    // catch edge case where there are lots of adults around
+                    // but only a few isolated moms left
+                    // they may not have adults around to help, so we don't
+                    // want to send all the babies to them by accident
+                    int totalMoms = countFertileMothers();
+                    ratio = (double)totalBabies / (double)totalMoms;
+                    
+                    if( ratio > 4 ) {
+                        // too many babies per mom
+                        AppLog::infoF( 
+                            "%d babies for %d moms, forcing Eve.",
+                            totalBabies, totalMoms );
+                    
+                        // this player wasn't cursed out of all
+                        // possible birth locations
+                        numBirthLocationsCurseBlocked = 0;
+                        parentChoices.deleteAll();
+                        }
+                    }
                 
                 break;
                 }
