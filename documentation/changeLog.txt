@@ -14,16 +14,18 @@ Version 304   ???
 Server Fixes
 
 --Rewrote baby placement code, removing a bunch of deprecated cases.  When
-  placing a player, we first find all non-curse-blocked, non-cooldown mothers,
-  expanding to include cooldown mothers if we can't find any.  Then, from those
-  available, we pick the mothers from the weakest race, and then, from those,
-  we pick the mothers from the weakest family.  From those, we send the baby to
-  one of those mothers at random, weighted by Yum and warmth.  If there exist
-  some fertile mothers, but all of them are curse-blocked, the player goes to
-  d-town.  If there are absolutely no fertile mothers, or if > 2/3 of the
-  player population are helpless babies, we spawn an Eve of the weakest race.
-  We also force-spawn an Eve for any non-existant race if specialty biomes are 
-  in effect (when we have >= 15 players).  Fixes #493
+  placing a player, we first find all non-curse-blocked, non-cooldown, 
+  non-lineage-limit mothers, expanding to include cooldown mothers if we can't
+  find any, and then expanding to include lineage limit mothers if we still 
+  can't find any.  Then, from those available, we pick the mothers from the
+  weakest race, and then, from those, we pick the mothers from the weakest
+  family.  From those, we send the baby to one of those mothers at random, 
+  weighted by Yum and warmth.  If there exist some fertile mothers, but all of
+  them are curse-blocked, the player goes to d-town.  If there are absolutely
+  no fertile mothers, or if > 2/3 of the player population are helpless babies,
+  we spawn an Eve of the weakest race.  We also force-spawn an Eve for any
+  non-existant race if specialty biomes are in effect (when we have >= 15 
+  players).  Fixes #493
 
 
 

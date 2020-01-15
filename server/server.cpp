@@ -7329,6 +7329,8 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     int numPlayers = players.size();
 
+    primeLineageTest( numPlayers );
+
     SimpleVector<LiveObject*> parentChoices;
     
     int numBirthLocationsCurseBlocked = 0;
@@ -7337,9 +7339,12 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     // first, find all mothers that could possibly have us
 
-    // two passes, once with birth cooldown limit on, once with it off
+    // three passes, once with birth cooldown limit and lineage limits on, 
+    // then more passes with them off (if needed)
     char checkCooldown = true;
-    for( int p=0; p<2; p++ ) {
+    char checkLineageLimit = true;
+    
+    for( int p=0; p<3; p++ ) {
     
         for( int i=0; i<numPlayers; i++ ) {
             LiveObject *player = players.getElement( i );
@@ -7366,6 +7371,12 @@ int processLoggedInPlayer( char inAllowReconnect,
                 
                 GridPos motherPos = getPlayerPos( player );
                 
+                if( checkLineageLimit &&
+                    ! isLinePermitted( newObject.email, motherPos ) ) {
+                    // this line forbidden for new player
+                    continue;
+                    }
+
                 if( usePersonalCurses &&
                     isBirthLocationCurseBlocked( newObject.email, 
                                                  motherPos ) ) {
@@ -7378,6 +7389,13 @@ int processLoggedInPlayer( char inAllowReconnect,
                 // test any twins also
                 char twinBanned = false;
                 for( int s=0; s<tempTwinEmails.size(); s++ ) {
+                    if( checkLineageLimit &&
+                        ! isLinePermitted( tempTwinEmails.getElementDirect( s ),
+                                           motherPos ) ) {
+                        twinBanned = true;
+                        break;
+                        }
+
                     if( usePersonalCurses &&
                         // non-cached version for twin emails
                         // (otherwise, we interfere with caching done
@@ -7425,7 +7443,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             
             AppLog::infoF( 
                 "Trying to place new baby %s, out of %d fertile moms, "
-                "none are not on cooldown or curse blocked.  "
+                "all are on cooldown, lineage banned, or curse blocked.  "
                 "Trying again ignoring cooldowns.", newObject.email, numOfAge );
             
             checkCooldown = false;
@@ -7433,7 +7451,26 @@ int processLoggedInPlayer( char inAllowReconnect,
             numOfAge = 0;
             }
         else if( p == 1 ) {
-            // had to resort to second pass with no cool-downs
+            if( parentChoices.size() == 0 && numOfAge > 0 ) {
+            
+                // found no mothers (but some on lineage limit?)
+                // start over with lineage limit off
+            
+                AppLog::infoF( 
+                    "Trying to place new baby %s, out of %d fertile moms, "
+                    "none are not on lineage limit or curse blocked.  "
+                    "Trying again ignoring lineage limit.", 
+                    newObject.email, numOfAge );
+                
+                checkLineageLimit = false;
+                numBirthLocationsCurseBlocked = 0;
+                numOfAge = 0;
+                }
+            }
+        
+        
+        if( p == 1 || p == 2 ) {
+            // had to resort to second/third pass with no cool-downs
             
             if( parentChoices.size() > 0 ) {
                 // we're about to force a baby on an overwhelmed mother
@@ -7458,10 +7495,12 @@ int processLoggedInPlayer( char inAllowReconnect,
                     numBirthLocationsCurseBlocked = 0;
                     parentChoices.deleteAll();
                     }
+                
+                break;
                 }
-            else {
+            else if( p == 2 ) {
                 AppLog::infoF( 
-                        "Even after ignoring cooldowns, "
+                        "Even after ignoring cooldowns and lineage limits, "
                         "no available mothers." );
                 }
             }
