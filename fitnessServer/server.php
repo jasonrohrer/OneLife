@@ -993,7 +993,7 @@ function fs_leaderboardDetail() {
         $new_score = fs_mysqli_result( $result, $i, "new_score" );
         $death_time = fs_mysqli_result( $result, $i, "death_time" );
 
-        $delta = $new_score - $old_score;
+        $delta = round( $new_score - $old_score, 3 );
 
         $deltaString;
 
