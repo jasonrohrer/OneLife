@@ -27,6 +27,7 @@ Server Fixes
   weakest race.  We also force-spawn an Eve for any non-existant race if 
   specialty biomes are in effect (when we have >= 15 players).  Fixes #493
 
+--Fitness leaderboard now has clickable detail links.
 
 
 Version 302    2020-January-9

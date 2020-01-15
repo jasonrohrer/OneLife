@@ -171,6 +171,9 @@ else if( $action == "logout" ) {
 else if( $action == "show_leaderboard" ) {
     fs_showLeaderboard();
     }
+else if( $action == "leaderboard_detail" ) {
+    fs_leaderboardDetail();
+    }
 else if( $action == "fs_setup" ) {
     global $setup_header, $setup_footer;
     echo $setup_header; 
@@ -899,7 +902,7 @@ function fs_showLeaderboard() {
 
     global $leaderboardHours;
     
-    $query = "SELECT leaderboard_name, score ".
+    $query = "SELECT id, leaderboard_name, score ".
         "FROM $tableNamePrefix"."users ".
         "WHERE last_action_time > ".
         "   DATE_SUB( NOW(), INTERVAL $leaderboardHours HOUR )".
@@ -914,15 +917,113 @@ function fs_showLeaderboard() {
     for( $i=0; $i<$numRows; $i++ ) {
         $place = $i + 1;
         
+        $id = fs_mysqli_result( $result, $i, "id" );
         $name = fs_mysqli_result( $result, $i, "leaderboard_name" );
         $score = fs_mysqli_result( $result, $i, "score" );
 
-        echo "<tr><td>$place.</td><td>$name</td><td>$score</td></tr>";
+        echo "<tr><td>$place.</td>".
+            "<td>".
+            "<a href=\"server.php?action=leaderboard_detail&id=$id\">".
+            "$name</a></td><td>$score</td></tr>";
         }
     echo "</table>";
     
         
     echo "</center>";
+
+    eval( $footer );
+    }
+
+
+
+
+
+function fs_leaderboardDetail() {
+    
+    global $tableNamePrefix;
+
+    global $header, $footer;
+
+    eval( $header );
+
+    echo "<center>";
+
+    
+    $id = fs_requestFilter( "id", "/[0-9]+/", 0 );
+
+    
+    $query = "SELECT email, leaderboard_name ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE id = $id;";
+    $result = fs_queryDatabase( $query );
+
+    $email = fs_mysqli_result( $result, 0, "email" );
+    $leaderboard_name = fs_mysqli_result( $result, 0, "leaderboard_name" );
+
+    $aveAge = fs_getAveAge( $email );
+    
+    $query = "SELECT name, age, relation_name, ".
+        "old_score, new_score, death_time ".
+        "FROM $tableNamePrefix"."offspring AS offspring ".
+        "INNER JOIN $tableNamePrefix"."lives AS lives ".
+        "ON offspring.life_id = lives.id ".
+        "WHERE offspring.player_id = $id ORDER BY offspring.death_time DESC";
+
+    
+    $result = fs_queryDatabase( $query );
+
+    echo "<center><table border=0><tr>";
+    
+    echo "<td><b>Leaderboard Name:</b></td><td>$leaderboard_name</td></tr>";
+    echo "<td><font color=green><b>Ave Age:</b></font></td>".
+        "<td><font color=green>$aveAge</font>";
+    echo "</td></tr></table>";
+
+    $numRows = mysqli_num_rows( $result );
+
+    global $numLivesInAverage;
+    $numYouLives = 0;
+    
+    echo "<table border=1 cellpadding=10 cellspacing=0>";
+    for( $i=0; $i<$numRows; $i++ ) {
+        $name = fs_mysqli_result( $result, $i, "name" );
+        $age = fs_mysqli_result( $result, $i, "age" );
+        $relation_name = fs_mysqli_result( $result, $i, "relation_name" );
+        $old_score = fs_mysqli_result( $result, $i, "old_score" );
+        $new_score = fs_mysqli_result( $result, $i, "new_score" );
+        $death_time = fs_mysqli_result( $result, $i, "death_time" );
+
+        $delta = $new_score - $old_score;
+
+        $deltaString;
+
+        if( $delta < 0 ) {
+            $deltaString = " - " . abs( $delta );
+            }
+        else {
+            $deltaString = " + " . $delta;
+            }
+        
+        echo "<tr>";
+
+        echo "<td>$name</td>";
+
+        if( $old_score != $new_score &&
+            $relation_name == "You" &&
+            $numYouLives < $numLivesInAverage ) {
+            echo "<td><font color=green><b>$age years old</b></font></td>";
+            $numYouLives ++;
+            }
+        else {
+            echo "<td>$age years old</td>";
+            }
+        echo "<td>$relation_name</td>";
+        echo "<td>$old_score</td>";
+        echo "<td>$deltaString</td>";
+        echo "<td>$new_score</td>";
+        echo "<td>$death_time</td>";
+        }
+    echo "</table></center>";
 
     eval( $footer );
     }
