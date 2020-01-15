@@ -1017,6 +1017,8 @@ function fs_leaderboardDetail() {
         
         echo "<tr>";
 
+        $name = str_replace( "_", " ", $name );
+        
         echo "<td>$name</td>";
 
         $age = round( $age, 3 );
@@ -1030,6 +1032,9 @@ function fs_leaderboardDetail() {
         else {
             echo "<td>$age years old</td>";
             }
+
+        $relation_name = str_replace( "_", " ", $relation_name );
+        
         echo "<td>$relation_name</td>";
         echo "<td>$old_score</td>";
         echo "<td nowrap='nowrap'>$deltaString</td>";
