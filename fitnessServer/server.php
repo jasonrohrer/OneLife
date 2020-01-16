@@ -964,7 +964,7 @@ function fs_leaderboardDetail() {
 
     $aveAge = round( $aveAge, 3 );
     
-    $query = "SELECT name, age, relation_name, ".
+    $query = "SELECT life_id, name, age, relation_name, ".
         "old_score, new_score, death_time ".
         "FROM $tableNamePrefix"."offspring AS offspring ".
         "INNER JOIN $tableNamePrefix"."lives AS lives ".
@@ -996,6 +996,9 @@ function fs_leaderboardDetail() {
         $death_time = fs_mysqli_result( $result, $i, "death_time" );
 
 
+        $life_id = fs_mysqli_result( $result, $i, "life_id" );
+
+        
         $deathAgoSec = strtotime( "now" ) - strtotime( $death_time );
         
         $deathAgo = fs_secondsToAgeSummary( $deathAgoSec );
@@ -1018,9 +1021,36 @@ function fs_leaderboardDetail() {
         echo "<tr>";
 
         $name = str_replace( "_", " ", $name );
-        
-        echo "<td>$name</td>";
 
+
+        if( $relation_name == "You" ||
+            $relation_name == "Affects_Everyone" ) {
+            echo "<td>$name</td>";
+            }
+        else {
+            // link to other player who lived this life
+            $otherID;
+
+            $query = "SELECT player_id FROM $tableNamePrefix"."offspring ".
+                "WHERE life_id = $life_id AND ".
+                "relation_name = 'You';";
+
+            $resultSub = fs_queryDatabase( $query );
+
+            if( mysqli_num_rows( $resultSub ) == 1 ) {
+            
+                $otherID = fs_mysqli_result( $resultSub, 0, "player_id" );
+            
+                echo "<td>".
+                    "<a href=\"server.php?".
+                    "action=leaderboard_detail&id=$otherID\">".
+                    "$name</a></td>";
+                }
+            else {
+                echo "<td>$name</td>";
+                }
+            }
+        
         $age = round( $age, 3 );
         
         if( $old_score != $new_score &&
