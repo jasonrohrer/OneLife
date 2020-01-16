@@ -1060,7 +1060,7 @@ function fs_leaderboardDetail() {
 
                 $query = "UPDATE $tableNamePrefix"."lives ".
                     "SET life_player_id = $life_player_id ".
-                    "WHERE life_id = $life_id;";
+                    "WHERE id = $life_id;";
                 fs_queryDatabase( $query );
                 }
             
