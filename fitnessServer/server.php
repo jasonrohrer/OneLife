@@ -366,6 +366,7 @@ function fs_setupDatabase() {
         $query =
             "CREATE TABLE $tableName(" .
             "id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "life_player_id INT UNSIGNED NOT NULL,".
             "name VARCHAR(254) NOT NULL,".
             // age at time of death in years
             "age FLOAT UNSIGNED NOT NULL,".
@@ -851,7 +852,8 @@ function fs_resetScores( $checkPassword = true ) {
         }
 
     $query = "INSERT INTO $tableNamePrefix"."lives ".
-        "SET name = 'Score_Reset', age = 42.0, display_id =3201";
+        "SET name = 'Score_Reset', age = 42.0, display_id =3201, ".
+        "life_player_id=-1";
 
     fs_queryDatabase( $query );
     
@@ -964,7 +966,7 @@ function fs_leaderboardDetail() {
 
     $aveAge = round( $aveAge, 3 );
     
-    $query = "SELECT life_id, name, age, relation_name, ".
+    $query = "SELECT life_id, life_player_id, name, age, relation_name, ".
         "old_score, new_score, death_time ".
         "FROM $tableNamePrefix"."offspring AS offspring ".
         "INNER JOIN $tableNamePrefix"."lives AS lives ".
@@ -998,6 +1000,8 @@ function fs_leaderboardDetail() {
 
         $life_id = fs_mysqli_result( $result, $i, "life_id" );
 
+        $life_player_id = fs_mysqli_result( $result, $i, "life_player_id" );
+
         
         $deathAgoSec = strtotime( "now" ) - strtotime( $death_time );
         
@@ -1023,27 +1027,47 @@ function fs_leaderboardDetail() {
         $name = str_replace( "_", " ", $name );
 
 
-        if( $relation_name == "You" ||
+        if( $life_player_id == -1 ||
+            $relation_name == "You" ||
             $relation_name == "Affects_Everyone" ) {
             echo "<td>$name</td>";
             }
         else {
             // link to other player who lived this life
-            $otherID;
-
-            $query = "SELECT player_id FROM $tableNamePrefix"."offspring ".
-                "WHERE life_id = $life_id AND ".
-                "relation_name = 'You';";
-
-            $resultSub = fs_queryDatabase( $query );
-
-            if( mysqli_num_rows( $resultSub ) == 1 ) {
             
-                $otherID = fs_mysqli_result( $resultSub, 0, "player_id" );
+
+            if( $life_player_id == 0 ) {
+                $life_player_id = -1;
+                
+                // life_player_id hasn't been set yet
+                // this must be an older entry
+                // see if we can set it now
+                
+                $query = "SELECT player_id FROM $tableNamePrefix"."offspring ".
+                    "WHERE life_id = $life_id AND ".
+                    "relation_name = 'You';";
+                
+                $resultSub = fs_queryDatabase( $query );
+                
+                if( mysqli_num_rows( $resultSub ) == 1 ) {
+                    
+                    $life_player_id =
+                        fs_mysqli_result( $resultSub, 0, "player_id" );
+                    }
+                
+                // otherwise, set it to -1 so we don't have to try
+                // settting it again later
+
+                $query = "UPDATE $tableNamePrefix"."lives ".
+                    "SET life_player_id = $life_player_id ".
+                    "WHERE life_id = $life_id;";
+                fs_queryDatabase( $query );
+                }
             
+            if( $life_player_id > 0 ) {
                 echo "<td>".
                     "<a href=\"server.php?".
-                    "action=leaderboard_detail&id=$otherID\">".
+                    "action=leaderboard_detail&id=$life_player_id\">".
                     "$name</a></td>";
                 }
             else {
@@ -1346,6 +1370,28 @@ function fs_pickLeaderboardName( $inEmail ) {
 
 function sign( $n ) {
     return ( $n > 0 ) - ( $n < 0 );
+    }
+
+
+
+function fs_getUserID( $inEmail ) {
+    global $tableNamePrefix;
+
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
+        "WHERE email = '$inEmail';";
+
+    $result = fs_queryDatabase( $query );
+    $count = fs_mysqli_result( $result, 0, 0 );
+
+    if( $count == 0 ) {
+        fs_addUserRecord( $inEmail );
+        }
+
+    $query = "SELECT id, score FROM $tableNamePrefix"."users ".
+        "WHERE email = '$inEmail';";
+
+    $result = fs_queryDatabase( $query );
+    return fs_mysqli_result( $result, 0, "id" );
     }
 
 
@@ -1699,7 +1745,11 @@ function fs_reportDeath() {
     $name = preg_replace( '/ /', '_', $name );
 
     
+    $player_id = fs_getUserID( $email );
+    
+    
     $query = "INSERT INTO $tableNamePrefix". "lives SET " .
+        "life_player_id = $player_id, ".
         "name = '$name', ".
         "age = $age, ".
         "display_id = $display_id;";

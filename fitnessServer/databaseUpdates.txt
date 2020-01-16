@@ -3,3 +3,7 @@
 ALTER TABLE fitnessServer_offspring MODIFY old_score FLOAT NOT NULL;
 ALTER TABLE fitnessServer_offspring MODIFY new_score FLOAT NOT NULL;
 
+
+ALTER TABLE fitnessServer_lives ADD life_player_id INT NOT NULL AFTER id;
+
+UPDATE fitnessServer_lives SET life_player_id = 0;
