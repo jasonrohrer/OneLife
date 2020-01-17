@@ -3,12 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 304   ???
+Version 304   2020-January-17
 
 --No longer playing eating animation when sticking food in clothing container.
   Fixes #490
 
 --Fix overlap of hidden email/SteamID with GENETIC FITNESS label.  Fixes #491
+
 
 
 Server Fixes
