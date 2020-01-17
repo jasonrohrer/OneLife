@@ -37,6 +37,8 @@ Server Fixes
   will go down.  This also ends the exploit where you push your own average
   down to farm score boosts from long lives later.
 
+--New tool slot formula based on new 0-60 capped fitness scores.
+
 
 
 

@@ -6862,49 +6862,32 @@ static void setupToolSlots( LiveObject *inPlayer ) {
     
 
 
-    // this sigmoid function found in gnuplot which looks good
-    // for 10 and 5
+    // for capped scores in 0..60
+    
+    // this hockey stick curve looks good for tool slots between 5 and 12
 
-    // plot 15 / (1 + 1.03**-(x - 100)) + 4.258
-    
-    // however, actual range here is 19.258 and 5
+    // plot 7 * ( 0.7 * (x/60)**10 + 0.3 * x / 60 ) + 5
 
-    // need to compute these parameters based on max and min
-    
-    // plot A / (1 + C**-(x - D)) + B
-    
-    double C = 1.03;
-    double D = 100;
+    // this is a weighted average between the linear part and the curve
+    // with weights B and C, exponent D (for how steep the curve is)
+
+    // A and E are determined by range settings
+
+    // A * ( B * (x/60)**D + C * (x/60) ) + E
 
     double A = max - min;
+    double E = min;
     
-    double valAtZero = A / ( 1 + pow( C, D ) );
+    double B = 0.7;
+    double C = 0.3;
     
-    double B = min - valAtZero;
+    double D = 10;
     
     
-    // when this is called, we already have a valid fitness score (or 0)
-    // can be negative or positive, with no limits
-
-    
+    // when this is called, we already have a valid fitness score between 0..60
+    double s = inPlayer->fitnessScore;
     int slots = 
-        lrint( 
-            A / ( 1 + pow( C, -( inPlayer->fitnessScore - D ) ) ) + B );
-    
-    if( inPlayer->fitnessScore < 0 ) {
-        // score is negative?  Auto-ding them one slot when this happens
-        slots -= 1;
-
-        // otherwise, the above formulat likely doesn't have a transition
-        // around 0
-        }
-    
-
-    
-    // no negative slots
-    if( slots < 0 ) {
-        slots = 0;
-        }
+        lrint( A * ( B * pow( (s/60), D ) + C * (s/60) ) + E );
 
 
     const char *slotWord = "SLOTS";
