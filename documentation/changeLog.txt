@@ -29,6 +29,16 @@ Server Fixes
 
 --Fitness leaderboard now has clickable detail links.
 
+--New fitness score update formula (thanks wondible).  Scores return again to
+  being capped at 60, and update based on how long you live relative to your
+  own score, or how long your offspring live relative to their score.  Help
+  them to live longer than their current score, and your score will go up.
+  Hurt them so that they live shorter than their current score, and your score
+  will go down.  This also ends the exploit where you push your own average
+  down to farm score boosts from long lives later.
+
+
+
 
 Version 302    2020-January-9
 

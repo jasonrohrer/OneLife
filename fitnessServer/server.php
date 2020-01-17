@@ -1402,7 +1402,7 @@ function fs_getUserID( $inEmail ) {
 // (to prevent noScore lives from bringing an expired player back to the
 //  leaderboard)
 function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
-                      $inDeadPersonAveAge,
+                      $inDeadPersonScore,
                       $inNoScore = false ) {
     global $tableNamePrefix;
 
@@ -1445,8 +1445,48 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
     global $formulaR, $formulaK;
 
 
-    $delta = $inAge - $inDeadPersonAveAge;
+    $delta = $inAge - $inDeadPersonScore;
 
+
+    // wondible's suggestion:
+
+    // Map this delta, which is in their score range,
+    // into the range of OUR score
+
+    // note that if we ARE the dead person (updating our own score)
+    // this operation should have no effect, because $inDeadPersonScore
+    // will be equal to old_score
+    
+    $mappedDelta = 0;
+
+    if( $inAge < $inDeadPersonScore ) {
+        // they lived shorter than average
+        $fraction = $inAge / $inDeadPersonScore;
+
+        $mappedAge = $fraction * $old_score;
+
+        $mappedDelta = $mappedAge - $old_score;
+        }
+    else if( $inAge > $inDeadPersonScore ) {
+        // here we have see how far they are away from the cap
+        // and map that a similar gap-closing between our score and the
+        // cap
+        $cap = 60;
+        
+        $gap = $cap - $inDeadPersonScore;
+
+        $gapFraction = $delta / $gap;
+
+        $ourGap = $cap - $old_score;
+
+        $mappedDelta = $ourGap * $gapFraction;
+        }
+
+
+    // now apply formula to the mapped delta value
+    $delta = $mappedDelta;
+    
+    
     if( $formulaR != 1 ) {
         // preserve sign after power operation
         $s = sign( $delta );
@@ -1654,6 +1694,26 @@ function fs_cleanOldLives( $email ) {
 
 
 
+
+function fs_getPlayerScore( $inEmail ) {
+    global $startingScore, $tableNamePrefix;
+    
+    $query = "SELECT score FROM $tableNamePrefix"."users ".
+        "WHERE email = '$inEmail';";
+
+    $result = fs_queryDatabase( $query );
+
+    $score = $startingScore;
+
+    if( mysqli_num_rows( $result ) > 0 ) {    
+        $score = fs_mysqli_result( $result, 0, "score" );
+        }
+
+    return $score;
+    }
+
+
+
 function fs_getAveAge( $inEmail ) {
     global $startingScore, $tableNamePrefix;
     
@@ -1773,7 +1833,7 @@ function fs_reportDeath() {
         $ancestor_list = $_REQUEST[ "ancestor_list" ];
         }
 
-    $deadPlayerAve = fs_getAveAge( $email );
+    $deadPlayerScore = fs_getPlayerScore( $email );
     
     
     if( $ancestor_list != "" ) {
@@ -1785,7 +1845,7 @@ function fs_reportDeath() {
             list( $ancestorEmail, $relName ) = explode( " ", $part, 2 );
 
             fs_logDeath( $ancestorEmail, $life_id, $relName, $age,
-                         $deadPlayerAve );
+                         $deadPlayerScore );
             
             $numAncestors ++;
             }
@@ -1801,7 +1861,7 @@ function fs_reportDeath() {
         $noScore = true;
         }
     
-    fs_logDeath( $email, $life_id, $self_rel_name, $age, $deadPlayerAve,
+    fs_logDeath( $email, $life_id, $self_rel_name, $age, $deadPlayerScore,
                  $noScore );
 
 
