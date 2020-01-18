@@ -574,10 +574,12 @@ fi
 
 
 echo "" 
-echo "Deleting temporary diffWorking directory"
+echo "Keeping temporary diffWorking directory around for future reference"
 echo ""
 
-rm -r ~/checkout/diffWorking
+# don't delete this.  If something goes wrong, we'll want to look at it
+#
+# rm -r ~/checkout/diffWorking
 
 
 

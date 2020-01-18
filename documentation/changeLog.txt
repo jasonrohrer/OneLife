@@ -3,6 +3,54 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes
+
+--Keeping diffWorking directory around after content build for forensic
+  purposes (in case the weird Steam build bug happens again).
+
+
+
+Version 304   2020-January-17
+
+--No longer playing eating animation when sticking food in clothing container.
+  Fixes #490
+
+--Fix overlap of hidden email/SteamID with GENETIC FITNESS label.  Fixes #491
+
+
+
+Server Fixes
+
+--Rewrote baby placement code, removing a bunch of deprecated cases.  When
+  placing a player, we first find all non-curse-blocked, non-cooldown, 
+  non-lineage-limit mothers, expanding to include cooldown mothers if we can't
+  find any, and then expanding to include lineage limit mothers if we still 
+  can't find any.  Then, from those available, we pick the mothers from the
+  weakest race, and then, from those, we pick the mothers from the weakest
+  family.  From those, we send the baby to one of those mothers at random, 
+  weighted by Yum and warmth.  If there exist some fertile mothers, but all of
+  them are curse-blocked, the player goes to d-town.  If there are absolutely
+  no fertile mothers, or if > 2/3 of the player population are helpless babies,
+  or if there are > 4 babies per mother on the server, we spawn an Eve of the 
+  weakest race.  We also force-spawn an Eve for any non-existant race if 
+  specialty biomes are in effect (when we have >= 15 players).  Fixes #493
+
+--Fitness leaderboard now has clickable detail links.
+
+--New fitness score update formula (thanks wondible).  Scores return again to
+  being capped at 60, and update based on how long you live relative to your
+  own score, or how long your offspring live relative to their score.  Help
+  them to live longer than their current score, and your score will go up.
+  Hurt them so that they live shorter than their current score, and your score
+  will go down.  This also ends the exploit where you push your own average
+  down to farm score boosts from long lives later.
+
+--New tool slot formula based on new 0-60 capped fitness scores.
+
+
+
+
 Version 302    2020-January-9
 
 --Fixed editor skipping gaps in numbering in sprite import cache.
