@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes
+
+--Keeping diffWorking directory around after content build for forensic
+  purposes (in case the weird Steam build bug happens again).
+
+
+
 Version 304   2020-January-17
 
 --No longer playing eating animation when sticking food in clothing container.
