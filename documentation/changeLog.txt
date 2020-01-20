@@ -12,6 +12,8 @@ Server Fixes
 --Cursing by name radius is now 200 (was 32), and is a live server setting.
   Part of #496
 
+--Server name at bottom of character detail page in family tree.
+
 
 
 Version 304   2020-January-17

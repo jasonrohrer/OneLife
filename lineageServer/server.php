@@ -2887,6 +2887,16 @@ function ls_characterPage() {
     
     echo "</center>\n";
 
+    $server_id = ls_getServerIDForLife( $id );
+
+    $serverName = "";
+
+    if( $server_id != -1 ) {
+        $serverName = ls_getServerName( $server_id );
+        }
+
+    echo "<br>Server: $serverName";
+    
     eval( $footer );    
     }
 
