@@ -81,8 +81,8 @@ void moveCategoryDown( int inObjectID, int inParentID );
 */
 
 // move member object up/down in category's member list
-void moveCategoryMemberUp( int inParentID, int inObjectID );
-void moveCategoryMemberDown( int inParentID, int inObjectID );
+void moveCategoryMemberUp( int inParentID, int inObjectID, int inListIndex );
+void moveCategoryMemberDown( int inParentID, int inObjectID, int inListIndex );
 
 void setMemberWeight( int inParentID, int inObjectID, float inWeight );
 

@@ -693,8 +693,9 @@ void EditorCategoryPage::specialKeyDown( int inKeyCode ) {
                         r->objectIDSet.getElementDirect( mSelectionIndex );
                     
                     for( int i=0; i<offset; i++ ) {
+                        moveCategoryMemberUp( mCurrentCategory, objID, 
+                                              mSelectionIndex );
                         mSelectionIndex --;
-                        moveCategoryMemberUp( mCurrentCategory, objID );
                         }
                     if( mSelectionIndex < 0 ) {
                         mSelectionIndex = 0;
@@ -736,8 +737,9 @@ void EditorCategoryPage::specialKeyDown( int inKeyCode ) {
                         r->objectIDSet.getElementDirect( mSelectionIndex );
                     
                     for( int i=0; i<offset; i++ ) {
+                        moveCategoryMemberDown( mCurrentCategory, objID, 
+                                                mSelectionIndex );
                         mSelectionIndex ++;
-                        moveCategoryMemberDown( mCurrentCategory, objID );
                         }
                     if( mSelectionIndex > r->objectIDSet.size() - 1 ) {
                         mSelectionIndex = 
