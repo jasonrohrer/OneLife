@@ -8161,8 +8161,15 @@ int processLoggedInPlayer( char inAllowReconnect,
             // (and they are NOT a solo player on an empty server)
             // don't allow them to spawn back at their last old-age Eve death
             // location.
+            allowEveRespawn = false;            
+            }
+       
+        if( SettingsManager::getIntSetting( "blockEveRespawn", 0 ) ) {
+            // this server has Eve respawn blocked
             allowEveRespawn = false;
             }
+
+        
 
         // else starts at civ outskirts (lone Eve)
         
