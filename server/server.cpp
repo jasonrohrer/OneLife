@@ -5184,6 +5184,10 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         // make a copy so we can delete it later
         cursedName = stringDuplicate( cursedName );
         }
+
+
+            
+    int curseDistance = SettingsManager::getIntSetting( "curseDistance", 200 );
     
         
     if( ! inPlayer->isTwin &&
@@ -5206,7 +5210,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 }
 
             if( distance( speakerPos, getPlayerPos( otherPlayer ) ) >
-                getMaxChunkDimension() ) {
+                curseDistance ) {
                 // only consider nearby players
                 continue;
                 }
@@ -5280,6 +5284,9 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
 
             if( dist > getMaxChunkDimension() ) {
                 // only consider nearby players
+                // don't use curseDistance setting here,
+                // because we don't want CURSE YOU to apply from too
+                // far away (would likely be a random target player)
                 continue;
                 }
             if( dist < closestDist ) {
@@ -5365,7 +5372,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 double dist = 
                     distance( speakerPos, getPlayerPos( otherPlayer ) );
 
-                if( dist > getMaxChunkDimension() ) {
+                if( dist > curseDistance ) {
                     // too far
                     delete [] cursedName;
                     cursedName = NULL;
@@ -5384,7 +5391,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                                inPlayer->lineageEveID,
                                inPlayer->email,
                                speakerPos,
-                               getMaxChunkDimension(),
+                               curseDistance,
                                cursedName );
         
         if( isCurse ) {

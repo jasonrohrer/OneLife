@@ -9,6 +9,9 @@ Server Fixes
 --Keeping diffWorking directory around after content build for forensic
   purposes (in case the weird Steam build bug happens again).
 
+--Cursing by name radius is now 200 (was 32), and is a live server setting.
+  Part of #496
+
 
 
 Version 304   2020-January-17
