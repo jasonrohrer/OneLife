@@ -690,6 +690,43 @@ void removeCategoryFromObject( int inObjectID, int inParentID ) {
 
 
 
+void removeObjectFromCategory( int inParentID, int inObjectID, 
+                               int inListIndex  ) {
+    
+    CategoryRecord *r = getCategory( inParentID );
+    
+    if( r != NULL ) {
+
+        int index = inListIndex;
+
+        if( r->objectIDSet.getElementDirect( index ) != inObjectID ) {
+            // mismatch
+            // do nothing
+            return;
+            }
+
+        if( index != -1 ) {
+            r->objectIDSet.deleteElement( index );
+            r->objectWeights.deleteElement( index );
+            }
+
+        autoAdjustWeights( inParentID );
+        
+
+        ReverseCategoryRecord *rr = getReverseCategory( inObjectID );
+        
+        if( rr != NULL ) {    
+            rr->categoryIDSet.deleteElementEqualTo( inParentID );
+            }
+            
+        saveCategoryToDisk( inParentID );
+        }
+
+    }
+
+
+
+
 void removeObjectFromAllCategories( int inObjectID ) {
     ReverseCategoryRecord *rr = getReverseCategory( inObjectID );
         

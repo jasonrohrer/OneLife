@@ -61,6 +61,11 @@ void addCategoryToObject( int inObjectID, int inParentID );
 void removeCategoryFromObject( int inObjectID, int inParentID );
 
 
+void removeObjectFromCategory( int inParentID, int inObjectID, 
+                               int inListIndex );
+
+
+
 void setCategoryIsPattern( int inParentID, char inIsPattern );
 void setCategoryIsProbabilitySet( int inParentID, char inIsProbabilitySet );
 
