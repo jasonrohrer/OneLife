@@ -7,7 +7,7 @@ Version 306   ???
 
 --Fixed PGUP/PGDOWN in category editor when pattern has same object repeated.
 
---Fixed removal in category edtiro when pattern has same object repeated.
+--Fixed removal in category editor when pattern has same object repeated.
 
 
 
