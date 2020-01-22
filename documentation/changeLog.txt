@@ -9,6 +9,8 @@ Version 306   ???
 
 --Fixed removal in category editor when pattern has same object repeated.
 
+--Added d/D key to category editor for duplicating object in a pattern.
+
 
 
 Server Fixes
