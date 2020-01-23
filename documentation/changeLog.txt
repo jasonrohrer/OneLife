@@ -13,6 +13,7 @@ Version 306   ???
 
 
 
+
 Server Fixes
 
 --Keeping diffWorking directory around after content build for forensic
@@ -22,6 +23,8 @@ Server Fixes
   Part of #496
 
 --Server name at bottom of character detail page in family tree.
+
+--Data-only diff bundle script has optional pause to check Steam build.
 
 
 
