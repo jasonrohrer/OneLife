@@ -26,6 +26,8 @@ Server Fixes
 
 --Data-only diff bundle script has optional pause to check Steam build.
 
+--Curse DB dump utility program prints date stamp for each entry.
+
 
 
 
