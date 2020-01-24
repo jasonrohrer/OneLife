@@ -26,7 +26,7 @@ Server Fixes
 
 --Data-only diff bundle script has optional pause to check Steam build.
 
---Family tree server has server filter.
+
 
 
 Version 304   2020-January-17

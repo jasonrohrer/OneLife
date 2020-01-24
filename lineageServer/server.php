@@ -1510,9 +1510,6 @@ function ls_frontPage() {
 
     $email_sha1 = ls_requestFilter( "email_sha1", "/[a-f0-9]+/i", "" );
 
-    $server_id = ls_requestFilter( "server_id", "/[0-9]+/", "-1" );
-    $server_name = ls_requestFilter( "server_name", "/[0-9a-z.]+/i", "" );
-
     if( $email_sha1 != "" ) {
         // use this to look up email
 
@@ -1643,11 +1640,6 @@ function ls_frontPage() {
         
         }
 
-    if( ! $customFilterSet && $server_id != -1 ) {
-        $customFilterSet = true;
-        $filter = "[server]";
-        $filterClause = " WHERE server_id = $server_id ";
-        }
     
 
     global $header, $footer;
@@ -1673,12 +1665,7 @@ function ls_frontPage() {
     </FORM>
   
 <?php
-    if( $customFilterSet && $filter == "[server]" ) {
-        echo "Showing results for server: $server_name ";
-        echo "[<a href=server.php?action=front_page>show all</a>]<br><br>";
-        }
-    
-                 
+
     $rootFilterClause = $filterClause;
 
     if( ! $customFilterSet ) {
@@ -1809,28 +1796,6 @@ function ls_frontPage() {
     
     
     echo "</table></center>";
-
-    global $tableNamePrefix;
-    
-    $query = "SELECT id, server FROM $tableNamePrefix"."servers;";
-
-    $result = ls_queryDatabase( $query );
-    
-    $numRows = mysqli_num_rows( $result );
-
-    if( $numRows > 0 ) {
-        echo "Server filter: ";
-    
-        for( $i=0; $i<$numRows; $i++ ) {
-            $id = ls_mysqli_result( $result, $i, "id" );
-            $server = ls_mysqli_result( $result, $i, "server" );
-            
-            $url = "server.php?action=front_page&server_id=$id&server_name=$server";
-
-            echo " [<a href='$url'>$server</a>] ";
-            }
-        }
-    
     
     
     eval( $footer );
