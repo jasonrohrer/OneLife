@@ -28,6 +28,8 @@ Server Fixes
 
 --Curse DB dump utility program prints date stamp for each entry.
 
+--Fixed glitch in names timing out for curse purposes after someone dies.  Fixes #511
+ 
 
 
 

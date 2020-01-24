@@ -476,7 +476,21 @@ void cursesLogDeath( char *inEmail, double inAge, GridPos inDeathPos ) {
             // push to front of list
             PlayerNameRecord newRec = *r;
             playerNames.deleteElement( i );
-            playerNames.push_front( newRec );
+
+            // but maintain time-sorted order
+            int numToSkip = 0;
+            
+            for( int j=0; j<playerNames.size(); j++ ) {
+                PlayerNameRecord *rOther = playerNames.getElement( j );
+                if( rOther->timeCreated < r->timeCreated ) {
+                    numToSkip ++;
+                    }
+                else {
+                    break;
+                    }
+                }
+
+            playerNames.push_middle( newRec, numToSkip );
             break;
             }
         }
