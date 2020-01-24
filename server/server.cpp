@@ -16969,7 +16969,9 @@ int main() {
                                     &( m.saidText ),
                                     nextPlayer, true );
                                 
-                                if( ! isEveWindow() ) {
+                                if( ! isEveWindow() && 
+                                    ! nextPlayer->isTutorial &&
+                                    nextPlayer->curseStatus.curseLevel == 0 ) {
                                     // new family name created
                                     restockPostWindowFamilies();
                                     }        
@@ -17241,7 +17243,10 @@ int main() {
                                                 &( m.saidText ),
                                                 closestOther, true );
                                             
-                                            if( ! isEveWindow() ) {
+                                            if( ! isEveWindow() && 
+                                                ! closestOther->isTutorial &&
+                                                closestOther->
+                                                curseStatus.curseLevel == 0 ) {
                                                 // new family name created
                                                 restockPostWindowFamilies();
                                                 }
