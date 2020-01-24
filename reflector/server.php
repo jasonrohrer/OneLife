@@ -13,6 +13,18 @@ $stopSpreadingFraction = .10;
 $updateServerURL = "http://onehouronelife.com/updateServer/server.php";
 
 
+$reflectorLog = "/tmp/reflectorLog.txt";
+
+
+function logMessage( $inMessage ) {
+    global $reflectorLog;
+
+    $d = date("M d, Y h:i:s A");
+    
+    file_put_contents( $reflectorLog, "$d $inMessage \n", FILE_APPEND );
+    }
+
+
 include( "requiredVersion.php" );
 
 global $version;
@@ -278,6 +290,10 @@ if( $handle ) {
 
         if( $curNumServers < $totalNumServer &&
             $activeMaxCap * $startSpreadingFraction <= $activeCurrentPop ) {
+            
+            logMessage( "$activeMaxCap * $startSpreadingFraction <= $activeCurrentPop, ".
+                        "$curNumServers servers is not enough, adding another" );
+
             // we are over 50%
             // add another server for next time
             $curNumServers ++;
@@ -287,6 +303,9 @@ if( $handle ) {
             }
         else if( $curNumServers > 1 &&
                  $activeMaxCap * $stopSpreadingFraction >= $activeCurrentPop ) {
+
+            logMessage( "$activeMaxCap * $stopSpreadingFraction >= $activeCurrentPop, ".
+                        "$curNumServers servers is too many, removing one" );
             // below threshold
             // remove a server for next time
             $curNumServers --;
@@ -506,6 +525,8 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
 
                         fclose( $fileOut );
                         }
+                    logMessage( "$current / $max >= $startSpreadingFraction for server ".
+                                "$inAddress, starting to spread to next server." );
                     }
                 }
             else if( file_exists( $spreadingFile ) ) {
@@ -518,6 +539,9 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
                 // the list from this one
                 if( file_exists( $spreadingFile )  ) {
                     unlink( $spreadingFile );
+
+                    logMessage( "$current / $max <= $stopSpreadingFraction for server ".
+                                "$inAddress, stopping spreading." );
                     }
                 
                 $spreading = false;
