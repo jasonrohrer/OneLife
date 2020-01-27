@@ -1818,6 +1818,12 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
             start = inObject->pathToDest[ closestI ];
             }
         }
+    else {
+        // no path exists to find closest point on
+        // our last known grid position is our closest point
+        start.x = inObject->xServer;
+        start.y = inObject->yServer;
+        }
     
     
     int startInd = getMapIndex( start.x, start.y );
