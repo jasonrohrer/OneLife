@@ -14,6 +14,8 @@ Version 306   ???
 --Made playback of recorded web events more robust in the face of (admitedly
   mysterious) playback timing variations.
 
+--Finally fixed client-side cause of dropping stuff in a bad biome.  Fixes #479
+
 
 
 
