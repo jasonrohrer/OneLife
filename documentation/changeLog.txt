@@ -28,11 +28,15 @@ Server Fixes
 
 --Curse DB dump utility program prints date stamp for each entry.
 
---Fixed glitch in names timing out for curse purposes after someone dies.  Fixes #511
+--Fixed glitch in names timing out for curse purposes after someone dies.
+  Fixes #511
 
---Fixed spurious creation of new family population logs when tutorial or cursed Eve picks
-  a name.
+--Fixed spurious creation of new family population logs when tutorial or cursed
+  Eve picks a name.
  
+--Improved reflector split/unsplit behavior in case where servers are spuriously
+  offline.
+
 
 
 

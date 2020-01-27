@@ -211,6 +211,7 @@ if( $handle ) {
         $offlineServerFlags = array();
         
         $totalNumServer = 0;
+        $totalNumOnline = 0;
         
         while( ( $line = fgets( $handle ) ) !== false ) {
             // process the line read.
@@ -263,6 +264,10 @@ if( $handle ) {
                 $offlineServerFlags[] = $offline;
                 
                 $totalNumServer ++;
+
+                if( $offline == 0 ) {
+                    $totalNumOnline ++;
+                    }
                 }
             }
 
@@ -288,7 +293,11 @@ if( $handle ) {
             $i++;
             }
 
-        if( $curNumServers < $totalNumServer &&
+        // never start spreading if we see ALL servers offline
+        // we can't reach them, and we know nothing about them
+        // our $activeMaxCap is 0 in that case, so our test is meaningless
+        if( $numServersSummed > 0 &&
+            $curNumServers < $totalNumServer &&
             $activeMaxCap * $startSpreadingFraction <= $activeCurrentPop ) {
             
             logMessage( "$activeMaxCap * $startSpreadingFraction <= $activeCurrentPop, ".
@@ -301,7 +310,16 @@ if( $handle ) {
             file_put_contents( $curNumServersFile, $curNumServers );
             // don't adjust $activeMaxCap this time
             }
-        else if( $curNumServers > 1 &&
+        // never STOP spreading if some of our servers are offline
+        // we don't have accurate information about player population in
+        // that case.  Leave spreading in place to avoid ping-ponging
+        // during temporary outages
+        // When in doubt, keep spreading.
+        // Note that in the case of a long-term outtage, the server should
+        // be removed from remoteServerList.ini manually so that it doesn't
+        // interfere with stop-spreading detection.
+        else if( $totalNumOnline == $totalNumServer &&
+                 $curNumServers > 1 &&
                  $activeMaxCap * $stopSpreadingFraction >= $activeCurrentPop ) {
 
             logMessage( "$activeMaxCap * $stopSpreadingFraction >= $activeCurrentPop, ".
