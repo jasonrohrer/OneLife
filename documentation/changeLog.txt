@@ -11,6 +11,9 @@ Version 306   ???
 
 --Added d/D key to category editor for duplicating object in a pattern.
 
+--Made playback of recorded web events more robust in the face of (admitedly
+  mysterious) playback timing variations.
+
 
 
 
