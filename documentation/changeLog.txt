@@ -3,6 +3,11 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+NOTE:
+As part of this week's update process, check bigserver2 logs post-restart as
+part of:  https://github.com/jasonrohrer/OneLife/issues/510
+
+
 Version 306   ???
 
 --Fixed PGUP/PGDOWN in category editor when pattern has same object repeated.
