@@ -5308,7 +5308,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             break;
                             }
                         else if( oID > 0 && getObject( oID ) != NULL &&
-                                 getObject( oID )->blocksWalking ) {
+                                 getObject( oID )->blocksMoving ) {
                             // blocked, stop now
                             break;
                             }
@@ -5410,7 +5410,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                     break;
                                     }
                                 else if( oID > 0 && getObject( oID ) != NULL &&
-                                         getObject( oID )->blocksWalking ) {
+                                         getObject( oID )->blocksMoving ) {
                                     // blocked, stop now
                                     break;
                                     }

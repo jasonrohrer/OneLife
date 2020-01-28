@@ -16,6 +16,8 @@ Version 306   ???
 
 --Finally fixed client-side cause of dropping stuff in a bad biome.  Fixes #479
 
+--Support for +blocksMoving tag to prevent animals from walking through
+  auto-open doors.  Part of #504
 
 
 
