@@ -44,6 +44,8 @@ Server Fixes
 --Improved reflector split/unsplit behavior in case where servers are spuriously
   offline.
 
+--New format for links to Wondible full family tree viewer.  Fixes #509
+
 
 
 

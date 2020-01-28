@@ -2469,9 +2469,16 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
             // show link to full tree on Wondible server
             $serverID = ls_mysqli_result( $result, 0, "server_id" );
             $player_id = ls_mysqli_result( $result, 0, "player_id" );
+
+            $serverName = ls_getServerName( $serverID );
+
+            // rough time window around birth
+            $end_time=strtotime( $death_time );
+            $start_time = $end_time - 3600 * 2;
             
             $url = "https://wondible.com/ohol-family-trees/#".
-                "server_id=$serverID&epoch=2&playerid=$player_id";
+                "server_name=$serverName&start_time=$start_time".
+                "&end_time=$end_time&playerid=$player_id";
 
             echo "<br>[<a href='$url'>Full Tree</a>]\n";
             }
