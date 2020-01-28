@@ -7471,6 +7471,12 @@ int processLoggedInPlayer( char inAllowReconnect,
                 int totalAdults = countLivingPlayers() - totalBabies;
                 
                 double ratio = (double)totalBabies / (double)totalAdults;
+
+
+                AppLog::infoF( 
+                    "Counting %d babies for %d adults, ratio %f (max 2.0)",
+                    totalBabies, totalAdults, ratio );
+
                 
                 if( ratio > 2 ) {
                     // more than 2/3 of the population are helpless babies 
@@ -7492,6 +7498,10 @@ int processLoggedInPlayer( char inAllowReconnect,
                     // want to send all the babies to them by accident
                     int totalMoms = countFertileMothers();
                     ratio = (double)totalBabies / (double)totalMoms;
+
+                    AppLog::infoF( 
+                        "Counting %d babies for %d moms, ratio %f (max 4.0)",
+                        totalBabies, totalMoms, ratio );
                     
                     if( ratio > 4 ) {
                         // too many babies per mom

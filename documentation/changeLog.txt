@@ -46,6 +46,8 @@ Server Fixes
 
 --New format for links to Wondible full family tree viewer.  Fixes #509
 
+--Added more logging around decision of when to spawn a new Eve.  Related to
+  #510
 
 
 
