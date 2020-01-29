@@ -62,6 +62,9 @@ Server Fixes
 --Added more logging around decision of when to spawn a new Eve.  Related to
   #510
 
+--Server notifies leader when they correctly issue an order.  Thanks David J.
+
+
 
 
 Version 304   2020-January-17

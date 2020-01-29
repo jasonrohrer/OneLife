@@ -13241,7 +13241,8 @@ leadershipNames[NUM_LEADERSHIP_NAMES][2] = { { "LORD",
                                                "SUPREME EMPRESS" } };
 
 
-static char *getLeadershipName( LiveObject *nextPlayer ) {
+static char *getLeadershipName( LiveObject *nextPlayer, 
+                                char inNoName = false ) {
     
     int level = 0;
     
@@ -13280,7 +13281,7 @@ static char *getLeadershipName( LiveObject *nextPlayer ) {
     int index = level - 1;
     const char *title = leadershipNames[index][gender];
     
-    if( nextPlayer->name == NULL ) {
+    if( nextPlayer->name == NULL || inNoName ) {
         return stringDuplicate( title );
         }
     else {
@@ -17237,6 +17238,21 @@ int main() {
 
                             if( leadershipName != NULL ) {
                                 // they are a leader
+
+                                // let leader know that order was made live
+                                char *selfLeadershipName = 
+                                    getLeadershipName( nextPlayer, true );
+                                
+                                char *confirmMessage =
+                                    autoSprintf( "AS %s, "
+                                                 "YOU ISSUED AN ORDER:**%s",
+                                                 selfLeadershipName,
+                                                 order );
+                                
+                                delete [] selfLeadershipName;
+                                
+                                sendGlobalMessage( confirmMessage, nextPlayer );
+                                delete [] confirmMessage;
 
                                 char *formattedOrder = 
                                     autoSprintf( "ORDER FROM YOUR %s:**%s",
