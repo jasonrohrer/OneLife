@@ -1077,6 +1077,7 @@ typedef enum messageType {
     GLOBAL_MESSAGE,
     WAR_REPORT,
     LEARNED_TOOL_REPORT,
+    TOOL_EXPERTS,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1232,6 +1233,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "LR" ) == 0 ) {
         returnValue = LEARNED_TOOL_REPORT;
+        }
+    else if( strcmp( copy, "TE" ) == 0 ) {
+        returnValue = TOOL_EXPERTS;
         }
     
     delete [] copy;
@@ -13165,6 +13169,40 @@ void LivingLifePage::step() {
                     
                     if( o != NULL ) {
                         o->toolLearned = true;
+                        }
+                    }
+                }
+            tokens->deallocateStringElements();
+            delete tokens;
+            }
+        else if( type == TOOL_EXPERTS ) {
+            SimpleVector<char *> *tokens = tokenizeString( message );
+            
+            double curTime = game_getCurrentTime();
+            
+            // first token is LR
+            // rest are learned IDs
+            for( int i=1; i < tokens->size(); i++ ) {
+                char *tok = tokens->getElementDirect( i );
+                
+                int id = 0;
+                sscanf( tok, "%d", &id );
+                if( id > 0 ) {
+                    LiveObject *o = getLiveObject( id );
+                   
+                    if( o != NULL ) {
+
+                        if( o->currentSpeech != NULL ) {
+                            delete [] o->currentSpeech;
+                            o->currentSpeech = NULL;
+                            }
+                        
+                        o->currentSpeech = stringDuplicate( "+" );
+                        o->speechFade = 1.0;
+                                
+                        o->speechIsSuccessfulCurse = false;
+
+                        o->speechFadeETATime = curTime + 3;
                         }
                     }
                 }

@@ -26,6 +26,10 @@ Version 306   ???
 
 --Improved spacing of speech bubbles (no more extra space at end of string).
 
+--Grabbing an unlearned tool (or trying to use an unlearned ground tool) puts a
+  + speech bubble above the heads of nearby people who already know that tool.
+  Fixes #517
+
 
 
 

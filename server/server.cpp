@@ -5547,6 +5547,90 @@ static void forcePlayerToRead( LiveObject *inPlayer,
 
 
 
+char canPlayerUseTool( LiveObject *inPlayer, int inToolID );
+
+
+void sendMessageToPlayer( LiveObject *inPlayer, 
+                          char *inMessage, int inLength );
+
+
+
+// sends message to player about nearby players who already know
+// the unlearned tool that they are holding
+// (or the ground tool they just tried to use, if inGroundToolID != -1 )
+static void sendToolExpertMessage( LiveObject *inPlayer, 
+                                   int inGroundToolID = -1 ) {    
+    int toolID = inGroundToolID;
+    
+    if( toolID == -1 ) {
+        toolID = inPlayer->holdingID;
+        }
+    
+    if( toolID <= 0 ) {
+        return;
+        }
+    
+    GridPos playerPos = getPlayerPos( inPlayer );
+    
+    SimpleVector<int> matchIDs;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *otherPlayer = players.getElement( i );
+
+        if( otherPlayer->error ) {
+            continue;
+            }
+        
+        if( otherPlayer == inPlayer ) {
+            continue;
+            }
+        
+        if( otherPlayer->heldByOther ) {
+            // ghost position of a held baby
+            continue;
+            }
+
+        double d = distance( playerPos, getPlayerPos( otherPlayer ) );
+        
+        if( d <= maxSpeechRadius ) {
+            
+            if( canPlayerUseTool( otherPlayer, toolID ) ) {
+                matchIDs.push_back( otherPlayer->id );
+                }
+            }
+        }
+    
+    if( matchIDs.size() == 0 ) {
+        return;
+        }
+
+    SimpleVector<char> messageWorking;
+    
+    messageWorking.appendElementString( "TE\n" );
+    
+    for( int i=0; i<matchIDs.size(); i++ ) {
+        char *idString = autoSprintf( "%d", matchIDs.getElementDirect( i ) );
+        
+        if( i > 0 ) {
+            messageWorking.appendElementString( " " );
+            }
+        messageWorking.appendElementString( idString );
+        delete [] idString;
+        }
+    messageWorking.appendElementString( "\n#" );
+
+    char *message = messageWorking.getElementString();
+    
+    sendMessageToPlayer( inPlayer, message, messageWorking.size() );
+    
+    delete [] message;
+    }
+
+
+
+
+
+
 void makePlayerBiomeSick( LiveObject *nextPlayer, 
                           int sicknessObjectID );
 
@@ -5555,7 +5639,11 @@ void makePlayerBiomeSick( LiveObject *nextPlayer,
 static void holdingSomethingNew( LiveObject *inPlayer, 
                                  int inOldHoldingID = 0 ) {
     if( inPlayer->holdingID > 0 ) {
-       
+        
+        if( ! canPlayerUseTool( inPlayer, inPlayer->holdingID ) ) {
+            sendToolExpertMessage( inPlayer );
+            }
+
         ObjectRecord *o = getObject( inPlayer->holdingID );
         
         ObjectRecord *oldO = NULL;
@@ -6234,7 +6322,7 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
 
 
 
-static char canPlayerUseTool( LiveObject *inPlayer, int inToolID ) {
+char canPlayerUseTool( LiveObject *inPlayer, int inToolID ) {
     ObjectRecord *toolO = getObject( inToolID );
                                     
     // is it a marked tool?
@@ -10114,8 +10202,8 @@ static unsigned char *makeCompressedMessage( char *inMessage, int inLength,
 static int maxUncompressedSize = 256;
 
 
-static void sendMessageToPlayer( LiveObject *inPlayer, 
-                                 char *inMessage, int inLength ) {
+void sendMessageToPlayer( LiveObject *inPlayer, 
+                          char *inMessage, int inLength ) {
     if( ! inPlayer->connected ) {
         // stop sending messages to disconnected players
         return;
@@ -17606,6 +17694,8 @@ int main() {
                                             target ) ) {
                                         r = NULL;
                                         blockedTool = true;
+                                        sendToolExpertMessage( nextPlayer,
+                                                               target );
                                         }
                                     }
                                 
@@ -18156,6 +18246,8 @@ int main() {
                                                 nextPlayer, floorID ) ) {
                                             r = NULL;
                                             blockedTool = true;
+                                            sendToolExpertMessage( nextPlayer,
+                                                                   floorID );
                                             }
                                         }
 
