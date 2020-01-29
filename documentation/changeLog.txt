@@ -24,6 +24,9 @@ Version 306   ???
 --Support for +blocksMoving tag to prevent animals from walking through
   auto-open doors.  Part of #504
 
+--Improved spacing of speech bubbles (no more extra space at end of string).
+
+
 
 
 Server Fixes
