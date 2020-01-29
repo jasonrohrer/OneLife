@@ -30,6 +30,7 @@ Version 306   ???
   + speech bubble above the heads of nearby people who already know that tool.
   Fixes #517
 
+--Fixed case of usingSound for target not playing if actor object also has uses.
 
 
 
