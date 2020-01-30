@@ -297,6 +297,8 @@ if( $handle ) {
         // we can't reach them, and we know nothing about them
         // our $activeMaxCap is 0 in that case, so our test is meaningless
         if( $numServersSummed > 0 &&
+            $activeMaxCap > 0 &&
+            $activeCurrentPop > 0 &&
             $curNumServers < $totalNumServer &&
             $activeMaxCap * $startSpreadingFraction <= $activeCurrentPop ) {
             
