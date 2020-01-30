@@ -8,7 +8,8 @@ As part of this week's update process, check bigserver2 logs post-restart as
 part of:  https://github.com/jasonrohrer/OneLife/issues/510
 
 
-Version 306   ???
+
+Version 307   2020-January-30
 
 --Fixed PGUP/PGDOWN in category editor when pattern has same object repeated.
 
@@ -33,6 +34,7 @@ Version 306   ???
 --Fixed case of usingSound for target not playing if actor object also has uses.
 
 --Holding SHIFT in freehand Sprite Trim Editor makes cut out area more visible.
+
 
 
 
