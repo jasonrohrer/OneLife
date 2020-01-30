@@ -3433,7 +3433,7 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
             { inPos.x, firstLineY - i * lineSpacing};
 
         
-        if( numBlots == 1 ) {
+        /*if( numBlots == 1 ) {
             // center first and only blot on line of text 
             // (probably one char of text)
             firstBlot.x += length / 2;
@@ -3441,7 +3441,7 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         else {
             // stretch blots so they just perfectly cover this line
             blotSpacing.x = length / ( numBlots - 1 );
-            }
+            }*/
 
         
         for( doublePair blotPos = firstBlot; blotPos.x < inPos.x + ( length + 20 * gui_fov_scale_hud ); blotPos.x += 20 * gui_fov_scale_hud ) {
