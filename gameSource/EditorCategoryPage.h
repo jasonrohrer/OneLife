@@ -76,6 +76,7 @@ class EditorCategoryPage : public GamePage, public ActionListener {
         int mCurrentWeightDigit;
         
         KeyLegend mKeyLegend;
+        KeyLegend mKeyLegendPattern;
 
 
         void updateCheckbox();

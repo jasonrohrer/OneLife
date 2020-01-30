@@ -61,6 +61,11 @@ void addCategoryToObject( int inObjectID, int inParentID );
 void removeCategoryFromObject( int inObjectID, int inParentID );
 
 
+void removeObjectFromCategory( int inParentID, int inObjectID, 
+                               int inListIndex );
+
+
+
 void setCategoryIsPattern( int inParentID, char inIsPattern );
 void setCategoryIsProbabilitySet( int inParentID, char inIsProbabilitySet );
 
@@ -81,8 +86,8 @@ void moveCategoryDown( int inObjectID, int inParentID );
 */
 
 // move member object up/down in category's member list
-void moveCategoryMemberUp( int inParentID, int inObjectID );
-void moveCategoryMemberDown( int inParentID, int inObjectID );
+void moveCategoryMemberUp( int inParentID, int inObjectID, int inListIndex );
+void moveCategoryMemberDown( int inParentID, int inObjectID, int inListIndex );
 
 void setMemberWeight( int inParentID, int inObjectID, float inWeight );
 

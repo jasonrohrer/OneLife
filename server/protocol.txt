@@ -215,6 +215,8 @@ WAR_REPORT (WR)
 
 LEARNED_TOOL_REPORT (LR)
 
+TOOL_EXPERTS (TE)
+
 FRAME (FM)
 
 PONG
@@ -926,6 +928,18 @@ tool_id tool_id ... tool_id
 Report about new tool objects that have just been learned
 
 Each tool_id is an object id.
+
+
+
+TE
+p_id p_id ... p_id
+#
+
+List of nearby players that already have learned the unlearned tool player is
+holding.
+
+Sent whenever player's held object changes to an unlearned tool.
+
 
 
 

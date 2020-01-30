@@ -120,6 +120,9 @@ EditorCategoryPage::EditorCategoryPage()
     addKeyClassDescription( &mKeyLegend, "Pg Up/Down", "Change order" );
     addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger jumps" );
     addKeyClassDescription( &mKeyLegend, "Bkspce", "Remv item" );
+
+    addKeyDescription( &mKeyLegendPattern, 'd', "Duplicate item in place" );
+    addKeyDescription( &mKeyLegendPattern, 'D', "Duplicate item to bottom" );
     }
 
 
@@ -362,6 +365,14 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
     drawKeyLegend( &mKeyLegend, legendPos );
 
 
+    if( mIsPatternCheckbox.getToggled() ) {
+        doublePair otherLegendPos = legendPos;
+        
+        otherLegendPos.x -= 250;
+        
+        drawKeyLegend( &mKeyLegendPattern, otherLegendPos );
+        }
+
 
     doublePair pos = { 200, 150 };
                        
@@ -555,7 +566,8 @@ void EditorCategoryPage::keyDown( unsigned char inASCII ) {
             int objID = getCategory( mCurrentCategory )->
                 objectIDSet.getElementDirect( mSelectionIndex );
             
-            removeCategoryFromObject( objID, mCurrentCategory );
+            removeObjectFromCategory( mCurrentCategory, objID, 
+                                      mSelectionIndex );
             
             int newMax =
                 getCategory( mCurrentCategory )->objectIDSet.size() - 1;
@@ -608,7 +620,33 @@ void EditorCategoryPage::keyDown( unsigned char inASCII ) {
             }
         }
     
-    
+    if( inASCII == 'd' || inASCII == 'D' ) {
+        CategoryRecord *r = getCategory( mCurrentCategory );
+
+        if( r != NULL && r->objectIDSet.size() > mSelectionIndex ) {
+            int objID = r->objectIDSet.getElementDirect( mSelectionIndex );
+            addCategoryToObject( objID, mCurrentCategory );
+
+            int oldIndex = mSelectionIndex;
+            
+            mSelectionIndex = r->objectIDSet.size() - 1;
+
+            if( inASCII == 'd' ) {
+                // insert in place, move up from bottom
+                int targetIndex = oldIndex + 1;
+                
+                int offset = mSelectionIndex - targetIndex;
+                
+                for( int i=0; i<offset; i++ ) {
+                    moveCategoryMemberUp( mCurrentCategory, objID, 
+                                          mSelectionIndex );
+                    mSelectionIndex --;
+                    }
+                }
+
+            updateCheckbox();
+            }
+        }
     }
 
 
@@ -693,8 +731,9 @@ void EditorCategoryPage::specialKeyDown( int inKeyCode ) {
                         r->objectIDSet.getElementDirect( mSelectionIndex );
                     
                     for( int i=0; i<offset; i++ ) {
+                        moveCategoryMemberUp( mCurrentCategory, objID, 
+                                              mSelectionIndex );
                         mSelectionIndex --;
-                        moveCategoryMemberUp( mCurrentCategory, objID );
                         }
                     if( mSelectionIndex < 0 ) {
                         mSelectionIndex = 0;
@@ -736,8 +775,9 @@ void EditorCategoryPage::specialKeyDown( int inKeyCode ) {
                         r->objectIDSet.getElementDirect( mSelectionIndex );
                     
                     for( int i=0; i<offset; i++ ) {
+                        moveCategoryMemberDown( mCurrentCategory, objID, 
+                                                mSelectionIndex );
                         mSelectionIndex ++;
-                        moveCategoryMemberDown( mCurrentCategory, objID );
                         }
                     if( mSelectionIndex > r->objectIDSet.size() - 1 ) {
                         mSelectionIndex = 
