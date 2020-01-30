@@ -32,6 +32,8 @@ Version 306   ???
 
 --Fixed case of usingSound for target not playing if actor object also has uses.
 
+--Holding SHIFT in freehand Sprite Trim Editor makes cut out area more visible.
+
 
 
 Server Fixes
