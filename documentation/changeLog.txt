@@ -3,11 +3,71 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+NOTE:
+As part of this week's update process, check bigserver2 logs post-restart as
+part of:  https://github.com/jasonrohrer/OneLife/issues/510
+
+
+
+Version 307   2020-January-30
+
+--Fixed PGUP/PGDOWN in category editor when pattern has same object repeated.
+
+--Fixed removal in category editor when pattern has same object repeated.
+
+--Added d/D key to category editor for duplicating object in a pattern.
+
+--Made playback of recorded web events more robust in the face of (admitedly
+  mysterious) playback timing variations.
+
+--Finally fixed client-side cause of dropping stuff in a bad biome.  Fixes #479
+
+--Support for +blocksMoving tag to prevent animals from walking through
+  auto-open doors.  Part of #504
+
+--Improved spacing of speech bubbles (no more extra space at end of string).
+
+--Grabbing an unlearned tool (or trying to use an unlearned ground tool) puts a
+  + speech bubble above the heads of nearby people who already know that tool.
+  Fixes #517
+
+--Fixed case of usingSound for target not playing if actor object also has uses.
+
+--Holding SHIFT in freehand Sprite Trim Editor makes cut out area more visible.
+
+
+
 
 Server Fixes
 
 --Keeping diffWorking directory around after content build for forensic
   purposes (in case the weird Steam build bug happens again).
+
+--Cursing by name radius is now 200 (was 32), and is a live server setting.
+  Part of #496
+
+--Server name at bottom of character detail page in family tree.
+
+--Data-only diff bundle script has optional pause to check Steam build.
+
+--Curse DB dump utility program prints date stamp for each entry.
+
+--Fixed glitch in names timing out for curse purposes after someone dies.
+  Fixes #511
+
+--Fixed spurious creation of new family population logs when tutorial or cursed
+  Eve picks a name.
+ 
+--Improved reflector split/unsplit behavior in case where servers are spuriously
+  offline.
+
+--New format for links to Wondible full family tree viewer.  Fixes #509
+
+--Added more logging around decision of when to spawn a new Eve.  Related to
+  #510
+
+--Server notifies leader when they correctly issue an order.  Thanks David J.
+
 
 
 
