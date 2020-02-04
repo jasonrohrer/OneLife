@@ -7,6 +7,18 @@ NOTE:
 As part of this week's update process, check bigserver2 logs post-restart as
 part of:  https://github.com/jasonrohrer/OneLife/issues/510
 
+Check again after the next update (v309)
+
+
+
+
+Version 309   ???
+
+--Fixed incorrect path start when path finding fails and retries.  Fixes #525
+
+
+
+
 
 
 Version 307   2020-January-30

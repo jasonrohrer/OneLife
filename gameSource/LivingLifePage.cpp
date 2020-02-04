@@ -1784,7 +1784,7 @@ static int pathFindingD = 32;
 static char isAutoClick = false;
 
 
-void LivingLifePage::computePathToDest( LiveObject *inObject ) {
+static void findClosestPathSpot( LiveObject *inObject ) {
     
     GridPos start;
     start.x = lrint( inObject->currentPos.x );
@@ -1828,6 +1828,16 @@ void LivingLifePage::computePathToDest( LiveObject *inObject ) {
         start.x = inObject->xServer;
         start.y = inObject->yServer;
         }
+    
+    inObject->closestPathPos = start;
+    }
+
+
+
+
+void LivingLifePage::computePathToDest( LiveObject *inObject ) {
+    
+    GridPos start = inObject->closestPathPos;
     
     
     int startInd = getMapIndex( start.x, start.y );
@@ -21761,6 +21771,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
         return;
         }
+    
+
+    // prepare for various calls to computePathToDest below
+    findClosestPathSpot( ourLiveObject );
+    
     
 
     // consider 3x4 area around click and test true object pixel

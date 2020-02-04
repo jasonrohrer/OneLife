@@ -237,6 +237,9 @@ typedef struct LiveObject {
         int pathLength;
         GridPos *pathToDest;
 
+        // closest spot on pathToDest to currentPos
+        GridPos closestPathPos;
+        
                 
         int closestDestIfPathFailedX;
         int closestDestIfPathFailedY;
@@ -916,8 +919,12 @@ class LivingLifePage : public GamePage, public ActionListener {
         
         double mPageStartTime;
 
+
+        // note:
+        // closestPathPos must be set before calling this
         void computePathToDest( LiveObject *inObject );
         
+
         double computePathSpeedMod( LiveObject *inObject, int inPathLength );
         
         // check if same floor is present when we take a step in x or y
