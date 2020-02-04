@@ -18,7 +18,11 @@ Version 309   ???
 
 --When a new offspring baby is born (other than your own), your character
   exclaims the situation verbally (only you can see the exclamation) and a
-  60-second map-style pointer is created to the offspring baby.
+  60-second map-style pointer is created to the offspring baby.  Part of #523
+
+--When a new offspring baby is born, all of your existing family members have
+  +FAMILY+ above their heads as a reminder of who affects your gene score.
+  Part of #523
 
 
 
