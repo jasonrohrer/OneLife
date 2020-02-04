@@ -8876,6 +8876,32 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     // generate log line whenever a new baby is born
     logFamilyCounts();
+
+
+    // tell non-mother ancestors about this baby
+    for( int i=0; i<newObject.ancestorIDs->size(); i++ ) {
+        int id = newObject.ancestorIDs->getElementDirect( i );
+        
+        if( id == newObject.parentID ) {
+            continue;
+            }
+        
+        LiveObject *o = getLiveObject( id );
+        
+        if( o != NULL && ! o->error && o->connected ) {
+            
+            char *message = autoSprintf( "PS\n"
+                                         "%d/0 A NEW OFFSPRING BABY "
+                                         "*baby %d *map %d %d\n#",
+                                         id,
+                                         newObject.id,
+                                         newObject.xs - o->birthPos.x,
+                                         newObject.ys - o->birthPos.y );
+            sendMessageToPlayer( o, message, strlen( message ) );
+            delete [] message;
+            }
+        }
+
     
     return newObject.id;
     }

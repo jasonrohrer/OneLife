@@ -269,6 +269,8 @@ typedef struct {
         GridPos pos;
         char ancient;
         char temporary;
+        char tempBaby;
+        int babyID;
         // 0 if not set
         double temporaryExpireETA;
     } HomePos;
@@ -314,7 +316,8 @@ static HomePos *getHomePosRecord() {
 
 // returns pointer to record, NOT destroyed by caller, or NULL if 
 // home unknown
-static  GridPos *getHomeLocation( char *outTemp, char inAncient ) {
+static  GridPos *getHomeLocation( char *outTemp, char *outTempBaby,
+                                  char inAncient ) {
     *outTemp = false;
     
     if( inAncient ) {
@@ -335,7 +338,7 @@ static  GridPos *getHomeLocation( char *outTemp, char inAncient ) {
     // don't consider ancient marker here, if it's the only one
     if( r != NULL && ! r->ancient ) {
         *outTemp = r->temporary;
-
+        *outTempBaby = r->tempBaby;
         return &( r->pos );
         }
     else {
@@ -384,7 +387,8 @@ static void addHomeLocation( int inX, int inY ) {
 
 
 
-static void addTempHomeLocation( int inX, int inY ) {
+static void addTempHomeLocation( int inX, int inY, 
+                                 char inBaby, int inBabyID ) {
     removeAllTempHomeLocations();
     
     GridPos newPos = { inX, inY };
@@ -396,7 +400,30 @@ static void addTempHomeLocation( int inX, int inY ) {
     // until we drop the map
     p.temporaryExpireETA = 0;
     
+    p.tempBaby = inBaby;
+
+    p.babyID = -1;
+    
+    if( inBaby ) {
+        // baby pointer does not depend on held map
+        p.temporaryExpireETA = game_getCurrentTime() + 60;
+        p.babyID = inBabyID;
+        }
+
     homePosStack.push_back( p );
+    }
+
+
+
+static void updateBabyHomeLocation( int inBabyID, int inX, int inY ) {
+    for( int i=0; i<homePosStack.size(); i++ ) {
+        HomePos *p = homePosStack.getElement( i );
+        
+        if( p->tempBaby && p->babyID == inBabyID ) {
+            p->pos.x = inX;
+            p->pos.y = inY;
+            }
+        }
     }
 
 
@@ -433,11 +460,14 @@ static int getHomeDir( doublePair inCurrentPlayerPos,
                        double *outTileDistance = NULL,
                        char *outTooClose = NULL,
                        char *outTemp = NULL,
+                       char *outTempBaby = NULL,
                        // 1 for ancient marker
                        int inIndex = 0 ) {
     char temporary = false;
     
-    GridPos *p = getHomeLocation( &temporary, ( inIndex == 1 ) );
+    char tempBaby = false;
+
+    GridPos *p = getHomeLocation( &temporary, &tempBaby, ( inIndex == 1 ) );
     
     if( p == NULL ) {
         return -1;
@@ -445,6 +475,9 @@ static int getHomeDir( doublePair inCurrentPlayerPos,
     
     if( outTemp != NULL ) {
         *outTemp = temporary;
+        }
+    if( outTempBaby != NULL ) {
+        *outTempBaby = tempBaby;
         }
     
     if( outTooClose != NULL ) {
@@ -5632,6 +5665,7 @@ char *getSpokenNumber( unsigned int inNumber, int inSigFigs = 2 ) {
 
 
 static char mapHintEverDrawn[2] = { false, false };
+static char babyHintEverDrawn[2] = { false, false };
 
 
 
@@ -5658,9 +5692,11 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
         double homeDist = 0;
         char tooClose = false;
         char temporary = false;
-            
+        char tempBaby = false;
+        
         int arrowIndex = getHomeDir( ourLiveObject->currentPos, &homeDist,
-                                     &tooClose, &temporary, inIndex );
+                                     &tooClose, &temporary, 
+                                     &tempBaby, inIndex );
             
         if( arrowIndex == -1 || 
             ! mHomeArrowStates[inIndex][arrowIndex].solid ) {
@@ -5752,8 +5788,19 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
             else {
                 distPos.y -= 20;
                 }
-            mapHintEverDrawn[inIndex] = true;
-            pencilFont->drawString( "MAP", mapHintPos, alignCenter );
+            
+            if( tempBaby ) {
+                babyHintEverDrawn[inIndex] = true;
+                mapHintEverDrawn[inIndex] = false;
+                pencilFont->drawString( translate( "baby" ), 
+                                        mapHintPos, alignCenter );
+                }
+            else {
+                babyHintEverDrawn[inIndex] = false;
+                mapHintEverDrawn[inIndex] = true;
+                pencilFont->drawString( translate( "map" ), 
+                                        mapHintPos, alignCenter );
+                }
             }
         else if( mapHintEverDrawn[inIndex] ) {
             if( inIndex == 0 ) {
@@ -5762,7 +5809,18 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
             else {
                 distPos.y -= 20;
                 }
-            pencilErasedFont->drawString( "MAP", mapHintPos, alignCenter );
+            pencilErasedFont->drawString( translate( "map" ), 
+                                          mapHintPos, alignCenter );
+            }
+        else if( babyHintEverDrawn[inIndex] ) {
+            if( inIndex == 0 ) {
+                distPos.y -= 20;
+                }
+            else {
+                distPos.y -= 20;
+                }
+            pencilErasedFont->drawString( translate( "baby" ), 
+                                          mapHintPos, alignCenter );
             }
             
 
@@ -12177,9 +12235,10 @@ void LivingLifePage::step() {
             char tooClose = false;
             double homeDist = 0;
             char temporary = false;
+            char tempBaby = false;
             
             int homeArrow = getHomeDir( ourObject->currentPos, &homeDist,
-                                        &tooClose, &temporary, j );
+                                        &tooClose, &temporary, &tempBaby, j );
             
             if( ! apocalypseInProgress && homeArrow != -1 && ! tooClose ) {
                 mHomeSlipPosTargetOffset[j].y = 
@@ -12196,7 +12255,8 @@ void LivingLifePage::step() {
                         }
                     }
                 if( temporary || 
-                    ( mapHintEverDrawn[j] && longDistance ) ) {
+                    ( ( babyHintEverDrawn[j] || mapHintEverDrawn[j] ) 
+                      && longDistance ) ) {
                     if( j == 0 ) {
                         mHomeSlipPosTargetOffset[j].y += 20;
                         }
@@ -12291,6 +12351,7 @@ void LivingLifePage::step() {
                     mHomeArrowStates[j][i].fade = 0;
                     }
                 mapHintEverDrawn[j] = false;
+                babyHintEverDrawn[j] = false;
                 
                 // clear old dist strings too
                 mPreviousHomeDistStrings[j].deallocateStringElements();
@@ -16814,6 +16875,25 @@ void LivingLifePage::step() {
                         existing->xServer = o.xServer;
                         existing->yServer = o.yServer;
                         
+                        
+                        if( existing->age < 1.0 && 
+                            existing->heldByAdultID == -1 ) {
+                            
+                            updateBabyHomeLocation( 
+                                existing->id,
+                                lrint( existing->currentPos.x ),
+                                lrint( existing->currentPos.y ) );
+                            }
+                        else if( existing->holdingID < 0 ) {
+                            int babyID = - existing->holdingID;
+                            
+                            updateBabyHomeLocation( 
+                                babyID,
+                                lrint( existing->currentPos.x ),
+                                lrint( existing->currentPos.y ) );
+                            }
+                        
+
                         existing->lastSpeed = o.lastSpeed;
                         
                         char babyDropped = false;
@@ -17602,6 +17682,23 @@ void LivingLifePage::step() {
                             // range anymore
                             existing->outOfRange = false;
                             
+                            
+                            if( existing->age < 1.0 && 
+                                existing->heldByAdultID == -1 ) {
+                                
+                                updateBabyHomeLocation( 
+                                    existing->id,
+                                    lrint( existing->currentPos.x ),
+                                    lrint( existing->currentPos.y ) );
+                                }
+                            else if( existing->holdingID < 0 ) {
+                                int babyID = - existing->holdingID;
+                                
+                                updateBabyHomeLocation( 
+                                    babyID,
+                                    lrint( existing->currentPos.x ),
+                                    lrint( existing->currentPos.y ) );
+                                }
 
 
                             double timePassed = 
@@ -18182,12 +18279,32 @@ void LivingLifePage::step() {
                                         int numRead = sscanf( starPos,
                                                               " *map %d %d",
                                                               &mapX, &mapY );
-                                        if( numRead == 2 ) {
-                                            addTempHomeLocation( mapX, mapY );
-                                            }
-
                                         // trim it off
                                         starPos[0] ='\0';
+
+                                        char baby = false;
+                                        
+                                        char *babyPos = 
+                                            strstr( existing->currentSpeech, 
+                                                    " *baby" );
+                                        
+                                        int babyID = -1;
+
+                                        if( babyPos != NULL ) {
+                                            baby = true;
+
+                                            sscanf( babyPos, 
+                                                    " *baby %d", &babyID );
+
+                                            babyPos[0] = '\0';
+                                            }
+
+
+                                        if( numRead == 2 ) {
+                                            addTempHomeLocation( mapX, mapY,
+                                                                 baby,
+                                                                 babyID );
+                                            }
 
                                         doublePair dest = { (double)mapX, 
                                                             (double)mapY };
@@ -20524,6 +20641,7 @@ void LivingLifePage::makeActive( char inFresh ) {
 
     for( int j=0; j<2; j++ ) {
         mapHintEverDrawn[j] = false;
+        babyHintEverDrawn[j] = false;
         }
 
     mOldHintArrows.deleteAll();

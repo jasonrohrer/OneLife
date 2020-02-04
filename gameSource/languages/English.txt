@@ -413,6 +413,10 @@ and " AND"
 
 metersAway "METERS AWAY"
 
+map "MAP"
+baby "BABY"
+
+
 
 atWar "AT WAR"
 

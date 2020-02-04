@@ -16,7 +16,9 @@ Version 309   ???
 
 --Fixed incorrect path start when path finding fails and retries.  Fixes #525
 
-
+--When a new offspring baby is born (other than your own), your character
+  exclaims the situation verbally (only you can see the exclamation) and a
+  60-second map-style pointer is created to the offspring baby.
 
 
 
