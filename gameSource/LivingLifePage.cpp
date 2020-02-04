@@ -17792,8 +17792,11 @@ void LivingLifePage::step() {
                                         // where we are
                                         
                                         printf( "    CUR PATH:  " );
-                                        printPath( oldPath.getElementArray(), 
+                                        GridPos *oldPathArray = 
+                                            oldPath.getElementArray();
+                                        printPath( oldPathArray,
                                                    oldPathLength );
+                                        delete [] oldPathArray;
                                         printf( "    WE AT:  %d (%d,%d)  \n",
                                                 oldCurrentPathIndex,
                                                 oldCurrentPathPos.x,
