@@ -101,6 +101,8 @@ CustomRandomSource randSource( 34957197 );
 
 #include "whiteSprites.h"
 
+#include "message.h"
+
 
 // should we pull the map
 static char mapPullMode = 0;
@@ -878,6 +880,60 @@ static void drawPauseScreen() {
         drawPos = add( drawPos, lastScreenViewCenter );
 
         drawSprite( instructionsSprite, drawPos, gui_fov_scale );
+
+        TextAlignment a = getMessageAlign();
+
+
+
+        drawPos = lastScreenViewCenter;
+        
+        drawPos.x -= 600;
+        drawPos.y += 320;
+        
+
+        doublePair rectPos = drawPos;
+        rectPos.x += 155;
+        rectPos.y -= 320;
+        
+        setDrawColor( 1, 1, 1, 0.5 * pauseScreenFade );
+        
+        drawRect( rectPos, 182, 362 );
+
+        setDrawColor( 0.2, 0.2, 0.2, 0.85 * pauseScreenFade  );
+
+        drawRect( rectPos, 170, 350  );
+
+        
+        setMessageAlign( alignLeft );
+        drawMessage( translate( "commandHintsA" ), drawPos, false, 
+                     pauseScreenFade );
+
+
+
+        drawPos = lastScreenViewCenter;
+        
+        drawPos.x += 285;
+        drawPos.y += 320;
+        
+
+        rectPos = drawPos;
+        rectPos.x += 160;
+        rectPos.y -= 320;
+        
+        setDrawColor( 1, 1, 1, 0.5 * pauseScreenFade );
+        
+        drawRect( rectPos, 187, 362 );
+
+        setDrawColor( 0.2, 0.2, 0.2, 0.85 * pauseScreenFade  );
+
+        drawRect( rectPos, 175, 350  );
+
+        
+        setMessageAlign( alignLeft );
+        drawMessage( translate( "commandHintsB" ), drawPos, false, 
+                     pauseScreenFade );
+        
+        setMessageAlign( a );
         }
     
 
