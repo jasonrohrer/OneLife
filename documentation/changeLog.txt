@@ -27,6 +27,7 @@ Version 309   ???
 --Saying /FAM command produces +FAMILY+ reminders above the heads of genetic
   family members.  Part of #523
 
+--Pause screen (hit ESC) has full list of chat commands.
 
 
 
