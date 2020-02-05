@@ -374,6 +374,7 @@ typedef struct FreshConnection {
         double connectionStartTimeSeconds;
 
         char *email;
+        unsigned int hashedSpawnSeed;
         
         int tutorialNumber;
         CurseStatus curseStatus;
@@ -11062,6 +11063,51 @@ int main() {
                             nextConnection->email = 
                                 stringDuplicate( 
                                     tokens->getElementDirect( 1 ) );
+
+                            // Check for seed
+
+                            // Must be >0
+                            const unsigned int minSeedLen = 1;
+                            const char seedDelim = '|';
+
+                            char* seedDelimPtr = strchr( tokens->getElementDirect( 1 ), seedDelim );
+
+                            if( seedDelimPtr != nullptr ) {
+                                unsigned int seedLen = strlen( seedDelimPtr );
+
+                                // Make sure there is at least one char after delim
+                                if( seedLen > minSeedLen ) {
+                                    // Move start of str up one
+                                    // Don't include '|' character
+                                    char* seed = seedDelimPtr + 1;
+
+                                    // Hash seed to 4 byte int
+                                    const int hashConst = 111337;
+                                    unsigned int hash = 0;
+                                    for( size_t i = 0; i < strlen(seed); ++i ) {
+                                        hash ^= seed[i];
+                                        hash *= hashConst;
+                                    }
+
+                                    nextConnection->hashedSpawnSeed = hash;
+                                }
+
+                                // Remove seed from email
+                                unsigned int emailLen = strlen( nextConnection->email );
+                                if( ( emailLen - seedLen ) == 0 ) {
+                                    // There was only a seed not email
+                                    nextConnection->email = stringDuplicate( "blank_email" );
+                                } else {
+                                    unsigned int onlyEmailLen = emailLen - seedLen;
+
+                                    char* onlyEmail = new char[ onlyEmailLen ];
+                                    strncpy( onlyEmail, nextConnection->email, onlyEmailLen );
+
+                                    delete[] nextConnection->email;
+                                    nextConnection->email = onlyEmail;
+                                }
+                            }
+
                             char *pwHash = tokens->getElementDirect( 2 );
                             char *keyHash = tokens->getElementDirect( 3 );
                             
