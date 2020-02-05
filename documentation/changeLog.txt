@@ -24,6 +24,9 @@ Version 309   ???
   +FAMILY+ above their heads as a reminder of who affects your gene score.
   Part of #523
 
+--Saying /FAM command produces +FAMILY+ reminders above the heads of genetic
+  family members.  Part of #523
+
 
 
 

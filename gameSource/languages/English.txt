@@ -455,6 +455,8 @@ pingCommand "/PING"
 
 disconnectCommand "/DISCONNECT"
 
+familyCommand "/FAM"
+
 
 
 fps "FPS"

@@ -228,6 +228,10 @@ static SimpleVector<GridPos> graveRequestPos;
 static SimpleVector<GridPos> ownerRequestPos;
 
 
+// IDs of pointed-to offspring that don't exist yet
+static SimpleVector<int> ourUnmarkedOffspring;
+
+
 
 static char showPing = false;
 static double pingSentTime = -1;
@@ -15440,6 +15444,8 @@ void LivingLifePage::step() {
                 o.followingUs = false;
                 o.leadershipNameTag = NULL;
                 
+                o.isGeneticFamily = false;
+                
 
                 int forced = 0;
                 int done_moving = 0;
@@ -17172,6 +17178,19 @@ void LivingLifePage::step() {
                         
                         o.foodDrainTime = -1;
                         o.indoorBonusTime = 0;
+
+                        
+                        int unmarkedIndex =
+                            ourUnmarkedOffspring.getElementIndex( o.id );
+                        if( unmarkedIndex != -1 ) {
+                            // this new baby was pointed to as our offspring
+                            // before, as they were born
+                            ourUnmarkedOffspring.deleteElement( unmarkedIndex );
+                            
+                            o.isGeneticFamily = true;
+                            }
+                        
+
                         
                         ObjectRecord *obj = getObject( o.displayID );
                         
@@ -18238,6 +18257,11 @@ void LivingLifePage::step() {
                                 existing->currentSpeech = 
                                     stringDuplicate( &( firstSpace[1] ) );
                                 
+                                if( strcmp( existing->currentSpeech, 
+                                            "+FAMILY+" ) == 0 ) {
+                                    existing->isGeneticFamily = true;
+                                    }
+
                                 existing->speechFade = 1.0;
                                 
                                 existing->speechIsSuccessfulCurse = curseFlag;
@@ -18306,6 +18330,20 @@ void LivingLifePage::step() {
                                                                  babyID );
                                             }
 
+                                        if( babyID != -1 ) {
+                                            LiveObject *babyO =
+                                                getLiveObject( babyID );
+                                            if( babyO != NULL ) {
+                                                babyO->isGeneticFamily = true;
+                                                }
+                                            else {
+                                                // baby creation message
+                                                // not received yet
+                                                ourUnmarkedOffspring.push_back(
+                                                    babyID );
+                                                }
+                                            }
+                                        
                                         doublePair dest = { (double)mapX, 
                                                             (double)mapY };
                                         double d = 
@@ -18599,7 +18637,34 @@ void LivingLifePage::step() {
                                         }
                                     }
                                 
+                                if( id == ourID ) {
+                                    // we just got our own lineage
+                                    for( int t=0; 
+                                         t < existing->lineage.size();
+                                         t++ ) {
+                                        LiveObject *ancestor =
+                                            getLiveObject( 
+                                                existing->lineage.
+                                                getElementDirect( t ) );
 
+                                        if( ancestor != NULL ) {
+                                            ancestor->isGeneticFamily = true;
+                                            }
+                                        }
+                                    }
+                                else {
+                                    // are we an ancestor of this person?
+                                    for( int t=0; 
+                                         t < existing->lineage.size();
+                                         t++ ) {
+                                        if( ourID == 
+                                            existing->
+                                            lineage.getElementDirect( t ) ) {
+                                            existing->isGeneticFamily = true;
+                                            break;
+                                            }
+                                        }
+                                    }
                                 
                                 tokens->deallocateStringElements();
                                 delete tokens;
@@ -20636,6 +20701,8 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    ourUnmarkedOffspring.deleteAll();
     
     clearToolLearnedStatus();
 
@@ -23752,6 +23819,32 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                              translate( "disconnectCommand" ) ) 
                                      == typedText ) {
                                 forceDisconnect = true;
+                                }
+                            else if( strstr( typedText,
+                                             translate( "familyCommand" ) ) 
+                                     == typedText ) {
+                                double curTime = game_getCurrentTime();
+                                for( int f=0; f<gameObjects.size(); f++ ) {
+                                    
+                                    LiveObject *famO = 
+                                        gameObjects.getElement( f );
+                                    if( famO->isGeneticFamily ) {
+                                        if( famO->currentSpeech != NULL ) {
+                                            delete [] famO->currentSpeech;
+                                            famO->currentSpeech = NULL;
+                                            }
+                                        
+                                        famO->currentSpeech = 
+                                            stringDuplicate( "+FAMILY+" );
+                                        famO->speechFade = 1.0;
+                                
+                                        famO->speechIsSuccessfulCurse = false;
+
+                                        famO->speechFadeETATime =
+                                            curTime + 3 +
+                                            strlen( famO->currentSpeech ) / 5;
+                                        }
+                                    }
                                 }
                             else {
                                 // filter hints

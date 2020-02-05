@@ -358,7 +358,9 @@ typedef struct LiveObject {
         // for mouse over, what this local player sees
         // in front of this player's name
         char *leadershipNameTag;
-
+        
+        char isGeneticFamily;
+        
     } LiveObject;
 
 
