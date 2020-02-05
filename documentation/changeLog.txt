@@ -29,6 +29,9 @@ Version 309   ???
 
 --Pause screen (hit ESC) has full list of chat commands.
 
+--Support for ~~ to indicate half-line skip in multi-line on-screen messages.
+  Using this for command list spacing.
+
 
 
 Version 307   2020-January-30
