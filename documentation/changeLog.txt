@@ -45,6 +45,10 @@ Version 309   ???
 --When issuing an order, the leader sees +FOLLOWER+ markers above the heads of
   nearby followers.
 
+--If your mother has no leader, you automatically follow her at birth to
+  bootstrap leadership.  Part of #532
+
+
 
 
 Version 307   2020-January-30

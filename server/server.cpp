@@ -8580,6 +8580,12 @@ int processLoggedInPlayer( char inAllowReconnect,
         // child inherits mother's leader
         newObject.followingID = parent->followingID;
         
+        if( newObject.followingID == -1 ) {
+            // boostrap the whole thing by having leaderless mothers
+            // get their children as automatic followers.
+            newObject.followingID = parent->id;
+            }
+
 
         newObject.parentChainLength = parent->parentChainLength + 1;
 
