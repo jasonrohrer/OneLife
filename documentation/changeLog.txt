@@ -32,6 +32,10 @@ Version 309   ???
 --Support for ~~ to indicate half-line skip in multi-line on-screen messages.
   Using this for command list spacing.
 
+--When a follower receives an order, they get a temporary LEAD arrow back to
+  the leader who issued the order.
+
+
 
 
 Version 307   2020-January-30

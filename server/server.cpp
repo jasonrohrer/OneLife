@@ -13510,6 +13510,33 @@ static void checkOrderPropagation() {
 
                         sendGlobalMessage( fullOrder, o );
                         delete [] fullOrder;
+
+                        LiveObject *leaderO = 
+                            getLiveObject( l->currentOrderOriginatorID );
+                        
+                        if( leaderO != NULL ) {
+                            // arrow to leader
+                            GridPos leaderPos = getPlayerPos( leaderO );
+                            
+                            char *leadershipName = 
+                                getLeadershipName( leaderO, true );
+                            
+                            char *message = 
+                                autoSprintf( "PS\n"
+                                             "%d/0 MY %s "
+                                             "*leader %d *map %d %d\n#",
+                                             o->id,
+                                             leadershipName,
+                                             l->currentOrderOriginatorID,
+                                             leaderPos.x - o->birthPos.x,
+                                             leaderPos.y - o->birthPos.y );
+                            
+                            delete [] leadershipName;
+
+                            sendMessageToPlayer( o, message, 
+                                                 strlen( message ) );
+                            delete [] message;
+                            }
                         }
                     }
                 }

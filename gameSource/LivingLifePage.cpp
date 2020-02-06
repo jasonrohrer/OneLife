@@ -18358,6 +18358,23 @@ void LivingLifePage::step() {
                                             personKey = "baby";
                                             }
 
+                                        if( ! baby ) {
+                                            char *leaderPos = 
+                                                strstr( 
+                                                    existing->currentSpeech, 
+                                                    " *leader" );
+                                            if( leaderPos != NULL ) {
+                                                person = true;
+                                                
+                                                sscanf( leaderPos, 
+                                                    " *leader %d", &personID );
+
+                                                leaderPos[0] = '\0';
+                                                personKey = "lead";
+                                                }
+                                            }
+                                            
+
 
                                         if( numRead == 2 ) {
                                             addTempHomeLocation( mapX, mapY,
