@@ -23968,6 +23968,41 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                             }
                         }
                     else {
+                        // actual, spoken text, not a /command
+                        
+                        if( strstr( typedText,
+                                    translate( "orderCommand" ) ) 
+                            == typedText ) {
+                            
+                            // when issuing an order, place +FOLLOWER+
+                            // above the heads of followers
+                            
+                            const char *tag = translate( "followerMarker" );
+
+                            double curTime = game_getCurrentTime();
+                            for( int f=0; f<gameObjects.size(); f++ ) {
+                                    
+                                LiveObject *follO = 
+                                    gameObjects.getElement( f );
+                                if( follO->followingUs ) {
+                                    if( follO->currentSpeech != NULL ) {
+                                        delete [] follO->currentSpeech;
+                                        follO->currentSpeech = NULL;
+                                        }
+                                    
+                                    follO->currentSpeech = 
+                                        stringDuplicate( tag );
+                                    follO->speechFade = 1.0;
+                                    
+                                    follO->speechIsSuccessfulCurse = false;
+                                    
+                                    follO->speechFadeETATime =
+                                        curTime + 3 +
+                                        strlen( follO->currentSpeech ) / 5;
+                                    }
+                                }
+                            }
+                        
                         // send text to server
 
                         const char *sayCommand = "SAY";
