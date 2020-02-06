@@ -6991,7 +6991,7 @@ static void setupToolSlots( LiveObject *inPlayer ) {
     double B = 0.7;
     double C = 0.3;
     
-    double D = 10;
+    double D = 7;
     
     
     // when this is called, we already have a valid fitness score between 0..60

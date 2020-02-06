@@ -67,6 +67,10 @@ Version 309   ???
 --When one of your leaders dies, you get a LEAD arrow pointing you to the
   leader who took over for them.  Final part of #532.  Fixes #532
 
+--Adjustment to tool slot curve.  Top real-world score of 52 now maps to 9
+  slots (was 8).  This is 3 extra beyond starting slots of 6, with 3 more as
+  headroom for when scores improve further.  Part of #533
+
 
 
 
