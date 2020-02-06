@@ -8930,8 +8930,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                                          "*baby %d *map %d %d\n#",
                                          id,
                                          newObject.id,
-                                         newObject.xs - o->birthPos.x,
-                                         newObject.ys - o->birthPos.y );
+                                         newObject.xs,
+                                         newObject.ys );
             sendMessageToPlayer( o, message, strlen( message ) );
             delete [] message;
             }
@@ -13160,6 +13160,38 @@ static void leaderDied( LiveObject *inLeader ) {
 
 
 
+static LiveObject *getClosestFollower( LiveObject *inLeader ) {
+    GridPos leaderPos = getPlayerPos( inLeader );
+    
+    double minDist = DBL_MAX;
+    LiveObject *closestFollower = NULL;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        
+        LiveObject *otherPlayer = players.getElement( i );
+        
+        if( otherPlayer != inLeader &&
+            ! otherPlayer->error ) {
+            
+            if( isFollower( inLeader, otherPlayer ) ) {
+                
+                GridPos fPos = getPlayerPos( otherPlayer );
+                
+                double d = distance( leaderPos, fPos );
+                
+                if( d < minDist ) {
+                    minDist = d;
+                    closestFollower = otherPlayer;
+                    }
+                }
+            }
+        }
+    return closestFollower;
+    }
+
+
+
+
 static void tryToStartKill( LiveObject *nextPlayer, int inTargetID ) {
     if( inTargetID > 0 && 
         nextPlayer->holdingID > 0 &&
@@ -13528,8 +13560,8 @@ static void checkOrderPropagation() {
                                              o->id,
                                              leadershipName,
                                              l->currentOrderOriginatorID,
-                                             leaderPos.x - o->birthPos.x,
-                                             leaderPos.y - o->birthPos.y );
+                                             leaderPos.x,
+                                             leaderPos.y );
                             
                             delete [] leadershipName;
 
@@ -17355,6 +17387,24 @@ int main() {
                                 
                                 delete [] formattedOrder;
                                 nextOrderNumber++;
+
+                                // give them a pointer to their closest
+                                // follower
+                                LiveObject *closeF = 
+                                    getClosestFollower( nextPlayer );
+                                if( closeF != NULL ) {
+                                    GridPos fPos = getPlayerPos( closeF );
+                                    
+                                    char *newSaidText = 
+                                        autoSprintf( "%s "
+                                             "*follower %d *map %d %d\n#",
+                                             m.saidText,
+                                             closeF->id,
+                                             fPos.x,
+                                             fPos.y );
+                                    delete [] m.saidText;
+                                    m.saidText = newSaidText;
+                                    }
                                 }
                             delete [] order;
                             }
@@ -23793,6 +23843,21 @@ int main() {
                                             }
                                         }
                                     }
+
+                                
+                                // any other * metadata before *map?
+                                char *otherStarLoc = strstr( trimmedPhrase,
+                                                             " *" );
+                                if( otherStarLoc != NULL ) {
+                                    if( speakerID != listenerID ) {
+                                        // only send * metadata through
+                                        // to speaker
+                                        // trim it otherwise
+                                        
+                                        otherStarLoc[0] = '\0';
+                                        }
+                                    }
+                                
 
                                 
                                 char *translatedPhrase = 

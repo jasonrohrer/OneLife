@@ -416,6 +416,10 @@ metersAway "METERS AWAY"
 map "MAP"
 baby "BABY"
 lead "LEAD"
+supp "SUPP"
+
+leader "LEADER"
+closestFollower "CLOSEST FOLLOWER"
 
 
 atWar "AT WAR"

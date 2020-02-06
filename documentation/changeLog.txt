@@ -39,6 +39,8 @@ Version 309   ???
   adults now >= 2.0 (was > 2.0).  Max ratio of baby to fertile moms now >= 3.0
   (was > 4.0).
 
+--When a leader issues an order, they get a temporary SUPP arrow back to their
+  closest follower.
 
 
 

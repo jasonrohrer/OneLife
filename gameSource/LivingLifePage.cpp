@@ -18358,14 +18358,18 @@ void LivingLifePage::step() {
                                             personKey = "baby";
                                             }
 
+
+                                        char leader = false;
+                                        
                                         if( ! baby ) {
                                             char *leaderPos = 
                                                 strstr( 
                                                     existing->currentSpeech, 
                                                     " *leader" );
+                                            
                                             if( leaderPos != NULL ) {
                                                 person = true;
-                                                
+                                                leader = true;
                                                 sscanf( leaderPos, 
                                                     " *leader %d", &personID );
 
@@ -18373,7 +18377,27 @@ void LivingLifePage::step() {
                                                 personKey = "lead";
                                                 }
                                             }
+
+                                        
+                                        char follower = false;
+                                        
+                                        if( ! baby && ! leader ) {
+                                            char *follPos = 
+                                                strstr( 
+                                                    existing->currentSpeech, 
+                                                    " *follower" );
                                             
+                                            if( follPos != NULL ) {
+                                                person = true;
+                                                follower = true;
+                                                sscanf( follPos, 
+                                                    " *follPos %d", &personID );
+
+                                                follPos[0] = '\0';
+                                                personKey = "supp";
+                                                }
+                                            }
+                                        
 
 
                                         if( numRead == 2 ) {
@@ -18406,10 +18430,23 @@ void LivingLifePage::step() {
                                         if( d >= 5 ) {
                                             char *dString = 
                                                 getSpokenNumber( d );
+
+                                            const char *des = "";
+                                            const char *desSpace = "";
+                                            
+                                            if( follower ) {
+                                                des = translate( 
+                                                    "closestFollower" );
+                                                desSpace = " ";
+                                                }
+                                            
+
                                             char *newSpeech =
                                                 autoSprintf( 
-                                                    "%s - %s %s",
+                                                    "%s - %s%s%s %s",
                                                     existing->currentSpeech,
+                                                    des,
+                                                    desSpace,
                                                     dString,
                                                     translate( "metersAway" ) );
                                             delete [] dString;
