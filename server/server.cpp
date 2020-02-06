@@ -7658,6 +7658,52 @@ int processLoggedInPlayer( char inAllowReconnect,
         }
     
     
+    if( parentChoices.size() > 1 ) {
+        // filter them so that we avoid mothers who WE have curse-blocked
+        // (only if we have a choice)
+        SimpleVector<LiveObject*> oldParentList;
+        oldParentList.push_back_other( &parentChoices );
+        
+        for( int i=0; i<parentChoices.size(); i++ ) {
+            LiveObject *mom = parentChoices.getElementDirect( i );
+            
+            if( isCursed( newObject.email, mom->email ) ) {
+                parentChoices.deleteElement( i );
+                i--;
+                }
+            }
+        if( parentChoices.size() == 0 ) {
+            // restore original list, we have them all curse-blocked
+            parentChoices.push_back_other( &oldParentList );
+            }
+        }
+    else if( parentChoices.size() == 1 && countFertileMothers() == 1 ) {
+        // only one possible mom
+
+        // make sure WE don't have THEM curse blocked
+        LiveObject *mom = parentChoices.getElementDirect( 0 );
+        
+        if( isCursed( newObject.email, mom->email ) ) {
+            AppLog::info( 
+                "We have only fertile mom on server curse-blocked.  "
+                "Avoiding her, and not going to d-town, spawning new Eve" );
+            parentChoices.deleteAll();
+            
+            // don't send ourselves to d-town in this case
+            numBirthLocationsCurseBlocked = 0;
+            }
+        }
+    else if( parentChoices.size() == 0 && 
+             numBirthLocationsCurseBlocked > 0 &&
+             countFertileMothers() == 1 ) {
+        // there's only one mom on the server, and we're curse-blocked from her
+        // don't send us to d-town in this case
+        numBirthLocationsCurseBlocked = 0;
+        
+        AppLog::info( 
+                "Only fertile mom on server has us curse-blocked.  "
+                "Avoiding her, and not going to d-town, spawning new Eve" );   
+        }
 
     
     if( parentChoices.size() > 0 ) {

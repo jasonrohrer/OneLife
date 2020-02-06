@@ -50,6 +50,18 @@ Version 309   ???
 
 --CURSE MY BABY now works forever, until you have another baby.  Part of #529
 
+--In a low-pop case (one fertile mom), avoid getting born to mothers that you
+  have cursed, and don't go to d-town if that lone mother has you cursed.
+  Spawn as a normal Eve instead.  This makes the 1-v-1 situation on a low-pop
+  server more sane, in the case where both people have each other cursed, and
+  prevents a lone griefer from monopolizing the whole server by killing or
+  cursing all incoming babies.  However, in the N=3 case, where two mothers
+  agree about one griefer, that griefer will still go two d-town.  Also, in all
+  cases, if we have a choice between mothers, avoid those that we have
+  curse-blocked, if possible.  The 'if possible' part prevents us from cursing
+  everyone in hopes of being Eve.  Fixes #529.
+
+
 
 
 
