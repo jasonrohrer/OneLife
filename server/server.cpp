@@ -7168,6 +7168,9 @@ static SimpleVector<char*> tempTwinEmails;
 
 static char nextLogInTwin = false;
 
+static int firstTwinID = -1;
+
+
 // returns ID of new player,
 // or -1 if this player reconnected to an existing ID
 int processLoggedInPlayer( char inAllowReconnect,
@@ -8900,8 +8903,12 @@ int processLoggedInPlayer( char inAllowReconnect,
         // will affect your score.
         
         if( newObject.parentID > 0 &&
-            newObject.parentID == otherPlayer->parentID ) {
-            // sibs
+            newObject.parentID == otherPlayer->parentID &&
+            ( firstTwinID == -1 || otherPlayer->id < firstTwinID ) ) {
+            
+            // sibs, but NOT twins
+            // only consider sibs that joined before the firstTwinID in
+            // our twin set
             
             newObject.ancestorIDs->push_back( otherPlayer->id );
 
@@ -9080,6 +9087,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             }
         
         nextLogInTwin = true;
+        firstTwinID = -1;
         
         int newID = processLoggedInPlayer( false,
                                            inConnection.sock,
@@ -9119,6 +9127,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
 
         delete [] emailCopy;
         
+        firstTwinID = newID;
         
         LiveObject *newPlayer = NULL;
 
@@ -9207,6 +9216,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                 }
             }
         
+        firstTwinID = -1;
 
         char *twinCode = stringDuplicate( inConnection.twinCode );
         

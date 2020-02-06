@@ -71,6 +71,8 @@ Version 309   ???
   slots (was 8).  This is 3 extra beyond starting slots of 6, with 3 more as
   headroom for when scores improve further.  Part of #533
 
+--Your twin sibs no longer count toward your genetic score.  Fixes #530
+
 
 
 
