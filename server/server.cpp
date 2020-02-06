@@ -5,6 +5,7 @@
 #include <math.h>
 #include <assert.h>
 #include <float.h>
+#include <random>
 
 
 #include "minorGems/util/stringUtils.h"
@@ -5574,6 +5575,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                            Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
+                           unsigned int hashedSpawnSeed,
                            int inTutorialNumber,
                            CurseStatus inCurseStatus,
                            // set to -2 to force Eve
@@ -6594,6 +6596,33 @@ int processLoggedInPlayer( char inAllowReconnect,
             startY = 
                 SettingsManager::getIntSetting( "forceEveLocationY", 0 );
             }
+
+        if( hashedSpawnSeed != 0 ) {
+            // Get bounding box from setting
+            char gotBoundingBoxSetting;
+
+            int seedSpawnBoundingBox =
+                SettingsManager::getIntSetting( "seedSpawnBoundingBox", &gotBoundingBoxSetting );
+
+
+            // If we failed to read setting default to 10k
+            if( !gotBoundingBoxSetting ) seedSpawnBoundingBox = 10000;
+
+            // Make bounding box even, because we divide by 2 later on
+            if( seedSpawnBoundingBox % 2 != 0 ) ++seedSpawnBoundingBox;
+
+
+            std::seed_seq ssq { hashedSpawnSeed };
+            std::mt19937_64 mt { ssq };
+
+            std::uniform_int_distribution<int> dist( -seedSpawnBoundingBox/2, seedSpawnBoundingBox/2 );
+
+            startX = dist(mt);
+            startY = dist(mt);
+
+            printf( "Player %s seed evaluated to (%d,%d)\n",
+                    newObject.email, startX, startY );
+            }
         
         
         newObject.xs = startX;
@@ -7062,6 +7091,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                            inConnection.sock,
                                            inConnection.sockBuffer,
                                            inConnection.email,
+                                           inConnection.hashedSpawnSeed,
                                            inConnection.tutorialNumber,
                                            anyTwinCurseLevel );
         tempTwinEmails.deleteAll();
@@ -7133,6 +7163,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                    nextConnection->sock,
                                    nextConnection->sockBuffer,
                                    nextConnection->email,
+                                   nextConnection->hashedSpawnSeed,
                                    // ignore tutorial number of all but
                                    // first player
                                    0,
@@ -11005,6 +11036,7 @@ int main() {
                             nextConnection->sock,
                             nextConnection->sockBuffer,
                             nextConnection->email,
+                            nextConnection->hashedSpawnSeed,
                             nextConnection->tutorialNumber,
                             nextConnection->curseStatus );
                         }
@@ -11244,6 +11276,7 @@ int main() {
                                             nextConnection->sock,
                                             nextConnection->sockBuffer,
                                             nextConnection->email,
+                                            nextConnection->hashedSpawnSeed,
                                             nextConnection->tutorialNumber,
                                             nextConnection->curseStatus );
                                         }
