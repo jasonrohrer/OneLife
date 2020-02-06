@@ -18391,7 +18391,8 @@ void LivingLifePage::step() {
                                                 person = true;
                                                 follower = true;
                                                 sscanf( follPos, 
-                                                    " *follPos %d", &personID );
+                                                        " *follower %d", 
+                                                        &personID );
 
                                                 follPos[0] = '\0';
                                                 personKey = "supp";
