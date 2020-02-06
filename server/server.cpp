@@ -13165,10 +13165,16 @@ static char isFollower( LiveObject *inLeader, LiveObject *inTestFollower ) {
     
 
 
+char *getLeadershipName( LiveObject *nextPlayer, 
+                         char inNoName = false );
+
+
+
 // any followers switch to following the leader of this leader
 // exiles are passed down to followers
 static void leaderDied( LiveObject *inLeader ) {
-
+    char *leaderName = getLeadershipName( inLeader );
+    
     SimpleVector<LiveObject*> exiledByThisLeader;
     
     for( int i=0; i<players.size(); i++ ) {
@@ -13189,6 +13195,19 @@ static void leaderDied( LiveObject *inLeader ) {
                 // take ourselves off their list, we're dead
                 otherPlayer->exiledByIDs.deleteElement( exileIndex );
                 otherPlayer->exileUpdate = true;
+                }
+            }
+        }
+
+
+    SimpleVector<LiveObject*> oldFollowers;
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *otherPlayer = players.getElement( i );
+        if( otherPlayer != inLeader &&
+            ! otherPlayer->error ) {
+        
+            if( isFollower( inLeader, otherPlayer ) ) {
+                oldFollowers.push_back( otherPlayer );
                 }
             }
         }
@@ -13229,7 +13248,82 @@ static void leaderDied( LiveObject *inLeader ) {
                 } 
             }
         }
+
+
+
+    if( leaderName == NULL ) {
+        // no followers to inform
+        return;
+        }
+
+
+    char *newLeaderExplain = NULL;
     
+    if( inLeader->followingID != -1 ) {
+        LiveObject *newLeader = getLiveObject( inLeader->followingID );
+        
+        char *newLeaderName = getLeadershipName( newLeader );
+        newLeaderExplain = autoSprintf( "YOU NOW FOLLOW %s\n", newLeaderName );
+        delete [] newLeaderName;
+        }
+
+    // tell followers about our death
+    for( int i=0; i<oldFollowers.size(); i++ ) {
+        LiveObject *otherPlayer = oldFollowers.getElementDirect( i );
+        
+        
+        char *secondLine;
+        
+        if( newLeaderExplain != NULL ) {
+            secondLine = stringDuplicate( newLeaderExplain );
+            }
+        else {
+            // no heir for this position.
+
+            // who is there prime leader?
+            int primeID = otherPlayer->followingID;
+            while( primeID != -1 ) {
+                LiveObject *primeO = getLiveObject( primeID );
+                if( primeO != NULL ) {
+                    if( primeO->followingID != -1 ) {
+                        primeID = primeO->followingID;
+                        }
+                    else {
+                        break;
+                        }
+                    }
+                }
+            LiveObject *primeO = NULL;
+            if( primeID != -1 ) {
+                primeO = getLiveObject( primeID );
+                }
+            if( primeO != NULL ) {
+                char *primeName = getLeadershipName( primeO );
+                secondLine = autoSprintf( "YOUR PRIME LEADER IS NOW %s.",
+                                          primeName );
+                delete [] primeName;
+                }
+            else {
+                secondLine = autoSprintf( "YOU NOW HAVE NO LEADER." );
+                }
+                
+            }
+
+        char *mesage =
+            autoSprintf( "YOUR %s HAS DIED.**"
+                         "%s",
+                         leaderName,
+                         secondLine );
+        
+        delete [] secondLine;
+                                
+        sendGlobalMessage( mesage, otherPlayer );
+        delete [] mesage;
+        }
+
+    
+    delete [] newLeaderExplain;
+    delete [] leaderName;
     }
 
 
@@ -13409,8 +13503,8 @@ leadershipNames[NUM_LEADERSHIP_NAMES][2] = { { "LORD",
                                                "SUPREME EMPRESS" } };
 
 
-static char *getLeadershipName( LiveObject *nextPlayer, 
-                                char inNoName = false ) {
+char *getLeadershipName( LiveObject *nextPlayer, 
+                         char inNoName ) {
     
     int level = 0;
     

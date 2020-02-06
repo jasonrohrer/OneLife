@@ -61,6 +61,9 @@ Version 309   ???
   curse-blocked, if possible.  The 'if possible' part prevents us from cursing
   everyone in hopes of being Eve.  Fixes #529.
 
+--When one of your leaders dies, you get a DING message informing you and
+  telling you who took over for them.  Part of #532
+
 
 
 
