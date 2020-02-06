@@ -35,6 +35,10 @@ Version 309   ???
 --When a follower receives an order, they get a temporary LEAD arrow back to
   the leader who issued the order.
 
+--Trying to fix baby overload after server restart.  Max ratio of baby to
+  adults now >= 2.0 (was > 2.0).  Max ratio of baby to fertile moms now >= 3.0
+  (was > 4.0).
+
 
 
 

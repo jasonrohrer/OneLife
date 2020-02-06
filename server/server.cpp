@@ -7592,7 +7592,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                     totalBabies, totalAdults, ratio );
 
                 
-                if( ratio > 2 ) {
+                if( ratio >= 2 ) {
                     // more than 2/3 of the population are helpless babies 
                     // force an Eve spawn to compensate for this condition
                     
@@ -7614,10 +7614,10 @@ int processLoggedInPlayer( char inAllowReconnect,
                     ratio = (double)totalBabies / (double)totalMoms;
 
                     AppLog::infoF( 
-                        "Counting %d babies for %d moms, ratio %f (max 4.0)",
+                        "Counting %d babies for %d moms, ratio %f (max 3.0)",
                         totalBabies, totalMoms, ratio );
                     
-                    if( ratio > 4 ) {
+                    if( ratio >= 3 ) {
                         // too many babies per mom
                         AppLog::infoF( 
                             "%d babies for %d moms, forcing Eve.",
