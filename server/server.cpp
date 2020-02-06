@@ -908,6 +908,10 @@ typedef struct LiveObject {
         // babies born to this player
         SimpleVector<timeSec_t> *babyBirthTimes;
         SimpleVector<int> *babyIDs;
+
+        // for CURSE MY BABY after baby is dead/deleted
+        char *lastBabyEmail;
+        
         
         // wall clock time after which they can have another baby
         // starts at 0 (start of time epoch) for non-mothers, as
@@ -1741,6 +1745,9 @@ void quitCleanup() {
             }
         if( nextPlayer->origEmail != NULL  ) {
             delete [] nextPlayer->origEmail;
+            }
+        if( nextPlayer->lastBabyEmail != NULL  ) {
+            delete [] nextPlayer->lastBabyEmail;
             }
 
         if( nextPlayer->murderPerpEmail != NULL  ) {
@@ -5432,6 +5439,14 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 setDBCurse( inPlayer->email, targetEmail );
                 }
             }
+        else if( isBabyShortcut && babyCursePlayer == NULL &&
+                 inPlayer->lastBabyEmail != NULL &&
+                 spendCurseToken( inPlayer->email ) ) {
+            
+            isCurse = true;
+            
+            setDBCurse( inPlayer->email, inPlayer->lastBabyEmail );
+            }
         }
 
 
@@ -7330,6 +7345,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.email = inEmail;
     newObject.origEmail = NULL;
     
+    newObject.lastBabyEmail = NULL;
+
     newObject.id = nextID;
     nextID++;
 
@@ -8117,6 +8134,12 @@ int processLoggedInPlayer( char inAllowReconnect,
             parent->babyBirthTimes->push_back( curTime );
             parent->babyIDs->push_back( newObject.id );
             
+            if( parent->lastBabyEmail != NULL ) {
+                delete [] parent->lastBabyEmail;
+                }
+            parent->lastBabyEmail = stringDuplicate( newObject.email );
+            
+
             // set cool-down time before this worman can have another baby
             parent->birthCoolDown = pickBirthCooldownSeconds() + curTime;
 
@@ -24531,6 +24554,9 @@ int main() {
                     }
                 if( nextPlayer->origEmail != NULL  ) {
                     delete [] nextPlayer->origEmail;
+                    }
+                if( nextPlayer->lastBabyEmail != NULL ) {
+                    delete [] nextPlayer->lastBabyEmail;
                     }
 
                 if( nextPlayer->murderPerpEmail != NULL ) {

@@ -48,6 +48,8 @@ Version 309   ???
 --If your mother has no leader, you automatically follow her at birth to
   bootstrap leadership.  Part of #532
 
+--CURSE MY BABY now works forever, until you have another baby.  Part of #529
+
 
 
 
