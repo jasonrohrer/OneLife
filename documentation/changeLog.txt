@@ -64,6 +64,8 @@ Version 309   ???
 --When one of your leaders dies, you get a DING message informing you and
   telling you who took over for them.  Part of #532
 
+--When one of your leaders dies, you get a LEAD arrow pointing you to the
+  leader who took over for them.  Final part of #532.  Fixes #532
 
 
 

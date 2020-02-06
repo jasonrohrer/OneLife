@@ -13258,12 +13258,13 @@ static void leaderDied( LiveObject *inLeader ) {
 
 
     char *newLeaderExplain = NULL;
+    LiveObject *newLeaderO = NULL;
     
     if( inLeader->followingID != -1 ) {
-        LiveObject *newLeader = getLiveObject( inLeader->followingID );
+        newLeaderO = getLiveObject( inLeader->followingID );
         
-        char *newLeaderName = getLeadershipName( newLeader );
-        newLeaderExplain = autoSprintf( "YOU NOW FOLLOW %s\n", newLeaderName );
+        char *newLeaderName = getLeadershipName( newLeaderO );
+        newLeaderExplain = autoSprintf( "YOU NOW FOLLOW %s.", newLeaderName );
         delete [] newLeaderName;
         }
 
@@ -13293,12 +13294,12 @@ static void leaderDied( LiveObject *inLeader ) {
                         }
                     }
                 }
-            LiveObject *primeO = NULL;
+            newLeaderO = NULL;
             if( primeID != -1 ) {
-                primeO = getLiveObject( primeID );
+                newLeaderO = getLiveObject( primeID );
                 }
-            if( primeO != NULL ) {
-                char *primeName = getLeadershipName( primeO );
+            if( newLeaderO != NULL ) {
+                char *primeName = getLeadershipName( newLeaderO );
                 secondLine = autoSprintf( "YOUR PRIME LEADER IS NOW %s.",
                                           primeName );
                 delete [] primeName;
@@ -13319,6 +13320,29 @@ static void leaderDied( LiveObject *inLeader ) {
                                 
         sendGlobalMessage( mesage, otherPlayer );
         delete [] mesage;
+        
+
+        if( newLeaderO != NULL ) {
+            // give them an arrow to their new leader
+            char *newLeaderName = getLeadershipName( newLeaderO );
+            
+            GridPos lPos = getPlayerPos( newLeaderO );
+
+            char *psMessage = 
+                autoSprintf( "PS\n"
+                             "%d/0 MY %s "
+                             "*leader %d *map %d %d\n#",
+                             otherPlayer->id,
+                             newLeaderName,
+                             newLeaderO->id,
+                             lPos.x,
+                             lPos.y );
+            
+            delete [] newLeaderName;
+            
+            sendMessageToPlayer( otherPlayer, psMessage, strlen( psMessage ) );
+            delete [] psMessage;
+            }
         }
 
     
