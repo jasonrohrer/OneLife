@@ -232,6 +232,7 @@ static const char *allowedSayChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! ";
 
 static int killEmotionIndex = 2;
 static int victimEmotionIndex = 2;
+static int victimTerrifiedEmotionIndex = 2;
 
 
 static double lastBabyPassedThresholdTime = 0;
@@ -7152,6 +7153,7 @@ static double killDelayTime = 12.0;
 
 static double posseDelayReductionFactor = 2.0;
 
+static int victimTerrifiedPosseSize = 3;
 
 
 // for placement of tutorials out of the way 
@@ -7355,6 +7357,10 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     posseDelayReductionFactor = 
         SettingsManager::getFloatSetting( "posseDelayReductionFactor", 2.0 );
+
+
+    victimTerrifiedPosseSize = 
+        SettingsManager::getIntSetting( "victimTerrifiedPosseSize", 3 );
     
     
 
@@ -11756,7 +11762,8 @@ static void removeKillState( LiveObject *inKiller, LiveObject *inTarget ) {
     if( newPosseSize == 0 &&
         inTarget != NULL &&
         inTarget->emotFrozen &&
-        inTarget->emotFrozenIndex == victimEmotionIndex ) {
+        ( inTarget->emotFrozenIndex == victimEmotionIndex ||
+          inTarget->emotFrozenIndex == victimTerrifiedEmotionIndex ) ) {
         
         // inTarget's emot hasn't been replaced, end it
         inTarget->emotFrozen = false;
@@ -13489,15 +13496,22 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID ) {
                         newEmotTTLs.push_back( 120 );
                                             
                         if( ! targetPlayer->emotFrozen ) {
-                                                
+                            int posseSize = countPosseSize( targetPlayer );
+                            
+                            int emotIndex = victimEmotionIndex;
+                            
+                            if( posseSize >= victimTerrifiedPosseSize ) {
+                                emotIndex = victimTerrifiedEmotionIndex;
+                                }
+
                             targetPlayer->emotFrozen = true;
                             targetPlayer->emotFrozenIndex =
-                                victimEmotionIndex;
+                                emotIndex;
                                                 
                             newEmotPlayerIDs.push_back( 
                                 targetPlayer->id );
                             newEmotIndices.push_back( 
-                                victimEmotionIndex );
+                                emotIndex );
                             newEmotTTLs.push_back( 120 );
                             }
                         }
@@ -14036,6 +14050,9 @@ int main() {
 
     victimEmotionIndex =
         SettingsManager::getIntSetting( "victimEmotionIndex", 2 );
+
+    victimTerrifiedEmotionIndex =
+        SettingsManager::getIntSetting( "victimTerrifiedEmotionIndex", 2 );
     
 
 #ifdef WIN_32
@@ -20369,7 +20386,17 @@ int main() {
                 // still not close enough
                 // see if we need to renew emote
                 
-                if( curTime - s->emotStartTime > s->emotRefreshSeconds ) {
+                if( curTime - s->emotStartTime > s->emotRefreshSeconds ||
+                    ( s->posseSize >= victimTerrifiedPosseSize &&
+                      target->emotFrozenIndex != 
+                      victimTerrifiedEmotionIndex ) ||
+                    ( s->posseSize < victimTerrifiedPosseSize &&
+                      target->emotFrozenIndex != 
+                      victimEmotionIndex ) ) {
+
+                    // emote time expired OR posse size changed
+                    // and demands different victim emote
+
                     s->emotStartTime = curTime;
                     
                     // refresh again in 30 seconds, even if we had a shorter
@@ -20382,8 +20409,17 @@ int main() {
                     newEmotTTLs.push_back( 120 );
 
                     newEmotPlayerIDs.push_back( target->id );
-                            
-                    newEmotIndices.push_back( victimEmotionIndex );
+                    
+                    int emotIndex = victimEmotionIndex;
+                    
+                    if( s->posseSize >= victimTerrifiedPosseSize ) {
+                        emotIndex = victimTerrifiedEmotionIndex;
+                        }
+                    
+                    newEmotIndices.push_back( emotIndex );
+                    target->emotFrozenIndex = emotIndex;
+                    
+                    
                     newEmotTTLs.push_back( 120 );
                     }
                 }

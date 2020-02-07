@@ -3572,6 +3572,8 @@ typedef struct OffScreenSound {
 
         char red;
         
+        char specialChar;
+        
         int sourcePlayerID;
     } OffScreenSound;
 
@@ -3586,6 +3588,7 @@ static void addOffScreenSound( int inSourcePlayerID,
                                double inFadeSec = 4 ) {
 
     char red = false;
+    char specialChar = 0;
     
     char *stringPos = strstr( inDescription, "offScreenSound" );
     
@@ -3596,13 +3599,21 @@ static void addOffScreenSound( int inSourcePlayerID,
             // _red flag next
             red = true;
             }
+        else {
+            char *underscorePos = strstr( stringPos, "_" );
+            
+            if( underscorePos != NULL && strlen( underscorePos ) >= 2 ) {
+                specialChar = underscorePos[1];
+                }
+            }
         }
     
     double fadeETATime = game_getCurrentTime() + inFadeSec;
     
     doublePair pos = { inPosX, inPosY };
     
-    OffScreenSound s = { pos, 1.0, fadeETATime, red, inSourcePlayerID };
+    OffScreenSound s = { pos, 1.0, fadeETATime, red, 
+                         specialChar, inSourcePlayerID };
     
     offScreenSounds.push_back( s );
     }
@@ -3691,6 +3702,12 @@ void LivingLifePage::drawOffScreenSounds() {
                     }
                 }
             
+            char *strToDelete = NULL;
+            if( s->specialChar > 0 ) {
+                stringToDraw = autoSprintf( "%c", s->specialChar );
+                strToDelete = (char*)stringToDraw;
+                }
+            
 
             drawChalkBackgroundString( drawPos,
                                        stringToDraw,
@@ -3699,6 +3716,10 @@ void LivingLifePage::drawOffScreenSounds() {
                                        NULL,
                                        -1,
                                        bgColor, textColor );
+            
+            if( strToDelete != NULL ) {
+                delete [] strToDelete;
+                }
             }    
         }
     }

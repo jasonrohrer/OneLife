@@ -81,6 +81,8 @@ Version 309   ???
 --Non-deadly weapons (+noWait) like snowballs and tattoo needles can be used to
   start a posse (others can't join you).
 
+--Posse of 3+ causes target to repeatedly gasp and show 'T' off-screen sound.
+
 
 
 
