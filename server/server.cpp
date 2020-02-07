@@ -17894,16 +17894,63 @@ int main() {
                                     }
                                 }
                             }
+
+
+                            
+                        int target = getMapObject( m.x, m.y );
+
+
+                        
+                        char isAdjacent = false;
+                        
+                        if( !distanceUseAllowed ) {
+                            isAdjacent = isGridAdjacent( m.x, m.y,
+                                                         nextPlayer->xd, 
+                                                         nextPlayer->yd );
+                            
+                            
+                            if( ! isAdjacent &&
+                                m.x == nextPlayer->xd &&
+                                m.y == nextPlayer->yd ) {
+                                
+                                isAdjacent = true;
+                                }
+                            
+                        
+                            if( ! isAdjacent && target > 0 ) {
+                                ObjectRecord *destO = getObject( target );
+                            
+                                if( destO->wide ) {
+                                    for( int r=0; r<destO->leftBlockingRadius; 
+                                         r++ ) {
+                                        int testX = m.x - r - 1;
+                                        if( isGridAdjacent( testX, m.y,
+                                                            nextPlayer->xd,
+                                                            nextPlayer->yd ) ) {
+                                            isAdjacent = true;
+                                            break;
+                                            }
+                                        }
+                                    if( ! isAdjacent )
+                                    for( int r=0; r<destO->rightBlockingRadius; 
+                                         r++ ) {
+                                        int testX = m.x + r + 1;
+                                        if( isGridAdjacent( testX, m.y,
+                                                            nextPlayer->xd,
+                                                            nextPlayer->yd ) ) {
+                                            isAdjacent = true;
+                                            break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        
                         
                         if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
                         if( distanceUseAllowed 
                             ||
-                            isGridAdjacent( m.x, m.y,
-                                            nextPlayer->xd, 
-                                            nextPlayer->yd ) 
-                            ||
-                            ( m.x == nextPlayer->xd &&
-                              m.y == nextPlayer->yd ) ) {
+                            isAdjacent ) {
                             
                             nextPlayer->actionAttempt = 1;
                             nextPlayer->actionTarget.x = m.x;
@@ -17918,8 +17965,6 @@ int main() {
 
                             // can only use on targets next to us for now,
                             // no diags
-                            
-                            int target = getMapObject( m.x, m.y );
                             
                             int oldHolding = nextPlayer->holdingID;
                             

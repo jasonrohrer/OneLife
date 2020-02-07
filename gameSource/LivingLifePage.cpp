@@ -23072,6 +23072,42 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             }
         
 
+        if( !canExecute && getObject( destID )->wide ) {
+            // can't reach main tile on wide object
+            // can we reach a side-wing?
+            // only check where we're actually standing
+            // this is a rare case where we're trapped by a wide object
+            // no problem in making user walk as close as possible manually
+            // to try to escape (so we don't need to overhaul all movement
+            // code to deal with wide objects)
+            ObjectRecord *destO = getObject( destID );
+            
+            for( int r=0; r<destO->leftBlockingRadius; r++ ) {
+                int testX = clickDestX - r - 1;
+                if( isGridAdjacent( testX, clickDestY,
+                                    ourLiveObject->xd, ourLiveObject->yd ) ) {
+                    canExecute = true;
+                    break;
+                    }
+                }
+            
+            if( ! canExecute )
+            for( int r=0; r<destO->rightBlockingRadius; r++ ) {
+                int testX = clickDestX + r + 1;
+                if( isGridAdjacent( testX, clickDestY,
+                                    ourLiveObject->xd, ourLiveObject->yd ) ) {
+                    canExecute = true;
+                    break;
+                    }
+                }
+            if( canExecute ) {
+                mustMove = false;
+                playerActionTargetNotAdjacent = true;
+                }
+            }
+        
+        
+
         if( canExecute && ! killMode ) {
             
             const char *action = "";

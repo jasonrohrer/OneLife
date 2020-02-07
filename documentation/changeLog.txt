@@ -89,6 +89,11 @@ Version 309   ???
   limited to a range of 8 before, which is the limit for direct-click kill
   targetting.
 
+--Fixed case of blocking by wide extension of a wide blocking object in a way
+  that prevents you from manipulating the wide object.  In this case, we allow
+  action diagonally.  Example:  newcomen tower blocking your exit from a
+  property gate.  If it sticks out enough to block you from walking, it stick
+  out enough for you to touch it (to take it down, for example).  Thanks Tarr.
 
 
 
