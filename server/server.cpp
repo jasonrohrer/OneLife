@@ -13423,7 +13423,8 @@ static LiveObject *getClosestFollower( LiveObject *inLeader ) {
 
 
 
-static void tryToStartKill( LiveObject *nextPlayer, int inTargetID ) {
+static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
+                            char inInfiniteRange = false ) {
     if( inTargetID > 0 && 
         nextPlayer->holdingID > 0 &&
         canPlayerUseOrLearnTool( nextPlayer,
@@ -13474,7 +13475,8 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID ) {
                                         
                     char enteredState =
                         addKillState( nextPlayer,
-                                      targetPlayer );
+                                      targetPlayer,
+                                      inInfiniteRange );
                                         
                     if( enteredState && 
                         ! isNoWaitWeapon( 
@@ -17688,7 +17690,9 @@ int main() {
 
                             if( otherToKill != NULL ) {
                                 playerIndicesToSendUpdatesAbout.push_back( i );
-                                tryToStartKill( nextPlayer, otherToKill->id );
+                                // spoken intent to kill has unlimited distance
+                                tryToStartKill( nextPlayer, otherToKill->id,
+                                                true );
                                 }
                             }
                         
