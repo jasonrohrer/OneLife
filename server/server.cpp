@@ -6610,7 +6610,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             startX = dist(mt);
             startY = dist(mt);
 
-            printf( "Player %s seed evaluated to (%d,%d)\n",
+            AppLog::infoF( "Player %s seed evaluated to (%d,%d)",
                     newObject.email, startX, startY );
             }
         
