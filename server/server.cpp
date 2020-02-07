@@ -6598,19 +6598,9 @@ int processLoggedInPlayer( char inAllowReconnect,
             }
 
         if( hashedSpawnSeed != 0 ) {
-            // Get bounding box from setting
-            char gotBoundingBoxSetting;
-
+            // Get bounding box from setting, default to 10k
             int seedSpawnBoundingBox =
-                SettingsManager::getIntSetting( "seedSpawnBoundingBox", &gotBoundingBoxSetting );
-
-
-            // If we failed to read setting default to 10k
-            if( !gotBoundingBoxSetting ) seedSpawnBoundingBox = 10000;
-
-            // Make bounding box even, because we divide by 2 later on
-            if( seedSpawnBoundingBox % 2 != 0 ) ++seedSpawnBoundingBox;
-
+                SettingsManager::getIntSetting( "seedSpawnBoundingBox", 10000 );
 
             std::seed_seq ssq { hashedSpawnSeed };
             std::mt19937_64 mt { ssq };
