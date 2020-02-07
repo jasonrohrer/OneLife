@@ -17359,6 +17359,18 @@ int main() {
                                     continue;
                                     }
                                 
+                                if( s->posseSize == 1 &&
+                                    strstr( 
+                                        getObject( s->killerWeaponID )->
+                                        description,
+                                        "+noWait" ) != NULL ) {
+                                    // single-person posse, where leader
+                                    // not holding a deadly weapon
+                                    // (snowball or tattoo needle)
+                                    // Can't join this posse.
+                                    continue;
+                                    }
+                                
                                 LiveObject *killer = 
                                     getLiveObject( s->killerID );
                                 

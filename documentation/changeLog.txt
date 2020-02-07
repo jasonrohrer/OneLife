@@ -78,6 +78,9 @@ Version 309   ???
 --Posse kill waiting period shorter with each new member (2 wait 6 seconds,
   3 wait 3 seconds, 4 wait 1.5 seconds, etc.)
 
+--Non-deadly weapons (+noWait) like snowballs and tattoo needles can be used to
+  start a posse (others can't join you).
+
 
 
 
