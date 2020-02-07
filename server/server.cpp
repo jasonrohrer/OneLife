@@ -11129,6 +11129,8 @@ int main() {
                                     delete[] nextConnection->email;
                                     nextConnection->email = stringDuplicate( onlyEmail.c_str() );
                                 }
+                            } else {
+                                nextConnection->hashedSpawnSeed = 0;
                             }
 
                             char *pwHash = tokens->getElementDirect( 2 );
