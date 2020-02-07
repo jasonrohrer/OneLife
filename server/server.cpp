@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <float.h>
 #include <random>
+#include <string>
 
 
 #include "minorGems/util/stringUtils.h"
@@ -11086,28 +11087,31 @@ int main() {
                                 stringDuplicate( 
                                     tokens->getElementDirect( 1 ) );
 
-                            // Check for seed
 
-                            // Must be >0
+                            // If email contains string delimiter
+                            // Set nextConnection's hashedSpawnSeed to hash of seed
+                            // then cut off seed and set email to onlyEmail
                             const unsigned int minSeedLen = 1;
                             const char seedDelim = '|';
 
-                            char* seedDelimPtr = strchr( tokens->getElementDirect( 1 ), seedDelim );
 
-                            if( seedDelimPtr != nullptr ) {
-                                unsigned int seedLen = strlen( seedDelimPtr );
+                            std::string emailAndSeed { tokens->getElementDirect( 1 ) };
+
+                            size_t seedDelimPos = emailAndSeed.find( seedDelim );
+
+                            if( seedDelimPos != std::string::npos ) {
+                                unsigned int seedLen = emailAndSeed.length() - seedDelimPos;
 
                                 // Make sure there is at least one char after delim
                                 if( seedLen > minSeedLen ) {
-                                    // Move start of str up one
-                                    // Don't include '|' character
-                                    char* seed = seedDelimPtr + 1;
+                                    // Get the substr from one after the seed delim
+                                    std::string seed { emailAndSeed.substr( seedDelimPos + 1 ) };
 
                                     // Hash seed to 4 byte int
                                     const int hashConst = 111337;
                                     unsigned int hash = 0;
-                                    for( size_t i = 0; i < strlen(seed); ++i ) {
-                                        hash ^= seed[i];
+                                    for( char c : seed ) {
+                                        hash ^= c;
                                         hash *= hashConst;
                                     }
 
@@ -11115,18 +11119,15 @@ int main() {
                                 }
 
                                 // Remove seed from email
-                                unsigned int emailLen = strlen( nextConnection->email );
-                                if( ( emailLen - seedLen ) == 0 ) {
+                                if( seedDelimPos == 0) {
                                     // There was only a seed not email
                                     nextConnection->email = stringDuplicate( "blank_email" );
                                 } else {
-                                    unsigned int onlyEmailLen = emailLen - seedLen;
-
-                                    char* onlyEmail = new char[ onlyEmailLen ];
-                                    strncpy( onlyEmail, nextConnection->email, onlyEmailLen );
+                                    /* unsigned int onlyEmailLen = emailLen - seedLen; */
+                                    std::string onlyEmail { emailAndSeed.substr( 0, seedDelimPos ) };
 
                                     delete[] nextConnection->email;
-                                    nextConnection->email = onlyEmail;
+                                    nextConnection->email = stringDuplicate( onlyEmail.c_str() );
                                 }
                             }
 
