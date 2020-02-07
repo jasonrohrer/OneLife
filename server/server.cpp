@@ -7148,6 +7148,11 @@ static void makeOffspringSayMarker( int inPlayerID, int inIDToSkip ) {
 
 
 
+static double killDelayTime = 12.0;
+
+static double posseDelayReductionFactor = 2.0;
+
+
 
 // for placement of tutorials out of the way 
 static int maxPlacementX = 5000000;
@@ -7339,6 +7344,19 @@ int processLoggedInPlayer( char inAllowReconnect,
     delete multiplierList;
     
 
+
+    foodScaleFactor = 
+        SettingsManager::getFloatSetting( "foodScaleFactor", 1.0 );
+    
+    
+    killDelayTime = 
+        SettingsManager::getFloatSetting( "killDelayTime", 12.0 );
+    
+    
+    posseDelayReductionFactor = 
+        SettingsManager::getFloatSetting( "posseDelayReductionFactor", 2.0 );
+    
+    
 
 
     numConnections ++;
@@ -10718,7 +10736,6 @@ int readIntFromFile( const char *inFileName, int inDefaultValue ) {
     }
 
 
-double killDelayTime = 6.0;
 
 
 typedef struct KillState {
@@ -10728,6 +10745,7 @@ typedef struct KillState {
         double killStartTime;
         double emotStartTime;
         int emotRefreshSeconds;
+        int posseSize;
     } KillState;
 
 
@@ -11562,6 +11580,8 @@ static void updatePosseSize( LiveObject *inTarget,
         
         if( s->targetID == inTarget->id ) {
             int killerID = s->killerID;
+
+            s->posseSize = p;
             
             LiveObject *o = getLiveObject( killerID );
             
@@ -11676,7 +11696,8 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                         inTarget->id, 
                         curTime,
                         curTime,
-                        30 };
+                        30,
+                        1 };
         
         if( isNoWaitWeapon( inKiller->holdingID ) ) {
                 // allow it to happen right now
@@ -20310,7 +20331,14 @@ int main() {
             
             double curTime = Time::getCurrentTime();
 
-            if( curTime - s->killStartTime  > killDelayTime && 
+            // vary delay based on posse size
+            double delay = killDelayTime;
+            if( posseDelayReductionFactor > 0 && s->posseSize > 1 ) {
+                delay /=
+                    pow( posseDelayReductionFactor, s->posseSize - 1 );
+                }
+            
+            if( curTime - s->killStartTime  > delay && 
                 getObject( killer->holdingID )->deadlyDistance >= dist &&
                 ! directLineBlocked( playerPos, targetPos ) ) {
                 // enough warning time has passed

@@ -73,6 +73,11 @@ Version 309   ???
 
 --Your twin sibs no longer count toward your genetic score.  Fixes #530
 
+--Waiting period for single-player killer now 12 seconds (was 6).
+
+--Posse kill waiting period shorter with each new member (2 wait 6 seconds,
+  3 wait 3 seconds, 4 wait 1.5 seconds, etc.)
+
 
 
 
