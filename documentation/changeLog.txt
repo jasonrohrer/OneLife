@@ -98,6 +98,10 @@ Version 309   ???
 --When you issue a personal curse against someone, you see them as having black
   speech bubbles for 30 days.
 
+--When you issue a personal curse against someone, they babel a unique 2-word
+  phrase to you after everything they say, and once every 15 seconds if they
+  are not speaking.
+
 
 
 Version 307   2020-January-30

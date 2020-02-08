@@ -298,6 +298,8 @@ typedef struct LiveObject {
 
         char speechIsSuccessfulCurse;
         
+        char speechIsCurseTag;
+        double lastCurseTagDisplayTime;
 
         char shouldDrawPathMarks;
         double pathMarkFade;

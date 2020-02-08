@@ -73,6 +73,10 @@ extern Font *pencilFont;
 extern Font *pencilErasedFont;
 
 
+// seconds
+static double maxCurseTagDisplayGap = 15.0;
+
+
 // to make all erased pencil fonts lighter
 static float pencilErasedFontExtraFade = 0.75;
 
@@ -13335,6 +13339,7 @@ void LivingLifePage::step() {
                         o->speechIsSuccessfulCurse = false;
 
                         o->speechFadeETATime = curTime + 3;
+                        o->speechIsCurseTag = false;
                         }
                     }
                 }
@@ -15444,7 +15449,9 @@ void LivingLifePage::step() {
                 o.currentSpeech = NULL;
                 o.speechFade = 1.0;
                 o.speechIsSuccessfulCurse = false;
-                
+                o.speechIsCurseTag = false;
+                o.lastCurseTagDisplayTime = 0;
+
                 o.heldByAdultID = -1;
                 o.heldByAdultPendingID = -1;
                 
@@ -18318,18 +18325,48 @@ void LivingLifePage::step() {
                                 existing->currentSpeech = 
                                     stringDuplicate( &( firstSpace[1] ) );
                                 
+                                char famSpeech = false;
                                 if( strcmp( existing->currentSpeech, 
                                             "+FAMILY+" ) == 0 ) {
                                     existing->isGeneticFamily = true;
+                                    famSpeech = true;
+                                    
                                     }
 
+                                double curTime = game_getCurrentTime();
+                                
                                 existing->speechFade = 1.0;
                                 
                                 existing->speechIsSuccessfulCurse = curseFlag;
 
+                                if( ! existing->speechIsSuccessfulCurse &&
+                                    ! famSpeech &&
+                                    curTime - existing->lastCurseTagDisplayTime
+                                    > maxCurseTagDisplayGap &&
+                                    existing->curseName != NULL ) {
+                                    // last speech was NOT curse tag
+                                    // and it has been too long
+                                    // that means they are babbling
+                                    // and hiding their own curse tag
+                                    // force it into their speech
+                                    
+                                    char *taggedSpeech = 
+                                        autoSprintf( "X %s X - %s",
+                                                     existing->curseName,
+                                                     existing->currentSpeech );
+                                    delete [] existing->currentSpeech;
+                                    existing->currentSpeech = taggedSpeech;
+                                    
+                                    existing->speechIsCurseTag = true;
+                                    existing->lastCurseTagDisplayTime = curTime;
+                                    }
+                                else {
+                                    existing->speechIsCurseTag = false;
+                                    }
+                                
                                 // longer time for longer speech
                                 existing->speechFadeETATime = 
-                                    game_getCurrentTime() + 3 +
+                                    curTime + 3 +
                                     strlen( existing->currentSpeech ) / 5;
 
                                 if( existing->age < 1 && 
@@ -18876,16 +18913,19 @@ void LivingLifePage::step() {
                                     barPos[0] = ' ';
                                     }
 
+                                // display their cursed tag now
                                 if( existing->currentSpeech != NULL ) {
                                     delete [] existing->currentSpeech;
                                     }
                                 existing->currentSpeech = 
-                                    autoSprintf( "+%s+",
+                                    autoSprintf( "X %s X",
                                                  existing->curseName );
-                                // an hour, whole life
-                                // until they speak again
-                                existing->speechFadeETATime = curTime += 3600;
+                                existing->speechFadeETATime =
+                                    curTime + 3 +
+                                    strlen( existing->currentSpeech ) / 5;
                                 existing->speechIsSuccessfulCurse = false;
+                                existing->speechIsCurseTag = true;
+                                existing->lastCurseTagDisplayTime = curTime;
                                 }
                             break;
                             }
@@ -19743,9 +19783,10 @@ void LivingLifePage::step() {
     for( int i=0; i<gameObjects.size(); i++ ) {
         
         LiveObject *o = gameObjects.getElement( i );
-        
+
+        double curTime = game_getCurrentTime();
+
         if( o->currentSpeech != NULL ) {
-            double curTime = game_getCurrentTime();
             
             if( curTime > o->speechFadeETATime ) {
                 
@@ -19758,17 +19799,35 @@ void LivingLifePage::step() {
                     o->speechIsSuccessfulCurse = false;
                     
                     
-                    if( o->curseName != NULL ) {
-                        o->currentSpeech = autoSprintf( "+%s+",
+                    // display their curse tag after everything they say
+                    if( ! o->speechIsCurseTag && 
+                        o->curseName != NULL ) {
+                        o->currentSpeech = autoSprintf( "X %s X",
                                                         o->curseName );
-                        // an hour, whole life
-                        // until they speak again
-                        o->speechFadeETATime = curTime += 3600;
+                        o->speechFadeETATime =
+                            curTime + 3 +
+                            strlen( o->currentSpeech ) / 5;
+                        o->speechIsCurseTag = true;
+                        o->lastCurseTagDisplayTime = curTime;
                         }
                     }
                 }
             }
-
+        else {
+            // show curse tags every 15 seconds
+            // like a nervous tic
+            if( o->curseName != NULL &&
+                curTime - o->lastCurseTagDisplayTime > 15 ) {
+                o->currentSpeech = autoSprintf( "X %s X",
+                                                o->curseName );
+                o->speechFadeETATime =
+                    curTime + 3 +
+                    strlen( o->currentSpeech ) / 5;
+                o->speechIsCurseTag = true;
+                o->lastCurseTagDisplayTime = curTime;
+                }
+            }
+        
         
         if( o->currentEmot != NULL ) {
             if( game_getCurrentTime() > o->emotClearETATime ) {
@@ -24038,6 +24097,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                         famO->speechFadeETATime =
                                             curTime + 3 +
                                             strlen( famO->currentSpeech ) / 5;
+                                        famO->speechIsCurseTag = false;
                                         }
                                     }
                                 }
@@ -24103,6 +24163,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                     follO->speechFadeETATime =
                                         curTime + 3 +
                                         strlen( follO->currentSpeech ) / 5;
+                                    follO->speechIsCurseTag = false;
                                     }
                                 }
                             }
