@@ -2889,6 +2889,10 @@ void LivingLifePage::clearLiveObjects() {
             delete [] nextObject->relationName;
             }
 
+        if( nextObject->curseName != NULL ) {
+            delete [] nextObject->curseName;
+            }
+        
         if( nextObject->name != NULL ) {
             delete [] nextObject->name;
             }
@@ -15422,6 +15426,8 @@ void LivingLifePage::step() {
                 o.warPeaceStatus = 0;
                 
                 o.curseLevel = 0;
+                o.curseName = NULL;
+                
                 o.excessCursePoints = 0;
                 o.curseTokenCount = 0;
 
@@ -17479,6 +17485,10 @@ void LivingLifePage::step() {
                                 delete [] nextObject->relationName;
                                 }
 
+                            if( nextObject->curseName != NULL ) {
+                                delete [] nextObject->curseName;
+                                }
+                            
                             if( nextObject->name != NULL ) {
                                 delete [] nextObject->name;
                                 }
@@ -18841,16 +18851,42 @@ void LivingLifePage::step() {
             for( int i=1; i<numLines; i++ ) {
 
                 int id, level;
-                int numRead = sscanf( lines[i], "%d %d",
-                                      &id, &level );
+                char buffer[30];
+                buffer[0] = '\0';
+                
+                int numRead = sscanf( lines[i], "%d %d %29s",
+                                      &id, &level, buffer );
 
-                if( numRead == 2 ) {
+                if( numRead == 2 || numRead == 3 ) {
                     for( int j=0; j<gameObjects.size(); j++ ) {
                         if( gameObjects.getElement(j)->id == id ) {
                             
                             LiveObject *existing = gameObjects.getElement(j);
                             
                             existing->curseLevel = level;
+                            
+                            if( numRead == 3 ) {
+                                if( existing->curseName != NULL ) {
+                                    delete [] existing->curseName;
+                                    }
+                                existing->curseName = stringDuplicate( buffer );
+                                char *barPos = strstr( existing->curseName,
+                                                       "_" );
+                                if( barPos != NULL ) {
+                                    barPos[0] = ' ';
+                                    }
+
+                                if( existing->currentSpeech != NULL ) {
+                                    delete [] existing->currentSpeech;
+                                    }
+                                existing->currentSpeech = 
+                                    autoSprintf( "+%s+",
+                                                 existing->curseName );
+                                // an hour, whole life
+                                // until they speak again
+                                existing->speechFadeETATime = curTime += 3600;
+                                existing->speechIsSuccessfulCurse = false;
+                                }
                             break;
                             }
                         }
@@ -19709,7 +19745,9 @@ void LivingLifePage::step() {
         LiveObject *o = gameObjects.getElement( i );
         
         if( o->currentSpeech != NULL ) {
-            if( game_getCurrentTime() > o->speechFadeETATime ) {
+            double curTime = game_getCurrentTime();
+            
+            if( curTime > o->speechFadeETATime ) {
                 
                 o->speechFade -= 0.05 * frameRateFactor;
 
@@ -19718,6 +19756,15 @@ void LivingLifePage::step() {
                     o->currentSpeech = NULL;
                     o->speechFade = 1.0;
                     o->speechIsSuccessfulCurse = false;
+                    
+                    
+                    if( o->curseName != NULL ) {
+                        o->currentSpeech = autoSprintf( "+%s+",
+                                                        o->curseName );
+                        // an hour, whole life
+                        // until they speak again
+                        o->speechFadeETATime = curTime += 3600;
+                        }
                     }
                 }
             }

@@ -75,6 +75,8 @@ typedef struct LiveObject {
 
         int curseLevel;
         
+        char *curseName;
+        
         int excessCursePoints;
 
         int curseTokenCount;
