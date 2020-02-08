@@ -12,7 +12,7 @@ Check again after the next update (v309)
 
 
 
-Version 309   ???
+Version 309   2020-February-8
 
 --Fixed incorrect path start when path finding fails and retries.  Fixes #525
 
