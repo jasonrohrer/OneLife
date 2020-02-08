@@ -10,3 +10,9 @@ Selection parameters:
 Variable 	K-F Word frequency 	Imagery 	Concreteness 	Meaningfulness 	# Syllables 	# Letters
 Minimum 	10 	1 	1 	1 	1 	4
 Maximum 	100 	7 	7 	10 	8 	5
+
+
+
+The old Paivio database has broken, and a new one is being hosted here:
+
+http://euclid.psych.yorku.ca/shiny/Paivio/

@@ -44,17 +44,22 @@ void drawMessage( const char *inTranslationKey, doublePair inCenter,
         
         char **subMessages = split( inMessage, "##", &numSubMessages );
             
+        
+        doublePair thisMessagePos = inCenter;
+        
+        for( int i=0; i < numSubMessages; i++ ) {
             
-        for( int i=numSubMessages-1; i>= 0; i-- ) {
-                
-            doublePair thisMessagePos = inCenter;
-                
-            thisMessagePos.y -= i * 30;
-                
-            mainFont->drawString( subMessages[i], 
-                                  thisMessagePos, messageAlign );
-                
+            if( strcmp( subMessages[i], "~~" ) == 0 ) {
+                // half-skip
+                thisMessagePos.y += 15;
+                }
+            else {
+                mainFont->drawString( subMessages[i], 
+                                      thisMessagePos, messageAlign );
+                }
             delete [] subMessages[i];
+
+            thisMessagePos.y -= 30;
             }
 
         delete [] subMessages;
