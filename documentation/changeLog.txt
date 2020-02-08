@@ -102,6 +102,9 @@ Version 309   ???
   phrase to you after everything they say, and once every 15 seconds if they
   are not speaking.
 
+--Twins don't count toward posse size for the posses that they join.
+
+
 
 
 Version 307   2020-January-30

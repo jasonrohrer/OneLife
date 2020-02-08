@@ -11677,12 +11677,33 @@ SimpleVector<int> killStatePosseChangedPlayerIDs;
 static int countPosseSize( LiveObject *inTarget ) {
     int p = 0;
     
+    int twinCount = 0;
+
     for( int i=0; i<activeKillStates.size(); i++ ) {
         KillState *s = activeKillStates.getElement( i );
         if( s->targetID == inTarget->id ) {
-            p++;
+
+            LiveObject *killerO = getLiveObject( s->killerID );
+            
+            if( killerO != NULL ) {
+                
+                // twins don't count toward posse size
+                if( ! killerO->isTwin ) {
+                    p++;
+                    }
+                else {
+                    twinCount ++;
+                    }
+                }
             }
         }
+    
+    if( p == 0 &&
+        twinCount > 0 ) {
+        // if twin is only one in posse, count as a posse of 1
+        p = 1;
+        }
+
     return p;
     }
 
