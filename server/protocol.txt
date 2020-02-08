@@ -842,14 +842,16 @@ Offset is from client's birth position (0,0) of first valley.
 
 
 CU
-p_id level
+p_id level word
 p_id level
 ...
-p_id level
+p_id level word
 #
 
 
 List of player ids that are cursed, and their curse level
+
+word is optional, which is a persistent name tag for this person.
 
 
 

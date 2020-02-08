@@ -4022,6 +4022,8 @@ Version 125    2018-July-13
 --Twin system.  Players can share a code friends and get born as identical
   twins, triplets, or quadruplets.
 
+--Server assigns a unique 2-word name to each personally-cursed player.
+
 
 
 

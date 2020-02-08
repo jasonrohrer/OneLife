@@ -1659,6 +1659,11 @@ static void deleteMembers( FreshConnection *inConnection ) {
 
 
 
+static SimpleVector<char *> curseWords;
+
+static char *curseSecret = NULL;
+
+
 static SimpleVector<char *> familyNamesAfterEveWindow;
 static SimpleVector<int> familyLineageEveIDsAfterEveWindow;
 static SimpleVector<int> familyCountsAfterEveWindow;
@@ -1905,9 +1910,67 @@ void quitCleanup() {
         fclose( postWindowFamilyLogFile );
         postWindowFamilyLogFile = NULL;
         }
+
+    curseWords.deallocateStringElements();
+    
+    if( curseSecret != NULL ) {
+        delete [] curseSecret;
+        curseSecret = NULL;
+        }
     }
 
 
+
+#include "minorGems/util/crc32.h"
+
+JenkinsRandomSource curseSource;
+
+
+static int cursesUseSenderEmail = 0;
+
+static int useCurseWords = 1;
+
+
+// result NOT destroyed by caller
+static const char *getCurseWord( char *inSenderEmail,
+                                 char *inEmail, int inWordIndex ) {
+    if( ! useCurseWords || curseWords.size() == 0 ) {
+        return "X";
+        }
+
+    if( curseSecret == NULL ) {
+        curseSecret = 
+            SettingsManager::getStringSetting( 
+                "statsServerSharedSecret", "sdfmlk3490sadfm3ug9324" );
+        }
+    
+    char *emailPlusSecret;
+
+    if( cursesUseSenderEmail ) {
+        emailPlusSecret =
+            autoSprintf( "%s_%s_%s", inSenderEmail, inEmail, curseSecret );
+        }
+    else {
+        emailPlusSecret = 
+            autoSprintf( "%s_%s", inEmail, curseSecret );
+        }
+    
+    unsigned int c = crc32( (unsigned char*)emailPlusSecret, 
+                            strlen( emailPlusSecret ) );
+    
+    delete [] emailPlusSecret;
+
+    curseSource.reseed( c );
+    
+    // mix based on index
+    for( int i=0; i<inWordIndex; i++ ) {
+        curseSource.getRandomDouble();
+        }
+
+    int index = curseSource.getRandomBoundedInt( 0, curseWords.size() - 1 );
+    
+    return curseWords.getElementDirect( index );
+    }
 
 
 
@@ -5482,7 +5545,11 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         LiveObject *targetP = getPlayerByEmail( dbCurseTargetEmail );
         
         if( targetP != NULL ) {
-            char *message = autoSprintf( "CU\n%d 1\n#", targetP->id );
+            char *message = autoSprintf( "CU\n%d 1 %s_%s\n#", targetP->id,
+                                         getCurseWord( inPlayer->email,
+                                                       targetP->email, 0 ),
+                                         getCurseWord( inPlayer->email,
+                                                       targetP->email, 1 ) );
             sendMessageToPlayer( inPlayer,
                                  message, strlen( message ) );
             delete [] message;
@@ -7399,6 +7466,13 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     victimTerrifiedPosseSize = 
         SettingsManager::getIntSetting( "victimTerrifiedPosseSize", 3 );
+
+
+    cursesUseSenderEmail = 
+        SettingsManager::getIntSetting( "cursesUseSenderEmail", 0 );
+
+    useCurseWords = 
+        SettingsManager::getIntSetting( "useCurseWords", 1 );
     
     
 
@@ -14093,6 +14167,28 @@ int main() {
 
     victimTerrifiedEmotionIndex =
         SettingsManager::getIntSetting( "victimTerrifiedEmotionIndex", 2 );
+
+
+    FILE *f = fopen( "curseWordList.txt", "r" );
+    
+    if( f != NULL ) {
+    
+        int numRead = 1;
+        
+        char buff[100];
+        
+        while( numRead == 1 ) {
+            numRead = fscanf( f, "%99s", buff );
+            
+            if( numRead == 1 ) {
+                if( strlen( buff ) < 6 ) {
+                    // short words only, 3, 4, 5 letters
+                    curseWords.push_back( stringToUpperCase( buff ) );
+                    }
+                }
+            }
+        fclose( f );
+        }
     
 
 #ifdef WIN_32
@@ -20606,8 +20702,14 @@ int main() {
                         
                         if( isCursed( otherPlayer->email, 
                                       nextPlayer->email ) ) {
-                            char *message = autoSprintf( "CU\n%d 1\n#",
-                                                         nextPlayer->id );
+                            char *message = autoSprintf( 
+                                "CU\n%d 1 %s_%s\n#",
+                                nextPlayer->id,
+                                getCurseWord( otherPlayer->email,
+                                              nextPlayer->email, 0 ),
+                                getCurseWord( otherPlayer->email,
+                                              nextPlayer->email, 1 ) );
+                            
                             sendMessageToPlayer( otherPlayer,
                                                  message, strlen( message ) );
                             delete [] message;
@@ -22521,6 +22623,10 @@ int main() {
                     continue;
                     }
 
+                // leave name out of it for now
+                // this bit of code left over from before personal curses
+                // we don't have the sender's email here, b/c this
+                // message goes to everyone.
                 char *line = autoSprintf( "%d %d\n", nextPlayer->id,
                                          nextPlayer->curseStatus.curseLevel );
                 
@@ -23130,7 +23236,11 @@ int main() {
                         }
                     
 
-                    char *line = autoSprintf( "%d %d\n", o->id, level );
+                    char *line = autoSprintf( "%d %d %s_%s\n", o->id, level,
+                                              getCurseWord( nextPlayer->email,
+                                                            o->email, 0 ),
+                                              getCurseWord( nextPlayer->email,
+                                                            o->email, 1 ) );
                     cursesWorking.appendElementString( line );
                     delete [] line;
                     
