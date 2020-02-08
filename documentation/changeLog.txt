@@ -7,6 +7,104 @@ NOTE:
 As part of this week's update process, check bigserver2 logs post-restart as
 part of:  https://github.com/jasonrohrer/OneLife/issues/510
 
+Check again after the next update (v309)
+
+
+
+
+Version 309   2020-February-8
+
+--Fixed incorrect path start when path finding fails and retries.  Fixes #525
+
+--When a new offspring baby is born (other than your own), your character
+  exclaims the situation verbally (only you can see the exclamation) and a
+  60-second map-style pointer is created to the offspring baby.  Part of #523
+
+--When a new offspring baby is born, all of your existing family members have
+  +FAMILY+ above their heads as a reminder of who affects your gene score.
+  Part of #523
+
+--Saying /FAM command produces +FAMILY+ reminders above the heads of genetic
+  family members.  Part of #523
+
+--Pause screen (hit ESC) has full list of chat commands.
+
+--Support for ~~ to indicate half-line skip in multi-line on-screen messages.
+  Using this for command list spacing.
+
+--When a follower receives an order, they get a temporary LEAD arrow back to
+  the leader who issued the order.
+
+--Trying to fix baby overload after server restart.  Max ratio of baby to
+  adults now >= 2.0 (was > 2.0).  Max ratio of baby to fertile moms now >= 3.0
+  (was > 4.0).
+
+--When a leader issues an order, they get a temporary SUPP arrow back to their
+  closest follower.
+
+--When issuing an order, the leader sees +FOLLOWER+ markers above the heads of
+  nearby followers.
+
+--If your mother has no leader, you automatically follow her at birth to
+  bootstrap leadership.  Part of #532
+
+--CURSE MY BABY now works forever, until you have another baby.  Part of #529
+
+--In a low-pop case (one fertile mom), avoid getting born to mothers that you
+  have cursed, and don't go to d-town if that lone mother has you cursed.
+  Spawn as a normal Eve instead.  This makes the 1-v-1 situation on a low-pop
+  server more sane, in the case where both people have each other cursed, and
+  prevents a lone griefer from monopolizing the whole server by killing or
+  cursing all incoming babies.  However, in the N=3 case, where two mothers
+  agree about one griefer, that griefer will still go two d-town.  Also, in all
+  cases, if we have a choice between mothers, avoid those that we have
+  curse-blocked, if possible.  The 'if possible' part prevents us from cursing
+  everyone in hopes of being Eve.  Fixes #529.
+
+--When one of your leaders dies, you get a DING message informing you and
+  telling you who took over for them.  Part of #532
+
+--When one of your leaders dies, you get a LEAD arrow pointing you to the
+  leader who took over for them.  Final part of #532.  Fixes #532
+
+--Adjustment to tool slot curve.  Top real-world score of 52 now maps to 9
+  slots (was 8).  This is 3 extra beyond starting slots of 6, with 3 more as
+  headroom for when scores improve further.  Part of #533
+
+--Your twin sibs no longer count toward your genetic score.  Fixes #530
+
+--Waiting period for single-player killer now 12 seconds (was 6).
+
+--Posse kill waiting period shorter with each new member (2 wait 6 seconds,
+  3 wait 3 seconds, 4 wait 1.5 seconds, etc.)
+
+--Non-deadly weapons (+noWait) like snowballs and tattoo needles can be used to
+  start a posse (others can't join you).
+
+--Posse of 3+ causes target to repeatedly gasp and show 'T' off-screen sound.
+
+--Verbal kill targetting now works at range 20 for I WILL KILL YOU, bringing it
+  in line with other YOU targetting (like YOU OWN THIS).  Kill targetting by
+  name now also works at range 20 (I WILL KILL EVE SMITH).  Both were mistakenly
+  limited to a range of 8 before, which is the limit for direct-click kill
+  targetting.
+
+--Fixed case of blocking by wide extension of a wide blocking object in a way
+  that prevents you from manipulating the wide object.  In this case, we allow
+  action diagonally.  Example:  newcomen tower blocking your exit from a
+  property gate.  If it sticks out enough to block you from walking, it stick
+  out enough for you to touch it (to take it down, for example).  Thanks Tarr.
+
+--When you issue a personal curse against someone, you see them as having black
+  speech bubbles for 30 days.
+
+--When you issue a personal curse against someone, they babel a unique 2-word
+  phrase to you after everything they say, and once every 15 seconds if they
+  are not speaking.
+
+--Twins don't count toward posse size for the posses that they join.
+
+
 
 
 Version 307   2020-January-30
@@ -3930,6 +4028,8 @@ Version 125    2018-July-13
 
 --Twin system.  Players can share a code friends and get born as identical
   twins, triplets, or quadruplets.
+
+--Server assigns a unique 2-word name to each personally-cursed player.
 
 
 

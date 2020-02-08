@@ -75,6 +75,8 @@ typedef struct LiveObject {
 
         int curseLevel;
         
+        char *curseName;
+        
         int excessCursePoints;
 
         int curseTokenCount;
@@ -237,6 +239,9 @@ typedef struct LiveObject {
         int pathLength;
         GridPos *pathToDest;
 
+        // closest spot on pathToDest to currentPos
+        GridPos closestPathPos;
+        
                 
         int closestDestIfPathFailedX;
         int closestDestIfPathFailedY;
@@ -293,6 +298,8 @@ typedef struct LiveObject {
 
         char speechIsSuccessfulCurse;
         
+        char speechIsCurseTag;
+        double lastCurseTagDisplayTime;
 
         char shouldDrawPathMarks;
         double pathMarkFade;
@@ -355,7 +362,9 @@ typedef struct LiveObject {
         // for mouse over, what this local player sees
         // in front of this player's name
         char *leadershipNameTag;
-
+        
+        char isGeneticFamily;
+        
     } LiveObject;
 
 
@@ -916,8 +925,12 @@ class LivingLifePage : public GamePage, public ActionListener {
         
         double mPageStartTime;
 
+
+        // note:
+        // closestPathPos must be set before calling this
         void computePathToDest( LiveObject *inObject );
         
+
         double computePathSpeedMod( LiveObject *inObject, int inPathLength );
         
         // check if same floor is present when we take a step in x or y
