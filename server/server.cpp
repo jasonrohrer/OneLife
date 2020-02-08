@@ -17686,11 +17686,22 @@ int main() {
                                                          nextPlayer );
                                     delete [] namedPlayer;
                                     }
+
+                                if( otherToKill != NULL ) {
+                                    if( distance( 
+                                            getPlayerPos( nextPlayer ),
+                                            getPlayerPos( otherToKill ) )
+                                        >= 20 ) {
+                                        // same limit as for YOU
+                                        otherToKill = NULL;
+                                        }
+                                    }
                                 }
 
                             if( otherToKill != NULL ) {
                                 playerIndicesToSendUpdatesAbout.push_back( i );
                                 // spoken intent to kill has unlimited distance
+                                // based on limits above instead
                                 tryToStartKill( nextPlayer, otherToKill->id,
                                                 true );
                                 }

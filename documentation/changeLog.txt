@@ -85,7 +85,7 @@ Version 309   ???
 
 --Verbal kill targetting now works at range 20 for I WILL KILL YOU, bringing it
   in line with other YOU targetting (like YOU OWN THIS).  Kill targetting by
-  name now has infinite range (I WILL KILL EVE SMITH).  Both were mistakenly
+  name now also works at range 20 (I WILL KILL EVE SMITH).  Both were mistakenly
   limited to a range of 8 before, which is the limit for direct-click kill
   targetting.
 
