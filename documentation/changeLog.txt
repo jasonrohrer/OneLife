@@ -95,6 +95,9 @@ Version 309   ???
   property gate.  If it sticks out enough to block you from walking, it stick
   out enough for you to touch it (to take it down, for example).  Thanks Tarr.
 
+--When you issue a personal curse against someone, you see them as having black
+  speech bubbles for 30 days.
+
 
 
 Version 307   2020-January-30

@@ -5111,6 +5111,28 @@ GridPos findClosestEmptyMapSpot( int inX, int inY, int inMaxPointsToCheck,
 
 
 
+// returns NULL if not found
+static LiveObject *getPlayerByEmail( char *inEmail ) {
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = players.getElement( j );
+        if( ! otherPlayer->error &&
+            otherPlayer->email != NULL &&
+            strcmp( otherPlayer->email, inEmail ) == 0 ) {
+            
+            return otherPlayer;
+            }
+        }
+    return NULL;
+    }
+
+
+
+static int usePersonalCurses = 0;
+
+
+void sendMessageToPlayer( LiveObject *inPlayer, 
+                          char *inMessage, int inLength );
+
 
 
 SimpleVector<ChangePosition> newSpeechPos;
@@ -5391,6 +5413,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         }
     
     
+    char *dbCurseTargetEmail = NULL;
+
 
     if( cursedName != NULL && 
         strcmp( cursedName, "" ) != 0 ) {
@@ -5406,6 +5430,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             char *targetEmail = getCurseReceiverEmail( cursedName );
             if( targetEmail != NULL ) {
                 setDBCurse( inPlayer->email, targetEmail );
+                dbCurseTargetEmail = targetEmail;
                 }
             }
         }
@@ -5425,6 +5450,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             
             isCurse = true;
             setDBCurse( inPlayer->email, youCursePlayer->email );
+            dbCurseTargetEmail = youCursePlayer->email;
             }
         else if( isBabyShortcut && babyCursePlayer != NULL &&
             spendCurseToken( inPlayer->email ) ) {
@@ -5438,6 +5464,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 }
             if( targetEmail != NULL ) {
                 setDBCurse( inPlayer->email, targetEmail );
+                dbCurseTargetEmail = targetEmail;
                 }
             }
         else if( isBabyShortcut && babyCursePlayer == NULL &&
@@ -5447,8 +5474,21 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             isCurse = true;
             
             setDBCurse( inPlayer->email, inPlayer->lastBabyEmail );
+            dbCurseTargetEmail = inPlayer->lastBabyEmail;
             }
         }
+
+    if( dbCurseTargetEmail != NULL && usePersonalCurses ) {
+        LiveObject *targetP = getPlayerByEmail( dbCurseTargetEmail );
+        
+        if( targetP != NULL ) {
+            char *message = autoSprintf( "CU\n%d 1\n#", targetP->id );
+            sendMessageToPlayer( inPlayer,
+                                 message, strlen( message ) );
+            delete [] message;
+            }
+        }
+    
 
 
     if( isCurse ) {
@@ -5566,8 +5606,6 @@ static void forcePlayerToRead( LiveObject *inPlayer,
 char canPlayerUseTool( LiveObject *inPlayer, int inToolID );
 
 
-void sendMessageToPlayer( LiveObject *inPlayer, 
-                          char *inMessage, int inLength );
 
 
 
@@ -7194,8 +7232,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                            GridPos *inForcePlayerPos = NULL ) {
     
 
-    int usePersonalCurses = SettingsManager::getIntSetting( "usePersonalCurses",
-                                                            0 );
+    usePersonalCurses = SettingsManager::getIntSetting( "usePersonalCurses",
+                                                        0 );
     
     if( usePersonalCurses ) {
         // ignore what old curse system said
@@ -20552,6 +20590,30 @@ int main() {
                 if( nextPlayer->curseStatus.curseLevel > 0 ) {
                     playerIndicesToSendCursesAbout.push_back( i );
                     }
+                else if( usePersonalCurses ) {
+                    // send a unique CU message to each player
+                    // who has this player cursed
+                    for( int p=0; p<players.size(); p++ ) {
+                        LiveObject *otherPlayer = players.getElement( p );
+                        
+                        if( otherPlayer == nextPlayer ) {
+                            continue;
+                            }
+                        if( otherPlayer->error ||
+                            ! otherPlayer->connected ) {
+                            continue;
+                            }
+                        
+                        if( isCursed( otherPlayer->email, 
+                                      nextPlayer->email ) ) {
+                            char *message = autoSprintf( "CU\n%d 1\n#",
+                                                         nextPlayer->id );
+                            sendMessageToPlayer( otherPlayer,
+                                                 message, strlen( message ) );
+                            delete [] message;
+                            }
+                        }
+                    }
 
                 nextPlayer->isNew = false;
                 
@@ -23052,6 +23114,16 @@ int main() {
                         }
 
                     int level = o->curseStatus.curseLevel;
+                    
+                    if( level == 0 ) {
+
+                        if( usePersonalCurses ) {
+                            if( isCursed( nextPlayer->email,
+                                          o->email ) ) {
+                                level = 1;
+                                }
+                            }
+                        }
                     
                     if( level == 0 ) {
                         continue;
