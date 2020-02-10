@@ -16,6 +16,12 @@ Server Fixes
 --Fixed baby and leader arrows and messages to make the coordinates birth-pos
   relative (no more new babies born 7000 meters away).
 
+--Fixed getLeadershipName server-side to correctly explore full depth of tree
+  and not count levels incorrectly (before, a single leader with lots of
+  followers would be described by the server as a supreme empress mistakenly).
+  Thanks Twisted and Tipy.
+
+
 
 
 Version 309   2020-February-8

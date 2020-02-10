@@ -13712,22 +13712,35 @@ char *getLeadershipName( LiveObject *nextPlayer,
     
     int level = 0;
     
-    LiveObject *possibleLeader = nextPlayer;
+
+    SimpleVector<LiveObject *>possibleLeaders;
+    possibleLeaders.push_back( nextPlayer );
     
-    while( possibleLeader != NULL ) {
-        LiveObject *nextLeader = NULL;
-        for( int i=0; i<players.size(); i++ ) {
-            LiveObject *o = players.getElement( i );
+    SimpleVector<LiveObject *>nextLeaders;
+
+    while( possibleLeaders.size() > 0 ) {
+        for( int p=0; p<possibleLeaders.size(); p++ ) {
+            LiveObject *possibleL = possibleLeaders.getElementDirect( p );
+
+            for( int i=0; i<players.size(); i++ ) {
+                LiveObject *o = players.getElement( i );
             
-            if( o->error ) {
-                continue;
-                }
-            if( o->followingID == possibleLeader->id ) {
-                level ++;
-                nextLeader = o;
+                if( o->error ) {
+                    continue;
+                    }
+                if( o->followingID == possibleL->id ) {
+                    nextLeaders.push_back( o );
+                    }
                 }
             }
-        possibleLeader = nextLeader;
+        possibleLeaders.deleteAll();
+        
+        if( nextLeaders.size() > 0 ) {
+            level ++;
+            
+            possibleLeaders.push_back_other( &nextLeaders );
+            nextLeaders.deleteAll();
+            }
         }
 
     if( level == 0 ) {
