@@ -9130,7 +9130,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             continue;
             }
         
-        // skip this baby when saying ++
+        // skip this baby when saying +FAMILY+
         // we are already getting a pointer to them, probably
         makeOffspringSayMarker( id, newObject.id );
         
@@ -9148,8 +9148,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                                          "*baby %d *map %d %d\n#",
                                          id,
                                          newObject.id,
-                                         newObject.xs,
-                                         newObject.ys );
+                                         newObject.xs - o->birthPos.x,
+                                         newObject.ys - o->birthPos.y );
             sendMessageToPlayer( o, message, strlen( message ) );
             delete [] message;
             }
@@ -13506,8 +13506,8 @@ static void leaderDied( LiveObject *inLeader ) {
                              otherPlayer->id,
                              newLeaderName,
                              newLeaderO->id,
-                             lPos.x,
-                             lPos.y );
+                             lPos.x - otherPlayer->birthPos.x,
+                             lPos.y - otherPlayer->birthPos.y );
             
             delete [] newLeaderName;
             
@@ -13933,8 +13933,8 @@ static void checkOrderPropagation() {
                                              o->id,
                                              leadershipName,
                                              l->currentOrderOriginatorID,
-                                             leaderPos.x,
-                                             leaderPos.y );
+                                             leaderPos.x - o->birthPos.x,
+                                             leaderPos.y - o->birthPos.y );
                             
                             delete [] leadershipName;
 
@@ -14210,6 +14210,7 @@ int main() {
             }
         fclose( f );
         }
+    printf( "Curse word list has %d words\n", curseWords.size() );
     
 
 #ifdef WIN_32

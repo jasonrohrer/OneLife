@@ -11,6 +11,12 @@ Check again after the next update (v309)
 
 
 
+Server Fixes
+
+--Fixed baby and leader arrows and messages to make the coordinates birth-pos
+  relative (no more new babies born 7000 meters away).
+
+
 
 Version 309   2020-February-8
 
