@@ -21,6 +21,8 @@ Server Fixes
   followers would be described by the server as a supreme empress mistakenly).
   Thanks Twisted and Tipy.
 
+--Sick, wounded, and murder-weapon-holding people can no longer join posses.
+  Fixes #539
 
 
 

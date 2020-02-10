@@ -17526,8 +17526,18 @@ int main() {
 
 
                         // they must be holding something to join a posse
-                        if( nextPlayer->holdingID > 0 && 
-                            isPosseJoiningSay( m.saidText ) ) {
+                        // but not a wound or a sickness
+                        // nor a bloody weapon
+                        // what these non-working held items have in common
+                        // is that they are stuck in hand AND don't have
+                        // a use-on-bare ground transition defined
+                        if( nextPlayer->holdingID > 0
+                            &&
+                            isPosseJoiningSay( m.saidText ) 
+                            &&
+                            ( ! getObject( nextPlayer->holdingID )->permanent ||
+                              getTrans( nextPlayer->holdingID, -1 ) != NULL ) 
+                            ) {
                             
                             GridPos ourPos = getPlayerPos( nextPlayer );
                             
