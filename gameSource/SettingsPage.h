@@ -55,14 +55,7 @@ class SettingsPage : public GamePage, public ActionListener {
         ValueSlider mSoundEffectsLoudnessSlider;
 
 
-        CheckboxButton mUseCustomServerBox;
-        
-        TextField mCustomServerAddressField;
-        TextField mCustomServerPortField;
-
-        TextButton mCopyButton;
-        TextButton mPasteButton;
-
+        TextField mSpawnSeed;
 
         RadioButtonSet *mCursorModeSet;
         
