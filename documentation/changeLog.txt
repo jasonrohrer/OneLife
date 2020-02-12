@@ -36,6 +36,8 @@ Server Fixes
   of the bad biome no matter what.  Should correct for any remaining client
   pathfinding glitches that result in dropping stuff in a bad biome.  Fixes #541
 
+--Trying one curse token every 10 minutes instead of every 30 minutes.
+
 
 
 
