@@ -25,6 +25,10 @@ Server Fixes
 --Sick, wounded, and murder-weapon-holding people can no longer join posses.
   Fixes #539
 
+--Added a daily killHitLog, tracking kill hits landed by solo players or
+  posses, and healing done to cancel kill hits.
+
+
 
 
 Version 309   2020-February-8

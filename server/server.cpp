@@ -12031,6 +12031,128 @@ static void printPath( LiveObject *inPlayer ) {
 */
 
 
+static FILE *getKillLogFile( char outTimeStamp[16] ) {
+    time_t t = time( NULL );
+    struct tm *timeStruct = localtime( &t );
+    
+    char fileName[100];
+
+    File logDir( NULL, "killHitLog" );
+    
+    if( ! logDir.exists() ) {
+        Directory::makeDirectory( &logDir );
+        }
+
+    if( ! logDir.isDirectory() ) {
+        AppLog::error( "Non-directory killHitLog is in the way" );
+        return NULL;
+        }
+
+    strftime( fileName, 99, "%Y_%m%B_%d_%A.txt", timeStruct );
+    
+    
+    strftime( outTimeStamp, 15, "%H:%M:%S -- ", timeStruct );
+    
+
+    File *newFile = logDir.getChildFile( fileName );
+    
+    char *newFileName = newFile->getFullFileName();
+    delete newFile;
+    
+    FILE *logFile = fopen( newFileName, "a" );
+
+    delete [] newFileName;
+
+    return logFile;
+    }
+
+
+
+static void logKillHit( LiveObject *inVictim, LiveObject *inKiller ) {
+    char timeStamp[16];
+    
+    FILE *logFile = getKillLogFile( timeStamp );
+
+    if( logFile == NULL ) {
+        return;
+        }
+    
+    char *weaponName = getObject( inKiller->holdingID )->description;
+
+
+    SimpleVector<LiveObject *> posseMembers;
+
+    double killStateDuration = 0;
+
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+        if( s->targetID == inVictim->id ) {
+
+            LiveObject *killerO = getLiveObject( s->killerID );
+            
+            if( killerO->id != inKiller->id ) {
+                posseMembers.push_back( killerO );
+                }
+            else {
+                killStateDuration = Time::getCurrentTime() - s->killStartTime;
+                }
+            }
+        }
+    
+    fprintf( logFile, "%s", timeStamp );
+    
+    fprintf( logFile, "Kill hit landed on %d (%s), ",
+             inVictim->id, inVictim->email );
+    
+    fprintf( logFile, "attacker is %d (%s), "
+             "been in kill state for %.2f seconds, using weapon %d (%s), ",
+             inKiller->id, inKiller->email, 
+             killStateDuration, inKiller->holdingID, weaponName );
+    
+    if( posseMembers.size() == 0 ) {
+        fprintf( logFile, "solo kill" );
+        }
+    else {
+        fprintf( logFile, "group kill, posse of %d member(s) including:  ", 
+                 posseMembers.size() );
+    
+        for( int i=0; i<posseMembers.size(); i++ ) {
+            LiveObject *pm = posseMembers.getElementDirect( i );
+            fprintf( logFile, "%d: %d (%s), ", i + 1, pm->id, pm->email );
+            }
+        }
+    
+    fprintf( logFile, "\n\n" );
+
+    fclose( logFile );
+    }
+
+
+
+void logHealOfKill( LiveObject *inVictim, LiveObject *inHealer ) {
+    char timeStamp[16];
+        
+    FILE *logFile = getKillLogFile( timeStamp );
+
+    if( logFile == NULL ) {
+        return;
+        }
+
+
+    fprintf( logFile, "%s", timeStamp );
+    
+    fprintf( logFile, "Kill hit healed on %d (%s), ",
+             inVictim->id, inVictim->email );
+    
+    fprintf( logFile, "healer is %d (%s)",
+             inHealer->id, inHealer->email );
+
+    fprintf( logFile, "\n\n" );
+
+    fclose( logFile );
+    }
+
+
 
 
 void executeKillAction( int inKillerIndex,
@@ -12246,6 +12368,9 @@ void executeKillAction( int inKillerIndex,
                 TransRecord *woundHit = NULL;
                                     
                 if( someoneHit ) {
+                    
+                    logKillHit( hitPlayer, nextPlayer );
+
                     // last use on target specifies
                     // grave and weapon change on hit
                     // non-last use (r above) specifies
@@ -19470,6 +19595,12 @@ int main() {
                                     
                                     if( targetPlayer->holdingID == 0 ) {
                                         // not dying anymore
+                                        
+                                        if( targetPlayer->murderPerpID > 0 ) {
+                                            logHealOfKill( targetPlayer,
+                                                           nextPlayer );
+                                            }
+
                                         setNoLongerDying( 
                                             targetPlayer,
                                             &playerIndicesToSendHealingAbout );
