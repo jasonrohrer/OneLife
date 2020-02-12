@@ -32,6 +32,10 @@ Server Fixes
   biome tiles are full.  Now searches for a drop spot off-floor and then
   off-biome.
 
+--Added fail-safe case to prevent dropping an item in a bad biome at the edge
+  of the bad biome no matter what.  Should correct for any remaining client
+  pathfinding glitches that result in dropping stuff in a bad biome.  Fixes #541
+
 
 
 

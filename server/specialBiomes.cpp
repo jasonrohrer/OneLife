@@ -152,7 +152,7 @@ static SpecialBiome getBiomeRecord( int inX, int inY ) {
     }
 
 
-char isBiomeAllowed( int inDisplayID, int inX, int inY ) {
+char isBiomeAllowed( int inDisplayID, int inX, int inY, char inIgnoreFloor ) {
     if( curNumPlayers < minNumPlayers ) {
         return true;
         }
@@ -170,7 +170,7 @@ char isBiomeAllowed( int inDisplayID, int inX, int inY ) {
         }
 
     // floor blocks
-    if( getMapFloor( inX, inY ) != 0 ) {
+    if( ! inIgnoreFloor && getMapFloor( inX, inY ) != 0 ) {
         return true;
         }
     

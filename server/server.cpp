@@ -4966,8 +4966,16 @@ void handleMapChangeToPaths(
 
 
 
+
+char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY,
+                              char inIgnoreFloor = false );
+
+
+
+
 // returns true if found
-char findDropSpot( int inX, int inY, int inSourceX, int inSourceY, 
+char findDropSpot( LiveObject *inDroppingPlayer,
+                   int inX, int inY, int inSourceX, int inSourceY, 
                    GridPos *outSpot ) {
 
     int barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
@@ -4975,6 +4983,28 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
 
     int targetBiome = getMapBiome( inX, inY );
     int targetFloor = getMapFloor( inX, inY );
+    
+
+    if( ! isBiomeAllowedForPlayer( inDroppingPlayer, inX, inY, true ) ) {
+        // would be dropping in a bad biome (floor or not)
+        // avoid this if the target spot is on the edge of a bad biome
+
+        int nX[4] = { -1, 1, 0, 0 };
+        int nY[4] = { 0, 0, -1, 1 };
+        
+        for( int i=0; i<4; i++ ) {
+            int testX = inX + nX[i];
+            int testY = inY + nY[i];
+            
+            if( isBiomeAllowedForPlayer( inDroppingPlayer, testX, testY, 
+                                         true ) ) {
+                targetBiome = getMapBiome( testX, testY );
+                break;
+                }
+            }
+        }
+
+    
     
     char found = false;
     int foundX = inX;
@@ -5975,7 +6005,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
 
         GridPos playerPos = getPlayerPos( inDroppingPlayer );
         
-        char found = findDropSpot( inX, inY, 
+        char found = findDropSpot( inDroppingPlayer, inX, inY, 
                                    playerPos.x, playerPos.y,
                                    &spot );
         
@@ -10360,7 +10390,8 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
             found = true;
             }
         else {
-            found = findDropSpot( 
+            found = findDropSpot(
+                nextPlayer,
                 dropPos.x, dropPos.y,
                 dropPos.x, dropPos.y,
                 &spot );
@@ -13143,7 +13174,8 @@ static char canPlayerUseOrLearnTool( LiveObject *inPlayer, int inToolID ) {
 
 
 
-static char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY ) {
+char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY,
+                              char inIgnoreFloor ) {
     if( inPlayer->vogMode ||
         inPlayer->forceSpawn ||
         inPlayer->isTutorial ) {
@@ -13169,7 +13201,7 @@ static char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY ) {
             }
         }
 
-    return isBiomeAllowed( inPlayer->displayID, inX, inY );
+    return isBiomeAllowed( inPlayer->displayID, inX, inY, inIgnoreFloor );
     }
 
 
@@ -21803,7 +21835,8 @@ int main() {
                                         found = true;
                                         }
                                     else {
-                                        found = findDropSpot( 
+                                        found = findDropSpot(
+                                            nextPlayer,
                                             dropPos.x, dropPos.y,
                                             dropPos.x, dropPos.y,
                                             &spot );
