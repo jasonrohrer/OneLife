@@ -11315,7 +11315,7 @@ void LivingLifePage::step() {
             char *tempEmail;
             
             if( strlen( userEmail ) > 0 ) {
-                std::string seededEmail = std::string{ userEmail };
+                std::string seededEmail = std::string( userEmail );
 
                 // If user doesn't have a seed in their email field
                 if( seededEmail.find('|') == std::string::npos ) {
