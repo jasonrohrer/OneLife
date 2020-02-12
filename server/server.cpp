@@ -19103,6 +19103,16 @@ int main() {
                                                 canPlace = false;
                                                 }
                                             
+                                            if( canPlace &&
+                                                ! isBiomeAllowedForPlayer( 
+                                                    nextPlayer, 
+                                                    m.x, m.y, true ) ) {
+                                                // this floor is over a bad
+                                                // biome for this player
+                                                // don't let them remove it
+                                                canPlace = false;
+                                                }
+
                                             if( canPlace ) {
                                                 setMapFloor( m.x, m.y, 0 );
                                                 

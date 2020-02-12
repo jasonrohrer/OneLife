@@ -38,6 +38,8 @@ Server Fixes
 
 --Trying one curse token every 10 minutes instead of every 30 minutes.
 
+--Can't remove floor in bad biome.
+
 
 
 
