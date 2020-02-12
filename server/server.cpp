@@ -5031,7 +5031,11 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
             }
         }
     
-        
+
+    // pass 0, respect target floor and biome
+    // pass 1 respect target biome only
+    // pass 2 don't respect either
+    for( int pass=0; pass<3 && !found; pass++ )
     for( int d=1; d<maxR && !found; d++ ) {
             
         char doneY0 = false;
@@ -5090,8 +5094,8 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
 
 
                 if( isMapSpotEmpty( x, y ) && 
-                    getMapBiome( x, y ) == targetBiome &&
-                    getMapFloor( x, y ) == targetFloor ) {
+                    ( pass > 1 || getMapBiome( x, y ) == targetBiome ) &&
+                    ( pass > 0 || getMapFloor( x, y ) == targetFloor ) ) {
                     
                     found = true;
                     if( barrierOn ) {    

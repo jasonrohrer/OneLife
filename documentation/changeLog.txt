@@ -28,6 +28,10 @@ Server Fixes
 --Added a daily killHitLog, tracking kill hits landed by solo players or
   posses, and healing done to cancel kill hits.
 
+--Fixed case of force-drop causing item to disappear if all matching floor or
+  biome tiles are full.  Now searches for a drop spot off-floor and then
+  off-biome.
+
 
 
 
