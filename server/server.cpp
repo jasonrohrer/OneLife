@@ -1921,6 +1921,12 @@ void quitCleanup() {
 
 
 
+static double minPosseFraction = 0.5;
+static int minPosseCap = 3;
+static double possePopulationRadius = 30;
+
+
+
 #include "minorGems/util/crc32.h"
 
 JenkinsRandomSource curseSource;
@@ -6999,6 +7005,31 @@ static int countLivingPlayers() {
 
 
 
+static int countNonHelpless( GridPos inPos, double inRadius ) {
+    int c = 0;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+
+        if( ! isPlayerCountable( p ) ) {
+            continue;
+            }
+
+        if( computeAge( p ) >= defaultActionAge ) {
+            double d = distance( getPlayerPos( p ), inPos );
+            
+            if( d <= inRadius ){
+                c++;
+                }
+            }
+        }
+    
+    return c;
+    }
+
+
+
+
 static int countFamilies() {
     
     int barrierRadius = 
@@ -7508,7 +7539,14 @@ int processLoggedInPlayer( char inAllowReconnect,
     useCurseWords = 
         SettingsManager::getIntSetting( "useCurseWords", 1 );
     
-    
+
+    minPosseFraction = 
+        SettingsManager::getFloatSetting( "minPosseFraction", 0.5 );
+    minPosseCap =
+        SettingsManager::getIntSetting( "minPosseCap", 3 );
+
+    possePopulationRadius = 
+        SettingsManager::getFloatSetting( "possePopulationRadius", 30 );
 
 
     numConnections ++;
@@ -10899,6 +10937,10 @@ typedef struct KillState {
         double emotStartTime;
         int emotRefreshSeconds;
         int posseSize;
+        // set when the first person joins the posse
+        // based on population size in radius
+        // later joiners copy this value
+        int minPosseSizeForKill;
     } KillState;
 
 
@@ -11830,9 +11872,10 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                    char inInfiniteRange = false ) {
     char found = false;
     
-    
+    GridPos killerPos = getPlayerPos( inKiller );
+
     if( ! inInfiniteRange && 
-        distance( getPlayerPos( inKiller ), getPlayerPos( inTarget ) )
+        distance( killerPos, getPlayerPos( inTarget ) )
         > 8 ) {
         // out of range
         return false;
@@ -11864,6 +11907,48 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
     
     if( !found ) {
         // add new
+        
+        int regionalPop = countNonHelpless( killerPos, 
+                                            possePopulationRadius );
+        
+        int minPosseSizeForKill = ceil( minPosseFraction * regionalPop );
+
+        if( minPosseSizeForKill > minPosseCap ) {
+            minPosseSizeForKill = minPosseCap;
+            }
+        
+        char joiningExisting = false;
+        
+        // dupe existing min posse size
+        // if other player started posse
+        for( int i=0; i<activeKillStates.size(); i++ ) {
+            KillState *s = activeKillStates.getElement( i );
+            
+            if( s->targetID == inTarget->id ) {
+                minPosseSizeForKill = s->minPosseSizeForKill;
+                joiningExisting = true;
+                break;
+                }
+            }
+
+
+        if( ! joiningExisting && minPosseSizeForKill > 1 ) {
+            // this is the founder of the posse
+            
+            // let them know what the requirements are
+            char *message = 
+                autoSprintf( 
+                    "THE MINIMUM POSSE SIZE TO KILL IN THIS AREA IS %d.**"
+                    "OTHERS JOIN BY HOLDING OBJECTS AND SAYING:  I JOIN YOU", 
+                    minPosseSizeForKill );            
+            
+        
+            sendGlobalMessage( message, inKiller );
+            delete [] message;
+            }
+        
+
+        
         double curTime = Time::getCurrentTime();
         KillState s = { inKiller->id, 
                         inKiller->holdingID,
@@ -11871,7 +11956,8 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                         curTime,
                         curTime,
                         30,
-                        1 };
+                        1,
+                        minPosseSizeForKill };
         
         if( isNoWaitWeapon( inKiller->holdingID ) ) {
                 // allow it to happen right now
@@ -12118,7 +12204,8 @@ static void logKillHit( LiveObject *inVictim, LiveObject *inKiller ) {
     SimpleVector<LiveObject *> posseMembers;
 
     double killStateDuration = 0;
-
+    int minPosseSizeForKill = 0;
+    
     for( int i=0; i<activeKillStates.size(); i++ ) {
         KillState *s = activeKillStates.getElement( i );
         if( s->targetID == inVictim->id ) {
@@ -12130,6 +12217,7 @@ static void logKillHit( LiveObject *inVictim, LiveObject *inKiller ) {
                 }
             else {
                 killStateDuration = Time::getCurrentTime() - s->killStartTime;
+                minPosseSizeForKill = s->minPosseSizeForKill;
                 }
             }
         }
@@ -12144,6 +12232,9 @@ static void logKillHit( LiveObject *inVictim, LiveObject *inKiller ) {
              inKiller->id, inKiller->email, 
              killStateDuration, inKiller->holdingID, weaponName );
     
+    fprintf( logFile, "min posse size for kill is %d, ",
+             minPosseSizeForKill );
+
     if( posseMembers.size() == 0 ) {
         fprintf( logFile, "solo kill" );
         }
@@ -20783,10 +20874,13 @@ int main() {
                     pow( posseDelayReductionFactor, s->posseSize - 1 );
                 }
             
-            if( curTime - s->killStartTime  > delay && 
+            if( curTime - s->killStartTime  > delay &&
+                s->posseSize >= s->minPosseSizeForKill &&
                 getObject( killer->holdingID )->deadlyDistance >= dist &&
                 ! directLineBlocked( playerPos, targetPos ) ) {
                 // enough warning time has passed
+                // and
+                // posse meets min size requirements
                 // and
                 // close enough to kill
                 

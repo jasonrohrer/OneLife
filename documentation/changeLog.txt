@@ -46,6 +46,12 @@ Server Fixes
   blocked radius.  Note that the top player has 103 people with active curses
   against them.
 
+--No more solo kills in populated areas.  Min posse size for landing a kill is
+  now 50% of the non-baby population in a 30-tile raidius, capped at 3.  So in
+  a city, you need 2 other people to agree with you before killing, but out in
+  the wilderness, 1v1 killing is still possible.  These are live server
+  settings that can be adjusted later.
+
 
 
 
