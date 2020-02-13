@@ -52,6 +52,9 @@ Server Fixes
   the wilderness, 1v1 killing is still possible.  These are live server
   settings that can be adjusted later.
 
+--Fixed so that mortal wounds that automatically go through transitions
+  (like gushing wounds) aren't mistakenly seen as temporary sickensses.
+
 
 
 
