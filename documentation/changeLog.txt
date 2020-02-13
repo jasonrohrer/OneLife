@@ -5,7 +5,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 311   ???
+Version 311   2020-February-13
 
 --Fixed so that offspring baby arrow adjusts to point toward carried baby.
 
