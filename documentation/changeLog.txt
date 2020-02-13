@@ -40,6 +40,12 @@ Server Fixes
 
 --Can't remove floor in bad biome.
 
+--Active curses from offline players count as an additional factor in
+  determining your curse blocked radius.  If T is the total number of curses
+  (online players and offline players) against you, then T^2 is added to your
+  blocked radius.  Note that the top player has 103 people with active curses
+  against them.
+
 
 
 
