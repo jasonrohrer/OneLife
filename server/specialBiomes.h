@@ -11,7 +11,8 @@ void updateSpecialBiomes( int inNumPlayers );
 
 
 
-char isBiomeAllowed( int inDisplayID, int inX, int inY );
+char isBiomeAllowed( int inDisplayID, int inX, int inY, 
+                     char inIgnoreFloor = false );
 
 
 // get sickness they should hold when stepping into biome

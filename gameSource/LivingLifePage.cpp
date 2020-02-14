@@ -17181,7 +17181,7 @@ void LivingLifePage::step() {
                                 lrint( existing->currentPos.x ),
                                 lrint( existing->currentPos.y ) );
                             }
-                        else if( existing->holdingID < 0 ) {
+                        if( existing->holdingID < 0 ) {
                             int babyID = - existing->holdingID;
                             
                             updatePersonHomeLocation( 
@@ -18004,7 +18004,7 @@ void LivingLifePage::step() {
                                     lrint( existing->currentPos.x ),
                                     lrint( existing->currentPos.y ) );
                                 }
-                            else if( existing->holdingID < 0 ) {
+                            if( existing->holdingID < 0 ) {
                                 int babyID = - existing->holdingID;
                                 
                                 updatePersonHomeLocation( 

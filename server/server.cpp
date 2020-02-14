@@ -1923,6 +1923,12 @@ void quitCleanup() {
 
 
 
+static double minPosseFraction = 0.5;
+static int minPosseCap = 3;
+static double possePopulationRadius = 30;
+
+
+
 #include "minorGems/util/crc32.h"
 
 JenkinsRandomSource curseSource;
@@ -4968,8 +4974,16 @@ void handleMapChangeToPaths(
 
 
 
+
+char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY,
+                              char inIgnoreFloor = false );
+
+
+
+
 // returns true if found
-char findDropSpot( int inX, int inY, int inSourceX, int inSourceY, 
+char findDropSpot( LiveObject *inDroppingPlayer,
+                   int inX, int inY, int inSourceX, int inSourceY, 
                    GridPos *outSpot ) {
 
     int barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );
@@ -4977,6 +4991,28 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
 
     int targetBiome = getMapBiome( inX, inY );
     int targetFloor = getMapFloor( inX, inY );
+    
+
+    if( ! isBiomeAllowedForPlayer( inDroppingPlayer, inX, inY, true ) ) {
+        // would be dropping in a bad biome (floor or not)
+        // avoid this if the target spot is on the edge of a bad biome
+
+        int nX[4] = { -1, 1, 0, 0 };
+        int nY[4] = { 0, 0, -1, 1 };
+        
+        for( int i=0; i<4; i++ ) {
+            int testX = inX + nX[i];
+            int testY = inY + nY[i];
+            
+            if( isBiomeAllowedForPlayer( inDroppingPlayer, testX, testY, 
+                                         true ) ) {
+                targetBiome = getMapBiome( testX, testY );
+                break;
+                }
+            }
+        }
+
+    
     
     char found = false;
     int foundX = inX;
@@ -5033,7 +5069,11 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
             }
         }
     
-        
+
+    // pass 0, respect target floor and biome
+    // pass 1 respect target biome only
+    // pass 2 don't respect either
+    for( int pass=0; pass<3 && !found; pass++ )
     for( int d=1; d<maxR && !found; d++ ) {
             
         char doneY0 = false;
@@ -5092,8 +5132,8 @@ char findDropSpot( int inX, int inY, int inSourceX, int inSourceY,
 
 
                 if( isMapSpotEmpty( x, y ) && 
-                    getMapBiome( x, y ) == targetBiome &&
-                    getMapFloor( x, y ) == targetFloor ) {
+                    ( pass > 1 || getMapBiome( x, y ) == targetBiome ) &&
+                    ( pass > 0 || getMapFloor( x, y ) == targetFloor ) ) {
                     
                     found = true;
                     if( barrierOn ) {    
@@ -5973,7 +6013,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
 
         GridPos playerPos = getPlayerPos( inDroppingPlayer );
         
-        char found = findDropSpot( inX, inY, 
+        char found = findDropSpot( inDroppingPlayer, inX, inY, 
                                    playerPos.x, playerPos.y,
                                    &spot );
         
@@ -6967,6 +7007,31 @@ static int countLivingPlayers() {
 
 
 
+static int countNonHelpless( GridPos inPos, double inRadius ) {
+    int c = 0;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+
+        if( ! isPlayerCountable( p ) ) {
+            continue;
+            }
+
+        if( computeAge( p ) >= defaultActionAge ) {
+            double d = distance( getPlayerPos( p ), inPos );
+            
+            if( d <= inRadius ){
+                c++;
+                }
+            }
+        }
+    
+    return c;
+    }
+
+
+
+
 static int countFamilies() {
     
     int barrierRadius = 
@@ -7476,7 +7541,14 @@ int processLoggedInPlayer( char inAllowReconnect,
     useCurseWords = 
         SettingsManager::getIntSetting( "useCurseWords", 1 );
     
-    
+
+    minPosseFraction = 
+        SettingsManager::getFloatSetting( "minPosseFraction", 0.5 );
+    minPosseCap =
+        SettingsManager::getIntSetting( "minPosseCap", 3 );
+
+    possePopulationRadius = 
+        SettingsManager::getFloatSetting( "possePopulationRadius", 30 );
 
 
     numConnections ++;
@@ -9132,7 +9204,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             continue;
             }
         
-        // skip this baby when saying ++
+        // skip this baby when saying +FAMILY+
         // we are already getting a pointer to them, probably
         makeOffspringSayMarker( id, newObject.id );
         
@@ -9150,8 +9222,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                                          "*baby %d *map %d %d\n#",
                                          id,
                                          newObject.id,
-                                         newObject.xs,
-                                         newObject.ys );
+                                         newObject.xs - o->birthPos.x,
+                                         newObject.ys - o->birthPos.y );
             sendMessageToPlayer( o, message, strlen( message ) );
             delete [] message;
             }
@@ -10358,7 +10430,8 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
             found = true;
             }
         else {
-            found = findDropSpot( 
+            found = findDropSpot(
+                nextPlayer,
                 dropPos.x, dropPos.y,
                 dropPos.x, dropPos.y,
                 &spot );
@@ -10866,6 +10939,10 @@ typedef struct KillState {
         double emotStartTime;
         int emotRefreshSeconds;
         int posseSize;
+        // set when the first person joins the posse
+        // based on population size in radius
+        // later joiners copy this value
+        int minPosseSizeForKill;
     } KillState;
 
 
@@ -11797,9 +11874,10 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                    char inInfiniteRange = false ) {
     char found = false;
     
-    
+    GridPos killerPos = getPlayerPos( inKiller );
+
     if( ! inInfiniteRange && 
-        distance( getPlayerPos( inKiller ), getPlayerPos( inTarget ) )
+        distance( killerPos, getPlayerPos( inTarget ) )
         > 8 ) {
         // out of range
         return false;
@@ -11831,6 +11909,48 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
     
     if( !found ) {
         // add new
+        
+        int regionalPop = countNonHelpless( killerPos, 
+                                            possePopulationRadius );
+        
+        int minPosseSizeForKill = ceil( minPosseFraction * regionalPop );
+
+        if( minPosseSizeForKill > minPosseCap ) {
+            minPosseSizeForKill = minPosseCap;
+            }
+        
+        char joiningExisting = false;
+        
+        // dupe existing min posse size
+        // if other player started posse
+        for( int i=0; i<activeKillStates.size(); i++ ) {
+            KillState *s = activeKillStates.getElement( i );
+            
+            if( s->targetID == inTarget->id ) {
+                minPosseSizeForKill = s->minPosseSizeForKill;
+                joiningExisting = true;
+                break;
+                }
+            }
+
+
+        if( ! joiningExisting && minPosseSizeForKill > 1 ) {
+            // this is the founder of the posse
+            
+            // let them know what the requirements are
+            char *message = 
+                autoSprintf( 
+                    "THE MINIMUM POSSE SIZE TO KILL IN THIS AREA IS %d.**"
+                    "OTHERS JOIN BY HOLDING OBJECTS AND SAYING:  I JOIN YOU", 
+                    minPosseSizeForKill );            
+            
+        
+            sendGlobalMessage( message, inKiller );
+            delete [] message;
+            }
+        
+
+        
         double curTime = Time::getCurrentTime();
         KillState s = { inKiller->id, 
                         inKiller->holdingID,
@@ -11838,7 +11958,8 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                         curTime,
                         curTime,
                         30,
-                        1 };
+                        1,
+                        minPosseSizeForKill };
         
         if( isNoWaitWeapon( inKiller->holdingID ) ) {
                 // allow it to happen right now
@@ -12031,6 +12152,133 @@ static void printPath( LiveObject *inPlayer ) {
     printf( "\n" );
     }
 */
+
+
+static FILE *getKillLogFile( char outTimeStamp[16] ) {
+    time_t t = time( NULL );
+    struct tm *timeStruct = localtime( &t );
+    
+    char fileName[100];
+
+    File logDir( NULL, "killHitLog" );
+    
+    if( ! logDir.exists() ) {
+        Directory::makeDirectory( &logDir );
+        }
+
+    if( ! logDir.isDirectory() ) {
+        AppLog::error( "Non-directory killHitLog is in the way" );
+        return NULL;
+        }
+
+    strftime( fileName, 99, "%Y_%m%B_%d_%A.txt", timeStruct );
+    
+    
+    strftime( outTimeStamp, 15, "%H:%M:%S -- ", timeStruct );
+    
+
+    File *newFile = logDir.getChildFile( fileName );
+    
+    char *newFileName = newFile->getFullFileName();
+    delete newFile;
+    
+    FILE *logFile = fopen( newFileName, "a" );
+
+    delete [] newFileName;
+
+    return logFile;
+    }
+
+
+
+static void logKillHit( LiveObject *inVictim, LiveObject *inKiller ) {
+    char timeStamp[16];
+    
+    FILE *logFile = getKillLogFile( timeStamp );
+
+    if( logFile == NULL ) {
+        return;
+        }
+    
+    char *weaponName = getObject( inKiller->holdingID )->description;
+
+
+    SimpleVector<LiveObject *> posseMembers;
+
+    double killStateDuration = 0;
+    int minPosseSizeForKill = 0;
+    
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+        if( s->targetID == inVictim->id ) {
+
+            LiveObject *killerO = getLiveObject( s->killerID );
+            
+            if( killerO->id != inKiller->id ) {
+                posseMembers.push_back( killerO );
+                }
+            else {
+                killStateDuration = Time::getCurrentTime() - s->killStartTime;
+                minPosseSizeForKill = s->minPosseSizeForKill;
+                }
+            }
+        }
+    
+    fprintf( logFile, "%s", timeStamp );
+    
+    fprintf( logFile, "Kill hit landed on %d (%s), ",
+             inVictim->id, inVictim->email );
+    
+    fprintf( logFile, "attacker is %d (%s), "
+             "been in kill state for %.2f seconds, using weapon %d (%s), ",
+             inKiller->id, inKiller->email, 
+             killStateDuration, inKiller->holdingID, weaponName );
+    
+    fprintf( logFile, "min posse size for kill is %d, ",
+             minPosseSizeForKill );
+
+    if( posseMembers.size() == 0 ) {
+        fprintf( logFile, "solo kill" );
+        }
+    else {
+        fprintf( logFile, "group kill, posse of %d member(s) including:  ", 
+                 posseMembers.size() );
+    
+        for( int i=0; i<posseMembers.size(); i++ ) {
+            LiveObject *pm = posseMembers.getElementDirect( i );
+            fprintf( logFile, "%d: %d (%s), ", i + 1, pm->id, pm->email );
+            }
+        }
+    
+    fprintf( logFile, "\n\n" );
+
+    fclose( logFile );
+    }
+
+
+
+void logHealOfKill( LiveObject *inVictim, LiveObject *inHealer ) {
+    char timeStamp[16];
+        
+    FILE *logFile = getKillLogFile( timeStamp );
+
+    if( logFile == NULL ) {
+        return;
+        }
+
+
+    fprintf( logFile, "%s", timeStamp );
+    
+    fprintf( logFile, "Kill hit healed on %d (%s), ",
+             inVictim->id, inVictim->email );
+    
+    fprintf( logFile, "healer is %d (%s)",
+             inHealer->id, inHealer->email );
+
+    fprintf( logFile, "\n\n" );
+
+    fclose( logFile );
+    }
 
 
 
@@ -12248,6 +12496,9 @@ void executeKillAction( int inKillerIndex,
                 TransRecord *woundHit = NULL;
                                     
                 if( someoneHit ) {
+                    
+                    logKillHit( hitPlayer, nextPlayer );
+
                     // last use on target specifies
                     // grave and weapon change on hit
                     // non-last use (r above) specifies
@@ -13016,7 +13267,8 @@ static char canPlayerUseOrLearnTool( LiveObject *inPlayer, int inToolID ) {
 
 
 
-static char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY ) {
+char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY,
+                              char inIgnoreFloor ) {
     if( inPlayer->vogMode ||
         inPlayer->forceSpawn ||
         inPlayer->isTutorial ) {
@@ -13042,7 +13294,7 @@ static char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY ) {
             }
         }
 
-    return isBiomeAllowed( inPlayer->displayID, inX, inY );
+    return isBiomeAllowed( inPlayer->displayID, inX, inY, inIgnoreFloor );
     }
 
 
@@ -13508,8 +13760,8 @@ static void leaderDied( LiveObject *inLeader ) {
                              otherPlayer->id,
                              newLeaderName,
                              newLeaderO->id,
-                             lPos.x,
-                             lPos.y );
+                             lPos.x - otherPlayer->birthPos.x,
+                             lPos.y - otherPlayer->birthPos.y );
             
             delete [] newLeaderName;
             
@@ -13714,22 +13966,35 @@ char *getLeadershipName( LiveObject *nextPlayer,
     
     int level = 0;
     
-    LiveObject *possibleLeader = nextPlayer;
+
+    SimpleVector<LiveObject *>possibleLeaders;
+    possibleLeaders.push_back( nextPlayer );
     
-    while( possibleLeader != NULL ) {
-        LiveObject *nextLeader = NULL;
-        for( int i=0; i<players.size(); i++ ) {
-            LiveObject *o = players.getElement( i );
+    SimpleVector<LiveObject *>nextLeaders;
+
+    while( possibleLeaders.size() > 0 ) {
+        for( int p=0; p<possibleLeaders.size(); p++ ) {
+            LiveObject *possibleL = possibleLeaders.getElementDirect( p );
+
+            for( int i=0; i<players.size(); i++ ) {
+                LiveObject *o = players.getElement( i );
             
-            if( o->error ) {
-                continue;
-                }
-            if( o->followingID == possibleLeader->id ) {
-                level ++;
-                nextLeader = o;
+                if( o->error ) {
+                    continue;
+                    }
+                if( o->followingID == possibleL->id ) {
+                    nextLeaders.push_back( o );
+                    }
                 }
             }
-        possibleLeader = nextLeader;
+        possibleLeaders.deleteAll();
+        
+        if( nextLeaders.size() > 0 ) {
+            level ++;
+            
+            possibleLeaders.push_back_other( &nextLeaders );
+            nextLeaders.deleteAll();
+            }
         }
 
     if( level == 0 ) {
@@ -13935,8 +14200,8 @@ static void checkOrderPropagation() {
                                              o->id,
                                              leadershipName,
                                              l->currentOrderOriginatorID,
-                                             leaderPos.x,
-                                             leaderPos.y );
+                                             leaderPos.x - o->birthPos.x,
+                                             leaderPos.y - o->birthPos.y );
                             
                             delete [] leadershipName;
 
@@ -14227,6 +14492,7 @@ int main() {
             }
         fclose( f );
         }
+    printf( "Curse word list has %d words\n", curseWords.size() );
     
 
 #ifdef WIN_32
@@ -17529,8 +17795,18 @@ int main() {
 
 
                         // they must be holding something to join a posse
-                        if( nextPlayer->holdingID > 0 && 
-                            isPosseJoiningSay( m.saidText ) ) {
+                        // but not a wound or a sickness
+                        // nor a bloody weapon
+                        // what these non-working held items have in common
+                        // is that they are stuck in hand AND don't have
+                        // a use-on-bare ground transition defined
+                        if( nextPlayer->holdingID > 0
+                            &&
+                            isPosseJoiningSay( m.saidText ) 
+                            &&
+                            ( ! getObject( nextPlayer->holdingID )->permanent ||
+                              getTrans( nextPlayer->holdingID, -1 ) != NULL ) 
+                            ) {
                             
                             GridPos ourPos = getPlayerPos( nextPlayer );
                             
@@ -18935,6 +19211,16 @@ int main() {
                                                 canPlace = false;
                                                 }
                                             
+                                            if( canPlace &&
+                                                ! isBiomeAllowedForPlayer( 
+                                                    nextPlayer, 
+                                                    m.x, m.y, true ) ) {
+                                                // this floor is over a bad
+                                                // biome for this player
+                                                // don't let them remove it
+                                                canPlace = false;
+                                                }
+
                                             if( canPlace ) {
                                                 setMapFloor( m.x, m.y, 0 );
                                                 
@@ -19463,6 +19749,12 @@ int main() {
                                     
                                     if( targetPlayer->holdingID == 0 ) {
                                         // not dying anymore
+                                        
+                                        if( targetPlayer->murderPerpID > 0 ) {
+                                            logHealOfKill( targetPlayer,
+                                                           nextPlayer );
+                                            }
+
                                         setNoLongerDying( 
                                             targetPlayer,
                                             &playerIndicesToSendHealingAbout );
@@ -20599,10 +20891,13 @@ int main() {
                     pow( posseDelayReductionFactor, s->posseSize - 1 );
                 }
             
-            if( curTime - s->killStartTime  > delay && 
+            if( curTime - s->killStartTime  > delay &&
+                s->posseSize >= s->minPosseSizeForKill &&
                 getObject( killer->holdingID )->deadlyDistance >= dist &&
                 ! directLineBlocked( playerPos, targetPos ) ) {
                 // enough warning time has passed
+                // and
+                // posse meets min size requirements
                 // and
                 // close enough to kill
                 
@@ -21661,7 +21956,8 @@ int main() {
                                         found = true;
                                         }
                                     else {
-                                        found = findDropSpot( 
+                                        found = findDropSpot(
+                                            nextPlayer,
                                             dropPos.x, dropPos.y,
                                             dropPos.x, dropPos.y,
                                             &spot );
@@ -22773,8 +23069,10 @@ int main() {
                 
                 char *line;
                 
-                if( nextPlayer->holdingEtaDecay > 0 ) {
-                    // what they have will cure itself in time
+                if( nextPlayer->holdingID > 0 &&
+                    strstr(
+                        getObject( nextPlayer->holdingID )->description,
+                        "sick" ) != NULL ) {
                     // flag as sick
                     line = autoSprintf( "%d 1\n", nextPlayer->id );
                     }

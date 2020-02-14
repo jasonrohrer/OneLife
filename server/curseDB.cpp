@@ -25,6 +25,9 @@ static double lastSettingCheckTime = 0;
 static double curseDuration = 48 * 3600;
 static int curseBlockRadius = 50;
 
+static double curseBlockOfflineFactor = 1.0;
+static double curseBlockOfflineExponent = 2.0;
+
 static double settingCheckInterval = 60;
 
 
@@ -36,6 +39,14 @@ static void checkSettings() {
                                                            48 * 3600.0 );
         curseBlockRadius = SettingsManager::getIntSetting( "curseBlockRadius",
                                                            50);
+        
+        curseBlockOfflineFactor = 
+            SettingsManager::getDoubleSetting( "curseBlockOfflineFactor", 
+                                               1.0 );
+        
+        curseBlockOfflineExponent = 
+            SettingsManager::getDoubleSetting( "curseBlockOfflineExponent", 
+                                               2.0 );
         
         lastSettingCheckTime = curTime;
         }
@@ -254,7 +265,7 @@ void initCurseDB() {
                             // followed by
                             //
                             // one 64-bit double, representing the time
-                            // the count was last incremented
+                            // the count was last incremented or decremented
                             // in whatever binary format and byte order
                             // "double" on the server platform uses
                             12 );
@@ -324,17 +335,21 @@ int getCurseCount( const char *inReceiverEmail ) {
         timeSec_t elapsedTime = Time::timeSec() - curseTime;
         
         if( elapsedTime > curseDuration ) {
-            // decrement by however many multiples
+            // our most recent curse is expired
+            // that means that all of our older curses are expired too!
 
-            int decr = lrint( elapsedTime ) / lrint( curseDuration );
-
-            count -= decr;
+            // that means we have no active curses at all.
             
-            if( count < 0 ) {
-                count = 0;
-                }
+            return 0;
             }
         
+        // if our most recent curse is not expired, this might be an 
+        // over-estimate, because some of our older curses might
+        // be expired.
+
+        // however, if we're actively acquiring new curses, over-estimating
+        // is fine.
+
         return count;
         }
     else {
@@ -363,6 +378,40 @@ void incrementCurseCount( const char *inReceiverEmail ) {
     
     
     LINEARDB3_put( &dbCount, key, value );
+    }
+
+
+
+void decrementCurseCount( const char *inReceiverEmail ) {
+    
+    int oldCount = getCurseCount( inReceiverEmail );
+    
+    if( oldCount > 0 ) {
+        unsigned char key[40];
+        unsigned char value[12];
+
+    
+        getCountKey( inReceiverEmail, key );
+        
+        
+        int result = LINEARDB3_get( &dbCount, key, value );
+        
+        if( result == 0 ) {
+            
+            int newCount = oldCount - 1;
+            
+            intToValue( newCount, value );
+        
+            // keep time in value[4] the same
+            // don't adjust it
+        
+            // by decrementing, we're saying that an older record has expired
+            // when our newest record expires (based on time stored in value[4])
+            // that means ALL of our records have expired.
+
+            LINEARDB3_put( &dbCount, key, value );
+            }
+        }
     }
 
 
@@ -412,11 +461,29 @@ char isCursed( const char *inSenderEmail, const char *inReceiverEmail ) {
     if( result == 0 ) {
         timeSec_t curseTime = valueToTime( value );
 
-        timeSec_t elapsedTime = Time::timeSec() - curseTime;
+        if( curseTime > 0 ) {
+
+            timeSec_t elapsedTime = Time::timeSec() - curseTime;
         
-        if( elapsedTime > curseDuration ) {
+            if( elapsedTime > curseDuration ) {
+                // curse just expired now
+
+                decrementCurseCount( inReceiverEmail );
+                
+                // mark it so we don't decrement again in future
+                
+                timeToValue( 0, value );
+                LINEARDB3_put( &db, key, value );
+                
+                return false;
+                }
+            }
+        else {
+            // 0 means curse expired before
+            // and was marked as such
             return false;
             }
+        
         return true;
         }
 
@@ -442,12 +509,16 @@ SimpleVector<PersonRecord> blockingRecords;
 
 int personalLiveCurseCount = 0;
 
+int personalTotalCurseCount = 0;
+
 void initPersonalCurseTest( const char *inTargetEmail ) {
     checkSettings();
     
     blockingRecords.deleteAll();
 
     personalLiveCurseCount = 0;
+
+    personalTotalCurseCount = getCurseCount( inTargetEmail );
     }
 
     
@@ -467,9 +538,13 @@ void addPersonToPersonalCurseTest( const char *inEmail,
     }
 
 
-static int getCurseRadius( int inLiveCurseCount ) {
-    // 0 if no one live is blocking
-    return curseBlockRadius * inLiveCurseCount;
+static int getCurseRadius( int inLiveCurseCount, int inTotalCurseCount ) {
+    return 
+        // 0 if no one live is blocking
+        curseBlockRadius * inLiveCurseCount +
+        // add in extra curve based on total, including offline people
+        curseBlockOfflineFactor * 
+        pow( inTotalCurseCount, curseBlockOfflineExponent );
     }
 
 
@@ -477,7 +552,8 @@ static int getCurseRadius( int inLiveCurseCount ) {
 
 char isBirthLocationCurseBlocked( const char *inTargetEmail, GridPos inPos ) {
     
-    int radius = getCurseRadius( personalLiveCurseCount );
+    int radius = getCurseRadius( personalLiveCurseCount, 
+                                 personalTotalCurseCount );
     
     for( int i=0; i<blockingRecords.size(); i++ ) {
         PersonRecord *r = blockingRecords.getElement( i );
@@ -515,7 +591,8 @@ char isBirthLocationCurseBlockedNoCache( const char *inTargetEmail,
     
     
     
-    int radius = getCurseRadius( liveCurseCount );
+    int radius = getCurseRadius( liveCurseCount,
+                                 getCurseCount( inTargetEmail ) );
     
     for( int i=0; i<blockingRecords.size(); i++ ) {
         PersonRecord *r = blockingRecords.getElement( i );

@@ -3,11 +3,57 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-NOTE:
-As part of this week's update process, check bigserver2 logs post-restart as
-part of:  https://github.com/jasonrohrer/OneLife/issues/510
 
-Check again after the next update (v309)
+
+Version 311   2020-February-13
+
+--Fixed so that offspring baby arrow adjusts to point toward carried baby.
+
+
+
+
+Server Fixes
+
+--Fixed baby and leader arrows and messages to make the coordinates birth-pos
+  relative (no more new babies born 7000 meters away).
+
+--Fixed getLeadershipName server-side to correctly explore full depth of tree
+  and not count levels incorrectly (before, a single leader with lots of
+  followers would be described by the server as a supreme empress mistakenly).
+  Thanks Twisted and Tipy.
+
+--Sick, wounded, and murder-weapon-holding people can no longer join posses.
+  Fixes #539
+
+--Added a daily killHitLog, tracking kill hits landed by solo players or
+  posses, and healing done to cancel kill hits.
+
+--Fixed case of force-drop causing item to disappear if all matching floor or
+  biome tiles are full.  Now searches for a drop spot off-floor and then
+  off-biome.
+
+--Added fail-safe case to prevent dropping an item in a bad biome at the edge
+  of the bad biome no matter what.  Should correct for any remaining client
+  pathfinding glitches that result in dropping stuff in a bad biome.  Fixes #541
+
+--Trying one curse token every 15 minutes instead of every 30 minutes.
+
+--Can't remove floor in bad biome.
+
+--Active curses from offline players count as an additional factor in
+  determining your curse blocked radius.  If T is the total number of curses
+  (online players and offline players) against you, then T^2 is added to your
+  blocked radius.  Note that the top player has 103 people with active curses
+  against them.
+
+--No more solo kills in populated areas.  Min posse size for landing a kill is
+  now 50% of the non-baby population in a 30-tile raidius, capped at 3.  So in
+  a city, you need 2 other people to agree with you before killing, but out in
+  the wilderness, 1v1 killing is still possible.  These are live server
+  settings that can be adjusted later.
+
+--Fixed so that mortal wounds that automatically go through transitions
+  (like gushing wounds) aren't mistakenly seen as temporary sickensses.
 
 
 
