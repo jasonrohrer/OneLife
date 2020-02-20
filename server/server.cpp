@@ -6072,7 +6072,10 @@ int processLoggedInPlayer( char inAllowReconnect,
         
         }
     
-
+    if( hashedSpawnSeed != 0 && SettingsManager::getIntSetting( "forceEveOnSeededSpawn", 0 ) ) {
+        parentChoices.deleteAll();
+        forceParentChoices = true;
+        }
 
 
     if( inCurseStatus.curseLevel <= 0 &&
