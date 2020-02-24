@@ -780,6 +780,7 @@ typedef struct LiveObject {
         
 
         char isNew;
+        char isNewCursed;
         char firstMessageSent;
         
         char inFlight;
@@ -8757,6 +8758,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.gotPartOfThisFrame = false;
     
     newObject.isNew = true;
+    newObject.isNewCursed = false;
     newObject.firstMessageSent = false;
     newObject.inFlight = false;
     
@@ -20976,38 +20978,48 @@ int main() {
                 else if( usePersonalCurses ) {
                     // send a unique CU message to each player
                     // who has this player cursed
-                    for( int p=0; p<players.size(); p++ ) {
-                        LiveObject *otherPlayer = players.getElement( p );
-                        
-                        if( otherPlayer == nextPlayer ) {
-                            continue;
-                            }
-                        if( otherPlayer->error ||
-                            ! otherPlayer->connected ) {
-                            continue;
-                            }
-                        
-                        if( isCursed( otherPlayer->email, 
-                                      nextPlayer->email ) ) {
-                            char *message = autoSprintf( 
-                                "CU\n%d 1 %s_%s\n#",
-                                nextPlayer->id,
-                                getCurseWord( otherPlayer->email,
-                                              nextPlayer->email, 0 ),
-                                getCurseWord( otherPlayer->email,
-                                              nextPlayer->email, 1 ) );
-                            
-                            sendMessageToPlayer( otherPlayer,
-                                                 message, strlen( message ) );
-                            delete [] message;
-                            }
-                        }
+                    
+                    // but wait until next step, because other players
+                    // haven't heard initial PU about this player yet
+                    nextPlayer->isNewCursed = true;
                     }
 
                 nextPlayer->isNew = false;
                 
                 // force this PU to be sent to everyone
                 nextPlayer->updateGlobal = true;
+                }
+            else if( nextPlayer->isNewCursed ) {
+                // update sent about this new player
+                // time to send personal curse status (b/c other players
+                // know about this player now)
+                for( int p=0; p<players.size(); p++ ) {
+                    LiveObject *otherPlayer = players.getElement( p );
+                    
+                    if( otherPlayer == nextPlayer ) {
+                        continue;
+                        }
+                    if( otherPlayer->error ||
+                        ! otherPlayer->connected ) {
+                        continue;
+                        }
+                    
+                    if( isCursed( otherPlayer->email, 
+                                  nextPlayer->email ) ) {
+                        char *message = autoSprintf( 
+                            "CU\n%d 1 %s_%s\n#",
+                            nextPlayer->id,
+                            getCurseWord( otherPlayer->email,
+                                          nextPlayer->email, 0 ),
+                            getCurseWord( otherPlayer->email,
+                                          nextPlayer->email, 1 ) );
+                        
+                        sendMessageToPlayer( otherPlayer,
+                                             message, strlen( message ) );
+                        delete [] message;
+                        }
+                    }
+                nextPlayer->isNewCursed = false;
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
                 

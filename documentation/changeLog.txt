@@ -9,6 +9,11 @@ Server Fixes
 --CURSE MY BABY now always targets most-recent baby, whether dead or alive
   (code has been simplified).  Fixes #546
 
+--Fixed a bug where server sent curse status of an incoming player before
+  sending the first PU telling you about that player's existence, causing your
+  client to ignore their curse status.
+
+
 
 
 Version 311   2020-February-13
