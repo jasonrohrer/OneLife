@@ -3,6 +3,12 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 313   ???
+
+--Mousing over an unlearned tool now shows you how many tool learning slots
+  remain.  Fixes #522
+
+
 
 Server Fixes
 

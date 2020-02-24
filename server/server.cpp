@@ -13138,6 +13138,14 @@ static void sendLearnedToolMessage( LiveObject *inPlayer,
     
     sendMessageToPlayer( inPlayer, lrMessage, strlen( lrMessage ) );
     delete [] lrMessage;
+
+
+    char *tsMessage = autoSprintf( "TS\n%d %d\n#", 
+                                   inPlayer->learnedTools.size(),
+                                   inPlayer->numToolSlots );
+    
+    sendMessageToPlayer( inPlayer, tsMessage, strlen( tsMessage ) );
+    delete [] tsMessage;
     }
 
 
