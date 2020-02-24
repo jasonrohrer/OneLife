@@ -13,6 +13,9 @@ Server Fixes
   sending the first PU telling you about that player's existence, causing your
   client to ignore their curse status.
 
+--When mother becomes a default leader, her leadership color is assigned
+  correctly (was left blank and white).  Fixes #544
+
 
 
 

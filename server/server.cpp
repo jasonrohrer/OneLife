@@ -7291,6 +7291,10 @@ static void makeOffspringSayMarker( int inPlayerID, int inIDToSkip ) {
 
 
 
+int getUnusedLeadershipColor();
+
+
+
 static double killDelayTime = 12.0;
 
 static double posseDelayReductionFactor = 2.0;
@@ -8837,6 +8841,11 @@ int processLoggedInPlayer( char inAllowReconnect,
             // boostrap the whole thing by having leaderless mothers
             // get their children as automatic followers.
             newObject.followingID = parent->id;
+            
+            // set mother's leadership color
+            if( parent->leadingColorIndex == -1 ) {
+                parent->leadingColorIndex = getUnusedLeadershipColor();
+                }
             }
 
 
@@ -13883,7 +13892,7 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
 
 
 
-static int getUnusedLeadershipColor() {
+int getUnusedLeadershipColor() {
     // look for next unused
 
     int usedCounts[ NUM_BADGE_COLORS ];
