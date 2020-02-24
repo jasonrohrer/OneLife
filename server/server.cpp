@@ -11898,6 +11898,11 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
         if( minPosseSizeForKill > minPosseCap ) {
             minPosseSizeForKill = minPosseCap;
             }
+
+        if( isNoWaitWeapon( inKiller->holdingID ) ) {
+            // no posse required for non-deadly weapons (snowballs, tattoos)
+            minPosseSizeForKill = 1;
+            }
         
         char joiningExisting = false;
         

@@ -16,6 +16,8 @@ Server Fixes
 --When mother becomes a default leader, her leadership color is assigned
   correctly (was left blank and white).  Fixes #544
 
+--Min posse size requirements don't apply for snowballs and tattoos.  Fixes #543
+
 
 
 
