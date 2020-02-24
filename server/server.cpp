@@ -5444,40 +5444,11 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             }
         }
     else if( isBabyShortcut ) {
-        LiveObject *youngestOther = NULL;
-        double youngestAge = 9999;
-        
-        for( int i=0; i<players.size(); i++ ) {
-            LiveObject *otherPlayer = players.getElement( i );
-            
-            if( otherPlayer == inPlayer ) {
-                // allow error players her, to access recently-dead babies
-                continue;
-                }
-            if( otherPlayer->parentID == inPlayer->id ) {
-                double age = computeAge( otherPlayer );
-                
-                if( age < youngestAge ) {
-                    youngestAge = age;
-                    youngestOther = otherPlayer;
-                    }
-                }
-            }
+        // this case is more robust (below) by simply using the lastBabyEmail
+        // in all cases
 
-
-        if( youngestOther != NULL ) {
-            babyCursePlayer = youngestOther;
-            
-            if( cursedName != NULL ) {
-                delete [] cursedName;
-                cursedName = NULL;
-                }
-
-            if( babyCursePlayer->name != NULL ) {
-                // allow name-based curse to go through, if possible
-                cursedName = stringDuplicate( babyCursePlayer->name );
-                }
-            }
+        // That way there's no confusing about who MY BABY is (always the
+        // most-recent baby).
         }
 
 

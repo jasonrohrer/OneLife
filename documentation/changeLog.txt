@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--CURSE MY BABY now always targets most-recent baby, whether dead or alive
+  (code has been simplified).  Fixes #546
+
+
 
 Version 311   2020-February-13
 
