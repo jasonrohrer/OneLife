@@ -8,6 +8,11 @@ Version 313   ???
 --Mousing over an unlearned tool now shows you how many tool learning slots
   remain.  Fixes #522
 
+--Reconnect now uses new RLOGIN command, which will only succeed if an existing
+  life for you is still in progress (login fails otherwise).  Thus, you can
+  never start a new life by accident when trying to reconnect to a life that
+  has already expired.  Fixes #531
+
 
 
 Server Fixes

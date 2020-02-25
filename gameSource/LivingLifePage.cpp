@@ -13481,9 +13481,16 @@ void LivingLifePage::step() {
                 tempEmail = stringDuplicate( "blank_email" );
                 }
             
+            const char *loginWord = "LOGIN";
+            
+            if( userReconnect ) {
+                loginWord = "RLOGIN";
+                }
+
 
             if( strlen( userEmail ) <= 80 ) {    
-                outMessage = autoSprintf( "LOGIN %s %-80s %s %s %d%s#",
+                outMessage = autoSprintf( "%s %s %-80s %s %s %d%s#",
+                                          loginWord,
                                           clientTag, tempEmail, pwHash, keyHash,
                                           mTutorialNumber, twinExtra );
                 }
@@ -13492,7 +13499,8 @@ void LivingLifePage::step() {
                 // don't cut it off.
                 // but note that the playback will fail if email.ini
                 // doesn't match on the playback machine
-                outMessage = autoSprintf( "LOGIN %s %s %s %s %d%s#",
+                outMessage = autoSprintf( "%s %s %s %s %s %d%s#",
+                                          loginWord,
                                           clientTag, tempEmail, pwHash, keyHash,
                                           mTutorialNumber, twinExtra );
                 }

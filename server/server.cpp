@@ -542,6 +542,8 @@ typedef struct FreshConnection {
         int twinCount;
 
         char *clientTag;
+        
+        char reconnectOnly;
 
     } FreshConnection;
 
@@ -7324,9 +7326,11 @@ static char nextLogInTwin = false;
 static int firstTwinID = -1;
 
 
+// inAllowOrForceReconnect is 0 for forbidden reconnect, 1 to allow, 
+// 2 to require
 // returns ID of new player,
 // or -1 if this player reconnected to an existing ID
-int processLoggedInPlayer( char inAllowReconnect,
+int processLoggedInPlayer( int inAllowOrForceReconnect,
                            Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
@@ -7397,7 +7401,7 @@ int processLoggedInPlayer( char inAllowReconnect,
         if( ! o->error && ! o->connected &&
             strcmp( o->email, inEmail ) == 0 ) {
 
-            if( ! inAllowReconnect ) {
+            if( ! inAllowOrForceReconnect ) {
                 // trigger an error for them, so they die and are removed
                 o->error = true;
                 o->errorCauseString = "Reconnected as twin";
@@ -7452,6 +7456,38 @@ int processLoggedInPlayer( char inAllowReconnect,
             
             return -1;
             }
+        }
+    
+
+    if( inAllowOrForceReconnect == 2 ) {
+        // wanted a reconnect, but got here and found no life for this player
+        
+        AppLog::infoF( 
+            "Player (%s) has attempted RLOGIN reconnect, but no life found.",
+            inEmail );
+
+        
+        refundLifeToken( inEmail );
+        
+
+        // send a REJECTED message here
+        const char *message = "REJECTED\n#";
+        inSock->send( (unsigned char*)message,
+                      strlen( message ), 
+                      false, false );
+
+        // then shut and clean up connection immediately
+
+        // this may result in the REJECTED message not getting through
+
+        // but we don't have other infrastructure in the code to handle
+        // this case.
+
+        delete [] inEmail;
+        delete inSock;
+        delete inSockBuffer;
+
+        return -1;
         }
     
 
@@ -15104,6 +15140,7 @@ int main() {
 
                 newConnection.sequenceNumber = nextSequenceNumber;
 
+                newConnection.reconnectOnly = false;
                 
 
                 char *secretString = 
@@ -15448,7 +15485,7 @@ int main() {
                             }
                                 
                         processLoggedInPlayer( 
-                            true,
+                            nextConnection->reconnectOnly ? 2 : true,
                             nextConnection->sock,
                             nextConnection->sockBuffer,
                             nextConnection->email,
@@ -15502,6 +15539,10 @@ int main() {
                     
                     
                     if( strstr( message, "LOGIN" ) != NULL ) {
+                        
+                        if( strstr( message, "RLOGIN" ) != NULL ) {
+                            nextConnection->reconnectOnly = true;
+                            }
                         
                         SimpleVector<char *> *tokens =
                             tokenizeString( message );
@@ -15683,7 +15724,8 @@ int main() {
                                             nextConnection->twinCode = NULL;
                                             }
                                         processLoggedInPlayer(
-                                            true,
+                                            nextConnection->reconnectOnly ? 
+                                            2 : true,
                                             nextConnection->sock,
                                             nextConnection->sockBuffer,
                                             nextConnection->email,
