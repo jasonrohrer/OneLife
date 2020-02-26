@@ -13,6 +13,8 @@ Version 313   ???
   never start a new life by accident when trying to reconnect to a life that
   has already expired.  Fixes #531
 
+--Fixed potential server-side crash in atoi by using safer strtol instead.
+
 
 
 Server Fixes

@@ -2191,6 +2191,13 @@ typedef struct ClientMessage {
 static int pathDeltaMax = 16;
 
 
+
+static int stringToInt( char *inString ) {
+    return strtol( inString, NULL, 10 );
+    }
+
+
+
 // if extraPos present in result, destroyed by caller
 // inMessage may be modified by this call
 ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
@@ -2240,11 +2247,11 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
                         }
                     break;
                 case 1:
-                    m.x = atoi( &( inMessage[i] ) );
+                    m.x = stringToInt( &( inMessage[i] ) );
                     numRead++;
                     break;
                 case 2:
-                    m.y = atoi( &( inMessage[i] ) );
+                    m.y = stringToInt( &( inMessage[i] ) );
                     numRead++;
                     break;
                 }
@@ -2308,7 +2315,8 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         
         if( atPos != NULL ) {
             // skip @ symbol in token and parse int
-            m.sequenceNumber = atoi( &( tokens->getElementDirect( 3 )[1] ) );
+            m.sequenceNumber = 
+                stringToInt( &( tokens->getElementDirect( 3 )[1] ) );
             }
 
         int numTokens = tokens->size();
@@ -2323,12 +2331,12 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
             char *yToken = tokens->getElementDirect( offset + e * 2 + 1 );
             
             // profiler found sscanf is a bottleneck here
-            // try atoi instead
+            // try atoi (stringToInt) instead
             //sscanf( xToken, "%d", &( m.extraPos[e].x ) );
             //sscanf( yToken, "%d", &( m.extraPos[e].y ) );
 
-            m.extraPos[e].x = atoi( xToken );
-            m.extraPos[e].y = atoi( yToken );
+            m.extraPos[e].x = stringToInt( xToken );
+            m.extraPos[e].y = stringToInt( yToken );
             
             
             if( abs( m.extraPos[e].x ) > pathDeltaMax ||
