@@ -4608,6 +4608,12 @@ int sendMapChunkMessage( LiveObject *inO,
             // remove top of bar
             horBarH = lastY - yd;
             }
+
+        if( horBarH > chunkDimensionY ) {
+            // don't allow bar to grow too big if we have a huge jump
+            // like from VOG mode
+            horBarH = chunkDimensionY;
+            }
         
 
         int vertBarStartX = fullStartX;
@@ -4624,6 +4630,14 @@ int sendMapChunkMessage( LiveObject *inO,
             // remove right part of bar
             vertBarW = lastX - xd;
             }
+        
+        
+        if( vertBarW > chunkDimensionX ) {
+            // don't allow bar to grow too big if we have a huge jump
+            // like from VOG mode
+            vertBarW = chunkDimensionX;
+            }
+        
         
         // now trim vert bar where it intersects with hor bar
         if( yd > lastY ) {

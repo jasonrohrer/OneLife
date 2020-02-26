@@ -6225,6 +6225,21 @@ unsigned char *getChunkMessage( int inStartX, int inStartY,
     int endY = inStartY + inHeight;
     int endX = inStartX + inWidth;
 
+    if( endY < inStartY ) {
+        // wrapped around in integer space
+        // pull inStartY back from edge
+        inStartY -= inHeight;
+        endY = inStartY + inHeight;
+        }
+    if( endX < inStartX ) {
+        // wrapped around in integer space
+        // pull inStartY back from edge
+        inStartX -= inWidth;
+        endX = inStartX + inWidth;
+        }
+    
+
+
     timeSec_t curTime = MAP_TIMESEC;
 
     // look at four corners of chunk whenever we fetch one

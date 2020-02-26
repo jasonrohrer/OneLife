@@ -15,6 +15,8 @@ Version 313   ???
 
 --Fixed potential server-side crash in atoi by using safer strtol instead.
 
+--Fixed server-side crash when VOGM coordinates out of bounds.
+
 
 
 Server Fixes
