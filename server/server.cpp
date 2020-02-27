@@ -6472,7 +6472,7 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
         // the global scale of other foods.
         
         inPlayer->yummyBonusStore += 
-            lrint( foodScaleFactor * currentBonus );
+            ceil( foodScaleFactor * currentBonus );
         }
     
     }
@@ -19091,8 +19091,8 @@ int main() {
                                         nextPlayer->foodStore;
                                     
                                     nextPlayer->foodStore += 
-                                        lrint( foodScaleFactor *
-                                               targetObj->foodValue );
+                                        ceil( foodScaleFactor *
+                                              targetObj->foodValue );
                                     
                                     updateYum( nextPlayer, targetObj->id );
                                     
@@ -19953,8 +19953,8 @@ int main() {
                                         targetPlayer->foodStore;
                                     
                                     targetPlayer->foodStore += 
-                                        lrint( foodScaleFactor * 
-                                               obj->foodValue );
+                                        ceil( foodScaleFactor * 
+                                              obj->foodValue );
                                     
                                     updateYum( targetPlayer, obj->id,
                                                targetPlayer == nextPlayer );

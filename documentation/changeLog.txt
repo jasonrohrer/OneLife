@@ -17,6 +17,10 @@ Version 313   ???
 
 --Fixed server-side crash when VOGM coordinates out of bounds.
 
+--foodScaleFactor applied with ceil (instead of lrint) so that a food never
+  rounds to 0 (like foodScaleFactor of 0.35 applied to popcorn).
+
+
 
 
 Server Fixes
