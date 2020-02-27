@@ -6513,6 +6513,19 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
 
 
 
+
+// returns -1 if not in a tool set
+int getToolSet( int inToolID ) {
+    ObjectRecord *toolO = getObject( inToolID );
+    
+    // is it a marked tool?
+    int toolSet = toolO->toolSetIndex;
+    
+    return toolSet;
+    }
+
+
+
 char canPlayerUseTool( LiveObject *inPlayer, int inToolID ) {
     ObjectRecord *toolO = getObject( inToolID );
                                     
@@ -18615,6 +18628,25 @@ int main() {
                                         
                                         insertion = true;
                                         }
+                                    
+                                    // watch out for transformation
+                                    // from one tool to another
+                                    // (sterilizing knife shouldn't learn
+                                    //  knife, for example)
+                                    char transformation = false;
+                                    if( r->newActor != nextPlayer->holdingID ) {
+                                        
+                                        int newActorToolSet =
+                                            getToolSet( r->newActor );
+                                        int heldToolSet =
+                                            getToolSet( nextPlayer->holdingID );
+                                        
+                                        if( newActorToolSet != -1 &&
+                                            newActorToolSet != heldToolSet ) {
+                                            transformation = true;
+                                            }
+                                        }
+                                        
 
                                     // also watch out for failed
                                     // tool use due to hungry work
@@ -18632,6 +18664,7 @@ int main() {
 
                                     if( ! insertion &&
                                         ! hungBlocked &&
+                                        ! transformation &&
                                         ! canPlayerUseOrLearnTool( 
                                             nextPlayer,
                                             nextPlayer->holdingID ) ) {

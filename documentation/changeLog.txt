@@ -35,6 +35,10 @@ Version 313   ???
 --Healing steps were not counting as tool use.  Part of
   jasonrohrer/OneLifeData7#638
 
+--Transformative steps (like sterilizing knife) no longer count as tool use of
+  the original item (you transformed it into a different tool).  Part of
+  jasonrohrer/OneLifeData7#638
+
 
 
 Server Fixes
