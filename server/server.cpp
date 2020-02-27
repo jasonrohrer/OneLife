@@ -13295,6 +13295,8 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
         
         char *toolPos = strstr( des, "+TOOL" );
         
+        char isToolGroup = false;
+        
         if( toolPos != NULL ) {
             char *tagPos = &( toolPos[5] );
             
@@ -13317,6 +13319,7 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
                 char *newDes = stringDuplicate( tagPos );
                 delete [] des;
                 des = newDes;
+                isToolGroup = true;
                 }
             }
         
@@ -13324,7 +13327,8 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
         stripDescriptionComment( des );
 
         int desLen = strlen( des );
-        if( ( desLen > 0 && des[ desLen - 1 ] == 'S' ) ||
+        if( isToolGroup ||
+            ( desLen > 0 && des[ desLen - 1 ] == 'S' ) ||
             ( desLen > 2 && des[ desLen - 1 ] == 'G'
               && des[ desLen - 2 ] == 'N' 
               && des[ desLen - 3 ] == 'I' ) ) {

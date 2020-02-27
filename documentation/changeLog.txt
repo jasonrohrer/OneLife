@@ -47,6 +47,9 @@ Version 313   ???
   Fixes case where recycling sword in roller causes you to learn the sword.
   Part of jasonrohrer/OneLifeData7#638
 
+--All tool groups avoid THE in learning message (not just those ending in ING).
+  Example:  YOU LEARNED ARCHERY.
+
 
 
 Server Fixes
