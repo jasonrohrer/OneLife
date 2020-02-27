@@ -21,9 +21,9 @@ Version 313   ???
   rounds to 0 (like foodScaleFactor of 0.35 applied to popcorn).
 
 --eatBonus and foodScaleFactor now decline over the generations from Eve.
-  eatBonus starts at 4 and eventually reaches 0, with a half-life of 50
-  generations.  foodScaleFactor starts at 1.0 and eventually reaches 0.5, with
-  a half-life of 50 generations.
+  eatBonus starts at 4 and eventually reaches 3, with a half-life of 4
+  generations.  foodScaleFactor starts at 1.0 and eventually reaches 1.0, with
+  a half-life of 4 generations (i.e, foodScaleFactor currently doesn't change).
 
 --Fixed HUGE bug in ancestor assignment for genetic scores of older siblings.
   When walking through the list of living players, to find older sibs that
