@@ -13918,9 +13918,7 @@ static LiveObject *getClosestFollower( LiveObject *inLeader ) {
 static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
                             char inInfiniteRange = false ) {
     if( inTargetID > 0 && 
-        nextPlayer->holdingID > 0 &&
-        canPlayerUseOrLearnTool( nextPlayer,
-                                 nextPlayer->holdingID ) ) {
+        nextPlayer->holdingID > 0 ) {
                             
         ObjectRecord *heldObj = 
             getObject( nextPlayer->holdingID );
@@ -13960,8 +13958,11 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
                     }
                                     
                 if( ! weaponBlocked  &&
-                    ! isAlreadyInKillState( nextPlayer ) ) {
+                    ! isAlreadyInKillState( nextPlayer ) &&
+                    canPlayerUseOrLearnTool( nextPlayer,
+                                             nextPlayer->holdingID ) ) {
                     // they aren't already in one
+                    // and they can learn the weapon they're holding
                                         
                     removeAnyKillState( nextPlayer );
                                         

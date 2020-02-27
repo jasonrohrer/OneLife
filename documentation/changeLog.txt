@@ -39,6 +39,10 @@ Version 313   ???
   the original item (you transformed it into a different tool).  Part of
   jasonrohrer/OneLifeData7#638
 
+--Switched order of testing weapon useability so that otherFamilyOnly is tested
+  before tool learning.  Thus, you don't learn the sword by accident if you
+  shift-click on a family member.  Part of jasonrohrer/OneLifeData7#638
+
 
 
 Server Fixes
