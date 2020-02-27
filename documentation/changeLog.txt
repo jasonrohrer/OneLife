@@ -32,6 +32,9 @@ Version 313   ???
   twins, where only the first twin in the set would receive a pointer to a new
   baby.  Thanks Twisted.
 
+--Healing steps were not counting as tool use.  Part of
+  jasonrohrer/OneLifeData7#638
+
 
 
 Server Fixes

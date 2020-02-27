@@ -19791,8 +19791,20 @@ int main() {
                                         }
                                     }
                                 
+                                char canDo = true;
+                                
 
-                                if( oldEnough && healTrans != NULL ) {
+                                if( nextPlayer->holdingID > 0 &&
+                                    ! canPlayerUseOrLearnTool( 
+                                                nextPlayer,
+                                                nextPlayer->holdingID ) ) {
+                                    // player can't learn this tool
+                                    canDo = false;
+                                    }
+                                
+
+
+                                if( canDo && oldEnough && healTrans != NULL ) {
                                     targetPlayer->holdingID =
                                         healTrans->newTarget;
                                     holdingSomethingNew( targetPlayer );
