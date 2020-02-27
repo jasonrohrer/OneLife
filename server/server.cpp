@@ -18647,7 +18647,18 @@ int main() {
                                             transformation = true;
                                             }
                                         }
-                                        
+                                    
+                                    // watch out for case where target is
+                                    // NOT transformed
+                                    // In that case, the tool isn't actually
+                                    // being used (for example, recycling a
+                                    // sword in a roller)
+                                    char nonTransformTarget = false;
+                                    
+                                    if( target == r->newTarget ) {
+                                        nonTransformTarget = true;
+                                        }
+                                    
 
                                     // also watch out for failed
                                     // tool use due to hungry work
@@ -18666,6 +18677,7 @@ int main() {
                                     if( ! insertion &&
                                         ! hungBlocked &&
                                         ! transformation &&
+                                        ! nonTransformTarget && 
                                         ! canPlayerUseOrLearnTool( 
                                             nextPlayer,
                                             nextPlayer->holdingID ) ) {

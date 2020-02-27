@@ -43,6 +43,10 @@ Version 313   ???
   before tool learning.  Thus, you don't learn the sword by accident if you
   shift-click on a family member.  Part of jasonrohrer/OneLifeData7#638
 
+--If target isn't transformed, held tool isn't actually used or learned.
+  Fixes case where recycling sword in roller causes you to learn the sword.
+  Part of jasonrohrer/OneLifeData7#638
+
 
 
 Server Fixes
