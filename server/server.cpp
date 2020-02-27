@@ -145,6 +145,8 @@ int monumentCallID = 0;
 static double minFoodDecrementSeconds = 5.0;
 static double maxFoodDecrementSeconds = 20;
 static double foodScaleFactor = 1.0;
+static double foodScaleFactorFloor = 0.5;
+static double foodScaleFactorHalfLife = 50;
 
 static double indoorFoodDecrementSecondsBonus = 20.0;
 
@@ -153,6 +155,10 @@ static int babyBirthFoodDecrement = 10;
 // bonus applied to all foods
 // makes whole server a bit easier (or harder, if negative)
 static int eatBonus = 0;
+
+static double eatBonusFloor = 0;
+static double eatBonusHalfLife = 50;
+
 
 static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
 
@@ -604,7 +610,7 @@ typedef struct LiveObject {
 
         int parentID;
 
-        // 0 for Eve
+        // 1 for Eve
         int parentChainLength;
 
         SimpleVector<int> *lineage;
@@ -6402,6 +6408,34 @@ static char *getUpdateLineFromRecord(
 
 
 
+static int getEatBonus( LiveObject *inPlayer ) {
+    int generation = inPlayer->parentChainLength - 1;
+    
+    int b = lrint( 
+        ( eatBonus - eatBonusFloor ) * 
+        pow( 0.5, 
+             generation / eatBonusHalfLife )
+        + eatBonusFloor );
+    
+    return b;
+    }
+
+
+
+static double getFoodScaleFactor( LiveObject *inPlayer ) {
+    int generation = inPlayer->parentChainLength - 1;
+    
+    double f = ( foodScaleFactor - foodScaleFactorFloor ) * 
+        pow( 0.5, 
+             generation / foodScaleFactorHalfLife )
+        + foodScaleFactorFloor;
+    
+    return f;
+    }
+
+
+
+
 static char isYummy( LiveObject *inPlayer, int inObjectID ) {
     ObjectRecord *o = getObject( inObjectID );
     
@@ -6472,7 +6506,7 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
         // the global scale of other foods.
         
         inPlayer->yummyBonusStore += 
-            ceil( foodScaleFactor * currentBonus );
+            ceil( getFoodScaleFactor( inPlayer ) * currentBonus );
         }
     
     }
@@ -7528,6 +7562,12 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     foodScaleFactor = 
         SettingsManager::getFloatSetting( "foodScaleFactor", 1.0 );
 
+    foodScaleFactorFloor = 
+        SettingsManager::getFloatSetting( "foodScaleFactorFloor", 0.5 );
+    foodScaleFactorHalfLife = 
+        SettingsManager::getFloatSetting( "foodScaleFactorHalfLife", 50 );
+
+
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
 
@@ -7537,6 +7577,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     eatBonus = 
         SettingsManager::getIntSetting( "eatBonus", 0 );
+    eatBonusFloor = 
+        SettingsManager::getIntSetting( "eatBonusFloor", 0 );
+    eatBonusHalfLife = 
+        SettingsManager::getFloatSetting( "eatBonusHalfLife", 50 );
 
     minActivePlayersForLanguages =
         SettingsManager::getIntSetting( "minActivePlayersForLanguages", 15 );
@@ -7548,11 +7592,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         posseSizeSpeedMultipliers[i] = multiplierList->getElementDirect( i );
         }
     delete multiplierList;
-    
 
 
-    foodScaleFactor = 
-        SettingsManager::getFloatSetting( "foodScaleFactor", 1.0 );
     
     
     killDelayTime = 
@@ -14379,18 +14420,12 @@ int main() {
     maxFoodDecrementSeconds = 
         SettingsManager::getFloatSetting( "maxFoodDecrementSeconds", 20 );
 
-    foodScaleFactor = 
-        SettingsManager::getFloatSetting( "foodScaleFactor", 1.0 );
-
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
 
     indoorFoodDecrementSecondsBonus = SettingsManager::getFloatSetting( 
         "indoorFoodDecrementSecondsBonus", 20 );
 
-
-    eatBonus = 
-        SettingsManager::getIntSetting( "eatBonus", 0 );
 
 
     secondsPerYear = 
@@ -19091,13 +19126,13 @@ int main() {
                                         nextPlayer->foodStore;
                                     
                                     nextPlayer->foodStore += 
-                                        ceil( foodScaleFactor *
+                                        ceil( getFoodScaleFactor( nextPlayer ) *
                                               targetObj->foodValue );
                                     
                                     updateYum( nextPlayer, targetObj->id );
                                     
                                     
-                                    int bonus = eatBonus;
+                                    int bonus = getEatBonus( nextPlayer );
                                     
                                     if( targetObj->alcohol > 0 ) {
                                         bonus = 0;
@@ -19953,13 +19988,14 @@ int main() {
                                         targetPlayer->foodStore;
                                     
                                     targetPlayer->foodStore += 
-                                        ceil( foodScaleFactor * 
-                                              obj->foodValue );
+                                        ceil( 
+                                            getFoodScaleFactor( targetPlayer )* 
+                                            obj->foodValue );
                                     
                                     updateYum( targetPlayer, obj->id,
                                                targetPlayer == nextPlayer );
 
-                                    int bonus = eatBonus;
+                                    int bonus = getEatBonus( targetPlayer );
                                     
                                     if( obj->alcohol > 0 ) {
                                         bonus = 0;

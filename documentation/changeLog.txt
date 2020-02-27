@@ -20,6 +20,11 @@ Version 313   ???
 --foodScaleFactor applied with ceil (instead of lrint) so that a food never
   rounds to 0 (like foodScaleFactor of 0.35 applied to popcorn).
 
+--eatBonus and foodScaleFactor now decline over the generations from Eve.
+  eatBonus starts at 4 and eventually reaches 0, with a half-life of 50
+  generations.  foodScaleFactor starts at 1.0 and eventually reaches 0.5, with
+  a half-life of 50 generations.
+
 
 
 
