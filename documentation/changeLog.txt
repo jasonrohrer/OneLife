@@ -25,6 +25,12 @@ Version 313   ???
   generations.  foodScaleFactor starts at 1.0 and eventually reaches 0.5, with
   a half-life of 50 generations.
 
+--Fixed HUGE bug in ancestor assignment for genetic scores of older siblings.
+  When walking through the list of living players, to find older sibs that
+  count as ancestors, only the first one encountered was added to the ancestor
+  list.  break in code should have been continue.  This was most obvious with 
+  twins, where only the first twin in the set would receive a pointer to a new
+  baby.  Thanks Twisted.
 
 
 

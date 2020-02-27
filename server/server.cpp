@@ -9218,7 +9218,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             newObject.ancestorLifeStartTimeSeconds->push_back(
                 otherPlayer->lifeStartTimeSeconds );
                         
-            break;
+            continue;
             }
         }
     
