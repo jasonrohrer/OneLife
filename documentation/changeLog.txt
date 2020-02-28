@@ -65,6 +65,9 @@ Version 313   ???
   never return to the same mother over and over, without other mothers being
   tried in between.  Fixes #549
 
+--Added support for same-color verification when checking for sprite-subset for
+  single-sprite objects.  This allows dyed objects to count as NOT the same
+  object for initial-only creation sounds.
 
 
 
