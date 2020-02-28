@@ -16409,6 +16409,11 @@ int main() {
                 //Thread::staticSleep( 
                 //    testRandSource.getRandomBoundedInt( 0, 450 ) );
                 
+                
+                // GOTO below jumps here if we need to reparse the message
+                // as a different type
+                RESTART_MESSAGE_ACTION:
+                
                 if( m.type == BUG ) {
                     int allow = 
                         SettingsManager::getIntSetting( "allowBugReports", 0 );
@@ -20767,49 +20772,12 @@ int main() {
                                                  == 0 ) {
                                             // try treating it like
                                             // a USE action
-                                            
-                                            TransRecord *useTrans =
-                                                getPTrans( 
-                                                    nextPlayer->holdingID,
-                                                    target );
-                                            // handle simple case
-                                            // stacking containers
-                                            // client sends DROP for this
-                                            if( useTrans != NULL &&
-                                                useTrans->newActor == 0 ) {
-                                                
-                                                char canUse = true;
-                                                
-                                                ObjectRecord *newTargetObj = 
-                                                    NULL;
-                                                
-                                                if( useTrans->newTarget > 0 ) {
-                                                    newTargetObj =
-                                                        getObject(
-                                                            useTrans->
-                                                            newTarget );
-                                                    }
-
-                                                if( newTargetObj != NULL &&
-                                                    newTargetObj->
-                                                    isBiomeLimited &&
-                                                    ! canBuildInBiome( 
-                                                        newTargetObj,
-                                                        getMapBiome( m.x,
-                                                                     m.y ) ) ) {
-                                                    canUse = false;
-                                                    }
-
-                                                if( canUse ) {
-                                                    handleHoldingChange(
-                                                        nextPlayer,
-                                                        useTrans->newActor );
-                                                    
-                                                    setMapObject( 
-                                                        m.x, m.y,
-                                                        useTrans->newTarget );
-                                                    }
-                                                }
+                                            m.type = USE;
+                                            m.id = -1;
+                                            m.c = -1;
+                                            playerIndicesToSendUpdatesAbout.
+                                                deleteElementEqualTo( i );
+                                            goto RESTART_MESSAGE_ACTION;
                                             }
                                         else if( canDrop && 
                                                  ! canGoIn &&

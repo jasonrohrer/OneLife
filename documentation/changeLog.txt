@@ -78,6 +78,15 @@ Version 313   ???
   Might as well just check that the drop spot is not a bad biome directly (and
   allow other types of cross-boundary drops).  Fixes #550
 
+--Player message DROP is a synonym for USE when DROP can't apply.  However,
+  the implementation of the USE behavior for DROP was a very simple piece of
+  code that missed a bunch of cases handled by the real USE action.  Now
+  handling DROP-as-USE with the real USE code (using a goto, yee-haw).  This
+  fixes a bug where you could DROP a pie onto a non-empty table, starting the 
+  construction of the feast table (which is supposed to require an empty table,
+  according to the real USE code) and hiding the items contained by the table.
+  Fixes #551.
+
 
 
 
