@@ -574,6 +574,9 @@ typedef struct LiveObject {
         // these aren't object IDs but tool set index numbers
         // some tools are grouped together
         SimpleVector<int> learnedTools;
+        
+        // tool set index numbers that have been tried at least once
+        SimpleVector<int> partiallyLearnedTools;
 
 
         // object ID used to visually represent this player
@@ -1224,6 +1227,7 @@ static void backToBasics( LiveObject *inPlayer ) {
     p->emotUnfreezeETA = 0;
 
     p->learnedTools.deleteAll();
+    p->partiallyLearnedTools.deleteAll();
     }
 
 
@@ -13263,7 +13267,68 @@ static void sendLearnedToolMessage( LiveObject *inPlayer,
     }
 
 
+
+static char *getToolSetDescription( ObjectRecord *inToolO ) {
+    const char *article = "THE ";
+        
+    char *des = stringToUpperCase( inToolO->description );
+
     
+    
+    // if it's a group of tools, like +toolSterile_Technique
+    // show the group name instead of the individual tool
+    
+    char *toolPos = strstr( des, "+TOOL" );
+    
+    char isToolGroup = false;
+    
+    if( toolPos != NULL ) {
+        char *tagPos = &( toolPos[5] );
+        
+        // use dummies can have # immediately after +TOOL tag
+        if( tagPos[0] != '\0' && tagPos[0] != ' ' && tagPos[0] != '#' ) {
+            int tagLen = strlen( tagPos );
+            for( int i=0; i<tagLen; i++ ) {
+                if( tagPos[i] == ' ' || tagPos[i] == '#' ) {
+                    tagPos[i] = '\0';
+                    break;
+                    }
+                }
+            // now replace any _ with ' '
+            tagLen = strlen( tagPos );
+            for( int i=0; i<tagLen; i++ ) {
+                if( tagPos[i] == '_' ) {
+                    tagPos[i] = ' ';
+                    }
+                }
+            char *newDes = stringDuplicate( tagPos );
+            delete [] des;
+            des = newDes;
+            isToolGroup = true;
+            }
+        }
+    
+        
+    stripDescriptionComment( des );
+    
+    int desLen = strlen( des );
+    if( isToolGroup ||
+        ( desLen > 0 && des[ desLen - 1 ] == 'S' ) ||
+        ( desLen > 2 && des[ desLen - 1 ] == 'G'
+          && des[ desLen - 2 ] == 'N' 
+          && des[ desLen - 3 ] == 'I' ) ) {
+        // use THE for singular tools like YOU LEARNED THE AXE
+        // no article for plural tools like YOU LEARNED KNITTING NEEDLES
+        // no article for activities (usually tool groups) like SEWING
+        article = "";
+        }
+    
+    char *finalDes = autoSprintf( "%s%s", article, des );
+    delete [] des;
+    
+    return finalDes;
+    }
+
     
 
 
@@ -13276,6 +13341,47 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
     if( toolSet != -1 &&
         inPlayer->learnedTools.getElementIndex( toolSet ) == -1 &&
         inPlayer->numToolSlots > inPlayer->learnedTools.size() ) {
+
+        
+        
+
+        if( inPlayer->partiallyLearnedTools.getElementIndex( toolSet ) == 
+            -1  ) {
+        
+            int numLeft =
+                inPlayer->numToolSlots - inPlayer->learnedTools.size();
+            
+            // they can try this tool once for free, without learning it
+            inPlayer->partiallyLearnedTools.push_back( toolSet );
+            
+            char *des = getToolSetDescription( toolO );
+
+            char *message;
+            if( numLeft > 1 ) {
+                message = autoSprintf( 
+                    "YOU ALMOST LEARNED %s.**"
+                    "REPEAT THAT ACTION TO SPEND ONE YOUR %d "
+                    "REMAINING TOOL SLOTS.", 
+                    des,
+                    numLeft );
+                }
+            else {
+                message = autoSprintf( 
+                    "YOU ALMOST LEARNED %s.**"
+                    "REPEAT THAT ACTION TO SPEND YOUR LAST "
+                    "REMAINING TOOL SLOT.", 
+                    des );
+                }
+            sendGlobalMessage( message, inPlayer );
+
+            delete [] message;
+            delete [] des;
+
+            return true;
+            }
+        
+
+
         
         inPlayer->learnedTools.push_back( toolSet );
         
@@ -13286,75 +13392,24 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
         
         
         // now send DING message
-        const char *article = "THE ";
+        char *des = getToolSetDescription( toolO );
         
-        char *des = stringToUpperCase( toolO->description );
-
-
-        
-        // if it's a group of tools, like +toolSterile_Technique
-        // show the group name instead of the individual tool
-        
-        char *toolPos = strstr( des, "+TOOL" );
-        
-        char isToolGroup = false;
-        
-        if( toolPos != NULL ) {
-            char *tagPos = &( toolPos[5] );
-            
-            // use dummies can have # immediately after +TOOL tag
-            if( tagPos[0] != '\0' && tagPos[0] != ' ' && tagPos[0] != '#' ) {
-                int tagLen = strlen( tagPos );
-                for( int i=0; i<tagLen; i++ ) {
-                    if( tagPos[i] == ' ' || tagPos[i] == '#' ) {
-                        tagPos[i] = '\0';
-                        break;
-                        }
-                    }
-                // now replace any _ with ' '
-                tagLen = strlen( tagPos );
-                for( int i=0; i<tagLen; i++ ) {
-                    if( tagPos[i] == '_' ) {
-                        tagPos[i] = ' ';
-                        }
-                    }
-                char *newDes = stringDuplicate( tagPos );
-                delete [] des;
-                des = newDes;
-                isToolGroup = true;
-                }
-            }
-        
-        
-        stripDescriptionComment( des );
-
-        int desLen = strlen( des );
-        if( isToolGroup ||
-            ( desLen > 0 && des[ desLen - 1 ] == 'S' ) ||
-            ( desLen > 2 && des[ desLen - 1 ] == 'G'
-              && des[ desLen - 2 ] == 'N' 
-              && des[ desLen - 3 ] == 'I' ) ) {
-            // use THE for singular tools like YOU LEARNED THE AXE
-            // no article for plural tools like YOU LEARNED KNITTING NEEDLES
-            // no article for activities (usually tool groups) like SEWING
-            article = "";
-            }
 
         char *message;
         
         int numLeft = inPlayer->numToolSlots - inPlayer->learnedTools.size();
         
         if( numLeft > 0 ) {
-            message = autoSprintf( "YOU LEARNED %s%s.**"
+            message = autoSprintf( "YOU LEARNED %s.**"
                                    "%d OF %d TOOL SLOTS ARE LEFT.", 
-                                   article, des,
+                                   des,
                                    numLeft,
                                    inPlayer->numToolSlots );
             }
         else {
-            message = autoSprintf( "YOU LEARNED %s%s.**"
+            message = autoSprintf( "YOU LEARNED %s.**"
                                    "ALL OF YOUR TOOL SLOTS HAVE BEEN USED.", 
-                                   article, des );            
+                                   des );            
             }
         
         sendGlobalMessage( message, inPlayer );

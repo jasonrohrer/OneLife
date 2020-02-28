@@ -52,6 +52,12 @@ Version 313   ???
 
 --Send food update immediately after reconnecting.  Fixes #547
 
+--You now get one free warning use of each unlearned tool for free, with a
+  message letting you know that using it again will learn the tool and use a
+  slot.  No more wasting tool slots by accident on things you didn't mean to
+  learn.
+
+
 
 
 Server Fixes
