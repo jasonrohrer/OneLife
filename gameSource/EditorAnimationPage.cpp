@@ -1969,7 +1969,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                     // previous object
                     SimpleVector<SubsetSpriteIndexMap> map;
                     
-                    if( isSpriteSubset( oldID, mCurrentObjectID, &map ) ) {
+                    if( isSpriteSubset( oldID, mCurrentObjectID, 
+                                        true, &map ) ) {
                         int newID = mCurrentObjectID;
                         
                         mCurrentObjectID = oldID;

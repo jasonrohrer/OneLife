@@ -87,6 +87,9 @@ Version 313   ???
   according to the real USE code) and hiding the items contained by the table.
   Fixes #551.
 
+--Fixed so that painting walls makes correct sound (plays initial-only
+  creation sound because color of sprites changes).
+
 
 
 

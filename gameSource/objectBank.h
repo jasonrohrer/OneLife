@@ -828,6 +828,7 @@ typedef struct SubsetSpriteIndexMap {
 // pass in empty vector if index mapping is desired
 // passed-in vector is NOT filled with anything if object is not a sprite subset
 char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
+                     char inIgnoreColors = false,
                      SimpleVector<SubsetSpriteIndexMap> *outMapping = NULL );
 
 

@@ -5711,6 +5711,7 @@ int getMaxWideRadius() {
 
 
 char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
+                     char inIgnoreColors,
                      SimpleVector<SubsetSpriteIndexMap> *outMapping ) {
 
     ObjectRecord *superO = getObject( inSuperObjectID );
@@ -5736,8 +5737,8 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
             if( superO->sprites[ ss ] == spriteID ) {
 
                 // do make sure that color matches too
-                if( equal( superO->spriteColor[ ss ],
-                           subO->spriteColor[ 0 ] ) ) {
+                if( inIgnoreColors || equal( superO->spriteColor[ ss ],
+                                             subO->spriteColor[ 0 ] ) ) {
                     return true;
                     }
                 }
@@ -5796,8 +5797,7 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
         
         char spriteHFlip = subO->spriteHFlip[s];
 
-        // ignore sprite color for now
-        //FloatRGB spriteColor = subO->spriteColor[s];
+        FloatRGB spriteColor = subO->spriteColor[s];
 
         char found = false;
         
@@ -5807,8 +5807,9 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
                             spriteSuperZeroPos ), spritePosRel ) &&
                 superO->spriteRot[ ss ] == spriteRot &&
                 superO->spriteHFlip[ ss ] == spriteHFlip 
-                /* &&
-                   equal( superO->spriteColor[ ss ], spriteColor ) */ ) {
+                &&
+                ( inIgnoreColors ||
+                  equal( superO->spriteColor[ ss ], spriteColor ) ) ) {
                 
                 if( outMapping != NULL ) {
                     SubsetSpriteIndexMap m = { s, ss };
