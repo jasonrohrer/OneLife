@@ -5050,7 +5050,12 @@ char findDropSpot( LiveObject *inDroppingPlayer,
                 }
             }
         }
-
+    else {
+        // target biome not bad for player
+        // allow dropping in ANY good biome for player
+        targetFloor = -1;
+        targetBiome = -1;
+        }
     
     
     char found = false;
@@ -5170,9 +5175,16 @@ char findDropSpot( LiveObject *inDroppingPlayer,
                                                 
 
 
-                if( isMapSpotEmpty( x, y ) && 
-                    ( pass > 1 || getMapBiome( x, y ) == targetBiome ) &&
-                    ( pass > 0 || getMapFloor( x, y ) == targetFloor ) ) {
+                if( isMapSpotEmpty( x, y ) 
+                    && 
+                    ( pass > 1 || 
+                      ( targetBiome == -1 && 
+                        isBiomeAllowedForPlayer( inDroppingPlayer, x, y ) )
+                      || getMapBiome( x, y ) == targetBiome ) 
+                    &&
+                    ( pass > 0 || 
+                      targetFloor == -1 || 
+                      getMapFloor( x, y ) == targetFloor ) ) {
                     
                     found = true;
                     if( barrierOn ) {    

@@ -72,6 +72,13 @@ Version 313   ???
 --Fixed case where car runs out of gas in a bad biome and drops a biome
   sickness object on the ground.
 
+--Fixed case where all same-biome (or floor) drop spots are full, causing
+  object to strangely drop in a distant spot.  The reason for prefering
+  same-biome or floor for drops was to avoid dropping into a bad biome.
+  Might as well just check that the drop spot is not a bad biome directly (and
+  allow other types of cross-boundary drops).  Fixes #550
+
+
 
 
 Server Fixes
