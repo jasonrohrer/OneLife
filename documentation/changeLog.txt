@@ -57,6 +57,14 @@ Version 313   ???
   slot.  No more wasting tool slots by accident on things you didn't mean to
   learn.
 
+--After /DIE, the last mother who had you is blocked for you, ensuring that you
+  don't /DIE-cycle back to the same mother again and again (not even in
+  lowpop).  If there's only ONE mother available, doing /DIE one time will
+  cause you to spawn as Eve.  Note that if there is more than one mother, you
+  will cycle between them with /DIE.  The only change here is that you will
+  never return to the same mother over and over, without other mothers being
+  tried in between.  Fixes #549
+
 
 
 

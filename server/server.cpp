@@ -965,6 +965,9 @@ typedef struct LiveObject {
         
         SimpleVector<int> permanentEmots;
 
+        // email of last baby that we had that did /DIE
+        char *lastSidsBabyEmail;
+
     } LiveObject;
 
 
@@ -1767,6 +1770,9 @@ void quitCleanup() {
             }
         if( nextPlayer->lastBabyEmail != NULL  ) {
             delete [] nextPlayer->lastBabyEmail;
+            }
+        if( nextPlayer->lastSidsBabyEmail != NULL ) {
+            delete [] nextPlayer->lastSidsBabyEmail;
             }
 
         if( nextPlayer->murderPerpEmail != NULL  ) {
@@ -7650,6 +7656,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.email = inEmail;
     newObject.origEmail = NULL;
     
+    newObject.lastSidsBabyEmail = NULL;
+
     newObject.lastBabyEmail = NULL;
 
     newObject.id = nextID;
@@ -7787,6 +7795,15 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 continue;
                 }
             
+            if( player->lastSidsBabyEmail != NULL &&
+                strcmp( player->lastSidsBabyEmail,
+                        newObject.email ) == 0 ) {
+                // this baby JUST committed SIDS for this mother
+                // skip her
+                // (don't ever send SIDS baby to same mother twice in a row)
+                continue;
+                }
+
             if( isFertileAge( player ) ) {
                 numOfAge ++;
                 
@@ -16734,6 +16751,29 @@ int main() {
                             // mother can have another baby right away
                             parentO->birthCoolDown = 0;
                             }
+
+                        if( parentO->lastSidsBabyEmail != NULL ) {
+                            delete [] parentO->lastSidsBabyEmail;
+                            parentO->lastSidsBabyEmail = NULL;
+                            }
+                        
+                        // walk through all other players and clear THIS
+                        // player from their SIDS mememory
+                        // we only track the most recent parent who had this
+                        // baby SIDS
+                        for( int p=0; p<players.size(); p++ ) {
+                            LiveObject *parent = players.getElement( p );
+                            
+                            if( parent->lastSidsBabyEmail != NULL &&
+                                strcmp( parent->lastSidsBabyEmail,
+                                        nextPlayer->email ) == 0 ) {
+                                delete [] parent->lastSidsBabyEmail;
+                                parent->lastSidsBabyEmail = NULL;
+                                }
+                            }
+                        
+                        parentO->lastSidsBabyEmail = 
+                            stringDuplicate( nextPlayer->email );
                         
                         
                         int holdingAdultID = nextPlayer->heldByOtherID;
@@ -25592,6 +25632,9 @@ int main() {
                     }
                 if( nextPlayer->lastBabyEmail != NULL ) {
                     delete [] nextPlayer->lastBabyEmail;
+                    }
+                if( nextPlayer->lastSidsBabyEmail != NULL ) {
+                    delete [] nextPlayer->lastSidsBabyEmail;
                     }
 
                 if( nextPlayer->murderPerpEmail != NULL ) {
