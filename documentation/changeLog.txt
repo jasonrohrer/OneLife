@@ -50,6 +50,8 @@ Version 313   ???
 --All tool groups avoid THE in learning message (not just those ending in ING).
   Example:  YOU LEARNED ARCHERY.
 
+--Send food update immediately after reconnecting.  Fixes #547
+
 
 
 Server Fixes

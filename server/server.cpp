@@ -7496,6 +7496,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             o->firstMapSent = false;
             o->firstMessageSent = false;
             o->inFlight = false;
+
+            o->foodUpdate = true;
             
             o->connected = true;
             
