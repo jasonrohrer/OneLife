@@ -69,6 +69,9 @@ Version 313   ???
   single-sprite objects.  This allows dyed objects to count as NOT the same
   object for initial-only creation sounds.
 
+--Fixed case where car runs out of gas in a bad biome and drops a biome
+  sickness object on the ground.
+
 
 
 Server Fixes

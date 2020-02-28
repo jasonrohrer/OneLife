@@ -5802,6 +5802,9 @@ static void sendToolExpertMessage( LiveObject *inPlayer,
 
 
 
+void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
+                 SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout );
+
 
 
 void makePlayerBiomeSick( LiveObject *nextPlayer, 
@@ -5854,6 +5857,13 @@ static void holdingSomethingNew( LiveObject *inPlayer,
                 inPlayer->yd );
         
         if( sicknessObjectID != -1 ) {
+
+            if( inPlayer->holdingID != 0 ) {
+                GridPos p = getPlayerPos( inPlayer );
+                handleDrop( 
+                    p.x, p.y, inPlayer, NULL );
+                }
+            
             makePlayerBiomeSick( inPlayer, 
                                  sicknessObjectID );
             }
@@ -21931,7 +21941,9 @@ int main() {
                         
                         
                         if( newObj != NULL && newObj->permanent &&
-                            oldObj != NULL && ! oldObj->permanent ) {
+                            oldObj != NULL && ! oldObj->permanent &&
+                            ! nextPlayer->holdingWound &&
+                            ! nextPlayer->holdingBiomeSickness ) {
                             // object decayed into a permanent
                             // force drop
                              GridPos dropPos = 
