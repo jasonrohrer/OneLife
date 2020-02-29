@@ -16779,7 +16779,8 @@ int main() {
                             parentO->birthCoolDown = 0;
                             }
 
-                        if( parentO->lastSidsBabyEmail != NULL ) {
+                        if( parentO != NULL &&
+                            parentO->lastSidsBabyEmail != NULL ) {
                             delete [] parentO->lastSidsBabyEmail;
                             parentO->lastSidsBabyEmail = NULL;
                             }
@@ -16799,9 +16800,10 @@ int main() {
                                 }
                             }
                         
-                        parentO->lastSidsBabyEmail = 
-                            stringDuplicate( nextPlayer->email );
-                        
+                        if( parentO != NULL ) {
+                            parentO->lastSidsBabyEmail = 
+                                stringDuplicate( nextPlayer->email );
+                            }
                         
                         int holdingAdultID = nextPlayer->heldByOtherID;
 

@@ -3,6 +3,12 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Fixed server crash in new lastSidsBabyEmail code.
+
+
+
 Version 312   2020-February-28
 
 --Mousing over an unlearned tool now shows you how many tool learning slots
