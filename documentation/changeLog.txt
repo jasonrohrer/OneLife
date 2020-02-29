@@ -90,6 +90,11 @@ Version 313   ???
 --Fixed so that painting walls makes correct sound (plays initial-only
   creation sound because color of sprites changes).
 
+--Dug rabbits that had very few move options were sometimes still settling and
+  digging new holes on roads and floors.  Now they avoid floors at all costs,
+  re-settling in their original location if necessary.  Fixes #552
+
+
 
 
 

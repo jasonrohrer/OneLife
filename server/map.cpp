@@ -5402,6 +5402,15 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                         
                                         continue;
                                         }
+                                    if( avoidFloor ) {
+                                        int floorID = 
+                                            getMapFloor( testX, testY );
+                        
+                                        if( floorID > 0 ) {
+                                            // blocked by floor
+                                            continue;
+                                            }
+                                        }
 
                                     possibleX[ numPossibleDirs ] = testX;
                                     possibleY[ numPossibleDirs ] = testY;
