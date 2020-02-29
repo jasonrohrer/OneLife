@@ -274,6 +274,11 @@ static double culvertFractalRoughness = 0.62;
 static double culvertFractalAmp = 98;
 
 
+static int usedToolSlots = 0;
+static int totalToolSlots = 0;
+
+
+
 typedef struct LocationSpeech {
         doublePair pos;
         char *speech;
@@ -1214,6 +1219,7 @@ typedef enum messageType {
     WAR_REPORT,
     LEARNED_TOOL_REPORT,
     TOOL_EXPERTS,
+    TOOL_SLOTS,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1372,6 +1378,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "TE" ) == 0 ) {
         returnValue = TOOL_EXPERTS;
+        }
+    else if( strcmp( copy, "TS" ) == 0 ) {
+        returnValue = TOOL_SLOTS;
         }
     
     delete [] copy;
@@ -10591,11 +10600,25 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 if( o->toolSetIndex != -1 ) {                
                     const char *status = "TOOL - ";
                     
+                    char *newDes = NULL;
+                    
+
                     if( ! o->toolLearned ) {
                         status = "UNLEARNED TOOL - ";
+
+                        if( totalToolSlots > 0 ) {
+                            newDes = 
+                                autoSprintf( "%s%d/%d SLOTS LEFT - %s", 
+                                             status, 
+                                             totalToolSlots - usedToolSlots, 
+                                             totalToolSlots, 
+                                             des );
+                            }
                         }
-                
-                    char *newDes = autoSprintf( "%s%s", status, des );
+
+                    if( newDes == NULL ) {
+                        newDes = autoSprintf( "%s%s", status, des );
+                        }
                     
                     if( desToDelete != NULL ) {
                         delete [] desToDelete;
@@ -13571,6 +13594,18 @@ void LivingLifePage::step() {
             tokens->deallocateStringElements();
             delete tokens;
             }
+        else if( type == TOOL_SLOTS ) {
+            int numSlotsUsed = 0;
+            int numTotalSlots = 0;
+            
+            int numRead = 
+                sscanf( message, "TS\n%d %d", &numSlotsUsed, &numTotalSlots );
+            
+            if( numRead == 2 ) {
+                usedToolSlots = numSlotsUsed;
+                totalToolSlots = numTotalSlots;
+                }
+            }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
             
@@ -13671,9 +13706,16 @@ void LivingLifePage::step() {
                 tempEmail = stringDuplicate( "blank_email" );
                 }
             
+            const char *loginWord = "LOGIN";
+            
+            if( userReconnect ) {
+                loginWord = "RLOGIN";
+                }
+
 
             if( strlen( userEmail ) <= 80 ) {    
-                outMessage = autoSprintf( "LOGIN %s %-80s %s %s %d%s#",
+                outMessage = autoSprintf( "%s %s %-80s %s %s %d%s#",
+                                          loginWord,
                                           clientTag, tempEmail, pwHash, keyHash,
                                           mTutorialNumber, twinExtra );
                 }
@@ -13682,7 +13724,8 @@ void LivingLifePage::step() {
                 // don't cut it off.
                 // but note that the playback will fail if email.ini
                 // doesn't match on the playback machine
-                outMessage = autoSprintf( "LOGIN %s %s %s %s %d%s#",
+                outMessage = autoSprintf( "%s %s %s %s %s %d%s#",
+                                          loginWord,
                                           clientTag, tempEmail, pwHash, keyHash,
                                           mTutorialNumber, twinExtra );
                 }
@@ -21146,6 +21189,10 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    usedToolSlots = 0;
+    totalToolSlots = 0;
+    
 
     ourUnmarkedOffspring.deleteAll();
     

@@ -71,6 +71,11 @@ Where challenge_string is an ascii string, less than 150 characters long.
 LOGIN client_tag email password_hash account_key_hash tutorial_number twin_code_hash twin_count#
 
 
+NOTE:  The command LOGIN can be replaced with RLOGIN if the client is
+       reconnnecting to an existing life and doesn't want to start a new life
+       if the previous life is over.
+
+
 client_tag must contain only A-Za-z0-9 plus _ and - 
 (alphanumeric, underscore, and hyphen).
 To be processed correctly, it must start with the string client_
@@ -216,6 +221,8 @@ WAR_REPORT (WR)
 LEARNED_TOOL_REPORT (LR)
 
 TOOL_EXPERTS (TE)
+
+TOOL_SLOTS (TS)
 
 FRAME (FM)
 
@@ -941,6 +948,14 @@ List of nearby players that already have learned the unlearned tool player is
 holding.
 
 Sent whenever player's held object changes to an unlearned tool.
+
+
+
+TS
+used total
+#
+
+Tells player how many slots have been used and how many total they have.
 
 
 

@@ -147,6 +147,8 @@ int monumentCallID = 0;
 static double minFoodDecrementSeconds = 5.0;
 static double maxFoodDecrementSeconds = 20;
 static double foodScaleFactor = 1.0;
+static double foodScaleFactorFloor = 0.5;
+static double foodScaleFactorHalfLife = 50;
 
 static double indoorFoodDecrementSecondsBonus = 20.0;
 
@@ -155,6 +157,10 @@ static int babyBirthFoodDecrement = 10;
 // bonus applied to all foods
 // makes whole server a bit easier (or harder, if negative)
 static int eatBonus = 0;
+
+static double eatBonusFloor = 0;
+static double eatBonusHalfLife = 50;
+
 
 static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
 
@@ -544,6 +550,8 @@ typedef struct FreshConnection {
         int twinCount;
 
         char *clientTag;
+        
+        char reconnectOnly;
 
     } FreshConnection;
 
@@ -568,6 +576,9 @@ typedef struct LiveObject {
         // these aren't object IDs but tool set index numbers
         // some tools are grouped together
         SimpleVector<int> learnedTools;
+        
+        // tool set index numbers that have been tried at least once
+        SimpleVector<int> partiallyLearnedTools;
 
 
         // object ID used to visually represent this player
@@ -604,7 +615,7 @@ typedef struct LiveObject {
 
         int parentID;
 
-        // 0 for Eve
+        // 1 for Eve
         int parentChainLength;
 
         SimpleVector<int> *lineage;
@@ -782,6 +793,7 @@ typedef struct LiveObject {
         
 
         char isNew;
+        char isNewCursed;
         char firstMessageSent;
         
         char inFlight;
@@ -954,6 +966,9 @@ typedef struct LiveObject {
         double forceFlightDestSetTime;
         
         SimpleVector<int> permanentEmots;
+
+        // email of last baby that we had that did /DIE
+        char *lastSidsBabyEmail;
 
     } LiveObject;
 
@@ -1217,6 +1232,7 @@ static void backToBasics( LiveObject *inPlayer ) {
     p->emotUnfreezeETA = 0;
 
     p->learnedTools.deleteAll();
+    p->partiallyLearnedTools.deleteAll();
     }
 
 
@@ -1757,6 +1773,9 @@ void quitCleanup() {
         if( nextPlayer->lastBabyEmail != NULL  ) {
             delete [] nextPlayer->lastBabyEmail;
             }
+        if( nextPlayer->lastSidsBabyEmail != NULL ) {
+            delete [] nextPlayer->lastSidsBabyEmail;
+            }
 
         if( nextPlayer->murderPerpEmail != NULL  ) {
             delete [] nextPlayer->murderPerpEmail;
@@ -2190,6 +2209,13 @@ typedef struct ClientMessage {
 static int pathDeltaMax = 16;
 
 
+
+static int stringToInt( char *inString ) {
+    return strtol( inString, NULL, 10 );
+    }
+
+
+
 // if extraPos present in result, destroyed by caller
 // inMessage may be modified by this call
 ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
@@ -2239,11 +2265,11 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
                         }
                     break;
                 case 1:
-                    m.x = atoi( &( inMessage[i] ) );
+                    m.x = stringToInt( &( inMessage[i] ) );
                     numRead++;
                     break;
                 case 2:
-                    m.y = atoi( &( inMessage[i] ) );
+                    m.y = stringToInt( &( inMessage[i] ) );
                     numRead++;
                     break;
                 }
@@ -2307,7 +2333,8 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         
         if( atPos != NULL ) {
             // skip @ symbol in token and parse int
-            m.sequenceNumber = atoi( &( tokens->getElementDirect( 3 )[1] ) );
+            m.sequenceNumber = 
+                stringToInt( &( tokens->getElementDirect( 3 )[1] ) );
             }
 
         int numTokens = tokens->size();
@@ -2322,12 +2349,12 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
             char *yToken = tokens->getElementDirect( offset + e * 2 + 1 );
             
             // profiler found sscanf is a bottleneck here
-            // try atoi instead
+            // try atoi (stringToInt) instead
             //sscanf( xToken, "%d", &( m.extraPos[e].x ) );
             //sscanf( yToken, "%d", &( m.extraPos[e].y ) );
 
-            m.extraPos[e].x = atoi( xToken );
-            m.extraPos[e].y = atoi( yToken );
+            m.extraPos[e].x = stringToInt( xToken );
+            m.extraPos[e].y = stringToInt( yToken );
             
             
             if( abs( m.extraPos[e].x ) > pathDeltaMax ||
@@ -4599,6 +4626,12 @@ int sendMapChunkMessage( LiveObject *inO,
             // remove top of bar
             horBarH = lastY - yd;
             }
+
+        if( horBarH > chunkDimensionY ) {
+            // don't allow bar to grow too big if we have a huge jump
+            // like from VOG mode
+            horBarH = chunkDimensionY;
+            }
         
 
         int vertBarStartX = fullStartX;
@@ -4615,6 +4648,14 @@ int sendMapChunkMessage( LiveObject *inO,
             // remove right part of bar
             vertBarW = lastX - xd;
             }
+        
+        
+        if( vertBarW > chunkDimensionX ) {
+            // don't allow bar to grow too big if we have a huge jump
+            // like from VOG mode
+            vertBarW = chunkDimensionX;
+            }
+        
         
         // now trim vert bar where it intersects with hor bar
         if( yd > lastY ) {
@@ -5011,7 +5052,12 @@ char findDropSpot( LiveObject *inDroppingPlayer,
                 }
             }
         }
-
+    else {
+        // target biome not bad for player
+        // allow dropping in ANY good biome for player
+        targetFloor = -1;
+        targetBiome = -1;
+        }
     
     
     char found = false;
@@ -5131,9 +5177,16 @@ char findDropSpot( LiveObject *inDroppingPlayer,
                                                 
 
 
-                if( isMapSpotEmpty( x, y ) && 
-                    ( pass > 1 || getMapBiome( x, y ) == targetBiome ) &&
-                    ( pass > 0 || getMapFloor( x, y ) == targetFloor ) ) {
+                if( isMapSpotEmpty( x, y ) 
+                    && 
+                    ( pass > 1 || 
+                      ( targetBiome == -1 && 
+                        isBiomeAllowedForPlayer( inDroppingPlayer, x, y ) )
+                      || getMapBiome( x, y ) == targetBiome ) 
+                    &&
+                    ( pass > 0 || 
+                      targetFloor == -1 || 
+                      getMapFloor( x, y ) == targetFloor ) ) {
                     
                     found = true;
                     if( barrierOn ) {    
@@ -5446,40 +5499,11 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             }
         }
     else if( isBabyShortcut ) {
-        LiveObject *youngestOther = NULL;
-        double youngestAge = 9999;
-        
-        for( int i=0; i<players.size(); i++ ) {
-            LiveObject *otherPlayer = players.getElement( i );
-            
-            if( otherPlayer == inPlayer ) {
-                // allow error players her, to access recently-dead babies
-                continue;
-                }
-            if( otherPlayer->parentID == inPlayer->id ) {
-                double age = computeAge( otherPlayer );
-                
-                if( age < youngestAge ) {
-                    youngestAge = age;
-                    youngestOther = otherPlayer;
-                    }
-                }
-            }
+        // this case is more robust (below) by simply using the lastBabyEmail
+        // in all cases
 
-
-        if( youngestOther != NULL ) {
-            babyCursePlayer = youngestOther;
-            
-            if( cursedName != NULL ) {
-                delete [] cursedName;
-                cursedName = NULL;
-                }
-
-            if( babyCursePlayer->name != NULL ) {
-                // allow name-based curse to go through, if possible
-                cursedName = stringDuplicate( babyCursePlayer->name );
-                }
-            }
+        // That way there's no confusing about who MY BABY is (always the
+        // most-recent baby).
         }
 
 
@@ -5792,6 +5816,9 @@ static void sendToolExpertMessage( LiveObject *inPlayer,
 
 
 
+void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
+                 SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout );
+
 
 
 void makePlayerBiomeSick( LiveObject *nextPlayer, 
@@ -5844,6 +5871,13 @@ static void holdingSomethingNew( LiveObject *inPlayer,
                 inPlayer->yd );
         
         if( sicknessObjectID != -1 ) {
+
+            if( inPlayer->holdingID != 0 ) {
+                GridPos p = getPlayerPos( inPlayer );
+                handleDrop( 
+                    p.x, p.y, inPlayer, NULL );
+                }
+            
             makePlayerBiomeSick( inPlayer, 
                                  sicknessObjectID );
             }
@@ -6408,6 +6442,34 @@ static char *getUpdateLineFromRecord(
 
 
 
+static int getEatBonus( LiveObject *inPlayer ) {
+    int generation = inPlayer->parentChainLength - 1;
+    
+    int b = lrint( 
+        ( eatBonus - eatBonusFloor ) * 
+        pow( 0.5, 
+             generation / eatBonusHalfLife )
+        + eatBonusFloor );
+    
+    return b;
+    }
+
+
+
+static double getFoodScaleFactor( LiveObject *inPlayer ) {
+    int generation = inPlayer->parentChainLength - 1;
+    
+    double f = ( foodScaleFactor - foodScaleFactorFloor ) * 
+        pow( 0.5, 
+             generation / foodScaleFactorHalfLife )
+        + foodScaleFactorFloor;
+    
+    return f;
+    }
+
+
+
+
 static char isYummy( LiveObject *inPlayer, int inObjectID ) {
     ObjectRecord *o = getObject( inObjectID );
     
@@ -6478,9 +6540,22 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
         // the global scale of other foods.
         
         inPlayer->yummyBonusStore += 
-            lrint( foodScaleFactor * currentBonus );
+            ceil( getFoodScaleFactor( inPlayer ) * currentBonus );
         }
     
+    }
+
+
+
+
+// returns -1 if not in a tool set
+int getToolSet( int inToolID ) {
+    ObjectRecord *toolO = getObject( inToolID );
+    
+    // is it a marked tool?
+    int toolSet = toolO->toolSetIndex;
+    
+    return toolSet;
     }
 
 
@@ -7321,6 +7396,10 @@ static void makeOffspringSayMarker( int inPlayerID, int inIDToSkip ) {
 
 
 
+int getUnusedLeadershipColor();
+
+
+
 static double killDelayTime = 12.0;
 
 static double posseDelayReductionFactor = 2.0;
@@ -7350,9 +7429,11 @@ static char nextLogInTwin = false;
 static int firstTwinID = -1;
 
 
+// inAllowOrForceReconnect is 0 for forbidden reconnect, 1 to allow, 
+// 2 to require
 // returns ID of new player,
 // or -1 if this player reconnected to an existing ID
-int processLoggedInPlayer( char inAllowReconnect,
+int processLoggedInPlayer( int inAllowOrForceReconnect,
                            Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
@@ -7423,7 +7504,7 @@ int processLoggedInPlayer( char inAllowReconnect,
         if( ! o->error && ! o->connected &&
             strcmp( o->email, inEmail ) == 0 ) {
 
-            if( ! inAllowReconnect ) {
+            if( ! inAllowOrForceReconnect ) {
                 // trigger an error for them, so they die and are removed
                 o->error = true;
                 o->errorCauseString = "Reconnected as twin";
@@ -7449,6 +7530,8 @@ int processLoggedInPlayer( char inAllowReconnect,
             o->firstMapSent = false;
             o->firstMessageSent = false;
             o->inFlight = false;
+
+            o->foodUpdate = true;
             
             o->connected = true;
             
@@ -7481,6 +7564,38 @@ int processLoggedInPlayer( char inAllowReconnect,
         }
     
 
+    if( inAllowOrForceReconnect == 2 ) {
+        // wanted a reconnect, but got here and found no life for this player
+        
+        AppLog::infoF( 
+            "Player (%s) has attempted RLOGIN reconnect, but no life found.",
+            inEmail );
+
+        
+        refundLifeToken( inEmail );
+        
+
+        // send a REJECTED message here
+        const char *message = "REJECTED\n#";
+        inSock->send( (unsigned char*)message,
+                      strlen( message ), 
+                      false, false );
+
+        // then shut and clean up connection immediately
+
+        // this may result in the REJECTED message not getting through
+
+        // but we don't have other infrastructure in the code to handle
+        // this case.
+
+        delete [] inEmail;
+        delete inSock;
+        delete inSockBuffer;
+
+        return -1;
+        }
+    
+
 
     // a baby needs to be born
     
@@ -7496,6 +7611,12 @@ int processLoggedInPlayer( char inAllowReconnect,
     foodScaleFactor = 
         SettingsManager::getFloatSetting( "foodScaleFactor", 1.0 );
 
+    foodScaleFactorFloor = 
+        SettingsManager::getFloatSetting( "foodScaleFactorFloor", 0.5 );
+    foodScaleFactorHalfLife = 
+        SettingsManager::getFloatSetting( "foodScaleFactorHalfLife", 50 );
+
+
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
 
@@ -7505,6 +7626,10 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     eatBonus = 
         SettingsManager::getIntSetting( "eatBonus", 0 );
+    eatBonusFloor = 
+        SettingsManager::getIntSetting( "eatBonusFloor", 0 );
+    eatBonusHalfLife = 
+        SettingsManager::getFloatSetting( "eatBonusHalfLife", 50 );
 
     minActivePlayersForLanguages =
         SettingsManager::getIntSetting( "minActivePlayersForLanguages", 15 );
@@ -7516,11 +7641,8 @@ int processLoggedInPlayer( char inAllowReconnect,
         posseSizeSpeedMultipliers[i] = multiplierList->getElementDirect( i );
         }
     delete multiplierList;
-    
 
 
-    foodScaleFactor = 
-        SettingsManager::getFloatSetting( "foodScaleFactor", 1.0 );
     
     
     killDelayTime = 
@@ -7558,6 +7680,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.email = inEmail;
     newObject.origEmail = NULL;
     
+    newObject.lastSidsBabyEmail = NULL;
+
     newObject.lastBabyEmail = NULL;
 
     newObject.id = nextID;
@@ -7695,6 +7819,15 @@ int processLoggedInPlayer( char inAllowReconnect,
                 continue;
                 }
             
+            if( player->lastSidsBabyEmail != NULL &&
+                strcmp( player->lastSidsBabyEmail,
+                        newObject.email ) == 0 ) {
+                // this baby JUST committed SIDS for this mother
+                // skip her
+                // (don't ever send SIDS baby to same mother twice in a row)
+                continue;
+                }
+
             if( isFertileAge( player ) ) {
                 numOfAge ++;
                 
@@ -8788,6 +8921,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.gotPartOfThisFrame = false;
     
     newObject.isNew = true;
+    newObject.isNewCursed = false;
     newObject.firstMessageSent = false;
     newObject.inFlight = false;
     
@@ -8866,6 +9000,11 @@ int processLoggedInPlayer( char inAllowReconnect,
             // boostrap the whole thing by having leaderless mothers
             // get their children as automatic followers.
             newObject.followingID = parent->id;
+            
+            // set mother's leadership color
+            if( parent->leadingColorIndex == -1 ) {
+                parent->leadingColorIndex = getUnusedLeadershipColor();
+                }
             }
 
 
@@ -9139,7 +9278,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             newObject.ancestorLifeStartTimeSeconds->push_back(
                 otherPlayer->lifeStartTimeSeconds );
                         
-            break;
+            continue;
             }
         }
     
@@ -11918,6 +12057,11 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
         if( minPosseSizeForKill > minPosseCap ) {
             minPosseSizeForKill = minPosseCap;
             }
+
+        if( isNoWaitWeapon( inKiller->holdingID ) ) {
+            // no posse required for non-deadly weapons (snowballs, tattoos)
+            minPosseSizeForKill = 1;
+            }
         
         char joiningExisting = false;
         
@@ -13153,10 +13297,79 @@ static void sendLearnedToolMessage( LiveObject *inPlayer,
     
     sendMessageToPlayer( inPlayer, lrMessage, strlen( lrMessage ) );
     delete [] lrMessage;
+
+
+    char *tsMessage = autoSprintf( "TS\n%d %d\n#", 
+                                   inPlayer->learnedTools.size(),
+                                   inPlayer->numToolSlots );
+    
+    sendMessageToPlayer( inPlayer, tsMessage, strlen( tsMessage ) );
+    delete [] tsMessage;
     }
 
 
+
+static char *getToolSetDescription( ObjectRecord *inToolO ) {
+    const char *article = "THE ";
+        
+    char *des = stringToUpperCase( inToolO->description );
+
     
+    
+    // if it's a group of tools, like +toolSterile_Technique
+    // show the group name instead of the individual tool
+    
+    char *toolPos = strstr( des, "+TOOL" );
+    
+    char isToolGroup = false;
+    
+    if( toolPos != NULL ) {
+        char *tagPos = &( toolPos[5] );
+        
+        // use dummies can have # immediately after +TOOL tag
+        if( tagPos[0] != '\0' && tagPos[0] != ' ' && tagPos[0] != '#' ) {
+            int tagLen = strlen( tagPos );
+            for( int i=0; i<tagLen; i++ ) {
+                if( tagPos[i] == ' ' || tagPos[i] == '#' ) {
+                    tagPos[i] = '\0';
+                    break;
+                    }
+                }
+            // now replace any _ with ' '
+            tagLen = strlen( tagPos );
+            for( int i=0; i<tagLen; i++ ) {
+                if( tagPos[i] == '_' ) {
+                    tagPos[i] = ' ';
+                    }
+                }
+            char *newDes = stringDuplicate( tagPos );
+            delete [] des;
+            des = newDes;
+            isToolGroup = true;
+            }
+        }
+    
+        
+    stripDescriptionComment( des );
+    
+    int desLen = strlen( des );
+    if( isToolGroup ||
+        ( desLen > 0 && des[ desLen - 1 ] == 'S' ) ||
+        ( desLen > 2 && des[ desLen - 1 ] == 'G'
+          && des[ desLen - 2 ] == 'N' 
+          && des[ desLen - 3 ] == 'I' ) ) {
+        // use THE for singular tools like YOU LEARNED THE AXE
+        // no article for plural tools like YOU LEARNED KNITTING NEEDLES
+        // no article for activities (usually tool groups) like SEWING
+        article = "";
+        }
+    
+    char *finalDes = autoSprintf( "%s%s", article, des );
+    delete [] des;
+    
+    return finalDes;
+    }
+
     
 
 
@@ -13169,6 +13382,47 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
     if( toolSet != -1 &&
         inPlayer->learnedTools.getElementIndex( toolSet ) == -1 &&
         inPlayer->numToolSlots > inPlayer->learnedTools.size() ) {
+
+        
+        
+
+        if( inPlayer->partiallyLearnedTools.getElementIndex( toolSet ) == 
+            -1  ) {
+        
+            int numLeft =
+                inPlayer->numToolSlots - inPlayer->learnedTools.size();
+            
+            // they can try this tool once for free, without learning it
+            inPlayer->partiallyLearnedTools.push_back( toolSet );
+            
+            char *des = getToolSetDescription( toolO );
+
+            char *message;
+            if( numLeft > 1 ) {
+                message = autoSprintf( 
+                    "YOU ALMOST LEARNED %s.**"
+                    "REPEAT THAT ACTION TO SPEND ONE YOUR %d "
+                    "REMAINING TOOL SLOTS.", 
+                    des,
+                    numLeft );
+                }
+            else {
+                message = autoSprintf( 
+                    "YOU ALMOST LEARNED %s.**"
+                    "REPEAT THAT ACTION TO SPEND YOUR LAST "
+                    "REMAINING TOOL SLOT.", 
+                    des );
+                }
+            sendGlobalMessage( message, inPlayer );
+
+            delete [] message;
+            delete [] des;
+
+            return true;
+            }
+        
+
+
         
         inPlayer->learnedTools.push_back( toolSet );
         
@@ -13179,71 +13433,24 @@ static char learnTool( LiveObject *inPlayer, int inToolID ) {
         
         
         // now send DING message
-        const char *article = "THE ";
+        char *des = getToolSetDescription( toolO );
         
-        char *des = stringToUpperCase( toolO->description );
-
-
-        
-        // if it's a group of tools, like +toolSterile_Technique
-        // show the group name instead of the individual tool
-        
-        char *toolPos = strstr( des, "+TOOL" );
-        
-        if( toolPos != NULL ) {
-            char *tagPos = &( toolPos[5] );
-            
-            // use dummies can have # immediately after +TOOL tag
-            if( tagPos[0] != '\0' && tagPos[0] != ' ' && tagPos[0] != '#' ) {
-                int tagLen = strlen( tagPos );
-                for( int i=0; i<tagLen; i++ ) {
-                    if( tagPos[i] == ' ' || tagPos[i] == '#' ) {
-                        tagPos[i] = '\0';
-                        break;
-                        }
-                    }
-                // now replace any _ with ' '
-                tagLen = strlen( tagPos );
-                for( int i=0; i<tagLen; i++ ) {
-                    if( tagPos[i] == '_' ) {
-                        tagPos[i] = ' ';
-                        }
-                    }
-                char *newDes = stringDuplicate( tagPos );
-                delete [] des;
-                des = newDes;
-                }
-            }
-        
-        
-        stripDescriptionComment( des );
-
-        int desLen = strlen( des );
-        if( ( desLen > 0 && des[ desLen - 1 ] == 'S' ) ||
-            ( desLen > 2 && des[ desLen - 1 ] == 'G'
-              && des[ desLen - 2 ] == 'N' 
-              && des[ desLen - 3 ] == 'I' ) ) {
-            // use THE for singular tools like YOU LEARNED THE AXE
-            // no article for plural tools like YOU LEARNED KNITTING NEEDLES
-            // no article for activities (usually tool groups) like SEWING
-            article = "";
-            }
 
         char *message;
         
         int numLeft = inPlayer->numToolSlots - inPlayer->learnedTools.size();
         
         if( numLeft > 0 ) {
-            message = autoSprintf( "YOU LEARNED %s%s.**"
+            message = autoSprintf( "YOU LEARNED %s.**"
                                    "%d OF %d TOOL SLOTS ARE LEFT.", 
-                                   article, des,
+                                   des,
                                    numLeft,
                                    inPlayer->numToolSlots );
             }
         else {
-            message = autoSprintf( "YOU LEARNED %s%s.**"
+            message = autoSprintf( "YOU LEARNED %s.**"
                                    "ALL OF YOUR TOOL SLOTS HAVE BEEN USED.", 
-                                   article, des );            
+                                   des );            
             }
         
         sendGlobalMessage( message, inPlayer );
@@ -13813,9 +14020,7 @@ static LiveObject *getClosestFollower( LiveObject *inLeader ) {
 static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
                             char inInfiniteRange = false ) {
     if( inTargetID > 0 && 
-        nextPlayer->holdingID > 0 &&
-        canPlayerUseOrLearnTool( nextPlayer,
-                                 nextPlayer->holdingID ) ) {
+        nextPlayer->holdingID > 0 ) {
                             
         ObjectRecord *heldObj = 
             getObject( nextPlayer->holdingID );
@@ -13855,8 +14060,11 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
                     }
                                     
                 if( ! weaponBlocked  &&
-                    ! isAlreadyInKillState( nextPlayer ) ) {
+                    ! isAlreadyInKillState( nextPlayer ) &&
+                    canPlayerUseOrLearnTool( nextPlayer,
+                                             nextPlayer->holdingID ) ) {
                     // they aren't already in one
+                    // and they can learn the weapon they're holding
                                         
                     removeAnyKillState( nextPlayer );
                                         
@@ -13912,7 +14120,7 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
 
 
 
-static int getUnusedLeadershipColor() {
+int getUnusedLeadershipColor() {
     // look for next unused
 
     int usedCounts[ NUM_BADGE_COLORS ];
@@ -14343,18 +14551,12 @@ int main() {
     maxFoodDecrementSeconds = 
         SettingsManager::getFloatSetting( "maxFoodDecrementSeconds", 20 );
 
-    foodScaleFactor = 
-        SettingsManager::getFloatSetting( "foodScaleFactor", 1.0 );
-
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
 
     indoorFoodDecrementSecondsBonus = SettingsManager::getFloatSetting( 
         "indoorFoodDecrementSecondsBonus", 20 );
 
-
-    eatBonus = 
-        SettingsManager::getIntSetting( "eatBonus", 0 );
 
 
     secondsPerYear = 
@@ -15126,6 +15328,7 @@ int main() {
 
                 newConnection.sequenceNumber = nextSequenceNumber;
 
+                newConnection.reconnectOnly = false;
                 
 
                 char *secretString = 
@@ -15470,7 +15673,7 @@ int main() {
                             }
                                 
                         processLoggedInPlayer( 
-                            true,
+                            nextConnection->reconnectOnly ? 2 : true,
                             nextConnection->sock,
                             nextConnection->sockBuffer,
                             nextConnection->email,
@@ -15524,6 +15727,10 @@ int main() {
                     
                     
                     if( strstr( message, "LOGIN" ) != NULL ) {
+                        
+                        if( strstr( message, "RLOGIN" ) != NULL ) {
+                            nextConnection->reconnectOnly = true;
+                            }
                         
                         SimpleVector<char *> *tokens =
                             tokenizeString( message );
@@ -15705,7 +15912,8 @@ int main() {
                                             nextConnection->twinCode = NULL;
                                             }
                                         processLoggedInPlayer(
-                                            true,
+                                            nextConnection->reconnectOnly ? 
+                                            2 : true,
                                             nextConnection->sock,
                                             nextConnection->sockBuffer,
                                             nextConnection->email,
@@ -16218,6 +16426,11 @@ int main() {
                 //Thread::staticSleep( 
                 //    testRandSource.getRandomBoundedInt( 0, 450 ) );
                 
+                
+                // GOTO below jumps here if we need to reparse the message
+                // as a different type
+                RESTART_MESSAGE_ACTION:
+                
                 if( m.type == BUG ) {
                     int allow = 
                         SettingsManager::getIntSetting( "allowBugReports", 0 );
@@ -16582,6 +16795,29 @@ int main() {
                             // mother can have another baby right away
                             parentO->birthCoolDown = 0;
                             }
+
+                        if( parentO->lastSidsBabyEmail != NULL ) {
+                            delete [] parentO->lastSidsBabyEmail;
+                            parentO->lastSidsBabyEmail = NULL;
+                            }
+                        
+                        // walk through all other players and clear THIS
+                        // player from their SIDS mememory
+                        // we only track the most recent parent who had this
+                        // baby SIDS
+                        for( int p=0; p<players.size(); p++ ) {
+                            LiveObject *parent = players.getElement( p );
+                            
+                            if( parent->lastSidsBabyEmail != NULL &&
+                                strcmp( parent->lastSidsBabyEmail,
+                                        nextPlayer->email ) == 0 ) {
+                                delete [] parent->lastSidsBabyEmail;
+                                parent->lastSidsBabyEmail = NULL;
+                                }
+                            }
+                        
+                        parentO->lastSidsBabyEmail = 
+                            stringDuplicate( nextPlayer->email );
                         
                         
                         int holdingAdultID = nextPlayer->heldByOtherID;
@@ -18538,6 +18774,36 @@ int main() {
                                         
                                         insertion = true;
                                         }
+                                    
+                                    // watch out for transformation
+                                    // from one tool to another
+                                    // (sterilizing knife shouldn't learn
+                                    //  knife, for example)
+                                    char transformation = false;
+                                    if( r->newActor != nextPlayer->holdingID ) {
+                                        
+                                        int newActorToolSet =
+                                            getToolSet( r->newActor );
+                                        int heldToolSet =
+                                            getToolSet( nextPlayer->holdingID );
+                                        
+                                        if( newActorToolSet != -1 &&
+                                            newActorToolSet != heldToolSet ) {
+                                            transformation = true;
+                                            }
+                                        }
+                                    
+                                    // watch out for case where target is
+                                    // NOT transformed
+                                    // In that case, the tool isn't actually
+                                    // being used (for example, recycling a
+                                    // sword in a roller)
+                                    char nonTransformTarget = false;
+                                    
+                                    if( target == r->newTarget ) {
+                                        nonTransformTarget = true;
+                                        }
+                                    
 
                                     // also watch out for failed
                                     // tool use due to hungry work
@@ -18555,6 +18821,8 @@ int main() {
 
                                     if( ! insertion &&
                                         ! hungBlocked &&
+                                        ! transformation &&
+                                        ! nonTransformTarget && 
                                         ! canPlayerUseOrLearnTool( 
                                             nextPlayer,
                                             nextPlayer->holdingID ) ) {
@@ -19049,13 +19317,13 @@ int main() {
                                         nextPlayer->foodStore;
                                     
                                     nextPlayer->foodStore += 
-                                        lrint( foodScaleFactor *
-                                               targetObj->foodValue );
+                                        ceil( getFoodScaleFactor( nextPlayer ) *
+                                              targetObj->foodValue );
                                     
                                     updateYum( nextPlayer, targetObj->id );
                                     
                                     
-                                    int bonus = eatBonus;
+                                    int bonus = getEatBonus( nextPlayer );
                                     
                                     if( targetObj->alcohol > 0 ) {
                                         bonus = 0;
@@ -19714,8 +19982,20 @@ int main() {
                                         }
                                     }
                                 
+                                char canDo = true;
+                                
 
-                                if( oldEnough && healTrans != NULL ) {
+                                if( nextPlayer->holdingID > 0 &&
+                                    ! canPlayerUseOrLearnTool( 
+                                                nextPlayer,
+                                                nextPlayer->holdingID ) ) {
+                                    // player can't learn this tool
+                                    canDo = false;
+                                    }
+                                
+
+
+                                if( canDo && oldEnough && healTrans != NULL ) {
                                     targetPlayer->holdingID =
                                         healTrans->newTarget;
                                     holdingSomethingNew( targetPlayer );
@@ -19911,13 +20191,14 @@ int main() {
                                         targetPlayer->foodStore;
                                     
                                     targetPlayer->foodStore += 
-                                        lrint( foodScaleFactor * 
-                                               obj->foodValue );
+                                        ceil( 
+                                            getFoodScaleFactor( targetPlayer )* 
+                                            obj->foodValue );
                                     
                                     updateYum( targetPlayer, obj->id,
                                                targetPlayer == nextPlayer );
 
-                                    int bonus = eatBonus;
+                                    int bonus = getEatBonus( targetPlayer );
                                     
                                     if( obj->alcohol > 0 ) {
                                         bonus = 0;
@@ -20508,49 +20789,12 @@ int main() {
                                                  == 0 ) {
                                             // try treating it like
                                             // a USE action
-                                            
-                                            TransRecord *useTrans =
-                                                getPTrans( 
-                                                    nextPlayer->holdingID,
-                                                    target );
-                                            // handle simple case
-                                            // stacking containers
-                                            // client sends DROP for this
-                                            if( useTrans != NULL &&
-                                                useTrans->newActor == 0 ) {
-                                                
-                                                char canUse = true;
-                                                
-                                                ObjectRecord *newTargetObj = 
-                                                    NULL;
-                                                
-                                                if( useTrans->newTarget > 0 ) {
-                                                    newTargetObj =
-                                                        getObject(
-                                                            useTrans->
-                                                            newTarget );
-                                                    }
-
-                                                if( newTargetObj != NULL &&
-                                                    newTargetObj->
-                                                    isBiomeLimited &&
-                                                    ! canBuildInBiome( 
-                                                        newTargetObj,
-                                                        getMapBiome( m.x,
-                                                                     m.y ) ) ) {
-                                                    canUse = false;
-                                                    }
-
-                                                if( canUse ) {
-                                                    handleHoldingChange(
-                                                        nextPlayer,
-                                                        useTrans->newActor );
-                                                    
-                                                    setMapObject( 
-                                                        m.x, m.y,
-                                                        useTrans->newTarget );
-                                                    }
-                                                }
+                                            m.type = USE;
+                                            m.id = -1;
+                                            m.c = -1;
+                                            playerIndicesToSendUpdatesAbout.
+                                                deleteElementEqualTo( i );
+                                            goto RESTART_MESSAGE_ACTION;
                                             }
                                         else if( canDrop && 
                                                  ! canGoIn &&
@@ -21022,38 +21266,48 @@ int main() {
                 else if( usePersonalCurses ) {
                     // send a unique CU message to each player
                     // who has this player cursed
-                    for( int p=0; p<players.size(); p++ ) {
-                        LiveObject *otherPlayer = players.getElement( p );
-                        
-                        if( otherPlayer == nextPlayer ) {
-                            continue;
-                            }
-                        if( otherPlayer->error ||
-                            ! otherPlayer->connected ) {
-                            continue;
-                            }
-                        
-                        if( isCursed( otherPlayer->email, 
-                                      nextPlayer->email ) ) {
-                            char *message = autoSprintf( 
-                                "CU\n%d 1 %s_%s\n#",
-                                nextPlayer->id,
-                                getCurseWord( otherPlayer->email,
-                                              nextPlayer->email, 0 ),
-                                getCurseWord( otherPlayer->email,
-                                              nextPlayer->email, 1 ) );
-                            
-                            sendMessageToPlayer( otherPlayer,
-                                                 message, strlen( message ) );
-                            delete [] message;
-                            }
-                        }
+                    
+                    // but wait until next step, because other players
+                    // haven't heard initial PU about this player yet
+                    nextPlayer->isNewCursed = true;
                     }
 
                 nextPlayer->isNew = false;
                 
                 // force this PU to be sent to everyone
                 nextPlayer->updateGlobal = true;
+                }
+            else if( nextPlayer->isNewCursed ) {
+                // update sent about this new player
+                // time to send personal curse status (b/c other players
+                // know about this player now)
+                for( int p=0; p<players.size(); p++ ) {
+                    LiveObject *otherPlayer = players.getElement( p );
+                    
+                    if( otherPlayer == nextPlayer ) {
+                        continue;
+                        }
+                    if( otherPlayer->error ||
+                        ! otherPlayer->connected ) {
+                        continue;
+                        }
+                    
+                    if( isCursed( otherPlayer->email, 
+                                  nextPlayer->email ) ) {
+                        char *message = autoSprintf( 
+                            "CU\n%d 1 %s_%s\n#",
+                            nextPlayer->id,
+                            getCurseWord( otherPlayer->email,
+                                          nextPlayer->email, 0 ),
+                            getCurseWord( otherPlayer->email,
+                                          nextPlayer->email, 1 ) );
+                        
+                        sendMessageToPlayer( otherPlayer,
+                                             message, strlen( message ) );
+                        delete [] message;
+                        }
+                    }
+                nextPlayer->isNewCursed = false;
                 }
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
                 
@@ -21684,7 +21938,9 @@ int main() {
                         
                         
                         if( newObj != NULL && newObj->permanent &&
-                            oldObj != NULL && ! oldObj->permanent ) {
+                            oldObj != NULL && ! oldObj->permanent &&
+                            ! nextPlayer->holdingWound &&
+                            ! nextPlayer->holdingBiomeSickness ) {
                             // object decayed into a permanent
                             // force drop
                              GridPos dropPos = 
@@ -25385,6 +25641,9 @@ int main() {
                     }
                 if( nextPlayer->lastBabyEmail != NULL ) {
                     delete [] nextPlayer->lastBabyEmail;
+                    }
+                if( nextPlayer->lastSidsBabyEmail != NULL ) {
+                    delete [] nextPlayer->lastSidsBabyEmail;
                     }
 
                 if( nextPlayer->murderPerpEmail != NULL ) {

@@ -5402,6 +5402,15 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                         
                                         continue;
                                         }
+                                    if( avoidFloor ) {
+                                        int floorID = 
+                                            getMapFloor( testX, testY );
+                        
+                                        if( floorID > 0 ) {
+                                            // blocked by floor
+                                            continue;
+                                            }
+                                        }
 
                                     possibleX[ numPossibleDirs ] = testX;
                                     possibleY[ numPossibleDirs ] = testY;
@@ -6224,6 +6233,21 @@ unsigned char *getChunkMessage( int inStartX, int inStartY,
 
     int endY = inStartY + inHeight;
     int endX = inStartX + inWidth;
+
+    if( endY < inStartY ) {
+        // wrapped around in integer space
+        // pull inStartY back from edge
+        inStartY -= inHeight;
+        endY = inStartY + inHeight;
+        }
+    if( endX < inStartX ) {
+        // wrapped around in integer space
+        // pull inStartY back from edge
+        inStartX -= inWidth;
+        endX = inStartX + inWidth;
+        }
+    
+
 
     timeSec_t curTime = MAP_TIMESEC;
 
