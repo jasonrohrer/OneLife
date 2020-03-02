@@ -18789,6 +18789,17 @@ int main() {
                                         nonTransformTarget = true;
                                         }
                                     
+                                    // EXCEPT in case where new actor
+                                    // stuck in hand
+                                    // (for fishing case, which doesn't
+                                    //  transform water hole)
+                                    if( nonTransformTarget &&
+                                        r->newActor > 0 &&
+                                        getObject( r->newActor )->permanent ) {
+                                        
+                                        nonTransformTarget = false;
+                                        }
+                                    
 
                                     // also watch out for failed
                                     // tool use due to hungry work

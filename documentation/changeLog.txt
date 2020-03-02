@@ -10,6 +10,10 @@ Server Fixes
 --Boiling the frog:  eatBonus now starts at 3 (was 4) for Eve and decays to 2
   (was 3) with a half life of 4 generations.
 
+--If target not transformed, tool still used if newActor stuck in hand.  Fixes
+  case of tool use for net and fishing pole, which don't transform target.
+  Fixes #553
+
 
 
 Version 312   2020-February-28
