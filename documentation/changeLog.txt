@@ -14,6 +14,12 @@ Server Fixes
   case of tool use for net and fishing pole, which don't transform target.
   Fixes #553
 
+--Touching a ground tool that you don't know how to use, or executing your free
+  trial use of it, show (+) above heads of nearby experts (before, you actually
+  had to be out of tool slots to see other experts for an unlearned ground
+  tool).  Part of jasonrohrer/OneLifeData7#624
+
+
 
 
 Version 312   2020-February-28

@@ -18876,6 +18876,26 @@ int main() {
                                         sendToolExpertMessage( nextPlayer,
                                                                target );
                                         }
+                                    else if( couldBeTool &&
+                                             ! canPlayerUseTool( nextPlayer,
+                                                                 target ) ) {
+                                        // maybe this is their first trial
+                                        // use of the ground tool
+                                        // show them who else can use it
+                                        sendToolExpertMessage( nextPlayer,
+                                                               target );
+                                        }
+                                    }
+                                else if( ! blockedTool && 
+                                         target > 0 &&
+                                         r == NULL ) {
+                                    // no trans applies
+                                    if( ! canPlayerUseTool( nextPlayer, 
+                                                            target ) ) {
+                                        // tell them who can use it
+                                        sendToolExpertMessage( nextPlayer,
+                                                               target );
+                                        }
                                     }
                                 
                                 
@@ -19428,7 +19448,25 @@ int main() {
                                             sendToolExpertMessage( nextPlayer,
                                                                    floorID );
                                             }
+                                        else if( 
+                                            ! canPlayerUseTool( nextPlayer,
+                                                                floorID ) ) {
+                                            // maybe this is their first trial
+                                            // use of the floor tool
+                                            // show them who else can use it
+                                            sendToolExpertMessage( nextPlayer,
+                                                                   floorID );
+                                            }
                                         }
+                                    else {
+                                        // no trans applies
+                                        if( ! canPlayerUseTool( nextPlayer, 
+                                                                floorID ) ) {
+                                            // tell them who can use it
+                                            sendToolExpertMessage( nextPlayer,
+                                                                   floorID );
+                                        }
+                                    }
 
 
                                     if( r == NULL && ! blockedTool ) {
