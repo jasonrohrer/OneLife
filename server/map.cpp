@@ -1392,17 +1392,6 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
         //        inX, inY, getXYRandom( 2087 + inX, 793 + inY ) );
        
         setXYRandomSeed( 348763 );
-       
-	    if (biomes[pickedBiome] != 7){
-			if( getXYRandom( inX, inY ) >
-				.5 + secondPlaceReduction * secondPlaceGap ) {
-		   
-				// note that lastCheckedBiome is NOT changed, so ground
-				// shows the true, first-place biome, but object placement
-				// follows the second place biome
-				pickedBiome = secondPlace;
-				}
-		}
  
         int numObjects = naturalMapIDs[pickedBiome].size();
  
@@ -1481,16 +1470,7 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
             = oldSpecialChance;
  
         totalChanceWeight[pickedBiome] = oldTotalChanceWeight;
-		
-		if (biomes[pickedBiome] == 7){
-			
-			totalChanceWeight[pickedBiome] = 10000;
-			int returnID = naturalMapIDs[pickedBiome].getElementDirect( i );
 
-			mapCacheInsert( inX, inY, returnID );
-			return returnID;
-			
-		}else{
 			if( i >= 0 ) {
 				int returnID = naturalMapIDs[pickedBiome].getElementDirect( i );
 			   
@@ -1513,7 +1493,7 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
 				mapCacheInsert( inX, inY, 0 );
 				return 0;
 			}
-		}
+            
 	}else {
 		if(biomes[pickedBiome] != 7){
 			mapCacheInsert( inX, inY, 0 );
