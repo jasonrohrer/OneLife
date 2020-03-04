@@ -19,6 +19,8 @@ Server Fixes
   had to be out of tool slots to see other experts for an unlearned ground
   tool).  Part of jasonrohrer/OneLifeData7#624
 
+--Boiling the frog:  eatBonus now starts at 2 (was 3) for Eve and decays to 1
+  (was 2) with a half life of 4 generations.
 
 
 
