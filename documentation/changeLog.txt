@@ -3,6 +3,18 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 314  ???
+
+--Container objects that have no sprites in front of contained (like table) now
+  use the lowest-Y sprite in each contained object as the object's center point
+  (other containers use the center of the widest sprite).  This allows objects
+  to "sit" on the table, centered on their visual bases.  Turkeys and other
+  larger plated objects used to overlap weirdly with other plated objects on
+  tables.
+
+
+
+
 Server Fixes
 
 --Fixed server crash in new lastSidsBabyEmail code.
