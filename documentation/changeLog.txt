@@ -34,6 +34,10 @@ Server Fixes
 --Boiling the frog:  eatBonus now starts at 2 (was 3) for Eve and decays to 1
   (was 2) with a half life of 4 generations.
 
+--Support for +contTAG fine-grained containment restrictions.  This allows us
+  to limit certain items (like plates of food) to being contained only in
+  certain containers (like on a table).  Part of jasonrohrer/OneLifeData7#650
+
 
 
 Version 312   2020-February-28
