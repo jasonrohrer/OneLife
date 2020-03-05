@@ -16,6 +16,8 @@ Version 314  ???
   FAILED, which was confusing).  Also, clearing stale error messages upon
   returning to menu screen.
 
+--Object editor now shows sprite ID for currently selected sprite.
+
 
 
 
