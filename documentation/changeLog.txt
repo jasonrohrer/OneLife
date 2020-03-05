@@ -12,6 +12,10 @@ Version 314  ???
   larger plated objects used to overlap weirdly with other plated objects on
   tables.
 
+--Improved messaging when reconnecting to last life fails (used to say LOGIN
+  FAILED, which was confusing).  Also, clearing stale error messages upon
+  returning to menu screen.
+
 
 
 
