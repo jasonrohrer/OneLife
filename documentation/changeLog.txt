@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 314  ???
+Version 314   2020-March-5
 
 --Container objects that have no sprites in front of contained (like table) now
   use the lowest-Y sprite in each contained object as the object's center point
