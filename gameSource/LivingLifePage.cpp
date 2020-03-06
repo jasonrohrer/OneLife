@@ -1024,7 +1024,13 @@ void LivingLifePage::sendToServerSocket( char *inMessage ) {
             }
         else {
             setWaiting( false );
-            setSignal( "loginFailed" );
+            
+            if( userReconnect ) {
+                setSignal( "reconnectFailed" );
+                }
+            else {
+                setSignal( "loginFailed" );
+                }
             }
         }
     
@@ -12297,7 +12303,13 @@ void LivingLifePage::step() {
             }
         else {
             setWaiting( false );
-            setSignal( "loginFailed" );
+            
+            if( userReconnect ) {
+                setSignal( "reconnectFailed" );
+                }
+            else {
+                setSignal( "loginFailed" );
+                }
             }
         return;
         }
@@ -13758,7 +13770,13 @@ void LivingLifePage::step() {
             mServerSocket = -1;
             
             setWaiting( false );
-            setSignal( "loginFailed" );
+            
+            if( userReconnect ) {
+                setSignal( "reconnectFailed" );
+                }
+            else {
+                setSignal( "loginFailed" );
+                }
             
             delete [] message;
             return;

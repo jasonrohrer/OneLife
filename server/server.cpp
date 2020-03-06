@@ -9751,7 +9751,59 @@ static int getContainerSwapIndex( LiveObject *inPlayer,
     return -1;
     }
 
+
+
+// checks for granular +cont containment limitations
+// assumes that container size limitation and 
+// containable property checked elsewhere
+static char containmentPermitted( int inContainerID, int inContainedID ) {
+    ObjectRecord *containedO = getObject( inContainedID );
     
+    char *contLoc = strstr( containedO->description, "+cont" );
+    
+    if( contLoc == NULL ) {
+        // not a limited containable object
+        return true;
+        }
+    
+    char *limitNameLoc = &( contLoc[5] );
+    
+    if( limitNameLoc[0] != ' ' &&
+        limitNameLoc[0] != '\0' ) {
+
+        // there's something after +cont
+        // scan the whole thing, including +cont
+
+        char tag[100];
+        
+        int numRead = sscanf( contLoc, "%99s", tag );
+        
+        if( numRead == 1 ) {
+            
+            char *locInContainerName =
+                strstr( getObject( inContainerID )->description, tag );
+            
+            if( locInContainerName != NULL ) {
+                // skip to end of tag
+                // and make sure tag isn't a sub-tag of container tag
+                // don't want contained to be +contHot
+                // and contaienr to be +contHotPlates
+                
+                char end = locInContainerName[ strlen( tag ) ];
+                
+                if( end == ' ' ||
+                    end == '\0' ) {
+                    return true;
+                    }
+                }
+            return false;
+            }
+        }
+    
+    // +cont with nothing after it, no limit
+    return true;
+    }
+
         
 
 
@@ -9828,7 +9880,8 @@ static char addHeldToContainer( LiveObject *inPlayer,
     if( isRoom &&
         isContainable( 
             inPlayer->holdingID ) &&
-        containSize <= slotSize ) {
+        containSize <= slotSize &&
+        containmentPermitted( inTargetID, inPlayer->holdingID ) ) {
         
         // add to container
         
@@ -10170,9 +10223,17 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
             getObject( inPlayer->holdingID )->
             containSize;
     
+        char permitted = false;
         
         if( containSize <= slotSize &&
             cObj->numSlots > 0 &&
+            containmentPermitted( cObj->id, inPlayer->holdingID ) ) {
+            permitted = true;
+            }
+        
+        if( containSize <= slotSize &&
+            cObj->numSlots > 0 &&
+            permitted &&
             outCouldHaveGoneIn != NULL ) {
             *outCouldHaveGoneIn = true;
             }
@@ -10180,7 +10241,8 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
         if( ( oldNum < cObj->numSlots
               || ( oldNum == cObj->numSlots && inWillSwap ) )
             &&
-            containSize <= slotSize ) {
+            containSize <= slotSize &&
+            permitted ) {
             // room (or will swap, so we can over-pack it)
             inPlayer->clothingContained[inC].
                 push_back( 
@@ -16796,7 +16858,8 @@ int main() {
                             parentO->birthCoolDown = 0;
                             }
 
-                        if( parentO->lastSidsBabyEmail != NULL ) {
+                        if( parentO != NULL &&
+                            parentO->lastSidsBabyEmail != NULL ) {
                             delete [] parentO->lastSidsBabyEmail;
                             parentO->lastSidsBabyEmail = NULL;
                             }
@@ -16816,9 +16879,10 @@ int main() {
                                 }
                             }
                         
-                        parentO->lastSidsBabyEmail = 
-                            stringDuplicate( nextPlayer->email );
-                        
+                        if( parentO != NULL ) {
+                            parentO->lastSidsBabyEmail = 
+                                stringDuplicate( nextPlayer->email );
+                            }
                         
                         int holdingAdultID = nextPlayer->heldByOtherID;
 
@@ -18770,6 +18834,9 @@ int main() {
                                         heldO->containable &&
                                         targetObj->slotSize >=
                                         heldO->containSize &&
+                                        containmentPermitted( 
+                                            target,
+                                            nextPlayer->holdingID ) &&
                                         getNumContained( m.x, m.y ) > 0 ) {
                                         
                                         insertion = true;
@@ -18802,6 +18869,17 @@ int main() {
                                     
                                     if( target == r->newTarget ) {
                                         nonTransformTarget = true;
+                                        }
+                                    
+                                    // EXCEPT in case where new actor
+                                    // stuck in hand
+                                    // (for fishing case, which doesn't
+                                    //  transform water hole)
+                                    if( nonTransformTarget &&
+                                        r->newActor > 0 &&
+                                        getObject( r->newActor )->permanent ) {
+                                        
+                                        nonTransformTarget = false;
                                         }
                                     
 
@@ -18877,6 +18955,26 @@ int main() {
                                             target ) ) {
                                         r = NULL;
                                         blockedTool = true;
+                                        sendToolExpertMessage( nextPlayer,
+                                                               target );
+                                        }
+                                    else if( couldBeTool &&
+                                             ! canPlayerUseTool( nextPlayer,
+                                                                 target ) ) {
+                                        // maybe this is their first trial
+                                        // use of the ground tool
+                                        // show them who else can use it
+                                        sendToolExpertMessage( nextPlayer,
+                                                               target );
+                                        }
+                                    }
+                                else if( ! blockedTool && 
+                                         target > 0 &&
+                                         r == NULL ) {
+                                    // no trans applies
+                                    if( ! canPlayerUseTool( nextPlayer, 
+                                                            target ) ) {
+                                        // tell them who can use it
                                         sendToolExpertMessage( nextPlayer,
                                                                target );
                                         }
@@ -19432,7 +19530,25 @@ int main() {
                                             sendToolExpertMessage( nextPlayer,
                                                                    floorID );
                                             }
+                                        else if( 
+                                            ! canPlayerUseTool( nextPlayer,
+                                                                floorID ) ) {
+                                            // maybe this is their first trial
+                                            // use of the floor tool
+                                            // show them who else can use it
+                                            sendToolExpertMessage( nextPlayer,
+                                                                   floorID );
+                                            }
                                         }
+                                    else {
+                                        // no trans applies
+                                        if( ! canPlayerUseTool( nextPlayer, 
+                                                                floorID ) ) {
+                                            // tell them who can use it
+                                            sendToolExpertMessage( nextPlayer,
+                                                                   floorID );
+                                        }
+                                    }
 
 
                                     if( r == NULL && ! blockedTool ) {
@@ -20765,7 +20881,10 @@ int main() {
                                         if( canDrop &&
                                             droppedObj->containable &&
                                             targetSlotSize >=
-                                            droppedObj->containSize ) {
+                                            droppedObj->containSize &&
+                                            containmentPermitted( 
+                                                target,
+                                                droppedObj->id ) ) {
                                             canGoIn = true;
                                             }
                                         

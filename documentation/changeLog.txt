@@ -3,6 +3,49 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 314   2020-March-5
+
+--Container objects that have no sprites in front of contained (like table) now
+  use the lowest-Y sprite in each contained object as the object's center point
+  (other containers use the center of the widest sprite).  This allows objects
+  to "sit" on the table, centered on their visual bases.  Turkeys and other
+  larger plated objects used to overlap weirdly with other plated objects on
+  tables.
+
+--Improved messaging when reconnecting to last life fails (used to say LOGIN
+  FAILED, which was confusing).  Also, clearing stale error messages upon
+  returning to menu screen.
+
+--Object editor now shows sprite ID for currently selected sprite.
+
+
+
+
+Server Fixes
+
+--Fixed server crash in new lastSidsBabyEmail code.
+
+--Boiling the frog:  eatBonus now starts at 3 (was 4) for Eve and decays to 2
+  (was 3) with a half life of 4 generations.
+
+--If target not transformed, tool still used if newActor stuck in hand.  Fixes
+  case of tool use for net and fishing pole, which don't transform target.
+  Fixes #553
+
+--Touching a ground tool that you don't know how to use, or executing your free
+  trial use of it, show (+) above heads of nearby experts (before, you actually
+  had to be out of tool slots to see other experts for an unlearned ground
+  tool).  Part of jasonrohrer/OneLifeData7#624
+
+--Boiling the frog:  eatBonus now starts at 2 (was 3) for Eve and decays to 1
+  (was 2) with a half life of 4 generations.
+
+--Support for +contTAG fine-grained containment restrictions.  This allows us
+  to limit certain items (like plates of food) to being contained only in
+  certain containers (like on a table).  Part of jasonrohrer/OneLifeData7#650
+
+
+
 Version 312   2020-February-28
 
 --Mousing over an unlearned tool now shows you how many tool learning slots

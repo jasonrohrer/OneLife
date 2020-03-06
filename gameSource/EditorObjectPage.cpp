@@ -3789,6 +3789,15 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 }
             }
         else {
+            
+            char allBehind = true;
+            for( int i=0; i< mCurrentObject.numSprites; i++ ) {
+                if( ! mCurrentObject.spriteBehindSlots[i] ) {
+                    allBehind = false;
+                    break;
+                    }
+                }
+
             ObjectRecord *demoObject = getObject( mSlotsDemoObject );
             
             for( int i=0; i<mCurrentObject.numSlots; i++ ) {
@@ -3808,7 +3817,16 @@ void EditorObjectPage::draw( doublePair inViewCenter,
                 setDrawColor( red, 1, blue, alpha );
                 
                 double rot = 0;
-                doublePair centerOffset = getObjectCenterOffset( demoObject );
+
+                doublePair centerOffset;
+
+                if( allBehind ) {
+                    centerOffset = getObjectBottomCenterOffset( demoObject );
+                    }
+                else {
+                    centerOffset = getObjectCenterOffset( demoObject );
+                    }
+
 
                 if( mCurrentObject.slotVert[i] ) {
                     rot = 0.25 + demoObject->vertContainRotationOffset;
@@ -4238,8 +4256,10 @@ void EditorObjectPage::draw( doublePair inViewCenter,
 
         doublePair spritePos = mCurrentObject.spritePos[ mPickedObjectLayer ];
         
-        char *posString = autoSprintf( "  ( %.0f, %.0f )",
-                                       spritePos.x, spritePos.y );
+        char *posString = autoSprintf( 
+            " - %d  ( %.0f, %.0f )",
+            mCurrentObject.sprites[ mPickedObjectLayer ],
+            spritePos.x, spritePos.y );
         
         smallFont->drawString( tag, pos, alignRight );
         

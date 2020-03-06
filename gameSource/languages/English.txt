@@ -169,6 +169,8 @@ manualRestartMessage "RESTART GAME TO APPLY UPDATE"
 
 loginFailed "LOGIN FAILED"
 
+reconnectFailed "FAILED TO RESUME EXISTING LIFE"
+
 versionMismatch "VERSION MISMATCH:  CLIENT %d -- SERVER %d"
 disableCustomServer "DISABLE CUSTOM SERVER"
 
