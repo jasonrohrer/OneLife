@@ -8050,7 +8050,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         }
 
     
-    if( parentChoices.size() > 0 ) {
+    if( parentChoices.size() > 0 &&
+        SettingsManager::getIntSetting( "propUpWeakestRace", 1 ) ) {
         // next, filter mothers by weakest race amoung them
         int preFilterCount = parentChoices.size();
         
@@ -8102,7 +8103,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
 
     
-    if( parentChoices.size() > 0 ) {
+    if( parentChoices.size() > 0 &&
+        SettingsManager::getIntSetting( "propUpWeakestFamily", 1 ) ) {
         int preFilterCount = parentChoices.size();
         
         // next, filter mothers by weakest family amoung them

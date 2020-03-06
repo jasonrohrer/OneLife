@@ -11,6 +11,9 @@ Server Fixes
   snow door to be the vertical auto-orient version of the property fence). 
   Fixes #557
 
+--Added live server setting for toggling propUpWeakestRace and
+  propUpWeakestFamily (force-sending babies to bolster the race or family with
+  the lowest potentially-fertile female count).
 
 
 
