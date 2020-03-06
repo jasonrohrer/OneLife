@@ -3,6 +3,18 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes
+
+--Fixed so that +vertical tag can't match a prefix of another tag by accident
+  +verticalD from a property fence was matching +vertialDoorSnow, causing the
+  snow door to be the vertical auto-orient version of the property fence). 
+  Fixes #557
+
+
+
+
+
 Version 314   2020-March-5
 
 --Container objects that have no sprites in front of contained (like table) now
