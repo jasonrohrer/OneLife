@@ -15,6 +15,9 @@ Server Fixes
   propUpWeakestFamily (force-sending babies to bolster the race or family with
   the lowest potentially-fertile female count).
 
+--Boiling the frog:  eatBonus now starts at 2 for Eve and decays to 0 (was 1)
+  with a half life of 4 generations.
+
 
 
 
