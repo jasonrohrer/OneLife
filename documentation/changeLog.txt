@@ -18,6 +18,10 @@ Server Fixes
 --Boiling the frog:  eatBonus now starts at 2 for Eve and decays to 0 (was 1)
   with a half life of 4 generations.
 
+--To keep things fresh, we force-spawn a new Eve when everyone on the server is
+  part of a family that is over generation 40 (every family at least roughly 10
+  hours old).
+
 
 
 

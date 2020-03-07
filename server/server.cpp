@@ -8189,6 +8189,38 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 }
             }
         }
+
+
+    
+    if( parentChoices.size() > 0 ) {
+        int generationNumber =
+            SettingsManager::getIntSetting( "forceEveAfterGenerationNumber",
+                                            40 );
+        
+        int minGen = generationNumber + 1;
+        
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *o = players.getElement( i );
+            
+            if( isPlayerCountable( o ) ) {
+                
+                if( o->parentChainLength < minGen ) {
+                    minGen = o->parentChainLength;
+                    }
+                }
+            }
+
+        if( minGen > generationNumber ) {
+            AppLog::infoF( 
+                        "Youngest player generation on server is %d, "
+                        "which is above our trigger level %d, "
+                        "forcing Eve.",
+                        minGen, generationNumber );    
+            parentChoices.deleteAll();
+            }
+        
+        }
+        
     
     
 
