@@ -733,6 +733,19 @@ static void setupBlocksMoving( ObjectRecord *inR ) {
 
 
 
+static void setupFamHomeland( ObjectRecord *inR ) {
+    inR->famUseDist = 0;
+
+    char *pos = strstr( inR->description, "+famUse" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+famUse%d", &( inR->famUseDist ) );
+        }
+    }
+
+
+
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
     }
@@ -800,6 +813,8 @@ float initObjectBankStep() {
                 setupNoBackAccess( r );                
 
                 setupAlcohol( r );
+                
+                setupFamHomeland( r );
                 
 
                 // do this later, after we parse floorHugging
@@ -3561,6 +3576,8 @@ int addObject( const char *inDescription,
     setupNoBackAccess( r );            
 
     setupAlcohol( r );
+
+    setupFamHomeland( r );
 
     setupWall( r );
 

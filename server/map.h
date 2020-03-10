@@ -321,5 +321,13 @@ void setGravePlayerID( int inX, int inY, int inPlayerID );
 void stepMapLongTermCulling( int inNumCurrentPlayers );
 
 
+// 1 if homeland
+// 0 if fam has no homeland
+// -1 if outside of homeland (or in someone else's)
+int isHomeland( int inX, int inY, int inLineageEveID );
+
+void logHomelandBirth( int inX, int inY, int inLineageEveID );
+
+
 
 #endif

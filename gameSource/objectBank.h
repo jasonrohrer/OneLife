@@ -420,6 +420,9 @@ typedef struct ObjectRecord {
         char noBackAccess;
 
         int alcohol;
+        
+        // 0 if using object doesn't determine a family's homeland
+        int famUseDist;
 
     } ObjectRecord;
 

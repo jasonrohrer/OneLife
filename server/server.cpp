@@ -1325,6 +1325,16 @@ char *getPlayerName( int inID ) {
 
 
 
+int getPlayerLineage( int inID ) {
+    LiveObject *o = getLiveObject( inID );
+    if( o != NULL ) {
+        return o->lineageEveID;
+        }
+    return -1;
+    }
+
+
+
 
 static double pickBirthCooldownSeconds() {
     // Kumaraswamy distribution
@@ -7816,6 +7826,14 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             if( player->vogMode ) {
                 continue;
                 }
+
+            GridPos motherPos = getPlayerPos( player );
+            if( isHomeland( motherPos.x, motherPos.y,
+                            player->lineageEveID ) == -1 ) {
+                // mother can't have babies here
+                continue;
+                }
+                
             
             if( player->lastSidsBabyEmail != NULL &&
                 strcmp( player->lastSidsBabyEmail,
@@ -9399,7 +9417,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             delete [] message;
             }
         }
+    
 
+    logHomelandBirth( newObject.xs, newObject.ys,
+                      newObject.lineageEveID );
     
     return newObject.id;
     }
