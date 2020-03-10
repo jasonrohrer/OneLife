@@ -13223,6 +13223,42 @@ static char *getLineageLastName( int inLineageEveID ) {
 
 
 
+
+static void sendHomelandMessage( LiveObject *nextPlayer,
+                                 int homeLineageEveID,
+                                 GridPos homeCenter ) {    
+    const char *famName = "0";
+    
+    if( homeLineageEveID != -1 ) {
+        char *realFamName =
+            getLineageLastName( 
+                homeLineageEveID );
+        if( realFamName != NULL ) {
+            famName = realFamName;
+            }
+        else {
+            famName = "UNNAMED";
+            }
+        }
+    
+    char *message = 
+        autoSprintf( 
+            "HL\n"
+            "%d %d %s\n#",
+            homeCenter.x -
+            nextPlayer->birthPos.x,
+            homeCenter.y -
+            nextPlayer->birthPos.y,
+            famName );
+    sendMessageToPlayer( 
+        nextPlayer, 
+        message, 
+        strlen( message ) );
+    delete [] message;
+    }
+
+
+
 static void endBiomeSickness( 
     LiveObject *nextPlayer,
     int i,
@@ -18142,35 +18178,10 @@ int main() {
                                         
                                         if( isSomeHomeland ) {
                                             // send them HL message
-
-                                            const char *famName = "0";
-                                            
-                                            if( homeLineageEveID != -1 ) {
-                                                char *realFamName =
-                                                    getLineageLastName( 
-                                                        homeLineageEveID );
-                                                if( realFamName != NULL ) {
-                                                    famName = realFamName;
-                                                    }
-                                                else {
-                                                    famName = "UNNAMED";
-                                                    }
-                                                }
-
-                                            char *message = 
-                                                autoSprintf( 
-                                                    "HL\n"
-                                                    "%d %d %s\n#",
-                                                    homeCenter.x -
-                                                    nextPlayer->birthPos.x,
-                                                    homeCenter.y -
-                                                    nextPlayer->birthPos.y,
-                                                    famName );
-                                            sendMessageToPlayer( 
-                                                nextPlayer, 
-                                                message, 
-                                                strlen( message ) );
-                                            delete [] message;
+                                            sendHomelandMessage( 
+                                                nextPlayer,
+                                                homeLineageEveID,
+                                                homeCenter );
                                             }
                                         }
 
@@ -23844,6 +23855,26 @@ int main() {
             delete [] lines;
             }
         
+        
+
+        SimpleVector<HomelandInfo> homelandList = getHomelandChanges();
+        
+        if( homelandList.size() > 0 ) {
+            for( int i=0; i<homelandList.size(); i++ ) {
+                HomelandInfo hi = homelandList.getElementDirect( i );
+                
+                for( int p=0; p<players.size(); p++ ) {
+                    LiveObject *nextPlayer = players.getElement( p );
+                    
+                    GridPos pos = getPlayerPos( nextPlayer );
+                    
+                    if( distance( pos, hi.center ) < hi.radius ) {
+                        sendHomelandMessage( nextPlayer,
+                                             hi.lineageEveID, hi.center );
+                        }
+                    }
+                }
+            }
         
 
         

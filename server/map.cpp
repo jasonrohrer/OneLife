@@ -530,6 +530,8 @@ typedef struct Homeland {
         
         char expired;
         
+        char changed;
+        
     } Homeland;
 
 
@@ -553,6 +555,7 @@ static Homeland *getHomeland( int inX, int inY,
         // watch for stale
         if( ! h->expired && h->lastBabyBirthTime < tooOldTime ) {
             h->expired = true;
+            h->changed = true;
             }
 
         
@@ -7102,7 +7105,9 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                 Homeland newH = { inX, inY, o->famUseDist,
                                   lineage,
                                   t,
-                                  false };
+                                  false,
+                                  // changed
+                                  true };
                 homelands.push_back( newH );
                 }
             else if( h->expired ) {
@@ -7113,6 +7118,7 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                 h->lineageEveID = lineage;
                 h->lastBabyBirthTime = t;
                 h->expired = false;
+                h->changed = true;
                 }
             }
         }
@@ -9434,3 +9440,27 @@ char getHomelandCenter( int inX, int inY,
         }
     }
 
+
+
+SimpleVector<HomelandInfo> getHomelandChanges() {
+    SimpleVector<HomelandInfo> list;
+    
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        
+        if( h->changed ) {
+            GridPos p = { h->x, h->y };
+            
+            HomelandInfo hi = { p, h->radius, h->lineageEveID };
+            
+            if( h->expired ) {
+                hi.lineageEveID = -1;
+                }
+
+            list.push_back( hi );
+            
+            h->changed = false;
+            }
+        }
+    return list;
+    }

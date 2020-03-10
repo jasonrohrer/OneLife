@@ -334,6 +334,17 @@ void logHomelandBirth( int inX, int inY, int inLineageEveID );
 char getHomelandCenter( int inX, int inY, 
                         GridPos *outCenter, int *outLineageEveID );
 
+typedef struct HomelandInfo {
+        GridPos center;
+        int radius;
+        // -1 if abandonned
+        int lineageEveID;
+    } HomelandInfo;
+    
+
+// gets changes since last call
+SimpleVector<HomelandInfo> getHomelandChanges();
+
 
 
 #endif
