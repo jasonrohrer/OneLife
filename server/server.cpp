@@ -13237,7 +13237,6 @@ static void endBiomeSickness(
     else {
         // clear
         newEmotIndices.push_back( -1 );
-        // 3 sec
         newEmotTTLs.push_back( 0 );
         }
     }
@@ -18003,6 +18002,72 @@ int main() {
                                         nextPlayer, i,
                                         &playerIndicesToSendUpdatesAbout );
                                     }
+
+                                if( sicknessObjectID == -1 &&
+                                    ! nextPlayer->emotFrozen ) {
+                                    // check if path starts/ends
+                                    // in/out of home
+
+                                    int homeStart =
+                                        isHomeland( 
+                                            nextPlayer->xs,
+                                            nextPlayer->ys,
+                                            nextPlayer->lineageEveID );
+                                    
+                                    int endStep = nextPlayer->pathLength - 1;
+                                    
+                                    int homeEnd =
+                                        isHomeland( 
+                                            nextPlayer->pathToDest[endStep].x,
+                                            nextPlayer->pathToDest[endStep].y,
+                                            nextPlayer->lineageEveID );
+
+                                    if( homeStart != homeEnd ) {
+                                        
+                                        int newEmotIndex = -1;
+                                        const char *speechWord;
+                                        
+                                        if( homeEnd == -1 ) {
+                                            newEmotIndex =
+                                                SettingsManager::
+                                                getIntSetting( 
+                                                    "homesickEmotionIndex", 
+                                                    -1 );
+                                            speechWord = "HOMESICK";
+                                            }
+                                        else {
+                                            newEmotIndex =
+                                                SettingsManager::
+                                                getIntSetting( 
+                                                    "homeEmotionIndex", 
+                                                    -1 );
+                                            speechWord = "HOME";
+                                            }
+                                        
+                                        if( newEmotIndex != -1 ) {
+                                            newEmotPlayerIDs.push_back( 
+                                                nextPlayer->id );
+        
+                                            newEmotIndices.push_back( 
+                                                newEmotIndex );
+                                            // 5 sec
+                                            newEmotTTLs.push_back( 5 );
+                                            }
+                                        
+                                        // put word above their head
+                                        // (only for them to see)
+                                        char *message = autoSprintf( 
+                                            "PS\n"
+                                            "%d/0 +%s+\n#",
+                                            nextPlayer->id, speechWord );
+                                        sendMessageToPlayer( 
+                                            nextPlayer, 
+                                            message, 
+                                            strlen( message ) );
+                                        delete [] message;
+                                        }
+                                    }
+                                
                                 }
                             }
                         }
