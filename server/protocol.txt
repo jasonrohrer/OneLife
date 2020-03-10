@@ -224,6 +224,8 @@ TOOL_EXPERTS (TE)
 
 TOOL_SLOTS (TS)
 
+HOMELAND (HL)
+
 FRAME (FM)
 
 PONG
@@ -956,6 +958,15 @@ used total
 #
 
 Tells player how many slots have been used and how many total they have.
+
+
+
+HL
+x y family_name
+#
+
+Tells player about a homeland center at x,y
+family_name is 0 if homeland is expired
 
 
 

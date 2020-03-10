@@ -451,6 +451,14 @@ follower "FOLLOWER"
 ally "ALLY"
 dubious "DUBIOUS"
 
+toolInfo "TOOL - "
+unlearnedToolInfo "UNLEARNED TOOL - "
+slotsLeft = "SLOTS LEFT"
+
+family "FAMILY"
+abandonned = "ABANDONNED"
+
+
 dieCommand "/DIE"
 
 fpsCommand "/FPS"

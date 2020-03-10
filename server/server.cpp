@@ -13207,6 +13207,22 @@ void getLineageLineForPlayer( LiveObject *inPlayer,
 
 
 
+// result NOT destroyed by caller
+// can be NULL if not found
+static char *getLineageLastName( int inLineageEveID ) {
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( p->lineageEveID == inLineageEveID &&
+            p->familyName != NULL ) {
+            return p->familyName;
+            }
+        }
+    return NULL;
+    }
+
+
+
 static void endBiomeSickness( 
     LiveObject *nextPlayer,
     int i,
@@ -18030,7 +18046,37 @@ int main() {
                                             nextPlayer->pathToDest[endStep].y,
                                             nextPlayer->lineageEveID );
 
+                                    char boundaryCross = false;
+                                    if( homeStart == homeEnd &&
+                                        homeEnd == -1 ) {
+                                        // player still outside homeland
+                                        // but did they cross a boundary
+                                        // into some other homeland?
+
+                                        int lineageA = 0;
+                                        int lineageB = 0;
+                                        GridPos dummyCenter;
+
+                                        getHomelandCenter(
+                                            nextPlayer->xs,
+                                            nextPlayer->ys,
+                                            &dummyCenter,
+                                            &lineageA );
+                                        getHomelandCenter(
+                                            nextPlayer->pathToDest[endStep].x,
+                                            nextPlayer->pathToDest[endStep].y,
+                                            &dummyCenter,
+                                            &lineageB );
+                                        
+                                        // even if B is -1, we have a boundary
+                                        // cross
+                                        if( lineageA != lineageB ) {
+                                            boundaryCross = true;
+                                            }
+                                        }
+
                                     if( homeStart != homeEnd ) {
+                                        boundaryCross = true;
                                         
                                         int newEmotIndex = -1;
                                         const char *speechWord = NULL;
@@ -18080,8 +18126,56 @@ int main() {
                                             delete [] message;
                                             }
                                         }
-                                    }
-                                
+                                    
+                                    if( boundaryCross ) {
+                                        // when player crosses boundary
+                                        // check if they've entered a homeland
+                                        // tell them about the center
+                                        GridPos homeCenter;
+                                        int homeLineageEveID;
+                                        char isSomeHomeland =
+                                            getHomelandCenter(
+                                              nextPlayer->pathToDest[endStep].x,
+                                              nextPlayer->pathToDest[endStep].y,
+                                              &homeCenter,
+                                              &homeLineageEveID );
+                                        
+                                        if( isSomeHomeland ) {
+                                            // send them HL message
+
+                                            const char *famName = "0";
+                                            
+                                            if( homeLineageEveID != -1 ) {
+                                                char *realFamName =
+                                                    getLineageLastName( 
+                                                        homeLineageEveID );
+                                                if( realFamName != NULL ) {
+                                                    famName = realFamName;
+                                                    }
+                                                else {
+                                                    famName = "UNNAMED";
+                                                    }
+                                                }
+
+                                            char *message = 
+                                                autoSprintf( 
+                                                    "HL\n"
+                                                    "%d %d %s\n#",
+                                                    homeCenter.x -
+                                                    nextPlayer->birthPos.x,
+                                                    homeCenter.y -
+                                                    nextPlayer->birthPos.y,
+                                                    famName );
+                                            sendMessageToPlayer( 
+                                                nextPlayer, 
+                                                message, 
+                                                strlen( message ) );
+                                            delete [] message;
+                                            }
+                                        }
+
+                                    
+                                    }                                
                                 }
                             }
                         }

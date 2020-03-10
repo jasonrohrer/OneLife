@@ -328,6 +328,12 @@ int isHomeland( int inX, int inY, int inLineageEveID );
 
 void logHomelandBirth( int inX, int inY, int inLineageEveID );
 
+// get position of homeland center that  (x,y) is within the radius of
+// also get the lineage corresponding to this homeland
+// returns -1 for outLineageEveID if this WAS a homeland, but is now expired.
+char getHomelandCenter( int inX, int inY, 
+                        GridPos *outCenter, int *outLineageEveID );
+
 
 
 #endif

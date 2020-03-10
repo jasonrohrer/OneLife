@@ -528,6 +528,8 @@ typedef struct Homeland {
         
         double lastBabyBirthTime;
         
+        char expired;
+        
     } Homeland;
 
 
@@ -536,7 +538,8 @@ static SimpleVector<Homeland> homelands;
 
 
 // NULL if not found
-static Homeland *getHomeland( int inX, int inY ) {
+static Homeland *getHomeland( int inX, int inY, 
+                              char includeExpired = false ) {
     double t = Time::getCurrentTime();
     
     int staleTime = 
@@ -548,11 +551,15 @@ static Homeland *getHomeland( int inX, int inY ) {
         Homeland *h = homelands.getElement( i );
         
         // watch for stale
-        if( h->lastBabyBirthTime < tooOldTime ) {
-            homelands.deleteElement( i );
-            i--;
+        if( ! h->expired && h->lastBabyBirthTime < tooOldTime ) {
+            h->expired = true;
+            }
+
+        
+        if( ! includeExpired && h->expired ) {
             continue;
             }
+
 
         if( inX < h->x + h->radius &&
             inX > h->x - h->radius &&
@@ -7086,13 +7093,26 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
         
         if( lineage != -1 ) {
 
-            Homeland *h = getHomeland( inX, inY );
-            
+            // include expired, and update
+            Homeland *h = getHomeland( inX, inY, true );
+
+            double t = Time::getCurrentTime();
+                                  
             if( h == NULL ) {
                 Homeland newH = { inX, inY, o->famUseDist,
                                   lineage,
-                                  Time::getCurrentTime() };
+                                  t,
+                                  false };
                 homelands.push_back( newH );
+                }
+            else if( h->expired ) {
+                // update expired record
+                h->x = inX;
+                h->y = inY;
+                h->radius = o->famUseDist;
+                h->lineageEveID = lineage;
+                h->lastBabyBirthTime = t;
+                h->expired = false;
                 }
             }
         }
@@ -9387,3 +9407,30 @@ void logHomelandBirth( int inX, int inY, int inLineageEveID ) {
             }
         }
     }
+
+
+
+char getHomelandCenter( int inX, int inY, 
+                        GridPos *outCenter, int *outLineageEveID ) {
+    
+    // include expired
+    Homeland *h = getHomeland( inX, inY, true );
+
+    if( h != NULL ) {
+        outCenter->x = h->x;
+        outCenter->y = h->y;
+        
+        if( h->expired ) {
+            *outLineageEveID = -1;
+            }
+        else {
+            *outLineageEveID = h->lineageEveID;
+            }
+        
+        return true;
+        }
+    else {
+        return false;
+        }
+    }
+
