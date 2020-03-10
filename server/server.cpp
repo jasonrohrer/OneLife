@@ -967,7 +967,9 @@ typedef struct LiveObject {
 
         // email of last baby that we had that did /DIE
         char *lastSidsBabyEmail;
-
+        
+        char everHomesick;
+        
     } LiveObject;
 
 
@@ -7692,6 +7694,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     newObject.lastBabyEmail = NULL;
 
+    newObject.everHomesick = false;
+
     newObject.id = nextID;
     nextID++;
 
@@ -7828,8 +7832,12 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 }
 
             GridPos motherPos = getPlayerPos( player );
-            if( isHomeland( motherPos.x, motherPos.y,
-                            player->lineageEveID ) == -1 ) {
+            int homeStatus = isHomeland( motherPos.x, motherPos.y,
+                                         player->lineageEveID );
+            
+            if( homeStatus == -1 ||
+                ( homeStatus == 0 &&
+                  player->everHomesick ) ) {
                 // mother can't have babies here
                 continue;
                 }
@@ -18025,7 +18033,7 @@ int main() {
                                     if( homeStart != homeEnd ) {
                                         
                                         int newEmotIndex = -1;
-                                        const char *speechWord;
+                                        const char *speechWord = NULL;
                                         
                                         if( homeEnd == -1 ) {
                                             newEmotIndex =
@@ -18034,8 +18042,12 @@ int main() {
                                                     "homesickEmotionIndex", 
                                                     -1 );
                                             speechWord = "HOMESICK";
+                                            nextPlayer->everHomesick = true;
                                             }
-                                        else {
+                                        else if( 
+                                            homeEnd == 1 ||
+                                            ( ! nextPlayer->everHomesick &&
+                                              homeEnd == 0 ) ) {
                                             newEmotIndex =
                                                 SettingsManager::
                                                 getIntSetting( 
@@ -18054,17 +18066,19 @@ int main() {
                                             newEmotTTLs.push_back( 5 );
                                             }
                                         
-                                        // put word above their head
-                                        // (only for them to see)
-                                        char *message = autoSprintf( 
-                                            "PS\n"
-                                            "%d/0 +%s+\n#",
-                                            nextPlayer->id, speechWord );
-                                        sendMessageToPlayer( 
-                                            nextPlayer, 
-                                            message, 
-                                            strlen( message ) );
-                                        delete [] message;
+                                        if( speechWord != NULL ) {
+                                            // put word above their head
+                                            // (only for them to see)
+                                            char *message = autoSprintf( 
+                                                "PS\n"
+                                                "%d/0 +%s+\n#",
+                                                nextPlayer->id, speechWord );
+                                            sendMessageToPlayer( 
+                                                nextPlayer, 
+                                                message, 
+                                                strlen( message ) );
+                                            delete [] message;
+                                            }
                                         }
                                     }
                                 
