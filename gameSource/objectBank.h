@@ -423,6 +423,11 @@ typedef struct ObjectRecord {
         
         // 0 if using object doesn't determine a family's homeland
         int famUseDist;
+        
+        // where this object occurs naturally (or on grid), 
+        // it forces a biome under itself
+        // -1 if no biome forced
+        int forceBiome;
 
     } ObjectRecord;
 

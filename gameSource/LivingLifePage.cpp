@@ -23204,11 +23204,18 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 nLimit = 3;
                 }
             else if( destID > 0 &&
-                     ourLiveObject->holdingID == 0 && 
+                     ( ourLiveObject->holdingID == 0 ||
+                       ( getObject( ourLiveObject->holdingID )->permanent &&
+                         strstr( getObject( ourLiveObject->holdingID )->
+                                 description, "sick" ) != NULL ) )
+                     &&
                      getObject( destID )->permanent &&
                      ! getObject( destID )->blocksWalking ) {
                 
-                TransRecord *handTrans = getTrans( 0, destID );
+                TransRecord *handTrans = NULL;
+                if( ourLiveObject->holdingID == 0 ) {
+                    handTrans = getTrans( 0, destID );
+                    }
                 
                 if( handTrans == NULL ||
                     ( handTrans->newActor != 0 &&

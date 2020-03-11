@@ -6044,7 +6044,28 @@ int getTweakedBaseMap( int inX, int inY ) {
             if( s2ID > 0 && getObjectHeight( s2ID ) >= 3 ) {
                 return 0;
                 }                
-            }            
+            }
+
+        if( o->forceBiome != -1 &&
+            biomeDBGet( inX, inY ) == -1 &&
+            getBiomeIndex( o->forceBiome ) != -1 ) {
+            
+            // naturally-occurring object that forces a biome
+            // stick into floorDB            
+            biomeDBPut( inX, inY, o->forceBiome, o->forceBiome, 0.5 );
+
+            if( lastCheckedBiome != -1 &&
+                lastCheckedBiomeX == inX &&
+                lastCheckedBiomeY == inY ) {
+                // replace last checked with this
+                lastCheckedBiome = o->forceBiome;
+                }
+
+            // we also need to force-set the object itself into the DB
+            // otherwise, the next time we gen this square, we might not
+            // generate this object, because the underlying biome has changed
+            setMapObjectRaw( inX, inY, o->id );
+            }
         }
     return result;
     }

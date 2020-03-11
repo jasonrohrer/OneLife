@@ -745,6 +745,18 @@ static void setupFamHomeland( ObjectRecord *inR ) {
     }
 
 
+static void setupForcedBiome( ObjectRecord *inR ) {
+    inR->forceBiome = -1;
+
+    char *pos = strstr( inR->description, "+biomeSet" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+biomeSet%d", &( inR->forceBiome ) );
+        }
+    }
+
+
 
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
@@ -815,6 +827,8 @@ float initObjectBankStep() {
                 setupAlcohol( r );
                 
                 setupFamHomeland( r );
+                
+                setupForcedBiome( r );
                 
 
                 // do this later, after we parse floorHugging
@@ -3578,6 +3592,8 @@ int addObject( const char *inDescription,
     setupAlcohol( r );
 
     setupFamHomeland( r );
+    
+    setupForcedBiome( r );
 
     setupWall( r );
 
