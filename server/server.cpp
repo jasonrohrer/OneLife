@@ -9842,6 +9842,17 @@ static char containmentPermitted( int inContainerID, int inContainedID ) {
         
         if( numRead == 1 ) {
             
+            // clean up # character that might delimit end of string
+            int tagLen = strlen( tag );
+            
+            for( int i=0; i<tagLen; i++ ) {
+                if( tag[i] == '#' ) {
+                    tag[i] = '\0';
+                    tagLen = i;
+                    break;
+                    }
+                }
+
             char *locInContainerName =
                 strstr( getObject( inContainerID )->description, tag );
             
@@ -9851,10 +9862,11 @@ static char containmentPermitted( int inContainerID, int inContainedID ) {
                 // don't want contained to be +contHot
                 // and contaienr to be +contHotPlates
                 
-                char end = locInContainerName[ strlen( tag ) ];
+                char end = locInContainerName[ tagLen ];
                 
                 if( end == ' ' ||
-                    end == '\0' ) {
+                    end == '\0'||
+                    end == '#' ) {
                     return true;
                     }
                 }

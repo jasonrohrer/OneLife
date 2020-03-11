@@ -11,6 +11,10 @@ Version 316   ???
 --Expert-finder way stones occure along ley lines in specialist biomes.
   Touching one points you toward the nearest expert for that biome.
 
+--Fixed issue with some partially-used objects not being containable on table
+  (use dummies have # appended to name, which was interfering with the end of
+  +cont tags).  Fixes #560
+ 
 
 
 Server Fixes
