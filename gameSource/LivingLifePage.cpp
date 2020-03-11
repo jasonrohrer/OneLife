@@ -10410,32 +10410,30 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                 
 
-                if( o->famUseDist > 0 ) {
-                    Homeland *h = getHomeland( mCurMouseOverWorld.x,
-                                               mCurMouseOverWorld.y );
-                    if( h != NULL ) {
-                        char *newDes = NULL;
-                        
-                        if( h->familyName != NULL ) {
-                            newDes =
-                                autoSprintf( "%s %s %s",
-                                             h->familyName,
-                                             translate( "family" ),
-                                             des );
+                Homeland *h = getHomeland( mCurMouseOverWorld.x,
+                                           mCurMouseOverWorld.y );
+                if( h != NULL ) {
+                    char *newDes = NULL;
+                    
+                    if( h->familyName != NULL ) {
+                        newDes =
+                            autoSprintf( "%s %s %s",
+                                         h->familyName,
+                                         translate( "family" ),
+                                         des );
+                        }
+                    else {
+                        newDes =
+                            autoSprintf( "%s %s",
+                                         translate( "abandonned" ),
+                                         des );
+                        }
+                    if( newDes != NULL ) {
+                        if( desToDelete != NULL ) {
+                            delete [] desToDelete;
                             }
-                        else {
-                            newDes =
-                                autoSprintf( "%s %s",
-                                             translate( "abandonned" ),
-                                             des );
-                            }
-                        if( newDes != NULL ) {
-                            if( desToDelete != NULL ) {
-                                delete [] desToDelete;
-                                }
-                            des = newDes;
-                            desToDelete = des;
-                            }
+                        des = newDes;
+                        desToDelete = des;
                         }
                     }
                 
