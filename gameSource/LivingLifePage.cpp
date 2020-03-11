@@ -3161,6 +3161,11 @@ LivingLifePage::~LivingLifePage() {
         delete [] photoSig;
         photoSig = NULL;
         }
+
+    for( int i=0; i<homelands.size(); i++ ) {
+        delete [] homelands.getElementDirect( i ).familyName;
+        }
+    homelands.deleteAll();
     }
 
 
