@@ -419,6 +419,7 @@ map "MAP"
 baby "BABY"
 lead "LEAD"
 supp "SUPP"
+expt "EXPT"
 
 leader "LEADER"
 closestFollower "CLOSEST FOLLOWER"

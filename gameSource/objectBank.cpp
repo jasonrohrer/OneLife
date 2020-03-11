@@ -758,6 +758,18 @@ static void setupForcedBiome( ObjectRecord *inR ) {
 
 
 
+static void setupExpertFind( ObjectRecord *inR ) {
+    inR->expertFind = false;
+
+    char *pos = strstr( inR->description, "+expertFind" );
+
+    if( pos != NULL ) {
+        inR->expertFind = true;
+        }
+    }
+
+
+
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
     }
@@ -830,6 +842,8 @@ float initObjectBankStep() {
                 
                 setupForcedBiome( r );
                 
+                setupExpertFind( r );
+
 
                 // do this later, after we parse floorHugging
                 // setupWall( r );
@@ -3594,6 +3608,8 @@ int addObject( const char *inDescription,
     setupFamHomeland( r );
     
     setupForcedBiome( r );
+
+    setupExpertFind( r );
 
     setupWall( r );
 

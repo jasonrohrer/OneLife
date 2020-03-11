@@ -8,6 +8,9 @@ Version 316   ???
 --100-radius homelands around wells, where family that built well feels
   comfortable enough to have babies.  Leaving this area makes you homesick.
 
+--Expert-finder way stones occure along ley lines in specialist biomes.
+  Touching one points you toward the nearest expert for that biome.
+
 
 
 Server Fixes

@@ -428,7 +428,10 @@ typedef struct ObjectRecord {
         // it forces a biome under itself
         // -1 if no biome forced
         int forceBiome;
-
+        
+        // is this an expert-find object?
+        char expertFind;
+        
     } ObjectRecord;
 
 

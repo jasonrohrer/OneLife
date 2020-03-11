@@ -18618,6 +18618,25 @@ void LivingLifePage::step() {
                                                 personKey = "supp";
                                                 }
                                             }
+
+                                        
+                                        if( ! baby && ! leader && ! follower ) {
+                                            char *expertPos = 
+                                                strstr( 
+                                                    existing->currentSpeech, 
+                                                    " *expert" );
+                                            
+                                            if( expertPos != NULL ) {
+                                                person = true;
+                                                sscanf( expertPos, 
+                                                        " *expert %d", 
+                                                        &personID );
+
+                                                expertPos[0] = '\0';
+                                                personKey = "expt";
+                                                }
+                                            }
+                                        
                                         
 
 

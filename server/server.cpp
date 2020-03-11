@@ -13798,6 +13798,82 @@ static LiveObject *getPlayerByName( char *inName, LiveObject *inSkip ) {
 
 
 
+static void findExpertForPlayer( LiveObject *inPlayer, 
+                                 ObjectRecord *inTouchedObject ) {
+    int race = getSpecialistRace( inTouchedObject );
+    
+    if( race == -1 ) {
+        return;
+        }
+
+    if( getObject( inPlayer->displayID )->race  == race ) {
+        // they ARE this expert themselves
+        return;
+        }
+    
+    GridPos playerPos = getPlayerPos( inPlayer );
+
+    double minDist = DBL_MAX;
+    LiveObject *closestExpert = NULL;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( getObject( p->displayID )->race == race ) {
+            GridPos pos = getPlayerPos( p );
+            
+            double d = distance( pos, playerPos );
+            
+            if( d < minDist ) {
+                minDist = d;
+                closestExpert = p;
+                }
+            }
+        }
+
+    const char *biomeName = getBadBiomeName( inTouchedObject );
+    
+    char *bName = NULL;
+    
+    if( biomeName != NULL ) {
+        char found;
+        bName = replaceAll( biomeName, "_", " ", &found );
+        }
+    else {
+        bName = stringDuplicate( "UNKNOWN BIOME" );
+        }
+
+    char *message = NULL;
+    
+    if( closestExpert != NULL ) {
+        GridPos ePos = getPlayerPos( closestExpert );
+
+        message = autoSprintf( "PS\n"
+                               "%d/0 EXPERT FOR %s "
+                               "*expert %d *map %d %d\n#",
+                               inPlayer->id,
+                               bName,
+                               closestExpert->id,
+                               ePos.x - inPlayer->birthPos.x,
+                               ePos.y - inPlayer->birthPos.y );
+        }
+    else {
+        message = autoSprintf( "PS\n"
+                               "%d/0 NO EXPERTS EXIST FOR %s\n#",
+                               inPlayer->id,
+                               bName );
+        }
+    
+    delete [] bName;
+    
+
+    sendMessageToPlayer( inPlayer, message, strlen( message ) );
+    delete [] message;
+    }
+
+
+
+
 // if inAll, generates info for all players, and doesn't touch 
 //           followingUpdate flags
 // returns NULL if no following message
@@ -18967,6 +19043,12 @@ int main() {
                                 if( targetObj->permanent &&
                                     targetObj->written ) {
                                     forcePlayerToRead( nextPlayer, target );
+                                    }
+                                
+                                if( targetObj->permanent &&
+                                    targetObj->expertFind ) {
+                                    findExpertForPlayer( nextPlayer,
+                                                         targetObj );
                                     }
                                 
 
