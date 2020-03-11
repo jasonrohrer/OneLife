@@ -3,6 +3,12 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 316   ???
+
+--100-radius homelands around wells, where family that built well feels
+  comfortable enough to have babies.  Leaving this area makes you homesick.
+
+
 
 Server Fixes
 
