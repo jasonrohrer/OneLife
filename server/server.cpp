@@ -8213,6 +8213,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                     break;
                     }
                 }
+            delete [] races;
             }
         }
 
