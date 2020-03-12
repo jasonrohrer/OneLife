@@ -34,6 +34,9 @@ Version 316   ???
 
 --New *spicyFood forced emote for hot pepper eating.
 
+--Client correctly routes you to front of noBackAccess objects (like wall
+  shelf).  Fixes #563
+
 
 
 Server Fixes

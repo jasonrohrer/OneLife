@@ -23215,9 +23215,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         char canExecute = false;
         char sideAccess = false;
+        char noBackAccess = false;
         
         if( destID > 0 && getObject( destID )->sideAccess ) {
             sideAccess = true;
+            }
+        
+        if( destID > 0 && getObject( destID )->noBackAccess ) {
+            noBackAccess = true;
             }
         
 
@@ -23234,6 +23239,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 ( clickDestY > ourLiveObject->yd ||
                   clickDestY < ourLiveObject->yd ) ) {
                 // trying to access side-access object from N or S
+                canExecute = false;
+                }
+            if( noBackAccess &&
+                ( clickDestY < ourLiveObject->yd ) ) {
+                // trying to access noBackAccess object from N
                 canExecute = false;
                 }
             }
@@ -23265,6 +23275,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( sideAccess ) {
                 // don't consider N or S neighbors
                 nLimit = 3;
+                }
+            else if( noBackAccess ) {
+                // don't consider N neighbor
+                nLimit = 4;
                 }
             else if( destID > 0 &&
                      ( ourLiveObject->holdingID == 0 ||
