@@ -321,5 +321,30 @@ void setGravePlayerID( int inX, int inY, int inPlayerID );
 void stepMapLongTermCulling( int inNumCurrentPlayers );
 
 
+// 1 if homeland
+// 0 if fam has no homeland
+// -1 if outside of homeland (or in someone else's)
+int isHomeland( int inX, int inY, int inLineageEveID );
+
+void logHomelandBirth( int inX, int inY, int inLineageEveID );
+
+// get position of homeland center that  (x,y) is within the radius of
+// also get the lineage corresponding to this homeland
+// returns -1 for outLineageEveID if this WAS a homeland, but is now expired.
+char getHomelandCenter( int inX, int inY, 
+                        GridPos *outCenter, int *outLineageEveID );
+
+typedef struct HomelandInfo {
+        GridPos center;
+        int radius;
+        // -1 if abandonned
+        int lineageEveID;
+    } HomelandInfo;
+    
+
+// gets changes since last call
+SimpleVector<HomelandInfo> getHomelandChanges();
+
+
 
 #endif

@@ -969,7 +969,9 @@ typedef struct LiveObject {
 
         // email of last baby that we had that did /DIE
         char *lastSidsBabyEmail;
-
+        
+        char everHomesick;
+        
     } LiveObject;
 
 
@@ -1323,6 +1325,16 @@ char *getPlayerName( int inID ) {
         return o->name;
         }
     return NULL;
+    }
+
+
+
+int getPlayerLineage( int inID ) {
+    LiveObject *o = getLiveObject( inID );
+    if( o != NULL ) {
+        return o->lineageEveID;
+        }
+    return -1;
     }
 
 
@@ -4266,6 +4278,9 @@ GridPos getClosestPlayerPos( int inX, int inY ) {
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *o = players.getElement( i );
         if( o->error ) {
+            continue;
+            }
+        if( o->heldByOther ) {
             continue;
             }
         
@@ -7684,6 +7699,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     newObject.lastBabyEmail = NULL;
 
+    newObject.everHomesick = false;
+
     newObject.id = nextID;
     nextID++;
 
@@ -7818,6 +7835,18 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             if( player->vogMode ) {
                 continue;
                 }
+
+            GridPos motherPos = getPlayerPos( player );
+            int homeStatus = isHomeland( motherPos.x, motherPos.y,
+                                         player->lineageEveID );
+            
+            if( homeStatus == -1 ||
+                ( homeStatus == 0 &&
+                  player->everHomesick ) ) {
+                // mother can't have babies here
+                continue;
+                }
+                
             
             if( player->lastSidsBabyEmail != NULL &&
                 strcmp( player->lastSidsBabyEmail,
@@ -8052,7 +8081,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         }
 
     
-    if( parentChoices.size() > 0 ) {
+    if( parentChoices.size() > 0 &&
+        SettingsManager::getIntSetting( "propUpWeakestRace", 1 ) ) {
         // next, filter mothers by weakest race amoung them
         int preFilterCount = parentChoices.size();
         
@@ -8104,7 +8134,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
 
     
-    if( parentChoices.size() > 0 ) {
+    if( parentChoices.size() > 0 &&
+        SettingsManager::getIntSetting( "propUpWeakestFamily", 1 ) ) {
         int preFilterCount = parentChoices.size();
         
         // next, filter mothers by weakest family amoung them
@@ -8187,8 +8218,41 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                     break;
                     }
                 }
+            delete [] races;
             }
         }
+
+
+    
+    if( parentChoices.size() > 0 ) {
+        int generationNumber =
+            SettingsManager::getIntSetting( "forceEveAfterGenerationNumber",
+                                            40 );
+        
+        int minGen = generationNumber + 1;
+        
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *o = players.getElement( i );
+            
+            if( isPlayerCountable( o ) ) {
+                
+                if( o->parentChainLength < minGen ) {
+                    minGen = o->parentChainLength;
+                    }
+                }
+            }
+
+        if( minGen > generationNumber ) {
+            AppLog::infoF( 
+                        "Youngest player generation on server is %d, "
+                        "which is above our trigger level %d, "
+                        "forcing Eve.",
+                        minGen, generationNumber );    
+            parentChoices.deleteAll();
+            }
+        
+        }
+        
     
     
 
@@ -9367,7 +9431,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             delete [] message;
             }
         }
+    
 
+    logHomelandBirth( newObject.xs, newObject.ys,
+                      newObject.lineageEveID );
     
     return newObject.id;
     }
@@ -9780,6 +9847,17 @@ static char containmentPermitted( int inContainerID, int inContainedID ) {
         
         if( numRead == 1 ) {
             
+            // clean up # character that might delimit end of string
+            int tagLen = strlen( tag );
+            
+            for( int i=0; i<tagLen; i++ ) {
+                if( tag[i] == '#' ) {
+                    tag[i] = '\0';
+                    tagLen = i;
+                    break;
+                    }
+                }
+
             char *locInContainerName =
                 strstr( getObject( inContainerID )->description, tag );
             
@@ -9789,10 +9867,11 @@ static char containmentPermitted( int inContainerID, int inContainedID ) {
                 // don't want contained to be +contHot
                 // and contaienr to be +contHotPlates
                 
-                char end = locInContainerName[ strlen( tag ) ];
+                char end = locInContainerName[ tagLen ];
                 
                 if( end == ' ' ||
-                    end == '\0' ) {
+                    end == '\0'||
+                    end == '#' ) {
                     return true;
                     }
                 }
@@ -13146,6 +13225,58 @@ void getLineageLineForPlayer( LiveObject *inPlayer,
 
 
 
+// result NOT destroyed by caller
+// can be NULL if not found
+static char *getLineageLastName( int inLineageEveID ) {
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( p->lineageEveID == inLineageEveID &&
+            p->familyName != NULL ) {
+            return p->familyName;
+            }
+        }
+    return NULL;
+    }
+
+
+
+
+static void sendHomelandMessage( LiveObject *nextPlayer,
+                                 int homeLineageEveID,
+                                 GridPos homeCenter ) {    
+    const char *famName = "0";
+    
+    if( homeLineageEveID != -1 ) {
+        char *realFamName =
+            getLineageLastName( 
+                homeLineageEveID );
+        if( realFamName != NULL ) {
+            famName = realFamName;
+            }
+        else {
+            famName = "UNNAMED";
+            }
+        }
+    
+    char *message = 
+        autoSprintf( 
+            "HL\n"
+            "%d %d %s\n#",
+            homeCenter.x -
+            nextPlayer->birthPos.x,
+            homeCenter.y -
+            nextPlayer->birthPos.y,
+            famName );
+    sendMessageToPlayer( 
+        nextPlayer, 
+        message, 
+        strlen( message ) );
+    delete [] message;
+    }
+
+
+
 static void endBiomeSickness( 
     LiveObject *nextPlayer,
     int i,
@@ -13184,7 +13315,6 @@ static void endBiomeSickness(
     else {
         // clear
         newEmotIndices.push_back( -1 );
-        // 3 sec
         newEmotTTLs.push_back( 0 );
         }
     }
@@ -13680,6 +13810,82 @@ static LiveObject *getPlayerByName( char *inName, LiveObject *inSkip ) {
             }
         }
     return NULL;
+    }
+
+
+
+
+static void findExpertForPlayer( LiveObject *inPlayer, 
+                                 ObjectRecord *inTouchedObject ) {
+    int race = getSpecialistRace( inTouchedObject );
+    
+    if( race == -1 ) {
+        return;
+        }
+
+    if( getObject( inPlayer->displayID )->race  == race ) {
+        // they ARE this expert themselves
+        return;
+        }
+    
+    GridPos playerPos = getPlayerPos( inPlayer );
+
+    double minDist = DBL_MAX;
+    LiveObject *closestExpert = NULL;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( getObject( p->displayID )->race == race ) {
+            GridPos pos = getPlayerPos( p );
+            
+            double d = distance( pos, playerPos );
+            
+            if( d < minDist ) {
+                minDist = d;
+                closestExpert = p;
+                }
+            }
+        }
+
+    const char *biomeName = getBadBiomeName( inTouchedObject );
+    
+    char *bName = NULL;
+    
+    if( biomeName != NULL ) {
+        char found;
+        bName = replaceAll( biomeName, "_", " ", &found );
+        }
+    else {
+        bName = stringDuplicate( "UNKNOWN BIOME" );
+        }
+
+    char *message = NULL;
+    
+    if( closestExpert != NULL ) {
+        GridPos ePos = getPlayerPos( closestExpert );
+
+        message = autoSprintf( "PS\n"
+                               "%d/0 EXPERT FOR %s "
+                               "*expert %d *map %d %d\n#",
+                               inPlayer->id,
+                               bName,
+                               closestExpert->id,
+                               ePos.x - inPlayer->birthPos.x,
+                               ePos.y - inPlayer->birthPos.y );
+        }
+    else {
+        message = autoSprintf( "PS\n"
+                               "%d/0 NO EXPERTS EXIST FOR %s\n#",
+                               inPlayer->id,
+                               bName );
+        }
+    
+    delete [] bName;
+    
+
+    sendMessageToPlayer( inPlayer, message, strlen( message ) );
+    delete [] message;
     }
 
 
@@ -16935,10 +17141,6 @@ int main() {
                                         gravePos.x, gravePos.y,
                                         nextPlayer->id );
                                     
-                                    setHeldGraveOrigin( adult, 
-                                                        gravePos.x,
-                                                        gravePos.y,
-                                                        0 );
                                     
                                     playerIndicesToSendUpdatesAbout.push_back(
                                         getLiveObjectIndex( holdingAdultID ) );
@@ -16995,6 +17197,12 @@ int main() {
                                     // in their hands
                                     adult->holdingID = babyBonesID;
                                     
+                                    setHeldGraveOrigin( adult, 
+                                                        gravePos.x,
+                                                        gravePos.y,
+                                                        0 );
+
+
                                     // this works to force client to play
                                     // creation sound for baby bones.
                                     adult->heldTransitionSourceID = 
@@ -17965,6 +18173,131 @@ int main() {
                                         nextPlayer, i,
                                         &playerIndicesToSendUpdatesAbout );
                                     }
+
+                                if( sicknessObjectID == -1 &&
+                                    ! nextPlayer->emotFrozen ) {
+                                    // check if path starts/ends
+                                    // in/out of home
+
+                                    int homeStart =
+                                        isHomeland( 
+                                            nextPlayer->xs,
+                                            nextPlayer->ys,
+                                            nextPlayer->lineageEveID );
+                                    
+                                    int endStep = nextPlayer->pathLength - 1;
+                                    
+                                    int homeEnd =
+                                        isHomeland( 
+                                            nextPlayer->pathToDest[endStep].x,
+                                            nextPlayer->pathToDest[endStep].y,
+                                            nextPlayer->lineageEveID );
+
+                                    char boundaryCross = false;
+                                    if( homeStart == homeEnd &&
+                                        homeEnd == -1 ) {
+                                        // player still outside homeland
+                                        // but did they cross a boundary
+                                        // into some other homeland?
+
+                                        int lineageA = 0;
+                                        int lineageB = 0;
+                                        GridPos dummyCenter;
+
+                                        getHomelandCenter(
+                                            nextPlayer->xs,
+                                            nextPlayer->ys,
+                                            &dummyCenter,
+                                            &lineageA );
+                                        getHomelandCenter(
+                                            nextPlayer->pathToDest[endStep].x,
+                                            nextPlayer->pathToDest[endStep].y,
+                                            &dummyCenter,
+                                            &lineageB );
+                                        
+                                        // even if B is -1, we have a boundary
+                                        // cross
+                                        if( lineageA != lineageB ) {
+                                            boundaryCross = true;
+                                            }
+                                        }
+
+                                    if( homeStart != homeEnd ) {
+                                        boundaryCross = true;
+                                        
+                                        int newEmotIndex = -1;
+                                        const char *speechWord = NULL;
+                                        
+                                        if( homeEnd == -1 ) {
+                                            newEmotIndex =
+                                                SettingsManager::
+                                                getIntSetting( 
+                                                    "homesickEmotionIndex", 
+                                                    -1 );
+                                            speechWord = "HOMESICK";
+                                            nextPlayer->everHomesick = true;
+                                            }
+                                        else if( 
+                                            homeEnd == 1 ||
+                                            ( ! nextPlayer->everHomesick &&
+                                              homeEnd == 0 ) ) {
+                                            newEmotIndex =
+                                                SettingsManager::
+                                                getIntSetting( 
+                                                    "homeEmotionIndex", 
+                                                    -1 );
+                                            speechWord = "HOME";
+                                            }
+                                        
+                                        if( newEmotIndex != -1 ) {
+                                            newEmotPlayerIDs.push_back( 
+                                                nextPlayer->id );
+        
+                                            newEmotIndices.push_back( 
+                                                newEmotIndex );
+                                            // 5 sec
+                                            newEmotTTLs.push_back( 5 );
+                                            }
+                                        
+                                        if( speechWord != NULL ) {
+                                            // put word above their head
+                                            // (only for them to see)
+                                            char *message = autoSprintf( 
+                                                "PS\n"
+                                                "%d/0 +%s+\n#",
+                                                nextPlayer->id, speechWord );
+                                            sendMessageToPlayer( 
+                                                nextPlayer, 
+                                                message, 
+                                                strlen( message ) );
+                                            delete [] message;
+                                            }
+                                        }
+                                    
+                                    if( boundaryCross ) {
+                                        // when player crosses boundary
+                                        // check if they've entered a homeland
+                                        // tell them about the center
+                                        GridPos homeCenter;
+                                        int homeLineageEveID;
+                                        char isSomeHomeland =
+                                            getHomelandCenter(
+                                              nextPlayer->pathToDest[endStep].x,
+                                              nextPlayer->pathToDest[endStep].y,
+                                              &homeCenter,
+                                              &homeLineageEveID );
+                                        
+                                        if( isSomeHomeland ) {
+                                            // send them HL message
+                                            sendHomelandMessage( 
+                                                nextPlayer,
+                                                homeLineageEveID,
+                                                homeCenter );
+                                            }
+                                        }
+
+                                    
+                                    }                                
                                 }
                             }
                         }
@@ -18559,8 +18892,9 @@ int main() {
                                     GridPos p = getPlayerPos( nextPlayer );
                                     
                                     textToAdd = autoSprintf( 
-                                        "%s *map %d %d",
-                                        m.saidText, p.x, p.y );
+                                        "%s *map %d %d %.f",
+                                        m.saidText, p.x, p.y, 
+                                        Time::timeSec() );
                                     
                                     if( strlen( textToAdd ) >= 
                                         MAP_METADATA_LENGTH ) {
@@ -18744,6 +19078,12 @@ int main() {
                                 if( targetObj->permanent &&
                                     targetObj->written ) {
                                     forcePlayerToRead( nextPlayer, target );
+                                    }
+                                
+                                if( targetObj->permanent &&
+                                    targetObj->expertFind ) {
+                                    findExpertForPlayer( nextPlayer,
+                                                         targetObj );
                                     }
                                 
 
@@ -20888,24 +21228,53 @@ int main() {
                                             canGoIn = true;
                                             }
                                         
+                                        char forceUse = false;
+                                        
+                                        if( canDrop && 
+                                            canGoIn &&
+                                            targetSlots > 0 &&
+                                            nextPlayer->numContained == 0 &&
+                                            getNumContained( m.x, m.y ) == 0 ) {
+                                            
+                                            // container empty
+                                            // is there a transition that might
+                                            // apply instead?
+                                            
+                                            // only consider a consuming
+                                            // transition (custom containment
+                                            // like grapes in a basket which
+                                            // aren't in container slots )
+
+                                            TransRecord *t = 
+                                                getPTrans( 
+                                                    nextPlayer->holdingID, 
+                                                    target );
+                                            
+                                            if( t != NULL && 
+                                                t->newActor == 0 ) {
+                                                forceUse = true;
+                                                }
+                                            }
                                         
 
                                         // DROP indicates they 
                                         // right-clicked on container
                                         // so use swap mode
                                         if( canDrop && 
-                                            canGoIn && 
+                                            canGoIn &&
+                                            ! forceUse &&
                                             addHeldToContainer( 
                                                 nextPlayer,
                                                 target,
                                                 m.x, m.y, true ) ) {
                                             // handled
                                             }
-                                        else if( canDrop && 
-                                                 ! canGoIn &&
-                                                 targetObj->permanent &&
-                                                 nextPlayer->numContained 
-                                                 == 0 ) {
+                                        else if( forceUse ||
+                                                 ( canDrop && 
+                                                   ! canGoIn &&
+                                                   targetObj->permanent &&
+                                                   nextPlayer->numContained 
+                                                   == 0 ) ) {
                                             // try treating it like
                                             // a USE action
                                             m.type = USE;
@@ -23635,6 +24004,26 @@ int main() {
         
         
 
+        SimpleVector<HomelandInfo> homelandList = getHomelandChanges();
+        
+        if( homelandList.size() > 0 ) {
+            for( int i=0; i<homelandList.size(); i++ ) {
+                HomelandInfo hi = homelandList.getElementDirect( i );
+                
+                for( int p=0; p<players.size(); p++ ) {
+                    LiveObject *nextPlayer = players.getElement( p );
+                    
+                    GridPos pos = getPlayerPos( nextPlayer );
+                    
+                    if( distance( pos, hi.center ) < hi.radius ) {
+                        sendHomelandMessage( nextPlayer,
+                                             hi.lineageEveID, hi.center );
+                        }
+                    }
+                }
+            }
+        
+
         
         // send moves and updates to clients
         
@@ -25047,18 +25436,29 @@ int main() {
                                         // make coords birth-relative
                                         // to person reading map
                                         int mapX, mapY;
+
+                                        // turn time into relative age in sec
+                                        timeSec_t mapT = 0;
                                         
                                         int numRead = 
                                             sscanf( starLoc, 
-                                                    " *map %d %d",
-                                                    &mapX, &mapY );
-                                        if( numRead == 2 ) {
+                                                    " *map %d %d %lf",
+                                                    &mapX, &mapY, &mapT );
+                                        if( numRead == 2 || numRead == 3 ) {
                                             starLoc[0] = '\0';
+
+                                            timeSec_t age = 0;
+                                            
+                                            if( numRead == 3 ) {
+                                                age = Time::timeSec() - mapT;
+                                                }
+
                                             char *newTrimmed = autoSprintf( 
-                                                "%s *map %d %d",
+                                                "%s *map %d %d %.f",
                                                 trimmedPhrase,
                                                 mapX - nextPlayer->birthPos.x, 
-                                                mapY - nextPlayer->birthPos.y );
+                                                mapY - nextPlayer->birthPos.y,
+                                                age );
                                             
                                             delete [] trimmedPhrase;
                                             trimmedPhrase = newTrimmed;

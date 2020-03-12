@@ -278,6 +278,28 @@ static int usedToolSlots = 0;
 static int totalToolSlots = 0;
 
 
+typedef struct Homeland {
+        int x, y;
+        char *familyName;
+    } Homeland;
+    
+
+static SimpleVector<Homeland> homelands;
+
+
+static Homeland *getHomeland( int inCenterX, int inCenterY ) {
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        
+        if( h->x == inCenterX && h->y == inCenterY ) {
+            return h;
+            }
+        }
+    return NULL;
+    }
+
+
+
 
 typedef struct LocationSpeech {
         doublePair pos;
@@ -1226,6 +1248,7 @@ typedef enum messageType {
     LEARNED_TOOL_REPORT,
     TOOL_EXPERTS,
     TOOL_SLOTS,
+    HOMELAND,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1387,6 +1410,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "TS" ) == 0 ) {
         returnValue = TOOL_SLOTS;
+        }
+    else if( strcmp( copy, "HL" ) == 0 ) {
+        returnValue = HOMELAND;
         }
     
     delete [] copy;
@@ -3241,6 +3267,11 @@ LivingLifePage::~LivingLifePage() {
         delete [] photoSig;
         photoSig = NULL;
         }
+
+    for( int i=0; i<homelands.size(); i++ ) {
+        delete [] homelands.getElementDirect( i ).familyName;
+        }
+    homelands.deleteAll();
     }
 
 
@@ -10603,21 +10634,50 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
 
                 
+
+                Homeland *h = getHomeland( mCurMouseOverWorld.x,
+                                           mCurMouseOverWorld.y );
+                if( h != NULL ) {
+                    char *newDes = NULL;
+                    
+                    if( h->familyName != NULL ) {
+                        newDes =
+                            autoSprintf( "%s %s %s",
+                                         h->familyName,
+                                         translate( "family" ),
+                                         des );
+                        }
+                    else {
+                        newDes =
+                            autoSprintf( "%s %s",
+                                         translate( "abandonned" ),
+                                         des );
+                        }
+                    if( newDes != NULL ) {
+                        if( desToDelete != NULL ) {
+                            delete [] desToDelete;
+                            }
+                        des = newDes;
+                        desToDelete = des;
+                        }
+                    }
+                
                 if( o->toolSetIndex != -1 ) {                
-                    const char *status = "TOOL - ";
+                    const char *status = translate( "toolInfo" );
                     
                     char *newDes = NULL;
                     
 
                     if( ! o->toolLearned ) {
-                        status = "UNLEARNED TOOL - ";
+                        status = translate( "unlearnedToolInfo" );
 
                         if( totalToolSlots > 0 ) {
                             newDes = 
-                                autoSprintf( "%s%d/%d SLOTS LEFT - %s", 
+                                autoSprintf( "%s%d/%d %s - %s", 
                                              status, 
                                              totalToolSlots - usedToolSlots, 
-                                             totalToolSlots, 
+                                             totalToolSlots,
+                                             translate( "slotsLeft" ),
                                              des );
                             }
                         }
@@ -13616,6 +13676,37 @@ void LivingLifePage::step() {
             if( numRead == 2 ) {
                 usedToolSlots = numSlotsUsed;
                 totalToolSlots = numTotalSlots;
+                }
+            }
+        else if( type == HOMELAND ) {
+            int x = 0;
+            int y = 0;
+            
+            char famName[40];
+
+            int numRead = 
+                sscanf( message, "HL\n%d %d %39s", &x, &y, famName );
+            
+            if( numRead == 3 ) {
+                Homeland *h = getHomeland( x, y );
+                if( h != NULL ) {
+                    if( h->familyName != NULL ) {
+                        delete [] h->familyName;
+                        h->familyName = NULL;
+                        }
+                    
+                    if( strcmp( famName, "0" ) != 0 ) {
+                        h->familyName = stringDuplicate( famName );
+                        }
+                    }
+                else {
+                    char *newFamName = NULL;
+                    if( strcmp( famName, "0" ) != 0 ) {
+                        newFamName = stringDuplicate( famName );
+                        }
+                    Homeland h = { x, y, newFamName };
+                    homelands.push_back( h );
+                    }
                 }
             }
         else if( type == SEQUENCE_NUMBER ) {
@@ -18685,9 +18776,18 @@ void LivingLifePage::step() {
                                         
                                         int mapX, mapY;
                                         
+                                        int mapAge = 0;
+                                        
                                         int numRead = sscanf( starPos,
-                                                              " *map %d %d",
-                                                              &mapX, &mapY );
+                                                              " *map %d %d %d",
+                                                              &mapX, &mapY,
+                                                              &mapAge );
+
+                                        int mapYears = 
+                                            floor( 
+                                                mapAge * 
+                                                getOurLiveObject()->ageRate );
+                                        
                                         // trim it off
                                         starPos[0] ='\0';
 
@@ -18753,10 +18853,29 @@ void LivingLifePage::step() {
                                                 personKey = "supp";
                                                 }
                                             }
+
+                                        
+                                        if( ! baby && ! leader && ! follower ) {
+                                            char *expertPos = 
+                                                strstr( 
+                                                    existing->currentSpeech, 
+                                                    " *expert" );
+                                            
+                                            if( expertPos != NULL ) {
+                                                person = true;
+                                                sscanf( expertPos, 
+                                                        " *expert %d", 
+                                                        &personID );
+
+                                                expertPos[0] = '\0';
+                                                personKey = "expt";
+                                                }
+                                            }
+                                        
                                         
 
 
-                                        if( numRead == 2 ) {
+                                        if( numRead == 2 || numRead == 3 ) {
                                             addTempHomeLocation( mapX, mapY,
                                                                  person,
                                                                  personID,
@@ -18807,6 +18926,41 @@ void LivingLifePage::step() {
                                                     translate( "metersAway" ) );
                                             delete [] dString;
                                             delete [] existing->currentSpeech;
+
+                                            if( mapYears > 0 ) {
+                                                const char *yearKey = 
+                                                    "yearsAgo";
+                                                if( mapYears == 1 ) {
+                                                    yearKey = "yearAgo";
+                                                    }
+                                                
+                                                if( mapYears >= 2000 ) {
+                                                    mapYears /= 1000;
+                                                    yearKey = "millenniaAgo";
+                                                    }
+                                                else if( mapYears >= 200 ) {
+                                                    mapYears /= 100;
+                                                    yearKey = "centuriesAgo";
+                                                    }
+                                                else if( mapYears >= 20 ) {
+                                                    mapYears /= 10;
+                                                    yearKey = "decadesAgo";
+                                                    }
+
+                                                char *ageString =
+                                                    getSpokenNumber( mapYears );
+                                                char *newSpeechB =
+                                                    autoSprintf( 
+                                                        "%s - %s %s %s",
+                                                        newSpeech,
+                                                        translate( "made" ),
+                                                        ageString,
+                                                        translate( yearKey ) );
+                                                delete [] ageString;
+                                                delete [] newSpeech;
+                                                newSpeech = newSpeechB;
+                                                }
+                                            
                                             existing->currentSpeech =
                                                 newSpeech;
                                             }
@@ -19724,7 +19878,7 @@ void LivingLifePage::step() {
                         mHungerSlipVisible = 0;
                         }
                     else if( ourLiveObject->foodStore <= 4 &&
-                             computeCurrentAge( ourLiveObject ) < (age_death - 3) ) {
+                             computeCurrentAge( ourLiveObject ) < (age_death - 2.67) ) {
                         
                         // don't play hunger sounds at end of life
                         // because it interrupts our end-of-life song
@@ -21207,6 +21361,12 @@ void LivingLifePage::makeActive( char inFresh ) {
     if( !inFresh ) {
         return;
         }
+
+    for( int i=0; i<homelands.size(); i++ ) {
+        delete [] homelands.getElementDirect( i ).familyName;
+        }
+    homelands.deleteAll();
+    
 
     usedToolSlots = 0;
     totalToolSlots = 0;
@@ -23300,9 +23460,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         char canExecute = false;
         char sideAccess = false;
+        char noBackAccess = false;
         
         if( destID > 0 && getObject( destID )->sideAccess ) {
             sideAccess = true;
+            }
+        
+        if( destID > 0 && getObject( destID )->noBackAccess ) {
+            noBackAccess = true;
             }
         
 
@@ -23319,6 +23484,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 ( clickDestY > ourLiveObject->yd ||
                   clickDestY < ourLiveObject->yd ) ) {
                 // trying to access side-access object from N or S
+                canExecute = false;
+                }
+            if( noBackAccess &&
+                ( clickDestY < ourLiveObject->yd ) ) {
+                // trying to access noBackAccess object from N
                 canExecute = false;
                 }
             }
@@ -23351,12 +23521,23 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 // don't consider N or S neighbors
                 nLimit = 3;
                 }
+            else if( noBackAccess ) {
+                // don't consider N neighbor
+                nLimit = 4;
+                }
             else if( destID > 0 &&
-                     ourLiveObject->holdingID == 0 && 
+                     ( ourLiveObject->holdingID <= 0 ||
+                       ( getObject( ourLiveObject->holdingID )->permanent &&
+                         strstr( getObject( ourLiveObject->holdingID )->
+                                 description, "sick" ) != NULL ) )
+                     &&
                      getObject( destID )->permanent &&
                      ! getObject( destID )->blocksWalking ) {
                 
-                TransRecord *handTrans = getTrans( 0, destID );
+                TransRecord *handTrans = NULL;
+                if( ourLiveObject->holdingID == 0 ) {
+                    handTrans = getTrans( 0, destID );
+                    }
                 
                 if( handTrans == NULL ||
                     ( handTrans->newActor != 0 &&

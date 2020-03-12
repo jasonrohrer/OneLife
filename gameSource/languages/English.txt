@@ -369,9 +369,13 @@ unknownPerson "UNKNOWN PERSON"
 yearAgo "YEAR AGO"
 yearsAgo "YEARS AGO"
 
+decadesAgo "DECADES AGO"
+
 centuriesAgo "CENTURIES AGO"
 
 millenniaAgo "MILLENNIA AGO"
+
+made "MADE"
 
 
 died "DIED"
@@ -419,6 +423,7 @@ map "MAP"
 baby "BABY"
 lead "LEAD"
 supp "SUPP"
+expt "EXPT"
 
 leader "LEADER"
 closestFollower "CLOSEST FOLLOWER"
@@ -450,6 +455,14 @@ exiled "EXILED"
 follower "FOLLOWER"
 ally "ALLY"
 dubious "DUBIOUS"
+
+toolInfo "TOOL - "
+unlearnedToolInfo "UNLEARNED TOOL - "
+slotsLeft = "SLOTS LEFT"
+
+family "FAMILY"
+abandonned = "ABANDONNED"
+
 
 dieCommand "/DIE"
 

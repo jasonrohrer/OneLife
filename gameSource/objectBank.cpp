@@ -733,6 +733,43 @@ static void setupBlocksMoving( ObjectRecord *inR ) {
 
 
 
+static void setupFamHomeland( ObjectRecord *inR ) {
+    inR->famUseDist = 0;
+
+    char *pos = strstr( inR->description, "+famUse" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+famUse%d", &( inR->famUseDist ) );
+        }
+    }
+
+
+static void setupForcedBiome( ObjectRecord *inR ) {
+    inR->forceBiome = -1;
+
+    char *pos = strstr( inR->description, "+biomeSet" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+biomeSet%d", &( inR->forceBiome ) );
+        }
+    }
+
+
+
+static void setupExpertFind( ObjectRecord *inR ) {
+    inR->expertFind = false;
+
+    char *pos = strstr( inR->description, "+expertFind" );
+
+    if( pos != NULL ) {
+        inR->expertFind = true;
+        }
+    }
+
+
+
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
     }
@@ -801,6 +838,12 @@ float initObjectBankStep() {
 
                 setupAlcohol( r );
                 
+                setupFamHomeland( r );
+                
+                setupForcedBiome( r );
+                
+                setupExpertFind( r );
+
 
                 // do this later, after we parse floorHugging
                 // setupWall( r );
@@ -2123,20 +2166,29 @@ void initObjectBankFinish() {
                 char *vertKey = autoSprintf( "+vertical%s", label );
                 char *cornerKey = autoSprintf( "+corner%s", label );
                 
+                int vertKeyLen = strlen( vertKey );
+                int cornerKeyLen = strlen( cornerKey );
+
                 for( int j=0; j<mapSize; j++ ) {
                     // consider self too, because horizontal and vertical
                     // might be the same
                     if( idMap[j] != NULL ) {
                         ObjectRecord *oOther = idMap[j];
                         
-                        if( strstr( oOther->description, vertKey ) ) {
+                        char *keyPos = strstr( oOther->description, vertKey );
+                        if( keyPos != NULL &&
+                            ( keyPos[ vertKeyLen ] == ' ' ||
+                              keyPos[ vertKeyLen ] == '\0' ) ) {
                             o->verticalVersionID = oOther->id;
                             }
                         // not else if
                         // vert and corner might be the same
                         // (in case of door, which doesn't have a corner
                         //  version)
-                        if( strstr( oOther->description, cornerKey ) ) {
+                        keyPos = strstr( oOther->description, cornerKey );
+                        if( keyPos != NULL &&
+                            ( keyPos[ cornerKeyLen ] == ' ' ||
+                              keyPos[ cornerKeyLen ] == '\0' ) ) {
                             o->cornerVersionID = oOther->id;
                             }
                         }
@@ -3552,6 +3604,12 @@ int addObject( const char *inDescription,
     setupNoBackAccess( r );            
 
     setupAlcohol( r );
+
+    setupFamHomeland( r );
+    
+    setupForcedBiome( r );
+
+    setupExpertFind( r );
 
     setupWall( r );
 

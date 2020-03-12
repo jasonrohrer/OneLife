@@ -519,6 +519,63 @@ typedef struct TestMapRecord {
 
 
 
+typedef struct Homeland {
+        int x, y;
+
+        int radius;
+
+        int lineageEveID;
+        
+        double lastBabyBirthTime;
+        
+        char expired;
+        
+        char changed;
+        
+    } Homeland;
+
+
+
+static SimpleVector<Homeland> homelands;
+
+
+// NULL if not found
+static Homeland *getHomeland( int inX, int inY, 
+                              char includeExpired = false ) {
+    double t = Time::getCurrentTime();
+    
+    int staleTime = 
+        SettingsManager::getIntSetting( "homelandStaleSeconds", 3600 );
+    
+    double tooOldTime = t - staleTime;
+
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        
+        // watch for stale
+        if( ! h->expired && h->lastBabyBirthTime < tooOldTime ) {
+            h->expired = true;
+            h->changed = true;
+            }
+
+        
+        if( ! includeExpired && h->expired ) {
+            continue;
+            }
+
+
+        if( inX < h->x + h->radius &&
+            inX > h->x - h->radius &&
+            inY < h->y + h->radius &&
+            inY > h->y - h->radius ) {
+            return h;
+            }
+        }
+    return NULL;
+    }
+
+
+
 
 #include "../commonSource/fractalNoise.h"
 
@@ -4434,6 +4491,8 @@ void freeMap( char inSkipCleanup ) {
     speechPipesOut = NULL;
 
     flightLandingPos.deleteAll();
+
+    homelands.deleteAll();
     }
 
 
@@ -5985,7 +6044,28 @@ int getTweakedBaseMap( int inX, int inY ) {
             if( s2ID > 0 && getObjectHeight( s2ID ) >= 3 ) {
                 return 0;
                 }                
-            }            
+            }
+
+        if( o->forceBiome != -1 &&
+            biomeDBGet( inX, inY ) == -1 &&
+            getBiomeIndex( o->forceBiome ) != -1 ) {
+            
+            // naturally-occurring object that forces a biome
+            // stick into floorDB            
+            biomeDBPut( inX, inY, o->forceBiome, o->forceBiome, 0.5 );
+
+            if( lastCheckedBiome != -1 &&
+                lastCheckedBiomeX == inX &&
+                lastCheckedBiomeY == inY ) {
+                // replace last checked with this
+                lastCheckedBiome = o->forceBiome;
+                }
+
+            // we also need to force-set the object itself into the DB
+            // otherwise, the next time we gen this square, we might not
+            // generate this object, because the underlying biome has changed
+            setMapObjectRaw( inX, inY, o->id );
+            }
         }
     return result;
     }
@@ -6731,6 +6811,11 @@ static void runTapoutOperation( int inX, int inY,
 
 
 
+// from server.cpp
+extern int getPlayerLineage( int inID );
+
+    
+
 
 void setMapObjectRaw( int inX, int inY, int inID ) {
     dbPut( inX, inY, 0, inID );
@@ -7020,6 +7105,44 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
         currentResponsiblePlayer = restoreResponsiblePlayer;
         }
     
+    
+    if( o->famUseDist > 0  && currentResponsiblePlayer != -1 ) {
+        
+        int p = currentResponsiblePlayer;
+        if( p < 0 ) {
+            p = - p;
+            }
+        
+        int lineage = getPlayerLineage( p );
+        
+        if( lineage != -1 ) {
+
+            // include expired, and update
+            Homeland *h = getHomeland( inX, inY, true );
+
+            double t = Time::getCurrentTime();
+                                  
+            if( h == NULL ) {
+                Homeland newH = { inX, inY, o->famUseDist,
+                                  lineage,
+                                  t,
+                                  false,
+                                  // changed
+                                  true };
+                homelands.push_back( newH );
+                }
+            else if( h->expired ) {
+                // update expired record
+                h->x = inX;
+                h->y = inY;
+                h->radius = o->famUseDist;
+                h->lineageEveID = lineage;
+                h->lastBabyBirthTime = t;
+                h->expired = false;
+                h->changed = true;
+                }
+            }
+        }
     }
 
 
@@ -9267,4 +9390,98 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
                 }
             }
         }
+    }
+
+
+
+
+int isHomeland( int inX, int inY, int inLineageEveID ) {
+    Homeland *h = getHomeland( inX, inY );
+    
+    if( h != NULL ) {
+        if( h->lineageEveID == inLineageEveID ) {
+            return 1;
+            }
+        else {
+            return -1;
+            }
+        }
+
+    // else check if they even have one
+    
+    for( int i=0; i<homelands.size(); i++ ) {
+        h = homelands.getElement( i );
+        
+        if( h->lineageEveID == inLineageEveID ) {
+            // they are outside of their homeland
+            return -1;
+            }
+        }
+    
+    // never found one, and they aren't inside someone else's
+    // report that they don't have one
+    return 0;
+    }
+
+
+
+void logHomelandBirth( int inX, int inY, int inLineageEveID ) {
+    Homeland *h = getHomeland( inX, inY );
+    
+    if( h != NULL ) {
+        if( h->lineageEveID == inLineageEveID ) {
+            h->lastBabyBirthTime = Time::getCurrentTime();
+            }
+        }
+    }
+
+
+
+char getHomelandCenter( int inX, int inY, 
+                        GridPos *outCenter, int *outLineageEveID ) {
+    
+    // include expired
+    Homeland *h = getHomeland( inX, inY, true );
+
+    if( h != NULL ) {
+        outCenter->x = h->x;
+        outCenter->y = h->y;
+        
+        if( h->expired ) {
+            *outLineageEveID = -1;
+            }
+        else {
+            *outLineageEveID = h->lineageEveID;
+            }
+        
+        return true;
+        }
+    else {
+        return false;
+        }
+    }
+
+
+
+SimpleVector<HomelandInfo> getHomelandChanges() {
+    SimpleVector<HomelandInfo> list;
+    
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        
+        if( h->changed ) {
+            GridPos p = { h->x, h->y };
+            
+            HomelandInfo hi = { p, h->radius, h->lineageEveID };
+            
+            if( h->expired ) {
+                hi.lineageEveID = -1;
+                }
+
+            list.push_back( hi );
+            
+            h->changed = false;
+            }
+        }
+    return list;
     }
