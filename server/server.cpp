@@ -21207,24 +21207,53 @@ int main() {
                                             canGoIn = true;
                                             }
                                         
+                                        char forceUse = false;
+                                        
+                                        if( canDrop && 
+                                            canGoIn &&
+                                            targetSlots > 0 &&
+                                            nextPlayer->numContained == 0 &&
+                                            getNumContained( m.x, m.y ) == 0 ) {
+                                            
+                                            // container empty
+                                            // is there a transition that might
+                                            // apply instead?
+                                            
+                                            // only consider a consuming
+                                            // transition (custom containment
+                                            // like grapes in a basket which
+                                            // aren't in container slots )
+
+                                            TransRecord *t = 
+                                                getPTrans( 
+                                                    nextPlayer->holdingID, 
+                                                    target );
+                                            
+                                            if( t != NULL && 
+                                                t->newActor == 0 ) {
+                                                forceUse = true;
+                                                }
+                                            }
                                         
 
                                         // DROP indicates they 
                                         // right-clicked on container
                                         // so use swap mode
                                         if( canDrop && 
-                                            canGoIn && 
+                                            canGoIn &&
+                                            ! forceUse &&
                                             addHeldToContainer( 
                                                 nextPlayer,
                                                 target,
                                                 m.x, m.y, true ) ) {
                                             // handled
                                             }
-                                        else if( canDrop && 
-                                                 ! canGoIn &&
-                                                 targetObj->permanent &&
-                                                 nextPlayer->numContained 
-                                                 == 0 ) {
+                                        else if( forceUse ||
+                                                 ( canDrop && 
+                                                   ! canGoIn &&
+                                                   targetObj->permanent &&
+                                                   nextPlayer->numContained 
+                                                   == 0 ) ) {
                                             // try treating it like
                                             // a USE action
                                             m.type = USE;

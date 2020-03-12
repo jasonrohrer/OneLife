@@ -21,6 +21,14 @@ Version 316   ???
   (previously, there was a 23-second gap where music hadn't started playing
   yet, but hunger chimes were still muted).
 
+--Support for forcing USE when trying to DROP an object into an empty
+  container where a consuming transition applies (so instead of containing the
+  held item, it is used on the empty container).  Example:  stacking grapes in
+  an empty basket, even though grapes would otherwise be containable in the
+  basket.  But if something else is already in the basket, the grapes go in
+  next to it, like an ordinary containable item.
+  Part of jasonrohrer/OneLifeData7#663 
+
 
 
 Server Fixes
