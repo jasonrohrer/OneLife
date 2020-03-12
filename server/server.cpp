@@ -4278,6 +4278,9 @@ GridPos getClosestPlayerPos( int inX, int inY ) {
         if( o->error ) {
             continue;
             }
+        if( o->heldByOther ) {
+            continue;
+            }
         
         GridPos p;
 

@@ -37,6 +37,9 @@ Version 316   ???
 --Client correctly routes you to front of noBackAccess objects (like wall
   shelf).  Fixes #563
 
+--Phantom baby position (for held baby) no longer counted when looking for
+  closest player (like for bear to chase).  Fixes #564
+
 
 
 Server Fixes
