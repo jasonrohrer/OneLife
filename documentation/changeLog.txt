@@ -17,6 +17,10 @@ Version 316   ???
  
 --Fixed baby bones (SIDS) grave identity tracking.  Fixes #559
 
+--Hunger chimes can now play right up until when final music starts
+  (previously, there was a 23-second gap where music hadn't started playing
+  yet, but hunger chimes were still muted).
+
 
 
 Server Fixes

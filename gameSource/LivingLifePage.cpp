@@ -19608,7 +19608,7 @@ void LivingLifePage::step() {
                         mHungerSlipVisible = 0;
                         }
                     else if( ourLiveObject->foodStore <= 4 &&
-                             computeCurrentAge( ourLiveObject ) < 57 ) {
+                             computeCurrentAge( ourLiveObject ) < 57.33 ) {
                         
                         // don't play hunger sounds at end of life
                         // because it interrupts our end-of-life song
