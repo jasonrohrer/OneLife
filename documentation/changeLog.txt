@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 316   ???
+Version 316    2020-March-12
 
 --100-radius homelands around wells, where family that built well feels
   comfortable enough to have babies.  Leaving this area makes you homesick.
@@ -39,6 +39,7 @@ Version 316   ???
 
 --Phantom baby position (for held baby) no longer counted when looking for
   closest player (like for bear to chase).  Fixes #564
+
 
 
 
