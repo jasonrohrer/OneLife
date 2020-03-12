@@ -23281,7 +23281,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 nLimit = 4;
                 }
             else if( destID > 0 &&
-                     ( ourLiveObject->holdingID == 0 ||
+                     ( ourLiveObject->holdingID <= 0 ||
                        ( getObject( ourLiveObject->holdingID )->permanent &&
                          strstr( getObject( ourLiveObject->holdingID )->
                                  description, "sick" ) != NULL ) )
