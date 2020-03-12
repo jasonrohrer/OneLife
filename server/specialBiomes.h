@@ -32,3 +32,11 @@ char isPolylingual( int inDisplayID );
 // and what their display names are
 // destroyed by caller
 char *getBadBiomeMessage( int inDisplayID );
+
+
+// gets race number for specialist for inObject
+// returns -1 if there's no specialist
+int getSpecialistRace( ObjectRecord *inObject );
+
+
+const char *getBadBiomeName( ObjectRecord *inObject );

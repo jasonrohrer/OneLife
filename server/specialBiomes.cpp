@@ -266,3 +266,50 @@ char *getBadBiomeMessage( int inDisplayID ) {
     return messageWorking.getElementString();
     }
 
+
+
+static SpecialBiome *getSpecialBiome( ObjectRecord *inObject ) {
+    if( inObject->numBiomes == 0 ) {
+        return NULL;
+        }
+    
+    int b = inObject->biomes[ 0 ];
+    
+    if( b < MAX_BIOME_NUMBER ) {
+        if( specialBiomes[b].badBiomeName == NULL ) {
+            return NULL;
+            }
+        
+        return &( specialBiomes[b] );
+        }
+    else {
+        return NULL;
+        }
+    }
+    
+
+
+int getSpecialistRace( ObjectRecord *inObject ) {
+    
+    SpecialBiome *b = getSpecialBiome( inObject );
+    
+    if( b == NULL ) {
+        return -1;
+        }
+    
+    return b->specialistRace;
+    }
+
+
+
+const char *getBadBiomeName( ObjectRecord *inObject ) {
+    SpecialBiome *b = getSpecialBiome( inObject );
+    
+    if( b == NULL ) {
+        return NULL;
+        }
+    
+    return b->badBiomeName;
+    }
+
+

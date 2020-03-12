@@ -3,6 +3,67 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 316    2020-March-12
+
+--100-radius homelands around wells, where family that built well feels
+  comfortable enough to have babies.  Leaving this area makes you homesick.
+
+--Expert-finder way stones occure along ley lines in specialist biomes.
+  Touching one points you toward the nearest expert for that biome.
+
+--Fixed issue with some partially-used objects not being containable on table
+  (use dummies have # appended to name, which was interfering with the end of
+  +cont tags).  Fixes #560
+ 
+--Fixed baby bones (SIDS) grave identity tracking.  Fixes #559
+
+--Hunger chimes can now play right up until when final music starts
+  (previously, there was a 23-second gap where music hadn't started playing
+  yet, but hunger chimes were still muted).
+
+--Support for forcing USE when trying to DROP an object into an empty
+  container where a consuming transition applies (so instead of containing the
+  held item, it is used on the empty container).  Example:  stacking grapes in
+  an empty basket, even though grapes would otherwise be containable in the
+  basket.  But if something else is already in the basket, the grapes go in
+  next to it, like an ordinary containable item.
+  Part of jasonrohrer/OneLifeData7#663 
+
+--Maps and waystones now show the age of the destination point when you read
+  them.  Fixes #562
+
+--New *spicyFood forced emote for hot pepper eating.
+
+--Client correctly routes you to front of noBackAccess objects (like wall
+  shelf).  Fixes #563
+
+--Phantom baby position (for held baby) no longer counted when looking for
+  closest player (like for bear to chase).  Fixes #564
+
+
+
+
+Server Fixes
+
+--Fixed so that +vertical tag can't match a prefix of another tag by accident
+  +verticalD from a property fence was matching +vertialDoorSnow, causing the
+  snow door to be the vertical auto-orient version of the property fence). 
+  Fixes #557
+
+--Added live server setting for toggling propUpWeakestRace and
+  propUpWeakestFamily (force-sending babies to bolster the race or family with
+  the lowest potentially-fertile female count).
+
+--Boiling the frog:  eatBonus now starts at 2 for Eve and decays to 0 (was 1)
+  with a half life of 4 generations.
+
+--To keep things fresh, we force-spawn a new Eve when everyone on the server is
+  part of a family that is over generation 40 (every family at least roughly 10
+  hours old).
+
+
+
+
 Version 314   2020-March-5
 
 --Container objects that have no sprites in front of contained (like table) now
