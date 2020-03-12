@@ -32,6 +32,8 @@ Version 316   ???
 --Maps and waystones now show the age of the destination point when you read
   them.  Fixes #562
 
+--New *spicyFood forced emote for hot pepper eating.
+
 
 
 Server Fixes
