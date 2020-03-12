@@ -29,6 +29,9 @@ Version 316   ???
   next to it, like an ordinary containable item.
   Part of jasonrohrer/OneLifeData7#663 
 
+--Maps and waystones now show the age of the destination point when you read
+  them.  Fixes #562
+
 
 
 Server Fixes

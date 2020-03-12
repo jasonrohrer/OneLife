@@ -18550,9 +18550,18 @@ void LivingLifePage::step() {
                                         
                                         int mapX, mapY;
                                         
+                                        int mapAge = 0;
+                                        
                                         int numRead = sscanf( starPos,
-                                                              " *map %d %d",
-                                                              &mapX, &mapY );
+                                                              " *map %d %d %d",
+                                                              &mapX, &mapY,
+                                                              &mapAge );
+
+                                        int mapYears = 
+                                            floor( 
+                                                mapAge * 
+                                                getOurLiveObject()->ageRate );
+                                        
                                         // trim it off
                                         starPos[0] ='\0';
 
@@ -18640,7 +18649,7 @@ void LivingLifePage::step() {
                                         
 
 
-                                        if( numRead == 2 ) {
+                                        if( numRead == 2 || numRead == 3 ) {
                                             addTempHomeLocation( mapX, mapY,
                                                                  person,
                                                                  personID,
@@ -18691,6 +18700,41 @@ void LivingLifePage::step() {
                                                     translate( "metersAway" ) );
                                             delete [] dString;
                                             delete [] existing->currentSpeech;
+
+                                            if( mapYears > 0 ) {
+                                                const char *yearKey = 
+                                                    "yearsAgo";
+                                                if( mapYears == 1 ) {
+                                                    yearKey = "yearAgo";
+                                                    }
+                                                
+                                                if( mapYears >= 2000 ) {
+                                                    mapYears /= 1000;
+                                                    yearKey = "millenniaAgo";
+                                                    }
+                                                else if( mapYears >= 200 ) {
+                                                    mapYears /= 100;
+                                                    yearKey = "centuriesAgo";
+                                                    }
+                                                else if( mapYears >= 20 ) {
+                                                    mapYears /= 10;
+                                                    yearKey = "decadesAgo";
+                                                    }
+
+                                                char *ageString =
+                                                    getSpokenNumber( mapYears );
+                                                char *newSpeechB =
+                                                    autoSprintf( 
+                                                        "%s - %s %s %s",
+                                                        newSpeech,
+                                                        translate( "made" ),
+                                                        ageString,
+                                                        translate( yearKey ) );
+                                                delete [] ageString;
+                                                delete [] newSpeech;
+                                                newSpeech = newSpeechB;
+                                                }
+                                            
                                             existing->currentSpeech =
                                                 newSpeech;
                                             }

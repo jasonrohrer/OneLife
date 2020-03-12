@@ -369,9 +369,13 @@ unknownPerson "UNKNOWN PERSON"
 yearAgo "YEAR AGO"
 yearsAgo "YEARS AGO"
 
+decadesAgo "DECADES AGO"
+
 centuriesAgo "CENTURIES AGO"
 
 millenniaAgo "MILLENNIA AGO"
+
+made "MADE"
 
 
 died "DIED"

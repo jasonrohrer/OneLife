@@ -18872,8 +18872,9 @@ int main() {
                                     GridPos p = getPlayerPos( nextPlayer );
                                     
                                     textToAdd = autoSprintf( 
-                                        "%s *map %d %d",
-                                        m.saidText, p.x, p.y );
+                                        "%s *map %d %d %.f",
+                                        m.saidText, p.x, p.y, 
+                                        Time::timeSec() );
                                     
                                     if( strlen( textToAdd ) >= 
                                         MAP_METADATA_LENGTH ) {
@@ -25415,18 +25416,29 @@ int main() {
                                         // make coords birth-relative
                                         // to person reading map
                                         int mapX, mapY;
+
+                                        // turn time into relative age in sec
+                                        timeSec_t mapT = 0;
                                         
                                         int numRead = 
                                             sscanf( starLoc, 
-                                                    " *map %d %d",
-                                                    &mapX, &mapY );
-                                        if( numRead == 2 ) {
+                                                    " *map %d %d %lf",
+                                                    &mapX, &mapY, &mapT );
+                                        if( numRead == 2 || numRead == 3 ) {
                                             starLoc[0] = '\0';
+
+                                            timeSec_t age = 0;
+                                            
+                                            if( numRead == 3 ) {
+                                                age = Time::timeSec() - mapT;
+                                                }
+
                                             char *newTrimmed = autoSprintf( 
-                                                "%s *map %d %d",
+                                                "%s *map %d %d %.f",
                                                 trimmedPhrase,
                                                 mapX - nextPlayer->birthPos.x, 
-                                                mapY - nextPlayer->birthPos.y );
+                                                mapY - nextPlayer->birthPos.y,
+                                                age );
                                             
                                             delete [] trimmedPhrase;
                                             trimmedPhrase = newTrimmed;
