@@ -578,7 +578,7 @@ function cs_getSequenceNumber() {
     global $tableNamePrefix;
     
 
-    $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
 
     if( $email == "" ) {
         cs_log( "getSequenceNumber denied for bad email" );
@@ -696,7 +696,7 @@ function cs_curse() {
     // not logged correctly
     
 
-    $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
 
     $sequence_number = cs_requestFilter( "sequence_number", "/[0-9]+/i", "0" );
 
@@ -782,7 +782,7 @@ function cs_liveTime() {
     // not logged correctly
     
 
-    $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
 
     $seconds = cs_requestFilter( "seconds", "/[0-9.]+/i", "0" );
     
@@ -905,7 +905,7 @@ function cs_isCursed() {
     // not logged correctly
     
 
-    $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $email = cs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
 
     $email_hash_value =
         cs_requestFilter( "email_hash_value", "/[A-F0-9]+/i", "" );
