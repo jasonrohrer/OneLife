@@ -24216,7 +24216,25 @@ int main() {
                     }
 
 
-
+                
+                // send homeland status for where player is standing
+                GridPos playerPos = getPlayerPos( nextPlayer );
+                GridPos homeCenter;
+                int homeLineageEveID;
+                
+                char isSomeHomeland = 
+                    getHomelandCenter( playerPos.x, playerPos.y, 
+                                       &homeCenter, &homeLineageEveID );
+                if( isSomeHomeland ) {
+                    // send them HL message
+                    sendHomelandMessage( 
+                        nextPlayer,
+                        homeLineageEveID,
+                        homeCenter );
+                    }
+                
+                
+                
                 // send lineage for everyone alive
                 
                 

@@ -9,6 +9,11 @@ Version 318    ???
 
 
 
+Server Fixes
+
+--Fixed to send homeland info for your spawn position.  Fixe #567
+
+
 
 Version 316    2020-March-12
 
