@@ -11,7 +11,7 @@ Version 318    ???
 
 Server Fixes
 
---Fixed to send homeland info for your spawn position.  Fixe #567
+--Fixed to send homeland info for your spawn position.  Fixes #567
 
 
 
