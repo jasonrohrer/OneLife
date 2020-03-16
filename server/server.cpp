@@ -13756,6 +13756,22 @@ static char isAccessBlocked( LiveObject *inPlayer,
 
 
 
+void sendHungryWorkSpeech( LiveObject *inPlayer ) {
+    // tell player about it with private speech
+    char *message = autoSprintf( 
+        "PS\n"
+        "%d/0 +MORE FOOD+\n#",
+        inPlayer->id );
+    
+    sendMessageToPlayer( 
+        inPlayer, 
+        message, 
+        strlen( message ) );
+    delete [] message;
+    }
+
+
+
 // cost set to 0 unless hungry work not blocked
 char isHungryWorkBlocked( LiveObject *inPlayer, 
                           int inNewTarget, int *outCost ) {          
@@ -19448,6 +19464,8 @@ int main() {
                                             r->newTarget,
                                             &hungryWorkCost ) ) {
                                         r = NULL;
+                                        
+                                        sendHungryWorkSpeech( nextPlayer );
                                         }
                                     }
 

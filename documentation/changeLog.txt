@@ -13,6 +13,9 @@ Server Fixes
 
 --Fixed to send homeland info for your spawn position.  Fixes #567
 
+--You get +MORE FOOD+ above your head when an action fails due to hungry work.
+  Fixes #568
+
 
 
 Version 316    2020-March-12
