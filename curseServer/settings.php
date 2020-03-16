@@ -9,13 +9,13 @@ $databasePassword = "testPassword";
 $databaseName = "test";
 
 // The URL of to the server.php script.
-$fullServerURL = "http://localhost/jcr13/curseServer/server.php";
+$fullServerURL = "http://play.twohoursonelife.com/curseServer/server.php";
 
 
 
 
 // The URL of the main, public-face website
-$mainSiteURL = "http://localhost/jcr13/";
+$mainSiteURL = "https://twohoursonelife.com";
 
 
 
