@@ -461,7 +461,7 @@ unlearnedToolInfo "UNLEARNED TOOL - "
 slotsLeft = "SLOTS LEFT"
 
 family "FAMILY"
-abandonned = "ABANDONNED"
+abandoned = "ABANDONED"
 
 
 dieCommand "/DIE"

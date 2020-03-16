@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 318    ???
+
+--Fixed misspelling of ABANDONED for wells.
+
+
+
+
 Version 316    2020-March-12
 
 --100-radius homelands around wells, where family that built well feels

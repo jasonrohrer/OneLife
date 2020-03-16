@@ -10425,7 +10425,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     else {
                         newDes =
                             autoSprintf( "%s %s",
-                                         translate( "abandonned" ),
+                                         translate( "abandoned" ),
                                          des );
                         }
                     if( newDes != NULL ) {
