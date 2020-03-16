@@ -7,6 +7,12 @@ Version 318    ???
 
 --Fixed misspelling of ABANDONED for wells.
 
+--Added a priority ranking for temporary home arrows (EXPT/MAP is top,
+  LEAD/SUPP is middle, and BABY is low priority).  This prevents less-important
+  home arrows from interrupting your more intentional and directed home arrows.
+  If you're out actively searching for an expert, you don't need constant
+  arrows pointing back to new babies at home.  Fixes #570
+
 
 
 Server Fixes

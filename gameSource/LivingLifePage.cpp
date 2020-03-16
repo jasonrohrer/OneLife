@@ -425,9 +425,68 @@ static void addHomeLocation( int inX, int inY ) {
 
 
 
+// inPersonKey can be NULL for map temp locations
+static int getLocationKeyPriority( const char *inPersonKey ) {
+    if( inPersonKey == NULL ||
+        strcmp( inPersonKey, "expt" ) == 0 ) {
+        return 1;
+        }
+    else if( strcmp( inPersonKey, "lead" ) == 0 ||
+             strcmp( inPersonKey, "supp" ) == 0 ) {
+        return 2;
+        }
+    else if( strcmp( inPersonKey, "baby" ) == 0 ) {
+        return 3;
+        }
+    else {
+        return 4;
+        }
+    }
+    
+
+// inPersonKey can be NULL for map temp locations
+// enforces priority for different classes of temp home locations
+static char doesNewTempLocationTrumpPrevious( const char *inPersonKey ) {
+    
+    // see what our current one is
+    const char *currentKey = NULL;
+    char currentFound = false;
+    
+    for( int i=0; i<homePosStack.size(); i++ ) {
+        if( homePosStack.getElementDirect( i ).temporary ) {            
+            currentKey = homePosStack.getElementDirect( i ).tempPersonKey;
+            currentFound = true;
+            break;
+            }
+        }
+    
+    
+    if( ! currentFound ) {
+        // no temp location currently
+        // all new ones can replace this state
+        return true;
+        }
+    
+    if( getLocationKeyPriority( inPersonKey ) <= 
+        getLocationKeyPriority( currentKey ) ) {
+        return true;
+        }
+    else {
+        return false;
+        }
+    }
+
+
+
 static void addTempHomeLocation( int inX, int inY, 
                                  char inPerson, int inPersonID,
                                  const char *inPersonKey ) {
+    if( ! doesNewTempLocationTrumpPrevious( inPersonKey ) ) {
+        // existing key has higher priority
+        // don't replace with this new key
+        return;
+        }
+    
     removeAllTempHomeLocations();
     
     GridPos newPos = { inX, inY };
