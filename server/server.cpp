@@ -18237,8 +18237,10 @@ int main() {
                                             // don't enforce the every-homesick
                                             // then homesick outside
                                             // of homelands restriction for 
-                                            // no-homeland folks
-                                            // nextPlayer->everHomesick = true;
+                                            // no-homeland Eves
+                                            if( ! nextPlayer->isEve ) {
+                                                nextPlayer->everHomesick = true;
+                                                }
                                             }
                                         else if( 
                                             homeEnd == 1 ||

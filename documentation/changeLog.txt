@@ -22,7 +22,7 @@ Server Fixes
 --You get +MORE FOOD+ above your head when an action fails due to hungry work.
   Fixes #568
 
---Nomads (with no well and no homeland) no longer lose their reproduction
+--Nomad Eves (with no well and no homeland) no longer lose their reproduction
   capabilities permanently when they enter other homelands.  They still need to
   leave the other homeland to have babies (but get +FREE REIN+ status when they
   leave).
