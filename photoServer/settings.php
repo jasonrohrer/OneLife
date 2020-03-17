@@ -9,20 +9,20 @@ $databasePassword = "testPassword";
 $databaseName = "test";
 
 // The URL of to the server.php script.
-$fullServerURL = "http://localhost/jcr13/photoServer/server.php";
+$fullServerURL = "http://play.twohoursonelife.com/photoServer/server.php";
 
 // for checking ticket_id hashes
-$ticketServerURL = "http://localhost/jcr13/ticketServer/server.php";
+$ticketServerURL = "http://play.twohoursonelife.com/ticketServer/server.php";
 
 
 // The URL of the main, public-face website
-$mainSiteURL = "http://localhost/jcr13/";
+$mainSiteURL = "http://twohoursonelife.com";
 
 
 // script must have write access here
 // must be web-accessible
 $submittedPhotoLocation = "photos/";
-$submittedPhotoURL = "http://localhost/jcr13/photoServer/photos/";
+$submittedPhotoURL = "http://play.twohoursonelife.com/photoServer/photos/";
 
 
 
