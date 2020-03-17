@@ -18234,7 +18234,11 @@ int main() {
                                                     "homesickEmotionIndex", 
                                                     -1 );
                                             speechWord = "HOMESICK";
-                                            nextPlayer->everHomesick = true;
+                                            // don't enforce the every-homesick
+                                            // then homesick outside
+                                            // of homelands restriction for 
+                                            // no-homeland folks
+                                            // nextPlayer->everHomesick = true;
                                             }
                                         else if( 
                                             homeEnd == 1 ||
@@ -18245,7 +18249,15 @@ int main() {
                                                 getIntSetting( 
                                                     "homeEmotionIndex", 
                                                     -1 );
-                                            speechWord = "HOME";
+                                            
+                                            if( homeEnd == 0 ) {
+                                                // a nomad with no homeland
+                                                speechWord = "FREE REIN";
+                                                }
+                                            else {
+                                                // returning to homeland
+                                                speechWord = "HOME";
+                                                }
                                             }
                                         
                                         if( newEmotIndex != -1 ) {
