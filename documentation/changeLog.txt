@@ -3,6 +3,45 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 318    2020-March-19
+
+--Fixed misspelling of ABANDONED for wells.
+
+--Added a priority ranking for temporary home arrows (EXPT/MAP is top,
+  LEAD/SUPP is middle, and BABY is low priority).  This prevents less-important
+  home arrows from interrupting your more intentional and directed home arrows.
+  If you're out actively searching for an expert, you don't need constant
+  arrows pointing back to new babies at home.  Fixes #570
+
+--Fixed so that 1-second "instant" transtions can go through instantly if they
+  would otherwise block a player action.  1-second transitions are used for
+  lots of temporary objects that are used to play a special creation sound
+  (example:  cleaning a dirty pad plays a different sound than making a pad
+  from scratch).  Fixes #571
+
+
+
+Server Fixes
+
+--Fixed to send homeland info for your spawn position.  Fixes #567
+
+--You get +MORE FOOD+ above your head when an action fails due to hungry work.
+  Fixes #568
+
+--Nomad Eves (with no well and no homeland) no longer lose their reproduction
+  capabilities permanently when they enter other homelands.  They still need to
+  leave the other homeland to have babies (but get +FREE REIN+ status when they
+  leave).
+
+--Fixed glitch with swapping a sub-container into a super-container that is
+  already filled with identical sub-containers (before, you could store a
+  hidden extra sub-container in there).  Fixes #572
+
+--Nurse cost is now a live server setting.  Pushed up to 2 (was 1).
+
+
+
+
 Version 316    2020-March-12
 
 --100-radius homelands around wells, where family that built well feels

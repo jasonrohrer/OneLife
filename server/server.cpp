@@ -154,6 +154,14 @@ static double indoorFoodDecrementSecondsBonus = 20.0;
 
 static int babyBirthFoodDecrement = 10;
 
+// fixed cost to pick up baby
+// this still encourages baby-parent
+// communication so as not
+// to get the most mileage out of 
+// food
+static int nurseCost = 1;
+
+
 // bonus applied to all foods
 // makes whole server a bit easier (or harder, if negative)
 static int eatBonus = 0;
@@ -7635,6 +7643,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
 
+    nurseCost =
+        SettingsManager::getIntSetting( "nurseCost", 1 );
+
     indoorFoodDecrementSecondsBonus = SettingsManager::getFloatSetting( 
         "indoorFoodDecrementSecondsBonus", 20 );
 
@@ -9942,6 +9953,12 @@ static char addHeldToContainer( LiveObject *inPlayer,
                 idToAdd = r->newTarget;
                 }
             
+            
+            if( inPlayer->numContained > 0 ) {
+                // negative to indicate sub-container
+                idToAdd *= -1;
+                }
+
             int swapInd = getContainerSwapIndex ( inPlayer,
                                                   idToAdd,
                                                   true,
@@ -13758,6 +13775,22 @@ static char isAccessBlocked( LiveObject *inPlayer,
 
 
 
+void sendHungryWorkSpeech( LiveObject *inPlayer ) {
+    // tell player about it with private speech
+    char *message = autoSprintf( 
+        "PS\n"
+        "%d/0 +MORE FOOD+\n#",
+        inPlayer->id );
+    
+    sendMessageToPlayer( 
+        inPlayer, 
+        message, 
+        strlen( message ) );
+    delete [] message;
+    }
+
+
+
 // cost set to 0 unless hungry work not blocked
 char isHungryWorkBlocked( LiveObject *inPlayer, 
                           int inNewTarget, int *outCost ) {          
@@ -14725,6 +14758,86 @@ void makePlayerBiomeSick( LiveObject *nextPlayer,
 
 
 
+
+static void handleHeldDecay( 
+    LiveObject *nextPlayer, int i,
+    SimpleVector<int> *playerIndicesToSendUpdatesAbout,
+    SimpleVector<int> *playerIndicesToSendHealingAbout ) {
+    
+    int oldID = nextPlayer->holdingID;
+    
+    TransRecord *t = getPTrans( -1, oldID );
+    
+    if( t != NULL ) {
+        
+        int newID = t->newTarget;
+        
+        handleHoldingChange( nextPlayer, newID );
+        
+        if( newID == 0 &&
+            nextPlayer->holdingWound &&
+            nextPlayer->dying ) {
+            
+            // wound decayed naturally, count as healed
+            setNoLongerDying( 
+                nextPlayer,
+                playerIndicesToSendHealingAbout );            
+            }
+        
+        
+        nextPlayer->heldTransitionSourceID = -1;
+        
+        ObjectRecord *newObj = getObject( newID );
+        ObjectRecord *oldObj = getObject( oldID );
+        
+        
+        if( newObj != NULL && newObj->permanent &&
+            oldObj != NULL && ! oldObj->permanent &&
+            ! nextPlayer->holdingWound &&
+            ! nextPlayer->holdingBiomeSickness ) {
+            // object decayed into a permanent
+            // force drop
+            GridPos dropPos = 
+                getPlayerPos( nextPlayer );
+            
+            handleDrop( 
+                dropPos.x, dropPos.y, 
+                nextPlayer,
+                playerIndicesToSendUpdatesAbout );
+            }
+        
+        
+        playerIndicesToSendUpdatesAbout->push_back( i );
+        }
+    else {
+        // no decay transition exists
+        // clear it
+        setFreshEtaDecayForHeld( nextPlayer );
+        }
+    }
+
+
+
+// check if target has a 1-second
+// decay specified
+// if so, make it happen NOW and set in map
+// return new target id
+static int checkTargetInstantDecay( int inTarget, int inX, int inY ) {
+    int newTarget = inTarget;
+    
+    TransRecord *targetDecay = getPTrans( -1, inTarget );
+                                        
+    if( targetDecay != NULL &&
+        targetDecay->autoDecaySeconds == 1  &&
+        targetDecay->newTarget > 0 ) {
+                                            
+        newTarget = targetDecay->newTarget;
+                                            
+        setMapObject( inX, inY, newTarget );
+        }
+    
+    return newTarget;
+    }
 
 
 void sanityCheckSettings(const char *inSettingName) {
@@ -18235,7 +18348,13 @@ int main() {
                                                     "homesickEmotionIndex", 
                                                     -1 );
                                             speechWord = "HOMESICK";
-                                            nextPlayer->everHomesick = true;
+                                            // don't enforce the every-homesick
+                                            // then homesick outside
+                                            // of homelands restriction for 
+                                            // no-homeland Eves
+                                            if( ! nextPlayer->isEve ) {
+                                                nextPlayer->everHomesick = true;
+                                                }
                                             }
                                         else if( 
                                             homeEnd == 1 ||
@@ -18246,7 +18365,15 @@ int main() {
                                                 getIntSetting( 
                                                     "homeEmotionIndex", 
                                                     -1 );
-                                            speechWord = "HOME";
+                                            
+                                            if( homeEnd == 0 ) {
+                                                // a nomad with no homeland
+                                                speechWord = "FREE REIN";
+                                                }
+                                            else {
+                                                // returning to homeland
+                                                speechWord = "HOME";
+                                                }
                                             }
                                         
                                         if( newEmotIndex != -1 ) {
@@ -19149,6 +19276,53 @@ int main() {
                                     // (and no bare hand action available)
                                     r = getPTrans( nextPlayer->holdingID,
                                                   target );
+                                    
+
+                                    if( r == NULL ) {
+                                        // no transition applies
+                                        // check if held or target has
+                                        // 1-second decay trans defined
+                                        // If so, treat it as instant
+                                        // and let it go through now
+                                        // (skip if result of decay is 0)
+                                        TransRecord *heldDecay = 
+                                                getPTrans( 
+                                                    -1, 
+                                                    nextPlayer->holdingID );
+                                        if( heldDecay != NULL &&
+                                            heldDecay->autoDecaySeconds == 1 &&
+                                            heldDecay->newTarget > 0 ) {
+                                            // force decay NOW and try again
+                                            handleHeldDecay( 
+                                             nextPlayer,
+                                             i,
+                                             &playerIndicesToSendUpdatesAbout,
+                                             &playerIndicesToSendHealingAbout );
+                                            r = getPTrans( 
+                                                nextPlayer->holdingID,
+                                                target );
+                                            }
+                                        
+                                        }
+                                    if( r == NULL ) {
+                                        
+                                        int newTarget = 
+                                            checkTargetInstantDecay(
+                                                target, m.x, m.y );
+                                        
+                                        // if so, let transition go through
+                                        // (skip if result of decay is 0)
+                                        if( newTarget != 0 &&
+                                            newTarget != target ) {
+                                            
+                                            target = newTarget;
+                                            targetObj = getObject( target );
+                                            
+                                            r = getPTrans( 
+                                                nextPlayer->holdingID,
+                                                target );
+                                            }
+                                        }
                                     }
 
                                 char blockedTool = false;
@@ -19465,6 +19639,8 @@ int main() {
                                             r->newTarget,
                                             &hungryWorkCost ) ) {
                                         r = NULL;
+                                        
+                                        sendHungryWorkSpeech( nextPlayer );
                                         }
                                     }
 
@@ -20236,18 +20412,13 @@ int main() {
                                             Time::getCurrentTime() +
                                             computeFoodDecrementTimeSeconds( 
                                                 hitPlayer );
-
-                                        // fixed cost to pick up baby
-                                        // this still encourages baby-parent
-                                        // communication so as not
-                                        // to get the most mileage out of 
-                                        // food
-                                        int nurseCost = 1;
+                                        
+                                        int thisNurseCost = nurseCost;
                                         
                                         if( nextPlayer->yummyBonusStore > 0 ) {
                                             nextPlayer->yummyBonusStore -= 
-                                                nurseCost;
-                                            nurseCost = 0;
+                                                thisNurseCost;
+                                            thisNurseCost = 0;
                                             if( nextPlayer->yummyBonusStore < 
                                                 0 ) {
                                                 
@@ -20256,14 +20427,14 @@ int main() {
 
                                                 // pass remaining nurse
                                                 // cost onto main food store
-                                                nurseCost = - nextPlayer->
+                                                thisNurseCost = - nextPlayer->
                                                     yummyBonusStore;
                                                 nextPlayer->yummyBonusStore = 0;
                                                 }
                                             }
                                         
 
-                                        nextPlayer->foodStore -= nurseCost;
+                                        nextPlayer->foodStore -= thisNurseCost;
                                         
                                         if( nextPlayer->foodStore < 0 ) {
                                             // catch mother death later
@@ -21415,7 +21586,27 @@ int main() {
                                         // consider bare-hand action
                                         TransRecord *handTrans = getPTrans(
                                             0, target );
-                                    
+                                        
+                                        if( handTrans == NULL ) {
+                                            // check for instant decay
+                                            int newTarget = 
+                                                checkTargetInstantDecay(
+                                                    target, m.x, m.y );
+                                        
+                                            // if so, let transition go through
+                                            // (skip if result of decay is 0)
+                                            if( newTarget != 0 &&
+                                                newTarget != target ) {
+                                            
+                                                target = newTarget;
+                                                targetObj = getObject( target );
+                                                
+                                                handTrans = 
+                                                    getPTrans( 0, target );
+                                                }
+                                            }
+
+
                                         // handle only simplest case here
                                         // (to avoid side-effects)
                                         // REMV on container stack
@@ -22397,57 +22588,9 @@ int main() {
                     nextPlayer->holdingEtaDecay < curTime ) {
                 
                     // what they're holding has decayed
-
-                    int oldID = nextPlayer->holdingID;
-                
-                    TransRecord *t = getPTrans( -1, oldID );
-
-                    if( t != NULL ) {
-
-                        int newID = t->newTarget;
-                        
-                        handleHoldingChange( nextPlayer, newID );
-                        
-                        if( newID == 0 &&
-                            nextPlayer->holdingWound &&
-                            nextPlayer->dying ) {
-                            
-                            // wound decayed naturally, count as healed
-                            setNoLongerDying( 
-                                nextPlayer,
-                                &playerIndicesToSendHealingAbout );            
-                            }
-                        
-
-                        nextPlayer->heldTransitionSourceID = -1;
-                        
-                        ObjectRecord *newObj = getObject( newID );
-                        ObjectRecord *oldObj = getObject( oldID );
-                        
-                        
-                        if( newObj != NULL && newObj->permanent &&
-                            oldObj != NULL && ! oldObj->permanent &&
-                            ! nextPlayer->holdingWound &&
-                            ! nextPlayer->holdingBiomeSickness ) {
-                            // object decayed into a permanent
-                            // force drop
-                             GridPos dropPos = 
-                                getPlayerPos( nextPlayer );
-                            
-                             handleDrop( 
-                                    dropPos.x, dropPos.y, 
-                                    nextPlayer,
-                                    &playerIndicesToSendUpdatesAbout );
-                            }
-                        
-
-                        playerIndicesToSendUpdatesAbout.push_back( i );
-                        }
-                    else {
-                        // no decay transition exists
-                        // clear it
-                        setFreshEtaDecayForHeld( nextPlayer );
-                        }
+                    handleHeldDecay( nextPlayer, i,
+                                     &playerIndicesToSendUpdatesAbout,
+                                     &playerIndicesToSendHealingAbout );
                     }
 
                 // check if anything in the container they are holding
@@ -24233,7 +24376,25 @@ int main() {
                     }
 
 
-
+                
+                // send homeland status for where player is standing
+                GridPos playerPos = getPlayerPos( nextPlayer );
+                GridPos homeCenter;
+                int homeLineageEveID;
+                
+                char isSomeHomeland = 
+                    getHomelandCenter( playerPos.x, playerPos.y, 
+                                       &homeCenter, &homeLineageEveID );
+                if( isSomeHomeland ) {
+                    // send them HL message
+                    sendHomelandMessage( 
+                        nextPlayer,
+                        homeLineageEveID,
+                        homeCenter );
+                    }
+                
+                
+                
                 // send lineage for everyone alive
                 
                 
