@@ -23614,6 +23614,26 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 // distinction between left and right click
 
                 action = "REMV";
+
+                if( ! modClick ) {
+                    // no bare-hand action
+                    // but check if this object decays in 1 second
+                    // and if so, a bare-hand action applies after that
+                    TransRecord *decayTrans = getTrans( -1, destID );
+                    if( decayTrans != NULL &&
+                        decayTrans->newTarget > 0 &&
+                        decayTrans->autoDecaySeconds == 1 ) {
+                        
+                        if( getTrans( 0, decayTrans->newTarget ) != NULL ) {
+                            // switch to USE in this case
+                            // because server will force object to decay
+                            // so a transition can go through
+                            action = "USE";
+                            }
+                        }
+                    }
+                
+
                 send = true;
                 delete [] extra;
                 extra = autoSprintf( " %d", p.hitSlotIndex );

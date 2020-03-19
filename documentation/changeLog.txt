@@ -13,6 +13,12 @@ Version 318    ???
   If you're out actively searching for an expert, you don't need constant
   arrows pointing back to new babies at home.  Fixes #570
 
+--Fixed so that 1-second "instant" transtions can go through instantly if they
+  would otherwise block a player action.  1-second transitions are used for
+  lots of temporary objects that are used to play a special creation sound
+  (example:  cleaning a dirty pad plays a different sound than making a pad
+  from scratch).  Fixes #571
+
 
 
 Server Fixes
