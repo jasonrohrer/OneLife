@@ -9940,6 +9940,12 @@ static char addHeldToContainer( LiveObject *inPlayer,
                 idToAdd = r->newTarget;
                 }
             
+            
+            if( inPlayer->numContained > 0 ) {
+                // negative to indicate sub-container
+                idToAdd *= -1;
+                }
+
             int swapInd = getContainerSwapIndex ( inPlayer,
                                                   idToAdd,
                                                   true,

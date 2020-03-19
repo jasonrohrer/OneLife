@@ -33,6 +33,11 @@ Server Fixes
   leave the other homeland to have babies (but get +FREE REIN+ status when they
   leave).
 
+--Fixed glitch with swapping a sub-container into a super-container that is
+  already filled with identical sub-containers (before, you could store a
+  hidden extra sub-container in there).  Fixes #572
+
+
 
 
 Version 316    2020-March-12
