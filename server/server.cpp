@@ -152,6 +152,14 @@ static double indoorFoodDecrementSecondsBonus = 20.0;
 
 static int babyBirthFoodDecrement = 10;
 
+// fixed cost to pick up baby
+// this still encourages baby-parent
+// communication so as not
+// to get the most mileage out of 
+// food
+static int nurseCost = 1;
+
+
 // bonus applied to all foods
 // makes whole server a bit easier (or harder, if negative)
 static int eatBonus = 0;
@@ -7632,6 +7640,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
+
+    nurseCost =
+        SettingsManager::getIntSetting( "nurseCost", 1 );
 
     indoorFoodDecrementSecondsBonus = SettingsManager::getFloatSetting( 
         "indoorFoodDecrementSecondsBonus", 20 );
@@ -20384,18 +20395,13 @@ int main() {
                                             Time::getCurrentTime() +
                                             computeFoodDecrementTimeSeconds( 
                                                 hitPlayer );
-
-                                        // fixed cost to pick up baby
-                                        // this still encourages baby-parent
-                                        // communication so as not
-                                        // to get the most mileage out of 
-                                        // food
-                                        int nurseCost = 1;
+                                        
+                                        int thisNurseCost = nurseCost;
                                         
                                         if( nextPlayer->yummyBonusStore > 0 ) {
                                             nextPlayer->yummyBonusStore -= 
-                                                nurseCost;
-                                            nurseCost = 0;
+                                                thisNurseCost;
+                                            thisNurseCost = 0;
                                             if( nextPlayer->yummyBonusStore < 
                                                 0 ) {
                                                 
@@ -20404,14 +20410,14 @@ int main() {
 
                                                 // pass remaining nurse
                                                 // cost onto main food store
-                                                nurseCost = - nextPlayer->
+                                                thisNurseCost = - nextPlayer->
                                                     yummyBonusStore;
                                                 nextPlayer->yummyBonusStore = 0;
                                                 }
                                             }
                                         
 
-                                        nextPlayer->foodStore -= nurseCost;
+                                        nextPlayer->foodStore -= thisNurseCost;
                                         
                                         if( nextPlayer->foodStore < 0 ) {
                                             // catch mother death later

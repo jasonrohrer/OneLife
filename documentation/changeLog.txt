@@ -37,6 +37,8 @@ Server Fixes
   already filled with identical sub-containers (before, you could store a
   hidden extra sub-container in there).  Fixes #572
 
+--Nurse cost is now a live server setting.  Pushed up to 2 (was 1).
+
 
 
 
