@@ -8,6 +8,7 @@ Server Fixes
 
 --Nurse cost back to 1 (was 2).
 
+--Optional code for counting visually unique objects.
 
 
 
