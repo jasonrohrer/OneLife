@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes
+
+--Nurse cost back to 1 (was 2).
+
+
+
+
 Version 318    2020-March-19
 
 --Fixed misspelling of ABANDONED for wells.
