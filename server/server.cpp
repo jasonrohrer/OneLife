@@ -20736,10 +20736,13 @@ int main() {
                                             
                                             if( nt > 0 &&
                                                 getObject( nt )->clothing 
-                                                == 'n' ) {
+                                                != clickedClothing->clothing ) {
                                                 // don't allow transitions
                                                 // that leave a non-wearable
                                                 // item on your body
+                                                // OR convert clothing into
+                                                // a different type of clothing
+                                                // (converting a shrit to a hat)
                                                 clickedClothingTrans = NULL;
                                                 }
                                             }

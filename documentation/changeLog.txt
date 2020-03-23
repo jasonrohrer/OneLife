@@ -10,6 +10,9 @@ Server Fixes
 
 --Optional code for counting visually unique objects.
 
+--Fixed glitch where you could transform worn clothing into some other clothing
+  type (cloak into ghost costume whith knife).  Fixes #575
+
 
 
 Version 318    2020-March-19
