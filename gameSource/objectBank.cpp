@@ -2390,7 +2390,10 @@ void initObjectBankFinish() {
         }
     
 
-    //countVisuallyUniqueObjects();
+    
+    if( false ) {
+        countVisuallyUniqueObjects();
+        }
     }
 
 
