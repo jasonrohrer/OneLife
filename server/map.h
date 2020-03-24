@@ -347,4 +347,10 @@ SimpleVector<HomelandInfo> getHomelandChanges();
 
 
 
+// looks for deadly object that is crossing inPos
+// passes out moving object's destination
+int getDeadlyMovingMapObject( int inPosX, int inPosY,
+                              int *outMovingDestX, int *outMovingDestY );
+
+
 #endif

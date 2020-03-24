@@ -15588,7 +15588,9 @@ int main() {
         
         SocketOrServer *readySock =  NULL;
 
-        double pollTimeout = 2;
+        // at bare minimum, run our periodic steps at a fixed
+        // frequency
+        double pollTimeout = periodicStepTime;
         
         if( minMoveTime < pollTimeout ) {
             // shorter timeout if we have to wake up for a move
@@ -16566,7 +16568,48 @@ int main() {
                     }
             
                 int curOverID = getMapObject( curPos.x, curPos.y );
-            
+                
+                char riding = false;
+                
+                if( nextPlayer->holdingID > 0 && 
+                    getObject( nextPlayer->holdingID )->rideable ) {
+                    riding = true;
+                    }
+
+
+                GridPos deadlyDestPos = curPos;
+
+                if( ! riding && curOverID > 0 ) {
+                    // check if player is standing on
+                    // a non-deadly object
+                    // if so, moving deadly objects might still be able
+                    // to get them
+                    ObjectRecord *curOverObj = getObject( curOverID );
+                    
+                    if( ! curOverObj->permanent ||
+                        curOverObj->deadlyDistance == 0 ) {
+                        
+                        int movingDestX, movingDestY;
+                        
+                        int curMovingID =
+                            getDeadlyMovingMapObject( 
+                                curPos.x, curPos.y,
+                                &movingDestX, &movingDestY );
+                        
+                        if( curMovingID != 0 ) {
+                            ObjectRecord *movingObj = getObject( curMovingID );
+                            if( movingObj->permanent &&
+                                movingObj->deadlyDistance > 0 ) {
+                                curOverID = curMovingID;
+                                
+                                deadlyDestPos.x = movingDestX;
+                                deadlyDestPos.y = movingDestY;
+                                }
+                            }
+                        }
+                    }
+                    
+
 
                 if( ! nextPlayer->heldByOther &&
                     ! nextPlayer->vogMode &&
@@ -16576,12 +16619,6 @@ int main() {
                 
                     ObjectRecord *curOverObj = getObject( curOverID );
                 
-                    char riding = false;
-                
-                    if( nextPlayer->holdingID > 0 && 
-                        getObject( nextPlayer->holdingID )->rideable ) {
-                        riding = true;
-                        }
 
                     if( !riding &&
                         curOverObj->permanent && 
@@ -16657,7 +16694,8 @@ int main() {
                             getPTrans( curOverID, 0 );
 
                         if( r != NULL ) {
-                            setMapObject( curPos.x, curPos.y, r->newActor );
+                            setMapObject( deadlyDestPos.x, deadlyDestPos.y, 
+                                          r->newActor );
 
                             // new target specifies wound
                             // but never replace an existing wound

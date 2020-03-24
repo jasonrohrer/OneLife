@@ -15106,9 +15106,18 @@ void LivingLifePage::step() {
                                 }
                             }
                         else {
-                            mMapMoveSpeeds[mapI] = 0;
-                            mMapMoveOffsets[mapI].x = 0;
-                            mMapMoveOffsets[mapI].y = 0;
+                            // if these are still set, even though
+                            // this map change is NOT for a moving object
+                            // it means that the old object is still busy
+                            // arriving at the destination, while a new
+                            // change to it has happened.
+                            // Try NOT snapping it to its destination when
+                            // this happens, and letting it finish its
+                            // move in the new state
+                            
+                            //mMapMoveSpeeds[mapI] = 0;
+                            //mMapMoveOffsets[mapI].x = 0;
+                            //mMapMoveOffsets[mapI].y = 0;
                             }
                         
                         

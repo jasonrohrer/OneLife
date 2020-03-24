@@ -3,6 +3,19 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 320     ???
+
+--Finally figured out a way to make deadly moving objects (like bears) attack
+  in passing, when they cross your position while you're standing on a
+  non-blocking object.  Server checks their rounded intermediary position, when
+  checking whether you're standing on a deadly object, if you're standing on a
+  non-empty tile.  Animal turns into attack state immediately, mid-move, and
+  client has been fixed to allow moving objects to transition in-motion
+  (before, they would snap to their destination instantly if a transition
+  happened in-motion).  This will also fix a few other snap-to-destination
+  glitches.
+
+
 
 Server Fixes
 
