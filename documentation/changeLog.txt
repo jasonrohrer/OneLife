@@ -15,6 +15,11 @@ Version 320     ???
   happened in-motion).  This will also fix a few other snap-to-destination
   glitches.
 
+--Whoops... switch to STARVING slip was not working for elderly people who were
+  listinging to their final music (final music blocks starving chime, but was
+  also blocking slip change).
+
+
 
 
 Server Fixes
