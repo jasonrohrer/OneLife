@@ -14845,6 +14845,29 @@ static int checkTargetInstantDecay( int inTarget, int inX, int inY ) {
     }
 
 
+static void setRefuseFoodEmote( LiveObject *hitPlayer ) {
+    if( hitPlayer->emotFrozen ) {
+        return;
+        }
+    
+    int newEmotIndex =
+        SettingsManager::
+        getIntSetting( 
+            "refuseFoodEmotionIndex",
+            -1 );
+    if( newEmotIndex != -1 ) {
+        newEmotPlayerIDs.push_back( 
+            hitPlayer->id );
+        
+        newEmotIndices.push_back( 
+            newEmotIndex );
+        // 5 sec
+        newEmotTTLs.push_back( 5 );
+        }
+    }
+
+
+
 
 int main() {
 
@@ -20457,6 +20480,9 @@ int main() {
                                                 computeFoodDecrementTimeSeconds(
                                                     hitPlayer );
                                             }
+                                        else {
+                                            setRefuseFoodEmote( hitPlayer );
+                                            }
                                         
                                         int thisNurseCost = nurseCost;
                                         
@@ -20853,18 +20879,18 @@ int main() {
                                     }
                                 // next case, holding food
                                 // that couldn't be put into clicked clothing
-                                else if( obj->foodValue > 0 
-                                         && 
-                                         ( ( targetPlayerAge >= 
-                                             defaultActionAge 
-                                             && targetPlayer->foodStore < cap )
-                                           ||
-                                           // helpless bb can only eat when
-                                           // starving
-                                           ( targetPlayerAge < defaultActionAge
-                                             && targetPlayer->foodStore <=
-                                             babyFeedingLevel ) ) 
+                                else if( obj->foodValue > 0 && 
+                                         ( targetPlayerAge < defaultActionAge
+                                           && targetPlayer->foodStore >
+                                           babyFeedingLevel ) 
                                          &&
+                                         ! couldHaveGoneIn ) {
+                                    // special case for babies refusing
+                                    // food when not starving.
+                                    setRefuseFoodEmote( targetPlayer );
+                                    }
+                                else if( obj->foodValue > 0 &&
+                                         targetPlayer->foodStore < cap &&
                                          ! couldHaveGoneIn ) {
                                     
                                     targetPlayer->justAte = true;
