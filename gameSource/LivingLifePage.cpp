@@ -19712,7 +19712,23 @@ void LivingLifePage::step() {
                         ourLiveObject->maxFoodCapacity = 
                             ourLiveObject->foodCapacity;
                         }
-                    if( ourLiveObject->foodStore == 
+
+
+                    double curAge = computeCurrentAge( ourLiveObject );
+                    
+                    if( curAge < 3 ) {
+                        mHungerSlipVisible = 0;
+                        // special case for babies
+                        // show either full or starving
+                        // only show starving at 2 food or lower
+                        // starving means you can nurse/eat
+                        if( ourLiveObject->foodStore <= 2 ) {
+                             setMusicLoudness( 0 );
+                             mHungerSlipVisible = 2;
+                             mPulseHungerSound = true;
+                            }
+                        }
+                    else if( ourLiveObject->foodStore == 
                         ourLiveObject->foodCapacity ) {
                         
                         mPulseHungerSound = false;

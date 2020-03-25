@@ -19,6 +19,13 @@ Version 320     ???
   listinging to their final music (final music blocks starving chime, but was
   also blocking slip change).
 
+--Helpless babies (under age 3) now flip between FULL or STARVING, with no
+  HUNGRY state in between.  They can only nurse or be fed food while STARVING.
+  A mother picking up a non-starving baby still burns one of her food pips, and
+  holds the baby at the current food level for the duration of the holding, but
+  won't top up the baby.  The only way to top up a baby is to feed them when
+  STARVING.  Baby communication to care-givers is now much more crucial.
+
 
 
 

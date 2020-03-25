@@ -152,6 +152,9 @@ static double indoorFoodDecrementSecondsBonus = 20.0;
 
 static int babyBirthFoodDecrement = 10;
 
+static int babyFeedingLevel = 2;
+
+
 // fixed cost to pick up baby
 // this still encourages baby-parent
 // communication so as not
@@ -7643,6 +7646,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     nurseCost =
         SettingsManager::getIntSetting( "nurseCost", 1 );
+
+    babyFeedingLevel =
+        SettingsManager::getIntSetting( "babyFeedingLevel", 2 );
+    
 
     indoorFoodDecrementSecondsBonus = SettingsManager::getFloatSetting( 
         "indoorFoodDecrementSecondsBonus", 20 );
@@ -20366,9 +20373,15 @@ int main() {
                                     getHitPlayer( m.x, m.y, m.id, 
                                                   false, babyAge );
                                 
+                                double hitPlayerAge = 0;
+                                
+                                if( hitPlayer != NULL ) {
+                                    hitPlayerAge = computeAge( hitPlayer );
+                                    }
+
                                 if( hitPlayer != NULL &&
                                     !hitPlayer->heldByOther &&
-                                    computeAge( hitPlayer ) < babyAge  ) {
+                                    hitPlayerAge < babyAge  ) {
                                     
                                     // negative holding IDs to indicate
                                     // holding another player
@@ -20421,18 +20434,29 @@ int main() {
                                     // if adult fertile female, baby auto-fed
                                     if( isFertileAge( nextPlayer ) ) {
                                         
-                                        hitPlayer->foodStore = 
-                                            computeFoodCapacity( hitPlayer );
+                                        if( hitPlayer->foodStore <=
+                                            babyFeedingLevel ||
+                                            hitPlayerAge >= defaultActionAge ) {
+                                            
+                                            // babies that aren't starving
+                                            // refuse to nurse
+                                            // but still have pick-up cost
+                                            // below
+                                            
+                                            hitPlayer->foodStore = 
+                                                computeFoodCapacity( 
+                                                    hitPlayer );
                 
-                                        hitPlayer->foodUpdate = true;
-                                        hitPlayer->responsiblePlayerID =
-                                            nextPlayer->id;
+                                            hitPlayer->foodUpdate = true;
+                                            hitPlayer->responsiblePlayerID =
+                                                nextPlayer->id;
                                         
-                                        // reset their food decrement time
-                                        hitPlayer->foodDecrementETASeconds =
-                                            Time::getCurrentTime() +
-                                            computeFoodDecrementTimeSeconds( 
-                                                hitPlayer );
+                                            // reset their food decrement time
+                                            hitPlayer->foodDecrementETASeconds =
+                                                Time::getCurrentTime() +
+                                                computeFoodDecrementTimeSeconds(
+                                                    hitPlayer );
+                                            }
                                         
                                         int thisNurseCost = nurseCost;
                                         
@@ -20605,6 +20629,7 @@ int main() {
                             nextPlayer->actionTarget.x = m.x;
                             nextPlayer->actionTarget.y = m.y;
                             
+                            double targetPlayerAge = computeAge( targetPlayer );
 
                             if( targetPlayer != nextPlayer &&
                                 targetPlayer->dying &&
@@ -20828,8 +20853,18 @@ int main() {
                                     }
                                 // next case, holding food
                                 // that couldn't be put into clicked clothing
-                                else if( obj->foodValue > 0 && 
-                                         targetPlayer->foodStore < cap &&
+                                else if( obj->foodValue > 0 
+                                         && 
+                                         ( ( targetPlayerAge >= 
+                                             defaultActionAge 
+                                             && targetPlayer->foodStore < cap )
+                                           ||
+                                           // helpless bb can only eat when
+                                           // starving
+                                           ( targetPlayerAge < defaultActionAge
+                                             && targetPlayer->foodStore <=
+                                             babyFeedingLevel ) ) 
+                                         &&
                                          ! couldHaveGoneIn ) {
                                     
                                     targetPlayer->justAte = true;
@@ -20857,7 +20892,7 @@ int main() {
 
                                     logEating( obj->id,
                                                obj->foodValue + bonus,
-                                               computeAge( targetPlayer ),
+                                               targetPlayerAge,
                                                m.x, m.y );
                                     
                                     targetPlayer->foodStore += bonus;
