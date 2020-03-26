@@ -13773,6 +13773,47 @@ static char isAccessBlocked( LiveObject *inPlayer,
             // make sure player owns this pos
             ownershipBlocked = 
                 ! isOwned( inPlayer, x, y );
+
+            if( ownershipBlocked ) {
+                GridPos ourPos = getPlayerPos( inPlayer );
+
+                // find closest owner
+                int closeID = -1;
+                GridPos closePos;
+                double closeDist = DBL_MAX;
+                
+                for( int j=0; j<players.size(); j++ ) {
+                    LiveObject *otherPlayer = players.getElement( j );
+                    if( ! otherPlayer->error &&
+                        isOwned( otherPlayer, x, y ) ) {
+                        
+                        GridPos p = getPlayerPos( otherPlayer );
+                        
+                        double d = distance( ourPos, p );
+                        
+                        if( d < closeDist ) {
+                            closeDist = d;
+                            closePos = p;
+                            closeID = otherPlayer->id;
+                            }
+                        }
+                    }            
+                
+                if( closeID != -1 ) {
+
+                    char *message = autoSprintf( "PS\n"
+                                                 "%d/0 OWNER "
+                                                 "*owner %d *map %d %d\n#",
+                                                 inPlayer->id,
+                                                 closeID,
+                                                 closePos.x - 
+                                                 inPlayer->birthPos.x,
+                                                 closePos.y - 
+                                                 inPlayer->birthPos.y );
+                    sendMessageToPlayer( inPlayer, message, strlen( message ) );
+                    delete [] message;
+                    }
+                }
             }
         }
     return wrongSide || ownershipBlocked;

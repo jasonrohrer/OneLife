@@ -26,6 +26,9 @@ Version 320     ???
   won't top up the baby.  The only way to top up a baby is to feed them when
   STARVING.  Baby communication to care-givers is now much more crucial.
 
+--Touching a property gate that you don't own now gives you an arrow pointing
+  to the closest owner.
+
 
 
 

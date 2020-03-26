@@ -424,6 +424,7 @@ baby "BABY"
 lead "LEAD"
 supp "SUPP"
 expt "EXPT"
+owner "OWN"
 
 leader "LEADER"
 closestFollower "CLOSEST FOLLOWER"

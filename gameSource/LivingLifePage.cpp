@@ -18695,7 +18695,9 @@ void LivingLifePage::step() {
                                                 personKey = "supp";
                                                 }
                                             }
-
+                                        
+                                        
+                                        char expert = false;
                                         
                                         if( ! baby && ! leader && ! follower ) {
                                             char *expertPos = 
@@ -18711,6 +18713,26 @@ void LivingLifePage::step() {
 
                                                 expertPos[0] = '\0';
                                                 personKey = "expt";
+                                                
+                                                expert = true;
+                                                }
+                                            }
+                                        
+                                        if( ! baby && ! leader && ! follower &&
+                                            ! expert ) {
+                                            char *ownerPos = 
+                                                strstr( 
+                                                    existing->currentSpeech, 
+                                                    " *owner" );
+                                            
+                                            if( ownerPos != NULL ) {
+                                                person = true;
+                                                sscanf( ownerPos, 
+                                                        " *owner %d", 
+                                                        &personID );
+
+                                                ownerPos[0] = '\0';
+                                                personKey = "owner";
                                                 }
                                             }
                                         
