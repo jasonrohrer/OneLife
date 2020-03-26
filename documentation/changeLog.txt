@@ -41,6 +41,12 @@ Server Fixes
 --Fixed glitch where you could transform worn clothing into some other clothing
   type (cloak into ghost costume whith knife).  Fixes #575
 
+--Fixed bug in way held object was being set after SELF action to transform
+  clothing (eta decay for held wasn't being set).  Fixed to handle instant-
+  decay (1-second auto-decay) when processing SELF action to use object on
+  clothing.
+
+
 
 
 Version 318    2020-March-19
