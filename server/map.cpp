@@ -8918,16 +8918,6 @@ int addMetadata( int inObjectID, unsigned char *inBuffer ) {
 
 
 
-static double distSquared( GridPos inA, GridPos inB ) {
-    double xDiff = (double)inA.x - (double)inB.x;
-    double yDiff = (double)inA.y - (double)inB.y;
-    
-    return xDiff * xDiff + yDiff * yDiff;
-    }
-
-
-
-
 void removeLandingPos( GridPos inPos ) {
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         if( equal( inPos, flightLandingPos.getElementDirect( i ) ) ) {
@@ -8966,6 +8956,9 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
     int closestIndex = -1;
     GridPos closestPos;
     double closestDist = DBL_MAX;
+
+    double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
+                                                        10000 );
     
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
@@ -8978,8 +8971,12 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
 
         
         if( isInDir( inCurPos, thisPos, inDir ) ) {
-            double dist = distSquared( inCurPos, thisPos );
+            double dist = distance( inCurPos, thisPos );
             
+            if( dist > maxDist ) {
+                continue;
+                }
+
             if( dist < closestDist ) {
                 // check if this is still a valid landing pos
                 int oID = getMapObject( thisPos.x, thisPos.y );
@@ -9017,13 +9014,20 @@ GridPos getClosestLandingPos( GridPos inTargetPos, char *outFound ) {
     int closestIndex = -1;
     GridPos closestPos;
     double closestDist = DBL_MAX;
+
+    double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
+                                                        10000 );
     
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
 
         
-        double dist = distSquared( inTargetPos, thisPos );
+        double dist = distance( inTargetPos, thisPos );
         
+        if( dist > maxDist ) {
+            continue;
+            }
+
         if( dist < closestDist ) {
             // check if this is still a valid landing pos
             int oID = getMapObject( thisPos.x, thisPos.y );
@@ -9063,6 +9067,9 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
     GridPos closestPos;
     double closestDist = DBL_MAX;
 
+    double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
+                                                        10000 );
+
     GridPos curPos = { inCurrentX, inCurrentY };
 
     char useLimit = false;
@@ -9085,7 +9092,11 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
             }
         
               
-        double dist = distSquared( curPos, thisPos );
+        double dist = distance( curPos, thisPos );
+
+        if( dist > maxDist ) {
+            continue;
+            }
         
         if( dist < closestDist ) {
             
