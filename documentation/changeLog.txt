@@ -33,6 +33,10 @@ Version 320     ???
   where we weren't populating the case for the unused actor or target with the
   used target or actor.
 
+--Support for transitions where lastUseActor AND lastUseTarget is flagged at
+  same time.  This has never been needed before, but was needed for mining pick
+  used on mine, since both can be exhausted.
+
 
 
 
