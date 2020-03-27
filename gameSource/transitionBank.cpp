@@ -1287,11 +1287,10 @@ void initTransBankFinish() {
                                 }
                             }
                         }
-                    else {
-                        // default one
-                        actorDummies.push_back( tr->actor );
-                        }
-
+                    // default one
+                    actorDummies.push_back( tr->actor );
+                    
+    
                     if( target != NULL && target->numUses > 1 ) {
                         
                         for( int u=0; u<target->numUses-1; u++ ) {
@@ -1304,11 +1303,10 @@ void initTransBankFinish() {
                                 }
                             }
                         }
-                    else {
-                        // default one
-                        targetDummies.push_back( tr->target );
-                        }
-
+                    // default one
+                    targetDummies.push_back( tr->target );
+                    
+    
                     if( actorDummies.size() > 1 || targetDummies.size() > 1 ) {
                         for( int ad=0; ad<actorDummies.size(); ad++ ) {
                             newTrans.actor = 

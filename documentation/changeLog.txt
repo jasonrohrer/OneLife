@@ -29,6 +29,10 @@ Version 320     ???
 --Touching a property gate that you don't own now gives you an arrow pointing
   to the closest owner.
 
+--Fixed a glitch in populating use dummy transitions with no use pass-through,
+  where we weren't populating the case for the unused actor or target with the
+  used target or actor.
+
 
 
 
