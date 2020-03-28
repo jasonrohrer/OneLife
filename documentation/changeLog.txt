@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 320     ???
+Version 320     2020-March-28
 
 --Finally figured out a way to make deadly moving objects (like bears) attack
   in passing, when they cross your position while you're standing on a
