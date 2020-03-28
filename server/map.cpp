@@ -580,6 +580,17 @@ static Homeland *getHomeland( int inX, int inY,
 
 
 
+static char hasHomeland( int inLineageEveID ) {
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        if( h->lineageEveID == inLineageEveID ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
 
 #include "../commonSource/fractalNoise.h"
 
@@ -6733,6 +6744,7 @@ static void runTapoutOperation( int inX, int inY,
                                 int inRadiusX, int inRadiusY,
                                 int inSpacingX, int inSpacingY,
                                 int inTriggerID,
+                                char inPlayerHasHomeland,
                                 char inIsPost = false ) {
     for( int y =  inY - inRadiusY; 
          y <= inY + inRadiusY; 
@@ -6812,6 +6824,19 @@ static void runTapoutOperation( int inX, int inY,
                 
                 if( t != NULL ) {
                     newTarget = t->newTarget;
+                    }
+                }
+
+            if( newTarget != -1 ) {
+                if( inPlayerHasHomeland ) {
+                    // block creation of objects that require +primaryHomeland
+                    // player already has a homeland
+                    ObjectRecord *nt = getObject( newTarget );
+                    
+                    if( strstr( nt->description, 
+                                "+primaryHomeland" ) != NULL ) {
+                        newTarget = -1;
+                        }
                     }
                 }
             
@@ -7088,6 +7113,20 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
     else if( o->isTapOutTrigger ) {
         // this object, when created, taps out other objects in grid around
 
+        char playerHasHomeland = false;
+        
+        if( currentResponsiblePlayer != -1 ) {
+            int pID = currentResponsiblePlayer;
+            if( pID < 0 ) {
+                pID = -pID;
+                }
+            int lineage = getPlayerLineage( pID );
+            
+            if( lineage != -1 ) {
+                playerHasHomeland = hasHomeland( lineage );
+                }
+            }
+        
         // don't make current player responsible for all these changes
         int restoreResponsiblePlayer = currentResponsiblePlayer;
         currentResponsiblePlayer = -1;        
@@ -7099,7 +7138,8 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
             runTapoutOperation( inX, inY, 
                                 r->limitX, r->limitY,
                                 r->gridSpacingX, r->gridSpacingY, 
-                                inID );
+                                inID,
+                                playerHasHomeland );
             
             
             r->buildCount++;
@@ -7111,7 +7151,8 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                 runTapoutOperation( inX, inY, 
                                     r->postBuildLimitX, r->postBuildLimitY,
                                     r->gridSpacingX, r->gridSpacingY, 
-                                    inID, true );
+                                    inID, 
+                                    playerHasHomeland, true );
                 }
             }
         
