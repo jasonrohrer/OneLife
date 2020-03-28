@@ -154,6 +154,9 @@ static double indoorFoodDecrementSecondsBonus = 20.0;
 
 static int babyBirthFoodDecrement = 10;
 
+static int babyFeedingLevel = 2;
+
+
 // fixed cost to pick up baby
 // this still encourages baby-parent
 // communication so as not
@@ -7646,6 +7649,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     nurseCost =
         SettingsManager::getIntSetting( "nurseCost", 1 );
 
+    babyFeedingLevel =
+        SettingsManager::getIntSetting( "babyFeedingLevel", 2 );
+    
+
     indoorFoodDecrementSecondsBonus = SettingsManager::getFloatSetting( 
         "indoorFoodDecrementSecondsBonus", 20 );
 
@@ -13768,6 +13775,47 @@ static char isAccessBlocked( LiveObject *inPlayer,
             // make sure player owns this pos
             ownershipBlocked = 
                 ! isOwned( inPlayer, x, y );
+
+            if( ownershipBlocked ) {
+                GridPos ourPos = getPlayerPos( inPlayer );
+
+                // find closest owner
+                int closeID = -1;
+                GridPos closePos;
+                double closeDist = DBL_MAX;
+                
+                for( int j=0; j<players.size(); j++ ) {
+                    LiveObject *otherPlayer = players.getElement( j );
+                    if( ! otherPlayer->error &&
+                        isOwned( otherPlayer, x, y ) ) {
+                        
+                        GridPos p = getPlayerPos( otherPlayer );
+                        
+                        double d = distance( ourPos, p );
+                        
+                        if( d < closeDist ) {
+                            closeDist = d;
+                            closePos = p;
+                            closeID = otherPlayer->id;
+                            }
+                        }
+                    }            
+                
+                if( closeID != -1 ) {
+
+                    char *message = autoSprintf( "PS\n"
+                                                 "%d/0 OWNER "
+                                                 "*owner %d *map %d %d\n#",
+                                                 inPlayer->id,
+                                                 closeID,
+                                                 closePos.x - 
+                                                 inPlayer->birthPos.x,
+                                                 closePos.y - 
+                                                 inPlayer->birthPos.y );
+                    sendMessageToPlayer( inPlayer, message, strlen( message ) );
+                    delete [] message;
+                    }
+                }
             }
         }
     return wrongSide || ownershipBlocked;
@@ -14840,6 +14888,28 @@ static int checkTargetInstantDecay( int inTarget, int inX, int inY ) {
     }
 
 
+static void setRefuseFoodEmote( LiveObject *hitPlayer ) {
+    if( hitPlayer->emotFrozen ) {
+        return;
+        }
+    
+    int newEmotIndex =
+        SettingsManager::
+        getIntSetting( 
+            "refuseFoodEmotionIndex",
+            -1 );
+    if( newEmotIndex != -1 ) {
+        newEmotPlayerIDs.push_back( 
+            hitPlayer->id );
+        
+        newEmotIndices.push_back( 
+            newEmotIndex );
+        // 5 sec
+        newEmotTTLs.push_back( 5 );
+        }
+    }
+
+
 void sanityCheckSettings(const char *inSettingName) {
     FILE *fp = SettingsManager::getSettingsFile( inSettingName, "r" );
 	if( fp == NULL ) {
@@ -15605,7 +15675,9 @@ int main() {
         
         SocketOrServer *readySock =  NULL;
 
-        double pollTimeout = 2;
+        // at bare minimum, run our periodic steps at a fixed
+        // frequency
+        double pollTimeout = periodicStepTime;
         
         if( minMoveTime < pollTimeout ) {
             // shorter timeout if we have to wake up for a move
@@ -16583,7 +16655,48 @@ int main() {
                     }
             
                 int curOverID = getMapObject( curPos.x, curPos.y );
-            
+                
+                char riding = false;
+                
+                if( nextPlayer->holdingID > 0 && 
+                    getObject( nextPlayer->holdingID )->rideable ) {
+                    riding = true;
+                    }
+
+
+                GridPos deadlyDestPos = curPos;
+
+                if( ! riding && curOverID > 0 ) {
+                    // check if player is standing on
+                    // a non-deadly object
+                    // if so, moving deadly objects might still be able
+                    // to get them
+                    ObjectRecord *curOverObj = getObject( curOverID );
+                    
+                    if( ! curOverObj->permanent ||
+                        curOverObj->deadlyDistance == 0 ) {
+                        
+                        int movingDestX, movingDestY;
+                        
+                        int curMovingID =
+                            getDeadlyMovingMapObject( 
+                                curPos.x, curPos.y,
+                                &movingDestX, &movingDestY );
+                        
+                        if( curMovingID != 0 ) {
+                            ObjectRecord *movingObj = getObject( curMovingID );
+                            if( movingObj->permanent &&
+                                movingObj->deadlyDistance > 0 ) {
+                                curOverID = curMovingID;
+                                
+                                deadlyDestPos.x = movingDestX;
+                                deadlyDestPos.y = movingDestY;
+                                }
+                            }
+                        }
+                    }
+                    
+
 
                 if( ! nextPlayer->heldByOther &&
                     ! nextPlayer->vogMode &&
@@ -16593,12 +16706,6 @@ int main() {
                 
                     ObjectRecord *curOverObj = getObject( curOverID );
                 
-                    char riding = false;
-                
-                    if( nextPlayer->holdingID > 0 && 
-                        getObject( nextPlayer->holdingID )->rideable ) {
-                        riding = true;
-                        }
 
                     if( !riding &&
                         curOverObj->permanent && 
@@ -16674,7 +16781,8 @@ int main() {
                             getPTrans( curOverID, 0 );
 
                         if( r != NULL ) {
-                            setMapObject( curPos.x, curPos.y, r->newActor );
+                            setMapObject( deadlyDestPos.x, deadlyDestPos.y, 
+                                          r->newActor );
 
                             // new target specifies wound
                             // but never replace an existing wound
@@ -20345,9 +20453,15 @@ int main() {
                                     getHitPlayer( m.x, m.y, m.id, 
                                                   false, babyAge );
                                 
+                                double hitPlayerAge = 0;
+                                
+                                if( hitPlayer != NULL ) {
+                                    hitPlayerAge = computeAge( hitPlayer );
+                                    }
+
                                 if( hitPlayer != NULL &&
                                     !hitPlayer->heldByOther &&
-                                    computeAge( hitPlayer ) < babyAge  ) {
+                                    hitPlayerAge < babyAge  ) {
                                     
                                     // negative holding IDs to indicate
                                     // holding another player
@@ -20400,18 +20514,32 @@ int main() {
                                     // if adult fertile female, baby auto-fed
                                     if( isFertileAge( nextPlayer ) ) {
                                         
-                                        hitPlayer->foodStore = 
-                                            computeFoodCapacity( hitPlayer );
+                                        if( hitPlayer->foodStore <=
+                                            babyFeedingLevel ||
+                                            hitPlayerAge >= defaultActionAge ) {
+                                            
+                                            // babies that aren't starving
+                                            // refuse to nurse
+                                            // but still have pick-up cost
+                                            // below
+                                            
+                                            hitPlayer->foodStore = 
+                                                computeFoodCapacity( 
+                                                    hitPlayer );
                 
-                                        hitPlayer->foodUpdate = true;
-                                        hitPlayer->responsiblePlayerID =
-                                            nextPlayer->id;
+                                            hitPlayer->foodUpdate = true;
+                                            hitPlayer->responsiblePlayerID =
+                                                nextPlayer->id;
                                         
-                                        // reset their food decrement time
-                                        hitPlayer->foodDecrementETASeconds =
-                                            Time::getCurrentTime() +
-                                            computeFoodDecrementTimeSeconds( 
-                                                hitPlayer );
+                                            // reset their food decrement time
+                                            hitPlayer->foodDecrementETASeconds =
+                                                Time::getCurrentTime() +
+                                                computeFoodDecrementTimeSeconds(
+                                                    hitPlayer );
+                                            }
+                                        else {
+                                            setRefuseFoodEmote( hitPlayer );
+                                            }
                                         
                                         int thisNurseCost = nurseCost;
                                         
@@ -20584,6 +20712,7 @@ int main() {
                             nextPlayer->actionTarget.x = m.x;
                             nextPlayer->actionTarget.y = m.y;
                             
+                            double targetPlayerAge = computeAge( targetPlayer );
 
                             if( targetPlayer != nextPlayer &&
                                 targetPlayer->dying &&
@@ -20735,6 +20864,31 @@ int main() {
                                             getPTrans( nextPlayer->holdingID,
                                                        clickedClothing->id );
                                         
+                                        if( clickedClothingTrans == NULL ) {
+                                            // check if held has instant-decay
+                                            TransRecord *heldDecay = 
+                                                getPTrans( 
+                                                    -1, 
+                                                    nextPlayer->holdingID );
+                                            if( heldDecay != NULL &&
+                                                heldDecay->autoDecaySeconds
+                                                == 1 &&
+                                                heldDecay->newTarget > 0 ) {
+                                                
+                                                // force decay NOW and try again
+                                                handleHeldDecay(
+                                                nextPlayer,
+                                                i,
+                                                &playerIndicesToSendUpdatesAbout,
+                                                &playerIndicesToSendHealingAbout );
+                                                clickedClothingTrans =
+                                                    getPTrans( 
+                                                        nextPlayer->holdingID,
+                                                        clickedClothing->id );
+                                                }
+                                            }
+                                        
+
                                         if( clickedClothingTrans != NULL ) {
                                             int na =
                                                 clickedClothingTrans->newActor;
@@ -20753,10 +20907,13 @@ int main() {
                                             
                                             if( nt > 0 &&
                                                 getObject( nt )->clothing 
-                                                == 'n' ) {
+                                                != clickedClothing->clothing ) {
                                                 // don't allow transitions
                                                 // that leave a non-wearable
                                                 // item on your body
+                                                // OR convert clothing into
+                                                // a different type of clothing
+                                                // (converting a shrit to a hat)
                                                 clickedClothingTrans = NULL;
                                                 }
                                             }
@@ -20805,6 +20962,16 @@ int main() {
                                 // next case, holding food
                                 // that couldn't be put into clicked clothing
                                 else if( obj->foodValue > 0 && 
+                                         ( targetPlayerAge < defaultActionAge
+                                           && targetPlayer->foodStore >
+                                           babyFeedingLevel ) 
+                                         &&
+                                         ! couldHaveGoneIn ) {
+                                    // special case for babies refusing
+                                    // food when not starving.
+                                    setRefuseFoodEmote( targetPlayer );
+                                    }
+                                else if( obj->foodValue > 0 &&
                                          targetPlayer->foodStore < cap &&
                                          ! couldHaveGoneIn ) {
                                     
@@ -20833,7 +21000,7 @@ int main() {
 
                                     logEating( obj->id,
                                                obj->foodValue + bonus,
-                                               computeAge( targetPlayer ),
+                                               targetPlayerAge,
                                                m.x, m.y );
                                     
                                     targetPlayer->foodStore += bonus;
@@ -21134,9 +21301,6 @@ int main() {
                                     // correctly.  A naive implementation for
                                     // now.  Works for removing sword
                                     // from backpack
-
-                                    nextPlayer->holdingID =
-                                        bareHandClothingTrans->newActor;
 
                                     handleHoldingChange( 
                                         nextPlayer,

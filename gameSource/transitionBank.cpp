@@ -1126,8 +1126,22 @@ void initTransBankFinish() {
             
             if( ! processed ) {
                 if( tr->lastUseActor || tr->lastUseTarget ) {
-                                    
-                    if( tr->lastUseActor && 
+                    
+                    if( tr->lastUseActor && tr->lastUseTarget &&
+                        actor != NULL && actor->numUses > 1 &&
+                        target != NULL && target->numUses > 1 ) {
+                        
+                        // map last use of actor to newActor
+                        if( ! tr->reverseUseActor ) {
+                            newTrans.actor = actor->useDummyIDs[0];
+                            }
+                        // map last use of target to newTarget
+                        if( ! tr->reverseUseTarget ) {
+                            newTrans.target = target->useDummyIDs[0];
+                            }
+                        transToAdd.push_back( newTrans );
+                        }
+                    else if( tr->lastUseActor && 
                         actor != NULL && 
                         actor->numUses > 1 ) {
                         
@@ -1165,7 +1179,7 @@ void initTransBankFinish() {
                                 }
                             }
                         }
-                    if( tr->lastUseTarget && 
+                    else if( tr->lastUseTarget && 
                         target != NULL && 
                         target->numUses > 1 ) {
                             
@@ -1287,11 +1301,10 @@ void initTransBankFinish() {
                                 }
                             }
                         }
-                    else {
-                        // default one
-                        actorDummies.push_back( tr->actor );
-                        }
-
+                    // default one
+                    actorDummies.push_back( tr->actor );
+                    
+    
                     if( target != NULL && target->numUses > 1 ) {
                         
                         for( int u=0; u<target->numUses-1; u++ ) {
@@ -1304,11 +1317,10 @@ void initTransBankFinish() {
                                 }
                             }
                         }
-                    else {
-                        // default one
-                        targetDummies.push_back( tr->target );
-                        }
-
+                    // default one
+                    targetDummies.push_back( tr->target );
+                    
+    
                     if( actorDummies.size() > 1 || targetDummies.size() > 1 ) {
                         for( int ad=0; ad<actorDummies.size(); ad++ ) {
                             newTrans.actor = 
@@ -2972,6 +2984,19 @@ void printTrans( TransRecord *inTrans ) {
         printf( " (move=%s,dist=%d)", moveName, inTrans->desiredMoveDist );
         }
     
+    if( inTrans->actorChangeChance < 1.0 ) {
+        printf( " (pA=%0.2f,[%s])",
+                inTrans->actorChangeChance,
+                getObjName( inTrans->newActorNoChange ) );
+        }
+    
+    if( inTrans->targetChangeChance < 1.0 ) {
+        printf( " (pT=%0.2f,[%s])",
+                inTrans->targetChangeChance,
+                getObjName( inTrans->newTargetNoChange ) );
+        }
+    
+
     printf( "\n" );
     }
 

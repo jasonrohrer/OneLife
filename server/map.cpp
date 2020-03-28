@@ -468,7 +468,11 @@ static CoordinateTimeTracking lookTimeTracking;
 // about whether arrival has happened or not
 typedef struct MovementRecord {
         int x, y;
+        int sourceX, sourceY;
+        int id;
+        char deadly;
         double etaTime;
+        double totalTime;
     } MovementRecord;
 
 
@@ -574,6 +578,17 @@ static Homeland *getHomeland( int inX, int inY,
     return NULL;
     }
 
+
+
+static char hasHomeland( int inLineageEveID ) {
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        if( h->lineageEveID == inLineageEveID ) {
+            return true;
+            }
+        }
+    return false;
+    }
 
 
 
@@ -1889,20 +1904,21 @@ void printBiomeSamples() {
 
 
 
-void printObjectSamples() {
+int printObjectSamples( int inXCenter, int inYCenter ) {
     int objectToCount = 2285;
     
     JenkinsRandomSource sampleRandSource;
 
     int numSamples = 0;
 
-    int range = 354;
+    int rangeX = 354;
+    int rangeY = 354;
 
     int count = 0;
     
-    for( int y=-range; y<range; y++ ) {
-        for( int x=-range; x<range; x++ ) {
-            int obj = getMapObjectRaw( x, y );
+    for( int y=-rangeY; y<=rangeY; y++ ) {
+        for( int x=-rangeX; x<=rangeX; x++ ) {
+            int obj = getMapObjectRaw( x  + inXCenter, y + inYCenter );
             
             
             if( obj == objectToCount ) {
@@ -1913,7 +1929,7 @@ void printObjectSamples() {
         }
     
 
-    int rangeSize = (range + range ) * ( range + range );
+    int rangeSize = (rangeX + rangeX + 1 ) * ( rangeY + rangeY + 1 );
 
     float sampleFraction = 
         numSamples / 
@@ -1921,6 +1937,8 @@ void printObjectSamples() {
     
     printf( "Counted %d objects in %d/%d samples, expect %d total\n",
             count, numSamples, rangeSize, (int)( count / sampleFraction ) );
+    
+    return count;
     }
 
 
@@ -5627,12 +5645,14 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                     double speed = 4.0f;
                     
-                    
+                    char deadly = false;
                     if( newID > 0 ) {
                         ObjectRecord *newObj = getObject( newID );
                         
                         if( newObj != NULL ) {
                             speed *= newObj->speedMult;
+                            
+                            deadly = ( newObj->deadlyDistance > 0 );
                             }
                         }
                     
@@ -5640,7 +5660,11 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                     double etaTime = Time::getCurrentTime() + moveTime;
                     
-                    MovementRecord moveRec = { newX, newY, etaTime };
+                    MovementRecord moveRec = { newX, newY, inX, inY, 
+                                               newID,
+                                               deadly, 
+                                               etaTime,
+                                               moveTime };
                     
                     liveMovementEtaTimes.insert( newX, newY, 0, 0, etaTime );
                     
@@ -6720,6 +6744,7 @@ static void runTapoutOperation( int inX, int inY,
                                 int inRadiusX, int inRadiusY,
                                 int inSpacingX, int inSpacingY,
                                 int inTriggerID,
+                                char inPlayerHasHomeland,
                                 char inIsPost = false ) {
     for( int y =  inY - inRadiusY; 
          y <= inY + inRadiusY; 
@@ -6799,6 +6824,19 @@ static void runTapoutOperation( int inX, int inY,
                 
                 if( t != NULL ) {
                     newTarget = t->newTarget;
+                    }
+                }
+
+            if( newTarget != -1 ) {
+                if( inPlayerHasHomeland ) {
+                    // block creation of objects that require +primaryHomeland
+                    // player already has a homeland
+                    ObjectRecord *nt = getObject( newTarget );
+                    
+                    if( strstr( nt->description, 
+                                "+primaryHomeland" ) != NULL ) {
+                        newTarget = -1;
+                        }
                     }
                 }
             
@@ -7075,6 +7113,20 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
     else if( o->isTapOutTrigger ) {
         // this object, when created, taps out other objects in grid around
 
+        char playerHasHomeland = false;
+        
+        if( currentResponsiblePlayer != -1 ) {
+            int pID = currentResponsiblePlayer;
+            if( pID < 0 ) {
+                pID = -pID;
+                }
+            int lineage = getPlayerLineage( pID );
+            
+            if( lineage != -1 ) {
+                playerHasHomeland = hasHomeland( lineage );
+                }
+            }
+        
         // don't make current player responsible for all these changes
         int restoreResponsiblePlayer = currentResponsiblePlayer;
         currentResponsiblePlayer = -1;        
@@ -7086,7 +7138,8 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
             runTapoutOperation( inX, inY, 
                                 r->limitX, r->limitY,
                                 r->gridSpacingX, r->gridSpacingY, 
-                                inID );
+                                inID,
+                                playerHasHomeland );
             
             
             r->buildCount++;
@@ -7098,7 +7151,8 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                 runTapoutOperation( inX, inY, 
                                     r->postBuildLimitX, r->postBuildLimitY,
                                     r->gridSpacingX, r->gridSpacingY, 
-                                    inID, true );
+                                    inID, 
+                                    playerHasHomeland, true );
                 }
             }
         
@@ -8908,16 +8962,6 @@ int addMetadata( int inObjectID, unsigned char *inBuffer ) {
 
 
 
-static double distSquared( GridPos inA, GridPos inB ) {
-    double xDiff = (double)inA.x - (double)inB.x;
-    double yDiff = (double)inA.y - (double)inB.y;
-    
-    return xDiff * xDiff + yDiff * yDiff;
-    }
-
-
-
-
 void removeLandingPos( GridPos inPos ) {
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         if( equal( inPos, flightLandingPos.getElementDirect( i ) ) ) {
@@ -8956,6 +9000,9 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
     int closestIndex = -1;
     GridPos closestPos;
     double closestDist = DBL_MAX;
+
+    double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
+                                                        10000 );
     
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
@@ -8968,8 +9015,12 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
 
         
         if( isInDir( inCurPos, thisPos, inDir ) ) {
-            double dist = distSquared( inCurPos, thisPos );
+            double dist = distance( inCurPos, thisPos );
             
+            if( dist > maxDist ) {
+                continue;
+                }
+
             if( dist < closestDist ) {
                 // check if this is still a valid landing pos
                 int oID = getMapObject( thisPos.x, thisPos.y );
@@ -9007,13 +9058,20 @@ GridPos getClosestLandingPos( GridPos inTargetPos, char *outFound ) {
     int closestIndex = -1;
     GridPos closestPos;
     double closestDist = DBL_MAX;
+
+    double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
+                                                        10000 );
     
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
 
         
-        double dist = distSquared( inTargetPos, thisPos );
+        double dist = distance( inTargetPos, thisPos );
         
+        if( dist > maxDist ) {
+            continue;
+            }
+
         if( dist < closestDist ) {
             // check if this is still a valid landing pos
             int oID = getMapObject( thisPos.x, thisPos.y );
@@ -9053,6 +9111,9 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
     GridPos closestPos;
     double closestDist = DBL_MAX;
 
+    double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
+                                                        10000 );
+
     GridPos curPos = { inCurrentX, inCurrentY };
 
     char useLimit = false;
@@ -9075,7 +9136,11 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
             }
         
               
-        double dist = distSquared( curPos, thisPos );
+        double dist = distance( curPos, thisPos );
+
+        if( dist > maxDist ) {
+            continue;
+            }
         
         if( dist < closestDist ) {
             
@@ -9484,4 +9549,46 @@ SimpleVector<HomelandInfo> getHomelandChanges() {
             }
         }
     return list;
+    }
+
+
+
+
+int getDeadlyMovingMapObject( int inPosX, int inPosY,
+                              int *outMovingDestX, int *outMovingDestY ) {
+    
+    double curTime = Time::getCurrentTime();
+    
+    int numMoving = liveMovements.size();
+    
+    for( int i=0; i<numMoving; i++ ) {
+        MovementRecord *m = liveMovements.getElement( i );
+        
+        if( ! m->deadly ) {
+            continue;
+            }
+        double progress = 
+            ( m->totalTime - ( m->etaTime - curTime )  )
+            / m->totalTime;
+        
+        if( progress < 0 ||
+            progress > 1 ) {
+            continue;
+            }
+        int curPosX = lrint( ( m->x - m->sourceX ) * progress + m->sourceX );
+        int curPosY = lrint( ( m->y - m->sourceY ) * progress + m->sourceY );
+        
+        if( curPosX != inPosX ||
+            curPosY != inPosY ) {
+            continue;
+            }
+        
+        // hit position
+        *outMovingDestX = m->x;
+        *outMovingDestY = m->y;
+        return m->id;
+        }
+    
+
+    return 0;
     }

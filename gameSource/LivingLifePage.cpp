@@ -15331,9 +15331,18 @@ void LivingLifePage::step() {
                                 }
                             }
                         else {
-                            mMapMoveSpeeds[mapI] = 0;
-                            mMapMoveOffsets[mapI].x = 0;
-                            mMapMoveOffsets[mapI].y = 0;
+                            // if these are still set, even though
+                            // this map change is NOT for a moving object
+                            // it means that the old object is still busy
+                            // arriving at the destination, while a new
+                            // change to it has happened.
+                            // Try NOT snapping it to its destination when
+                            // this happens, and letting it finish its
+                            // move in the new state
+                            
+                            //mMapMoveSpeeds[mapI] = 0;
+                            //mMapMoveOffsets[mapI].x = 0;
+                            //mMapMoveOffsets[mapI].y = 0;
                             }
                         
                         
@@ -18912,7 +18921,9 @@ void LivingLifePage::step() {
                                                 personKey = "supp";
                                                 }
                                             }
-
+                                        
+                                        
+                                        char expert = false;
                                         
                                         if( ! baby && ! leader && ! follower ) {
                                             char *expertPos = 
@@ -18928,6 +18939,26 @@ void LivingLifePage::step() {
 
                                                 expertPos[0] = '\0';
                                                 personKey = "expt";
+                                                
+                                                expert = true;
+                                                }
+                                            }
+                                        
+                                        if( ! baby && ! leader && ! follower &&
+                                            ! expert ) {
+                                            char *ownerPos = 
+                                                strstr( 
+                                                    existing->currentSpeech, 
+                                                    " *owner" );
+                                            
+                                            if( ownerPos != NULL ) {
+                                                person = true;
+                                                sscanf( ownerPos, 
+                                                        " *owner %d", 
+                                                        &personID );
+
+                                                ownerPos[0] = '\0';
+                                                personKey = "owner";
                                                 }
                                             }
                                         
@@ -19929,7 +19960,23 @@ void LivingLifePage::step() {
                         ourLiveObject->maxFoodCapacity = 
                             ourLiveObject->foodCapacity;
                         }
-                    if( ourLiveObject->foodStore == 
+
+
+                    double curAge = computeCurrentAge( ourLiveObject );
+                    
+                    if( curAge < (age_baby - 2) ) {
+                        mHungerSlipVisible = 0;
+                        // special case for babies
+                        // show either full or starving
+                        // only show starving at 2 food or lower
+                        // starving means you can nurse/eat
+                        if( ourLiveObject->foodStore <= 2 ) {
+                             setMusicLoudness( 0 );
+                             mHungerSlipVisible = 2;
+                             mPulseHungerSound = true;
+                            }
+                        }
+                    else if( ourLiveObject->foodStore == 
                         ourLiveObject->foodCapacity ) {
                         
                         mPulseHungerSound = false;
@@ -19937,7 +19984,12 @@ void LivingLifePage::step() {
                         mHungerSlipVisible = 0;
                         }
                     else if( ourLiveObject->foodStore <= 4 &&
-                             computeCurrentAge( ourLiveObject ) < (age_death - 2.67) ) {
+                             curAge >= (age_death - 2.67) ) {
+                        mHungerSlipVisible = 2;
+                        mPulseHungerSound = false;
+                        }
+                    else if( ourLiveObject->foodStore <= 4 &&
+                             curAge < (age_death - 2.67) ) {
                         
                         // don't play hunger sounds at end of life
                         // because it interrupts our end-of-life song

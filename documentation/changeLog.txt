@@ -3,6 +3,65 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 320     2020-March-28
+
+--Finally figured out a way to make deadly moving objects (like bears) attack
+  in passing, when they cross your position while you're standing on a
+  non-blocking object.  Server checks their rounded intermediary position, when
+  checking whether you're standing on a deadly object, if you're standing on a
+  non-empty tile.  Animal turns into attack state immediately, mid-move, and
+  client has been fixed to allow moving objects to transition in-motion
+  (before, they would snap to their destination instantly if a transition
+  happened in-motion).  This will also fix a few other snap-to-destination
+  glitches.
+
+--Whoops... switch to STARVING slip was not working for elderly people who were
+  listinging to their final music (final music blocks starving chime, but was
+  also blocking slip change).
+
+--Helpless babies (under age 3) now flip between FULL or STARVING, with no
+  HUNGRY state in between.  They can only nurse or be fed food while STARVING.
+  A mother picking up a non-starving baby still burns one of her food pips, and
+  holds the baby at the current food level for the duration of the holding, but
+  won't top up the baby.  The only way to top up a baby is to feed them when
+  STARVING.  Baby communication to care-givers is now much more crucial.
+
+--Touching a property gate that you don't own now gives you an arrow pointing
+  to the closest owner.
+
+--Fixed a glitch in populating use dummy transitions with no use pass-through,
+  where we weren't populating the case for the unused actor or target with the
+  used target or actor.
+
+--Support for transitions where lastUseActor AND lastUseTarget is flagged at
+  same time.  This has never been needed before, but was needed for mining pick
+  used on mine, since both can be exhausted.
+
+
+
+
+Server Fixes
+
+--Nurse cost back to 1 (was 2).
+
+--Optional code for counting visually unique objects.
+
+--Fixed glitch where you could transform worn clothing into some other clothing
+  type (cloak into ghost costume whith knife).  Fixes #575
+
+--Fixed bug in way held object was being set after SELF action to transform
+  clothing (eta decay for held wasn't being set).  Fixed to handle instant-
+  decay (1-second auto-decay) when processing SELF action to use object on
+  clothing.
+
+--Max flight distance 10,000 tiles.  No more flights to tutorial or d-town.
+
+--Support for +primaryHomeland tag, which limits creation through tap-out to a
+  family's first homeland.
+
+
+
+
 Version 318    2020-March-19
 
 --Fixed misspelling of ABANDONED for wells.
