@@ -7995,13 +7995,16 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 double ratio = (double)totalBabies / (double)totalAdults;
 
 
+                double maxRatio = 
+                    SettingsManager::getDoubleSetting( "maxBabyAdultRatio",
+                                                       2.0 );
                 AppLog::infoF( 
-                    "Counting %d babies for %d adults, ratio %f (max 2.0)",
-                    totalBabies, totalAdults, ratio );
-
+                    "Counting %d babies for %d adults, ratio %f (max %f)",
+                    totalBabies, totalAdults, ratio, maxRatio );
                 
-                if( ratio >= 2 ) {
-                    // more than 2/3 of the population are helpless babies 
+                
+                if( ratio >= maxRatio ) {
+                    // to many members of the population are helpless babies 
                     // force an Eve spawn to compensate for this condition
                     
                     AppLog::infoF( 
@@ -8021,11 +8024,14 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                     int totalMoms = countFertileMothers();
                     ratio = (double)totalBabies / (double)totalMoms;
 
+                    maxRatio =
+                        SettingsManager::getDoubleSetting( "maxBabyMomRatio",
+                                                           2.0 );
                     AppLog::infoF( 
-                        "Counting %d babies for %d moms, ratio %f (max 3.0)",
-                        totalBabies, totalMoms, ratio );
-                    
-                    if( ratio >= 3 ) {
+                        "Counting %d babies for %d moms, ratio %f (max %f)",
+                        totalBabies, totalMoms, ratio, maxRatio );
+
+                    if( ratio >= maxRatio ) {
                         // too many babies per mom
                         AppLog::infoF( 
                             "%d babies for %d moms, forcing Eve.",

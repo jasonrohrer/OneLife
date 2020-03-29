@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Max baby/adult and baby/mom ratio, which trigger force Eve spawns, are now
+  live server settings.  Trying max baby/mom of 2 (was 3) to reduce baby
+  overload after server restart.
+
+
+
 Version 320     2020-March-28
 
 --Finally figured out a way to make deadly moving objects (like bears) attack
