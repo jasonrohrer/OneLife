@@ -9,6 +9,9 @@ Server Fixes
   live server settings.  Trying max baby/mom of 2 (was 3) to reduce baby
   overload after server restart.
 
+--Fixed drop-in-bad-biome trick with vehicles.  Fixes #694
+
+
 
 
 Version 320     2020-March-28

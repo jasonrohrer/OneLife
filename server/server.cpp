@@ -21352,6 +21352,20 @@ int main() {
                         char accessBlocked = 
                             isAccessBlocked( nextPlayer, 
                                              m.x, m.y, target );
+
+                        GridPos playerPos = getPlayerPos( nextPlayer );
+                        
+                        if( playerPos.x != m.x || playerPos.y != m.y ) {
+                            if( ! isBiomeAllowedForPlayer( nextPlayer,
+                                                           playerPos.x,
+                                                           playerPos.y ) ) {
+                                // don't allow player to drop/swap
+                                // from a bad biome into a good one
+                                // (they might be in a vehicle in the bad biome)
+                                accessBlocked = true;
+                                }
+                            }
+                        
                         
                         if( ! accessBlocked )
                         if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
