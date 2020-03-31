@@ -11,6 +11,13 @@ Server Fixes
 
 --Fixed drop-in-bad-biome trick with vehicles.  Fixes #694
 
+--Added support for transitions that end with a floor in hand, meaning that
+  floor is put UNDER target object.  This allows a snow floor to be installed
+  under an ice hole, for example, without making a special ice-hole-floor
+  object, in turn making such an ice hole work for all families (because it
+  now has a floor, protecting them from the arctic).
+
+
 
 
 
