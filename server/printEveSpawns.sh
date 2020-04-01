@@ -15,4 +15,4 @@ do
 	date=`date -d @$time`
 
 	echo "$date ||  $coord  "
-done < <( grep noParent $1 | grep -v ",-20" | grep " F " | sed -e "s/\(B [0-9]* \).* F /\1/" | sed "s/ noParent.*//" )
+done < <( grep noParent $1 | grep -v ",-20" | grep -v ",20" | grep " F " | sed -e "s/\(B [0-9]* \).* F /\1/" | sed "s/ noParent.*//" )
