@@ -21,6 +21,9 @@ Server Fixes
   placed is actually surviving, and we've been walking 1000 to the west every
   day.  Now we expect to walk 250 to the west every day.
 
+--Chasing (and fleeing) animals now react to nearby players as far as 10 away
+  (was 7).
+
 
 
 

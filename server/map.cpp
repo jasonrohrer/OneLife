@@ -5189,7 +5189,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
 
                     double dist = sqrt( dX * dX + dY * dY );
                     
-                    if( dist <= 7 &&
+                    if( dist <= 10 &&
                         ( p.x != 0 || p.y != 0 ) ) {
                         
                         if( t->move == 1 && dist <= desiredMoveDist ) {
