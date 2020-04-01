@@ -17,6 +17,10 @@ Server Fixes
   object, in turn making such an ice hole work for all families (because it
   now has a floor, protecting them from the arctic).
 
+--Reduced Eve placement grid jump size to 50 (was 200), because only 1/4 Eves
+  placed is actually surviving, and we've been walking 1000 to the west every
+  day.  Now we expect to walk 250 to the west every day.
+
 
 
 
