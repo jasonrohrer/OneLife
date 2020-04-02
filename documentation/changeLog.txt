@@ -8,6 +8,11 @@ Version 324     ???
 
 --Arrow to biome expert lasts 3 minutes (was 1 minute).
 
+--Touching an expert waystone points you to a very close expert (<32 away), if
+  a close one exists, OR to the well site in a populated expert homeland.  No
+  more wild goose chase for a lone expert out in the wilderness who will
+  probably be gone by the time you get there (or who may be walking away from
+  you as you try to approach them).
 
 
 

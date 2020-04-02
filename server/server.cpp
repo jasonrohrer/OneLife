@@ -13918,19 +13918,50 @@ static void findExpertForPlayer( LiveObject *inPlayer,
     double minDist = DBL_MAX;
     LiveObject *closestExpert = NULL;
     
-    for( int i=0; i<players.size(); i++ ) {
-        LiveObject *p = players.getElement( i );
-        
-        if( getObject( p->displayID )->race == race ) {
-            GridPos pos = getPlayerPos( p );
+    int chunkD = getMaxChunkDimension();
+    
+
+    // two passes
+    // first pass, look for experts that are very close or standing in homelands
+    // second pass, look for any expert
+    for( int pass=0; pass<2; pass++ ) {
+
+        for( int i=0; i<players.size(); i++ ) {
+            LiveObject *p = players.getElement( i );
             
-            double d = distance( pos, playerPos );
-            
-            if( d < minDist ) {
-                minDist = d;
-                closestExpert = p;
+            if( getObject( p->displayID )->race == race ) {
+                GridPos pos = getPlayerPos( p );            
+                double d = distance( pos, playerPos );
+                
+                
+                if( d < minDist ) {
+                    if( pass == 1 || 
+                        d < chunkD || 
+                        isHomeland( pos.x, pos.y, p->lineageEveID ) == 1 ) {
+                        
+                        // player has no homeland or they are standing in their
+                        // homeland
+                        
+                        // OR they are super-close to us
+                        // (if there's a very nearby expert, don't send player
+                        //  off to find homeland).
+                        
+                        // OR we're on second pass
+                        // in that case, consider distant experts that
+                        // are outside their homelands
+
+                        minDist = d;
+                        closestExpert = p;
+                        }
+                    }
                 }
             }
+        
+        if( closestExpert != NULL ) {
+            // found one on first pass
+            break;
+            }
+        // else continue to second pass
         }
 
     const char *biomeName = getBadBiomeName( inTouchedObject );
@@ -13949,13 +13980,40 @@ static void findExpertForPlayer( LiveObject *inPlayer,
     
     if( closestExpert != NULL ) {
         GridPos ePos = getPlayerPos( closestExpert );
+        
+        int eID = closestExpert->id;
 
+        const char *phrase = "EXPERT";
+        
+        if( minDist > chunkD &&
+            isHomeland( ePos.x, ePos.y, closestExpert->lineageEveID ) == 1 ) {
+            // expert is far away.
+            // they will probably move by the time we get to them
+            
+            // point to center of homeland instead, if we have one
+            GridPos homeCenter;
+            int homeEve = 0;
+
+            if( getHomelandCenter( ePos.x, ePos.y, &homeCenter, &homeEve ) ) {
+                
+                if( homeEve == closestExpert->lineageEveID ) {
+                    // leave 0 for person ID
+                    // because we lead them to well location instead of person
+                    eID = 0;
+                    ePos = homeCenter;
+                    phrase = "EXPERT VILLAGE";
+                    }
+                }
+            }
+        
+        
         message = autoSprintf( "PS\n"
-                               "%d/0 EXPERT FOR %s "
+                               "%d/0 %s FOR %s "
                                "*expert %d *map %d %d\n#",
                                inPlayer->id,
+                               phrase,
                                bName,
-                               closestExpert->id,
+                               eID,
                                ePos.x - inPlayer->birthPos.x,
                                ePos.y - inPlayer->birthPos.y );
         }
