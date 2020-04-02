@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 324     ???
+
+--Arrow to biome expert lasts 3 minutes (was 1 minute).
+
+
+
+
 Server Fixes
 
 --Max baby/adult and baby/mom ratio, which trigger force Eve spawns, are now
