@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 324     ???
+Version 324     2020-April-2
 
 --Arrow to biome expert lasts 3 minutes (was 1 minute).
 
@@ -13,6 +13,7 @@ Version 324     ???
   more wild goose chase for a lone expert out in the wilderness who will
   probably be gone by the time you get there (or who may be walking away from
   you as you try to approach them).
+
 
 
 
