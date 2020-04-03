@@ -3,6 +3,45 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 324     2020-April-2
+
+--Arrow to biome expert lasts 3 minutes (was 1 minute).
+
+--Touching an expert waystone points you to a very close expert (<32 away), if
+  a close one exists, OR to the well site in a populated expert homeland.  No
+  more wild goose chase for a lone expert out in the wilderness who will
+  probably be gone by the time you get there (or who may be walking away from
+  you as you try to approach them).
+
+
+
+
+Server Fixes
+
+--Max baby/adult and baby/mom ratio, which trigger force Eve spawns, are now
+  live server settings.  Trying max baby/mom of 2 (was 3) to reduce baby
+  overload after server restart.
+
+--Fixed drop-in-bad-biome trick with vehicles.  Fixes #694
+
+--Added support for transitions that end with a floor in hand, meaning that
+  floor is put UNDER target object.  This allows a snow floor to be installed
+  under an ice hole, for example, without making a special ice-hole-floor
+  object, in turn making such an ice hole work for all families (because it
+  now has a floor, protecting them from the arctic).
+
+--Reduced Eve placement grid jump size to 50 (was 200), because only 1/4 Eves
+  placed is actually surviving, and we've been walking 1000 to the west every
+  day.  Now we expect to walk 250 to the west every day.
+
+--Chasing (and fleeing) animals now react to nearby players as far as 10 away
+  (was 7).
+
+
+
+
+
 Version 320     2020-March-28
 
 --Finally figured out a way to make deadly moving objects (like bears) attack

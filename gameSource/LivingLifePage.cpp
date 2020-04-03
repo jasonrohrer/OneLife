@@ -584,6 +584,12 @@ static void addTempHomeLocation( int inX, int inY,
     if( inPerson ) {
         // person pointer does not depend on held map
         p.temporaryExpireETA = game_getCurrentTime() + 60;
+
+        if( strcmp( inPersonKey, "expt" ) == 0 ) {
+            // 3 minutes total when searching for an expert
+            p.temporaryExpireETA += 120;
+            }
+        
         p.personID = inPersonID;
         p.tempPersonKey = inPersonKey;
         }
