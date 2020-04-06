@@ -16,6 +16,9 @@ Server Fixes
   killing yourself at 40 to jump right back in to Eve in the same race.
   Fixes #581
 
+--Now that towns are closer together, base curseBlockRadius reduced to 50
+  (was 100).  Fixes #705
+
 
 
 
