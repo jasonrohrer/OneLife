@@ -255,6 +255,70 @@ static int victimTerrifiedEmotionIndex = 2;
 static double lastBabyPassedThresholdTime = 0;
 
 
+static int recentScoreWindowForPickingEve = 10;
+
+SimpleVector<float> recentScoresForPickingEve;
+SimpleVector<char *>recentScoreEmailsForPickingEve;
+
+
+
+static void cleanRecentScores() {
+    while( recentScoresForPickingEve.size() > recentScoreWindowForPickingEve ) {
+        recentScoresForPickingEve.deleteElement( 0 );
+        delete [] recentScoreEmailsForPickingEve.getElementDirect( 0 );
+        recentScoreEmailsForPickingEve.deleteElement( 0 );
+        }
+    }
+
+
+
+static void addRecentScore( char *inEmail, float inScore ) {
+
+    // only one score per account
+    
+    for( int i=0; i<recentScoreEmailsForPickingEve.size(); i++ ) {
+        char *oldEmail = recentScoreEmailsForPickingEve.getElementDirect( i );
+        
+        if( strcmp( oldEmail, inEmail ) == 0 ) {
+            delete [] oldEmail;
+            recentScoreEmailsForPickingEve.deleteElement( i );
+            recentScoresForPickingEve.deleteElement( i );
+            break;
+            }
+        }
+    
+    
+    recentScoresForPickingEve.push_back( inScore );
+    recentScoreEmailsForPickingEve.push_back( stringDuplicate( inEmail ) );
+
+    cleanRecentScores();
+    }
+
+
+
+static float getHighestRecentScore() {
+    if( recentScoreEmailsForPickingEve.size() < 
+        recentScoreWindowForPickingEve ) {
+        // window not full
+        // assume highest score seen is max
+        // (this will block low-score players from sneaking through the test
+        //  immediately after server restart).
+        return FLT_MAX;
+        }
+    
+    float highest = - FLT_MAX;
+    for( int i=0; i<recentScoresForPickingEve.size(); i++ ) {
+        float s = recentScoresForPickingEve.getElementDirect( i );
+        if( s > highest ) {
+            highest = s;
+            }
+        }
+    return highest;
+    }
+
+
+
+
 static double eveWindowStart = 0;
 static char eveWindowOver = false;
 
@@ -1959,6 +2023,10 @@ void quitCleanup() {
         delete [] curseSecret;
         curseSecret = NULL;
         }
+
+
+    recentScoreEmailsForPickingEve.deallocateStringElements();
+    recentScoresForPickingEve.deleteAll();
     }
 
 
@@ -7702,6 +7770,12 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     possePopulationRadius = 
         SettingsManager::getFloatSetting( "possePopulationRadius", 30 );
+    
+
+    recentScoreWindowForPickingEve = 
+        SettingsManager::getIntSetting( "recentScoreWindowForPickingEve", 10 );
+    
+    
 
 
     numConnections ++;
@@ -8218,6 +8292,16 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         }
 
     
+    float maxRecentScore = getHighestRecentScore();
+    
+    AppLog::infoF( "%d recent scores in log, %d max window size, "
+                   "this player's score is %f, max score in window is %f",
+                   recentScoresForPickingEve.size(),
+                   recentScoreWindowForPickingEve,
+                   inFitnessScore, maxRecentScore );
+
+    
+    if( inFitnessScore >= maxRecentScore )
     if( parentChoices.size() > 0 ) {
         // make sure one race isn't entirely extinct
         
@@ -8233,8 +8317,12 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                     countFertileMothers( -1, races[i] ) == 0 ) {
                     AppLog::infoF( 
                         "Race %d has no potentially fertile females, "
-                        "forcing Eve.",
-                        races[i] );
+                        "AND player's score (%f) beats/ties "
+                        "max score of last %d players (%f), forcing Eve.",
+                        races[i],
+                        inFitnessScore,
+                        recentScoreWindowForPickingEve,
+                        maxRecentScore );
                 
                     parentChoices.deleteAll();
                     break;
@@ -8246,6 +8334,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
 
     
+    if( inFitnessScore >= maxRecentScore )
     if( parentChoices.size() > 0 ) {
         int generationNumber =
             SettingsManager::getIntSetting( "forceEveAfterGenerationNumber",
@@ -8268,8 +8357,12 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             AppLog::infoF( 
                         "Youngest player generation on server is %d, "
                         "which is above our trigger level %d, "
-                        "forcing Eve.",
-                        minGen, generationNumber );    
+                        "AND player's score (%f) beats/ties "
+                        "max score of last %d players (%f), forcing Eve.",
+                        minGen, generationNumber,
+                        inFitnessScore,
+                        recentScoreWindowForPickingEve,
+                        maxRecentScore );    
             parentChoices.deleteAll();
             }
         
@@ -9398,6 +9491,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         incrementLanguageCount( newObject.lineageEveID );
         }
     
+
+    addRecentScore( newObject.email, inFitnessScore );
     
 
     if( ! newObject.isTutorial )        
