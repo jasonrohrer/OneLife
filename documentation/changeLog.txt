@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 326     ???
+
+--Editor search boxes now allow -term to avoid objects with term in the name.
+
+
+
 
 Server Fixes
 
