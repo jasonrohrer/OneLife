@@ -5636,8 +5636,16 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     
     char *dbCurseTargetEmail = NULL;
 
+    
+    char canCurse = false;
+    
+    if( inPlayer->curseTokenCount > 0 ) {
+        canCurse = true;
+        }
+    
 
-    if( cursedName != NULL && 
+    if( canCurse && 
+        cursedName != NULL && 
         strcmp( cursedName, "" ) != 0 ) {
         
         isCurse = cursePlayer( inPlayer->id,
@@ -5662,7 +5670,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         }
     
 
-    if( !isCurse ) {
+    if( canCurse && !isCurse ) {
         // named curse didn't happen above
         // maybe we used a shortcut, and target didn't have name
         

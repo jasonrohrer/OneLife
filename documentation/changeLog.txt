@@ -25,6 +25,9 @@ Server Fixes
 --Now that towns are closer together, base curseBlockRadius reduced to 50
   (was 100).  Fixes #705
 
+--Fixed so that players sent to donkeytown don't get a curse token to spend.
+  Fixes #587
+
 
 
 
