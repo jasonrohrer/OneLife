@@ -116,10 +116,25 @@ void Picker::redoSearch( char inClearPageSkip ) {
 
         SimpleVector<char*> validTerms;
         
+        // any term that starts with - is a term to avoid
+        SimpleVector<char*> avoidTerms;
+        
         for( int i=0; i<numTerms; i++ ) {
-            if( strlen( terms[i] ) > 0 ) {
+            int termLen = strlen( terms[i] );
+            
+            if( termLen > 0 ) {
                 
-                validTerms.push_back( terms[i] );
+                if( terms[i][0] == '-' ) {
+                    if( termLen > 1 ) {
+                        // skip the - character
+                        avoidTerms.push_back( &( terms[i][1] ) );
+                        }
+                    // ignore single - characters
+                    // user is probably in the middle of typing an avoid-term
+                    }
+                else {
+                    validTerms.push_back( terms[i] );
+                    }
                 }
             }
         
@@ -159,8 +174,21 @@ void Picker::redoSearch( char inClearPageSkip ) {
                         
                         if( strstr( mainNameLower, term ) == NULL ) {
                             matchFailed = true;
+                            break;
                             }
                         }
+
+                    if( ! matchFailed ) {
+                        for( int j=0; j<avoidTerms.size(); j++ ) {
+                            char *term = avoidTerms.getElementDirect( j );
+                        
+                            if( strstr( mainNameLower, term ) != NULL ) {
+                                matchFailed = true;
+                                break;
+                                }
+                            }
+                        }
+                    
                     if( !matchFailed ) {
                         passingResults.push_back( mainResults[i] );
                         }

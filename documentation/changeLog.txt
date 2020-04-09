@@ -4,6 +4,33 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 326     2020-April-9
+
+--Editor search boxes now allow -term to avoid objects with term in the name.
+
+
+
+
+Server Fixes
+
+--When adding an Eve due to a race dying out or all families being too
+  high-generation, we wait for a player with a fitness score equal to or
+  greater than the last 10 unique players that were born.  This window size is
+  a live server setting.  You can no longer spam /DIE when you know a new Eve
+  is about to be placed to give yourself a high chance of being Eve, nor can
+  you hold and daisy-chain Eve by blocking your own fertility as Eve and 
+  killing yourself at 40 to jump right back in to Eve in the same race.
+  Fixes #581
+
+--Now that towns are closer together, base curseBlockRadius reduced to 50
+  (was 100).  Fixes #705
+
+--Fixed so that players sent to donkeytown don't get a curse token to spend.
+  Fixes #587
+
+
+
+
 Version 324     2020-April-2
 
 --Arrow to biome expert lasts 3 minutes (was 1 minute).
