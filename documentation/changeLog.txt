@@ -6,9 +6,9 @@ http://onehouronelife.com/updateLog.php
 
 Server Fixes
 
---There are still food surpluses everywhere.  Food scale factor 0.5 (was 1.0),
-  with eating bonus of 4 (was 2).  This increases food pressure long-term, but
-  not too hard for Eve starts.
+--There are still food surpluses everywhere.  Food scale factor floor 0.5
+  (was 1.0), eating bonus left alone.This increases food pressure long-term, but
+  not too hard for Eve starts (b/c food scale factor still starts at 1.0).
 
 
 
