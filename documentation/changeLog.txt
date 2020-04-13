@@ -26,6 +26,12 @@ Server Fixes
   (to scale all foods uniformly), but turning it off for now (setting floor
   back to 1.0).
 
+--When triggering unlock of iron veins due to a primary homeland, we only count
+  it as a primary homeland if it taps out at least one iron vein.  Thus, if a
+  family makes a bad choice for their first well in an area with no iron veins,
+  they can move later to a spot with iron veins and unlock them with a new well
+  site.  Fixes #725
+
 
 
 
