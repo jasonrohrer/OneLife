@@ -6568,6 +6568,11 @@ static double getFoodScaleFactor( LiveObject *inPlayer ) {
     }
 
 
+static int getScaledFoodValue( LiveObject *inPlayer, int inFoodValue ) {
+    return ceil( getFoodScaleFactor( inPlayer ) * inFoodValue );
+    }
+
+
 
 
 static char isYummy( LiveObject *inPlayer, int inObjectID ) {
@@ -6639,8 +6644,8 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
         // apply foodScaleFactor here to scale value of YUM along with
         // the global scale of other foods.
         
-        inPlayer->yummyBonusStore += 
-            ceil( getFoodScaleFactor( inPlayer ) * currentBonus );
+        inPlayer->yummyBonusStore +=
+            getScaledFoodValue( inPlayer, currentBonus );
         }
     
     }
@@ -20210,9 +20215,10 @@ int main() {
                                     nextPlayer->lastAteFillMax =
                                         nextPlayer->foodStore;
                                     
-                                    nextPlayer->foodStore += 
-                                        ceil( getFoodScaleFactor( nextPlayer ) *
-                                              targetObj->foodValue );
+                                    nextPlayer->foodStore +=
+                                        getScaledFoodValue( 
+                                            nextPlayer,
+                                            targetObj->foodValue );
                                     
                                     updateYum( nextPlayer, targetObj->id );
                                     
@@ -21156,10 +21162,9 @@ int main() {
                                     targetPlayer->lastAteFillMax =
                                         targetPlayer->foodStore;
                                     
-                                    targetPlayer->foodStore += 
-                                        ceil( 
-                                            getFoodScaleFactor( targetPlayer )* 
-                                            obj->foodValue );
+                                    targetPlayer->foodStore +=
+                                        getScaledFoodValue( targetPlayer,
+                                                            obj->foodValue );
                                     
                                     updateYum( targetPlayer, obj->id,
                                                targetPlayer == nextPlayer );
