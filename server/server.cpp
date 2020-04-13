@@ -147,6 +147,8 @@ static double maxFoodDecrementSeconds = 20;
 static double foodScaleFactor = 1.0;
 static double foodScaleFactorFloor = 0.5;
 static double foodScaleFactorHalfLife = 50;
+static double foodScaleFactorGamma = 1.5;
+
 
 static double indoorFoodDecrementSecondsBonus = 20.0;
 
@@ -6556,7 +6558,7 @@ static int getEatBonus( LiveObject *inPlayer ) {
 
 
 
-static double getFoodScaleFactor( LiveObject *inPlayer ) {
+static double getLinearFoodScaleFactor( LiveObject *inPlayer ) {
     int generation = inPlayer->parentChainLength - 1;
     
     double f = ( foodScaleFactor - foodScaleFactorFloor ) * 
@@ -6569,7 +6571,33 @@ static double getFoodScaleFactor( LiveObject *inPlayer ) {
 
 
 static int getScaledFoodValue( LiveObject *inPlayer, int inFoodValue ) {
-    return ceil( getFoodScaleFactor( inPlayer ) * inFoodValue );
+    if( foodScaleFactorGamma == 1 ) {
+        return ceil( getLinearFoodScaleFactor( inPlayer ) * inFoodValue );
+        }
+    else {
+        // apply half-life to gamma
+        // gamma starts at 1.0 and approaches foodScaleFactorGamma over time
+        // getting half-way there after foodScaleFactorHalfLife generations
+        int generation = inPlayer->parentChainLength - 1;
+
+        double h = pow( 0.5, 
+                        generation / foodScaleFactorHalfLife );
+        double g = h * 1.0 + (1-h) * foodScaleFactorGamma;
+        
+        int maxFoodValue = getMaxFoodValue();
+        
+        double scaledValue = inFoodValue / (double)maxFoodValue;
+        
+        double powerValue = pow( scaledValue, g );
+        
+        double rescaledValue = maxFoodValue * powerValue;
+        
+        // apply linear factor at end
+        int finalVal = 
+            ceil( getLinearFoodScaleFactor( inPlayer ) * rescaledValue );
+
+        return finalVal;
+        }
     }
 
 
@@ -7720,6 +7748,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         SettingsManager::getFloatSetting( "foodScaleFactorFloor", 0.5 );
     foodScaleFactorHalfLife = 
         SettingsManager::getFloatSetting( "foodScaleFactorHalfLife", 50 );
+
+    foodScaleFactorGamma = 
+        SettingsManager::getFloatSetting( "foodScaleFactorGamma", 1.5 );
 
 
     babyBirthFoodDecrement = 

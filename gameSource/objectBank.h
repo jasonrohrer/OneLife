@@ -941,5 +941,8 @@ void getAllToolSets( SimpleVector<int> *outListToFill );
 char canBuildInBiome( ObjectRecord *inObj, int inTargetBiome );
 
 
+int getMaxFoodValue();
+
+
 
 #endif
