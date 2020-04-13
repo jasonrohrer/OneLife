@@ -30,7 +30,7 @@ Server Fixes
   it as a primary homeland if it taps out at least one iron vein.  Thus, if a
   family makes a bad choice for their first well in an area with no iron veins,
   they can move later to a spot with iron veins and unlock them with a new well
-  site.  Fixes #725
+  site.  Fixes #590
 
 
 
