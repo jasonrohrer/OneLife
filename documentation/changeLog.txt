@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 328     ???
+
+--Don't interrupt character's speech with automatic +FAMILY+ marker above their
+  head.  Fixes #588
+
+
+
+
 Server Fixes
 
 --There are still food surpluses everywhere.  Food scale factor floor 0.5

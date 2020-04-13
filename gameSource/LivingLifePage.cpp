@@ -18540,24 +18540,43 @@ void LivingLifePage::step() {
                             
                             LiveObject *existing = gameObjects.getElement(j);
                             
-                            if( existing->currentSpeech != NULL ) {
-                                delete [] existing->currentSpeech;
-                                existing->currentSpeech = NULL;
-                                }
-                            
                             char *firstSpace = strstr( lines[i], " " );
-        
+                            
+                            char famSpeech = false;
                             if( firstSpace != NULL ) {
-                                existing->currentSpeech = 
-                                    stringDuplicate( &( firstSpace[1] ) );
+                                // check for +FAMILY+
+                                // only show it if the person is NOT
+                                // currently talking, but remember it
+                                // (Don't interrupt speech with spurious
+                                //  +FAMILY+ indicators)
                                 
-                                char famSpeech = false;
-                                if( strcmp( existing->currentSpeech, 
+                                if( strcmp( &( firstSpace[1] ), 
                                             "+FAMILY+" ) == 0 ) {
                                     existing->isGeneticFamily = true;
                                     famSpeech = true;
-                                    
+
+                                    if( existing->currentSpeech != NULL ) {
+                                        // we learned their family status
+                                        // but don't make them say +FAMILY+
+                                        // because they have a current speech
+                                        // bubble
+                                        firstSpace = NULL;
+                                        }
                                     }
+                                }
+                            
+
+
+                            if( firstSpace != NULL ) {
+                                
+                                if( existing->currentSpeech != NULL ) {
+                                    delete [] existing->currentSpeech;
+                                    existing->currentSpeech = NULL;
+                                    }
+                                
+                                existing->currentSpeech = 
+                                    stringDuplicate( &( firstSpace[1] ) );
+                                
 
                                 double curTime = game_getCurrentTime();
                                 
