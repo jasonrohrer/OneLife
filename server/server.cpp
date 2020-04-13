@@ -7481,7 +7481,7 @@ static void makeOffspringSayMarker( int inPlayerID, int inIDToSkip ) {
             if( o->ancestorIDs->getElementIndex( inPlayerID ) != -1 ) {
                 // this player is an ancestor of this other
                 
-                // make other say ++, but only so this player can hear it
+                // make other say +FAMILY+, but only so this player can hear it
 
                 char *message = autoSprintf( "PS\n"
                                              "%d/0 +FAMILY+\n#",
