@@ -6026,6 +6026,29 @@ static int isGraveSwapDest( int inTargetX, int inTargetY,
 void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                  SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
     
+    
+    if( ! isBiomeAllowedForPlayer( inDroppingPlayer, inX, inY, true ) ) {
+        // would be dropping in a bad biome (floor or not)
+        // avoid this if the target spot is on the edge of a bad biome
+
+        int nX[4] = { -1, 1, 0, 0 };
+        int nY[4] = { 0, 0, -1, 1 };
+        
+        for( int i=0; i<4; i++ ) {
+            int testX = inX + nX[i];
+            int testY = inY + nY[i];
+            
+            if( isBiomeAllowedForPlayer( inDroppingPlayer, testX, testY,
+                                         true ) ) {
+                inX = testX;
+                inY = testY;
+                
+                break;
+                }
+            }
+        }
+
+
     int oldHoldingID = inDroppingPlayer->holdingID;
     
 

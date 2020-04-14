@@ -35,6 +35,10 @@ Server Fixes
 --Applied YUM bonus no longer scaled by food scaling factor (too confusing).
   Fixes #592
 
+--Another fail-safe, at beginning of handleDrop, to prevent dropping in a bad
+  biome if we're on the edge of a good biome.  Before, the only fail-safe was
+  in findDropSpot, which is only invoked if the first prefered spot already has
+  an object in it.  Fixes #593
 
 
 
