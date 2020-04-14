@@ -6669,11 +6669,10 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
         // only get bonus if actually was yummy (whether fed self or not)
         // chain not broken if fed non-yummy by other, but don't get bonus
         
-        // apply foodScaleFactor here to scale value of YUM along with
-        // the global scale of other foods.
-        
-        inPlayer->yummyBonusStore +=
-            getScaledFoodValue( inPlayer, currentBonus );
+        // for now, do NOT scale current bonus
+        // it's confusing to see a yum multiplier on the screen and then
+        // not receive that number of bonus food points.
+        inPlayer->yummyBonusStore += currentBonus;
         }
     
     }

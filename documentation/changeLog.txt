@@ -32,6 +32,9 @@ Server Fixes
   they can move later to a spot with iron veins and unlock them with a new well
   site.  Fixes #590
 
+--Applied YUM bonus no longer scaled by food scaling factor (too confusing).
+  Fixes #592
+
 
 
 
