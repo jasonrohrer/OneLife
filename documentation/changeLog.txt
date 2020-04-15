@@ -40,6 +40,16 @@ Server Fixes
   in findDropSpot, which is only invoked if the first prefered spot already has
   an object in it.  Fixes #593
 
+--If your last life was a short life (currently under 10 years, a live server
+  setting), then you are not counted toward posse size when you join a posse.
+  This prevents people from die-cycling to find their friends and then gang up
+  on people to kill them.  You earn the right to join a posse by surviving
+  through childhood in your previous life.  This is similar to the twin
+  restriction on being counted toward a posse.  People who are die-cycling to
+  find each other are essentially non-identical twins.
+
+
+
 
 
 Version 326     2020-April-9

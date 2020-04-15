@@ -680,6 +680,12 @@ typedef struct LiveObject {
 
         char isTwin;
         
+        // if last life is too short, assume they are die-cycling
+        // to pick their birth location, and don't count them when computing
+        // posse size
+        char isLastLifeShort;
+        
+
         // used to track incremental tutorial map loading
         TutorialLoadProgress tutorialLoad;
 
@@ -1779,6 +1785,52 @@ static int nextBabyFamilyIndex = 0;
 static FILE *postWindowFamilyLogFile = NULL;
 
 
+// keep track of players whose last life was short
+static double shortLifeAge = 10;
+
+static SimpleVector<char*> shortLifeEmails;
+
+
+// checks for presence of inEmail in short life list, and deletes it from list
+// if present
+static char isShortLife( char *inEmail ) {
+    
+    char hit = false;
+    for( int i=0; i<shortLifeEmails.size(); i++ ) {
+        if( strcmp( shortLifeEmails.getElementDirect( i ), inEmail ) == 0 ) {
+            hit = true;
+            delete [] shortLifeEmails.getElementDirect( i );
+            shortLifeEmails.deleteElement( i );
+            break;
+            }
+        }
+    
+
+    if( shortLifeEmails.size() > 1000 ) {
+        // don't let it keep growing
+        // remember only last 1000 unique short-life players.
+        // forget rest
+        int extra = shortLifeEmails.size() - 1000;
+        for( int i=0; i<extra; i++ ) {
+            delete [] shortLifeEmails.getElementDirect( i );
+            }
+        shortLifeEmails.deleteStartElements( extra );
+        }
+    
+    return hit;
+    }
+
+
+
+// destroyed by caller
+static void addShortLife( char *inEmail ) {
+    // remove if present
+    isShortLife( inEmail );
+
+    shortLifeEmails.push_back( stringDuplicate( inEmail ) );
+    }
+
+
 
 
 void quitCleanup() {
@@ -2029,6 +2081,8 @@ void quitCleanup() {
 
     recentScoreEmailsForPickingEve.deallocateStringElements();
     recentScoresForPickingEve.deleteAll();
+
+    shortLifeEmails.deallocateStringElements();
     }
 
 
@@ -3487,10 +3541,9 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
             posseSpeedMult = posseSizeSpeedMultipliers[3];
             }
         
-        if( inPlayer->isTwin ) {
+        if( inPlayer->isTwin || inPlayer->isLastLifeShort ) {
             // twins always run at slowest speed when trying to kill
-            // they can't form their own posse, but can join
-            // into posses to help speed up others
+            // same with people who are die-cycling to pick their birth location
             posseSpeedMult = posseSizeSpeedMultipliers[0];
             }
 
@@ -7841,7 +7894,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     recentScoreWindowForPickingEve = 
         SettingsManager::getIntSetting( "recentScoreWindowForPickingEve", 10 );
     
-    
+    shortLifeAge = SettingsManager::getFloatSetting( "shortLifeAge", 10 );
 
 
     numConnections ++;
@@ -7867,6 +7920,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     else {
         newObject.isTwin = false;
         }
+    
+    newObject.isLastLifeShort = isShortLife( inEmail );
+
     
 
 
@@ -12225,7 +12281,7 @@ SimpleVector<int> killStatePosseChangedPlayerIDs;
 static int countPosseSize( LiveObject *inTarget ) {
     int p = 0;
     
-    int twinCount = 0;
+    int uncounted = 0;
 
     for( int i=0; i<activeKillStates.size(); i++ ) {
         KillState *s = activeKillStates.getElement( i );
@@ -12236,19 +12292,23 @@ static int countPosseSize( LiveObject *inTarget ) {
             if( killerO != NULL ) {
                 
                 // twins don't count toward posse size
-                if( ! killerO->isTwin ) {
+                // people who lived short life last life don't count either
+                // they may be die-cycling to find their IRL friends and
+                // gang up
+                if( ! killerO->isTwin && ! killerO->isLastLifeShort ) {
                     p++;
                     }
                 else {
-                    twinCount ++;
+                    uncounted ++;
                     }
                 }
             }
         }
     
     if( p == 0 &&
-        twinCount > 0 ) {
-        // if twin is only one in posse, count as a posse of 1
+        uncounted > 0 ) {
+        // if twin (or other uncounted person) is only one in posse, 
+        // count as a posse of 1
         p = 1;
         }
 
@@ -22566,6 +22626,10 @@ int main() {
                 // both tutorial and non-tutorial players
                 logFitnessDeath( nextPlayer );
                 
+
+                if( age < shortLifeAge ) {
+                    addShortLife( nextPlayer->email );
+                    }
 
 
                 if( SettingsManager::getIntSetting( 
