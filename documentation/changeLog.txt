@@ -48,6 +48,10 @@ Server Fixes
   restriction on being counted toward a posse.  People who are die-cycling to
   find each other are essentially non-identical twins.
 
+--Experimenting with unbreakable YUM chains.  Each new food in your life both
+  earns the current bonus and increases the bonus.  Repeat foods don't earn the
+  bonus, but don't reset the bonus back to 0.
+
 
 
 

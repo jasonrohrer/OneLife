@@ -172,6 +172,8 @@ static int eatBonus = 0;
 static double eatBonusFloor = 0;
 static double eatBonusHalfLife = 50;
 
+static int canYumChainBreak = 0;
+
 
 static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
 
@@ -6712,7 +6714,7 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
         // chain broken
         
         // only feeding self can break chain
-        if( inFedSelf ) {
+        if( inFedSelf && canYumChainBreak ) {
             inPlayer->yummyFoodChain.deleteAll();
             }
         }
@@ -7896,6 +7898,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     
     shortLifeAge = SettingsManager::getFloatSetting( "shortLifeAge", 10 );
 
+    canYumChainBreak = SettingsManager::getIntSetting( "canYumChainBreak", 0 );
+    
 
     numConnections ++;
                 
