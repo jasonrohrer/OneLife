@@ -146,6 +146,15 @@ static int babyBirthFoodDecrement = 10;
 // makes whole server a bit easier (or harder, if negative)
 static int eatBonus = 0;
 
+static double eatBonusFloor = 0;
+static double eatBonusHalfLife = 50;
+
+static int canYumChainBreak = 0;
+
+
+static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
+
+
 
 static int minActivePlayersForLanguages = 15;
 
@@ -5547,7 +5556,7 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
         // chain broken
         
         // only feeding self can break chain
-        if( inFedSelf ) {
+        if( inFedSelf && canYumChainBreak ) {
             inPlayer->yummyFoodChain.deleteAll();
             }
         }
@@ -6317,6 +6326,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     minActivePlayersForLanguages =
         SettingsManager::getIntSetting( "minActivePlayersForLanguages", 15 );
 
+    canYumChainBreak = SettingsManager::getIntSetting( "canYumChainBreak", 0 );
+    
 
     numConnections ++;
                 
