@@ -52,6 +52,9 @@ Server Fixes
   earns the current bonus and increases the bonus.  Repeat foods don't earn the
   bonus, but don't reset the bonus back to 0.
 
+--Live server setting for a YUM bonus cap.  Currently -1 (off), but can be
+  turned on in future to limit how big a YUM bonus can grow.
+
 
 
 
