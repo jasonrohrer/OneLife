@@ -172,6 +172,10 @@ static int eatBonus = 0;
 static double eatBonusFloor = 0;
 static double eatBonusHalfLife = 50;
 
+static double eatCostMax = 5;
+static double eatCostGrowthRate = 0.1;
+
+
 static int canYumChainBreak = 0;
 // -1 for no cap
 static int yumBonusCap = -1;
@@ -6638,7 +6642,42 @@ static int getEatBonus( LiveObject *inPlayer ) {
 
 
 
+static int getEatCost( LiveObject *inPlayer ) {
+
+    if( eatCostMax == 0 ||
+        eatCostGrowthRate == 0 ) {
+        return 0;
+        }
+
+    // using P(t) form of logistic function from here:
+    // https://en.wikipedia.org/wiki/Logistic_function#
+    //         In_ecology:_modeling_population_growth
+
+
+    int generation = inPlayer->parentChainLength - 1;
+
+    // P(0) is 1, so we subtract 1 from the result value.
+    // but add 1 to max param
+    double K = eatCostMax + 1;
+
+    double costFloat = 
+        K / 
+        ( 1 + ( K - 1 ) * 
+          pow( M_E, -eatCostGrowthRate * generation ) );
+    
+    int cost = lrint( costFloat - 1 );
+
+    return cost;
+    }
+
+
+
 static double getLinearFoodScaleFactor( LiveObject *inPlayer ) {
+    
+    if( foodScaleFactor == foodScaleFactorFloor ) {
+        return foodScaleFactor;
+        }
+
     int generation = inPlayer->parentChainLength - 1;
     
     double f = ( foodScaleFactor - foodScaleFactorFloor ) * 
@@ -6651,8 +6690,10 @@ static double getLinearFoodScaleFactor( LiveObject *inPlayer ) {
 
 
 static int getScaledFoodValue( LiveObject *inPlayer, int inFoodValue ) {
+    int v = inFoodValue;
+    
     if( foodScaleFactorGamma == 1 ) {
-        return ceil( getLinearFoodScaleFactor( inPlayer ) * inFoodValue );
+        v = ceil( getLinearFoodScaleFactor( inPlayer ) * inFoodValue );
         }
     else {
         // apply half-life to gamma
@@ -6673,11 +6714,19 @@ static int getScaledFoodValue( LiveObject *inPlayer, int inFoodValue ) {
         double rescaledValue = maxFoodValue * powerValue;
         
         // apply linear factor at end
-        int finalVal = 
+        v = 
             ceil( getLinearFoodScaleFactor( inPlayer ) * rescaledValue );
-
-        return finalVal;
         }
+
+    if( v > 1 ) {
+        v -= getEatCost( inPlayer );
+
+        if( v < 1 ) {
+            v = 1;
+            }
+        }
+    
+    return v;
     }
 
 
@@ -7857,6 +7906,11 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         SettingsManager::getIntSetting( "eatBonusFloor", 0 );
     eatBonusHalfLife = 
         SettingsManager::getFloatSetting( "eatBonusHalfLife", 50 );
+
+    eatCostMax =
+        SettingsManager::getFloatSetting( "eatCostMax", 5 );
+    eatCostGrowthRate =
+        SettingsManager::getFloatSetting( "eatCostGrowthRate", 0.1 );
 
     minActivePlayersForLanguages =
         SettingsManager::getIntSetting( "minActivePlayersForLanguages", 15 );

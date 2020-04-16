@@ -55,6 +55,17 @@ Server Fixes
 --Live server setting for a YUM bonus cap.  Currently -1 (off), but can be
   turned on in future to limit how big a YUM bonus can grow.
 
+--Better than food-scale gamma:  Subtract a constant value from all foods, and
+  bottom-cap the result at 1.  This reduces the value of small foods a lot
+  without affecting high-value foods too much, relatively speaking.  This is
+  better than a linear scale factor, which takes the same relative chunk out of
+  all foods, and simpler and easier to control compared to a gamma curve.  This
+  constant, which is the eatCost (opposite of eatBonus) kicks in over time as
+  the generations pass, currently topping out at 5.  The old gamma and linear
+  scale factors are still in place, and can be turned on as-needed, in
+  conjuction with this new eatCost.  But they are both off for now.  The
+  eatCost currently goes to 1 at generation 7, 2 at generation 14, 3 at gen 21,
+  4 at gen 29, and 5 at get 42.
 
 
 
