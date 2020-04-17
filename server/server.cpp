@@ -14098,7 +14098,7 @@ static char isAccessBlocked( LiveObject *inPlayer,
                 if( closeID != -1 ) {
 
                     char *message = autoSprintf( "PS\n"
-                                                 "%d/0 OWNER "
+                                                 "%d/0 CLOSEST OWNER "
                                                  "*owner %d *map %d %d\n#",
                                                  inPlayer->id,
                                                  closeID,
