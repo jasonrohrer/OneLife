@@ -67,6 +67,15 @@ Server Fixes
   eatCost currently goes to 1 at generation 7, 2 at generation 14, 3 at gen 21,
   4 at gen 29, and 5 at get 42.
 
+--When a non-primary homeland (outpost) expires (no baby born there in past
+  hour), any primitive well there (pre-newc pump) collapses into a well site
+  (9 stones) and dry springs in the area become wet again, and sunken iron
+  veins in the area resurface and become muddy veins again.  If someone else
+  makes a well in the area, the springs dry up again.  If someone else
+  establishes a primary homeland there, they can unlock iron veins again.
+  So you can't run around making spruious outposts to perma-block iron in a
+  large area.
+
 
 
 

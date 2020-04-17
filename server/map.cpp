@@ -564,6 +564,22 @@ static Homeland *getHomeland( int inX, int inY,
         if( ! h->expired && h->lastBabyBirthTime < tooOldTime ) {
             h->expired = true;
             h->changed = true;
+
+
+            if( ! h->primary ) {
+                // apply expiration transition to whatever is at center of
+                // non-primary homeland 
+                // (object operating on itself defines this)
+            
+                int centerID = getMapObject( h->x, h->y );
+                
+                if( centerID > 0 ) {
+                    TransRecord *expireTrans = getTrans( centerID, centerID );
+                    if( expireTrans != NULL ) {
+                        setMapObject( h->x, h->y, expireTrans->newTarget );
+                        }
+                    }
+                }
             }
 
         
