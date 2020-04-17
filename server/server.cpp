@@ -149,6 +149,8 @@ static double maxFoodDecrementSeconds = 20;
 static double foodScaleFactor = 1.0;
 static double foodScaleFactorFloor = 0.5;
 static double foodScaleFactorHalfLife = 50;
+static double foodScaleFactorGamma = 1.5;
+
 
 static double indoorFoodDecrementSecondsBonus = 20.0;
 
@@ -171,6 +173,14 @@ static int eatBonus = 0;
 
 static double eatBonusFloor = 0;
 static double eatBonusHalfLife = 50;
+
+static double eatCostMax = 5;
+static double eatCostGrowthRate = 0.1;
+
+
+static int canYumChainBreak = 0;
+// -1 for no cap
+static int yumBonusCap = -1;
 
 
 static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
@@ -680,6 +690,12 @@ typedef struct LiveObject {
 
         char isTwin;
         
+        // if last life is too short, assume they are die-cycling
+        // to pick their birth location, and don't count them when computing
+        // posse size
+        char isLastLifeShort;
+        
+
         // used to track incremental tutorial map loading
         TutorialLoadProgress tutorialLoad;
 
@@ -1779,6 +1795,52 @@ static int nextBabyFamilyIndex = 0;
 static FILE *postWindowFamilyLogFile = NULL;
 
 
+// keep track of players whose last life was short
+static double shortLifeAge = 10;
+
+static SimpleVector<char*> shortLifeEmails;
+
+
+// checks for presence of inEmail in short life list, and deletes it from list
+// if present
+static char isShortLife( char *inEmail ) {
+    
+    char hit = false;
+    for( int i=0; i<shortLifeEmails.size(); i++ ) {
+        if( strcmp( shortLifeEmails.getElementDirect( i ), inEmail ) == 0 ) {
+            hit = true;
+            delete [] shortLifeEmails.getElementDirect( i );
+            shortLifeEmails.deleteElement( i );
+            break;
+            }
+        }
+    
+
+    if( shortLifeEmails.size() > 1000 ) {
+        // don't let it keep growing
+        // remember only last 1000 unique short-life players.
+        // forget rest
+        int extra = shortLifeEmails.size() - 1000;
+        for( int i=0; i<extra; i++ ) {
+            delete [] shortLifeEmails.getElementDirect( i );
+            }
+        shortLifeEmails.deleteStartElements( extra );
+        }
+    
+    return hit;
+    }
+
+
+
+// destroyed by caller
+static void addShortLife( char *inEmail ) {
+    // remove if present
+    isShortLife( inEmail );
+
+    shortLifeEmails.push_back( stringDuplicate( inEmail ) );
+    }
+
+
 
 
 void quitCleanup() {
@@ -2029,6 +2091,8 @@ void quitCleanup() {
 
     recentScoreEmailsForPickingEve.deallocateStringElements();
     recentScoresForPickingEve.deleteAll();
+
+    shortLifeEmails.deallocateStringElements();
     }
 
 
@@ -3487,10 +3551,9 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
             posseSpeedMult = posseSizeSpeedMultipliers[3];
             }
         
-        if( inPlayer->isTwin ) {
+        if( inPlayer->isTwin || inPlayer->isLastLifeShort ) {
             // twins always run at slowest speed when trying to kill
-            // they can't form their own posse, but can join
-            // into posses to help speed up others
+            // same with people who are die-cycling to pick their birth location
             posseSpeedMult = posseSizeSpeedMultipliers[0];
             }
 
@@ -6026,6 +6089,29 @@ static int isGraveSwapDest( int inTargetX, int inTargetY,
 void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                  SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
     
+    
+    if( ! isBiomeAllowedForPlayer( inDroppingPlayer, inX, inY, true ) ) {
+        // would be dropping in a bad biome (floor or not)
+        // avoid this if the target spot is on the edge of a bad biome
+
+        int nX[4] = { -1, 1, 0, 0 };
+        int nY[4] = { 0, 0, -1, 1 };
+        
+        for( int i=0; i<4; i++ ) {
+            int testX = inX + nX[i];
+            int testY = inY + nY[i];
+            
+            if( isBiomeAllowedForPlayer( inDroppingPlayer, testX, testY,
+                                         true ) ) {
+                inX = testX;
+                inY = testY;
+                
+                break;
+                }
+            }
+        }
+
+
     int oldHoldingID = inDroppingPlayer->holdingID;
     
 
@@ -6558,7 +6644,42 @@ static int getEatBonus( LiveObject *inPlayer ) {
 
 
 
-static double getFoodScaleFactor( LiveObject *inPlayer ) {
+static int getEatCost( LiveObject *inPlayer ) {
+
+    if( eatCostMax == 0 ||
+        eatCostGrowthRate == 0 ) {
+        return 0;
+        }
+
+    // using P(t) form of logistic function from here:
+    // https://en.wikipedia.org/wiki/Logistic_function#
+    //         In_ecology:_modeling_population_growth
+
+
+    int generation = inPlayer->parentChainLength - 1;
+
+    // P(0) is 1, so we subtract 1 from the result value.
+    // but add 1 to max param
+    double K = eatCostMax + 1;
+
+    double costFloat = 
+        K / 
+        ( 1 + ( K - 1 ) * 
+          pow( M_E, -eatCostGrowthRate * generation ) );
+    
+    int cost = lrint( costFloat - 1 );
+
+    return cost;
+    }
+
+
+
+static double getLinearFoodScaleFactor( LiveObject *inPlayer ) {
+    
+    if( foodScaleFactor == foodScaleFactorFloor ) {
+        return foodScaleFactor;
+        }
+
     int generation = inPlayer->parentChainLength - 1;
     
     double f = ( foodScaleFactor - foodScaleFactorFloor ) * 
@@ -6567,6 +6688,47 @@ static double getFoodScaleFactor( LiveObject *inPlayer ) {
         + foodScaleFactorFloor;
     
     return f;
+    }
+
+
+static int getScaledFoodValue( LiveObject *inPlayer, int inFoodValue ) {
+    int v = inFoodValue;
+    
+    if( foodScaleFactorGamma == 1 ) {
+        v = ceil( getLinearFoodScaleFactor( inPlayer ) * inFoodValue );
+        }
+    else {
+        // apply half-life to gamma
+        // gamma starts at 1.0 and approaches foodScaleFactorGamma over time
+        // getting half-way there after foodScaleFactorHalfLife generations
+        int generation = inPlayer->parentChainLength - 1;
+
+        double h = pow( 0.5, 
+                        generation / foodScaleFactorHalfLife );
+        double g = h * 1.0 + (1-h) * foodScaleFactorGamma;
+        
+        int maxFoodValue = getMaxFoodValue();
+        
+        double scaledValue = inFoodValue / (double)maxFoodValue;
+        
+        double powerValue = pow( scaledValue, g );
+        
+        double rescaledValue = maxFoodValue * powerValue;
+        
+        // apply linear factor at end
+        v = 
+            ceil( getLinearFoodScaleFactor( inPlayer ) * rescaledValue );
+        }
+
+    if( v > 1 ) {
+        v -= getEatCost( inPlayer );
+
+        if( v < 1 ) {
+            v = 1;
+            }
+        }
+    
+    return v;
     }
 
 
@@ -6605,7 +6767,7 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
         // chain broken
         
         // only feeding self can break chain
-        if( inFedSelf ) {
+        if( inFedSelf && canYumChainBreak ) {
             inPlayer->yummyFoodChain.deleteAll();
             }
         }
@@ -6633,16 +6795,20 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
     if( currentBonus < 0 ) {
         currentBonus = 0;
         }    
+    
+    if( yumBonusCap != -1 &&
+        currentBonus > yumBonusCap ) {
+        currentBonus = yumBonusCap;
+        }
 
     if( wasYummy ) {
         // only get bonus if actually was yummy (whether fed self or not)
         // chain not broken if fed non-yummy by other, but don't get bonus
         
-        // apply foodScaleFactor here to scale value of YUM along with
-        // the global scale of other foods.
-        
-        inPlayer->yummyBonusStore += 
-            ceil( getFoodScaleFactor( inPlayer ) * currentBonus );
+        // for now, do NOT scale current bonus
+        // it's confusing to see a yum multiplier on the screen and then
+        // not receive that number of bonus food points.
+        inPlayer->yummyBonusStore += currentBonus;
         }
     
     }
@@ -7483,7 +7649,7 @@ static void makeOffspringSayMarker( int inPlayerID, int inIDToSkip ) {
             if( o->ancestorIDs->getElementIndex( inPlayerID ) != -1 ) {
                 // this player is an ancestor of this other
                 
-                // make other say ++, but only so this player can hear it
+                // make other say +FAMILY+, but only so this player can hear it
 
                 char *message = autoSprintf( "PS\n"
                                              "%d/0 +FAMILY+\n#",
@@ -7718,6 +7884,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     foodScaleFactorHalfLife = 
         SettingsManager::getFloatSetting( "foodScaleFactorHalfLife", 50 );
 
+    foodScaleFactorGamma = 
+        SettingsManager::getFloatSetting( "foodScaleFactorGamma", 1.5 );
+
 
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
@@ -7739,6 +7908,11 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         SettingsManager::getIntSetting( "eatBonusFloor", 0 );
     eatBonusHalfLife = 
         SettingsManager::getFloatSetting( "eatBonusHalfLife", 50 );
+
+    eatCostMax =
+        SettingsManager::getFloatSetting( "eatCostMax", 5 );
+    eatCostGrowthRate =
+        SettingsManager::getFloatSetting( "eatCostGrowthRate", 0.1 );
 
     minActivePlayersForLanguages =
         SettingsManager::getIntSetting( "minActivePlayersForLanguages", 15 );
@@ -7785,8 +7959,12 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     recentScoreWindowForPickingEve = 
         SettingsManager::getIntSetting( "recentScoreWindowForPickingEve", 10 );
     
-    
+    shortLifeAge = SettingsManager::getFloatSetting( "shortLifeAge", 10 );
 
+    canYumChainBreak = SettingsManager::getIntSetting( "canYumChainBreak", 0 );
+    
+    yumBonusCap = SettingsManager::getIntSetting( "yumBonusCap", -1 );
+    
 
     numConnections ++;
                 
@@ -7811,6 +7989,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     else {
         newObject.isTwin = false;
         }
+    
+    newObject.isLastLifeShort = isShortLife( inEmail );
+
     
 
 
@@ -12169,7 +12350,7 @@ SimpleVector<int> killStatePosseChangedPlayerIDs;
 static int countPosseSize( LiveObject *inTarget ) {
     int p = 0;
     
-    int twinCount = 0;
+    int uncounted = 0;
 
     for( int i=0; i<activeKillStates.size(); i++ ) {
         KillState *s = activeKillStates.getElement( i );
@@ -12180,19 +12361,23 @@ static int countPosseSize( LiveObject *inTarget ) {
             if( killerO != NULL ) {
                 
                 // twins don't count toward posse size
-                if( ! killerO->isTwin ) {
+                // people who lived short life last life don't count either
+                // they may be die-cycling to find their IRL friends and
+                // gang up
+                if( ! killerO->isTwin && ! killerO->isLastLifeShort ) {
                     p++;
                     }
                 else {
-                    twinCount ++;
+                    uncounted ++;
                     }
                 }
             }
         }
     
     if( p == 0 &&
-        twinCount > 0 ) {
-        // if twin is only one in posse, count as a posse of 1
+        uncounted > 0 ) {
+        // if twin (or other uncounted person) is only one in posse, 
+        // count as a posse of 1
         p = 1;
         }
 
@@ -13890,6 +14075,7 @@ static char isAccessBlocked( LiveObject *inPlayer,
 
                 // find closest owner
                 int closeID = -1;
+                LiveObject *closePlayer = NULL;
                 GridPos closePos;
                 double closeDist = DBL_MAX;
                 
@@ -13906,6 +14092,7 @@ static char isAccessBlocked( LiveObject *inPlayer,
                             closeDist = d;
                             closePos = p;
                             closeID = otherPlayer->id;
+                            closePlayer = otherPlayer;
                             }
                         }
                     }            
@@ -13913,7 +14100,7 @@ static char isAccessBlocked( LiveObject *inPlayer,
                 if( closeID != -1 ) {
 
                     char *message = autoSprintf( "PS\n"
-                                                 "%d/0 OWNER "
+                                                 "%d/0 CLOSEST OWNER "
                                                  "*owner %d *map %d %d\n#",
                                                  inPlayer->id,
                                                  closeID,
@@ -13922,6 +14109,21 @@ static char isAccessBlocked( LiveObject *inPlayer,
                                                  closePos.y - 
                                                  inPlayer->birthPos.y );
                     sendMessageToPlayer( inPlayer, message, strlen( message ) );
+                    delete [] message;
+
+                    
+                    // send visitor message to closest owner
+                    message = autoSprintf( "PS\n"
+                                           "%d/0 A GATE VISITOR "
+                                           "*visitor %d *map %d %d\n#",
+                                           closePlayer->id,
+                                           inPlayer->id,
+                                           ourPos.x - 
+                                           closePlayer->birthPos.x,
+                                           ourPos.y - 
+                                           closePlayer->birthPos.y );
+                    sendMessageToPlayer( 
+                        closePlayer, message, strlen( message ) );
                     delete [] message;
                     }
                 }
@@ -20226,9 +20428,10 @@ int main() {
                                     nextPlayer->lastAteFillMax =
                                         nextPlayer->foodStore;
                                     
-                                    nextPlayer->foodStore += 
-                                        ceil( getFoodScaleFactor( nextPlayer ) *
-                                              targetObj->foodValue );
+                                    nextPlayer->foodStore +=
+                                        getScaledFoodValue( 
+                                            nextPlayer,
+                                            targetObj->foodValue );
                                     
                                     updateYum( nextPlayer, targetObj->id );
                                     
@@ -21172,10 +21375,9 @@ int main() {
                                     targetPlayer->lastAteFillMax =
                                         targetPlayer->foodStore;
                                     
-                                    targetPlayer->foodStore += 
-                                        ceil( 
-                                            getFoodScaleFactor( targetPlayer )* 
-                                            obj->foodValue );
+                                    targetPlayer->foodStore +=
+                                        getScaledFoodValue( targetPlayer,
+                                                            obj->foodValue );
                                     
                                     updateYum( targetPlayer, obj->id,
                                                targetPlayer == nextPlayer );
@@ -22524,6 +22726,10 @@ int main() {
                 // both tutorial and non-tutorial players
                 logFitnessDeath( nextPlayer );
                 
+
+                if( age < shortLifeAge ) {
+                    addShortLife( nextPlayer->email );
+                    }
 
 
                 if( SettingsManager::getIntSetting( 
@@ -26389,6 +26595,11 @@ int main() {
                         yumMult = 0;
                         }
                     
+                    if( yumBonusCap != -1 &&
+                        yumMult > yumBonusCap ) {
+                        yumMult = yumBonusCap;
+                        }
+
                     if( nextPlayer->connected ) {
                         
                         char *foodMessage = autoSprintf( 

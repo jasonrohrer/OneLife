@@ -4,6 +4,89 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 328     2020-April-17
+
+--Don't interrupt character's speech with automatic +FAMILY+ marker above their
+  head.  Fixes #588
+
+--Whenever you get an arrow pointing toward a person (baby, expert, leader,
+  owner, visitor, etc), once that person is close, you see a label above their
+  head.  Otherwise, they can be hard to locate in a crowd.
+
+
+
+
+
+Server Fixes
+
+--There are still food surpluses everywhere.  Food scale factor floor 0.5
+  (was 1.0), eating bonus left alone. This increases food pressure long-term,
+  but not too hard for Eve starts (b/c food scale factor still starts at 1.0).
+
+--Food scaled on a gamma curve instead of linearly, allowing us to reduce
+  effectiveness of small foods without affecting large-valued foods so much.
+  Gamma starts at 1.0 and eventually reaches 1.5, with a half-life of 4
+  generations.  By gen 20, a berry only provides 1 food, but a feast plate
+  still provides 40.  Linear food scale factor can still apply on top of gamma
+  (to scale all foods uniformly), but turning it off for now (setting floor
+  back to 1.0).
+
+--When triggering unlock of iron veins due to a primary homeland, we only count
+  it as a primary homeland if it taps out at least one iron vein.  Thus, if a
+  family makes a bad choice for their first well in an area with no iron veins,
+  they can move later to a spot with iron veins and unlock them with a new well
+  site.  Fixes #590
+
+--Applied YUM bonus no longer scaled by food scaling factor (too confusing).
+  Fixes #592
+
+--Another fail-safe, at beginning of handleDrop, to prevent dropping in a bad
+  biome if we're on the edge of a good biome.  Before, the only fail-safe was
+  in findDropSpot, which is only invoked if the first prefered spot already has
+  an object in it.  Fixes #593
+
+--If your last life was a short life (currently under 10 years, a live server
+  setting), then you are not counted toward posse size when you join a posse.
+  This prevents people from die-cycling to find their friends and then gang up
+  on people to kill them.  You earn the right to join a posse by surviving
+  through childhood in your previous life.  This is similar to the twin
+  restriction on being counted toward a posse.  People who are die-cycling to
+  find each other are essentially non-identical twins.
+
+--Experimenting with unbreakable YUM chains.  Each new food in your life both
+  earns the current bonus and increases the bonus.  Repeat foods don't earn the
+  bonus, but don't reset the bonus back to 0.
+
+--Live server setting for a YUM bonus cap.  Currently -1 (off), but can be
+  turned on in future to limit how big a YUM bonus can grow.
+
+--Better than food-scale gamma:  Subtract a constant value from all foods, and
+  bottom-cap the result at 1.  This reduces the value of small foods a lot
+  without affecting high-value foods too much, relatively speaking.  This is
+  better than a linear scale factor, which takes the same relative chunk out of
+  all foods, and simpler and easier to control compared to a gamma curve.  This
+  constant, which is the eatCost (opposite of eatBonus) kicks in over time as
+  the generations pass, currently topping out at 5.  The old gamma and linear
+  scale factors are still in place, and can be turned on as-needed, in
+  conjuction with this new eatCost.  But they are both off for now.  The
+  eatCost currently goes to 1 at generation 7, 2 at generation 14, 3 at gen 21,
+  4 at gen 29, and 5 at get 42.
+
+--When a non-primary homeland (outpost) expires (no baby born there in past
+  hour), any primitive well there (pre-newc pump) collapses into a well site
+  (9 stones) and dry springs in the area become wet again, and sunken iron
+  veins in the area resurface and become muddy veins again.  If someone else
+  makes a well in the area, the springs dry up again.  If someone else
+  establishes a primary homeland there, they can unlock iron veins again.
+  So you can't run around making spruious outposts to perma-block iron in a
+  large area.
+
+--When someone touches your gate and is blocked by it, you get a low-priority
+  VSTR arrow pointing toward them.
+
+
+
+
 Version 326     2020-April-9
 
 --Editor search boxes now allow -term to avoid objects with term in the name.
