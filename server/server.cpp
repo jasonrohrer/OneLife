@@ -14073,6 +14073,7 @@ static char isAccessBlocked( LiveObject *inPlayer,
 
                 // find closest owner
                 int closeID = -1;
+                LiveObject *closePlayer = NULL;
                 GridPos closePos;
                 double closeDist = DBL_MAX;
                 
@@ -14089,6 +14090,7 @@ static char isAccessBlocked( LiveObject *inPlayer,
                             closeDist = d;
                             closePos = p;
                             closeID = otherPlayer->id;
+                            closePlayer = otherPlayer;
                             }
                         }
                     }            
@@ -14105,6 +14107,21 @@ static char isAccessBlocked( LiveObject *inPlayer,
                                                  closePos.y - 
                                                  inPlayer->birthPos.y );
                     sendMessageToPlayer( inPlayer, message, strlen( message ) );
+                    delete [] message;
+
+                    
+                    // send visitor message to closest owner
+                    message = autoSprintf( "PS\n"
+                                           "%d/0 A GATE VISITOR "
+                                           "*visitor %d *map %d %d\n#",
+                                           closePlayer->id,
+                                           inPlayer->id,
+                                           ourPos.x - 
+                                           closePlayer->birthPos.x,
+                                           ourPos.y - 
+                                           closePlayer->birthPos.y );
+                    sendMessageToPlayer( 
+                        closePlayer, message, strlen( message ) );
                     delete [] message;
                     }
                 }

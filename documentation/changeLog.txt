@@ -76,6 +76,9 @@ Server Fixes
   So you can't run around making spruious outposts to perma-block iron in a
   large area.
 
+--When someone touches your gate and is blocked by it, you get a low-priority
+  VSTR arrow pointing toward them.
+
 
 
 
