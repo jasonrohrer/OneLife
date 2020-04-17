@@ -301,6 +301,8 @@ typedef struct LiveObject {
         char speechIsCurseTag;
         double lastCurseTagDisplayTime;
 
+        char speechIsOverheadLabel;
+
         char shouldDrawPathMarks;
         double pathMarkFade;
         

@@ -9,6 +9,11 @@ Version 328     ???
 --Don't interrupt character's speech with automatic +FAMILY+ marker above their
   head.  Fixes #588
 
+--Whenever you get an arrow pointing toward a person (baby, expert, leader,
+  owner, visitor, etc), once that person is close, you see a label above their
+  head.  Otherwise, they can be hard to locate in a crowd.
+
+
 
 
 

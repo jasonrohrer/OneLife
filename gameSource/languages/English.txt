@@ -425,6 +425,16 @@ lead "LEAD"
 supp "SUPP"
 expt "EXPT"
 owner "OWN"
+visitor "VSTR"
+
+babyLabel "+BABY+"
+leadLabel "+LEADER+"
+suppLabel "+FOLLOWER+"
+exptLabel "+EXPERT+"
+ownerLabel "+OWNER+"
+visitorLabel "+VISITOR+"
+
+
 
 leader "LEADER"
 closestFollower "CLOSEST FOLLOWER"
