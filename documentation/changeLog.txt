@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 330     2020-April-??
+Version 330     2020-April-23
 
 --Support for +becomeUseX tags, for non-use objects that should turn into a
   specific use count in the newTarget after a transition.  This allows (for
