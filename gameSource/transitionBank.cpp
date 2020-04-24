@@ -843,6 +843,34 @@ void initTransBankFinish() {
             newTrans.targetMinUseFraction = 0.0f;
             
             char processed = false;
+
+            int transAddedBefore = transToAdd.size();            
+
+            // consider +becomeUseX tag to force X uses in a newTarget
+            // with uses, when target has no uses
+            // replace before all further operations below
+            char targetUseTagProcessed = false;
+            if( target != NULL && newTarget != NULL &&
+                target->numUses <= 1 && newTarget->numUses > 1 ) {
+                        
+                char *useTag = strstr( target->description, "+becomeUse" );
+                int useTarget = -1;
+                        
+                if( useTag != NULL ) {
+                    sscanf( useTag, "+becomeUse%d", &useTarget );    
+                    }
+                        
+                if( useTarget != -1 &&
+                    useTarget > 0 &&
+                    useTarget < newTarget->numUses ) {
+                    
+                    newTrans.newTarget = 
+                        newTarget->useDummyIDs[ useTarget - 1 ];
+                    targetUseTagProcessed = true;
+                    }
+                }
+
+
             
             if( ! tr->lastUseTarget && ! tr->lastUseActor ) {
 
@@ -913,7 +941,8 @@ void initTransBankFinish() {
                     else {
                         // at least one
                         TransIDPair tp = 
-                            { tr->actor, tr->newActor, tr->newActor };
+                            { newTrans.actor, 
+                              newTrans.newActor, newTrans.newActor };
                         actorSteps.push_back( tp );
                         
                         if( actor != NULL && actor->numUses > 1 ) {
@@ -1007,8 +1036,8 @@ void initTransBankFinish() {
                         }
                     else {
                         // at least one
-                        TransIDPair tp = { tr->target, tr->newTarget, 
-                                           tr->newTarget };
+                        TransIDPair tp = { newTrans.target, newTrans.newTarget, 
+                                           newTrans.newTarget };
                         targetSteps.push_back( tp );
                         
                         if( target != NULL && target->numUses > 1 ) {
@@ -1333,6 +1362,17 @@ void initTransBankFinish() {
                             }
                         }
                     }
+                }
+
+            
+
+            if( transToAdd.size() == transAddedBefore && 
+                targetUseTagProcessed ) {
+                // no new trans added based on this trans
+                
+                // we should at least add the modified newTrans that contains
+                // our +becomeUse tag modification
+                transToAdd.push_back( newTrans );
                 }
             }
 

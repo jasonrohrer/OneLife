@@ -4,6 +4,17 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 330     2020-April-23
+
+--Support for +becomeUseX tags, for non-use objects that should turn into a
+  specific use count in the newTarget after a transition.  This allows (for
+  example), the same scrap box to result from scrapping different objects with
+  differing amounts of resultings scrap metal.  A nozzle is +becomeUse2, while
+  a full piston head is +becomeUse6.
+
+
+
+
 Version 328     2020-April-17
 
 --Don't interrupt character's speech with automatic +FAMILY+ marker above their
