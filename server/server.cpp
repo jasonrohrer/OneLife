@@ -12662,18 +12662,31 @@ static void removeAnyKillState( LiveObject *inKiller ) {
 
 
 
-static char isAlreadyInKillState( LiveObject *inKiller ) {
+static KillState *getKillState( LiveObject *inKiller ) {
     for( int i=0; i<activeKillStates.size(); i++ ) {
         KillState *s = activeKillStates.getElement( i );
     
         if( s->killerID == inKiller->id ) {
-            
             LiveObject *target = getLiveObject( s->targetID );
             
             if( target != NULL ) {
-                return true;
+                return s;
+                }
+            else {
+                return NULL;
                 }
             }
+        }
+    return NULL;
+    }
+
+
+
+static char isAlreadyInKillState( LiveObject *inKiller ) {
+    KillState *s = getKillState( inKiller );
+    
+    if( s != NULL ) {
+        return true;
         }
     return false;
     }
@@ -18706,6 +18719,20 @@ int main() {
                                     
                                     sicknessObjectID = -1;
                                     }
+
+                                
+                                // being part of a full-size posse prevents
+                                // sicness
+                                if( sicknessObjectID > 0 ) {
+                                    KillState *ks = getKillState( nextPlayer );
+                                    
+                                    if( ks != NULL && 
+                                        ks->posseSize >=
+                                        ks->minPosseSizeForKill ) {
+                                        sicknessObjectID = -1;
+                                        }
+                                    }
+                                
 
                                 if( sicknessObjectID > 0 &&
                                     ! nextPlayer->holdingWound &&

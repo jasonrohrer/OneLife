@@ -26,6 +26,10 @@ Server Fixes
   a solo kill in a low-pop area (but they don't count toward the population of
   the posse that they lead).
 
+--Being part of a full-sized posse prevents biome sickness while chasing
+  victim (victim can't hide in bad biome to make you drop your weapons).
+
+
 
 
 
