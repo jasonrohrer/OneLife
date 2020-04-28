@@ -4,6 +4,18 @@ http://onehouronelife.com/updateLog.php
 
 
 
+
+Server Fixes
+
+--If player had short last life or is twin, we don't even let them join a
+  posse, to avoid confusion.  Otherwise, a seeminly large-enough posse might be
+  ineffective.  A short life or twin player can still lead a posse or complete
+  a solo kill in a low-pop area (but they don't count toward the population of
+  the posse that they lead).
+
+
+
+
 Version 330     2020-April-23
 
 --Support for +becomeUseX tags, for non-use objects that should turn into a

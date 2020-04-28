@@ -19026,8 +19026,15 @@ int main() {
                             isPosseJoiningSay( m.saidText ) 
                             &&
                             ( ! getObject( nextPlayer->holdingID )->permanent ||
-                              getTrans( nextPlayer->holdingID, -1 ) != NULL ) 
-                            ) {
+                              getTrans( nextPlayer->holdingID, -1 ) != NULL )
+                            &&
+                            // block twins and last-short-life players
+                            // from even joining in the first place
+                            // to avoid confusion of a big posse
+                            // that can't actually land a kill because
+                            // too many of the players are posse blocked
+                            !( nextPlayer->isTwin || 
+                               nextPlayer->isLastLifeShort ) ) {
                             
                             GridPos ourPos = getPlayerPos( nextPlayer );
                             
