@@ -11,6 +11,11 @@ Version 332    ????
   distances is now measured and they are marked outOfRange client-side, even if
   no PO message arrives for them.
 
+--Fence and wall making now much less fiddly, because you auto-move to a
+  neighboring tile if you try to build a fence or wall where you're currently
+  standing (before, the build action was blocked by you standing there).
+
+
 
 
 Server Fixes

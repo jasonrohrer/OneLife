@@ -23468,6 +23468,31 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 // trying to access noBackAccess object from N
                 canExecute = false;
                 }
+
+            if( canExecute && 
+                clickDestX == ourLiveObject->xd && 
+                clickDestY == ourLiveObject->yd ) {
+                // access from where we're standing
+                
+                // make sure result is non-blocking
+                // (else walk to an empty spot before executing action)
+                if( destID > 0 ) {
+                    
+                    int newDestID = 0;
+                    
+                    TransRecord *useTrans = 
+                        getTrans( ourLiveObject->holdingID, destID );
+                    
+                    if( useTrans != NULL ) {
+                        newDestID = useTrans->newTarget;
+                        }
+                    
+                    if( newDestID > 0 && 
+                        getObject( newDestID )->blocksWalking ) {
+                        canExecute = false;
+                        }
+                    }
+                }
             }
 
 
