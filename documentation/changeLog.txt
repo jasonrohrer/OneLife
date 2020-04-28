@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 332    ???? 
+
+--Fixed a rare bug where a player standing still and not changing while you
+  move out of range of them will still have emote and animation sounds
+  displayed for them (because you never get a PO message for them).  Their
+  distances is now measured and they are marked outOfRange client-side, even if
+  no PO message arrives for them.
+
 
 
 Server Fixes

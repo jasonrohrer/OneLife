@@ -1958,8 +1958,11 @@ char LivingLifePage::isBadBiome( int inMapI ) {
 
 
 
-// should match limit on server
+// should match limits on server
 static int pathFindingD = 32;
+static int maxChunkDimension = 32;
+
+
 
 static char isAutoClick = false;
 
@@ -20290,7 +20293,18 @@ void LivingLifePage::step() {
             getObject( o->holdingID )->rideable ) {
             holdingRideable = true;
             }
-            
+        
+
+        if( ! o->outOfRange &&
+            distance( o->currentPos, ourLiveObject->currentPos ) > 
+            maxChunkDimension ) {
+            // mark as out of range, even if we've never heard an official
+            // PO message about them
+            // Maybe they weren't moving when we walked out of range for them
+            // We don't want spurious animation and emote sounds to be played
+            // for them in this case.
+            o->outOfRange = true;
+            }
         
                     
         // no anim sounds if out of range
