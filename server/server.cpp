@@ -6307,6 +6307,16 @@ int processLoggedInPlayer( char inAllowReconnect,
                 // temp part of weight
                 totalWeight += 0.5 - fabs( p->heat - 0.5 );
                 
+                // this section adds a weighting based on age, younger more likely to have children, currently the rate seems to be a ratio around 6:1 children for young:old parents with no extra weight from yum or temp.
+                double age = computeAge(p);
+
+                if (age <= 45) {
+                    totalWeight += 0.5;
+                }
+
+                if (age <= 25) {
+                    totalWeight += 1.0;
+                }
 
                 int yumMult = p->yummyFoodChain.size() - 1;
                                 
@@ -6329,6 +6339,18 @@ int processLoggedInPlayer( char inAllowReconnect,
 
                 totalWeight += 0.5 - fabs( p->heat - 0.5 );
 
+                // repeated in this section, as the weighting system needs both totalWeight and Chance to have the same max value or else it crashes the server when trying to have a child.
+                double age = computeAge(p);
+
+                if (age <= 45) {
+                    totalWeight += 0.5;
+                }
+
+                if (age <= 25) {
+                    totalWeight += 1.0;
+                }
+		// current ~ratio of children netween 2 parents, one young and one old, is around 6:1 with Weight values set to current values based on age. ~3:1 ratio if age <= 25 totalWeight is set to 0.5
+		// only tested with 2 parents, with birthcooldown disabled, so if the young parent just had a kid, and another player joins, then the older will be chosen regardless of weighting.
 
                 int yumMult = p->yummyFoodChain.size() - 1;
                                 
