@@ -47,6 +47,8 @@ Server Fixes
   (when you're not in a posse or in some other situation that protects you from
   sickness).
 
+--You don't get NEW OFFSPRING BABY notifications when you're too young to help.
+
 
 
 

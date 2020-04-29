@@ -9719,7 +9719,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         
         LiveObject *o = getLiveObject( id );
         
-        if( o != NULL && ! o->error && o->connected ) {
+        if( o != NULL && ! o->error && o->connected &&
+            computeAge( o ) >= defaultActionAge ) {
             
             char *message = autoSprintf( "PS\n"
                                          "%d/0 A NEW OFFSPRING BABY "
