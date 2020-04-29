@@ -22653,7 +22653,8 @@ int main() {
                 if( nextPlayer->curseStatus.curseLevel > 0 ) {
                     playerIndicesToSendCursesAbout.push_back( i );
                     }
-                else if( usePersonalCurses ) {
+                
+                if( usePersonalCurses ) {
                     // send a unique CU message to each player
                     // who has this player cursed
                     

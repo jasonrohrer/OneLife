@@ -52,6 +52,9 @@ Server Fixes
 --Donkey and tutorial players can't manipulate end tower or ring bell.
   Part of #603
 
+--Fixed case where newly spawned d-town player's personal curse tags don't show
+  up to the people who cursed them.
+
 
 
 
