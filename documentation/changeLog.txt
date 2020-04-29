@@ -34,6 +34,12 @@ Server Fixes
   being killed by whether you are whimpering.  The posse can also know whether
   it is big enough by whether you are whimpering or not.
 
+--When targeted by a full-sized posse for killing, where the posse has more
+  than one member (not in case of wilderness solo posse), you drop what you are
+  holding, and can't pick anything up.  This happens while whimpering in
+  terror, so you're too scared to hold anything.  This prevents victim from
+  escaping on a horse.
+
 
 
 

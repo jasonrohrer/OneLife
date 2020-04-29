@@ -14026,6 +14026,20 @@ char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY,
 
 
 
+static char isPlayerBlockedFromHoldingByPosse( LiveObject *inPlayer ) {
+    int minPosseSizeForKill = 0;
+    int posseSize = countPosseSize( 
+        inPlayer,
+        &minPosseSizeForKill  );
+                            
+    // deadly solo posses in wilderness don't block victim from holding stuff
+    if( posseSize >= minPosseSizeForKill && posseSize > 1 ) {
+        return true;
+        }
+    return false;
+    }
+
+
 
 static char heldNeverDrop( LiveObject *inPlayer ) {
     if( inPlayer->holdingID > 0 ) {        
@@ -14035,6 +14049,28 @@ static char heldNeverDrop( LiveObject *inPlayer ) {
             }
         }
     return false;
+    }
+
+
+
+// does not force-drop of player holding wound, sickness, etc.
+static void tryToForceDropHeld( 
+    LiveObject *inTargetPlayer, 
+    SimpleVector<int> *playerIndicesToSendUpdatesAbout ) {
+    
+    if( ! inTargetPlayer->holdingWound &&
+        ! inTargetPlayer->holdingBiomeSickness &&
+        ! heldNeverDrop( inTargetPlayer ) ) {
+                                    
+        GridPos p = getPlayerPos( inTargetPlayer );
+        
+        int pi = getLiveObjectIndex( inTargetPlayer->id );
+                                    
+        playerIndicesToSendUpdatesAbout->push_back( pi );
+                                    
+        handleDrop( p.x, p.y, inTargetPlayer,
+                    playerIndicesToSendUpdatesAbout );
+        }
     }
 
     
@@ -14746,6 +14782,7 @@ static LiveObject *getClosestFollower( LiveObject *inLeader ) {
 
 
 static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
+                            SimpleVector<int> *playerIndicesToSendUpdatesAbout,
                             char inInfiniteRange = false ) {
     if( inTargetID > 0 && 
         nextPlayer->holdingID > 0 ) {
@@ -14830,6 +14867,18 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
                             
                             if( posseSize >= minPosseSizeForKill ) {
                                 emotIndex = victimTerrifiedEmotionIndex;
+                                // force target player to drop what they are
+                                // holding
+                                // 
+                                // but NOT for wilderness solo posses
+                                // The point of solo posses is to tell someone
+                                // to scram or else, not to force them to get
+                                // off their horse.
+                                if( posseSize > 1 ) {
+                                    tryToForceDropHeld( 
+                                        targetPlayer, 
+                                        playerIndicesToSendUpdatesAbout );
+                                    }
                                 }
 
                             targetPlayer->emotFrozen = true;
@@ -19407,8 +19456,9 @@ int main() {
                                 playerIndicesToSendUpdatesAbout.push_back( i );
                                 // spoken intent to kill has unlimited distance
                                 // based on limits above instead
-                                tryToStartKill( nextPlayer, otherToKill->id,
-                                                true );
+                                tryToStartKill( 
+                                    nextPlayer, otherToKill->id,
+                                    &playerIndicesToSendUpdatesAbout, true );
                                 }
                             }
                         
@@ -19567,7 +19617,8 @@ int main() {
                         }
                     else if( m.type == KILL ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
-                        tryToStartKill( nextPlayer, m.id );
+                        tryToStartKill( nextPlayer, m.id, 
+                                        &playerIndicesToSendUpdatesAbout );
                         }
                     else if( m.type == USE ) {
                         // send update even if action fails (to let them
@@ -19665,6 +19716,7 @@ int main() {
                         
                         
                         if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
+                        if( ! isPlayerBlockedFromHoldingByPosse( nextPlayer ) )
                         if( distanceUseAllowed 
                             ||
                             isAdjacent ) {
@@ -22131,6 +22183,7 @@ int main() {
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
                         if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
+                        if( ! isPlayerBlockedFromHoldingByPosse( nextPlayer ) )
                         if( isGridAdjacent( m.x, m.y, 
                                             nextPlayer->xd, 
                                             nextPlayer->yd ) 
@@ -22452,6 +22505,13 @@ int main() {
                     
                     if( s->posseSize >= s->minPosseSizeForKill ) {
                         emotIndex = victimTerrifiedEmotionIndex;
+
+
+                        if( s->posseSize > 1 ) {
+                            tryToForceDropHeld( 
+                                target, 
+                                &playerIndicesToSendUpdatesAbout );
+                            }
                         }
                     
                     newEmotIndices.push_back( emotIndex );
