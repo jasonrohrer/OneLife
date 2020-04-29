@@ -432,6 +432,10 @@ typedef struct ObjectRecord {
         // is this an expert-find object?
         char expertFind;
         
+        // is this object useable by normal players only?
+        // non-tutorial, non-cursed players
+        char normalOnly;
+
     } ObjectRecord;
 
 

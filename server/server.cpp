@@ -19770,6 +19770,24 @@ int main() {
                             // can only use on targets next to us for now,
                             // no diags
                             
+
+                            
+                            ObjectRecord *targetObj = NULL;
+                            if( target != 0 ) {
+                                targetObj = getObject( target );
+                                }
+                            
+                            if( targetObj != NULL && 
+                                targetObj->normalOnly &&
+                                ( nextPlayer->isTutorial ||
+                                  nextPlayer->curseStatus.curseLevel > 0 ) ) {
+                                
+                                // non-normal player blocked
+                                targetObj = NULL;
+                                target = 0;
+                                }
+                            
+
                             int oldHolding = nextPlayer->holdingID;
                             
                             char accessBlocked =
@@ -19779,8 +19797,7 @@ int main() {
                                 // ignore action from wrong side
                                 // or that players don't own
                                 }
-                            else if( target != 0 ) {
-                                ObjectRecord *targetObj = getObject( target );
+                            else if( targetObj != NULL ) {
                                 
                                 // see if target object is permanent
                                 // and has writing on it.
@@ -22249,7 +22266,17 @@ int main() {
                                     ObjectRecord *targetObj = 
                                         getObject( target );
                                 
-                                    if( ! targetObj->permanent &&
+                                    if( targetObj->normalOnly &&
+                                        ( nextPlayer->isTutorial ||
+                                          nextPlayer->
+                                          curseStatus.curseLevel > 0 ) ) {
+                                        
+                                        // non-normal player blocked
+                                        targetObj = NULL;
+                                        }
+                                    
+                                    if( targetObj != NULL && 
+                                        ! targetObj->permanent &&
                                         canPickup( targetObj->id,
                                                    computeAge( 
                                                        nextPlayer ) ) ) {
@@ -22258,7 +22285,8 @@ int main() {
                                         pickupToHold( nextPlayer, m.x, m.y, 
                                                       target );
                                         }
-                                    else if( targetObj->permanent ) {
+                                    else if( targetObj != NULL &&
+                                             targetObj->permanent ) {
                                         // consider bare-hand action
                                         TransRecord *handTrans = getPTrans(
                                             0, target );

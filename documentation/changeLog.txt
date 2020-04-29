@@ -49,6 +49,9 @@ Server Fixes
 
 --You don't get NEW OFFSPRING BABY notifications when you're too young to help.
 
+--Donkey and tutorial players can't manipulate end tower or ring bell.
+  Part of #603
+
 
 
 
