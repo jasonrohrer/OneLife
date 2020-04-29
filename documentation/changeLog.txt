@@ -40,6 +40,13 @@ Server Fixes
   terror, so you're too scared to hold anything.  This prevents victim from
   escaping on a horse.
 
+--If you start in a bad biome holding something, you don't get sick and drop it
+  while continuing to move in that bad biome.  Thus, if you enter a bad biome
+  while in a posse, but that posse disbands, you don't drop what you're holding
+  in the bad biome.  It's only crossing into a bad biome that makes you sick
+  (when you're not in a posse or in some other situation that protects you from
+  sickness).
+
 
 
 

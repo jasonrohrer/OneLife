@@ -18739,6 +18739,24 @@ int main() {
                                 // and makes them sick
                                 int sicknessObjectID = -1;
                                 
+                                // but only if an earlier part of their path
+                                // was not a sick-making biome
+                                // i.e., only if their path passes INTO
+                                // a sick-making biome, not if it starts there
+                                // (they might start in a bad biome for various
+                                //  reasons, like if a posse breaks up)
+
+                                char nonSickPathStart = false;
+                                
+                                int curLocSicknessObjectID = 
+                                    getBiomeSickness( 
+                                        nextPlayer->displayID, 
+                                        nextPlayer->xs,
+                                        nextPlayer->ys );
+                                
+                                if( curLocSicknessObjectID == -1 ) {
+                                    nonSickPathStart = true;
+                                    }
                                 
                                 for( int p=0; p< nextPlayer->pathLength; p++ ) {
                                     
@@ -18751,8 +18769,24 @@ int main() {
                                     if( sicknessObjectID != -1 ) {
                                         break;
                                         }
+                                    else {
+                                        // some path step before sickness
+                                        // was non-sickness
+                                        nonSickPathStart = true;
+                                        }
+                                    
                                     }
                                 
+                                
+                                if( ! nonSickPathStart &&
+                                    ! nextPlayer->holdingBiomeSickness ) {
+                                    // path starts in sick biome
+                                    // and player NOT already sick
+                                    // don't make them sick now, until
+                                    // they cross back in from outside later
+                                    sicknessObjectID = -1;
+                                    }
+
                                 
                                 if( nextPlayer->vogMode || 
                                     nextPlayer->forceSpawn ||
