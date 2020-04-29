@@ -7670,7 +7670,6 @@ static double killDelayTime = 12.0;
 
 static double posseDelayReductionFactor = 2.0;
 
-static int victimTerrifiedPosseSize = 3;
 
 
 // for placement of tutorials out of the way 
@@ -7932,10 +7931,6 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     
     posseDelayReductionFactor = 
         SettingsManager::getFloatSetting( "posseDelayReductionFactor", 2.0 );
-
-
-    victimTerrifiedPosseSize = 
-        SettingsManager::getIntSetting( "victimTerrifiedPosseSize", 3 );
 
 
     cursesUseSenderEmail = 
@@ -12345,7 +12340,8 @@ typedef struct FlightDest {
 SimpleVector<int> killStatePosseChangedPlayerIDs;
 
 
-static int countPosseSize( LiveObject *inTarget ) {
+static int countPosseSize( LiveObject *inTarget, 
+                           int *outMinPosseSizeForKill = NULL ) {
     int p = 0;
     
     int uncounted = 0;
@@ -12364,6 +12360,9 @@ static int countPosseSize( LiveObject *inTarget ) {
                 // gang up
                 if( ! killerO->isTwin && ! killerO->isLastLifeShort ) {
                     p++;
+                    if( outMinPosseSizeForKill != NULL ) {
+                        *outMinPosseSizeForKill = s->minPosseSizeForKill;
+                        }
                     }
                 else {
                     uncounted ++;
@@ -14822,11 +14821,14 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
                         newEmotTTLs.push_back( 120 );
                                             
                         if( ! targetPlayer->emotFrozen ) {
-                            int posseSize = countPosseSize( targetPlayer );
+                            int minPosseSizeForKill = 0;
+                            int posseSize = countPosseSize( 
+                                targetPlayer,
+                                &minPosseSizeForKill  );
                             
                             int emotIndex = victimEmotionIndex;
                             
-                            if( posseSize >= victimTerrifiedPosseSize ) {
+                            if( posseSize >= minPosseSizeForKill ) {
                                 emotIndex = victimTerrifiedEmotionIndex;
                                 }
 
@@ -22423,10 +22425,10 @@ int main() {
                 // see if we need to renew emote
                 
                 if( curTime - s->emotStartTime > s->emotRefreshSeconds ||
-                    ( s->posseSize >= victimTerrifiedPosseSize &&
+                    ( s->posseSize >= s->minPosseSizeForKill &&
                       target->emotFrozenIndex != 
                       victimTerrifiedEmotionIndex ) ||
-                    ( s->posseSize < victimTerrifiedPosseSize &&
+                    ( s->posseSize < s->minPosseSizeForKill &&
                       target->emotFrozenIndex != 
                       victimEmotionIndex ) ) {
 
@@ -22448,7 +22450,7 @@ int main() {
                     
                     int emotIndex = victimEmotionIndex;
                     
-                    if( s->posseSize >= victimTerrifiedPosseSize ) {
+                    if( s->posseSize >= s->minPosseSizeForKill ) {
                         emotIndex = victimTerrifiedEmotionIndex;
                         }
                     

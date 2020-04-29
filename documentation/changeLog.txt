@@ -29,6 +29,10 @@ Server Fixes
 --Being part of a full-sized posse prevents biome sickness while chasing
   victim (victim can't hide in bad biome to make you drop your weapons).
 
+--VictimTerrifiedEmote (where they whimper repeatedly) now triggered by kill
+  posse being big enough.  Thus, you can tell whether you're in real danger of
+  being killed by whether you are whimpering.  The posse can also know whether
+  it is big enough by whether you are whimpering or not.
 
 
 
