@@ -1061,6 +1061,8 @@ typedef struct LiveObject {
         
         char everHomesick;
         
+        double lastGateVisitorNoticeTime;
+
     } LiveObject;
 
 
@@ -7972,6 +7974,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     newObject.everHomesick = false;
 
+    newObject.lastGateVisitorNoticeTime = 0;
+
     newObject.id = nextID;
     nextID++;
 
@@ -14158,20 +14162,36 @@ static char isAccessBlocked( LiveObject *inPlayer,
                     sendMessageToPlayer( inPlayer, message, strlen( message ) );
                     delete [] message;
 
+                    if( closeDist > getMaxChunkDimension() ) {
+                        // closest owner is out of range
+                        
+                        // send the owner a VISITOR message to let them
+                        // know that they are needed back at home
                     
-                    // send visitor message to closest owner
-                    message = autoSprintf( "PS\n"
-                                           "%d/0 A GATE VISITOR "
-                                           "*visitor %d *map %d %d\n#",
-                                           closePlayer->id,
-                                           inPlayer->id,
-                                           ourPos.x - 
-                                           closePlayer->birthPos.x,
-                                           ourPos.y - 
-                                           closePlayer->birthPos.y );
-                    sendMessageToPlayer( 
-                        closePlayer, message, strlen( message ) );
-                    delete [] message;
+                        // but don't bug them about this too often
+                        // not more than once a minute
+                        
+                        double curTime = Time::getCurrentTime();
+                        
+                        if( curTime - 
+                            closePlayer->lastGateVisitorNoticeTime > 60 ) {
+
+                            message = autoSprintf( "PS\n"
+                                                   "%d/0 A GATE VISITOR "
+                                                   "*visitor %d *map %d %d\n#",
+                                                   closePlayer->id,
+                                                   inPlayer->id,
+                                                   ourPos.x - 
+                                                   closePlayer->birthPos.x,
+                                                   ourPos.y - 
+                                                   closePlayer->birthPos.y );
+                            sendMessageToPlayer( 
+                                closePlayer, message, strlen( message ) );
+                            delete [] message;
+                            
+                            closePlayer->lastGateVisitorNoticeTime = curTime;
+                            }
+                        }
                     }
                 }
             }

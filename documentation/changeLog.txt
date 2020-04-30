@@ -55,6 +55,9 @@ Server Fixes
 --Fixed case where newly spawned d-town player's personal curse tags don't show
   up to the people who cursed them.
 
+--Gate owner only gets VISITOR notice and arrow if they are out of range (which
+  makes them harder for the visitor to find), and at most one notice per 
+  minute, so visitors can't spam them with repeat notices.
 
 
 
