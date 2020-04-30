@@ -15,6 +15,8 @@ Version 332    ????
   neighboring tile if you try to build a fence or wall where you're currently
   standing (before, the build action was blocked by you standing there).
 
+--Fixed tutorial wording to match how YUM currently works.  Fixes #604
+
 
 
 
