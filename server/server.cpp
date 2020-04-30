@@ -1062,7 +1062,8 @@ typedef struct LiveObject {
         char everHomesick;
         
         double lastGateVisitorNoticeTime;
-
+        double lastNewBabyNoticeTime;
+        
     } LiveObject;
 
 
@@ -7975,6 +7976,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.everHomesick = false;
 
     newObject.lastGateVisitorNoticeTime = 0;
+    newObject.lastNewBabyNoticeTime = 0;
 
     newObject.id = nextID;
     nextID++;
@@ -9704,6 +9706,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     logFamilyCounts();
 
 
+    double curTime = Time::getCurrentTime();
+
     // tell non-mother ancestors about this baby
     for( int i=0; i<newObject.ancestorIDs->size(); i++ ) {
         int id = newObject.ancestorIDs->getElementDirect( i );
@@ -9724,7 +9728,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         LiveObject *o = getLiveObject( id );
         
         if( o != NULL && ! o->error && o->connected &&
-            computeAge( o ) >= defaultActionAge ) {
+            computeAge( o ) >= defaultActionAge &&
+            // at most one new baby notice per minute
+            curTime - o->lastNewBabyNoticeTime > 60 ) {
             
             char *message = autoSprintf( "PS\n"
                                          "%d/0 A NEW OFFSPRING BABY "
@@ -9735,6 +9741,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                                          newObject.ys - o->birthPos.y );
             sendMessageToPlayer( o, message, strlen( message ) );
             delete [] message;
+            
+            o->lastNewBabyNoticeTime = curTime;
             }
         }
     

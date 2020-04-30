@@ -59,6 +59,10 @@ Server Fixes
   makes them harder for the visitor to find), and at most one notice per 
   minute, so visitors can't spam them with repeat notices.
 
+--New Baby notifications are throttled so you don't receive more than one per
+  minute.
+
+
 
 
 Version 330     2020-April-23
