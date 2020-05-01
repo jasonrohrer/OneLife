@@ -773,6 +773,18 @@ static void setupExpertFind( ObjectRecord *inR ) {
 
 
 
+static void setupNormalOnly( ObjectRecord *inR ) {
+    inR->normalOnly = false;
+
+    char *pos = strstr( inR->description, "+normalOnly" );
+
+    if( pos != NULL ) {
+        inR->normalOnly = true;
+        }
+    }
+
+
+
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
     }
@@ -846,6 +858,8 @@ float initObjectBankStep() {
                 setupForcedBiome( r );
                 
                 setupExpertFind( r );
+
+                setupNormalOnly( r );
 
 
                 // do this later, after we parse floorHugging
@@ -3691,6 +3705,8 @@ int addObject( const char *inDescription,
     setupForcedBiome( r );
 
     setupExpertFind( r );
+
+    setupNormalOnly( r );
 
     setupWall( r );
 

@@ -1063,6 +1063,9 @@ typedef struct LiveObject {
         
         char everHomesick;
         
+        double lastGateVisitorNoticeTime;
+        double lastNewBabyNoticeTime;
+        
     } LiveObject;
 
 
@@ -7672,7 +7675,6 @@ static double killDelayTime = 12.0;
 
 static double posseDelayReductionFactor = 2.0;
 
-static int victimTerrifiedPosseSize = 3;
 
 
 // for placement of tutorials out of the way 
@@ -7936,10 +7938,6 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         SettingsManager::getFloatSetting( "posseDelayReductionFactor", 2.0 );
 
 
-    victimTerrifiedPosseSize = 
-        SettingsManager::getIntSetting( "victimTerrifiedPosseSize", 3 );
-
-
     cursesUseSenderEmail = 
         SettingsManager::getIntSetting( "cursesUseSenderEmail", 0 );
 
@@ -7978,6 +7976,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.lastBabyEmail = NULL;
 
     newObject.everHomesick = false;
+
+    newObject.lastGateVisitorNoticeTime = 0;
+    newObject.lastNewBabyNoticeTime = 0;
 
     newObject.id = nextID;
     nextID++;
@@ -9707,6 +9708,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     logFamilyCounts();
 
 
+    double curTime = Time::getCurrentTime();
+
     // tell non-mother ancestors about this baby
     for( int i=0; i<newObject.ancestorIDs->size(); i++ ) {
         int id = newObject.ancestorIDs->getElementDirect( i );
@@ -9726,7 +9729,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         
         LiveObject *o = getLiveObject( id );
         
-        if( o != NULL && ! o->error && o->connected ) {
+        if( o != NULL && ! o->error && o->connected &&
+            computeAge( o ) >= defaultActionAge &&
+            // at most one new baby notice per minute
+            curTime - o->lastNewBabyNoticeTime > 60 ) {
             
             char *message = autoSprintf( "PS\n"
                                          "%d/0 A NEW OFFSPRING BABY "
@@ -9737,6 +9743,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                                          newObject.ys - o->birthPos.y );
             sendMessageToPlayer( o, message, strlen( message ) );
             delete [] message;
+            
+            o->lastNewBabyNoticeTime = curTime;
             }
         }
     
@@ -12347,7 +12355,8 @@ typedef struct FlightDest {
 SimpleVector<int> killStatePosseChangedPlayerIDs;
 
 
-static int countPosseSize( LiveObject *inTarget ) {
+static int countPosseSize( LiveObject *inTarget, 
+                           int *outMinPosseSizeForKill = NULL ) {
     int p = 0;
     
     int uncounted = 0;
@@ -12366,6 +12375,9 @@ static int countPosseSize( LiveObject *inTarget ) {
                 // gang up
                 if( ! killerO->isTwin && ! killerO->isLastLifeShort ) {
                     p++;
+                    if( outMinPosseSizeForKill != NULL ) {
+                        *outMinPosseSizeForKill = s->minPosseSizeForKill;
+                        }
                     }
                 else {
                     uncounted ++;
@@ -12664,18 +12676,31 @@ static void removeAnyKillState( LiveObject *inKiller ) {
 
 
 
-static char isAlreadyInKillState( LiveObject *inKiller ) {
+static KillState *getKillState( LiveObject *inKiller ) {
     for( int i=0; i<activeKillStates.size(); i++ ) {
         KillState *s = activeKillStates.getElement( i );
     
         if( s->killerID == inKiller->id ) {
-            
             LiveObject *target = getLiveObject( s->targetID );
             
             if( target != NULL ) {
-                return true;
+                return s;
+                }
+            else {
+                return NULL;
                 }
             }
+        }
+    return NULL;
+    }
+
+
+
+static char isAlreadyInKillState( LiveObject *inKiller ) {
+    KillState *s = getKillState( inKiller );
+    
+    if( s != NULL ) {
+        return true;
         }
     return false;
     }
@@ -14016,6 +14041,20 @@ char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY,
 
 
 
+static char isPlayerBlockedFromHoldingByPosse( LiveObject *inPlayer ) {
+    int minPosseSizeForKill = 0;
+    int posseSize = countPosseSize( 
+        inPlayer,
+        &minPosseSizeForKill  );
+                            
+    // deadly solo posses in wilderness don't block victim from holding stuff
+    if( posseSize >= minPosseSizeForKill && posseSize > 1 ) {
+        return true;
+        }
+    return false;
+    }
+
+
 
 static char heldNeverDrop( LiveObject *inPlayer ) {
     if( inPlayer->holdingID > 0 ) {        
@@ -14025,6 +14064,28 @@ static char heldNeverDrop( LiveObject *inPlayer ) {
             }
         }
     return false;
+    }
+
+
+
+// does not force-drop of player holding wound, sickness, etc.
+static void tryToForceDropHeld( 
+    LiveObject *inTargetPlayer, 
+    SimpleVector<int> *playerIndicesToSendUpdatesAbout ) {
+    
+    if( ! inTargetPlayer->holdingWound &&
+        ! inTargetPlayer->holdingBiomeSickness &&
+        ! heldNeverDrop( inTargetPlayer ) ) {
+                                    
+        GridPos p = getPlayerPos( inTargetPlayer );
+        
+        int pi = getLiveObjectIndex( inTargetPlayer->id );
+                                    
+        playerIndicesToSendUpdatesAbout->push_back( pi );
+                                    
+        handleDrop( p.x, p.y, inTargetPlayer,
+                    playerIndicesToSendUpdatesAbout );
+        }
     }
 
     
@@ -14111,20 +14172,36 @@ static char isAccessBlocked( LiveObject *inPlayer,
                     sendMessageToPlayer( inPlayer, message, strlen( message ) );
                     delete [] message;
 
+                    if( closeDist > getMaxChunkDimension() ) {
+                        // closest owner is out of range
+                        
+                        // send the owner a VISITOR message to let them
+                        // know that they are needed back at home
                     
-                    // send visitor message to closest owner
-                    message = autoSprintf( "PS\n"
-                                           "%d/0 A GATE VISITOR "
-                                           "*visitor %d *map %d %d\n#",
-                                           closePlayer->id,
-                                           inPlayer->id,
-                                           ourPos.x - 
-                                           closePlayer->birthPos.x,
-                                           ourPos.y - 
-                                           closePlayer->birthPos.y );
-                    sendMessageToPlayer( 
-                        closePlayer, message, strlen( message ) );
-                    delete [] message;
+                        // but don't bug them about this too often
+                        // not more than once a minute
+                        
+                        double curTime = Time::getCurrentTime();
+                        
+                        if( curTime - 
+                            closePlayer->lastGateVisitorNoticeTime > 60 ) {
+
+                            message = autoSprintf( "PS\n"
+                                                   "%d/0 A GATE VISITOR "
+                                                   "*visitor %d *map %d %d\n#",
+                                                   closePlayer->id,
+                                                   inPlayer->id,
+                                                   ourPos.x - 
+                                                   closePlayer->birthPos.x,
+                                                   ourPos.y - 
+                                                   closePlayer->birthPos.y );
+                            sendMessageToPlayer( 
+                                closePlayer, message, strlen( message ) );
+                            delete [] message;
+                            
+                            closePlayer->lastGateVisitorNoticeTime = curTime;
+                            }
+                        }
                     }
                 }
             }
@@ -14736,6 +14813,7 @@ static LiveObject *getClosestFollower( LiveObject *inLeader ) {
 
 
 static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
+                            SimpleVector<int> *playerIndicesToSendUpdatesAbout,
                             char inInfiniteRange = false ) {
     if( inTargetID > 0 && 
         nextPlayer->holdingID > 0 ) {
@@ -14811,12 +14889,27 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
                         newEmotTTLs.push_back( 120 );
                                             
                         if( ! targetPlayer->emotFrozen ) {
-                            int posseSize = countPosseSize( targetPlayer );
+                            int minPosseSizeForKill = 0;
+                            int posseSize = countPosseSize( 
+                                targetPlayer,
+                                &minPosseSizeForKill  );
                             
                             int emotIndex = victimEmotionIndex;
                             
-                            if( posseSize >= victimTerrifiedPosseSize ) {
+                            if( posseSize >= minPosseSizeForKill ) {
                                 emotIndex = victimTerrifiedEmotionIndex;
+                                // force target player to drop what they are
+                                // holding
+                                // 
+                                // but NOT for wilderness solo posses
+                                // The point of solo posses is to tell someone
+                                // to scram or else, not to force them to get
+                                // off their horse.
+                                if( posseSize > 1 ) {
+                                    tryToForceDropHeld( 
+                                        targetPlayer, 
+                                        playerIndicesToSendUpdatesAbout );
+                                    }
                                 }
 
                             targetPlayer->emotFrozen = true;
@@ -18691,6 +18784,24 @@ int main() {
                                 // and makes them sick
                                 int sicknessObjectID = -1;
                                 
+                                // but only if an earlier part of their path
+                                // was not a sick-making biome
+                                // i.e., only if their path passes INTO
+                                // a sick-making biome, not if it starts there
+                                // (they might start in a bad biome for various
+                                //  reasons, like if a posse breaks up)
+
+                                char nonSickPathStart = false;
+                                
+                                int curLocSicknessObjectID = 
+                                    getBiomeSickness( 
+                                        nextPlayer->displayID, 
+                                        nextPlayer->xs,
+                                        nextPlayer->ys );
+                                
+                                if( curLocSicknessObjectID == -1 ) {
+                                    nonSickPathStart = true;
+                                    }
                                 
                                 for( int p=0; p< nextPlayer->pathLength; p++ ) {
                                     
@@ -18703,8 +18814,24 @@ int main() {
                                     if( sicknessObjectID != -1 ) {
                                         break;
                                         }
+                                    else {
+                                        // some path step before sickness
+                                        // was non-sickness
+                                        nonSickPathStart = true;
+                                        }
+                                    
                                     }
                                 
+                                
+                                if( ! nonSickPathStart &&
+                                    ! nextPlayer->holdingBiomeSickness ) {
+                                    // path starts in sick biome
+                                    // and player NOT already sick
+                                    // don't make them sick now, until
+                                    // they cross back in from outside later
+                                    sicknessObjectID = -1;
+                                    }
+
                                 
                                 if( nextPlayer->vogMode || 
                                     nextPlayer->forceSpawn ||
@@ -18722,6 +18849,20 @@ int main() {
                                     
                                     sicknessObjectID = -1;
                                     }
+
+                                
+                                // being part of a full-size posse prevents
+                                // sicness
+                                if( sicknessObjectID > 0 ) {
+                                    KillState *ks = getKillState( nextPlayer );
+                                    
+                                    if( ks != NULL && 
+                                        ks->posseSize >=
+                                        ks->minPosseSizeForKill ) {
+                                        sicknessObjectID = -1;
+                                        }
+                                    }
+                                
 
                                 if( sicknessObjectID > 0 &&
                                     ! nextPlayer->holdingWound &&
@@ -19042,8 +19183,15 @@ int main() {
                             isPosseJoiningSay( m.saidText ) 
                             &&
                             ( ! getObject( nextPlayer->holdingID )->permanent ||
-                              getTrans( nextPlayer->holdingID, -1 ) != NULL ) 
-                            ) {
+                              getTrans( nextPlayer->holdingID, -1 ) != NULL )
+                            &&
+                            // block twins and last-short-life players
+                            // from even joining in the first place
+                            // to avoid confusion of a big posse
+                            // that can't actually land a kill because
+                            // too many of the players are posse blocked
+                            !( nextPlayer->isTwin || 
+                               nextPlayer->isLastLifeShort ) ) {
                             
                             GridPos ourPos = getPlayerPos( nextPlayer );
                             
@@ -19387,8 +19535,9 @@ int main() {
                                 playerIndicesToSendUpdatesAbout.push_back( i );
                                 // spoken intent to kill has unlimited distance
                                 // based on limits above instead
-                                tryToStartKill( nextPlayer, otherToKill->id,
-                                                true );
+                                tryToStartKill( 
+                                    nextPlayer, otherToKill->id,
+                                    &playerIndicesToSendUpdatesAbout, true );
                                 }
                             }
                         
@@ -19547,7 +19696,8 @@ int main() {
                         }
                     else if( m.type == KILL ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
-                        tryToStartKill( nextPlayer, m.id );
+                        tryToStartKill( nextPlayer, m.id, 
+                                        &playerIndicesToSendUpdatesAbout );
                         }
                     else if( m.type == USE ) {
                         // send update even if action fails (to let them
@@ -19645,6 +19795,7 @@ int main() {
                         
                         
                         if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
+                        if( ! isPlayerBlockedFromHoldingByPosse( nextPlayer ) )
                         if( distanceUseAllowed 
                             ||
                             isAdjacent ) {
@@ -19663,6 +19814,24 @@ int main() {
                             // can only use on targets next to us for now,
                             // no diags
                             
+
+                            
+                            ObjectRecord *targetObj = NULL;
+                            if( target != 0 ) {
+                                targetObj = getObject( target );
+                                }
+                            
+                            if( targetObj != NULL && 
+                                targetObj->normalOnly &&
+                                ( nextPlayer->isTutorial ||
+                                  nextPlayer->curseStatus.curseLevel > 0 ) ) {
+                                
+                                // non-normal player blocked
+                                targetObj = NULL;
+                                target = 0;
+                                }
+                            
+
                             int oldHolding = nextPlayer->holdingID;
                             
                             char accessBlocked =
@@ -19672,8 +19841,7 @@ int main() {
                                 // ignore action from wrong side
                                 // or that players don't own
                                 }
-                            else if( target != 0 ) {
-                                ObjectRecord *targetObj = getObject( target );
+                            else if( targetObj != NULL ) {
                                 
                                 // see if target object is permanent
                                 // and has writing on it.
@@ -22111,6 +22279,7 @@ int main() {
                         playerIndicesToSendUpdatesAbout.push_back( i );
                         
                         if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
+                        if( ! isPlayerBlockedFromHoldingByPosse( nextPlayer ) )
                         if( isGridAdjacent( m.x, m.y, 
                                             nextPlayer->xd, 
                                             nextPlayer->yd ) 
@@ -22141,7 +22310,17 @@ int main() {
                                     ObjectRecord *targetObj = 
                                         getObject( target );
                                 
-                                    if( ! targetObj->permanent &&
+                                    if( targetObj->normalOnly &&
+                                        ( nextPlayer->isTutorial ||
+                                          nextPlayer->
+                                          curseStatus.curseLevel > 0 ) ) {
+                                        
+                                        // non-normal player blocked
+                                        targetObj = NULL;
+                                        }
+                                    
+                                    if( targetObj != NULL && 
+                                        ! targetObj->permanent &&
                                         canPickup( targetObj->id,
                                                    computeAge( 
                                                        nextPlayer ) ) ) {
@@ -22150,7 +22329,8 @@ int main() {
                                         pickupToHold( nextPlayer, m.x, m.y, 
                                                       target );
                                         }
-                                    else if( targetObj->permanent ) {
+                                    else if( targetObj != NULL &&
+                                             targetObj->permanent ) {
                                         // consider bare-hand action
                                         TransRecord *handTrans = getPTrans(
                                             0, target );
@@ -22405,10 +22585,10 @@ int main() {
                 // see if we need to renew emote
                 
                 if( curTime - s->emotStartTime > s->emotRefreshSeconds ||
-                    ( s->posseSize >= victimTerrifiedPosseSize &&
+                    ( s->posseSize >= s->minPosseSizeForKill &&
                       target->emotFrozenIndex != 
                       victimTerrifiedEmotionIndex ) ||
-                    ( s->posseSize < victimTerrifiedPosseSize &&
+                    ( s->posseSize < s->minPosseSizeForKill &&
                       target->emotFrozenIndex != 
                       victimEmotionIndex ) ) {
 
@@ -22430,8 +22610,15 @@ int main() {
                     
                     int emotIndex = victimEmotionIndex;
                     
-                    if( s->posseSize >= victimTerrifiedPosseSize ) {
+                    if( s->posseSize >= s->minPosseSizeForKill ) {
                         emotIndex = victimTerrifiedEmotionIndex;
+
+
+                        if( s->posseSize > 1 ) {
+                            tryToForceDropHeld( 
+                                target, 
+                                &playerIndicesToSendUpdatesAbout );
+                            }
                         }
                     
                     newEmotIndices.push_back( emotIndex );
@@ -22510,7 +22697,8 @@ int main() {
                 if( nextPlayer->curseStatus.curseLevel > 0 ) {
                     playerIndicesToSendCursesAbout.push_back( i );
                     }
-                else if( usePersonalCurses ) {
+                
+                if( usePersonalCurses ) {
                     // send a unique CU message to each player
                     // who has this player cursed
                     

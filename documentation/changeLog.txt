@@ -3,6 +3,69 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 332    2020-May-1
+
+--Fixed a rare bug where a player standing still and not changing while you
+  move out of range of them will still have emote and animation sounds
+  displayed for them (because you never get a PO message for them).  Their
+  distances is now measured and they are marked outOfRange client-side, even if
+  no PO message arrives for them.
+
+--Fence and wall making now much less fiddly, because you auto-move to a
+  neighboring tile if you try to build a fence or wall where you're currently
+  standing (before, the build action was blocked by you standing there).
+
+--Fixed tutorial wording to match how YUM currently works.  Fixes #604
+
+
+
+
+Server Fixes
+
+--If player had short last life or is twin, we don't even let them join a
+  posse, to avoid confusion.  Otherwise, a seeminly large-enough posse might be
+  ineffective.  A short life or twin player can still lead a posse or complete
+  a solo kill in a low-pop area (but they don't count toward the population of
+  the posse that they lead).
+
+--Being part of a full-sized posse prevents biome sickness while chasing
+  victim (victim can't hide in bad biome to make you drop your weapons).
+
+--VictimTerrifiedEmote (where they whimper repeatedly) now triggered by kill
+  posse being big enough.  Thus, you can tell whether you're in real danger of
+  being killed by whether you are whimpering.  The posse can also know whether
+  it is big enough by whether you are whimpering or not.
+
+--When targeted by a full-sized posse for killing, where the posse has more
+  than one member (not in case of wilderness solo posse), you drop what you are
+  holding, and can't pick anything up.  This happens while whimpering in
+  terror, so you're too scared to hold anything.  This prevents victim from
+  escaping on a horse.
+
+--If you start in a bad biome holding something, you don't get sick and drop it
+  while continuing to move in that bad biome.  Thus, if you enter a bad biome
+  while in a posse, but that posse disbands, you don't drop what you're holding
+  in the bad biome.  It's only crossing into a bad biome that makes you sick
+  (when you're not in a posse or in some other situation that protects you from
+  sickness).
+
+--You don't get NEW OFFSPRING BABY notifications when you're too young to help.
+
+--Donkey and tutorial players can't manipulate end tower or ring bell.
+  Part of #603
+
+--Fixed case where newly spawned d-town player's personal curse tags don't show
+  up to the people who cursed them.
+
+--Gate owner only gets VISITOR notice and arrow if they are out of range (which
+  makes them harder for the visitor to find), and at most one notice per 
+  minute, so visitors can't spam them with repeat notices.
+
+--New Baby notifications are throttled so you don't receive more than one per
+  minute.
+
+
+
 
 Version 330     2020-April-23
 
