@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 332    ???? 
+Version 332    2020-May-1
 
 --Fixed a rare bug where a player standing still and not changing while you
   move out of range of them will still have emote and animation sounds
