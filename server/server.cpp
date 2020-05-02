@@ -5883,6 +5883,10 @@ int processLoggedInPlayer( char inAllowReconnect,
             continue;
             }
 
+	if( player->isEve && ( player->familyName == NULL ) ) {
+            continue;
+            }//skips over players who do not name themselves. helps new player spawn on mothers who are not just playing solo.
+
         if( player->vogMode ) {
             continue;
             }
