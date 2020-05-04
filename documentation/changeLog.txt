@@ -3,6 +3,17 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Max baby/mom ratio 1.0 (was 2.0) and baby/adult ratio 1.0 (was 2.0).  When
+  these ratios are met or surpassed, a new Eve is inserted.  During normal
+  times, the ratios are more like 0.5 and 0.125, so the ratios only come into
+  effect during server restart.  There have been too few Eves and baby overload
+  after recent restarts, so these new settings should give us 2x more Eves.
+
+
+
+
 Version 332    2020-May-1
 
 --Fixed a rare bug where a player standing still and not changing while you
