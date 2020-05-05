@@ -11,6 +11,12 @@ Server Fixes
   effect during server restart.  There have been too few Eves and baby overload
   after recent restarts, so these new settings should give us 2x more Eves.
 
+--Min posse size cap 5 (was 3), which means that in places with 10 or more
+  people, you need a posse of 5 to kill, and in places with 8 or 9 people, you
+  need a posse of 4 to kill.  (Min posse fraction is 0.5 of the local
+  population.)  This makes it harder for small groups to wage campaigns of
+  terror.
+
 
 
 
