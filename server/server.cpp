@@ -12521,8 +12521,8 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
     if( !found ) {
         // add new
         
-        // before age 10, they can't say "I JOIN YOU"
-        double possePossibleAge = 10;
+        // before age 9, they can't say "I JOIN YOU"
+        double possePossibleAge = 9;
         
 
         int regionalPop = countNonHelpless( killerPos, 
