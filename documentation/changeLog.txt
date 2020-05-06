@@ -17,6 +17,9 @@ Server Fixes
   population.)  This makes it harder for small groups to wage campaigns of
   terror.
 
+--Only people old enough to join a posse (age 9, when they can say I JOIN YOU)
+  are counted when computing min posse size.
+
 
 
 

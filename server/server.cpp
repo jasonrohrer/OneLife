@@ -7351,7 +7351,8 @@ static int countLivingPlayers() {
 
 
 
-static int countNonHelpless( GridPos inPos, double inRadius ) {
+static int countNonHelpless( GridPos inPos, double inRadius, 
+                             double inMinAge = 0 ) {
     int c = 0;
     
     for( int i=0; i<players.size(); i++ ) {
@@ -7361,7 +7362,9 @@ static int countNonHelpless( GridPos inPos, double inRadius ) {
             continue;
             }
 
-        if( computeAge( p ) >= defaultActionAge ) {
+        double age = computeAge( p );
+        
+        if( age >= defaultActionAge && age >= inMinAge ) {
             double d = distance( getPlayerPos( p ), inPos );
             
             if( d <= inRadius ){
@@ -12518,8 +12521,13 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
     if( !found ) {
         // add new
         
+        // before age 10, they can't say "I JOIN YOU"
+        double possePossibleAge = 10;
+        
+
         int regionalPop = countNonHelpless( killerPos, 
-                                            possePopulationRadius );
+                                            possePopulationRadius,
+                                            possePossibleAge );
         
         int minPosseSizeForKill = ceil( minPosseFraction * regionalPop );
 
