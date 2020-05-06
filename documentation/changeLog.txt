@@ -3,6 +3,15 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 334    ????
+
+--When the last owner dies, property is automatically inherited by the oldest
+  direct offspring of the owner, and if none exist, then the closest, oldest
+  relative of the the owner.
+
+
+
+
 Server Fixes
 
 --Max baby/mom ratio 1.0 (was 2.0) and baby/adult ratio 1.0 (was 2.0).  When

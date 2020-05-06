@@ -434,20 +434,23 @@ static int getLocationKeyPriority( const char *inPersonKey ) {
     else if( strcmp( inPersonKey, "owner" ) == 0 ) {
         return 2;
         }
-    else if( strcmp( inPersonKey, "lead" ) == 0 ||
-             strcmp( inPersonKey, "supp" ) == 0 ) {
+    else if( strcmp( inPersonKey, "property" ) == 0 ) {
         return 3;
         }
-    else if( strcmp( inPersonKey, "baby" ) == 0 ) {
+    else if( strcmp( inPersonKey, "lead" ) == 0 ||
+             strcmp( inPersonKey, "supp" ) == 0 ) {
         return 4;
+        }
+    else if( strcmp( inPersonKey, "baby" ) == 0 ) {
+        return 5;
         }
     else if( strcmp( inPersonKey, "visitor" ) == 0 ) {
         // don't bug owner with spurious visitor arrows, unless there
         // is nothing else going on
-        return 5;
+        return 6;
         }
     else {
-        return 6;
+        return 7;
         }
     }
     
@@ -18798,6 +18801,24 @@ void LivingLifePage::step() {
                                                 }
                                             }
                                         
+
+                                        if( ! person ) {
+                                            char *propPos = 
+                                                strstr( 
+                                                    existing->currentSpeech, 
+                                                    " *prop" );
+                                            
+                                            if( propPos != NULL ) {
+                                                person = true;
+
+                                                // prop person id is always 0
+                                                personID = 0;
+
+                                                propPos[0] = '\0';
+                                                personKey = "property";
+                                                }
+                                            }
+
                                         
                                         LiveObject *personO = NULL;
                                         if( personID > 0 ) {

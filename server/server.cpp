@@ -1086,6 +1086,85 @@ char doesEveLineExist( int inEveID ) {
 
 
 
+double computeAge( LiveObject *inPlayer );
+
+
+
+// false for male, true for female
+char getFemale( LiveObject *inPlayer ) {
+    ObjectRecord *r = getObject( inPlayer->displayID );
+    
+    return ! r->male;
+    }
+
+
+
+static LiveObject *findOldestOffspring( int inPlayerID, int inSkipID ) {
+    LiveObject *oldestOffspring = NULL;
+    double oldestOffspringAge = 0;
+
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = players.getElement( j );
+        
+        if( otherPlayer->id != inPlayerID &&
+            otherPlayer->id != inSkipID ) {
+            
+            double age = computeAge( otherPlayer );
+            
+            if( age > oldestOffspringAge ) {
+                
+                if( otherPlayer->lineage->getElementIndex( inPlayerID ) 
+                    != -1 ) {
+                    
+                    // player is direct offspring of inPlayer
+                    // (child, grandchild, etc).
+                    oldestOffspring = otherPlayer;
+                    oldestOffspringAge = age;
+                    }
+                }
+            }
+        }
+    
+    return oldestOffspring;
+    }
+    
+
+
+static LiveObject *findHeir( LiveObject *inPlayer ) {
+    LiveObject *offspring = NULL;
+    
+    if( getFemale( inPlayer ) ) {
+        offspring = findOldestOffspring( inPlayer->id, inPlayer->id );
+        }
+    
+    if( offspring == NULL ) {
+        // no direct offspring found
+        
+        // walk up through lineage and find oldest close relative
+        // oldest person who shares our mother
+        // oldest person who shares our gma
+        // oldest person who shares our ggma
+        
+        // start with ma
+        int lineageStep = 0;
+        
+        while( offspring == NULL &&
+               lineageStep < inPlayer->lineage->size() ) {
+            
+            offspring = findOldestOffspring( 
+                inPlayer->lineage->getElementDirect( lineageStep ),
+                inPlayer->id );
+            
+            lineageStep++;
+            }
+        }
+
+    return offspring;
+    }
+
+
+
+
 
 typedef struct DeadObject {
         int id;
@@ -1182,10 +1261,21 @@ char isKnownOwned( LiveObject *inPlayer, GridPos inPos ) {
 
 
 
+void sendGlobalMessage( char *inMessage,
+                        LiveObject *inOnePlayerOnly = NULL );
+
+
+void sendMessageToPlayer( LiveObject *inPlayer, 
+                          char *inMessage, int inLength );
+
+
+
+SimpleVector<GridPos> newOwnerPos;
+
 SimpleVector<GridPos> recentlyRemovedOwnerPos;
 
 
-void removeAllOwnership( LiveObject *inPlayer ) {
+void removeAllOwnership( LiveObject *inPlayer, char inProcessInherit = true ) {
     double startTime = Time::getCurrentTime();
     int num = inPlayer->ownedPositions.size();
     
@@ -1212,6 +1302,47 @@ void removeAllOwnership( LiveObject *inPlayer ) {
                     }
                 }
             }
+
+        
+        if( noOtherOwners && inProcessInherit ) {
+            // find closest relative
+            
+            LiveObject *heir = findHeir( inPlayer );
+            
+            if( heir != NULL ) {
+                heir->ownedPositions.push_back( *p );
+                newOwnerPos.push_back( *p );
+                
+                const char *name = "SOMEONE";
+                
+                if( inPlayer->name != NULL ) {
+                    name = inPlayer->name;
+                    }
+
+                char *message = 
+                    autoSprintf( "%s JUST DIED.**"
+                                 "YOU INHERITED THEIR PROPERTY.",
+                                 name);
+                                
+                sendGlobalMessage( message, heir );
+                delete [] message;
+
+                // send them a map pointer too
+                message = autoSprintf( "PS\n"
+                                       "%d/0 MY INHERITED PROPERTY "
+                                       "*prop %d *map %d %d\n#",
+                                       heir->id,
+                                       0,
+                                       p->x - heir->birthPos.x,
+                                       p->y - heir->birthPos.y );
+                sendMessageToPlayer( heir, message, strlen( message ) );
+                delete [] message;
+                
+                noOtherOwners = false;
+                }
+            }
+        
+
         
         if( noOtherOwners ) {
             // last owner of p just died
@@ -1874,7 +2005,7 @@ void quitCleanup() {
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *nextPlayer = players.getElement(i);
         
-        removeAllOwnership( nextPlayer );
+        removeAllOwnership( nextPlayer, false );
 
         if( nextPlayer->sock != NULL ) {
             delete nextPlayer->sock;
@@ -3100,7 +3231,6 @@ void forcePlayerAge( const char *inEmail, double inAge ) {
 
 
 
-double computeAge( LiveObject *inPlayer );
 
 
 double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
@@ -3232,12 +3362,6 @@ int getSecondsPlayed( LiveObject *inPlayer ) {
     }
 
 
-// false for male, true for female
-char getFemale( LiveObject *inPlayer ) {
-    ObjectRecord *r = getObject( inPlayer->displayID );
-    
-    return ! r->male;
-    }
 
 
 static int getFirstFertileAge() {
@@ -4518,8 +4642,8 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
 
 
 // if inOnePlayerOnly set, we only send to that player
-static void sendGlobalMessage( char *inMessage,
-                               LiveObject *inOnePlayerOnly = NULL ) {
+void sendGlobalMessage( char *inMessage,
+                        LiveObject *inOnePlayerOnly ) {
     char found;
     char *noSpaceMessage = replaceAll( inMessage, " ", "_", &found );
 
@@ -5446,8 +5570,6 @@ static LiveObject *getPlayerByEmail( char *inEmail ) {
 static int usePersonalCurses = 0;
 
 
-void sendMessageToPlayer( LiveObject *inPlayer, 
-                          char *inMessage, int inLength );
 
 
 
@@ -17041,7 +17163,6 @@ int main() {
         SimpleVector<int> playerIndicesToSendHealingAbout;
 
 
-        SimpleVector<GridPos> newOwnerPos;
 
         newOwnerPos.push_back_other( &recentlyRemovedOwnerPos );
         recentlyRemovedOwnerPos.deleteAll();
@@ -26983,6 +27104,7 @@ int main() {
         newEmotIndices.deleteAll();
         newEmotTTLs.deleteAll();
         
+        newOwnerPos.deleteAll();
 
         
         // handle end-of-frame for all players that need it
