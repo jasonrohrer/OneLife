@@ -14766,6 +14766,55 @@ static void leaderDied( LiveObject *inLeader ) {
                 }
             }
         }
+
+
+
+    // if leader is following no one (they haven't picked an heir to take over)
+    // have them follow their oldest follower now automatically
+    
+    if( inLeader->followingID == -1 &&
+        oldFollowers.size() > 0 ) {
+        
+        LiveObject *oldestFollower = NULL;
+        double oldestAge = 0;
+        
+        for( int i=0; i<oldFollowers.size(); i++ ) {
+            LiveObject *otherPlayer = oldFollowers.getElementDirect( i );
+            
+            double age = computeAge( otherPlayer );
+            
+            if( age > oldestAge ) {
+                oldestAge = age;
+                oldestFollower = otherPlayer;
+                }
+            }
+        
+        inLeader->followingID = oldestFollower->id;
+        
+        // they become top of tree, following no one
+        oldestFollower->followingID = -1;
+        
+
+        // inform them differently, instead of as part of
+        // group of followers below
+        oldFollowers.deleteElementEqualTo( oldestFollower );
+        
+        const char *pronoun = "HIS";
+        
+        if( getFemale( inLeader ) ) {
+            pronoun = "HER";
+            }
+        
+        char *message =
+            autoSprintf( "YOUR %s HAS DIED.**"
+                         "YOU HAVE INHERITED %s POSITION.",
+                         leaderName, pronoun );
+        
+        sendGlobalMessage( message, oldestFollower );
+        delete [] message;
+        }
+
+
     
         
     for( int i=0; i<players.size(); i++ ) {
@@ -14819,7 +14868,8 @@ static void leaderDied( LiveObject *inLeader ) {
         newLeaderO = getLiveObject( inLeader->followingID );
         
         char *newLeaderName = getLeadershipName( newLeaderO );
-        newLeaderExplain = autoSprintf( "YOU NOW FOLLOW %s.", newLeaderName );
+        newLeaderExplain = autoSprintf( "YOU NOW FOLLOW YOUR %s.", 
+                                        newLeaderName );
         delete [] newLeaderName;
         }
 
@@ -14836,7 +14886,7 @@ static void leaderDied( LiveObject *inLeader ) {
         else {
             // no heir for this position.
 
-            // who is there prime leader?
+            // who is their prime leader?
             int primeID = otherPlayer->followingID;
             while( primeID != -1 ) {
                 LiveObject *primeO = getLiveObject( primeID );
@@ -14855,7 +14905,7 @@ static void leaderDied( LiveObject *inLeader ) {
                 }
             if( newLeaderO != NULL ) {
                 char *primeName = getLeadershipName( newLeaderO );
-                secondLine = autoSprintf( "YOUR PRIME LEADER IS NOW %s.",
+                secondLine = autoSprintf( "YOUR PRIME LEADER IS NOW YOUR %s.",
                                           primeName );
                 delete [] primeName;
                 }
@@ -14865,7 +14915,7 @@ static void leaderDied( LiveObject *inLeader ) {
                 
             }
 
-        char *mesage =
+        char *message =
             autoSprintf( "YOUR %s HAS DIED.**"
                          "%s",
                          leaderName,
@@ -14873,8 +14923,8 @@ static void leaderDied( LiveObject *inLeader ) {
         
         delete [] secondLine;
                                 
-        sendGlobalMessage( mesage, otherPlayer );
-        delete [] mesage;
+        sendGlobalMessage( message, otherPlayer );
+        delete [] message;
         
 
         if( newLeaderO != NULL ) {
@@ -26064,7 +26114,7 @@ int main() {
                     if( minUpdateDist <= maxDist ) {
                         // some updates close enough
 
-                        // compose PU mesage for this player
+                        // compose PU message for this player
                         
                         unsigned char *updateMessage = NULL;
                         int updateMessageLength = 0;

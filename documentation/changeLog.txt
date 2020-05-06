@@ -29,6 +29,9 @@ Server Fixes
 --Only people old enough to join a posse (age 9, when they can say I JOIN YOU)
   are counted when computing min posse size.
 
+--When a leader dies who is following no one, their oldest follower inherits
+  their position.
+
 
 
 
