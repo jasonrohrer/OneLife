@@ -32,6 +32,12 @@ Server Fixes
 --When a leader dies who is following no one, their oldest follower inherits
   their position.
 
+--When counting area population to determine necessary posse size, we now count
+  people in radius around victim, not around killer.  This closes a potential
+  exploit where the killer wanders out into the wilderness and issues a verbal
+  kill command from just in radius in a way that reduces the population around
+  the killer.
+
 
 
 

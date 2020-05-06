@@ -12608,9 +12608,10 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
     char found = false;
     
     GridPos killerPos = getPlayerPos( inKiller );
-
+    GridPos targetPos = getPlayerPos( inTarget );
+    
     if( ! inInfiniteRange && 
-        distance( killerPos, getPlayerPos( inTarget ) )
+        distance( killerPos, targetPos )
         > 8 ) {
         // out of range
         return false;
@@ -12647,7 +12648,8 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
         double possePossibleAge = 9;
         
 
-        int regionalPop = countNonHelpless( killerPos, 
+        // count population around victim, not around killer
+        int regionalPop = countNonHelpless( targetPos, 
                                             possePopulationRadius,
                                             possePossibleAge );
         
