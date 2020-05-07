@@ -38,6 +38,11 @@ Server Fixes
   kill command from just in radius in a way that reduces the population around
   the killer.
 
+--Fixed so that instant-apply of 1-second transition to target object doesn't
+  happen if that transition is a moving transition.  This fixes glitches where
+  clicking on a moving cart causes it to crash.  Fixes #607
+
+
 
 
 

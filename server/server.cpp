@@ -15516,10 +15516,17 @@ static int checkTargetInstantDecay( int inTarget, int inX, int inY ) {
     int newTarget = inTarget;
     
     TransRecord *targetDecay = getPTrans( -1, inTarget );
-                                        
+    
+    // do NOT auto-apply movement transitions here
+    // don't want result of move to repace this object in place, because
+    // moving object might leave something behind, or require something to
+    // land on in its destination (like a moving cart leaving one track
+    // and landing on another)
+
     if( targetDecay != NULL &&
         targetDecay->autoDecaySeconds == 1  &&
-        targetDecay->newTarget > 0 ) {
+        targetDecay->newTarget > 0 &&
+        targetDecay->move == 0 ) {
                                             
         newTarget = targetDecay->newTarget;
                                             
