@@ -1279,6 +1279,9 @@ void removeAllOwnership( LiveObject *inPlayer, char inProcessInherit = true ) {
     double startTime = Time::getCurrentTime();
     int num = inPlayer->ownedPositions.size();
     
+    SimpleVector<LiveObject*> heirList;
+    
+
     for( int i=0; i<inPlayer->ownedPositions.size(); i++ ) {
         GridPos *p = inPlayer->ownedPositions.getElement( i );
 
@@ -1312,33 +1315,40 @@ void removeAllOwnership( LiveObject *inPlayer, char inProcessInherit = true ) {
             if( heir != NULL ) {
                 heir->ownedPositions.push_back( *p );
                 newOwnerPos.push_back( *p );
-                
-                const char *name = "SOMEONE";
-                
-                if( inPlayer->name != NULL ) {
-                    name = inPlayer->name;
-                    }
-
-                char *message = 
-                    autoSprintf( "%s JUST DIED.**"
-                                 "YOU INHERITED THEIR PROPERTY.",
-                                 name);
-                                
-                sendGlobalMessage( message, heir );
-                delete [] message;
-
-                // send them a map pointer too
-                message = autoSprintf( "PS\n"
-                                       "%d/0 MY INHERITED PROPERTY "
-                                       "*prop %d *map %d %d\n#",
-                                       heir->id,
-                                       0,
-                                       p->x - heir->birthPos.x,
-                                       p->y - heir->birthPos.y );
-                sendMessageToPlayer( heir, message, strlen( message ) );
-                delete [] message;
-                
+                    
                 noOtherOwners = false;
+                
+                // only send them message about first piece of property
+                // they inherit from this death (don't overwhelm them with
+                // lots of messages)
+                if( heirList.getElementIndex( heir ) == -1 ) {
+                    heirList.push_back( heir );                    
+
+                    const char *name = "SOMEONE";
+                
+                    if( inPlayer->name != NULL ) {
+                        name = inPlayer->name;
+                        }
+                    
+                    char *message = 
+                        autoSprintf( "%s JUST DIED.**"
+                                     "YOU INHERITED THEIR PROPERTY.",
+                                     name);
+                    
+                    sendGlobalMessage( message, heir );
+                    delete [] message;
+                    
+                    // send them a map pointer too
+                    message = autoSprintf( "PS\n"
+                                           "%d/0 MY INHERITED PROPERTY "
+                                           "*prop %d *map %d %d\n#",
+                                           heir->id,
+                                           0,
+                                           p->x - heir->birthPos.x,
+                                           p->y - heir->birthPos.y );
+                    sendMessageToPlayer( heir, message, strlen( message ) );
+                    delete [] message;
+                    }
                 }
             }
         
