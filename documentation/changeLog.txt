@@ -47,6 +47,13 @@ Server Fixes
   which is effectively unlimited, which means that a rogue posse cannot
   slaughter a village unless the non-posse members are in the super-minority.
 
+--New alternative mechanism for measuring consensus to kill:  how many nearby
+  allies do you have (people who share the same top leader as you) vs how many
+  nearby enemies do you have (people who see you as exiled through leadership
+  mechanics).  If you have more enemies than allies, you can be solo killed. 
+  If you have as many or more allies than enemies, minPosseFraction applies as
+  before.  In other words, the posse size requirements, which are currently
+  exreme, are bypassed if the majority of people around you see you as exiled.
 
 
 

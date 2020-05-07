@@ -7553,6 +7553,119 @@ static int countFamilies() {
 
 
 
+static int getTopLeader( LiveObject *inPlayer ) {
+    LiveObject *nextPlayer = inPlayer;
+    
+    int topID = nextPlayer->id;
+
+    while( nextPlayer != NULL ) {
+        int nextID = nextPlayer->followingID;
+        
+        nextPlayer = NULL;
+        
+        if( nextID != -1 ) {
+            topID = nextID;
+            nextPlayer = getLiveObject( nextID );
+            }
+        }
+    
+    return topID;
+    }
+
+
+
+static char isLeader( LiveObject *inPlayer, int inPossibleLeaderID ) {
+    if( inPlayer->followingID == inPossibleLeaderID ) {
+        return true;
+        }
+    else if( inPlayer->followingID == -1 ) {
+        return false;
+        }
+    else {
+        LiveObject *leader = getLiveObject( inPlayer->followingID );
+        if( leader == NULL ) {
+            return false;
+            }
+        else {
+            return isLeader( leader, inPossibleLeaderID );
+            }
+        }
+    }
+
+
+
+// does inViewer see inTarget as exiled?
+static char isExiled( LiveObject *inViewer, LiveObject *inTarget ) {
+    for( int e=0; e< inTarget->exiledByIDs.size(); e++ ) {
+        int exilerID = inTarget->exiledByIDs.getElementDirect( e );
+                    
+        // they have exiled us, or the person who exiled
+        // us is their leader
+        if( exilerID == inViewer->id 
+            ||
+            isLeader( inViewer, 
+                      exilerID ) ) {
+            return true;
+            }
+        }
+
+    return false;
+    }
+
+
+// people under player's top leader who don't see player as exiled
+static int countAllies( LiveObject *inPlayer, 
+                        GridPos inPos, double inRadius ) {    
+    int count = 0;
+
+    int thisTopID = getTopLeader( inPlayer );
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( p != inPlayer && 
+            distance( inPos, getPlayerPos( p ) ) <= inRadius ) {
+            int otherTopID = getTopLeader( p );
+            
+            if( otherTopID == thisTopID ) {
+                // they are in our ally tree
+                
+                if( ! isExiled( p, inPlayer ) ) {
+                    // they don't view us as exiled
+                    count ++;
+                    }
+                }
+            }
+        }
+    
+    return count;
+    }
+
+
+
+// people who see this player as exiled
+// Note that this does NOT count 
+static int countEnemies( LiveObject *inPlayer, 
+                        GridPos inPos, double inRadius ) {
+    int count = 0;
+
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( distance( inPos, getPlayerPos( p ) ) <= inRadius ) {
+            
+            if( isExiled( p, inPlayer ) ) {
+                // they view us as exiled
+                count ++;
+                }
+            }
+        }
+
+    return count;
+    }
+
+
+
 
 static char isEveWindow() {
     
@@ -11678,6 +11791,10 @@ typedef struct KillState {
         // based on population size in radius
         // later joiners copy this value
         int minPosseSizeForKill;
+        
+        // true if solo posse permitted in high-pop area
+        // due to enemies overwhelming allies
+        char fullForceSoloPosse;
     } KillState;
 
 
@@ -12489,7 +12606,8 @@ SimpleVector<int> killStatePosseChangedPlayerIDs;
 
 
 static int countPosseSize( LiveObject *inTarget, 
-                           int *outMinPosseSizeForKill = NULL ) {
+                           int *outMinPosseSizeForKill = NULL,
+                           char *outFullForceSoloPosse = NULL ) {
     int p = 0;
     
     int uncounted = 0;
@@ -12508,8 +12626,15 @@ static int countPosseSize( LiveObject *inTarget,
                 // gang up
                 if( ! killerO->isTwin && ! killerO->isLastLifeShort ) {
                     p++;
-                    if( outMinPosseSizeForKill != NULL ) {
-                        *outMinPosseSizeForKill = s->minPosseSizeForKill;
+
+                    if( p == 1 ) {
+                        // set these based on state for posse leader only
+                        if( outMinPosseSizeForKill != NULL ) {
+                            *outMinPosseSizeForKill = s->minPosseSizeForKill;
+                            }
+                        if( outFullForceSoloPosse != NULL ) {
+                            *outFullForceSoloPosse = s->fullForceSoloPosse;
+                            }
                         }
                     }
                 else {
@@ -12653,17 +12778,54 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
     
     if( !found ) {
         // add new
+
+
+        // new, based on allies and enemies
+        // allies protect, enemies reduce protection
         
-        // before age 9, they can't say "I JOIN YOU"
-        double possePossibleAge = 9;
+        int allyCount = countAllies( inTarget, targetPos, 
+                                     possePopulationRadius );
+        int enemyCount = countEnemies( inTarget, targetPos, 
+                                       possePopulationRadius );        
+        
+        if( ! isExiled( inKiller, inTarget ) ) {
+            // killer doesn't currently see target as exiled
+            // count them as a temporary enemy, because they are trying
+            // to kill target
+            enemyCount += 1;
+            }
         
 
-        // count population around victim, not around killer
-        int regionalPop = countNonHelpless( targetPos, 
-                                            possePopulationRadius,
-                                            possePossibleAge );
+        int minPosseSizeForKill = 1;
+        char fullForceSoloPosse = false;
+
+        if( allyCount >= enemyCount ) {
+            // use standard posse size calculation based on settings
+            // and population size
+            
+            // before age 9, they can't say "I JOIN YOU"
+            double possePossibleAge = 9;
         
-        int minPosseSizeForKill = ceil( minPosseFraction * regionalPop );
+
+            // count population around victim, not around killer
+            int regionalPop = countNonHelpless( targetPos, 
+                                                possePopulationRadius,
+                                                possePossibleAge );
+            
+            minPosseSizeForKill = ceil( minPosseFraction * regionalPop );
+            }
+        else {
+            // more enemies than allies
+            // solo killing becomes possible
+            minPosseSizeForKill = 1;
+            
+            if( enemyCount > 1 ) {
+                // target isn't being solo targeted in wilderness
+                // enable force-dropping of what they are holding
+                fullForceSoloPosse = true;
+                }
+            }
+
 
         if( minPosseSizeForKill > minPosseCap ) {
             minPosseSizeForKill = minPosseCap;
@@ -12693,10 +12855,21 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
             // this is the founder of the posse
             
             // let them know what the requirements are
+
+            const char *allyWord = "ALLIES";
+            if( allyCount == 1 ) {
+                allyWord = "ALLY";
+                }
+            const char *enemyWord = "ENEMIES";
+            if( enemyCount == 1 ) {
+                enemyWord = "ENEMY";
+                }
+            
             char *message = 
                 autoSprintf( 
-                    "THE MINIMUM POSSE SIZE TO KILL IN THIS AREA IS %d.**"
+                    "TARGET HAS %d %s, %d %s, NEED POSSE OF %d TO KILL.**"
                     "OTHERS JOIN BY HOLDING OBJECTS AND SAYING:  I JOIN YOU", 
+                    allyCount, allyWord, enemyCount, enemyWord, 
                     minPosseSizeForKill );            
             
         
@@ -12714,7 +12887,8 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                         curTime,
                         30,
                         1,
-                        minPosseSizeForKill };
+                        minPosseSizeForKill,
+                        fullForceSoloPosse };
         
         if( isNoWaitWeapon( inKiller->holdingID ) ) {
                 // allow it to happen right now
@@ -14183,12 +14357,17 @@ char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY,
 
 static char isPlayerBlockedFromHoldingByPosse( LiveObject *inPlayer ) {
     int minPosseSizeForKill = 0;
+    char fullForceSoloPosse = false;
+    
     int posseSize = countPosseSize( 
         inPlayer,
-        &minPosseSizeForKill  );
+        &minPosseSizeForKill,
+        &fullForceSoloPosse );
                             
     // deadly solo posses in wilderness don't block victim from holding stuff
-    if( posseSize >= minPosseSizeForKill && posseSize > 1 ) {
+    if( ( fullForceSoloPosse && posseSize >= 1 )
+        || 
+        ( posseSize >= minPosseSizeForKill && posseSize > 1 ) ) {
         return true;
         }
     return false;
@@ -15080,9 +15259,12 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
                                             
                         if( ! targetPlayer->emotFrozen ) {
                             int minPosseSizeForKill = 0;
+                            char fullForceSoloPosse = false;
+                            
                             int posseSize = countPosseSize( 
                                 targetPlayer,
-                                &minPosseSizeForKill  );
+                                &minPosseSizeForKill,
+                                &fullForceSoloPosse );
                             
                             int emotIndex = victimEmotionIndex;
                             
@@ -15095,7 +15277,7 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
                                 // The point of solo posses is to tell someone
                                 // to scram or else, not to force them to get
                                 // off their horse.
-                                if( posseSize > 1 ) {
+                                if( fullForceSoloPosse || posseSize > 1 ) {
                                     tryToForceDropHeld( 
                                         targetPlayer, 
                                         playerIndicesToSendUpdatesAbout );
