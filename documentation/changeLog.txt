@@ -42,6 +42,11 @@ Server Fixes
   happen if that transition is a moving transition.  This fixes glitches where
   clicking on a moving cart causes it to crash.  Fixes #607
 
+--MinPosseFraction now 0.66 (was 0.5), which means you need a super-majority to
+  agree before you land a kill.  The cap has been pushed up to 99 (was 5),
+  which is effectively unlimited, which means that a rogue posse cannot
+  slaughter a village unless the non-posse members are in the super-minority.
+
 
 
 
