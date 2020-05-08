@@ -3,6 +3,45 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes
+
+--You get informed when you target a top leader to kill (instead of an arrow
+  pointing toward that leader as a possible exiler).
+
+--Fixed posse size system glitch when posse started with NoWaitWeapon.
+  Thanks Wondible.
+
+--Fixed so that there's no victim emote when targetting with NoWaitWeapon
+  (snowball, tatoo needle).  Before, emote was getting stuck after dropping
+  weapon.
+
+--DING message upon issuing an order now shows you your follower count.
+
+--When pointing you toward closest follower after issuing an order, don't
+  consider followers you see as exiled.
+
+
+
+Version 336    2020-May-8
+
+--Fixed disappearing adult glitch when an adult carries you far away from your
+  pick-up location.
+
+
+
+
+
+
+Server Fixes
+
+--Fixed leader auto-heir code to pick the oldest direct follower instead of the
+  oldest follower overall.  Old code resulted in loops in the leadership tree 
+  that caused the client to get stuck in an infinite loop.
+
+
+
+
 Version 334    2020-May-7
 
 --When the last owner dies, property is automatically inherited by the oldest

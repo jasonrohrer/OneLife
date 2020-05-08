@@ -12295,6 +12295,18 @@ void LivingLifePage::endExtraObjectMove( int inExtraIndex ) {
 
 
 
+doublePair LivingLifePage::getPlayerPos( LiveObject *inPlayer ) {
+    if( inPlayer->heldByAdultID != -1 ) {
+        LiveObject *adult = getLiveObject( inPlayer->heldByAdultID );
+        
+        if( adult != NULL ) {
+            return adult->currentPos;
+            }
+        }
+    return inPlayer->currentPos;
+    }
+
+
 
 // color list from here:
 // https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
@@ -20421,6 +20433,13 @@ void LivingLifePage::step() {
     
 
     HomePos *curHomePosRecord = getHomePosRecord();
+
+    doublePair ourPos = { 0, 0 };
+
+    if( ourLiveObject != NULL ) {
+        ourPos = getPlayerPos( ourLiveObject );
+        }
+    
             
     // update all positions for moving objects
     if( !mapPullMode )
@@ -20544,7 +20563,7 @@ void LivingLifePage::step() {
         
 
         if( ! o->outOfRange &&
-            distance( o->currentPos, ourLiveObject->currentPos ) > 
+            distance( getPlayerPos( o ), ourPos ) > 
             maxChunkDimension ) {
             // mark as out of range, even if we've never heard an official
             // PO message about them
