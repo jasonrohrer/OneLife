@@ -10,6 +10,9 @@ Server Fixes
   oldest follower overall.  Old code resulted in loops in the leadership tree 
   that caused the client to get stuck in an infinite loop.
 
+--You get informed when you target a top leader to kill (instead of an arrow
+  pointing toward that leader as a possible exiler).
+
 
 
 Version 334    2020-May-7

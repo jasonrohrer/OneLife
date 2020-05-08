@@ -12901,6 +12901,23 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                                      psMessage, strlen( psMessage ) );
                 delete [] psMessage;
                 }
+            else if( topLeaderO == inTarget ) {
+                // we're targeting a leader
+                
+                pronoun = "HE";
+                if( getFemale( inTarget ) ) {
+                    pronoun = "SHE";
+                    }
+                
+                char *psMessage = 
+                    autoSprintf( "PS\n"
+                                 "%d/0 %s IS A TOP LEADER\n#",
+                                 inKiller->id, pronoun );
+                
+                sendMessageToPlayer( inKiller, 
+                                     psMessage, strlen( psMessage ) );
+                delete [] psMessage;
+                }
             else if( topLeaderO != NULL ) {
 
                 char *topLeaderName = getLeadershipName( topLeaderO );
