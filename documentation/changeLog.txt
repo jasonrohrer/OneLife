@@ -23,7 +23,7 @@ Server Fixes
 
 
 
-Version 336    2020-May-????
+Version 336    2020-May-8
 
 --Fixed disappearing adult glitch when an adult carries you far away from your
   pick-up location.
