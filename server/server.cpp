@@ -23026,6 +23026,7 @@ int main() {
                 // still not close enough
                 // see if we need to renew emote
                 
+                if( ! isNoWaitWeapon( s->killerWeaponID ) )
                 if( curTime - s->emotStartTime > s->emotRefreshSeconds ||
                     ( s->posseSize >= s->minPosseSizeForKill &&
                       target->emotFrozenIndex != 

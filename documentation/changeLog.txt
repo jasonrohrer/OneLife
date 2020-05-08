@@ -16,6 +16,10 @@ Server Fixes
 --Fixed posse size system glitch when posse started with NoWaitWeapon.
   Thanks Wondible.
 
+--Fixed so that there's no victim emote when targetting with NoWaitWeapon
+  (snowball, tatoo needle).  Before, emote was getting stuck after dropping
+  weapon.
+
 
 
 Version 334    2020-May-7
