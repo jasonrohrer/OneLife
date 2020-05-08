@@ -3,6 +3,15 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes
+
+--Fixed leader auto-heir code to pick the oldest direct follower instead of the
+  oldest follower overall.  Old code resulted in loops in the leadership tree 
+  that caused the client to get stuck in an infinite loop.
+
+
+
 Version 334    2020-May-7
 
 --When the last owner dies, property is automatically inherited by the oldest

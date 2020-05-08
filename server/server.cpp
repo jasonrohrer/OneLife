@@ -14995,6 +14995,8 @@ static void leaderDied( LiveObject *inLeader ) {
 
 
     SimpleVector<LiveObject*> oldFollowers;
+    SimpleVector<LiveObject*> directFollowers;
+
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *otherPlayer = players.getElement( i );
         if( otherPlayer != inLeader &&
@@ -15003,22 +15005,25 @@ static void leaderDied( LiveObject *inLeader ) {
             if( isFollower( inLeader, otherPlayer ) ) {
                 oldFollowers.push_back( otherPlayer );
                 }
+            if( otherPlayer->followingID == inLeader->id ) {
+                directFollowers.push_back( otherPlayer );
+                }
             }
         }
 
 
 
     // if leader is following no one (they haven't picked an heir to take over)
-    // have them follow their oldest follower now automatically
+    // have them follow their oldest direct follower now automatically
     
     if( inLeader->followingID == -1 &&
-        oldFollowers.size() > 0 ) {
+        directFollowers.size() > 0 ) {
         
         LiveObject *oldestFollower = NULL;
         double oldestAge = 0;
         
-        for( int i=0; i<oldFollowers.size(); i++ ) {
-            LiveObject *otherPlayer = oldFollowers.getElementDirect( i );
+        for( int i=0; i<directFollowers.size(); i++ ) {
+            LiveObject *otherPlayer = directFollowers.getElementDirect( i );
             
             double age = computeAge( otherPlayer );
             
@@ -15032,7 +15037,7 @@ static void leaderDied( LiveObject *inLeader ) {
         
         // they become top of tree, following no one
         oldestFollower->followingID = -1;
-        
+        oldestFollower->followingUpdate = true;
 
         // inform them differently, instead of as part of
         // group of followers below
