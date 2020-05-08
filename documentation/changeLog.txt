@@ -58,6 +58,10 @@ Server Fixes
 --Force-drop code for target player terrified by posse was dropping a 0 item
   (if holding nothing) by accident, deleting whatever was on the ground.
 
+--When you try to solo kill someone, and can't because they have too many
+  allies, you get an arrow pointing back to their top leader, who has the power
+  to exile them.
+
 
 
 

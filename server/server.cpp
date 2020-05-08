@@ -12734,6 +12734,10 @@ static char isNoWaitWeapon( int inObjectID ) {
                    "+noWait" ) != NULL;
     }
 
+
+
+char *getLeadershipName( LiveObject *nextPlayer, 
+                         char inNoName = false );
     
 
 
@@ -12875,6 +12879,51 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
         
             sendGlobalMessage( message, inKiller );
             delete [] message;
+
+
+            LiveObject *topLeaderO = 
+                getLiveObject( getTopLeader( inTarget ) );
+
+            const char *pronoun = "HIM";
+            if( getFemale( inTarget ) ) {
+                pronoun = "HER";
+                }
+            
+            if( topLeaderO == inKiller ) {
+                // killer has power to exile them directly
+    
+                char *psMessage = 
+                    autoSprintf( "PS\n"
+                                 "%d/0 I CAN EXILE %s MYSELF\n#",
+                                 inKiller->id, pronoun );
+                
+                sendMessageToPlayer( inKiller, 
+                                     psMessage, strlen( psMessage ) );
+                delete [] psMessage;
+                }
+            else if( topLeaderO != NULL ) {
+
+                char *topLeaderName = getLeadershipName( topLeaderO );
+                
+                GridPos lPos = getPlayerPos( topLeaderO );
+                
+                char *psMessage = 
+                    autoSprintf( "PS\n"
+                                 "%d/0 %s CAN EXILE %s "
+                                 "*leader %d *map %d %d\n#",
+                                 inKiller->id,
+                                 topLeaderName,
+                                 pronoun,
+                                 topLeaderO->id,
+                                 lPos.x - inKiller->birthPos.x,
+                                 lPos.y - inKiller->birthPos.y );
+                
+                delete [] topLeaderName;
+            
+                sendMessageToPlayer( inKiller, 
+                                     psMessage, strlen( psMessage ) );
+                delete [] psMessage;
+                }
             }
         
 
@@ -14912,8 +14961,6 @@ static char isFollower( LiveObject *inLeader, LiveObject *inTestFollower ) {
     
 
 
-char *getLeadershipName( LiveObject *nextPlayer, 
-                         char inNoName = false );
 
 
 
