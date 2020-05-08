@@ -42,14 +42,14 @@ set xtics 691200
 #set decimal locale
 #set format y "%'g"
 
-set yrange [0:0.07]	
+set yrange [0:0.27]	
 
 set style fill solid noborder
 
 set size 1, 1.0
 
-set title "Fraction of total deaths that were murders"
+set title "Fraction of unique players who were victimized at least once"
 
-plot "murderRate.Trimmed.dat" using ($2 - ( 8 * 3600 ) ):($4/$3) with filledcurves y1=0 fillcolor rgb "#000000"
+plot "murderRate.Trimmed.dat" using ($2 - ( 8 * 3600 ) ):($6/$5) with filledcurves y1=0 fillcolor rgb "#000000"
 
 pause -1

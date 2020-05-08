@@ -3,6 +3,68 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 334    2020-May-7
+
+--When the last owner dies, property is automatically inherited by the oldest
+  direct offspring of the owner, and if none exist, then the closest, oldest
+  relative of the the owner.
+
+
+
+
+Server Fixes
+
+--Max baby/mom ratio 1.0 (was 2.0) and baby/adult ratio 1.0 (was 2.0).  When
+  these ratios are met or surpassed, a new Eve is inserted.  During normal
+  times, the ratios are more like 0.5 and 0.125, so the ratios only come into
+  effect during server restart.  There have been too few Eves and baby overload
+  after recent restarts, so these new settings should give us 2x more Eves.
+
+--Min posse size cap 5 (was 3), which means that in places with 10 or more
+  people, you need a posse of 5 to kill, and in places with 8 or 9 people, you
+  need a posse of 4 to kill.  (Min posse fraction is 0.5 of the local
+  population.)  This makes it harder for small groups to wage campaigns of
+  terror.
+
+--Only people old enough to join a posse (age 9, when they can say I JOIN YOU)
+  are counted when computing min posse size.
+
+--When a leader dies who is following no one, their oldest follower inherits
+  their position.
+
+--When counting area population to determine necessary posse size, we now count
+  people in radius around victim, not around killer.  This closes a potential
+  exploit where the killer wanders out into the wilderness and issues a verbal
+  kill command from just in radius in a way that reduces the population around
+  the killer.
+
+--Fixed so that instant-apply of 1-second transition to target object doesn't
+  happen if that transition is a moving transition.  This fixes glitches where
+  clicking on a moving cart causes it to crash.  Fixes #607
+
+--MinPosseFraction now 0.66 (was 0.5), which means you need a super-majority to
+  agree before you land a kill.  The cap has been pushed up to 99 (was 5),
+  which is effectively unlimited, which means that a rogue posse cannot
+  slaughter a village unless the non-posse members are in the super-minority.
+
+--New alternative mechanism for measuring consensus to kill:  how many nearby
+  allies do you have (people who share the same top leader as you) vs how many
+  nearby enemies do you have (people who see you as exiled through leadership
+  mechanics).  If you have more enemies than allies, you can be solo killed. 
+  If you have as many or more allies than enemies, minPosseFraction applies as
+  before.  In other words, the posse size requirements, which are currently
+  exreme, are bypassed if the majority of people around you see you as exiled.
+
+--Force-drop code for target player terrified by posse was dropping a 0 item
+  (if holding nothing) by accident, deleting whatever was on the ground.
+
+--When you try to solo kill someone, and can't because they have too many
+  allies, you get an arrow pointing back to their top leader, who has the power
+  to exile them.
+
+
+
+
 Version 332    2020-May-1
 
 --Fixed a rare bug where a player standing still and not changing while you

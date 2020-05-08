@@ -426,6 +426,7 @@ supp "SUPP"
 expt "EXPT"
 owner "OWN"
 visitor "VSTR"
+property "PROP"
 
 babyLabel "+BABY+"
 leadLabel "+LEADER+"

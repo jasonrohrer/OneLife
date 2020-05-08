@@ -1088,6 +1088,85 @@ char doesEveLineExist( int inEveID ) {
 
 
 
+double computeAge( LiveObject *inPlayer );
+
+
+
+// false for male, true for female
+char getFemale( LiveObject *inPlayer ) {
+    ObjectRecord *r = getObject( inPlayer->displayID );
+    
+    return ! r->male;
+    }
+
+
+
+static LiveObject *findOldestOffspring( int inPlayerID, int inSkipID ) {
+    LiveObject *oldestOffspring = NULL;
+    double oldestOffspringAge = 0;
+
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = players.getElement( j );
+        
+        if( otherPlayer->id != inPlayerID &&
+            otherPlayer->id != inSkipID ) {
+            
+            double age = computeAge( otherPlayer );
+            
+            if( age > oldestOffspringAge ) {
+                
+                if( otherPlayer->lineage->getElementIndex( inPlayerID ) 
+                    != -1 ) {
+                    
+                    // player is direct offspring of inPlayer
+                    // (child, grandchild, etc).
+                    oldestOffspring = otherPlayer;
+                    oldestOffspringAge = age;
+                    }
+                }
+            }
+        }
+    
+    return oldestOffspring;
+    }
+    
+
+
+static LiveObject *findHeir( LiveObject *inPlayer ) {
+    LiveObject *offspring = NULL;
+    
+    if( getFemale( inPlayer ) ) {
+        offspring = findOldestOffspring( inPlayer->id, inPlayer->id );
+        }
+    
+    if( offspring == NULL ) {
+        // no direct offspring found
+        
+        // walk up through lineage and find oldest close relative
+        // oldest person who shares our mother
+        // oldest person who shares our gma
+        // oldest person who shares our ggma
+        
+        // start with ma
+        int lineageStep = 0;
+        
+        while( offspring == NULL &&
+               lineageStep < inPlayer->lineage->size() ) {
+            
+            offspring = findOldestOffspring( 
+                inPlayer->lineage->getElementDirect( lineageStep ),
+                inPlayer->id );
+            
+            lineageStep++;
+            }
+        }
+
+    return offspring;
+    }
+
+
+
+
 
 typedef struct DeadObject {
         int id;
@@ -1184,13 +1263,27 @@ char isKnownOwned( LiveObject *inPlayer, GridPos inPos ) {
 
 
 
+void sendGlobalMessage( char *inMessage,
+                        LiveObject *inOnePlayerOnly = NULL );
+
+
+void sendMessageToPlayer( LiveObject *inPlayer, 
+                          char *inMessage, int inLength );
+
+
+
+SimpleVector<GridPos> newOwnerPos;
+
 SimpleVector<GridPos> recentlyRemovedOwnerPos;
 
 
-void removeAllOwnership( LiveObject *inPlayer ) {
+void removeAllOwnership( LiveObject *inPlayer, char inProcessInherit = true ) {
     double startTime = Time::getCurrentTime();
     int num = inPlayer->ownedPositions.size();
     
+    SimpleVector<LiveObject*> heirList;
+    
+
     for( int i=0; i<inPlayer->ownedPositions.size(); i++ ) {
         GridPos *p = inPlayer->ownedPositions.getElement( i );
 
@@ -1214,6 +1307,54 @@ void removeAllOwnership( LiveObject *inPlayer ) {
                     }
                 }
             }
+
+        
+        if( noOtherOwners && inProcessInherit ) {
+            // find closest relative
+            
+            LiveObject *heir = findHeir( inPlayer );
+            
+            if( heir != NULL ) {
+                heir->ownedPositions.push_back( *p );
+                newOwnerPos.push_back( *p );
+                    
+                noOtherOwners = false;
+                
+                // only send them message about first piece of property
+                // they inherit from this death (don't overwhelm them with
+                // lots of messages)
+                if( heirList.getElementIndex( heir ) == -1 ) {
+                    heirList.push_back( heir );                    
+
+                    const char *name = "SOMEONE";
+                
+                    if( inPlayer->name != NULL ) {
+                        name = inPlayer->name;
+                        }
+                    
+                    char *message = 
+                        autoSprintf( "%s JUST DIED.**"
+                                     "YOU INHERITED THEIR PROPERTY.",
+                                     name);
+                    
+                    sendGlobalMessage( message, heir );
+                    delete [] message;
+                    
+                    // send them a map pointer too
+                    message = autoSprintf( "PS\n"
+                                           "%d/0 MY INHERITED PROPERTY "
+                                           "*prop %d *map %d %d\n#",
+                                           heir->id,
+                                           0,
+                                           p->x - heir->birthPos.x,
+                                           p->y - heir->birthPos.y );
+                    sendMessageToPlayer( heir, message, strlen( message ) );
+                    delete [] message;
+                    }
+                }
+            }
+        
+
         
         if( noOtherOwners ) {
             // last owner of p just died
@@ -1876,7 +2017,7 @@ void quitCleanup() {
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *nextPlayer = players.getElement(i);
         
-        removeAllOwnership( nextPlayer );
+        removeAllOwnership( nextPlayer, false );
 
         if( nextPlayer->sock != NULL ) {
             delete nextPlayer->sock;
@@ -3102,7 +3243,6 @@ void forcePlayerAge( const char *inEmail, double inAge ) {
 
 
 
-double computeAge( LiveObject *inPlayer );
 
 
 double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
@@ -3234,12 +3374,6 @@ int getSecondsPlayed( LiveObject *inPlayer ) {
     }
 
 
-// false for male, true for female
-char getFemale( LiveObject *inPlayer ) {
-    ObjectRecord *r = getObject( inPlayer->displayID );
-    
-    return ! r->male;
-    }
 
 
 static int getFirstFertileAge() {
@@ -4520,8 +4654,8 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
 
 
 // if inOnePlayerOnly set, we only send to that player
-static void sendGlobalMessage( char *inMessage,
-                               LiveObject *inOnePlayerOnly = NULL ) {
+void sendGlobalMessage( char *inMessage,
+                        LiveObject *inOnePlayerOnly ) {
     char found;
     char *noSpaceMessage = replaceAll( inMessage, " ", "_", &found );
 
@@ -5448,8 +5582,6 @@ static LiveObject *getPlayerByEmail( char *inEmail ) {
 static int usePersonalCurses = 0;
 
 
-void sendMessageToPlayer( LiveObject *inPlayer, 
-                          char *inMessage, int inLength );
 
 
 
@@ -7353,7 +7485,8 @@ static int countLivingPlayers() {
 
 
 
-static int countNonHelpless( GridPos inPos, double inRadius ) {
+static int countNonHelpless( GridPos inPos, double inRadius, 
+                             double inMinAge = 0 ) {
     int c = 0;
     
     for( int i=0; i<players.size(); i++ ) {
@@ -7363,7 +7496,9 @@ static int countNonHelpless( GridPos inPos, double inRadius ) {
             continue;
             }
 
-        if( computeAge( p ) >= defaultActionAge ) {
+        double age = computeAge( p );
+        
+        if( age >= defaultActionAge && age >= inMinAge ) {
             double d = distance( getPlayerPos( p ), inPos );
             
             if( d <= inRadius ){
@@ -7416,6 +7551,119 @@ static int countFamilies() {
         }
     
     return uniqueLines.size();
+    }
+
+
+
+static int getTopLeader( LiveObject *inPlayer ) {
+    LiveObject *nextPlayer = inPlayer;
+    
+    int topID = nextPlayer->id;
+
+    while( nextPlayer != NULL ) {
+        int nextID = nextPlayer->followingID;
+        
+        nextPlayer = NULL;
+        
+        if( nextID != -1 ) {
+            topID = nextID;
+            nextPlayer = getLiveObject( nextID );
+            }
+        }
+    
+    return topID;
+    }
+
+
+
+static char isLeader( LiveObject *inPlayer, int inPossibleLeaderID ) {
+    if( inPlayer->followingID == inPossibleLeaderID ) {
+        return true;
+        }
+    else if( inPlayer->followingID == -1 ) {
+        return false;
+        }
+    else {
+        LiveObject *leader = getLiveObject( inPlayer->followingID );
+        if( leader == NULL ) {
+            return false;
+            }
+        else {
+            return isLeader( leader, inPossibleLeaderID );
+            }
+        }
+    }
+
+
+
+// does inViewer see inTarget as exiled?
+static char isExiled( LiveObject *inViewer, LiveObject *inTarget ) {
+    for( int e=0; e< inTarget->exiledByIDs.size(); e++ ) {
+        int exilerID = inTarget->exiledByIDs.getElementDirect( e );
+                    
+        // they have exiled us, or the person who exiled
+        // us is their leader
+        if( exilerID == inViewer->id 
+            ||
+            isLeader( inViewer, 
+                      exilerID ) ) {
+            return true;
+            }
+        }
+
+    return false;
+    }
+
+
+// people under player's top leader who don't see player as exiled
+static int countAllies( LiveObject *inPlayer, 
+                        GridPos inPos, double inRadius ) {    
+    int count = 0;
+
+    int thisTopID = getTopLeader( inPlayer );
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( p != inPlayer && 
+            distance( inPos, getPlayerPos( p ) ) <= inRadius ) {
+            int otherTopID = getTopLeader( p );
+            
+            if( otherTopID == thisTopID ) {
+                // they are in our ally tree
+                
+                if( ! isExiled( p, inPlayer ) ) {
+                    // they don't view us as exiled
+                    count ++;
+                    }
+                }
+            }
+        }
+    
+    return count;
+    }
+
+
+
+// people who see this player as exiled
+// Note that this does NOT count 
+static int countEnemies( LiveObject *inPlayer, 
+                        GridPos inPos, double inRadius ) {
+    int count = 0;
+
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( distance( inPos, getPlayerPos( p ) ) <= inRadius ) {
+            
+            if( isExiled( p, inPlayer ) ) {
+                // they view us as exiled
+                count ++;
+                }
+            }
+        }
+
+    return count;
     }
 
 
@@ -11545,6 +11793,10 @@ typedef struct KillState {
         // based on population size in radius
         // later joiners copy this value
         int minPosseSizeForKill;
+        
+        // true if solo posse permitted in high-pop area
+        // due to enemies overwhelming allies
+        char fullForceSoloPosse;
     } KillState;
 
 
@@ -12356,7 +12608,8 @@ SimpleVector<int> killStatePosseChangedPlayerIDs;
 
 
 static int countPosseSize( LiveObject *inTarget, 
-                           int *outMinPosseSizeForKill = NULL ) {
+                           int *outMinPosseSizeForKill = NULL,
+                           char *outFullForceSoloPosse = NULL ) {
     int p = 0;
     
     int uncounted = 0;
@@ -12375,8 +12628,15 @@ static int countPosseSize( LiveObject *inTarget,
                 // gang up
                 if( ! killerO->isTwin && ! killerO->isLastLifeShort ) {
                     p++;
-                    if( outMinPosseSizeForKill != NULL ) {
-                        *outMinPosseSizeForKill = s->minPosseSizeForKill;
+
+                    if( p == 1 ) {
+                        // set these based on state for posse leader only
+                        if( outMinPosseSizeForKill != NULL ) {
+                            *outMinPosseSizeForKill = s->minPosseSizeForKill;
+                            }
+                        if( outFullForceSoloPosse != NULL ) {
+                            *outFullForceSoloPosse = s->fullForceSoloPosse;
+                            }
                         }
                     }
                 else {
@@ -12476,6 +12736,10 @@ static char isNoWaitWeapon( int inObjectID ) {
                    "+noWait" ) != NULL;
     }
 
+
+
+char *getLeadershipName( LiveObject *nextPlayer, 
+                         char inNoName = false );
     
 
 
@@ -12485,9 +12749,10 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
     char found = false;
     
     GridPos killerPos = getPlayerPos( inKiller );
-
+    GridPos targetPos = getPlayerPos( inTarget );
+    
     if( ! inInfiniteRange && 
-        distance( killerPos, getPlayerPos( inTarget ) )
+        distance( killerPos, targetPos )
         > 8 ) {
         // out of range
         return false;
@@ -12519,11 +12784,54 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
     
     if( !found ) {
         // add new
+
+
+        // new, based on allies and enemies
+        // allies protect, enemies reduce protection
         
-        int regionalPop = countNonHelpless( killerPos, 
-                                            possePopulationRadius );
+        int allyCount = countAllies( inTarget, targetPos, 
+                                     possePopulationRadius );
+        int enemyCount = countEnemies( inTarget, targetPos, 
+                                       possePopulationRadius );        
         
-        int minPosseSizeForKill = ceil( minPosseFraction * regionalPop );
+        if( ! isExiled( inKiller, inTarget ) ) {
+            // killer doesn't currently see target as exiled
+            // count them as a temporary enemy, because they are trying
+            // to kill target
+            enemyCount += 1;
+            }
+        
+
+        int minPosseSizeForKill = 1;
+        char fullForceSoloPosse = false;
+
+        if( allyCount >= enemyCount ) {
+            // use standard posse size calculation based on settings
+            // and population size
+            
+            // before age 9, they can't say "I JOIN YOU"
+            double possePossibleAge = 9;
+        
+
+            // count population around victim, not around killer
+            int regionalPop = countNonHelpless( targetPos, 
+                                                possePopulationRadius,
+                                                possePossibleAge );
+            
+            minPosseSizeForKill = ceil( minPosseFraction * regionalPop );
+            }
+        else {
+            // more enemies than allies
+            // solo killing becomes possible
+            minPosseSizeForKill = 1;
+            
+            if( enemyCount > 1 ) {
+                // target isn't being solo targeted in wilderness
+                // enable force-dropping of what they are holding
+                fullForceSoloPosse = true;
+                }
+            }
+
 
         if( minPosseSizeForKill > minPosseCap ) {
             minPosseSizeForKill = minPosseCap;
@@ -12553,15 +12861,71 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
             // this is the founder of the posse
             
             // let them know what the requirements are
+
+            const char *allyWord = "ALLIES";
+            if( allyCount == 1 ) {
+                allyWord = "ALLY";
+                }
+            const char *enemyWord = "ENEMIES";
+            if( enemyCount == 1 ) {
+                enemyWord = "ENEMY";
+                }
+            
             char *message = 
                 autoSprintf( 
-                    "THE MINIMUM POSSE SIZE TO KILL IN THIS AREA IS %d.**"
+                    "TARGET HAS %d %s, %d %s, NEED POSSE OF %d TO KILL.**"
                     "OTHERS JOIN BY HOLDING OBJECTS AND SAYING:  I JOIN YOU", 
+                    allyCount, allyWord, enemyCount, enemyWord, 
                     minPosseSizeForKill );            
             
         
             sendGlobalMessage( message, inKiller );
             delete [] message;
+
+
+            LiveObject *topLeaderO = 
+                getLiveObject( getTopLeader( inTarget ) );
+
+            const char *pronoun = "HIM";
+            if( getFemale( inTarget ) ) {
+                pronoun = "HER";
+                }
+            
+            if( topLeaderO == inKiller ) {
+                // killer has power to exile them directly
+    
+                char *psMessage = 
+                    autoSprintf( "PS\n"
+                                 "%d/0 I CAN EXILE %s MYSELF\n#",
+                                 inKiller->id, pronoun );
+                
+                sendMessageToPlayer( inKiller, 
+                                     psMessage, strlen( psMessage ) );
+                delete [] psMessage;
+                }
+            else if( topLeaderO != NULL ) {
+
+                char *topLeaderName = getLeadershipName( topLeaderO );
+                
+                GridPos lPos = getPlayerPos( topLeaderO );
+                
+                char *psMessage = 
+                    autoSprintf( "PS\n"
+                                 "%d/0 %s CAN EXILE %s "
+                                 "*leader %d *map %d %d\n#",
+                                 inKiller->id,
+                                 topLeaderName,
+                                 pronoun,
+                                 topLeaderO->id,
+                                 lPos.x - inKiller->birthPos.x,
+                                 lPos.y - inKiller->birthPos.y );
+                
+                delete [] topLeaderName;
+            
+                sendMessageToPlayer( inKiller, 
+                                     psMessage, strlen( psMessage ) );
+                delete [] psMessage;
+                }
             }
         
 
@@ -12574,7 +12938,8 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                         curTime,
                         30,
                         1,
-                        minPosseSizeForKill };
+                        minPosseSizeForKill,
+                        fullForceSoloPosse };
         
         if( isNoWaitWeapon( inKiller->holdingID ) ) {
                 // allow it to happen right now
@@ -14043,12 +14408,17 @@ char isBiomeAllowedForPlayer( LiveObject *inPlayer, int inX, int inY,
 
 static char isPlayerBlockedFromHoldingByPosse( LiveObject *inPlayer ) {
     int minPosseSizeForKill = 0;
+    char fullForceSoloPosse = false;
+    
     int posseSize = countPosseSize( 
         inPlayer,
-        &minPosseSizeForKill  );
+        &minPosseSizeForKill,
+        &fullForceSoloPosse );
                             
     // deadly solo posses in wilderness don't block victim from holding stuff
-    if( posseSize >= minPosseSizeForKill && posseSize > 1 ) {
+    if( ( fullForceSoloPosse && posseSize >= 1 )
+        || 
+        ( posseSize >= minPosseSizeForKill && posseSize > 1 ) ) {
         return true;
         }
     return false;
@@ -14073,7 +14443,8 @@ static void tryToForceDropHeld(
     LiveObject *inTargetPlayer, 
     SimpleVector<int> *playerIndicesToSendUpdatesAbout ) {
     
-    if( ! inTargetPlayer->holdingWound &&
+    if( inTargetPlayer->holdingID != 0 &&
+        ! inTargetPlayer->holdingWound &&
         ! inTargetPlayer->holdingBiomeSickness &&
         ! heldNeverDrop( inTargetPlayer ) ) {
                                     
@@ -14592,8 +14963,6 @@ static char isFollower( LiveObject *inLeader, LiveObject *inTestFollower ) {
     
 
 
-char *getLeadershipName( LiveObject *nextPlayer, 
-                         char inNoName = false );
 
 
 
@@ -14638,6 +15007,55 @@ static void leaderDied( LiveObject *inLeader ) {
                 }
             }
         }
+
+
+
+    // if leader is following no one (they haven't picked an heir to take over)
+    // have them follow their oldest follower now automatically
+    
+    if( inLeader->followingID == -1 &&
+        oldFollowers.size() > 0 ) {
+        
+        LiveObject *oldestFollower = NULL;
+        double oldestAge = 0;
+        
+        for( int i=0; i<oldFollowers.size(); i++ ) {
+            LiveObject *otherPlayer = oldFollowers.getElementDirect( i );
+            
+            double age = computeAge( otherPlayer );
+            
+            if( age > oldestAge ) {
+                oldestAge = age;
+                oldestFollower = otherPlayer;
+                }
+            }
+        
+        inLeader->followingID = oldestFollower->id;
+        
+        // they become top of tree, following no one
+        oldestFollower->followingID = -1;
+        
+
+        // inform them differently, instead of as part of
+        // group of followers below
+        oldFollowers.deleteElementEqualTo( oldestFollower );
+        
+        const char *pronoun = "HIS";
+        
+        if( getFemale( inLeader ) ) {
+            pronoun = "HER";
+            }
+        
+        char *message =
+            autoSprintf( "YOUR %s HAS DIED.**"
+                         "YOU HAVE INHERITED %s POSITION.",
+                         leaderName, pronoun );
+        
+        sendGlobalMessage( message, oldestFollower );
+        delete [] message;
+        }
+
+
     
         
     for( int i=0; i<players.size(); i++ ) {
@@ -14691,7 +15109,8 @@ static void leaderDied( LiveObject *inLeader ) {
         newLeaderO = getLiveObject( inLeader->followingID );
         
         char *newLeaderName = getLeadershipName( newLeaderO );
-        newLeaderExplain = autoSprintf( "YOU NOW FOLLOW %s.", newLeaderName );
+        newLeaderExplain = autoSprintf( "YOU NOW FOLLOW YOUR %s.", 
+                                        newLeaderName );
         delete [] newLeaderName;
         }
 
@@ -14708,7 +15127,7 @@ static void leaderDied( LiveObject *inLeader ) {
         else {
             // no heir for this position.
 
-            // who is there prime leader?
+            // who is their prime leader?
             int primeID = otherPlayer->followingID;
             while( primeID != -1 ) {
                 LiveObject *primeO = getLiveObject( primeID );
@@ -14727,7 +15146,7 @@ static void leaderDied( LiveObject *inLeader ) {
                 }
             if( newLeaderO != NULL ) {
                 char *primeName = getLeadershipName( newLeaderO );
-                secondLine = autoSprintf( "YOUR PRIME LEADER IS NOW %s.",
+                secondLine = autoSprintf( "YOUR PRIME LEADER IS NOW YOUR %s.",
                                           primeName );
                 delete [] primeName;
                 }
@@ -14737,7 +15156,7 @@ static void leaderDied( LiveObject *inLeader ) {
                 
             }
 
-        char *mesage =
+        char *message =
             autoSprintf( "YOUR %s HAS DIED.**"
                          "%s",
                          leaderName,
@@ -14745,8 +15164,8 @@ static void leaderDied( LiveObject *inLeader ) {
         
         delete [] secondLine;
                                 
-        sendGlobalMessage( mesage, otherPlayer );
-        delete [] mesage;
+        sendGlobalMessage( message, otherPlayer );
+        delete [] message;
         
 
         if( newLeaderO != NULL ) {
@@ -14890,9 +15309,12 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
                                             
                         if( ! targetPlayer->emotFrozen ) {
                             int minPosseSizeForKill = 0;
+                            char fullForceSoloPosse = false;
+                            
                             int posseSize = countPosseSize( 
                                 targetPlayer,
-                                &minPosseSizeForKill  );
+                                &minPosseSizeForKill,
+                                &fullForceSoloPosse );
                             
                             int emotIndex = victimEmotionIndex;
                             
@@ -14905,7 +15327,7 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
                                 // The point of solo posses is to tell someone
                                 // to scram or else, not to force them to get
                                 // off their horse.
-                                if( posseSize > 1 ) {
+                                if( fullForceSoloPosse || posseSize > 1 ) {
                                     tryToForceDropHeld( 
                                         targetPlayer, 
                                         playerIndicesToSendUpdatesAbout );
@@ -15336,10 +15758,17 @@ static int checkTargetInstantDecay( int inTarget, int inX, int inY ) {
     int newTarget = inTarget;
     
     TransRecord *targetDecay = getPTrans( -1, inTarget );
-                                        
+    
+    // do NOT auto-apply movement transitions here
+    // don't want result of move to repace this object in place, because
+    // moving object might leave something behind, or require something to
+    // land on in its destination (like a moving cart leaving one track
+    // and landing on another)
+
     if( targetDecay != NULL &&
         targetDecay->autoDecaySeconds == 1  &&
-        targetDecay->newTarget > 0 ) {
+        targetDecay->newTarget > 0 &&
+        targetDecay->move == 0 ) {
                                             
         newTarget = targetDecay->newTarget;
                                             
@@ -17049,7 +17478,6 @@ int main() {
         SimpleVector<int> playerIndicesToSendHealingAbout;
 
 
-        SimpleVector<GridPos> newOwnerPos;
 
         newOwnerPos.push_back_other( &recentlyRemovedOwnerPos );
         recentlyRemovedOwnerPos.deleteAll();
@@ -25951,7 +26379,7 @@ int main() {
                     if( minUpdateDist <= maxDist ) {
                         // some updates close enough
 
-                        // compose PU mesage for this player
+                        // compose PU message for this player
                         
                         unsigned char *updateMessage = NULL;
                         int updateMessageLength = 0;
@@ -26991,6 +27419,7 @@ int main() {
         newEmotIndices.deleteAll();
         newEmotTTLs.deleteAll();
         
+        newOwnerPos.deleteAll();
 
         
         // handle end-of-frame for all players that need it
