@@ -6,10 +6,6 @@ http://onehouronelife.com/updateLog.php
 
 Server Fixes
 
---Fixed leader auto-heir code to pick the oldest direct follower instead of the
-  oldest follower overall.  Old code resulted in loops in the leadership tree 
-  that caused the client to get stuck in an infinite loop.
-
 --You get informed when you target a top leader to kill (instead of an arrow
   pointing toward that leader as a possible exiler).
 
@@ -24,6 +20,24 @@ Server Fixes
 
 --When pointing you toward closest follower after issuing an order, don't
   consider followers you see as exiled.
+
+
+
+Version 336    2020-May-????
+
+--Fixed disappearing adult glitch when an adult carries you far away from your
+  pick-up location.
+
+
+
+
+
+
+Server Fixes
+
+--Fixed leader auto-heir code to pick the oldest direct follower instead of the
+  oldest follower overall.  Old code resulted in loops in the leadership tree 
+  that caused the client to get stuck in an infinite loop.
 
 
 
