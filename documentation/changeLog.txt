@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 334    ????
+Version 334    2020-May-7
 
 --When the last owner dies, property is automatically inherited by the oldest
   direct offspring of the owner, and if none exist, then the closest, oldest
