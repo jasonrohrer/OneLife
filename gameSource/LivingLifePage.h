@@ -1064,6 +1064,10 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         int mFullXObjectID;
 
+
+        // where player is standing or held
+        doublePair getPlayerPos( LiveObject *inPlayer );
+
     };
 
 
