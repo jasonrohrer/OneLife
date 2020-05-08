@@ -14392,7 +14392,8 @@ static void tryToForceDropHeld(
     LiveObject *inTargetPlayer, 
     SimpleVector<int> *playerIndicesToSendUpdatesAbout ) {
     
-    if( ! inTargetPlayer->holdingWound &&
+    if( inTargetPlayer->holdingID != 0 &&
+        ! inTargetPlayer->holdingWound &&
         ! inTargetPlayer->holdingBiomeSickness &&
         ! heldNeverDrop( inTargetPlayer ) ) {
                                     

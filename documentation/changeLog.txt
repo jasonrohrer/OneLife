@@ -55,6 +55,9 @@ Server Fixes
   before.  In other words, the posse size requirements, which are currently
   exreme, are bypassed if the majority of people around you see you as exiled.
 
+--Force-drop code for target player terrified by posse was dropping a 0 item
+  (if holding nothing) by accident, deleting whatever was on the ground.
+
 
 
 
