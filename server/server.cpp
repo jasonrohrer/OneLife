@@ -12848,7 +12848,18 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
             KillState *s = activeKillStates.getElement( i );
             
             if( s->targetID == inTarget->id ) {
-                minPosseSizeForKill = s->minPosseSizeForKill;
+                
+                // don't copy small posse size from no-wait weapons
+                if( ! isNoWaitWeapon( s->killerWeaponID ) ) {
+                    
+                    minPosseSizeForKill = s->minPosseSizeForKill;
+                    }
+                else if( minPosseSizeForKill > 1 ) {
+                    // earlier kill state is no-wait weapon
+                    // override it's small posse size with this new size
+                    s->minPosseSizeForKill = minPosseSizeForKill;
+                    }
+                
                 joiningExisting = true;
                 break;
                 }
@@ -12956,7 +12967,7 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                         minPosseSizeForKill,
                         fullForceSoloPosse };
         
-        if( isNoWaitWeapon( inKiller->holdingID ) ) {
+        if( ! joiningExisting && isNoWaitWeapon( inKiller->holdingID ) ) {
                 // allow it to happen right now
             s.killStartTime -= killDelayTime;
             }
@@ -19646,10 +19657,7 @@ int main() {
                                     }
                                 
                                 if( s->posseSize == 1 &&
-                                    strstr( 
-                                        getObject( s->killerWeaponID )->
-                                        description,
-                                        "+noWait" ) != NULL ) {
+                                    isNoWaitWeapon( s->killerWeaponID ) ) {
                                     // single-person posse, where leader
                                     // not holding a deadly weapon
                                     // (snowball or tattoo needle)

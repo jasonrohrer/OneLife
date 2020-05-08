@@ -13,6 +13,9 @@ Server Fixes
 --You get informed when you target a top leader to kill (instead of an arrow
   pointing toward that leader as a possible exiler).
 
+--Fixed posse size system glitch when posse started with NoWaitWeapon.
+  Thanks Wondible.
+
 
 
 Version 334    2020-May-7
