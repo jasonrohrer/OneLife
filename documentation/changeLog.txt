@@ -20,6 +20,12 @@ Server Fixes
   (snowball, tatoo needle).  Before, emote was getting stuck after dropping
   weapon.
 
+--DING message upon issuing an order now shows you your follower count.
+
+--When pointing you toward closest follower after issuing an order, don't
+  consider followers you see as exiled.
+
+
 
 
 Version 334    2020-May-7

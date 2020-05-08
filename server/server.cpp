@@ -7613,6 +7613,25 @@ static char isExiled( LiveObject *inViewer, LiveObject *inTarget ) {
     }
 
 
+
+
+static int countFollowers( LiveObject *inLeader ) {
+    int count = 0;
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( isLeader( p, inLeader->id ) &&
+            ! isExiled( inLeader, p ) ) {
+            count++;
+            }
+        }
+    
+    return count;
+    }
+
+
+
+
 // people under player's top leader who don't see player as exiled
 static int countAllies( LiveObject *inPlayer, 
                         GridPos inPos, double inRadius ) {    
@@ -15243,7 +15262,8 @@ static LiveObject *getClosestFollower( LiveObject *inLeader ) {
         if( otherPlayer != inLeader &&
             ! otherPlayer->error ) {
             
-            if( isFollower( inLeader, otherPlayer ) ) {
+            if( isFollower( inLeader, otherPlayer ) &&
+                ! isExiled( inLeader, otherPlayer ) ) {
                 
                 GridPos fPos = getPlayerPos( otherPlayer );
                 
@@ -19893,10 +19913,22 @@ int main() {
                                 char *selfLeadershipName = 
                                     getLeadershipName( nextPlayer, true );
                                 
+                                int followerCount = 
+                                    countFollowers( nextPlayer );
+                                
+                                const char *followerWord = "FOLLOWERS";
+                                
+                                if( followerCount == 1 ) {
+                                    followerWord = "FOLLOWER";
+                                    }
+
                                 char *confirmMessage =
                                     autoSprintf( "AS %s, "
-                                                 "YOU ISSUED AN ORDER:**%s",
+                                                 "YOU ISSUED AN ORDER "
+                                                 "TO YOUR %d %s:**%s",
                                                  selfLeadershipName,
+                                                 followerCount,
+                                                 followerWord,
                                                  order );
                                 
                                 delete [] selfLeadershipName;
