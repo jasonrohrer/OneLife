@@ -21,6 +21,11 @@ Server Fixes
 --When pointing you toward closest follower after issuing an order, don't
   consider followers you see as exiled.
 
+--Last heard monument call is passed from mother to baby, but only perpetuated
+  one generation (inherited calls are not passed to next generation after
+  that).  No more perpetual stale monument calls.
+
+
 
 
 Version 336    2020-May-8
