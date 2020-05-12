@@ -25,6 +25,12 @@ Server Fixes
   one generation (inherited calls are not passed to next generation after
   that).  No more perpetual stale monument calls.
 
+--Support for +causeAutoOrientH, which triggers E/W neighbors to auto-orient,
+  but not N/S neighbors.  When an object goes from auto-orienting to not, other
+  auto-orienting objects around it now un-react to it.  This allows, for
+  example, corner fences to go back to being horizontal when the fence to the
+  north or south is removed.  Part of jasonrohrer/OneLifeData7#787
+
 
 
 
