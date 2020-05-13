@@ -17623,6 +17623,15 @@ int main() {
                                 &movingDestX, &movingDestY );
                         
                         if( curMovingID != 0 ) {
+                            
+                            // make sure that dest object hasn't changed
+                            // since moving record was created
+                            // (if a bear is shot mid-move, for example,
+                            //  the movement record will still show the unshot
+                            //  bear)
+                            curMovingID = getMapObject( movingDestX,
+                                                        movingDestY );
+                            
                             ObjectRecord *movingObj = getObject( curMovingID );
                             if( movingObj->permanent &&
                                 movingObj->deadlyDistance > 0 ) {

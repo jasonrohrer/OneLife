@@ -31,6 +31,10 @@ Server Fixes
   example, corner fences to go back to being horizontal when the fence to the
   north or south is removed.  Part of jasonrohrer/OneLifeData7#787
 
+--Fixed case of stale object left in movement record overriding an object that
+  changed mid-move (allowing a 3-arrow bear to go back to being a 2-arrow bear
+  and attack mid-move, if shot with the third arrow mid-move).  Fixes #608
+
 
 
 
