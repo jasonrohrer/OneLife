@@ -102,6 +102,8 @@ extern int userTwinCount;
 extern char userReconnect;
 
 static char vogMode = false;
+static char vogModeActuallyOn = false;
+
 static doublePair vogPos = { 0, 0 };
 
 static char vogPickerOn = false;
@@ -14323,6 +14325,8 @@ void LivingLifePage::step() {
             int numRead = sscanf( message, "VU\n%d %d",
                                   &posX, &posY );
             if( numRead == 2 ) {
+                vogModeActuallyOn = true;
+                
                 vogPos.x = posX;
                 vogPos.y = posY;
 
@@ -20335,7 +20339,8 @@ void LivingLifePage::step() {
             }
         
 
-        if( ! o->outOfRange &&
+        if( ! vogModeActuallyOn &&
+            ! o->outOfRange &&
             distance( getPlayerPos( o ), ourPos ) > 
             maxChunkDimension ) {
             // mark as out of range, even if we've never heard an official
@@ -24303,6 +24308,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 if( ! vogMode ) {
                     sendToServerSocket( (char*)"VOGS 0 0#" );
                     vogMode = true;
+                    vogModeActuallyOn = false;
+
                     vogPos = getOurLiveObject()->currentPos;
                     vogPickerOn = false;
                     mObjectPicker.setPosition( vogPos.x * CELL_D + 510,
