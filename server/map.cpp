@@ -5257,6 +5257,30 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             dir.x = -1;
                             break;
                         }
+
+
+                    if( desiredMoveDist == 1 ) {
+                        // make sure something else isn't moving out of
+                        // destination
+                        int destPosX = inX + dir.x;
+                        int destPosY = inY + dir.y ;
+                        
+                        
+                        int numMoving = liveMovements.size();
+                        
+                        for( int i=0; i<numMoving; i++ ) {
+                            MovementRecord *m = liveMovements.getElement( i );
+                            
+                            if( m->sourceX == destPosX &&
+                                m->sourceY == destPosY ) {
+                                // found something leaving where we're landing
+                                // wait for it to finish
+                                setEtaDecay( inX, inY, MAP_TIMESEC + 1, t );
+                                return inID;
+                                }
+                            }
+                        }
+
                     }
                 
                 // round to 1000ths to avoid rounding errors
