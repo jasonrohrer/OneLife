@@ -42,6 +42,10 @@ Server Fixes
   changed mid-move (allowing a 3-arrow bear to go back to being a 2-arrow bear
   and attack mid-move, if shot with the third arrow mid-move).  Fixes #608
 
+--Changed movement code so that track carts that pile up against obstacles
+  (something beyond the end of a disconnnected track or another cart in the
+  way) don't derail, but instead pile up.  Part of jasonrohrer/OneLifeData7#790
+
 
 
 

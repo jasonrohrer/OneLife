@@ -5714,11 +5714,13 @@ int checkDecayObject( int inX, int inY, int inID ) {
 
                     // default to applying bare-ground transition, if any
                     TransRecord *trans = getPTrans( inID, -1 );
-                            
+                    
+                    int currentMovingID = newID;
+
                     if( trans == NULL ) {
                         // does trans exist for newID applied to
                         // bare ground
-                        trans = getPTrans( newID, -1 );
+                        trans = getPTrans( currentMovingID, -1 );
                         }
                     if( trans != NULL ) {
                         newID = trans->newTarget;
@@ -5736,6 +5738,14 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             
                             TransRecord *inPlaceTrans = 
                                 getPTrans( newID, trans->newActor );
+
+                            if( inPlaceTrans == NULL ) {
+                                // see if there's anything for moving ID
+                                // applied directly to what's left on ground
+                                // allowing moving item to remain in place
+                                inPlaceTrans = getPTrans( currentMovingID,
+                                                          trans->newActor );
+                                }
                             
                             if( inPlaceTrans != NULL &&
                                 inPlaceTrans->newTarget > 0 ) {
