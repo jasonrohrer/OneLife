@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 336    ???
+Version 337    2020-May-15
 
 --Fixed glitch in VOG mode that left distant players invisible (marked out of
   range) when we jumped to them.
