@@ -58,6 +58,10 @@ Server Fixes
 --DING message when your leader exiles or redeems you, showing you your new
   ally count after this action.  Part of #610
 
+--Property inherited by fittest close relative, instead of oldest close
+  relative.  Part of #610
+
+
 
 
 Version 336    2020-May-8

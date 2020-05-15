@@ -1101,9 +1101,11 @@ char getFemale( LiveObject *inPlayer ) {
 
 
 
-static LiveObject *findOldestOffspring( int inPlayerID, int inSkipID ) {
-    LiveObject *oldestOffspring = NULL;
-    double oldestOffspringAge = 0;
+// find most fit offspring over 14 years old
+// (old enough to manage ownership of property)
+static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID ) {
+    LiveObject *fittestOffspring = NULL;
+    double fittestOffspringFitness = 0;
 
     for( int j=0; j<players.size(); j++ ) {
         LiveObject *otherPlayer = players.getElement( j );
@@ -1113,21 +1115,22 @@ static LiveObject *findOldestOffspring( int inPlayerID, int inSkipID ) {
             
             double age = computeAge( otherPlayer );
             
-            if( age > oldestOffspringAge ) {
+            if( age > 14.0 && 
+                otherPlayer->fitnessScore > fittestOffspringFitness ) {
                 
                 if( otherPlayer->lineage->getElementIndex( inPlayerID ) 
                     != -1 ) {
                     
                     // player is direct offspring of inPlayer
                     // (child, grandchild, etc).
-                    oldestOffspring = otherPlayer;
-                    oldestOffspringAge = age;
+                    fittestOffspring = otherPlayer;
+                    fittestOffspringFitness = otherPlayer->fitnessScore;
                     }
                 }
             }
         }
     
-    return oldestOffspring;
+    return fittestOffspring;
     }
     
 
@@ -1136,7 +1139,7 @@ static LiveObject *findHeir( LiveObject *inPlayer ) {
     LiveObject *offspring = NULL;
     
     if( getFemale( inPlayer ) ) {
-        offspring = findOldestOffspring( inPlayer->id, inPlayer->id );
+        offspring = findFittestOffspring( inPlayer->id, inPlayer->id );
         }
     
     if( offspring == NULL ) {
@@ -1153,7 +1156,7 @@ static LiveObject *findHeir( LiveObject *inPlayer ) {
         while( offspring == NULL &&
                lineageStep < inPlayer->lineage->size() ) {
             
-            offspring = findOldestOffspring( 
+            offspring = findFittestOffspring( 
                 inPlayer->lineage->getElementDirect( lineageStep ),
                 inPlayer->id );
             
