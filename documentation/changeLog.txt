@@ -11,6 +11,10 @@ Version 336    ???
 --New /LEADER /FOLLOWER and /ALLY command to show labels above the heads of
   people.  Part of #610
 
+--DING messages showing follower and ally count when you use the new commands.
+  Part of #610
+
+
 
 
 

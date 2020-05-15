@@ -499,9 +499,19 @@ followerLabel "+FOLLOWER+"
 allyLabel "+ALLY+"
 
 
-orderCommand "ORDER,"
 
-followerMarker "+FOLLOWER+"
+followerCountMessage "YOU HAVE %d FOLLOWERS."
+oneFollowerCountMessage "YOU HAVE ONLY ONE FOLLOWER."
+noFollowerCountMessage "YOU HAVE NO FOLLOWERS."
+
+
+allyCountMessage "YOU HAVE %d ALLIES."
+oneAllyCountMessage "YOU HAVE ONLY ONE ALLY."
+noAllyCountMessage "YOU HAVE NO ALLIES."
+
+
+
+orderCommand "ORDER,"
 
 
 

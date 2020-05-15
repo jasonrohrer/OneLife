@@ -1081,6 +1081,9 @@ class LivingLifePage : public GamePage, public ActionListener {
         char isExiled( LiveObject *inViewer, LiveObject *inPlayer );
         
 
+        void displayGlobalMessage( char *inMessage );
+
+
     };
 
 

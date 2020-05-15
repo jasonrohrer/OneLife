@@ -12085,6 +12085,56 @@ doublePair LivingLifePage::getPlayerPos( LiveObject *inPlayer ) {
 
 
 
+
+void LivingLifePage::displayGlobalMessage( char *inMessage ) {
+    
+    char *upper = stringToUpperCase( inMessage );
+                
+    char found;
+    
+    char *lines = replaceAll( upper, "**", "##", &found );
+    delete [] upper;
+    
+    char *spaces = replaceAll( lines, "_", " ", &found );
+    
+    delete [] lines;
+    
+    
+    mGlobalMessageShowing = true;
+    mGlobalMessageStartTime = game_getCurrentTime();
+    
+    if( mLiveTutorialSheetIndex >= 0 ) {
+        mTutorialTargetOffset[ mLiveTutorialSheetIndex ] =
+            mTutorialHideOffset[ mLiveTutorialSheetIndex ];
+        }
+    mLiveTutorialSheetIndex ++;
+    
+    if( mLiveTutorialSheetIndex >= NUM_HINT_SHEETS ) {
+        mLiveTutorialSheetIndex -= NUM_HINT_SHEETS;
+        }
+    mTutorialMessage[ mLiveTutorialSheetIndex ] = 
+        stringDuplicate( spaces );
+    
+    // other tutorial messages don't need to be destroyed
+    mGlobalMessagesToDestroy.push_back( 
+        (char*)( mTutorialMessage[ mLiveTutorialSheetIndex ] ) );
+    
+    mTutorialTargetOffset[ mLiveTutorialSheetIndex ] =
+        mTutorialHideOffset[ mLiveTutorialSheetIndex ];
+    
+    mTutorialTargetOffset[ mLiveTutorialSheetIndex ].y -= 100;
+    
+    double longestLine = getLongestLine( 
+        (char*)( mTutorialMessage[ mLiveTutorialSheetIndex ] ) );
+    
+    mTutorialExtraOffset[ mLiveTutorialSheetIndex ].x = longestLine;
+    
+    
+    delete [] spaces;
+    }
+
+
+
 // color list from here:
 // https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
 
@@ -13384,49 +13434,7 @@ void LivingLifePage::step() {
                 char messageFromServer[200];
                 sscanf( message, "MS\n%199s", messageFromServer );            
                 
-                char *upper = stringToUpperCase( messageFromServer );
-                
-                char found;
-
-                char *lines = replaceAll( upper, "**", "##", &found );
-                delete [] upper;
-                
-                char *spaces = replaceAll( lines, "_", " ", &found );
-                
-                delete [] lines;
-                
-
-                mGlobalMessageShowing = true;
-                mGlobalMessageStartTime = game_getCurrentTime();
-                
-                if( mLiveTutorialSheetIndex >= 0 ) {
-                    mTutorialTargetOffset[ mLiveTutorialSheetIndex ] =
-                    mTutorialHideOffset[ mLiveTutorialSheetIndex ];
-                    }
-                mLiveTutorialSheetIndex ++;
-                
-                if( mLiveTutorialSheetIndex >= NUM_HINT_SHEETS ) {
-                    mLiveTutorialSheetIndex -= NUM_HINT_SHEETS;
-                    }
-                mTutorialMessage[ mLiveTutorialSheetIndex ] = 
-                    stringDuplicate( spaces );
-                
-                // other tutorial messages don't need to be destroyed
-                mGlobalMessagesToDestroy.push_back( 
-                    (char*)( mTutorialMessage[ mLiveTutorialSheetIndex ] ) );
-
-                mTutorialTargetOffset[ mLiveTutorialSheetIndex ] =
-                    mTutorialHideOffset[ mLiveTutorialSheetIndex ];
-                
-                mTutorialTargetOffset[ mLiveTutorialSheetIndex ].y -= 100;
-
-                double longestLine = getLongestLine( 
-                    (char*)( mTutorialMessage[ mLiveTutorialSheetIndex ] ) );
-            
-                mTutorialExtraOffset[ mLiveTutorialSheetIndex ].x = longestLine;
-
-                
-                delete [] spaces;
+                displayGlobalMessage( messageFromServer );
                 }
             }
         else if( type == WAR_REPORT ) {
@@ -24807,7 +24815,9 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 
                                 double eta = game_getCurrentTime() + 3 +
                                     strlen( followerLabel ) / 5;
-
+                                
+                                int count = 0;
+                                
                                 for( int f=0; f<gameObjects.size(); f++ ) {
                                     
                                     LiveObject *testO =
@@ -24817,8 +24827,29 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                         
                                         showPlayerLabel( testO, 
                                                          followerLabel, eta );
+                                        count ++;
                                         }
                                     }
+                                
+                                char *message;
+                                if( count == 0 ) {
+                                    message = stringDuplicate( 
+                                        translate( "noFollowerCountMessage" ) );
+                                    }
+                                else if( count == 1 ) {
+                                    message = stringDuplicate( 
+                                        translate( 
+                                            "oneFollowerCountMessage" ) );
+                                    }
+                                else {
+                                    message =
+                                        autoSprintf( 
+                                            translate( "followerCountMessage" ),
+                                            count );
+                                    }
+                                
+                                displayGlobalMessage( message );
+                                delete [] message;
                                 }
                             else if( strstr( typedText,
                                              translate( "allyCommand" ) ) 
@@ -24832,7 +24863,9 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
 
                                 int ourTopLeader = 
                                     getTopLeader( ourLiveObject );
-
+                                
+                                int count = 0;
+                                
                                 for( int f=0; f<gameObjects.size(); f++ ) {
                                     
                                     LiveObject *testO =
@@ -24851,8 +24884,29 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                         
                                         showPlayerLabel( testO, 
                                                          allyLabel, eta );
+                                        count ++;
                                         }
                                     }
+                                
+                                char *message;
+                                if( count == 0 ) {
+                                    message = stringDuplicate( 
+                                        translate( "noAllyCountMessage" ) );
+                                    }
+                                else if( count == 1 ) {
+                                    message = stringDuplicate( 
+                                        translate( 
+                                            "oneAllyCountMessage" ) );
+                                    }
+                                else {
+                                    message =
+                                        autoSprintf( 
+                                            translate( "allyCountMessage" ),
+                                            count );
+                                    }
+                                
+                                displayGlobalMessage( message );
+                                delete [] message;
                                 }
                             else {
                                 // filter hints
@@ -24894,7 +24948,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                             // when issuing an order, place +FOLLOWER+
                             // above the heads of followers
                             
-                            const char *tag = translate( "followerMarker" );
+                            const char *tag = translate( "followerLabel" );
 
                             double curTime = game_getCurrentTime();
                             for( int f=0; f<gameObjects.size(); f++ ) {
