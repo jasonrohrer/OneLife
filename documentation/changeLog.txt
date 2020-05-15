@@ -55,6 +55,8 @@ Server Fixes
   (something beyond the end of a disconnnected track or another cart in the
   way) don't derail, but instead pile up.  Part of jasonrohrer/OneLifeData7#790
 
+--DING message when your leader exiles or redeems you, showing you your new
+  ally count after this action.  Part of #610
 
 
 

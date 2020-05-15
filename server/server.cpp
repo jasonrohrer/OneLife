@@ -19863,6 +19863,41 @@ int main() {
                                         nextPlayer->id );
 
                                     otherToExile->exileUpdate = true;
+                                    
+                                    if( isFollower( nextPlayer,
+                                                    otherToExile ) ) {
+                                        // exiled by their leader
+                                        // warn them about it
+
+                                        char *leadershipName = 
+                                            getLeadershipName( nextPlayer );
+                                        
+                                        const char *allyWord = "ALLIES";
+                                        int numAllies = 
+                                            countAllies( 
+                                                otherToExile,
+                                                getPlayerPos( otherToExile ),
+                                                possePopulationRadius );
+                                        
+                                        if( numAllies == 1 ) {
+                                            allyWord = "ALLY";
+                                            }
+                                        char *warnMessage =
+                                            autoSprintf( 
+                                                "YOU HAVE BEEN EXILED BY "
+                                                "YOUR %s.**"
+                                                "YOU NOW HAVE %d "
+                                                "IN-RANGE %s LEFT.",
+                                                leadershipName,
+                                                numAllies,
+                                                allyWord );
+                                        
+                                        delete [] leadershipName;
+                                
+                                        sendGlobalMessage( warnMessage,
+                                                           otherToExile );
+                                        delete [] warnMessage;
+                                        }
                                     }
                                 }
                             else {
@@ -19886,6 +19921,8 @@ int main() {
                                     // clearing up exiles perpetrated by
                                     // our followers
                                     
+                                    int exileChanged = false;
+                                    
                                     for( int e=0; 
                                          e<otherToRedeem->exiledByIDs.size();
                                          e++ ) {
@@ -19903,6 +19940,7 @@ int main() {
                                                 exiledByIDs.deleteElement( e );
                                             e--;
                                             otherToRedeem->exileUpdate = true;
+                                            exileChanged = true;
                                             }
                                         else if( exiler != NULL && 
                                                  isFollower( nextPlayer,
@@ -19911,7 +19949,43 @@ int main() {
                                                 exiledByIDs.deleteElement( e );
                                             e--;
                                             otherToRedeem->exileUpdate = true;
+                                            exileChanged = true;
                                             }
+                                        }
+                                    if( exileChanged &&
+                                        isFollower( nextPlayer,
+                                                    otherToRedeem ) ) {
+                                        // redeemed by their leader
+                                        // tell them about it
+
+                                        char *leadershipName = 
+                                            getLeadershipName( nextPlayer );
+                                        
+                                        const char *allyWord = "ALLIES";
+                                        int numAllies = 
+                                            countAllies( 
+                                                otherToRedeem,
+                                                getPlayerPos( otherToRedeem ),
+                                                possePopulationRadius );
+                                        
+                                        if( numAllies == 1 ) {
+                                            allyWord = "ALLY";
+                                            }
+                                        char *warnMessage =
+                                            autoSprintf( 
+                                                "YOU HAVE BEEN REDEEMED BY "
+                                                "YOUR %s.**"
+                                                "YOU NOW HAVE %d "
+                                                "IN-RANGE %s.",
+                                                leadershipName,
+                                                numAllies,
+                                                allyWord );
+                                        
+                                        delete [] leadershipName;
+                                
+                                        sendGlobalMessage( warnMessage,
+                                                           otherToExile );
+                                        delete [] warnMessage;
                                         }
                                     }
                                 }
