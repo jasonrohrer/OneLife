@@ -8,6 +8,9 @@ Version 336    ???
 --Fixed glitch in VOG mode that left distant players invisible (marked out of
   range) when we jumped to them.
 
+--New /LEADER /FOLLOWER and /ALLY command to show labels above the heads of
+  people.  Part of #610
+
 
 
 

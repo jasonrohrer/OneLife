@@ -24266,6 +24266,125 @@ void LivingLifePage::pointerUp( float inX, float inY ) {
     }
 
 
+
+
+SimpleVector<int> LivingLifePage::getOurLeadershipChain() {
+    
+    SimpleVector<int> ourLeadershipChain;
+
+    LiveObject *ourLiveObject = getOurLiveObject();
+    
+    int nextID = ourLiveObject->followingID;
+    
+    while( nextID != -1 ) {
+        ourLeadershipChain.push_back( nextID );
+        
+        LiveObject *l = getGameObject( nextID );
+
+        if( l != NULL ) {
+            nextID = l->followingID;
+            }
+        else {
+            nextID = -1;
+            }
+        }
+    return ourLeadershipChain;
+    }
+
+
+
+char LivingLifePage::isFollower( LiveObject *inLeader, 
+                                 LiveObject *inFollower ) {
+    int nextID = inFollower->followingID;
+
+    while( nextID != -1 ) {
+        if( nextID == inLeader->id ) {
+            return true;
+            }
+        LiveObject *l = getGameObject( nextID );
+
+        if( l != NULL ) {
+            nextID = l->followingID;
+            }
+        else {
+            nextID = -1;
+            }
+        }
+    return false;
+    }
+
+
+
+int LivingLifePage::getTopLeader( LiveObject *inPlayer ) {
+    int nextID = inPlayer->followingID;
+
+    while( nextID != -1 ) {
+        LiveObject *l = getGameObject( nextID );
+
+        if( l != NULL ) {
+            nextID = l->followingID;
+            
+            if( nextID == -1 ) {
+                return l->id;
+                }
+            }
+        else {
+            nextID = -1;
+            }
+        }
+    
+    // top leader is self
+    return inPlayer->id;
+    }
+
+
+
+
+char LivingLifePage::isExiled( LiveObject *inViewer, LiveObject *inPlayer ) {
+    int viewerID = inViewer->id;
+    
+    for( int e=0; e < inPlayer->exiledByIDs.size(); e++ ) {
+        int eID = inPlayer->exiledByIDs.getElementDirect( e );
+        
+        // we have them exiled
+        if( eID == viewerID ) {
+            return true;
+            }
+        
+        LiveObject *eO = getLiveObject( eID );
+        
+        if( isFollower( eO, inViewer ) ) {
+            // one of our leaders has them exiled
+            return true;
+            }
+        }
+    
+    return false;
+    }
+
+
+
+
+static void showPlayerLabel( LiveObject *inPlayer, const char *inLabel, 
+                             double inETA ) {
+    
+    if( inPlayer->currentSpeech != NULL ) {
+        delete [] inPlayer->currentSpeech;
+        inPlayer->currentSpeech = NULL;
+        }
+    
+    inPlayer->currentSpeech = stringDuplicate( inLabel );
+    inPlayer->speechFade = 1.0;
+    
+    inPlayer->speechIsSuccessfulCurse = false;
+    
+    inPlayer->speechFadeETATime = inETA;
+    inPlayer->speechIsCurseTag = false;
+    inPlayer->speechIsOverheadLabel = false;
+    }
+
+
+
 void LivingLifePage::keyDown( unsigned char inASCII ) {
     
     registerTriggerKeyCommand( inASCII, this );
@@ -24637,28 +24756,101 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                             else if( strstr( typedText,
                                              translate( "familyCommand" ) ) 
                                      == typedText ) {
-                                double curTime = game_getCurrentTime();
+                                
+                                const char *famLabel = 
+                                    translate( "familyLabel" );
+                                
+                                double eta = game_getCurrentTime() + 3 +
+                                    strlen( famLabel ) / 5;
+
                                 for( int f=0; f<gameObjects.size(); f++ ) {
                                     
                                     LiveObject *famO = 
                                         gameObjects.getElement( f );
                                     if( famO->isGeneticFamily ) {
-                                        if( famO->currentSpeech != NULL ) {
-                                            delete [] famO->currentSpeech;
-                                            famO->currentSpeech = NULL;
-                                            }
                                         
-                                        famO->currentSpeech = 
-                                            stringDuplicate( "+FAMILY+" );
-                                        famO->speechFade = 1.0;
+                                        showPlayerLabel( famO, famLabel,
+                                                         eta );
+                                        }
+                                    }
+                                }
+                            else if( strstr( typedText,
+                                             translate( "leaderCommand" ) ) 
+                                     == typedText ) {
                                 
-                                        famO->speechIsSuccessfulCurse = false;
+                                const char *leaderLabel = 
+                                    translate( "leaderLabel" );
+                                
+                                double eta = game_getCurrentTime() + 3 +
+                                    strlen( leaderLabel ) / 5;
 
-                                        famO->speechFadeETATime =
-                                            curTime + 3 +
-                                            strlen( famO->currentSpeech ) / 5;
-                                        famO->speechIsCurseTag = false;
-                                        famO->speechIsOverheadLabel = false;
+                                SimpleVector<int> ourLeadershipChain =
+                                    getOurLeadershipChain();
+
+                                for( int f=0; 
+                                     f<ourLeadershipChain.size(); f++ ) {
+                                    
+                                    LiveObject *leadO = 
+                                        getLiveObject( 
+                                            ourLeadershipChain.
+                                            getElementDirect( f ) );
+                                    
+                                    showPlayerLabel( leadO, leaderLabel, eta );
+                                    }
+                                }
+                            else if( strstr( typedText,
+                                             translate( "followerCommand" ) ) 
+                                     == typedText ) {
+                                
+                                const char *followerLabel = 
+                                    translate( "followerLabel" );
+                                
+                                double eta = game_getCurrentTime() + 3 +
+                                    strlen( followerLabel ) / 5;
+
+                                for( int f=0; f<gameObjects.size(); f++ ) {
+                                    
+                                    LiveObject *testO =
+                                        gameObjects.getElement( f );
+                                    
+                                    if( isFollower( ourLiveObject, testO ) ) {
+                                        
+                                        showPlayerLabel( testO, 
+                                                         followerLabel, eta );
+                                        }
+                                    }
+                                }
+                            else if( strstr( typedText,
+                                             translate( "allyCommand" ) ) 
+                                     == typedText ) {
+                                
+                                const char *allyLabel = 
+                                    translate( "allyLabel" );
+                                
+                                double eta = game_getCurrentTime() + 3 +
+                                    strlen( allyLabel ) / 5;
+
+                                int ourTopLeader = 
+                                    getTopLeader( ourLiveObject );
+
+                                for( int f=0; f<gameObjects.size(); f++ ) {
+                                    
+                                    LiveObject *testO =
+                                        gameObjects.getElement( f );
+                                    
+                                    if( testO != ourLiveObject 
+                                        &&
+                                        getTopLeader( testO ) == 
+                                        ourTopLeader 
+                                        &&
+                                        // we don't see them as exiled
+                                        ! isExiled( ourLiveObject, testO )
+                                        &&
+                                        // they don't see us as exiled
+                                        ! isExiled( testO, ourLiveObject ) ) {
+                                        
+                                        showPlayerLabel( testO, 
+                                                         allyLabel, eta );
                                         }
                                     }
                                 }
@@ -25202,25 +25394,9 @@ void LivingLifePage::updateLeadership() {
         }
 
     
-    SimpleVector<int> ourLeadershipChain;
+    SimpleVector<int> ourLeadershipChain = getOurLeadershipChain();
     
     LiveObject *ourLiveObject = getOurLiveObject();
-    
-    int nextID = ourLiveObject->followingID;
-    
-    while( nextID != -1 ) {
-        ourLeadershipChain.push_back( nextID );
-        
-        LiveObject *l = getGameObject( nextID );
-
-        if( l != NULL ) {
-            nextID = l->followingID;
-            }
-        else {
-            nextID = -1;
-            }
-        }
-
 
 
     // find our followers
