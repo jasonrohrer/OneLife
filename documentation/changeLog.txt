@@ -14,6 +14,8 @@ Version 336    ???
 --DING messages showing follower and ally count when you use the new commands.
   Part of #610
 
+--Help screen shows I FOLLOW MYSELF.  Part of #610
+
 
 
 
