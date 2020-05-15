@@ -5257,6 +5257,30 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             dir.x = -1;
                             break;
                         }
+
+
+                    if( desiredMoveDist == 1 ) {
+                        // make sure something else isn't moving out of
+                        // destination
+                        int destPosX = inX + dir.x;
+                        int destPosY = inY + dir.y ;
+                        
+                        
+                        int numMoving = liveMovements.size();
+                        
+                        for( int i=0; i<numMoving; i++ ) {
+                            MovementRecord *m = liveMovements.getElement( i );
+                            
+                            if( m->sourceX == destPosX &&
+                                m->sourceY == destPosY ) {
+                                // found something leaving where we're landing
+                                // wait for it to finish
+                                setEtaDecay( inX, inY, MAP_TIMESEC + 1, t );
+                                return inID;
+                                }
+                            }
+                        }
+
                     }
                 
                 // round to 1000ths to avoid rounding errors
@@ -5714,11 +5738,13 @@ int checkDecayObject( int inX, int inY, int inID ) {
 
                     // default to applying bare-ground transition, if any
                     TransRecord *trans = getPTrans( inID, -1 );
-                            
+                    
+                    int currentMovingID = newID;
+
                     if( trans == NULL ) {
                         // does trans exist for newID applied to
                         // bare ground
-                        trans = getPTrans( newID, -1 );
+                        trans = getPTrans( currentMovingID, -1 );
                         }
                     if( trans != NULL ) {
                         newID = trans->newTarget;
@@ -5736,6 +5762,14 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             
                             TransRecord *inPlaceTrans = 
                                 getPTrans( newID, trans->newActor );
+
+                            if( inPlaceTrans == NULL ) {
+                                // see if there's anything for moving ID
+                                // applied directly to what's left on ground
+                                // allowing moving item to remain in place
+                                inPlaceTrans = getPTrans( currentMovingID,
+                                                          trans->newActor );
+                                }
                             
                             if( inPlaceTrans != NULL &&
                                 inPlaceTrans->newTarget > 0 ) {
@@ -6670,7 +6704,7 @@ static int findGridPos( SimpleVector<GridPos> *inList, GridPos inP ) {
 
 
 
-// inSetO must hvae isAutoOrienting set
+// inSetO can be NULL
 // returns new ID at inX, inY
 static int neighborWallAgree( int inX, int inY, ObjectRecord *inSetO,
                               char inRecurse ) {
@@ -6686,18 +6720,32 @@ static int neighborWallAgree( int inX, int inY, ObjectRecord *inSetO,
         int oID = getMapObjectRaw( inX + nX[n], inY + nY[n] );
         
         if( oID > 0 ) {
-            if( getObject( oID )->isAutoOrienting ) {
-                nSet[n] = true;
-                nID[n] = oID;
+            ObjectRecord *nO = getObject( oID );
+            
+            if( nO->isAutoOrienting ) {
+
+                if( n < 2 ||
+                    // watch for N/S neighbors that aren't supposed to
+                    // affect us
+                    ( n >= 2 && ! nO->causeAutoOrientHOnly ) ) {
+                    
+                    nSet[n] = true;
+                    nID[n] = oID;
+                    }
                 }
             }
         }
 
     
-    int returnID = inSetO->id;
+    int returnID = 0;
 
+    if( inSetO != NULL ) {
+        returnID = inSetO->id;
+        }
+    
 
-    if( inSetO->horizontalVersionID != -1 &&
+    if( inSetO != NULL &&
+        inSetO->horizontalVersionID != -1 &&
         inSetO->verticalVersionID != -1 &&
         inSetO->cornerVersionID != -1 ) {
         
@@ -6886,31 +6934,48 @@ extern int getPlayerLineage( int inID );
 
 
 void setMapObjectRaw( int inX, int inY, int inID ) {
+    int oldID = dbGet( inX, inY, 0 );
+    
     dbPut( inX, inY, 0, inID );
     
 
-    // global trigger and speech pipe stuff
-
-    if( inID <= 0 ) {
-        return;
-        }
-
-    ObjectRecord *o = getObject( inID );
     
-    if( o == NULL ) {
-        return;
+    // allow un-trigger for auto-orient even if tile becomes empty
+    
+    ObjectRecord *o = NULL;
+
+    if( inID > 0 ) {
+        o = getObject( inID );
         }
 
 
-
-    if( o->isAutoOrienting ) {
+    if( o != NULL && o->isAutoOrienting ) {
         
         // recurse one step
         inID = neighborWallAgree( inX, inY, o, true );
         
         o = getObject( inID );
         }
+    else if( oldID > 0 ) {
+        ObjectRecord *oldO = getObject( oldID );
+        
+        if( oldO->isAutoOrienting ) {
+            // WAS auto-orienting, but not anymore
+            // recurse once to let neighbors un-react to it
+            neighborWallAgree( inX, inY, o, true );
+            }
+        }
+    
 
+
+    // global trigger and speech pipe stuff
+    // skip if tile is now empty
+
+    if( o == NULL ) {
+        return;
+        }
+
+        
     
     char tappedOutPrimaryHomeland = false;
     

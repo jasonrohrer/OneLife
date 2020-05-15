@@ -1085,6 +1085,22 @@ class LivingLifePage : public GamePage, public ActionListener {
         // where player is standing or held
         doublePair getPlayerPos( LiveObject *inPlayer );
 
+
+        SimpleVector<int> getOurLeadershipChain();
+        
+
+        char isFollower( LiveObject *inLeader, 
+                         LiveObject *inFollower );
+        
+        int getTopLeader( LiveObject *inPlayer );
+
+        // is exiled from a point of view
+        char isExiled( LiveObject *inViewer, LiveObject *inPlayer );
+        
+
+        void displayGlobalMessage( char *inMessage );
+
+
     };
 
 

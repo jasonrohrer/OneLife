@@ -3,6 +3,22 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 337    2020-May-15
+
+--Fixed glitch in VOG mode that left distant players invisible (marked out of
+  range) when we jumped to them.
+
+--New /LEADER /FOLLOWER and /ALLY command to show labels above the heads of
+  people.  Part of #610
+
+--DING messages showing follower and ally count when you use the new commands.
+  Part of #610
+
+--Help screen shows I FOLLOW MYSELF.  Part of #610
+
+
+
+
 
 Server Fixes
 
@@ -20,6 +36,34 @@ Server Fixes
 
 --When pointing you toward closest follower after issuing an order, don't
   consider followers you see as exiled.
+
+--Last heard monument call is passed from mother to baby, but only perpetuated
+  one generation (inherited calls are not passed to next generation after
+  that).  No more perpetual stale monument calls.
+
+--Support for +causeAutoOrientH, which triggers E/W neighbors to auto-orient,
+  but not N/S neighbors.  When an object goes from auto-orienting to not, other
+  auto-orienting objects around it now un-react to it.  This allows, for
+  example, corner fences to go back to being horizontal when the fence to the
+  north or south is removed.  Part of jasonrohrer/OneLifeData7#787
+
+--Fixed case of stale object left in movement record overriding an object that
+  changed mid-move (allowing a 3-arrow bear to go back to being a 2-arrow bear
+  and attack mid-move, if shot with the third arrow mid-move).  Fixes #608
+
+--Changed movement code so that track carts that pile up against obstacles
+  (something beyond the end of a disconnnected track or another cart in the
+  way) don't derail, but instead pile up.  Part of jasonrohrer/OneLifeData7#790
+
+--DING message when your leader exiles or redeems you, showing you your new
+  ally count after this action.  Part of #610
+
+--Property inherited by fittest close relative, instead of oldest close
+  relative.  Part of #610
+
+--Leadership inherited by fittest follower, instead of oldest.  Part of #610
+
+
 
 
 

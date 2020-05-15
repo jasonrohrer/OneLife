@@ -1035,6 +1035,8 @@ typedef struct LiveObject {
         int lastMonumentID;
         char monumentPosSent;
         
+        char monumentPosInherited;
+        
 
         char holdingFlightObject;
         
@@ -1101,9 +1103,10 @@ char getFemale( LiveObject *inPlayer ) {
 
 
 
-static LiveObject *findOldestOffspring( int inPlayerID, int inSkipID ) {
-    LiveObject *oldestOffspring = NULL;
-    double oldestOffspringAge = 0;
+// find most fit offspring
+static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID ) {
+    LiveObject *fittestOffspring = NULL;
+    double fittestOffspringFitness = 0;
 
     for( int j=0; j<players.size(); j++ ) {
         LiveObject *otherPlayer = players.getElement( j );
@@ -1111,23 +1114,21 @@ static LiveObject *findOldestOffspring( int inPlayerID, int inSkipID ) {
         if( otherPlayer->id != inPlayerID &&
             otherPlayer->id != inSkipID ) {
             
-            double age = computeAge( otherPlayer );
-            
-            if( age > oldestOffspringAge ) {
+            if( otherPlayer->fitnessScore > fittestOffspringFitness ) {
                 
                 if( otherPlayer->lineage->getElementIndex( inPlayerID ) 
                     != -1 ) {
                     
                     // player is direct offspring of inPlayer
                     // (child, grandchild, etc).
-                    oldestOffspring = otherPlayer;
-                    oldestOffspringAge = age;
+                    fittestOffspring = otherPlayer;
+                    fittestOffspringFitness = otherPlayer->fitnessScore;
                     }
                 }
             }
         }
     
-    return oldestOffspring;
+    return fittestOffspring;
     }
     
 
@@ -1136,7 +1137,7 @@ static LiveObject *findHeir( LiveObject *inPlayer ) {
     LiveObject *offspring = NULL;
     
     if( getFemale( inPlayer ) ) {
-        offspring = findOldestOffspring( inPlayer->id, inPlayer->id );
+        offspring = findFittestOffspring( inPlayer->id, inPlayer->id );
         }
     
     if( offspring == NULL ) {
@@ -1153,7 +1154,7 @@ static LiveObject *findHeir( LiveObject *inPlayer ) {
         while( offspring == NULL &&
                lineageStep < inPlayer->lineage->size() ) {
             
-            offspring = findOldestOffspring( 
+            offspring = findFittestOffspring( 
                 inPlayer->lineage->getElementDirect( lineageStep ),
                 inPlayer->id );
             
@@ -9602,6 +9603,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.monumentPosSet = false;
     newObject.monumentPosSent = true;
     
+    newObject.monumentPosInherited = false;
+
     newObject.holdingFlightObject = false;
 
     newObject.vogMode = false;
@@ -9651,12 +9654,20 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         // mother
         newObject.lineage->push_back( newObject.parentID );
 
+
         // inherit last heard monument, if any, from parent
-        newObject.monumentPosSet = parent->monumentPosSet;
-        newObject.lastMonumentPos = parent->lastMonumentPos;
-        newObject.lastMonumentID = parent->lastMonumentID;
-        if( newObject.monumentPosSet ) {
-            newObject.monumentPosSent = false;
+
+        // but only if parent heard the monument call directly, not if THEY
+        // also inherited it
+        // Don't keep propagating across multiple generations.
+        if( ! parent->monumentPosInherited ) {
+            newObject.monumentPosSet = parent->monumentPosSet;
+            newObject.lastMonumentPos = parent->lastMonumentPos;
+            newObject.lastMonumentID = parent->lastMonumentID;
+            if( newObject.monumentPosSet ) {
+                newObject.monumentPosSent = false;
+                newObject.monumentPosInherited = true;
+                }
             }
         
         
@@ -15063,34 +15074,33 @@ static void leaderDied( LiveObject *inLeader ) {
 
 
     // if leader is following no one (they haven't picked an heir to take over)
-    // have them follow their oldest direct follower now automatically
+    // have them follow their fittest direct follower now automatically
     
     if( inLeader->followingID == -1 &&
         directFollowers.size() > 0 ) {
         
-        LiveObject *oldestFollower = NULL;
-        double oldestAge = 0;
+        LiveObject *fittestFollower = NULL;
+        double fittestFitness = 0;
         
         for( int i=0; i<directFollowers.size(); i++ ) {
             LiveObject *otherPlayer = directFollowers.getElementDirect( i );
             
-            double age = computeAge( otherPlayer );
-            
-            if( age > oldestAge ) {
-                oldestAge = age;
-                oldestFollower = otherPlayer;
+            if( otherPlayer->fitnessScore > fittestFitness ) {
+                
+                fittestFitness = otherPlayer->fitnessScore;
+                fittestFollower = otherPlayer;
                 }
             }
         
-        inLeader->followingID = oldestFollower->id;
+        inLeader->followingID = fittestFollower->id;
         
         // they become top of tree, following no one
-        oldestFollower->followingID = -1;
-        oldestFollower->followingUpdate = true;
+        fittestFollower->followingID = -1;
+        fittestFollower->followingUpdate = true;
 
         // inform them differently, instead of as part of
         // group of followers below
-        oldFollowers.deleteElementEqualTo( oldestFollower );
+        oldFollowers.deleteElementEqualTo( fittestFollower );
         
         const char *pronoun = "HIS";
         
@@ -15103,7 +15113,7 @@ static void leaderDied( LiveObject *inLeader ) {
                          "YOU HAVE INHERITED %s POSITION.",
                          leaderName, pronoun );
         
-        sendGlobalMessage( message, oldestFollower );
+        sendGlobalMessage( message, fittestFollower );
         delete [] message;
         }
 
@@ -17627,6 +17637,15 @@ int main() {
                                 &movingDestX, &movingDestY );
                         
                         if( curMovingID != 0 ) {
+                            
+                            // make sure that dest object hasn't changed
+                            // since moving record was created
+                            // (if a bear is shot mid-move, for example,
+                            //  the movement record will still show the unshot
+                            //  bear)
+                            curMovingID = getMapObject( movingDestX,
+                                                        movingDestY );
+                            
                             ObjectRecord *movingObj = getObject( curMovingID );
                             if( movingObj->permanent &&
                                 movingObj->deadlyDistance > 0 ) {
@@ -19858,6 +19877,41 @@ int main() {
                                         nextPlayer->id );
 
                                     otherToExile->exileUpdate = true;
+                                    
+                                    if( isFollower( nextPlayer,
+                                                    otherToExile ) ) {
+                                        // exiled by their leader
+                                        // warn them about it
+
+                                        char *leadershipName = 
+                                            getLeadershipName( nextPlayer );
+                                        
+                                        const char *allyWord = "ALLIES";
+                                        int numAllies = 
+                                            countAllies( 
+                                                otherToExile,
+                                                getPlayerPos( otherToExile ),
+                                                possePopulationRadius );
+                                        
+                                        if( numAllies == 1 ) {
+                                            allyWord = "ALLY";
+                                            }
+                                        char *warnMessage =
+                                            autoSprintf( 
+                                                "YOU HAVE BEEN EXILED BY "
+                                                "YOUR %s.**"
+                                                "YOU NOW HAVE %d "
+                                                "IN-RANGE %s LEFT.",
+                                                leadershipName,
+                                                numAllies,
+                                                allyWord );
+                                        
+                                        delete [] leadershipName;
+                                
+                                        sendGlobalMessage( warnMessage,
+                                                           otherToExile );
+                                        delete [] warnMessage;
+                                        }
                                     }
                                 }
                             else {
@@ -19881,6 +19935,8 @@ int main() {
                                     // clearing up exiles perpetrated by
                                     // our followers
                                     
+                                    int exileChanged = false;
+                                    
                                     for( int e=0; 
                                          e<otherToRedeem->exiledByIDs.size();
                                          e++ ) {
@@ -19898,6 +19954,7 @@ int main() {
                                                 exiledByIDs.deleteElement( e );
                                             e--;
                                             otherToRedeem->exileUpdate = true;
+                                            exileChanged = true;
                                             }
                                         else if( exiler != NULL && 
                                                  isFollower( nextPlayer,
@@ -19906,7 +19963,43 @@ int main() {
                                                 exiledByIDs.deleteElement( e );
                                             e--;
                                             otherToRedeem->exileUpdate = true;
+                                            exileChanged = true;
                                             }
+                                        }
+                                    if( exileChanged &&
+                                        isFollower( nextPlayer,
+                                                    otherToRedeem ) ) {
+                                        // redeemed by their leader
+                                        // tell them about it
+
+                                        char *leadershipName = 
+                                            getLeadershipName( nextPlayer );
+                                        
+                                        const char *allyWord = "ALLIES";
+                                        int numAllies = 
+                                            countAllies( 
+                                                otherToRedeem,
+                                                getPlayerPos( otherToRedeem ),
+                                                possePopulationRadius );
+                                        
+                                        if( numAllies == 1 ) {
+                                            allyWord = "ALLY";
+                                            }
+                                        char *warnMessage =
+                                            autoSprintf( 
+                                                "YOU HAVE BEEN REDEEMED BY "
+                                                "YOUR %s.**"
+                                                "YOU NOW HAVE %d "
+                                                "IN-RANGE %s.",
+                                                leadershipName,
+                                                numAllies,
+                                                allyWord );
+                                        
+                                        delete [] leadershipName;
+                                
+                                        sendGlobalMessage( warnMessage,
+                                                           otherToExile );
+                                        delete [] warnMessage;
                                         }
                                     }
                                 }
