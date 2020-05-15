@@ -1101,8 +1101,7 @@ char getFemale( LiveObject *inPlayer ) {
 
 
 
-// find most fit offspring over 14 years old
-// (old enough to manage ownership of property)
+// find most fit offspring
 static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID ) {
     LiveObject *fittestOffspring = NULL;
     double fittestOffspringFitness = 0;
@@ -1113,10 +1112,7 @@ static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID ) {
         if( otherPlayer->id != inPlayerID &&
             otherPlayer->id != inSkipID ) {
             
-            double age = computeAge( otherPlayer );
-            
-            if( age > 14.0 && 
-                otherPlayer->fitnessScore > fittestOffspringFitness ) {
+            if( otherPlayer->fitnessScore > fittestOffspringFitness ) {
                 
                 if( otherPlayer->lineage->getElementIndex( inPlayerID ) 
                     != -1 ) {
@@ -15076,34 +15072,33 @@ static void leaderDied( LiveObject *inLeader ) {
 
 
     // if leader is following no one (they haven't picked an heir to take over)
-    // have them follow their oldest direct follower now automatically
+    // have them follow their fittest direct follower now automatically
     
     if( inLeader->followingID == -1 &&
         directFollowers.size() > 0 ) {
         
-        LiveObject *oldestFollower = NULL;
-        double oldestAge = 0;
+        LiveObject *fittestFollower = NULL;
+        double fittestFitness = 0;
         
         for( int i=0; i<directFollowers.size(); i++ ) {
             LiveObject *otherPlayer = directFollowers.getElementDirect( i );
             
-            double age = computeAge( otherPlayer );
-            
-            if( age > oldestAge ) {
-                oldestAge = age;
-                oldestFollower = otherPlayer;
+            if( otherPlayer->fitnessScore > fittestFitness ) {
+                
+                fittestFitness = otherPlayer->fitnessScore;
+                fittestFollower = otherPlayer;
                 }
             }
         
-        inLeader->followingID = oldestFollower->id;
+        inLeader->followingID = fittestFollower->id;
         
         // they become top of tree, following no one
-        oldestFollower->followingID = -1;
-        oldestFollower->followingUpdate = true;
+        fittestFollower->followingID = -1;
+        fittestFollower->followingUpdate = true;
 
         // inform them differently, instead of as part of
         // group of followers below
-        oldFollowers.deleteElementEqualTo( oldestFollower );
+        oldFollowers.deleteElementEqualTo( fittestFollower );
         
         const char *pronoun = "HIS";
         
@@ -15116,7 +15111,7 @@ static void leaderDied( LiveObject *inLeader ) {
                          "YOU HAVE INHERITED %s POSITION.",
                          leaderName, pronoun );
         
-        sendGlobalMessage( message, oldestFollower );
+        sendGlobalMessage( message, fittestFollower );
         delete [] message;
         }
 

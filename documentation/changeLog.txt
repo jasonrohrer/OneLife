@@ -61,6 +61,9 @@ Server Fixes
 --Property inherited by fittest close relative, instead of oldest close
   relative.  Part of #610
 
+--Leadership inherited by fittest follower, instead of oldest.  Part of #610
+
+
 
 
 
