@@ -19977,7 +19977,7 @@ int main() {
                                         delete [] leadershipName;
                                 
                                         sendGlobalMessage( warnMessage,
-                                                           otherToExile );
+                                                           otherToRedeem );
                                         delete [] warnMessage;
                                         }
                                     }

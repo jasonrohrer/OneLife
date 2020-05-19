@@ -19,6 +19,9 @@ Server Fixes
   (client and server should enforcing good limits anyway, but added more checks
   just in case those numbers change in the future).
 
+--Fixed bug in DING redeem message sent to redeemed player (was being sent to
+  everyone by accident).
+
 
 
 
