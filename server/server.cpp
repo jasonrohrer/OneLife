@@ -36,6 +36,7 @@
 #include "../gameSource/objectMetadata.h"
 #include "../gameSource/animationBank.h"
 #include "../gameSource/categoryBank.h"
+#include "../commonSource/sayLimit.h"
 
 #include "lifeLog.h"
 #include "foodLog.h"
@@ -3353,13 +3354,7 @@ double computeAge( LiveObject *inPlayer ) {
 
 
 int getSayLimit( LiveObject *inPlayer ) {
-    int limit = (unsigned int)( floor( computeAge( inPlayer ) ) + 1 );
-
-    if( inPlayer->isEve && limit < 30 ) {
-        // give Eve room to name her family line
-        limit = 30;
-        }
-    return limit;
+    return getSayLimit( computeAge( inPlayer ) );
     }
 
 

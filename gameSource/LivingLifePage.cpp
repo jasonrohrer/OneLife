@@ -23,6 +23,8 @@
 #include "liveAnimationTriggers.h"
 
 #include "../commonSource/fractalNoise.h"
+#include "../commonSource/sayLimit.h"
+
 
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/MinPriorityQueue.h"
@@ -19982,12 +19984,8 @@ void LivingLifePage::step() {
         // current age
         double age = computeCurrentAge( ourLiveObject );
 
-        int sayCap = (int)( floor( age ) + 1 );
-        
-        if( ourLiveObject->lineage.size() == 0  && sayCap < 30 ) {
-            // eve has a larger say limit
-            sayCap = 30;
-            }
+        int sayCap = getSayLimit( age );
+
         if( vogMode ) {
             sayCap = 200;
             }
