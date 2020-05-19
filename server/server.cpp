@@ -20206,27 +20206,51 @@ int main() {
                                     // add coordinates to where we're standing
                                     GridPos p = getPlayerPos( nextPlayer );
                                     
-                                    textToAdd = autoSprintf( 
-                                        "%s *map %d %d %.f",
-                                        m.saidText, p.x, p.y, 
-                                        Time::timeSec() );
+                                    char *mapStuff = autoSprintf( 
+                                        " *map %d %d %.f",
+                                        p.x, p.y, Time::timeSec() );
                                     
-                                    if( strlen( textToAdd ) >= 
-                                        MAP_METADATA_LENGTH ) {
-                                        // too long once coords added
-                                        // skip adding
-                                        delete [] textToAdd;
-                                        textToAdd = 
-                                            stringDuplicate( m.saidText );
-                                        }
+                                    int mapStuffLen = strlen( mapStuff );
+                                    
+                                    char *saidText = 
+                                        stringDuplicate( m.saidText );
+                                    
+                                    int saidLen = strlen( saidText );
+                                    
+                                    int extra = saidLen + mapStuffLen
+                                        - ( MAP_METADATA_LENGTH - 1 );
+
+                                    if( extra > 0 ) {
+                                        // too long to fit in metadata,
+                                        // trim speech, not map data
+                                        
+                                        saidLen = saidLen - extra;
+                                        
+                                        // truncate
+                                        saidText[ saidLen ] = '\0';
+                                        }                                    
+                                    
+                                    textToAdd = autoSprintf( 
+                                        "%s%s", saidText, mapStuff );
+                                    
+                                    delete [] saidText;
+                                    delete [] mapStuff;
                                     }
                                 else {
                                     textToAdd = stringDuplicate( m.saidText );
                                     }
 
+                                int lenToAdd = strlen( textToAdd );
+                                
+                                // leave room for null char at end
+                                if( lenToAdd > MAP_METADATA_LENGTH - 1 ) {
+                                    lenToAdd = MAP_METADATA_LENGTH - 1;
+                                    }
+
                                 memset( metaData, 0, MAP_METADATA_LENGTH );
-                                memcpy( metaData, textToAdd, 
-                                        strlen( textToAdd ) + 1 );
+                                // this will leave 0 null character at end
+                                // left over from memset of full length
+                                memcpy( metaData, textToAdd, lenToAdd );
                                 
                                 delete [] textToAdd;
 

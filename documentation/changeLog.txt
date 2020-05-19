@@ -13,6 +13,14 @@ Version 339    ???
 
 
 
+Server Fixes
+
+--Truncating said text to avoid overflowing metadata limit when writing
+  (client and server should enforcing good limits anyway, but added more checks
+  just in case those numbers change in the future).
+
+
+
 
 Version 337    2020-May-15
 
