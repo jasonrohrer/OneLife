@@ -5,10 +5,10 @@ int getSayLimit( double inAge ) {
     
     int sayCap = (int)( floorAge + 1 );
     
-    int adultBase = 80;
+    int adultBase = 50;
 
     if( floorAge >= 16 ) {
-        sayCap = floorAge + adultBase;
+        sayCap = 16 + ( floorAge - 16 ) / 2 + adultBase;
         }
     else if ( floorAge >= 8 ) {
         // rise smoothly from 9 to ( 16 + adultBase) characters between

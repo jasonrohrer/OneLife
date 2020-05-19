@@ -7,8 +7,8 @@ Version 339    ???
 
 --New speech length limit curve that rises rapidly between ages 8 and 16, so
   that adults aren't so limited in what they can say.  Babies still gain one
-  letter per year up to age 8, but by age 16, the limit is 96 characters. 
-  After that, you gain one character per year again, and can say 140 characters
+  letter per year up to age 8, but by age 16, the limit is 66 characters. 
+  After that, you gain one character per two years, and can say 88 characters
   by old age.
 
 
