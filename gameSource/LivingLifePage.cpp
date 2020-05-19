@@ -24803,6 +24803,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                     
                                     showPlayerLabel( leadO, leaderLabel, eta );
                                     }
+                                sendToServerSocket( (char*)"LEAD 0 0#" );
                                 }
                             else if( strstr( typedText,
                                              translate( "followerCommand" ) ) 
@@ -24905,6 +24906,11 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 
                                 displayGlobalMessage( message );
                                 delete [] message;
+                                }
+                            else if( strstr( typedText,
+                                             translate( "unfollowCommand" ) ) 
+                                     == typedText ) {
+                                sendToServerSocket( (char*)"UNFOL 0 0#" );
                                 }
                             else {
                                 // filter hints

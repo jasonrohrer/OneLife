@@ -11,6 +11,10 @@ Version 339    ???
   After that, you gain one character per two years, and can say 88 characters
   by old age.
 
+--/LEADER command now gives you an arrow to your top leader.  Fixes #615
+
+--New /UNFOLLOW command that can be used by the youngest baby.
+
 
 
 Server Fixes

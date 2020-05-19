@@ -2474,6 +2474,8 @@ typedef enum messageType {
     VOGT,
     VOGX,
     PHOTO,
+    LEAD,
+    UNFOL,
     UNKNOWN
     } messageType;
 
@@ -2876,7 +2878,7 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     else if( strcmp( nameBuffer, "VOGX" ) == 0 ) {
         m.type = VOGX;
         }
-   else if( strcmp( nameBuffer, "PHOTO" ) == 0 ) {
+    else if( strcmp( nameBuffer, "PHOTO" ) == 0 ) {
         m.type = PHOTO;
         numRead = sscanf( inMessage, 
                           "%99s %d %d %d", 
@@ -2886,7 +2888,13 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
             m.id = 0;
             }
         }
-     else {
+    else if( strcmp( nameBuffer, "LEAD" ) == 0 ) {
+        m.type = LEAD;
+        }
+    else if( strcmp( nameBuffer, "UNFOL" ) == 0 ) {
+        m.type = UNFOL;
+        }
+    else {
         m.type = UNKNOWN;
         }
     
@@ -18591,7 +18599,76 @@ int main() {
                                          strlen( message ) );
                     delete [] message;
                     }
+                else if( m.type == LEAD ) {
+                    LiveObject *topLeaderO = 
+                        getLiveObject( getTopLeader( nextPlayer ) );
 
+                    if( topLeaderO != NULL && topLeaderO != nextPlayer ) {
+                        
+                        
+                        if( ! isExiled( topLeaderO, nextPlayer ) ) {
+                        
+                            // they have a leader and haven't been exiled
+                            // by that leader
+                            
+                            // give them an arrow toward that leader
+                            
+                            GridPos lPos = getPlayerPos( topLeaderO );
+                            
+                            char *topLeaderName = 
+                                getLeadershipName( topLeaderO );
+
+                            char *psMessage = 
+                                autoSprintf( "PS\n"
+                                             "%d/0 MY %s "
+                                             "*leader %d *map %d %d\n#",
+                                             nextPlayer->id,
+                                             topLeaderName,
+                                             topLeaderO->id,
+                                             lPos.x - nextPlayer->birthPos.x,
+                                             lPos.y - nextPlayer->birthPos.y );
+                            
+                            delete [] topLeaderName;
+
+                            sendMessageToPlayer( nextPlayer, 
+                                                 psMessage, 
+                                                 strlen( psMessage ) );
+                            delete [] psMessage;
+                            }
+                        else {
+                            char *psMessage = 
+                                autoSprintf( "PS\n"
+                                             "%d/0 +EXILED+\n#",
+                                             nextPlayer->id );
+                            
+                            sendMessageToPlayer( nextPlayer, 
+                                                 psMessage, 
+                                                 strlen( psMessage ) );
+                            delete [] psMessage;
+                            }
+                        }
+                    else {
+                        char *psMessage = 
+                            autoSprintf( "PS\n"
+                                         "%d/0 +NO LEADER+\n#",
+                                         nextPlayer->id );
+                        sendMessageToPlayer( nextPlayer, 
+                                             psMessage, strlen( psMessage ) );
+                        delete [] psMessage;
+                        }
+                    }
+                else if( m.type == UNFOL ) {
+                    // following no one
+                    nextPlayer->followingID = -1;
+                    nextPlayer->followingUpdate = true;
+                    char *psMessage = 
+                        autoSprintf( "PS\n"
+                                     "%d/0 +NO LEADER+\n#",
+                                 nextPlayer->id );
+                    sendMessageToPlayer( nextPlayer, 
+                                         psMessage, strlen( psMessage ) );
+                    delete [] psMessage;
+                    }
                 else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
                     // if we're waiting for a FORCE response, ignore
