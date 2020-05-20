@@ -262,6 +262,8 @@ static int killEmotionIndex = 2;
 static int victimEmotionIndex = 2;
 static int victimTerrifiedEmotionIndex = 2;
 
+static int starvingEmotionIndex = 2;
+
 
 static double lastBabyPassedThresholdTime = 0;
 
@@ -898,6 +900,9 @@ typedef struct LiveObject {
         double emotUnfreezeETA;
         int emotFrozenIndex;
         
+        char starving;
+        
+
         char connected;
         
         char error;
@@ -9572,6 +9577,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.emotUnfreezeETA = 0;
     newObject.emotFrozenIndex = 0;
     
+    newObject.starving = false;
 
     newObject.connected = true;
     newObject.error = false;
@@ -12737,6 +12743,10 @@ static SimpleVector<int> newEmotTTLs;
 static void checkForFoodEatingEmot( LiveObject *inPlayer,
                                     int inEatenID ) {
     
+    char wasStarving = inPlayer->starving;
+    inPlayer->starving = false;
+
+    
     ObjectRecord *o = getObject( inEatenID );
     
     if( o != NULL ) {
@@ -12755,9 +12765,19 @@ static void checkForFoodEatingEmot( LiveObject *inPlayer,
                 newEmotPlayerIDs.push_back( inPlayer->id );
                 newEmotIndices.push_back( e );
                 newEmotTTLs.push_back( t );
+                return;
                 }
             }
         }
+
+    // no food emot found
+    if( wasStarving ) {
+        // clear their starving emot
+        newEmotPlayerIDs.push_back( inPlayer->id );
+        newEmotIndices.push_back( -1 );
+        newEmotTTLs.push_back( 0 );
+        }
+                
     }
 
 
@@ -16064,6 +16084,10 @@ int main() {
 
     victimTerrifiedEmotionIndex =
         SettingsManager::getIntSetting( "victimTerrifiedEmotionIndex", 2 );
+
+
+    starvingEmotionIndex =
+        SettingsManager::getIntSetting( "starvingEmotionIndex", 2 );
 
 
     FILE *f = fopen( "curseWordList.txt", "r" );
@@ -24798,6 +24822,33 @@ int main() {
                     
                     if( decrementedPlayer != NULL ) {
                         decrementedPlayer->foodUpdate = true;
+
+                        if( computeAge( decrementedPlayer ) > 
+                            defaultActionAge ) {
+                            
+                            double decTime = 
+                                computeFoodDecrementTimeSeconds( 
+                                    decrementedPlayer );
+                            
+                            int totalFood = 
+                                decrementedPlayer->yummyBonusStore
+                                + decrementedPlayer->foodStore;
+
+                            double totalTime = decTime * totalFood;
+                            
+                            if( totalTime < 20 ) {
+                                // 20 seconds left before death
+                                // show starving emote
+                                newEmotPlayerIDs.push_back( 
+                                    decrementedPlayer->id );
+                            
+                                newEmotIndices.push_back( 
+                                    starvingEmotionIndex );
+                                
+                                newEmotTTLs.push_back( 30 );
+                                decrementedPlayer->starving = true;
+                                }
+                            }
                         }
                     }
                 

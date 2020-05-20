@@ -15,6 +15,11 @@ Version 339    ???
 
 --New /UNFOLLOW command that can be used by the youngest baby.
 
+--Non-baby players that will starve to death in less than 20 seconds display
+  starving emot, complete with off-screen H sound.  You can now easily notice
+  people who need help.  Fixes #614
+
+
 
 
 Server Fixes
