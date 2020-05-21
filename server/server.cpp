@@ -6888,6 +6888,17 @@ static char isYummy( LiveObject *inPlayer, int inObjectID ) {
         return false;
         }
 
+
+    if( o->yumParentID != -1 ) {
+        // set this whether valid or not
+        inObjectID = o->yumParentID;
+        
+        // NOTE:
+        // we're NOT replacing o with the yumParent object
+        // because o isn't used beyond this point
+        }   
+
+
     for( int i=0; i<inPlayer->yummyFoodChain.size(); i++ ) {
         if( inObjectID == inPlayer->yummyFoodChain.getElementDirect(i) ) {
             return false;
@@ -6928,7 +6939,18 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
     if( wasYummy ||
         inPlayer->yummyFoodChain.size() == 0 ) {
         
-        inPlayer->yummyFoodChain.push_back( inFoodEatenID );
+        int eatenID = inFoodEatenID;
+
+        ObjectRecord *eatenO = getObject( inFoodEatenID );
+        
+        if( eatenO->yumParentID != -1 ) {
+            // this may or may not be a valid object id
+            // doesn't matter, because it's never used as an object ID
+            // just as a unique food ID in the yummyFoodChain list
+            eatenID = eatenO->yumParentID;
+            }
+
+        inPlayer->yummyFoodChain.push_back( eatenID );
         }
     
 

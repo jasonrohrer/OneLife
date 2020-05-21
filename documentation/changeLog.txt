@@ -19,6 +19,9 @@ Version 339    ???
   starving emot, complete with off-screen H sound.  You can now easily notice
   people who need help.  Fixes #614
 
+--Support for +yumID tag to group different foods into the same YUM category.
+  Part of jasonrohrer/OneLifeData7#799
+
 
 
 
