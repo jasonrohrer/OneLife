@@ -11703,7 +11703,7 @@ static char isWildcardGivingSay( char *inSaidString,
         
         char *hitLoc = strstr( inSaidString, testString );
 
-        if( hitLoc != NULL ) {
+        if( hitLoc == inSaidString ) {
             return true;
             }
         }

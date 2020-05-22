@@ -34,6 +34,10 @@ Server Fixes
 --Fixed bug in DING redeem message sent to redeemed player (was being sent to
   everyone by accident).
 
+--I FOLLOW YOU and other non-name phrases must not have other strings in front
+  of them (so SAY I FOLLOW YOU won't follow someone by accident).  Fixes #620
+
+
 
 
 
