@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 339    2020-May-22
+Version 340    2020-May-22
 
 --New speech length limit curve that rises rapidly between ages 8 and 16, so
   that adults aren't so limited in what they can say.  Babies still gain one
