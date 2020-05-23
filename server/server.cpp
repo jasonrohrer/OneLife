@@ -36,6 +36,7 @@
 #include "../gameSource/objectMetadata.h"
 #include "../gameSource/animationBank.h"
 #include "../gameSource/categoryBank.h"
+#include "../commonSource/sayLimit.h"
 
 #include "lifeLog.h"
 #include "foodLog.h"
@@ -262,6 +263,8 @@ static const char *allowedSayChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! ";
 static int killEmotionIndex = 2;
 static int victimEmotionIndex = 2;
 static int victimTerrifiedEmotionIndex = 2;
+
+static int starvingEmotionIndex = 2;
 
 
 static double lastBabyPassedThresholdTime = 0;
@@ -899,6 +902,9 @@ typedef struct LiveObject {
         double emotUnfreezeETA;
         int emotFrozenIndex;
         
+        char starving;
+        
+
         char connected;
         
         char error;
@@ -2475,6 +2481,8 @@ typedef enum messageType {
     VOGT,
     VOGX,
     PHOTO,
+    LEAD,
+    UNFOL,
     UNKNOWN
     } messageType;
 
@@ -2877,7 +2885,7 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     else if( strcmp( nameBuffer, "VOGX" ) == 0 ) {
         m.type = VOGX;
         }
-   else if( strcmp( nameBuffer, "PHOTO" ) == 0 ) {
+    else if( strcmp( nameBuffer, "PHOTO" ) == 0 ) {
         m.type = PHOTO;
         numRead = sscanf( inMessage, 
                           "%99s %d %d %d", 
@@ -2887,7 +2895,13 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
             m.id = 0;
             }
         }
-     else {
+    else if( strcmp( nameBuffer, "LEAD" ) == 0 ) {
+        m.type = LEAD;
+        }
+    else if( strcmp( nameBuffer, "UNFOL" ) == 0 ) {
+        m.type = UNFOL;
+        }
+    else {
         m.type = UNKNOWN;
         }
     
@@ -3355,13 +3369,7 @@ double computeAge( LiveObject *inPlayer ) {
 
 
 int getSayLimit( LiveObject *inPlayer ) {
-    int limit = (unsigned int)( floor( computeAge( inPlayer ) ) + 1 );
-
-    if( inPlayer->isEve && limit < 30 ) {
-        // give Eve room to name her family line
-        limit = 30;
-        }
-    return limit;
+    return getSayLimit( computeAge( inPlayer ) );
     }
 
 
@@ -6882,6 +6890,17 @@ static char isYummy( LiveObject *inPlayer, int inObjectID ) {
         return false;
         }
 
+
+    if( o->yumParentID != -1 ) {
+        // set this whether valid or not
+        inObjectID = o->yumParentID;
+        
+        // NOTE:
+        // we're NOT replacing o with the yumParent object
+        // because o isn't used beyond this point
+        }   
+
+
     for( int i=0; i<inPlayer->yummyFoodChain.size(); i++ ) {
         if( inObjectID == inPlayer->yummyFoodChain.getElementDirect(i) ) {
             return false;
@@ -6922,7 +6941,18 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
     if( wasYummy ||
         inPlayer->yummyFoodChain.size() == 0 ) {
         
-        inPlayer->yummyFoodChain.push_back( inFoodEatenID );
+        int eatenID = inFoodEatenID;
+
+        ObjectRecord *eatenO = getObject( inFoodEatenID );
+        
+        if( eatenO->yumParentID != -1 ) {
+            // this may or may not be a valid object id
+            // doesn't matter, because it's never used as an object ID
+            // just as a unique food ID in the yummyFoodChain list
+            eatenID = eatenO->yumParentID;
+            }
+
+        inPlayer->yummyFoodChain.push_back( eatenID );
         }
     
 
@@ -9571,6 +9601,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.emotUnfreezeETA = 0;
     newObject.emotFrozenIndex = 0;
     
+    newObject.starving = false;
 
     newObject.connected = true;
     newObject.error = false;
@@ -11674,7 +11705,7 @@ static char isWildcardGivingSay( char *inSaidString,
         
         char *hitLoc = strstr( inSaidString, testString );
 
-        if( hitLoc != NULL ) {
+        if( hitLoc == inSaidString ) {
             return true;
             }
         }
@@ -12736,6 +12767,10 @@ static SimpleVector<int> newEmotTTLs;
 static void checkForFoodEatingEmot( LiveObject *inPlayer,
                                     int inEatenID ) {
     
+    char wasStarving = inPlayer->starving;
+    inPlayer->starving = false;
+
+    
     ObjectRecord *o = getObject( inEatenID );
     
     if( o != NULL ) {
@@ -12754,9 +12789,19 @@ static void checkForFoodEatingEmot( LiveObject *inPlayer,
                 newEmotPlayerIDs.push_back( inPlayer->id );
                 newEmotIndices.push_back( e );
                 newEmotTTLs.push_back( t );
+                return;
                 }
             }
         }
+
+    // no food emot found
+    if( wasStarving ) {
+        // clear their starving emot
+        newEmotPlayerIDs.push_back( inPlayer->id );
+        newEmotIndices.push_back( -1 );
+        newEmotTTLs.push_back( 0 );
+        }
+                
     }
 
 
@@ -16079,6 +16124,10 @@ int main() {
         SettingsManager::getIntSetting( "victimTerrifiedEmotionIndex", 2 );
 
 
+    starvingEmotionIndex =
+        SettingsManager::getIntSetting( "starvingEmotionIndex", 2 );
+
+
     FILE *f = fopen( "curseWordList.txt", "r" );
     
     if( f != NULL ) {
@@ -18612,7 +18661,76 @@ int main() {
                                          strlen( message ) );
                     delete [] message;
                     }
+                else if( m.type == LEAD ) {
+                    LiveObject *topLeaderO = 
+                        getLiveObject( getTopLeader( nextPlayer ) );
 
+                    if( topLeaderO != NULL && topLeaderO != nextPlayer ) {
+                        
+                        
+                        if( ! isExiled( topLeaderO, nextPlayer ) ) {
+                        
+                            // they have a leader and haven't been exiled
+                            // by that leader
+                            
+                            // give them an arrow toward that leader
+                            
+                            GridPos lPos = getPlayerPos( topLeaderO );
+                            
+                            char *topLeaderName = 
+                                getLeadershipName( topLeaderO );
+
+                            char *psMessage = 
+                                autoSprintf( "PS\n"
+                                             "%d/0 MY %s "
+                                             "*leader %d *map %d %d\n#",
+                                             nextPlayer->id,
+                                             topLeaderName,
+                                             topLeaderO->id,
+                                             lPos.x - nextPlayer->birthPos.x,
+                                             lPos.y - nextPlayer->birthPos.y );
+                            
+                            delete [] topLeaderName;
+
+                            sendMessageToPlayer( nextPlayer, 
+                                                 psMessage, 
+                                                 strlen( psMessage ) );
+                            delete [] psMessage;
+                            }
+                        else {
+                            char *psMessage = 
+                                autoSprintf( "PS\n"
+                                             "%d/0 +EXILED+\n#",
+                                             nextPlayer->id );
+                            
+                            sendMessageToPlayer( nextPlayer, 
+                                                 psMessage, 
+                                                 strlen( psMessage ) );
+                            delete [] psMessage;
+                            }
+                        }
+                    else {
+                        char *psMessage = 
+                            autoSprintf( "PS\n"
+                                         "%d/0 +NO LEADER+\n#",
+                                         nextPlayer->id );
+                        sendMessageToPlayer( nextPlayer, 
+                                             psMessage, strlen( psMessage ) );
+                        delete [] psMessage;
+                        }
+                    }
+                else if( m.type == UNFOL ) {
+                    // following no one
+                    nextPlayer->followingID = -1;
+                    nextPlayer->followingUpdate = true;
+                    char *psMessage = 
+                        autoSprintf( "PS\n"
+                                     "%d/0 +NO LEADER+\n#",
+                                 nextPlayer->id );
+                    sendMessageToPlayer( nextPlayer, 
+                                         psMessage, strlen( psMessage ) );
+                    delete [] psMessage;
+                    }
                 else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
                     // if we're waiting for a FORCE response, ignore
@@ -19998,7 +20116,7 @@ int main() {
                                         delete [] leadershipName;
                                 
                                         sendGlobalMessage( warnMessage,
-                                                           otherToExile );
+                                                           otherToRedeem );
                                         delete [] warnMessage;
                                         }
                                     }
@@ -20227,27 +20345,51 @@ int main() {
                                     // add coordinates to where we're standing
                                     GridPos p = getPlayerPos( nextPlayer );
                                     
-                                    textToAdd = autoSprintf( 
-                                        "%s *map %d %d %.f",
-                                        m.saidText, p.x, p.y, 
-                                        Time::timeSec() );
+                                    char *mapStuff = autoSprintf( 
+                                        " *map %d %d %.f",
+                                        p.x, p.y, Time::timeSec() );
                                     
-                                    if( strlen( textToAdd ) >= 
-                                        MAP_METADATA_LENGTH ) {
-                                        // too long once coords added
-                                        // skip adding
-                                        delete [] textToAdd;
-                                        textToAdd = 
-                                            stringDuplicate( m.saidText );
-                                        }
+                                    int mapStuffLen = strlen( mapStuff );
+                                    
+                                    char *saidText = 
+                                        stringDuplicate( m.saidText );
+                                    
+                                    int saidLen = strlen( saidText );
+                                    
+                                    int extra = saidLen + mapStuffLen
+                                        - ( MAP_METADATA_LENGTH - 1 );
+
+                                    if( extra > 0 ) {
+                                        // too long to fit in metadata,
+                                        // trim speech, not map data
+                                        
+                                        saidLen = saidLen - extra;
+                                        
+                                        // truncate
+                                        saidText[ saidLen ] = '\0';
+                                        }                                    
+                                    
+                                    textToAdd = autoSprintf( 
+                                        "%s%s", saidText, mapStuff );
+                                    
+                                    delete [] saidText;
+                                    delete [] mapStuff;
                                     }
                                 else {
                                     textToAdd = stringDuplicate( m.saidText );
                                     }
 
+                                int lenToAdd = strlen( textToAdd );
+                                
+                                // leave room for null char at end
+                                if( lenToAdd > MAP_METADATA_LENGTH - 1 ) {
+                                    lenToAdd = MAP_METADATA_LENGTH - 1;
+                                    }
+
                                 memset( metaData, 0, MAP_METADATA_LENGTH );
-                                memcpy( metaData, textToAdd, 
-                                        strlen( textToAdd ) + 1 );
+                                // this will leave 0 null character at end
+                                // left over from memset of full length
+                                memcpy( metaData, textToAdd, lenToAdd );
                                 
                                 delete [] textToAdd;
 
@@ -24718,6 +24860,33 @@ int main() {
                     
                     if( decrementedPlayer != NULL ) {
                         decrementedPlayer->foodUpdate = true;
+
+                        if( computeAge( decrementedPlayer ) > 
+                            defaultActionAge ) {
+                            
+                            double decTime = 
+                                computeFoodDecrementTimeSeconds( 
+                                    decrementedPlayer );
+                            
+                            int totalFood = 
+                                decrementedPlayer->yummyBonusStore
+                                + decrementedPlayer->foodStore;
+
+                            double totalTime = decTime * totalFood;
+                            
+                            if( totalTime < 20 ) {
+                                // 20 seconds left before death
+                                // show starving emote
+                                newEmotPlayerIDs.push_back( 
+                                    decrementedPlayer->id );
+                            
+                                newEmotIndices.push_back( 
+                                    starvingEmotionIndex );
+                                
+                                newEmotTTLs.push_back( 30 );
+                                decrementedPlayer->starving = true;
+                                }
+                            }
                         }
                     }
                 

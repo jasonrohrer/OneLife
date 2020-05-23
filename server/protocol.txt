@@ -1029,6 +1029,8 @@ VOGI x y id#
 VOGT x y text# 
 VOGX x y#
 PHOTO x y seq#
+LEAD x y#
+UNFOL x y#
 
 KA   is a keep-alive message used to keep the connection alive when the client
      is idle and not sending any other messages (NATs and other routers can
@@ -1127,6 +1129,12 @@ PING is used to request a PONG response fromt the server.  The x and y
 
 PHOTO is used to request a photo approval and signature for position
       x y and sequence number seq
+
+LEAD requests the player's top leader's position as spoken map coordinates.
+     x and y are ignored
+
+UNFOL makes the player follow no one (same as saying "I FOLLOW MYSELF")
+
 
 
 This one is more complicated:

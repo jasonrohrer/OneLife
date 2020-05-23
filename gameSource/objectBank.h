@@ -436,7 +436,12 @@ typedef struct ObjectRecord {
         // is this object useable by normal players only?
         // non-tutorial, non-cursed players
         char normalOnly;
-
+        
+        // -1 if this object is in its own yum class
+        // or the object ID of its YUM parent
+        // tag of +yum453 in object description specifies 453 as the yum parent 
+        int yumParentID;
+        
     } ObjectRecord;
 
 

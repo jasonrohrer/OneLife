@@ -3,6 +3,44 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 340    2020-May-22
+
+--New speech length limit curve that rises rapidly between ages 8 and 16, so
+  that adults aren't so limited in what they can say.  Babies still gain one
+  letter per year up to age 8, but by age 16, the limit is 66 characters. 
+  After that, you gain one character per two years, and can say 88 characters
+  by old age.
+
+--/LEADER command now gives you an arrow to your top leader.  Fixes #615
+
+--New /UNFOLLOW command that can be used by the youngest baby.
+
+--Non-baby players that will starve to death in less than 20 seconds display
+  starving emot, complete with off-screen H sound.  You can now easily notice
+  people who need help.  Fixes #614
+
+--Support for +yumID tag to group different foods into the same YUM category.
+  Part of jasonrohrer/OneLifeData7#799
+
+
+
+
+Server Fixes
+
+--Truncating said text to avoid overflowing metadata limit when writing
+  (client and server should enforcing good limits anyway, but added more checks
+  just in case those numbers change in the future).
+
+--Fixed bug in DING redeem message sent to redeemed player (was being sent to
+  everyone by accident).
+
+--I FOLLOW YOU and other non-name phrases must not have other strings in front
+  of them (so SAY I FOLLOW YOU won't follow someone by accident).  Fixes #620
+
+
+
+
+
 Version 337    2020-May-15
 
 --Fixed glitch in VOG mode that left distant players invisible (marked out of
