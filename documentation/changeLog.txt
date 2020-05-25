@@ -5,10 +5,20 @@ http://onehouronelife.com/updateLog.php
 
 Version 341    ???
 
+NOTE:  must update server first this week.
+
 --Player character now flips facing direction as mouse moves to left and right.
   Fixes #623
 
 --Object editor page shows current object ID.
+
+
+
+Server Fixes
+
+--Server no longer disconnects client when it sends an unknown message type.
+  For future protocol updates, this allows client to be updated before server.
+
 
 
 
