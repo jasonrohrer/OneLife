@@ -226,6 +226,8 @@ TOOL_SLOTS (TS)
 
 HOMELAND (HL)
 
+FLIP (FL) 
+
 FRAME (FM)
 
 PONG
@@ -970,6 +972,19 @@ family_name is 0 if homeland is expired
 
 
 
+FL
+p_id face_left
+p_id face_left
+...
+p_id face_left
+#
+
+Tells player about other players that have flipped.  face_left is true if facing
+left, false if facing right.  Only sent in response to stationary player flip
+requests (clients should still auto-flip players based on movement).
+
+
+
 
 FM
 #
@@ -1031,6 +1046,7 @@ VOGX x y#
 PHOTO x y seq#
 LEAD x y#
 UNFOL x y#
+FLIP x y#
 
 KA   is a keep-alive message used to keep the connection alive when the client
      is idle and not sending any other messages (NATs and other routers can
@@ -1134,6 +1150,8 @@ LEAD requests the player's top leader's position as spoken map coordinates.
      x and y are ignored
 
 UNFOL makes the player follow no one (same as saying "I FOLLOW MYSELF")
+
+FLIP requests flip to player's orientation, new facing toward x y
 
 
 
