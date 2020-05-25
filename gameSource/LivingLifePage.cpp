@@ -22529,12 +22529,12 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         char flip = false;
         
         if( ourLiveObject->holdingFlip &&
-            worldX > ourLiveObject->currentPos.x + 1 ) {
+            worldX > ourLiveObject->currentPos.x + 0.5 ) {
             ourLiveObject->holdingFlip = false;
             flip = true;
             }
         else if( ! ourLiveObject->holdingFlip &&
-                 worldX < ourLiveObject->currentPos.x - 1 ) {
+                 worldX < ourLiveObject->currentPos.x - 0.5 ) {
             ourLiveObject->holdingFlip = true;
             flip = true;
             }
