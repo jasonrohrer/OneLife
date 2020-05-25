@@ -8,6 +8,8 @@ Version 341    ???
 --Player character now flips facing direction as mouse moves to left and right.
   Fixes #623
 
+--Object editor page shows current object ID.
+
 
 
 
