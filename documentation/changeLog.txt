@@ -12,6 +12,8 @@ NOTE:  must update server first this week.
 
 --Object editor page shows current object ID.
 
+--Fixed crash in Animation editor when right-click dragging with empty object.
+
 
 
 Server Fixes
