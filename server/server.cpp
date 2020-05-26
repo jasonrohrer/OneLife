@@ -16199,6 +16199,9 @@ int main() {
                                             Time::getCurrentTime() +
                                             computeFoodDecrementTimeSeconds( 
                                                 hitPlayer );
+                                            
+										checkForFoodEatingEmot( hitPlayer,
+																0 );
 
                                         // fixed cost to pick up baby
                                         // this still encourages baby-parent
