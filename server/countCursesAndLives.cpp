@@ -50,7 +50,7 @@ int main() {
     
     int numRead = 2;
     
-    
+    int numLives = 0;
     while( numRead == 2 ) {
     
         numRead = fscanf( livesFile, "%499s age=%lf", email, &minutesLived );
@@ -58,11 +58,16 @@ int main() {
         if( numRead == 2 ) {
             EmailRecord *r = getRecord( email );
             r->lifeMinutes += minutesLived;
+            numLives++;
             }
         }
 
+    printf( "Read %d lives from life file\n", numLives );
+
+
     numRead == 2;
 
+    int numCurseListings = 0;
     while( numRead == 2 ) {
     
         numRead = fscanf( curseFile, "%d %499s", &curses, email );
@@ -70,9 +75,12 @@ int main() {
         if( numRead == 2 ) {
             EmailRecord *r = getRecord( email );
             r->curses += curses;
+            numCurseListings++;
             }
         }
     
+
+    printf( "Read %d curse listings from curses file\n", numCurseListings );
     
 
     fclose( curseFile );
