@@ -21,6 +21,7 @@ Server Fixes
 --Server no longer disconnects client when it sends an unknown message type.
   For future protocol updates, this allows client to be updated before server.
 
+--Picking up a 3+ child to nurse them clears their starving emote.  Fixes #626
 
 
 

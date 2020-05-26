@@ -12776,6 +12776,7 @@ static SimpleVector<int> newEmotIndices;
 static SimpleVector<int> newEmotTTLs;
 
 
+// inEatenID = 0 for nursing
 static void checkForFoodEatingEmot( LiveObject *inPlayer,
                                     int inEatenID ) {
     
@@ -12783,25 +12784,28 @@ static void checkForFoodEatingEmot( LiveObject *inPlayer,
     inPlayer->starving = false;
 
     
-    ObjectRecord *o = getObject( inEatenID );
-    
-    if( o != NULL ) {
-        char *emotPos = strstr( o->description, "emotEat_" );
+    if( inEatenID > 0 ) {
         
-        if( emotPos != NULL ) {
-            int e, t;
-            int numRead = sscanf( emotPos, "emotEat_%d_%d", &e, &t );
-
-            if( numRead == 2 ) {
-                inPlayer->emotFrozen = true;
-                inPlayer->emotFrozenIndex = e;
-                            
-                inPlayer->emotUnfreezeETA = Time::getCurrentTime() + t;
-                            
-                newEmotPlayerIDs.push_back( inPlayer->id );
-                newEmotIndices.push_back( e );
-                newEmotTTLs.push_back( t );
-                return;
+        ObjectRecord *o = getObject( inEatenID );
+        
+        if( o != NULL ) {
+            char *emotPos = strstr( o->description, "emotEat_" );
+            
+            if( emotPos != NULL ) {
+                int e, t;
+                int numRead = sscanf( emotPos, "emotEat_%d_%d", &e, &t );
+                
+                if( numRead == 2 ) {
+                    inPlayer->emotFrozen = true;
+                    inPlayer->emotFrozenIndex = e;
+                    
+                    inPlayer->emotUnfreezeETA = Time::getCurrentTime() + t;
+                    
+                    newEmotPlayerIDs.push_back( inPlayer->id );
+                    newEmotIndices.push_back( e );
+                    newEmotTTLs.push_back( t );
+                    return;
+                    }
                 }
             }
         }
@@ -21851,6 +21855,9 @@ int main() {
                                                 Time::getCurrentTime() +
                                                 computeFoodDecrementTimeSeconds(
                                                     hitPlayer );
+                                            
+                                            checkForFoodEatingEmot( hitPlayer,
+                                                                    0 );
                                             }
                                         else {
                                             setRefuseFoodEmote( hitPlayer );
