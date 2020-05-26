@@ -13,7 +13,7 @@ typedef struct EmailRecord {
 static SimpleVector<EmailRecord> records;
 
 
-EmailRecord *getRecord( char *inEmail ) {
+EmailRecord *getRecord( char *inEmail, char inMakeNew = true ) {
     
     for( int i=0; i<records.size(); i++ ) {
         EmailRecord *r = records.getElement( i );
@@ -21,6 +21,10 @@ EmailRecord *getRecord( char *inEmail ) {
         if( strcmp( r->email, inEmail ) == 0 ) {
             return r;
             }
+        }
+
+    if( ! inMakeNew ) {
+        return NULL;
         }
     
     EmailRecord r = { stringDuplicate( inEmail ), 0.0, 0 };
@@ -62,7 +66,7 @@ int main() {
             }
         }
 
-    printf( "Read %d lives from life file\n", numLives );
+    // printf( "Read %d lives from life file\n", numLives );
 
 
     numRead = 2;
@@ -73,14 +77,20 @@ int main() {
         numRead = fscanf( curseFile, "%d %499s", &curses, email );
         
         if( numRead == 2 ) {
-            EmailRecord *r = getRecord( email );
-            r->curses += curses;
+            // don't make new records here
+            // only count curses for people who actually played recently
+            // stale records ignored
+            EmailRecord *r = getRecord( email, false );
+            
+            if( r != NULL ) {
+                r->curses += curses;
+                }
             numCurseListings++;
             }
         }
     
 
-    printf( "Read %d curse listings from curses file\n", numCurseListings );
+    // printf( "Read %d curse listings from curses file\n", numCurseListings );
     
 
     fclose( curseFile );
