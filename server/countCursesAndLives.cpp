@@ -103,7 +103,7 @@ int main() {
     for( int i=0; i<records.size(); i++ ) {
         EmailRecord *r = records.getElement( i );
     
-        printf( "%f %d\n", r->lifeMinutes, r->curses );
+        printf( "%f %d %s\n", r->lifeMinutes, r->curses, r->email );
     
         delete [] r->email;
         }
