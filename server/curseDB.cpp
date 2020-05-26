@@ -224,9 +224,11 @@ void initCurseDB() {
                                 "curses.db", 
                                 KISSDB_OPEN_MODE_RWCREAT,
                                 10000,
-                                // sender email (truncated to 40 chars max)
+                                // sender email (truncated to 39 chars max)
                                 // with receiver email (trucated to 39) 
-                                // appended, terminated by a NULL character
+                                // appended,
+                                // space separating them
+                                // terminated by a NULL character
                                 // append spaces to the end if needed
                                 // (after the NULL character) to fill
                                 // the full 80 characters consistently
@@ -300,8 +302,24 @@ static void getKey( const char *inSenderEmail, const char *inReceiverEmail,
                     unsigned char *outKey ) {
     memset( outKey, ' ', 80 );
 
+    sprintf( (char*)outKey, "%.39s %.39s", inSenderEmail, inReceiverEmail );
+    }
+
+
+
+// old key has no space
+// don't write new curses in this format
+// but check for existing curses using this format
+static void getOldKey( const char *inSenderEmail, const char *inReceiverEmail, 
+                       unsigned char *outKey ) {
+    memset( outKey, ' ', 80 );
+
     sprintf( (char*)outKey, "%.40s%.39s", inSenderEmail, inReceiverEmail );
     }
+
+
+// set to false later, after no non-space keys remain in DB
+static char considerOldKey = true;
 
 
 
@@ -457,6 +475,14 @@ char isCursed( const char *inSenderEmail, const char *inReceiverEmail ) {
     getKey( inSenderEmail, inReceiverEmail, key );
     
     int result = LINEARDB3_get( &db, key, value );
+
+
+    if( considerOldKey && result == 1 ) {
+        getOldKey( inSenderEmail, inReceiverEmail, key );
+        
+        result = LINEARDB3_get( &db, key, value );
+        }
+    
 
     if( result == 0 ) {
         timeSec_t curseTime = valueToTime( value );

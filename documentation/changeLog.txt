@@ -23,6 +23,10 @@ Server Fixes
 
 --Picking up a 3+ child to nurse them clears their starving emote.  Fixes #626
 
+--CurseDB key format now has space between emails.  Should have done this a
+  long time ago.  Temporary code in place for fall-back to old no-space key if
+  entry for new space-key not found.
+
 
 
 
