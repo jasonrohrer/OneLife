@@ -11,4 +11,4 @@ g++ -I../.. -o countCursesAndLives countCursesAndLives.cpp
 
 ./countCursesAndLives
 
-rm tempCursedEmails.txt tempEmailLives.txt
+#rm tempCursedEmails.txt tempEmailLives.txt
