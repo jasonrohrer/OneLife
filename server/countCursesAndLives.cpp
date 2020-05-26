@@ -65,7 +65,7 @@ int main() {
     printf( "Read %d lives from life file\n", numLives );
 
 
-    numRead == 2;
+    numRead = 2;
 
     int numCurseListings = 0;
     while( numRead == 2 ) {
