@@ -1,3 +1,6 @@
+//2HOL: <fstream>, <iostream> added to handle restoration of in-game passwords on server restart
+#include <fstream>
+#include <iostream>
 
 #include "objectBank.h"
 
@@ -22,9 +25,6 @@
 #include "soundBank.h"
 
 #include "animationBank.h"
-
-
-
 
 
 static int mapSize;
@@ -472,13 +472,105 @@ static void setupOwned( ObjectRecord *inR ) {
         }
     }
 
+//2HOL additions for: password-protected doors
+//  added fields initialization coded by analogue with setupObjectWritingStatus;
+//  fetching the previously saved passwords happens here as well
+static void setupObjectPasswordStatus( ObjectRecord *inR ) {
+    
+    inR->canGetInGamePassword = false;
+    inR->hasInGamePassword = false;
+    inR->canHaveInGamePassword = false;
+    inR->passID = 0;
+                
+    if( strstr( inR->description, "+" ) != NULL ) {
+        if( strstr( inR->description, "+password-protected" ) != NULL ) {
+            inR->canHaveInGamePassword = true;
+            }
+        if( strstr( inR->description, "+password-assignable" ) != NULL ) {
+            inR->canGetInGamePassword = true;
+            }
+        }
+        
+    //look through saved passwords and get ones that belong to the currently processed object kind
+    char buf[100]; char *p, *x, *y, *id;
+    std::ifstream file;
+    file.open( "2HOL passwords.txt" );
+    if ( !file.is_open() ) return;
+    //parsing 2HOL passwords.txt, the expected format is "x:%i|y:%i|word:%s|id:%i"
+    while ( file >> buf ) {
+        //std::cout << '\n' << buf;
+        p = strstr( buf, "word:" );
+        x = strstr( buf, "x:" );
+        y = strstr( buf, "y:" );
+        id = strstr( buf, "id:" );
+        if( p && x && y && id ) {
+            id = id+3;
+            if ( atoi( id ) == inR->id ) {
+                std::cout << "\nRestoring secret word for object with ID:" << id;
 
+                *(id-4) = '\0';
+                p = p+5;
+                inR->IndPass.push_back( p );
+                std::cout << ", secret word: " << p;
+
+                *(p-6) = '\0';
+                y = y+2;
+                inR->IndY.push_back( atoi( y ) );
+                std::cout << "; coordinates: y:" << y;
+
+                *(y-3) = '\0';
+                x = x+2;
+                inR->IndX.push_back( atoi( x ) );
+                std::cout << "; x:" << x << ".\n";
+                }
+            }
+        }
+    file.close();
+    
+    }
+
+//IndX.push_back( m.x );
+//IndY.push_back( m.y );
+//IndPass.push_back( found );
 
 static void setupNoHighlight( ObjectRecord *inR ) {
     inR->noHighlight = false;
     
     if( strstr( inR->description, "+noHighlight" ) != NULL ) {
         inR->noHighlight = true;
+        }
+    }
+
+
+
+static void setupMaxPickupAge( ObjectRecord *inR ) {
+    inR->maxPickupAge = 9999999;
+    
+
+    const char *key = "maxPickupAge_";
+    
+    char *loc = strstr( inR->description, key );
+
+    if( loc != NULL ) {
+        
+        char *indexLoc = &( loc[ strlen( key ) ] );
+        
+        sscanf( indexLoc, "%d", &( inR->maxPickupAge ) );
+        }
+    }
+
+
+
+static void setupWall( ObjectRecord *inR ) {
+    inR->wallLayer = inR->floorHugging;
+    
+    if( inR->wallLayer ) {
+        return;
+        }
+
+    char *wallPos = strstr( inR->description, "+wall" );
+    if( wallPos != NULL ) {
+        inR->wallLayer = true;
         }
     }
 
@@ -536,6 +628,9 @@ float initObjectBankStep() {
 
                 setupObjectWritingStatus( r );
                 
+                //2HOL additions for: password-protected doors
+                setupObjectPasswordStatus( r );
+
                 setupObjectGlobalTriggers( r );
                 
                 setupObjectSpeechPipe( r );
@@ -546,6 +641,15 @@ float initObjectBankStep() {
                 
                 setupNoHighlight( r );
                 
+                setupMaxPickupAge( r );
+                
+                // do this later, after we parse floorHugging
+                // setupWall( r );
+                
+
+                r->horizontalVersionID = -1;
+                r->verticalVersionID = -1;
+                r->cornerVersionID = -1;
 
                 next++;
                             
@@ -786,6 +890,9 @@ float initObjectBankStep() {
                     
                     next++;
                     }
+
+
+                setupWall( r );
 
                             
                 sscanf( lines[next], "foodValue=%d", 
@@ -1768,6 +1875,66 @@ void initObjectBankFinish() {
         }
 
             // resaveAll();
+
+    
+    // populate vertical and corner version pointers for walls and fences
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+            
+            const char *key = "+horizontal";
+            
+            char *pos = strstr( o->description, key );
+            
+            if( pos != NULL ) {
+                char *skipKey = &( pos[ strlen( key ) ] );
+                
+                char label[20];
+                int numRead = sscanf( skipKey, "%19s", label );
+                
+                if( numRead != 1 ) {
+                    continue;
+                    }
+
+                char *vertKey = autoSprintf( "+vertical%s", label );
+                char *cornerKey = autoSprintf( "+corner%s", label );
+                
+                for( int j=0; j<mapSize; j++ ) {
+                    if( j != i && idMap[j] != NULL ) {
+                        ObjectRecord *oOther = idMap[j];
+                        
+                        if( strstr( oOther->description, vertKey ) ) {
+                            o->verticalVersionID = oOther->id;
+                            }
+                        else if( strstr( oOther->description, cornerKey ) ) {
+                            o->cornerVersionID = oOther->id;
+                            }
+                        }
+                    }
+
+                delete [] vertKey;
+                delete [] cornerKey;
+                
+                if( o->verticalVersionID != -1 && o->cornerVersionID != -1 ) {
+                    o->horizontalVersionID = o->id;
+                    
+                    // make sure they all know about each other
+                    ObjectRecord *vertO = getObject( o->verticalVersionID );
+                    ObjectRecord *cornerO = getObject( o->cornerVersionID );
+                    
+                    vertO->horizontalVersionID = o->id;
+                    vertO->verticalVersionID = vertO->id;
+                    vertO->cornerVersionID = cornerO->id;
+
+                    cornerO->horizontalVersionID = o->id;
+                    cornerO->verticalVersionID = vertO->id;
+                    cornerO->cornerVersionID = cornerO->id;
+                    }
+                }
+            }
+        }
+
+
     }
 
 
@@ -3008,6 +3175,9 @@ int addObject( const char *inDescription,
 
     setupObjectWritingStatus( r );
     
+    //2HOL additions for: password-protected doors
+    setupObjectPasswordStatus( r );
+    
     setupObjectGlobalTriggers( r );
     
     setupObjectSpeechPipe( r );
@@ -3016,6 +3186,15 @@ int addObject( const char *inDescription,
     
     setupOwned( r );
     
+    setupNoHighlight( r );
+                
+    setupMaxPickupAge( r );
+
+    setupWall( r );
+
+    r->horizontalVersionID = -1;
+    r->verticalVersionID = -1;
+    r->cornerVersionID = -1;
 
     memset( r->spriteSkipDrawing, false, inNumSprites );
     
@@ -5474,8 +5653,16 @@ void restoreSkipDrawing( ObjectRecord *inObject ) {
 
 
 
-
-
-
-
-
+char canPickup( int inObjectID, double inPlayerAge ) {
+    ObjectRecord *o = getObject( inObjectID );
+    
+    if( o->minPickupAge > inPlayerAge ) {
+        return false;
+        }
+    
+    if( o->maxPickupAge < inPlayerAge ) {
+        return false;
+        }
+    
+    return true;
+    }
