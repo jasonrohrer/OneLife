@@ -177,6 +177,7 @@ static SimpleVector<char*> namedGivingPhrases;
 
 //2HOL additions for: password-protected objects
 int passwordTransitionsAllowed = 0;
+int passwordInvocationAndSettingSeparated = 0;
 static SimpleVector<char*> passwordSettingPhrases;
 static SimpleVector<char*> passwordInvokingPhrases;
 
@@ -4297,11 +4298,14 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     
     //2HOL additions for: password-protected objects
     if ( passwordTransitionsAllowed ) {
-        char *sayingPassword = isPasswordInvokingSay( inToSay );
-        if( sayingPassword != NULL ) {
-            AppLog::infoF( "2HOL DEBUG: Player says password. New password assigned to a player." );
-            inPlayer->saidPassword = stringDuplicate( sayingPassword );
-            AppLog::infoF( "2HOL DEBUG: Player's password is %s", inPlayer->saidPassword );
+        
+        if ( passwordInvocationAndSettingAreSeparated ) {
+            char *sayingPassword = isPasswordInvokingSay( inToSay );
+            if( sayingPassword != NULL ) {
+                AppLog::infoF( "2HOL DEBUG: Player says password. New password assigned to a player." );
+                inPlayer->saidPassword = stringDuplicate( sayingPassword );
+                AppLog::infoF( "2HOL DEBUG: Player's password is %s", inPlayer->saidPassword );
+                }
             }
     
     
@@ -4309,8 +4313,10 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         if( assigningPassword != NULL ) {
             AppLog::infoF( "2HOL DEBUG: Player sets new password for future assignment." );
             inPlayer->assignedPassword = stringDuplicate( assigningPassword );
+            if ( !passwordInvocationAndSettingAreSeparated ) { inPlayer->saidPassword = stringDuplicate( assigningPassword ); }
             AppLog::infoF( "2HOL DEBUG: Password for future assignment password is %s", inPlayer->assignedPassword );
             }
+
         }
                         
 
@@ -10178,6 +10184,8 @@ int main() {
     //2HOL additions for: password-protected objects
     passwordTransitionsAllowed =
         SettingsManager::getStringSetting( "passwordTransitionsAllowed", 0 );
+    passwordInvocationAndSettingAreSeparated =
+        SettingsManager::getStringSetting( "passwordInvocationAndSettingAreSeparated", 0 );
     readPhrases( "passwordSettingPhrases", &passwordSettingPhrases );
     readPhrases( "passwordInvokingPhrases", &passwordInvokingPhrases );
     
