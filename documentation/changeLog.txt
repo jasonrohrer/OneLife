@@ -14,6 +14,8 @@ NOTE:  must update server first this week.
 
 --Fixed crash in Animation editor when right-click dragging with empty object.
 
+--I FORGIVE YOU (or I FORGIVE JOHN SMITH) to forgive a personal curse.
+
 
 
 Server Fixes
@@ -26,6 +28,10 @@ Server Fixes
 --CurseDB key format now has space between emails.  Should have done this a
   long time ago.  Temporary code in place for fall-back to old no-space key if
   entry for new space-key not found.
+
+--Eve is pushed to the west of farthest-west active homeland, not including
+  d-town homelands.  More chance for her to find an area to settle.  Fixes #624
+
 
 
 
