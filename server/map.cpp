@@ -8420,6 +8420,48 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             eveLocation.x = gridX;
             eveLocation.y = gridY;
             }
+
+        if( SettingsManager::getIntSetting( "eveToWestOfHomelands", 0 ) ) {
+            // we've placed Eve based on walking grid
+            // now move her farther west, to avoid plopping her down
+            // in middle of active homelands
+            
+            int homelandXSum = 0;
+            int homelandXCount = 0;
+            
+            for( int i=0; i<homelands.size(); i++ ) {
+                Homeland *h = homelands.getElement( i );
+                
+                if( ! h->expired ) {
+                    homelandXCount ++;
+                    homelandXSum += h->x;
+                    }
+                }
+            
+            if( homelandXCount > 0 ) {
+                int homelandXAve = homelandXSum / homelandXCount;
+            
+                for( int i=0; i<homelands.size(); i++ ) {
+                    
+                    Homeland *h = homelands.getElement( i );
+                    
+                    // d-town placed 20K away
+                    // by looking for homelands not more than 9K past average
+                    // we avoid d-town homelands
+                    if( ! h->expired && h->x < homelandXAve + 9000 ) {
+                        int xBoundary = h->x - 2 * h->radius;
+                        
+                        if( xBoundary < ave.x ) {
+                            ave.x = xBoundary;
+                            
+                            AppLog::infoF( 
+                                "Pushing Eve to west of homeland at x=%d\n",
+                                h->x );
+                            }
+                        }
+                    }
+                }
+            }
         }
     else {
         // player has never been an Eve that survived to old age before
