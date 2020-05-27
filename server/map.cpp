@@ -6806,6 +6806,67 @@ static int neighborWallAgree( int inX, int inY, ObjectRecord *inSetO,
     }
     
 
+static int applyTapoutGradientRotate( int inX, int inY,
+                                      int inTargetX, int inTargetY,
+                                      int inEastwardGradientID ) {
+    // apply result to itself to flip it 
+    // and point gradient in other direction
+                
+    // eastward + eastward = westward, etc
+
+    // order:  e, w, s, n, ne, se, sw, nw
+    
+    int numRepeat = 0;
+    
+    int curObjectID = inEastwardGradientID;                        
+
+    if( inX > inTargetX && inY == inTargetY ) {
+        numRepeat = 0;
+        }
+    else if( inX < inTargetX && inY == inTargetY ) {
+        numRepeat = 1;
+        }
+    else if( inX == inTargetX && inY < inTargetY ) {
+        numRepeat = 2;
+        }
+    else if( inX == inTargetX && inY > inTargetY ) {
+        numRepeat = 3;
+        }
+    else if( inX > inTargetX && inY > inTargetY ) {
+        numRepeat = 4;
+        }
+    else if( inX > inTargetX && inY < inTargetY ) {
+        numRepeat = 5;
+        }
+    else if( inX < inTargetX && inY < inTargetY ) {
+        numRepeat = 6;
+        }
+    else if( inX < inTargetX && inY > inTargetY ) {
+        numRepeat = 7;
+        }
+
+
+    
+    for( int i=0; i<numRepeat; i++ ) {
+        if( curObjectID == 0 ) {
+            break;
+            }
+        TransRecord *flipTrans = getPTrans( curObjectID, curObjectID );
+        
+        if( flipTrans != NULL ) {
+            curObjectID = flipTrans->newTarget;
+            }
+        }
+
+    if( curObjectID == 0 ) {
+        return -1;
+        }
+
+    return curObjectID;
+    }
+
+
+
 
 // returns true if tapout-triggered a +primaryHomeland object
 static char runTapoutOperation( int inX, int inY, 
@@ -6839,7 +6900,7 @@ static char runTapoutOperation( int inX, int inY,
             
             int newTarget = -1;
 
-            if( ! inIsPost && ( y == inY || x == inX ) ) {
+            if( ! inIsPost ) {
                 // last use target signifies what happens in 
                 // same row or column as inX, inY
                 
@@ -6850,42 +6911,10 @@ static char runTapoutOperation( int inX, int inY,
                     newTarget = t->newTarget;
                     }
                 
-
-                if( x >= inX && newTarget > 0 ) {
-                    // apply result to itself to flip it 
-                    // and point gradient in other direction
-                
-                    // eastward + eastward = westward
-                    TransRecord *flipTrans = getPTrans( newTarget, newTarget );
-                    
-                    if( flipTrans != NULL ) {
-                        newTarget = flipTrans->newTarget;
-                        
-
-                        if( x == inX && newTarget > 0 ) {
-                            // same column
-
-                            // westward + westward = southward
-                            flipTrans = 
-                                getPTrans( newTarget, newTarget );
-
-                            if( flipTrans != NULL ) {
-                                newTarget = flipTrans->newTarget;
-                        
-                                if( y < inY && newTarget > 0 ) {
-                                    // below
-
-                                    // southward + southward = northward
-                                    flipTrans = 
-                                        getPTrans( newTarget, newTarget );
-                                    
-                                    if( flipTrans != NULL ) {
-                                        newTarget = flipTrans->newTarget;
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                if( newTarget > 0 ) {
+                    newTarget = applyTapoutGradientRotate( inX, inY,
+                                                           x, y,
+                                                           newTarget );
                     }
                 }
 

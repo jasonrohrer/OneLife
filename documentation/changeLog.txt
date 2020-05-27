@@ -32,6 +32,7 @@ Server Fixes
 --Eve is pushed to the west of farthest-west active homeland, not including
   d-town homelands.  More chance for her to find an area to settle.  Fixes #624
 
+--Support for diagonal tap-out gradients (sw, ne, etc).
 
 
 
