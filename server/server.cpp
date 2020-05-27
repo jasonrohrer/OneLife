@@ -13915,16 +13915,18 @@ int main() {
                                         }
                                         
                                     //2HOL additions for: password-protected objects
-                                    //variation when oldTarget is password protected and the password must be transferred into newTarget
+                                    //variation when oldTarget is protected by password
+                                    //  and that password must be, or must be not transferred into newTarget
                                     if ( passwordTransitionsAllowed &&
                                         ( target > 0) && ( r->newTarget > 0 ) && ( target != r->newTarget ) &&
-                                         getObject( target )->canHaveInGamePassword &&
-                                         getObject( r->newTarget )->canHaveInGamePassword ) {
-                                            
+                                         getObject( target )->canHaveInGamePassword ) {
+                                        
+                                        //first of all, if transition was allowed, then old object loses the password record in any case
                                         char *pass = NULL;
                                         for( int i=0; i<targetObj->IndX.size(); i++ ) {
                                             if ( m.x == getObject( target )->IndX.getElementDirect(i) && m.y == getObject( target )->IndY.getElementDirect(i) ) {
                                                 pass = getObject( target )->IndPass.getElementDirect(i);
+                                                    AppLog::infoF( "2HOL DEBUG: the password is deleted from the object with ID %i, located at the position (%i,%i).", getObject( target )->ID, m.x, m.y);
                                                 getObject( target )->IndPass.deleteElement(i);
                                                 getObject( target )->IndX.deleteElement(i);
                                                 getObject( target )->IndY.deleteElement(i);
@@ -13932,7 +13934,11 @@ int main() {
                                             }
                                         }
                                         
-                                        if ( pass != NULL ) {
+                                        //then, if the result of the transition isn't protected by password (either newTarget is without password, or there is no newTarget), that's it;
+                                        //otherwise, the password needs to be reapplied to the new object
+                                        if ( ( pass != NULL ) &&
+                                             ( getObject( r->newTarget ) != NULL ) &&
+                                             ( getObject( r->newTarget )->canHaveInGamePassword ) ) {
                                             getObject( r->newTarget )->IndX.push_back( m.x );
                                             getObject( r->newTarget )->IndY.push_back( m.y );
                                             getObject( r->newTarget )->IndPass.push_back( pass );
