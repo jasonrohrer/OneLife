@@ -175,7 +175,8 @@ static SimpleVector<char*> cursingPhrases;
 static SimpleVector<char*> youGivingPhrases;
 static SimpleVector<char*> namedGivingPhrases;
 
-//2HOL additions for: password doors
+//2HOL additions for: password-protected objects
+int passwordTransitionsAllowed = 0;
 static SimpleVector<char*> passwordSettingPhrases;
 static SimpleVector<char*> passwordInvokingPhrases;
 
@@ -4282,7 +4283,7 @@ SimpleVector<ChangePosition> newLocationSpeechPos;
 
 char *isCurseNamingSay( char *inSaidString );
 
-//2HOL additions for: password doors
+//2HOL additions for: password-protected objects
 char *isPasswordSettingSay( char *inSaidString );
 char *isPasswordInvokingSay( char *inSaidString );
 
@@ -4295,19 +4296,21 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     inPlayer->lastSay = stringDuplicate( inToSay );
     
     //2HOL additions for: password-protected objects
-    char *sayingPassword = isPasswordInvokingSay( inToSay );
-    if( sayingPassword != NULL ) {
-        AppLog::infoF( "2HOL DEBUG: Player says password. New password assigned to a player." );
-        inPlayer->saidPassword = stringDuplicate( sayingPassword );
-        AppLog::infoF( "2HOL DEBUG: Player's password is %s", inPlayer->saidPassword );
-        }
+    if ( passwordTransitionsAllowed ) {
+        char *sayingPassword = isPasswordInvokingSay( inToSay );
+        if( sayingPassword != NULL ) {
+            AppLog::infoF( "2HOL DEBUG: Player says password. New password assigned to a player." );
+            inPlayer->saidPassword = stringDuplicate( sayingPassword );
+            AppLog::infoF( "2HOL DEBUG: Player's password is %s", inPlayer->saidPassword );
+            }
     
-    //2HOL additions for: password-protected objects
-    char *assigningPassword = isPasswordSettingSay( inToSay );
-    if( assigningPassword != NULL ) {
-        AppLog::infoF( "2HOL DEBUG: Player sets new password for future assignment." );
-        inPlayer->assignedPassword = stringDuplicate( assigningPassword );
-        AppLog::infoF( "2HOL DEBUG: Password for future assignment password is %s", inPlayer->assignedPassword );
+    
+        char *assigningPassword = isPasswordSettingSay( inToSay );
+        if( assigningPassword != NULL ) {
+            AppLog::infoF( "2HOL DEBUG: Player sets new password for future assignment." );
+            inPlayer->assignedPassword = stringDuplicate( assigningPassword );
+            AppLog::infoF( "2HOL DEBUG: Password for future assignment password is %s", inPlayer->assignedPassword );
+            }
         }
                         
 
@@ -10172,7 +10175,9 @@ int main() {
     readPhrases( "youGivingPhrases", &youGivingPhrases );
     readPhrases( "namedGivingPhrases", &namedGivingPhrases );
     
-    //2HOL additions for: password doors
+    //2HOL additions for: password-protected objects
+    passwordTransitionsAllowed =
+        SettingsManager::getStringSetting( "passwordTransitionsAllowed", 0 );
     readPhrases( "passwordSettingPhrases", &passwordSettingPhrases );
     readPhrases( "passwordInvokingPhrases", &passwordInvokingPhrases );
     
@@ -13444,7 +13449,7 @@ int main() {
                                     }
                                 //2HOL additions for: password-protected objects
                                 //the check to block the transition for the object which password was not guessed correctly
-                                if( targetObj->canHaveInGamePassword ) {
+                                if( passwordTransitionsAllowed && targetObj->canHaveInGamePassword ) {
                                     AppLog::infoF( "2HOL DEBUG: attempt to interact with an object potentially having password" );
                                     AppLog::infoF( "2HOL DEBUG: there are %i protected tiles with object ID %i in the world", targetObj->IndX.size(), targetObj->id );
                                     AppLog::infoF( "2HOL DEBUG: interaction location, x: %i", m.x );
@@ -13854,7 +13859,8 @@ int main() {
                                     //2HOL additions for: password-protected objects
                                     //  the initial transition from +password-assignable to +password-protected object
                                     //  "the moment when password attachment to the object (speaking strictly, to the tile where the structure is constructed) happens"
-                                    if ( ( oldHolding > 0) && ( r->newTarget > 0 ) &&
+                                    if ( passwordTransitionsAllowed &&
+                                        ( oldHolding > 0) && ( r->newTarget > 0 ) &&
                                          getObject( oldHolding )->canGetInGamePassword &&
                                          getObject( r->newTarget )->canHaveInGamePassword ) {                                           
 
@@ -13902,7 +13908,8 @@ int main() {
                                         
                                     //2HOL additions for: password-protected objects
                                     //variation when oldTarget is password protected and the password must be transferred into newTarget
-                                    if ( ( target > 0) && ( r->newTarget > 0 ) && ( target != r->newTarget ) &&
+                                    if ( passwordTransitionsAllowed &&
+                                        ( target > 0) && ( r->newTarget > 0 ) && ( target != r->newTarget ) &&
                                          getObject( target )->canHaveInGamePassword &&
                                          getObject( r->newTarget )->canHaveInGamePassword ) {
                                             
