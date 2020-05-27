@@ -19373,28 +19373,32 @@ void LivingLifePage::step() {
                             if( numRead == 3 ) {
                                 if( existing->curseName != NULL ) {
                                     delete [] existing->curseName;
+                                    existing->curseName = NULL;
                                     }
-                                existing->curseName = stringDuplicate( buffer );
-                                char *barPos = strstr( existing->curseName,
-                                                       "_" );
-                                if( barPos != NULL ) {
-                                    barPos[0] = ' ';
+                                if( level > 0 ) {
+                                    existing->curseName = 
+                                        stringDuplicate( buffer );
+                                    char *barPos = strstr( existing->curseName,
+                                                           "_" );
+                                    if( barPos != NULL ) {
+                                        barPos[0] = ' ';
+                                        }
+                                    
+                                    // display their cursed tag now
+                                    if( existing->currentSpeech != NULL ) {
+                                        delete [] existing->currentSpeech;
+                                        }
+                                    existing->currentSpeech = 
+                                        autoSprintf( "X %s X",
+                                                     existing->curseName );
+                                    existing->speechFadeETATime =
+                                        curTime + 3 +
+                                        strlen( existing->currentSpeech ) / 5;
+                                    existing->speechIsSuccessfulCurse = false;
+                                    existing->speechIsCurseTag = true;
+                                    existing->lastCurseTagDisplayTime = curTime;
+                                    existing->speechIsOverheadLabel = false;
                                     }
-
-                                // display their cursed tag now
-                                if( existing->currentSpeech != NULL ) {
-                                    delete [] existing->currentSpeech;
-                                    }
-                                existing->currentSpeech = 
-                                    autoSprintf( "X %s X",
-                                                 existing->curseName );
-                                existing->speechFadeETATime =
-                                    curTime + 3 +
-                                    strlen( existing->currentSpeech ) / 5;
-                                existing->speechIsSuccessfulCurse = false;
-                                existing->speechIsCurseTag = true;
-                                existing->lastCurseTagDisplayTime = curTime;
-                                existing->speechIsOverheadLabel = false;
                                 }
                             break;
                             }

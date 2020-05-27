@@ -217,6 +217,10 @@ static SimpleVector<char*> cursingPhrases;
 char *curseYouPhrase = NULL;
 char *curseBabyPhrase = NULL;
 
+static SimpleVector<char*> forgivingPhrases;
+static SimpleVector<char*> youForgivingPhrases;
+
+
 static SimpleVector<char*> youGivingPhrases;
 static SimpleVector<char*> namedGivingPhrases;
 
@@ -2171,6 +2175,10 @@ void quitCleanup() {
     familyNameGivingPhrases.deallocateStringElements();
     eveNameGivingPhrases.deallocateStringElements();
     cursingPhrases.deallocateStringElements();
+    
+    forgivingPhrases.deallocateStringElements();
+    youForgivingPhrases.deallocateStringElements();
+    
     youGivingPhrases.deallocateStringElements();
     namedGivingPhrases.deallocateStringElements();
     
@@ -11715,9 +11723,7 @@ static char isWildcardGivingSay( char *inSaidString,
     for( int i=0; i<inPhrases->size(); i++ ) {
         char *testString = inPhrases->getElementDirect( i );
         
-        char *hitLoc = strstr( inSaidString, testString );
-
-        if( hitLoc == inSaidString ) {
+        if( strcmp( inSaidString, testString ) == 0 ) {
             return true;
             }
         }
@@ -11795,6 +11801,16 @@ char *isNamedKillSay( char *inSaidString ) {
         }
     
     return NULL;
+    }
+
+
+char isYouForgivingSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youForgivingPhrases );
+    }
+
+// returns pointer into inSaidString
+char *isNamedForgivingSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &forgivingPhrases );
     }
 
 
@@ -16071,6 +16087,9 @@ int main() {
 
     readPhrases( "cursingPhrases", &cursingPhrases );
 
+    readPhrases( "forgivingPhrases", &forgivingPhrases );
+    readPhrases( "forgiveYouPhrases", &youForgivingPhrases );
+
     
     readPhrases( "youGivingPhrases", &youGivingPhrases );
     readPhrases( "namedGivingPhrases", &namedGivingPhrases );
@@ -19947,7 +19966,41 @@ int main() {
                                     }
                                 }
                             }
+                        
 
+                        
+                        LiveObject *otherToForgive = NULL;
+                        
+                        if( isYouForgivingSay( m.saidText ) ) {
+                            otherToForgive = 
+                                getClosestOtherPlayer( nextPlayer );
+                            }
+                        else {
+                            char *forgiveName = isNamedForgivingSay( m.saidText );
+                            if( forgiveName != NULL ) {
+                                otherToForgive =
+                                    getPlayerByName( forgiveName, nextPlayer );
+                                
+                                }
+                            }
+                        
+                        if( otherToForgive != NULL ) {
+                            clearDBCurse( nextPlayer->email, 
+                                          otherToForgive->email );
+                            
+                            char *message = 
+                                autoSprintf( 
+                                    "CU\n%d 0 %s_%s\n#", 
+                                    otherToForgive->id,
+                                    getCurseWord( nextPlayer->email,
+                                                  otherToForgive->email, 0 ),
+                                    getCurseWord( nextPlayer->email,
+                                                  otherToForgive->email, 1 ) );
+                            sendMessageToPlayer( nextPlayer,
+                                                 message, strlen( message ) );
+                            delete [] message;
+                            }
+                        
                         
                         LiveObject *otherToFollow = NULL;
                         LiveObject *otherToExile = NULL;

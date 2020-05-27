@@ -468,6 +468,40 @@ void setDBCurse( const char *inSenderEmail, const char *inReceiverEmail ) {
 
 
 
+void clearDBCurse( const char *inSenderEmail, const char *inReceiverEmail ) {
+    
+    unsigned char key[80];
+    unsigned char value[8];
+
+    getKey( inSenderEmail, inReceiverEmail, key );
+    
+    int result = LINEARDB3_get( &db, key, value );
+
+
+    if( considerOldKey && result == 1 ) {
+        getOldKey( inSenderEmail, inReceiverEmail, key );
+        
+        result = LINEARDB3_get( &db, key, value );
+        }
+    
+
+    if( result == 0 ) {
+        timeSec_t curseTime = valueToTime( value );
+
+        if( curseTime > 0 ) {
+            
+            decrementCurseCount( inReceiverEmail );
+                
+            // mark it so we don't decrement again in future                
+            timeToValue( 0, value );
+            LINEARDB3_put( &db, key, value );
+            }
+        }
+    }
+
+
+
+
 char isCursed( const char *inSenderEmail, const char *inReceiverEmail ) {
     unsigned char key[80];
     unsigned char value[8];
