@@ -7,7 +7,7 @@
 #include <random>
 #include <string>
 
-//2HOL: <fstream>, <iostream> added to handle runtime storage of in-game passwords
+//2HOL, password-protected objects: <fstream>, <iostream> added to handle runtime storage of in-game passwords
 #include <fstream>
 #include <iostream>
 //  <time.h> added to add time stamps to recorded data
@@ -177,7 +177,9 @@ static SimpleVector<char*> namedGivingPhrases;
 
 //2HOL additions for: password-protected objects
 int passwordTransitionsAllowed = 0;
-int passwordInvocationAndSettingSeparated = 0;
+int passwordInvocationAndSettingAreSeparated = 0;
+int passwordOverhearRadius = 6;
+int passwordSilent = 0;
 static SimpleVector<char*> passwordSettingPhrases;
 static SimpleVector<char*> passwordInvokingPhrases;
 
@@ -1586,7 +1588,7 @@ void quitCleanup() {
     youGivingPhrases.deallocateStringElements();
     namedGivingPhrases.deallocateStringElements();
     
-    //2HOL maintenance
+    //2HOL, password-protected objects: maintenance
     passwordSettingPhrases.deallocateStringElements();
     passwordInvokingPhrases.deallocateStringElements();
     if( eveName != NULL ) {
@@ -4273,6 +4275,8 @@ SimpleVector<ChangePosition> newSpeechPos;
 SimpleVector<char*> newSpeechPhrases;
 SimpleVector<int> newSpeechPlayerIDs;
 SimpleVector<char> newSpeechCurseFlags;
+//2HOL additions for: password-protected objects
+SimpleVector<char> newSpeechPasswordFlags;
 
 
 
@@ -4306,6 +4310,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 inPlayer->saidPassword = stringDuplicate( sayingPassword );
                 AppLog::infoF( "2HOL DEBUG: Player's password is %s", inPlayer->saidPassword );
                 }
+            //if passwordSilent = true, no need to display anything, as well as make any further checks, just cut it after the assignment is done
+            if( passwordSilent ) { return }
             }
     
     
@@ -4315,6 +4321,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             inPlayer->assignedPassword = stringDuplicate( assigningPassword );
             if ( !passwordInvocationAndSettingAreSeparated ) { inPlayer->saidPassword = stringDuplicate( assigningPassword ); }
             AppLog::infoF( "2HOL DEBUG: Password for future assignment password is %s", inPlayer->assignedPassword );
+            //if passwordSilent = true, no need to display anything, as well as make any further checks, just cut it after the assignment is done
+            if( passwordSilent ) { return }
             }
 
         }
@@ -4449,6 +4457,14 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     newSpeechPhrases.push_back( stringDuplicate( inToSay ) );
     newSpeechCurseFlags.push_back( curseFlag );
     newSpeechPlayerIDs.push_back( inPlayer->id );
+    
+    //2HOL additions for: password-protected objects
+    //  newSpeechPasswordFlags added to communicate with an algorithm
+    //  which decides whether send the info about something was said
+    //  to neighboring players or not
+    int passwordFlag = 0;
+    if ( sayingPassword || assigningPassword ) { passwordFlag = 1; }
+    newSpeechPasswordFlags.push_back( passwordFlag );
 
                         
     ChangePosition p = { inPlayer->xd, inPlayer->yd, false };
@@ -10186,6 +10202,10 @@ int main() {
         SettingsManager::getStringSetting( "passwordTransitionsAllowed", 0 );
     passwordInvocationAndSettingAreSeparated =
         SettingsManager::getStringSetting( "passwordInvocationAndSettingAreSeparated", 0 );
+    passwordOverhearRadius =
+        SettingsManager::getStringSetting( "passwordOverhearRadius", 5 );
+    if (passwordOverhearRadius == -1) { passwordSilent = 1 }
+    else { passwordSilent = 0 }
     readPhrases( "passwordSettingPhrases", &passwordSettingPhrases );
     readPhrases( "passwordInvokingPhrases", &passwordInvokingPhrases );
     
@@ -13491,7 +13511,7 @@ int main() {
                             if( wrongSide || ownershipBlocked || blockedByPassword ) {
                                 // ignore action from wrong side
                                 // or that players don't own
-                                // 2HOL: or for which the password was not guessed
+                                // 2HOL, password-protected objects: or for which the password was not guessed
                                 if ( blockedByPassword ) {
                                      AppLog::infoF( "2HOL DEBUG: attempt to interact was blocked: wrong password." );
                                     }
@@ -18919,6 +18939,13 @@ int main() {
                         if( d < minUpdateDist ) {
                             minUpdateDist = d;
                             }
+
+                        //2HOL additions for: password-protected objects
+                        //  if player said password aloud, do not send it to anyone positioned further than passwordOverhearRadius tiles away
+                        int sayingPassword =
+                                    newSpeechPasswordFlags.getElementDirect( u );
+                        if( sayingPassword && ( passwordOverhearRadius > d ) ) { minUpdateDist = maxDist + 1 }
+
                         }
 
                     if( minUpdateDist <= maxDist ) {
