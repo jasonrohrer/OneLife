@@ -25,14 +25,21 @@ Server Fixes
 
 --Picking up a 3+ child to nurse them clears their starving emote.  Fixes #626
 
---CurseDB key format now has space between emails.  Should have done this a
-  long time ago.  Temporary code in place for fall-back to old no-space key if
-  entry for new space-key not found.
+--CurseDB key format now has comma between emails.  Should have done this a
+  long time ago.  Temporary code in place for fall-back to old no-comma key if
+  entry for new comma-key not found.
 
 --Eve is pushed to the west of farthest-west active homeland, not including
   d-town homelands.  More chance for her to find an area to settle.  Fixes #624
 
 --Support for diagonal tap-out gradients (sw, ne, etc).
+
+--To prevent build up of stale curse counts, we now gradually iterate through
+  curse database (10 iterations per step) and check for stale curse times.
+  This keeps our curse count per player accurate over time, and fixes a glitch
+  that mistakenly sent some redeemed players to d-town due to inflated total
+  curse counts.
+
 
 
 

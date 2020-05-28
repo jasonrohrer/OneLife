@@ -90,9 +90,11 @@ static char cullStale() {
         
         timeSec_t curseTime = valueToTime( value );
 
-        timeSec_t elapsedTime = Time::timeSec() - curseTime;
-        
-        if( elapsedTime > curseDuration ) {
+        // look for those that have been previously marked as stale
+        // with a 0 time
+        // don't do time calculation for non-marked records here,
+        // because we're not decrementing curseCount as we do this
+        if( curseTime == 0 ) {
             stale ++;
             }
         else {
@@ -177,6 +179,8 @@ static char cullStaleCount() {
         
         if( elapsedTime > curseDuration * count ) {
             // completely decremented to 0 due to elapsed time
+            // the newest curse record for this person is stale
+            // that means all of them are stale
             stale ++;
             }
         else {
@@ -302,12 +306,12 @@ static void getKey( const char *inSenderEmail, const char *inReceiverEmail,
                     unsigned char *outKey ) {
     memset( outKey, ' ', 80 );
 
-    sprintf( (char*)outKey, "%.39s %.39s", inSenderEmail, inReceiverEmail );
+    sprintf( (char*)outKey, "%.39s,%.39s", inSenderEmail, inReceiverEmail );
     }
 
 
 
-// old key has no space
+// old key has no , between addresses
 // don't write new curses in this format
 // but check for existing curses using this format
 static void getOldKey( const char *inSenderEmail, const char *inReceiverEmail, 
@@ -432,6 +436,93 @@ void decrementCurseCount( const char *inReceiverEmail ) {
         }
     }
 
+
+
+
+
+static char cullingIteratorSet = false;
+
+static LINEARDB3_Iterator cullingIterator;
+
+static int numCullsPerStep = 10;
+
+static int numRecordsSeenByIterator = 0;
+static int numRecordsMarked = 0;
+
+
+static void stepStaleCurseCulling() {
+    if( !cullingIteratorSet ) {
+        LINEARDB3_Iterator_init( &db, &cullingIterator );
+        cullingIteratorSet = true;
+        numRecordsSeenByIterator = 0;
+        }
+
+    unsigned char key[80];
+    
+    unsigned char value[8];
+    
+    timeSec_t curTimeSec = Time::timeSec();
+    
+    for( int i=0; i<numCullsPerStep; i++ ) {        
+        int result = 
+            LINEARDB3_Iterator_next( &cullingIterator, key, value );
+
+        if( result <= 0 ) {
+            // restart the iterator back at the beginning
+            LINEARDB3_Iterator_init( &db, &cullingIterator );
+            if( numRecordsSeenByIterator != 0 ) {
+                AppLog::infoF( 
+                    "Curse stale cull iterated through %d curse db entries,"
+                    " marked %d as stale.",
+                    numRecordsSeenByIterator,
+                    numRecordsMarked );
+                }
+            numRecordsSeenByIterator = 0;
+            numRecordsMarked = 0;
+            
+            // break loop when we reach end, so we don't busy-cycle
+            // in a very short list repeatedly in one step
+            break;
+            }
+        else {
+            numRecordsSeenByIterator ++;
+            }
+
+        timeSec_t curseTime = valueToTime( value );
+
+        if( curseTime != 0 &&
+            curTimeSec - curseTime > curseDuration ) {
+            // non-marked, but stale
+            
+
+            // is this our newer-style key, with both emails
+            // separated by comma?
+            
+            char *commaPos = strstr( (char*)key, "," );
+            
+            if( commaPos != NULL ) {
+                // if so, we can strip out receiver email 
+                // and decrement their count
+                
+                numRecordsMarked++;
+                
+                char *receiverEmail = &( commaPos[1] );
+                
+
+                decrementCurseCount( receiverEmail );
+                
+                // mark this curse so we don't decrement again in future
+                timeToValue( 0, value );
+                LINEARDB3_put( &db, key, value );
+                }
+            
+            // otherwise, it's an old-style key.
+            // we must wait until we check for this email pair
+            // in a curse check to decrement it, so leave this record alone
+            // as unmarked and still with the stale time
+            }
+        }
+    }
 
 
 
@@ -574,6 +665,8 @@ int personalTotalCurseCount = 0;
 void initPersonalCurseTest( const char *inTargetEmail ) {
     checkSettings();
     
+    stepStaleCurseCulling();
+
     blockingRecords.deleteAll();
 
     personalLiveCurseCount = 0;
