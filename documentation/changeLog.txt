@@ -6,6 +6,7 @@ http://onehouronelife.com/updateLog.php
 Version 341    ???
 
 NOTE:  must update server first this week.
+NOTE:  must disable clearCurseCountsOnStartup after servers restart this week.
 
 --Player character now flips facing direction as mouse moves to left and right.
   Fixes #623
@@ -39,6 +40,10 @@ Server Fixes
   This keeps our curse count per player accurate over time, and fixes a glitch
   that mistakenly sent some redeemed players to d-town due to inflated total
   curse counts.
+
+--Added a clearCurseCountsOnStartup setting, and enabled it, to clear stale
+  curse counts on next startup (without removing live personal curses that
+  haven't expired yet).
 
 
 

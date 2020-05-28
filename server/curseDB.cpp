@@ -167,7 +167,14 @@ static char cullStaleCount() {
     int stale = 0;
     int nonStale = 0;
     
-    // first, just count
+    char forceStale = false;
+    
+    if( SettingsManager::getIntSetting( "clearCurseCountsOnStartup", 0 ) ) {
+        printf( "Culling curseCount.db clearCurseCountsOnStartup setting, "
+            "treating all records as stale.\n" );
+        forceStale = true;
+        }
+    
     while( LINEARDB3_Iterator_next( &dbi, key, value ) > 0 ) {
         total++;
         
@@ -177,7 +184,7 @@ static char cullStaleCount() {
 
         timeSec_t elapsedTime = Time::timeSec() - curseTime;
         
-        if( elapsedTime > curseDuration * count ) {
+        if( forceStale || elapsedTime > curseDuration * count ) {
             // completely decremented to 0 due to elapsed time
             // the newest curse record for this person is stale
             // that means all of them are stale
