@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 341    ???
+Version 342    2020-May-30
 
 NOTE:  must update server first this week.
 NOTE:  must disable clearCurseCountsOnStartup after servers restart this week.
