@@ -13636,6 +13636,10 @@ void LivingLifePage::step() {
                             o->lastAnim = moving;
                             o->curAnim = ground;
                             o->lastAnimFade = 1;
+
+                            o->lastHeldAnim = moving;
+                            o->curHeldAnim = ground;
+                            o->lastHeldAnimFade = 1;
                             }
                         }
                     }
@@ -22547,6 +22551,10 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             ourLiveObject->lastAnim = moving;
             ourLiveObject->curAnim = ground;
             ourLiveObject->lastAnimFade = 1;
+            
+            ourLiveObject->lastHeldAnim = moving;
+            ourLiveObject->curHeldAnim = ground;
+            ourLiveObject->lastHeldAnimFade = 1;
             }
         }
     
