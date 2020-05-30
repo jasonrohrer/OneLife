@@ -3,6 +3,52 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 342    2020-May-30
+
+NOTE:  must update server first this week.
+NOTE:  must disable clearCurseCountsOnStartup after servers restart this week.
+
+--Player character now flips facing direction as mouse moves to left and right.
+  Fixes #623
+
+--Object editor page shows current object ID.
+
+--Fixed crash in Animation editor when right-click dragging with empty object.
+
+--I FORGIVE YOU (or I FORGIVE JOHN SMITH) to forgive a personal curse.
+
+
+
+Server Fixes
+
+--Server no longer disconnects client when it sends an unknown message type.
+  For future protocol updates, this allows client to be updated before server.
+
+--Picking up a 3+ child to nurse them clears their starving emote.  Fixes #626
+
+--CurseDB key format now has comma between emails.  Should have done this a
+  long time ago.  Temporary code in place for fall-back to old no-comma key if
+  entry for new comma-key not found.
+
+--Eve is pushed to the west of farthest-west active homeland, not including
+  d-town homelands.  More chance for her to find an area to settle.  Fixes #624
+
+--Support for diagonal tap-out gradients (sw, ne, etc).
+
+--To prevent build up of stale curse counts, we now gradually iterate through
+  curse database (10 iterations per step) and check for stale curse times.
+  This keeps our curse count per player accurate over time, and fixes a glitch
+  that mistakenly sent some redeemed players to d-town due to inflated total
+  curse counts.
+
+--Added a clearCurseCountsOnStartup setting, and enabled it, to clear stale
+  curse counts on next startup (without removing live personal curses that
+  haven't expired yet).
+
+
+
+
+
 Version 340    2020-May-22
 
 --New speech length limit curve that rises rapidly between ages 8 and 16, so

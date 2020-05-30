@@ -130,7 +130,11 @@ typedef struct LiveObject {
         int lastHoldingID;
 
         char holdingFlip;
+
+        double lastFlipSendTime;
+        char lastFlipSent;
         
+
         // if not learned, held flipped 180 degrees
         char heldLearned;
 

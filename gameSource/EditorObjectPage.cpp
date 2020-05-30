@@ -4432,7 +4432,19 @@ void EditorObjectPage::draw( doublePair inViewCenter,
         badWords.deallocateStringElements();
         }
 
-
+    if( mCurrentObject.id != -1 ) {
+        doublePair pos = mDescriptionField.getPosition();
+            
+        pos.x += 170;
+            
+        setDrawColor( 1, 1, 1, 1 );
+        
+        char *idString = autoSprintf( "%d", mCurrentObject.id );
+        
+        smallFont->drawString( idString, pos, alignLeft );
+        delete [] idString;
+        }
+    
 
 
 

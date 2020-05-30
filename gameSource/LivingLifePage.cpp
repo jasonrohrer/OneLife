@@ -1340,6 +1340,7 @@ typedef enum messageType {
     TOOL_EXPERTS,
     TOOL_SLOTS,
     HOMELAND,
+    FLIP,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1504,6 +1505,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "HL" ) == 0 ) {
         returnValue = HOMELAND;
+        }
+    else if( strcmp( copy, "FL" ) == 0 ) {
+        returnValue = FLIP;
         }
     
     delete [] copy;
@@ -13824,6 +13828,51 @@ void LivingLifePage::step() {
                     }
                 }
             }
+        else if( type == FLIP ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+
+            if( numLines > 0 ) {
+                delete [] lines[0];
+                }
+            
+            for( int i=1; i<numLines; i++ ) {
+                int id = 0;
+                int facingLeft = 0;
+                
+                int numRead = 
+                    sscanf( lines[i], "%d %d", &id, &facingLeft );
+            
+                if( numRead == 2 ) {
+                    LiveObject *o = getLiveObject( id );
+                    
+                    if( o != NULL && ! o->inMotion ) {
+                        char flip = false;
+                        
+                        if( facingLeft && ! o->holdingFlip ) {
+                            o->holdingFlip = true;
+                            flip = true;
+                            }
+                        else if( ! facingLeft && o->holdingFlip ) {
+                            o->holdingFlip = false;
+                            flip = true;
+                            }
+                        if( flip ) {
+                            o->lastAnim = moving;
+                            o->curAnim = ground;
+                            o->lastAnimFade = 1;
+
+                            o->lastHeldAnim = moving;
+                            o->curHeldAnim = ground;
+                            o->lastHeldAnimFade = 1;
+                            }
+                        }
+                    }
+                delete [] lines[i];
+                }
+            
+            delete [] lines;
+            }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
             
@@ -17720,6 +17769,10 @@ void LivingLifePage::step() {
                         
                         o.holdingFlip = false;
                         
+                        o.lastFlipSendTime = game_getCurrentTime();
+                        o.lastFlipSent = false;
+                        
+
                         o.lastHeldByRawPosSet = false;
 
                         o.pendingAction = false;
@@ -19550,28 +19603,32 @@ void LivingLifePage::step() {
                             if( numRead == 3 ) {
                                 if( existing->curseName != NULL ) {
                                     delete [] existing->curseName;
+                                    existing->curseName = NULL;
                                     }
-                                existing->curseName = stringDuplicate( buffer );
-                                char *barPos = strstr( existing->curseName,
-                                                       "_" );
-                                if( barPos != NULL ) {
-                                    barPos[0] = ' ';
+                                if( level > 0 ) {
+                                    existing->curseName = 
+                                        stringDuplicate( buffer );
+                                    char *barPos = strstr( existing->curseName,
+                                                           "_" );
+                                    if( barPos != NULL ) {
+                                        barPos[0] = ' ';
+                                        }
+                                    
+                                    // display their cursed tag now
+                                    if( existing->currentSpeech != NULL ) {
+                                        delete [] existing->currentSpeech;
+                                        }
+                                    existing->currentSpeech = 
+                                        autoSprintf( "X %s X",
+                                                     existing->curseName );
+                                    existing->speechFadeETATime =
+                                        curTime + 3 +
+                                        strlen( existing->currentSpeech ) / 5;
+                                    existing->speechIsSuccessfulCurse = false;
+                                    existing->speechIsCurseTag = true;
+                                    existing->lastCurseTagDisplayTime = curTime;
+                                    existing->speechIsOverheadLabel = false;
                                     }
-
-                                // display their cursed tag now
-                                if( existing->currentSpeech != NULL ) {
-                                    delete [] existing->currentSpeech;
-                                    }
-                                existing->currentSpeech = 
-                                    autoSprintf( "X %s X",
-                                                 existing->curseName );
-                                existing->speechFadeETATime =
-                                    curTime + 3 +
-                                    strlen( existing->currentSpeech ) / 5;
-                                existing->speechIsSuccessfulCurse = false;
-                                existing->speechIsCurseTag = true;
-                                existing->lastCurseTagDisplayTime = curTime;
-                                existing->speechIsOverheadLabel = false;
                                 }
                             break;
                             }
@@ -21325,6 +21382,31 @@ void LivingLifePage::step() {
 
 
 
+    if( ourLiveObject != NULL ) {
+        if( ourLiveObject->holdingFlip != ourLiveObject->lastFlipSent &&
+            currentTime - ourLiveObject->lastFlipSendTime > 2 ) {
+            
+            // been 2 seconds since last sent FLIP to server
+            // avoid spamming
+            int offset = 1;
+            
+            if( ourLiveObject->holdingFlip ) {
+                offset = -1;
+                }
+            
+            char *message = autoSprintf( 
+                "FLIP %d %d#",
+                ourLiveObject->xd + offset,
+                ourLiveObject->yd );
+            
+            sendToServerSocket( message );
+            
+            delete [] message;
+            ourLiveObject->lastFlipSendTime = currentTime;
+            ourLiveObject->lastFlipSent = ourLiveObject->holdingFlip;
+            }
+        }
+    
     
 
     if( mFirstServerMessagesReceived == 3 ) {
@@ -22673,6 +22755,36 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         mCurMouseOverBehind = false;
         mLastMouseOverFade = 1.0f;
         }
+    
+    
+    double worldX = inX / (double)CELL_D;
+    
+
+    if( ! ourLiveObject->inMotion ) {
+        char flip = false;
+        
+        if( ourLiveObject->holdingFlip &&
+            worldX > ourLiveObject->currentPos.x + 0.5 ) {
+            ourLiveObject->holdingFlip = false;
+            flip = true;
+            }
+        else if( ! ourLiveObject->holdingFlip &&
+                 worldX < ourLiveObject->currentPos.x - 0.5 ) {
+            ourLiveObject->holdingFlip = true;
+            flip = true;
+            }
+
+        if( flip ) {
+            ourLiveObject->lastAnim = moving;
+            ourLiveObject->curAnim = ground;
+            ourLiveObject->lastAnimFade = 1;
+            
+            ourLiveObject->lastHeldAnim = moving;
+            ourLiveObject->curHeldAnim = ground;
+            ourLiveObject->lastHeldAnimFade = 1;
+            }
+        }
+    
     
     }
 
