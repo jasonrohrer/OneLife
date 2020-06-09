@@ -4301,28 +4301,30 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     inPlayer->lastSay = stringDuplicate( inToSay );
     
     //2HOL additions for: password-protected objects
+    char *sayingPassword = NULL;
+    char *assigningPassword = NULL;
     if ( passwordTransitionsAllowed ) {
         
         if ( passwordInvocationAndSettingAreSeparated ) {
-            char *sayingPassword = isPasswordInvokingSay( inToSay );
+            sayingPassword = isPasswordInvokingSay( inToSay );
             if( sayingPassword != NULL ) {
                 AppLog::infoF( "2HOL DEBUG: Player says password. New password assigned to a player." );
                 inPlayer->saidPassword = stringDuplicate( sayingPassword );
                 AppLog::infoF( "2HOL DEBUG: Player's password is %s", inPlayer->saidPassword );
                 }
             //if passwordSilent = true, no need to display anything, as well as make any further checks, just cut it after the assignment is done
-            if( passwordSilent ) { return }
+            if( passwordSilent ) { return; }
             }
     
     
-        char *assigningPassword = isPasswordSettingSay( inToSay );
+        assigningPassword = isPasswordSettingSay( inToSay );
         if( assigningPassword != NULL ) {
             AppLog::infoF( "2HOL DEBUG: Player sets new password for future assignment." );
             inPlayer->assignedPassword = stringDuplicate( assigningPassword );
             if ( !passwordInvocationAndSettingAreSeparated ) { inPlayer->saidPassword = stringDuplicate( assigningPassword ); }
             AppLog::infoF( "2HOL DEBUG: Password for future assignment password is %s", inPlayer->assignedPassword );
             //if passwordSilent = true, no need to display anything, as well as make any further checks, just cut it after the assignment is done
-            if( passwordSilent ) { return }
+            if( passwordSilent ) { return; }
             }
 
         }
@@ -10199,13 +10201,13 @@ int main() {
     
     //2HOL additions for: password-protected objects
     passwordTransitionsAllowed =
-        SettingsManager::getStringSetting( "passwordTransitionsAllowed", 0 );
+        SettingsManager::getIntSetting( "passwordTransitionsAllowed", 0 );
     passwordInvocationAndSettingAreSeparated =
-        SettingsManager::getStringSetting( "passwordInvocationAndSettingAreSeparated", 0 );
+        SettingsManager::getIntSetting( "passwordInvocationAndSettingAreSeparated", 0 );
     passwordOverhearRadius =
-        SettingsManager::getStringSetting( "passwordOverhearRadius", 5 );
-    if (passwordOverhearRadius == -1) { passwordSilent = 1 }
-    else { passwordSilent = 0 }
+        SettingsManager::getIntSetting( "passwordOverhearRadius", 6 );
+    if (passwordOverhearRadius == -1) { passwordSilent = 1; }
+    else { passwordSilent = 0; }
     readPhrases( "passwordSettingPhrases", &passwordSettingPhrases );
     readPhrases( "passwordInvokingPhrases", &passwordInvokingPhrases );
     
@@ -13923,8 +13925,11 @@ int main() {
                                                 file.open("2HOL passwords.txt",std::ios::app);
                                                 file << '\n' << asctime(curtime) << "        id:" << tmp << "|x:" << m.x << "|y:" << m.y << "|word:" << found;
                                                 file.close();
+ 
+                                                //erasing player's password after each successful transition
+                                                nextPlayer->assignedPassword = NULL;
                                                 
-                                                AppLog::infoF( "2HOL DEBUG: saved password-protected position, x = %i", getObject( r->newTarget )->IndX.getElementDirect(getObject( r->newTarget )->IndX.size()-1));
+                                                                                              AppLog::infoF( "2HOL DEBUG: saved password-protected position, x = %i", getObject( r->newTarget )->IndX.getElementDirect(getObject( r->newTarget )->IndX.size()-1));
                                                 AppLog::infoF( "2HOL DEBUG: saved password-protected position, y = %i", getObject( r->newTarget )->IndY.getElementDirect(getObject( r->newTarget )->IndY.size()-1));
                                                 AppLog::infoF( "2HOL DEBUG: saved password: %s", getObject( r->newTarget )->IndPass.getElementDirect(getObject( r->newTarget )->IndPass.size()-1));
                                             }
@@ -13946,7 +13951,7 @@ int main() {
                                         for( int i=0; i<targetObj->IndX.size(); i++ ) {
                                             if ( m.x == getObject( target )->IndX.getElementDirect(i) && m.y == getObject( target )->IndY.getElementDirect(i) ) {
                                                 pass = getObject( target )->IndPass.getElementDirect(i);
-                                                    AppLog::infoF( "2HOL DEBUG: the password is deleted from the object with ID %i, located at the position (%i,%i).", getObject( target )->ID, m.x, m.y);
+                                                    AppLog::infoF( "2HOL DEBUG: the password is deleted from the object with ID %i, located at the position (%i,%i).", getObject( target )->id, m.x, m.y);
                                                 getObject( target )->IndPass.deleteElement(i);
                                                 getObject( target )->IndX.deleteElement(i);
                                                 getObject( target )->IndY.deleteElement(i);
@@ -18942,9 +18947,9 @@ int main() {
 
                         //2HOL additions for: password-protected objects
                         //  if player said password aloud, do not send it to anyone positioned further than passwordOverhearRadius tiles away
-                        int sayingPassword =
+                        int sPassword =
                                     newSpeechPasswordFlags.getElementDirect( u );
-                        if( sayingPassword && ( passwordOverhearRadius > d ) ) { minUpdateDist = maxDist + 1 }
+                        if( sPassword && ( passwordOverhearRadius > d ) ) { minUpdateDist = maxDist + 1; }
 
                         }
 
