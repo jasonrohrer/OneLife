@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Fixed family tree server to accept longer last words.
+
+
+
+
 Version 342    2020-May-30
 
 NOTE:  must update server first this week.
