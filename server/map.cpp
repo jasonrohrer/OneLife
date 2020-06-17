@@ -8476,8 +8476,9 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                     
                     // d-town placed 20K away
                     // by looking for homelands not more than 9K past average
+                    // in negative (west) direction
                     // we avoid d-town homelands
-                    if( ! h->expired && h->x < homelandXAve + 9000 ) {
+                    if( ! h->expired && h->x > homelandXAve - 9000 ) {
                         int xBoundary = h->x - 2 * h->radius;
                         
                         if( xBoundary < ave.x ) {

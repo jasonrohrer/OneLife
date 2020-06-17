@@ -7,6 +7,10 @@ Server Fixes
 
 --Fixed family tree server to accept longer last words.
 
+--Fixed bug that caused Eve spawn to jump to the west of a donkeytown homeland.
+  Fixes #633.
+
+
 
 
 
