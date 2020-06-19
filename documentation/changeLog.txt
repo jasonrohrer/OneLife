@@ -10,6 +10,10 @@ Server Fixes
 --Fixed bug that caused Eve spawn to jump to the west of a donkeytown homeland.
   Fixes #633.
 
+--New method for putting Eve to west of homelands.  Completely ignore any
+  d-town or tutorial homelands, and compute the average location of the rest.
+  Place Eve to the west of the furthest-west homeland that is not > 1500 to the
+  west of this average.
 
 
 

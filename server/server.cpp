@@ -1587,6 +1587,18 @@ int getPlayerLineage( int inID ) {
 
 
 
+char isPlayerIgnoredForEvePlacement( int inID ) {
+    LiveObject *o = getLiveObject( inID );
+    if( o != NULL ) {
+        return ( o->curseStatus.curseLevel > 0 ) || o->isTutorial;
+        }
+
+    // player id doesn't even exist
+    return true;
+    }
+
+
+
 
 static double pickBirthCooldownSeconds() {
     // Kumaraswamy distribution
