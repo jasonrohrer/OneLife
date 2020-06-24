@@ -259,6 +259,8 @@ with "WITH"
 yum "YUM"
 meh "MEH"
 
+craving "CRAVING"
+
 
 foodTimeString "SECONDS PER FOOD PIP"
 foodTimeFormatString "%s:  %0.1f%s"
