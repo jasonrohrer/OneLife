@@ -6933,7 +6933,8 @@ static char isYummy( LiveObject *inPlayer, int inObjectID ) {
         // because o isn't used beyond this point
         }   
     
-    if( inObjectID == inPlayer->cravingFoodID ) {
+    if( inObjectID == inPlayer->cravingFoodID &&
+        computeAge( inPlayer ) >= minAgeForCravings ) {
         return true;
         }
 
@@ -6990,7 +6991,8 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
 
         inPlayer->yummyFoodChain.push_back( eatenID );
         
-        if( eatenID == inPlayer->cravingFoodID ) {
+        if( eatenID == inPlayer->cravingFoodID &&
+            computeAge( inPlayer ) >= minAgeForCravings ) {
             
             for( int i=0; i< inPlayer->cravingFoodYumIncrement; i++ ) {
                 // add extra copies to YUM chain as a bonus
