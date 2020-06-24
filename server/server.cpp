@@ -63,6 +63,7 @@
 #include "fitnessScore.h"
 #include "arcReport.h"
 #include "curseDB.h"
+#include "cravings.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -150,6 +151,8 @@ static double eatBonusFloor = 0;
 static double eatBonusHalfLife = 50;
 
 static int canYumChainBreak = 0;
+
+static double minAgeForCravings = 10;
 
 
 static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
@@ -823,6 +826,10 @@ typedef struct LiveObject {
 		
 		//2HOL: player is either disconnected or inactive
 		bool isAFK;
+
+        int cravingFoodID;
+        int cravingFoodYumIncrement;
+        char cravingKnown;
 
     } LiveObject;
 
@@ -5782,6 +5789,10 @@ static char isYummy( LiveObject *inPlayer, int inObjectID ) {
         return false;
         }
 
+    if( inObjectID == inPlayer->cravingFoodID ) {
+        return true;
+        }
+
     for( int i=0; i<inPlayer->yummyFoodChain.size(); i++ ) {
         if( inObjectID == inPlayer->yummyFoodChain.getElementDirect(i) ) {
             return false;
@@ -5822,7 +5833,28 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
     if( wasYummy ||
         inPlayer->yummyFoodChain.size() == 0 ) {
         
-        inPlayer->yummyFoodChain.push_back( inFoodEatenID );
+        int eatenID = inFoodEatenID;
+
+        inPlayer->yummyFoodChain.push_back( eatenID );
+        
+        if( eatenID == inPlayer->cravingFoodID ) {
+            
+            for( int i=0; i< inPlayer->cravingFoodYumIncrement; i++ ) {
+                // add extra copies to YUM chain as a bonus
+                inPlayer->yummyFoodChain.push_back( eatenID );
+                }
+            
+            // craving satisfied, go on to next thing in list
+            inPlayer->cravingFoodID = 
+                getCravedFood( inPlayer->lineageEveID,
+                               inPlayer->parentChainLength,
+                               inPlayer->cravingFoodID );
+            // reset generational bonus counter
+            inPlayer->cravingFoodYumIncrement = 1;
+            
+            // flag them for getting a new craving message
+            inPlayer->cravingKnown = false;
+            }
         }
     
 
@@ -6576,6 +6608,11 @@ int processLoggedInPlayer( char inAllowReconnect,
     canYumChainBreak = SettingsManager::getIntSetting( "canYumChainBreak", 0 );
     
 
+    
+    minAgeForCravings = SettingsManager::getDoubleSetting( "minAgeForCravings",
+                                                           10 );
+    
+
     numConnections ++;
                 
     LiveObject newObject;
@@ -6586,6 +6623,10 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.lastSidsBabyEmail = NULL;
 
     newObject.lastBabyEmail = NULL;
+
+    newObject.cravingFoodID = -1;
+    newObject.cravingFoodYumIncrement = 0;
+    newObject.cravingKnown = false;
     
     newObject.id = nextID;
     nextID++;
@@ -6862,6 +6903,14 @@ int processLoggedInPlayer( char inAllowReconnect,
         newObject.lineageEveID = newObject.id;
         
         newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
+        
+        // she starts off craving a food right away
+        newObject.cravingFoodID = getCravedFood( newObject.lineageEveID,
+                                                 newObject.parentChainLength );
+        // initilize increment
+        newObject.cravingFoodYumIncrement = 1;
+
+        
         
         // she starts off craving a food right away
         // newObject.cravingFood = getCravedFood( newObject.lineageEveID,
@@ -7631,6 +7680,14 @@ int processLoggedInPlayer( char inAllowReconnect,
 
         // mother
         newObject.lineage->push_back( newObject.parentID );
+
+        
+        // inherit mother's craving at time of birth
+        newObject.cravingFoodID = parent->cravingFoodID;
+        
+        // increment for next generation
+        newObject.cravingFoodYumIncrement = parent->cravingFoodYumIncrement + 1;
+        
 
         // inherit last heard monument, if any, from parent
         newObject.monumentPosSet = parent->monumentPosSet;
@@ -11422,6 +11479,19 @@ static LiveObject *getPlayerByName( char *inName,
     }
 	
 	
+
+
+static void sendCraving( LiveObject *inPlayer ) {
+    char *message = autoSprintf( "CR\n%d %d\n#", 
+                                 inPlayer->cravingFoodID,
+                                 inPlayer->cravingFoodYumIncrement );
+    sendMessageToPlayer( inPlayer, message, strlen( message ) );
+    delete [] message;
+
+    inPlayer->cravingKnown = true;
+    }
+
+
 
 
 int main() {
@@ -18050,6 +18120,14 @@ int main() {
                 nextPlayer->emotUnfreezeETA = 0;
                 }
             
+            if( ! nextPlayer->error &&
+                ! nextPlayer->cravingKnown &&
+                computeAge( nextPlayer ) >= minAgeForCravings ) {
+                
+                sendCraving( nextPlayer );
+                }
+                
+
 
             if( nextPlayer->dying && ! nextPlayer->error &&
                 curTime >= nextPlayer->dyingETA ) {
