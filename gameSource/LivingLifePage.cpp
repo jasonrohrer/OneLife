@@ -1037,7 +1037,8 @@ typedef enum messageType {
     PHOTO_SIGNATURE,
     FORCED_SHUTDOWN,
     GLOBAL_MESSAGE,
-	FLIP,
+    FLIP,
+    CRAVING,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1175,6 +1176,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "FL" ) == 0 ) {
         returnValue = FLIP;
+        }
+    else if( strcmp( copy, "CR" ) == 0 ) {
+        returnValue = CRAVING;
         }
     
     delete [] copy;
@@ -2656,10 +2660,25 @@ LivingLifePage::LivingLifePage()
         mTutorialExtraOffset[i].y = 0;
         
         mTutorialMessage[i] = "";
+
+
+        mCravingHideOffset[i].x = -932;
+        
+        mCravingHideOffset[i].y = -370;
+        
+        mCravingTargetOffset[i] = mCravingHideOffset[i];
+        mCravingPosOffset[i] = mCravingHideOffset[i];
+
+        mCravingExtraOffset[i].x = 0;
+        mCravingExtraOffset[i].y = 0;
+        
+        mCravingMessage[i] = NULL;        
         }
     
     mLiveTutorialSheetIndex = -1;
     mLiveTutorialTriggerNumber = -1;
+    
+    mLiveCravingSheetIndex = -1;
 
     //FOV
 	calcOffsetHUD();
@@ -3021,6 +3040,9 @@ LivingLifePage::~LivingLifePage() {
         
         if( mHintMessage[i] != NULL ) {
             delete [] mHintMessage[i];
+            }
+        if( mCravingMessage[i] != NULL ) {
+            delete [] mCravingMessage[i];
             }
         }
     
@@ -8437,18 +8459,24 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
+
+
+
+    double highestCravingYOffset = 0;
     
-    setDrawColor( 0, 0, 0, 1 );
-    for( int i=0; i<mErasedNoteChars.size(); i++ ) {
-        setDrawFade( mErasedNoteCharFades.getElementDirect( i ) *
-                     pencilErasedFontExtraFade );
-        
-        pencilErasedFont->
-            drawCharacterSprite( 
-                mErasedNoteChars.getElementDirect( i ), 
-                add( paperPos, 
-                     mult( mErasedNoteCharOffsets.getElementDirect( i ), gui_fov_scale_hud ) ) );
+    if( mLiveCravingSheetIndex != -1 ) {
+        // craving showing
+        // find highest one
+        highestCravingYOffset = 0;
+                
+        for( int c=0; c<NUM_HINT_SHEETS; c++ ) {
+            double offset = mCravingPosOffset[c].y - mCravingHideOffset[c].y;
+            if( offset > highestCravingYOffset ) {
+                highestCravingYOffset = offset;
+                }
+            }
         }
+    
 
 
 
@@ -8512,6 +8540,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
 			if ( showHelp ) {
 				setDrawColor( 1, 1, 1, 0.2f );
 				}
+
+            slipPos.y += lrint( highestCravingYOffset / 1.75 );
+
             drawSprite( mHungerSlipSprites[i], slipPos, gui_fov_scale_hud );
             }
         }
@@ -8523,6 +8554,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
         if( ! equal( mYumSlipPosOffset[i], mYumSlipHideOffset[i] ) ) {
             doublePair slipPos = 
                 add( mult( recalcOffset( mYumSlipPosOffset[i] ), gui_fov_scale ), lastScreenViewCenter );
+        
+            slipPos.y += lrint( highestCravingYOffset / 1.75 );
+            
             setDrawColor( 1, 1, 1, 1 );
             drawSprite( mYumSlipSprites[i], slipPos, gui_fov_scale_hud );
             
@@ -8550,6 +8584,37 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                 handwritingFont->drawString( word, messagePos, alignCenter );
                 }
+            }
+        }
+
+    
+    
+    // now draw craving sheets
+    if( mLiveCravingSheetIndex > -1 )
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        if( ! equal( mCravingPosOffset[i], mCravingHideOffset[i] ) ) {
+            
+            doublePair cravingPos  = 
+                add( mCravingPosOffset[i], lastScreenViewCenter );
+            
+            cravingPos = add( cravingPos, mCravingExtraOffset[i] );
+            
+            setDrawColor( 1, 1, 1, 1.0 );
+            // flip, don't rotate
+            drawSprite( mHintSheetSprites[i], cravingPos, 1.0, 0.0, true );
+                
+            setDrawColor( 0, 0, 0, 1.0f );
+            
+            doublePair lineStart = cravingPos;
+            
+            lineStart.x += 298;
+            lineStart.x -= mCravingExtraOffset[i].x;
+            
+            lineStart.y += 26;
+                
+            handwritingFont->drawString( mCravingMessage[i],
+                                         lineStart, alignLeft );
+            
             }
         }
 
@@ -8739,7 +8804,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             drawCharacterSprite( 
                 mErasedNoteChars.getElementDirect( i ), 
                 add( paperPos, 
-                     mErasedNoteCharOffsets.getElementDirect( i ) ) );
+                     mult( mErasedNoteCharOffsets.getElementDirect( i ), gui_fov_scale_hud ) ) );
         }
 
 
@@ -10770,6 +10835,47 @@ void LivingLifePage::endExtraObjectMove( int inExtraIndex ) {
 
 
 
+void LivingLifePage::setNewCraving( int inFoodID, int inYumBonus ) {
+    char *foodDescription = 
+        stringToUpperCase( getObject( inFoodID )->description );
+                
+    stripDescriptionComment( foodDescription );
+
+    char *message = 
+        autoSprintf( "%s: %s (+%d)", translate( "craving"), 
+                     foodDescription, inYumBonus );
+    
+    delete [] foodDescription;
+    
+    
+    if( mLiveCravingSheetIndex > -1 ) {
+        // hide old craving sheet
+        mCravingTargetOffset[ mLiveCravingSheetIndex ] =
+            mCravingHideOffset[ mLiveCravingSheetIndex ];
+        }
+    mLiveCravingSheetIndex ++;
+    
+    if( mLiveCravingSheetIndex >= NUM_HINT_SHEETS ) {
+        mLiveCravingSheetIndex -= NUM_HINT_SHEETS;
+        }
+    
+    if( mCravingMessage[ mLiveCravingSheetIndex ] != NULL ) {
+        delete [] mCravingMessage[ mLiveCravingSheetIndex ];
+        mCravingMessage[ mLiveCravingSheetIndex ] = NULL;
+        }
+
+    mCravingMessage[ mLiveCravingSheetIndex ] = message;
+    
+    mCravingTargetOffset[ mLiveCravingSheetIndex ] =
+        mCravingHideOffset[ mLiveCravingSheetIndex ];
+    
+    mCravingTargetOffset[ mLiveCravingSheetIndex ].y += 64;
+    
+    double longestLine = getLongestLine( 
+        (char*)( mCravingMessage[ mLiveCravingSheetIndex ] ) );
+    
+    mCravingExtraOffset[ mLiveCravingSheetIndex ].x = longestLine;
+    }
 
         
 void LivingLifePage::step() {
@@ -11623,6 +11729,49 @@ void LivingLifePage::step() {
                 }
             }
         }
+
+
+
+
+    // pos for craving sheets
+    // don't start sliding first sheet until map loaded
+    if( mLiveCravingSheetIndex >= 0 && mDoneLoadingFirstObjectSet )
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        
+        if( ! equal( mCravingPosOffset[i], mCravingTargetOffset[i] ) ) {
+            doublePair delta = 
+                sub( mCravingTargetOffset[i], mCravingPosOffset[i] );
+            
+            double d = distance( mCravingTargetOffset[i], 
+                                 mCravingPosOffset[i] );
+            
+            
+            if( d <= 1 ) {
+                mCravingPosOffset[i] = mCravingTargetOffset[i];
+                }
+            else {
+                int speed = frameRateFactor * 4;
+                
+                if( d < 8 ) {
+                    speed = lrint( frameRateFactor * d / 2 );
+                    }
+                
+                if( speed > d ) {
+                    speed = floor( d );
+                    }
+                
+                if( speed < 1 ) {
+                    speed = 1;
+                    }
+                
+                doublePair dir = normalize( delta );
+                
+                mCravingPosOffset[i] = 
+                    add( mCravingPosOffset[i],
+                         mult( dir, speed ) );
+                }
+            }
+        }
     
 
 
@@ -11983,6 +12132,17 @@ void LivingLifePage::step() {
                 }
             
             delete [] lines;
+            }
+        else if( type == CRAVING ) {
+            int foodID = -1;
+            int bonus = 0;
+            
+            int numRead = 
+                sscanf( message, "CR\n%d %d", &foodID, &bonus );
+            
+            if( numRead == 2 ) {
+                setNewCraving( foodID, bonus );
+                }
             }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
@@ -19194,11 +19354,19 @@ void LivingLifePage::makeActive( char inFresh ) {
         }
 
     mLiveTutorialSheetIndex = -1;
+    mLiveCravingSheetIndex = -1;
     
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {    
         mTutorialTargetOffset[i] = mTutorialHideOffset[i];
         mTutorialPosOffset[i] = mTutorialHideOffset[i];
         mTutorialMessage[i] = "";
+
+        mCravingTargetOffset[i] = mCravingHideOffset[i];
+        mCravingPosOffset[i] = mCravingHideOffset[i];
+        if( mCravingMessage[i] != NULL ) {
+            delete [] mCravingMessage[i];
+            mCravingMessage[i] = NULL;
+            }
         }
     
     

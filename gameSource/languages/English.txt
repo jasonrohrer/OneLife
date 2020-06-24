@@ -262,6 +262,8 @@ with "WITH"
 yum "YUM"
 meh "MEH"
 
+craving "CRAVING"
+
 
 eatHint "MOUTH"
 bareHandHint "BARE HAND"
