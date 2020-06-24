@@ -8159,6 +8159,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             o->foodUpdate = true;
             
             o->connected = true;
+            o->cravingKnown = false;
             
             if( o->heldByOther ) {
                 // they're held, so they may have moved far away from their
