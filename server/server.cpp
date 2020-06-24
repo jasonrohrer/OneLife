@@ -11484,9 +11484,11 @@ static LiveObject *getPlayerByName( char *inName,
 
 
 static void sendCraving( LiveObject *inPlayer ) {
+    // they earn the normal YUM multiplier increase (+1) PLUS the bonus
+    // increase, so send them the total.
     char *message = autoSprintf( "CR\n%d %d\n#", 
                                  inPlayer->cravingFoodID,
-                                 inPlayer->cravingFoodYumIncrement );
+                                 inPlayer->cravingFoodYumIncrement + 1 );
     sendMessageToPlayer( inPlayer, message, strlen( message ) );
     delete [] message;
 

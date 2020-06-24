@@ -60,6 +60,7 @@ fitnessScore.cpp \
 CoordinateTimeTracking.cpp \
 arcReport.cpp \
 curseDB.cpp \
+cravings.cpp \
 
 
 
