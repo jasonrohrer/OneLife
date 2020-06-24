@@ -6501,6 +6501,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             o->inFlight = false;
             
             o->connected = true;
+            o->cravingKnown = false;
             
             if( o->heldByOther ) {
                 // they're held, so they may have moved far away from their
