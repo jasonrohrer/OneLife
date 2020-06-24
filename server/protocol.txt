@@ -228,6 +228,8 @@ HOMELAND (HL)
 
 FLIP (FL) 
 
+CRAVING (CR)
+
 FRAME (FM)
 
 PONG
@@ -982,6 +984,15 @@ p_id face_left
 Tells player about other players that have flipped.  face_left is true if facing
 left, false if facing right.  Only sent in response to stationary player flip
 requests (clients should still auto-flip players based on movement).
+
+
+
+CR
+food_id bonus
+#
+
+Tells player about which food they're currently craving, and how much their
+YUM multiplier will increase when they eat it.
 
 
 
