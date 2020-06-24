@@ -40,7 +40,9 @@ static int getRandomFood( int inPlayerGenerationNumber,
     
     double e = SettingsManager::getDoubleSetting( "cravingPoolExponent", 1.4 );
 
-    int maxDepth = lrint( pow( inPlayerGenerationNumber, e ) );
+    double offset = SettingsManager::getDoubleSetting( "cravingPoolOffset", 5 );
+
+    int maxDepth = lrint( pow( inPlayerGenerationNumber + offset, e ) );
 
     if( maxDepth < 1 ) {
         maxDepth = 1;
@@ -68,6 +70,9 @@ static int getRandomFood( int inPlayerGenerationNumber,
         int pick = 
             randSource.getRandomBoundedInt( 0, possibleFoods.size() - 1 );
     
+        printf( "%d possible foods, picking #%d\n", possibleFoods.size(),
+                pick );
+        
         return possibleFoods.getElementDirect( pick );
         }
     else {

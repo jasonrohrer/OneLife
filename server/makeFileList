@@ -62,6 +62,7 @@ arcReport.cpp \
 curseDB.cpp \
 eveMovingGrid.cpp \
 specialBiomes.cpp \
+cravings.cpp \
 
 
 
