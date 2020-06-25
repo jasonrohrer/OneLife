@@ -7,6 +7,10 @@ Version 344  ??
 
 --Cravings implemented.
 
+--Can use a tool on objects in certain specially-marked (+useOnContained)
+  containers.  For example, can use a knife to slice a loaf of bread that is
+  sitting on a table.  Before, you had to remove the bread from the table to
+  slice it, and then put it back on the table.
 
 
 
