@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 344  ??
+
+--Cravings implemented.
+
+
+
+
 Server Fixes
 
 --Fixed family tree server to accept longer last words.
@@ -15,6 +22,8 @@ Server Fixes
   Place Eve to the west of the furthest-west homeland that is not > 1500 to the
   west of this average.
 
+--forceEveAfterGenerationNumber pushed up to 100 (about 1 new town a day).
+  Was 40 (about 1 new town every 9 hours).
 
 
 
