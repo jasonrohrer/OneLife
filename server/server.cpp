@@ -21514,6 +21514,7 @@ int main() {
                                     }         
                                 else if( nextPlayer->holdingID >= 0 ) {
                                     
+                                    char handled = false;
                                     
                                     if( m.i != -1 && targetObj->permanent &&
                                         targetObj->numSlots > m.i &&
@@ -21567,12 +21568,26 @@ int main() {
                                                   nextPlayer,
                                                   nextPlayer->holdingID ) ) ) {
                                                 
+                                            int oldHeld = 
+                                                nextPlayer->holdingID;
+                                            
                                             handleHoldingChange( 
                                                 nextPlayer,
                                                 contTrans->newActor );
                                             
-                                            nextPlayer->heldTransitionSourceID
-                                                = targetObj->id;
+                                            
+                                            if( contTrans->newActor > 0 && 
+                                                contTrans->newActor !=
+                                                oldHeld ) {
+                                                
+                                                nextPlayer->heldOriginValid = 0;
+                                                nextPlayer->heldOriginX = 0;
+                                                nextPlayer->heldOriginY = 0;
+                                                nextPlayer->
+                                                    heldTransitionSourceID
+                                                    = contTargetObj->id;
+                                                }
+
                                             
                                             setResponsiblePlayer( 
                                                 - nextPlayer->id );
@@ -21583,23 +21598,30 @@ int main() {
                                                 contTrans->newTarget );
                                             
                                             setResponsiblePlayer( -1 );
+                                            handled = true;
                                             }
                                         }
-                                    else if( nextPlayer->holdingID == 0 &&
-                                         targetObj->permanent ) {
+
                                     
-                                        // try removing from permanent
-                                        // container
-                                        removeFromContainerToHold( nextPlayer,
-                                                                   m.x, m.y,
-                                                                   m.i );
-                                        }
-                                    else if( nextPlayer->holdingID > 0 ) {
-                                        // try adding what we're holding to
-                                        // target container
-                                        
-                                        addHeldToContainer(
-                                            nextPlayer, target, m.x, m.y );
+                                    // consider other cases
+                                    if( ! handled ) {
+                                        if( nextPlayer->holdingID == 0 &&
+                                            targetObj->permanent ) {
+                                    
+                                            // try removing from permanent
+                                            // container
+                                            removeFromContainerToHold( 
+                                                nextPlayer,
+                                                m.x, m.y,
+                                                m.i );
+                                            }
+                                        else if( nextPlayer->holdingID > 0 ) {
+                                            // try adding what we're holding to
+                                            // target container
+                                            
+                                            addHeldToContainer(
+                                                nextPlayer, target, m.x, m.y );
+                                            }
                                         }
                                     }
                                 
