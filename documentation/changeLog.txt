@@ -12,6 +12,9 @@ Version 344  ??
   sitting on a table.  Before, you had to remove the bread from the table to
   slice it, and then put it back on the table.
 
+--Hunger slips now account for stored YUM bonus, so they don't show hungry or
+  starving, when you're actually not due to your bonus.
+
 
 
 Server Fixes
