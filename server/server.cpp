@@ -21575,14 +21575,16 @@ int main() {
                                                 nextPlayer,
                                                 contTrans->newActor );
                                             
+                                            nextPlayer->heldOriginValid = 0;
+                                            nextPlayer->heldOriginX = 0;
+                                            nextPlayer->heldOriginY = 0;
+                                            nextPlayer->
+                                                heldTransitionSourceID = 0;
                                             
                                             if( contTrans->newActor > 0 && 
                                                 contTrans->newActor !=
                                                 oldHeld ) {
                                                 
-                                                nextPlayer->heldOriginValid = 0;
-                                                nextPlayer->heldOriginX = 0;
-                                                nextPlayer->heldOriginY = 0;
                                                 nextPlayer->
                                                     heldTransitionSourceID
                                                     = contTargetObj->id;

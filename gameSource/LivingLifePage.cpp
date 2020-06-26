@@ -15255,23 +15255,56 @@ void LivingLifePage::step() {
                                         mMapContainedStacks[mapI].
                                         getElementDirect( changeIndex );
                                     
-                                    ObjectRecord *newObj = 
-                                        getObject( newContID );
+                                    
+                                    // watch out for swap case, with single
+                                    // item
+                                    // don't play sound then
+                                    LiveObject *causingPlayer =
+                                        getLiveObject( - responsiblePlayerID );
+
+                                    if( causingPlayer != NULL &&
+                                        causingPlayer->holdingID 
+                                        != oldContID ) {
                                         
-                                    if( shouldCreationSoundPlay(
-                                            oldContID, newContID ) ) {
-                                        if( newObj->
-                                            creationSound.numSubSounds > 0 ) {
-                                            playSound( 
-                                                newObj->creationSound,
-                                                getVectorFromCamera( x, y ) );
+
+                                        ObjectRecord *newObj = 
+                                            getObject( newContID );
+                                        
+                                        if( shouldCreationSoundPlay(
+                                                oldContID, newContID ) ) {
+                                            if( newObj->
+                                                creationSound.numSubSounds 
+                                                > 0 ) {
+                                                
+                                                playSound( 
+                                                    newObj->creationSound,
+                                                    getVectorFromCamera( 
+                                                        x, y ) );
+                                                }
                                             }
-                                        }
-                                    else if( newObj->
-                                             usingSound.numSubSounds > 0 ) {
-                                        playSound( 
-                                                newObj->usingSound,
-                                                getVectorFromCamera( x, y ) );
+                                        else if( 
+                                            bothSameUseParent( newContID,
+                                                               oldContID ) &&
+                                            newObj->
+                                            usingSound.numSubSounds > 0 ) {
+                                        
+                                            ObjectRecord *oldObj = 
+                                                getObject( oldContID );
+                                        
+                                            // only play sound if new is
+                                            // less used than old (filling back
+                                            // up sound)
+                                            if( getObjectParent( oldContID ) ==
+                                                newContID ||
+                                                oldObj->thisUseDummyIndex <
+                                                newObj->thisUseDummyIndex ) {
+                                        
+                                                playSound( 
+                                                    newObj->usingSound,
+                                                    getVectorFromCamera( 
+                                                        x, y ) );
+                                                }
+                                            }
                                         }
                                     }
                                 }
