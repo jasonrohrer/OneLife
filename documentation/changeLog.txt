@@ -52,6 +52,10 @@ Server Fixes
 --Fixed lingering ownership that could occur if your heir died a few seconds
   before you did (UNKNOWN PERSON as owner of a gate, forever).  Fixes #636
 
+--Childless women are treated like men in terms of who counts as genetic
+  offspring (nieces and nephews who are born while they are childless).  This
+  closes an exploit where a woman runs away from her homeland to avoid having
+  kids.  Fixes #635
 
 
 
