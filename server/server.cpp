@@ -8024,6 +8024,20 @@ static void makeOffspringSayMarker( int inPlayerID, int inIDToSkip ) {
 
 
 
+static int countLivingChildren( int inMotherID ) {
+    int count = 0;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( o->parentID == inMotherID && ! o->error ) {
+            count ++;
+            }
+        }
+    return count;
+    }
+
+
 
 int getUnusedLeadershipColor();
 
@@ -8461,6 +8475,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     int numOfAge = 0;
 
+    int maxLivingChildrenPerMother = 
+        SettingsManager::getIntSetting( "maxLivingChildrenPerMother", 4 );
+    
+
     // first, find all mothers that could possibly have us
 
     // three passes, once with birth cooldown limit and lineage limits on, 
@@ -8510,7 +8528,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 numOfAge ++;
                 
                 if( checkCooldown &&
-                    Time::timeSec() < player->birthCoolDown ) {    
+                    ( Time::timeSec() < player->birthCoolDown 
+                      ||
+                      countLivingChildren( player->id ) >= 
+                      maxLivingChildrenPerMother ) ) {    
                     continue;
                     }
                 

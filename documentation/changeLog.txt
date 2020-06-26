@@ -32,6 +32,11 @@ Server Fixes
 --forceEveAfterGenerationNumber pushed up to 100 (about 1 new town a day).
   Was 40 (about 1 new town every 9 hours).
 
+--New live server setting:  maxLivingChildrenPerMother, set to 4.  Mothers that
+  have 4 living children are on infinite birth cooldown, unless other factors
+  force them to have another baby.
+
+
 
 
 Version 342    2020-May-30
