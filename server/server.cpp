@@ -13208,6 +13208,35 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                 delete [] psMessage;
                 }
             }
+        else if( ! joiningExisting && minPosseSizeForKill <= 1 ) {
+            // solo killing okay!
+            
+            // let them know about it
+
+            const char *allyWord = "ALLIES";
+            if( allyCount == 1 ) {
+                allyWord = "ALLY";
+                }
+            const char *enemyWord = "ENEMIES";
+            if( enemyCount == 1 ) {
+                enemyWord = "ENEMY";
+                }
+            
+            const char *pronoun = "HE";
+            if( getFemale( inTarget ) ) {
+                pronoun = "SHE";
+                }
+
+            char *message = 
+                autoSprintf( 
+                    "TARGET HAS %d %s, %d %s, SO %s CAN BE KILLED SOLO.", 
+                    allyCount, allyWord, enemyCount, enemyWord,
+                    pronoun );            
+            
+        
+            sendGlobalMessage( message, inKiller );
+            delete [] message;
+            }
         
 
         

@@ -39,6 +39,11 @@ Server Fixes
 --Fixed server crash upon receiving a malformed MOVE message
   (thanks Tru Custom).
 
+--When solo killing is possible (due to enemies of target swamping allies), no
+  explanation was given.  Now a DING message explains this to the killer, so
+  they know they don't still need to form a posse.
+
+
 
 
 Version 342    2020-May-30
