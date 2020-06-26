@@ -16914,7 +16914,8 @@ void LivingLifePage::step() {
                             //existing->lastAnimFade = 0;
                             if( oldHeld != 0 ) {
                                 if( o.id == ourID ) {
-                                    if( existing->curAnim == doing ) {
+                                    if( existing->curAnim == doing ||
+                                        existing->curAnim == eating ) {
                                         addNewAnimPlayerOnly( 
                                             existing, ground );
                                         }

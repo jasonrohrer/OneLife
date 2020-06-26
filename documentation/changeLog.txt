@@ -15,6 +15,9 @@ Version 344  ??
 --Hunger slips now account for stored YUM bonus, so they don't show hungry or
   starving, when you're actually not due to your bonus.
 
+--Fixed glitch in lingering eating state after eating a food that leaves
+  nothing in your hand.
+
 
 
 Server Fixes
