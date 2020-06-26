@@ -8251,176 +8251,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
-    int lineSpacing = 20 * gui_fov_scale_hud;
-
-    doublePair notePos = add( mult( recalcOffset( mNotePaperPosOffset ), gui_fov_scale ), lastScreenViewCenter );
-
-    if( ! equal( mNotePaperPosOffset, mNotePaperHideOffset ) ) {
-        setDrawColor( 1, 1, 1, 1 );
-        drawSprite( mNotePaperSprite, notePos, gui_fov_scale_hud );
-        
-
-        doublePair drawPos = notePos;
-
-        drawPos.x += 160 * gui_fov_scale_hud;
-        drawPos.y += 79 * gui_fov_scale_hud;
-        drawPos.y += 22 * gui_fov_scale_hud;
-        
-        drawPos.x += 27 * gui_fov_scale_hud;
-
-        setDrawColor( 0, 0, 0, 1 );
-        
-        handwritingFont->drawString( translate( "enterHint" ), 
-                                     drawPos,
-                                     alignRight );
-        }
-        
-
-    
-
-    doublePair paperPos = add( mult( recalcOffset( mNotePaperPosOffset ), gui_fov_scale ), lastScreenViewCenter );
-
-    if( mSayField.isFocused() ) {
-        char *partialSay = mSayField.getText();
-
-        char *strUpper = stringToUpperCase( partialSay );
-        
-        delete [] partialSay;
-
-        SimpleVector<char*> *lines = splitLines( strUpper, ( 345 * gui_fov_scale_hud ) );
-        
-        mNotePaperPosTargetOffset.y = mNotePaperHideOffset.y + 58;
-        
-        if( lines->size() > 1 ) {    
-            mNotePaperPosTargetOffset.y += 20 * ( lines->size() - 1 );
-            }
-        
-        doublePair drawPos = paperPos;
-
-        drawPos.x -= 160 * gui_fov_scale_hud;
-        drawPos.y += 79 * gui_fov_scale_hud;
-
-
-        doublePair drawPosTemp = drawPos;
-        
-
-        for( int i=0; i<mLastKnownNoteLines.size(); i++ ) {
-            char *oldString = mLastKnownNoteLines.getElementDirect( i );
-            int oldLen = strlen( oldString );
-            
-            SimpleVector<doublePair> charPos;        
-                    
-            pencilFont->getCharPos( &charPos, 
-                                    oldString,
-                                    drawPosTemp,
-                                    alignLeft );
-            
-            int newLen = 0;
-            
-            if( i < lines->size() ) {
-                // compare lines
-
-                newLen = strlen( lines->getElementDirect( i ) );
-                
-                }
-            
-
-            // any extra chars?
-                    
-            for( int j=newLen; j<oldLen; j++ ) {
-                mErasedNoteChars.push_back( oldString[j] );
-                       
-                mErasedNoteCharOffsets.push_back(
-                    sub( mult( charPos.getElementDirect( j ), 1. / gui_fov_scale_hud ),
-                         paperPos ) );
-                
-                mErasedNoteCharFades.push_back( 1.0f );
-                }
-            
-            drawPosTemp.y -= lineSpacing;
-            }
-        mLastKnownNoteLines.deallocateStringElements();
-        
-        for( int i=0; i<lines->size(); i++ ) {
-            mLastKnownNoteLines.push_back( 
-                stringDuplicate( lines->getElementDirect(i) ) );
-            }
-        
-
-    
-        delete [] strUpper;
-
-        
-        
-        setDrawColor( 0, 0, 0, 1 );
-        
-        mCurrentNoteChars.deleteAll();
-        mCurrentNoteCharOffsets.deleteAll();
-        
-        for( int i=0; i<lines->size(); i++ ) {
-            char *line = lines->getElementDirect( i );
-            
-            pencilFont->drawString( line, drawPos,
-                                    alignLeft );
-
-            SimpleVector<doublePair> charPos;        
-                    
-            pencilFont->getCharPos( &charPos, 
-                                    line,
-                                    drawPos,
-                                    alignLeft );
-
-            int lineSize = strlen( line );
-            
-            for( int j=0; j<lineSize; j++ ) {
-                mCurrentNoteChars.push_back( line[j] );
-                mCurrentNoteCharOffsets.push_back( 
-                    sub( mult( charPos.getElementDirect( j ), 1. / gui_fov_scale_hud ), paperPos ) );
-                }
-
-            drawPos.y -= lineSpacing;
-            }
-        lines->deallocateStringElements();
-        delete lines;
-        }
-    else {
-        mNotePaperPosTargetOffset = mNotePaperHideOffset;
-
-        doublePair drawPos = paperPos;
-
-        drawPos.x -= 160 * gui_fov_scale_hud;
-        drawPos.y += 79 * gui_fov_scale_hud;
-
-        for( int i=0; i<mLastKnownNoteLines.size(); i++ ) {
-            // whole line gone
-            
-            char *oldString = mLastKnownNoteLines.getElementDirect( i );
-            int oldLen = strlen( oldString );
-            
-            SimpleVector<doublePair> charPos;        
-                    
-            pencilFont->getCharPos( &charPos, 
-                                    oldString,
-                                    drawPos,
-                                    alignLeft );
-                    
-            for( int j=0; j<oldLen; j++ ) {
-                mErasedNoteChars.push_back( oldString[j] );
-                        
-                mErasedNoteCharOffsets.push_back(
-                    sub( mult( charPos.getElementDirect( j ), 1. / gui_fov_scale_hud ),
-                         paperPos ) );
-                
-                mErasedNoteCharFades.push_back( 1.0f );
-                }
-            
-            drawPos.y -= lineSpacing;
-
-            }
-        mLastKnownNoteLines.deallocateStringElements();
-        }
-    
-
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
         if( ! equal( mHintPosOffset[i], mHintHideOffset[i] ) 
             &&
@@ -8725,9 +8555,199 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
+    
+    // finally, draw chat note sheet, so that it covers craving sheet
+    // whenever it is up.
+
+    int lineSpacing = 20 * gui_fov_scale_hud;
+
+    doublePair notePos = add( mult( recalcOffset( mNotePaperPosOffset ), gui_fov_scale ), lastScreenViewCenter );
+
+    if( ! equal( mNotePaperPosOffset, mNotePaperHideOffset ) ) {
+        setDrawColor( 1, 1, 1, 1 );
+        drawSprite( mNotePaperSprite, notePos, gui_fov_scale_hud );
+        
+
+        doublePair drawPos = notePos;
+
+        drawPos.x += 160 * gui_fov_scale_hud;
+        drawPos.y += 79 * gui_fov_scale_hud;
+        drawPos.y += 22 * gui_fov_scale_hud;
+        
+        drawPos.x += 27 * gui_fov_scale_hud;
+
+        setDrawColor( 0, 0, 0, 1 );
+        
+        handwritingFont->drawString( translate( "enterHint" ), 
+                                     drawPos,
+                                     alignRight );
+        }
+        
+
+    
+
+    doublePair paperPos = add( mult( recalcOffset( mNotePaperPosOffset ), gui_fov_scale ), lastScreenViewCenter );
+
+    if( mSayField.isFocused() ) {
+        char *partialSay = mSayField.getText();
+
+        char *strUpper = stringToUpperCase( partialSay );
+        
+        delete [] partialSay;
+
+        SimpleVector<char*> *lines = splitLines( strUpper, ( 345 * gui_fov_scale_hud ) );
+        
+        mNotePaperPosTargetOffset.y = mNotePaperHideOffset.y + 58;
+        
+        if( lines->size() > 1 ) {    
+            mNotePaperPosTargetOffset.y += 20 * ( lines->size() - 1 );
+            }
+        
+        doublePair drawPos = paperPos;
+
+        drawPos.x -= 160 * gui_fov_scale_hud;
+        drawPos.y += 79 * gui_fov_scale_hud;
 
 
-    // info panel at bottom
+        doublePair drawPosTemp = drawPos;
+        
+
+        for( int i=0; i<mLastKnownNoteLines.size(); i++ ) {
+            char *oldString = mLastKnownNoteLines.getElementDirect( i );
+            int oldLen = strlen( oldString );
+            
+            SimpleVector<doublePair> charPos;        
+                    
+            pencilFont->getCharPos( &charPos, 
+                                    oldString,
+                                    drawPosTemp,
+                                    alignLeft );
+            
+            int newLen = 0;
+            
+            if( i < lines->size() ) {
+                // compare lines
+
+                newLen = strlen( lines->getElementDirect( i ) );
+                
+                }
+            
+
+            // any extra chars?
+                    
+            for( int j=newLen; j<oldLen; j++ ) {
+                mErasedNoteChars.push_back( oldString[j] );
+                       
+                mErasedNoteCharOffsets.push_back(
+                    sub( mult( charPos.getElementDirect( j ), 1. / gui_fov_scale_hud ),
+                         paperPos ) );
+                
+                mErasedNoteCharFades.push_back( 1.0f );
+                }
+            
+            drawPosTemp.y -= lineSpacing;
+            }
+        mLastKnownNoteLines.deallocateStringElements();
+        
+        for( int i=0; i<lines->size(); i++ ) {
+            mLastKnownNoteLines.push_back( 
+                stringDuplicate( lines->getElementDirect(i) ) );
+            }
+        
+
+    
+        delete [] strUpper;
+
+        
+        
+        setDrawColor( 0, 0, 0, 1 );
+        
+        mCurrentNoteChars.deleteAll();
+        mCurrentNoteCharOffsets.deleteAll();
+        
+        for( int i=0; i<lines->size(); i++ ) {
+            char *line = lines->getElementDirect( i );
+            
+            pencilFont->drawString( line, drawPos,
+                                    alignLeft );
+
+            SimpleVector<doublePair> charPos;        
+                    
+            pencilFont->getCharPos( &charPos, 
+                                    line,
+                                    drawPos,
+                                    alignLeft );
+
+            int lineSize = strlen( line );
+            
+            for( int j=0; j<lineSize; j++ ) {
+                mCurrentNoteChars.push_back( line[j] );
+                mCurrentNoteCharOffsets.push_back( 
+                    sub( mult( charPos.getElementDirect( j ), 1. / gui_fov_scale_hud ), paperPos ) );
+                }
+
+            drawPos.y -= lineSpacing;
+            }
+        lines->deallocateStringElements();
+        delete lines;
+        }
+    else {
+        mNotePaperPosTargetOffset = mNotePaperHideOffset;
+
+        doublePair drawPos = paperPos;
+
+        drawPos.x -= 160 * gui_fov_scale_hud;
+        drawPos.y += 79 * gui_fov_scale_hud;
+
+        for( int i=0; i<mLastKnownNoteLines.size(); i++ ) {
+            // whole line gone
+            
+            char *oldString = mLastKnownNoteLines.getElementDirect( i );
+            int oldLen = strlen( oldString );
+            
+            SimpleVector<doublePair> charPos;        
+                    
+            pencilFont->getCharPos( &charPos, 
+                                    oldString,
+                                    drawPos,
+                                    alignLeft );
+                    
+            for( int j=0; j<oldLen; j++ ) {
+                mErasedNoteChars.push_back( oldString[j] );
+                        
+                mErasedNoteCharOffsets.push_back(
+                    sub( mult( charPos.getElementDirect( j ), 1. / gui_fov_scale_hud ),
+                         paperPos ) );
+                
+                mErasedNoteCharFades.push_back( 1.0f );
+                }
+            
+            drawPos.y -= lineSpacing;
+
+            }
+        mLastKnownNoteLines.deallocateStringElements();
+        }
+    
+
+
+    setDrawColor( 0, 0, 0, 1 );
+    for( int i=0; i<mErasedNoteChars.size(); i++ ) {
+        setDrawFade( mErasedNoteCharFades.getElementDirect( i ) *
+                     pencilErasedFontExtraFade );
+        
+        pencilErasedFont->
+            drawCharacterSprite( 
+                mErasedNoteChars.getElementDirect( i ), 
+                add( paperPos, 
+                     mErasedNoteCharOffsets.getElementDirect( i ) ) );
+        }
+
+
+
+
+
+
+    // info panel at bottom, over top of all the other slips
     setDrawColor( 1, 1, 1, 1 );
     doublePair panelPos = lastScreenViewCenter;
 	
