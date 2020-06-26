@@ -13090,11 +13090,17 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
             minPosseSizeForKill = minPosseCap;
             }
 
+        char noWaitWeapon = false;
+        
         if( isNoWaitWeapon( inKiller->holdingID ) ) {
             // no posse required for non-deadly weapons (snowballs, tattoos)
             minPosseSizeForKill = 1;
+            noWaitWeapon = true;
             }
         
+        int thisMinPosseSizeForKill = minPosseSizeForKill;
+        
+
         char joiningExisting = false;
         
         // dupe existing min posse size
@@ -13117,6 +13123,27 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                 
                 joiningExisting = true;
                 break;
+                }
+            }
+
+        
+        if( joiningExisting && ! noWaitWeapon &&
+            thisMinPosseSizeForKill < minPosseSizeForKill &&
+            thisMinPosseSizeForKill <= 1 ) {
+            
+            // something has changed since posse was formed
+            // maybe target has been exiled?
+
+            // update existing posse records to reflect this.
+
+            minPosseSizeForKill = thisMinPosseSizeForKill;
+            
+            for( int i=0; i<activeKillStates.size(); i++ ) {
+                KillState *s = activeKillStates.getElement( i );
+                
+                if( s->targetID == inTarget->id ) {
+                    s->minPosseSizeForKill = minPosseSizeForKill;
+                    }
                 }
             }
 

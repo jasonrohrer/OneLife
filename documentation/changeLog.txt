@@ -43,6 +43,12 @@ Server Fixes
   explanation was given.  Now a DING message explains this to the killer, so
   they know they don't still need to form a posse.
 
+--When someone is exiled after a posse is already formed, the min required
+  posse size shrinks accordingly.  Before, the previously-established min posse
+  size would prevail, even after someone was exiled.  This might allow one
+  griefer to protect another by maintaining a posse against their comrad so
+  that exile wouldn't shrink the posse size.  Fixes #638
+
 
 
 
