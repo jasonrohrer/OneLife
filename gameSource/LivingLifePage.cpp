@@ -20647,6 +20647,29 @@ void LivingLifePage::step() {
         
         if( o->currentEmot != NULL ) {
             if( game_getCurrentTime() > o->emotClearETATime ) {
+                
+                // play decay sounds for this emot
+
+                if( !o->outOfRange ) {
+                    for( int s=0; s<getEmotionNumObjectSlots(); s++ ) {
+                                    
+                        int id = getEmotionObjectByIndex( o->currentEmot, s );
+                                    
+                        if( id > 0 ) {
+                            ObjectRecord *obj = getObject( id );
+                                        
+                            if( obj->decaySound.numSubSounds > 0 ) {    
+                                    
+                                playSound( 
+                                    obj->decaySound,
+                                    getVectorFromCamera( 
+                                        o->currentPos.x,
+                                        o->currentPos.y ) );
+                                }
+                            }
+                        }
+                    }
+                
                 o->currentEmot = NULL;
                 }
             }

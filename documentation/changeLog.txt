@@ -18,6 +18,10 @@ Version 344  ??
 --Fixed glitch in lingering eating state after eating a food that leaves
   nothing in your hand.
 
+--Support for emote decay sounds, so that satisfaction sound can play at the
+  end of satisfied emote and not overlap with food's custom chewing sound.
+
+
 
 
 Server Fixes
