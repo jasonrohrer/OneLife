@@ -2705,6 +2705,10 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
                 if( e == 0 ) {
                     delete [] m.extraPos;
                     m.extraPos = NULL;
+                    m.numExtraPos = 0;
+                    m.type = UNKNOWN;
+                    delete tokens;
+                    return m;
                     }
                 break;
                 }

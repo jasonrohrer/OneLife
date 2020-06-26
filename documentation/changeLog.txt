@@ -36,6 +36,8 @@ Server Fixes
   have 4 living children are on infinite birth cooldown, unless other factors
   force them to have another baby.
 
+--Fixed server crash upon receiving a malformed MOVE message
+  (thanks Tru Custom).
 
 
 
