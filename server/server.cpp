@@ -224,6 +224,7 @@ static int killEmotionIndex = 2;
 static int victimEmotionIndex = 2;
 
 static int starvingEmotionIndex = 2;
+static int satisfiedEmotionIndex = 2;
 
 static int afkEmotionIndex = 2;
 static double afkTimeSeconds = 0;
@@ -5777,6 +5778,13 @@ static char *getUpdateLineFromRecord(
 
 
 
+static SimpleVector<int> newEmotPlayerIDs;
+static SimpleVector<int> newEmotIndices;
+// 0 if no ttl specified
+static SimpleVector<int> newEmotTTLs;
+
+
+
 static char isYummy( LiveObject *inPlayer, int inObjectID ) {
     ObjectRecord *o = getObject( inObjectID );
     
@@ -5856,6 +5864,23 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
             
             // flag them for getting a new craving message
             inPlayer->cravingKnown = false;
+            
+            // satisfied emot
+            
+            if( satisfiedEmotionIndex != -1 ) {
+                inPlayer->emotFrozen = false;
+                inPlayer->emotUnfreezeETA = 0;
+        
+                newEmotPlayerIDs.push_back( inPlayer->id );
+                
+                newEmotIndices.push_back( satisfiedEmotionIndex );
+                // 3 sec
+                newEmotTTLs.push_back( 2 );
+                
+                // don't leave starving status, or else non-starving
+                // change might override our satisfied emote
+                inPlayer->starving = false;
+                }
             }
         }
     
@@ -10348,12 +10373,6 @@ typedef struct FlightDest {
 
 
 
-static SimpleVector<int> newEmotPlayerIDs;
-static SimpleVector<int> newEmotIndices;
-// 0 if no ttl specified
-static SimpleVector<int> newEmotTTLs;
-
-
 // inEatenID = 0 for nursing
 static void checkForFoodEatingEmot( LiveObject *inPlayer,
                                     int inEatenID ) {
@@ -11691,6 +11710,9 @@ int main() {
 
     afkTimeSeconds =
         SettingsManager::getDoubleSetting( "afkTimeSeconds", 120.0 );
+
+    satisfiedEmotionIndex =
+        SettingsManager::getIntSetting( "satisfiedEmotionIndex", 2 );
 
 
     FILE *f = fopen( "curseWordList.txt", "r" );
