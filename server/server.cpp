@@ -1130,7 +1130,8 @@ static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID ) {
     for( int j=0; j<players.size(); j++ ) {
         LiveObject *otherPlayer = players.getElement( j );
         
-        if( otherPlayer->id != inPlayerID &&
+        if( ! otherPlayer->error &&
+            otherPlayer->id != inPlayerID &&
             otherPlayer->id != inSkipID ) {
             
             if( otherPlayer->fitnessScore > fittestOffspringFitness ) {
@@ -1292,6 +1293,23 @@ void sendMessageToPlayer( LiveObject *inPlayer,
 
 
 
+static void endOwnership( int inX, int inY, int inObjectID ) {
+    SimpleVector<int> *deathMarkers = getAllPossibleDeathIDs();
+    for( int j=0; j<deathMarkers->size(); j++ ) {
+        int deathID = deathMarkers->getElementDirect( j );
+        TransRecord *t = getTrans( deathID, inObjectID );
+        
+        if( t != NULL ) {
+                    
+            setMapObject( inX, inY, t->newTarget );
+            break;
+            }
+        }
+    }
+
+
+
+
 SimpleVector<GridPos> newOwnerPos;
 
 SimpleVector<GridPos> recentlyRemovedOwnerPos;
@@ -1379,17 +1397,8 @@ void removeAllOwnership( LiveObject *inPlayer, char inProcessInherit = true ) {
         if( noOtherOwners ) {
             // last owner of p just died
             // force end transition
-            SimpleVector<int> *deathMarkers = getAllPossibleDeathIDs();
-            for( int j=0; j<deathMarkers->size(); j++ ) {
-                int deathID = deathMarkers->getElementDirect( j );
-                TransRecord *t = getTrans( deathID, oID );
-                
-                if( t != NULL ) {
-                    
-                    setMapObject( p->x, p->y, t->newTarget );
-                    break;
-                    }
-                }
+
+            endOwnership( p->x, p->y, oID );
             }
         }
     
@@ -1404,6 +1413,8 @@ void removeAllOwnership( LiveObject *inPlayer, char inProcessInherit = true ) {
 
 
 char *getOwnershipString( int inX, int inY ) {    
+    char foundAny = false;
+    
     SimpleVector<char> messageWorking;
     
     for( int j=0; j<players.size(); j++ ) {
@@ -1415,8 +1426,20 @@ char *getOwnershipString( int inX, int inY ) {
             messageWorking.appendElementString( 
                 playerIDString );
             delete [] playerIDString;
+            foundAny = true;
             }
         }
+    
+    if( ! foundAny ) {
+        // an orphaned owned object?
+        // this should never happen, but in case it ever does, clear
+        // it when we discover it.
+        int oID = getMapObject( inX, inY );
+        if( oID > 0 ) {
+            endOwnership( inX, inY, oID );
+            }
+        }
+
     char *message = messageWorking.getElementString();
     return message;
     }

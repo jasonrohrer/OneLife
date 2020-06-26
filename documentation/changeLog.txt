@@ -49,6 +49,9 @@ Server Fixes
   griefer to protect another by maintaining a posse against their comrad so
   that exile wouldn't shrink the posse size.  Fixes #638
 
+--Fixed lingering ownership that could occur if your heir died a few seconds
+  before you did (UNKNOWN PERSON as owner of a gate, forever).  Fixes #636
+
 
 
 
