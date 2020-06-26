@@ -270,6 +270,7 @@ static int victimEmotionIndex = 2;
 static int victimTerrifiedEmotionIndex = 2;
 
 static int starvingEmotionIndex = 2;
+static int satisfiedEmotionIndex = 2;
 
 
 static double lastBabyPassedThresholdTime = 0;
@@ -6837,6 +6838,13 @@ static char *getUpdateLineFromRecord(
 
 
 
+static SimpleVector<int> newEmotPlayerIDs;
+static SimpleVector<int> newEmotIndices;
+// 0 if no ttl specified
+static SimpleVector<int> newEmotTTLs;
+
+
+
 static int getEatBonus( LiveObject *inPlayer ) {
     int generation = inPlayer->parentChainLength - 1;
     
@@ -7039,6 +7047,23 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
             
             // flag them for getting a new craving message
             inPlayer->cravingKnown = false;
+            
+            // satisfied emot
+            
+            if( satisfiedEmotionIndex != -1 ) {
+                inPlayer->emotFrozen = false;
+                inPlayer->emotUnfreezeETA = 0;
+        
+                newEmotPlayerIDs.push_back( inPlayer->id );
+                
+                newEmotIndices.push_back( satisfiedEmotionIndex );
+                // 3 sec
+                newEmotTTLs.push_back( 2 );
+                
+                // don't leave starving status, or else non-starving
+                // change might override our satisfied emote
+                inPlayer->starving = false;
+                }
             }
         }
     
@@ -12960,10 +12985,6 @@ static void updatePosseSize( LiveObject *inTarget,
 
 
 
-static SimpleVector<int> newEmotPlayerIDs;
-static SimpleVector<int> newEmotIndices;
-// 0 if no ttl specified
-static SimpleVector<int> newEmotTTLs;
 
 
 // inEatenID = 0 for nursing
@@ -16392,6 +16413,9 @@ int main() {
 
     starvingEmotionIndex =
         SettingsManager::getIntSetting( "starvingEmotionIndex", 2 );
+
+    satisfiedEmotionIndex =
+        SettingsManager::getIntSetting( "satisfiedEmotionIndex", 2 );
 
 
     FILE *f = fopen( "curseWordList.txt", "r" );
