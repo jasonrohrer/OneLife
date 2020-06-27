@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 344  ??
+Version 344   2020-June-26
 
 --Cravings implemented.
 
