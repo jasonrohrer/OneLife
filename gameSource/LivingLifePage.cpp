@@ -15291,7 +15291,9 @@ void LivingLifePage::step() {
                                                         x, y ) );
                                                 }
                                             }
-                                        else if( 
+                                        else if(
+                                            causingPlayer != NULL &&
+                                            causingPlayer->holdingID == 0 &&
                                             bothSameUseParent( newContID,
                                                                oldContID ) &&
                                             newObj->
