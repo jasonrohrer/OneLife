@@ -11175,6 +11175,8 @@ static void changeContained( int inX, int inY, int inSlotNumber,
     timeSec_t *containedETA = 
         getContainedEtaDecay( inX, inY, &numContained );
     
+    timeSec_t curTimeSec = Time::timeSec();
+    
     if( contained != NULL && containedETA != NULL &&
         numContained > inSlotNumber ) {
     
@@ -11191,7 +11193,7 @@ static void changeContained( int inX, int inY, int inSlotNumber,
             timeSec_t newETA = 0;
             
             if( newDecayTrans != NULL ) {
-                newETA = newDecayTrans->autoDecaySeconds;
+                newETA = curTimeSec + newDecayTrans->autoDecaySeconds;
                 }
             
             if( oldDecayTrans != NULL && newDecayTrans != NULL &&
