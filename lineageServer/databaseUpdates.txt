@@ -74,3 +74,9 @@ ALTER TABLE lineageServer_lives ADD INDEX eve_life_id ( eve_life_id );
 
 
 ALTER TABLE lineageServer_lives ADD INDEX ( user_id, death_time );
+
+
+
+// expand last_words field
+
+ALTER TABLE lineageServer_lives MODIFY COLUMN last_words VARCHAR(254) NOT NULL;

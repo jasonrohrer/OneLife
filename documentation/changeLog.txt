@@ -3,6 +3,69 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 344   2020-June-26
+
+--Cravings implemented.
+
+--Can use a tool on objects in certain specially-marked (+useOnContained)
+  containers.  For example, can use a knife to slice a loaf of bread that is
+  sitting on a table.  Before, you had to remove the bread from the table to
+  slice it, and then put it back on the table.
+
+--Hunger slips now account for stored YUM bonus, so they don't show hungry or
+  starving, when you're actually not due to your bonus.
+
+--Fixed glitch in lingering eating state after eating a food that leaves
+  nothing in your hand.
+
+--Support for emote decay sounds, so that satisfaction sound can play at the
+  end of satisfied emote and not overlap with food's custom chewing sound.
+
+
+
+
+Server Fixes
+
+--Fixed family tree server to accept longer last words.
+
+--Fixed bug that caused Eve spawn to jump to the west of a donkeytown homeland.
+  Fixes #633.
+
+--New method for putting Eve to west of homelands.  Completely ignore any
+  d-town or tutorial homelands, and compute the average location of the rest.
+  Place Eve to the west of the furthest-west homeland that is not > 1500 to the
+  west of this average.
+
+--forceEveAfterGenerationNumber pushed up to 100 (about 1 new town a day).
+  Was 40 (about 1 new town every 9 hours).
+
+--New live server setting:  maxLivingChildrenPerMother, set to 4.  Mothers that
+  have 4 living children are on infinite birth cooldown, unless other factors
+  force them to have another baby.
+
+--Fixed server crash upon receiving a malformed MOVE message
+  (thanks Tru Custom).
+
+--When solo killing is possible (due to enemies of target swamping allies), no
+  explanation was given.  Now a DING message explains this to the killer, so
+  they know they don't still need to form a posse.
+
+--When someone is exiled after a posse is already formed, the min required
+  posse size shrinks accordingly.  Before, the previously-established min posse
+  size would prevail, even after someone was exiled.  This might allow one
+  griefer to protect another by maintaining a posse against their comrad so
+  that exile wouldn't shrink the posse size.  Fixes #638
+
+--Fixed lingering ownership that could occur if your heir died a few seconds
+  before you did (UNKNOWN PERSON as owner of a gate, forever).  Fixes #636
+
+--Childless women are treated like men in terms of who counts as genetic
+  offspring (nieces and nephews who are born while they are childless).  This
+  closes an exploit where a woman runs away from her homeland to avoid having
+  kids.  Fixes #635
+
+
+
 Version 342    2020-May-30
 
 NOTE:  must update server first this week.
