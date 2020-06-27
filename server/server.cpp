@@ -7058,7 +7058,7 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
                 
                 newEmotIndices.push_back( satisfiedEmotionIndex );
                 // 3 sec
-                newEmotTTLs.push_back( 2 );
+                newEmotTTLs.push_back( 1 );
                 
                 // don't leave starving status, or else non-starving
                 // change might override our satisfied emote
