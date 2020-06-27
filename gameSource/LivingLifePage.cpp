@@ -12443,7 +12443,7 @@ void LivingLifePage::displayGlobalMessage( char *inMessage ) {
     double longestLine = getLongestLine( 
         (char*)( mTutorialMessage[ mLiveTutorialSheetIndex ] ) );
     
-    mTutorialExtraOffset[ mLiveTutorialSheetIndex ].x = longestLine;
+    mTutorialExtraOffset[ mLiveTutorialSheetIndex ].x = longestLine / gui_fov_scale_hud;
     
     
     delete [] spaces;
