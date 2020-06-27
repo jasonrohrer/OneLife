@@ -3,6 +3,15 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+
+Server Fixes
+
+--Fixed crash when someone right-clicks a full basket on a table.
+
+
+
+
 Version 344   2020-June-26
 
 --Cravings implemented.

@@ -21677,6 +21677,10 @@ int main() {
                                         int contTarget = 
                                             getContained( m.x, m.y, m.i );
                                         
+                                        if( contTarget < 0 ) {
+                                            contTarget = -contTarget;
+                                            }
+
                                         ObjectRecord *contTargetObj =
                                             getObject( contTarget );
                                         
