@@ -828,7 +828,7 @@ typedef struct LiveObject {
 		//2HOL: player is either disconnected or inactive
 		bool isAFK;
 
-        int cravingFoodID;
+        Craving cravingFood;
         int cravingFoodYumIncrement;
         char cravingKnown;
 
@@ -5797,7 +5797,7 @@ static char isYummy( LiveObject *inPlayer, int inObjectID ) {
         return false;
         }
 
-    if( inObjectID == inPlayer->cravingFoodID &&
+    if( inObjectID == inPlayer->cravingFood.foodID &&
         computeAge( inPlayer ) >= minAgeForCravings ) {
         return true;
         }
@@ -5846,7 +5846,7 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
 
         inPlayer->yummyFoodChain.push_back( eatenID );
         
-        if( eatenID == inPlayer->cravingFoodID &&
+        if( eatenID == inPlayer->cravingFood.foodID &&
             computeAge( inPlayer ) >= minAgeForCravings ) {
             
             for( int i=0; i< inPlayer->cravingFoodYumIncrement; i++ ) {
@@ -5855,10 +5855,10 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
                 }
             
             // craving satisfied, go on to next thing in list
-            inPlayer->cravingFoodID = 
+            inPlayer->cravingFood = 
                 getCravedFood( inPlayer->lineageEveID,
                                inPlayer->parentChainLength,
-                               inPlayer->cravingFoodID );
+                               inPlayer->cravingFood );
             // reset generational bonus counter
             inPlayer->cravingFoodYumIncrement = 1;
             
@@ -6652,7 +6652,7 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     newObject.lastBabyEmail = NULL;
 
-    newObject.cravingFoodID = -1;
+    newObject.cravingFood = noCraving;
     newObject.cravingFoodYumIncrement = 0;
     newObject.cravingKnown = false;
     
@@ -6933,8 +6933,8 @@ int processLoggedInPlayer( char inAllowReconnect,
         newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
         
         // she starts off craving a food right away
-        newObject.cravingFoodID = getCravedFood( newObject.lineageEveID,
-                                                 newObject.parentChainLength );
+        newObject.cravingFood = getCravedFood( newObject.lineageEveID,
+                                               newObject.parentChainLength );
         // initilize increment
         newObject.cravingFoodYumIncrement = 1;
 
@@ -7711,7 +7711,7 @@ int processLoggedInPlayer( char inAllowReconnect,
 
         
         // inherit mother's craving at time of birth
-        newObject.cravingFoodID = parent->cravingFoodID;
+        newObject.cravingFood = parent->cravingFood;
         
         // increment for next generation
         newObject.cravingFoodYumIncrement = parent->cravingFoodYumIncrement + 1;
@@ -11507,7 +11507,7 @@ static void sendCraving( LiveObject *inPlayer ) {
     // they earn the normal YUM multiplier increase (+1) PLUS the bonus
     // increase, so send them the total.
     char *message = autoSprintf( "CR\n%d %d\n#", 
-                                 inPlayer->cravingFoodID,
+                                 inPlayer->cravingFood.foodID,
                                  inPlayer->cravingFoodYumIncrement + 1 );
     sendMessageToPlayer( inPlayer, message, strlen( message ) );
     delete [] message;
@@ -12089,6 +12089,20 @@ int main() {
 
             
             checkCustomGlobalMessage();
+            
+
+            int lowestCravingID = INT_MAX;
+            
+            for( int i=0; i< players.size(); i++ ) {
+                LiveObject *nextPlayer = players.getElement( i );
+                
+                if( nextPlayer->cravingFood.uniqueID > -1 && 
+                    nextPlayer->cravingFood.uniqueID < lowestCravingID ) {
+                    
+                    lowestCravingID = nextPlayer->cravingFood.uniqueID;
+                    }
+                }
+            purgeStaleCravings( lowestCravingID );
             }
         
         

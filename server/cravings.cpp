@@ -1,3 +1,4 @@
+#include "cravings.h"
 
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/SettingsManager.h"
@@ -8,14 +9,20 @@
 #include "../gameSource/transitionBank.h"
 
 
+Craving noCraving = { -1, -1 };
+
+
+
 
 typedef struct CravingList {
         int lineageEveID;
-        SimpleVector<int> cravedFoodIDs;
+        SimpleVector<Craving> cravedFoods;
     } CravingList;
     
 
 static SimpleVector<CravingList> list;
+
+static int nextUniqueID = 1;
 
 
 
@@ -35,8 +42,8 @@ static CravingList *getListForLineage( int inLineageEveID ) {
 static JenkinsRandomSource randSource;
 
 
-static int getRandomFood( int inPlayerGenerationNumber, 
-                          int inFoodToAvoid = -1 ) {
+static Craving getRandomFood( int inPlayerGenerationNumber, 
+                              Craving inFoodToAvoid = noCraving ) {
     
     double e = SettingsManager::getDoubleSetting( "cravingPoolExponent", 1.4 );
 
@@ -56,7 +63,7 @@ static int getRandomFood( int inPlayerGenerationNumber,
     for( int i=0; i<allFoods->size(); i++ ) {
         int id = allFoods->getElementDirect( i );
         
-        if( id != inFoodToAvoid ) {
+        if( id != inFoodToAvoid.foodID ) {
             
             int d = getObjectDepth( id );
 
@@ -73,17 +80,25 @@ static int getRandomFood( int inPlayerGenerationNumber,
         printf( "%d possible foods, picking #%d\n", possibleFoods.size(),
                 pick );
         
-        return possibleFoods.getElementDirect( pick );
+        Craving c = { possibleFoods.getElementDirect( pick ),
+                      nextUniqueID };
+        nextUniqueID ++;
+        
+        return c;
         }
     else {
         // no possible foods at or below d depth
 
         // return first food in main list
         if( allFoods->size() > 0 ) {
-            return allFoods->getElementDirect( 0 );
+            Craving c = { allFoods->getElementDirect( 0 ),
+                          nextUniqueID };
+            nextUniqueID ++;
+        
+            return c;
             }
         else {
-            return -1;
+            return noCraving;
             }
         }
     }
@@ -91,8 +106,8 @@ static int getRandomFood( int inPlayerGenerationNumber,
 
 
 
-int getCravedFood( int inLineageEveID, int inPlayerGenerationNumber,
-                   int inLastCravedID ) {
+Craving getCravedFood( int inLineageEveID, int inPlayerGenerationNumber,
+                       Craving inLastCraved ) {
 
     CravingList *l = getListForLineage( inLineageEveID );
    
@@ -105,12 +120,14 @@ int getCravedFood( int inLineageEveID, int inPlayerGenerationNumber,
         l = getListForLineage( inLineageEveID );
         }
     
-    int listSize = l->cravedFoodIDs.size();
+    int listSize = l->cravedFoods.size();
     for( int i=0; i < listSize; i++ ) {
-        int foodID = l->cravedFoodIDs.getElementDirect( i );
+        Craving food = l->cravedFoods.getElementDirect( i );
         
-        if( foodID == inLastCravedID && i < listSize - 1 ) {
-            return l->cravedFoodIDs.getElementDirect( i + 1 );
+        if( food.foodID == inLastCraved.foodID && 
+            food.uniqueID == inLastCraved.uniqueID &&
+            i < listSize - 1 ) {
+            return l->cravedFoods.getElementDirect( i + 1 );
             }
         }
     
@@ -118,11 +135,40 @@ int getCravedFood( int inLineageEveID, int inPlayerGenerationNumber,
     // add a new one and return that.
 
     // avoid repeating last food we craved
-    int newFoodID = getRandomFood( inPlayerGenerationNumber, inLastCravedID );
+    Craving newFood = getRandomFood( inPlayerGenerationNumber, inLastCraved );
     
-    l->cravedFoodIDs.push_back( newFoodID );
+    l->cravedFoods.push_back( newFood );
     
-    return newFoodID;
+    return newFood;
     }
+
+
+
+
+void purgeStaleCravings( int inLowestUniqueID ) {
+    
+    int numPurged = 0;
+    
+    for( int i=0; i<list.size(); i++ ) {
+        CravingList *l = list.getElement( i );        
+
+        // walk backwards and find first id that is below inLowestUniqueID
+        // then trim all records that come before that
+        int start = l->cravedFoods.size() - 1;
+        
+        for( int f=start; f >= 0; f-- ) {
+            
+            if( l->cravedFoods.getElementDirect( f ).uniqueID < 
+                inLowestUniqueID ) {
+                
+                l->cravedFoods.deleteStartElements( f + 1 );
+                
+                numPurged += f + 1;
+                break;
+                }
+            }
+        }
+    }
+
 
 
