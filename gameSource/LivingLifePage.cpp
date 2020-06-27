@@ -9845,9 +9845,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
         if( ! equal( mCravingPosOffset[i], mCravingHideOffset[i] ) ) {
             
             doublePair cravingPos  = 
-                add( mCravingPosOffset[i], lastScreenViewCenter );
+                add( mult( recalcOffset( mCravingPosOffset[i] ), gui_fov_scale_hud ), lastScreenViewCenter );
             
-            cravingPos = add( mult( recalcOffset( cravingPos ), gui_fov_scale ), mCravingExtraOffset[i] );
+            cravingPos = add( cravingPos, mult( mCravingExtraOffset[i], gui_fov_scale_hud ) );
             
             setDrawColor( 1, 1, 1, 1.0 );
             // flip, don't rotate
@@ -9858,7 +9858,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             doublePair lineStart = cravingPos;
             
             lineStart.x += 298 * gui_fov_scale_hud;
-            lineStart.x -= mCravingExtraOffset[i].x;
+            lineStart.x -= mCravingExtraOffset[i].x * gui_fov_scale_hud;
             
             lineStart.y += 26 * gui_fov_scale_hud;
                 
@@ -12491,7 +12491,7 @@ void LivingLifePage::setNewCraving( int inFoodID, int inYumBonus ) {
     double longestLine = getLongestLine( 
         (char*)( mCravingMessage[ mLiveCravingSheetIndex ] ) );
     
-    mCravingExtraOffset[ mLiveCravingSheetIndex ].x = longestLine;
+    mCravingExtraOffset[ mLiveCravingSheetIndex ].x = longestLine / gui_fov_scale_hud;
     }
 
 
@@ -13196,7 +13196,7 @@ void LivingLifePage::step() {
                 }
             
 
-            mHintExtraOffset[ i ].x = - getLongestLine( mHintMessage[i] );
+            mHintExtraOffset[ i ].x = - getLongestLine( mHintMessage[i] ) / gui_fov_scale_hud;
             }
         else {
             // even in case where filter set, update this
