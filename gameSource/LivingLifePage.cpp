@@ -9851,7 +9851,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             setDrawColor( 1, 1, 1, 1.0 );
             // flip, don't rotate
-            drawSprite( mHintSheetSprites[i], cravingPos, 1.0, gui_fov_scale_hud, true );
+            drawSprite( mHintSheetSprites[i], cravingPos, gui_fov_scale, 0.0, true );
                 
             setDrawColor( 0, 0, 0, 1.0f );
             
