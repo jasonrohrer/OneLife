@@ -1341,6 +1341,7 @@ typedef enum messageType {
     TOOL_SLOTS,
     HOMELAND,
     FLIP,
+    CRAVING,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1508,6 +1509,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "FL" ) == 0 ) {
         returnValue = FLIP;
+        }
+    else if( strcmp( copy, "CR" ) == 0 ) {
+        returnValue = CRAVING;
         }
     
     delete [] copy;
@@ -2957,10 +2961,25 @@ LivingLifePage::LivingLifePage()
         mTutorialExtraOffset[i].y = 0;
         
         mTutorialMessage[i] = "";
+
+
+        mCravingHideOffset[i].x = -932;
+        
+        mCravingHideOffset[i].y = -370;
+        
+        mCravingTargetOffset[i] = mCravingHideOffset[i];
+        mCravingPosOffset[i] = mCravingHideOffset[i];
+
+        mCravingExtraOffset[i].x = 0;
+        mCravingExtraOffset[i].y = 0;
+        
+        mCravingMessage[i] = NULL;        
         }
     
     mLiveTutorialSheetIndex = -1;
     mLiveTutorialTriggerNumber = -1;
+    
+    mLiveCravingSheetIndex = -1;
 
     // FOVMOD NOTE:  Change 3/26 - Take these lines during the merge process
 	calcOffsetHUD();
@@ -3328,6 +3347,9 @@ LivingLifePage::~LivingLifePage() {
         
         if( mHintMessage[i] != NULL ) {
             delete [] mHintMessage[i];
+            }
+        if( mCravingMessage[i] != NULL ) {
+            delete [] mCravingMessage[i];
             }
         }
     
@@ -9479,7 +9501,379 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
 
 
-    // FOVMOD NOTE:  Change 14/27 - Take these lines during the merge process
+
+
+    
+    
+    const char *shiftHintKey = "shiftHint";
+    if( mUsingSteam ) {
+        shiftHintKey = "zHint";
+        }
+    
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        if( ! equal( mHintPosOffset[i], mHintHideOffset[i] ) 
+            &&
+            mHintMessage[i] != NULL ) {
+            
+            doublePair hintPos  = 
+                add( mult( recalcOffset( mHintPosOffset[i] ), gui_fov_scale ), lastScreenViewCenter );
+            
+            hintPos = add( hintPos, mult( mHintExtraOffset[i], gui_fov_scale_hud ) );
+
+
+            char *pageNum = NULL;
+            double pageNumExtra = 0;
+            
+            if( mNumTotalHints[i] > 1 ) {
+                
+                pageNum = 
+                    autoSprintf( "(%d %s %d)",
+                                 mHintMessageIndex[i] + 1, 
+                                 translate( "ofHint" ),
+                                 mNumTotalHints[i] );
+            
+                double extraA = handwritingFont->measureString( pageNum );
+            
+                double extraB = 
+                    handwritingFont->measureString( translate( "tabHint" ) );
+
+                double extraC = 
+                    handwritingFont->measureString( translate( shiftHintKey ) );
+                
+                if( extraB > extraA ) {
+                    extraA = extraB;
+                    }
+                if( extraC > extraA ) {
+                    extraA = extraC;
+                    }
+                
+                pageNumExtra = extraA;
+                
+                hintPos.x -= extraA;
+                hintPos.x -= 10 * gui_fov_scale_hud;
+                }
+            
+
+            setDrawColor( 1, 1, 1, 1 );
+            // FOVMOD NOTE:  Change 14/27 - Take these lines during the merge process
+            // Hint sheets have to be manually cut off in centered mode.
+			if( gui_hud_mode != 0 && gui_fov_target_scale_hud > 1.0f ) {
+				doublePair sheetPos[4] = {
+                    { hintPos.x - getSpriteWidth( mHintSheetSprites[0] ) / 2.0f * gui_fov_scale_hud, hintPos.y + getSpriteHeight( mHintSheetSprites[0] ) / 2.0f * gui_fov_scale_hud },
+                    { lastScreenViewCenter.x + 640 * gui_fov_scale_hud, hintPos.y + getSpriteHeight( mHintSheetSprites[0] ) / 2.0f * gui_fov_scale_hud },
+                    { lastScreenViewCenter.x + 640 * gui_fov_scale_hud, hintPos.y - getSpriteHeight( mHintSheetSprites[0] ) / 2.0f * gui_fov_scale_hud },
+                    { hintPos.x - getSpriteWidth( mHintSheetSprites[0] ) / 2.0f * gui_fov_scale_hud, hintPos.y - getSpriteHeight( mHintSheetSprites[0] ) / 2.0f * gui_fov_scale_hud },
+                    };
+                double sheetLength = ( sheetPos[1].x - sheetPos[0].x ) / ( getSpriteWidth( mHintSheetSprites[0] ) * gui_fov_scale_hud );
+				doublePair sheetCoords[4] = {
+                    { 0.0f, 0.0f },
+                    { sheetLength, 0.0f },
+                    { sheetLength, 1.0f },
+                    { 0.0f, 1.0f },
+                    };
+                drawSprite( mHintSheetSprites[i], sheetPos, sheetCoords );
+                }
+            else {
+                drawSprite( mHintSheetSprites[i], hintPos, gui_fov_scale_hud );
+                }
+            
+
+            setDrawColor( 0, 0, 0, 1.0f );
+            double lineSpacing = handwritingFont->getFontHeight() / 2 + ( 5 * gui_fov_scale_hud );
+            
+            int numLines;
+            
+            char **lines = split( mHintMessage[i], "#", &numLines );
+            
+            doublePair lineStart = hintPos;
+            lineStart.x -= (280 * gui_fov_scale_hud);
+            lineStart.y += (30 * gui_fov_scale_hud);
+            for( int l=0; l<numLines; l++ ) {
+                
+                if( l == 1 ) {
+                    doublePair drawPos = lineStart;
+                    drawPos.x -= 5 * gui_fov_scale_hud;
+                    
+                    handwritingFont->drawString( "+",
+                                                 drawPos, alignRight );
+                    }
+                
+                if( l == 2 ) {
+                    doublePair drawPos = lineStart;
+                    drawPos.x -= 5 * gui_fov_scale_hud;
+                    
+                    handwritingFont->drawString( "=",
+                                                 drawPos, alignRight );
+                    }
+                
+                handwritingFont->drawString( lines[l], 
+                                             lineStart, alignLeft );
+                    
+                delete [] lines[l];
+                
+                lineStart.y -= lineSpacing;
+                }
+            delete [] lines;
+            
+
+            if( pageNum != NULL ) {
+                
+                // now draw tab message
+                
+                lineStart = hintPos;
+                lineStart.x -= (280 * gui_fov_scale_hud);
+                
+                lineStart.x -= mHintExtraOffset[i].x * gui_fov_scale_hud;
+                lineStart.x += (20 * gui_fov_scale_hud);
+                
+                lineStart.y += (30 * gui_fov_scale_hud);
+                
+                handwritingFont->drawString( pageNum, lineStart, alignLeft );
+                
+                
+                lineStart.y -= lineSpacing;
+                
+                lineStart.x += pageNumExtra;
+
+                // center shift and tab hints under page number, which is always
+                // bigger
+                lineStart.x -= 0.5 * handwritingFont->measureString( pageNum );
+                
+                delete [] pageNum;
+                
+                handwritingFont->drawString( translate( shiftHintKey ), 
+                                             lineStart, alignCenter );
+                
+                lineStart.y -= lineSpacing;
+                
+                handwritingFont->drawString( translate( "tabHint" ), 
+                                             lineStart, alignCenter );
+                }
+            }
+        }
+
+
+
+    // now draw tutorial sheets
+    if( mTutorialNumber > 0 || mGlobalMessageShowing )
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        if( ! equal( mTutorialPosOffset[i], mTutorialHideOffset[i] ) ) {
+            
+            doublePair tutorialPos  = 
+                add( mult( recalcOffset( mTutorialPosOffset[i], true ), gui_fov_scale ), lastScreenViewCenter );
+            
+            if( i % 2 == 1 ) {
+                tutorialPos = sub( tutorialPos, mult( mTutorialExtraOffset[i], gui_fov_scale_hud ) );
+                }
+            else {
+                tutorialPos = add( tutorialPos, mult( mTutorialExtraOffset[i], gui_fov_scale_hud ) );
+                }
+            
+            setDrawColor( 1, 1, 1, 1 );
+            // rotate 180
+            drawSprite( mHintSheetSprites[i], tutorialPos, gui_fov_scale_hud, 0.5,
+                        mTutorialFlips[i] );
+            
+
+            setDrawColor( 0, 0, 0, 1.0f );
+            double lineSpacing = handwritingFont->getFontHeight() / 2 + 16 * gui_fov_scale_hud;
+            
+            int numLines;
+            
+            char **lines = split( mTutorialMessage[i], "##", &numLines );
+            
+            doublePair lineStart = tutorialPos;
+            
+            if( i % 2 == 1 ) {
+                lineStart.x -= 289 * gui_fov_scale_hud;
+                //lineStart.x += mTutorialExtraOffset[i].x * gui_fov_scale_hud;
+                }
+            else {
+                lineStart.x += 289 * gui_fov_scale_hud;
+                lineStart.x -= mTutorialExtraOffset[i].x * gui_fov_scale_hud;
+                }
+            
+            lineStart.y += 8 * gui_fov_scale_hud;
+            for( int l=0; l<numLines; l++ ) {
+                
+                handwritingFont->drawString( lines[l], 
+                                             lineStart, alignLeft );
+                    
+                delete [] lines[l];
+                
+                lineStart.y -= lineSpacing;
+                }
+            delete [] lines;
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+    double highestCravingYOffset = 0;
+    
+    if( mLiveCravingSheetIndex != -1 ) {
+        // craving showing
+        // find highest one
+        highestCravingYOffset = 0;
+                
+        for( int c=0; c<NUM_HINT_SHEETS; c++ ) {
+            double offset = mCravingPosOffset[c].y - mCravingHideOffset[c].y;
+            if( offset > highestCravingYOffset ) {
+                highestCravingYOffset = offset;
+                }
+            }
+        }
+    
+
+
+
+    setDrawColor( 1, 1, 1, 1 );
+    
+    for( int i=0; i<3; i++ ) { 
+        if( !equal( mHungerSlipPosOffset[i], mHungerSlipHideOffsets[i] ) ) {
+            doublePair slipPos = lastScreenViewCenter;
+            slipPos = add( slipPos, mult( recalcOffset( mHungerSlipPosOffset[i] ), gui_fov_scale ) );
+            
+            if( mHungerSlipWiggleAmp[i] > 0 ) {
+                
+                double distFromHidden =
+                    ( mHungerSlipPosOffset[i].y - mHungerSlipHideOffsets[i].y ) * gui_fov_scale_hud;
+
+                // amplitude grows when we are further from
+                // hidden, and shrinks again as we go back down
+
+                double slipHarmonic = 
+                    ( 0.5 * ( 1 - cos( mHungerSlipWiggleTime[i] ) ) ) *
+                    mHungerSlipWiggleAmp[i] * distFromHidden;
+                
+                slipPos.y += slipHarmonic;
+                
+
+                if( i == 2 ) {
+                    
+                    if( mStarvingSlipLastPos[0] != 0 &&
+                        mStarvingSlipLastPos[1] != 0 ) {
+                        double lastDir = mStarvingSlipLastPos[1] - 
+                            mStarvingSlipLastPos[0];
+                        
+                        
+                        if( lastDir > 0 ) {
+                            
+                            double newDir = 
+                                slipHarmonic - mStarvingSlipLastPos[1];
+                            
+                            if( newDir < 0 ) {
+                                // peak
+                                if( mPulseHungerSound && 
+                                    mHungerSound != NULL ) {
+                                    // make sure it can be heard, even
+                                    // if paused
+                                    setSoundLoudness( 1.0 );
+                                    playSoundSprite( mHungerSound, 
+                                                     getSoundEffectsLoudness(),
+                                                     // middle
+                                                     0.5 );
+                                    }
+                                }
+                            }
+                        
+                        }
+                    mStarvingSlipLastPos[0] = mStarvingSlipLastPos[1];
+                    
+                    mStarvingSlipLastPos[1] = slipHarmonic;
+                    }
+                }
+            
+            slipPos.y += lrint( highestCravingYOffset / 1.75 );
+
+            drawSprite( mHungerSlipSprites[i], slipPos, gui_fov_scale_hud );
+            }
+        }
+
+
+
+    for( int i=0; i<NUM_YUM_SLIPS; i++ ) {
+
+        if( ! equal( mYumSlipPosOffset[i], mYumSlipHideOffset[i] ) ) {
+            doublePair slipPos = 
+                add( mult( recalcOffset( mYumSlipPosOffset[i] ), gui_fov_scale ), lastScreenViewCenter );
+      
+            slipPos.y += lrint( highestCravingYOffset / 1.75 );
+            
+            setDrawColor( 1, 1, 1, 1 );
+            drawSprite( mYumSlipSprites[i], slipPos, gui_fov_scale_hud );
+            
+            doublePair messagePos = slipPos;
+            messagePos.y += 11 * gui_fov_scale_hud;
+
+            if( mYumSlipNumberToShow[i] != 0 ) {
+                char *s = autoSprintf( "%dx", mYumSlipNumberToShow[i] );
+
+                setDrawColor( 0, 0, 0, 1 );
+                handwritingFont->drawString( s, messagePos, alignCenter );
+                delete [] s;
+                }
+            if( i == 2 || i == 3 ) {
+                setDrawColor( 0, 0, 0, 1 );
+
+                const char *word;
+                
+                if( i == 3 ) {
+                    word = translate( "meh" );
+                    }
+                else {
+                    word = translate( "yum" );
+                    }
+
+                handwritingFont->drawString( word, messagePos, alignCenter );
+                }
+            }
+        }
+
+    
+    
+    // now draw craving sheets
+    if( mLiveCravingSheetIndex > -1 )
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        if( ! equal( mCravingPosOffset[i], mCravingHideOffset[i] ) ) {
+            
+            doublePair cravingPos  = 
+                add( mCravingPosOffset[i], lastScreenViewCenter );
+            
+            cravingPos = add( mult( recalcOffset( cravingPos ), gui_fov_scale ), mCravingExtraOffset[i] );
+            
+            setDrawColor( 1, 1, 1, 1.0 );
+            // flip, don't rotate
+            drawSprite( mHintSheetSprites[i], cravingPos, 1.0, gui_fov_scale_hud, true );
+                
+            setDrawColor( 0, 0, 0, 1.0f );
+            
+            doublePair lineStart = cravingPos;
+            
+            lineStart.x += 298 * gui_fov_scale_hud;
+            lineStart.x -= mCravingExtraOffset[i].x;
+            
+            lineStart.y += 26 * gui_fov_scale_hud;
+                
+            handwritingFont->drawString( mCravingMessage[i],
+                                         lineStart, alignLeft );
+            
+            }
+        }
+
+
+
+    
+    // finally, draw chat note sheet, so that it covers craving sheet
+    // whenever it is up.
+    // FOVMOD NOTE:  Change 15/27 - Take these lines during the merge process
     int lineSpacing = 20 * gui_fov_scale_hud;
 
     doublePair notePos = add( mult( recalcOffset( mNotePaperPosOffset ), gui_fov_scale ), lastScreenViewCenter );
@@ -9648,217 +10042,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         mLastKnownNoteLines.deallocateStringElements();
         }
-    
-    
-    const char *shiftHintKey = "shiftHint";
-    if( mUsingSteam ) {
-        shiftHintKey = "zHint";
-        }
-    
-    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
-        if( ! equal( mHintPosOffset[i], mHintHideOffset[i] ) 
-            &&
-            mHintMessage[i] != NULL ) {
-            
-            doublePair hintPos  = 
-                add( mult( recalcOffset( mHintPosOffset[i] ), gui_fov_scale ), lastScreenViewCenter );
-            
-            hintPos = add( hintPos, mult( mHintExtraOffset[i], gui_fov_scale_hud ) );
-
-
-            char *pageNum = NULL;
-            double pageNumExtra = 0;
-            
-            if( mNumTotalHints[i] > 1 ) {
-                
-                pageNum = 
-                    autoSprintf( "(%d %s %d)",
-                                 mHintMessageIndex[i] + 1, 
-                                 translate( "ofHint" ),
-                                 mNumTotalHints[i] );
-            
-                double extraA = handwritingFont->measureString( pageNum );
-            
-                double extraB = 
-                    handwritingFont->measureString( translate( "tabHint" ) );
-
-                double extraC = 
-                    handwritingFont->measureString( translate( shiftHintKey ) );
-                
-                if( extraB > extraA ) {
-                    extraA = extraB;
-                    }
-                if( extraC > extraA ) {
-                    extraA = extraC;
-                    }
-                
-                pageNumExtra = extraA;
-                
-                hintPos.x -= extraA;
-                hintPos.x -= 10 * gui_fov_scale_hud;
-                }
-            
-
-            setDrawColor( 1, 1, 1, 1 );
-            // FOVMOD NOTE:  Change 15/27 - Take these lines during the merge process
-            // Hint sheets have to be manually cut off in centered mode.
-			if( gui_hud_mode != 0 && gui_fov_target_scale_hud > 1.0f ) {
-				doublePair sheetPos[4] = {
-                    { hintPos.x - getSpriteWidth( mHintSheetSprites[0] ) / 2.0f * gui_fov_scale_hud, hintPos.y + getSpriteHeight( mHintSheetSprites[0] ) / 2.0f * gui_fov_scale_hud },
-                    { lastScreenViewCenter.x + 640 * gui_fov_scale_hud, hintPos.y + getSpriteHeight( mHintSheetSprites[0] ) / 2.0f * gui_fov_scale_hud },
-                    { lastScreenViewCenter.x + 640 * gui_fov_scale_hud, hintPos.y - getSpriteHeight( mHintSheetSprites[0] ) / 2.0f * gui_fov_scale_hud },
-                    { hintPos.x - getSpriteWidth( mHintSheetSprites[0] ) / 2.0f * gui_fov_scale_hud, hintPos.y - getSpriteHeight( mHintSheetSprites[0] ) / 2.0f * gui_fov_scale_hud },
-                    };
-                double sheetLength = ( sheetPos[1].x - sheetPos[0].x ) / ( getSpriteWidth( mHintSheetSprites[0] ) * gui_fov_scale_hud );
-				doublePair sheetCoords[4] = {
-                    { 0.0f, 0.0f },
-                    { sheetLength, 0.0f },
-                    { sheetLength, 1.0f },
-                    { 0.0f, 1.0f },
-                    };
-                drawSprite( mHintSheetSprites[i], sheetPos, sheetCoords );
-                }
-            else {
-                drawSprite( mHintSheetSprites[i], hintPos, gui_fov_scale_hud );
-                }
-            
-
-            setDrawColor( 0, 0, 0, 1.0f );
-            double lineSpacing = handwritingFont->getFontHeight() / 2 + ( 5 * gui_fov_scale_hud );
-            
-            int numLines;
-            
-            char **lines = split( mHintMessage[i], "#", &numLines );
-            
-            doublePair lineStart = hintPos;
-            lineStart.x -= (280 * gui_fov_scale_hud);
-            lineStart.y += (30 * gui_fov_scale_hud);
-            for( int l=0; l<numLines; l++ ) {
-                
-                if( l == 1 ) {
-                    doublePair drawPos = lineStart;
-                    drawPos.x -= 5 * gui_fov_scale_hud;
-                    
-                    handwritingFont->drawString( "+",
-                                                 drawPos, alignRight );
-                    }
-                
-                if( l == 2 ) {
-                    doublePair drawPos = lineStart;
-                    drawPos.x -= 5 * gui_fov_scale_hud;
-                    
-                    handwritingFont->drawString( "=",
-                                                 drawPos, alignRight );
-                    }
-                
-                handwritingFont->drawString( lines[l], 
-                                             lineStart, alignLeft );
-                    
-                delete [] lines[l];
-                
-                lineStart.y -= lineSpacing;
-                }
-            delete [] lines;
-            
-
-            if( pageNum != NULL ) {
-                
-                // now draw tab message
-                
-                lineStart = hintPos;
-                lineStart.x -= (280 * gui_fov_scale_hud);
-                
-                lineStart.x -= mHintExtraOffset[i].x * gui_fov_scale_hud;
-                lineStart.x += (20 * gui_fov_scale_hud);
-                
-                lineStart.y += (30 * gui_fov_scale_hud);
-                
-                handwritingFont->drawString( pageNum, lineStart, alignLeft );
-                
-                
-                lineStart.y -= lineSpacing;
-                
-                lineStart.x += pageNumExtra;
-
-                // center shift and tab hints under page number, which is always
-                // bigger
-                lineStart.x -= 0.5 * handwritingFont->measureString( pageNum );
-                
-                delete [] pageNum;
-                
-                handwritingFont->drawString( translate( shiftHintKey ), 
-                                             lineStart, alignCenter );
-                
-                lineStart.y -= lineSpacing;
-                
-                handwritingFont->drawString( translate( "tabHint" ), 
-                                             lineStart, alignCenter );
-                }
-            }
-        }
 
 
 
-    // now draw tutorial sheets
-    if( mTutorialNumber > 0 || mGlobalMessageShowing )
-    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
-        if( ! equal( mTutorialPosOffset[i], mTutorialHideOffset[i] ) ) {
-            
-            doublePair tutorialPos  = 
-                add( mult( recalcOffset( mTutorialPosOffset[i], true ), gui_fov_scale ), lastScreenViewCenter );
-            
-            if( i % 2 == 1 ) {
-                tutorialPos = sub( tutorialPos, mult( mTutorialExtraOffset[i], gui_fov_scale_hud ) );
-                }
-            else {
-                tutorialPos = add( tutorialPos, mult( mTutorialExtraOffset[i], gui_fov_scale_hud ) );
-                }
-            
-            setDrawColor( 1, 1, 1, 1 );
-            // rotate 180
-            drawSprite( mHintSheetSprites[i], tutorialPos, gui_fov_scale_hud, 0.5,
-                        mTutorialFlips[i] );
-            
-
-            setDrawColor( 0, 0, 0, 1.0f );
-            double lineSpacing = handwritingFont->getFontHeight() / 2 + 16 * gui_fov_scale_hud;
-            
-            int numLines;
-            
-            char **lines = split( mTutorialMessage[i], "##", &numLines );
-            
-            doublePair lineStart = tutorialPos;
-            
-            if( i % 2 == 1 ) {
-                lineStart.x -= 289 * gui_fov_scale_hud;
-                //lineStart.x += mTutorialExtraOffset[i].x * gui_fov_scale_hud;
-                }
-            else {
-                lineStart.x += 289 * gui_fov_scale_hud;
-                lineStart.x -= mTutorialExtraOffset[i].x * gui_fov_scale_hud;
-                }
-            
-            lineStart.y += 8 * gui_fov_scale_hud;
-            for( int l=0; l<numLines; l++ ) {
-                
-                handwritingFont->drawString( lines[l], 
-                                             lineStart, alignLeft );
-                    
-                delete [] lines[l];
-                
-                lineStart.y -= lineSpacing;
-                }
-            delete [] lines;
-            }
-        }
-
-
-
-
-
-
-
-    
     setDrawColor( 0, 0, 0, 1 );
     for( int i=0; i<mErasedNoteChars.size(); i++ ) {
         setDrawFade( mErasedNoteCharFades.getElementDirect( i ) *
@@ -9869,107 +10055,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 mErasedNoteChars.getElementDirect( i ), 
                 add( paperPos, 
                      mult( mErasedNoteCharOffsets.getElementDirect( i ), gui_fov_scale_hud ) ) );
-        }
-
-
-
-    setDrawColor( 1, 1, 1, 1 );
-    
-    for( int i=0; i<3; i++ ) { 
-        if( !equal( mHungerSlipPosOffset[i], mHungerSlipHideOffsets[i] ) ) {
-            doublePair slipPos = lastScreenViewCenter;
-            slipPos = add( slipPos, mult( recalcOffset( mHungerSlipPosOffset[i] ), gui_fov_scale ) );
-            
-            if( mHungerSlipWiggleAmp[i] > 0 ) {
-                
-                double distFromHidden =
-                    ( mHungerSlipPosOffset[i].y - mHungerSlipHideOffsets[i].y ) * gui_fov_scale_hud;
-
-                // amplitude grows when we are further from
-                // hidden, and shrinks again as we go back down
-
-                double slipHarmonic = 
-                    ( 0.5 * ( 1 - cos( mHungerSlipWiggleTime[i] ) ) ) *
-                    mHungerSlipWiggleAmp[i] * distFromHidden;
-                
-                slipPos.y += slipHarmonic;
-                
-
-                if( i == 2 ) {
-                    
-                    if( mStarvingSlipLastPos[0] != 0 &&
-                        mStarvingSlipLastPos[1] != 0 ) {
-                        double lastDir = mStarvingSlipLastPos[1] - 
-                            mStarvingSlipLastPos[0];
-                        
-                        
-                        if( lastDir > 0 ) {
-                            
-                            double newDir = 
-                                slipHarmonic - mStarvingSlipLastPos[1];
-                            
-                            if( newDir < 0 ) {
-                                // peak
-                                if( mPulseHungerSound && 
-                                    mHungerSound != NULL ) {
-                                    // make sure it can be heard, even
-                                    // if paused
-                                    setSoundLoudness( 1.0 );
-                                    playSoundSprite( mHungerSound, 
-                                                     getSoundEffectsLoudness(),
-                                                     // middle
-                                                     0.5 );
-                                    }
-                                }
-                            }
-                        
-                        }
-                    mStarvingSlipLastPos[0] = mStarvingSlipLastPos[1];
-                    
-                    mStarvingSlipLastPos[1] = slipHarmonic;
-                    }
-                }
-            
-
-            drawSprite( mHungerSlipSprites[i], slipPos, gui_fov_scale_hud );
-            }
-        }
-
-
-
-    for( int i=0; i<NUM_YUM_SLIPS; i++ ) {
-
-        if( ! equal( mYumSlipPosOffset[i], mYumSlipHideOffset[i] ) ) {
-            doublePair slipPos = 
-                add( mult( recalcOffset( mYumSlipPosOffset[i] ), gui_fov_scale ), lastScreenViewCenter );
-            setDrawColor( 1, 1, 1, 1 );
-            drawSprite( mYumSlipSprites[i], slipPos, gui_fov_scale_hud );
-            
-            doublePair messagePos = slipPos;
-            messagePos.y += 11 * gui_fov_scale_hud;
-
-            if( mYumSlipNumberToShow[i] != 0 ) {
-                char *s = autoSprintf( "%dx", mYumSlipNumberToShow[i] );
-
-                setDrawColor( 0, 0, 0, 1 );
-                handwritingFont->drawString( s, messagePos, alignCenter );
-                delete [] s;
-                }
-            if( i == 2 || i == 3 ) {
-                setDrawColor( 0, 0, 0, 1 );
-
-                const char *word;
-                
-                if( i == 3 ) {
-                    word = translate( "meh" );
-                    }
-                else {
-                    word = translate( "yum" );
-                    }
-
-                handwritingFont->drawString( word, messagePos, alignCenter );
-                }
-            }
         }
 
 
@@ -9985,7 +10070,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         doublePair zoomPos = { lastMouseX, lastMouseY };
         drawZoomView( zoomPos, 16, 4, zoomPos );
     }
-    // info panel at bottom
+    // info panel at bottom, over top of all the other slips
     setDrawColor( 1, 1, 1, 1 );
     doublePair panelPos = lastScreenViewCenter;
     // FOVMOD NOTE:  Change 16/27 - Take these lines during the merge process
@@ -12366,6 +12451,51 @@ void LivingLifePage::displayGlobalMessage( char *inMessage ) {
 
 
 
+
+void LivingLifePage::setNewCraving( int inFoodID, int inYumBonus ) {
+    char *foodDescription = 
+        stringToUpperCase( getObject( inFoodID )->description );
+                
+    stripDescriptionComment( foodDescription );
+
+    char *message = 
+        autoSprintf( "%s: %s (+%d)", translate( "craving"), 
+                     foodDescription, inYumBonus );
+    
+    delete [] foodDescription;
+    
+    
+    if( mLiveCravingSheetIndex > -1 ) {
+        // hide old craving sheet
+        mCravingTargetOffset[ mLiveCravingSheetIndex ] =
+            mCravingHideOffset[ mLiveCravingSheetIndex ];
+        }
+    mLiveCravingSheetIndex ++;
+    
+    if( mLiveCravingSheetIndex >= NUM_HINT_SHEETS ) {
+        mLiveCravingSheetIndex -= NUM_HINT_SHEETS;
+        }
+    
+    if( mCravingMessage[ mLiveCravingSheetIndex ] != NULL ) {
+        delete [] mCravingMessage[ mLiveCravingSheetIndex ];
+        mCravingMessage[ mLiveCravingSheetIndex ] = NULL;
+        }
+
+    mCravingMessage[ mLiveCravingSheetIndex ] = message;
+    
+    mCravingTargetOffset[ mLiveCravingSheetIndex ] =
+        mCravingHideOffset[ mLiveCravingSheetIndex ];
+    
+    mCravingTargetOffset[ mLiveCravingSheetIndex ].y += 64;
+    
+    double longestLine = getLongestLine( 
+        (char*)( mCravingMessage[ mLiveCravingSheetIndex ] ) );
+    
+    mCravingExtraOffset[ mLiveCravingSheetIndex ].x = longestLine;
+    }
+
+
+
 // color list from here:
 // https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
 
@@ -13388,6 +13518,49 @@ void LivingLifePage::step() {
                 }
             }
         }
+
+
+
+
+    // pos for craving sheets
+    // don't start sliding first sheet until map loaded
+    if( mLiveCravingSheetIndex >= 0 && mDoneLoadingFirstObjectSet )
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        
+        if( ! equal( mCravingPosOffset[i], mCravingTargetOffset[i] ) ) {
+            doublePair delta = 
+                sub( mCravingTargetOffset[i], mCravingPosOffset[i] );
+            
+            double d = distance( mCravingTargetOffset[i], 
+                                 mCravingPosOffset[i] );
+            
+            
+            if( d <= 1 ) {
+                mCravingPosOffset[i] = mCravingTargetOffset[i];
+                }
+            else {
+                int speed = frameRateFactor * 4;
+                
+                if( d < 8 ) {
+                    speed = lrint( frameRateFactor * d / 2 );
+                    }
+                
+                if( speed > d ) {
+                    speed = floor( d );
+                    }
+                
+                if( speed < 1 ) {
+                    speed = 1;
+                    }
+                
+                doublePair dir = normalize( delta );
+                
+                mCravingPosOffset[i] = 
+                    add( mCravingPosOffset[i],
+                         mult( dir, speed ) );
+                }
+            }
+        }
     
 
 
@@ -13872,6 +14045,17 @@ void LivingLifePage::step() {
                 }
             
             delete [] lines;
+            }
+        else if( type == CRAVING ) {
+            int foodID = -1;
+            int bonus = 0;
+            
+            int numRead = 
+                sscanf( message, "CR\n%d %d", &foodID, &bonus );
+            
+            if( numRead == 2 ) {
+                setNewCraving( foodID, bonus );
+                }
             }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
@@ -15219,6 +15403,18 @@ void LivingLifePage::step() {
                             
                             delete [] ints[0];
 
+                            SimpleVector<int> oldContained;
+                            // player triggered
+                            // with no changed to container
+                            // look for contained change
+                            if( speed == 0 &&
+                                old == newID && 
+                                responsiblePlayerID < 0 ) {
+                            
+                                oldContained.push_back_other( 
+                                    &( mMapContainedStacks[mapI] ) );
+                                }
+                            
                             mMapContainedStacks[mapI].deleteAll();
                             mMapSubContainedStacks[mapI].deleteAll();
                             
@@ -15260,6 +15456,93 @@ void LivingLifePage::step() {
                                 delete [] ints[ c + 1 ];
                                 }
                             delete [] ints;
+
+                            if( speed == 0 &&
+                                old == newID && 
+                                responsiblePlayerID < 0
+                                &&
+                                oldContained.size() ==
+                                mMapContainedStacks[mapI].size() ) {
+                                // no change in number of items
+                                // count number that change
+                                int changeCount = 0;
+                                int changeIndex = -1;
+                                for( int i=0; i<oldContained.size(); i++ ) {
+                                    if( oldContained.
+                                        getElementDirect( i ) 
+                                        !=
+                                        mMapContainedStacks[mapI].
+                                        getElementDirect( i ) ) {
+                                        changeCount++;
+                                        changeIndex = i;
+                                        }
+                                    }
+                                if( changeCount == 1 ) {
+                                    // single item changed
+                                    // play sound for it?
+
+                                    int oldContID =
+                                        oldContained.
+                                        getElementDirect( changeIndex );
+                                    int newContID =
+                                        mMapContainedStacks[mapI].
+                                        getElementDirect( changeIndex );
+                                    
+                                    
+                                    // watch out for swap case, with single
+                                    // item
+                                    // don't play sound then
+                                    LiveObject *causingPlayer =
+                                        getLiveObject( - responsiblePlayerID );
+
+                                    if( causingPlayer != NULL &&
+                                        causingPlayer->holdingID 
+                                        != oldContID ) {
+                                        
+
+                                        ObjectRecord *newObj = 
+                                            getObject( newContID );
+                                        
+                                        if( shouldCreationSoundPlay(
+                                                oldContID, newContID ) ) {
+                                            if( newObj->
+                                                creationSound.numSubSounds 
+                                                > 0 ) {
+                                                
+                                                playSound( 
+                                                    newObj->creationSound,
+                                                    getVectorFromCamera( 
+                                                        x, y ) );
+                                                }
+                                            }
+                                        else if(
+                                            causingPlayer != NULL &&
+                                            causingPlayer->holdingID == 0 &&
+                                            bothSameUseParent( newContID,
+                                                               oldContID ) &&
+                                            newObj->
+                                            usingSound.numSubSounds > 0 ) {
+                                        
+                                            ObjectRecord *oldObj = 
+                                                getObject( oldContID );
+                                        
+                                            // only play sound if new is
+                                            // less used than old (filling back
+                                            // up sound)
+                                            if( getObjectParent( oldContID ) ==
+                                                newContID ||
+                                                oldObj->thisUseDummyIndex <
+                                                newObj->thisUseDummyIndex ) {
+                                        
+                                                playSound( 
+                                                    newObj->usingSound,
+                                                    getVectorFromCamera( 
+                                                        x, y ) );
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         else {
                             // a single int
@@ -16858,7 +17141,8 @@ void LivingLifePage::step() {
                             //existing->lastAnimFade = 0;
                             if( oldHeld != 0 ) {
                                 if( o.id == ourID ) {
-                                    if( existing->curAnim == doing ) {
+                                    if( existing->curAnim == doing ||
+                                        existing->curAnim == eating ) {
                                         addNewAnimPlayerOnly( 
                                             existing, ground );
                                         }
@@ -20142,7 +20426,7 @@ void LivingLifePage::step() {
                         // show either full or starving
                         // only show starving at 2 food or lower
                         // starving means you can nurse/eat
-                        if( ourLiveObject->foodStore <= 2 ) {
+                        if( ourLiveObject->foodStore + mYumBonus <= 2 ) {
                              setMusicLoudness( 0 );
                              mHungerSlipVisible = 2;
                              mPulseHungerSound = true;
@@ -20155,12 +20439,12 @@ void LivingLifePage::step() {
 
                         mHungerSlipVisible = 0;
                         }
-                    else if( ourLiveObject->foodStore <= 4 &&
+                    else if( ourLiveObject->foodStore + mYumBonus <= 4 &&
                              curAge >= (age_death - 2.67) ) {
                         mHungerSlipVisible = 2;
                         mPulseHungerSound = false;
                         }
-                    else if( ourLiveObject->foodStore <= 4 &&
+                    else if( ourLiveObject->foodStore + mYumBonus <= 4 &&
                              curAge < (age_death - 2.67) ) {
                         
                         // don't play hunger sounds at end of life
@@ -20191,7 +20475,7 @@ void LivingLifePage::step() {
                                 }
                             }
                         }
-                    else if( ourLiveObject->foodStore <= 8 ) {
+                    else if( ourLiveObject->foodStore + mYumBonus <= 8 ) {
                         mHungerSlipVisible = 1;
                         mPulseHungerSound = false;
                         }
@@ -20199,7 +20483,7 @@ void LivingLifePage::step() {
                         mHungerSlipVisible = -1;
                         }
 
-                    if( ourLiveObject->foodStore > 4 ||
+                    if( ourLiveObject->foodStore + mYumBonus > 4 ||
                         computeCurrentAge( ourLiveObject ) >= 57 ) {
                         // restore music
                         setMusicLoudness( musicLoudness );
@@ -20591,6 +20875,29 @@ void LivingLifePage::step() {
         
         if( o->currentEmot != NULL ) {
             if( game_getCurrentTime() > o->emotClearETATime ) {
+                
+                // play decay sounds for this emot
+
+                if( !o->outOfRange ) {
+                    for( int s=0; s<getEmotionNumObjectSlots(); s++ ) {
+                                    
+                        int id = getEmotionObjectByIndex( o->currentEmot, s );
+                                    
+                        if( id > 0 ) {
+                            ObjectRecord *obj = getObject( id );
+                                        
+                            if( obj->decaySound.numSubSounds > 0 ) {    
+                                    
+                                playSound( 
+                                    obj->decaySound,
+                                    getVectorFromCamera( 
+                                        o->currentPos.x,
+                                        o->currentPos.y ) );
+                                }
+                            }
+                        }
+                    }
+                
                 o->currentEmot = NULL;
                 }
             }
@@ -21839,11 +22146,19 @@ void LivingLifePage::makeActive( char inFresh ) {
         }
 
     mLiveTutorialSheetIndex = -1;
+    mLiveCravingSheetIndex = -1;
     
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {    
         mTutorialTargetOffset[i] = mTutorialHideOffset[i];
         mTutorialPosOffset[i] = mTutorialHideOffset[i];
         mTutorialMessage[i] = "";
+
+        mCravingTargetOffset[i] = mCravingHideOffset[i];
+        mCravingPosOffset[i] = mCravingHideOffset[i];
+        if( mCravingMessage[i] != NULL ) {
+            delete [] mCravingMessage[i];
+            mCravingMessage[i] = NULL;
+            }
         }
     
     
@@ -23815,6 +24130,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
 
     
+    // for USE actions that specify a slot number
+    int useExtraIParam = -1;
+    
 
     if( !killMode && 
         destID == 0 && !modClick && !tryingToPickUpBaby && !useOnBabyLater && 
@@ -24228,6 +24546,19 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                             }
                         }
                     }
+                else {
+                    // in case of mod-click, if we clicked a contained item
+                    // directly, and it has a bare hand transition,
+                    // consider doing that as a USE
+                    ObjectRecord *destObj = getObject( destID );
+                    
+                    if( destObj->numSlots > p.hitSlotIndex &&
+                        strstr( destObj->description, "+useOnContained" )
+                        != NULL ) {
+                        action = "USE";
+                        useExtraIParam = p.hitSlotIndex;
+                        }
+                    }
                 
 
                 send = true;
@@ -24285,7 +24616,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                             }
                         }
                     }
+                else if( ourLiveObject->holdingID > 0 &&
+                         p.hitSlotIndex != -1 &&
+                         getNumContainerSlots( destID ) > p.hitSlotIndex ) {
+                    
+                    // USE on a slot?  Only if allowed by container
 
+                    ObjectRecord *destObj = getObject( destID );
+                    
+                    if( strstr( destObj->description, "+useOnContained" )
+                        != NULL ) {
+                        useExtraIParam = p.hitSlotIndex;
+                        }
+                    }
+                
                 send = true;
                 }
             
@@ -24300,7 +24644,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 // optional ID param for USE, specifying that we clicked
                 // on something
                 delete [] extra;
-                extra = autoSprintf( " %d", destID );
+                
+                if( useExtraIParam != -1 ) {
+                    extra = autoSprintf( " %d %d", destID, useExtraIParam );
+                    }
+                else {
+                    extra = autoSprintf( " %d", destID );
+                    }
                 }
             
             

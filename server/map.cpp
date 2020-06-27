@@ -539,7 +539,10 @@ typedef struct Homeland {
         // did the creation of this homeland tapout-trigger
         // a +primaryHomeland object?
         char primary;
-        
+
+        // should Eve placement ignore this homeland?
+        char ignoredForEve;
+
     } Homeland;
 
 
@@ -6958,6 +6961,7 @@ static char runTapoutOperation( int inX, int inY,
 
 // from server.cpp
 extern int getPlayerLineage( int inID );
+extern char isPlayerIgnoredForEvePlacement( int inID );
 
     
 
@@ -7311,7 +7315,8 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                                   false,
                                   // changed
                                   true,
-                                  tappedOutPrimaryHomeland };
+                                  tappedOutPrimaryHomeland,
+                                  isPlayerIgnoredForEvePlacement( p ) };
                 homelands.push_back( newH );
                 }
             else if( h->expired ) {
@@ -8461,7 +8466,8 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             for( int i=0; i<homelands.size(); i++ ) {
                 Homeland *h = homelands.getElement( i );
                 
-                if( ! h->expired ) {
+                // any d-town or tutorial homelands are ignored
+                if( ! h->expired && ! h->ignoredForEve ) {
                     homelandXCount ++;
                     homelandXSum += h->x;
                     }
@@ -8474,10 +8480,11 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                     
                     Homeland *h = homelands.getElement( i );
                     
-                    // d-town placed 20K away
-                    // by looking for homelands not more than 9K past average
-                    // we avoid d-town homelands
-                    if( ! h->expired && h->x < homelandXAve + 9000 ) {
+                    // avoid extreme outlier homelands that are more
+                    // than 1500 to the West of the average homeland location
+                    if( ! h->expired && ! h->ignoredForEve &&
+                        h->x > homelandXAve - 1500 ) {
+                        
                         int xBoundary = h->x - 2 * h->radius;
                         
                         if( xBoundary < ave.x ) {

@@ -57,6 +57,7 @@
 #include "arcReport.h"
 #include "curseDB.h"
 #include "specialBiomes.h"
+#include "cravings.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -183,6 +184,8 @@ static int canYumChainBreak = 0;
 // -1 for no cap
 static int yumBonusCap = -1;
 
+static double minAgeForCravings = 10;
+
 
 static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
 
@@ -269,6 +272,7 @@ static int victimEmotionIndex = 2;
 static int victimTerrifiedEmotionIndex = 2;
 
 static int starvingEmotionIndex = 2;
+static int satisfiedEmotionIndex = 2;
 
 
 static double lastBabyPassedThresholdTime = 0;
@@ -1082,6 +1086,10 @@ typedef struct LiveObject {
         double lastGateVisitorNoticeTime;
         double lastNewBabyNoticeTime;
         
+        Craving cravingFood;
+        int cravingFoodYumIncrement;
+        char cravingKnown;
+
     } LiveObject;
 
 
@@ -1125,7 +1133,8 @@ static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID ) {
     for( int j=0; j<players.size(); j++ ) {
         LiveObject *otherPlayer = players.getElement( j );
         
-        if( otherPlayer->id != inPlayerID &&
+        if( ! otherPlayer->error &&
+            otherPlayer->id != inPlayerID &&
             otherPlayer->id != inSkipID ) {
             
             if( otherPlayer->fitnessScore > fittestOffspringFitness ) {
@@ -1287,6 +1296,23 @@ void sendMessageToPlayer( LiveObject *inPlayer,
 
 
 
+static void endOwnership( int inX, int inY, int inObjectID ) {
+    SimpleVector<int> *deathMarkers = getAllPossibleDeathIDs();
+    for( int j=0; j<deathMarkers->size(); j++ ) {
+        int deathID = deathMarkers->getElementDirect( j );
+        TransRecord *t = getTrans( deathID, inObjectID );
+        
+        if( t != NULL ) {
+                    
+            setMapObject( inX, inY, t->newTarget );
+            break;
+            }
+        }
+    }
+
+
+
+
 SimpleVector<GridPos> newOwnerPos;
 
 SimpleVector<GridPos> recentlyRemovedOwnerPos;
@@ -1374,17 +1400,8 @@ void removeAllOwnership( LiveObject *inPlayer, char inProcessInherit = true ) {
         if( noOtherOwners ) {
             // last owner of p just died
             // force end transition
-            SimpleVector<int> *deathMarkers = getAllPossibleDeathIDs();
-            for( int j=0; j<deathMarkers->size(); j++ ) {
-                int deathID = deathMarkers->getElementDirect( j );
-                TransRecord *t = getTrans( deathID, oID );
-                
-                if( t != NULL ) {
-                    
-                    setMapObject( p->x, p->y, t->newTarget );
-                    break;
-                    }
-                }
+
+            endOwnership( p->x, p->y, oID );
             }
         }
     
@@ -1399,6 +1416,8 @@ void removeAllOwnership( LiveObject *inPlayer, char inProcessInherit = true ) {
 
 
 char *getOwnershipString( int inX, int inY ) {    
+    char foundAny = false;
+    
     SimpleVector<char> messageWorking;
     
     for( int j=0; j<players.size(); j++ ) {
@@ -1410,8 +1429,20 @@ char *getOwnershipString( int inX, int inY ) {
             messageWorking.appendElementString( 
                 playerIDString );
             delete [] playerIDString;
+            foundAny = true;
             }
         }
+    
+    if( ! foundAny ) {
+        // an orphaned owned object?
+        // this should never happen, but in case it ever does, clear
+        // it when we discover it.
+        int oID = getMapObject( inX, inY );
+        if( oID > 0 ) {
+            endOwnership( inX, inY, oID );
+            }
+        }
+
     char *message = messageWorking.getElementString();
     return message;
     }
@@ -1585,6 +1616,18 @@ int getPlayerLineage( int inID ) {
         return o->lineageEveID;
         }
     return -1;
+    }
+
+
+
+char isPlayerIgnoredForEvePlacement( int inID ) {
+    LiveObject *o = getLiveObject( inID );
+    if( o != NULL ) {
+        return ( o->curseStatus.curseLevel > 0 ) || o->isTutorial;
+        }
+
+    // player id doesn't even exist
+    return true;
     }
 
 
@@ -2688,6 +2731,10 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
                 if( e == 0 ) {
                     delete [] m.extraPos;
                     m.extraPos = NULL;
+                    m.numExtraPos = 0;
+                    m.type = UNKNOWN;
+                    delete tokens;
+                    return m;
                     }
                 break;
                 }
@@ -2719,10 +2766,13 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         m.type = USE;
         // read optional id parameter
         numRead = sscanf( inMessage, 
-                          "%99s %d %d %d", 
-                          nameBuffer, &( m.x ), &( m.y ), &( m.id ) );
+                          "%99s %d %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.id ), &( m.i ) );
         
-        if( numRead != 4 ) {
+        if( numRead < 5 ) {
+            m.i = -1;
+            }
+        if( numRead < 4 ) {
             m.id = -1;
             }
         }
@@ -6790,6 +6840,13 @@ static char *getUpdateLineFromRecord(
 
 
 
+static SimpleVector<int> newEmotPlayerIDs;
+static SimpleVector<int> newEmotIndices;
+// 0 if no ttl specified
+static SimpleVector<int> newEmotTTLs;
+
+
+
 static int getEatBonus( LiveObject *inPlayer ) {
     int generation = inPlayer->parentChainLength - 1;
     
@@ -6915,7 +6972,11 @@ static char isYummy( LiveObject *inPlayer, int inObjectID ) {
         // we're NOT replacing o with the yumParent object
         // because o isn't used beyond this point
         }   
-
+    
+    if( inObjectID == inPlayer->cravingFood.foodID &&
+        computeAge( inPlayer ) >= minAgeForCravings ) {
+        return true;
+        }
 
     for( int i=0; i<inPlayer->yummyFoodChain.size(); i++ ) {
         if( inObjectID == inPlayer->yummyFoodChain.getElementDirect(i) ) {
@@ -6969,6 +7030,43 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
             }
 
         inPlayer->yummyFoodChain.push_back( eatenID );
+        
+        if( eatenID == inPlayer->cravingFood.foodID &&
+            computeAge( inPlayer ) >= minAgeForCravings ) {
+            
+            for( int i=0; i< inPlayer->cravingFoodYumIncrement; i++ ) {
+                // add extra copies to YUM chain as a bonus
+                inPlayer->yummyFoodChain.push_back( eatenID );
+                }
+            
+            // craving satisfied, go on to next thing in list
+            inPlayer->cravingFood = 
+                getCravedFood( inPlayer->lineageEveID,
+                               inPlayer->parentChainLength,
+                               inPlayer->cravingFood );
+            // reset generational bonus counter
+            inPlayer->cravingFoodYumIncrement = 1;
+            
+            // flag them for getting a new craving message
+            inPlayer->cravingKnown = false;
+            
+            // satisfied emot
+            
+            if( satisfiedEmotionIndex != -1 ) {
+                inPlayer->emotFrozen = false;
+                inPlayer->emotUnfreezeETA = 0;
+        
+                newEmotPlayerIDs.push_back( inPlayer->id );
+                
+                newEmotIndices.push_back( satisfiedEmotionIndex );
+                // 3 sec
+                newEmotTTLs.push_back( 1 );
+                
+                // don't leave starving status, or else non-starving
+                // change might override our satisfied emote
+                inPlayer->starving = false;
+                }
+            }
         }
     
 
@@ -7980,6 +8078,20 @@ static void makeOffspringSayMarker( int inPlayerID, int inIDToSkip ) {
 
 
 
+static int countLivingChildren( int inMotherID ) {
+    int count = 0;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( o->parentID == inMotherID && ! o->error ) {
+            count ++;
+            }
+        }
+    return count;
+    }
+
+
 
 int getUnusedLeadershipColor();
 
@@ -8118,6 +8230,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             o->foodUpdate = true;
             
             o->connected = true;
+            o->cravingKnown = false;
             
             if( o->heldByOther ) {
                 // they're held, so they may have moved far away from their
@@ -8276,6 +8389,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     canYumChainBreak = SettingsManager::getIntSetting( "canYumChainBreak", 0 );
     
     yumBonusCap = SettingsManager::getIntSetting( "yumBonusCap", -1 );
+
+    
+    minAgeForCravings = SettingsManager::getDoubleSetting( "minAgeForCravings",
+                                                           10 );
     
 
     numConnections ++;
@@ -8294,6 +8411,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.lastGateVisitorNoticeTime = 0;
     newObject.lastNewBabyNoticeTime = 0;
 
+    newObject.cravingFood = noCraving;
+    newObject.cravingFoodYumIncrement = 0;
+    newObject.cravingKnown = false;
+    
     newObject.id = nextID;
     nextID++;
 
@@ -8408,6 +8529,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     int numOfAge = 0;
 
+    int maxLivingChildrenPerMother = 
+        SettingsManager::getIntSetting( "maxLivingChildrenPerMother", 4 );
+    
+
     // first, find all mothers that could possibly have us
 
     // three passes, once with birth cooldown limit and lineage limits on, 
@@ -8457,7 +8582,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 numOfAge ++;
                 
                 if( checkCooldown &&
-                    Time::timeSec() < player->birthCoolDown ) {    
+                    ( Time::timeSec() < player->birthCoolDown 
+                      ||
+                      countLivingChildren( player->id ) >= 
+                      maxLivingChildrenPerMother ) ) {    
                     continue;
                     }
                 
@@ -8928,6 +9056,12 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         newObject.lineageEveID = newObject.id;
         
         newObject.lifeStartTimeSeconds -= age_fertile * ( 1.0 / getAgeRate() );
+        
+        // she starts off craving a food right away
+        newObject.cravingFood = getCravedFood( newObject.lineageEveID,
+                                               newObject.parentChainLength );
+        // initilize increment
+        newObject.cravingFoodYumIncrement = 1;
 
         
         // when placing eve, pick a race that is not currently
@@ -9707,6 +9841,13 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         // mother
         newObject.lineage->push_back( newObject.parentID );
 
+        
+        // inherit mother's craving at time of birth
+        newObject.cravingFood = parent->cravingFood;
+        
+        // increment for next generation
+        newObject.cravingFoodYumIncrement = parent->cravingFoodYumIncrement + 1;
+        
 
         // inherit last heard monument, if any, from parent
 
@@ -9820,10 +9961,15 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         
         // a living other player
         
-        if( ! getFemale( otherPlayer ) ) {
+        // consider all men here
+        // and any childless women (they are counted as aunts
+        // for any children born before they themselves have children
+        // or after all their own children die)
+        if( ! getFemale( otherPlayer ) ||
+            countLivingChildren( otherPlayer->id ) == 0 ) {
             
             // check if his mother is an ancestor
-            // (then he's an uncle
+            // (then he's an uncle, or she's a childless aunt)
             if( otherPlayer->parentID > 0 ) {
                 
                 // look at lineage above parent
@@ -11018,6 +11164,61 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
         }
 
     return false;
+    }
+
+
+
+static void changeContained( int inX, int inY, int inSlotNumber, 
+                             int inNewObjectID ) {
+    
+    int numContained = 0;
+    int *contained = getContained( inX, inY, &numContained );
+
+    timeSec_t *containedETA = 
+        getContainedEtaDecay( inX, inY, &numContained );
+    
+    timeSec_t curTimeSec = Time::timeSec();
+    
+    if( contained != NULL && containedETA != NULL &&
+        numContained > inSlotNumber ) {
+    
+        int oldObjectID = contained[ inSlotNumber ];
+        timeSec_t oldETA = containedETA[ inSlotNumber ];
+        
+        if( oldObjectID > 0 ) {
+            
+            TransRecord *oldDecayTrans = getTrans( -1, oldObjectID );
+
+            TransRecord *newDecayTrans = getTrans( -1, inNewObjectID );
+            
+
+            timeSec_t newETA = 0;
+            
+            if( newDecayTrans != NULL ) {
+                newETA = curTimeSec + newDecayTrans->autoDecaySeconds;
+                }
+            
+            if( oldDecayTrans != NULL && newDecayTrans != NULL &&
+                oldDecayTrans->autoDecaySeconds == 
+                newDecayTrans->autoDecaySeconds ) {
+                // preserve remaining seconds from old object
+                newETA = oldETA;
+                }
+            
+            contained[ inSlotNumber ] = inNewObjectID;
+            containedETA[ inSlotNumber ] = newETA;
+
+            setContained( inX, inY, numContained, contained );
+            setContainedEtaDecay( inX, inY, numContained, containedETA );
+            }
+        }
+
+    if( contained != NULL ) {
+        delete [] contained;
+        }
+    if( containedETA != NULL ) {
+        delete [] containedETA;
+        }
     }
 
 
@@ -12788,10 +12989,6 @@ static void updatePosseSize( LiveObject *inTarget,
 
 
 
-static SimpleVector<int> newEmotPlayerIDs;
-static SimpleVector<int> newEmotIndices;
-// 0 if no ttl specified
-static SimpleVector<int> newEmotTTLs;
 
 
 // inEatenID = 0 for nursing
@@ -12946,11 +13143,17 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
             minPosseSizeForKill = minPosseCap;
             }
 
+        char noWaitWeapon = false;
+        
         if( isNoWaitWeapon( inKiller->holdingID ) ) {
             // no posse required for non-deadly weapons (snowballs, tattoos)
             minPosseSizeForKill = 1;
+            noWaitWeapon = true;
             }
         
+        int thisMinPosseSizeForKill = minPosseSizeForKill;
+        
+
         char joiningExisting = false;
         
         // dupe existing min posse size
@@ -12973,6 +13176,27 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                 
                 joiningExisting = true;
                 break;
+                }
+            }
+
+        
+        if( joiningExisting && ! noWaitWeapon &&
+            thisMinPosseSizeForKill < minPosseSizeForKill &&
+            thisMinPosseSizeForKill <= 1 ) {
+            
+            // something has changed since posse was formed
+            // maybe target has been exiled?
+
+            // update existing posse records to reflect this.
+
+            minPosseSizeForKill = thisMinPosseSizeForKill;
+            
+            for( int i=0; i<activeKillStates.size(); i++ ) {
+                KillState *s = activeKillStates.getElement( i );
+                
+                if( s->targetID == inTarget->id ) {
+                    s->minPosseSizeForKill = minPosseSizeForKill;
+                    }
                 }
             }
 
@@ -13063,6 +13287,35 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                                      psMessage, strlen( psMessage ) );
                 delete [] psMessage;
                 }
+            }
+        else if( ! joiningExisting && minPosseSizeForKill <= 1 ) {
+            // solo killing okay!
+            
+            // let them know about it
+
+            const char *allyWord = "ALLIES";
+            if( allyCount == 1 ) {
+                allyWord = "ALLY";
+                }
+            const char *enemyWord = "ENEMIES";
+            if( enemyCount == 1 ) {
+                enemyWord = "ENEMY";
+                }
+            
+            const char *pronoun = "HE";
+            if( getFemale( inTarget ) ) {
+                pronoun = "SHE";
+                }
+
+            char *message = 
+                autoSprintf( 
+                    "TARGET HAS %d %s, %d %s, SO %s CAN BE KILLED SOLO.", 
+                    allyCount, allyWord, enemyCount, enemyWord,
+                    pronoun );            
+            
+        
+            sendGlobalMessage( message, inKiller );
+            delete [] message;
             }
         
 
@@ -15943,6 +16196,21 @@ static void setRefuseFoodEmote( LiveObject *hitPlayer ) {
     }
 
 
+
+
+static void sendCraving( LiveObject *inPlayer ) {
+    // they earn the normal YUM multiplier increase (+1) PLUS the bonus
+    // increase, so send them the total.
+    char *message = autoSprintf( "CR\n%d %d\n#", 
+                                 inPlayer->cravingFood.foodID,
+                                 inPlayer->cravingFoodYumIncrement + 1 );
+    sendMessageToPlayer( inPlayer, message, strlen( message ) );
+    delete [] message;
+
+    inPlayer->cravingKnown = true;
+    }
+
+
 void sanityCheckSettings(const char *inSettingName) {
     FILE *fp = SettingsManager::getSettingsFile( inSettingName, "r" );
 	if( fp == NULL ) {
@@ -16163,6 +16431,9 @@ int main() {
 
     starvingEmotionIndex =
         SettingsManager::getIntSetting( "starvingEmotionIndex", 2 );
+
+    satisfiedEmotionIndex =
+        SettingsManager::getIntSetting( "satisfiedEmotionIndex", 2 );
 
 
     FILE *f = fopen( "curseWordList.txt", "r" );
@@ -16569,6 +16840,20 @@ int main() {
             checkOrderPropagation();
             
             checkCustomGlobalMessage();
+            
+
+            int lowestCravingID = INT_MAX;
+            
+            for( int i=0; i< players.size(); i++ ) {
+                LiveObject *nextPlayer = players.getElement( i );
+                
+                if( nextPlayer->cravingFood.uniqueID > -1 && 
+                    nextPlayer->cravingFood.uniqueID < lowestCravingID ) {
+                    
+                    lowestCravingID = nextPlayer->cravingFood.uniqueID;
+                    }
+                }
+            purgeStaleCravings( lowestCravingID );
             }
         
         
@@ -21391,22 +21676,120 @@ int main() {
                                     
                                     pickupToHold( nextPlayer, m.x, m.y,
                                                   target );
-                                    }
-                                else if( nextPlayer->holdingID == 0 &&
-                                         targetObj->permanent ) {
-                                    
-                                    // try removing from permanent
-                                    // container
-                                    removeFromContainerToHold( nextPlayer,
-                                                               m.x, m.y,
-                                                               m.i );
                                     }         
-                                else if( nextPlayer->holdingID > 0 ) {
-                                    // try adding what we're holding to
-                                    // target container
+                                else if( nextPlayer->holdingID >= 0 ) {
                                     
-                                    addHeldToContainer(
-                                        nextPlayer, target, m.x, m.y );
+                                    char handled = false;
+                                    
+                                    if( m.i != -1 && targetObj->permanent &&
+                                        targetObj->numSlots > m.i &&
+                                        getNumContained( m.x, m.y ) > m.i &&
+                                        strstr( targetObj->description,
+                                                "+useOnContained" ) != NULL ) {
+                                        // a valid slot specified to use
+                                        // held object on.
+                                        // AND container allows this
+                                        
+                                        int contTarget = 
+                                            getContained( m.x, m.y, m.i );
+                                        
+                                        ObjectRecord *contTargetObj =
+                                            getObject( contTarget );
+                                        
+                                        TransRecord *contTrans =
+                                            getPTrans( nextPlayer->holdingID,
+                                                       contTarget );
+                                        
+                                        ObjectRecord *newTarget = NULL;
+                                        
+                                        if( contTargetObj->numSlots == 0 &&
+                                            contTrans != NULL &&
+                                            ( contTrans->newActor == 
+                                              nextPlayer->holdingID ||
+                                              contTrans->newActor == 0 ||
+                                              canPickup( 
+                                                  contTrans->newActor,
+                                                  computeAge( 
+                                                      nextPlayer ) ) ) ) {
+
+                                            // a trans applies, and we
+                                            // can hold the resulting actor
+                                            if( contTrans->newTarget > 0 ) {
+                                                newTarget = getObject(
+                                                    contTrans->newTarget );
+                                                }
+                                            }
+                                        if( newTarget != NULL &&
+                                            isContainable( 
+                                                contTrans->newTarget ) &&
+                                            newTarget->containSize <=
+                                            targetObj->slotSize &&
+                                            containmentPermitted(
+                                                targetObj->id,
+                                                newTarget->id ) &&
+                                            ( nextPlayer->holdingID == 0
+                                              ||
+                                              canPlayerUseOrLearnTool( 
+                                                  nextPlayer,
+                                                  nextPlayer->holdingID ) ) ) {
+                                                
+                                            int oldHeld = 
+                                                nextPlayer->holdingID;
+                                            
+                                            handleHoldingChange( 
+                                                nextPlayer,
+                                                contTrans->newActor );
+                                            
+                                            nextPlayer->heldOriginValid = 0;
+                                            nextPlayer->heldOriginX = 0;
+                                            nextPlayer->heldOriginY = 0;
+                                            nextPlayer->
+                                                heldTransitionSourceID = 0;
+                                            
+                                            if( contTrans->newActor > 0 && 
+                                                contTrans->newActor !=
+                                                oldHeld ) {
+                                                
+                                                nextPlayer->
+                                                    heldTransitionSourceID
+                                                    = contTargetObj->id;
+                                                }
+
+                                            
+                                            setResponsiblePlayer( 
+                                                - nextPlayer->id );
+                                            
+                                            changeContained( 
+                                                m.x, m.y,
+                                                m.i, 
+                                                contTrans->newTarget );
+                                            
+                                            setResponsiblePlayer( -1 );
+                                            handled = true;
+                                            }
+                                        }
+
+                                    
+                                    // consider other cases
+                                    if( ! handled ) {
+                                        if( nextPlayer->holdingID == 0 &&
+                                            targetObj->permanent ) {
+                                    
+                                            // try removing from permanent
+                                            // container
+                                            removeFromContainerToHold( 
+                                                nextPlayer,
+                                                m.x, m.y,
+                                                m.i );
+                                            }
+                                        else if( nextPlayer->holdingID > 0 ) {
+                                            // try adding what we're holding to
+                                            // target container
+                                            
+                                            addHeldToContainer(
+                                                nextPlayer, target, m.x, m.y );
+                                            }
+                                        }
                                     }
                                 
 
@@ -23485,6 +23868,14 @@ int main() {
                 nextPlayer->emotUnfreezeETA = 0;
                 }
             
+            if( ! nextPlayer->error &&
+                ! nextPlayer->cravingKnown &&
+                computeAge( nextPlayer ) >= minAgeForCravings ) {
+                
+                sendCraving( nextPlayer );
+                }
+                
+
 
             if( nextPlayer->dying && ! nextPlayer->error &&
                 curTime >= nextPlayer->dyingETA ) {

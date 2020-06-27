@@ -343,7 +343,7 @@ function ls_setupDatabase() {
             "INDEX( name ),".
             // 1 if male
             "male TINYINT UNSIGNED NOT NULL,".
-            "last_words VARCHAR(63) NOT NULL,".
+            "last_words VARCHAR(254) NOT NULL,".
             // -1 if not set yet
             // 0 for Eve
             "generation INT NOT NULL,".

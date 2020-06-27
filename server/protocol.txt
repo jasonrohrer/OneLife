@@ -228,6 +228,8 @@ HOMELAND (HL)
 
 FLIP (FL) 
 
+CRAVING (CR)
+
 FRAME (FM)
 
 PONG
@@ -985,6 +987,15 @@ requests (clients should still auto-flip players based on movement).
 
 
 
+CR
+food_id bonus
+#
+
+Tells player about which food they're currently craving, and how much their
+YUM multiplier will increase when they eat it.
+
+
+
 
 FM
 #
@@ -1018,7 +1029,7 @@ parameters, and no leading spaces.
 
 
 KA x y#
-USE x y id#
+USE x y id i#
 BABY x y#
 BABY x y id#
 SELF x y i#
@@ -1066,6 +1077,8 @@ USE  is for bare-hand or held-object action on target object in non-empty
      id parameter is optional, and is used by server to differentiate 
      intentional use-on-bare-ground actions from use actions (in case
      where target animal moved out of the way).
+     i parameter is optional, and specifies a container slot to use a held
+     object on (for example, using a knife to slice bread sitting on a table).
 
 SELF is special case of USE action taken on self (to eat what we're holding
      or add/remove clothing).
