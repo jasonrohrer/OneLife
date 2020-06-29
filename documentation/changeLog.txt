@@ -9,6 +9,10 @@ Server Fixes
 
 --Fixed crash when someone right-clicks a full basket on a table.
 
+--Fixed glitch where you get stuck unable to satisfy a craving if the craved
+  item has a YUM parent (example:  bowl of gooseberries).  Fixes #641
+
+
 
 
 
