@@ -25,6 +25,8 @@ Server Fixes
   logged.  Both issues were causing lives to be ignored or mis-recorded by the
   fitness server.  Fixes #642.  Fixes #643.
 
+--Pagination of fitness server logs.
+
 
 
 
