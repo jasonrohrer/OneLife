@@ -9968,8 +9968,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         // and any childless women (they are counted as aunts
         // for any children born before they themselves have children
         // or after all their own children die)
-        if( ! getFemale( otherPlayer ) ||
-            countLivingChildren( otherPlayer->id ) == 0 ) {
+        if( newObject.parentID != otherPlayer->id 
+            &&
+            ( ! getFemale( otherPlayer ) ||
+              countLivingChildren( otherPlayer->id ) == 0 ) ) {
             
             // check if his mother is an ancestor
             // (then he's an uncle, or she's a childless aunt)

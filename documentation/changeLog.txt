@@ -14,6 +14,13 @@ Server Fixes
 
 --Fitness server admin interface now has links to other players on details page.
 
+--Two bugs in genetic fitness tracking.  First, if your mother is childless,
+  she was being considered as your aunt in the ancestor tracking.  Second, if
+  an email has a wayward backslash character (which the client should forbid,
+  but does not), it breaks the SQL statement, preventing fitness from being
+  logged.  Both issues were causing lives to be ignored or mis-recorded by the
+  fitness server.  Fixes #642.  Fixes #643.
+
 
 
 

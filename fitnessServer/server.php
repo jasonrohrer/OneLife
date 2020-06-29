@@ -1874,9 +1874,16 @@ function fs_reportDeath() {
 
             list( $ancestorEmail, $relName ) = explode( " ", $part, 2 );
 
-            fs_logDeath( $ancestorEmail, $life_id, $relName, $age,
-                         $deadPlayerScore );
-            
+
+            // watch for malformed emails in list
+            $ancestorEmail =
+                fs_filter( $ancestorEmail,
+                           "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+
+            if( $ancestorEmail != "" ) {
+                fs_logDeath( $ancestorEmail, $life_id, $relName, $age,
+                             $deadPlayerScore );
+                }
             $numAncestors ++;
             }
         }
