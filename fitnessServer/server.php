@@ -752,19 +752,38 @@ function fs_showDetail( $checkPassword = true ) {
     global $tableNamePrefix;
     
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
+    // two possible params... id or email
 
+    $id = fs_requestFilter( "id", "/[0-9]+/i", -1 );
+    $email = "";
+
+    
+    if( $id != -1 ) {
+        $query = "SELECT email ".
+            "FROM $tableNamePrefix"."users ".
+            "WHERE id = '$id';";
+        $result = fs_queryDatabase( $query );
+        
+        $email = fs_mysqli_result( $result, 0, "email" );
+        }
+    else {
+        $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
+    
+        $query = "SELECT id ".
+            "FROM $tableNamePrefix"."users ".
+            "WHERE email = '$email';";
+        $result = fs_queryDatabase( $query );
+        
+        $id = fs_mysqli_result( $result, 0, "id" );
+        }
+
+    
     $aveAge = fs_getAveAge( $email );
     
-    $query = "SELECT id ".
-        "FROM $tableNamePrefix"."users ".
-        "WHERE email = '$email';";
-    $result = fs_queryDatabase( $query );
 
-    $id = fs_mysqli_result( $result, 0, "id" );
-
+    
     $query = "SELECT name, age, relation_name, ".
-        "old_score, new_score, death_time ".
+        "old_score, new_score, death_time, life_player_id ".
         "FROM $tableNamePrefix"."offspring AS offspring ".
         "INNER JOIN $tableNamePrefix"."lives AS lives ".
         "ON offspring.life_id = lives.id ".
@@ -794,6 +813,10 @@ function fs_showDetail( $checkPassword = true ) {
         $new_score = fs_mysqli_result( $result, $i, "new_score" );
         $death_time = fs_mysqli_result( $result, $i, "death_time" );
 
+        $otherLifePlayerID =
+            fs_mysqli_result( $result, $i, "life_player_id" );
+
+        
         $delta = round( $new_score - $old_score, 3 );
 
         $deltaString;
@@ -807,8 +830,15 @@ function fs_showDetail( $checkPassword = true ) {
         
         echo "<tr>";
 
-        echo "<td>$name</td>";
-
+        if( $relation_name != "You" ) {
+            // link to other player
+            echo "<td><a href='server.php?".
+                "action=show_detail&id=$otherLifePlayerID'>$name</a></td>";
+            }
+        else {
+            echo "<td>$name</td>";
+            }
+        
         if( $old_score != $new_score &&
             $relation_name == "You" &&
             $numYouLives < $numLivesInAverage ) {

@@ -12,6 +12,7 @@ Server Fixes
 --Fixed glitch where you get stuck unable to satisfy a craving if the craved
   item has a YUM parent (example:  bowl of gooseberries).  Fixes #641
 
+--Fitness server admin interface now has links to other players on details page.
 
 
 
