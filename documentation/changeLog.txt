@@ -7,6 +7,9 @@ Version 346   ???
 
 --Forbid backslash and quotes in login email address in client.
 
+--Forbid player flipping when a 0-speed object is held (like cast fishing
+  pole).  Fixes #644
+
 
 
 Server Fixes
