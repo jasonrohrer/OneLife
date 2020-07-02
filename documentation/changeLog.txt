@@ -10,6 +10,8 @@ Version 346   ???
 --Forbid player flipping when a 0-speed object is held (like cast fishing
   pole).  Fixes #644
 
+--Object editor preserves use vanish when inserting an object.
+
 
 
 Server Fixes
