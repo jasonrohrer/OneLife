@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 346   ???
+Version 346   2020-July-3
 
 --Forbid backslash and quotes in login email address in client.
 
@@ -16,6 +16,7 @@ Version 346   ???
 
 --Tech tree button (to open Onetech in browser) on login screen.  Better tool
   tips for several buttons.  Fixes #647
+
 
 
 
