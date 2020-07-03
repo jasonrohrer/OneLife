@@ -46,6 +46,7 @@ atSignTip "INSERT '@' SIGN (INTL KEYBOARDS)"
 loginButton "LOGIN"
 friendsButton "FRIENDS"
 familyTrees "FAMILY TREES"
+techTree "TECH"
 genesButton "GENES"
 geneticHistoryButton "GENETIC HISTORY"
 
@@ -90,6 +91,12 @@ submit "SUBMIT"
 
 saveTip "LOGIN AND STORE DETAILS LOCALLY"
 clearAccountTip "DELETES ACCOUNT DETAILS FROM DISK"
+
+friendsTip "GET BORN WITH FRIENDS"
+genesTip "GENETIC SCORE DETAILS"
+
+familyTreesTip "OPEN FAMILY TREES IN WEB BROWSER"
+techTreeTip "OPEN TECH TREE IN WEB BROWSER"
 
 
 accountKey "KEY:"

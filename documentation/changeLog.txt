@@ -14,6 +14,10 @@ Version 346   ???
 
 --Category editor preserves index, if possible, when switching categories.
 
+--Tech tree button (to open Onetech in browser) on login screen.  Better tool
+  tips for several buttons.  Fixes #647
+
+
 
 
 Server Fixes

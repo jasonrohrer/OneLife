@@ -58,7 +58,8 @@ ExistingAccountPage::ExistingAccountPage()
           mLoginButton( mainFont, 400, 0, translate( "loginButton" ) ),
           mFriendsButton( mainFont, 400, -80, translate( "friendsButton" ) ),
           mGenesButton( mainFont, 550, 0, translate( "genesButton" ) ),
-          mFamilyTreesButton( mainFont, 400, -160, translate( "familyTrees" ) ),
+          mFamilyTreesButton( mainFont, 320, -160, translate( "familyTrees" ) ),
+          mTechTreeButton( mainFont, 550, -160, translate( "techTree" ) ),
           mClearAccountButton( mainFont, 400, -280, 
                                translate( "clearAccount" ) ),
           mCancelButton( mainFont, -400, -280, 
@@ -97,6 +98,7 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mFriendsButton );
     setButtonStyle( &mGenesButton );
     setButtonStyle( &mFamilyTreesButton );
+    setButtonStyle( &mTechTreeButton );
     setButtonStyle( &mClearAccountButton );
     setButtonStyle( &mCancelButton );
     setButtonStyle( &mSettingsButton );
@@ -118,6 +120,7 @@ ExistingAccountPage::ExistingAccountPage()
     addComponent( &mFriendsButton );
     addComponent( &mGenesButton );
     addComponent( &mFamilyTreesButton );
+    addComponent( &mTechTreeButton );
     addComponent( &mClearAccountButton );
     addComponent( &mCancelButton );
     addComponent( &mSettingsButton );
@@ -137,6 +140,7 @@ ExistingAccountPage::ExistingAccountPage()
     mFriendsButton.addActionListener( this );
     mGenesButton.addActionListener( this );
     mFamilyTreesButton.addActionListener( this );
+    mTechTreeButton.addActionListener( this );
     mClearAccountButton.addActionListener( this );
     
     mCancelButton.addActionListener( this );
@@ -163,6 +167,12 @@ ExistingAccountPage::ExistingAccountPage()
     mLoginButton.setMouseOverTip( translate( "saveTip" ) );
     mClearAccountButton.setMouseOverTip( translate( "clearAccountTip" ) );
     
+    mFriendsButton.setMouseOverTip( translate( "friendsTip" ) );
+    mGenesButton.setMouseOverTip( translate( "genesTip" ) );
+    mFamilyTreesButton.setMouseOverTip( translate( "familyTreesTip" ) );
+    mTechTreeButton.setMouseOverTip( translate( "techTreeTip" ) );
+    
+
     int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
     
     if( reviewPosted ) {
@@ -425,6 +435,14 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
             
             launchURL( fullURL );
             delete [] fullURL;
+            }
+        delete [] url;
+        }
+    else if( inTarget == &mTechTreeButton ) {
+        char *url = SettingsManager::getStringSetting( "techTreeURL", "" );
+
+        if( strcmp( url, "" ) != 0 ) {
+            launchURL( url );
             }
         delete [] url;
         }
