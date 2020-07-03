@@ -12,6 +12,8 @@ Version 346   ???
 
 --Object editor preserves use vanish when inserting an object.
 
+--Category editor preserves index, if possible, when switching categories.
+
 
 
 Server Fixes
