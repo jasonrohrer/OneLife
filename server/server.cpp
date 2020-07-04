@@ -6964,6 +6964,8 @@ static char isYummy( LiveObject *inPlayer, int inObjectID ) {
         }
 
 
+    int origID = inObjectID;
+
     if( o->yumParentID != -1 ) {
         // set this whether valid or not
         inObjectID = o->yumParentID;
@@ -6973,7 +6975,9 @@ static char isYummy( LiveObject *inPlayer, int inObjectID ) {
         // because o isn't used beyond this point
         }   
     
-    if( inObjectID == inPlayer->cravingFood.foodID &&
+    
+    // don't consider yumParent when testing for craving satisfaction
+    if( origID == inPlayer->cravingFood.foodID &&
         computeAge( inPlayer ) >= minAgeForCravings ) {
         return true;
         }
@@ -7031,7 +7035,8 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
 
         inPlayer->yummyFoodChain.push_back( eatenID );
         
-        if( eatenID == inPlayer->cravingFood.foodID &&
+        // don't consider yumParent when testing for craving satisfaction
+        if( inFoodEatenID == inPlayer->cravingFood.foodID &&
             computeAge( inPlayer ) >= minAgeForCravings ) {
             
             for( int i=0; i< inPlayer->cravingFoodYumIncrement; i++ ) {
@@ -9965,8 +9970,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         // and any childless women (they are counted as aunts
         // for any children born before they themselves have children
         // or after all their own children die)
-        if( ! getFemale( otherPlayer ) ||
-            countLivingChildren( otherPlayer->id ) == 0 ) {
+        if( newObject.parentID != otherPlayer->id 
+            &&
+            ( ! getFemale( otherPlayer ) ||
+              countLivingChildren( otherPlayer->id ) == 0 ) ) {
             
             // check if his mother is an ancestor
             // (then he's an uncle, or she's a childless aunt)
@@ -21693,6 +21700,10 @@ int main() {
                                         int contTarget = 
                                             getContained( m.x, m.y, m.i );
                                         
+                                        if( contTarget < 0 ) {
+                                            contTarget = -contTarget;
+                                            }
+
                                         ObjectRecord *contTargetObj =
                                             getObject( contTarget );
                                         

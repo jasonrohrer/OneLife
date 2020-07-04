@@ -457,33 +457,81 @@ function fs_setupDatabase() {
 function fs_showLog() {
     fs_checkPassword( "show_log" );
 
-     echo "[<a href=\"server.php?action=show_data" .
-         "\">Main</a>]<br><br><br>";
+    echo "[<a href=\"server.php?action=show_data" .
+        "\">Main</a>]<br><br><br>";
+
+    $entriesPerPage = 1000;
+    
+    $skip = fs_requestFilter( "skip", "/\d+/", 0 );
+
     
     global $tableNamePrefix;
 
-    $query = "SELECT * FROM $tableNamePrefix"."log ".
-        "ORDER BY entry_time DESC;";
+
+    // first, count results
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."log;";
+
+    $result = fs_queryDatabase( $query );
+    $totalEntries = fs_mysqli_result( $result, 0, 0 );
+
+
+    
+    $query = "SELECT entry, entry_time FROM $tableNamePrefix"."log ".
+        "ORDER BY entry_time DESC LIMIT $skip, $entriesPerPage;";
     $result = fs_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
 
 
 
-    echo "<a href=\"server.php?action=clear_log\">".
-        "Clear log</a>";
+    $startSkip = $skip + 1;
+    
+    $endSkip = $startSkip + $entriesPerPage - 1;
+
+    if( $endSkip > $totalEntries ) {
+        $endSkip = $totalEntries;
+        }
+
+    
+
+    
+    echo "$totalEntries Log entries".
+        " (showing $startSkip - $endSkip):<br>\n";
+
+    
+    $nextSkip = $skip + $entriesPerPage;
+
+    $prevSkip = $skip - $entriesPerPage;
+
+    if( $skip > 0 && $prevSkip < 0 ) {
+        $prevSkip = 0;
+        }
+    
+    if( $prevSkip >= 0 ) {
+        echo "[<a href=\"server.php?action=show_log" .
+            "&skip=$prevSkip\">".
+            "Previous Page</a>] ";
+        }
+    if( $nextSkip < $totalEntries ) {
+        echo "[<a href=\"server.php?action=show_log" .
+            "&skip=$nextSkip\">".
+            "Next Page</a>]";
+        }
+    
         
     echo "<hr>";
-        
-    echo "$numRows log entries:<br><br><br>\n";
-        
 
+        
+    
     for( $i=0; $i<$numRows; $i++ ) {
         $time = fs_mysqli_result( $result, $i, "entry_time" );
         $entry = htmlspecialchars( fs_mysqli_result( $result, $i, "entry" ) );
 
-        echo "<b>$time</b>:<br>$entry<hr>\n";
+        echo "<b>$time</b>:<br><pre>$entry</pre><hr>\n";
         }
+
+    echo "<br><br><hr><a href=\"server.php?action=clear_log\">".
+        "Clear log</a>";
     }
 
 
@@ -752,19 +800,38 @@ function fs_showDetail( $checkPassword = true ) {
     global $tableNamePrefix;
     
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
+    // two possible params... id or email
 
+    $id = fs_requestFilter( "id", "/[0-9]+/i", -1 );
+    $email = "";
+
+    
+    if( $id != -1 ) {
+        $query = "SELECT email ".
+            "FROM $tableNamePrefix"."users ".
+            "WHERE id = '$id';";
+        $result = fs_queryDatabase( $query );
+        
+        $email = fs_mysqli_result( $result, 0, "email" );
+        }
+    else {
+        $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
+    
+        $query = "SELECT id ".
+            "FROM $tableNamePrefix"."users ".
+            "WHERE email = '$email';";
+        $result = fs_queryDatabase( $query );
+        
+        $id = fs_mysqli_result( $result, 0, "id" );
+        }
+
+    
     $aveAge = fs_getAveAge( $email );
     
-    $query = "SELECT id ".
-        "FROM $tableNamePrefix"."users ".
-        "WHERE email = '$email';";
-    $result = fs_queryDatabase( $query );
 
-    $id = fs_mysqli_result( $result, 0, "id" );
-
+    
     $query = "SELECT name, age, relation_name, ".
-        "old_score, new_score, death_time ".
+        "old_score, new_score, death_time, life_player_id ".
         "FROM $tableNamePrefix"."offspring AS offspring ".
         "INNER JOIN $tableNamePrefix"."lives AS lives ".
         "ON offspring.life_id = lives.id ".
@@ -794,6 +861,10 @@ function fs_showDetail( $checkPassword = true ) {
         $new_score = fs_mysqli_result( $result, $i, "new_score" );
         $death_time = fs_mysqli_result( $result, $i, "death_time" );
 
+        $otherLifePlayerID =
+            fs_mysqli_result( $result, $i, "life_player_id" );
+
+        
         $delta = round( $new_score - $old_score, 3 );
 
         $deltaString;
@@ -807,8 +878,15 @@ function fs_showDetail( $checkPassword = true ) {
         
         echo "<tr>";
 
-        echo "<td>$name</td>";
-
+        if( $relation_name != "You" ) {
+            // link to other player
+            echo "<td><a href='server.php?".
+                "action=show_detail&id=$otherLifePlayerID'>$name</a></td>";
+            }
+        else {
+            echo "<td>$name</td>";
+            }
+        
         if( $old_score != $new_score &&
             $relation_name == "You" &&
             $numYouLives < $numLivesInAverage ) {
@@ -1844,9 +1922,16 @@ function fs_reportDeath() {
 
             list( $ancestorEmail, $relName ) = explode( " ", $part, 2 );
 
-            fs_logDeath( $ancestorEmail, $life_id, $relName, $age,
-                         $deadPlayerScore );
-            
+
+            // watch for malformed emails in list
+            $ancestorEmail =
+                fs_filter( $ancestorEmail,
+                           "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+
+            if( $ancestorEmail != "" ) {
+                fs_logDeath( $ancestorEmail, $life_id, $relName, $age,
+                             $deadPlayerScore );
+                }
             $numAncestors ++;
             }
         }

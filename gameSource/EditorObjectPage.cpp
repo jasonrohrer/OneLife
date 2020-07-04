@@ -2651,6 +2651,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                     mCurrentObject.spriteParent[i + oldNumSprites] = 
                         pickedRecord->spriteParent[i] + oldNumSprites;
                     }
+                
+                if( pickedRecord->numUses > 0 &&
+                    mNumUsesField.getInt() > 0 ) {
+                    
+                    mCurrentObject.spriteUseVanish[i + oldNumSprites] =
+                        pickedRecord->spriteUseVanish[i];
+                    
+                    mCurrentObject.spriteUseAppear[i + oldNumSprites] =
+                        pickedRecord->spriteUseAppear[i];
+                    }
                 }
             if( jumpPerSprite > 0 ) {
                 for( int i=0; i<pickedRecord->numSprites; i++ ) {

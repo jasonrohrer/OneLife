@@ -3,6 +3,45 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 346   2020-July-3
+
+--Forbid backslash and quotes in login email address in client.
+
+--Forbid player flipping when a 0-speed object is held (like cast fishing
+  pole).  Fixes #644
+
+--Object editor preserves use vanish when inserting an object.
+
+--Category editor preserves index, if possible, when switching categories.
+
+--Tech tree button (to open Onetech in browser) on login screen.  Better tool
+  tips for several buttons.  Fixes #647
+
+
+
+
+
+Server Fixes
+
+--Fixed crash when someone right-clicks a full basket on a table.
+
+--Fixed glitch where you get stuck unable to satisfy a craving if the craved
+  item has a YUM parent (example:  bowl of gooseberries).  Fixes #641
+
+--Fitness server admin interface now has links to other players on details page.
+
+--Two bugs in genetic fitness tracking.  First, if your mother is childless,
+  she was being considered as your aunt in the ancestor tracking.  Second, if
+  an email has a wayward backslash character (which the client should forbid,
+  but does not), it breaks the SQL statement, preventing fitness from being
+  logged.  Both issues were causing lives to be ignored or mis-recorded by the
+  fitness server.  Fixes #642.  Fixes #643.
+
+--Pagination of fitness server logs.
+
+
+
+
 Version 344   2020-June-26
 
 --Cravings implemented.

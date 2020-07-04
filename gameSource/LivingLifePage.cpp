@@ -23075,7 +23075,11 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
     double worldX = inX / (double)CELL_D;
     
 
-    if( ! ourLiveObject->inMotion ) {
+    if( ! ourLiveObject->inMotion &&
+        // watch for being stuck with no-move object in hand, like fishing
+        // pole
+        ( ourLiveObject->holdingID <= 0 ||
+          getObject( ourLiveObject->holdingID )->speedMult > 0 ) ) {
         char flip = false;
         
         if( ourLiveObject->holdingFlip &&
