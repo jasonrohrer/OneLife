@@ -797,6 +797,17 @@ static void setupYumParent( ObjectRecord *inR ) {
     }
 
 
+static void setupRoadParent( ObjectRecord *inR ) {
+    inR->roadParentID = -1;
+
+    char *pos = strstr( inR->description, "+road" );
+
+    if( pos != NULL ) {
+        sscanf( pos, "+road%d", &( inR->roadParentID ) );
+        }
+    }
+
+
 
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
@@ -875,6 +886,8 @@ float initObjectBankStep() {
                 setupNormalOnly( r );
 
                 setupYumParent( r );
+                
+                setupRoadParent( r );
                 
 
                 // do this later, after we parse floorHugging
@@ -3748,6 +3761,8 @@ int addObject( const char *inDescription,
     setupNormalOnly( r );
     
     setupYumParent( r );
+    
+    setupRoadParent( r );
 
     setupWall( r );
 
@@ -6580,6 +6595,27 @@ char canBuildInBiome( ObjectRecord *inObj, int inTargetBiome ) {
 int getMaxFoodValue() {
     return maxFoodValue;
     }
+
+
+
+char sameRoadClass( int inFloorA, int inFloorB ) {
+    if( inFloorA <= 0 || inFloorB <= 0 ) {
+        return false;
+        }
+    
+    if( inFloorA == inFloorB ) {
+        return true;
+        }
+    
+    if( getObject( inFloorA )->roadParentID == inFloorB ||
+        getObject( inFloorB )->roadParentID == inFloorA ) {
+        
+        return true;
+        }
+
+    return false;
+    }
+
 
     
 

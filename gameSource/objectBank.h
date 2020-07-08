@@ -442,6 +442,11 @@ typedef struct ObjectRecord {
         // tag of +yum453 in object description specifies 453 as the yum parent 
         int yumParentID;
         
+        // -1 if this object is in its own road class
+        // or ID of other object that is the same type of road
+        // tag of +road453 in object description specifies 453 as road parent
+        int roadParentID;
+        
     } ObjectRecord;
 
 
@@ -957,6 +962,9 @@ char canBuildInBiome( ObjectRecord *inObj, int inTargetBiome );
 
 
 int getMaxFoodValue();
+
+
+char sameRoadClass( int inFloorA, int inFloorB );
 
 
 
