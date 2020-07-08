@@ -6607,8 +6607,12 @@ char sameRoadClass( int inFloorA, int inFloorB ) {
         return true;
         }
     
-    if( getObject( inFloorA )->roadParentID == inFloorB ||
-        getObject( inFloorB )->roadParentID == inFloorA ) {
+    int aParent = getObject( inFloorA )->roadParentID;
+    int bParent = getObject( inFloorB )->roadParentID;
+
+    if( aParent == inFloorB ||
+        bParent == inFloorA ||
+        ( aParent != -1 && aParent == bParent ) ) {
         
         return true;
         }
