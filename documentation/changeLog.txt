@@ -11,6 +11,9 @@ Version 348    ???
 --Support for road classes, so that logical road can continue across road
   variations (corners, t-junctions, etc.).
 
+--Fixed crash when loading an empty category.
+
+
 
 
 

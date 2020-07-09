@@ -179,10 +179,18 @@ void EditorCategoryPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentCategory = parentID;
             
             if( mCurrentCategory != -1 ) {
-                int newMax =
-                    getCategory( mCurrentCategory )->objectIDSet.size() - 1;
+               
+                CategoryRecord *cr = getCategory( mCurrentCategory );
                 
-                if( newMax < mSelectionIndex ) {
+                if( cr != NULL ) {
+                    int newMax =
+                        getCategory( mCurrentCategory )->objectIDSet.size() - 1;
+                    
+                    if( newMax < mSelectionIndex ) {
+                        mSelectionIndex = 0;
+                        }
+                    }
+                else {
                     mSelectionIndex = 0;
                     }
                 }
