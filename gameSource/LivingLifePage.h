@@ -1102,6 +1102,10 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         void displayGlobalMessage( char *inMessage );
 
+        
+        // true if tile index is covered by a floor tile that doesn't
+        // have a +noCover tag
+        char isCoveredByFloor( int inTileIndex );
 
     };
 

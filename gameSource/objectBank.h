@@ -447,6 +447,9 @@ typedef struct ObjectRecord {
         // tag of +road453 in object description specifies 453 as road parent
         int roadParentID;
         
+        // for floor objects that don't completely cover ground
+        char noCover;
+        
     } ObjectRecord;
 
 

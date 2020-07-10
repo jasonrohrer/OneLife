@@ -13,6 +13,8 @@ Version 348    ???
 
 --Fixed crash when loading an empty category.
 
+--Fixed biome ground tile glitch when floor doesn't completely cover tile
+  square.
 
 
 

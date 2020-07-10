@@ -805,6 +805,13 @@ static void setupRoadParent( ObjectRecord *inR ) {
     if( pos != NULL ) {
         sscanf( pos, "+road%d", &( inR->roadParentID ) );
         }
+
+    // also deal with noCover
+    inR->noCover = false;
+    pos = strstr( inR->description, "+noCover" );
+    if( pos != NULL ) {
+        inR->noCover = true;
+        }
     }
 
 
