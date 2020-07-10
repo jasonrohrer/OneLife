@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 348    ???
+Version 348    2020-July-10
 
 --Support for moving objects that leave floors behind, or land on and change
   an existing floor.
