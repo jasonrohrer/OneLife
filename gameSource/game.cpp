@@ -1,4 +1,4 @@
-int versionNumber = 346;
+int versionNumber = 348;
 int dataVersionNumber = 0;
 
 int binVersionNumber = versionNumber;

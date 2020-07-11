@@ -1882,7 +1882,7 @@ double LivingLifePage::computePathSpeedMod( LiveObject *inObject,
             }
         int thisFloor = mMapFloors[ mapI ];
     
-        if( floor != thisFloor ) {
+        if( ! sameRoadClass( floor, thisFloor ) ) {
             return 1;
             }
         }
@@ -6338,6 +6338,20 @@ static void drawHUDBarPart( double x, double y, double width, double height ) {
     drawSprite( guiPanelTileSprite, barPos, barTexCoords );
     }
 
+char LivingLifePage::isCoveredByFloor( int inTileIndex ) {
+    int i = inTileIndex;
+    
+    int fID = mMapFloors[ i ];
+
+    if( fID > 0 && 
+        ! getObject( fID )->noCover ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
 void LivingLifePage::draw( doublePair inViewCenter, 
                            double inViewSize ) {
     
@@ -6743,19 +6757,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         diagB = mMapBiomes[ mapI + mMapD + 1 ];
                         }
                     
-                    char floorAt = mMapFloors[ mapI ] > 0;
+                    char floorAt = isCoveredByFloor( mapI );
                     char floorR = false;
                     char floorB = false;
                     char floorBR = false;
                     
                     if( isInBounds( x +1, y, mMapD ) ) {    
-                        floorR = mMapFloors[ mapI + 1 ] > 0;
+                        floorR = isCoveredByFloor( mapI + 1 );
                         }
                     if( isInBounds( x, y - 1, mMapD ) ) {    
-                        floorB = mMapFloors[ mapI - mMapD ] > 0;
+                        floorB = isCoveredByFloor( mapI - mMapD );
                         }
                     if( isInBounds( x +1, y - 1, mMapD ) ) {    
-                        floorBR = mMapFloors[ mapI - mMapD + 1 ] > 0;
+                        floorBR = isCoveredByFloor( mapI - mMapD + 1 );
                         }
 
 
@@ -6785,19 +6799,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         char floorBL = false;
                     
                         if( isInBounds( x -1, y, mMapD ) ) {    
-                            floorL = mMapFloors[ mapI - 1 ] > 0;
+                            floorL = isCoveredByFloor( mapI - 1 );
                             }
                         if( isInBounds( x, y+1, mMapD ) ) {    
-                            floorA = mMapFloors[ mapI + mMapD ] > 0;
+                            floorA = isCoveredByFloor( mapI + mMapD );
                             }
                         if( isInBounds( x-1, y+1, mMapD ) ) {    
-                            floorAL = mMapFloors[ mapI + mMapD - 1 ] > 0;
+                            floorAL = isCoveredByFloor( mapI + mMapD - 1 );
                             }
                         if( isInBounds( x+1, y+1, mMapD ) ) {    
-                            floorAR = mMapFloors[ mapI + mMapD + 1 ] > 0;
+                            floorAR = isCoveredByFloor( mapI + mMapD + 1 );
                             }
                         if( isInBounds( x-1, y-1, mMapD ) ) {    
-                            floorBL = mMapFloors[ mapI - mMapD - 1 ] > 0;
+                            floorBL = isCoveredByFloor( mapI - mMapD - 1 );
                             }
 
                         if( !( floorAt && floorR && floorB && floorBR &&
@@ -21322,7 +21336,8 @@ void LivingLifePage::step() {
                     if( mapIF != -1 && mapIP != -1 ) {
                         int floor = mMapFloors[ mapIF ];
                         
-                        if( floor > 0 && mMapFloors[ mapIP ] == floor && 
+                        if( floor > 0 && 
+                            sameRoadClass( mMapFloors[ mapIP ], floor ) && 
                             getObject( floor )->rideable ) {
                             
                             // rideable floor is a road!
@@ -21336,12 +21351,12 @@ void LivingLifePage::step() {
                             
                             int len = 0;
 
-                            if( isSameFloor( floor, finalStep, xDir, yDir ) ) {
+                            if( isSameRoad( floor, finalStep, xDir, yDir ) ) {
                                 // floor continues in same direction
                                 // go as far as possible in that direction
                                 // with next click
-                                while( len < 5 && isSameFloor( floor, nextStep,
-                                                               xDir, yDir ) ) {
+                                while( len < 5 && isSameRoad( floor, nextStep,
+                                                              xDir, yDir ) ) {
                                     nextStep.x += xDir;
                                     nextStep.y += yDir;
                                     len ++;
@@ -21430,7 +21445,7 @@ void LivingLifePage::step() {
                                     xDir = d.x;
                                     yDir = d.y;
                                     
-                                    if( isSameFloor( floor, finalStep, xDir,
+                                    if( isSameRoad( floor, finalStep, xDir,
                                                      yDir ) ) {
                                         foundBranch = true;
                                         }
@@ -21441,7 +21456,7 @@ void LivingLifePage::step() {
                                     nextStep.y += yDir;
                                     
                                     while( len < 5 &&
-                                           isSameFloor( floor, nextStep,
+                                           isSameRoad( floor, nextStep,
                                                         xDir, yDir ) ) {
                                         nextStep.x += xDir;
                                         nextStep.y += yDir;
@@ -21957,8 +21972,11 @@ static void dummyFunctionA() {
 
 
 
-char LivingLifePage::isSameFloor( int inFloor, GridPos inFloorPos, 
-                                  int inDX, int inDY ) {    
+
+
+
+char LivingLifePage::isSameRoad( int inFloor, GridPos inFloorPos, 
+                                 int inDX, int inDY ) {    
     GridPos nextStep = inFloorPos;
     nextStep.x += inDX;
     nextStep.y += inDY;
@@ -21969,7 +21987,7 @@ char LivingLifePage::isSameFloor( int inFloor, GridPos inFloorPos,
   
     if( nextMapI != -1 
         &&
-        mMapFloors[ nextMapI ] == inFloor 
+        sameRoadClass( mMapFloors[ nextMapI ], inFloor ) 
         && 
         ! getCellBlocksWalking( nextMap.x, nextMap.y ) ) {
         return true;

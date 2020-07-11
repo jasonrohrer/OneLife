@@ -1924,7 +1924,7 @@ static double getPathSpeedModifier( GridPos *inPathPos, int inPathLength ) {
         
         int thisFloor = getMapFloor( inPathPos[i].x, inPathPos[i].y );
         
-        if( thisFloor != floor ) {
+        if( ! sameRoadClass( thisFloor, floor ) ) {
             // not same floor whole way
             return 1;
             }

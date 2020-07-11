@@ -5400,6 +5400,18 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                 // bare ground
                                 trans = getPTrans( newID, -1 );
                                 }
+                            else {
+                                // what about trans onto floor?
+                                int fID = getMapFloor( testX, testY );
+                                if( fID > 0 ) {
+                                    trans = getPTrans( inID, fID );
+                                    if( trans == NULL ) {
+                                        // does exist for newID applied to
+                                        // floor?
+                                        trans = getPTrans( newID, fID );
+                                        }
+                                    }
+                                }
                             }
                         
                         
@@ -5607,13 +5619,25 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                         
                     
-                    if( destTrans != NULL ) {
+                    if( destTrans != NULL &&
+                        destTrans->newActor > 0 ) {
                         // leave new actor behind
                         
                         leftBehindID = destTrans->newActor;
                         
-                        dbPut( inX, inY, 0, leftBehindID );
+                        ObjectRecord *leftBehindObj = getObject( leftBehindID );
                         
+                        char leftFloor = false;
+                        if( leftBehindObj->floor ) {
+                            leftFloor = true;
+                            }
+                        
+                        if( leftFloor ) {
+                            dbFloorPut( inX, inY, leftBehindID );
+                            }
+                        else {
+                            dbPut( inX, inY, 0, leftBehindID );
+                            }
 
                         
                         TransRecord *leftDecayT = 
@@ -5640,7 +5664,17 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             // no further decay
                             leftMapETA = 0;
                             }
-                        setEtaDecay( inX, inY, leftMapETA );
+
+                        if( leftFloor ) {
+                            setFloorEtaDecay( inX, inY, leftMapETA );
+                            
+                            // don't leave anything behind except for floor
+                            dbPut( inX, inY, 0, 0 );
+                            leftBehindID = 0;
+                            }
+                        else {
+                            setEtaDecay( inX, inY, leftMapETA );
+                            }
                         }
                     else {
                         // leave empty spot behind

@@ -3,6 +3,22 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 348    2020-July-10
+
+--Support for moving objects that leave floors behind, or land on and change
+  an existing floor.
+
+--Support for road classes, so that logical road can continue across road
+  variations (corners, t-junctions, etc.).
+
+--Fixed crash when loading an empty category.
+
+--Fixed biome ground tile glitch when floor doesn't completely cover tile
+  square.
+
+
+
+
 Version 346   2020-July-3
 
 --Forbid backslash and quotes in login email address in client.
