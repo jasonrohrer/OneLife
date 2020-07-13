@@ -15484,7 +15484,16 @@ int main() {
                                 }
                             }
                         
-                        makePlayerSay( nextPlayer, m.saidText );
+                        // trim whitespace and make sure we're not
+                        // adding an empty string
+                        // empty or whitespace strings causes trouble
+                        // elsewhere in code
+                        char *cleanSay = trimWhitespace( m.saidText );
+                        
+                        if( strcmp( cleanSay, "" ) != 0 ) {
+                            makePlayerSay( nextPlayer, cleanSay );
+                            }
+                        delete [] cleanSay;
                         }
                     else if( m.type == KILL ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
