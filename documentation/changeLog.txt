@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes
+
+--Fixed rare crash when client sends an illegal chat character (impossible with
+  official client) when character is drunk.
+
+
+
 Version 348    2020-July-10
 
 --Support for moving objects that leave floors behind, or land on and change
