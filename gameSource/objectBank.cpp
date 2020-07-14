@@ -903,6 +903,7 @@ float initObjectBankStep() {
 
                 r->isAutoOrienting = false;
                 r->causeAutoOrientHOnly = false;
+                r->causeAutoOrientVOnly = false;
                 r->horizontalVersionID = -1;
                 r->verticalVersionID = -1;
                 r->cornerVersionID = -1;
@@ -2355,6 +2356,9 @@ void initObjectBankFinish() {
                 if( strstr( o->description, "+causeAutoOrientH" ) ) {
                     o->causeAutoOrientHOnly = true;
                     }
+                else if( strstr( o->description, "+causeAutoOrientV" ) ) {
+                    o->causeAutoOrientVOnly = true;
+                    }
                 }
             }
         }
@@ -3783,6 +3787,7 @@ int addObject( const char *inDescription,
 
     r->isAutoOrienting = false;
     r->causeAutoOrientHOnly = false;
+    r->causeAutoOrientVOnly = false;
     r->horizontalVersionID = -1;
     r->verticalVersionID = -1;
     r->cornerVersionID = -1;

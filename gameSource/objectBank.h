@@ -400,6 +400,7 @@ typedef struct ObjectRecord {
         // all three objects know the IDs of all three objects
         char isAutoOrienting;
         char causeAutoOrientHOnly;
+        char causeAutoOrientVOnly;
         int horizontalVersionID;
         int verticalVersionID;
         int cornerVersionID;

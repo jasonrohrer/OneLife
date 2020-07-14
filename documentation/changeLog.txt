@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 350    ???
+
+--Support for +causeAutoOrientV tag (opposite of +causeAutoOrientH).
+
+
+
+
 Server Fixes
 
 --Fixed rare crash when client sends an illegal chat character (impossible with

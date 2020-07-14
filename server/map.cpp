@@ -6761,7 +6761,10 @@ static int neighborWallAgree( int inX, int inY, ObjectRecord *inSetO,
             
             if( nO->isAutoOrienting ) {
 
-                if( n < 2 ||
+                if( // watch for E/W neighbors that aren't supposed to affect
+                    // us
+                    ( n < 2 && ! nO->causeAutoOrientVOnly ) 
+                    ||
                     // watch for N/S neighbors that aren't supposed to
                     // affect us
                     ( n >= 2 && ! nO->causeAutoOrientHOnly ) ) {
