@@ -590,9 +590,15 @@ static void setupWall( ObjectRecord *inR ) {
         }
     
     if( inR->wallLayer ) {
-        char *frontWallPos = strstr( inR->description, "+frontWall" );
-        if( frontWallPos != NULL ) {
-            inR->frontWall = true;
+        char *noWallPos = strstr( inR->description, "-wall" );
+        if( noWallPos != NULL ) {
+            inR->wallLayer = false;
+            }
+        else {
+            char *frontWallPos = strstr( inR->description, "+frontWall" );
+            if( frontWallPos != NULL ) {
+                inR->frontWall = true;
+                }
             }
         }
     }
