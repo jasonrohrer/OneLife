@@ -395,7 +395,7 @@ void EditorCategoryPage::draw( doublePair inViewCenter,
 
     doublePair pos = { 200, 150 };
                        
-    setDrawColor( 1, 1, 1, 1 );
+    setDrawColor( 0.75, 0.75, 0.75, 1 );
     drawSquare( pos, 50 );
     
     if( mCurrentObject != -1 ) {
