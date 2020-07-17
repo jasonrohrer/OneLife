@@ -4,12 +4,17 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 350    ???
+Version 350    2020-July-16
 
 --Support for +causeAutoOrientV tag (opposite of +causeAutoOrientH).
 
 --Fixed color of background box in category editor to not interfere with long
   text.
+
+--Support for -wall tag in object description, to push what would otherwise be
+  drawn in the wall layer into the non-wall layer (so that pipes through fences
+  can visually connect properly, and not overlap other pipes in a weird way).
+
 
 
 
