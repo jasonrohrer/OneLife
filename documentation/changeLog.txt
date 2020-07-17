@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 352    ???
+
+--Support for paging through items in Editor pickers with [ and ] keys.
+
+
+
+
+
 Version 350    2020-July-16
 
 --Support for +causeAutoOrientV tag (opposite of +causeAutoOrientH).

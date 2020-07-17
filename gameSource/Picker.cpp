@@ -358,6 +358,52 @@ void Picker::actionPerformed( GUIComponent *inTarget ) {
     }
 
 
+
+void Picker::keyDown( unsigned char inASCII ) {
+    // don't capture field typing
+    if( mSearchField.isFocused() || mSelectionIndex == -1 ) {
+        return;
+        }
+
+    // but respond to [ and ] keys to page through items one by one
+    
+    int oldSelection = mSelectionIndex;    
+
+    switch( inASCII ) {
+        case '[':
+            mSelectionIndex --;
+            if( mSelectionIndex < 0 ) {
+                if( mPrevButton.isVisible() ) {
+                    actionPerformed( &mPrevButton );
+                    mSelectionIndex = PER_PAGE - 1;
+                    }
+                else {
+                    mSelectionIndex = 0;
+                    }
+                }
+            break;
+        case ']':
+            mSelectionIndex ++;
+            if( mSelectionIndex >= mNumResults ) {
+                if( mNextButton.isVisible() ) {
+                    actionPerformed( &mNextButton );
+                    mSelectionIndex = 0;
+                    }
+                else {
+                    mSelectionIndex = mNumResults - 1;
+                    }
+                }
+            break;
+        }
+
+    if( oldSelection != mSelectionIndex ) {
+        mSelectionRightClicked = false;
+        fireActionPerformed( this );
+        }
+    }
+
+
+
 void Picker::specialKeyDown( int inKeyCode ) {
     
     if( ! mSearchField.isFocused() ) {
