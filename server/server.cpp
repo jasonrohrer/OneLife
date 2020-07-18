@@ -376,7 +376,7 @@ typedef struct FreshConnection {
         double connectionStartTimeSeconds;
 
         char *email;
-        unsigned int hashedSpawnSeed;
+        uint32_t hashedSpawnSeed;
         
         int tutorialNumber;
         CurseStatus curseStatus;
@@ -5580,7 +5580,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                            Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
-                           unsigned int hashedSpawnSeed,
+                           uint32_t hashedSpawnSeed,
                            int inTutorialNumber,
                            CurseStatus inCurseStatus,
                            // set to -2 to force Eve
