@@ -376,7 +376,7 @@ typedef struct FreshConnection {
         double connectionStartTimeSeconds;
 
         char *email;
-        unsigned int hashedSpawnSeed;
+        uint32_t hashedSpawnSeed;
         
         int tutorialNumber;
         CurseStatus curseStatus;
@@ -5580,7 +5580,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                            Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
-                           unsigned int hashedSpawnSeed,
+                           uint32_t hashedSpawnSeed,
                            int inTutorialNumber,
                            CurseStatus inCurseStatus,
                            // set to -2 to force Eve
@@ -11083,31 +11083,38 @@ int main() {
                             // If email contains string delimiter
                             // Set nextConnection's hashedSpawnSeed to hash of seed
                             // then cut off seed and set email to onlyEmail
-                            const unsigned int minSeedLen = 1;
+                            const size_t minSeedLen = 1;
                             const char seedDelim = '|';
 
 
                             std::string emailAndSeed { tokens->getElementDirect( 1 ) };
 
-                            size_t seedDelimPos = emailAndSeed.find( seedDelim );
+                            const size_t seedDelimPos = emailAndSeed.find( seedDelim );
 
                             if( seedDelimPos != std::string::npos ) {
-                                unsigned int seedLen = emailAndSeed.length() - seedDelimPos;
+                                const size_t seedLen = emailAndSeed.length() - seedDelimPos;
 
-                                // Make sure there is at least one char after delim
                                 if( seedLen > minSeedLen ) {
+                                    // FNV-1a Hashing algorithm
+                                    auto hashStr = [](std::string &s, const uint32_t FNV_init = 2166136261u){
+                                        const size_t FNV_prime = 111337;
+
+                                        // Hash seed to 4 byte int
+                                        uint32_t hash = FNV_init;
+                                        for( auto c : s ) {
+                                            hash ^= c;
+                                            hash *= FNV_prime;
+                                        }
+
+                                        return hash;
+                                    };
+
                                     // Get the substr from one after the seed delim
                                     std::string seed { emailAndSeed.substr( seedDelimPos + 1 ) };
+                                    std::string seedSalt { SettingsManager::getStringSetting("seedSalt", "default salt") };
 
-                                    // Hash seed to 4 byte int
-                                    const int hashConst = 111337;
-                                    unsigned int hash = 0;
-                                    for( char c : seed ) {
-                                        hash ^= c;
-                                        hash *= hashConst;
-                                    }
-
-                                    nextConnection->hashedSpawnSeed = hash;
+                                    nextConnection->hashedSpawnSeed =
+                                        hashStr(seed, hashStr(seedSalt));
                                 }
 
                                 // Remove seed from email
@@ -11115,7 +11122,6 @@ int main() {
                                     // There was only a seed not email
                                     nextConnection->email = stringDuplicate( "blank_email" );
                                 } else {
-                                    /* unsigned int onlyEmailLen = emailLen - seedLen; */
                                     std::string onlyEmail { emailAndSeed.substr( 0, seedDelimPos ) };
 
                                     delete[] nextConnection->email;
