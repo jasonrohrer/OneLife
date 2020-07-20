@@ -8,6 +8,10 @@ Version 352    ???
 
 --Support for paging through items in Editor pickers with [ and ] keys.
 
+--Shaved 13% off loading time by reducing repeat memory allocations when
+  expanding transition bank and object bank with runtime-generated elements. 
+  Also optimized a few other loading hotspots.  Fixes #661
+
 
 
 
