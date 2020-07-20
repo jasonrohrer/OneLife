@@ -2337,7 +2337,13 @@ void addTrans( int inActor, int inTarget,
             max = inNewTarget;
             }
         
-        int newMapSize = max + 1;
+        // instead of adding just one new map element at a time
+        // we know that more are coming, because they are added in batches
+        // But doubling each time will waste a lot of space at the end
+        // Can speed it up by a factor of X by adding X each time instead of 1
+        // speed it up by 100x
+        // This will waste at most space for 100 elements in last expansion.
+        int newMapSize = max + 100;
         
         SimpleVector<TransRecord *> *newUsesMap =
             new SimpleVector<TransRecord *>[ newMapSize ];
@@ -2457,10 +2463,12 @@ void addTrans( int inActor, int inTarget,
             
             // remove record from producesMaps
             
-            if( t->newActor != 0 ) {
+            if( t->newActor != 0 &&
+                t->newActor != inNewActor ) {
                 producesMap[t->newActor].deleteElementEqualTo( t );
                 }
-            if( t->newTarget != 0 ) {                
+            if( t->newTarget != 0 &&
+                t->newTarget != inNewTarget ) {                
                 producesMap[t->newTarget].deleteElementEqualTo( t );
                 }
             
