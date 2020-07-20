@@ -12,6 +12,8 @@ Version 352    ???
   expanding transition bank and object bank with runtime-generated elements. 
   Also optimized a few other loading hotspots.  Fixes #661
 
+--Shaved another 10% off loading time by optimizing inner loop of kerning
+  calculation during font loading.
 
 
 
