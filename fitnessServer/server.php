@@ -2020,12 +2020,16 @@ function fs_outputBasicScore( $inEmail ) {
         $rank = 0;
 
         if( $sec_passed < 3600 * $leaderboardHours ) {
-        
+
+            // due to rounding errors when fetching $score above
+            // finding scores > $score sometimes counts the target player
+            // by accident.  Make sure we ignore them by email.
             $query =
                 "SELECT count(*) FROM $tableNamePrefix"."users ".
                 "WHERE last_action_time > ".
                 "DATE_SUB( NOW(), INTERVAL $leaderboardHours HOUR ) ".
-                "AND score > $score;";
+                "AND score > $score ".
+                "AND email != '$inEmail';";
 
             $result = fs_queryDatabase( $query );
 
