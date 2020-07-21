@@ -17520,7 +17520,7 @@ int main() {
                             tokens->size() == 7 ) {
                             
                             nextConnection->email = 
-                                stringDuplicate( 
+                                stringToLowerCase( 
                                     tokens->getElementDirect( 1 ) );
                             char *pwHash = tokens->getElementDirect( 2 );
                             char *keyHash = tokens->getElementDirect( 3 );

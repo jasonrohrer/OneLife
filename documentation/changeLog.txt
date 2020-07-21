@@ -16,6 +16,12 @@ Version 352    ???
   calculation during font loading.
 
 
+Server Fixes
+
+--Server converts all incoming client emails to lower case.  Fixes #659
+
+
+
 
 
 Version 350    2020-July-16
