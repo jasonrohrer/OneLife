@@ -23,6 +23,9 @@ Server Fixes
 
 --Fixed rounding errors in computing fitness ranking.  Fixes #660
 
+--Homelands expire immediately when last member of family dies (before, it
+  would wait until no baby was born in homeland for 60 minutes).  Fixes #658
+
 
 
 

@@ -24039,8 +24039,14 @@ int main() {
 
                 removeAllOwnership( nextPlayer );
                 
-                decrementLanguageCount( nextPlayer->lineageEveID );
+                int numLangSpeakersLeft = 
+                    decrementLanguageCount( nextPlayer->lineageEveID );
                 
+                if( numLangSpeakersLeft == 0 ) {
+                    // last member of this family died out
+                    homelandsDead( nextPlayer->lineageEveID );
+                    }
+
                 removePlayerLanguageMaps( nextPlayer->id );
                 
                 if( nextPlayer->heldByOther ) {

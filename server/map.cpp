@@ -550,6 +550,30 @@ typedef struct Homeland {
 static SimpleVector<Homeland> homelands;
 
 
+static void expireHomeland( Homeland *inH ) {
+    inH->expired = true;
+    inH->changed = true;
+
+    
+    if( ! inH->primary ) {
+        // apply expiration transition to whatever is at center of
+        // non-primary homeland 
+        // (object operating on itself defines this)
+        
+        int centerID = getMapObject( inH->x, inH->y );
+        
+        if( centerID > 0 ) {
+            TransRecord *expireTrans = getTrans( centerID, centerID );
+            if( expireTrans != NULL ) {
+                setMapObject( inH->x, inH->y, expireTrans->newTarget );
+                }
+            }
+        }
+    }
+
+
+
+
 // NULL if not found
 static Homeland *getHomeland( int inX, int inY, 
                               char includeExpired = false ) {
@@ -565,24 +589,7 @@ static Homeland *getHomeland( int inX, int inY,
         
         // watch for stale
         if( ! h->expired && h->lastBabyBirthTime < tooOldTime ) {
-            h->expired = true;
-            h->changed = true;
-
-
-            if( ! h->primary ) {
-                // apply expiration transition to whatever is at center of
-                // non-primary homeland 
-                // (object operating on itself defines this)
-            
-                int centerID = getMapObject( h->x, h->y );
-                
-                if( centerID > 0 ) {
-                    TransRecord *expireTrans = getTrans( centerID, centerID );
-                    if( expireTrans != NULL ) {
-                        setMapObject( h->x, h->y, expireTrans->newTarget );
-                        }
-                    }
-                }
+            expireHomeland( h );
             }
 
         
@@ -9717,6 +9724,18 @@ void logHomelandBirth( int inX, int inY, int inLineageEveID ) {
 
 
 
+void homelandsDead( int inLineageEveID ) {
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        
+        if( ! h->expired && h->lineageEveID == inLineageEveID ) {
+            expireHomeland( h );
+            }
+        }
+    }
+
+
+
 char getHomelandCenter( int inX, int inY, 
                         GridPos *outCenter, int *outLineageEveID ) {
     
@@ -9761,6 +9780,12 @@ SimpleVector<HomelandInfo> getHomelandChanges() {
             list.push_back( hi );
             
             h->changed = false;
+
+            if( h->expired ) {
+                // now that we've reported that it expired, remove it
+                homelands.deleteElement( i );
+                i--;
+                }
             }
         }
     return list;

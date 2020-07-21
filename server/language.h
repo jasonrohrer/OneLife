@@ -12,7 +12,8 @@ void addEveLanguage( int inPlayerID );
 
 void incrementLanguageCount( int inEveID );
 
-void decrementLanguageCount( int inEveID );
+// returns number of speakers of the language remaining
+int decrementLanguageCount( int inEveID );
 
 void stepLanguage();
 

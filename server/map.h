@@ -334,6 +334,11 @@ void logHomelandBirth( int inX, int inY, int inLineageEveID );
 char getHomelandCenter( int inX, int inY, 
                         GridPos *outCenter, int *outLineageEveID );
 
+
+// when last member of a family dies
+void homelandsDead( int inLineageEveID );
+
+
 typedef struct HomelandInfo {
         GridPos center;
         int radius;
