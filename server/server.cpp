@@ -15226,7 +15226,28 @@ int main() {
                                 m.saidText[c] = ' ';
                                 }
                             }
+                        
+                        // now clean up gratuitous runs of spaces left behind
+                        // by removed characters (or submitted by a wayward
+                        // client)
+                        SimpleVector<char *> *tokens = 
+                            tokenizeString( m.saidText );
 
+                        char **tokensArray = 
+                            tokens->getElementArray();
+                        
+                        // join words with single spaces
+                        char *cleanedString = join( tokensArray,
+                                                    tokens->size(),
+                                                    " " );
+                        
+                        tokens->deallocateStringElements();
+                        delete tokens;
+                        delete [] tokensArray;
+                        
+                        delete [] m.saidText;
+                        m.saidText = cleanedString;
+                        
                         
                         if( nextPlayer->ownedPositions.size() > 0 ) {
                             // consider phrases that assign ownership
