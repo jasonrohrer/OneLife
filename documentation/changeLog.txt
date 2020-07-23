@@ -15,6 +15,9 @@ Version 352    ???
 --Shaved another 10% off loading time by optimizing inner loop of kerning
   calculation during font loading.
 
+--Fixed appearance of certain held objects, and arm position, after flipping
+  character to left or right with mouse movement.  Fixes #657
+
 
 
 Server Fixes

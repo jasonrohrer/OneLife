@@ -13822,11 +13822,11 @@ void LivingLifePage::step() {
                             }
                         if( flip ) {
                             o->lastAnim = moving;
-                            o->curAnim = ground;
+                            o->curAnim = ground2;
                             o->lastAnimFade = 1;
 
                             o->lastHeldAnim = moving;
-                            o->curHeldAnim = ground;
+                            o->curHeldAnim = held;
                             o->lastHeldAnimFade = 1;
                             }
                         }
@@ -22887,11 +22887,11 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
 
         if( flip ) {
             ourLiveObject->lastAnim = moving;
-            ourLiveObject->curAnim = ground;
+            ourLiveObject->curAnim = ground2;
             ourLiveObject->lastAnimFade = 1;
             
             ourLiveObject->lastHeldAnim = moving;
-            ourLiveObject->curHeldAnim = ground;
+            ourLiveObject->curHeldAnim = held;
             ourLiveObject->lastHeldAnimFade = 1;
             }
         }
