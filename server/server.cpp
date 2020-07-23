@@ -6298,8 +6298,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                  SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
     
     
-    if( ! isBiomeAllowedForPlayer( inDroppingPlayer, inX, inY, true ) ) {
-        // would be dropping in a bad biome (floor or not)
+    if( ! isBiomeAllowedForPlayer( inDroppingPlayer, inX, inY, false ) ) {
+        // would be dropping in a bad biome (not on floor)
         // avoid this if the target spot is on the edge of a bad biome
 
         int nX[4] = { -1, 1, 0, 0 };
@@ -6310,7 +6310,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             int testY = inY + nY[i];
             
             if( isBiomeAllowedForPlayer( inDroppingPlayer, testX, testY,
-                                         true ) ) {
+                                         false ) ) {
                 inX = testX;
                 inY = testY;
                 

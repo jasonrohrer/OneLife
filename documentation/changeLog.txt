@@ -54,6 +54,8 @@ Version 350    2020-July-16
   drawn in the wall layer into the non-wall layer (so that pipes through fences
   can visually connect properly, and not overlap other pipes in a weird way).
 
+--Fixed case where you drop object on floor at edge of bad biome.  Fixes #654
+
 
 
 
