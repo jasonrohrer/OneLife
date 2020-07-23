@@ -36,6 +36,10 @@ Server Fixes
 --Homelands expire immediately when last member of family dies (before, it
   would wait until no baby was born in homeland for 60 minutes).  Fixes #658
 
+--Fixed a case of transforming an empty basket that is on a table (by adding
+  grapes, for example).  Before, this was blocked because the basket was
+  potentially a sub-container.
+
 
 
 

@@ -21693,8 +21693,10 @@ int main() {
                                         int contTarget = 
                                             getContained( m.x, m.y, m.i );
                                         
+                                        char isSubCont = false;
                                         if( contTarget < 0 ) {
                                             contTarget = -contTarget;
+                                            isSubCont = true;
                                             }
 
                                         ObjectRecord *contTargetObj =
@@ -21706,7 +21708,7 @@ int main() {
                                         
                                         ObjectRecord *newTarget = NULL;
                                         
-                                        if( contTargetObj->numSlots == 0 &&
+                                        if( ! isSubCont &&
                                             contTrans != NULL &&
                                             ( contTrans->newActor == 
                                               nextPlayer->holdingID ||
