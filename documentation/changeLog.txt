@@ -44,6 +44,8 @@ Server Fixes
 --Server cleans up long runs of spaces between words after removing forbidden
   characters in SAY.  Fixes #653
 
+--DING messages explaining why you're blocked from joining a posse.  Fixes #663
+
 
 
 

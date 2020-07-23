@@ -20163,20 +20163,37 @@ int main() {
                         // what these non-working held items have in common
                         // is that they are stuck in hand AND don't have
                         // a use-on-bare ground transition defined
-                        if( nextPlayer->holdingID > 0
-                            &&
-                            isPosseJoiningSay( m.saidText ) 
-                            &&
-                            ( ! getObject( nextPlayer->holdingID )->permanent ||
-                              getTrans( nextPlayer->holdingID, -1 ) != NULL )
-                            &&
-                            // block twins and last-short-life players
-                            // from even joining in the first place
-                            // to avoid confusion of a big posse
-                            // that can't actually land a kill because
-                            // too many of the players are posse blocked
-                            !( nextPlayer->isTwin || 
-                               nextPlayer->isLastLifeShort ) ) {
+                        char joiningPosse = false;
+                        if( isPosseJoiningSay( m.saidText ) ) {
+                            joiningPosse = true;
+                            if( nextPlayer->isTwin ) {
+                                const char *message = 
+                                    "TWINS CANNOT JOIN POSSES.";
+                                sendGlobalMessage( (char*)message, nextPlayer );
+                                joiningPosse = false;
+                                }
+                            else if( nextPlayer->isLastLifeShort ) {
+                                const char *message = 
+                                    "YOUR LAST LIFE WAS VERY SHORT.**"
+                                    "YOU CANNOT JOIN POSSES IN THIS LIFE.";
+                                sendGlobalMessage( (char*)message, nextPlayer );
+                                joiningPosse = false;
+                                }
+                            else if( nextPlayer->holdingID <= 0  ||
+                                ( getObject( nextPlayer->holdingID )->
+                                  permanent &&
+                                  getTrans( nextPlayer->holdingID, -
+                                            1 ) == NULL ) ) {
+                                const char *message = 
+                                    "YOU MUST BE HOLDING SOMETHING "
+                                    "TO JOIN A POSSE.";
+                                sendGlobalMessage( (char*)message, nextPlayer );
+                                joiningPosse = false;
+                                }
+
+                            }
+                        
+                        if( joiningPosse ) {
                             
                             GridPos ourPos = getPlayerPos( nextPlayer );
                             
