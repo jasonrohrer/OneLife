@@ -970,6 +970,7 @@ static void replaceLastMessageSent( char *inNewMessage ) {
 SimpleVector<unsigned char> serverSocketBuffer;
 
 static char serverSocketConnected = false;
+static char serverSocketHardFail = false;
 static float connectionMessageFade = 1.0f;
 static double connectedTime = 0;
 
@@ -12368,17 +12369,42 @@ void LivingLifePage::step() {
         mouseDownFrames++;
         }
     
+    double pageLifeTime = game_getCurrentTime() - mPageStartTime;
+
     if( mServerSocket == -1 ) {
         serverSocketConnected = false;
         connectionMessageFade = 1.0f;
-        mServerSocket = openSocketConnection( serverIP, serverPort );
-        timeLastMessageSent = game_getCurrentTime();
+        
+        // don't keep looping to reconnect on instant hard-fail
+        if( ! serverSocketHardFail ) {    
+            mServerSocket = openSocketConnection( serverIP, serverPort );
+            timeLastMessageSent = game_getCurrentTime();
+            
+            if( mServerSocket == -1 ) {
+                // instant hard-fail, probably from bad hostname that
+                // gets looked up right away.
+                serverSocketHardFail = true;
+                }
+            }
+        
+        
+        if( mServerSocket == -1 ) {
+            // hard fail condition
+            
+            if( pageLifeTime >= 1 ) {
+                // they have seen "CONNECTING" long enough
+                
+                setWaiting( false );
+                setSignal( "connectionFailed" );
+                }
+            }
+        
         
         return;
         }
     
 
-    double pageLifeTime = game_getCurrentTime() - mPageStartTime;
+    
     
     if( pageLifeTime < 1 ) {
         // let them see CONNECTING message for a bit
@@ -21882,6 +21908,7 @@ void LivingLifePage::makeActive( char inFresh ) {
     waitForFrameMessages = false;
 
     serverSocketConnected = false;
+    serverSocketHardFail = false;
     connectionMessageFade = 1.0f;
     connectedTime = 0;
 

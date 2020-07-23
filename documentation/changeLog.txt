@@ -18,6 +18,10 @@ Version 352    ???
 --Fixed appearance of certain held objects, and arm position, after flipping
   character to left or right with mouse movement.  Fixes #657
 
+--Fixed endless looping behavior if custom server address includes a bad
+  hostname that gets looked up as invalid instantly.  Fixes #662
+
+
 
 
 Server Fixes
