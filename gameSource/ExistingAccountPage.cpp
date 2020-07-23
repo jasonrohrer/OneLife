@@ -52,7 +52,8 @@ ExistingAccountPage::ExistingAccountPage()
                      // allow only ticket code characters
                      "23456789ABCDEFGHJKLMNPQRSTUVWXYZ-" ),
           mAtSignButton( mainFont, 252, 128, "@" ),
-          mPasteButton( mainFont, 0, -80, translate( "paste" ), 'v', 'V' ),
+          mPasteButton( mainFont, 0, -60, translate( "paste" ), 'v', 'V' ),
+          mPasteEmailButton( mainFont, 0, 68, translate( "paste" ), 'v', 'V' ),
           mDisableCustomServerButton( mainFont, 0, 220, 
                                       translate( "disableCustomServer" ) ),
           mLoginButton( mainFont, 400, 0, translate( "loginButton" ) ),
@@ -105,6 +106,7 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mReviewButton );
     setButtonStyle( &mAtSignButton );
     setButtonStyle( &mPasteButton );
+    setButtonStyle( &mPasteEmailButton );
     setButtonStyle( &mRetryButton );
     setButtonStyle( &mRedetectButton );
     setButtonStyle( &mViewAccountButton );
@@ -127,6 +129,7 @@ ExistingAccountPage::ExistingAccountPage()
     addComponent( &mReviewButton );
     addComponent( &mAtSignButton );
     addComponent( &mPasteButton );
+    addComponent( &mPasteEmailButton );
     addComponent( &mEmailField );
     addComponent( &mKeyField );
     addComponent( &mRetryButton );
@@ -149,6 +152,7 @@ ExistingAccountPage::ExistingAccountPage()
     
     mAtSignButton.addActionListener( this );
     mPasteButton.addActionListener( this );
+    mPasteEmailButton.addActionListener( this );
 
     mRetryButton.addActionListener( this );
     mRedetectButton.addActionListener( this );
@@ -297,6 +301,7 @@ void ExistingAccountPage::makeActive( char inFresh ) {
 
     
     mPasteButton.setVisible( false );
+    mPasteEmailButton.setVisible( false );
     mAtSignButton.setVisible( false );
 
 
@@ -361,6 +366,8 @@ void ExistingAccountPage::makeNotActive() {
 void ExistingAccountPage::step() {
     mPasteButton.setVisible( isClipboardSupported() &&
                              mKeyField.isFocused() );
+    mPasteEmailButton.setVisible( isClipboardSupported() &&
+                                  mEmailField.isFocused() );
     mAtSignButton.setVisible( mEmailField.isFocused() );
     }
 
@@ -481,6 +488,13 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         char *clipboardText = getClipboardText();
         
         mKeyField.setText( clipboardText );
+    
+        delete [] clipboardText;
+        }
+    else if( inTarget == &mPasteEmailButton ) {
+        char *clipboardText = getClipboardText();
+        
+        mEmailField.setText( clipboardText );
     
         delete [] clipboardText;
         }

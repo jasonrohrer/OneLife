@@ -24,6 +24,7 @@ Version 352    ???
 --CTRL-right-click on object picker in object editor inserts other object above
   current sprite layer.
 
+--Can now paste email into login form.  Fixes #649
 
 
 

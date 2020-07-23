@@ -56,6 +56,7 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         TextButton mAtSignButton;
 
         KeyEquivalentTextButton mPasteButton;
+        KeyEquivalentTextButton mPasteEmailButton;
 
         TextButton mDisableCustomServerButton;
         
