@@ -2180,7 +2180,8 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->spriteUseVanish,
                         inObject->spriteUseAppear,
                         inNoWriteToFile,
-                        inReplaceID );
+                        inReplaceID,
+                        inObject->cachedHeight );
 
     delete [] biomeString;
 
@@ -2452,7 +2453,8 @@ int addObject( const char *inDescription,
                char *inSpriteUseVanish,
                char *inSpriteUseAppear,
                char inNoWriteToFile,
-               int inReplaceID ) {
+               int inReplaceID,
+               int inExistingObjectHeight ) {
     
     if( inSlotTimeStretch < 0.0001 ) {
         inSlotTimeStretch = 0.0001;
@@ -2483,9 +2485,14 @@ int addObject( const char *inDescription,
     
     int newID = inReplaceID;
     
-    int newHeight = recomputeObjectHeight( inNumSprites,
-                                           inSprites, inSpritePos );
+    int newHeight = inExistingObjectHeight;
 
+
+    if( newHeight == -1 ) {
+        newHeight = recomputeObjectHeight( inNumSprites,
+                                           inSprites, inSpritePos );
+        }
+    
     // add it to file structure
     File objectsDir( NULL, "objects" );
             
@@ -2496,7 +2503,8 @@ int addObject( const char *inDescription,
 
     int nextObjectNumber = 1;
     
-    if( objectsDir.exists() && objectsDir.isDirectory() ) {
+    if( ! inNoWriteToFile &&
+        objectsDir.exists() && objectsDir.isDirectory() ) {
                 
         File *nextNumberFile = 
             objectsDir.getChildFile( "nextObjectNumber.txt" );
@@ -2759,20 +2767,20 @@ int addObject( const char *inDescription,
         
         if( inReplaceID == -1 ) {
             nextObjectNumber++;
+            
+        
+            char *nextNumberString = autoSprintf( "%d", nextObjectNumber );
+        
+            File *nextNumberFile = 
+                objectsDir.getChildFile( "nextObjectNumber.txt" );
+            
+            nextNumberFile->writeToFile( nextNumberString );
+            
+            delete [] nextNumberString;
+            
+            
+            delete nextNumberFile;
             }
-
-        
-        char *nextNumberString = autoSprintf( "%d", nextObjectNumber );
-        
-        File *nextNumberFile = 
-            objectsDir.getChildFile( "nextObjectNumber.txt" );
-
-        nextNumberFile->writeToFile( nextNumberString );
-        
-        delete [] nextNumberString;
-                
-        
-        delete nextNumberFile;
         }
     
     if( newID == -1 && ! inNoWriteToFile ) {
@@ -2790,7 +2798,11 @@ int addObject( const char *inDescription,
     if( newID >= mapSize ) {
         // expand map
 
-        int newMapSize = newID + 1;
+        // same trick used in other banks:  speed it up by a factor of 100x
+        // by adding 100 new slots at a time
+        // (without wasting as much space on last expansion as 
+        // doubling it would)
+        int newMapSize = newID + 100;
         
 
         

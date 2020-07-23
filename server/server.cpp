@@ -11776,17 +11776,22 @@ int main() {
                 
                 delete [] message;
                 
-                if( m.type == UNKNOWN ) {
-                    AppLog::info( "Client error, unknown message type." );
-                    
-                    setPlayerDisconnected( nextPlayer, 
-                                           "Unknown message type" );
-                    }
 
                 //Thread::staticSleep( 
                 //    testRandSource.getRandomBoundedInt( 0, 450 ) );
                 
-                if( m.type == BUG ) {
+                // GOTO below jumps here if we need to reparse the message
+                // as a different type
+                RESTART_MESSAGE_ACTION:
+                if( m.type == UNKNOWN ) {
+                    AppLog::info( "Client error, unknown message type." );
+                    //setPlayerDisconnected( nextPlayer,
+                    //                       "Unknown message type" );
+                    // do not disconnect client here
+                    // keep server flexible, so client can be updated
+                    // with a protocol change before the server gets updated
+                    }
+                else if( m.type == BUG ) {
                     int allow = 
                         SettingsManager::getIntSetting( "allowBugReports", 0 );
 
