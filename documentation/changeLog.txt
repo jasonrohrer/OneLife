@@ -40,6 +40,9 @@ Server Fixes
   grapes, for example).  Before, this was blocked because the basket was
   potentially a sub-container.
 
+--Server cleans up long runs of spaces between words after removing forbidden
+  characters in SAY.  Fixes #653
+
 
 
 
