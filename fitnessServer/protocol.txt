@@ -34,6 +34,7 @@ so that first request can be submitted.
 server.php
 ?action=report_death
 &email=[email address]
+&age=[age in game years]
 &name=[character name]
 &display_id=[object id]
 &self_rel_name=[word for You]
