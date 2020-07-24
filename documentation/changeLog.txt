@@ -46,6 +46,9 @@ Server Fixes
 
 --DING messages explaining why you're blocked from joining a posse.  Fixes #663
 
+--Can solo kill any person who landed a kill themselves in last 60 seconds.
+  Fixes #648
+
 
 
 

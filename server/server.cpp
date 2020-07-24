@@ -187,6 +187,7 @@ static double minAgeForCravings = 10;
 
 static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
 
+static double killerVulnerableSeconds = 60;
 
 
 static int minActivePlayersForLanguages = 15;
@@ -883,6 +884,9 @@ typedef struct LiveObject {
         
         // true if this character landed a mortal wound on another player
         char everKilledAnyone;
+
+        // when they last landed a kill
+        double lastKillTime;
 
         // true in case of sudden infant death
         char suicide;
@@ -8367,6 +8371,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     posseDelayReductionFactor = 
         SettingsManager::getFloatSetting( "posseDelayReductionFactor", 2.0 );
 
+    
+    killerVulnerableSeconds =
+        SettingsManager::getFloatSetting( "killerVulnerableSeconds", 60 );
+    
 
     cursesUseSenderEmail = 
         SettingsManager::getIntSetting( "cursesUseSenderEmail", 0 );
@@ -9741,6 +9749,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     
     newObject.everKilledAnyone = false;
     newObject.suicide = false;
+    
+    newObject.lastKillTime = 0;
     
 
     newObject.sock = inSock;
@@ -13144,6 +13154,17 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
             }
 
 
+        char recentKiller = false;
+        
+        if( ! fullForceSoloPosse &&
+            Time::getCurrentTime() - inTarget->lastKillTime < 
+            killerVulnerableSeconds ) {
+            
+            // trying to kill a recent killer
+            recentKiller = true;            
+            minPosseSizeForKill = 1;
+            }
+
         if( minPosseSizeForKill > minPosseCap ) {
             minPosseSizeForKill = minPosseCap;
             }
@@ -13292,6 +13313,21 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                                      psMessage, strlen( psMessage ) );
                 delete [] psMessage;
                 }
+            }
+        else if( ! joiningExisting && minPosseSizeForKill <= 1 &&
+                 recentKiller ) {
+            // solo killing okay, because it's a recent killer
+            const char *pronoun = "HE";
+            if( getFemale( inTarget ) ) {
+                pronoun = "SHE";
+                }
+            char *message = 
+                autoSprintf( 
+                    "TARGET HAS KILLED RECENTLY, SO %s CAN BE KILLED SOLO.", 
+                    pronoun );
+
+            sendGlobalMessage( message, inKiller );
+            delete [] message;
             }
         else if( ! joiningExisting && minPosseSizeForKill <= 1 ) {
             // solo killing okay!
@@ -13886,6 +13922,9 @@ void executeKillAction( int inKillerIndex,
                 if( someoneHit ) {
                     
                     logKillHit( hitPlayer, nextPlayer );
+                    
+                    nextPlayer->lastKillTime = Time::getCurrentTime();
+                    
 
                     // last use on target specifies
                     // grave and weapon change on hit
