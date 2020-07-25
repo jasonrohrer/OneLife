@@ -886,15 +886,20 @@ void incrementLanguageCount( int inEveID ) {
     }
 
 
-void decrementLanguageCount( int inEveID ) {
+int decrementLanguageCount( int inEveID ) {
+    int countLeft = 0;
+    
     int rInd;
     EveLangRecord *r = getLangRecord( inEveID, &rInd );
     
     if( r != NULL ) {
         r->langCount --;
 
+        countLeft = r->langCount;
+
         if( r->langCount <= 0 ) {
             // language is dead, last speaker died
+            countLeft = 0;
             
             freeEveLangRecord( r );                        
             langRecords.deleteElement( rInd );
@@ -918,6 +923,8 @@ void decrementLanguageCount( int inEveID ) {
                 }
             }
         }
+    
+    return countLeft;
     }
 
 

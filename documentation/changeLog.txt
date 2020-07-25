@@ -4,6 +4,54 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 352    2020-July-24
+
+--Support for paging through items in Editor pickers with [ and ] keys.
+
+--Shaved 13% off loading time by reducing repeat memory allocations when
+  expanding transition bank and object bank with runtime-generated elements. 
+  Also optimized a few other loading hotspots.  Fixes #661
+
+--Shaved another 10% off loading time by optimizing inner loop of kerning
+  calculation during font loading.
+
+--Fixed appearance of certain held objects, and arm position, after flipping
+  character to left or right with mouse movement.  Fixes #657
+
+--Fixed endless looping behavior if custom server address includes a bad
+  hostname that gets looked up as invalid instantly.  Fixes #662
+
+--CTRL-right-click on object picker in object editor inserts other object above
+  current sprite layer.
+
+--Can now paste email into login form.  Fixes #649
+
+
+
+Server Fixes
+
+--Server converts all incoming client emails to lower case.  Fixes #659
+
+--Fixed rounding errors in computing fitness ranking.  Fixes #660
+
+--Homelands expire immediately when last member of family dies (before, it
+  would wait until no baby was born in homeland for 60 minutes).  Fixes #658
+
+--Fixed a case of transforming an empty basket that is on a table (by adding
+  grapes, for example).  Before, this was blocked because the basket was
+  potentially a sub-container.
+
+--Server cleans up long runs of spaces between words after removing forbidden
+  characters in SAY.  Fixes #653
+
+--DING messages explaining why you're blocked from joining a posse.  Fixes #663
+
+--Can solo kill any person who landed a kill themselves in last 60 seconds.
+  Fixes #648
+
+
+
+
 Version 350    2020-July-16
 
 --Support for +causeAutoOrientV tag (opposite of +causeAutoOrientH).
@@ -14,6 +62,8 @@ Version 350    2020-July-16
 --Support for -wall tag in object description, to push what would otherwise be
   drawn in the wall layer into the non-wall layer (so that pipes through fences
   can visually connect properly, and not overlap other pipes in a weird way).
+
+--Fixed case where you drop object on floor at edge of bad biome.  Fixes #654
 
 
 

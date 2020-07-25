@@ -189,6 +189,7 @@ static double minAgeForCravings = 10;
 
 static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
 
+static double killerVulnerableSeconds = 60;
 
 
 static int minActivePlayersForLanguages = 15;
@@ -885,6 +886,9 @@ typedef struct LiveObject {
         
         // true if this character landed a mortal wound on another player
         char everKilledAnyone;
+
+        // when they last landed a kill
+        double lastKillTime;
 
         // true in case of sudden infant death
         char suicide;
@@ -6300,8 +6304,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
                  SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
     
     
-    if( ! isBiomeAllowedForPlayer( inDroppingPlayer, inX, inY, true ) ) {
-        // would be dropping in a bad biome (floor or not)
+    if( ! isBiomeAllowedForPlayer( inDroppingPlayer, inX, inY, false ) ) {
+        // would be dropping in a bad biome (not on floor)
         // avoid this if the target spot is on the edge of a bad biome
 
         int nX[4] = { -1, 1, 0, 0 };
@@ -6312,7 +6316,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             int testY = inY + nY[i];
             
             if( isBiomeAllowedForPlayer( inDroppingPlayer, testX, testY,
-                                         true ) ) {
+                                         false ) ) {
                 inX = testX;
                 inY = testY;
                 
@@ -8369,6 +8373,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     posseDelayReductionFactor = 
         SettingsManager::getFloatSetting( "posseDelayReductionFactor", 2.0 );
 
+    
+    killerVulnerableSeconds =
+        SettingsManager::getFloatSetting( "killerVulnerableSeconds", 60 );
+    
 
     cursesUseSenderEmail = 
         SettingsManager::getIntSetting( "cursesUseSenderEmail", 0 );
@@ -9743,6 +9751,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     
     newObject.everKilledAnyone = false;
     newObject.suicide = false;
+    
+    newObject.lastKillTime = 0;
     
 
     newObject.sock = inSock;
@@ -13146,6 +13156,17 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
             }
 
 
+        char recentKiller = false;
+        
+        if( ! fullForceSoloPosse &&
+            Time::getCurrentTime() - inTarget->lastKillTime < 
+            killerVulnerableSeconds ) {
+            
+            // trying to kill a recent killer
+            recentKiller = true;            
+            minPosseSizeForKill = 1;
+            }
+
         if( minPosseSizeForKill > minPosseCap ) {
             minPosseSizeForKill = minPosseCap;
             }
@@ -13294,6 +13315,21 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                                      psMessage, strlen( psMessage ) );
                 delete [] psMessage;
                 }
+            }
+        else if( ! joiningExisting && minPosseSizeForKill <= 1 &&
+                 recentKiller ) {
+            // solo killing okay, because it's a recent killer
+            const char *pronoun = "HE";
+            if( getFemale( inTarget ) ) {
+                pronoun = "SHE";
+                }
+            char *message = 
+                autoSprintf( 
+                    "TARGET HAS KILLED RECENTLY, SO %s CAN BE KILLED SOLO.", 
+                    pronoun );
+
+            sendGlobalMessage( message, inKiller );
+            delete [] message;
             }
         else if( ! joiningExisting && minPosseSizeForKill <= 1 ) {
             // solo killing okay!
@@ -13888,6 +13924,9 @@ void executeKillAction( int inKillerIndex,
                 if( someoneHit ) {
                     
                     logKillHit( hitPlayer, nextPlayer );
+                    
+                    nextPlayer->lastKillTime = Time::getCurrentTime();
+                    
 
                     // last use on target specifies
                     // grave and weapon change on hit
@@ -17536,7 +17575,7 @@ int main() {
                             tokens->size() == 7 ) {
                             
                             nextConnection->email = 
-                                stringDuplicate( 
+                                stringToLowerCase( 
                                     tokens->getElementDirect( 1 ) );
                             char *pwHash = tokens->getElementDirect( 2 );
                             char *keyHash = tokens->getElementDirect( 3 );
@@ -20051,7 +20090,28 @@ int main() {
                                 m.saidText[c] = ' ';
                                 }
                             }
+                        
+                        // now clean up gratuitous runs of spaces left behind
+                        // by removed characters (or submitted by a wayward
+                        // client)
+                        SimpleVector<char *> *tokens = 
+                            tokenizeString( m.saidText );
 
+                        char **tokensArray = 
+                            tokens->getElementArray();
+                        
+                        // join words with single spaces
+                        char *cleanedString = join( tokensArray,
+                                                    tokens->size(),
+                                                    " " );
+                        
+                        tokens->deallocateStringElements();
+                        delete tokens;
+                        delete [] tokensArray;
+                        
+                        delete [] m.saidText;
+                        m.saidText = cleanedString;
+                        
                         
                         if( nextPlayer->ownedPositions.size() > 0 ) {
                             // consider phrases that assign ownership
@@ -20158,20 +20218,37 @@ int main() {
                         // what these non-working held items have in common
                         // is that they are stuck in hand AND don't have
                         // a use-on-bare ground transition defined
-                        if( nextPlayer->holdingID > 0
-                            &&
-                            isPosseJoiningSay( m.saidText ) 
-                            &&
-                            ( ! getObject( nextPlayer->holdingID )->permanent ||
-                              getTrans( nextPlayer->holdingID, -1 ) != NULL )
-                            &&
-                            // block twins and last-short-life players
-                            // from even joining in the first place
-                            // to avoid confusion of a big posse
-                            // that can't actually land a kill because
-                            // too many of the players are posse blocked
-                            !( nextPlayer->isTwin || 
-                               nextPlayer->isLastLifeShort ) ) {
+                        char joiningPosse = false;
+                        if( isPosseJoiningSay( m.saidText ) ) {
+                            joiningPosse = true;
+                            if( nextPlayer->isTwin ) {
+                                const char *message = 
+                                    "TWINS CANNOT JOIN POSSES.";
+                                sendGlobalMessage( (char*)message, nextPlayer );
+                                joiningPosse = false;
+                                }
+                            else if( nextPlayer->isLastLifeShort ) {
+                                const char *message = 
+                                    "YOUR LAST LIFE WAS VERY SHORT.**"
+                                    "YOU CANNOT JOIN POSSES IN THIS LIFE.";
+                                sendGlobalMessage( (char*)message, nextPlayer );
+                                joiningPosse = false;
+                                }
+                            else if( nextPlayer->holdingID <= 0  ||
+                                ( getObject( nextPlayer->holdingID )->
+                                  permanent &&
+                                  getTrans( nextPlayer->holdingID, -
+                                            1 ) == NULL ) ) {
+                                const char *message = 
+                                    "YOU MUST BE HOLDING SOMETHING "
+                                    "TO JOIN A POSSE.";
+                                sendGlobalMessage( (char*)message, nextPlayer );
+                                joiningPosse = false;
+                                }
+
+                            }
+                        
+                        if( joiningPosse ) {
                             
                             GridPos ourPos = getPlayerPos( nextPlayer );
                             
@@ -21709,8 +21786,10 @@ int main() {
                                         int contTarget = 
                                             getContained( m.x, m.y, m.i );
                                         
+                                        char isSubCont = false;
                                         if( contTarget < 0 ) {
                                             contTarget = -contTarget;
+                                            isSubCont = true;
                                             }
 
                                         ObjectRecord *contTargetObj =
@@ -21722,7 +21801,7 @@ int main() {
                                         
                                         ObjectRecord *newTarget = NULL;
                                         
-                                        if( contTargetObj->numSlots == 0 &&
+                                        if( ! isSubCont &&
                                             contTrans != NULL &&
                                             ( contTrans->newActor == 
                                               nextPlayer->holdingID ||
@@ -24055,8 +24134,14 @@ int main() {
 
                 removeAllOwnership( nextPlayer );
                 
-                decrementLanguageCount( nextPlayer->lineageEveID );
+                int numLangSpeakersLeft = 
+                    decrementLanguageCount( nextPlayer->lineageEveID );
                 
+                if( numLangSpeakersLeft == 0 ) {
+                    // last member of this family died out
+                    homelandsDead( nextPlayer->lineageEveID );
+                    }
+
                 removePlayerLanguageMaps( nextPlayer->id );
                 
                 if( nextPlayer->heldByOther ) {

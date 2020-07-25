@@ -2580,6 +2580,22 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         // shift right-click means interleave on insertion
         char shiftClick = isShiftKeyDown();
         
+        // ctrl-click means insert above current layer
+        char commandClick = isCommandKeyDown();
+
+
+        int oldNumSprites = mCurrentObject.numSprites;
+
+        
+        int insertBelowLayers = 0;
+        
+        if( commandClick ) {
+            insertBelowLayers = 
+                mCurrentObject.numSprites - mPickedObjectLayer - 1;
+            }
+        
+        
+
         // auto-end the held-pos setting if a new object is picked
         // (also, potentially enable the setting button for the first time) 
         if( objectID != -1 && ! mDemoSlots ) {
@@ -2604,7 +2620,6 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         else if( objectID != -1 && rightClick ) {
             ObjectRecord *pickedRecord = getObject( objectID );
 
-            int oldNumSprites = mCurrentObject.numSprites;
             
             int jumpPerSprite = 0;
             
@@ -2672,9 +2687,22 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
                         }
                     }
                 }
+            else if( insertBelowLayers > 0 ) {
+                for( int i=0; i<pickedRecord->numSprites; i++ ) {
+                    mPickedObjectLayer = i + oldNumSprites;
+                    moveSpriteLayerDown( insertBelowLayers );
+                    }
+                }
             
+
             // make bottom layer of inserted object the active layer
-            mPickedObjectLayer = oldNumSprites;
+            if( commandClick ) {
+                // inserted above old pick
+                mPickedObjectLayer = mPickedObjectLayer + 1;
+                }
+            else {
+                mPickedObjectLayer = oldNumSprites;
+                }
             mPickedSlot = -1;
             
             pickedLayerChanged();

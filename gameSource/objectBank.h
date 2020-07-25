@@ -614,7 +614,8 @@ int addObject( const char *inDescription,
                char *inSpriteUseVanish,
                char *inSpriteUseAppear,
                char inNoWriteToFile = false,
-               int inReplaceID = -1 );
+               int inReplaceID = -1,
+               int inExistingObjectHeight = -1 );
 
 
 
