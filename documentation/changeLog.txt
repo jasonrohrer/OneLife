@@ -3,6 +3,11 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Fixed crash when client sends chat string containing only invalid characters.
+
+
 
 Version 352    2020-July-24
 
