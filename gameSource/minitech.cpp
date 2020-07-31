@@ -255,7 +255,49 @@ GridPos minitech::getClosestTile(GridPos src, int objId) {
 bool minitech::isUseDummy(int objId) {
 	if (objId <= 0) return false;
 	ObjectRecord* o = getObject(objId);
+	if (o == NULL) return false;
 	return o->isUseDummy;
+}
+
+bool minitech::isProbabilitySet(int objId) {
+	if (objId <= 0) return false;
+	CategoryRecord *c = getCategory( objId );
+	if (c == NULL) return false;
+    if( c->isProbabilitySet ) return true;
+    return false;
+}
+
+float minitech::getTransProbability(TransRecord* trans) {
+	if (trans == NULL) return -1.0;
+	int idA = trans->actor;
+	int idB = trans->target;
+	int idC = trans->newActor;
+	int idD = trans->newTarget;
+	
+	TransRecord* t = getTrans( idA, idB, false, false );
+	int origIdC = t->newActor;
+	int origIdD = t->newTarget;
+	
+	int cOrD = -1;
+	if ( isProbabilitySet(origIdC) ) cOrD = 0;
+	if ( isProbabilitySet(origIdD) ) cOrD = 1;
+	if (cOrD != -1) {
+		CategoryRecord* c;
+		if (cOrD == 0) c = getCategory( origIdC );
+		if (cOrD == 1) c = getCategory( origIdD );
+		SimpleVector<int> idSet = c->objectIDSet;
+		SimpleVector<float> wSet = c->objectWeights;
+		for (int i=0; i<idSet.size(); i++) {
+			TransRecord* staticTrans = new TransRecord;
+			*staticTrans = *t;
+			int newId = idSet.getElementDirect(i);
+			if (cOrD == 0) staticTrans->newActor = newId;
+			if (cOrD == 1) staticTrans->newTarget = newId;
+			
+			if ( staticTrans->newActor == idC && staticTrans->newTarget == idD ) return wSet.getElementDirect(i);
+		}
+	}
+	return -1.0;
 }
 
 int minitech::objIdFromXY( int x, int y ) {
@@ -349,6 +391,25 @@ vector<TransRecord*> minitech::getUsesTrans(int objId) {
 		int idC = trans->newActor;
 		int idD = trans->newTarget;
 		
+		int cOrD = -1;
+		if ( isProbabilitySet(idC) ) cOrD = 0;
+		if ( isProbabilitySet(idD) ) cOrD = 1;
+		if (cOrD != -1) {
+			CategoryRecord* c;
+			if (cOrD == 0) c = getCategory( idC );
+			if (cOrD == 1) c = getCategory( idD );
+			SimpleVector<int> idSet = c->objectIDSet;
+			for (int i=0; i<idSet.size(); i++) {
+				TransRecord* staticTrans = new TransRecord;
+				*staticTrans = *trans;
+				int newId = idSet.getElementDirect(i);
+				if (cOrD == 0) staticTrans->newActor = newId;
+				if (cOrD == 1) staticTrans->newTarget = newId;
+				results.push_back(staticTrans);
+			}
+			continue;
+		}
+		
 		if ( isUseDummy(idA) || isUseDummy(idB) ) continue;
 		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
@@ -369,9 +430,6 @@ vector<TransRecord*> minitech::getProdTrans(int objId) {
 	if( prodTrans != NULL ) {
 		numTrans = prodTrans->size();
 	}
-	if( numTrans == 0 ) {
-		return results; 
-	}
 
 	for( int t=0; t<numTrans; t++ ) {
 		
@@ -389,6 +447,31 @@ vector<TransRecord*> minitech::getProdTrans(int objId) {
 		
 		results.push_back(trans);
 
+	}
+	
+	int numCategoriesForObject = getNumCategoriesForObject( objId );
+	for (int i=0; i<numCategoriesForObject; i++) {
+		int cId = getCategoryForObject(objId, i);
+		CategoryRecord* c = getCategory( cId );
+		
+		if (c->isProbabilitySet) {
+			SimpleVector<TransRecord*> *prodPTrans = getAllProduces( cId );
+			int numPTrans = 0;
+			if( prodPTrans != NULL ) {
+				numPTrans = prodPTrans->size();
+			}
+			for( int t=0; t<numPTrans; t++ ) {
+				TransRecord* staticTrans = new TransRecord;
+				*staticTrans = *(prodPTrans->getElementDirect( t ));
+				
+				if (staticTrans->actor == cId) staticTrans->actor = objId;
+				if (staticTrans->target == cId) staticTrans->target = objId;
+				if (staticTrans->newActor == cId) staticTrans->newActor = objId;
+				if (staticTrans->newTarget == cId) staticTrans->newTarget = objId;
+				
+				results.push_back(staticTrans);
+			}
+		}
 	}
 	
 	return results;
@@ -833,7 +916,17 @@ void minitech::updateDrawTwoTech() {
 			}
 			
 			pos.x += iconSize;
+			float transProb = getTransProbability(trans);
 			drawStr("=", pos, "handwritten", false);
+			if ( transProb != -1 ) {
+				string firstPart = "=";
+				string secondPart = to_string( transProb * 100 );
+				secondPart = secondPart.substr(0, secondPart.find(".") + 2) + "PCT";
+				doublePair chanceLinePos = pos;
+				float tinyLineHeight = 15.0*guiScale;
+				chanceLinePos.y -= tinyLineHeight;
+				drawStr(secondPart, chanceLinePos, "tinyHandwritten", false);
+			}
 			
 			pos.x += iconSize;
 			if (trans->actor > 0 && trans->target > 0 && trans->newActor == 0) {

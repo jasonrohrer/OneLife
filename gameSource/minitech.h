@@ -62,6 +62,8 @@ public:
 		vector<mouseListener*>* listeners, doublePair posTL, doublePair posBR );
 	static GridPos getClosestTile(GridPos src, int objId);	
 	static bool isUseDummy(int objId);
+	static bool isProbabilitySet(int objId);
+	static float getTransProbability(TransRecord* trans);
 	
 	static int objIdFromXY( int x, int y );
 	static vector<bool> getObjIsCloseVector();
