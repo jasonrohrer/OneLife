@@ -61,6 +61,7 @@ public:
 	static mouseListener* getMouseListenerByArea(
 		vector<mouseListener*>* listeners, doublePair posTL, doublePair posBR );
 	static GridPos getClosestTile(GridPos src, int objId);	
+	static bool isUseDummy(int objId);
 	
 	static int objIdFromXY( int x, int y );
 	static vector<bool> getObjIsCloseVector();

@@ -252,7 +252,11 @@ GridPos minitech::getClosestTile(GridPos src, int objId) {
 	return foundPos;
 }
 
-
+bool minitech::isUseDummy(int objId) {
+	if (objId <= 0) return false;
+	ObjectRecord* o = getObject(objId);
+	return o->isUseDummy;
+}
 
 int minitech::objIdFromXY( int x, int y ) {
 	int mMapOffsetX = livingLifePage->mMapOffsetX;
@@ -345,31 +349,7 @@ vector<TransRecord*> minitech::getUsesTrans(int objId) {
 		int idC = trans->newActor;
 		int idD = trans->newTarget;
 		
-		// if ( idA < 0 || idB < 0 ) continue;
-		
-		bool isUseDummyA = false;
-		bool isUseDummyB = false;
-		bool isUseDummyC = false;
-		bool isUseDummyD = false;
-		
-		if ( idA > 0 ) {
-			ObjectRecord* a = getObject(idA);
-			isUseDummyA = a->isUseDummy;
-		}
-		if ( idB > 0 ) {
-			ObjectRecord* b = getObject(idB);
-			isUseDummyB = b->isUseDummy;
-		}
-		if ( idC > 0 ) {
-			ObjectRecord* c = getObject(idC);
-			isUseDummyC = c->isUseDummy;
-		}
-		if ( idD > 0 ) {
-			ObjectRecord* d = getObject(idD);
-			isUseDummyD = d->isUseDummy;
-		}
-		if ( isUseDummyA || isUseDummyB ) continue;
-		
+		if ( isUseDummy(idA) || isUseDummy(idB) ) continue;
 		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
 		
@@ -403,30 +383,7 @@ vector<TransRecord*> minitech::getProdTrans(int objId) {
 		int idD = trans->newTarget;
 		
 		if ( idA == objId || idB == objId ) continue;
-		
-		bool isUseDummyA = false;
-		bool isUseDummyB = false;
-		bool isUseDummyC = false;
-		bool isUseDummyD = false;
-		
-		if ( idA > 0 ) {
-			ObjectRecord* a = getObject(idA);
-			isUseDummyA = a->isUseDummy;
-		}
-		if ( idB > 0 ) {
-			ObjectRecord* b = getObject(idB);
-			isUseDummyB = b->isUseDummy;
-		}
-		if ( idC > 0 ) {
-			ObjectRecord* c = getObject(idC);
-			isUseDummyC = c->isUseDummy;
-		}
-		if ( idD > 0 ) {
-			ObjectRecord* d = getObject(idD);
-			isUseDummyD = d->isUseDummy;
-		}
-		if ( isUseDummyA || isUseDummyB ) continue;
-		
+		if ( isUseDummy(idA) || isUseDummy(idB) ) continue;
 		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
 		
