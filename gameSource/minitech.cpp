@@ -410,7 +410,8 @@ vector<TransRecord*> minitech::getUsesTrans(int objId) {
 			continue;
 		}
 		
-		if ( isUseDummy(idA) || isUseDummy(idB) ) continue;
+		if ( isUseDummy(idA) && isUseDummy(idC) ) continue;
+		if ( isUseDummy(idB) && isUseDummy(idD) ) continue;
 		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
 		
@@ -441,7 +442,8 @@ vector<TransRecord*> minitech::getProdTrans(int objId) {
 		int idD = trans->newTarget;
 		
 		if ( idA == objId || idB == objId ) continue;
-		if ( isUseDummy(idA) || isUseDummy(idB) ) continue;
+		if ( isUseDummy(idA) && isUseDummy(idC) ) continue;
+		if ( isUseDummy(idB) && isUseDummy(idD) ) continue;
 		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
 		
