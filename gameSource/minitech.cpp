@@ -1055,6 +1055,8 @@ void minitech::updateDrawTwoTech() {
 
 void minitech::livingLifeDraw(float mX, float mY) {
 	
+	if (!minitechEnabled) return;
+	
 	doublePair screenPos = livingLifePage->minitechGetLastScreenViewCenter();
 	doublePair mousePos = {mX, mY};
 	doublePair mousePosScreenAdj = sub(mousePos, screenPos);
