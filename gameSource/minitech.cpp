@@ -646,7 +646,7 @@ vector<TransRecord*> minitech::sortUsesTrans(vector<TransRecord*> unsortedTrans)
 				float dist = sqrt(pow(currentX - pos.x, 2) + pow(currentY - pos.y, 2));
 				distScore[i] += dist;
 			} else {
-				distScore[i] += 9999;
+				distScore[i] += 9999 + idB; //ranking empty hand trans by id
 			}
 		}
 		if ( idA == idB ) {
@@ -702,7 +702,7 @@ vector<TransRecord*> minitech::sortProdTrans(vector<TransRecord*> unsortedTrans)
 				float dist = sqrt(pow(currentX - pos.x, 2) + pow(currentY - pos.y, 2));
 				distScore[i] += dist;
 			} else {
-				distScore[i] += punishmentScore;
+				distScore[i] += punishmentScore + idB; //ranking empty hand trans by id
 			}
 		}
 		if ( idB == -1 ) distScore[i] += 9999; //item + Bare Ground
