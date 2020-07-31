@@ -135,7 +135,9 @@ int minitech::getDummyParent(int objId) {
 bool minitech::isCategory(int objId) {
 	if (objId <= 0) return false;
 	CategoryRecord *c = getCategory( objId );
-	return c != NULL;
+	if (c == NULL) return false;
+    if( !c->isPattern && c->objectIDSet.size() > 0 ) return true;
+    return false;
 }
 
 minitech::mouseListener* minitech::getMouseListenerByArea( 
