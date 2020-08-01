@@ -64,6 +64,7 @@ public:
 	static bool isUseDummy(int objId);
 	static bool isProbabilitySet(int objId);
 	static float getTransProbability(TransRecord* trans);
+	static unsigned int LevenshteinDistance(const std::string& s1, const std::string& s2);
 	
 	static int objIdFromXY( int x, int y );
 	static vector<bool> getObjIsCloseVector();
@@ -96,6 +97,8 @@ public:
 	static int lastUseOrMake;
 	static int currentHintObjId;
 	static int lastHintObjId;
+	static string hintStr;
+	static string lastHintStr;
 	static vector<mouseListener*> twotechMouseListeners;
 	static mouseListener* prevListener;
 	static mouseListener* nextListener;

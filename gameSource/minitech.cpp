@@ -53,6 +53,8 @@ int minitech::useOrMake;
 int minitech::lastUseOrMake;
 int minitech::currentHintObjId;
 int minitech::lastHintObjId;
+string minitech::hintStr;
+string minitech::lastHintStr;
 vector<minitech::mouseListener*> minitech::twotechMouseListeners;
 minitech::mouseListener* minitech::prevListener;
 minitech::mouseListener* minitech::nextListener;
@@ -480,6 +482,21 @@ vector<TransRecord*> minitech::getProdTrans(int objId) {
 	return results;
 }
 
+unsigned int minitech::LevenshteinDistance(const std::string& s1, const std::string& s2) {
+	const std::size_t len1 = s1.size(), len2 = s2.size();
+	std::vector<std::vector<unsigned int>> d(len1 + 1, std::vector<unsigned int>(len2 + 1));
+
+	d[0][0] = 0;
+	for(unsigned int i = 1; i <= len1; ++i) d[i][0] = i;
+	for(unsigned int i = 1; i <= len2; ++i) d[0][i] = i;
+
+	for(unsigned int i = 1; i <= len1; ++i)
+		for(unsigned int j = 1; j <= len2; ++j)
+                      // note that std::min({arg1, arg2, arg3}) works only in C++11,
+                      // for C++98 use std::min(std::min(arg1, arg2), arg3)
+                      d[i][j] = std::min({ d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 0 : 1) });
+	return d[len1][len2];
+}
 
 
 void minitech::drawPoint(doublePair posCen, string color) {
@@ -1177,6 +1194,41 @@ void minitech::livingLifeDraw(float mX, float mY) {
 	}
 	
 	if ( lastHintObjId == 0 && currentHintObjId != 0 ) minitechMinimized = false;
+	
+	if (hintStr != lastHintStr) {
+		lastHintStr = hintStr;
+        int numHits = 0;
+        int numRemain = 0;
+        ObjectRecord **hitsSimpleVector = searchObjects( hintStr.c_str(),
+                                             0,
+                                             200,
+                                             &numHits, &numRemain );
+		
+		if (numHits > 0) {
+			vector<ObjectRecord*> unsortedHits;
+			for (int i=0; i<numHits; i++) {
+				unsortedHits.push_back(hitsSimpleVector[i]);
+			}
+			
+			vector<std::size_t> index(unsortedHits.size());
+			iota(index.begin(), index.end(), 0);
+			sort(index.begin(), index.end(), [&](size_t a, size_t b) { 
+				// string aDesc(stringToUpperCase(unsortedHits[a]->description));
+				// string bDesc(stringToUpperCase(unsortedHits[b]->description));
+				// int aLDist = LevenshteinDistance(hintStr, aDesc); 
+				// int bLDist = LevenshteinDistance(hintStr, bDesc);
+				// return aLDist < bLDist;
+				return unsortedHits[a]->id < unsortedHits[b]->id;
+			});
+			
+			vector<ObjectRecord*> sortedHits(unsortedHits.size());
+			for ( int i=0; i<unsortedHits.size(); i++ ) {
+				sortedHits[i] = unsortedHits[index[i]];
+			}
+			
+			currentHintObjId = sortedHits[0]->id;
+		}
+	}
 	
 	if ( (lastHintObjId != currentHintObjId || lastUseOrMake != useOrMake) && !minitechMinimized ) {
 		lastHintObjId = currentHintObjId;
