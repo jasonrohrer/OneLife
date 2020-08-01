@@ -1101,8 +1101,17 @@ void minitech::updateDrawTwoTech() {
 		sub(iconBR, screenPos));
 	if (headerIconListener->mouseHover) {
 		doublePair captionPos = {iconCen.x, iconCen.y + iconCaptionYOffset};
-		string objDesc(livingLifePage->minitechGetDisplayObjectDescription(currentHintObjId));
-		drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
+		string objName(livingLifePage->minitechGetDisplayObjectDescription(currentHintObjId));
+		drawStr(objName, captionPos, "tinyHandwritten", true, true);
+		
+		ObjectRecord* o = getObject(currentHintObjId);
+		string objFullDesc(stringToUpperCase(o->description));
+		int poundPos = objFullDesc.find("#");
+		if (poundPos != -1) {
+			string objDesc(objFullDesc.substr(poundPos + 1));
+			captionPos.y -= tinyLineHeight*2;
+			drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
+		}
 	}
 
 
