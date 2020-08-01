@@ -970,27 +970,6 @@ void minitech::updateDrawTwoTech() {
 			}
 		}
 		
-		for (int i=0; i<iconListenerIds.size(); i++) {
-			mouseListener* listener = iconListenerIds[i].first;
-			int id = iconListenerIds[i].second;
-			doublePair iconLT = add(listener->posTL, screenPos);
-			doublePair iconCen = { iconLT.x + iconSize/2, iconLT.y - iconSize/2 };
-			if (listener->mouseHover && id > 0) {
-				doublePair captionPos = {iconCen.x, iconCen.y + iconCaptionYOffset};
-				string objName(livingLifePage->minitechGetDisplayObjectDescription(id));
-				drawStr(objName, captionPos, "tinyHandwritten", true, true);
-				
-				ObjectRecord* o = getObject(id);
-				string objFullDesc(stringToUpperCase(o->description));
-				int poundPos = objFullDesc.find("#");
-				if (poundPos != -1) {
-					string objDesc(objFullDesc.substr(poundPos + 1));
-					captionPos.y -= tinyLineHeight*2;
-					drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
-				}
-			}
-		}
-		
 		if (currHintObjId > 0) {
 			GridPos currentPos = {currentX, currentY};
 			GridPos closestHintObjPos = getClosestTile(currentPos, currHintObjId);
@@ -1041,6 +1020,27 @@ void minitech::updateDrawTwoTech() {
 			pos.x -= iconSize*3;
 			string pageInd = to_string(currentTwoTechPage + 1) + "/" + to_string(maxPage);
 			drawStr(pageInd, pos, "tinyMain", false);
+		}
+		
+		for (int i=0; i<iconListenerIds.size(); i++) {
+			mouseListener* listener = iconListenerIds[i].first;
+			int id = iconListenerIds[i].second;
+			doublePair iconLT = add(listener->posTL, screenPos);
+			doublePair iconCen = { iconLT.x + iconSize/2, iconLT.y - iconSize/2 };
+			if (listener->mouseHover && id > 0) {
+				doublePair captionPos = {iconCen.x, iconCen.y + iconCaptionYOffset};
+				string objName(livingLifePage->minitechGetDisplayObjectDescription(id));
+				drawStr(objName, captionPos, "tinyHandwritten", true, true);
+				
+				ObjectRecord* o = getObject(id);
+				string objFullDesc(stringToUpperCase(o->description));
+				int poundPos = objFullDesc.find("#");
+				if (poundPos != -1) {
+					string objDesc(objFullDesc.substr(poundPos + 1));
+					captionPos.y -= tinyLineHeight*2;
+					drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
+				}
+			}
 		}
 	}
 
