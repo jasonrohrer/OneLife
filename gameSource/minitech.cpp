@@ -792,9 +792,9 @@ void minitech::updateDrawTwoTech() {
 		
 	} else {
 		
-		if (currentTwoTechPage < 0) currentTwoTechPage = 0;
 		int maxPage = int( ceil( float(transSize) / float(defaultNumOfLines) ) );
-		if ( currentTwoTechPage >= maxPage ) currentTwoTechPage = maxPage - 1;
+		if (currentTwoTechPage < 0) currentTwoTechPage = maxPage - 1;
+		if ( currentTwoTechPage >= maxPage ) currentTwoTechPage = 0;
 		bool showNextPageButton = transSize > (currentTwoTechPage+1)*defaultNumOfLines;
 		bool showPreviousPageButton = currentTwoTechPage > 0;
 		
