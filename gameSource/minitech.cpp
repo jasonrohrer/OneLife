@@ -933,6 +933,12 @@ void minitech::updateDrawTwoTech() {
 			pos.x += iconSize;
 			if (trans->actor > 0 && trans->target > 0 && trans->newActor == 0) {
 				drawObj(pos, trans->newActor);
+			} else if (trans->actor == -1 && trans->autoDecaySeconds != 0 && trans->newActor == 0) {
+				if (trans->move !=0) {
+					drawStr("MOVING...", pos, "tinyHandwritten", false);
+				} else {
+					drawObj(pos, trans->newActor, "TURNING", "INTO...");
+				}
 			} else if (trans->newActor == 0) {
 				drawObj(pos, trans->newActor, "EMPTY", "GROUND");
 			} else {
@@ -952,10 +958,14 @@ void minitech::updateDrawTwoTech() {
 			}
 			
 			pos.x += iconSize;
-			drawStr("+", pos, "handwritten", false);
+			if (trans->actor == -1 && trans->autoDecaySeconds != 0 && trans->newActor == 0) {
+				//not drawing the plus sign for pure Changes over time...
+			} else {
+				drawStr("+", pos, "handwritten", false);
+			}
 			
 			pos.x += iconSize;
-			drawObj(pos, trans->newTarget);
+			drawObj(pos, trans->newTarget, "EMPTY", "GROUND");
 			iconLT = {pos.x - iconSize/2, pos.y + iconSize/2};
 			iconBR = {pos.x + iconSize/2, pos.y - iconSize/2};		
 			mouseListener* iconDListener = getMouseListenerByArea(
