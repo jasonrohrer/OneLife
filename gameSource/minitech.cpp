@@ -13,6 +13,7 @@
 
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/game/drawUtils.h"
+#include "minorGems/util/stringUtils.h"
 #include "minorGems/game/Font.h"
 // #include "minorGems/util/SettingsManager.h"
 
@@ -976,8 +977,17 @@ void minitech::updateDrawTwoTech() {
 			doublePair iconCen = { iconLT.x + iconSize/2, iconLT.y - iconSize/2 };
 			if (listener->mouseHover && id > 0) {
 				doublePair captionPos = {iconCen.x, iconCen.y + iconCaptionYOffset};
-				string objDesc(livingLifePage->minitechGetDisplayObjectDescription(id));
-				drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
+				string objName(livingLifePage->minitechGetDisplayObjectDescription(id));
+				drawStr(objName, captionPos, "tinyHandwritten", true, true);
+				
+				ObjectRecord* o = getObject(id);
+				string objFullDesc(stringToUpperCase(o->description));
+				int poundPos = objFullDesc.find("#");
+				if (poundPos != -1) {
+					string objDesc(objFullDesc.substr(poundPos + 1));
+					captionPos.y -= tinyLineHeight*2;
+					drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
+				}
 			}
 		}
 		
