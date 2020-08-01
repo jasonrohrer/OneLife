@@ -822,6 +822,7 @@ void minitech::updateDrawTwoTech() {
 			};	
 		
 		int currHintObjId = 0;
+		vector<pair<mouseListener*,int>> iconListenerIds;
 		for (int i=0; i<numOfLines; i++) {
 			if (i>0) posLineLCen.y -= iconSize+lineSpacing;
 			
@@ -886,11 +887,8 @@ void minitech::updateDrawTwoTech() {
 			iconBR = {pos.x + iconSize/2, pos.y - iconSize/2};		
 			mouseListener* iconAListener = getMouseListenerByArea(
 				&twotechMouseListeners, sub(iconLT, screenPos), sub(iconBR, screenPos));
-			if (iconAListener->mouseHover && trans->actor > 0) {
-				doublePair captionPos = {pos.x, pos.y + iconCaptionYOffset};
-				string objDesc(livingLifePage->minitechGetDisplayObjectDescription(trans->actor));
-				drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
-			}
+			pair<mouseListener*,int> iconAListenerId(iconAListener, trans->actor);
+			iconListenerIds.push_back(iconAListenerId);
 			if (iconAListener->mouseClick && trans->actor > 0) {
 				currentHintObjId = trans->actor;
 			}
@@ -908,11 +906,8 @@ void minitech::updateDrawTwoTech() {
 			iconBR = {pos.x + iconSize/2, pos.y - iconSize/2};		
 			mouseListener* iconBListener = getMouseListenerByArea(
 				&twotechMouseListeners, sub(iconLT, screenPos), sub(iconBR, screenPos));
-			if (iconBListener->mouseHover && trans->target > 0) {
-				doublePair captionPos = {pos.x, pos.y + iconCaptionYOffset};
-				string objDesc(livingLifePage->minitechGetDisplayObjectDescription(trans->target));
-				drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
-			}
+			pair<mouseListener*,int> iconBListenerId(iconBListener, trans->target);
+			iconListenerIds.push_back(iconBListenerId);
 			if (iconBListener->mouseClick && trans->target > 0) {
 				currentHintObjId = trans->target;
 			}
@@ -948,11 +943,8 @@ void minitech::updateDrawTwoTech() {
 			iconBR = {pos.x + iconSize/2, pos.y - iconSize/2};		
 			mouseListener* iconCListener = getMouseListenerByArea(
 				&twotechMouseListeners, sub(iconLT, screenPos), sub(iconBR, screenPos));
-			if (iconCListener->mouseHover && trans->newActor > 0) {
-				doublePair captionPos = {pos.x, pos.y + iconCaptionYOffset};
-				string objDesc(livingLifePage->minitechGetDisplayObjectDescription(trans->newActor));
-				drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
-			}
+			pair<mouseListener*,int> iconCListenerId(iconCListener, trans->newActor);
+			iconListenerIds.push_back(iconCListenerId);
 			if (iconCListener->mouseClick && trans->newActor > 0) {
 				currentHintObjId = trans->newActor;
 			}
@@ -970,13 +962,22 @@ void minitech::updateDrawTwoTech() {
 			iconBR = {pos.x + iconSize/2, pos.y - iconSize/2};		
 			mouseListener* iconDListener = getMouseListenerByArea(
 				&twotechMouseListeners, sub(iconLT, screenPos), sub(iconBR, screenPos));
-			if (iconDListener->mouseHover && trans->newTarget > 0) {
-				doublePair captionPos = {pos.x, pos.y + iconCaptionYOffset};
-				string objDesc(livingLifePage->minitechGetDisplayObjectDescription(trans->newTarget));
-				drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
-			}
+			pair<mouseListener*,int> iconDListenerId(iconDListener, trans->newTarget);
+			iconListenerIds.push_back(iconDListenerId);
 			if (iconDListener->mouseClick && trans->newTarget > 0) {
 				currentHintObjId = trans->newTarget;
+			}
+		}
+		
+		for (int i=0; i<iconListenerIds.size(); i++) {
+			mouseListener* listener = iconListenerIds[i].first;
+			int id = iconListenerIds[i].second;
+			doublePair iconLT = add(listener->posTL, screenPos);
+			doublePair iconCen = { iconLT.x + iconSize/2, iconLT.y - iconSize/2 };
+			if (listener->mouseHover && id > 0) {
+				doublePair captionPos = {iconCen.x, iconCen.y + iconCaptionYOffset};
+				string objDesc(livingLifePage->minitechGetDisplayObjectDescription(id));
+				drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
 			}
 		}
 		
