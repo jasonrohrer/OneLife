@@ -1116,7 +1116,7 @@ void minitech::updateDrawTwoTech() {
 		&twotechMouseListeners, 
 		sub(iconTL, screenPos), 
 		sub(iconBR, screenPos));
-	if (headerIconListener->mouseHover) {
+	if (headerIconListener->mouseHover && currentHintObjId > 0) {
 		doublePair captionPos = {iconCen.x, iconCen.y + iconCaptionYOffset};
 		string objName(livingLifePage->minitechGetDisplayObjectDescription(currentHintObjId));
 		drawStr(objName, captionPos, "tinyHandwritten", true, true);
