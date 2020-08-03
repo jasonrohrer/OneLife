@@ -277,7 +277,7 @@ float minitech::getTransProbability(TransRecord* trans) {
 	int idC = trans->newActor;
 	int idD = trans->newTarget;
 	
-	TransRecord* t = getTrans( idA, idB, false, false );
+	TransRecord* t = getTrans( idA, idB, trans->lastUseActor, trans->lastUseTarget );
 	int origIdC = t->newActor;
 	int origIdD = t->newTarget;
 	
