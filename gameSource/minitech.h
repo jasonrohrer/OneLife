@@ -6,8 +6,6 @@
 #include <string>
 
 
-using namespace std;
-
 class minitech
 {
 
@@ -59,7 +57,7 @@ public:
 	static int getDummyParent(int objId);
 	static bool isCategory(int objId);
 	static mouseListener* getMouseListenerByArea(
-		vector<mouseListener*>* listeners, doublePair posTL, doublePair posBR );
+		std::vector<mouseListener*>* listeners, doublePair posTL, doublePair posBR );
 	static GridPos getClosestTile(GridPos src, int objId);	
 	static bool isUseDummy(int objId);
 	static bool isProbabilitySet(int objId);
@@ -67,23 +65,23 @@ public:
 	static unsigned int LevenshteinDistance(const std::string& s1, const std::string& s2);
 	
 	static int objIdFromXY( int x, int y );
-	static vector<bool> getObjIsCloseVector();
-	static vector<TransRecord*> getUsesTrans(int objId);
-	static vector<TransRecord*> getProdTrans(int objId);
+	static std::vector<bool> getObjIsCloseVector();
+	static std::vector<TransRecord*> getUsesTrans(int objId);
+	static std::vector<TransRecord*> getProdTrans(int objId);
 	
-	static void drawPoint(doublePair posCen, string color);
+	static void drawPoint(doublePair posCen, std::string color);
 	static void drawObj(
 		doublePair posCen, 
 		int objId, 
-		string strDescFirstLine = "", 
-		string strDescSecondLine = "");
+		std::string strDescFirstLine = "", 
+		std::string strDescSecondLine = "");
 	static void drawStr(
-		string str, 
+		std::string str, 
 		doublePair posCen, 
-		string font, 
+		std::string font, 
 		bool withBackground = true, 
 		bool avoidOffScreen = false);
-	static void drawTileRect( int x, int y, string color, bool flashing = false );
+	static void drawTileRect( int x, int y, std::string color, bool flashing = false );
 	
 	static void initOnBirth();
 	static void livingLifeStep();
@@ -91,19 +89,19 @@ public:
 	static void livingLifeDraw(float mouseX, float mouseY);
 	static bool livingLifePageMouseDown(float mouseX, float mouseY);
 	
-	static vector<TransRecord*> currentHintTrans;
+	static std::vector<TransRecord*> currentHintTrans;
 	static int currentTwoTechPage;
 	static int useOrMake;
 	static int lastUseOrMake;
 	static int currentHintObjId;
 	static int lastHintObjId;
-	static string hintStr;
-	static string lastHintStr;
-	static vector<mouseListener*> twotechMouseListeners;
+	static std::string hintStr;
+	static std::string lastHintStr;
+	static std::vector<mouseListener*> twotechMouseListeners;
 	static mouseListener* prevListener;
 	static mouseListener* nextListener;
-	static vector<TransRecord*> sortUsesTrans(vector<TransRecord*> unsortedTrans);
-	static vector<TransRecord*> sortProdTrans(vector<TransRecord*> unsortedTrans);
+	static std::vector<TransRecord*> sortUsesTrans(std::vector<TransRecord*> unsortedTrans);
+	static std::vector<TransRecord*> sortProdTrans(std::vector<TransRecord*> unsortedTrans);
 	static void updateDrawTwoTech();
 
 	
