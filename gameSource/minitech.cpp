@@ -1233,6 +1233,8 @@ void minitech::livingLifeDraw(float mX, float mY) {
 	if ( (lastHintObjId != currentHintObjId || lastUseOrMake != useOrMake) && !minitechMinimized ) {
 		lastHintObjId = currentHintObjId;
 		lastUseOrMake = useOrMake;
+		hintStr = "";
+		lastHintStr = "";
 		currentTwoTechPage = 0;
 		
 		for (auto p: twotechMouseListeners) {
