@@ -4311,9 +4311,10 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 AppLog::infoF( "2HOL DEBUG: Player says password. New password assigned to a player." );
                 inPlayer->saidPassword = stringDuplicate( sayingPassword );
                 AppLog::infoF( "2HOL DEBUG: Player's password is %s", inPlayer->saidPassword );
+				//if passwordSilent = true, no need to display anything, as well as make any further checks, just cut it after the assignment is done
+				if( passwordSilent ) { return; }
                 }
-            //if passwordSilent = true, no need to display anything, as well as make any further checks, just cut it after the assignment is done
-            if( passwordSilent ) { return; }
+
             }
     
     
@@ -18949,7 +18950,7 @@ int main() {
                         //  if player said password aloud, do not send it to anyone positioned further than passwordOverhearRadius tiles away
                         int sPassword =
                                     newSpeechPasswordFlags.getElementDirect( u );
-                        if( sPassword && ( passwordOverhearRadius > d ) ) { minUpdateDist = maxDist + 1; }
+                        if( sPassword && ( d > passwordOverhearRadius ) ) { minUpdateDist = maxDist + 1; }
 
                         }
 
@@ -19504,7 +19505,9 @@ int main() {
         newGraves.deleteAll();
         newGraveMoves.deleteAll();
         
-        
+		//2HOL additions for: password-protected objects
+		//These flags correspond to newSpeechPos, need to be cleared every loop as well
+        newSpeechPasswordFlags.deleteAll();
 
         
         // handle end-of-frame for all players that need it
