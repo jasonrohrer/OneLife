@@ -10189,8 +10189,14 @@ int main() {
         SettingsManager::getStringSetting( "infertilitySuffix", "+INFERTILE+" );
     fertilitySuffix = 
         SettingsManager::getStringSetting( "fertilitySuffix", "+FERTILE+" );
-	//Would like to pad the suffix to have some space between player name and the suffix
+	//Pad the suffix to have some space between player name and the suffix
 	//padding it in the ini file wouldnt work, for some unknown reason...
+	std::string strInfertilitySuffix(infertilitySuffix);
+	std::string strFertilitySuffix(fertilitySuffix);
+	strInfertilitySuffix = " " + strInfertilitySuffix;
+	strFertilitySuffix = " " + strFertilitySuffix;
+	infertilitySuffix = strdup( strInfertilitySuffix.c_str() );
+	fertilitySuffix = strdup( strFertilitySuffix.c_str() );
     
     killEmotionIndex =
         SettingsManager::getIntSetting( "killEmotionIndex", 2 );
