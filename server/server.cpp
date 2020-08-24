@@ -10189,13 +10189,8 @@ int main() {
         SettingsManager::getStringSetting( "infertilitySuffix", "+INFERTILE+" );
     fertilitySuffix = 
         SettingsManager::getStringSetting( "fertilitySuffix", "+FERTILE+" );
-	//Pad the suffix to have some space between player name and the suffix
-	//padding it in the ini file wouldnt work, for some unknown reason
-	//hence the weird trick here...
-	infertilitySuffix -= 1;
-	infertilitySuffix[0] = ' ';
-	fertilitySuffix -= 1;
-	fertilitySuffix[0] = ' ';
+	//Would like to pad the suffix to have some space between player name and the suffix
+	//padding it in the ini file wouldnt work, for some unknown reason...
     
     killEmotionIndex =
         SettingsManager::getIntSetting( "killEmotionIndex", 2 );
