@@ -2533,8 +2533,7 @@ int addObject( const char *inDescription,
         }
     
 
-    if( ! inNoWriteToFile && 
-        objectsDir.exists() && objectsDir.isDirectory() ) {
+    if( objectsDir.exists() && objectsDir.isDirectory() ) {
         
         char *fileName = autoSprintf( "%d.txt", newID );
 
