@@ -13199,6 +13199,7 @@ int main() {
 									strName += strInfertilitySuffix;
 									char *cName = strdup( strName.c_str() );
 									nextPlayer->name = cName;
+									nextPlayer->nameHasSuffix = true;
 									}
                                 
                                 playerIndicesToSendNamesAbout.push_back( i );
@@ -13216,6 +13217,7 @@ int main() {
 								if (nextPlayer->name == NULL) {
 									char *cName = strdup( strInfertilitySuffix.c_str() );
 									nextPlayer->name = cName;
+									nextPlayer->nameHasSuffix = true;
 								} else {
 									std::string strName(nextPlayer->name);
 									if (strName == strFertilitySuffix) {
@@ -13225,6 +13227,7 @@ int main() {
 									}
 									char *cName = strdup( strName.c_str() );
 									nextPlayer->name = cName;
+									nextPlayer->nameHasSuffix = true;
 								}
 								
 								playerIndicesToSendNamesAbout.push_back( i );
@@ -13236,16 +13239,19 @@ int main() {
 									//This case should not happen
 									char *cName = strdup( strFertilitySuffix.c_str() );
 									nextPlayer->name = cName;
+									nextPlayer->nameHasSuffix = true;
 								} else {
 									std::string strName(nextPlayer->name);
 									size_t start_pos = strName.find(strInfertilitySuffix);
 									if (strName == strInfertilitySuffix) {
 										char *cName = strdup( strFertilitySuffix.c_str() );
 										nextPlayer->name = cName;
+										nextPlayer->nameHasSuffix = true;
 									} else if (start_pos != std::string::npos) {
 										strName.replace(start_pos, strInfertilitySuffix.length(), "");
 										char *cName = strdup( strName.c_str() );
 										nextPlayer->name = cName;
+										nextPlayer->nameHasSuffix = false;
 									}
 								}
 								
