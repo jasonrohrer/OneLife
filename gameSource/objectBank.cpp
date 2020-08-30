@@ -2503,8 +2503,7 @@ int addObject( const char *inDescription,
 
     int nextObjectNumber = 1;
     
-    if( ! inNoWriteToFile &&
-        objectsDir.exists() && objectsDir.isDirectory() ) {
+    if( objectsDir.exists() && objectsDir.isDirectory() ) {
                 
         File *nextNumberFile = 
             objectsDir.getChildFile( "nextObjectNumber.txt" );
@@ -2533,7 +2532,8 @@ int addObject( const char *inDescription,
         }
     
 
-    if( objectsDir.exists() && objectsDir.isDirectory() ) {
+    if( ! inNoWriteToFile && 
+        objectsDir.exists() && objectsDir.isDirectory() ) {
         
         char *fileName = autoSprintf( "%d.txt", newID );
 
