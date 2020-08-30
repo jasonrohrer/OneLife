@@ -16364,6 +16364,21 @@ void LivingLifePage::step() {
                                 char *nameStart = &( firstSpace[1] );
                                 
                                 existing->name = stringDuplicate( nameStart );
+								
+								LiveObject *ourLiveObject = getOurLiveObject();
+								if ( id == ourLiveObject->id && 
+									//Little hack here to not have the ding
+									//when we are just reconnected
+									//instead of a real name change
+									ourLiveObject->foodCapacity > 0 && 
+									mTutorialSound != NULL ) {
+									playSound( 
+										mTutorialSound,
+										0.18 * getSoundEffectsLoudness(), 
+										getVectorFromCamera( 
+											ourLiveObject->currentPos.x, 
+											ourLiveObject->currentPos.y ) );
+									}
                                 }
                             
                             break;
