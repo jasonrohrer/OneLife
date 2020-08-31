@@ -13200,7 +13200,6 @@ int main() {
 									
 								if ( !nextPlayer->fertile ) {
 									std::string strName(nextPlayer->name);
-									std::string strInfertilitySuffix(infertilitySuffix);
 									strName += strInfertilitySuffix;
 									nextPlayer->displayedName = strdup( strName.c_str() );
 									} 
@@ -13213,15 +13212,13 @@ int main() {
                             }
 							
 						if( getFemale( nextPlayer ) ) {
-							std::string strInfertilitySuffix(infertilitySuffix);
-							std::string strFertilitySuffix(fertilitySuffix);
 							char *infertilityDeclaring = isInfertilityDeclaringSay( m.saidText );
 							char *fertilityDeclaring = isFertilityDeclaringSay( m.saidText );
 							if( infertilityDeclaring != NULL && nextPlayer->fertile ) {
 								nextPlayer->fertile = false;
 								
 								if (nextPlayer->name == NULL) {
-									nextPlayer->displayedName = strdup( strInfertilitySuffix.c_str() );
+									nextPlayer->displayedName = infertilitySuffix;
 								} else {
 									std::string strName(nextPlayer->name);
 									strName += strInfertilitySuffix;
@@ -13234,7 +13231,7 @@ int main() {
 								nextPlayer->fertile = true;
 								
 								if (nextPlayer->name == NULL) {
-									nextPlayer->displayedName = strdup( strFertilitySuffix.c_str() );
+									nextPlayer->displayedName = fertilitySuffix;
 								} else {
 									nextPlayer->displayedName = nextPlayer->name;
 								}
