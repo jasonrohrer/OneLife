@@ -343,7 +343,7 @@ function ls_setupDatabase() {
             "INDEX( name ),".
             // 1 if male
             "male TINYINT UNSIGNED NOT NULL,".
-            "last_words VARCHAR(63) NOT NULL,".
+            "last_words VARCHAR(254) NOT NULL,".
             // -1 if not set yet
             // 0 for Eve
             "generation INT NOT NULL,".
@@ -353,6 +353,9 @@ function ls_setupDatabase() {
             "INDEX( generation, death_time ),".
             // single index on death_time to speed up queries on just death_time
             "INDEX( death_time ),".
+            // for users with a lot of lives, need to speed up sorting by
+            // death_time per user
+            "INDEX( user_id, death_time ),".
             // -1 if not set yet
             // 0 for Eve
             // the Eve of this family line
@@ -1585,7 +1588,8 @@ function ls_frontPage() {
     $numNameMatches = 0;
 
     $forceIndexClause = "";
-    
+
+    $needUsersTable = false;
     
 
     if( $email_sha1 != "" ) {
@@ -1593,11 +1597,13 @@ function ls_frontPage() {
         $filterClause = " WHERE users.email_sha1 = '$email_sha1' ";
         $filter = "[email hash]";
         $customFilterSet = true;
+        $needUsersTable = true;
         }
     else if( $emailFilter != "" ) {
         $filterClause = " WHERE users.email = '$emailFilter' ";
         $filter = $emailFilter;
         $customFilterSet = true;
+        $needUsersTable = true;
         }
     else if( $nameFilter != "" ) {
         // name filter is used as prefix filter for speed
@@ -1685,7 +1691,8 @@ function ls_frontPage() {
 
     ls_printFrontPageRows( $forceIndexClause,
                            "$filterClause AND age >= 50", "death_time DESC",
-                           $numPerList );
+                           $numPerList,
+                           $needUsersTable );
 
 
     echo "<tr><td colspan=6><font size=5>Today's Deep Roots:".
@@ -1695,7 +1702,8 @@ function ls_frontPage() {
         $forceIndexClause,
         "$rootFilterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 DAY )",
         "lineage_depth DESC, death_time DESC",
-        $numPerList );
+        $numPerList,
+        $needUsersTable );
     
     
     echo "<tr><td colspan=6>".
@@ -1704,7 +1712,8 @@ function ls_frontPage() {
     ls_printFrontPageRows( $forceIndexClause,
                            "$filterClause AND age >= 20 AND age < 50",
                            "death_time DESC",
-                           $numPerList );
+                           $numPerList,
+                           $needUsersTable );
 
 
     echo "<tr><td colspan=6>".
@@ -1712,7 +1721,8 @@ function ls_frontPage() {
     
     ls_printFrontPageRows( $forceIndexClause,
                            "$filterClause AND age < 20", "death_time DESC",
-                           $numPerList );
+                           $numPerList,
+                           $needUsersTable );
 
 
     
@@ -1724,7 +1734,8 @@ function ls_frontPage() {
         "$rootFilterClause AND ".
         "death_time >= DATE_SUB( NOW(), INTERVAL 1 WEEK )",
         "lineage_depth DESC, death_time DESC",
-        $numPerList );
+        $numPerList,
+        $needUsersTable );
 
 
     echo "<tr><td colspan=6><font size=5>All Time Deep Roots:".
@@ -1734,7 +1745,8 @@ function ls_frontPage() {
         $forceIndexClause,
         $rootFilterClause,
         "lineage_depth DESC, death_time DESC",
-        $numPerList );
+        $numPerList,
+        $needUsersTable );
 
     
     
@@ -1756,7 +1768,8 @@ function ls_frontPage() {
         $specialForceIndexClause,
         "$filterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 DAY )",
         "generation DESC, death_time DESC",
-        $numPerList );
+        $numPerList,
+        $needUsersTable );
     
     
     echo "<tr><td colspan=6><font size=5>This Week's Long Lines:".
@@ -1766,7 +1779,8 @@ function ls_frontPage() {
         $forceIndexClause,
         "$filterClause AND death_time >= DATE_SUB( NOW(), INTERVAL 1 WEEK )",
         "generation DESC, death_time DESC",
-        $numPerList );
+        $numPerList,
+        $needUsersTable );
 
     
 
@@ -1775,7 +1789,8 @@ function ls_frontPage() {
     
     ls_printFrontPageRows( $forceIndexClause,
                            $filterClause, "generation DESC, death_time DESC",
-                           $numPerList );
+                           $numPerList,
+                           $needUsersTable );
 
 
     
@@ -1804,21 +1819,26 @@ function ls_getGrayPercent( $inDeathAgoSec ) {
 
 
 function ls_printFrontPageRows( $inForceIndexClause,
-                                $inFilterClause, $inOrderBy, $inNumRows ) {
+                                $inFilterClause, $inOrderBy, $inNumRows,
+                                $inNeedUsersTable ) {
     global $tableNamePrefix;
     global $photoServerURL, $usePhotoServer;
 
     $startTime = microtime( true );
 
-    $query = "SELECT lives.id, display_id, player_id, name, ".
-        "age, generation, death_time, deepest_descendant_generation, ".
-        "servers.server " .
+    $usersTableJoin = "";
+
+    if( $inNeedUsersTable ) {
+        $usersTableJoin =
+            "INNER JOIN $tableNamePrefix"."users as users ".
+            "ON lives.user_id = users.id ";
+        }
+    
+    $query = "SELECT lives.id, server_id, display_id, player_id, name, ".
+        "age, generation, death_time, deepest_descendant_generation ".
         "FROM $tableNamePrefix"."lives as lives ".
         " $inForceIndexClause ".
-        "INNER JOIN $tableNamePrefix"."users as users ".
-        "ON lives.user_id = users.id ".
-        "INNER JOIN $tableNamePrefix"."servers as servers ".
-        "ON lives.server_id = servers.id  ".
+        " $usersTableJoin ".
         "$inFilterClause ".
         "ORDER BY $inOrderBy ".
         "LIMIT $inNumRows;";
@@ -1833,6 +1853,7 @@ function ls_printFrontPageRows( $inForceIndexClause,
 
         $id = ls_mysqli_result( $result, $i, "id" );
         $display_id = ls_mysqli_result( $result, $i, "display_id" );
+        $server_id = ls_mysqli_result( $result, $i, "server_id" );
         $name = ls_mysqli_result( $result, $i, "name" );
         $age = ls_mysqli_result( $result, $i, "age" );
         $generation = ls_mysqli_result( $result, $i, "generation" );
@@ -1906,7 +1927,9 @@ function ls_printFrontPageRows( $inForceIndexClause,
 
         if( $usePhotoServer ) {
 
-            $serverName = ls_mysqli_result( $result, $i, "server" );
+            $serverID = ls_mysqli_result( $result, $i, "server_id" );
+            $serverName = ls_getServerName( $serverID );
+
             $player_id = ls_mysqli_result( $result, $i, "player_id" );
             
             $imageURL =
@@ -2295,11 +2318,8 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
     global $tableNamePrefix;
 
     $query = "SELECT lives.id, display_id, server_id, player_id, name, ".
-        "age, last_words, generation, death_time, death_cause, ".
-        "servers.server " .
+        "age, last_words, generation, death_time, death_cause ".
         "FROM $tableNamePrefix"."lives as lives ".
-        "INNER JOIN $tableNamePrefix"."servers as servers ".
-        "ON lives.server_id = servers.id  ".
         "WHERE lives.id=$inID;";
     
     $result = ls_queryDatabase( $query );
@@ -2310,6 +2330,7 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
 
         $id = ls_mysqli_result( $result, 0, "id" );
         $display_id = ls_mysqli_result( $result, 0, "display_id" );
+        $server_id = ls_mysqli_result( $result, 0, "server_id" );
         $name = ls_mysqli_result( $result, 0, "name" );
         $last_words = ls_mysqli_result( $result, 0, "last_words" );
         $age = ls_mysqli_result( $result, 0, "age" );
@@ -2361,7 +2382,9 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
 
         if( $usePhotoServer ) {
             // now real photo link to right of face
-            $serverName = ls_mysqli_result( $result, 0, "server" );
+            $serverID = ls_mysqli_result( $result, 0, "server_id" );
+            $serverName = ls_getServerName( $serverID );
+
             $player_id = ls_mysqli_result( $result, 0, "player_id" );
             
             $imageURL =
@@ -2446,9 +2469,16 @@ function ls_displayPerson( $inID, $inRelID, $inFullWords ) {
             // show link to full tree on Wondible server
             $serverID = ls_mysqli_result( $result, 0, "server_id" );
             $player_id = ls_mysqli_result( $result, 0, "player_id" );
+
+            $serverName = ls_getServerName( $serverID );
+
+            // rough time window around birth
+            $end_time=strtotime( $death_time );
+            $start_time = $end_time - 3600 * 2;
             
             $url = "https://wondible.com/ohol-family-trees/#".
-                "server_id=$serverID&epoch=2&playerid=$player_id";
+                "server_name=$serverName&start_time=$start_time".
+                "&end_time=$end_time&playerid=$player_id";
 
             echo "<br>[<a href='$url'>Full Tree</a>]\n";
             }
@@ -2864,6 +2894,16 @@ function ls_characterPage() {
     
     echo "</center>\n";
 
+    $server_id = ls_getServerIDForLife( $id );
+
+    $serverName = "";
+
+    if( $server_id != -1 ) {
+        $serverName = ls_getServerName( $server_id );
+        }
+
+    echo "<br>Server: $serverName";
+    
     eval( $footer );    
     }
 

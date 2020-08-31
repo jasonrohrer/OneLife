@@ -1,4 +1,5 @@
 #include "minorGems/util/SimpleVector.h"
+#include "../gameSource/GridPos.h"
 
 
 void initCurses();
@@ -7,7 +8,7 @@ void freeCurses();
 
 
 void cursesLogBirth( char *inEmail );
-void cursesLogDeath( char *inEmail, double inAge );
+void cursesLogDeath( char *inEmail, double inAge, GridPos inDeathPos );
 
 
 
@@ -26,8 +27,12 @@ void getNewCurseTokenHolders( SimpleVector<char*> *inEmailList );
 
 // spends token and registers a curse
 // returns true of curse effective
+// enforces inMaxDistance for dead receivers only
+// (position of living players isn't tracked internally)
 char cursePlayer( int inGiverID, int inGiverLineageEveID, 
-                  char *inGiverEmail, char *inReceiverName );
+                  char *inGiverEmail, GridPos inGiverPos,
+                  double inMaxDistance,
+                  char *inReceiverName );
 
 
 // spends a token directly

@@ -1,7 +1,14 @@
-int versionNumber = 268;
+int versionNumber = 352;
 int dataVersionNumber = 0;
 
 int binVersionNumber = versionNumber;
+
+// Note to modders:
+// Please use this tag to describe your client honestly and uniquely
+// client_official is reserved for the unmodded client
+// do not include whitespace in your tag
+const char *clientTag = "client_official";
+
 
 
 // NOTE that OneLife doesn't use account hmacs
@@ -100,6 +107,8 @@ CustomRandomSource randSource( 34957197 );
 #include "musicPlayer.h"
 
 #include "whiteSprites.h"
+
+#include "message.h"
 
 
 // should we pull the map
@@ -831,6 +840,60 @@ static void drawPauseScreen() {
         drawPos = add( drawPos, lastScreenViewCenter );
 
         drawSprite( instructionsSprite, drawPos );
+
+        TextAlignment a = getMessageAlign();
+
+
+
+        drawPos = lastScreenViewCenter;
+        
+        drawPos.x -= 600;
+        drawPos.y += 320;
+        
+
+        doublePair rectPos = drawPos;
+        rectPos.x += 155;
+        rectPos.y -= 320;
+        
+        setDrawColor( 1, 1, 1, 0.5 * pauseScreenFade );
+        
+        drawRect( rectPos, 182, 362 );
+
+        setDrawColor( 0.2, 0.2, 0.2, 0.85 * pauseScreenFade  );
+
+        drawRect( rectPos, 170, 350  );
+
+        
+        setMessageAlign( alignLeft );
+        drawMessage( translate( "commandHintsA" ), drawPos, false, 
+                     pauseScreenFade );
+
+
+
+        drawPos = lastScreenViewCenter;
+        
+        drawPos.x += 285;
+        drawPos.y += 320;
+        
+
+        rectPos = drawPos;
+        rectPos.x += 160;
+        rectPos.y -= 320;
+        
+        setDrawColor( 1, 1, 1, 0.5 * pauseScreenFade );
+        
+        drawRect( rectPos, 187, 362 );
+
+        setDrawColor( 0.2, 0.2, 0.2, 0.85 * pauseScreenFade  );
+
+        drawRect( rectPos, 175, 350  );
+
+        
+        setMessageAlign( alignLeft );
+        drawMessage( translate( "commandHintsB" ), drawPos, false, 
+                     pauseScreenFade );
+        
+        setMessageAlign( a );
         }
     
 
@@ -1868,6 +1931,21 @@ void drawFrame( char inUpdate ) {
 
                 currentGamePage->base_makeActive( true );
                 }
+            else if( livingLifePage->checkSignal( "reconnectFailed" ) ) {
+                lastScreenViewCenter.x = 0;
+                lastScreenViewCenter.y = 0;
+
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                
+                currentGamePage = existingAccountPage;
+                
+                existingAccountPage->setStatus( "reconnectFailed", true );
+
+                existingAccountPage->setStatusPositiion( true );
+
+                currentGamePage->base_makeActive( true );
+                }
             else if( livingLifePage->checkSignal( "noLifeTokens" ) ) {
                 lastScreenViewCenter.x = 0;
                 lastScreenViewCenter.y = 0;
@@ -1989,6 +2067,7 @@ void drawFrame( char inUpdate ) {
                 currentGamePage->base_makeActive( true );
                 }
             else if( livingLifePage->checkSignal( "died" ) ) {
+                existingAccountPage->setStatus( NULL, false );
                 showDiedPage();
                 }
             else if( livingLifePage->checkSignal( "disconnect" ) ) {

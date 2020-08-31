@@ -67,3 +67,26 @@ timeSec_t valueToTime( unsigned char *inValue ) {
     // caste back to timeSec_t
     return doubleTime;
     }
+
+
+// four ints to a 16-byte key
+void intQuadToKey( int inX, int inY, int inSlot, int inB, 
+                   unsigned char *outKey ) {
+    for( int i=0; i<4; i++ ) {
+        int offset = i * 8;
+        outKey[i] = ( inX >> offset ) & 0xFF;
+        outKey[i+4] = ( inY >> offset ) & 0xFF;
+        outKey[i+8] = ( inSlot >> offset ) & 0xFF;
+        outKey[i+12] = ( inB >> offset ) & 0xFF;
+        }    
+    }
+
+
+// two ints to an 8-byte key
+void intPairToKey( int inX, int inY, unsigned char *outKey ) {
+    for( int i=0; i<4; i++ ) {
+        int offset = i * 8;
+        outKey[i] = ( inX >> offset ) & 0xFF;
+        outKey[i+4] = ( inY >> offset ) & 0xFF;
+        }    
+    }

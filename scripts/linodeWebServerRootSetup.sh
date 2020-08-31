@@ -100,6 +100,15 @@ git clone https://jasonrohrer@github.com/jasonrohrer/OneLife.git
 
 cp OneLife/scripts/nginx/sites-available/default /etc/nginx/sites-available/default
 
+
+echo "You need to edit the nginx config file to change the server_name."
+echo -n "Hit [ENTER] when ready: "
+read
+
+emacs /etc/nginx/sites-available/default
+
+
+
 nginx -s reload
 
 echo ""

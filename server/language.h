@@ -12,7 +12,8 @@ void addEveLanguage( int inPlayerID );
 
 void incrementLanguageCount( int inEveID );
 
-void decrementLanguageCount( int inEveID );
+// returns number of speakers of the language remaining
+int decrementLanguageCount( int inEveID );
 
 void stepLanguage();
 
@@ -25,6 +26,9 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
                          int inPlayerIDA, int inPlayerIDB,
                          // ages in years
                          double inAgeA, double inAgeB,
-                         int inParentIDA, int inParentIDB );
+                         int inParentIDA, int inParentIDB,
+                         // if > 0, some clusters that would be in other
+                         // language come straight through
+                         double inFractionToPassThrough );
 
 

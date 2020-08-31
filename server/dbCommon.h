@@ -19,3 +19,14 @@ void timeToValue( timeSec_t inT, unsigned char *outValue );
 
 // inValue is 8 bytes
 timeSec_t valueToTime( unsigned char *inValue );
+
+
+
+// four ints to a 16-byte key
+void intQuadToKey( int inX, int inY, int inSlot, int inB, 
+                   unsigned char *outKey );
+
+
+// two ints to an 8-byte key
+void intPairToKey( int inX, int inY, unsigned char *outKey );
+

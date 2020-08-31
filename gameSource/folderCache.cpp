@@ -11,9 +11,17 @@
 
 
 
+static int stringSortCompare(const void *inA, const void * inB ) {
+    
+    return strcmp( *(char**)inA, *(char**)inB );
+    }
+
+
 
 FolderCache initFolderCache( const char *inFolderName, 
-                             char *outRebuildingCache ) {
+                             char *outRebuildingCache,
+                             char (*inInclusionTest)( char *inFileName ),
+                             char inForceRebuild ) {
     *outRebuildingCache = false;
     
     File *folderDir = new File( NULL, inFolderName );
@@ -27,6 +35,13 @@ FolderCache initFolderCache( const char *inFolderName,
     
     File *cacheFile = folderDir->getChildFile( "cache.fcz" );
     
+    if( inForceRebuild && cacheFile->exists() ) {
+        printf( "Forcing remove/rebuild of cache.fcz in %s folder\n",
+                inFolderName );
+
+        cacheFile->remove();
+        }
+
 
     FolderCache c;
     c.folderDir = folderDir;
@@ -109,6 +124,9 @@ FolderCache initFolderCache( const char *inFolderName,
                 
                 *outRebuildingCache = false;
 
+                printf( "cache.fcz file in folder %s good with %d files\n",
+                        inFolderName, c.numFiles );
+
                 delete [] charData;
                 }
             }
@@ -116,6 +134,112 @@ FolderCache initFolderCache( const char *inFolderName,
         }
         
     delete cacheFile;
+
+
+    if( cacheGood ) {
+        // make sure cache matches existing folder contents
+
+        printf( "Checking that cache contains all of %s folder's "
+                "current files...\n", inFolderName );
+
+        double startTime = Time::getCurrentTime();
+
+        int numChildFiles;
+        File **childFiles = 
+            folderDir->getChildFilesSorted( &numChildFiles );
+
+        
+        char **cacheFileNames = new char*[ c.numFiles ];
+        
+        for( int j=0; j<c.numFiles; j++ ) {
+            cacheFileNames[j] = c.fileRecords[j].fileName;
+            }
+
+        
+        qsort( cacheFileNames, c.numFiles, sizeof(char*), stringSortCompare );
+        
+
+        char cacheStale = false;
+
+        // index into sorted cache
+        int j = 0;
+        
+        for( int i=0; i<numChildFiles; i++ ) {
+            char *fileName = childFiles[i]->getFileName();
+    
+            // skip our special cache data file
+            if( ! childFiles[i]->isDirectory()
+                &&
+                // make sure file should be included
+                inInclusionTest( fileName )
+                &&
+                strcmp( fileName, "cache.fcz" ) != 0 ) {
+
+                
+                if( j < c.numFiles ) {
+                    if( strcmp( cacheFileNames[j], fileName ) != 0 ) {
+                        cacheStale = true;
+                        printf( 
+                            "Cache file %s does not match folder file %s\n",
+                            cacheFileNames[j], fileName );
+                        delete [] fileName;
+                        break;
+                        }
+                    }
+                else {
+                    cacheStale = true;
+                    printf( 
+                        "Folder file %s not present in cache.\n", fileName );
+                    delete [] fileName;
+                    break;
+                    }
+                j++;
+                }
+            delete [] fileName;
+            }
+        
+        if( ! cacheStale && j < c.numFiles ) {
+            printf( "Cache contains %d extra files not present in folder\n",
+                    c.numFiles - j );
+            cacheStale = true;
+            }
+
+        delete [] cacheFileNames;
+        
+        for( int i=0; i<numChildFiles; i++ ) {
+            delete childFiles[i];
+            }
+        delete [] childFiles;
+        
+        if( ! cacheStale ) {
+            printf( "Cache not stale -- " );
+            }
+        else {
+            printf( "Cache stale, rebuilding -- " );
+            }
+        
+        printf( "Checking took %f ms\n",
+                1000 * ( Time::getCurrentTime() - startTime ) );
+        
+        
+        if( cacheStale ) {
+            // rebuild it
+            
+            // don't write out or free folderDir
+            c.folderDir = NULL;
+            
+            freeFolderCache( c );
+            
+            c.folderDir = folderDir;
+            c.newDataBlock = new SimpleVector<char>();
+            
+            cacheGood = false;
+            }
+        }
+    
+    
+    
+
     
     if( !cacheGood ) {
         // cache stale or not present
@@ -136,6 +260,9 @@ FolderCache initFolderCache( const char *inFolderName,
             
             // skip our special cache data file
             if( ! childFiles[i]->isDirectory()
+                &&
+                // make sure file should be included
+                inInclusionTest( fileName )
                 &&
                 strcmp( fileName, "cache.fcz" ) != 0 ) {
             

@@ -11,12 +11,14 @@
 #define XX_PRIME32_5 374761393U
 
 
-static uint32_t xxSeed = 0U;
+static uint32_t xxSeedA = 0U;
+static uint32_t xxSeedB = 0U;
 
 
 
-void setXYRandomSeed( uint32_t inSeed ) {
-    xxSeed = inSeed;
+void setXYRandomSeed( uint32_t inSeedA, uint32_t inSeedB ) {
+    xxSeedA = inSeedA;
+    xxSeedB = inSeedB;
     }
 
 
@@ -59,13 +61,14 @@ static uint32_t xxHash2D( uint32_t inX, uint32_t inY ) {
 // tweaked to be faster by removing lines that don't seem to matter
 // for procedural content generation
 static uint32_t xxTweakedHash2D( uint32_t inX, uint32_t inY ) {
-    uint32_t h32 = xxSeed + inX + XX_PRIME32_5;
+    uint32_t h32 = xxSeedA + inX + XX_PRIME32_5;
     //h32 += 4U;
     h32 += inY * XX_PRIME32_3;
     //h32 = XX_ROTATE_LEFT( h32, 17 ) * XX_PRIME32_4;
     //h32 ^= h32 >> 15;
     h32 *= XX_PRIME32_2;
     h32 ^= h32 >> 13;
+    h32 += xxSeedB;
     h32 *= XX_PRIME32_3;
     h32 ^= h32 >> 16;
     return h32;

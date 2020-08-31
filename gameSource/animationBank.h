@@ -6,6 +6,8 @@
 
 #include "minorGems/util/SimpleVector.h"
 
+#include "minorGems/game/gameGraphics.h"
+
 #include "objectBank.h"
 #include "emotion.h"
 
@@ -270,7 +272,7 @@ typedef struct ObjectAnimPack {
         int *inContainedIDs;
         SimpleVector<int> *inSubContained;
         
-        Emotion *setEmot;
+        SimpleVector<Emotion*> setEmots;
 
         // can be added by caller after this structure
         // is returned by drawObjectAnimPacked
@@ -443,13 +445,29 @@ char isSoundUsedByAnim( int inSoundID );
 
 
 // sets emotion for subsequent drawObjectAnim calls, or NULL for no emotion
+// clear extra layers
 void setAnimationEmotion( Emotion *inEmotion );
+
+// add an extra layer of emotion for drawObjectAnim calls
+void addExtraAnimationEmotions( SimpleVector<Emotion*> *inList );
+
+
+// set to -1 to clear
+// drawn on top of tunic of people who are drawn
+// inBareBadge = true to draw badge on bare skin if wearing no tunic
+void setAnimationBadge( int inBadgeID, char inBareBadge = false );
+void setAnimationBadgeColor( FloatColor inBadgeColor );
+
 
 
 // sets fade values for clothing highlights of next drawn person
 // or NULL for no clothing highlights
 // Copied internally.
 void setClothingHighlightFades( float *inFades );
+
+
+// toggles hiding of "Shadow" tagged sprites on drawn person objects
+void hidePersonShadows( char inHide );
 
 
 

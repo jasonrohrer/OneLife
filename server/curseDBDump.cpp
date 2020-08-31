@@ -52,7 +52,13 @@ int main() {
 
         key[79] = '\0';
         
-        printf( "%s\n", (char*)key );
+        timeSec_t t = valueToTime( value );
+
+        time_t tt = (time_t)t;
+        
+        char *humanTime = ctime( &tt );
+
+        printf( "%s | %s\n", (char*)key, humanTime );
         }
 
 

@@ -37,6 +37,9 @@ typedef struct CurseRecord {
         double livedTimeSinceScoreDecrement;
 
         double lastBirthTime;
+
+        GridPos deathPos;
+        double deathTime;
     } CurseRecord;
 
 
@@ -186,6 +189,10 @@ void initCurses() {
                 r.livedTimeSinceScoreDecrement = livedTimeSinceScoreDecrement;
                 r.lastBirthTime = Time::getCurrentTime();
                 
+                r.deathPos.x = 0;
+                r.deathPos.y = 0;
+                r.deathTime = 0;
+                
                 curseRecords.push_back( r );
                 }
             }
@@ -324,7 +331,12 @@ static void stepCurses() {
             }
 
 
-        if( ! r->alive )
+        // for records for non-living players, if they've been dead
+        // for more than 10 minutes
+        // (we keep their name record for 5 minutes)
+        if( ! r->alive &
+            ( r->deathTime == 0 ||
+              curTime - r->deathTime > 10 * 60 ) )
         if( ( r->tokens == 1 && r->score == 0 )
             ||
             curTime - r->lastBirthTime > 3600 * 96 ) {
@@ -368,7 +380,9 @@ static CurseRecord *findCurseRecord( char *inEmail ) {
                       0,
                       0,
                       0,
-                      curTime };
+                      curTime,
+                      { 0, 0 },
+                      0 };
     
     
     curseRecords.push_back( r );
@@ -429,20 +443,25 @@ void cursesLogBirth( char *inEmail ) {
 
 
 
-void cursesLogDeath( char *inEmail, double inAge ) {
+void cursesLogDeath( char *inEmail, double inAge, GridPos inDeathPos ) {
     CurseRecord *r = findCurseRecord( inEmail );
     
     if( r->alive ) {
         
         r->alive = false;
 
+        double curTime = Time::getCurrentTime();
+
         double lifeTimeSinceToken = 
-            Time::getCurrentTime() - r->aliveStartTimeSinceTokenSpent;
+            curTime - r->aliveStartTimeSinceTokenSpent;
         double lifeTimeSinceScoreDecrement = 
-            Time::getCurrentTime() - r->aliveStartTimeSinceScoreDecrement;
+            curTime - r->aliveStartTimeSinceScoreDecrement;
         
         r->livedTimeSinceTokenSpent += lifeTimeSinceToken;
         r->livedTimeSinceScoreDecrement += lifeTimeSinceScoreDecrement;
+
+        r->deathPos = inDeathPos;
+        r->deathTime = curTime;
         }
 
     for( int i=0; i<playerNames.size(); i++ ) {
@@ -457,7 +476,21 @@ void cursesLogDeath( char *inEmail, double inAge ) {
             // push to front of list
             PlayerNameRecord newRec = *r;
             playerNames.deleteElement( i );
-            playerNames.push_front( newRec );
+
+            // but maintain time-sorted order
+            int numToSkip = 0;
+            
+            for( int j=0; j<playerNames.size(); j++ ) {
+                PlayerNameRecord *rOther = playerNames.getElement( j );
+                if( rOther->timeCreated < r->timeCreated ) {
+                    numToSkip ++;
+                    }
+                else {
+                    break;
+                    }
+                }
+
+            playerNames.push_middle( newRec, numToSkip );
             break;
             }
         }
@@ -566,7 +599,9 @@ char spendCurseToken( char *inGiverEmail ) {
 
 
 
-char cursePlayer( int inGiverID, int inGiverLineageEveID, char *inGiverEmail, 
+char cursePlayer( int inGiverID, int inGiverLineageEveID, char *inGiverEmail,
+                  GridPos inGiverPos,
+                  double inMaxDistance,
                   char *inReceiverName ) {
     stepCurses();
     
@@ -597,12 +632,18 @@ char cursePlayer( int inGiverID, int inGiverLineageEveID, char *inGiverEmail,
         // giver is receiver, block
         return false;
         }
-    
+
+
+    if( ! receiverRecord->alive &&
+        distance( inGiverPos, receiverRecord->deathPos ) > inMaxDistance ) {
+        // too far away from this death pos
+        return false;
+        }
 
     if( !spendCurseToken( inGiverEmail ) ) {
         return false;
         }
-
+    
     
     double curTime = Time::getCurrentTime();
 

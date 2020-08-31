@@ -13,6 +13,18 @@ $stopSpreadingFraction = .10;
 $updateServerURL = "http://onehouronelife.com/updateServer/server.php";
 
 
+$reflectorLog = "/tmp/reflectorLog.txt";
+
+
+function logMessage( $inMessage ) {
+    global $reflectorLog;
+
+    $d = date("M d, Y h:i:s A");
+    
+    file_put_contents( $reflectorLog, "$d $inMessage \n", FILE_APPEND );
+    }
+
+
 include( "requiredVersion.php" );
 
 global $version;
@@ -199,6 +211,7 @@ if( $handle ) {
         $offlineServerFlags = array();
         
         $totalNumServer = 0;
+        $totalNumOnline = 0;
         
         while( ( $line = fgets( $handle ) ) !== false ) {
             // process the line read.
@@ -251,6 +264,10 @@ if( $handle ) {
                 $offlineServerFlags[] = $offline;
                 
                 $totalNumServer ++;
+
+                if( $offline == 0 ) {
+                    $totalNumOnline ++;
+                    }
                 }
             }
 
@@ -276,8 +293,18 @@ if( $handle ) {
             $i++;
             }
 
-        if( $curNumServers < $totalNumServer &&
+        // never start spreading if we see ALL servers offline
+        // we can't reach them, and we know nothing about them
+        // our $activeMaxCap is 0 in that case, so our test is meaningless
+        if( $numServersSummed > 0 &&
+            $activeMaxCap > 0 &&
+            $activeCurrentPop > 0 &&
+            $curNumServers < $totalNumServer &&
             $activeMaxCap * $startSpreadingFraction <= $activeCurrentPop ) {
+            
+            logMessage( "$activeMaxCap * $startSpreadingFraction <= $activeCurrentPop, ".
+                        "$curNumServers servers is not enough, adding another" );
+
             // we are over 50%
             // add another server for next time
             $curNumServers ++;
@@ -285,8 +312,20 @@ if( $handle ) {
             file_put_contents( $curNumServersFile, $curNumServers );
             // don't adjust $activeMaxCap this time
             }
-        else if( $curNumServers > 1 &&
+        // never STOP spreading if some of our servers are offline
+        // we don't have accurate information about player population in
+        // that case.  Leave spreading in place to avoid ping-ponging
+        // during temporary outages
+        // When in doubt, keep spreading.
+        // Note that in the case of a long-term outtage, the server should
+        // be removed from remoteServerList.ini manually so that it doesn't
+        // interfere with stop-spreading detection.
+        else if( $totalNumOnline == $totalNumServer &&
+                 $curNumServers > 1 &&
                  $activeMaxCap * $stopSpreadingFraction >= $activeCurrentPop ) {
+
+            logMessage( "$activeMaxCap * $stopSpreadingFraction >= $activeCurrentPop, ".
+                        "$curNumServers servers is too many, removing one" );
             // below threshold
             // remove a server for next time
             $curNumServers --;
@@ -506,6 +545,8 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
 
                         fclose( $fileOut );
                         }
+                    logMessage( "$current / $max >= $startSpreadingFraction for server ".
+                                "$inAddress, starting to spread to next server." );
                     }
                 }
             else if( file_exists( $spreadingFile ) ) {
@@ -518,6 +559,9 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
                 // the list from this one
                 if( file_exists( $spreadingFile )  ) {
                     unlink( $spreadingFile );
+
+                    logMessage( "$current / $max <= $stopSpreadingFraction for server ".
+                                "$inAddress, stopping spreading." );
                     }
                 
                 $spreading = false;

@@ -24,6 +24,9 @@
 #include "animationBank.h"
 
 
+#include "spriteDrawColorOverride.h"
+
+
 // supplied by animation bank
 extern void checkDrawPos( int inObjectID, doublePair inPos );
 
@@ -34,6 +37,10 @@ static int mapSize;
 // maps IDs to records
 // sparse, so some entries are NULL
 static ObjectRecord **idMap;
+
+
+// what object to return
+static int defaultObjectID = -1;
 
 
 static StringTree tree;
@@ -56,6 +63,14 @@ static SimpleVector<int> deathMarkerObjectIDs;
 // (marked with fromDeath in description)
 static SimpleVector<int> allPossibleDeathMarkerIDs;
 
+static SimpleVector<int> allPossibleFoodIDs;
+
+
+static SimpleVector<TapoutRecord> tapoutRecords;
+
+
+static int maxFoodValue = 0;
+
 
 
 
@@ -77,6 +92,51 @@ int getNumGlobalTriggers() {
 
 int getMetaTriggerObject( int inTriggerIndex ) {
     return globalTriggers.getElementDirect( inTriggerIndex ).onTriggerID;
+    }
+
+
+
+typedef struct ToolSetRecord {
+        // can be null for a single-tool set
+        char *setTag;
+        
+        SimpleVector<int> setMembership;
+    } ToolSetRecord;
+
+
+SimpleVector<ToolSetRecord> toolSetRecords;
+
+
+// inSetTage destroyed interally, NOT by caller
+static int getToolSetIndex( char *inSetTag = NULL ) {
+    if( inSetTag != NULL ) {
+        
+        for( int i=0; i<toolSetRecords.size(); i++ ) {
+            ToolSetRecord *r = toolSetRecords.getElement( i );
+            
+            if( r->setTag != NULL ) {
+                
+                if( strcmp( inSetTag, r->setTag ) == 0 ) {
+                    delete [] inSetTag;
+                    return i;
+                    }
+                }
+            }
+        }
+    
+    // need to return a new record
+    ToolSetRecord r = { inSetTag };
+    
+    toolSetRecords.push_back( r );
+    
+    return toolSetRecords.size() - 1;
+    }
+
+
+static void addToolSetMembership( int inToolSetIndex, int inObjectID ) {
+    ToolSetRecord *r = toolSetRecords.getElement( inToolSetIndex );
+    
+    r->setMembership.push_back( inObjectID );
     }
 
 
@@ -207,6 +267,17 @@ void setDrawColor( FloatRGB inColor ) {
 
 
 
+static char shouldFileBeCached( char *inFileName ) {
+    if( strstr( inFileName, ".txt" ) != NULL &&
+        strstr( inFileName, "groundHeat_" ) == NULL &&
+        strcmp( inFileName, "nextObjectNumber.txt" ) != 0 ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
 static char autoGenerateUsedObjects = false;
 static char autoGenerateVariableObjects = false;
 
@@ -219,7 +290,8 @@ int initObjectBankStart( char *outRebuildingCache,
     currentFile = 0;
     
 
-    cache = initFolderCache( "objects", outRebuildingCache );
+    cache = initFolderCache( "objects", outRebuildingCache,
+                             shouldFileBeCached );
 
     autoGenerateUsedObjects = inAutoGenerateUsedObjects;
     autoGenerateVariableObjects = inAutoGenerateVariableObjects;
@@ -377,7 +449,8 @@ static void setupObjectWritingStatus( ObjectRecord *inR ) {
             }
         if( strstr( inR->description, "&writable" ) != NULL ) {
             inR->writable = true;
-            inR->mayHaveMetadata = true;
+            // writable objects don't have metadata yet
+            // inR->mayHaveMetadata = true;
             }
         }
     }
@@ -507,14 +580,243 @@ static void setupMaxPickupAge( ObjectRecord *inR ) {
 
 static void setupWall( ObjectRecord *inR ) {
     inR->wallLayer = inR->floorHugging;
+    inR->frontWall = false;
+
+    if( ! inR->wallLayer ) {    
+        char *wallPos = strstr( inR->description, "+wall" );
+        if( wallPos != NULL ) {
+            inR->wallLayer = true;
+            }
+        }
     
     if( inR->wallLayer ) {
+        char *noWallPos = strstr( inR->description, "-wall" );
+        if( noWallPos != NULL ) {
+            inR->wallLayer = false;
+            }
+        else {
+            char *frontWallPos = strstr( inR->description, "+frontWall" );
+            if( frontWallPos != NULL ) {
+                inR->frontWall = true;
+                }
+            }
+        }
+    }
+
+
+
+static void setupTapout( ObjectRecord *inR ) {
+    inR->isTapOutTrigger = false;
+    
+    if( inR->isUseDummy || inR->isVariableDummy ) {
+        // only parent object counts tapouts
         return;
         }
+    
 
-    char *wallPos = strstr( inR->description, "+wall" );
-    if( wallPos != NULL ) {
-        inR->wallLayer = true;
+    char *triggerPos = strstr( inR->description, "+tapoutTrigger" );
+                
+    if( triggerPos != NULL ) {
+        int xGrid, yGrid;
+        int xLimit, yLimit;
+        int buildCountLimit = -1;
+        int postBuildLimitX = 0;
+        int postBuildLimitY = 0;
+        
+        int numRead = sscanf( triggerPos, 
+                              "+tapoutTrigger,%d,%d,%d,%d,"
+                              "%d,%d,%d",
+                              &xGrid, &yGrid,
+                              &xLimit, &yLimit,
+                              &buildCountLimit,
+                              &postBuildLimitX,
+                              &postBuildLimitY );
+        if( numRead == 4 || numRead == 7 ) {
+            // valid tapout trigger
+            TapoutRecord r;
+            
+            r.triggerID = inR->id;
+            r.gridSpacingX = xGrid;
+            r.gridSpacingY = yGrid;
+            r.limitX = xLimit;
+            r.limitY = yLimit;
+            
+            r.buildCountLimit = buildCountLimit;
+            r.buildCount = 0;
+            r.postBuildLimitX = postBuildLimitX;
+            r.postBuildLimitY = postBuildLimitY;
+            
+            tapoutRecords.push_back( r );
+            
+            inR->isTapOutTrigger = true;
+            }
+        }
+    }
+
+
+
+
+static void setupToolSet( ObjectRecord *inR ) {
+    inR->toolSetIndex = -1;
+    inR->toolLearned = false;    
+    
+    char *toolPos = strstr( inR->description, "+tool" );
+                
+    if( toolPos != NULL ) {
+        
+        char *skipPos = &( toolPos[5] );
+        
+        char *setTag = NULL;
+
+        if( skipPos[0] != ' ' &&
+            skipPos[0] != '\0' ) {
+            
+            char tag[100];
+
+            int numRead = sscanf( skipPos, "%99s", tag );
+            
+            if( numRead == 1 ) {
+                setTag = stringDuplicate( tag );
+                }
+            }
+        
+        inR->toolSetIndex = getToolSetIndex( setTag );
+        addToolSetMembership( inR->toolSetIndex, inR->id );
+        }
+    }
+
+
+
+static void setupDefaultObject( ObjectRecord *inR ) {
+    if( strstr( inR->description, "+default" ) ) {
+        defaultObjectID = inR->id;
+        }
+    }
+
+
+
+static void setupAutoDefaultTrans( ObjectRecord *inR ) {
+    inR->autoDefaultTrans = false;
+
+    char *pos = strstr( inR->description, "+autoDefaultTrans" );
+    if( pos != NULL ) {
+        inR->autoDefaultTrans = true;
+        }
+    }
+
+
+static void setupNoBackAccess( ObjectRecord *inR ) {
+    inR->noBackAccess = false;
+
+    char *pos = strstr( inR->description, "+noBackAccess" );
+    if( pos != NULL ) {
+        inR->noBackAccess = true;
+        }
+    }
+
+
+static void setupAlcohol( ObjectRecord *inR ) {
+    inR->alcohol = 0;
+
+    char *pos = strstr( inR->description, "+alcohol" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+alcohol%d", &( inR->alcohol ) );
+        }
+    }
+
+
+static void setupBlocksMoving( ObjectRecord *inR ) {
+    inR->blocksMoving = false;
+    
+    if( inR->blocksWalking ) {
+        inR->blocksMoving = true;
+        return;
+        }
+    
+    char *pos = strstr( inR->description, "+blocksMoving" );
+
+    if( pos != NULL ) {
+        inR->blocksMoving = true;
+        }
+    }
+
+
+
+static void setupFamHomeland( ObjectRecord *inR ) {
+    inR->famUseDist = 0;
+
+    char *pos = strstr( inR->description, "+famUse" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+famUse%d", &( inR->famUseDist ) );
+        }
+    }
+
+
+static void setupForcedBiome( ObjectRecord *inR ) {
+    inR->forceBiome = -1;
+
+    char *pos = strstr( inR->description, "+biomeSet" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+biomeSet%d", &( inR->forceBiome ) );
+        }
+    }
+
+
+
+static void setupExpertFind( ObjectRecord *inR ) {
+    inR->expertFind = false;
+
+    char *pos = strstr( inR->description, "+expertFind" );
+
+    if( pos != NULL ) {
+        inR->expertFind = true;
+        }
+    }
+
+
+
+static void setupNormalOnly( ObjectRecord *inR ) {
+    inR->normalOnly = false;
+
+    char *pos = strstr( inR->description, "+normalOnly" );
+
+    if( pos != NULL ) {
+        inR->normalOnly = true;
+        }
+    }
+
+
+static void setupYumParent( ObjectRecord *inR ) {
+    inR->yumParentID = -1;
+
+    char *pos = strstr( inR->description, "+yum" );
+
+    if( pos != NULL ) {
+        sscanf( pos, "+yum%d", &( inR->yumParentID ) );
+        }
+    }
+
+
+static void setupRoadParent( ObjectRecord *inR ) {
+    inR->roadParentID = -1;
+
+    char *pos = strstr( inR->description, "+road" );
+
+    if( pos != NULL ) {
+        sscanf( pos, "+road%d", &( inR->roadParentID ) );
+        }
+
+    // also deal with noCover
+    inR->noCover = false;
+    pos = strstr( inR->description, "+noCover" );
+    if( pos != NULL ) {
+        inR->noCover = true;
         }
     }
 
@@ -537,9 +839,7 @@ float initObjectBankStep() {
                 
     char *txtFileName = getFileName( cache, i );
             
-    if( strstr( txtFileName, ".txt" ) != NULL &&
-        strstr( txtFileName, "groundHeat_" ) == NULL &&
-        strcmp( txtFileName, "nextObjectNumber.txt" ) != 0 ) {
+    if( shouldFileBeCached( txtFileName ) ) {
                             
         // an object txt file!
                     
@@ -584,11 +884,32 @@ float initObjectBankStep() {
                 
                 setupMaxPickupAge( r );
                 
+                setupAutoDefaultTrans( r );
+                
+                setupNoBackAccess( r );                
+
+                setupAlcohol( r );
+                
+                setupFamHomeland( r );
+                
+                setupForcedBiome( r );
+                
+                setupExpertFind( r );
+
+                setupNormalOnly( r );
+
+                setupYumParent( r );
+                
+                setupRoadParent( r );
+                
+
                 // do this later, after we parse floorHugging
                 // setupWall( r );
                 
 
                 r->isAutoOrienting = false;
+                r->causeAutoOrientHOnly = false;
+                r->causeAutoOrientVOnly = false;
                 r->horizontalVersionID = -1;
                 r->verticalVersionID = -1;
                 r->cornerVersionID = -1;
@@ -705,6 +1026,9 @@ float initObjectBankStep() {
                     
 
                 next++;
+
+                
+                setupBlocksMoving( r );
 
 
                 
@@ -839,7 +1163,15 @@ float initObjectBankStep() {
                             
                 sscanf( lines[next], "foodValue=%d", 
                         &( r->foodValue ) );
-                            
+                
+                if( r->foodValue > maxFoodValue ) {
+                    maxFoodValue = r->foodValue;
+                    }
+                
+                if( r->foodValue > 0 ) {
+                    allPossibleFoodIDs.push_back( r->id );
+                    }
+
                 next++;
                             
                             
@@ -1272,7 +1604,10 @@ float initObjectBankStep() {
                     next++;
                     }       
                 
-
+                r->toolSetIndex = -1;
+                
+                r->isBiomeLimited = false;
+                r->permittedBiomeMap = NULL;
                     
                 records.push_back( r );
 
@@ -1351,6 +1686,105 @@ static char *getVarObjectLabel( int inNumber ) {
     
     return digits.getElementString();
     }
+
+
+
+// returns NULL if not found
+static int *parseNumberList( char *inString, 
+                             const char *inListKey, int *outNum ) {
+    char *keyPos = strstr( inString, inListKey );
+    
+    if( keyPos == NULL ) {
+        return NULL;
+        }
+    
+    char *listStart = &keyPos[ strlen( inListKey ) ];
+    int numParts = 0;
+    
+    char **parts = split( listStart, ",", &numParts );
+    
+
+    int *list = new int[ numParts ];
+    
+    for( int i=0; i<numParts; i++ ) {
+        list[i] = 0;
+        sscanf( parts[i], "%d", &( list[i] ) );
+        delete [] parts[i];
+        }
+    delete [] parts;
+    
+    *outNum = numParts;
+    return list;
+    }
+
+
+
+// counts objects containing a sprite that is not used by any other object
+// (or the first object in the list to use the sprite)
+static void countVisuallyUniqueObjects() {
+    
+    int uniqueCount = 0;
+
+    SimpleVector<int> uniqueList;
+    
+    
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            
+            ObjectRecord *rI = idMap[i];
+
+            int unique = false;
+            
+            for( int s=0; s < rI->numSprites; s++ ) {
+                int sID = rI->sprites[s];
+            
+                
+                unique = true;
+                
+                // look at objects that we've already checked
+                // is this sprite unique amoung them?
+                // if so, it's the first object to use this sprite
+                for( int j=0; j<i; j++ ) {
+                    if( idMap[j] != NULL ) {
+                        ObjectRecord *rJ = idMap[j];    
+                
+                        for( int sJ=0; sJ < rJ->numSprites; sJ++ ) {
+                            
+                            if( rJ->sprites[sJ] == sID ) {
+                                unique = false;
+                                break;
+                                }
+                            }
+                        if( !unique ) {
+                            break;
+                            }
+                        }
+                    if( !unique ) {
+                        break;
+                        }
+                    }
+                if( unique ) {
+                    break;
+                    }
+                }
+            
+            if( unique ) {
+                uniqueCount++;
+                
+                uniqueList.push_back( rI->id );
+                }            
+            }
+        }
+    
+
+    printf( "Objects that are the first on list to have a unique sprite: %d\n",
+            uniqueCount );
+    for( int i=0; i<uniqueList.size(); i++ ) {
+        printf( "%d: %s\n", uniqueList.getElementDirect( i ),
+                getObject( uniqueList.getElementDirect( i ) )->description );
+        }
+    }
+
 
 
 
@@ -1777,6 +2211,34 @@ void initObjectBankFinish() {
         }
     
 
+    // setup tapout triggers
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+            setupTapout( o );
+            }
+        }
+    
+    // setup default object
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+            setupDefaultObject( o );
+            }
+        }
+    
+    
+    if( defaultObjectID == -1 ) {
+        // no default defined
+        // pick first object
+        for( int i=0; i<mapSize; i++ ) {
+            if( idMap[i] != NULL ) {
+                defaultObjectID = i;
+                break;
+                }
+            }
+        }
+    
 
     for( int i=0; i<=MAX_BIOME; i++ ) {
         biomeHeatMap[ i ] = 0;
@@ -1841,14 +2303,29 @@ void initObjectBankFinish() {
                 char *vertKey = autoSprintf( "+vertical%s", label );
                 char *cornerKey = autoSprintf( "+corner%s", label );
                 
+                int vertKeyLen = strlen( vertKey );
+                int cornerKeyLen = strlen( cornerKey );
+
                 for( int j=0; j<mapSize; j++ ) {
-                    if( j != i && idMap[j] != NULL ) {
+                    // consider self too, because horizontal and vertical
+                    // might be the same
+                    if( idMap[j] != NULL ) {
                         ObjectRecord *oOther = idMap[j];
                         
-                        if( strstr( oOther->description, vertKey ) ) {
+                        char *keyPos = strstr( oOther->description, vertKey );
+                        if( keyPos != NULL &&
+                            ( keyPos[ vertKeyLen ] == ' ' ||
+                              keyPos[ vertKeyLen ] == '\0' ) ) {
                             o->verticalVersionID = oOther->id;
                             }
-                        else if( strstr( oOther->description, cornerKey ) ) {
+                        // not else if
+                        // vert and corner might be the same
+                        // (in case of door, which doesn't have a corner
+                        //  version)
+                        keyPos = strstr( oOther->description, cornerKey );
+                        if( keyPos != NULL &&
+                            ( keyPos[ cornerKeyLen ] == ' ' ||
+                              keyPos[ cornerKeyLen ] == '\0' ) ) {
                             o->cornerVersionID = oOther->id;
                             }
                         }
@@ -1876,10 +2353,122 @@ void initObjectBankFinish() {
                     cornerO->isAutoOrienting = true;
                     }
                 }
+            else if( strstr( o->description, "+causeAutoOrient" ) ) {
+                // an object that participates in auto-orienting
+                // but doesn't have orientation versions defined
+                // (example:  horizontal wall with shelf installed)
+                o->isAutoOrienting = true;
+                
+                if( strstr( o->description, "+causeAutoOrientH" ) ) {
+                    o->causeAutoOrientHOnly = true;
+                    }
+                else if( strstr( o->description, "+causeAutoOrientV" ) ) {
+                    o->causeAutoOrientVOnly = true;
+                    }
+                }
             }
         }
 
 
+    // generate all tool sets
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+
+            if( ! o->isUseDummy && ! o->isVariableDummy ) {
+                
+                setupToolSet( o );
+                
+                if( o->toolSetIndex != -1 ) {                    
+                    
+                    if( o->numUses > 1 && o->useDummyIDs != NULL ) {
+                        for( int d=0; d < o->numUses - 1; d++ ) {
+                            int dID = o->useDummyIDs[d];
+                            
+                            getObject( dID )->toolSetIndex = o->toolSetIndex;
+                            addToolSetMembership( o->toolSetIndex, dID );
+                            }
+                        }
+                    if( o->numVariableDummyIDs > 1 && 
+                        o->variableDummyIDs != NULL ) {
+                        
+                        for( int d=0; d < o->numVariableDummyIDs; d++ ) {
+                            int dID = o->variableDummyIDs[d];
+                            
+                            getObject( dID )->toolSetIndex = o->toolSetIndex;
+                            addToolSetMembership( o->toolSetIndex, dID );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+    int maxActualBiome = 0;
+    for( int i=0; i<biomes.size(); i++ ) {
+        int b =  biomes.getElementDirect( i );
+        if( b > maxActualBiome ) {
+            maxActualBiome = b;
+            }
+        }
+    
+    
+    // setup biome limitations
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+            
+            int numReq;
+            int *reqList = parseNumberList( o->description, 
+                                            "+biomeReq",
+                                            &numReq );
+            int numBlock;
+            int *blockList = parseNumberList( o->description, 
+                                            "+biomeBlock",
+                                            &numBlock );
+            
+
+            if( reqList == NULL &&
+                blockList == NULL ) {
+                continue;
+                }
+            
+            o->isBiomeLimited = true;
+            
+            o->maxBiomeMapEntry = maxActualBiome;
+            
+            o->permittedBiomeMap = new char[ maxActualBiome + 1 ];
+            memset( o->permittedBiomeMap, true, maxActualBiome + 1 );
+            
+            if( reqList!= NULL ) {
+                // all but req are blocked
+                memset( o->permittedBiomeMap, false, maxActualBiome + 1 );
+                for( int i=0; i<numReq; i++ ) {
+                    if( reqList[i] <= maxActualBiome ) {
+                        o->permittedBiomeMap[ reqList[i] ] = true;
+                        }
+                    }
+                delete [] reqList;
+                }
+            if( blockList != NULL ) {
+                // remove blocked
+                for( int i=0; i<numBlock; i++ ) {
+                    if( blockList[i] <= maxActualBiome ) {
+                        o->permittedBiomeMap[ blockList[i] ] = false;
+                        }
+                    }
+                delete [] blockList;
+                }
+            }
+        }
+    
+
+    
+    if( false ) {
+        countVisuallyUniqueObjects();
+        }
     }
 
 
@@ -2098,6 +2687,9 @@ static void freeObjectRecord( int inID ) {
             clearSoundUsage( &( idMap[inID]->eatingSound ) );
             clearSoundUsage( &( idMap[inID]->decaySound ) );
             
+            if( idMap[inID]->permittedBiomeMap != NULL ) {
+                delete [] idMap[inID]->permittedBiomeMap;
+                }
 
             delete idMap[inID];
             idMap[inID] = NULL;
@@ -2107,7 +2699,8 @@ static void freeObjectRecord( int inID ) {
             monumentCallObjectIDs.deleteElementEqualTo( inID );
             deathMarkerObjectIDs.deleteElementEqualTo( inID );
             allPossibleDeathMarkerIDs.deleteElementEqualTo( inID );
-            
+            allPossibleFoodIDs.deleteElementEqualTo( inID );
+
             if( race <= MAX_RACE ) {
                 racePersonObjectIDs[ race ].deleteElementEqualTo( inID );
                 }
@@ -2184,6 +2777,10 @@ void freeObjectBank() {
             clearSoundUsage( &( idMap[i]->eatingSound ) );
             clearSoundUsage( &( idMap[i]->decaySound ) );
 
+            if( idMap[i]->permittedBiomeMap != NULL ) {
+                delete [] idMap[i]->permittedBiomeMap;
+                }
+
             delete idMap[i];
             }
         }
@@ -2195,6 +2792,7 @@ void freeObjectBank() {
     monumentCallObjectIDs.deleteAll();
     deathMarkerObjectIDs.deleteAll();
     allPossibleDeathMarkerIDs.deleteAll();
+    allPossibleFoodIDs.deleteAll();
     
     for( int i=0; i<= MAX_RACE; i++ ) {
         racePersonObjectIDs[i].deleteAll();
@@ -2206,6 +2804,17 @@ void freeObjectBank() {
         }
     skipDrawingWorkingArea = NULL;
     skipDrawingWorkingAreaSize = -1;
+
+
+    for( int i=0; i<toolSetRecords.size(); i++ ) {
+        ToolSetRecord *r = toolSetRecords.getElement( i );
+        
+        if( r->setTag != NULL ) {
+            delete [] r->setTag;
+            }
+        }
+    toolSetRecords.deleteAll();
+    
     }
 
 
@@ -2292,7 +2901,8 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->spriteUseVanish,
                         inObject->spriteUseAppear,
                         inNoWriteToFile,
-                        inReplaceID );
+                        inReplaceID,
+                        inObject->cachedHeight );
 
     delete [] biomeString;
 
@@ -2336,7 +2946,7 @@ void resaveAll() {
 #include "objectMetadata.h"
 
 
-ObjectRecord *getObject( int inID ) {
+ObjectRecord *getObject( int inID, char inNoDefault ) {
     inID = extractObjectID( inID );
     
     if( inID < mapSize ) {
@@ -2344,6 +2954,15 @@ ObjectRecord *getObject( int inID ) {
             return idMap[inID];
             }
         }
+
+    if( ! inNoDefault && defaultObjectID != -1 ) {
+        if( defaultObjectID < mapSize ) {
+            if( idMap[ defaultObjectID ] != NULL ) {
+                return idMap[ defaultObjectID ];
+                }
+            }
+        }
+    
     return NULL;
     }
 
@@ -2564,7 +3183,8 @@ int addObject( const char *inDescription,
                char *inSpriteUseVanish,
                char *inSpriteUseAppear,
                char inNoWriteToFile,
-               int inReplaceID ) {
+               int inReplaceID,
+               int inExistingObjectHeight ) {
     
     if( inSlotTimeStretch < 0.0001 ) {
         inSlotTimeStretch = 0.0001;
@@ -2595,9 +3215,14 @@ int addObject( const char *inDescription,
     
     int newID = inReplaceID;
     
-    int newHeight = recomputeObjectHeight( inNumSprites,
-                                           inSprites, inSpritePos );
+    int newHeight = inExistingObjectHeight;
 
+
+    if( newHeight == -1 ) {
+        newHeight = recomputeObjectHeight( inNumSprites,
+                                           inSprites, inSpritePos );
+        }
+    
     // add it to file structure
     File objectsDir( NULL, "objects" );
             
@@ -2608,7 +3233,8 @@ int addObject( const char *inDescription,
 
     int nextObjectNumber = 1;
     
-    if( objectsDir.exists() && objectsDir.isDirectory() ) {
+    if( ! inNoWriteToFile &&
+        objectsDir.exists() && objectsDir.isDirectory() ) {
                 
         File *nextNumberFile = 
             objectsDir.getChildFile( "nextObjectNumber.txt" );
@@ -2871,20 +3497,20 @@ int addObject( const char *inDescription,
         
         if( inReplaceID == -1 ) {
             nextObjectNumber++;
+            
+        
+            char *nextNumberString = autoSprintf( "%d", nextObjectNumber );
+        
+            File *nextNumberFile = 
+                objectsDir.getChildFile( "nextObjectNumber.txt" );
+            
+            nextNumberFile->writeToFile( nextNumberString );
+            
+            delete [] nextNumberString;
+            
+            
+            delete nextNumberFile;
             }
-
-        
-        char *nextNumberString = autoSprintf( "%d", nextObjectNumber );
-        
-        File *nextNumberFile = 
-            objectsDir.getChildFile( "nextObjectNumber.txt" );
-
-        nextNumberFile->writeToFile( nextNumberString );
-        
-        delete [] nextNumberString;
-                
-        
-        delete nextNumberFile;
         }
     
     if( newID == -1 && ! inNoWriteToFile ) {
@@ -2902,7 +3528,11 @@ int addObject( const char *inDescription,
     if( newID >= mapSize ) {
         // expand map
 
-        int newMapSize = newID + 1;
+        // same trick used in other banks:  speed it up by a factor of 100x
+        // by adding 100 new slots at a time
+        // (without wasting as much space on last expansion as 
+        // doubling it would)
+        int newMapSize = newID + 100;
         
 
         
@@ -3001,6 +3631,7 @@ int addObject( const char *inDescription,
     
     deathMarkerObjectIDs.deleteElementEqualTo( newID );
     allPossibleDeathMarkerIDs.deleteElementEqualTo( newID );
+    allPossibleFoodIDs.deleteElementEqualTo( newID );
     
     if( r->deathMarker ) {
         deathMarkerObjectIDs.push_back( newID );
@@ -3014,6 +3645,18 @@ int addObject( const char *inDescription,
     r->floor = inFloor;
     r->floorHugging = inFloorHugging;
     r->foodValue = inFoodValue;
+
+    
+    // do NOT add to food list
+    // addObject is only called for generated objects NOT loaded from disk 
+    // (use dummies, etc).
+    // Don't include them in list of foods
+    
+    // if( r->foodValue > 0 ) {
+    //    allPossibleFoodIDs.push_back( newID );
+    //    }
+
+    
     r->speedMult = inSpeedMult;
     r->heldOffset = inHeldOffset;
     r->clothing = inClothing;
@@ -3132,9 +3775,37 @@ int addObject( const char *inDescription,
                 
     setupMaxPickupAge( r );
 
+    setupAutoDefaultTrans( r );
+
+    setupNoBackAccess( r );            
+
+    setupAlcohol( r );
+
+    setupFamHomeland( r );
+    
+    setupForcedBiome( r );
+
+    setupExpertFind( r );
+
+    setupNormalOnly( r );
+    
+    setupYumParent( r );
+    
+    setupRoadParent( r );
+
     setupWall( r );
 
+    setupBlocksMoving( r );
+    
+    
+    r->toolSetIndex = -1;
+    
+    r->isBiomeLimited = false;
+    r->permittedBiomeMap = NULL;
+
     r->isAutoOrienting = false;
+    r->causeAutoOrientHOnly = false;
+    r->causeAutoOrientVOnly = false;
     r->horizontalVersionID = -1;
     r->verticalVersionID = -1;
     r->cornerVersionID = -1;
@@ -3579,7 +4250,13 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
         
         
         if( ! skipSprite ) {
-            setDrawColor( inObject->spriteColor[i] );
+            
+            if( spriteColorOverrideOn ) {
+                setDrawColor( spriteColorOverride );
+                }
+            else {
+                setDrawColor( inObject->spriteColor[i] );
+                }
 
             double rot = inObject->spriteRot[i];
 
@@ -3617,9 +4294,12 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
                 toggleAdditiveBlend( true );
                 }
 
-            drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
-                        rot, 
-                        logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
+            SpriteHandle sh = getSprite( inObject->sprites[i] );
+            if( sh != NULL ) {
+                drawSprite( sh, pos, inScale,
+                            rot, 
+                            logicalXOR( inFlipH, inObject->spriteHFlip[i] ) );
+                }
             
             if( multiplicative ) {
                 toggleMultiplicativeBlend( false );
@@ -3700,7 +4380,14 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                 inHeldNotInPlaceYet,
                 inClothing );
 
-    
+    char allBehind = true;
+    for( int i=0; i< inObject->numSprites; i++ ) {
+        if( ! inObject->spriteBehindSlots[i] ) {
+            allBehind = false;
+            break;
+            }
+        }
+
     setDrawnObjectContained( true );
     
     int numSlots = getNumContainerSlots( inObject->id );
@@ -3714,8 +4401,15 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
         ObjectRecord *contained = getObject( inContainedIDs[i] );
         
 
-        doublePair centerOffset = getObjectCenterOffset( contained );
-        
+        doublePair centerOffset;
+
+        if( allBehind ) {
+            centerOffset = getObjectBottomCenterOffset( contained );
+            }
+        else {
+            centerOffset = getObjectCenterOffset( contained );
+            }
+
         double rot = inRot;
         
         if( inObject->slotVert[i] ) {
@@ -4169,6 +4863,11 @@ SimpleVector<int> *getAllPossibleDeathIDs() {
 
 
 
+SimpleVector<int> *getAllPossibleFoodIDs() {
+    return &allPossibleFoodIDs;
+    }
+
+
 
 
 ObjectRecord **getAllObjects( int *outNumResults ) {
@@ -4614,6 +5313,10 @@ double getClosestObjectPart( ObjectRecord *inObject,
         
         SpriteRecord *sr = getSpriteRecord( inObject->sprites[i] );
         
+        if( sr == NULL ) {
+            continue;
+            }
+
         if( !inConsiderTransparent &&
             sr->multiplicativeBlend ){
             // skip this transparent sprite
@@ -5262,6 +5965,74 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject ) {
 
 
 
+
+doublePair getObjectBottomCenterOffset( ObjectRecord *inObject ) {
+
+
+    // find center of lowessprite
+
+    SpriteRecord *lowestRecord = NULL;
+    
+    int lowestIndex = -1;
+    double lowestYPos = 0;
+    
+    for( int i=0; i<inObject->numSprites; i++ ) {
+        SpriteRecord *sprite = getSpriteRecord( inObject->sprites[i] );
+    
+        if( sprite->multiplicativeBlend ) {
+            // don't consider translucent sprites when finding bottom
+            continue;
+            }
+
+        if( inObject->spriteInvisibleWhenWorn[i] == 2 ) {
+            // don't consider parts visible only when worn
+            continue;
+            }
+        
+
+        double y = inObject->spritePos[i].y;
+
+
+        if( lowestRecord == NULL ||
+            // wider than what we've seen so far
+            y < lowestYPos ) {
+
+            lowestRecord = sprite;
+            lowestIndex = i;
+            lowestYPos = inObject->spritePos[i].y;
+            }
+        }
+    
+
+    if( lowestRecord == NULL ) {
+        doublePair result = { 0, 0 };
+        return result;
+        }
+    
+    
+        
+    doublePair centerOffset = { (double)lowestRecord->centerXOffset,
+                                (double)lowestRecord->centerYOffset };
+        
+    centerOffset = rotate( centerOffset, 
+                           2 * M_PI * inObject->spriteRot[lowestIndex] );
+
+    doublePair spriteCenter = add( inObject->spritePos[lowestIndex], 
+                                   centerOffset );
+
+    doublePair wideCenter = getObjectCenterOffset( inObject );
+    
+    
+    // adjust y based on lowest sprite
+    // but keep center from widest sprite
+    // (in case object has "feet" that are not centered)
+    wideCenter.y = spriteCenter.y;
+
+    return wideCenter;    
+    }
+
+
+
 int getMaxWideRadius() {
     return maxWideRadius;
     }
@@ -5269,6 +6040,7 @@ int getMaxWideRadius() {
 
 
 char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
+                     char inIgnoreColors,
                      SimpleVector<SubsetSpriteIndexMap> *outMapping ) {
 
     ObjectRecord *superO = getObject( inSuperObjectID );
@@ -5292,7 +6064,12 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
         
         for( int ss=0; ss<superO->numSprites; ss++ ) {
             if( superO->sprites[ ss ] == spriteID ) {
-                return true;
+
+                // do make sure that color matches too
+                if( inIgnoreColors || equal( superO->spriteColor[ ss ],
+                                             subO->spriteColor[ 0 ] ) ) {
+                    return true;
+                    }
                 }
             }
         // if our sub-obj's single sprite does not occur, 
@@ -5349,8 +6126,7 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
         
         char spriteHFlip = subO->spriteHFlip[s];
 
-        // ignore sprite color for now
-        //FloatRGB spriteColor = subO->spriteColor[s];
+        FloatRGB spriteColor = subO->spriteColor[s];
 
         char found = false;
         
@@ -5360,8 +6136,9 @@ char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
                             spriteSuperZeroPos ), spritePosRel ) &&
                 superO->spriteRot[ ss ] == spriteRot &&
                 superO->spriteHFlip[ ss ] == spriteHFlip 
-                /* &&
-                   equal( superO->spriteColor[ ss ], spriteColor ) */ ) {
+                &&
+                ( inIgnoreColors ||
+                  equal( superO->spriteColor[ ss ], spriteColor ) ) ) {
                 
                 if( outMapping != NULL ) {
                     SubsetSpriteIndexMap m = { s, ss };
@@ -5522,6 +6299,25 @@ char bothSameUseParent( int inAObjectID, int inBObjectID ) {
         }
 
     return false;
+    }
+
+
+
+int getObjectParent( int inObjectID ) {
+    if( inObjectID > 0 ) {    
+        ObjectRecord *o = getObject( inObjectID );
+        
+        if( o != NULL ) {
+            if( o->isUseDummy ) {
+                return o->useDummyParent;
+                }
+            if( o->isVariableDummy ) {
+                return o->variableDummyParent;
+                }
+            }
+        }
+    
+    return inObjectID;
     }
 
 
@@ -5715,6 +6511,32 @@ SimpleVector<int> findObjectsMatchingWords( char *inWords,
             hitIDs.push_back( id );
             }
         }
+
+
+
+    int shallowestExactDepth = UNREACHABLE;
+       
+    for( int i=0; i<exactHitMatchIDs.size(); i++ ) {
+            
+        int depth = getObjectDepth( exactHitMatchIDs.getElementDirect( i ) );
+            
+        if( depth >= startDepth && depth < shallowestExactDepth ) {
+            shallowestExactDepth = depth;
+            }
+        }
+
+    SimpleVector<int> exactHitIDs;
+
+    for( int i=0; i<exactHitMatchIDs.size(); i++ ) {
+        int id = exactHitMatchIDs.getElementDirect( i );
+            
+        int depth = getObjectDepth( id );
+            
+        if( depth == shallowestExactDepth ) {
+            exactHitIDs.push_back( id );
+            }
+        }
+    
         
 
     if( hits != NULL ) {    
@@ -5723,9 +6545,9 @@ SimpleVector<int> findObjectsMatchingWords( char *inWords,
         
     // there are exact matches
     // use those instead
-    if( exactHitMatchIDs.size() > 0 ) {
+    if( exactHitIDs.size() > 0 ) {
         hitIDs.deleteAll();
-        hitIDs.push_back_other( &exactHitMatchIDs );
+        hitIDs.push_back_other( &exactHitIDs );
         }
         
 
@@ -5734,3 +6556,106 @@ SimpleVector<int> findObjectsMatchingWords( char *inWords,
 
     return hitIDs;
     }
+
+
+
+
+TapoutRecord *getTapoutRecord( int inObjectID ) {
+    for( int i=0; i<tapoutRecords.size(); i++ ) {
+        TapoutRecord *r = tapoutRecords.getElement( i );
+        
+        if( r->triggerID == inObjectID ) {
+            return r;
+            }
+        }
+    return NULL;
+    }
+
+
+
+void clearTapoutCounts() {
+    for( int i=0; i<tapoutRecords.size(); i++ ) {
+        TapoutRecord *r = tapoutRecords.getElement( i );
+        r->buildCount = 0;
+        }
+    }
+
+
+
+void clearToolLearnedStatus() {
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+
+            o->toolLearned = false;
+            }
+        }
+    }
+
+
+
+void getToolSetMembership( int inToolSetIndex, 
+                           SimpleVector<int> *outListToFill ) {
+    ToolSetRecord *r = toolSetRecords.getElement( inToolSetIndex );
+    
+    outListToFill->push_back_other( &( r->setMembership ) );
+    }
+
+
+
+void getAllToolSets( SimpleVector<int> *outListToFill ) {
+    for( int i=0; i<toolSetRecords.size(); i++ ) {
+        outListToFill->push_back( i );
+        }
+    }
+
+
+
+char canBuildInBiome( ObjectRecord *inObj, int inTargetBiome ) {
+    if( ! inObj->isBiomeLimited || inObj->permittedBiomeMap == NULL ||
+        inTargetBiome > inObj->maxBiomeMapEntry ) {
+        return true;
+        }
+    
+    return inObj->permittedBiomeMap[ inTargetBiome ];
+    }
+
+
+
+int getMaxFoodValue() {
+    return maxFoodValue;
+    }
+
+
+
+char sameRoadClass( int inFloorA, int inFloorB ) {
+    if( inFloorA <= 0 || inFloorB <= 0 ) {
+        return false;
+        }
+    
+    if( inFloorA == inFloorB ) {
+        return true;
+        }
+    
+    int aParent = getObject( inFloorA )->roadParentID;
+    int bParent = getObject( inFloorB )->roadParentID;
+
+    if( aParent == inFloorB ||
+        bParent == inFloorA ||
+        ( aParent != -1 && aParent == bParent ) ) {
+        
+        return true;
+        }
+
+    return false;
+    }
+
+
+    
+
+// from spriteDrawColorOverride.h
+// instantiated here so we don't need a separate cpp file for these
+
+char spriteColorOverrideOn = false;
+
+FloatColor spriteColorOverride = {1, 1, 1, 1};

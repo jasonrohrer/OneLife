@@ -43,6 +43,14 @@ static int maxID;
 static int maxObjectID;
 
 
+static char shouldFileBeCached( char *inFileName ) {
+    if( strstr( inFileName, ".txt" ) != NULL ) {
+        return true;
+        }
+    return false;
+    }
+
+
 
 int initCategoryBankStart( char *outRebuildingCache ) {
     maxID = 0;
@@ -51,7 +59,8 @@ int initCategoryBankStart( char *outRebuildingCache ) {
     currentFile = 0;
     
 
-    cache = initFolderCache( "categories", outRebuildingCache );
+    cache = initFolderCache( "categories", outRebuildingCache,
+                             shouldFileBeCached );
 
     return cache.numFiles;
     }
@@ -70,7 +79,7 @@ float initCategoryBankStep() {
                 
     char *txtFileName = getFileName( cache, i );
             
-    if( strstr( txtFileName, ".txt" ) != NULL ) {
+    if( shouldFileBeCached( txtFileName ) ) {
                             
         // a category txt file!
                     
@@ -570,10 +579,14 @@ void addCategoryToObject( int inObjectID, int inParentID ) {
     
     if( r != NULL ) {
 
-        for( int i=0; i< r->objectIDSet.size(); i++ ) {
-            if( r->objectIDSet.getElementDirect( i ) == inObjectID ) {
-                // already there
-                return;
+        if( ! r->isPattern ) {
+            // pattern categories can contain the same child more
+            // than once
+            for( int i=0; i< r->objectIDSet.size(); i++ ) {
+                if( r->objectIDSet.getElementDirect( i ) == inObjectID ) {
+                    // already there
+                    return;
+                    }
                 }
             }
 
@@ -655,6 +668,43 @@ void removeCategoryFromObject( int inObjectID, int inParentID ) {
 
         int index = r->objectIDSet.getElementIndex( inObjectID );
         
+        if( index != -1 ) {
+            r->objectIDSet.deleteElement( index );
+            r->objectWeights.deleteElement( index );
+            }
+
+        autoAdjustWeights( inParentID );
+        
+
+        ReverseCategoryRecord *rr = getReverseCategory( inObjectID );
+        
+        if( rr != NULL ) {    
+            rr->categoryIDSet.deleteElementEqualTo( inParentID );
+            }
+            
+        saveCategoryToDisk( inParentID );
+        }
+
+    }
+
+
+
+
+void removeObjectFromCategory( int inParentID, int inObjectID, 
+                               int inListIndex  ) {
+    
+    CategoryRecord *r = getCategory( inParentID );
+    
+    if( r != NULL ) {
+
+        int index = inListIndex;
+
+        if( r->objectIDSet.getElementDirect( index ) != inObjectID ) {
+            // mismatch
+            // do nothing
+            return;
+            }
+
         if( index != -1 ) {
             r->objectIDSet.deleteElement( index );
             r->objectWeights.deleteElement( index );
@@ -765,12 +815,19 @@ void moveCategoryDown( int inObjectID, int inParentID ) {
 
 
 
-void moveCategoryMemberUp( int inParentID, int inObjectID ) {
+void moveCategoryMemberUp( int inParentID, int inObjectID, int inListIndex ) {
 
     CategoryRecord *r = getCategory( inParentID );
     
     if( r != NULL ) {        
-        int index = r->objectIDSet.getElementIndex( inObjectID );
+        int index = inListIndex;
+
+        if( r->objectIDSet.getElementDirect( index ) != inObjectID ) {
+            // mismatch
+            // do nothing
+            return;
+            }
+        
         
         if( index != -1 && index != 0 ) {
             
@@ -798,13 +855,20 @@ void moveCategoryMemberUp( int inParentID, int inObjectID ) {
 
 
 
-void moveCategoryMemberDown( int inParentID, int inObjectID ) {
+void moveCategoryMemberDown( int inParentID, int inObjectID, int inListIndex ) {
 
     CategoryRecord *r = getCategory( inParentID );
     
     if( r != NULL ) {        
-        int index = r->objectIDSet.getElementIndex( inObjectID );
-        
+        int index = inListIndex;
+
+        if( r->objectIDSet.getElementDirect( index ) != inObjectID ) {
+            // mismatch
+            // do nothing
+            return;
+            }
+
+
         if( index != -1 && 
             index != r->objectIDSet.size() - 1 ) {
             

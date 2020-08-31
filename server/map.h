@@ -62,7 +62,11 @@ void resetEveRadius();
 // considered.
 void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                      SimpleVector<GridPos> *inOtherPeoplePos,
-                     char inAllowRespawn = true );
+                     char inAllowRespawn = true,
+                     // true if we should increment position for advancing
+                     // eve grid or spiral placement
+                     // false to just sample the current position with no update
+                     char inIncrementPosition = true );
 
 
 // save recent placements on Eve's death so that this player can spawn
@@ -298,6 +302,12 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
                                  int inRadiusLimit = -1 );
 
 
+
+GridPos getClosestLandingPos( GridPos inTargetPos, char *outFound );
+
+
+
+
 // get and set player ID for grave on map
 
 // returns 0 if not found
@@ -310,6 +320,42 @@ void setGravePlayerID( int inX, int inY, int inPlayerID );
 // culling regions of map that haven't been seen in a long time
 void stepMapLongTermCulling( int inNumCurrentPlayers );
 
+
+// 1 if homeland
+// 0 if fam has no homeland
+// -1 if outside of homeland (or in someone else's)
+int isHomeland( int inX, int inY, int inLineageEveID );
+
+void logHomelandBirth( int inX, int inY, int inLineageEveID );
+
+// get position of homeland center that  (x,y) is within the radius of
+// also get the lineage corresponding to this homeland
+// returns -1 for outLineageEveID if this WAS a homeland, but is now expired.
+char getHomelandCenter( int inX, int inY, 
+                        GridPos *outCenter, int *outLineageEveID );
+
+
+// when last member of a family dies
+void homelandsDead( int inLineageEveID );
+
+
+typedef struct HomelandInfo {
+        GridPos center;
+        int radius;
+        // -1 if abandonned
+        int lineageEveID;
+    } HomelandInfo;
+    
+
+// gets changes since last call
+SimpleVector<HomelandInfo> getHomelandChanges();
+
+
+
+// looks for deadly object that is crossing inPos
+// passes out moving object's destination
+int getDeadlyMovingMapObject( int inPosX, int inPosY,
+                              int *outMovingDestX, int *outMovingDestY );
 
 
 #endif

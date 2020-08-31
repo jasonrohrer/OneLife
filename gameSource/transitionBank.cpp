@@ -58,6 +58,15 @@ static char autoGenerateGenericUseTransitions = false;
 static char autoGenerateVariableTransitions = false;
 
 
+static char shouldFileBeCached( char *inFileName ) {
+    if( strstr( inFileName, ".txt" ) != NULL ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
 int initTransBankStart( char *outRebuildingCache,
                         char inAutoGenerateCategoryTransitions,
                         char inAutoGenerateUsedObjectTransitions,
@@ -74,7 +83,8 @@ int initTransBankStart( char *outRebuildingCache,
     currentFile = 0;
 
 
-    cache = initFolderCache( "transitions", outRebuildingCache );
+    cache = initFolderCache( "transitions", outRebuildingCache,
+                             shouldFileBeCached );
 
     return cache.numFiles;
     }
@@ -92,7 +102,7 @@ float initTransBankStep() {
 
     char *txtFileName = getFileName( cache, i );
                         
-    if( strstr( txtFileName, ".txt" ) != NULL ) {
+    if( shouldFileBeCached( txtFileName ) ) {
                     
         int actor = 0;
         int target = -2;
@@ -227,19 +237,33 @@ typedef struct TransIDPair {
     
 
 
-void initTransBankFinish() {
+
+static void handleWhatProbSetProduces( int inPossibleSetID,
+                                       TransRecord *inT ) {
     
-    freeFolderCache( cache );
+    CategoryRecord *cr = getCategory( inPossibleSetID );
+    
+    if( cr != NULL &&
+        cr->isProbabilitySet ) {
+        for( int i=0; i< cr->objectIDSet.size(); i++ ) {
+            if( cr->objectWeights.getElementDirect( i ) > 0 ) {
+                int oID = cr->objectIDSet.getElementDirect( i );
+                
+                producesMap[ oID ].push_back( inT );
+                }
+            }
+        }
+    }
 
 
-    mapSize = maxID + 1;
-    
 
-    usesMap = new SimpleVector<TransRecord *>[ mapSize ];
-        
-    producesMap = new SimpleVector<TransRecord *>[ mapSize ];
-    
-    
+static void regenUsesAndProducesMaps() {
+    for( int i=0; i<mapSize; i++ ) {
+        usesMap[i].deleteAll();
+        producesMap[i].deleteAll();
+        }
+
+
     int numRecords = records.size();
     
     for( int i=0; i<numRecords; i++ ) {
@@ -257,13 +281,52 @@ void initTransBankFinish() {
         
         if( t->newActor != 0 ) {
             producesMap[t->newActor].push_back( t );
+            handleWhatProbSetProduces( t->newActor, t );
+            }
+
+        if( t->actorChangeChance < 1.0 && t->newActorNoChange != 0 &&
+            t->newActorNoChange != t->newActor ) {
+            producesMap[t->newActorNoChange].push_back( t );
+            handleWhatProbSetProduces( t->newActorNoChange, t );
             }
         
         // no duplicate records
         if( t->newTarget != 0 && t->newTarget != t->newActor ) {    
             producesMap[t->newTarget].push_back( t );
+            handleWhatProbSetProduces( t->newTarget, t );
             }
+
+        if( t->targetChangeChance < 1.0 && t->newTargetNoChange != 0 &&
+            t->newTargetNoChange != t->newTarget &&
+            t->newTargetNoChange != t->newActor &&
+            t->newTargetNoChange != t->newActorNoChange ) {
+            producesMap[t->newTargetNoChange].push_back( t );
+            handleWhatProbSetProduces( t->newTargetNoChange, t );
+            }
+        
         }
+    }
+
+
+
+
+void initTransBankFinish() {
+    
+    freeFolderCache( cache );
+
+
+    mapSize = maxID + 1;
+    
+
+    usesMap = new SimpleVector<TransRecord *>[ mapSize ];
+        
+    producesMap = new SimpleVector<TransRecord *>[ mapSize ];
+
+    
+    regenUsesAndProducesMaps();
+    
+
+    int numRecords = records.size();    
     
     printf( "Loaded %d transitions from transitions folder\n", numRecords );
 
@@ -780,6 +843,34 @@ void initTransBankFinish() {
             newTrans.targetMinUseFraction = 0.0f;
             
             char processed = false;
+
+            int transAddedBefore = transToAdd.size();            
+
+            // consider +becomeUseX tag to force X uses in a newTarget
+            // with uses, when target has no uses
+            // replace before all further operations below
+            char targetUseTagProcessed = false;
+            if( target != NULL && newTarget != NULL &&
+                target->numUses <= 1 && newTarget->numUses > 1 ) {
+                        
+                char *useTag = strstr( target->description, "+becomeUse" );
+                int useTarget = -1;
+                        
+                if( useTag != NULL ) {
+                    sscanf( useTag, "+becomeUse%d", &useTarget );    
+                    }
+                        
+                if( useTarget != -1 &&
+                    useTarget > 0 &&
+                    useTarget < newTarget->numUses ) {
+                    
+                    newTrans.newTarget = 
+                        newTarget->useDummyIDs[ useTarget - 1 ];
+                    targetUseTagProcessed = true;
+                    }
+                }
+
+
             
             if( ! tr->lastUseTarget && ! tr->lastUseActor ) {
 
@@ -850,7 +941,8 @@ void initTransBankFinish() {
                     else {
                         // at least one
                         TransIDPair tp = 
-                            { tr->actor, tr->newActor, tr->newActor };
+                            { newTrans.actor, 
+                              newTrans.newActor, newTrans.newActor };
                         actorSteps.push_back( tp );
                         
                         if( actor != NULL && actor->numUses > 1 ) {
@@ -944,8 +1036,8 @@ void initTransBankFinish() {
                         }
                     else {
                         // at least one
-                        TransIDPair tp = { tr->target, tr->newTarget, 
-                                           tr->newTarget };
+                        TransIDPair tp = { newTrans.target, newTrans.newTarget, 
+                                           newTrans.newTarget };
                         targetSteps.push_back( tp );
                         
                         if( target != NULL && target->numUses > 1 ) {
@@ -1063,8 +1155,22 @@ void initTransBankFinish() {
             
             if( ! processed ) {
                 if( tr->lastUseActor || tr->lastUseTarget ) {
-                                    
-                    if( tr->lastUseActor && 
+                    
+                    if( tr->lastUseActor && tr->lastUseTarget &&
+                        actor != NULL && actor->numUses > 1 &&
+                        target != NULL && target->numUses > 1 ) {
+                        
+                        // map last use of actor to newActor
+                        if( ! tr->reverseUseActor ) {
+                            newTrans.actor = actor->useDummyIDs[0];
+                            }
+                        // map last use of target to newTarget
+                        if( ! tr->reverseUseTarget ) {
+                            newTrans.target = target->useDummyIDs[0];
+                            }
+                        transToAdd.push_back( newTrans );
+                        }
+                    else if( tr->lastUseActor && 
                         actor != NULL && 
                         actor->numUses > 1 ) {
                         
@@ -1102,7 +1208,7 @@ void initTransBankFinish() {
                                 }
                             }
                         }
-                    if( tr->lastUseTarget && 
+                    else if( tr->lastUseTarget && 
                         target != NULL && 
                         target->numUses > 1 ) {
                             
@@ -1224,11 +1330,10 @@ void initTransBankFinish() {
                                 }
                             }
                         }
-                    else {
-                        // default one
-                        actorDummies.push_back( tr->actor );
-                        }
-
+                    // default one
+                    actorDummies.push_back( tr->actor );
+                    
+    
                     if( target != NULL && target->numUses > 1 ) {
                         
                         for( int u=0; u<target->numUses-1; u++ ) {
@@ -1241,11 +1346,10 @@ void initTransBankFinish() {
                                 }
                             }
                         }
-                    else {
-                        // default one
-                        targetDummies.push_back( tr->target );
-                        }
-
+                    // default one
+                    targetDummies.push_back( tr->target );
+                    
+    
                     if( actorDummies.size() > 1 || targetDummies.size() > 1 ) {
                         for( int ad=0; ad<actorDummies.size(); ad++ ) {
                             newTrans.actor = 
@@ -1258,6 +1362,17 @@ void initTransBankFinish() {
                             }
                         }
                     }
+                }
+
+            
+
+            if( transToAdd.size() == transAddedBefore && 
+                targetUseTagProcessed ) {
+                // no new trans added based on this trans
+                
+                // we should at least add the modified newTrans that contains
+                // our +becomeUse tag modification
+                transToAdd.push_back( newTrans );
                 }
             }
 
@@ -1463,6 +1578,14 @@ void initTransBankFinish() {
         }
 
 
+    if( autoGenerateVariableTransitions ||
+        autoGenerateUsedObjectTransitions ||
+        autoGenerateGenericUseTransitions ||
+        autoGenerateCategoryTransitions ) {
+        
+        regenUsesAndProducesMaps();
+        }
+    
 
 
     regenerateDepthMap();
@@ -1577,15 +1700,47 @@ void regenerateDepthMap() {
             if( nextDepth < UNREACHABLE ) {
                     
                 if( tr->newActor > 0 ) {
-                    if( depthMap[ tr->newActor ] == UNREACHABLE ) {
-                        depthMap[ tr->newActor ] = nextDepth;
-                        treeHorizon.push_back( tr->newActor );
+                    CategoryRecord *cr = getCategory( tr->newActor );
+                    
+                    if( cr != NULL && cr->isProbabilitySet ) {
+                        for( int s=0; s<cr->objectIDSet.size(); s++ ) {
+                            if( cr->objectWeights.getElementDirect( s ) > 0 ) {
+                                int oID = cr->objectIDSet.getElementDirect( s );
+                                
+                                if( depthMap[ oID ] == UNREACHABLE ) {
+                                    depthMap[ oID ] = nextDepth;
+                                    treeHorizon.push_back( oID );
+                                    }
+                                }
+                            }
+                        }
+                    else {
+                        if( depthMap[ tr->newActor ] == UNREACHABLE ) {
+                            depthMap[ tr->newActor ] = nextDepth;
+                            treeHorizon.push_back( tr->newActor );
+                            }
                         }
                     }
                 if( tr->newTarget > 0 ) {
-                    if( depthMap[ tr->newTarget ] == UNREACHABLE ) {
-                        depthMap[ tr->newTarget ] = nextDepth;
-                        treeHorizon.push_back( tr->newTarget );
+                    CategoryRecord *cr = getCategory( tr->newTarget );
+                    
+                    if( cr != NULL && cr->isProbabilitySet ) {
+                        for( int s=0; s<cr->objectIDSet.size(); s++ ) {
+                            if( cr->objectWeights.getElementDirect( s ) > 0 ) {
+                                int oID = cr->objectIDSet.getElementDirect( s );
+                                
+                                if( depthMap[ oID ] == UNREACHABLE ) {
+                                    depthMap[ oID ] = nextDepth;
+                                    treeHorizon.push_back( oID );
+                                    }
+                                }
+                            }
+                        }
+                    else {
+                        if( depthMap[ tr->newTarget ] == UNREACHABLE ) {
+                            depthMap[ tr->newTarget ] = nextDepth;
+                            treeHorizon.push_back( tr->newTarget );
+                            }
                         }
                     }
                 }
@@ -1888,7 +2043,13 @@ TransRecord *getPTrans( int inActor, int inTarget,
             rStatic->newActor = packMetadataID( rStatic->newActor, 
                                                 passThroughMeta );
             }
-        else if( rStatic->newTarget > 0 &&
+        // can pass meta data through to both
+        // forking it and duplicating it
+        
+        // this allows for a piece of writing to be copied onto
+        // another object, for example
+
+        if( rStatic->newTarget > 0 &&
                  getObject( rStatic->newTarget )->mayHaveMetadata ) {
             rStatic->newTarget = packMetadataID( rStatic->newTarget, 
                                                  passThroughMeta );
@@ -2337,7 +2498,13 @@ void addTrans( int inActor, int inTarget,
             max = inNewTarget;
             }
         
-        int newMapSize = max + 1;
+        // instead of adding just one new map element at a time
+        // we know that more are coming, because they are added in batches
+        // But doubling each time will waste a lot of space at the end
+        // Can speed it up by a factor of X by adding X each time instead of 1
+        // speed it up by 100x
+        // This will waste at most space for 100 elements in last expansion.
+        int newMapSize = max + 100;
         
         SimpleVector<TransRecord *> *newUsesMap =
             new SimpleVector<TransRecord *>[ newMapSize ];
@@ -2457,10 +2624,12 @@ void addTrans( int inActor, int inTarget,
             
             // remove record from producesMaps
             
-            if( t->newActor != 0 ) {
+            if( t->newActor != 0 &&
+                t->newActor != inNewActor ) {
                 producesMap[t->newActor].deleteElementEqualTo( t );
                 }
-            if( t->newTarget != 0 ) {                
+            if( t->newTarget != 0 &&
+                t->newTarget != inNewTarget ) {                
                 producesMap[t->newTarget].deleteElementEqualTo( t );
                 }
             
@@ -2863,6 +3032,19 @@ void printTrans( TransRecord *inTrans ) {
         printf( " (move=%s,dist=%d)", moveName, inTrans->desiredMoveDist );
         }
     
+    if( inTrans->actorChangeChance < 1.0 ) {
+        printf( " (pA=%0.2f,[%s])",
+                inTrans->actorChangeChance,
+                getObjName( inTrans->newActorNoChange ) );
+        }
+    
+    if( inTrans->targetChangeChance < 1.0 ) {
+        printf( " (pT=%0.2f,[%s])",
+                inTrans->targetChangeChance,
+                getObjName( inTrans->newTargetNoChange ) );
+        }
+    
+
     printf( "\n" );
     }
 

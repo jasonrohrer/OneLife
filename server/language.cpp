@@ -34,9 +34,20 @@
 static int closeSetSize = 3;
 
 
+// max age where hearing an utterance in another language has impact
 static double maxLanguageLearningAge = 3.0;
+
+// fraction of each utterance that hearer learns 
+// (coin flip for each phoneme heard)
 static double languageLearningRate = 0.5;
+
+// Words repeated within the last X words are ignored for learning purposes
 static int languageLearningRepetitionLimit = 20;
+
+// When how much more of a language a learner learns when they first
+// hear the language at a young age (a sudden jump in learning before
+// more gradual learning based on learning rate.
+static double languageLearningBaseFraction = 0.1;
 
 
 
@@ -73,6 +84,8 @@ const int *allClustersFreq[ NUM_CLUSTER_SETS ] =
   vowelClustersFreq,
   middleConsonantClustersFreq };
 
+
+int allClustersFreqTotals[ NUM_CLUSTER_SETS ];
 
 
 
@@ -238,6 +251,8 @@ typedef struct LanguageLearningMap {
         // these two eves
         int playerID;
 
+        // false until first utterance heard by listener
+        char firstPhraseHeard;
         
         // these are false if the mapping is not learned, true if learned
         char startingMapping[ NUM_STARTING_CONSONANT_CLUSTERS ];
@@ -333,8 +348,8 @@ static const char *clusterMap(
             inDestClusters[ inSetIndex ][ inClusterIndex ];
         
         if( inCanLearnB &&
-            randSource.getRandomDouble() > 0.5 ) {
-            // coin flipped heads
+            randSource.getRandomDouble() > 1.0 - languageLearningRate ) {
+            // weighted coin flipped heads
             
             // B learns this for the future
             inLearnB->allMappings[inSetIndex][inClusterIndex] = true;
@@ -639,6 +654,7 @@ static void initMapping( LanguageLearningMap *inMap,
     inMap->eveIDA = inEveIDA;
     inMap->eveIDB = inEveIDB;
     inMap->playerID = inPlayerID;
+    inMap->firstPhraseHeard = false;
 
     inMap->allMappings[ START_I ] = inMap->startingMapping;
     inMap->allMappings[ END_I ] = inMap->endingMapping;
@@ -650,6 +666,21 @@ static void initMapping( LanguageLearningMap *inMap,
     for( int s=0; s<NUM_CLUSTER_SETS; s++ ) {    
         memset( inMap->allMappings[s], false, allClusterSizes[s] );
         }
+    }
+
+
+LanguageLearningMap *cloneMapping( LanguageLearningMap *inMapping ) {
+    LanguageLearningMap *c = new LanguageLearningMap;
+    
+    initMapping( c, inMapping->eveIDA, inMapping->eveIDB, inMapping->playerID );
+    
+    c->firstPhraseHeard = inMapping->firstPhraseHeard;
+
+    for( int s=0; s<NUM_CLUSTER_SETS; s++ ) {
+        memcpy( c->allMappings[s], inMapping->allMappings[s], 
+                allClusterSizes[s] );
+        }
+    return c;
     }
 
 
@@ -757,12 +788,14 @@ static LanguageLearningMap *getPlayerLearningMap( int inEveIDA, int inEveIDB,
 void initLanguage() {
     initMapping( &blankLearningMap, 0, 0, 0 );
 
-    maxLanguageLearningAge = 
-        SettingsManager::getFloatSetting( "maxLanguageLearningAge", 3.0 );
-    languageLearningRate = 
-        SettingsManager::getFloatSetting( "languageLearningRate", 0.5 );
-    languageLearningRepetitionLimit = 
-        SettingsManager::getIntSetting( "languageLearningRepetitionLimit", 20 );
+    for( int i=0; i<NUM_CLUSTER_SETS; i++ ) {
+        allClustersFreqTotals[ i ] = 0;
+        for( int c=0; c<allClusterSizes[i]; c++ ) {
+            allClustersFreqTotals[ i ] += allClustersFreq[i][c];
+            }
+        }
+
+    stepLanguage();
     }
 
 
@@ -853,15 +886,20 @@ void incrementLanguageCount( int inEveID ) {
     }
 
 
-void decrementLanguageCount( int inEveID ) {
+int decrementLanguageCount( int inEveID ) {
+    int countLeft = 0;
+    
     int rInd;
     EveLangRecord *r = getLangRecord( inEveID, &rInd );
     
     if( r != NULL ) {
         r->langCount --;
 
+        countLeft = r->langCount;
+
         if( r->langCount <= 0 ) {
             // language is dead, last speaker died
+            countLeft = 0;
             
             freeEveLangRecord( r );                        
             langRecords.deleteElement( rInd );
@@ -885,12 +923,24 @@ void decrementLanguageCount( int inEveID ) {
                 }
             }
         }
+    
+    return countLeft;
     }
 
 
 
 
 void stepLanguage() {
+    // reload settings
+    maxLanguageLearningAge = 
+        SettingsManager::getFloatSetting( "maxLanguageLearningAge", 3.0 );
+    languageLearningRate = 
+        SettingsManager::getFloatSetting( "languageLearningRate", 0.5 );
+    languageLearningRepetitionLimit = 
+        SettingsManager::getIntSetting( "languageLearningRepetitionLimit", 20 );
+    languageLearningBaseFraction = 
+        SettingsManager::getFloatSetting( "languageLearningBaseFraction", 0.1 );
+    
     // see if there's one mapping that needs generating
     // spread the work out for generating mappings
     for( int e=0; e<langRecords.size(); e++ ) {
@@ -927,7 +977,8 @@ void stepLanguage() {
 char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
                          int inPlayerIDA, int inPlayerIDB,
                          double inAgeA, double inAgeB,
-                         int inParentIDA, int inParentIDB ) {
+                         int inParentIDA, int inParentIDB,
+                         double inFractionToPassThrough ) {
 
     if( inEveIDA == inEveIDB ) {
         // self, no translation
@@ -967,7 +1018,115 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
         canLearnB = false;
         }
     
+    
+    if( canLearnB && ! learnB->firstPhraseHeard &&
+        languageLearningBaseFraction > 0 ) {
+        
+        // apply base learning fraction now
+                
+        for( int i=0; i<NUM_CLUSTER_SETS; i++ ) {
 
+            // how much unlearned weight is left in this set?
+            int freqTotalLeftToLearn = 0;
+
+            for( int c=0; c<allClusterSizes[i]; c++ ) {
+                if( ! learnB->allMappings[i][c] ) {
+                    freqTotalLeftToLearn += allClustersFreq[i][c];
+                    }
+                }
+            
+            if( freqTotalLeftToLearn == 0 ) {
+                // done learning this set entirely
+                continue;
+                }
+
+            // fraction of remaining weight
+            // for example, 10% of what's left, over and over
+            // Thus, the total weight learned is asymptotic to 100% over time
+            // but never actually gets there.
+            // We learn something like 10%, 19%, 27%, 34%, etc.
+            // it will get there at very end, once the fraction of 
+            // remaining weight left to learn is < 1, because we round up
+            // to 1.
+            int freqTotalToLearnThisRun = 
+                ceil( freqTotalLeftToLearn * languageLearningBaseFraction );
+
+            int freqTotalLearnedThisRun = 0;
+            
+            int c = 0;
+            
+            while( freqTotalLearnedThisRun < freqTotalToLearnThisRun ) {
+                // jump into remaining clusters randomly, with
+                // our chance of landing on a given cluster based on its
+                // fraction of the remaining weight
+                int freqToSkip = 
+                    randSource.getRandomBoundedInt( 0,
+                                                    freqTotalLeftToLearn );
+                // jump into the remaining clusters by freqToSkip amount
+                
+                int clusterHit = -1;
+                
+                int freqSkipped = 0;
+                for( int s=0; s<allClusterSizes[i]; s++ ) {
+                    // skip already-learned clusters during this
+                    // weighted picking process
+                    if( ! learnB->allMappings[i][s] ) {
+                        freqSkipped += allClustersFreq[i][s];
+                    
+                        if( freqSkipped >= freqToSkip ) {
+                            // landed in this cluster
+                            clusterHit = s;
+                            break;
+                            }
+                        }
+                    }
+                
+                if( clusterHit != -1 ) {
+                    int s = clusterHit;
+                    
+                    learnB->allMappings[i][s] = true;
+                    freqTotalLearnedThisRun += allClustersFreq[i][s];
+                    
+                    freqTotalLeftToLearn -= allClustersFreq[i][s];
+                    }
+                else {
+                    // no clusters left to learn
+                    break;
+                    }
+                c++;
+                }
+            }
+        
+        learnB->firstPhraseHeard = true;
+        }
+
+
+    // temporarily replace map with a stripped one that lets more pass through
+    // but don't do this if gradual learning over time is enabled
+    char deleteMapA = false;
+    
+    if( learnA != NULL && inFractionToPassThrough > 0 && 
+        languageLearningRate == 0 ) {
+        
+        LanguageLearningMap *tweakedMap = cloneMapping( learnA );
+        
+        int seed = inEveIDA + inEveIDB;
+        
+        CustomRandomSource tweakRand( seed );
+        
+        for( int s=0; s<NUM_CLUSTER_SETS; s++ ) {
+            for( int c=0; c<allClusterSizes[s]; c++ ) {   
+                if( tweakRand.getRandomDouble() <= inFractionToPassThrough ) {
+                    tweakedMap->allMappings[s][c] = true;
+                    }
+                }
+            }
+
+        
+        learnA = tweakedMap;
+
+        deleteMapA = true;
+        }
 
 
     char *returnString = NULL;
@@ -1065,7 +1224,11 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
                     
                     char *ucNew = stringToUpperCase( newPhrase );
                     delete [] newPhrase;
-
+                    
+                    if( deleteMapA ) {
+                        delete learnA;
+                        }
+                    
                     return ucNew;
                     }
                 }
@@ -1078,5 +1241,9 @@ char *mapLanguagePhrase( char *inPhrase, int inEveIDA, int inEveIDB,
         returnString = stringDuplicate( inPhrase );
         }
     
+    if( deleteMapA ) {
+        delete learnA;
+        }            
+
     return returnString;
     }

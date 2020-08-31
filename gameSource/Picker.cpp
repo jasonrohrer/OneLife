@@ -116,10 +116,25 @@ void Picker::redoSearch( char inClearPageSkip ) {
 
         SimpleVector<char*> validTerms;
         
+        // any term that starts with - is a term to avoid
+        SimpleVector<char*> avoidTerms;
+        
         for( int i=0; i<numTerms; i++ ) {
-            if( strlen( terms[i] ) > 0 ) {
+            int termLen = strlen( terms[i] );
+            
+            if( termLen > 0 ) {
                 
-                validTerms.push_back( terms[i] );
+                if( terms[i][0] == '-' ) {
+                    if( termLen > 1 ) {
+                        // skip the - character
+                        avoidTerms.push_back( &( terms[i][1] ) );
+                        }
+                    // ignore single - characters
+                    // user is probably in the middle of typing an avoid-term
+                    }
+                else {
+                    validTerms.push_back( terms[i] );
+                    }
                 }
             }
         
@@ -159,8 +174,21 @@ void Picker::redoSearch( char inClearPageSkip ) {
                         
                         if( strstr( mainNameLower, term ) == NULL ) {
                             matchFailed = true;
+                            break;
                             }
                         }
+
+                    if( ! matchFailed ) {
+                        for( int j=0; j<avoidTerms.size(); j++ ) {
+                            char *term = avoidTerms.getElementDirect( j );
+                        
+                            if( strstr( mainNameLower, term ) != NULL ) {
+                                matchFailed = true;
+                                break;
+                                }
+                            }
+                        }
+                    
                     if( !matchFailed ) {
                         passingResults.push_back( mainResults[i] );
                         }
@@ -289,6 +317,9 @@ void Picker::actionPerformed( GUIComponent *inTarget ) {
     if( isCommandKeyDown() ) {
         skipAmount *= 5;
         }
+    if( isShiftKeyDown() ) {
+        skipAmount *= 5;
+        }
     
     if( inTarget == &mNextButton ) {
         mSkip += skipAmount;
@@ -325,6 +356,52 @@ void Picker::actionPerformed( GUIComponent *inTarget ) {
     
         
     }
+
+
+
+void Picker::keyDown( unsigned char inASCII ) {
+    // don't capture field typing
+    if( mSearchField.isFocused() || mSelectionIndex == -1 ) {
+        return;
+        }
+
+    // but respond to [ and ] keys to page through items one by one
+    
+    int oldSelection = mSelectionIndex;    
+
+    switch( inASCII ) {
+        case '[':
+            mSelectionIndex --;
+            if( mSelectionIndex < 0 ) {
+                if( mPrevButton.isVisible() ) {
+                    actionPerformed( &mPrevButton );
+                    mSelectionIndex = PER_PAGE - 1;
+                    }
+                else {
+                    mSelectionIndex = 0;
+                    }
+                }
+            break;
+        case ']':
+            mSelectionIndex ++;
+            if( mSelectionIndex >= mNumResults ) {
+                if( mNextButton.isVisible() ) {
+                    actionPerformed( &mNextButton );
+                    mSelectionIndex = 0;
+                    }
+                else {
+                    mSelectionIndex = mNumResults - 1;
+                    }
+                }
+            break;
+        }
+
+    if( oldSelection != mSelectionIndex ) {
+        mSelectionRightClicked = false;
+        fireActionPerformed( this );
+        }
+    }
+
 
 
 void Picker::specialKeyDown( int inKeyCode ) {

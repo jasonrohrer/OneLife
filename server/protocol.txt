@@ -68,7 +68,30 @@ Where challenge_string is an ascii string, less than 150 characters long.
 
 2.  The client MUST respond with the following login message:
 
-LOGIN email password_hash account_key_hash tutorial_number twin_code_hash twin_count#
+LOGIN client_tag email password_hash account_key_hash tutorial_number twin_code_hash twin_count#
+
+
+NOTE:  The command LOGIN can be replaced with RLOGIN if the client is
+       reconnnecting to an existing life and doesn't want to start a new life
+       if the previous life is over.
+
+
+client_tag must contain only A-Za-z0-9 plus _ and - 
+(alphanumeric, underscore, and hyphen).
+To be processed correctly, it must start with the string client_
+Mods MUST describe themselves honestly and uniquely.  Examples:
+
+client_official  (reserved for the official client)
+
+client_custom_john
+
+client_hetuw
+
+cleint_awbz
+
+client_wondible
+
+client_milkweed
 
 
 password_hash is based on the server access password, and is computed by:
@@ -131,6 +154,8 @@ PLAYER_MOVES_START (PM)
 
 PLAYER_OUT_OF_RANGE (PO)
 
+BABY_WIGGLE (BW)
+
 PLAYER_SAYS (PS)
 
 LOCATION_SAYS (LS)
@@ -155,6 +180,8 @@ DYING (DY)
 
 HEALED (HE)
 
+POSSE_JOIN (PJ)
+
 MONUMENT_CALL (MN)
 
 GRAVE (GV)
@@ -164,6 +191,10 @@ GRAVE_MOVE (GM)
 GRAVE_OLD (GO)
 
 OWNER_LIST (OW)
+
+FOLLOWING (FW)
+
+EXILED (EX) 
 
 VALLEY_SPACING (VS)
 
@@ -175,6 +206,8 @@ CURSE_SCORE_CHANGE (CS)
 
 FLIGHT_DEST (FD)
 
+BAD_BIOMES (BB)
+
 VOG_UPDATE (VU)
 
 PHOTO_SIGNATURE (PH)
@@ -184,6 +217,18 @@ FORCED_SHUTDOWN (SD)
 GLOBAL_MESSAGE (MS)
 
 WAR_REPORT (WR)
+
+LEARNED_TOOL_REPORT (LR)
+
+TOOL_EXPERTS (TE)
+
+TOOL_SLOTS (TS)
+
+HOMELAND (HL)
+
+FLIP (FL) 
+
+CRAVING (CR)
 
 FRAME (FM)
 
@@ -267,12 +312,12 @@ Check the code in map.cpp for details.
 
 
 PU
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum held_learned
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum held_learned
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum held_learned
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum held_learned
 ...
-p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum
+p_id po_id facing action action_target_x action_target_y o_id o_origin_valid o_origin_x o_origin_y o_transition_source_id heat done_moving_seqNum force x y age age_r move_speed clothing_set just_ate last_ate_id responsible_id held_yum held_learned
 #
 
 List of player ids with their display object ids, facing direction, action
@@ -348,6 +393,8 @@ local walk).  Current examples involve feeding and clothing a baby.
 
 held_yum is 1 if held item is yummy food, 0 otherwise
 
+held_learned is 1 if the held item is a learned tool (or non-tool), 0 otherwise
+ 
 
 NOTE:
 If a baby wriggles out of an adult's arms, there is no PU sent about
@@ -402,6 +449,15 @@ they have moved out of range.
 
 
 
+BW
+p_id
+p_id
+...
+p_id
+#
+
+A list of player IDs that are babies who just started wiggling.
+
 
 
 
@@ -449,6 +505,19 @@ LS
 
 
 
+
+BB
+bID DISPLAY_NAME
+bID DISPLAY_NAME
+...
+bID DISPLAY_NAME
+#
+
+Lists bad biome IDs for a player, along with their display names IN_THIS_FORMAT
+
+
+
+
 VU
 x y
 #
@@ -478,13 +547,16 @@ PE
 1432 4
 1501 6 30
 1448 1
+1449 17 -1
 #
 
 
 ttl_sec is optional, and specifies how long the emote should be shown, in
 seconds, client-side.  If it is omitted, the client should display the emotion
-for the standard amount of time.
+for the standard amount of time.  If ttl is -1, this emot is permanent and
+should layer with other permanent and non-permanent emots.
 
+If ttl is -2, the emot is permanent but not new, so sound shoudl be skipped.
 
 
 
@@ -555,9 +627,13 @@ when the next yummy food is eaten.
 
 
 HX
-heat#
+heat food_time indoor_bonus#
 
-Tells player about their current heat value.
+Tells player about their current heat value, food drain time, and indoor bonus.
+
+Food drain time and indoor bonus are in seconds.
+
+Food drain time is total including bonus.
 
 
 
@@ -651,6 +727,13 @@ Indicates that the listed players have been healed and are no longer dying.
 
 
 
+PJ
+p_id_killer p_id_target
+#
+
+Indicates that killer joined posse of target.
+If target = 0, killer has left the posse.
+
 
 
 
@@ -714,6 +797,52 @@ Provides owner list for position x y
 
 
 
+
+FW
+follower_id leader_id leader_color_index
+follower_id leader_id leader_color_index
+...
+follower_id leader_id leader_color_index
+#
+
+Provides list of people following other people.
+If leader is -1, that person follows no one
+Leader color index specifies leader's badge color from a fixed color list
+
+
+
+
+EX
+exile_target_id exiler_id
+exile_target_id exiler_id
+exile_target_id exiler_id
+...
+exile_target_id exiler_id
+#
+
+Provides list of people exiled by another person.
+
+If someone's exile list has changed (who's exiling them), then their whole
+exile list is sent.
+
+Each target's list is prefaced by this line:
+
+exile_target_id -1
+
+This indicates that the target's complete list is coming, and the client-side
+list should be cleared in preparation for this.
+
+
+If a target is newly exiled by no one, they show up as:
+
+exile_target_id -1
+
+
+
+
+
+
+
 VS
 y_spacing y_offset
 #
@@ -726,14 +855,16 @@ Offset is from client's birth position (0,0) of first valley.
 
 
 CU
-p_id level
+p_id level word
 p_id level
 ...
-p_id level
+p_id level word
 #
 
 
 List of player ids that are cursed, and their curse level
+
+word is optional, which is a persistent name tag for this person.
 
 
 
@@ -805,6 +936,65 @@ peace
 
 
 
+LR
+tool_id tool_id ... tool_id 
+#
+
+Report about new tool objects that have just been learned
+
+Each tool_id is an object id.
+
+
+
+TE
+p_id p_id ... p_id
+#
+
+List of nearby players that already have learned the unlearned tool player is
+holding.
+
+Sent whenever player's held object changes to an unlearned tool.
+
+
+
+TS
+used total
+#
+
+Tells player how many slots have been used and how many total they have.
+
+
+
+HL
+x y family_name
+#
+
+Tells player about a homeland center at x,y
+family_name is 0 if homeland is expired
+
+
+
+FL
+p_id face_left
+p_id face_left
+...
+p_id face_left
+#
+
+Tells player about other players that have flipped.  face_left is true if facing
+left, false if facing right.  Only sent in response to stationary player flip
+requests (clients should still auto-flip players based on movement).
+
+
+
+CR
+food_id bonus
+#
+
+Tells player about which food they're currently craving, and how much their
+YUM multiplier will increase when they eat it.
+
+
 
 
 FM
@@ -839,7 +1029,7 @@ parameters, and no leading spaces.
 
 
 KA x y#
-USE x y id#
+USE x y id i#
 BABY x y#
 BABY x y id#
 SELF x y i#
@@ -865,6 +1055,9 @@ VOGI x y id#
 VOGT x y text# 
 VOGX x y#
 PHOTO x y seq#
+LEAD x y#
+UNFOL x y#
+FLIP x y#
 
 KA   is a keep-alive message used to keep the connection alive when the client
      is idle and not sending any other messages (NATs and other routers can
@@ -884,6 +1077,8 @@ USE  is for bare-hand or held-object action on target object in non-empty
      id parameter is optional, and is used by server to differentiate 
      intentional use-on-bare-ground actions from use actions (in case
      where target animal moved out of the way).
+     i parameter is optional, and specifies a container slot to use a held
+     object on (for example, using a knife to slice bread sitting on a table).
 
 SELF is special case of USE action taken on self (to eat what we're holding
      or add/remove clothing).
@@ -937,6 +1132,7 @@ JUMP is used by a baby to jump out of its mother's arms.  The x and y
      MOVE ambiguous in the case of jump-out (for example, if the baby
      has already been dropped by the time the MOVE arrives, the server will
      interpret it as a legitimate move attempt).
+     JUMP is also used to make an immobile baby wiggle on the ground.
 
 EMOT is used to specify an emotion to display.  The x and y coordinates are
      ignored.  e is the emotion index.
@@ -962,6 +1158,14 @@ PING is used to request a PONG response fromt the server.  The x and y
 
 PHOTO is used to request a photo approval and signature for position
       x y and sequence number seq
+
+LEAD requests the player's top leader's position as spoken map coordinates.
+     x and y are ignored
+
+UNFOL makes the player follow no one (same as saying "I FOLLOW MYSELF")
+
+FLIP requests flip to player's orientation, new facing toward x y
+
 
 
 This one is more complicated:

@@ -348,6 +348,11 @@ class EditorObjectPage : public GamePage, public ActionListener {
         KeyLegend mKeyLegendB;
         KeyLegend mKeyLegendC;
         KeyLegend mKeyLegendD;
+
+
+        void moveSpriteLayerDown( int inOffset );
+        
+
     };
 
 

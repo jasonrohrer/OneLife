@@ -19,6 +19,9 @@
 
 #include "folderCache.h"
 
+#include "spriteDrawColorOverride.h"
+
+
 
 static int mapSize;
 // maps IDs and AnimTyps to anim records
@@ -67,6 +70,14 @@ static int mouthShapeFrame = 0;
 static char outputMouthFrames = false;
 static char mouthFrameOutputStarted = false;
 
+
+
+static char shouldFileBeCached( char *inFileName ) {
+    if( strstr( inFileName, ".txt" ) != NULL ) {
+        return true;
+        }
+    return false;
+    }
 
 
 
@@ -156,7 +167,8 @@ int initAnimationBankStart( char *outRebuildingCache ) {
     currentFile = 0;
 
     
-    cache = initFolderCache( "animations", outRebuildingCache );
+    cache = initFolderCache( "animations", outRebuildingCache,
+                             shouldFileBeCached );
 
     return cache.numFiles;
     }
@@ -174,7 +186,7 @@ float initAnimationBankStep() {
 
     char *txtFileName = getFileName( cache, i );
                         
-    if( strstr( txtFileName, ".txt" ) != NULL ) {
+    if( shouldFileBeCached( txtFileName ) ) {
         
         // every .txt file is an animation file
 
@@ -1179,11 +1191,37 @@ static char logicalXOR( char inA, char inB ) {
     }
 
 
-static Emotion *drawWithEmot = NULL;
+static SimpleVector<Emotion *> drawWithEmots;
 
 void setAnimationEmotion( Emotion *inEmotion ) {
-    drawWithEmot = inEmotion;
+    drawWithEmots.deleteAll();
+    if( inEmotion != NULL ) {
+        drawWithEmots.push_back( inEmotion );
+        }
     }
+
+
+void addExtraAnimationEmotions( SimpleVector<Emotion*> *inList ) {
+    drawWithEmots.push_back_other( inList );
+    }
+
+
+static int drawWithBadge = -1;
+static char bareBadge = false;
+static FloatColor drawWithBadgeColor = { 1, 1, 1, 1 };
+
+
+void setAnimationBadge( int inBadgeID, char inBareBadge ) {
+    drawWithBadge = inBadgeID;
+    bareBadge = inBareBadge;
+    }
+
+
+void setAnimationBadgeColor( FloatColor inBadgeColor ) {
+    drawWithBadgeColor = inBadgeColor;
+    }
+
+
 
 
 static float clothingHighlightFades[ NUM_CLOTHING_PIECES ];
@@ -1200,6 +1238,15 @@ void setClothingHighlightFades( float *inFades ) {
             }
         }
     }
+
+
+
+static char shouldHidePersonShadows = false;
+
+void hidePersonShadows( char inHide ) {
+    shouldHidePersonShadows = inHide;
+    }
+
 
 
 
@@ -1251,7 +1298,7 @@ ObjectAnimPack drawObjectAnimPacked(
         inNumContained,
         inContainedIDs,
         inSubContained,
-        drawWithEmot,
+        drawWithEmots,
         0 };
     
     return outPack;
@@ -1265,9 +1312,9 @@ void drawObjectAnim( ObjectAnimPack inPack ) {
     p.valid = false;
 
     // set based on what's in pack, but restore main value afterward
-    Emotion *oldEmot = drawWithEmot;
+    SimpleVector<Emotion*> oldEmots = drawWithEmots;
     
-    drawWithEmot = inPack.setEmot;
+    drawWithEmots = inPack.setEmots;
     
     if( inPack.inContainedIDs == NULL ) {
         p = drawObjectAnim( 
@@ -1320,7 +1367,7 @@ void drawObjectAnim( ObjectAnimPack inPack ) {
             inPack.inSubContained );
         }
     
-    drawWithEmot = oldEmot;
+    drawWithEmots = oldEmots;
     
 
     if( inPack.additionalHeldID > 0 && p.valid ) {
@@ -1757,15 +1804,9 @@ void checkDrawPos( int inObjectID, doublePair inPos ) {
     
     if( inObjectID != closestObjectDrawID[0] &&
         inObjectID != closestObjectDrawID[1] ) {
-        ObjectRecord *o = getObject( inObjectID );
         
-        if( o->isUseDummy ) {
-            inObjectID = o->useDummyParent;
-            }
-        else if( o->isVariableDummy ) {
-            inObjectID = o->variableDummyParent;
-            }
-
+        inObjectID = getObjectParent( inObjectID );
+        
         if( inObjectID != closestObjectDrawID[0] &&
             inObjectID != closestObjectDrawID[1] ) return;
         }
@@ -1881,7 +1922,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     int eyesIndex = -1;
     int mouthIndex = -1;
     
-    if( drawWithEmot != NULL ) {
+    if( drawWithEmots.size() > 0 ) {
         eyesIndex = getEyesIndex( obj, inAge );
         mouthIndex = getMouthIndex( obj, inAge );
         
@@ -2320,6 +2361,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     doublePair tunicPos = { 0, 0 };
     double tunicRot = 0;
 
+    doublePair badgePos = { 0, 0 };
+    double badgeRot = 0;
+
     doublePair bottomPos = { 0, 0 };
     double bottomRot = 0;
 
@@ -2356,6 +2400,14 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             // skip drawing this aging layer entirely
             continue;
             }
+        
+        
+        if( obj->person && shouldHidePersonShadows &&
+            strstr( getSpriteRecord( obj->sprites[i] )->tag, 
+                    "Shadow" ) != NULL ) {
+            continue;
+            }
+        
 
         
         doublePair spritePos = workingSpritePos[i];
@@ -2407,7 +2459,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 animHeadPos.x *= -1;
                 animHeadRotDelta *= -1;
                 }
-            
+            if( inRot != 0 ) {
+                animHeadPos = rotate( animHeadPos, -2 * M_PI * inRot );
+                animHeadRotDelta += inRot;
+                }            
             }
 
         
@@ -2421,6 +2476,10 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 animBodyRotDelta *= -1;
                 }
             
+            if( inRot != 0 ) {
+                animBodyPos = rotate( animBodyPos, -2 * M_PI * inRot );
+                animBodyRotDelta += inRot;
+                }
             }
 
 
@@ -2459,9 +2518,13 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 }
             }
         
-        if( i == mouthIndex && drawWithEmot != NULL &&
-            drawWithEmot->mouthEmot != 0 ) {
-            skipSprite = true;
+        if( i == mouthIndex && drawWithEmots.size() > 0 ) {
+            for( int e=0; e<drawWithEmots.size(); e++ ) {
+                if( drawWithEmots.getElementDirect(e)->mouthEmot != 0 ) {
+                    skipSprite = true;
+                    break;
+                    }
+                }
             }
         
 
@@ -2558,6 +2621,37 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 
                 tunicPos = cPos;
                 }
+            
+            if( drawWithBadge != -1 &&
+                ( inClothing.tunic != NULL || bareBadge ) ) {
+                ObjectRecord *badgeO = getObject( drawWithBadge );
+                doublePair offset = badgeO->clothingOffset;
+            
+                if( inFlipH ) {
+                    offset.x *= -1;
+                    badgeRot = -rot - obj->spriteRot[i];
+                    }
+                else {
+                    badgeRot = rot - obj->spriteRot[i];
+                    }
+                    
+                if( badgeRot != 0 ) {
+                    if( inFlipH ) {
+                        offset = rotate( offset, 2 * M_PI * badgeRot );
+                        badgeRot *= -1;
+                        }
+                    else {
+                        offset = rotate( offset, -2 * M_PI * badgeRot );
+                        }
+                    }
+                    
+                    
+                doublePair cPos = add( spritePos, offset );
+                    
+                cPos = add( cPos, inPos );
+                    
+                badgePos = cPos;               
+                }
             if( inClothing.bottom != NULL ) {
 
                 doublePair offset = inClothing.bottom->clothingOffset;
@@ -2624,12 +2718,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             
 
             // body emote above all body parts
-            if( drawWithEmot != NULL &&
-                drawWithEmot->bodyEmot != 0 &&
+            for( int e=0; e<drawWithEmots.size(); e++ )
+            if( drawWithEmots.getElementDirect( e )->bodyEmot != 0 &&
                 obj->person ) {
             
                 char used;
-                drawObjectAnim( drawWithEmot->bodyEmot, 
+                drawObjectAnim( drawWithEmots.getElementDirect( e )->bodyEmot, 
                                 clothingAnimType, 
                                 inFrameTime,
                                 inAnimFade, 
@@ -2726,7 +2820,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
                 if( cont != NULL ) {
                     delete [] cont;
+                    cont = NULL;
                     }
+                numCont = 0;
                 }
             if( inClothing.backpack != NULL ) {
                 int numCont = 0;
@@ -2764,6 +2860,37 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 if( cont != NULL ) {
                     delete [] cont;
                     }
+                }            
+            if( drawWithBadge != -1 &&
+                ( inClothing.tunic != NULL || bareBadge ) ) {
+                spriteColorOverrideOn = true;
+                spriteColorOverride = drawWithBadgeColor;
+                
+                char used;
+                drawObjectAnimHighlighted( clothingHighlightFades[1],
+                                           drawWithBadge, 
+                                           clothingAnimType, 
+                                           inFrameTime,
+                                           inAnimFade, 
+                                           clothingFadeTargetAnimType,
+                                           inFadeTargetFrameTime,
+                                           inFrozenRotFrameTime,
+                                           &used,
+                                           endAnimType,
+                                           endAnimType,
+                                           badgePos,
+                                           badgeRot,
+                                           true,
+                                           inFlipH,
+                                           -1,
+                                           0,
+                                           false,
+                                           false,
+                                           emptyClothing,
+                                           NULL,
+                                           0, NULL,
+                                           NULL );
+                spriteColorOverrideOn = false;
                 }
             }
         
@@ -2802,7 +2929,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
 
         if( !skipSprite ) {
-            setDrawColor( obj->spriteColor[i] );
+            if( spriteColorOverrideOn ) {
+                setDrawColor( spriteColorOverride );
+                }
+            else {
+                setDrawColor( obj->spriteColor[i] );
+                }
             
             if( animLayerFades != NULL ) {
                 setDrawFade( animLayerFades[i] );
@@ -2866,8 +2998,11 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     }
                 }
             else {
-                drawSprite( getSprite( spriteID ), pos, 1.0, rot, 
-                            logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+                SpriteHandle sh = getSprite( spriteID );
+                if( sh != NULL ) {
+                    drawSprite( sh, pos, 1.0, rot, 
+                                logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+                    }
                 }
             
             if( multiplicative ) {
@@ -2912,8 +3047,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
 
         // eye emot on top of eyes
-        if( i == eyesIndex && drawWithEmot != NULL &&
-            drawWithEmot->eyeEmot != 0 ) {
+        if( i == eyesIndex )
+        for( int e=0; e<drawWithEmots.size(); e++ )
+        if( drawWithEmots.getElementDirect(e)->eyeEmot != 0 ) {
             
             doublePair offset = obj->mainEyesOffset;
 
@@ -2932,7 +3068,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             cPos = add( cPos, inPos );
 
             char used;
-            drawObjectAnim( drawWithEmot->eyeEmot, 
+            drawObjectAnim( drawWithEmots.getElementDirect(e)->eyeEmot, 
                             clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
@@ -2963,12 +3099,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         if( ( ( eyesIndex != -1 && i == eyesIndex ) 
               ||
               ( eyesIndex == -1 && i == headIndex ) )
-            && drawWithEmot != NULL &&
-            drawWithEmot->faceEmot != 0 &&
-            obj->person ) {
+            && obj->person )
+        for( int e=0; e<drawWithEmots.size(); e++ )
+        if( drawWithEmots.getElementDirect(e)->faceEmot != 0 ) {
             
             char used;
-            drawObjectAnim( drawWithEmot->faceEmot, 
+            drawObjectAnim( drawWithEmots.getElementDirect(e)->faceEmot, 
                             clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
@@ -2998,12 +3134,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
         // mouth on top of head
         // but only if there's a mouth to be replaced
-        if( i == headIndex && drawWithEmot != NULL &&
-            drawWithEmot->mouthEmot != 0 &&
-            mouthIndex != -1 ) {
+        if( i == headIndex && mouthIndex != -1 )
+        for( int e=0; e<drawWithEmots.size(); e++ )
+        if( drawWithEmots.getElementDirect(e)->mouthEmot != 0 ) {
             
             char used;
-            drawObjectAnim( drawWithEmot->mouthEmot, 
+            drawObjectAnim( drawWithEmots.getElementDirect(e)->mouthEmot, 
                             clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
@@ -3032,12 +3168,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         // other emote tests depend on eyes index or mouth index, which
         // are forced to 0 for non-people (and become -1 above), but 
         // this does not happen for headIndex
-        if( i == headIndex && drawWithEmot != NULL &&
-            drawWithEmot->otherEmot != 0 &&
-            obj->person ) {
+        if( i == headIndex && obj->person )
+        for( int e=0; e<drawWithEmots.size(); e++ )
+        if( drawWithEmots.getElementDirect(e)->otherEmot != 0 ) {
             
             char used;
-            drawObjectAnim( drawWithEmot->otherEmot, 
+            drawObjectAnim( drawWithEmots.getElementDirect(e)->otherEmot, 
                             clothingAnimType, 
                             inFrameTime,
                             inAnimFade, 
@@ -3146,36 +3282,6 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         } 
     
 
-    // head emot emot on top of everything
-    // if not
-    if( drawWithEmot != NULL &&
-        drawWithEmot->headEmot != 0 &&
-        obj->person ) {
-            
-        char used;
-        drawObjectAnim( drawWithEmot->headEmot, 
-                        clothingAnimType, 
-                        inFrameTime,
-                        inAnimFade, 
-                        clothingFadeTargetAnimType,
-                        inFadeTargetFrameTime,
-                        inFrozenRotFrameTime,
-                        &used,
-                        endAnimType,
-                        endAnimType,
-                        add( animHeadPos, inPos ),
-                        animHeadRotDelta,
-                        true,
-                        inFlipH,
-                        -1,
-                        0,
-                        false,
-                        false,
-                        emptyClothing,
-                        NULL,
-                        0, NULL,
-                        NULL );
-        }
 
 
 
@@ -3237,6 +3343,40 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             delete [] cont;
             }
         }
+
+
+
+    // head emot on top of everything, including hat
+    if( obj->person )
+    for( int e=0; e<drawWithEmots.size(); e++ )
+    if( drawWithEmots.getElementDirect(e)->headEmot != 0 ) {
+            
+        char used;
+        drawObjectAnim( drawWithEmots.getElementDirect(e)->headEmot, 
+                        clothingAnimType, 
+                        inFrameTime,
+                        inAnimFade, 
+                        clothingFadeTargetAnimType,
+                        inFadeTargetFrameTime,
+                        inFrozenRotFrameTime,
+                        &used,
+                        endAnimType,
+                        endAnimType,
+                        add( animHeadPos, inPos ),
+                        animHeadRotDelta,
+                        true,
+                        inFlipH,
+                        -1,
+                        0,
+                        false,
+                        false,
+                        emptyClothing,
+                        NULL,
+                        0, NULL,
+                        NULL );
+        }
+
+
     
     if( animLayerFades != NULL ) {
         delete [] animLayerFades;
@@ -3431,7 +3571,15 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     inClothingContained,
                     slotRots,
                     slotOffsets );
-
+    
+    char allBehind = true;
+    for( int i=0; i< obj->numSprites; i++ ) {
+        if( ! obj->spriteBehindSlots[i] ) {
+            allBehind = false;
+            break;
+            }
+        }
+    
     
     // next, draw jiggling (never rotating) objects in slots
     // can't safely rotate them, because they may be compound objects
@@ -3464,7 +3612,14 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
             doublePair pos = obj->slotPos[i];
             
-            doublePair centerOffset = getObjectCenterOffset( contained );
+            doublePair centerOffset;
+
+            if( allBehind ) {
+                centerOffset = getObjectBottomCenterOffset( contained );
+                }
+            else {
+                centerOffset = getObjectCenterOffset( contained );
+                }
             
             double rot = inRot;
             

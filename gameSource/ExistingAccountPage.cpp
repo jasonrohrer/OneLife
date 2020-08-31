@@ -44,20 +44,23 @@ ExistingAccountPage::ExistingAccountPage()
         : mEmailField( mainFont, 0, 128, 10, false, 
                        translate( "email" ),
                        NULL,
-                       // forbid only spaces
-                       " " ),
+                       // forbid only spaces and backslash and 
+                       // single/double quotes 
+                       "\"' \\" ),
           mKeyField( mainFont, 0, 0, 15, true,
                      translate( "accountKey" ),
                      // allow only ticket code characters
                      "23456789ABCDEFGHJKLMNPQRSTUVWXYZ-" ),
           mAtSignButton( mainFont, 252, 128, "@" ),
-          mPasteButton( mainFont, 0, -80, translate( "paste" ), 'v', 'V' ),
+          mPasteButton( mainFont, 0, -60, translate( "paste" ), 'v', 'V' ),
+          mPasteEmailButton( mainFont, 0, 68, translate( "paste" ), 'v', 'V' ),
           mDisableCustomServerButton( mainFont, 0, 220, 
                                       translate( "disableCustomServer" ) ),
           mLoginButton( mainFont, 400, 0, translate( "loginButton" ) ),
           mFriendsButton( mainFont, 400, -80, translate( "friendsButton" ) ),
           mGenesButton( mainFont, 550, 0, translate( "genesButton" ) ),
-          mFamilyTreesButton( mainFont, 400, -160, translate( "familyTrees" ) ),
+          mFamilyTreesButton( mainFont, 320, -160, translate( "familyTrees" ) ),
+          mTechTreeButton( mainFont, 550, -160, translate( "techTree" ) ),
           mClearAccountButton( mainFont, 400, -280, 
                                translate( "clearAccount" ) ),
           mCancelButton( mainFont, -400, -280, 
@@ -96,12 +99,14 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mFriendsButton );
     setButtonStyle( &mGenesButton );
     setButtonStyle( &mFamilyTreesButton );
+    setButtonStyle( &mTechTreeButton );
     setButtonStyle( &mClearAccountButton );
     setButtonStyle( &mCancelButton );
     setButtonStyle( &mSettingsButton );
     setButtonStyle( &mReviewButton );
     setButtonStyle( &mAtSignButton );
     setButtonStyle( &mPasteButton );
+    setButtonStyle( &mPasteEmailButton );
     setButtonStyle( &mRetryButton );
     setButtonStyle( &mRedetectButton );
     setButtonStyle( &mViewAccountButton );
@@ -117,12 +122,14 @@ ExistingAccountPage::ExistingAccountPage()
     addComponent( &mFriendsButton );
     addComponent( &mGenesButton );
     addComponent( &mFamilyTreesButton );
+    addComponent( &mTechTreeButton );
     addComponent( &mClearAccountButton );
     addComponent( &mCancelButton );
     addComponent( &mSettingsButton );
     addComponent( &mReviewButton );
     addComponent( &mAtSignButton );
     addComponent( &mPasteButton );
+    addComponent( &mPasteEmailButton );
     addComponent( &mEmailField );
     addComponent( &mKeyField );
     addComponent( &mRetryButton );
@@ -136,6 +143,7 @@ ExistingAccountPage::ExistingAccountPage()
     mFriendsButton.addActionListener( this );
     mGenesButton.addActionListener( this );
     mFamilyTreesButton.addActionListener( this );
+    mTechTreeButton.addActionListener( this );
     mClearAccountButton.addActionListener( this );
     
     mCancelButton.addActionListener( this );
@@ -144,6 +152,7 @@ ExistingAccountPage::ExistingAccountPage()
     
     mAtSignButton.addActionListener( this );
     mPasteButton.addActionListener( this );
+    mPasteEmailButton.addActionListener( this );
 
     mRetryButton.addActionListener( this );
     mRedetectButton.addActionListener( this );
@@ -162,6 +171,12 @@ ExistingAccountPage::ExistingAccountPage()
     mLoginButton.setMouseOverTip( translate( "saveTip" ) );
     mClearAccountButton.setMouseOverTip( translate( "clearAccountTip" ) );
     
+    mFriendsButton.setMouseOverTip( translate( "friendsTip" ) );
+    mGenesButton.setMouseOverTip( translate( "genesTip" ) );
+    mFamilyTreesButton.setMouseOverTip( translate( "familyTreesTip" ) );
+    mTechTreeButton.setMouseOverTip( translate( "techTreeTip" ) );
+    
+
     int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
     
     if( reviewPosted ) {
@@ -286,6 +301,7 @@ void ExistingAccountPage::makeActive( char inFresh ) {
 
     
     mPasteButton.setVisible( false );
+    mPasteEmailButton.setVisible( false );
     mAtSignButton.setVisible( false );
 
 
@@ -350,6 +366,8 @@ void ExistingAccountPage::makeNotActive() {
 void ExistingAccountPage::step() {
     mPasteButton.setVisible( isClipboardSupported() &&
                              mKeyField.isFocused() );
+    mPasteEmailButton.setVisible( isClipboardSupported() &&
+                                  mEmailField.isFocused() );
     mAtSignButton.setVisible( mEmailField.isFocused() );
     }
 
@@ -427,6 +445,14 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
             }
         delete [] url;
         }
+    else if( inTarget == &mTechTreeButton ) {
+        char *url = SettingsManager::getStringSetting( "techTreeURL", "" );
+
+        if( strcmp( url, "" ) != 0 ) {
+            launchURL( url );
+            }
+        delete [] url;
+        }
     else if( inTarget == &mViewAccountButton ) {
         if( mHideAccount ) {
             mViewAccountButton.setLabelText( translate( "hide" ) );
@@ -462,6 +488,13 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         char *clipboardText = getClipboardText();
         
         mKeyField.setText( clipboardText );
+    
+        delete [] clipboardText;
+        }
+    else if( inTarget == &mPasteEmailButton ) {
+        char *clipboardText = getClipboardText();
+        
+        mEmailField.setText( clipboardText );
     
         delete [] clipboardText;
         }
@@ -665,11 +698,12 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
         if( mHideAccount ) {
             int len = strlen( email );
             for( int i=0; i<len; i++ ) {
-                if( email[i] != '@' &&
-                    email[i] != '.' ) {
-                    email[i] = coverChar;
-                    }
-                }   
+                email[i] = coverChar;
+                }
+            if( len > 13 ) {
+                // truncate.  Don't overlap with GENETIC FITNESS
+                email[ 13 ] = '\0';
+                }
             }
         
 

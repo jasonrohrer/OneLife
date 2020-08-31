@@ -39,6 +39,7 @@ folderCache.cpp \
 binFolderCache.cpp \
 liveObjectSet.cpp \
 ../commonSource/fractalNoise.cpp \
+../commonSource/sayLimit.cpp \
 ExistingAccountPage.cpp \
 KeyEquivalentTextButton.cpp \
 ServerActionPage.cpp \
@@ -113,6 +114,7 @@ graphics/cellFill.tga \
 graphics/homeArrows.tga \
 graphics/homeArrowsErased.tga \
 graphics/homeSlip.tga \
+graphics/homeSlip2.tga \
 graphics/hiddenFieldTexture.tga \
 graphics/yumSlip1.tga \
 graphics/yumSlip2.tga \

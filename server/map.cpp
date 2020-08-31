@@ -5,6 +5,8 @@
 
 #include "CoordinateTimeTracking.h"
 
+#include "eveMovingGrid.h"
+
 
 // cell pixel dimension on client
 #define CELL_D 128
@@ -204,7 +206,8 @@ static GridPos eveStartSpiralPos = { 0, 0 };
 
 
 
-static int evePrimaryLocSpacing = 0;
+static int evePrimaryLocSpacingX = 0;
+static int evePrimaryLocSpacingY = 0;
 static int evePrimaryLocObjectID = -1;
 static SimpleVector<int> eveSecondaryLocObjectIDs;
 
@@ -219,6 +222,8 @@ static double recentlyUsedPrimaryEvePositionTimeout = 3600;
 
 static int eveHomeMarkerObjectID = -1;
 
+
+static char allowSecondPlaceBiomes = false;
 
 
 
@@ -235,7 +240,8 @@ static int barrierOn = 1;
 static int longTermCullEnabled = 1;
 
 
-static unsigned int biomeRandSeed = 723;
+static unsigned int biomeRandSeedA = 727;
+static unsigned int biomeRandSeedB = 941;
 
 
 static SimpleVector<int> barrierItemList;
@@ -296,9 +302,9 @@ static SimpleVector<float> *naturalMapChances;
 
 typedef struct MapGridPlacement {
         int id;
-        int spacing;
-        int phase;
-        int wiggleScale;
+        int spacingX, spacingY;
+        int phaseX, phaseY;
+        int wiggleScaleX, wiggleScaleY;
         SimpleVector<int> permittedBiomes;
     } MapGridPlacement;
 
@@ -462,7 +468,11 @@ static CoordinateTimeTracking lookTimeTracking;
 // about whether arrival has happened or not
 typedef struct MovementRecord {
         int x, y;
+        int sourceX, sourceY;
+        int id;
+        char deadly;
         double etaTime;
+        double totalTime;
     } MovementRecord;
 
 
@@ -513,6 +523,104 @@ typedef struct TestMapRecord {
 
 
 
+typedef struct Homeland {
+        int x, y;
+
+        int radius;
+
+        int lineageEveID;
+        
+        double lastBabyBirthTime;
+        
+        char expired;
+        
+        char changed;
+        
+        // did the creation of this homeland tapout-trigger
+        // a +primaryHomeland object?
+        char primary;
+
+        // should Eve placement ignore this homeland?
+        char ignoredForEve;
+
+    } Homeland;
+
+
+
+static SimpleVector<Homeland> homelands;
+
+
+static void expireHomeland( Homeland *inH ) {
+    inH->expired = true;
+    inH->changed = true;
+
+    
+    if( ! inH->primary ) {
+        // apply expiration transition to whatever is at center of
+        // non-primary homeland 
+        // (object operating on itself defines this)
+        
+        int centerID = getMapObject( inH->x, inH->y );
+        
+        if( centerID > 0 ) {
+            TransRecord *expireTrans = getTrans( centerID, centerID );
+            if( expireTrans != NULL ) {
+                setMapObject( inH->x, inH->y, expireTrans->newTarget );
+                }
+            }
+        }
+    }
+
+
+
+
+// NULL if not found
+static Homeland *getHomeland( int inX, int inY, 
+                              char includeExpired = false ) {
+    double t = Time::getCurrentTime();
+    
+    int staleTime = 
+        SettingsManager::getIntSetting( "homelandStaleSeconds", 3600 );
+    
+    double tooOldTime = t - staleTime;
+
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        
+        // watch for stale
+        if( ! h->expired && h->lastBabyBirthTime < tooOldTime ) {
+            expireHomeland( h );
+            }
+
+        
+        if( ! includeExpired && h->expired ) {
+            continue;
+            }
+
+
+        if( inX < h->x + h->radius &&
+            inX > h->x - h->radius &&
+            inY < h->y + h->radius &&
+            inY > h->y - h->radius ) {
+            return h;
+            }
+        }
+    return NULL;
+    }
+
+
+
+static char hasPrimaryHomeland( int inLineageEveID ) {
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        if( h->primary && h->lineageEveID == inLineageEveID ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
 
 #include "../commonSource/fractalNoise.h"
 
@@ -520,27 +628,7 @@ typedef struct TestMapRecord {
 
 
 
-// four ints to a 16-byte key
-void intQuadToKey( int inX, int inY, int inSlot, int inB, 
-                   unsigned char *outKey ) {
-    for( int i=0; i<4; i++ ) {
-        int offset = i * 8;
-        outKey[i] = ( inX >> offset ) & 0xFF;
-        outKey[i+4] = ( inY >> offset ) & 0xFF;
-        outKey[i+8] = ( inSlot >> offset ) & 0xFF;
-        outKey[i+12] = ( inB >> offset ) & 0xFF;
-        }    
-    }
 
-
-// two ints to an 8-byte key
-void intPairToKey( int inX, int inY, unsigned char *outKey ) {
-    for( int i=0; i<4; i++ ) {
-        int offset = i * 8;
-        outKey[i] = ( inX >> offset ) & 0xFF;
-        outKey[i+4] = ( inY >> offset ) & 0xFF;
-        }    
-    }
 
 
 
@@ -815,7 +903,7 @@ static int computeMapBiomeIndex( int inX, int inY,
 
     // try topographical altitude mapping
 
-    setXYRandomSeed( biomeRandSeed );
+    setXYRandomSeed( biomeRandSeedA, biomeRandSeedB );
 
     double randVal = 
         ( getXYFractal( inX, inY,
@@ -900,7 +988,8 @@ static int computeMapBiomeIndex( int inX, int inY,
         for( int i=regularBiomeLimit; i<numBiomes; i++ ) {
             int biome = biomes[i];
         
-            setXYRandomSeed( biome * 263 + biomeRandSeed + 38475 );
+            setXYRandomSeed( biome * 263 + biomeRandSeedA + 38475,
+                             biomeRandSeedB );
 
             double randVal = getXYFractal(  inX,
                                             inY,
@@ -941,6 +1030,15 @@ static int computeMapBiomeIndex( int inX, int inY,
         secondPlaceGap = 0.1;
         }
     
+
+    if( ! allowSecondPlaceBiomes ) {
+        // make the gap ridiculously big, so that second-place placement
+        // never happens.
+        // but keep secondPlace set different from pickedBiome
+        // (elsewhere in code, we avoid placing animals if 
+        // secondPlace == picked
+        secondPlaceGap = 10.0;
+        }
 
 
     biomePutCached( inX, inY, pickedBiome, secondPlace, secondPlaceGap );
@@ -995,7 +1093,7 @@ static int computeMapBiomeIndexOld( int inX, int inY,
     for( int i=0; i<numBiomes; i++ ) {
         int biome = biomes[i];
         
-        setXYRandomSeed( biome * 263 + biomeRandSeed );
+        setXYRandomSeed( biome * 263 + biomeRandSeedA, biomeRandSeedB );
 
         double randVal = getXYFractal(  inX,
                                         inY,
@@ -1249,22 +1347,22 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
 
 
         /*
-        double gridWiggleX = getXYFractal( inX / gp->spacing, 
-                                           inY / gp->spacing, 
+        double gridWiggleX = getXYFractal( inX / gp->spacingX, 
+                                           inY / gp->spacingY, 
                                            0.1, 0.25 );
         
-        double gridWiggleY = getXYFractal( inX / gp->spacing, 
-                                           inY / gp->spacing + 392387, 
+        double gridWiggleY = getXYFractal( inX / gp->spacingX, 
+                                           inY / gp->spacingY + 392387, 
                                            0.1, 0.25 );
         */
         // turn wiggle off for now
         double gridWiggleX = 0;
         double gridWiggleY = 0;
 
-        if( ( inX + gp->phase + lrint( gridWiggleX * gp->wiggleScale ) ) 
-            % gp->spacing == 0 &&
-            ( inY + gp->phase + lrint( gridWiggleY * gp->wiggleScale ) ) 
-            % gp->spacing == 0 ) {
+        if( ( inX + gp->phaseX + lrint( gridWiggleX * gp->wiggleScaleX ) ) 
+            % gp->spacingX == 0 &&
+            ( inY + gp->phaseY + lrint( gridWiggleY * gp->wiggleScaleY ) ) 
+            % gp->spacingY == 0 ) {
             
             // hits this grid
 
@@ -1836,20 +1934,21 @@ void printBiomeSamples() {
 
 
 
-void printObjectSamples() {
+int printObjectSamples( int inXCenter, int inYCenter ) {
     int objectToCount = 2285;
     
     JenkinsRandomSource sampleRandSource;
 
     int numSamples = 0;
 
-    int range = 500;
+    int rangeX = 354;
+    int rangeY = 354;
 
     int count = 0;
     
-    for( int y=-range; y<range; y++ ) {
-        for( int x=-range; x<range; x++ ) {
-            int obj = getMapObjectRaw( x, y );
+    for( int y=-rangeY; y<=rangeY; y++ ) {
+        for( int x=-rangeX; x<=rangeX; x++ ) {
+            int obj = getMapObjectRaw( x  + inXCenter, y + inYCenter );
             
             
             if( obj == objectToCount ) {
@@ -1860,7 +1959,7 @@ void printObjectSamples() {
         }
     
 
-    int rangeSize = (range + range ) * ( range + range );
+    int rangeSize = (rangeX + rangeX + 1 ) * ( rangeY + rangeY + 1 );
 
     float sampleFraction = 
         numSamples / 
@@ -1868,6 +1967,8 @@ void printObjectSamples() {
     
     printf( "Counted %d objects in %d/%d samples, expect %d total\n",
             count, numSamples, rangeSize, (int)( count / sampleFraction ) );
+    
+    return count;
     }
 
 
@@ -1902,6 +2003,17 @@ static int computeDBCacheHash( int inKeyA, int inKeyB,
     return hashKey;
     }
 
+
+
+static int computeBLCacheHash( int inKeyA, int inKeyB ) {
+    
+    int hashKey = ( inKeyA * CACHE_PRIME_A + 
+                    inKeyB * CACHE_PRIME_B ) % DB_CACHE_SIZE;
+    if( hashKey < 0 ) {
+        hashKey += DB_CACHE_SIZE;
+        }
+    return hashKey;
+    }
 
 
 
@@ -2005,7 +2117,7 @@ static void dbTimePutCached( int inX, int inY, int inSlot, int inSubCont,
 // returns -1 on miss
 static char blockingGetCached( int inX, int inY ) {
     BlockingCacheRecord r =
-        blockingCache[ computeXYCacheHash( inX, inY ) ];
+        blockingCache[ computeBLCacheHash( inX, inY ) ];
 
     if( r.x == inX && r.y == inY &&
         r.blocking != -1 ) {
@@ -2021,14 +2133,14 @@ static char blockingGetCached( int inX, int inY ) {
 static void blockingPutCached( int inX, int inY, char inBlocking ) {
     BlockingCacheRecord r = { inX, inY, inBlocking };
     
-    blockingCache[ computeXYCacheHash( inX, inY ) ] = r;
+    blockingCache[ computeBLCacheHash( inX, inY ) ] = r;
     }
 
 
 static void blockingClearCached( int inX, int inY ) {
     
     BlockingCacheRecord *r =
-        &( blockingCache[ computeXYCacheHash( inX, inY ) ] );
+        &( blockingCache[ computeBLCacheHash( inX, inY ) ] );
 
     if( r->x == inX && r->y == inY ) {
         r->blocking = -1;
@@ -2785,6 +2897,7 @@ static void setupMapChangeLogFile() {
         logFolder.makeDirectory();
         }
 
+    // always close file and start a new one when this is called
 
     if( mapChangeLogFile != NULL ) {
         fclose( mapChangeLogFile );
@@ -2794,43 +2907,12 @@ static void setupMapChangeLogFile() {
 
     if( logFolder.isDirectory() ) {
         
-        char *biomeSeedString = autoSprintf( "%d", biomeRandSeed );
-        
-        // does log file already exist?
-
-        int numFiles;
-        File **childFiles = logFolder.getChildFiles( &numFiles );
-        
-        for( int i=0; i<numFiles; i++ ) {
-            File *f = childFiles[i];
-            
-            char *name = f->getFileName();
-        
-            if( strstr( name, biomeSeedString ) != NULL ) {
-                // found!
-                char *fullFileName = f->getFullFileName();
-                mapChangeLogFile = fopen( fullFileName, "a" );
-                delete [] fullFileName;
-                }
-            delete [] name;
-            if( mapChangeLogFile != NULL ) {
-                break;
-                }
-            }
-        for( int i=0; i<numFiles; i++ ) {
-            delete childFiles[i];
-            }
-        delete [] childFiles;
-
-        delete [] biomeSeedString;
-            
-        
         if( mapChangeLogFile == NULL ) {
 
             // file does not exist
-            char *newFileName = autoSprintf( "%.ftime_%useed_mapLog.txt",
-                                             Time::getCurrentTime(),
-                                             biomeRandSeed );
+            char *newFileName = 
+                autoSprintf( "%.ftime_mapLog.txt",
+                             Time::getCurrentTime() );
             
             File *f = logFolder.getChildFile( newFileName );
             
@@ -2860,12 +2942,24 @@ void reseedMap( char inForceFresh ) {
         seedFile = fopen( "biomeRandSeed.txt", "r" );
         }
     
+
+    char set = false;
+    
     if( seedFile != NULL ) {
-        fscanf( seedFile, "%d", &biomeRandSeed );
+        int numRead = 
+            fscanf( seedFile, "%u %u", &biomeRandSeedA, &biomeRandSeedB );
         fclose( seedFile );
-        AppLog::infoF( "Reading map rand seed from file: %u\n", biomeRandSeed );
+        
+        if( numRead == 2 ) {
+            AppLog::infoF( "Reading map rand seed from file: %u %u\n", 
+                           biomeRandSeedA, biomeRandSeedB );
+            set = true;
+            }
         }
-    else {
+    
+
+
+    if( !set ) {
         // no seed set, or ignoring it, make a new one
         
         if( !inForceFresh ) {
@@ -2875,33 +2969,168 @@ void reseedMap( char inForceFresh ) {
             reportArcEnd();
             }
 
-        char *secret =
+        char *secretA =
             SettingsManager::getStringSetting( "statsServerSharedSecret", 
                                                "secret" );
+        int secretALen = strlen( secretA );
         
-        unsigned int seedBase = 
-            crc32( (unsigned char*)secret, strlen( secret ) );
+        unsigned int seedBaseA = 
+            crc32( (unsigned char*)secretA, secretALen );
         
-        delete [] secret;
+        const char *nonce = 
+            "8TX8sr7weEK8UIqrE0xV"
+            "voZgafknTgZAVQCTD8UG"
+            "6FKWSgi9N1wDhUQ7VCuw"
+            "uJbKsMAnOzLwbnnB7nQs"
+            "a6mI5rjqijo1oMjPiYbk"
+            "uezCnYjrn744AvSP7Zux"
+            "wOiZLLDUn5tUe1Ym3vTG"
+            "0I80QFzhFPht5TOiiYqT"
+            "jeZx0k9reFeknKkGUac3"
+            "fHlp0rg1PEOtZZ0LZsme";
+        
+        // assumption:  secret has way more than 32 bits of entropy
+        // crc32 only extracts 32 bits, though.
+        
+        // by XORing secret with a random nonce and passing through crc32
+        // again, we get another 32 bits of entropy out of it.
 
-        unsigned int modTimeSeed = 
-            (unsigned int)fmod( Time::getCurrentTime() + seedBase, 
+        // Not the best way of doing this, but it is probably sufficient
+        // to prevent brute-force test-guessing of the map seed based
+        // on sample map data.
+
+        char *secretB = stringDuplicate( secretA );
+        
+        int nonceLen = strlen( nonce );
+        
+        for( int i=0; i<secretALen; i++ ) {
+            if( i > nonceLen ) {
+                break;
+                }
+            secretB[i] = secretB[i] ^ nonce[i];
+            }
+
+        unsigned int seedBaseB = 
+            crc32( (unsigned char*)secretB, secretALen );
+
+
+        delete [] secretA;
+        delete [] secretB;
+
+        unsigned int modTimeSeedA = 
+            (unsigned int)fmod( Time::getCurrentTime() + seedBaseA, 
                                 4294967295U );
         
-        JenkinsRandomSource tempRandSource( modTimeSeed );
+        JenkinsRandomSource tempRandSourceA( modTimeSeedA );
 
-        biomeRandSeed = tempRandSource.getRandomInt();
+        biomeRandSeedA = tempRandSourceA.getRandomInt();
+
+        unsigned int modTimeSeedB = 
+            (unsigned int)fmod( Time::getCurrentTime() + seedBaseB, 
+                                4294967295U );
         
-        AppLog::infoF( "Generating fresh map rand seed and saving to file: "
-                       "%u\n", biomeRandSeed );
+        JenkinsRandomSource tempRandSourceB( modTimeSeedB );
+
+        biomeRandSeedB = tempRandSourceB.getRandomInt();
+        
+        AppLog::infoF( "Generating fresh map rand seeds and saving to file: "
+                       "%u %u\n", biomeRandSeedA, biomeRandSeedB );
 
         // and save it
         seedFile = fopen( "biomeRandSeed.txt", "w" );
         if( seedFile != NULL ) {
             
-            fprintf( seedFile, "%d", biomeRandSeed );
+            fprintf( seedFile, "%u %u", biomeRandSeedA, biomeRandSeedB );
             fclose( seedFile );
             }
+
+
+
+        // re-place rand placement objects
+        CustomRandomSource placementRandSource( biomeRandSeedA );
+
+        int numObjects;
+        ObjectRecord **allObjects = getAllObjects( &numObjects );
+    
+        for( int i=0; i<numObjects; i++ ) {
+            ObjectRecord *o = allObjects[i];
+
+            float p = o->mapChance;
+            if( p > 0 ) {
+                int id = o->id;
+            
+                char *randPlacementLoc =
+                    strstr( o->description, "randPlacement" );
+                
+                if( randPlacementLoc != NULL ) {
+                    // special random placement
+                
+                    int count = 10;                
+                    sscanf( randPlacementLoc, "randPlacement%d", &count );
+                
+                    printf( "Placing %d random occurences of %d (%s) "
+                            "inside %d square radius:\n",
+                            count, id, o->description, barrierRadius );
+                    for( int p=0; p<count; p++ ) {
+                        // sample until we find target biome
+                        int safeR = barrierRadius - 2;
+                        
+                        char placed = false;
+                        while( ! placed ) {                    
+                            int pickX = 
+                                placementRandSource.
+                                getRandomBoundedInt( -safeR, safeR );
+                            int pickY = 
+                                placementRandSource.
+                                getRandomBoundedInt( -safeR, safeR );
+                            
+                            int pickB = getMapBiome( pickX, pickY );
+                            
+                            for( int j=0; j< o->numBiomes; j++ ) {
+                                int b = o->biomes[j];
+                                
+                                if( b == pickB ) {
+                                    // hit
+                                    placed = true;
+                                    printf( "  (%d,%d)\n", pickX, pickY );
+                                    setMapObject( pickX, pickY, id );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        delete [] allObjects;
+        }
+
+                
+    setupMapChangeLogFile();
+
+    if( !set && mapChangeLogFile != NULL ) {
+        // whenever we actually change the seed, save it to a separate
+        // file in log folder
+
+        File logFolder( NULL, "mapChangeLogs" );
+        
+        char *newFileName = 
+            autoSprintf( "%.ftime_mapSeed.txt",
+                         Time::getCurrentTime() );
+            
+        File *f = logFolder.getChildFile( newFileName );
+            
+        delete [] newFileName;
+        
+        char *fullName = f->getFullFileName();
+        
+        delete f;
+        
+        FILE *seedFile = fopen( fullName, "w" );
+        delete [] fullName;
+        
+        fprintf( seedFile, "%u %u", biomeRandSeedA, biomeRandSeedB );
+        
+        fclose( seedFile );
         }
     }
 
@@ -2910,7 +3139,6 @@ void reseedMap( char inForceFresh ) {
 
 char initMap() {
 
-    reseedMap( false );
     
     
     numSpeechPipes = getMaxSpeechPipeIndex() + 1;
@@ -3669,16 +3897,37 @@ char initMap() {
 
             char *gridPlacementLoc =
                 strstr( o->description, "gridPlacement" );
+
+            char *randPlacementLoc =
+                strstr( o->description, "randPlacement" );
                 
             if( gridPlacementLoc != NULL ) {
                 // special grid placement
                 
-                int spacing = 10;
-                sscanf( gridPlacementLoc, "gridPlacement%d", &spacing );
+                int spacingX = 10;
+                int spacingY = 10;
+                int phaseX = 0;
+                int phaseY = 0;
                 
+                int numRead = sscanf( gridPlacementLoc, 
+                                      "gridPlacement%d,%d,p%d,p%d", 
+                                      &spacingX, &spacingY,
+                                      &phaseX, &phaseY );
+                if( numRead < 2 ) {
+                    // only X specified, square grid
+                    spacingY = spacingX;
+                    }
+                if( numRead < 4 ) {
+                    // only X specified, square grid
+                    phaseY = phaseX;
+                    }
+                
+                
+
                 if( strstr( o->description, "evePrimaryLoc" ) != NULL ) {
                     evePrimaryLocObjectID = id;
-                    evePrimaryLocSpacing = spacing;
+                    evePrimaryLocSpacingX = spacingX;
+                    evePrimaryLocSpacingY = spacingY;
                     }
 
                 SimpleVector<int> permittedBiomes;
@@ -3687,21 +3936,35 @@ char initMap() {
                         getBiomeIndex( o->biomes[ b ] ) );
                     }
 
-                int wiggleScale = 4;
+                int wiggleScaleX = 4;
+                int wiggleScaleY = 4;
                 
-                if( spacing > 12 ) {
-                    wiggleScale = spacing / 3;
+                if( spacingX > 12 ) {
+                    wiggleScaleX = spacingX / 3;
+                    }
+                if( spacingY > 12 ) {
+                    wiggleScaleY = spacingY / 3;
                     }
                 
                 MapGridPlacement gp =
-                    { id, spacing,
-                      0,
+                    { id, 
+                      spacingX, spacingY,
+                      phaseX, phaseY,
                       //phaseRandSource.getRandomBoundedInt( 0, 
-                      //                                     spacing - 1 ),
-                      wiggleScale,
+                      //                                     spacingX - 1 ),
+                      //phaseRandSource.getRandomBoundedInt( 0, 
+                      //                                     spacingY - 1 ),
+                      wiggleScaleX,
+                      wiggleScaleY,
                       permittedBiomes };
                 
                 gridPlacements.push_back( gp );
+                }
+            else if( randPlacementLoc != NULL ) {
+                // special random placement
+                
+                // don't actually place these now, do it on reseed
+                // but skip adding them to list of natural objects
                 }
             else {
                 // regular fractal placement
@@ -3901,7 +4164,8 @@ char initMap() {
         }
     
     
-    
+    reseedMap( false );
+        
     
 
     
@@ -3912,8 +4176,6 @@ char initMap() {
 
     //outputBiomeFractals();
 
-            
-    setupMapChangeLogFile();
 
     return true;
     }
@@ -4277,6 +4539,8 @@ void freeMap( char inSkipCleanup ) {
     speechPipesOut = NULL;
 
     flightLandingPos.deleteAll();
+
+    homelands.deleteAll();
     }
 
 
@@ -4937,6 +5201,14 @@ int checkDecayObject( int inX, int inY, int inID ) {
 
                 char stayInBiome = false;
                 
+                char avoidFloor = false;
+                
+                if( t->newTarget > 0 &&
+                    strstr( getObject( t->newTarget )->description, 
+                            "groundOnly" ) ) {
+                    avoidFloor = true;
+                    }
+                
 
                 if( t->move < 3 ) {
                     
@@ -4947,7 +5219,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
 
                     double dist = sqrt( dX * dX + dY * dY );
                     
-                    if( dist <= 7 &&
+                    if( dist <= 10 &&
                         ( p.x != 0 || p.y != 0 ) ) {
                         
                         if( t->move == 1 && dist <= desiredMoveDist ) {
@@ -4995,6 +5267,30 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             dir.x = -1;
                             break;
                         }
+
+
+                    if( desiredMoveDist == 1 ) {
+                        // make sure something else isn't moving out of
+                        // destination
+                        int destPosX = inX + dir.x;
+                        int destPosY = inY + dir.y ;
+                        
+                        
+                        int numMoving = liveMovements.size();
+                        
+                        for( int i=0; i<numMoving; i++ ) {
+                            MovementRecord *m = liveMovements.getElement( i );
+                            
+                            if( m->sourceX == destPosX &&
+                                m->sourceY == destPosY ) {
+                                // found something leaving where we're landing
+                                // wait for it to finish
+                                setEtaDecay( inX, inY, MAP_TIMESEC + 1, t );
+                                return inID;
+                                }
+                            }
+                        }
+
                     }
                 
                 // round to 1000ths to avoid rounding errors
@@ -5017,6 +5313,26 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         dir,
                         2 * M_PI * 
                         randSource.getRandomBoundedInt( 0, 7 ) / 8.0 );
+
+                    // clean up rounding errors
+                    if( fabs( dir.x ) < 0.1 ) {
+                        dir.x = 0;
+                        }
+                    if( fabs( dir.y ) < 0.1 ) {
+                        dir.y = 0;
+                        }
+                    if( dir.x > 0.9 ) {
+                        dir.x = 1;
+                        }
+                    if( dir.x < - 0.9 ) {
+                        dir.x = -1;
+                        }
+                    if( dir.y > 0.9 ) {
+                        dir.y = 1;
+                        }
+                    if( dir.y < - 0.9 ) {
+                        dir.y = -1;
+                        }
                     }
                 
                 if( dir.x != 0 && dir.y != 0 ) {
@@ -5091,17 +5407,42 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                 // bare ground
                                 trans = getPTrans( newID, -1 );
                                 }
+                            else {
+                                // what about trans onto floor?
+                                int fID = getMapFloor( testX, testY );
+                                if( fID > 0 ) {
+                                    trans = getPTrans( inID, fID );
+                                    if( trans == NULL ) {
+                                        // does exist for newID applied to
+                                        // floor?
+                                        trans = getPTrans( newID, fID );
+                                        }
+                                    }
+                                }
                             }
-                            
+                        
+                        
+                        char blockedByFloor = false;
+                        
+                        if( oID == 0 &&
+                            avoidFloor ) {
+                            int floorID = getMapFloor( testX, testY );
+                        
+                            if( floorID > 0 ) {
+                                blockedByFloor = true;
+                                }
+                            }
 
 
                         if( i >= tryDist && oID == 0 ) {
-                            // found a bare ground spot for it to move
-                            newX = testX;
-                            newY = testY;
-                            // keep any bare ground transition (or NULL)
-                            destTrans = trans;
-                            break;
+                            if( ! blockedByFloor ) {
+                                // found a bare ground spot for it to move
+                                newX = testX;
+                                newY = testY;
+                                // keep any bare ground transition (or NULL)
+                                destTrans = trans;
+                                break;
+                                }
                             }
                         else if( i >= tryDist && trans != NULL ) {
                             newX = testX;
@@ -5110,7 +5451,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             break;
                             }
                         else if( oID > 0 && getObject( oID ) != NULL &&
-                                 getObject( oID )->blocksWalking ) {
+                                 getObject( oID )->blocksMoving ) {
                             // blocked, stop now
                             break;
                             }
@@ -5204,6 +5545,15 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                         
                                         continue;
                                         }
+                                    if( avoidFloor ) {
+                                        int floorID = 
+                                            getMapFloor( testX, testY );
+                        
+                                        if( floorID > 0 ) {
+                                            // blocked by floor
+                                            continue;
+                                            }
+                                        }
 
                                     possibleX[ numPossibleDirs ] = testX;
                                     possibleY[ numPossibleDirs ] = testY;
@@ -5212,7 +5562,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                     break;
                                     }
                                 else if( oID > 0 && getObject( oID ) != NULL &&
-                                         getObject( oID )->blocksWalking ) {
+                                         getObject( oID )->blocksMoving ) {
                                     // blocked, stop now
                                     break;
                                     }
@@ -5276,13 +5626,25 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                         
                     
-                    if( destTrans != NULL ) {
+                    if( destTrans != NULL &&
+                        destTrans->newActor > 0 ) {
                         // leave new actor behind
                         
                         leftBehindID = destTrans->newActor;
                         
-                        dbPut( inX, inY, 0, leftBehindID );
+                        ObjectRecord *leftBehindObj = getObject( leftBehindID );
                         
+                        char leftFloor = false;
+                        if( leftBehindObj->floor ) {
+                            leftFloor = true;
+                            }
+                        
+                        if( leftFloor ) {
+                            dbFloorPut( inX, inY, leftBehindID );
+                            }
+                        else {
+                            dbPut( inX, inY, 0, leftBehindID );
+                            }
 
                         
                         TransRecord *leftDecayT = 
@@ -5309,7 +5671,17 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             // no further decay
                             leftMapETA = 0;
                             }
-                        setEtaDecay( inX, inY, leftMapETA );
+
+                        if( leftFloor ) {
+                            setFloorEtaDecay( inX, inY, leftMapETA );
+                            
+                            // don't leave anything behind except for floor
+                            dbPut( inX, inY, 0, 0 );
+                            leftBehindID = 0;
+                            }
+                        else {
+                            setEtaDecay( inX, inY, leftMapETA );
+                            }
                         }
                     else {
                         // leave empty spot behind
@@ -5361,12 +5733,14 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                     double speed = 4.0f;
                     
-                    
+                    char deadly = false;
                     if( newID > 0 ) {
                         ObjectRecord *newObj = getObject( newID );
                         
                         if( newObj != NULL ) {
                             speed *= newObj->speedMult;
+                            
+                            deadly = ( newObj->deadlyDistance > 0 );
                             }
                         }
                     
@@ -5374,7 +5748,11 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                     double etaTime = Time::getCurrentTime() + moveTime;
                     
-                    MovementRecord moveRec = { newX, newY, etaTime };
+                    MovementRecord moveRec = { newX, newY, inX, inY, 
+                                               newID,
+                                               deadly, 
+                                               etaTime,
+                                               moveTime };
                     
                     liveMovementEtaTimes.insert( newX, newY, 0, 0, etaTime );
                     
@@ -5404,11 +5782,13 @@ int checkDecayObject( int inX, int inY, int inID ) {
 
                     // default to applying bare-ground transition, if any
                     TransRecord *trans = getPTrans( inID, -1 );
-                            
+                    
+                    int currentMovingID = newID;
+
                     if( trans == NULL ) {
                         // does trans exist for newID applied to
                         // bare ground
-                        trans = getPTrans( newID, -1 );
+                        trans = getPTrans( currentMovingID, -1 );
                         }
                     if( trans != NULL ) {
                         newID = trans->newTarget;
@@ -5426,6 +5806,14 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             
                             TransRecord *inPlaceTrans = 
                                 getPTrans( newID, trans->newActor );
+
+                            if( inPlaceTrans == NULL ) {
+                                // see if there's anything for moving ID
+                                // applied directly to what's left on ground
+                                // allowing moving item to remain in place
+                                inPlaceTrans = getPTrans( currentMovingID,
+                                                          trans->newActor );
+                                }
                             
                             if( inPlaceTrans != NULL &&
                                 inPlaceTrans->newTarget > 0 ) {
@@ -5442,7 +5830,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 // no move happened
 
                 // just set change in DB
-                dbPut( inX, inY, 0, newID );
+                setMapObjectRaw( inX, inY, newID );
                 }
             
                 
@@ -5778,7 +6166,28 @@ int getTweakedBaseMap( int inX, int inY ) {
             if( s2ID > 0 && getObjectHeight( s2ID ) >= 3 ) {
                 return 0;
                 }                
-            }            
+            }
+
+        if( o->forceBiome != -1 &&
+            biomeDBGet( inX, inY ) == -1 &&
+            getBiomeIndex( o->forceBiome ) != -1 ) {
+            
+            // naturally-occurring object that forces a biome
+            // stick into floorDB            
+            biomeDBPut( inX, inY, o->forceBiome, o->forceBiome, 0.5 );
+
+            if( lastCheckedBiome != -1 &&
+                lastCheckedBiomeX == inX &&
+                lastCheckedBiomeY == inY ) {
+                // replace last checked with this
+                lastCheckedBiome = o->forceBiome;
+                }
+
+            // we also need to force-set the object itself into the DB
+            // otherwise, the next time we gen this square, we might not
+            // generate this object, because the underlying biome has changed
+            setMapObjectRaw( inX, inY, o->id );
+            }
         }
     return result;
     }
@@ -6026,6 +6435,21 @@ unsigned char *getChunkMessage( int inStartX, int inStartY,
 
     int endY = inStartY + inHeight;
     int endX = inStartX + inWidth;
+
+    if( endY < inStartY ) {
+        // wrapped around in integer space
+        // pull inStartY back from edge
+        inStartY -= inHeight;
+        endY = inStartY + inHeight;
+        }
+    if( endX < inStartX ) {
+        // wrapped around in integer space
+        // pull inStartY back from edge
+        inStartX -= inWidth;
+        endX = inStartX + inWidth;
+        }
+    
+
 
     timeSec_t curTime = MAP_TIMESEC;
 
@@ -6324,10 +6748,10 @@ static int findGridPos( SimpleVector<GridPos> *inList, GridPos inP ) {
 
 
 
-// inSetO must hvae o->horizontalVersionID etc set
+// inSetO can be NULL
 // returns new ID at inX, inY
 static int neighborWallAgree( int inX, int inY, ObjectRecord *inSetO,
-                               char inRecurse ) {
+                              char inRecurse ) {
 
     // make sure this agrees with all neighbors
     
@@ -6340,50 +6764,87 @@ static int neighborWallAgree( int inX, int inY, ObjectRecord *inSetO,
         int oID = getMapObjectRaw( inX + nX[n], inY + nY[n] );
         
         if( oID > 0 ) {
-            if( getObject( oID )->isAutoOrienting ) {
-                nSet[n] = true;
-                nID[n] = oID;
+            ObjectRecord *nO = getObject( oID );
+            
+            if( nO->isAutoOrienting ) {
+
+                if( // watch for E/W neighbors that aren't supposed to affect
+                    // us
+                    ( n < 2 && ! nO->causeAutoOrientVOnly ) 
+                    ||
+                    // watch for N/S neighbors that aren't supposed to
+                    // affect us
+                    ( n >= 2 && ! nO->causeAutoOrientHOnly ) ) {
+                    
+                    nSet[n] = true;
+                    nID[n] = oID;
+                    }
                 }
             }
         }
 
-    int returnID = inSetO->id;
     
-    if( inSetO->id != inSetO->verticalVersionID &&
-        ( nSet[2] || nSet[3] ) 
-        &&
-        ! ( nSet[0] || nSet[1] ) ) {
-        // should be vert
-        
-        returnID = inSetO->verticalVersionID;
-        }
-    else if( inSetO->id != inSetO->horizontalVersionID &&
-        ! ( nSet[2] || nSet[3] ) 
-        &&
-        ( nSet[0] || nSet[1] ) ) {
-        // should be horizontal
-        
-        returnID = inSetO->horizontalVersionID;
-        }
-    else if( inSetO->id != inSetO->cornerVersionID &&
-        ( nSet[2] || nSet[3] ) 
-        &&
-        ( nSet[0] || nSet[1] ) ) {
-        // should be corner
-        
-        returnID = inSetO->cornerVersionID;
+    int returnID = 0;
+
+    if( inSetO != NULL ) {
+        returnID = inSetO->id;
         }
     
-    if( returnID != inSetO->id ) {
-        dbPut( inX, inY, 0, returnID );
+
+    if( inSetO != NULL &&
+        inSetO->horizontalVersionID != -1 &&
+        inSetO->verticalVersionID != -1 &&
+        inSetO->cornerVersionID != -1 ) {
+        
+        // this object can react to its neighbors
+        
+        if( inSetO->id != inSetO->verticalVersionID &&
+            ( nSet[2] || nSet[3] ) 
+            &&
+            ! ( nSet[0] || nSet[1] ) ) {
+            // should be vert
+            
+            returnID = inSetO->verticalVersionID;
+            }
+        else if( inSetO->id != inSetO->horizontalVersionID &&
+                 ! ( nSet[2] || nSet[3] ) 
+                 &&
+                 ( nSet[0] || nSet[1] ) ) {
+            // should be horizontal
+            
+            returnID = inSetO->horizontalVersionID;
+            }
+        else if( inSetO->id != inSetO->cornerVersionID &&
+                 ( nSet[2] || nSet[3] ) 
+                 &&
+                 ( nSet[0] || nSet[1] ) ) {
+            // should be corner
+            
+            returnID = inSetO->cornerVersionID;
+            }
+    
+        if( returnID != inSetO->id ) {
+            dbPut( inX, inY, 0, returnID );
+            }
         }
+    
     
     if( inRecurse ) {
-        // recurse once for each matching neighbor
+        // recurse once for each matching neighbor that has orientations
         for( int n=0; n<4; n++ ) {
             if( nSet[n] ) {
-                neighborWallAgree( inX + nX[n], inY + nY[n], 
-                                   getObject( nID[n] ), false );
+                ObjectRecord *nO = getObject( nID[n] );
+                
+                // need to check this, because nSet is true if
+                // it is auto-orienting, but not all auto-orienting
+                // objects have all three orientations defined
+                if( nO->horizontalVersionID != -1 &&
+                    nO->verticalVersionID != -1 &&
+                    nO->cornerVersionID != -1 ) {
+                 
+                    neighborWallAgree( inX + nX[n], inY + nY[n], 
+                                       nO, false );
+                    }
                 }
             }
         }
@@ -6392,37 +6853,209 @@ static int neighborWallAgree( int inX, int inY, ObjectRecord *inSetO,
     }
     
 
+static int applyTapoutGradientRotate( int inX, int inY,
+                                      int inTargetX, int inTargetY,
+                                      int inEastwardGradientID ) {
+    // apply result to itself to flip it 
+    // and point gradient in other direction
+                
+    // eastward + eastward = westward, etc
+
+    // order:  e, w, s, n, ne, se, sw, nw
+    
+    int numRepeat = 0;
+    
+    int curObjectID = inEastwardGradientID;                        
+
+    if( inX > inTargetX && inY == inTargetY ) {
+        numRepeat = 0;
+        }
+    else if( inX < inTargetX && inY == inTargetY ) {
+        numRepeat = 1;
+        }
+    else if( inX == inTargetX && inY < inTargetY ) {
+        numRepeat = 2;
+        }
+    else if( inX == inTargetX && inY > inTargetY ) {
+        numRepeat = 3;
+        }
+    else if( inX > inTargetX && inY > inTargetY ) {
+        numRepeat = 4;
+        }
+    else if( inX > inTargetX && inY < inTargetY ) {
+        numRepeat = 5;
+        }
+    else if( inX < inTargetX && inY < inTargetY ) {
+        numRepeat = 6;
+        }
+    else if( inX < inTargetX && inY > inTargetY ) {
+        numRepeat = 7;
+        }
+
+
+    
+    for( int i=0; i<numRepeat; i++ ) {
+        if( curObjectID == 0 ) {
+            break;
+            }
+        TransRecord *flipTrans = getPTrans( curObjectID, curObjectID );
+        
+        if( flipTrans != NULL ) {
+            curObjectID = flipTrans->newTarget;
+            }
+        }
+
+    if( curObjectID == 0 ) {
+        return -1;
+        }
+
+    return curObjectID;
+    }
+
+
+
+
+// returns true if tapout-triggered a +primaryHomeland object
+static char runTapoutOperation( int inX, int inY, 
+                                int inRadiusX, int inRadiusY,
+                                int inSpacingX, int inSpacingY,
+                                int inTriggerID,
+                                char inPlayerHasPrimaryHomeland,
+                                char inIsPost = false ) {
+
+    char returnVal = false;
+    
+    for( int y =  inY - inRadiusY; 
+         y <= inY + inRadiusY; 
+         y += inSpacingY ) {
+    
+        for( int x =  inX - inRadiusX; 
+             x <= inX + inRadiusX; 
+             x += inSpacingX ) {
+            
+            if( inX == x && inY == y ) {
+                // skip center
+                continue;
+                }
+
+            int id = getMapObjectRaw( x, y );
+                    
+            // change triggered by tapout represented by 
+            // tapoutTrigger object getting used as actor
+            // on tapoutTarget
+            TransRecord *t = NULL;
+            
+            int newTarget = -1;
+
+            if( ! inIsPost ) {
+                // last use target signifies what happens in 
+                // same row or column as inX, inY
+                
+                // get eastward
+                t = getPTrans( inTriggerID, id, false, true );
+
+                if( t != NULL ) {
+                    newTarget = t->newTarget;
+                    }
+                
+                if( newTarget > 0 ) {
+                    newTarget = applyTapoutGradientRotate( inX, inY,
+                                                           x, y,
+                                                           newTarget );
+                    }
+                }
+
+            if( newTarget == -1 ) {
+                // not same row or post or last-use-target trans undefined
+                t = getPTrans( inTriggerID, id );
+                
+                if( t != NULL ) {
+                    newTarget = t->newTarget;
+                    }
+                }
+
+            if( newTarget != -1 ) {
+                ObjectRecord *nt = getObject( newTarget );
+                
+                if( strstr( nt->description, "+primaryHomeland" ) != NULL ) {
+                    if( inPlayerHasPrimaryHomeland ) {
+                        // block creation of objects that require 
+                        // +primaryHomeland
+                        // player already has a primary homeland
+                    
+                        newTarget = -1;
+                        }
+                    else {
+                        // created a +primaryHomeland object
+                        returnVal = true;
+                        }
+                    }
+                }
+            
+            if( newTarget != -1 ) {
+                setMapObjectRaw( x, y, newTarget );
+                }
+            }
+        }
+    
+    return returnVal;
+    }
+
+
+
+// from server.cpp
+extern int getPlayerLineage( int inID );
+extern char isPlayerIgnoredForEvePlacement( int inID );
+
+    
 
 
 void setMapObjectRaw( int inX, int inY, int inID ) {
+    int oldID = dbGet( inX, inY, 0 );
+    
     dbPut( inX, inY, 0, inID );
     
 
-    // global trigger and speech pipe stuff
-
-    if( inID <= 0 ) {
-        return;
-        }
-
-    ObjectRecord *o = getObject( inID );
     
-    if( o == NULL ) {
-        return;
+    // allow un-trigger for auto-orient even if tile becomes empty
+    
+    ObjectRecord *o = NULL;
+
+    if( inID > 0 ) {
+        o = getObject( inID );
         }
 
 
-
-    if( o->horizontalVersionID != -1 &&
-        o->verticalVersionID != -1 &&
-        o->cornerVersionID != -1 ) {
+    if( o != NULL && o->isAutoOrienting ) {
         
         // recurse one step
         inID = neighborWallAgree( inX, inY, o, true );
         
         o = getObject( inID );
         }
+    else if( oldID > 0 ) {
+        ObjectRecord *oldO = getObject( oldID );
+        
+        if( oldO->isAutoOrienting ) {
+            // WAS auto-orienting, but not anymore
+            // recurse once to let neighbors un-react to it
+            neighborWallAgree( inX, inY, o, true );
+            }
+        }
+    
 
 
+    // global trigger and speech pipe stuff
+    // skip if tile is now empty
+
+    if( o == NULL ) {
+        return;
+        }
+
+        
+    
+    char tappedOutPrimaryHomeland = false;
+    
 
     if( o->isFlightLanding ) {
         GridPos p = { inX, inY };
@@ -6651,6 +7284,97 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                 }
             }
         }
+    else if( o->isTapOutTrigger ) {
+        // this object, when created, taps out other objects in grid around
+
+        char playerHasPrimaryHomeland = false;
+        
+        if( currentResponsiblePlayer != -1 ) {
+            int pID = currentResponsiblePlayer;
+            if( pID < 0 ) {
+                pID = -pID;
+                }
+            int lineage = getPlayerLineage( pID );
+            
+            if( lineage != -1 ) {
+                playerHasPrimaryHomeland = hasPrimaryHomeland( lineage );
+                }
+            }
+        
+        // don't make current player responsible for all these changes
+        int restoreResponsiblePlayer = currentResponsiblePlayer;
+        currentResponsiblePlayer = -1;        
+        
+        TapoutRecord *r = getTapoutRecord( inID );
+        
+        if( r != NULL ) {
+
+            tappedOutPrimaryHomeland = 
+            runTapoutOperation( inX, inY, 
+                                r->limitX, r->limitY,
+                                r->gridSpacingX, r->gridSpacingY, 
+                                inID,
+                                playerHasPrimaryHomeland );
+            
+            
+            r->buildCount++;
+            
+            if( r->buildCountLimit != -1 &&
+                r->buildCount >= r->buildCountLimit ) {
+                // hit limit!
+                // tapout a larger radius now
+                tappedOutPrimaryHomeland =
+                runTapoutOperation( inX, inY, 
+                                    r->postBuildLimitX, r->postBuildLimitY,
+                                    r->gridSpacingX, r->gridSpacingY, 
+                                    inID, 
+                                    playerHasPrimaryHomeland, true );
+                }
+            }
+        
+        currentResponsiblePlayer = restoreResponsiblePlayer;
+        }
+    
+    
+    if( o->famUseDist > 0  && currentResponsiblePlayer != -1 ) {
+        
+        int p = currentResponsiblePlayer;
+        if( p < 0 ) {
+            p = - p;
+            }
+        
+        int lineage = getPlayerLineage( p );
+        
+        if( lineage != -1 ) {
+
+            // include expired, and update
+            Homeland *h = getHomeland( inX, inY, true );
+
+            double t = Time::getCurrentTime();
+                                  
+            if( h == NULL ) {
+                Homeland newH = { inX, inY, o->famUseDist,
+                                  lineage,
+                                  t,
+                                  false,
+                                  // changed
+                                  true,
+                                  tappedOutPrimaryHomeland,
+                                  isPlayerIgnoredForEvePlacement( p ) };
+                homelands.push_back( newH );
+                }
+            else if( h->expired ) {
+                // update expired record
+                h->x = inX;
+                h->y = inY;
+                h->radius = o->famUseDist;
+                h->lineageEveID = lineage;
+                h->lastBabyBirthTime = t;
+                h->expired = false;
+                h->changed = true;
+                }
+            }
+        }
     }
 
 
@@ -6659,6 +7383,16 @@ static void logMapChange( int inX, int inY, int inID ) {
     // log it?
     if( mapChangeLogFile != NULL ) {
         
+        double timeDelta = Time::getCurrentTime() - mapChangeLogTimeStart;
+
+        if( timeDelta > 3600 * 24 ) {
+            // break logs int 24-hour chunks
+            setupMapChangeLogFile();
+            timeDelta = Time::getCurrentTime() - mapChangeLogTimeStart;
+            }
+        
+        
+
         ObjectRecord *o = getObject( inID );
         
         const char *extraFlag = "";
@@ -6667,31 +7401,40 @@ static void logMapChange( int inX, int inY, int inID ) {
             extraFlag = "f";
             }
         
+        int respPlayer = currentResponsiblePlayer;
+        
+        if( respPlayer != -1 && respPlayer < 0 ) {
+            respPlayer = - respPlayer;
+            }
+
         if( o != NULL && o->isUseDummy ) {
             fprintf( mapChangeLogFile, 
-                     "%.2f %d %d %s%du%d\n", 
-                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     "%.2f %d %d %s%du%d %d\n",
+                     timeDelta,
                      inX, inY,
                      extraFlag,
                      o->useDummyParent,
-                     o->thisUseDummyIndex );
+                     o->thisUseDummyIndex,
+                     respPlayer );
             }
         else if( o != NULL && o->isVariableDummy ) {
             fprintf( mapChangeLogFile, 
-                     "%.2f %d %d %s%dv%d\n", 
-                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     "%.2f %d %d %s%dv%d %d\n", 
+                     timeDelta,
                      inX, inY,
                      extraFlag,
                      o->variableDummyParent,
-                     o->thisVariableDummyIndex );
+                     o->thisVariableDummyIndex,
+                     respPlayer );
             }
         else {        
             fprintf( mapChangeLogFile, 
-                     "%.2f %d %d %s%d\n", 
-                     Time::getCurrentTime() - mapChangeLogTimeStart,
+                     "%.2f %d %d %s%d %d\n", 
+                     timeDelta,
                      inX, inY,
                      extraFlag,
-                     inID );
+                     inID,
+                     respPlayer );
             }
         }
     }
@@ -7709,7 +8452,8 @@ extern char doesEveLineExist( int inEveID );
 
 void getEvePosition( const char *inEmail, int inID, int *outX, int *outY, 
                      SimpleVector<GridPos> *inOtherPeoplePos,
-                     char inAllowRespawn ) {
+                     char inAllowRespawn,
+                     char inIncrementPosition ) {
 
     int currentEveRadius = eveRadius;
 
@@ -7717,7 +8461,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
     doublePair ave = { 0, 0 };
 
-    printf( "Placing new Eve:  " );
+    printf( "Placing new Eve...\n" );
     
     
     int pX, pY, pR;
@@ -7725,12 +8469,79 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
     int result = eveDBGet( inEmail, &pX, &pY, &pR );
     
     if( inAllowRespawn && result == 1 && pR > 0 ) {
-        printf( "Found camp center (%d,%d) r=%d in db for %s\n",
+        printf( "Placing new Eve:  "
+                "Found camp center (%d,%d) r=%d in db for %s\n",
                 pX, pY, pR, inEmail );
         
         ave.x = pX;
         ave.y = pY;
         currentEveRadius = pR;
+        }
+    else if( SettingsManager::getIntSetting( "useEveMovingGrid", 0 ) ) {
+        printf( "Placing new Eve:  "
+                "using Eve moving grid method\n" );
+        
+        int gridX = eveLocation.x;
+        int gridY = eveLocation.y;
+        
+
+        getEveMovingGridPosition( & gridX, & gridY, inIncrementPosition );
+        
+        ave.x = gridX;
+        ave.y = gridY;
+        
+        forceEveToBorder = true;
+        currentEveRadius = 50;
+
+        if( inIncrementPosition ) {
+            // update advancing position
+            eveLocation.x = gridX;
+            eveLocation.y = gridY;
+            }
+
+        if( SettingsManager::getIntSetting( "eveToWestOfHomelands", 0 ) ) {
+            // we've placed Eve based on walking grid
+            // now move her farther west, to avoid plopping her down
+            // in middle of active homelands
+            
+            int homelandXSum = 0;
+            int homelandXCount = 0;
+            
+            for( int i=0; i<homelands.size(); i++ ) {
+                Homeland *h = homelands.getElement( i );
+                
+                // any d-town or tutorial homelands are ignored
+                if( ! h->expired && ! h->ignoredForEve ) {
+                    homelandXCount ++;
+                    homelandXSum += h->x;
+                    }
+                }
+            
+            if( homelandXCount > 0 ) {
+                int homelandXAve = homelandXSum / homelandXCount;
+            
+                for( int i=0; i<homelands.size(); i++ ) {
+                    
+                    Homeland *h = homelands.getElement( i );
+                    
+                    // avoid extreme outlier homelands that are more
+                    // than 1500 to the West of the average homeland location
+                    if( ! h->expired && ! h->ignoredForEve &&
+                        h->x > homelandXAve - 1500 ) {
+                        
+                        int xBoundary = h->x - 2 * h->radius;
+                        
+                        if( xBoundary < ave.x ) {
+                            ave.x = xBoundary;
+                            
+                            AppLog::infoF( 
+                                "Pushing Eve to west of homeland at x=%d\n",
+                                h->x );
+                            }
+                        }
+                    }
+                }
+            }
         }
     else {
         // player has never been an Eve that survived to old age before
@@ -7738,6 +8549,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
         maxEveLocationUsage = 
             SettingsManager::getIntSetting( "maxEveStartupLocationUsage", 10 );
+
+
+        printf( "Placing new Eve:  "
+                "using Eve spiral method\n" );
 
         
         // first try new grid placement method
@@ -7757,11 +8572,11 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                         0, inOtherPeoplePos->size() - 1 ) );
                 
                 // round to nearest whole spacing multiple
-                centerP.x /= evePrimaryLocSpacing;
-                centerP.y /= evePrimaryLocSpacing;
+                centerP.x /= evePrimaryLocSpacingX;
+                centerP.y /= evePrimaryLocSpacingY;
                 
-                centerP.x *= evePrimaryLocSpacing;
-                centerP.y *= evePrimaryLocSpacing;
+                centerP.x *= evePrimaryLocSpacingX;
+                centerP.y *= evePrimaryLocSpacingY;
                 }
             
 
@@ -7815,8 +8630,8 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                     for( int x=-r; x<=r; x++ ) {
                         tryP = centerP;
                         
-                        tryP.x += x * evePrimaryLocSpacing;
-                        tryP.y += y * evePrimaryLocSpacing;
+                        tryP.x += x * evePrimaryLocSpacingX;
+                        tryP.y += y * evePrimaryLocSpacingY;
                         
                         char existsAlready = false;
 
@@ -7939,15 +8754,15 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
             // remember it for when we exhaust it
             if( evePrimaryLocObjectID > 0 &&
-                evePrimaryLocSpacing > 0 ) {
+                ( evePrimaryLocSpacingX > 0 || evePrimaryLocSpacingY > 0 ) ) {
 
                 lastEvePrimaryLocation = eveLocation;
                 // round to nearest whole spacing multiple
-                lastEvePrimaryLocation.x /= evePrimaryLocSpacing;
-                lastEvePrimaryLocation.y /= evePrimaryLocSpacing;
+                lastEvePrimaryLocation.x /= evePrimaryLocSpacingX;
+                lastEvePrimaryLocation.y /= evePrimaryLocSpacingY;
                 
-                lastEvePrimaryLocation.x *= evePrimaryLocSpacing;
-                lastEvePrimaryLocation.y *= evePrimaryLocSpacing;
+                lastEvePrimaryLocation.x *= evePrimaryLocSpacingX;
+                lastEvePrimaryLocation.y *= evePrimaryLocSpacingY;
             
                 printf( "Saving eve start-up location close grid pos "
                         "of %d,%d for later\n",
@@ -8159,6 +8974,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             }
         }
 
+    printf( "Placing new Eve:  "
+            "Final location (%d,%d)\n", *outX, *outY );
+
+
     
     // clear recent placements after placing a new Eve
     // let her make new placements in her life which we will remember
@@ -8365,16 +9184,6 @@ int addMetadata( int inObjectID, unsigned char *inBuffer ) {
 
 
 
-static double distSquared( GridPos inA, GridPos inB ) {
-    double xDiff = (double)inA.x - (double)inB.x;
-    double yDiff = (double)inA.y - (double)inB.y;
-    
-    return xDiff * xDiff + yDiff * yDiff;
-    }
-
-
-
-
 void removeLandingPos( GridPos inPos ) {
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         if( equal( inPos, flightLandingPos.getElementDirect( i ) ) ) {
@@ -8413,6 +9222,9 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
     int closestIndex = -1;
     GridPos closestPos;
     double closestDist = DBL_MAX;
+
+    double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
+                                                        10000 );
     
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
@@ -8425,8 +9237,12 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
 
         
         if( isInDir( inCurPos, thisPos, inDir ) ) {
-            double dist = distSquared( inCurPos, thisPos );
+            double dist = distance( inCurPos, thisPos );
             
+            if( dist > maxDist ) {
+                continue;
+                }
+
             if( dist < closestDist ) {
                 // check if this is still a valid landing pos
                 int oID = getMapObject( thisPos.x, thisPos.y );
@@ -8456,6 +9272,56 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
     return closestPos;
     }
 
+
+
+
+GridPos getClosestLandingPos( GridPos inTargetPos, char *outFound ) {
+
+    int closestIndex = -1;
+    GridPos closestPos;
+    double closestDist = DBL_MAX;
+
+    double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
+                                                        10000 );
+    
+    for( int i=0; i<flightLandingPos.size(); i++ ) {
+        GridPos thisPos = flightLandingPos.getElementDirect( i );
+
+        
+        double dist = distance( inTargetPos, thisPos );
+        
+        if( dist > maxDist ) {
+            continue;
+            }
+
+        if( dist < closestDist ) {
+            // check if this is still a valid landing pos
+            int oID = getMapObject( thisPos.x, thisPos.y );
+            
+            if( oID <=0 ||
+                ! getObject( oID )->isFlightLanding ) {
+                
+                // not even a valid landing pos anymore
+                flightLandingPos.deleteElement( i );
+                i--;
+                continue;
+                }
+            closestDist = dist;
+            closestPos = thisPos;
+            closestIndex = i;
+            }
+        }
+    
+    if( closestIndex == -1 ) {
+        *outFound = false;
+        }
+    else {
+        *outFound = true;
+        }
+    
+    return closestPos;
+    }
+
                 
 
 
@@ -8466,6 +9332,9 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
     int closestIndex = -1;
     GridPos closestPos;
     double closestDist = DBL_MAX;
+
+    double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
+                                                        10000 );
 
     GridPos curPos = { inCurrentX, inCurrentY };
 
@@ -8489,7 +9358,11 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
             }
         
               
-        double dist = distSquared( curPos, thisPos );
+        double dist = distance( curPos, thisPos );
+
+        if( dist > maxDist ) {
+            continue;
+            }
         
         if( dist < closestDist ) {
             
@@ -8542,7 +9415,7 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
     SimpleVector<GridPos> otherPeoplePos;
     
     getEvePosition( "dummyPlaneCrashEmail@test.com", 0, &eveX, &eveY, 
-                    &otherPeoplePos, false );
+                    &otherPeoplePos, false, false );
     
     GridPos returnVal = { eveX, eveY };
     
@@ -8804,4 +9677,158 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
                 }
             }
         }
+    }
+
+
+
+
+int isHomeland( int inX, int inY, int inLineageEveID ) {
+    Homeland *h = getHomeland( inX, inY );
+    
+    if( h != NULL ) {
+        if( h->lineageEveID == inLineageEveID ) {
+            return 1;
+            }
+        else {
+            return -1;
+            }
+        }
+
+    // else check if they even have one
+    
+    for( int i=0; i<homelands.size(); i++ ) {
+        h = homelands.getElement( i );
+        
+        if( h->lineageEveID == inLineageEveID ) {
+            // they are outside of their homeland
+            return -1;
+            }
+        }
+    
+    // never found one, and they aren't inside someone else's
+    // report that they don't have one
+    return 0;
+    }
+
+
+
+void logHomelandBirth( int inX, int inY, int inLineageEveID ) {
+    Homeland *h = getHomeland( inX, inY );
+    
+    if( h != NULL ) {
+        if( h->lineageEveID == inLineageEveID ) {
+            h->lastBabyBirthTime = Time::getCurrentTime();
+            }
+        }
+    }
+
+
+
+void homelandsDead( int inLineageEveID ) {
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        
+        if( ! h->expired && h->lineageEveID == inLineageEveID ) {
+            expireHomeland( h );
+            }
+        }
+    }
+
+
+
+char getHomelandCenter( int inX, int inY, 
+                        GridPos *outCenter, int *outLineageEveID ) {
+    
+    // include expired
+    Homeland *h = getHomeland( inX, inY, true );
+
+    if( h != NULL ) {
+        outCenter->x = h->x;
+        outCenter->y = h->y;
+        
+        if( h->expired ) {
+            *outLineageEveID = -1;
+            }
+        else {
+            *outLineageEveID = h->lineageEveID;
+            }
+        
+        return true;
+        }
+    else {
+        return false;
+        }
+    }
+
+
+
+SimpleVector<HomelandInfo> getHomelandChanges() {
+    SimpleVector<HomelandInfo> list;
+    
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        
+        if( h->changed ) {
+            GridPos p = { h->x, h->y };
+            
+            HomelandInfo hi = { p, h->radius, h->lineageEveID };
+            
+            if( h->expired ) {
+                hi.lineageEveID = -1;
+                }
+
+            list.push_back( hi );
+            
+            h->changed = false;
+
+            if( h->expired ) {
+                // now that we've reported that it expired, remove it
+                homelands.deleteElement( i );
+                i--;
+                }
+            }
+        }
+    return list;
+    }
+
+
+
+
+int getDeadlyMovingMapObject( int inPosX, int inPosY,
+                              int *outMovingDestX, int *outMovingDestY ) {
+    
+    double curTime = Time::getCurrentTime();
+    
+    int numMoving = liveMovements.size();
+    
+    for( int i=0; i<numMoving; i++ ) {
+        MovementRecord *m = liveMovements.getElement( i );
+        
+        if( ! m->deadly ) {
+            continue;
+            }
+        double progress = 
+            ( m->totalTime - ( m->etaTime - curTime )  )
+            / m->totalTime;
+        
+        if( progress < 0 ||
+            progress > 1 ) {
+            continue;
+            }
+        int curPosX = lrint( ( m->x - m->sourceX ) * progress + m->sourceX );
+        int curPosY = lrint( ( m->y - m->sourceY ) * progress + m->sourceY );
+        
+        if( curPosX != inPosX ||
+            curPosY != inPosY ) {
+            continue;
+            }
+        
+        // hit position
+        *outMovingDestX = m->x;
+        *outMovingDestY = m->y;
+        return m->id;
+        }
+    
+
+    return 0;
     }

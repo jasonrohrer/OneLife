@@ -1969,7 +1969,8 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                     // previous object
                     SimpleVector<SubsetSpriteIndexMap> map;
                     
-                    if( isSpriteSubset( oldID, mCurrentObjectID, &map ) ) {
+                    if( isSpriteSubset( oldID, mCurrentObjectID, 
+                                        true, &map ) ) {
                         int newID = mCurrentObjectID;
                         
                         mCurrentObjectID = oldID;
@@ -3407,7 +3408,7 @@ void EditorAnimationPage::pointerDrag( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
 
-    if( mSettingRotCenter ) {
+    if( mCurrentObjectID != -1 && mSettingRotCenter ) {
         doublePair pos = { 0, -64 };
     
         ObjectRecord *r = getObject( mCurrentObjectID );

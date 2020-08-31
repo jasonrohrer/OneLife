@@ -1,7 +1,7 @@
-set output "murderRate.eps"
+#set output "murderRate.eps"
 
 
-set terminal post enhanced color
+#set terminal post enhanced color
 
 
 #set style fill solid border -1
@@ -37,16 +37,19 @@ set format x "%b/%d"
 #set timefmt "%m/%d/%y"
 
 #set xtics rotate by -45
-set xtics 1296000
+set xtics 691200
 
 #set decimal locale
 #set format y "%'g"
 
-#set yrange [0:0.06]	
+set yrange [0:0.07]	
 
 set style fill solid noborder
 
-set size 1, .8
+set size 1, 1.0
 
+set title "Fraction of total deaths that were murders"
 
-plot "murderRate.dat" using ($2 - ( 8 * 3600 ) ):($4/$3) with filledcurves y1=0 fillcolor rgb "#000000"
+plot "murderRate.Trimmed.dat" using ($2 - ( 8 * 3600 ) ):($4/$3) with filledcurves y1=0 fillcolor rgb "#000000"
+
+pause -1
