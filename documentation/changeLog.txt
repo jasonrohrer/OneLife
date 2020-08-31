@@ -2173,6 +2173,13 @@ Server Fixes
 
 
 
+----
+Steam Release     2018-November-8
+----
+
+
+
+
 Version 165    2018-November-8
 
 --Tore out the code that always shows the dotted line when held-mouse journey
@@ -4381,6 +4388,14 @@ Server Fixes:
 
 --Changed server update script to shut down servers one at a time so that
   people can keep playing during the update.
+
+
+
+
+
+----
+Off-Steam Release     2018-February-27
+----
 
 
 
