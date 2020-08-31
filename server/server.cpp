@@ -411,6 +411,7 @@ typedef struct LiveObject {
         
         char *name;
         char nameHasSuffix;
+		char *displayedName;
         
         char *familyName;
         
@@ -1471,6 +1472,10 @@ void quitCleanup() {
 
         if( nextPlayer->name != NULL ) {
             delete [] nextPlayer->name;
+            }
+
+        if( nextPlayer->displayedName != NULL ) {
+            delete [] nextPlayer->displayedName;
             }
 
         if( nextPlayer->familyName != NULL ) {
@@ -6745,6 +6750,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.lineage = new SimpleVector<int>();
     
     newObject.name = NULL;
+	newObject.displayedName = NULL;
     newObject.familyName = NULL;
     
     newObject.nameHasSuffix = false;
@@ -9984,6 +9990,8 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
              babyO->name,
              babyO->lineageEveID );
                                     
+    babyO->displayedName = babyO->name;
+	
     playerIndicesToSendNamesAbout->push_back( 
         getLiveObjectIndex( babyO->id ) );
     }
@@ -13148,10 +13156,7 @@ int main() {
 
 
                         
-                        if( nextPlayer->isEve && 
-							( nextPlayer->name == NULL ||
-							strcmp(nextPlayer->name, infertilitySuffix) == 0 || 
-							strcmp(nextPlayer->name, fertilitySuffix) == 0 ) ) {
+                        if( nextPlayer->isEve && nextPlayer->name == NULL ) {
                             char *name = isFamilyNamingSay( m.saidText );
                             
                             if( name != NULL && strcmp( name, "" ) != 0 ) {
@@ -13197,9 +13202,10 @@ int main() {
 									std::string strName(nextPlayer->name);
 									std::string strInfertilitySuffix(infertilitySuffix);
 									strName += strInfertilitySuffix;
-									char *cName = strdup( strName.c_str() );
-									nextPlayer->name = cName;
-									nextPlayer->nameHasSuffix = true;
+									nextPlayer->displayedName = strdup( strName.c_str() );
+									} 
+								else {
+									nextPlayer->displayedName = nextPlayer->name;
 									}
                                 
                                 playerIndicesToSendNamesAbout.push_back( i );
@@ -13213,21 +13219,13 @@ int main() {
 							char *fertilityDeclaring = isFertilityDeclaringSay( m.saidText );
 							if( infertilityDeclaring != NULL && nextPlayer->fertile ) {
 								nextPlayer->fertile = false;
-
+								
 								if (nextPlayer->name == NULL) {
-									char *cName = strdup( strInfertilitySuffix.c_str() );
-									nextPlayer->name = cName;
-									nextPlayer->nameHasSuffix = true;
+									nextPlayer->displayedName = strdup( strInfertilitySuffix.c_str() );
 								} else {
 									std::string strName(nextPlayer->name);
-									if (strName == strFertilitySuffix) {
-										strName = strInfertilitySuffix;
-									} else {
-										strName += strInfertilitySuffix;
-									}
-									char *cName = strdup( strName.c_str() );
-									nextPlayer->name = cName;
-									nextPlayer->nameHasSuffix = true;
+									strName += strInfertilitySuffix;
+									nextPlayer->displayedName = strdup( strName.c_str() );
 								}
 								
 								playerIndicesToSendNamesAbout.push_back( i );
@@ -13236,23 +13234,9 @@ int main() {
 								nextPlayer->fertile = true;
 								
 								if (nextPlayer->name == NULL) {
-									//This case should not happen
-									char *cName = strdup( strFertilitySuffix.c_str() );
-									nextPlayer->name = cName;
-									nextPlayer->nameHasSuffix = true;
+									nextPlayer->displayedName = strdup( strFertilitySuffix.c_str() );
 								} else {
-									std::string strName(nextPlayer->name);
-									size_t start_pos = strName.find(strInfertilitySuffix);
-									if (strName == strInfertilitySuffix) {
-										char *cName = strdup( strFertilitySuffix.c_str() );
-										nextPlayer->name = cName;
-										nextPlayer->nameHasSuffix = true;
-									} else if (start_pos != std::string::npos) {
-										strName.replace(start_pos, strInfertilitySuffix.length(), "");
-										char *cName = strdup( strName.c_str() );
-										nextPlayer->name = cName;
-										nextPlayer->nameHasSuffix = false;
-									}
+									nextPlayer->displayedName = nextPlayer->name;
 								}
 								
 								playerIndicesToSendNamesAbout.push_back( i );
@@ -17476,7 +17460,7 @@ int main() {
                     }
 
                 char *line = autoSprintf( "%d %s\n", nextPlayer->id,
-                                          nextPlayer->name );
+                                          nextPlayer->displayedName );
                 numAdded++;
                 namesWorking.appendElementString( line );
                 delete [] line;
