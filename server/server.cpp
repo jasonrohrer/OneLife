@@ -9990,8 +9990,6 @@ void nameBaby( LiveObject *inNamer, LiveObject *inBaby, char *inName,
              babyO->name,
              babyO->lineageEveID );
                                     
-    babyO->displayedName = babyO->name;
-	
     playerIndicesToSendNamesAbout->push_back( 
         getLiveObjectIndex( babyO->id ) );
     }
@@ -13255,6 +13253,15 @@ int main() {
                                 if( name != NULL && strcmp( name, "" ) != 0 ) {
                                     nameBaby( nextPlayer, babyO, name,
                                               &playerIndicesToSendNamesAbout );
+									
+									if ( !babyO->fertile ) {
+										std::string strName(babyO->name);
+										strName += strInfertilitySuffix;
+										babyO->displayedName = strdup( strName.c_str() );
+										} 
+									else {
+										babyO->displayedName = strdup( babyO->name );
+										}
                                     }
                                 }
                             }
@@ -13275,6 +13282,15 @@ int main() {
                                     nameBaby( nextPlayer, closestOther,
                                               name, 
                                               &playerIndicesToSendNamesAbout );
+									
+									if ( !closestOther->fertile ) {
+										std::string strName(closestOther->name);
+										strName += strInfertilitySuffix;
+										closestOther->displayedName = strdup( strName.c_str() );
+										} 
+									else {
+										closestOther->displayedName = strdup( closestOther->name );
+										}
                                     }
                                 }
 
