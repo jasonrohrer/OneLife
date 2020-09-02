@@ -17906,11 +17906,11 @@ int main() {
                 
                     LiveObject *o = players.getElement( i );
                 
-                    if( o->error || o->name == NULL) {
+                    if( o->error || o->displayedName == NULL) {
                         continue;
                         }
 
-                    char *line = autoSprintf( "%d %s\n", o->id, o->name );
+                    char *line = autoSprintf( "%d %s\n", o->id, o->displayedName );
                     namesWorking.appendElementString( line );
                     delete [] line;
                     
