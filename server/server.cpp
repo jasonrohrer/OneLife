@@ -15993,7 +15993,14 @@ int main() {
                         
                         GraveInfo graveInfo = { dropPos, nextPlayer->id,
                                                 nextPlayer->lineageEveID };
-                        newGraves.push_back( graveInfo );
+						//Only use GV message for players which name and displayedName match
+						//otherwise use GO message to update clients with names for graves
+						if (
+							(nextPlayer->name == NULL && nextPlayer->displayedName == NULL) ||
+							(nextPlayer->name != NULL && nextPlayer->displayedName != NULL && 
+							strcmp(nextPlayer->name, nextPlayer->displayedName) == 0)
+							) 
+							newGraves.push_back( graveInfo );
                         
                         setGravePlayerID( dropPos.x, dropPos.y,
                                           nextPlayer->id );
