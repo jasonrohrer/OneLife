@@ -13195,14 +13195,15 @@ int main() {
                                              nextPlayer->name,
                                              nextPlayer->lineageEveID );
                                     }
-									
+								
+								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
 								if ( !nextPlayer->fertile ) {
 									std::string strName(nextPlayer->name);
 									strName += strInfertilitySuffix;
 									nextPlayer->displayedName = strdup( strName.c_str() );
 									} 
 								else {
-									nextPlayer->displayedName = nextPlayer->name;
+									nextPlayer->displayedName = strdup( nextPlayer->name );
 									}
                                 
                                 playerIndicesToSendNamesAbout.push_back( i );
@@ -13215,8 +13216,9 @@ int main() {
 							if( infertilityDeclaring != NULL && nextPlayer->fertile ) {
 								nextPlayer->fertile = false;
 								
+								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
 								if (nextPlayer->name == NULL) {
-									nextPlayer->displayedName = infertilitySuffix;
+									nextPlayer->displayedName = strdup( infertilitySuffix );
 								} else {
 									std::string strName(nextPlayer->name);
 									strName += strInfertilitySuffix;
@@ -13228,10 +13230,11 @@ int main() {
 							} else if( fertilityDeclaring != NULL && !nextPlayer->fertile ) {
 								nextPlayer->fertile = true;
 								
+								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
 								if (nextPlayer->name == NULL) {
-									nextPlayer->displayedName = fertilitySuffix;
+									nextPlayer->displayedName = strdup( fertilitySuffix );
 								} else {
-									nextPlayer->displayedName = nextPlayer->name;
+									nextPlayer->displayedName = strdup( nextPlayer->name );
 								}
 								
 								playerIndicesToSendNamesAbout.push_back( i );
@@ -13254,6 +13257,7 @@ int main() {
                                     nameBaby( nextPlayer, babyO, name,
                                               &playerIndicesToSendNamesAbout );
 									
+									if ( babyO->displayedName != NULL ) delete [] babyO->displayedName;
 									if ( !babyO->fertile ) {
 										std::string strName(babyO->name);
 										strName += strInfertilitySuffix;
@@ -13283,6 +13287,7 @@ int main() {
                                               name, 
                                               &playerIndicesToSendNamesAbout );
 									
+									if ( closestOther->displayedName != NULL ) delete [] closestOther->displayedName;
 									if ( !closestOther->fertile ) {
 										std::string strName(closestOther->name);
 										strName += strInfertilitySuffix;
@@ -19448,6 +19453,10 @@ int main() {
 
                 if( nextPlayer->name != NULL ) {
                     delete [] nextPlayer->name;
+                    }
+					
+                if( nextPlayer->displayedName != NULL ) {
+                    delete [] nextPlayer->displayedName;
                     }
 
                 if( nextPlayer->familyName != NULL ) {
