@@ -170,10 +170,14 @@ static SimpleVector<char*> cursingPhrases;
 static SimpleVector<char*> youGivingPhrases;
 static SimpleVector<char*> namedGivingPhrases;
 
+static SimpleVector<char*> infertilityDeclaringPhrases;
+static SimpleVector<char*> fertilityDeclaringPhrases;
 
 
 static char *eveName = NULL;
 
+static char *infertilitySuffix = NULL;
+static char *fertilitySuffix = NULL;
 
 // maps extended ascii codes to true/false for characters allowed in SAY
 // messages
@@ -407,6 +411,7 @@ typedef struct LiveObject {
         
         char *name;
         char nameHasSuffix;
+		char *displayedName;
         
         char *familyName;
         
@@ -691,6 +696,7 @@ typedef struct LiveObject {
         // they can have their first baby right away.
         timeSec_t birthCoolDown;
         
+		bool fertile;
 
         timeSec_t lastRegionLookTime;
         
@@ -1468,6 +1474,10 @@ void quitCleanup() {
             delete [] nextPlayer->name;
             }
 
+        if( nextPlayer->displayedName != NULL ) {
+            delete [] nextPlayer->displayedName;
+            }
+
         if( nextPlayer->familyName != NULL ) {
             delete [] nextPlayer->familyName;
             }
@@ -1568,10 +1578,20 @@ void quitCleanup() {
     cursingPhrases.deallocateStringElements();
     youGivingPhrases.deallocateStringElements();
     namedGivingPhrases.deallocateStringElements();
+	infertilityDeclaringPhrases.deallocateStringElements();
+	fertilityDeclaringPhrases.deallocateStringElements();
     
     if( eveName != NULL ) {
         delete [] eveName;
         eveName = NULL;
+        }
+    if( infertilitySuffix != NULL ) {
+        delete [] infertilitySuffix;
+        infertilitySuffix = NULL;
+        }
+    if( fertilitySuffix != NULL ) {
+        delete [] fertilitySuffix;
+        fertilitySuffix = NULL;
         }
 
     if( apocalypseRequest != NULL ) {
@@ -5887,9 +5907,9 @@ int processLoggedInPlayer( char inAllowReconnect,
             continue;
             }
 
-	if( player->isEve && ( player->familyName == NULL ) ) {
-            continue;
-            }//skips over players who do not name themselves. helps new player spawn on mothers who are not just playing solo.
+		if( !player->fertile ) {
+				continue;
+				}///skips over solo players who declare themselves infertile
 
         if( player->vogMode ) {
             continue;
@@ -6730,6 +6750,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.lineage = new SimpleVector<int>();
     
     newObject.name = NULL;
+	newObject.displayedName = NULL;
     newObject.familyName = NULL;
     
     newObject.nameHasSuffix = false;
@@ -6829,6 +6850,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.babyIDs = new SimpleVector<int>();
     
     newObject.birthCoolDown = 0;
+	newObject.fertile = true;
     
     newObject.monumentPosSet = false;
     newObject.monumentPosSent = true;
@@ -8481,6 +8503,13 @@ char *isNamedGivingSay( char *inSaidString ) {
     return isReverseNamingSay( inSaidString, &namedGivingPhrases );
     }
 
+char *isInfertilityDeclaringSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &infertilityDeclaringPhrases );
+    }
+
+char *isFertilityDeclaringSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &fertilityDeclaringPhrases );
+    }
 
 
 char isYouGivingSay( char *inSaidString ) {
@@ -10157,9 +10186,23 @@ int main() {
     readPhrases( "youGivingPhrases", &youGivingPhrases );
     readPhrases( "namedGivingPhrases", &namedGivingPhrases );
     
+	readPhrases( "infertilityDeclaringPhrases", &infertilityDeclaringPhrases );
+	readPhrases( "fertilityDeclaringPhrases", &fertilityDeclaringPhrases );
 
     eveName = 
         SettingsManager::getStringSetting( "eveName", "EVE" );
+    infertilitySuffix = 
+        SettingsManager::getStringSetting( "infertilitySuffix", "+INFERTILE+" );
+    fertilitySuffix = 
+        SettingsManager::getStringSetting( "fertilitySuffix", "+FERTILE+" );
+	//Pad the suffix to have some space between player name and the suffix
+	//padding it in the ini file wouldnt work, for some unknown reason...
+	std::string strInfertilitySuffix(infertilitySuffix);
+	std::string strFertilitySuffix(fertilitySuffix);
+	strInfertilitySuffix = " " + strInfertilitySuffix;
+	strFertilitySuffix = " " + strFertilitySuffix;
+	infertilitySuffix = strdup( strInfertilitySuffix.c_str() );
+	fertilitySuffix = strdup( strFertilitySuffix.c_str() );
     
     killEmotionIndex =
         SettingsManager::getIntSetting( "killEmotionIndex", 2 );
@@ -13152,10 +13195,51 @@ int main() {
                                              nextPlayer->name,
                                              nextPlayer->lineageEveID );
                                     }
+								
+								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
+								if ( !nextPlayer->fertile ) {
+									std::string strName(nextPlayer->name);
+									strName += strInfertilitySuffix;
+									nextPlayer->displayedName = strdup( strName.c_str() );
+									} 
+								else {
+									nextPlayer->displayedName = strdup( nextPlayer->name );
+									}
                                 
                                 playerIndicesToSendNamesAbout.push_back( i );
                                 }
                             }
+							
+						if( getFemale( nextPlayer ) ) {
+							char *infertilityDeclaring = isInfertilityDeclaringSay( m.saidText );
+							char *fertilityDeclaring = isFertilityDeclaringSay( m.saidText );
+							if( infertilityDeclaring != NULL && nextPlayer->fertile ) {
+								nextPlayer->fertile = false;
+								
+								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
+								if (nextPlayer->name == NULL) {
+									nextPlayer->displayedName = strdup( infertilitySuffix );
+								} else {
+									std::string strName(nextPlayer->name);
+									strName += strInfertilitySuffix;
+									nextPlayer->displayedName = strdup( strName.c_str() );
+								}
+								
+								playerIndicesToSendNamesAbout.push_back( i );
+								
+							} else if( fertilityDeclaring != NULL && !nextPlayer->fertile ) {
+								nextPlayer->fertile = true;
+								
+								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
+								if (nextPlayer->name == NULL) {
+									nextPlayer->displayedName = strdup( fertilitySuffix );
+								} else {
+									nextPlayer->displayedName = strdup( nextPlayer->name );
+								}
+								
+								playerIndicesToSendNamesAbout.push_back( i );
+							}
+						}
 
                         if( nextPlayer->holdingID < 0 ) {
 
@@ -13172,6 +13256,16 @@ int main() {
                                 if( name != NULL && strcmp( name, "" ) != 0 ) {
                                     nameBaby( nextPlayer, babyO, name,
                                               &playerIndicesToSendNamesAbout );
+									
+									if ( babyO->displayedName != NULL ) delete [] babyO->displayedName;
+									if ( !babyO->fertile ) {
+										std::string strName(babyO->name);
+										strName += strInfertilitySuffix;
+										babyO->displayedName = strdup( strName.c_str() );
+										} 
+									else {
+										babyO->displayedName = strdup( babyO->name );
+										}
                                     }
                                 }
                             }
@@ -13192,6 +13286,16 @@ int main() {
                                     nameBaby( nextPlayer, closestOther,
                                               name, 
                                               &playerIndicesToSendNamesAbout );
+									
+									if ( closestOther->displayedName != NULL ) delete [] closestOther->displayedName;
+									if ( !closestOther->fertile ) {
+										std::string strName(closestOther->name);
+										strName += strInfertilitySuffix;
+										closestOther->displayedName = strdup( strName.c_str() );
+										} 
+									else {
+										closestOther->displayedName = strdup( closestOther->name );
+										}
                                     }
                                 }
 
@@ -15910,7 +16014,14 @@ int main() {
                         
                         GraveInfo graveInfo = { dropPos, nextPlayer->id,
                                                 nextPlayer->lineageEveID };
-                        newGraves.push_back( graveInfo );
+						//Only use GV message for players which name and displayedName match
+						//otherwise use GO message to update clients with names for graves
+						if (
+							(nextPlayer->name == NULL && nextPlayer->displayedName == NULL) ||
+							(nextPlayer->name != NULL && nextPlayer->displayedName != NULL && 
+							strcmp(nextPlayer->name, nextPlayer->displayedName) == 0)
+							) 
+							newGraves.push_back( graveInfo );
                         
                         setGravePlayerID( dropPos.x, dropPos.y,
                                           nextPlayer->id );
@@ -17374,7 +17485,7 @@ int main() {
                     }
 
                 char *line = autoSprintf( "%d %s\n", nextPlayer->id,
-                                          nextPlayer->name );
+                                          nextPlayer->displayedName );
                 numAdded++;
                 namesWorking.appendElementString( line );
                 delete [] line;
@@ -17823,11 +17934,11 @@ int main() {
                 
                     LiveObject *o = players.getElement( i );
                 
-                    if( o->error || o->name == NULL) {
+                    if( o->error || o->displayedName == NULL) {
                         continue;
                         }
 
-                    char *line = autoSprintf( "%d %s\n", o->id, o->name );
+                    char *line = autoSprintf( "%d %s\n", o->id, o->displayedName );
                     namesWorking.appendElementString( line );
                     delete [] line;
                     
@@ -19342,6 +19453,10 @@ int main() {
 
                 if( nextPlayer->name != NULL ) {
                     delete [] nextPlayer->name;
+                    }
+					
+                if( nextPlayer->displayedName != NULL ) {
+                    delete [] nextPlayer->displayedName;
                     }
 
                 if( nextPlayer->familyName != NULL ) {
