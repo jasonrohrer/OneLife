@@ -53,7 +53,7 @@
 
 static ObjectPickable objectPickable;
 
-
+#include "minitech.h"
 
 #define MAP_D 64
 #define MAP_NUM_CELLS 4096
@@ -76,6 +76,7 @@ static float pencilErasedFontExtraFade = 0.75;
 
 
 extern doublePair lastScreenViewCenter;
+doublePair LivingLifePage::minitechGetLastScreenViewCenter() { return lastScreenViewCenter; }
 
 static char shouldMoveCamera = true;
 
@@ -896,7 +897,13 @@ static char *getDisplayObjectDescription( int inID ) {
     return upper;
     }
 
-
+char *LivingLifePage::minitechGetDisplayObjectDescription( int objId ) { 
+    ObjectRecord *o = getObject( objId );
+    if( o == NULL ) {
+		return "";
+    }
+	return getDisplayObjectDescription(objId);
+}
 
 typedef enum messageType {
     SHUTDOWN,
@@ -2489,6 +2496,14 @@ LivingLifePage::LivingLifePage()
     if( ! tutorialDone ) {
         mTutorialNumber = 1;
         }
+		
+	minitech::setLivingLifePage(
+		this, 
+		&gameObjects, 
+		mMapD, 
+		pathFindingD, 
+		mMapContainedStacks, 
+		mMapSubContainedStacks);
     }
 
 
@@ -7825,7 +7840,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
         if( ! equal( mHintPosOffset[i], mHintHideOffset[i] ) 
             &&
-            mHintMessage[i] != NULL ) {
+            mHintMessage[i] != NULL && !minitech::minitechEnabled ) {
             
             doublePair hintPos  = 
                 add( mHintPosOffset[i], lastScreenViewCenter );
@@ -8816,6 +8831,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
 
+	// minitech
+	float worldMouseX, worldMouseY;
+	getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
+	screenToWorld( lastScreenMouseX,
+				   lastScreenMouseY,
+				   &worldMouseX,
+				   &worldMouseY );
+	minitech::livingLifeDraw(worldMouseX, worldMouseY);
     
     if( vogMode ) {
         // draw again, so we can see picker
@@ -11133,7 +11156,7 @@ void LivingLifePage::step() {
         sendToServerSocket( (char*)"KA 0 0#" );
         }
     
-
+	minitech::livingLifeStep();
 
     char *message = getNextServerMessage();
 
@@ -12280,6 +12303,8 @@ void LivingLifePage::step() {
                 
                 if( !( mFirstServerMessagesReceived & 1 ) ) {
                     // first map chunk just recieved
+					
+					minitech::initOnBirth();
                     
                     char found = false;
                     int closestX = 0;
@@ -13820,8 +13845,9 @@ void LivingLifePage::step() {
                             mNextHintObjectID = existing->holdingID;
                             mNextHintIndex = 
                                 mHintBookmarks[ mNextHintObjectID ];
+								
+							minitech::currentHintObjId = mNextHintObjectID;
                             }
-                        
 
 
                         ObjectRecord *newClothing = 
@@ -15295,6 +15321,7 @@ void LivingLifePage::step() {
                 ourID = ourObject->id;
 
                 if( ourID != lastPlayerID ) {
+					minitech::initOnBirth();
                     // different ID than last time, delete old home markers
                     oldHomePosStack.deleteAll();
                     }
@@ -16337,6 +16364,21 @@ void LivingLifePage::step() {
                                 char *nameStart = &( firstSpace[1] );
                                 
                                 existing->name = stringDuplicate( nameStart );
+								
+								LiveObject *ourLiveObject = getOurLiveObject();
+								if ( id == ourLiveObject->id && 
+									//Little hack here to not have the ding
+									//when we are just reconnected
+									//instead of a real name change
+									ourLiveObject->foodCapacity > 0 && 
+									mTutorialSound != NULL ) {
+									playSound( 
+										mTutorialSound,
+										0.18 * getSoundEffectsLoudness(), 
+										getVectorFromCamera( 
+											ourLiveObject->currentPos.x, 
+											ourLiveObject->currentPos.y ) );
+									}
                                 }
                             
                             break;
@@ -19104,6 +19146,8 @@ char LivingLifePage::getCellBlocksWalking( int inMapX, int inMapY ) {
 
 
 void LivingLifePage::pointerDown( float inX, float inY ) {
+	if (minitech::livingLifePageMouseDown( inX, inY )) return;
+	
     lastMouseX = inX;
     lastMouseY = inY;
 
@@ -19561,17 +19605,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 // give hint about dest object which will be unchanged 
                 mNextHintObjectID = destID;
                 mNextHintIndex = mHintBookmarks[ destID ];
+				minitech::currentHintObjId = destID;
                 }
             else if( tr->newActor > 0 && 
                      ourLiveObject->holdingID != tr->newActor ) {
                 // give hint about how what we're holding will change
                 mNextHintObjectID = tr->newActor;
                 mNextHintIndex = mHintBookmarks[ tr->newTarget ];
+				minitech::currentHintObjId = tr->newActor;
                 }
             else if( tr->newTarget > 0 ) {
                 // give hint about changed target after we act on it
                 mNextHintObjectID = tr->newTarget;
                 mNextHintIndex = mHintBookmarks[ tr->newTarget ];
+				minitech::currentHintObjId = tr->newTarget;
                 }
             }
         else {
@@ -19581,6 +19628,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( getTrans( 0, destID ) == NULL ) {
                 mNextHintObjectID = destID;
                 mNextHintIndex = mHintBookmarks[ destID ];
+				minitech::currentHintObjId = destID;
                 }
             }
         }
@@ -20645,6 +20693,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         return;
         }
 
+	if (minitech::livingLifeKeyDown(inASCII)) return;
     
     switch( inASCII ) {
         /*
@@ -20995,6 +21044,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                     // not blank
                                     mHintFilterString = 
                                         stringDuplicate( trimmedFilterString );
+										
+									minitech::hintStr = mHintFilterString;
                                     }
                             
                                 delete [] trimmedFilterString;

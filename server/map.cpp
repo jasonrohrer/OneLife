@@ -1349,6 +1349,7 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
 		density = 1;
 		
 	}
+	setXYRandomSeed( 9877 );
     if( getXYRandom( inX, inY ) < density ) {
  
  

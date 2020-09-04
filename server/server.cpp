@@ -180,12 +180,17 @@ int passwordTransitionsAllowed = 0;
 int passwordInvocationAndSettingAreSeparated = 0;
 int passwordOverhearRadius = 6;
 int passwordSilent = 0;
+
 static SimpleVector<char*> passwordSettingPhrases;
 static SimpleVector<char*> passwordInvokingPhrases;
 
+static SimpleVector<char*> infertilityDeclaringPhrases;
+static SimpleVector<char*> fertilityDeclaringPhrases;
 
 static char *eveName = NULL;
 
+static char *infertilitySuffix = NULL;
+static char *fertilitySuffix = NULL;
 
 // maps extended ascii codes to true/false for characters allowed in SAY
 // messages
@@ -388,7 +393,7 @@ typedef struct FreshConnection {
         double connectionStartTimeSeconds;
 
         char *email;
-        unsigned int hashedSpawnSeed;
+        uint32_t hashedSpawnSeed;
         
         int tutorialNumber;
         CurseStatus curseStatus;
@@ -419,6 +424,7 @@ typedef struct LiveObject {
         
         char *name;
         char nameHasSuffix;
+		char *displayedName;
         
         char *familyName;
         
@@ -710,6 +716,7 @@ typedef struct LiveObject {
         // they can have their first baby right away.
         timeSec_t birthCoolDown;
         
+		bool fertile;
 
         timeSec_t lastRegionLookTime;
         
@@ -1487,6 +1494,10 @@ void quitCleanup() {
             delete [] nextPlayer->name;
             }
 
+        if( nextPlayer->displayedName != NULL ) {
+            delete [] nextPlayer->displayedName;
+            }
+
         if( nextPlayer->familyName != NULL ) {
             delete [] nextPlayer->familyName;
             }
@@ -1587,6 +1598,8 @@ void quitCleanup() {
     cursingPhrases.deallocateStringElements();
     youGivingPhrases.deallocateStringElements();
     namedGivingPhrases.deallocateStringElements();
+	infertilityDeclaringPhrases.deallocateStringElements();
+	fertilityDeclaringPhrases.deallocateStringElements();
     
     //2HOL, password-protected objects: maintenance
     passwordSettingPhrases.deallocateStringElements();
@@ -1594,6 +1607,14 @@ void quitCleanup() {
     if( eveName != NULL ) {
         delete [] eveName;
         eveName = NULL;
+        }
+    if( infertilitySuffix != NULL ) {
+        delete [] infertilitySuffix;
+        infertilitySuffix = NULL;
+        }
+    if( fertilitySuffix != NULL ) {
+        delete [] fertilitySuffix;
+        fertilitySuffix = NULL;
         }
 
     if( apocalypseRequest != NULL ) {
@@ -1969,6 +1990,10 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
                 if( e == 0 ) {
                     delete [] m.extraPos;
                     m.extraPos = NULL;
+                    m.numExtraPos = 0;
+                    m.type = UNKNOWN;
+                    delete tokens;
+                    return m;
                     }
                 break;
                 }
@@ -5641,7 +5666,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                            Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
-                           unsigned int hashedSpawnSeed,
+                           uint32_t hashedSpawnSeed,
                            int inTutorialNumber,
                            CurseStatus inCurseStatus,
                            // set to -2 to force Eve
@@ -5947,6 +5972,11 @@ int processLoggedInPlayer( char inAllowReconnect,
         if( player->isTutorial ) {
             continue;
             }
+      
+        //skips over solo players who declare themselves infertile
+		    if( !player->fertile ) {
+			    	continue;
+				    }
 
         if( player->vogMode ) {
             continue;
@@ -6765,6 +6795,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.lineage = new SimpleVector<int>();
     
     newObject.name = NULL;
+	newObject.displayedName = NULL;
     newObject.familyName = NULL;
     
     newObject.nameHasSuffix = false;
@@ -6868,6 +6899,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.babyIDs = new SimpleVector<int>();
     
     newObject.birthCoolDown = 0;
+	newObject.fertile = true;
     
     newObject.monumentPosSet = false;
     newObject.monumentPosSent = true;
@@ -8519,6 +8551,15 @@ char *isCurseNamingSay( char *inSaidString ) {
 char *isNamedGivingSay( char *inSaidString ) {
     return isReverseNamingSay( inSaidString, &namedGivingPhrases );
     }
+
+char *isInfertilityDeclaringSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &infertilityDeclaringPhrases );
+    }
+
+char *isFertilityDeclaringSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &fertilityDeclaringPhrases );
+    }
+
 
 char isYouGivingSay( char *inSaidString ) {
     if( inSaidString[0] == ':' ) {
@@ -10212,8 +10253,23 @@ int main() {
     readPhrases( "passwordSettingPhrases", &passwordSettingPhrases );
     readPhrases( "passwordInvokingPhrases", &passwordInvokingPhrases );
     
+	readPhrases( "infertilityDeclaringPhrases", &infertilityDeclaringPhrases );
+	readPhrases( "fertilityDeclaringPhrases", &fertilityDeclaringPhrases );
+
     eveName = 
         SettingsManager::getStringSetting( "eveName", "EVE" );
+    infertilitySuffix = 
+        SettingsManager::getStringSetting( "infertilitySuffix", "+INFERTILE+" );
+    fertilitySuffix = 
+        SettingsManager::getStringSetting( "fertilitySuffix", "+FERTILE+" );
+	//Pad the suffix to have some space between player name and the suffix
+	//padding it in the ini file wouldnt work, for some unknown reason...
+	std::string strInfertilitySuffix(infertilitySuffix);
+	std::string strFertilitySuffix(fertilitySuffix);
+	strInfertilitySuffix = " " + strInfertilitySuffix;
+	strFertilitySuffix = " " + strFertilitySuffix;
+	infertilitySuffix = strdup( strInfertilitySuffix.c_str() );
+	fertilitySuffix = strdup( strFertilitySuffix.c_str() );
     
     killEmotionIndex =
         SettingsManager::getIntSetting( "killEmotionIndex", 2 );
@@ -11178,31 +11234,38 @@ int main() {
                             // If email contains string delimiter
                             // Set nextConnection's hashedSpawnSeed to hash of seed
                             // then cut off seed and set email to onlyEmail
-                            const unsigned int minSeedLen = 1;
+                            const size_t minSeedLen = 1;
                             const char seedDelim = '|';
 
 
                             std::string emailAndSeed { tokens->getElementDirect( 1 ) };
 
-                            size_t seedDelimPos = emailAndSeed.find( seedDelim );
+                            const size_t seedDelimPos = emailAndSeed.find( seedDelim );
 
                             if( seedDelimPos != std::string::npos ) {
-                                unsigned int seedLen = emailAndSeed.length() - seedDelimPos;
+                                const size_t seedLen = emailAndSeed.length() - seedDelimPos;
 
-                                // Make sure there is at least one char after delim
                                 if( seedLen > minSeedLen ) {
+                                    // FNV-1a Hashing algorithm
+                                    auto hashStr = [](std::string &s, const uint32_t FNV_init = 2166136261u){
+                                        const size_t FNV_prime = 111337;
+
+                                        // Hash seed to 4 byte int
+                                        uint32_t hash = FNV_init;
+                                        for( auto c : s ) {
+                                            hash ^= c;
+                                            hash *= FNV_prime;
+                                        }
+
+                                        return hash;
+                                    };
+
                                     // Get the substr from one after the seed delim
                                     std::string seed { emailAndSeed.substr( seedDelimPos + 1 ) };
+                                    std::string seedSalt { SettingsManager::getStringSetting("seedSalt", "default salt") };
 
-                                    // Hash seed to 4 byte int
-                                    const int hashConst = 111337;
-                                    unsigned int hash = 0;
-                                    for( char c : seed ) {
-                                        hash ^= c;
-                                        hash *= hashConst;
-                                    }
-
-                                    nextConnection->hashedSpawnSeed = hash;
+                                    nextConnection->hashedSpawnSeed =
+                                        hashStr(seed, hashStr(seedSalt));
                                 }
 
                                 // Remove seed from email
@@ -11210,7 +11273,6 @@ int main() {
                                     // There was only a seed not email
                                     nextConnection->email = stringDuplicate( "blank_email" );
                                 } else {
-                                    /* unsigned int onlyEmailLen = emailLen - seedLen; */
                                     std::string onlyEmail { emailAndSeed.substr( 0, seedDelimPos ) };
 
                                     delete[] nextConnection->email;
@@ -11865,17 +11927,22 @@ int main() {
                 
                 delete [] message;
                 
-                if( m.type == UNKNOWN ) {
-                    AppLog::info( "Client error, unknown message type." );
-                    
-                    setPlayerDisconnected( nextPlayer, 
-                                           "Unknown message type" );
-                    }
 
                 //Thread::staticSleep( 
                 //    testRandSource.getRandomBoundedInt( 0, 450 ) );
                 
-                if( m.type == BUG ) {
+                // GOTO below jumps here if we need to reparse the message
+                // as a different type
+                RESTART_MESSAGE_ACTION:
+                if( m.type == UNKNOWN ) {
+                    AppLog::info( "Client error, unknown message type." );
+                    //setPlayerDisconnected( nextPlayer,
+                    //                       "Unknown message type" );
+                    // do not disconnect client here
+                    // keep server flexible, so client can be updated
+                    // with a protocol change before the server gets updated
+                    }
+                else if( m.type == BUG ) {
                     int allow = 
                         SettingsManager::getIntSetting( "allowBugReports", 0 );
 
@@ -13236,10 +13303,51 @@ int main() {
                                              nextPlayer->name,
                                              nextPlayer->lineageEveID );
                                     }
+								
+								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
+								if ( !nextPlayer->fertile ) {
+									std::string strName(nextPlayer->name);
+									strName += strInfertilitySuffix;
+									nextPlayer->displayedName = strdup( strName.c_str() );
+									} 
+								else {
+									nextPlayer->displayedName = strdup( nextPlayer->name );
+									}
                                 
                                 playerIndicesToSendNamesAbout.push_back( i );
                                 }
                             }
+							
+						if( getFemale( nextPlayer ) ) {
+							char *infertilityDeclaring = isInfertilityDeclaringSay( m.saidText );
+							char *fertilityDeclaring = isFertilityDeclaringSay( m.saidText );
+							if( infertilityDeclaring != NULL && nextPlayer->fertile ) {
+								nextPlayer->fertile = false;
+								
+								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
+								if (nextPlayer->name == NULL) {
+									nextPlayer->displayedName = strdup( infertilitySuffix );
+								} else {
+									std::string strName(nextPlayer->name);
+									strName += strInfertilitySuffix;
+									nextPlayer->displayedName = strdup( strName.c_str() );
+								}
+								
+								playerIndicesToSendNamesAbout.push_back( i );
+								
+							} else if( fertilityDeclaring != NULL && !nextPlayer->fertile ) {
+								nextPlayer->fertile = true;
+								
+								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
+								if (nextPlayer->name == NULL) {
+									nextPlayer->displayedName = strdup( fertilitySuffix );
+								} else {
+									nextPlayer->displayedName = strdup( nextPlayer->name );
+								}
+								
+								playerIndicesToSendNamesAbout.push_back( i );
+							}
+						}
 
                         if( nextPlayer->holdingID < 0 ) {
 
@@ -13256,6 +13364,16 @@ int main() {
                                 if( name != NULL && strcmp( name, "" ) != 0 ) {
                                     nameBaby( nextPlayer, babyO, name,
                                               &playerIndicesToSendNamesAbout );
+									
+									if ( babyO->displayedName != NULL ) delete [] babyO->displayedName;
+									if ( !babyO->fertile ) {
+										std::string strName(babyO->name);
+										strName += strInfertilitySuffix;
+										babyO->displayedName = strdup( strName.c_str() );
+										} 
+									else {
+										babyO->displayedName = strdup( babyO->name );
+										}
                                     }
                                 }
                             }
@@ -13276,6 +13394,16 @@ int main() {
                                     nameBaby( nextPlayer, closestOther,
                                               name, 
                                               &playerIndicesToSendNamesAbout );
+									
+									if ( closestOther->displayedName != NULL ) delete [] closestOther->displayedName;
+									if ( !closestOther->fertile ) {
+										std::string strName(closestOther->name);
+										strName += strInfertilitySuffix;
+										closestOther->displayedName = strdup( strName.c_str() );
+										} 
+									else {
+										closestOther->displayedName = strdup( closestOther->name );
+										}
                                     }
                                 }
 
@@ -16130,7 +16258,14 @@ int main() {
                         
                         GraveInfo graveInfo = { dropPos, nextPlayer->id,
                                                 nextPlayer->lineageEveID };
-                        newGraves.push_back( graveInfo );
+						//Only use GV message for players which name and displayedName match
+						//otherwise use GO message to update clients with names for graves
+						if (
+							(nextPlayer->name == NULL && nextPlayer->displayedName == NULL) ||
+							(nextPlayer->name != NULL && nextPlayer->displayedName != NULL && 
+							strcmp(nextPlayer->name, nextPlayer->displayedName) == 0)
+							) 
+							newGraves.push_back( graveInfo );
                         
                         setGravePlayerID( dropPos.x, dropPos.y,
                                           nextPlayer->id );
@@ -17594,7 +17729,7 @@ int main() {
                     }
 
                 char *line = autoSprintf( "%d %s\n", nextPlayer->id,
-                                          nextPlayer->name );
+                                          nextPlayer->displayedName );
                 numAdded++;
                 namesWorking.appendElementString( line );
                 delete [] line;
@@ -18043,11 +18178,11 @@ int main() {
                 
                     LiveObject *o = players.getElement( i );
                 
-                    if( o->error || o->name == NULL) {
+                    if( o->error || o->displayedName == NULL) {
                         continue;
                         }
 
-                    char *line = autoSprintf( "%d %s\n", o->id, o->name );
+                    char *line = autoSprintf( "%d %s\n", o->id, o->displayedName );
                     namesWorking.appendElementString( line );
                     delete [] line;
                     
@@ -19571,6 +19706,10 @@ int main() {
 
                 if( nextPlayer->name != NULL ) {
                     delete [] nextPlayer->name;
+                    }
+					
+                if( nextPlayer->displayedName != NULL ) {
+                    delete [] nextPlayer->displayedName;
                     }
 
                 if( nextPlayer->familyName != NULL ) {
