@@ -11,14 +11,6 @@ static double oldHeadDownFactor = 0.35;
 
 static double oldHeadForwardFactor = 2;
 
-//UncleGus Changes
-static double deathAge = 120.0;
-
-static double adultAge = 20.0;
-
-static double oldAge = 100.0;
-
-//End UncleGus Changes
 
 #include "minorGems/util/SettingsManager.h"
 
@@ -48,43 +40,33 @@ doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
         return (doublePair){ 0, 0 };
         }
     
-    // UncleGus change
-      if( inAge < adultAge ) {
-    // End UncleGus change
+    if( inAge < 20 ) {
         
         double maxHead = inHeadSpritePos.y - inBodySpritePos.y;
         
-        //UncleGus change
-                double yOffset = ( ( adultAge - inAge ) / adultAge ) * babyHeadDownFactor * maxHead;
-        // End UncleGus change
+        double yOffset = ( ( 20 - inAge ) / 20 ) * babyHeadDownFactor * maxHead;
         
         
         return (doublePair){ 0, round( -yOffset ) };
         }
     
 
-		// UncleGus Change
-		 if( inAge >= oldAge ) {
-
-				if( inAge > deathAge ) {
-					// no worse after 120
-					inAge = deathAge;
-					}
-		// End UncleGus change
+    if( inAge >= 40 ) {
+        
+        if( inAge > 60 ) {
+            // no worse after 60
+            inAge = 60;
+            }
 
         double maxHead = inHeadSpritePos.y - inBodySpritePos.y;
         
-		// UncleGus Change
-				double vertOffset =
-					( ( inAge - oldAge ) / adultAge ) * oldHeadDownFactor * maxHead;
-		// End UncleGus change
+        double vertOffset = 
+            ( ( inAge - 40 ) / 20 ) * oldHeadDownFactor * maxHead;
         
         double footOffset = inFrontFootSpritePos.x - inHeadSpritePos.x;
         
-		// UncleGus Change	
-				double forwardOffset =
-				   ( ( inAge - oldAge ) / adultAge ) * oldHeadForwardFactor * footOffset;
-		// End UncleGus Change
+        double forwardOffset = 
+            ( ( inAge - 40 ) / 20 ) * oldHeadForwardFactor * footOffset;
 
         return (doublePair){ round( forwardOffset ), round( -vertOffset ) };
         }
@@ -99,15 +81,11 @@ doublePair getAgeBodyOffset( double inAge, doublePair inBodySpritePos ) {
         return (doublePair){ 0, 0 };
         }
     
-	// UncleGus Change
-		if( inAge < adultAge ) {
-	// End UncleGus Change
+    if( inAge < 20 ) {
         
         double maxBody = inBodySpritePos.y;
-    
-	// UncleGus Change
-        double yOffset = ( ( adultAge - inAge ) / adultAge ) * babyBodyDownFactor * maxBody;
-	// End UncleGus Change
+        
+        double yOffset = ( ( 20 - inAge ) / 20 ) * babyBodyDownFactor * maxBody;
         
         
         return (doublePair){ 0, round( -yOffset ) };
