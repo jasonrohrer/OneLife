@@ -370,6 +370,8 @@ typedef struct ObjectRecord {
         char isOwned;
         
         char noHighlight;
+		
+		char noBackAccess;
         
         // for auto-orienting fences, walls, etc
         // all three objects know the IDs of all three objects
