@@ -3,12 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 354    ???
+
+Version 354    2020-September-11
 
 --Support for containers with invisible contained items.
 
 --Support for sprites (like words) that never flip when object flips in world.
  
+
 
 
 
