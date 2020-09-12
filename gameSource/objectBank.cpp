@@ -822,6 +822,19 @@ static void setupRoadParent( ObjectRecord *inR ) {
 
 
 
+static void setupSlotsInvis( ObjectRecord *inR ) {
+    inR->slotsInvis = false;
+    char *pos = strstr( inR->description, "+slotsInvis" );
+
+    if( pos != NULL ) {
+        inR->slotsInvis = true;    
+        }
+    }
+
+    
+
+
+
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
     }
@@ -901,6 +914,8 @@ float initObjectBankStep() {
                 setupYumParent( r );
                 
                 setupRoadParent( r );
+                
+                setupSlotsInvis( r );
                 
 
                 // do this later, after we parse floorHugging
@@ -3792,6 +3807,8 @@ int addObject( const char *inDescription,
     setupYumParent( r );
     
     setupRoadParent( r );
+    
+    setupSlotsInvis( r );
 
     setupWall( r );
 
@@ -4395,7 +4412,8 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
     if( inNumContained > numSlots ) {
         inNumContained = numSlots;
         }
-    
+
+    if( ! inObject->slotsInvis )
     for( int i=0; i<inNumContained; i++ ) {
 
         ObjectRecord *contained = getObject( inContainedIDs[i] );

@@ -3587,7 +3587,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     // all of these are in contained mode
     setDrawnObjectContained( true );
     
-
+    
+    if( ! obj->slotsInvis )
     for( int i=0; i<obj->numSlots; i++ ) {
         if( i < inNumContained ) {
 

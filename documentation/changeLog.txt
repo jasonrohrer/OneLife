@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 354    ???
+
+--Support for containers with invisible contained items.
+
+
+
+
 Server Fixes
 
 --Fixed crash when client sends chat string containing only invalid characters.
