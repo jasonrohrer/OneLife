@@ -451,6 +451,9 @@ typedef struct ObjectRecord {
         // for floor objects that don't completely cover ground
         char noCover;
         
+        // are objects in container slots invisible?
+        char slotsInvis;
+
     } ObjectRecord;
 
 

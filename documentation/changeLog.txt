@@ -4,6 +4,22 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 354    2020-September-11
+
+--Support for containers with invisible contained items.
+
+--Support for sprites (like words) that never flip when object flips in world.
+ 
+
+
+
+
+Server Fixes
+
+--Fixed crash when client sends chat string containing only invalid characters.
+
+
+
 Version 352    2020-July-24
 
 --Support for paging through items in Editor pickers with [ and ] keys.
@@ -4149,6 +4165,13 @@ Server Fixes
 
 
 
+----
+Steam Release     2018-November-8
+----
+
+
+
+
 Version 165    2018-November-8
 
 --Tore out the code that always shows the dotted line when held-mouse journey
@@ -6359,6 +6382,14 @@ Server Fixes:
 
 --Changed server update script to shut down servers one at a time so that
   people can keep playing during the update.
+
+
+
+
+
+----
+Off-Steam Release     2018-February-27
+----
 
 
 

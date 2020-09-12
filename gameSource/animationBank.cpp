@@ -3000,8 +3000,14 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             else {
                 SpriteHandle sh = getSprite( spriteID );
                 if( sh != NULL ) {
+                    char f = inFlipH;
+                    
+                    if( f && getNoFlip( spriteID ) ) {
+                        f = false;
+                        }
+                    
                     drawSprite( sh, pos, 1.0, rot, 
-                                logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+                                logicalXOR( f, obj->spriteHFlip[i] ) );
                     }
                 }
             
@@ -3587,7 +3593,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     // all of these are in contained mode
     setDrawnObjectContained( true );
     
-
+    
+    if( ! obj->slotsInvis )
     for( int i=0; i<obj->numSlots; i++ ) {
         if( i < inNumContained ) {
 

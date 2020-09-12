@@ -20097,17 +20097,25 @@ int main() {
                         SimpleVector<char *> *tokens = 
                             tokenizeString( m.saidText );
 
-                        char **tokensArray = 
-                            tokens->getElementArray();
+                        char *cleanedString;
+                        if( tokens->size() > 0 ) {
                         
-                        // join words with single spaces
-                        char *cleanedString = join( tokensArray,
-                                                    tokens->size(),
-                                                    " " );
+                            char **tokensArray = 
+                                tokens->getElementArray();
                         
-                        tokens->deallocateStringElements();
+                            // join words with single spaces
+                            cleanedString = join( tokensArray,
+                                                  tokens->size(),
+                                                  " " );
+                        
+                            tokens->deallocateStringElements();
+                            delete [] tokensArray;
+                            }
+                        else {
+                            cleanedString = stringDuplicate( "" );
+                            }
+
                         delete tokens;
-                        delete [] tokensArray;
                         
                         delete [] m.saidText;
                         m.saidText = cleanedString;
@@ -28621,6 +28629,13 @@ char getSpriteHit( int inID, int inXCenterOffset, int inYCenterOffset ) {
 char getUsesMultiplicativeBlending( int inID ) {
     return false;
     }
+
+
+
+char getNoFlip( int inID ) {
+    return false;
+    }
+
 
 
 void toggleMultiplicativeBlend( char inMultiplicative ) {
