@@ -378,6 +378,12 @@ float initSpriteBankStep() {
                     else {
                         r->multiplicativeBlend = false;
                         }
+
+                    r->noFlip = false;
+                    
+                    if( strstr( r->tag, "NoFlip" ) != NULL ) {
+                        r->noFlip = true;
+                        }
                     }
                 if( numTokens >= 4 ) {
                     sscanf( tokens->getElementDirect( 2 ),
@@ -397,6 +403,7 @@ float initSpriteBankStep() {
             if( r->tag == NULL ) {
                 r->tag = stringDuplicate( "tag" );
                 r->multiplicativeBlend = false;
+                r->noFlip = false;
                 }
 
             records.push_back( r );
@@ -756,6 +763,17 @@ char getUsesMultiplicativeBlending( int inID ) {
     if( inID < mapSize ) {
         if( idMap[inID] != NULL ) {
             return idMap[inID]->multiplicativeBlend;
+            }
+        }
+    return false;
+    }
+
+
+
+char getNoFlip( int inID ) {
+    if( inID < mapSize ) {
+        if( idMap[inID] != NULL ) {
+            return idMap[inID]->noFlip;
             }
         }
     return false;

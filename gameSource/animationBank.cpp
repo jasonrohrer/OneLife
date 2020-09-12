@@ -3000,8 +3000,14 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             else {
                 SpriteHandle sh = getSprite( spriteID );
                 if( sh != NULL ) {
+                    char f = inFlipH;
+                    
+                    if( f && getNoFlip( spriteID ) ) {
+                        f = false;
+                        }
+                    
                     drawSprite( sh, pos, 1.0, rot, 
-                                logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+                                logicalXOR( f, obj->spriteHFlip[i] ) );
                     }
                 }
             

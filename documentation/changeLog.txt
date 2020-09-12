@@ -7,6 +7,8 @@ Version 354    ???
 
 --Support for containers with invisible contained items.
 
+--Support for sprites (like words) that never flip when object flips in world.
+ 
 
 
 
