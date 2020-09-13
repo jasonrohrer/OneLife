@@ -6348,6 +6348,156 @@ static int findGridPos( SimpleVector<GridPos> *inList, GridPos inP ) {
         }
     return -1;
     }
+
+
+
+static int applyTapoutGradientRotate( int inX, int inY,
+                                      int inTargetX, int inTargetY,
+                                      int inEastwardGradientID ) {
+    // apply result to itself to flip it 
+    // and point gradient in other direction
+                
+    // eastward + eastward = westward, etc
+
+    // order:  e, w, s, n, ne, se, sw, nw
+    
+    int numRepeat = 0;
+    
+    int curObjectID = inEastwardGradientID;                        
+
+    if( inX > inTargetX && inY == inTargetY ) {
+        numRepeat = 0;
+        }
+    else if( inX < inTargetX && inY == inTargetY ) {
+        numRepeat = 1;
+        }
+    else if( inX == inTargetX && inY < inTargetY ) {
+        numRepeat = 2;
+        }
+    else if( inX == inTargetX && inY > inTargetY ) {
+        numRepeat = 3;
+        }
+    else if( inX > inTargetX && inY > inTargetY ) {
+        numRepeat = 4;
+        }
+    else if( inX > inTargetX && inY < inTargetY ) {
+        numRepeat = 5;
+        }
+    else if( inX < inTargetX && inY < inTargetY ) {
+        numRepeat = 6;
+        }
+    else if( inX < inTargetX && inY > inTargetY ) {
+        numRepeat = 7;
+        }
+
+
+    
+    for( int i=0; i<numRepeat; i++ ) {
+        if( curObjectID == 0 ) {
+            break;
+            }
+        TransRecord *flipTrans = getPTrans( curObjectID, curObjectID );
+        
+        if( flipTrans != NULL ) {
+            curObjectID = flipTrans->newTarget;
+            }
+        }
+
+    if( curObjectID == 0 ) {
+        return -1;
+        }
+
+    return curObjectID;
+    }
+
+
+
+
+// returns true if tapout-triggered a +primaryHomeland object
+static char runTapoutOperation( int inX, int inY, 
+                                int inRadiusX, int inRadiusY,
+                                int inSpacingX, int inSpacingY,
+                                int inTriggerID,
+                                char inPlayerHasPrimaryHomeland,
+                                char inIsPost = false ) {
+
+    char returnVal = false;
+    
+    for( int y =  inY - inRadiusY; 
+         y <= inY + inRadiusY; 
+         y += inSpacingY ) {
+    
+        for( int x =  inX - inRadiusX; 
+             x <= inX + inRadiusX; 
+             x += inSpacingX ) {
+            
+            if( inX == x && inY == y ) {
+                // skip center
+                continue;
+                }
+
+            int id = getMapObjectRaw( x, y );
+                    
+            // change triggered by tapout represented by 
+            // tapoutTrigger object getting used as actor
+            // on tapoutTarget
+            TransRecord *t = NULL;
+            
+            int newTarget = -1;
+
+            if( ! inIsPost ) {
+                // last use target signifies what happens in 
+                // same row or column as inX, inY
+                
+                // get eastward
+                t = getPTrans( inTriggerID, id, false, true );
+
+                if( t != NULL ) {
+                    newTarget = t->newTarget;
+                    }
+                
+                if( newTarget > 0 ) {
+                    newTarget = applyTapoutGradientRotate( inX, inY,
+                                                           x, y,
+                                                           newTarget );
+                    }
+                }
+
+            if( newTarget == -1 ) {
+                // not same row or post or last-use-target trans undefined
+                t = getPTrans( inTriggerID, id );
+                
+                if( t != NULL ) {
+                    newTarget = t->newTarget;
+                    }
+                }
+
+            if( newTarget != -1 ) {
+                ObjectRecord *nt = getObject( newTarget );
+                
+                if( strstr( nt->description, "+primaryHomeland" ) != NULL ) {
+                    if( inPlayerHasPrimaryHomeland ) {
+                        // block creation of objects that require 
+                        // +primaryHomeland
+                        // player already has a primary homeland
+                    
+                        newTarget = -1;
+                        }
+                    else {
+                        // created a +primaryHomeland object
+                        returnVal = true;
+                        }
+                    }
+                }
+            
+            if( newTarget != -1 ) {
+                setMapObjectRaw( x, y, newTarget );
+                }
+            }
+        }
+    
+    return returnVal;
+    }
  
  
  
@@ -6595,6 +6745,59 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                     }
                 }
             }
+        }
+    else if( o->isTapOutTrigger ) {
+        // this object, when created, taps out other objects in grid around
+
+        char playerHasPrimaryHomeland = false;
+        
+        if( currentResponsiblePlayer != -1 ) {
+            int pID = currentResponsiblePlayer;
+            if( pID < 0 ) {
+                pID = -pID;
+                }
+			//primaryHomeland is not in 2HOL
+            // int lineage = getPlayerLineage( pID );
+            
+            // if( lineage != -1 ) {
+                // playerHasPrimaryHomeland = hasPrimaryHomeland( lineage );
+                // }
+            }
+        
+        // don't make current player responsible for all these changes
+        int restoreResponsiblePlayer = currentResponsiblePlayer;
+        currentResponsiblePlayer = -1;        
+        
+        TapoutRecord *r = getTapoutRecord( inID );
+        
+        if( r != NULL ) {
+			
+			char tappedOutPrimaryHomeland = false; //primaryHomeland is not in 2HOL
+
+            tappedOutPrimaryHomeland = 
+            runTapoutOperation( inX, inY, 
+                                r->limitX, r->limitY,
+                                r->gridSpacingX, r->gridSpacingY, 
+                                inID,
+                                playerHasPrimaryHomeland );
+            
+            
+            r->buildCount++;
+            
+            if( r->buildCountLimit != -1 &&
+                r->buildCount >= r->buildCountLimit ) {
+                // hit limit!
+                // tapout a larger radius now
+                tappedOutPrimaryHomeland =
+                runTapoutOperation( inX, inY, 
+                                    r->postBuildLimitX, r->postBuildLimitY,
+                                    r->gridSpacingX, r->gridSpacingY, 
+                                    inID, 
+                                    playerHasPrimaryHomeland, true );
+                }
+            }
+        
+        currentResponsiblePlayer = restoreResponsiblePlayer;
         }
     }
  

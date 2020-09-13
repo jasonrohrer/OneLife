@@ -54,6 +54,9 @@ static SimpleVector<int> deathMarkerObjectIDs;
 static SimpleVector<int> allPossibleDeathMarkerIDs;
 
 
+static SimpleVector<TapoutRecord> tapoutRecords;
+
+
 
 
 typedef struct GlobalTrigger {
@@ -571,6 +574,56 @@ static void setupWall( ObjectRecord *inR ) {
     char *wallPos = strstr( inR->description, "+wall" );
     if( wallPos != NULL ) {
         inR->wallLayer = true;
+        }
+    }
+
+
+
+static void setupTapout( ObjectRecord *inR ) {
+    inR->isTapOutTrigger = false;
+    
+    if( inR->isUseDummy || inR->isVariableDummy ) {
+        // only parent object counts tapouts
+        return;
+        }
+    
+
+    char *triggerPos = strstr( inR->description, "+tapoutTrigger" );
+                
+    if( triggerPos != NULL ) {
+        int xGrid, yGrid;
+        int xLimit, yLimit;
+        int buildCountLimit = -1;
+        int postBuildLimitX = 0;
+        int postBuildLimitY = 0;
+        
+        int numRead = sscanf( triggerPos, 
+                              "+tapoutTrigger,%d,%d,%d,%d,"
+                              "%d,%d,%d",
+                              &xGrid, &yGrid,
+                              &xLimit, &yLimit,
+                              &buildCountLimit,
+                              &postBuildLimitX,
+                              &postBuildLimitY );
+        if( numRead == 4 || numRead == 7 ) {
+            // valid tapout trigger
+            TapoutRecord r;
+            
+            r.triggerID = inR->id;
+            r.gridSpacingX = xGrid;
+            r.gridSpacingY = yGrid;
+            r.limitX = xLimit;
+            r.limitY = yLimit;
+            
+            r.buildCountLimit = buildCountLimit;
+            r.buildCount = 0;
+            r.postBuildLimitX = postBuildLimitX;
+            r.postBuildLimitY = postBuildLimitY;
+            
+            tapoutRecords.push_back( r );
+            
+            inR->isTapOutTrigger = true;
+            }
         }
     }
 
@@ -1848,6 +1901,14 @@ void initObjectBankFinish() {
         }
     
 
+    // setup tapout triggers
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+            setupTapout( o );
+            }
+        }
+	
 
     for( int i=0; i<=MAX_BIOME; i++ ) {
         biomeHeatMap[ i ] = 0;
@@ -5691,4 +5752,27 @@ char canPickup( int inObjectID, double inPlayerAge ) {
         }
     
     return true;
+    }
+
+
+
+
+TapoutRecord *getTapoutRecord( int inObjectID ) {
+    for( int i=0; i<tapoutRecords.size(); i++ ) {
+        TapoutRecord *r = tapoutRecords.getElement( i );
+        
+        if( r->triggerID == inObjectID ) {
+            return r;
+            }
+        }
+    return NULL;
+    }
+
+
+
+void clearTapoutCounts() {
+    for( int i=0; i<tapoutRecords.size(); i++ ) {
+        TapoutRecord *r = tapoutRecords.getElement( i );
+        r->buildCount = 0;
+        }
     }

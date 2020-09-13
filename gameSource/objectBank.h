@@ -17,6 +17,21 @@ void setDrawColor( FloatRGB inColor );
 
 
 
+// tracks when creation of an object taps out nearby objects on a grid
+typedef struct TapoutRecord {
+        int triggerID;
+        int gridSpacingX, gridSpacingY;
+        // how far to reach in +/- x and y when tapping out
+        int limitX, limitY;
+        int buildCount;
+        int buildCountLimit;
+        // how far to reach in +/- x and y when tapping out
+        // after build count limit reached
+        int postBuildLimitX, postBuildLimitY;
+    } TapoutRecord;
+
+
+
 typedef struct ObjectRecord {
         int id;
         
@@ -370,14 +385,17 @@ typedef struct ObjectRecord {
         char isOwned;
         
         char noHighlight;
-		
-		char noBackAccess;
         
         // for auto-orienting fences, walls, etc
         // all three objects know the IDs of all three objects
         int horizontalVersionID;
         int verticalVersionID;
         int cornerVersionID;
+		
+		
+		char isTapOutTrigger;
+		
+		char noBackAccess;
         
         //2HOL additions for: password-protected doors      
         //true for object that can transition into password-bearer, similar to how "writtable" and "written" flags are related
@@ -859,6 +877,13 @@ int getMetaTriggerObject( int inTriggerIndex );
 
 // can a player of this age pick up a given object?
 char canPickup( int inObjectID, double inPlayerAge );
+
+
+
+TapoutRecord *getTapoutRecord( int inObjectID );
+
+
+void clearTapoutCounts();
 
 
 
