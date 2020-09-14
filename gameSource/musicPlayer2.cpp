@@ -1,3 +1,4 @@
+#include "ageControl.h"
 #include "minorGems/game/game.h"
 #include <math.h>
 
@@ -71,25 +72,27 @@ void initMusicPlayer() {
 
 // returns an asynch file read handle, or -1 on failure
 static int startNextAgeFileRead( double inAge ) {
-    int nextFiveBlock = ceil( inAge / 5 );
+    double inDisplayAge = computeDisplayAge( inAge );
+    int nextFiveBlock = ceil( inDisplayAge / 5 );
     
 
     // too close to that age transition,
     // start on next
-    if( nextFiveBlock * 5 < inAge + 60 * ageRate ) {
+    if( nextFiveBlock * 5 < inDisplayAge + 60 * ageRate ) {
         nextFiveBlock += 1;
         }
     
-    ageNextMusicDone = nextFiveBlock * 5;
+    double displayAgeNextMusicDone = nextFiveBlock * 5;
 
-    if( ageNextMusicDone == 60 ) {
+    if( displayAgeNextMusicDone == 60 ) {
         // special case, end of life
         // have music end 5 seconds after end of life
         // so there's an ubrupt cut off of the music with the YOU DIED
         // screen
-        ageNextMusicDone += 10 * ageRate;
+        displayAgeNextMusicDone += 10 * ageRate;
         }
-    
+
+    ageNextMusicDone = computeServerAge( displayAgeNextMusicDone );
 
     char *searchString = autoSprintf( "_%02d.ogg", nextFiveBlock );
 
@@ -146,7 +149,7 @@ void restartMusic( double inAge, double inAgeRate, char inForceNow ) {
     musicStarted = false;
     forceStartNow = inForceNow;
     
-    age = inAge;
+    age = computeServerAge( inAge );
     ageRate = inAgeRate;
     
     samplesSeenSinceAgeSet = 0;
@@ -171,7 +174,7 @@ void restartMusic( double inAge, double inAgeRate, char inForceNow ) {
     musicOGGPlaying = false;
 
 
-    asyncLoadHandle = startNextAgeFileRead( inAge );
+    asyncLoadHandle = startNextAgeFileRead( age );
     
     
     musicStarted = true;
