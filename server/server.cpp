@@ -10111,6 +10111,88 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
 
     
     
+// access blocked b/c of access direction or ownership?
+static char isAccessBlocked( LiveObject *inPlayer, 
+                             int inTargetX, int inTargetY,
+                             int inTargetID ) {
+    int target = inTargetID;
+    
+    int x = inTargetX;
+    int y = inTargetY;
+    
+
+    char wrongSide = false;
+    char ownershipBlocked = false;
+	//2HOL additions for: password-protected objects
+	char blockedByPassword = false;
+    
+    if( target > 0 ) {
+        ObjectRecord *targetObj = getObject( target );
+
+        if( isGridAdjacent( x, y,
+                            inPlayer->xd, 
+                            inPlayer->yd ) ) {
+            
+            if( targetObj->sideAccess ) {
+                
+                if( y > inPlayer->yd ||
+                    y < inPlayer->yd ) {
+                    // access from N or S
+                    wrongSide = true;
+                    }
+                }
+            else if( targetObj->noBackAccess ) {
+                if( y < inPlayer->yd ) {
+                    // access from N
+                    wrongSide = true;
+                    }
+                }
+            }
+        if( targetObj->isOwned ) {
+            // make sure player owns this pos
+            ownershipBlocked = 
+                ! isOwned( inPlayer, x, y );
+            }
+			
+		//2HOL additions for: password-protected objects
+		//the check to block the transition for the object which password was not guessed correctly
+		if( passwordTransitionsAllowed && targetObj->canHaveInGamePassword ) {
+			AppLog::infoF( "2HOL DEBUG: attempt to interact with an object potentially having password" );
+			AppLog::infoF( "2HOL DEBUG: there are %i protected tiles with object ID %i in the world", targetObj->IndX.size(), targetObj->id );
+			AppLog::infoF( "2HOL DEBUG: interaction location, x: %i", x );
+			AppLog::infoF( "2HOL DEBUG: interaction location, y: %i", y );
+			for( int i=0; i<targetObj->IndX.size(); i++ ) {
+				if ( x == targetObj->IndX.getElementDirect(i) && y == targetObj->IndY.getElementDirect(i) ) {
+					AppLog::infoF( "2HOL DEBUG: protected tile #%i, password: %s", i, targetObj->IndPass.getElementDirect(i) );
+					if ( inPlayer->saidPassword == NULL ) {
+							AppLog::infoF( "2HOL DEBUG: player didn't say any password." );
+							blockedByPassword = true;
+					}
+					else {
+						AppLog::infoF( "2HOL DEBUG: player's password: %s", inPlayer->saidPassword );
+						char *pass = strstr( inPlayer->saidPassword, targetObj->IndPass.getElementDirect(i) );
+						if ( pass ) {
+							AppLog::infoF( "2HOL DEBUG: passwords match." );
+							blockedByPassword = false;
+							}
+						else {
+							AppLog::infoF( "2HOL DEBUG: passwords do not match." );
+							blockedByPassword = true;
+							}
+						}
+						break;
+					}
+				}
+			// 2HOL, password-protected objects: or for which the password was not guessed
+			if ( blockedByPassword ) {
+				 AppLog::infoF( "2HOL DEBUG: attempt to interact was blocked: wrong password." );
+				}
+			}
+        }
+    return wrongSide || ownershipBlocked || blockedByPassword;
+    }
+	
+	
 
 
 int main() {
@@ -13579,77 +13661,15 @@ int main() {
                             
                             int oldHolding = nextPlayer->holdingID;
                             
-
-                            char wrongSide = false;
-                            char ownershipBlocked = false;
-                            //2HOL additions for: password-protected objects
-                            char blockedByPassword = false;
+                            char accessBlocked =
+                                isAccessBlocked( nextPlayer, m.x, m.y, target );
                             
-                            if( target != 0 ) {
-                                ObjectRecord *targetObj = getObject( target );
-
-                                if( isGridAdjacent( m.x, m.y,
-                                                    nextPlayer->xd, 
-                                                    nextPlayer->yd ) ) {
-                                    
-                                    if( targetObj->sideAccess ) {
-                                        
-                                        if( m.y > nextPlayer->yd ||
-                                            m.y < nextPlayer->yd ) {
-                                            // access from N or S
-                                            wrongSide = true;
-                                            }
-                                        }
-                                    }
-                                if( targetObj->isOwned ) {
-                                    // make sure player owns this pos
-                                    ownershipBlocked = 
-                                        ! isOwned( nextPlayer, m.x, m.y );
-                                    }
-                                //2HOL additions for: password-protected objects
-                                //the check to block the transition for the object which password was not guessed correctly
-                                if( passwordTransitionsAllowed && targetObj->canHaveInGamePassword ) {
-                                    AppLog::infoF( "2HOL DEBUG: attempt to interact with an object potentially having password" );
-                                    AppLog::infoF( "2HOL DEBUG: there are %i protected tiles with object ID %i in the world", targetObj->IndX.size(), targetObj->id );
-                                    AppLog::infoF( "2HOL DEBUG: interaction location, x: %i", m.x );
-                                    AppLog::infoF( "2HOL DEBUG: interaction location, y: %i", m.y );
-                                    for( int i=0; i<targetObj->IndX.size(); i++ ) {
-                                        if ( m.x == targetObj->IndX.getElementDirect(i) && m.y == targetObj->IndY.getElementDirect(i) ) {
-                                            AppLog::infoF( "2HOL DEBUG: protected tile #%i, password: %s", i, targetObj->IndPass.getElementDirect(i) );
-                                            if ( nextPlayer->saidPassword == NULL ) {
-                                                    AppLog::infoF( "2HOL DEBUG: player didn't say any password." );
-                                                    blockedByPassword = true;
-                                            }
-                                            else {
-                                                AppLog::infoF( "2HOL DEBUG: player's password: %s", nextPlayer->saidPassword );
-                                                char *pass = strstr( nextPlayer->saidPassword, targetObj->IndPass.getElementDirect(i) );
-                                                if ( pass ) {
-                                                    AppLog::infoF( "2HOL DEBUG: passwords match." );
-                                                    blockedByPassword = false;
-                                                    }
-                                                else {
-                                                    AppLog::infoF( "2HOL DEBUG: passwords do not match." );
-                                                    blockedByPassword = true;
-                                                }
-                                            }
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-
-                            
-                            if( wrongSide || ownershipBlocked || blockedByPassword ) {
+                            if( accessBlocked ) {
                                 // ignore action from wrong side
                                 // or that players don't own
-                                // 2HOL, password-protected objects: or for which the password was not guessed
-                                if ( blockedByPassword ) {
-                                     AppLog::infoF( "2HOL DEBUG: attempt to interact was blocked: wrong password." );
-                                    }
+
                                 }
                             else if( target != 0 ) {
-                                
-
 
                                 ObjectRecord *targetObj = getObject( target );
                                 
@@ -15310,7 +15330,16 @@ int main() {
                             getObject( nextPlayer->holdingID )->permanent ) {
                             canDrop = false;
                             }
-
+							
+                        int target = getMapObject( m.x, m.y );
+                        
+                        
+                        char accessBlocked = 
+                            isAccessBlocked( nextPlayer, 
+                                             m.x, m.y, target );
+						
+						
+						if( ! accessBlocked )
                         if( ( isGridAdjacent( m.x, m.y,
                                               nextPlayer->xd, 
                                               nextPlayer->yd ) 
@@ -15630,13 +15659,21 @@ int main() {
                             ||
                             ( m.x == nextPlayer->xd &&
                               m.y == nextPlayer->yd ) ) {
+							
+                            int target = getMapObject( m.x, m.y );
+
+                            char accessBlocked =
+                                isAccessBlocked( nextPlayer, m.x, m.y, target );
                             
+							
                             char handEmpty = ( nextPlayer->holdingID == 0 );
-                        
+							
+							if( ! accessBlocked ) 
                             removeFromContainerToHold( nextPlayer,
                                                        m.x, m.y, m.i );
 
-                            if( handEmpty &&
+                            if( ! accessBlocked ) 
+							if( handEmpty &&
                                 nextPlayer->holdingID == 0 ) {
                                 // hand still empty?
                             
