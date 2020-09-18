@@ -1848,10 +1848,11 @@ void setupNumericSprites( ObjectRecord *inO, int inNumber, int inMax,
     for( int i=0; i< inO->numSprites; i++ ) {
         char *tag = getSpriteTag( inO->sprites[ i ] );
         
+        char *keyLoc = strstr( tag, key );
         
-        if( strstr( tag, "Numeral#" ) != NULL ) {
+        if( keyLoc != NULL ) {
             int d = 0;
-            sscanf( &( tag[keyLen] ), "%d", &d );
+            sscanf( &( keyLoc[keyLen] ), "%d", &d );
             
             if( d < 10 && d >= 0 ) {
                 
