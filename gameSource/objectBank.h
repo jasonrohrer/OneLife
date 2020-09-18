@@ -464,10 +464,6 @@ typedef struct ObjectRecord {
         // it is replaced by the next var object child in line
         char useVarSerialNumbers;
         
-        // tracks total number of instances of this object created in world
-        // since server started, used for implementing varSerialNumbers
-        int numInstancesCreated;
-
     } ObjectRecord;
 
 

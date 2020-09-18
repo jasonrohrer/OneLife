@@ -840,8 +840,6 @@ static void setupVarSerialNumber( ObjectRecord *inR ) {
     if( pos != NULL ) {
         inR->useVarSerialNumbers = true;    
         }
-
-    inR->numInstancesCreated = 0;
     }
 
     
@@ -6881,6 +6879,48 @@ FloatColor spriteColorOverride = {1, 1, 1, 1};
 
 
 
+typedef struct SerialCountRecord {
+        int serialNumberCategory;
+        
+        int numInstancesCreated;
+    } SerialCountRecord;
+
+
+SimpleVector<SerialCountRecord> serialRecords;
+
+
+
+static SerialCountRecord *getSerialRecord( ObjectRecord *inO ) {
+    
+    const char *key = "+varSerialNumber";
+    
+    char *pos = strstr( inO->description, key );
+
+    int categoryNumber = 0;
+    
+    if( pos != NULL ) {
+        sscanf( &( pos[ strlen( key ) ] ), "%d", &categoryNumber );    
+        }
+    
+    for( int i=0; i<serialRecords.size(); i++ ) {
+        SerialCountRecord *r = serialRecords.getElement( i );
+        
+        if( r->serialNumberCategory == categoryNumber ) {
+            return r;
+            }
+        }
+
+    // none found, make one
+    SerialCountRecord rec = { categoryNumber, 0 };
+    
+    serialRecords.push_back( rec );    
+    
+    return serialRecords.getElement( serialRecords.size() - 1 );
+    }
+
+    
+
+
 int getNextVarSerialNumberChild( ObjectRecord *inO ) {
     
     ObjectRecord *parent = inO;
@@ -6897,11 +6937,13 @@ int getNextVarSerialNumberChild( ObjectRecord *inO ) {
         return inO->id;
         }
     
+    SerialCountRecord *r = getSerialRecord( inO );
+
     int nextDummyIndex = 
-        parent->numInstancesCreated % parent->numVariableDummyIDs;
+        r->numInstancesCreated % parent->numVariableDummyIDs;
 
 
-    parent->numInstancesCreated ++;
+    r->numInstancesCreated ++;
     
     return parent->variableDummyIDs[ nextDummyIndex ];
     }
