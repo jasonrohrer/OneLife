@@ -1561,6 +1561,9 @@ float initObjectBankStep() {
                     next++;
                     }
 
+                    
+                r->spriteNoFlipXPos = NULL;
+
 
                 sparseCommaLineToBoolArray( "headIndex", lines[next],
                                             r->spriteIsHead, r->numSprites );
@@ -1838,6 +1841,11 @@ static void countVisuallyUniqueObjects() {
 
 void setupNumericSprites( ObjectRecord *inO, int inNumber, int inMax,
                           char *inSpriteVis ) {
+
+    if( inO->spriteNoFlipXPos == NULL ) {
+        inO->spriteNoFlipXPos = new double[ inO->numSprites ];
+        }
+    
     // find sprites from 0 to 9
     SimpleVector<int> numericalIndices[10];
     SimpleVector<double> numericalXPos[10];
@@ -1846,6 +1854,9 @@ void setupNumericSprites( ObjectRecord *inO, int inNumber, int inMax,
     int keyLen = strlen( key );
     
     for( int i=0; i< inO->numSprites; i++ ) {
+        // set all sprites to their own X pos
+        inO->spriteNoFlipXPos[i] = inO->spritePos[i].x;
+        
         char *tag = getSpriteTag( inO->sprites[ i ] );
         
         char *keyLoc = strstr( tag, key );
@@ -1897,6 +1908,8 @@ void setupNumericSprites( ObjectRecord *inO, int inNumber, int inMax,
         digits.push_front( 0 );
         }
 
+    SimpleVector<int> visibleDigitSpriteIndex;
+
     for( int i=0; i<digits.size(); i++ ) {
         int d = digits.getElementDirect( i );
 
@@ -1904,9 +1917,23 @@ void setupNumericSprites( ObjectRecord *inO, int inNumber, int inMax,
             int spriteInd = numericalIndices[d].getElementDirect( i );
         
             inSpriteVis[ spriteInd ] = false;
+            visibleDigitSpriteIndex.push_back( spriteInd );
             }
         }
 
+    // for each visible digit, set up a swap pos with the digit on the opposite
+    // end
+    // if there are an odd number o digits, middle digit will be skipped
+    // because it's pos doesn't need flipping
+    for( int i=0; i<digits.size() / 2; i++ ) {
+        int oppositeI = ( digits.size() - 1 ) - i;
+
+        int spriteI = visibleDigitSpriteIndex.getElementDirect( i );
+        int spriteOppI = visibleDigitSpriteIndex.getElementDirect( oppositeI );
+        
+        inO->spriteNoFlipXPos[spriteI] = inO->spritePos[spriteOppI].x;
+        inO->spriteNoFlipXPos[spriteOppI] = inO->spritePos[spriteI].x;
+        }
     }
 
 
@@ -2821,6 +2848,10 @@ static void freeObjectRecord( int inID ) {
                 delete [] idMap[inID]->spriteAdditiveBlend;
                 }
 
+            if( idMap[inID]->spriteNoFlipXPos != NULL ) {
+                delete [] idMap[inID]->spriteNoFlipXPos;
+                }
+            
 
             delete [] idMap[inID]->spriteSkipDrawing;
             
@@ -2910,6 +2941,11 @@ void freeObjectBank() {
             if( idMap[i]->spriteAdditiveBlend != NULL ) {
                 delete [] idMap[i]->spriteAdditiveBlend;
                 }
+            
+            if( idMap[i]->spriteNoFlipXPos != NULL ) {
+                delete [] idMap[i]->spriteNoFlipXPos;
+                }
+            
 
             delete [] idMap[i]->spriteSkipDrawing;
 
@@ -3754,7 +3790,8 @@ int addObject( const char *inDescription,
             maxWideRadius = r->rightBlockingRadius;
             }
         }
-
+    
+    r->spriteNoFlipXPos = NULL;
 
 
     fillObjectBiomeFromString( r, inBiomes );
@@ -4248,9 +4285,20 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             // this is the head
             animHeadPos = spritePos;
             }
+
+        char spriteNoFlip = false;
+        
+        if( inFlipH ) {
+            spriteNoFlip = getNoFlip( inObject->sprites[i] );
+            }
         
         
         if( inFlipH ) {
+            
+            if( spriteNoFlip && inObject->spriteNoFlipXPos != NULL ) {
+                spritePos.x = inObject->spriteNoFlipXPos[i];
+                }
+            
             spritePos.x *= -1;            
             }
 
@@ -4441,7 +4489,7 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             SpriteHandle sh = getSprite( inObject->sprites[i] );
             if( sh != NULL ) {
                 char f = inFlipH;
-                if( f && getNoFlip( inObject->sprites[i] ) ) {    
+                if( f && spriteNoFlip ) {    
                     f = false;
                     }
                 

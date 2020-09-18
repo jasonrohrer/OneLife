@@ -2483,7 +2483,18 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             }
 
 
+        char spriteNoFlip = false;
+        
+        if( inFlipH && getNoFlip( obj->sprites[i] ) ) {
+            spriteNoFlip = true;
+            }
+
         if( inFlipH ) {
+            
+            if( spriteNoFlip && obj->spriteNoFlipXPos != NULL ) {
+                spritePos.x = obj->spriteNoFlipXPos[i];
+                }
+
             spritePos.x *= -1;
             rot *= -1;
             }
@@ -3002,7 +3013,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 if( sh != NULL ) {
                     char f = inFlipH;
                     
-                    if( f && getNoFlip( spriteID ) ) {
+                    if( f && spriteNoFlip ) {
                         f = false;
                         }
                     
