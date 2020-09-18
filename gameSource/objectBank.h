@@ -460,6 +460,13 @@ typedef struct ObjectRecord {
         // this can be NULL if not used for an object
         double *spriteNoFlipXPos;
         
+        // if true, when parent object is constructed in the world
+        // it is replaced by the next var object child in line
+        char useVarSerialNumbers;
+        
+        // tracks total number of instances of this object created in world
+        // since server started, used for implementing varSerialNumbers
+        int numInstancesCreated;
 
     } ObjectRecord;
 
@@ -987,6 +994,10 @@ int getMaxFoodValue();
 
 
 char sameRoadClass( int inFloorA, int inFloorB );
+
+
+// gets next var child in line for a serial numbered object ID
+int getNextVarSerialNumberChild( ObjectRecord *inO );
 
 
 

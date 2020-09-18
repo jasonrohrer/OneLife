@@ -831,6 +831,19 @@ static void setupSlotsInvis( ObjectRecord *inR ) {
         }
     }
 
+
+
+static void setupVarSerialNumber( ObjectRecord *inR ) {
+    inR->useVarSerialNumbers = false;
+    char *pos = strstr( inR->description, "+varSerialNumber" );
+
+    if( pos != NULL ) {
+        inR->useVarSerialNumbers = true;    
+        }
+
+    inR->numInstancesCreated = 0;
+    }
+
     
 
 
@@ -916,6 +929,8 @@ float initObjectBankStep() {
                 setupRoadParent( r );
                 
                 setupSlotsInvis( r );
+                
+                setupVarSerialNumber( r );
                 
 
                 // do this later, after we parse floorHugging
@@ -1841,6 +1856,10 @@ static void countVisuallyUniqueObjects() {
 
 void setupNumericSprites( ObjectRecord *inO, int inNumber, int inMax,
                           char *inSpriteVis ) {
+
+    if( ! realSpriteBank() ) {
+        return;
+        }
 
     if( inO->spriteNoFlipXPos == NULL ) {
         inO->spriteNoFlipXPos = new double[ inO->numSprites ];
@@ -3974,6 +3993,8 @@ int addObject( const char *inDescription,
     
     setupSlotsInvis( r );
 
+    setupVarSerialNumber( r );
+                
     setupWall( r );
 
     setupBlocksMoving( r );
@@ -6857,3 +6878,31 @@ char sameRoadClass( int inFloorA, int inFloorB ) {
 char spriteColorOverrideOn = false;
 
 FloatColor spriteColorOverride = {1, 1, 1, 1};
+
+
+
+int getNextVarSerialNumberChild( ObjectRecord *inO ) {
+    
+    ObjectRecord *parent = inO;
+    
+    if( inO->isVariableDummy ) {
+        parent = getObject( inO->variableDummyParent );
+        }
+
+    if( ! parent->useVarSerialNumbers ) {
+        return inO->id;
+        }
+    
+    if( parent->numVariableDummyIDs == 0 ) {
+        return inO->id;
+        }
+    
+    int nextDummyIndex = 
+        parent->numInstancesCreated % parent->numVariableDummyIDs;
+
+
+    parent->numInstancesCreated ++;
+    
+    return parent->variableDummyIDs[ nextDummyIndex ];
+    }
+

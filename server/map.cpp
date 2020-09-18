@@ -7442,6 +7442,16 @@ static void logMapChange( int inX, int inY, int inID ) {
 
 
 void setMapObject( int inX, int inY, int inID ) {
+    
+    if( inID > 0 ) {
+        ObjectRecord *o = getObject( inID );
+        
+        if( o != NULL && o->useVarSerialNumbers ) {
+            
+            inID = getNextVarSerialNumberChild( o );
+            }
+        }
+    
 
     logMapChange( inX, inY, inID );
 

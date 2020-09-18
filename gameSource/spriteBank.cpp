@@ -1671,7 +1671,11 @@ void countLoadedSprites( int *outLoaded, int *outTotal ) {
     *outTotal = total;
     }
 
+
     
+char realSpriteBank() {
+    return true;
+    }
 
 
 

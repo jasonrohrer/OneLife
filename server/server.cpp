@@ -28649,3 +28649,8 @@ void startOutputAllFrames() {
 void stopOutputAllFrames() {
     }
 
+
+char realSpriteBank() {
+    return false;
+    }
+
