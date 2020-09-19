@@ -15455,7 +15455,7 @@ static void leaderDied( LiveObject *inLeader ) {
     if( inLeader->followingID == -1 &&
         directFollowers.size() > 0 ) {
         
-        LiveObject *fittestFollower = NULL;
+        LiveObject *fittestFollower = directFollowers.getElementDirect( 0 );
         double fittestFitness = 0;
         
         for( int i=0; i<directFollowers.size(); i++ ) {
