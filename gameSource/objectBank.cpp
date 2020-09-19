@@ -831,6 +831,17 @@ static void setupSlotsInvis( ObjectRecord *inR ) {
         }
     }
 
+
+
+static void setupVarSerialNumber( ObjectRecord *inR ) {
+    inR->useVarSerialNumbers = false;
+    char *pos = strstr( inR->description, "+varSerialNumber" );
+
+    if( pos != NULL ) {
+        inR->useVarSerialNumbers = true;    
+        }
+    }
+
     
 
 
@@ -916,6 +927,8 @@ float initObjectBankStep() {
                 setupRoadParent( r );
                 
                 setupSlotsInvis( r );
+                
+                setupVarSerialNumber( r );
                 
 
                 // do this later, after we parse floorHugging
@@ -1561,6 +1574,9 @@ float initObjectBankStep() {
                     next++;
                     }
 
+                    
+                r->spriteNoFlipXPos = NULL;
+
 
                 sparseCommaLineToBoolArray( "headIndex", lines[next],
                                             r->spriteIsHead, r->numSprites );
@@ -1704,6 +1720,37 @@ static char *getVarObjectLabel( int inNumber ) {
 
 
 
+// turns a variable object number into a numeral label
+// with a certain number of digits
+// 01  02   03  .. 37
+// includes - 01 hyphen offset character
+static char *getVarObjectNumeral( int inNumber, int inMax ) {
+
+    const char *formatString = "- %02d";
+    
+    if( inMax < 10 ) {
+        formatString = "- %d";
+        }
+    else if( inMax > 99 && inMax < 1000 ) {
+        formatString = "- %03d";
+        }
+    else if( inMax > 999 && inMax < 10000 ) {
+        formatString = "- %04d";
+        }
+    else if( inMax > 9999 && inMax < 100000 ) {
+        formatString = "- %05d";
+        }
+    else {
+        // really big number?
+        formatString = "- %d";
+        }
+
+    return autoSprintf( formatString, inNumber );
+    }
+
+
+
+
 // returns NULL if not found
 static int *parseNumberList( char *inString, 
                              const char *inListKey, int *outNum ) {
@@ -1797,6 +1844,112 @@ static void countVisuallyUniqueObjects() {
     for( int i=0; i<uniqueList.size(); i++ ) {
         printf( "%d: %s\n", uniqueList.getElementDirect( i ),
                 getObject( uniqueList.getElementDirect( i ) )->description );
+        }
+    }
+
+
+
+
+
+
+void setupNumericSprites( ObjectRecord *inO, int inNumber, int inMax,
+                          char *inSpriteVis ) {
+
+    if( ! realSpriteBank() ) {
+        return;
+        }
+
+    if( inO->spriteNoFlipXPos == NULL ) {
+        inO->spriteNoFlipXPos = new double[ inO->numSprites ];
+        }
+    
+    // find sprites from 0 to 9
+    SimpleVector<int> numericalIndices[10];
+    SimpleVector<double> numericalXPos[10];
+    
+    const char *key = "Numeral#";
+    int keyLen = strlen( key );
+    
+    for( int i=0; i< inO->numSprites; i++ ) {
+        // set all sprites to their own X pos
+        inO->spriteNoFlipXPos[i] = inO->spritePos[i].x;
+        
+        char *tag = getSpriteTag( inO->sprites[ i ] );
+        
+        char *keyLoc = strstr( tag, key );
+        
+        if( keyLoc != NULL ) {
+            int d = 0;
+            sscanf( &( keyLoc[keyLen] ), "%d", &d );
+            
+            if( d < 10 && d >= 0 ) {
+                
+                // sort them by x pos as we insert them
+                double xPos = inO->spritePos[ i ].x;
+                
+                char inserted = false;
+                for( int j=0; j<numericalXPos[d].size(); j++ ) {
+                    
+                    if( numericalXPos[d].getElementDirect( j ) > xPos ) {
+                        
+                        numericalIndices[d].push_middle( i, j );
+                        numericalXPos[d].push_middle( xPos, j );
+                    
+                        inserted = true;
+                        break;
+                        }
+                    }
+                if( ! inserted ) {
+                    numericalIndices[d].push_back( i );
+                    numericalXPos[d].push_back( xPos );
+                    }
+                
+                
+                // hide them all for now
+                // make certain ones vis later, based on inNumber
+                inSpriteVis[ i ] = true;
+                }
+            }
+        }
+    
+    SimpleVector<int> digits;
+    int numLeft = inNumber;
+    
+    while( numLeft > 0 ) {
+        digits.push_front( numLeft % 10 );
+        
+        numLeft /= 10;
+        }
+
+    while( pow( 10, digits.size() ) < inMax ) {
+        digits.push_front( 0 );
+        }
+
+    SimpleVector<int> visibleDigitSpriteIndex;
+
+    for( int i=0; i<digits.size(); i++ ) {
+        int d = digits.getElementDirect( i );
+
+        if( numericalIndices[d].size() > i ) {
+            int spriteInd = numericalIndices[d].getElementDirect( i );
+        
+            inSpriteVis[ spriteInd ] = false;
+            visibleDigitSpriteIndex.push_back( spriteInd );
+            }
+        }
+
+    // for each visible digit, set up a swap pos with the digit on the opposite
+    // end
+    // if there are an odd number o digits, middle digit will be skipped
+    // because it's pos doesn't need flipping
+    for( int i=0; i<digits.size() / 2; i++ ) {
+        int oppositeI = ( digits.size() - 1 ) - i;
+
+        int spriteI = visibleDigitSpriteIndex.getElementDirect( i );
+        int spriteOppI = visibleDigitSpriteIndex.getElementDirect( oppositeI );
+        
+        inO->spriteNoFlipXPos[spriteI] = inO->spritePos[spriteOppI].x;
+        inO->spriteNoFlipXPos[spriteOppI] = inO->spritePos[spriteI].x;
         }
     }
 
@@ -2009,6 +2162,13 @@ void initObjectBankFinish() {
                 char *dollarPos = strstr( o->description, "$" );
                 
                 if( dollarPos != NULL ) {
+
+                    char numericLabel = false;
+                    
+                    if( strstr( o->description, "+varNumeral" ) != NULL ) {
+                        numericLabel = true;
+                        }
+                    
                     int mainID = o->id;
                     
                     char *afterDollarPos = &( dollarPos[1] );
@@ -2030,8 +2190,15 @@ void initObjectBankFinish() {
                     for( int d=1; d<=numVar; d++ ) {    
                         numAutoGenerated ++;
                         
-                        char *sub = getVarObjectLabel( d );
-
+                        char *sub;
+                        
+                        if( numericLabel ) {
+                            sub = getVarObjectNumeral( d, numVar );
+                            }
+                        else {
+                            sub = getVarObjectLabel( d );
+                            }
+                        
                         char variableHidden = false;
                         
                         char *targetPos = strstr( o->description, target );
@@ -2084,6 +2251,10 @@ void initObjectBankFinish() {
                                 // restore original record
                                 a->objectID = mainID;
                                 }
+                            }
+                        if( numericLabel ) {
+                            setupNumericSprites( dummyO, d, numVar,
+                                                 dummyO->spriteSkipDrawing );
                             }
                         }
 
@@ -2694,6 +2865,10 @@ static void freeObjectRecord( int inID ) {
                 delete [] idMap[inID]->spriteAdditiveBlend;
                 }
 
+            if( idMap[inID]->spriteNoFlipXPos != NULL ) {
+                delete [] idMap[inID]->spriteNoFlipXPos;
+                }
+            
 
             delete [] idMap[inID]->spriteSkipDrawing;
             
@@ -2783,6 +2958,11 @@ void freeObjectBank() {
             if( idMap[i]->spriteAdditiveBlend != NULL ) {
                 delete [] idMap[i]->spriteAdditiveBlend;
                 }
+            
+            if( idMap[i]->spriteNoFlipXPos != NULL ) {
+                delete [] idMap[i]->spriteNoFlipXPos;
+                }
+            
 
             delete [] idMap[i]->spriteSkipDrawing;
 
@@ -3627,7 +3807,8 @@ int addObject( const char *inDescription,
             maxWideRadius = r->rightBlockingRadius;
             }
         }
-
+    
+    r->spriteNoFlipXPos = NULL;
 
 
     fillObjectBiomeFromString( r, inBiomes );
@@ -3810,6 +3991,8 @@ int addObject( const char *inDescription,
     
     setupSlotsInvis( r );
 
+    setupVarSerialNumber( r );
+                
     setupWall( r );
 
     setupBlocksMoving( r );
@@ -4121,9 +4304,20 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             // this is the head
             animHeadPos = spritePos;
             }
+
+        char spriteNoFlip = false;
+        
+        if( inFlipH ) {
+            spriteNoFlip = getNoFlip( inObject->sprites[i] );
+            }
         
         
         if( inFlipH ) {
+            
+            if( spriteNoFlip && inObject->spriteNoFlipXPos != NULL ) {
+                spritePos.x = inObject->spriteNoFlipXPos[i];
+                }
+            
             spritePos.x *= -1;            
             }
 
@@ -4314,7 +4508,7 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             SpriteHandle sh = getSprite( inObject->sprites[i] );
             if( sh != NULL ) {
                 char f = inFlipH;
-                if( f && getNoFlip( inObject->sprites[i] ) ) {    
+                if( f && spriteNoFlip ) {    
                     f = false;
                     }
                 
@@ -6682,3 +6876,75 @@ char sameRoadClass( int inFloorA, int inFloorB ) {
 char spriteColorOverrideOn = false;
 
 FloatColor spriteColorOverride = {1, 1, 1, 1};
+
+
+
+typedef struct SerialCountRecord {
+        int serialNumberCategory;
+        
+        int numInstancesCreated;
+    } SerialCountRecord;
+
+
+SimpleVector<SerialCountRecord> serialRecords;
+
+
+
+static SerialCountRecord *getSerialRecord( ObjectRecord *inO ) {
+    
+    const char *key = "+varSerialNumber";
+    
+    char *pos = strstr( inO->description, key );
+
+    int categoryNumber = 0;
+    
+    if( pos != NULL ) {
+        sscanf( &( pos[ strlen( key ) ] ), "%d", &categoryNumber );    
+        }
+    
+    for( int i=0; i<serialRecords.size(); i++ ) {
+        SerialCountRecord *r = serialRecords.getElement( i );
+        
+        if( r->serialNumberCategory == categoryNumber ) {
+            return r;
+            }
+        }
+
+    // none found, make one
+    SerialCountRecord rec = { categoryNumber, 0 };
+    
+    serialRecords.push_back( rec );    
+    
+    return serialRecords.getElement( serialRecords.size() - 1 );
+    }
+
+    
+
+
+int getNextVarSerialNumberChild( ObjectRecord *inO ) {
+    
+    ObjectRecord *parent = inO;
+    
+    if( inO->isVariableDummy ) {
+        parent = getObject( inO->variableDummyParent );
+        }
+
+    if( ! parent->useVarSerialNumbers ) {
+        return inO->id;
+        }
+    
+    if( parent->numVariableDummyIDs == 0 ) {
+        return inO->id;
+        }
+    
+    SerialCountRecord *r = getSerialRecord( inO );
+
+    int nextDummyIndex = 
+        r->numInstancesCreated % parent->numVariableDummyIDs;
+
+
+    r->numInstancesCreated ++;
+    
+    return parent->variableDummyIDs[ nextDummyIndex ];
+    }
+

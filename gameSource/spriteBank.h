@@ -172,5 +172,10 @@ void setRemapFraction( double inFraction );
 void countLoadedSprites( int *outLoaded, int *outTotal );
 
 
+// returns true if implementation is fully-functional sprite bank
+// or false if implementation is a dummy implementation (server-side)
+char realSpriteBank();
+
+
 
 #endif

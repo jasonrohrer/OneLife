@@ -4,6 +4,18 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 356    2020-September-18
+
+--Support for variable dummy objects that have numeral sprites which count up.
+
+--Support for serial numbered variable dummy objects, where the next variable
+  object is substituted for each new object created in the world.  (Example:
+  sports cars with unique numbers on the side.)
+
+
+
+
+
 Version 354    2020-September-11
 
 --Support for containers with invisible contained items.
