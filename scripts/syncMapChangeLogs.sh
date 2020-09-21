@@ -1,7 +1,16 @@
 
 
+# delete old files from game server
+ssh bigserver2.onehouronelife.com 'find checkout/OneLife/server/mapChangeLogs/*.txt -mtime +14 -delete'
+
+
 # copy from game server to here
 rsync -avz -e ssh --progress bigserver2.onehouronelife.com:checkout/OneLife/server/mapChangeLogs/*.txt ~/mapChangeLogs/
+
+
+# delete old files locally
+find ~/mapChangeLogs/ -mtime +14 -delete
+
 
 # copy from here to public data server
 # send all but latest file, which is not public knowledge yet (still being

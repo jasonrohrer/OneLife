@@ -4,6 +4,35 @@ http://onehouronelife.com/updateLog.php
 
 
 
+
+Version 358    2020-September-21
+
+--Fixed so that filtering for /DIESEL ENGINE doesn't cause you to /DIE.
+  Fixes #667
+
+--Improved tutorial by NOT locking hint hallway for 20 minutes, and adding a
+  new tutorial stone explaining where the hints are.
+
+
+
+
+
+Server Fixes
+
+--New food settings to ease new players into the difficulty of the game.  New
+  players get slower food decrement time.  This bonus has a half life of 
+  10 hours of playtime.  Does not affect tutorial players, who still get the 
+  same "hard" food timing that the tutorial was designed for.
+
+--Fixed so that wide objects (like parked truck) can't be accessed on their
+  extended side if that side extends over a blocking object (like a truck
+  parked at the edge of a fence, overhanging the fence, can't be stolen through
+  the fence).  Fixes #669.
+
+
+
+
+
 Version 356    2020-September-18
 
 --Support for variable dummy objects that have numeral sprites which count up.

@@ -153,6 +153,12 @@ static double foodScaleFactorFloor = 0.5;
 static double foodScaleFactorHalfLife = 50;
 static double foodScaleFactorGamma = 1.5;
 
+static double newPlayerFoodDecrementSecondsBonus = 8;
+static int newPlayerFoodEatingBonus = 5;
+// first 10 hours of living
+static double newPlayerFoodBonusHalfLifeSeconds = 36000;
+
+
 
 static double indoorFoodDecrementSecondsBonus = 20.0;
 
@@ -1093,6 +1099,12 @@ typedef struct LiveObject {
         Craving cravingFood;
         int cravingFoodYumIncrement;
         char cravingKnown;
+        
+        // to give new players a boost
+        // set these at birth based on how long they have played so far
+        int personalEatBonus;
+        double personalFoodDecrementSecondsBonus;
+        
 
     } LiveObject;
 
@@ -3343,6 +3355,8 @@ double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
     
     // all player temp effects push us up above min
     value += minFoodDecrementSeconds;
+
+    value += inPlayer->personalFoodDecrementSecondsBonus;
 
     inPlayer->indoorBonusTime = 0;
     
@@ -6860,6 +6874,8 @@ static int getEatBonus( LiveObject *inPlayer ) {
              generation / eatBonusHalfLife )
         + eatBonusFloor );
     
+    b += inPlayer->personalEatBonus;
+
     return b;
     }
 
@@ -8325,6 +8341,14 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     foodScaleFactorGamma = 
         SettingsManager::getFloatSetting( "foodScaleFactorGamma", 1.5 );
 
+    newPlayerFoodEatingBonus = 
+        SettingsManager::getIntSetting( "newPlayerFoodEatingBonus", 5 );
+    newPlayerFoodDecrementSecondsBonus =
+        SettingsManager::getFloatSetting( "newPlayerFoodDecrementSecondsBonus",
+                                          8 );
+    newPlayerFoodBonusHalfLifeSeconds =
+        SettingsManager::getFloatSetting( "newPlayerFoodBonusHalfLifeSeconds",
+                                          36000 );
 
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
@@ -9918,6 +9942,27 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             }
         }
 
+    newObject.personalEatBonus = 0;
+    newObject.personalFoodDecrementSecondsBonus = 0;
+
+    if( ! newObject.isTutorial &&
+        isUsingStatsServer() &&
+        ! newObject.lifeStats.error ) {
+        
+        int sec = newObject.lifeStats.lifeTotalSeconds;
+
+        double halfLifeFactor = 
+            pow( 0.5, sec / newPlayerFoodBonusHalfLifeSeconds );
+        
+
+        newObject.personalEatBonus = 
+            lrint( halfLifeFactor * newPlayerFoodEatingBonus );
+        
+        newObject.personalFoodDecrementSecondsBonus =
+            lrint( halfLifeFactor * newPlayerFoodDecrementSecondsBonus );
+        }
+    
+        
     if( forceSpawn ) {
         newObject.forceSpawn = true;
         newObject.xs = forceSpawnInfo.pos.x;
@@ -15457,7 +15502,7 @@ static void leaderDied( LiveObject *inLeader ) {
     if( inLeader->followingID == -1 &&
         directFollowers.size() > 0 ) {
         
-        LiveObject *fittestFollower = NULL;
+        LiveObject *fittestFollower = directFollowers.getElementDirect( 0 );
         double fittestFitness = 0;
         
         for( int i=0; i<directFollowers.size(); i++ ) {
@@ -20989,8 +21034,20 @@ int main() {
                                         if( isGridAdjacent( testX, m.y,
                                                             nextPlayer->xd,
                                                             nextPlayer->yd ) ) {
-                                            isAdjacent = true;
-                                            break;
+                                            // don't count wide object
+                                            // as adjacent if it hangs
+                                            // out over another blocking
+                                            // object (prevent wide truck
+                                            // from being stolen through
+                                            // fence)
+                                            int blockOID =
+                                                getMapObject( testX, m.y );
+                                            if( blockOID == 0 ||
+                                                ! getObject( blockOID )->
+                                                blocksWalking ) {
+                                                isAdjacent = true;
+                                                break;
+                                                }
                                             }
                                         }
                                     if( ! isAdjacent )
@@ -21000,8 +21057,14 @@ int main() {
                                         if( isGridAdjacent( testX, m.y,
                                                             nextPlayer->xd,
                                                             nextPlayer->yd ) ) {
-                                            isAdjacent = true;
-                                            break;
+                                            int blockOID =
+                                                getMapObject( testX, m.y );
+                                            if( blockOID == 0 ||
+                                                ! getObject( blockOID )->
+                                                blocksWalking ) {
+                                                isAdjacent = true;
+                                                break;
+                                                }
                                             }
                                         }
                                     }
