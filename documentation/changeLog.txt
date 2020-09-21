@@ -4,6 +4,15 @@ http://onehouronelife.com/updateLog.php
 
 
 
+
+Version 358    ???
+
+--Fixed so that filtering for /DIESEL ENGINE doesn't cause you to /DIE.
+  Fixes #667
+
+
+
+
 Server Fixes
 
 --New food settings to ease new players into the difficulty of the game.  New
