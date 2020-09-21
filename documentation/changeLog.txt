@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--New food settings to ease new players into the difficulty of the game.  New
+  players get an extra eating bonus and a slower food decrement time.  These
+  bonuses have a half life of 10 hours of playtime.
+
+
+
 Version 356    2020-September-18
 
 --Support for variable dummy objects that have numeral sprites which count up.
