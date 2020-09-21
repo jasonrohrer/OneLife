@@ -20,6 +20,11 @@ Server Fixes
   10 hours of playtime.  Does not affect tutorial players, who still get the 
   same "hard" food timing that the tutorial was designed for.
 
+--Fixed so that wide objects (like parked truck) can't be accessed on their
+  extended side if that side extends over a blocking object (like a truck
+  parked at the edge of a fence, overhanging the fence, can't be stolen through
+  the fence).  Fixes #669.
+
 
 
 

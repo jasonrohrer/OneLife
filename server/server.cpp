@@ -21018,8 +21018,20 @@ int main() {
                                         if( isGridAdjacent( testX, m.y,
                                                             nextPlayer->xd,
                                                             nextPlayer->yd ) ) {
-                                            isAdjacent = true;
-                                            break;
+                                            // don't count wide object
+                                            // as adjacent if it hangs
+                                            // out over another blocking
+                                            // object (prevent wide truck
+                                            // from being stolen through
+                                            // fence)
+                                            int blockOID =
+                                                getMapObject( testX, m.y );
+                                            if( blockOID == 0 ||
+                                                ! getObject( blockOID )->
+                                                blocksWalking ) {
+                                                isAdjacent = true;
+                                                break;
+                                                }
                                             }
                                         }
                                     if( ! isAdjacent )
@@ -21029,8 +21041,14 @@ int main() {
                                         if( isGridAdjacent( testX, m.y,
                                                             nextPlayer->xd,
                                                             nextPlayer->yd ) ) {
-                                            isAdjacent = true;
-                                            break;
+                                            int blockOID =
+                                                getMapObject( testX, m.y );
+                                            if( blockOID == 0 ||
+                                                ! getObject( blockOID )->
+                                                blocksWalking ) {
+                                                isAdjacent = true;
+                                                break;
+                                                }
                                             }
                                         }
                                     }
