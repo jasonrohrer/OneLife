@@ -5,7 +5,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 358    ???
+Version 358    2020-September-21
 
 --Fixed so that filtering for /DIESEL ENGINE doesn't cause you to /DIE.
   Fixes #667
