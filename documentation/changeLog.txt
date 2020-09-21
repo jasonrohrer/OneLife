@@ -8,7 +8,11 @@ Server Fixes
 
 --New food settings to ease new players into the difficulty of the game.  New
   players get an extra eating bonus and a slower food decrement time.  These
-  bonuses have a half life of 10 hours of playtime.
+  bonuses have a half life of 10 hours of playtime.  Does not affect tutorial
+  players, who still get the same "hard" food timing that the tutorial was
+  designed for.
+
+
 
 
 

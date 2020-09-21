@@ -9943,7 +9943,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.personalEatBonus = 0;
     newObject.personalFoodDecrementSecondsBonus = 0;
 
-    if( isUsingStatsServer() &&
+    if( ! newObject.isTutorial &&
+        isUsingStatsServer() &&
         ! newObject.lifeStats.error ) {
         
         int sec = newObject.lifeStats.lifeTotalSeconds;
