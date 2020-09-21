@@ -10,6 +10,10 @@ Version 358    ???
 --Fixed so that filtering for /DIESEL ENGINE doesn't cause you to /DIE.
   Fixes #667
 
+--Improved tutorial by NOT locking hint hallway for 20 minutes, and adding a
+  new tutorial stone explaining where the hints are.
+
+
 
 
 
