@@ -4,6 +4,11 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--Disabled tool slots (minActivePlayersForToolSlots 100000).
+
+
 
 Version 358    2020-September-21
 
