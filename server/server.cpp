@@ -9501,8 +9501,20 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         }
     else if( inTutorialNumber > 0 ) {
         
-        int startX = maxPlacementX + tutorialOffsetX;
+        // different tutorials go in different x blocks, far apart
+        int startX = maxPlacementX + tutorialOffsetX * inTutorialNumber;
         int startY = tutorialCount * 40;
+
+        if( inTutorialNumber > 1 ) {
+            // everything beyond tutorial 1 is placed randomly dispersed
+            // in a big square
+            int randX = randSource.getRandomBoundedInt( 0, tutorialOffsetX );
+            int randY = randSource.getRandomBoundedInt( 0, tutorialOffsetX );
+            
+            startX += randX;
+            startY += randY;
+            }
+        
 
         newObject.xs = startX;
         newObject.ys = startY;

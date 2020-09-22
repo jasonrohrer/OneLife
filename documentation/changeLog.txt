@@ -3,6 +3,18 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 361    ???
+
+NOTE:  Must update server and data this week before client.
+
+--New second phase of tutorial, which is a solo wilderness survival challenge.
+  Gives new players a chance to learn the ropes of survival without the
+  pressure and chaos of village life.  Solo challenge can be bypassed easily
+  by those who want to skip it.
+
+
+
+
 
 Server Fixes
 

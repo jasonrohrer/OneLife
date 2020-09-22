@@ -2607,7 +2607,7 @@ void LivingLifePage::clearMap() {
 
 LivingLifePage::LivingLifePage() 
         : mServerSocket( -1 ), 
-          mForceRunTutorial( false ),
+          mForceRunTutorial( 0 ),
           mTutorialNumber( 0 ),
           mGlobalMessageShowing( false ),
           mGlobalMessageStartTime( 0 ),
@@ -3017,8 +3017,8 @@ LivingLifePage::LivingLifePage()
 
 
 
-void LivingLifePage::runTutorial() {
-    mForceRunTutorial = true;
+void LivingLifePage::runTutorial( int inNumber ) {
+    mForceRunTutorial = inNumber;
     }
 
 
@@ -13223,8 +13223,8 @@ void LivingLifePage::step() {
             // different tutorial stone that what is showing
             
             if( closestIsFinal ) {
-                // done with totorial for good, unless they request it
-                SettingsManager::setSetting( "tutorialDone", 1 );
+                // done with tutorial for good, unless they request it
+                SettingsManager::setSetting( "tutorialDone", mTutorialNumber );
                 }
             
 
@@ -13247,9 +13247,16 @@ void LivingLifePage::step() {
                 transString = autoSprintf( "tutorial_%d_steam", 
                                            mLiveTutorialTriggerNumber );
                 }
-            else {    
-                transString = autoSprintf( "tutorial_%d", 
-                                           mLiveTutorialTriggerNumber );
+            else {
+                if( mTutorialNumber == 1 ) {
+                    transString = autoSprintf( "tutorial_%d", 
+                                               mLiveTutorialTriggerNumber );
+                    }
+                else {
+                    transString = autoSprintf( "tutorial_%d_%d",
+                                               mTutorialNumber,
+                                               mLiveTutorialTriggerNumber );
+                    }
                 }
             
             mTutorialMessage[ mLiveTutorialSheetIndex ] = 
@@ -17998,6 +18005,12 @@ void LivingLifePage::step() {
                         else if( strcmp( reasonString, "age" ) == 0 ) {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonOldAge" ) );
+
+                            if( mTutorialNumber == 2 ) {
+                                // old age ends tutorial 2
+                                SettingsManager::setSetting( 
+                                    "tutorialDone", mTutorialNumber );
+                                }
                             }
                         else if( strcmp( reasonString, "disconnected" ) == 0 ) {
                             mDeathReason = stringDuplicate( 
@@ -21952,16 +21965,19 @@ void LivingLifePage::makeActive( char inFresh ) {
 
     int tutorialDone = SettingsManager::getIntSetting( "tutorialDone", 0 );
     
-    if( ! tutorialDone ) {
+    if( tutorialDone == 0 ) {
         mTutorialNumber = 1;
+        }
+    else if( tutorialDone == 1 ) {
+        mTutorialNumber = 2;
         }
     else {
         mTutorialNumber = 0;
         }
     
-    if( mForceRunTutorial ) {
-        mTutorialNumber = 1;
-        mForceRunTutorial = false;
+    if( mForceRunTutorial != 0 ) {
+        mTutorialNumber = mForceRunTutorial;
+        mForceRunTutorial = 0;
         }
 
     mLiveTutorialSheetIndex = -1;
