@@ -20,6 +20,12 @@ Server Fixes
 
 --Disabled tool slots (minActivePlayersForToolSlots 100000).
 
+--Touching your own expert waystone (e.g., desert stone if you are a desert
+  expert yourself) now points you toward the closest language expert.
+  Fixes #680
+
+
+
 
 
 Version 358    2020-September-21

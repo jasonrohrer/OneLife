@@ -236,6 +236,21 @@ char isPolylingual( int inDisplayID ) {
     }
 
 
+int getPolylingualRace() {
+    if( curNumPlayers < minNumPlayers ) {
+        return -1;
+        }
+    
+    
+    if( polylingualRaces.size() > 0 ) {
+        return polylingualRaces.getElementDirect( 0 );
+        }
+    
+    return -1;
+    }
+
+
+
 char *getBadBiomeMessage( int inDisplayID ) {
     if( curNumPlayers < minNumPlayers ) {
         return stringDuplicate( "BB\n#" );

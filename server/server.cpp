@@ -15150,14 +15150,21 @@ static void findExpertForPlayer( LiveObject *inPlayer,
                                  ObjectRecord *inTouchedObject ) {
     int race = getSpecialistRace( inTouchedObject );
     
+
+    char polylingual = false;
+    if( getObject( inPlayer->displayID )->race  == race ) {
+        // they ARE this expert themselves
+        
+        // point them toward polylingual race instead
+        race = getPolylingualRace();
+        polylingual = true;
+        }
+
+    
     if( race == -1 ) {
         return;
         }
 
-    if( getObject( inPlayer->displayID )->race  == race ) {
-        // they ARE this expert themselves
-        return;
-        }
     
     GridPos playerPos = getPlayerPos( inPlayer );
 
@@ -15214,7 +15221,13 @@ static void findExpertForPlayer( LiveObject *inPlayer,
     
     char *bName = NULL;
     
-    if( biomeName != NULL ) {
+    if( polylingual ) {
+        if( bName != NULL ) {
+            delete [] bName;
+            }
+        bName = stringDuplicate( "OTHER LANGUAGES" );
+        }
+    else if( biomeName != NULL ) {
         char found;
         bName = replaceAll( biomeName, "_", " ", &found );
         }
