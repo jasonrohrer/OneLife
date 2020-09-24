@@ -12,6 +12,12 @@ NOTE:  Must update server and data this week before client.
   pressure and chaos of village life.  Solo challenge can be bypassed easily
   by those who want to skip it.
 
+--Fixed so that requesting a leader arrow with /LEADER takes priority over
+  other arrows (before, an EXPT arrow had priority over all other arrows).  OWN
+  (when you touch a locked gate), LEAD (if you requested it manually), and EXPT
+  now have the same priority.  An automatic LEAD arrow (when you receive an
+  order) still has lower priority.  Fixes #681
+
 
 
 

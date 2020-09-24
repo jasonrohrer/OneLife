@@ -429,32 +429,48 @@ static void addHomeLocation( int inX, int inY ) {
 
 
 
+// make leader arrow higher priority if /LEADER command typed manually
+// (automatic leader arrows are lower priority)
+static char leaderCommandTyped = false;
+
+
+
 // inPersonKey can be NULL for map temp locations
 static int getLocationKeyPriority( const char *inPersonKey ) {
     if( inPersonKey == NULL ||
-        strcmp( inPersonKey, "expt" ) == 0 ) {
+        // these are all triggered by explicit user actions
+        // where they are asking for an arrow to something
+        // explicitly touched an expert waystone
+        strcmp( inPersonKey, "expt" ) == 0 ||
+        // explicitly touched a locked gate
+        strcmp( inPersonKey, "owner" ) == 0 ||
+        // manually-requested leader arrow
+        ( leaderCommandTyped && strcmp( inPersonKey, "lead" ) == 0 ) ) {
+        
+        leaderCommandTyped = false;
         return 1;
         }
-    else if( strcmp( inPersonKey, "owner" ) == 0 ) {
+    // this is automatic, out of user control, when they inherit some
+    // property
+    else if( strcmp( inPersonKey, "property" ) == 0 ) {
         return 2;
         }
-    else if( strcmp( inPersonKey, "property" ) == 0 ) {
-        return 3;
-        }
+    // non-manual leader arrow (like when you receive an order)
+    // and supp arrow (automatic, when you issue an order)
     else if( strcmp( inPersonKey, "lead" ) == 0 ||
              strcmp( inPersonKey, "supp" ) == 0 ) {
-        return 4;
+        return 3;
         }
     else if( strcmp( inPersonKey, "baby" ) == 0 ) {
-        return 5;
+        return 4;
         }
     else if( strcmp( inPersonKey, "visitor" ) == 0 ) {
         // don't bug owner with spurious visitor arrows, unless there
         // is nothing else going on
-        return 6;
+        return 5;
         }
     else {
-        return 7;
+        return 6;
         }
     }
     
@@ -25323,6 +25339,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 }
                             else if( commandTyped( typedText, 
                                                    "leaderCommand" ) ) {
+                                
+                                leaderCommandTyped = true;
                                 
                                 const char *leaderLabel = 
                                     translate( "leaderLabel" );
