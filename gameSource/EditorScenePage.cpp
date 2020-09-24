@@ -89,6 +89,9 @@ EditorScenePage::EditorScenePage()
           mCellSpriteVanishSlider( smallFont, -450, -310, 2,
                                    100, 20,
                                    0, 1, "Use" ),
+          mCellSpriteVarSlider( smallFont, -250, -310, 2,
+                                100, 20,
+                                0, 1, "Var" ),
           mCellXOffsetSlider( smallFont, -450, -230, 2,
                               175, 20,
                               -MAX_OFFSET, MAX_OFFSET, "X Offset" ),
@@ -196,6 +199,11 @@ EditorScenePage::EditorScenePage()
     addComponent( &mCellSpriteVanishSlider );
     mCellSpriteVanishSlider.setVisible( false );
     mCellSpriteVanishSlider.addActionListener( this );
+
+
+    addComponent( &mCellSpriteVarSlider );
+    mCellSpriteVarSlider.setVisible( false );
+    mCellSpriteVarSlider.addActionListener( this );
     
     
     addComponent( &mCellXOffsetSlider );
@@ -458,7 +466,8 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                     c->oID = id;
                     c->contained.deleteAll();
                     c->subContained.deleteAll();
-                    c->numUsesRemaining = o->numUses;                    
+                    c->numUsesRemaining = o->numUses;
+                    c->varNumber = 0;
                     }
                 }
             }
@@ -605,6 +614,10 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mCellSpriteVanishSlider ) {
         c->numUsesRemaining = lrint( mCellSpriteVanishSlider.getValue() );
         mCellSpriteVanishSlider.setValue( c->numUsesRemaining );
+        }
+    else if( inTarget == &mCellSpriteVarSlider ) {
+        c->varNumber = lrint( mCellSpriteVarSlider.getValue() );
+        mCellSpriteVarSlider.setValue( c->varNumber );
         }
     else if( inTarget == &mCellXOffsetSlider ) {
         c->xOffset = lrint( mCellXOffsetSlider.getValue() );
@@ -838,6 +851,22 @@ void EditorScenePage::checkVisible() {
         else {
             mCellSpriteVanishSlider.setVisible( false );
             }
+
+        char *varPos = strstr( cellO->description, "$" );
+        if( varPos != NULL ) {
+            int maxVar = 0;
+            sscanf( &( varPos[1] ), "%d", &maxVar );
+            
+            if( maxVar > 0 ) {
+                mCellSpriteVarSlider.setVisible( true );
+                mCellSpriteVarSlider.setHighValue( maxVar );
+                mCellSpriteVanishSlider.setValue( c->varNumber );
+                }
+            }
+        else {
+            mCellSpriteVanishSlider.setVisible( false );
+            }
+
 
         mCellXOffsetSlider.setVisible( true );
         mCellYOffsetSlider.setVisible( true );
@@ -1660,7 +1689,13 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                            cellO->spriteSkipDrawing );
                         }
                     
-                    
+                    if( c->varNumber > 0 ) {
+                        setupNumericSprites( 
+                            cellO, c->varNumber,
+                            mCellSpriteVarSlider.getHighValue(),
+                            cellO->spriteSkipDrawing );
+                        }
+
                     double frozenRotFrameTime = 0;
                     
                     if( c->anim == moving ) {

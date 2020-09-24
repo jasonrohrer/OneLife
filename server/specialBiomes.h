@@ -28,6 +28,12 @@ int getBiomeReliefEmot( int inSicknessObjectID );
 char isPolylingual( int inDisplayID );
 
 
+// returns race number of first race that is polylingual
+// returns -1 if there's no polylingual race
+int getPolylingualRace();
+
+
+
 // message to tell a player which biomes are bad for them
 // and what their display names are
 // destroyed by caller

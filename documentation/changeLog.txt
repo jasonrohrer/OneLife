@@ -3,6 +3,70 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 361    ???
+
+NOTE:  Must update server and data this week before client.
+
+--New second phase of tutorial, which is a solo wilderness survival challenge.
+  Gives new players a chance to learn the ropes of survival without the
+  pressure and chaos of village life.  Solo challenge can be bypassed easily
+  by those who want to skip it.
+
+
+
+
+
+Server Fixes
+
+--Disabled tool slots (minActivePlayersForToolSlots 100000).
+
+--Touching your own expert waystone (e.g., desert stone if you are a desert
+  expert yourself) now points you toward the closest language expert.
+  Fixes #680
+
+
+
+
+
+Version 358    2020-September-21
+
+--Fixed so that filtering for /DIESEL ENGINE doesn't cause you to /DIE.
+  Fixes #667
+
+--Improved tutorial by NOT locking hint hallway for 20 minutes, and adding a
+  new tutorial stone explaining where the hints are.
+
+
+
+
+
+Server Fixes
+
+--New food settings to ease new players into the difficulty of the game.  New
+  players get slower food decrement time.  This bonus has a half life of 
+  10 hours of playtime.  Does not affect tutorial players, who still get the 
+  same "hard" food timing that the tutorial was designed for.
+
+--Fixed so that wide objects (like parked truck) can't be accessed on their
+  extended side if that side extends over a blocking object (like a truck
+  parked at the edge of a fence, overhanging the fence, can't be stolen through
+  the fence).  Fixes #669.
+
+
+
+
+
+Version 356    2020-September-18
+
+--Support for variable dummy objects that have numeral sprites which count up.
+
+--Support for serial numbered variable dummy objects, where the next variable
+  object is substituted for each new object created in the world.  (Example:
+  sports cars with unique numbers on the side.)
+
+
+
+
 
 Version 354    2020-September-11
 

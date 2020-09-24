@@ -40,7 +40,7 @@ if( isset( $blockRobots ) && $blockRobots == 1 ) {
     <td align=center width=10%>[<a href='http://onehouronelife.com/fitnessServer/server.php?action=show_leaderboard'>Leaderboard</a>]</td>
     <td align=center width=10%>[<a href='http://photos.onehouronelife.com/server.php?action=front_page'>Photos</a>]</td>
     <td align=center width=10%>[<a href='http://onehouronelife.com/updateLog.php'>Update Log</a>]</td>
-    <td align=center width=10%>[<a href='http://onehouronelife.com/reviewServer/server.php?action=list_polls'>Polls</a>]</td>
+    <td align=center width=10%>[<a href='https://onehouronelife.com/forums/viewtopic.php?pid=101114'>FAQ</a>]</td>
     <td align=center width=10%>[<a href='https://onehouronelife.com/forums'>Forums</a>]</td>
     <td align=center width=10%>[<a href='https://onetech.info/'>Tech Tree</a>]</td>
 
