@@ -463,7 +463,12 @@ typedef struct ObjectRecord {
         // if true, when parent object is constructed in the world
         // it is replaced by the next var object child in line
         char useVarSerialNumbers;
+
         
+        // true if generally non-blocking, but should block non-allies
+        // of owners
+        char blocksNonAlly;
+
     } ObjectRecord;
 
 

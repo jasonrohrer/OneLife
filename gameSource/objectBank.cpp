@@ -744,6 +744,18 @@ static void setupBlocksMoving( ObjectRecord *inR ) {
 
 
 
+static void setupBlocksNonAlly( ObjectRecord *inR ) {
+    inR->blocksNonAlly = false;    
+    
+    char *pos = strstr( inR->description, "+blocksNonAlly" );
+
+    if( pos != NULL ) {
+        inR->blocksNonAlly = true;
+        }
+    }
+
+
+
 static void setupFamHomeland( ObjectRecord *inR ) {
     inR->famUseDist = 0;
 
@@ -1057,6 +1069,7 @@ float initObjectBankStep() {
 
                 
                 setupBlocksMoving( r );
+                setupBlocksNonAlly( r );
 
 
                 
@@ -3996,6 +4009,7 @@ int addObject( const char *inDescription,
     setupWall( r );
 
     setupBlocksMoving( r );
+    setupBlocksNonAlly( r );
     
     
     r->toolSetIndex = -1;

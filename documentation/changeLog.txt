@@ -30,6 +30,8 @@ Server Fixes
   expert yourself) now points you toward the closest language expert.
   Fixes #680
 
+--Support for special gates that only block non-allies passing through.
+  Part of #682
 
 
 

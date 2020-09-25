@@ -1281,6 +1281,52 @@ char isOwned( LiveObject *inPlayer, GridPos inPos ) {
     }
 
 
+char isExiled( LiveObject *inViewer, LiveObject *inTarget );
+LiveObject *getLiveObject( int inID );
+
+
+
+static char isMapSpotAllyOwned( LiveObject *inPlayer, int inX, int inY ) {    
+    // walk up leadership chain for inPlayer and see if anyone owns it
+        
+    LiveObject *nextToCheck = inPlayer;
+    
+    while( nextToCheck != NULL ) {
+        
+        if( isOwned( nextToCheck, inX, inY ) &&
+            ! isExiled( nextToCheck, inPlayer ) ) {
+            // found a leader above them who owns it
+            return true;
+            }
+            
+        int nextID = nextToCheck->followingID;
+        
+        if( nextID == -1 ) {
+            nextToCheck = NULL;
+            }
+        else {
+            nextToCheck = getLiveObject( nextID );
+            }
+        }
+    // found no leader above us who owns it and doesn't see
+    // us as exiled
+    // we're no ally of owner
+    return false;
+    }
+
+
+
+char isOwnedOrAllyOwned( LiveObject *inPlayer, int inX, int inY ) {
+    if( isOwned( inPlayer, inX, inY ) ) {
+        return true;
+        }
+    else if( isMapSpotAllyOwned( inPlayer, inX, inY ) ) {
+        return true;
+        }
+    return false;
+    }
+
+
 
 char isKnownOwned( LiveObject *inPlayer, int inX, int inY ) {
     for( int i=0; i<inPlayer->knownOwnedPositions.size(); i++ ) {
@@ -1601,7 +1647,7 @@ static void addDeadlyMapSpot( GridPos inPos ) {
 
 
 
-static LiveObject *getLiveObject( int inID ) {
+LiveObject *getLiveObject( int inID ) {
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *o = players.getElement( i );
         
@@ -7765,7 +7811,7 @@ static char isLeader( LiveObject *inPlayer, int inPossibleLeaderID ) {
 
 
 // does inViewer see inTarget as exiled?
-static char isExiled( LiveObject *inViewer, LiveObject *inTarget ) {
+char isExiled( LiveObject *inViewer, LiveObject *inTarget ) {
     for( int e=0; e< inTarget->exiledByIDs.size(); e++ ) {
         int exilerID = inTarget->exiledByIDs.getElementDirect( e );
                     
@@ -10307,6 +10353,36 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
 
 
+
+
+static char isMapSpotBlockingForPlayer( LiveObject *inPlayer,
+                                        int inX, int inY ) {
+    
+    if( isMapSpotBlocking( inX, inY ) ) {
+        return true;
+        }
+    int oID = getMapObject( inX, inY );
+    
+    if( oID <= 0 ) {
+        return false;
+        }
+
+    ObjectRecord *o = getObject( oID );
+    
+    if( o->isOwned && o->blocksNonAlly ) {
+        
+        if( isMapSpotAllyOwned( inPlayer, inX, inY ) ) {
+            return false;
+            }
+        return true;
+        }
+    
+    return false;    
+    }
+
+
+
+
 static void processWaitingTwinConnection( FreshConnection inConnection ) {
     AppLog::infoF( "Player %s waiting for twin party of %d", 
                    inConnection.email,
@@ -10531,7 +10607,8 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
 
 
 // doesn't check whether dest itself is blocked
-static char directLineBlocked( GridPos inSource, GridPos inDest ) {
+static char directLineBlocked( LiveObject *inShooter,
+                               GridPos inSource, GridPos inDest ) {
     // line algorithm from here
     // https://en.wikipedia.org/wiki/Bresenham's_line_algorithm
     
@@ -10556,7 +10633,7 @@ static char directLineBlocked( GridPos inSource, GridPos inDest ) {
         
         // just walk through y
         for( int y=inSource.y; y != inDest.y; y += yStep ) {
-            if( isMapSpotBlocking( inSource.x, y ) ) {
+            if( isMapSpotBlockingForPlayer( inShooter, inSource.x, y ) ) {
                 return true;
                 }
             }
@@ -10568,7 +10645,7 @@ static char directLineBlocked( GridPos inSource, GridPos inDest ) {
         
         int y = inSource.y;
         for( int x=inSource.x; x != inDest.x || y != inDest.y; x += xStep ) {
-            if( isMapSpotBlocking( x, y ) ) {
+            if( isMapSpotBlockingForPlayer( inShooter, x, y ) ) {
                 return true;
                 }
             error += deltaErr;
@@ -10581,7 +10658,7 @@ static char directLineBlocked( GridPos inSource, GridPos inDest ) {
             // we may need to take multiple steps in y
             // if line is vertically oriented
             while( error >= 0.5 ) {
-                if( isMapSpotBlocking( x, y ) ) {
+                if( isMapSpotBlockingForPlayer( inShooter, x, y ) ) {
                     return true;
                     }
 
@@ -13809,7 +13886,7 @@ void executeKillAction( int inKillerIndex,
                                  playerPos );
                                 
             if( heldObj->deadlyDistance >= d &&
-                ! directLineBlocked( playerPos, 
+                ! directLineBlocked( nextPlayer, playerPos, 
                                      targetPos ) ) {
                 // target is close enough
                 // and no blocking objects along the way                
@@ -14990,8 +15067,9 @@ static char isAccessBlocked( LiveObject *inPlayer,
             }
         if( targetObj->isOwned ) {
             // make sure player owns this pos
+            // (or is part of ally pool that can access it)
             ownershipBlocked = 
-                ! isOwned( inPlayer, x, y );
+                ! isOwnedOrAllyOwned( inPlayer, x, y );
 
             if( ownershipBlocked ) {
                 GridPos ourPos = getPlayerPos( inPlayer );
@@ -15621,6 +15699,36 @@ static void leaderDied( LiveObject *inLeader ) {
                                         newLeaderName );
         delete [] newLeaderName;
         }
+
+    
+    if( newLeaderO != NULL ) {
+        // have a new leader
+        // before removeAllOwnership happens externally (which passes property
+        // to children)
+        // pass +leaderInherit owned stuff to this new leader now
+
+        for( int i=0; i<inLeader->ownedPositions.size(); i++ ) {
+            GridPos *p = inLeader->ownedPositions.getElement( i );
+
+            int oID = getMapObject( p->x, p->y );
+            
+            if( oID <= 0 ) {
+                continue;
+                }
+
+            ObjectRecord *o = getObject( oID );
+            
+            if( strstr( o->description, "+leaderInherit" ) != NULL ) {
+                recentlyRemovedOwnerPos.push_back( *p );
+                newOwnerPos.push_back( *p );
+                newLeaderO->ownedPositions.push_back( *p );
+
+                inLeader->ownedPositions.deleteElement( i );
+                }
+            }
+        }
+        
+
 
     // tell followers about our death
     for( int i=0; i<oldFollowers.size(); i++ ) {
@@ -19609,8 +19717,10 @@ int main() {
                                 // blocking us
                                 char currentBlocked = false;
                                 
-                                if( isMapSpotBlocking( lastValidPathStep.x,
-                                                       lastValidPathStep.y ) ) {
+                                if( isMapSpotBlockingForPlayer( 
+                                        nextPlayer,
+                                        lastValidPathStep.x,
+                                        lastValidPathStep.y ) ) {
                                     currentBlocked = true;
                                     }
                                 
@@ -19621,7 +19731,8 @@ int main() {
                                     GridPos pos = 
                                         unfilteredPath.getElementDirect(p);
 
-                                    if( isMapSpotBlocking( pos.x, pos.y ) ) {
+                                    if( isMapSpotBlockingForPlayer( 
+                                            nextPlayer, pos.x, pos.y ) ) {
                                         // blockage in middle of path
                                         // terminate path here
                                         truncated = 1;
@@ -21004,7 +21115,8 @@ int main() {
                                                      playerPos );
                                 
                                 if( heldObj->useDistance >= d &&
-                                    ! directLineBlocked( playerPos, 
+                                    ! directLineBlocked( nextPlayer,
+                                                         playerPos, 
                                                          targetPos ) ) {
                                     distanceUseAllowed = true;
                                     }
@@ -23959,7 +24071,7 @@ int main() {
             if( curTime - s->killStartTime  > delay &&
                 s->posseSize >= s->minPosseSizeForKill &&
                 getObject( killer->holdingID )->deadlyDistance >= dist &&
-                ! directLineBlocked( playerPos, targetPos ) ) {
+                ! directLineBlocked( killer, playerPos, targetPos ) ) {
                 // enough warning time has passed
                 // and
                 // posse meets min size requirements
