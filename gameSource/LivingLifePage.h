@@ -1107,6 +1107,8 @@ class LivingLifePage : public GamePage, public ActionListener {
         // have a +noCover tag
         char isCoveredByFloor( int inTileIndex );
 
+        int getBadgeObjectID( LiveObject *inPlayer );
+
     };
 
 

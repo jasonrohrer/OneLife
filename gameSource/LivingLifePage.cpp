@@ -19,6 +19,8 @@
 
 #include "photos.h"
 
+#include "spriteDrawColorOverride.h"
+
 
 #include "liveAnimationTriggers.h"
 
@@ -4396,6 +4398,83 @@ void LivingLifePage::drawMapCell( int inMapI,
                             getEmptyClothingSet(), NULL );
             }
         
+        ObjectRecord *oRecord = getObject( oID );
+        
+        if( oRecord->hasBadgePos ) {
+            doublePair badgePos = pos;
+            badgePos.x += oRecord->badgePos.x;
+            badgePos.y += oRecord->badgePos.y;
+            
+            int badgeID = -1;
+            FloatColor badgeColor = { 1, 1, 1, 1 };
+            
+
+            int x = inMapI % mMapD;
+            int y = inMapI / mMapD;
+            
+            int worldY = y + mMapOffsetY - mMapD / 2;
+
+            int worldX = x + mMapOffsetX - mMapD / 2;
+
+            for( int g=0; g<mOwnerInfo.size(); g++ ) {
+                OwnerInfo *gI = mOwnerInfo.getElement( g );
+                
+                if( gI->worldPos.x == worldX &&
+                    gI->worldPos.y == worldY &&
+                    gI->ownerList->size() >= 1 ) {
+                    
+                    int ownerID = gI->ownerList->getElementDirect( 0 );
+                    
+                    LiveObject *ownerO = getLiveObject( ownerID );
+                    
+                    if( ownerO != NULL ) {
+                        badgeID = getBadgeObjectID( ownerO ); 
+                        badgeColor = ownerO->badgeColor;
+                        }
+                    }
+                }
+            if( badgeID != -1 ) {
+                spriteColorOverrideOn = true;
+                spriteColorOverride = badgeColor;
+                char used;
+                drawObjectAnim( 
+                    badgeID, 2, 
+                    curType, timeVal,
+                    animFade,
+                    fadeTargetType, 
+                    targetTimeVal,
+                    frozenRotTimeVal,
+                    &used,
+                    endAnimType,
+                    endAnimType,
+                    badgePos, rot,
+                    false,
+                    flip, -1,
+                    false, false, false,
+                    getEmptyClothingSet(), NULL );
+                
+                drawObjectAnim( badgeID, 2, 
+                                ground, timeVal,
+                                0,
+                                ground, 
+                                timeVal,
+                                timeVal,
+                                &used,
+                                ground,
+                                ground,
+                                badgePos, 0,
+                                false,
+                                false, -1,
+                                false, false, false,
+                                getEmptyClothingSet(), NULL );
+                
+                spriteColorOverrideOn = false;
+                }
+            }
+        
+
+
+
 
         if( highlight ) {
             
@@ -4507,6 +4586,31 @@ int LivingLifePage::getMapIndex( int inWorldX, int inWorldY ) {
     return -1;
     }
 
+
+
+int LivingLifePage::getBadgeObjectID( LiveObject *inPlayer ) {
+    int badge = -1;
+    
+    
+    int badgeXIndex = 0;
+        
+    if( inPlayer->isDubious ) {
+        badgeXIndex = 1;
+        }
+    if( inPlayer->isExiled ) {
+        badgeXIndex = 2;
+        }
+        
+    if( inPlayer->leadershipLevel < mLeadershipBadges[badgeXIndex].size() ) {
+        badge = mLeadershipBadges[badgeXIndex].
+            getElementDirect( inPlayer->leadershipLevel );
+        }
+    else if( mLeadershipBadges[badgeXIndex].size() > 0 ) {
+        badge = mLeadershipBadges[badgeXIndex].
+            getElementDirect( mLeadershipBadges[badgeXIndex].size() - 1 );
+        }
+    return badge;
+    }
 
 
 
@@ -4760,23 +4864,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
     int badge = -1;
     if( inObj->hasBadge && inObj->clothing.tunic != NULL ) {
-        int badgeXIndex = 0;
-        
-        if( inObj->isDubious ) {
-            badgeXIndex = 1;
-            }
-        if( inObj->isExiled ) {
-            badgeXIndex = 2;
-            }
-        
-        if( inObj->leadershipLevel < mLeadershipBadges[badgeXIndex].size() ) {
-            badge = mLeadershipBadges[badgeXIndex].
-                getElementDirect( inObj->leadershipLevel );
-            }
-        else if( mLeadershipBadges[badgeXIndex].size() > 0 ) {
-            badge = mLeadershipBadges[badgeXIndex].
-                getElementDirect( mLeadershipBadges[badgeXIndex].size() - 1 );
-            }
+        badge = getBadgeObjectID( inObj );
         }
     else if( inObj->isExiled ) {
         // exiled and no badge visible

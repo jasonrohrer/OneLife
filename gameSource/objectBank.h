@@ -469,6 +469,9 @@ typedef struct ObjectRecord {
         // of owners
         char blocksNonAlly;
 
+        char hasBadgePos;
+        doublePair badgePos;
+
     } ObjectRecord;
 
 

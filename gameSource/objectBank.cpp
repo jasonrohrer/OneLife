@@ -756,6 +756,24 @@ static void setupBlocksNonAlly( ObjectRecord *inR ) {
 
 
 
+static void setupBadgePos( ObjectRecord *inR ) {
+    inR->hasBadgePos = false;    
+    inR->badgePos.x = 0;
+    inR->badgePos.y = 0;
+    
+    char *pos = strstr( inR->description, "+badgePos" );
+
+    if( pos != NULL ) {
+        inR->hasBadgePos = true;
+        
+        sscanf( pos, "+badgePos%lf,%lf", 
+                &( inR->badgePos.x ),
+                &( inR->badgePos.y ) );
+        }
+    }
+
+
+
 static void setupFamHomeland( ObjectRecord *inR ) {
     inR->famUseDist = 0;
 
@@ -1070,7 +1088,7 @@ float initObjectBankStep() {
                 
                 setupBlocksMoving( r );
                 setupBlocksNonAlly( r );
-
+                setupBadgePos( r );
 
                 
                 
@@ -4010,6 +4028,7 @@ int addObject( const char *inDescription,
 
     setupBlocksMoving( r );
     setupBlocksNonAlly( r );
+    setupBadgePos( r );
     
     
     r->toolSetIndex = -1;
