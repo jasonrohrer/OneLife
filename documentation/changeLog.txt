@@ -44,6 +44,7 @@ Server Fixes
   players see the same curse name on the same individual.  Thus, players can
   compare notes about the behavior of a given cursed individual.
 
+--Personal curses now last 90 days (was 30 days).
 
 
 
