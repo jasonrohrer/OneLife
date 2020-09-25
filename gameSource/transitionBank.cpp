@@ -1462,7 +1462,13 @@ void initTransBankFinish() {
                 followObject = newActor;
                 }
             
-            if( leadObject != NULL && leadObject != followObject ) {
+            if( leadObject != NULL && 
+                ( leadObject != followObject ||
+                  // var serial numbers block the usual map-to-self increment
+                  // behavior
+                  leadObject->useVarSerialNumbers ||
+                  leadObject->varIsNumeral ) ) {
+
                 int num = leadObject->numVariableDummyIDs;
                 
                 for( int k=0; k<num; k++ ) {

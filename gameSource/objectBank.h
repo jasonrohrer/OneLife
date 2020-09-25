@@ -464,6 +464,10 @@ typedef struct ObjectRecord {
         // it is replaced by the next var object child in line
         char useVarSerialNumbers;
 
+        // object var number expressed as a visible numeral
+        // (so it's not the usual invisibly incremented var number)
+        char varIsNumeral;
+
         
         // true if generally non-blocking, but should block non-allies
         // of owners

@@ -872,6 +872,17 @@ static void setupVarSerialNumber( ObjectRecord *inR ) {
         }
     }
 
+
+
+static void setupVarIsNumeral( ObjectRecord *inR ) {
+    inR->varIsNumeral = false;
+    char *pos = strstr( inR->description, "+varNumeral" );
+
+    if( pos != NULL ) {
+        inR->varIsNumeral = true;    
+        }
+    }
+
     
 
 
@@ -959,7 +970,9 @@ float initObjectBankStep() {
                 setupSlotsInvis( r );
                 
                 setupVarSerialNumber( r );
-                
+
+                setupVarIsNumeral( r );
+
 
                 // do this later, after we parse floorHugging
                 // setupWall( r );
@@ -2196,7 +2209,7 @@ void initObjectBankFinish() {
 
                     char numericLabel = false;
                     
-                    if( strstr( o->description, "+varNumeral" ) != NULL ) {
+                    if( o->varIsNumeral ) {
                         numericLabel = true;
                         }
                     
@@ -4023,7 +4036,10 @@ int addObject( const char *inDescription,
     setupSlotsInvis( r );
 
     setupVarSerialNumber( r );
-                
+    
+    setupVarIsNumeral( r );
+
+    
     setupWall( r );
 
     setupBlocksMoving( r );
