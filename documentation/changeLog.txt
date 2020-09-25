@@ -40,6 +40,10 @@ Server Fixes
 --New players start with fitness scores of 0, so helping a new player, even if
   they die young, is always beneficial to the fitness scores of expert players.
 
+--Curse names no longer use sender email in randomization, meaning that all
+  players see the same curse name on the same individual.  Thus, players can
+  compare notes about the behavior of a given cursed individual.
+
 
 
 
