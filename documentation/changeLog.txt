@@ -3,7 +3,8 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 361    ???
+
+Version 361    2020-September-25
 
 NOTE:  Must update server and data this week before client.
 
@@ -45,6 +46,10 @@ Server Fixes
   compare notes about the behavior of a given cursed individual.
 
 --Personal curses now last 90 days (was 30 days).
+
+
+
+
 
 
 
