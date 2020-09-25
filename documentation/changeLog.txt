@@ -22,6 +22,7 @@ NOTE:  Must update server and data this week before client.
 
 --Fixed so that car numeral not incremented when hitting roadkill.  Fixes #683
 
+--Fixed 2-digit, 0-padded formatting of car serial number in description.
 
 
 

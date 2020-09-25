@@ -1770,10 +1770,13 @@ static char *getVarObjectLabel( int inNumber ) {
 // includes - 01 hyphen offset character
 static char *getVarObjectNumeral( int inNumber, int inMax ) {
 
-    const char *formatString = "- %02d";
+    const char *formatString;
     
     if( inMax < 10 ) {
         formatString = "- %d";
+        }
+    else if( inMax > 9 && inMax < 100 ) {
+        formatString = "- %02d";
         }
     else if( inMax > 99 && inMax < 1000 ) {
         formatString = "- %03d";
