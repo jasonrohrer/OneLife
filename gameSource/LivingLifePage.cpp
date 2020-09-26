@@ -19,6 +19,8 @@
 
 #include "photos.h"
 
+#include "spriteDrawColorOverride.h"
+
 
 #include "liveAnimationTriggers.h"
 
@@ -506,32 +508,48 @@ static void addHomeLocation( int inX, int inY ) {
 
 
 
+// make leader arrow higher priority if /LEADER command typed manually
+// (automatic leader arrows are lower priority)
+static char leaderCommandTyped = false;
+
+
+
 // inPersonKey can be NULL for map temp locations
 static int getLocationKeyPriority( const char *inPersonKey ) {
     if( inPersonKey == NULL ||
-        strcmp( inPersonKey, "expt" ) == 0 ) {
+        // these are all triggered by explicit user actions
+        // where they are asking for an arrow to something
+        // explicitly touched an expert waystone
+        strcmp( inPersonKey, "expt" ) == 0 ||
+        // explicitly touched a locked gate
+        strcmp( inPersonKey, "owner" ) == 0 ||
+        // manually-requested leader arrow
+        ( leaderCommandTyped && strcmp( inPersonKey, "lead" ) == 0 ) ) {
+        
+        leaderCommandTyped = false;
         return 1;
         }
-    else if( strcmp( inPersonKey, "owner" ) == 0 ) {
+    // this is automatic, out of user control, when they inherit some
+    // property
+    else if( strcmp( inPersonKey, "property" ) == 0 ) {
         return 2;
         }
-    else if( strcmp( inPersonKey, "property" ) == 0 ) {
-        return 3;
-        }
+    // non-manual leader arrow (like when you receive an order)
+    // and supp arrow (automatic, when you issue an order)
     else if( strcmp( inPersonKey, "lead" ) == 0 ||
              strcmp( inPersonKey, "supp" ) == 0 ) {
-        return 4;
+        return 3;
         }
     else if( strcmp( inPersonKey, "baby" ) == 0 ) {
-        return 5;
+        return 4;
         }
     else if( strcmp( inPersonKey, "visitor" ) == 0 ) {
         // don't bug owner with spurious visitor arrows, unless there
         // is nothing else going on
-        return 6;
+        return 5;
         }
     else {
-        return 7;
+        return 6;
         }
     }
     
@@ -2688,7 +2706,7 @@ void LivingLifePage::clearMap() {
 
 LivingLifePage::LivingLifePage() 
         : mServerSocket( -1 ), 
-          mForceRunTutorial( false ),
+          mForceRunTutorial( 0 ),
           mTutorialNumber( 0 ),
           mGlobalMessageShowing( false ),
           mGlobalMessageStartTime( 0 ),
@@ -3119,8 +3137,8 @@ LivingLifePage::LivingLifePage()
 
 
 
-void LivingLifePage::runTutorial() {
-    mForceRunTutorial = true;
+void LivingLifePage::runTutorial( int inNumber ) {
+    mForceRunTutorial = inNumber;
     }
 
 
@@ -4490,6 +4508,83 @@ void LivingLifePage::drawMapCell( int inMapI,
                             getEmptyClothingSet(), NULL );
             }
         
+        ObjectRecord *oRecord = getObject( oID );
+        
+        if( oRecord->hasBadgePos ) {
+            doublePair badgePos = pos;
+            badgePos.x += oRecord->badgePos.x;
+            badgePos.y += oRecord->badgePos.y;
+            
+            int badgeID = -1;
+            FloatColor badgeColor = { 1, 1, 1, 1 };
+            
+
+            int x = inMapI % mMapD;
+            int y = inMapI / mMapD;
+            
+            int worldY = y + mMapOffsetY - mMapD / 2;
+
+            int worldX = x + mMapOffsetX - mMapD / 2;
+
+            for( int g=0; g<mOwnerInfo.size(); g++ ) {
+                OwnerInfo *gI = mOwnerInfo.getElement( g );
+                
+                if( gI->worldPos.x == worldX &&
+                    gI->worldPos.y == worldY &&
+                    gI->ownerList->size() >= 1 ) {
+                    
+                    int ownerID = gI->ownerList->getElementDirect( 0 );
+                    
+                    LiveObject *ownerO = getLiveObject( ownerID );
+                    
+                    if( ownerO != NULL ) {
+                        badgeID = getBadgeObjectID( ownerO ); 
+                        badgeColor = ownerO->badgeColor;
+                        }
+                    }
+                }
+            if( badgeID != -1 ) {
+                spriteColorOverrideOn = true;
+                spriteColorOverride = badgeColor;
+                char used;
+                drawObjectAnim( 
+                    badgeID, 2, 
+                    curType, timeVal,
+                    animFade,
+                    fadeTargetType, 
+                    targetTimeVal,
+                    frozenRotTimeVal,
+                    &used,
+                    endAnimType,
+                    endAnimType,
+                    badgePos, rot,
+                    false,
+                    flip, -1,
+                    false, false, false,
+                    getEmptyClothingSet(), NULL );
+                
+                drawObjectAnim( badgeID, 2, 
+                                ground, timeVal,
+                                0,
+                                ground, 
+                                timeVal,
+                                timeVal,
+                                &used,
+                                ground,
+                                ground,
+                                badgePos, 0,
+                                false,
+                                false, -1,
+                                false, false, false,
+                                getEmptyClothingSet(), NULL );
+                
+                spriteColorOverrideOn = false;
+                }
+            }
+        
+
+
+
 
         if( highlight ) {
             
@@ -4601,6 +4696,31 @@ int LivingLifePage::getMapIndex( int inWorldX, int inWorldY ) {
     return -1;
     }
 
+
+
+int LivingLifePage::getBadgeObjectID( LiveObject *inPlayer ) {
+    int badge = -1;
+    
+    
+    int badgeXIndex = 0;
+        
+    if( inPlayer->isDubious ) {
+        badgeXIndex = 1;
+        }
+    if( inPlayer->isExiled ) {
+        badgeXIndex = 2;
+        }
+        
+    if( inPlayer->leadershipLevel < mLeadershipBadges[badgeXIndex].size() ) {
+        badge = mLeadershipBadges[badgeXIndex].
+            getElementDirect( inPlayer->leadershipLevel );
+        }
+    else if( mLeadershipBadges[badgeXIndex].size() > 0 ) {
+        badge = mLeadershipBadges[badgeXIndex].
+            getElementDirect( mLeadershipBadges[badgeXIndex].size() - 1 );
+        }
+    return badge;
+    }
 
 
 
@@ -4854,23 +4974,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
 
     int badge = -1;
     if( inObj->hasBadge && inObj->clothing.tunic != NULL ) {
-        int badgeXIndex = 0;
-        
-        if( inObj->isDubious ) {
-            badgeXIndex = 1;
-            }
-        if( inObj->isExiled ) {
-            badgeXIndex = 2;
-            }
-        
-        if( inObj->leadershipLevel < mLeadershipBadges[badgeXIndex].size() ) {
-            badge = mLeadershipBadges[badgeXIndex].
-                getElementDirect( inObj->leadershipLevel );
-            }
-        else if( mLeadershipBadges[badgeXIndex].size() > 0 ) {
-            badge = mLeadershipBadges[badgeXIndex].
-                getElementDirect( mLeadershipBadges[badgeXIndex].size() - 1 );
-            }
+        badge = getBadgeObjectID( inObj );
         }
     else if( inObj->isExiled ) {
         // exiled and no badge visible
@@ -13447,8 +13551,8 @@ void LivingLifePage::step() {
             // different tutorial stone that what is showing
             
             if( closestIsFinal ) {
-                // done with totorial for good, unless they request it
-                SettingsManager::setSetting( "tutorialDone", 1 );
+                // done with tutorial for good, unless they request it
+                SettingsManager::setSetting( "tutorialDone", mTutorialNumber );
                 }
             
 
@@ -13471,9 +13575,16 @@ void LivingLifePage::step() {
                 transString = autoSprintf( "tutorial_%d_steam", 
                                            mLiveTutorialTriggerNumber );
                 }
-            else {    
-                transString = autoSprintf( "tutorial_%d", 
-                                           mLiveTutorialTriggerNumber );
+            else {
+                if( mTutorialNumber == 1 ) {
+                    transString = autoSprintf( "tutorial_%d", 
+                                               mLiveTutorialTriggerNumber );
+                    }
+                else {
+                    transString = autoSprintf( "tutorial_%d_%d",
+                                               mTutorialNumber,
+                                               mLiveTutorialTriggerNumber );
+                    }
                 }
             
             mTutorialMessage[ mLiveTutorialSheetIndex ] = 
@@ -18223,6 +18334,12 @@ void LivingLifePage::step() {
                         else if( strcmp( reasonString, "age" ) == 0 ) {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonOldAge" ) );
+
+                            if( mTutorialNumber == 2 ) {
+                                // old age ends tutorial 2
+                                SettingsManager::setSetting( 
+                                    "tutorialDone", mTutorialNumber );
+                                }
                             }
                         else if( strcmp( reasonString, "disconnected" ) == 0 ) {
                             mDeathReason = stringDuplicate( 
@@ -22178,16 +22295,19 @@ void LivingLifePage::makeActive( char inFresh ) {
 
     int tutorialDone = SettingsManager::getIntSetting( "tutorialDone", 0 );
     
-    if( ! tutorialDone ) {
+    if( tutorialDone == 0 ) {
         mTutorialNumber = 1;
+        }
+    else if( tutorialDone == 1 ) {
+        mTutorialNumber = 2;
         }
     else {
         mTutorialNumber = 0;
         }
     
-    if( mForceRunTutorial ) {
-        mTutorialNumber = 1;
-        mForceRunTutorial = false;
+    if( mForceRunTutorial != 0 ) {
+        mTutorialNumber = mForceRunTutorial;
+        mForceRunTutorial = 0;
         }
 
     mLiveTutorialSheetIndex = -1;
@@ -25628,6 +25748,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 }
                             else if( commandTyped( typedText, 
                                                    "leaderCommand" ) ) {
+                                
+                                leaderCommandTyped = true;
                                 
                                 const char *leaderLabel = 
                                     translate( "leaderLabel" );

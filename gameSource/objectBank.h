@@ -463,7 +463,19 @@ typedef struct ObjectRecord {
         // if true, when parent object is constructed in the world
         // it is replaced by the next var object child in line
         char useVarSerialNumbers;
+
+        // object var number expressed as a visible numeral
+        // (so it's not the usual invisibly incremented var number)
+        char varIsNumeral;
+
         
+        // true if generally non-blocking, but should block non-allies
+        // of owners
+        char blocksNonAlly;
+
+        char hasBadgePos;
+        doublePair badgePos;
+
     } ObjectRecord;
 
 

@@ -1,4 +1,4 @@
-int versionNumber = 358;
+int versionNumber = 361;
 int dataVersionNumber = 0;
 
 int binVersionNumber = versionNumber;
@@ -1947,8 +1947,9 @@ void drawFrame( char inUpdate ) {
                 startConnecting();
                 }
             else if( existingAccountPage->checkSignal( "tutorial" ) ) {
-                livingLifePage->runTutorial();
-
+                livingLifePage->runTutorial( 1 );
+                SettingsManager::setSetting( "tutorialDone", 0 );
+                
                 // tutorial button clears twin status
                 // they have to login from twin page to play as twin
                 if( userTwinCode != NULL ) {
@@ -2300,7 +2301,8 @@ void drawFrame( char inUpdate ) {
                 startConnecting();
                 }
             else if( rebirthChoicePage->checkSignal( "tutorial" ) ) {
-                livingLifePage->runTutorial();
+                livingLifePage->runTutorial( 1 );
+                SettingsManager::setSetting( "tutorialDone", 0 );
                 // heck, allow twins in tutorial too, for now, it's funny
                 startConnecting();
                 }

@@ -4,6 +4,54 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 361    2020-September-25
+
+NOTE:  Must update server and data this week before client.
+
+--New second phase of tutorial, which is a solo wilderness survival challenge.
+  Gives new players a chance to learn the ropes of survival without the
+  pressure and chaos of village life.  Solo challenge can be bypassed easily
+  by those who want to skip it.
+
+--Fixed so that requesting a leader arrow with /LEADER takes priority over
+  other arrows (before, an EXPT arrow had priority over all other arrows).  OWN
+  (when you touch a locked gate), LEAD (if you requested it manually), and EXPT
+  now have the same priority.  An automatic LEAD arrow (when you receive an
+  order) still has lower priority.  Fixes #681
+
+--New ally gates display the colored badge of the gate-owning leader.
+
+--Fixed so that car numeral not incremented when hitting roadkill.  Fixes #683
+
+--Fixed 2-digit, 0-padded formatting of car serial number in description.
+
+
+
+Server Fixes
+
+--Disabled tool slots (minActivePlayersForToolSlots 100000).
+
+--Touching your own expert waystone (e.g., desert stone if you are a desert
+  expert yourself) now points you toward the closest language expert.
+  Fixes #680
+
+--Support for special gates that only block non-allies passing through.
+  Part of #682
+
+--New players start with fitness scores of 0, so helping a new player, even if
+  they die young, is always beneficial to the fitness scores of expert players.
+
+--Curse names no longer use sender email in randomization, meaning that all
+  players see the same curse name on the same individual.  Thus, players can
+  compare notes about the behavior of a given cursed individual.
+
+--Personal curses now last 90 days (was 30 days).
+
+
+
+
+
+
 
 Version 358    2020-September-21
 

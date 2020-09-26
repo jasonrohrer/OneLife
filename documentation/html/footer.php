@@ -32,15 +32,16 @@ if( ! $nocounter && ( !isSet( $blockCounter ) || ! $blockCounter ) ) {
 
     <table border=0 cellspacing=5 cellpadding=0 width=100%><tr>
 
-    <td align=center width=14%>[<a href='http://onehouronelife.com'>Home</a>]</td>
-    <td align=center width=14%>[<a href='https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=<?php echo $referrer;?>'>Buy</a>]</td>
+    <td align=center width=12%>[<a href='http://onehouronelife.com'>Home</a>]</td>
+    <td align=center width=12%>[<a href='https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=<?php echo $referrer;?>'>Buy</a>]</td>
     
-    <td align=center width=14%>[<a href="http://onehouronelife.gamepedia.com">Wiki</a>]</td>
+    <td align=center width=12%>[<a href="http://onehouronelife.gamepedia.com">Wiki</a>]</td>
 
-    <td align=center width=14%>[<a href='http://onehouronelife.com/foodStats.php'>Food Stats</a>]</td>
-    <td align=center width=14%>[<a href='http://onehouronelife.com/failureStats.php'>Fail Stats</a>]</td>
-    <td align=center width=14%>[<a href='http://onehouronelife.com/artLogPage.php'>Artwork</a>]</td>
-    <td align=center width=14%>[<a href='http://onehouronelife.com/credits.php'>Credits</a>]</td>
+    <td align=center width=12%>[<a href='http://onehouronelife.com/foodStats.php'>Food Stats</a>]</td>
+    <td align=center width=12%>[<a href='http://onehouronelife.com/failureStats.php'>Fail Stats</a>]</td>
+    <td align=center width=12%>[<a href='http://onehouronelife.com/reviewServer/server.php?action=list_polls'>Polls</a>]</td>
+    <td align=center width=12%>[<a href='http://onehouronelife.com/artLogPage.php'>Artwork</a>]</td>
+    <td align=center width=12%>[<a href='http://onehouronelife.com/credits.php'>Credits</a>]</td>
 
     
 </tr></table>
