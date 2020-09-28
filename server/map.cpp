@@ -5470,7 +5470,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 // no move happened
  
                 // just set change in DB
-                dbPut( inX, inY, 0, newID );
+                setMapObjectRaw( inX, inY, newID );
                 }
            
                
