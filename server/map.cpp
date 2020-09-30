@@ -6492,6 +6492,31 @@ static char runTapoutOperation( int inX, int inY,
             
             if( newTarget != -1 ) {
                 setMapObjectRaw( x, y, newTarget );
+				
+				TransRecord *newDecayT = getMetaTrans( -1, newTarget );
+				
+				timeSec_t mapETA = 0;
+	 
+				if( newDecayT != NULL ) {
+	 
+					// add some random variation to avoid lock-step
+					// especially after a server restart
+					int tweakedSeconds =
+						randSource.getRandomBoundedInt(
+							lrint( newDecayT->autoDecaySeconds * 0.9 ),
+							newDecayT->autoDecaySeconds );
+				   
+					if( tweakedSeconds < 1 ) {
+						tweakedSeconds = 1;
+						}
+					mapETA = MAP_TIMESEC + tweakedSeconds;
+					}
+				else {
+					// no further decay
+					mapETA = 0;
+					}          
+	 
+				setEtaDecay( x, y, mapETA, newDecayT );
                 }
             }
         }
