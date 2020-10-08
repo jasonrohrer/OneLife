@@ -20,3 +20,6 @@ rsync -avz -e ssh --progress `ls -1tr *mapLog.txt | head -n -1` publicdata.oneho
 
 # send all but latest seed file too (seed still a secret)
 rsync -avz -e ssh --progress `ls -1tr *mapSeed.txt | head -n -1` publicdata.onehouronelife.com:public_html/publicMapChangeData/bigserver2.onehouronelife.com/
+
+# delete old files in public data repo
+ssh publicdata.onehouronelife.com 'find public_html/publicMapChangeData/bigserver2.onehouronelife.com/*.txt -mtime +14 -delete'
