@@ -1,7 +1,7 @@
 
 
 # delete old files from game server
-ssh bigserver2.onehouronelife.com 'find checkout/OneLife/server/mapChangeLogs/*.txt -mtime +14 -delete'
+ssh bigserver2.onehouronelife.com 'find checkout/OneLife/server/mapChangeLogs/*mapLog.txt -mtime +14 -delete'
 
 
 # copy from game server to here
@@ -9,7 +9,7 @@ rsync -avz -e ssh --progress bigserver2.onehouronelife.com:checkout/OneLife/serv
 
 
 # delete old files locally
-find ~/mapChangeLogs/ -mtime +14 -delete
+find ~/mapChangeLogs/*mapLog.txt -mtime +14 -delete
 
 
 # copy from here to public data server
@@ -22,4 +22,4 @@ rsync -avz -e ssh --progress `ls -1tr *mapLog.txt | head -n -1` publicdata.oneho
 rsync -avz -e ssh --progress `ls -1tr *mapSeed.txt | head -n -1` publicdata.onehouronelife.com:public_html/publicMapChangeData/bigserver2.onehouronelife.com/
 
 # delete old files in public data repo
-ssh publicdata.onehouronelife.com 'find public_html/publicMapChangeData/bigserver2.onehouronelife.com/*.txt -mtime +14 -delete'
+ssh publicdata.onehouronelife.com 'find public_html/publicMapChangeData/bigserver2.onehouronelife.com/*mapLog.txt -mtime +14 -delete'
