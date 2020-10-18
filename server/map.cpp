@@ -5337,7 +5337,9 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             // no further decay
                             leftMapETA = 0;
                             }
-                        setEtaDecay( inX, inY, leftMapETA );
+						//for movement from posA to posB, we want posA to be potentially always live tracked as well
+						//leftDecayT is passed to check if it should be always live tracked
+                        setEtaDecay( inX, inY, leftMapETA, leftDecayT );
                         }
                     else {
                         // leave empty spot behind
