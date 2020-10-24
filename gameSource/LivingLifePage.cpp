@@ -900,7 +900,7 @@ static char *getDisplayObjectDescription( int inID ) {
 char *LivingLifePage::minitechGetDisplayObjectDescription( int objId ) { 
     ObjectRecord *o = getObject( objId );
     if( o == NULL ) {
-		return NULL;
+		return "";
     }
 	return getDisplayObjectDescription(objId);
 }
