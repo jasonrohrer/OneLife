@@ -30,6 +30,11 @@ Server Fixes
 --Apocalypse is impossible if there are less than 15 players on server.
   Fixes #693
 
+--Fixed so that deadly animal passing over an empty tile (in a 2 or more tile
+  jump) can still attack you if you're standing there (before, it could only
+  attack you if the tile was non-empty).  Fixes #690
+
+
 
 
 Version 361    2020-September-25

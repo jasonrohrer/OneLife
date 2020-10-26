@@ -18249,14 +18249,19 @@ int main() {
 
                 GridPos deadlyDestPos = curPos;
 
-                if( ! riding && curOverID > 0 ) {
+                if( ! riding ) {
                     // check if player is standing on
-                    // a non-deadly object
+                    // a non-deadly object OR on nothing
                     // if so, moving deadly objects might still be able
                     // to get them
-                    ObjectRecord *curOverObj = getObject( curOverID );
+                    ObjectRecord *curOverObj = NULL;
                     
-                    if( ! curOverObj->permanent ||
+                    if( curOverID > 0 ) {
+                        curOverObj = getObject( curOverID );
+                        }
+                    
+                    if( curOverObj == NULL ||
+                        ! curOverObj->permanent ||
                         curOverObj->deadlyDistance == 0 ) {
                         
                         int movingDestX, movingDestY;
