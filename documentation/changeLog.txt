@@ -34,6 +34,10 @@ Server Fixes
   jump) can still attack you if you're standing there (before, it could only
   attack you if the tile was non-empty).  Fixes #690
 
+--Fixed so that you can't set a blocking object down in a sliver of good biome,
+  surrounded by bad biome, in such a way that you are blocked from reaching it
+  to pick it back up again.  Fixes #694
+
 
 
 

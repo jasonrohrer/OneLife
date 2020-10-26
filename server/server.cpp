@@ -21724,7 +21724,8 @@ int main() {
                                             r = NULL;
                                             }
                                         }
-                                    if( newTargetObj->isBiomeLimited &&
+                                    if( r != NULL &&
+                                        newTargetObj->isBiomeLimited &&
                                         ! canBuildInBiome( 
                                             newTargetObj,
                                             getMapBiome( m.x,
@@ -22429,6 +22430,41 @@ int main() {
                                                                   m.y ) ) ) {
                                             // can't make this object
                                             // in this biome
+                                            canPlace = false;
+                                            }
+                                        else if( newTargetObj->blocksWalking &&
+                                                 ( ( newTargetObj->sideAccess 
+                                                     &&
+                                                     ! isBiomeAllowedForPlayer( 
+                                                         nextPlayer, 
+                                                         m.x - 1, 
+                                                         m.y ) &&
+                                                     ! isBiomeAllowedForPlayer( 
+                                                         nextPlayer, 
+                                                         m.x + 1, 
+                                                         m.y ) )
+                                                   ||
+                                                   ( newTargetObj->noBackAccess
+                                                     &&
+                                                     ! isBiomeAllowedForPlayer( 
+                                                         nextPlayer, 
+                                                         m.x, 
+                                                         m.y - 1 ) )
+                                                   ||
+                                                   ( ! isBiomeAllowedForPlayer( 
+                                                       nextPlayer, 
+                                                       m.x, 
+                                                       m.y + 1 ) &&
+                                                     ! isBiomeAllowedForPlayer( 
+                                                         nextPlayer, 
+                                                         m.x, 
+                                                         m.y - 1 ) ) ) ) {
+                                            // we're setting down something that
+                                            // will block us walking to that 
+                                            // tile again
+                                            // So we'll need to access it from
+                                            // an adjacent tile, and those
+                                            // adjacent tiles are in bad biomes
                                             canPlace = false;
                                             }
                                         }
