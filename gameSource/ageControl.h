@@ -10,3 +10,9 @@ doublePair getAgeHeadOffset( double inAge, doublePair inHeadSpritePos,
                              doublePair inFrontFootSpritePos );
 
 doublePair getAgeBodyOffset( double inAge, doublePair inBodySpritePos );
+
+void initAgeScaling();
+
+double computeDisplayAge( double serverAge );
+
+double computeServerAge( double displayAge );

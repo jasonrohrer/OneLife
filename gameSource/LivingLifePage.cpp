@@ -855,9 +855,9 @@ static double computeCurrentAge( LiveObject *inObj ) {
                 // baby cries for 5 seconds each time they speak
             
                 // update age using clock
-                return inObj->tempAgeOverride + 
+                return computeDisplayAge( inObj->tempAgeOverride +
                     inObj->ageRate * 
-                    ( curTime - inObj->tempAgeOverrideSetTime );
+                    ( curTime - inObj->tempAgeOverrideSetTime ) );
                 }
             else {
                 // temp override over
@@ -866,8 +866,8 @@ static double computeCurrentAge( LiveObject *inObj ) {
             }
         
         // update age using clock
-        return inObj->age + 
-            inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime );
+        return computeDisplayAge( inObj->age +
+            inObj->ageRate * ( game_getCurrentTime() - inObj->lastAgeSetTime ) );
         }
     
     }
@@ -16364,6 +16364,21 @@ void LivingLifePage::step() {
                                 char *nameStart = &( firstSpace[1] );
                                 
                                 existing->name = stringDuplicate( nameStart );
+								
+								LiveObject *ourLiveObject = getOurLiveObject();
+								if ( id == ourLiveObject->id && 
+									//Little hack here to not have the ding
+									//when we are just reconnected
+									//instead of a real name change
+									ourLiveObject->foodCapacity > 0 && 
+									mTutorialSound != NULL ) {
+									playSound( 
+										mTutorialSound,
+										0.18 * getSoundEffectsLoudness(), 
+										getVectorFromCamera( 
+											ourLiveObject->currentPos.x, 
+											ourLiveObject->currentPos.y ) );
+									}
                                 }
                             
                             break;
@@ -19993,9 +20008,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         char canExecute = false;
         char sideAccess = false;
+		char noBackAccess = false;
         
         if( destID > 0 && getObject( destID )->sideAccess ) {
             sideAccess = true;
+            }
+			
+        if( destID > 0 && getObject( destID )->noBackAccess ) {
+            noBackAccess = true;
             }
         
 
@@ -20012,6 +20032,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 ( clickDestY > ourLiveObject->yd ||
                   clickDestY < ourLiveObject->yd ) ) {
                 // trying to access side-access object from N or S
+                canExecute = false;
+                }
+            if( noBackAccess &&
+                ( clickDestY < ourLiveObject->yd ) ) {
+                // trying to access noBackAccess object from N
                 canExecute = false;
                 }
             }
@@ -20039,6 +20064,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( sideAccess ) {
                 // don't consider N or S neighbors
                 nLimit = 3;
+                }
+            else if( noBackAccess ) {
+                // don't consider N neighbor
+                nLimit = 4;
                 }
             else if( destID > 0 &&
                      ourLiveObject->holdingID == 0 && 
