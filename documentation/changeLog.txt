@@ -3,6 +3,15 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Version 363    ???
+
+--Network stats command is now /NETWORK to avoid blocking crafting filter
+  for /NET.  Fixes #692
+
+
+
+
 Server Fixes
 
 --Expert waystones no longer point you to an expert in a low population
