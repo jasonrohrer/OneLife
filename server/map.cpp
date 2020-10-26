@@ -169,6 +169,8 @@ timeSec_t slowTime() {
 
 extern GridPos getClosestPlayerPos( int inX, int inY );
 
+extern int getNumPlayers();
+
 
 
 // track recent placements to determine camp where
@@ -4746,7 +4748,10 @@ static void dbPut( int inX, int inY, int inSlot, int inValue,
     if( apocalypsePossible && inValue > 0 && inSlot == 0 && inSubCont == 0 ) {
         // a primary tile put
         // check if this triggers the apocalypse
-        if( isApocalypseTrigger( inValue ) ) {
+        if( isApocalypseTrigger( inValue ) &&
+            getNumPlayers() >=
+            SettingsManager::getIntSetting( "minActivePlayersForApocalypse", 
+                                            15 ) ) {
             apocalypseTriggered = true;
             apocalypseLocation.x = inX;
             apocalypseLocation.y = inY;

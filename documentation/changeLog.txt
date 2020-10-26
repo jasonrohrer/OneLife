@@ -27,6 +27,8 @@ Server Fixes
   follower gates can be opened by followers, but can only be destroyed by the
   actual owners.  Fixes #688
 
+--Apocalypse is impossible if there are less than 15 players on server.
+  Fixes #693
 
 
 

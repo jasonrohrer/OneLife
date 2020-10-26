@@ -1112,6 +1112,11 @@ SimpleVector<LiveObject> players;
 SimpleVector<LiveObject> tutorialLoadingPlayers;
 
 
+int getNumPlayers() {
+    return players.size();
+    }
+
+
 
 char doesEveLineExist( int inEveID ) {
     for( int i=0; i<players.size(); i++ ) {
