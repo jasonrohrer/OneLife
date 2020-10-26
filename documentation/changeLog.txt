@@ -3,6 +3,12 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes
+
+--Expert waystones no longer point you to an expert in a low population
+  situation where specialist biomes are disabled.  Fixes #695
+
+
 
 Version 361    2020-September-25
 

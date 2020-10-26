@@ -10,6 +10,10 @@ void freeSpecialBiomes();
 void updateSpecialBiomes( int inNumPlayers );
 
 
+// returns true if special biomes are currently active on server
+char specialBiomesActive();
+
+
 
 char isBiomeAllowed( int inDisplayID, int inX, int inY, 
                      char inIgnoreFloor = false );

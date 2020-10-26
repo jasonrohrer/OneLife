@@ -152,6 +152,16 @@ static SpecialBiome getBiomeRecord( int inX, int inY ) {
     }
 
 
+
+char specialBiomesActive() {
+    if( curNumPlayers < minNumPlayers ) {
+        return false;
+        }
+    return true;
+    }
+
+
+
 char isBiomeAllowed( int inDisplayID, int inX, int inY, char inIgnoreFloor ) {
     if( curNumPlayers < minNumPlayers ) {
         return true;

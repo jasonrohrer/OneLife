@@ -15226,6 +15226,11 @@ static LiveObject *getPlayerByName( char *inName, LiveObject *inSkip ) {
 
 static void findExpertForPlayer( LiveObject *inPlayer, 
                                  ObjectRecord *inTouchedObject ) {
+    
+    if( ! specialBiomesActive() ) {
+        return;
+        }
+
     int race = getSpecialistRace( inTouchedObject );
     
 
