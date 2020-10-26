@@ -23,6 +23,9 @@ Server Fixes
 --Fixed so that non-follower gates don't accidentally work like follower gates.
   Forgot to check a separate case when testing for gate ownership.  Fixes #689
 
+--Fixed so that shaky gates can be destroyed by non-owners (whoops) and so that
+  follower gates can be opened by followers, but can only be destroyed by the
+  actual owners.  Fixes #688
 
 
 

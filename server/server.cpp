@@ -1321,8 +1321,9 @@ char isOwnedOrAllyOwned( LiveObject *inPlayer, ObjectRecord *inObject,
     if( isOwned( inPlayer, inX, inY ) ) {
         return true;
         }
-    // do allies have access to this object?  If so, look for a 
-    else if( inObject->blocksNonAlly && 
+    // do followers have access to this object?  If so, look for a leader above
+    // who owns it
+    else if( inObject->isFollowerOwned && 
              isMapSpotLeaderOwned( inPlayer, inX, inY ) ) {
         return true;
         }
@@ -10372,7 +10373,7 @@ static char isMapSpotBlockingForPlayer( LiveObject *inPlayer,
 
     ObjectRecord *o = getObject( oID );
     
-    if( o->isOwned && o->blocksNonAlly ) {
+    if( o->isOwned && o->blocksNonFollower ) {
         
         if( isMapSpotLeaderOwned( inPlayer, inX, inY ) ) {
             return false;
@@ -15036,7 +15037,8 @@ static void tryToForceDropHeld(
 // access blocked b/c of access direction or ownership?
 static char isAccessBlocked( LiveObject *inPlayer, 
                              int inTargetX, int inTargetY,
-                             int inTargetID ) {
+                             int inTargetID,
+                             int inHoldingID = 0 ) {
     int target = inTargetID;
     
     int x = inTargetX;
@@ -15073,6 +15075,38 @@ static char isAccessBlocked( LiveObject *inPlayer,
             // (or is part of ally pool that can access it)
             ownershipBlocked = 
                 ! isOwnedOrAllyOwned( inPlayer, targetObj, x, y );
+            
+            if( ownershipBlocked && 
+                targetObj->isTempOwned &&
+                inHoldingID > 0 ) {
+                // if they are attempting a transition that leads to a
+                // non-owned object, let it through, because ownership
+                // of the target object is on shaky footing
+                TransRecord *t = getTrans( inHoldingID, inTargetID );
+                if( t != NULL && 
+                    ( t->newTarget <= 0 ||
+                      ! getObject( t->newTarget )->isOwned ) ) {
+                    ownershipBlocked = false;
+                    }
+                }
+            else if( ! ownershipBlocked &&
+                     ! targetObj->isTempOwned &&
+                     inHoldingID > 0 &&
+                     ! isOwned( inPlayer, x, y ) ) {
+                // they're not blocked, but they don't own it directly
+                // their leader must own it
+                // make sure this action isn't going to destroy it
+                // (only a direct owner, not a follower, can destroy owned
+                //  property and convert it into a non-owned object)
+                TransRecord *t = getTrans( inHoldingID, inTargetID );
+                if( t != NULL && 
+                    ( t->newTarget <= 0 ||
+                      ! getObject( t->newTarget )->isOwned ) ) {
+                    ownershipBlocked = true;
+                    }
+                }
+            
+            
 
             if( ownershipBlocked ) {
                 GridPos ourPos = getPlayerPos( inPlayer );
@@ -21242,7 +21276,8 @@ int main() {
                             int oldHolding = nextPlayer->holdingID;
                             
                             char accessBlocked =
-                                isAccessBlocked( nextPlayer, m.x, m.y, target );
+                                isAccessBlocked( nextPlayer, m.x, m.y, target,
+                                                 oldHolding );
                             
                             if( accessBlocked ) {
                                 // ignore action from wrong side
