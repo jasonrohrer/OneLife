@@ -2840,8 +2840,12 @@ LivingLifePage::LivingLifePage()
         mHintMessageIndex[i] = 0;
         
         mNumTotalHints[i] = 0;
+        mHintSheetXTweak[i] = 0;
         }
-    
+    // manual tweaks
+    mHintSheetXTweak[1] = -6;
+    mHintSheetXTweak[2] = -4;
+
     mLiveHintSheetIndex = -1;
 
     mForceHintRefresh = false;
@@ -9520,7 +9524,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
 
             setDrawColor( 1, 1, 1, 1 );
-            drawSprite( mHintSheetSprites[i], hintPos );
+
+            doublePair sheetSpritePos = hintPos;
+            sheetSpritePos.x += mHintSheetXTweak[i];
+            
+            drawSprite( mHintSheetSprites[i], sheetSpritePos );
             
 
             setDrawColor( 0, 0, 0, 1.0f );
