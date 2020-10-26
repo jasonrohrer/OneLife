@@ -15,7 +15,8 @@
 #include "minorGems/game/drawUtils.h"
 #include "minorGems/util/stringUtils.h"
 #include "minorGems/game/Font.h"
-// #include "minorGems/util/SettingsManager.h"
+
+#include "minorGems/util/SettingsManager.h"
 
 
 #include "minitech.h"
@@ -43,6 +44,7 @@ SimpleVector<int> *minitech::mMapContainedStacks;
 SimpleVector<SimpleVector<int>> *minitech::mMapSubContainedStacks;
 
 bool minitech::minitechMinimized = true;
+unsigned char minitech::minimizeKey = 'o';
 int minitech::stepCount;
 float minitech::currentX;
 float minitech::currentY;
@@ -58,6 +60,15 @@ string minitech::lastHintStr;
 vector<minitech::mouseListener*> minitech::twotechMouseListeners;
 minitech::mouseListener* minitech::prevListener;
 minitech::mouseListener* minitech::nextListener;
+
+const char *biomeNames[] = {"GRASSLANDS",
+							"SWAMP",
+							"YELLOW PRAIRIES",
+							"BADLANDS",
+							"TUNDRA",
+							"DESERT",
+							"JUNGLE",
+							"OCEAN"};
 
 
 
@@ -77,6 +88,8 @@ void minitech::setLivingLifePage(
 	pathFindingD = inPathFindingD;
 	mMapContainedStacks = inmMapContainedStacks;
 	mMapSubContainedStacks = inmMapSubContainedStacks;
+	
+	minitechEnabled = SettingsManager::getIntSetting( "useMinitech", 1 );
 }
 
 void minitech::initOnBirth() { 
@@ -131,6 +144,22 @@ int minitech::getDummyParent(int objId) {
 	ObjectRecord* o = getObject(objId);
 	if (o != NULL) {
 		if (o->isUseDummy) return o->useDummyParent;
+	}
+	return objId;
+}
+
+int minitech::getDummyLastUse(int objId) {
+	if (objId <= 0 || objId >= maxObjects) return objId;
+	ObjectRecord* o = getObject(objId);
+	if (o != NULL) {
+		int parentID = o->id;
+		if (o->isUseDummy) {
+			parentID = o->useDummyParent;
+		}
+		ObjectRecord* parent = getObject(parentID);
+		if (parent->numUses > 1) {
+			return parent->useDummyIDs[0];
+		}
 	}
 	return objId;
 }
@@ -262,6 +291,64 @@ bool minitech::isUseDummy(int objId) {
 	return o->isUseDummy;
 }
 
+bool minitech::isUseDummyAndNotLastUse(int objId) {
+	if (objId <= 0) return false;
+	ObjectRecord* o = getObject(objId);
+	if (o == NULL) return false;
+	if (o->isUseDummy) {
+		if (o->thisUseDummyIndex != 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
+int minitech::getDummyUse(int objId) {
+	//return -1 if not applicable
+	//return 0 if it is the parent object
+	//then 1 is the last use, and 2 is #use 2 etc.
+	if (objId <= 0) return -1;
+	ObjectRecord* o = getObject(objId);
+	if (o == NULL) return -1;
+	if (o->numUses > 1) return 0;
+	if (o->isUseDummy) {
+		return o->thisUseDummyIndex + 1;
+	}
+	return -1;
+}
+
+int minitech::compareObjUse(int idA, int idB) {
+	//return -1 if a and b have the same parent and a's use > b's
+	//return 1 if a and b have the same parent and a's use < b's
+	//return 0 otherwise
+	
+	ObjectRecord* a = getObject(idA);
+	ObjectRecord* b = getObject(idB);
+	
+	if (a == NULL || b == NULL) return 0;
+	
+	int aParentId = 0;
+	int bParentId = 0;
+	if (a->numUses > 1) aParentId = a->id;
+	if (b->numUses > 1) bParentId = b->id;
+	if (a->isUseDummy) aParentId = a->useDummyParent;
+	if (b->isUseDummy) bParentId = b->useDummyParent;
+	
+	if (aParentId == 0 || bParentId == 0) return 0;
+	if (aParentId != bParentId) return 0;
+	
+	int aUse = 0;
+	int bUse = 0;
+	if (aParentId == a->id) aUse = a->numUses;
+	if (bParentId == b->id) bUse = b->numUses;
+	if (a->isUseDummy) aUse = a->thisUseDummyIndex + 1;
+	if (b->isUseDummy) bUse = b->thisUseDummyIndex + 1;
+	
+	if (aUse > bUse) return -1;
+	if (aUse < bUse) return 1;
+	return 0;
+}
+
 bool minitech::isProbabilitySet(int objId) {
 	if (objId <= 0) return false;
 	CategoryRecord *c = getCategory( objId );
@@ -278,6 +365,7 @@ float minitech::getTransProbability(TransRecord* trans) {
 	int idD = trans->newTarget;
 	
 	TransRecord* t = getTrans( idA, idB, trans->lastUseActor, trans->lastUseTarget );
+	if (t == NULL) return -1.0;
 	int origIdC = t->newActor;
 	int origIdD = t->newTarget;
 	
@@ -372,116 +460,6 @@ vector<bool> minitech::getObjIsCloseVector() {
 	return objIsClose;
 }
 
-vector<TransRecord*> minitech::getUsesTrans(int objId) {
-	
-	SimpleVector<TransRecord*> *usesTrans = getAllUses( objId );
-	vector<TransRecord*> results;
-	
-	int numTrans = 0;
-	if( usesTrans != NULL ) {
-		numTrans = usesTrans->size();
-	}
-	if( numTrans == 0 ) {
-		return results; 
-	}
-
-	for( int t=0; t<numTrans; t++ ) {
-		
-		TransRecord *trans = usesTrans->getElementDirect( t );
-		
-		int idA = trans->actor;
-		int idB = trans->target;
-		int idC = trans->newActor;
-		int idD = trans->newTarget;
-		
-		int cOrD = -1;
-		if ( isProbabilitySet(idC) ) cOrD = 0;
-		if ( isProbabilitySet(idD) ) cOrD = 1;
-		if (cOrD != -1) {
-			CategoryRecord* c;
-			if (cOrD == 0) c = getCategory( idC );
-			if (cOrD == 1) c = getCategory( idD );
-			SimpleVector<int> idSet = c->objectIDSet;
-			for (int i=0; i<idSet.size(); i++) {
-				TransRecord* staticTrans = new TransRecord;
-				*staticTrans = *trans;
-				int newId = idSet.getElementDirect(i);
-				if (cOrD == 0) staticTrans->newActor = newId;
-				if (cOrD == 1) staticTrans->newTarget = newId;
-				results.push_back(staticTrans);
-			}
-			continue;
-		}
-		
-		if ( isUseDummy(idA) && isUseDummy(idC) ) continue;
-		if ( isUseDummy(idB) && isUseDummy(idD) ) continue;
-		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
-		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
-		
-		results.push_back(trans);
-
-	}
-	
-	return results;
-}
-
-vector<TransRecord*> minitech::getProdTrans(int objId) {
-	
-	SimpleVector<TransRecord*> *prodTrans = getAllProduces( objId );
-	vector<TransRecord*> results;
-	
-	int numTrans = 0;
-	if( prodTrans != NULL ) {
-		numTrans = prodTrans->size();
-	}
-
-	for( int t=0; t<numTrans; t++ ) {
-		
-		TransRecord *trans = prodTrans->getElementDirect( t );
-		
-		int idA = trans->actor;
-		int idB = trans->target;
-		int idC = trans->newActor;
-		int idD = trans->newTarget;
-		
-		if ( idA == objId || idB == objId ) continue;
-		if ( isUseDummy(idA) && isUseDummy(idC) ) continue;
-		if ( isUseDummy(idB) && isUseDummy(idD) ) continue;
-		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
-		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
-		
-		results.push_back(trans);
-
-	}
-	
-	int numCategoriesForObject = getNumCategoriesForObject( objId );
-	for (int i=0; i<numCategoriesForObject; i++) {
-		int cId = getCategoryForObject(objId, i);
-		CategoryRecord* c = getCategory( cId );
-		
-		if (c->isProbabilitySet) {
-			SimpleVector<TransRecord*> *prodPTrans = getAllProduces( cId );
-			int numPTrans = 0;
-			if( prodPTrans != NULL ) {
-				numPTrans = prodPTrans->size();
-			}
-			for( int t=0; t<numPTrans; t++ ) {
-				TransRecord* staticTrans = new TransRecord;
-				*staticTrans = *(prodPTrans->getElementDirect( t ));
-				
-				if (staticTrans->actor == cId) staticTrans->actor = objId;
-				if (staticTrans->target == cId) staticTrans->target = objId;
-				if (staticTrans->newActor == cId) staticTrans->newActor = objId;
-				if (staticTrans->newTarget == cId) staticTrans->newTarget = objId;
-				
-				results.push_back(staticTrans);
-			}
-		}
-	}
-	
-	return results;
-}
-
 unsigned int minitech::LevenshteinDistance(const std::string& s1, const std::string& s2) {
 	const std::size_t len1 = s1.size(), len2 = s2.size();
 	std::vector<std::vector<unsigned int>> d(len1 + 1, std::vector<unsigned int>(len2 + 1));
@@ -497,6 +475,7 @@ unsigned int minitech::LevenshteinDistance(const std::string& s1, const std::str
                       d[i][j] = std::min({ d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 0 : 1) });
 	return d[len1][len2];
 }
+
 
 
 void minitech::drawPoint(doublePair posCen, string color) {
@@ -626,13 +605,134 @@ void minitech::drawTileRect( int x, int y, string color, bool flashing ) {
 	drawRect( startPos, CELL_D/2, CELL_D/2 );
 }
 
+void minitech::drawBox(doublePair posCen, float height, float width, float lineWidth) {
+	doublePair posCenTopSide = {posCen.x, posCen.y + ( height / 2 - lineWidth / 2 )};
+	doublePair posCenBottomSide = {posCen.x, posCen.y - ( height / 2 - lineWidth / 2 )};
+	doublePair posCenRightSide = {posCen.x + ( width / 2 - lineWidth / 2 ), posCen.y};
+	doublePair posCenLeftSide = {posCen.x - ( width / 2 - lineWidth / 2 ), posCen.y};
+	
+	drawRect( posCenTopSide, width/2 - lineWidth, lineWidth/2 );
+	drawRect( posCenBottomSide, width/2 - lineWidth, lineWidth/2 );
+	drawRect( posCenRightSide, lineWidth/2, height/2 );
+	drawRect( posCenLeftSide, lineWidth/2, height/2 );
+}
 
 
+
+vector<TransRecord*> minitech::getUsesTrans(int objId) {
+	
+	SimpleVector<TransRecord*> *usesTrans = getAllUses( objId );
+	vector<TransRecord*> results;
+	
+	int numTrans = 0;
+	if( usesTrans != NULL ) {
+		numTrans = usesTrans->size();
+	}
+	if( numTrans == 0 ) {
+		return results; 
+	}
+
+	for( int t=0; t<numTrans; t++ ) {
+		
+		TransRecord *trans = usesTrans->getElementDirect( t );
+		
+		int idA = trans->actor;
+		int idB = trans->target;
+		int idC = trans->newActor;
+		int idD = trans->newTarget;
+		
+		int cOrD = -1;
+		if ( isProbabilitySet(idC) ) cOrD = 0;
+		if ( isProbabilitySet(idD) ) cOrD = 1;
+		if (cOrD != -1) {
+			CategoryRecord* c;
+			if (cOrD == 0) c = getCategory( idC );
+			if (cOrD == 1) c = getCategory( idD );
+			SimpleVector<int> idSet = c->objectIDSet;
+			for (int i=0; i<idSet.size(); i++) {
+				TransRecord* staticTrans = new TransRecord;
+				*staticTrans = *trans;
+				int newId = idSet.getElementDirect(i);
+				if (cOrD == 0) staticTrans->newActor = newId;
+				if (cOrD == 1) staticTrans->newTarget = newId;
+				results.push_back(staticTrans);
+			}
+			continue;
+		}
+		
+		if ( isUseDummyAndNotLastUse(idA) && isUseDummyAndNotLastUse(idC) ) continue;
+		if ( isUseDummyAndNotLastUse(idB) && isUseDummyAndNotLastUse(idD) ) continue;
+		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
+		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
+		
+		results.push_back(trans);
+
+	}
+	
+	return results;
+}
+
+vector<TransRecord*> minitech::getProdTrans(int objId) {
+	
+	SimpleVector<TransRecord*> *prodTrans = getAllProduces( objId );
+	vector<TransRecord*> results;
+	
+	int numTrans = 0;
+	if( prodTrans != NULL ) {
+		numTrans = prodTrans->size();
+	}
+
+	for( int t=0; t<numTrans; t++ ) {
+		
+		TransRecord *trans = prodTrans->getElementDirect( t );
+		
+		int idA = trans->actor;
+		int idB = trans->target;
+		int idC = trans->newActor;
+		int idD = trans->newTarget;
+		
+		if ( idA == objId || idB == objId ) continue;
+		if ( isUseDummyAndNotLastUse(idA) && isUseDummyAndNotLastUse(idC) ) continue;
+		if ( isUseDummyAndNotLastUse(idB) && isUseDummyAndNotLastUse(idD) ) continue;
+		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
+		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
+		
+		results.push_back(trans);
+
+	}
+	
+	int numCategoriesForObject = getNumCategoriesForObject( objId );
+	for (int i=0; i<numCategoriesForObject; i++) {
+		int cId = getCategoryForObject(objId, i);
+		CategoryRecord* c = getCategory( cId );
+		
+		if (c->isProbabilitySet) {
+			SimpleVector<TransRecord*> *prodPTrans = getAllProduces( cId );
+			int numPTrans = 0;
+			if( prodPTrans != NULL ) {
+				numPTrans = prodPTrans->size();
+			}
+			for( int t=0; t<numPTrans; t++ ) {
+				TransRecord* staticTrans = new TransRecord;
+				*staticTrans = *(prodPTrans->getElementDirect( t ));
+				
+				if (staticTrans->actor == cId) staticTrans->actor = objId;
+				if (staticTrans->target == cId) staticTrans->target = objId;
+				if (staticTrans->newActor == cId) staticTrans->newActor = objId;
+				if (staticTrans->newTarget == cId) staticTrans->newTarget = objId;
+				
+				results.push_back(staticTrans);
+			}
+		}
+	}
+	
+	return results;
+}
 
 vector<TransRecord*> minitech::sortUsesTrans(vector<TransRecord*> unsortedTrans) {
 	
 	vector<bool> boolCloseVect = getObjIsCloseVector();
-	vector<float> distScore(unsortedTrans.size(), 0);
+	vector<float> rankScores(unsortedTrans.size(), 0);
 	
 	for ( int i=0; i<unsortedTrans.size(); i++ ) {
 		TransRecord *trans = unsortedTrans[i];
@@ -645,38 +745,45 @@ vector<TransRecord*> minitech::sortUsesTrans(vector<TransRecord*> unsortedTrans)
 		
 		GridPos currentPos = {currentX, currentY};
 		
-		float punishmentScore = 16.0;
+		float punishmentScore = 9999.0;
 		
-		if (ourLiveObject->holdingID != idA) {
-			if (idA <= 0) {
-				distScore[i] += punishmentScore;
-			} else if ( boolCloseVect[idA] ) {
-				GridPos pos = getClosestTile(currentPos, idA);
-				float dist = sqrt(pow(currentX - pos.x, 2) + pow(currentY - pos.y, 2));
-				distScore[i] += dist;
-			} else {
-				distScore[i] += 9999;
-			}
+		//idea behind the sorting:
+		//- show transition involving ingredients (actor and target) which are nearby first, sort these by distance
+		//- sort the far-away transitions by the object depth of the ingredients
+
+		if (idA == ourLiveObject->holdingID || idA <= 0) {
+			rankScores[i] += 0;
+		} else if (boolCloseVect[idA]) {
+			GridPos pos = getClosestTile(currentPos, idA);
+			float dist = sqrt(pow(currentX - pos.x, 2) + pow(currentY - pos.y, 2));
+			rankScores[i] += dist;
+		} else {
+			//+1 to make sure transitions with 0 depth, naturally spawning ingredients won't show up on top
+			rankScores[i] += punishmentScore * (getObjectDepth(idA) + 1); 
 		}
-		if (ourLiveObject->holdingID != idB) {
-			if (idB <= 0) {
-				distScore[i] += punishmentScore;
-			} else if ( boolCloseVect[idB] ) {
-				GridPos pos = getClosestTile(currentPos, idB);
-				float dist = sqrt(pow(currentX - pos.x, 2) + pow(currentY - pos.y, 2));
-				distScore[i] += dist;
-			} else {
-				distScore[i] += 9999 + idB; //ranking empty hand trans by id
-			}
+
+		if (idB == ourLiveObject->holdingID || idB <= 0) {
+				  
+			rankScores[i] += 0;
+		} else if (boolCloseVect[idB]) {
+			GridPos pos = getClosestTile(currentPos, idB);
+			float dist = sqrt(pow(currentX - pos.x, 2) + pow(currentY - pos.y, 2));
+			rankScores[i] += dist;
+		} else {
+			rankScores[i] += punishmentScore * (getObjectDepth(idB) + 1);
+	
 		}
-		if ( idA == idB ) {
-			distScore[i] += punishmentScore; //two stackable items stacked together
+
+		//dont always show the transition to stack the object we are currently holding
+		if ( idA == idB && idA == ourLiveObject->holdingID ) {
+			rankScores[i] += punishmentScore * (getObjectDepth(idA) + 1);
 		}
+		
 	}
 	
 	vector<std::size_t> index(unsortedTrans.size());
 	iota(index.begin(), index.end(), 0);
-	sort(index.begin(), index.end(), [&](size_t a, size_t b) { return distScore[a] < distScore[b]; });
+	sort(index.begin(), index.end(), [&](size_t a, size_t b) { return rankScores[a] < rankScores[b]; });
 	
 	vector<TransRecord*> temp(unsortedTrans.size());
 	for ( int i=0; i<unsortedTrans.size(); i++ ) {
@@ -688,7 +795,7 @@ vector<TransRecord*> minitech::sortUsesTrans(vector<TransRecord*> unsortedTrans)
 vector<TransRecord*> minitech::sortProdTrans(vector<TransRecord*> unsortedTrans) {
 	
 	vector<bool> boolCloseVect = getObjIsCloseVector();
-	vector<float> distScore(unsortedTrans.size(), 0);
+	vector<float> rankScores(unsortedTrans.size(), 0);
 	
 	for ( int i=0; i<unsortedTrans.size(); i++ ) {
 		TransRecord *trans = unsortedTrans[i];
@@ -703,37 +810,53 @@ vector<TransRecord*> minitech::sortProdTrans(vector<TransRecord*> unsortedTrans)
 		
 		float punishmentScore = 32.0;
 		
-		if (ourLiveObject->holdingID != idA) {
-			if (idA <= 0) {
-				
-			} else if ( boolCloseVect[idA] ) {
-				GridPos pos = getClosestTile(currentPos, idA);
-				float dist = sqrt(pow(currentX - pos.x, 2) + pow(currentY - pos.y, 2));
-				distScore[i] += dist;
-			} else {
-				distScore[i] += punishmentScore;
-			}
-		}
-		if (ourLiveObject->holdingID != idB) {
-			if (idB <= 0) {
-				
-			} else if ( boolCloseVect[idB] ) {
-				GridPos pos = getClosestTile(currentPos, idB);
-				float dist = sqrt(pow(currentX - pos.x, 2) + pow(currentY - pos.y, 2));
-				distScore[i] += dist;
-			} else {
-				distScore[i] += punishmentScore + idB; //ranking empty hand trans by id
-			}
-		}
-		if ( idB == -1 ) distScore[i] += 9999; //item + Bare Ground
-		if ( idA > 0 && idB > 0  ) distScore[i] -= 9999; //actual crafting instead of empty hand use
-		if ( idC <= 0  ) distScore[i] -= 9999; //actualy crafting comsuming actor
+		//idea behind the sorting:
+		//- show craft-from-scratch transition on the very top
+		//- show transition involving ingredients (actor and target) which are nearby first, sort these by distance
+		//- sort the far-away transitions by the object depth of the ingredients
 		
+		if (idA == ourLiveObject->holdingID || idA <= 0) {
+			rankScores[i] += 0;
+		} else if (boolCloseVect[idA]) {
+			GridPos pos = getClosestTile(currentPos, idA);
+			float dist = sqrt(pow(currentX - pos.x, 2) + pow(currentY - pos.y, 2));
+			rankScores[i] += dist;
+			
+		} else {
+			rankScores[i] += punishmentScore * (getObjectDepth(idA) + 1);
+	
+		}
+
+		if (idB == ourLiveObject->holdingID || idB <= 0) {
+			rankScores[i] += 0;
+	
+		} else if (boolCloseVect[idB]) {
+			GridPos pos = getClosestTile(currentPos, idB);
+			float dist = sqrt(pow(currentX - pos.x, 2) + pow(currentY - pos.y, 2));
+			rankScores[i] += dist;
+			
+		} else {
+			rankScores[i] += punishmentScore * (getObjectDepth(idB) + 1);
+	
+		}
+															 
+																																			 
+																		   
+		
+		//For craft-from-scratch transition, object depth of both ingredience would be shallower than the product object
+		int currDepth = getObjectDepth(currentHintObjId);
+		if (
+			(idA <= 0 || getObjectDepth(idA) < currDepth) &&
+			(idB <= 0 || getObjectDepth(idB) < currDepth)
+			) {
+			rankScores[i] = 0;
+		}
+
 	}
 	
 	vector<std::size_t> index(unsortedTrans.size());
 	iota(index.begin(), index.end(), 0);
-	sort(index.begin(), index.end(), [&](size_t a, size_t b) { return distScore[a] < distScore[b]; });
+	sort(index.begin(), index.end(), [&](size_t a, size_t b) { return rankScores[a] < rankScores[b]; });
 	
 	vector<TransRecord*> temp(unsortedTrans.size());
 	for ( int i=0; i<unsortedTrans.size(); i++ ) {
@@ -781,15 +904,15 @@ void minitech::updateDrawTwoTech() {
 		drawRect( posCenter, recWidth/2, recHeight/2);
 		
 		drawStr("[+] CRAFTING GUIDE", posCenter, "tinyHandwritten", false);
-		mouseListener* maxAListener = getMouseListenerByArea(
+		mouseListener* maxListener = getMouseListenerByArea(
 			&twotechMouseListeners, sub(posLT, screenPos), sub(posBR, screenPos));
-		if (maxAListener->mouseHover) {
+		if (maxListener->mouseHover) {
 			setDrawColor( 1, 1, 1, 0.3 );
 			drawRect( posCenter, recWidth/2, recHeight/2);
 		}
-		if (maxAListener->mouseClick) {
+		if (maxListener->mouseClick) {
 			minitechMinimized = false;
-			maxAListener->mouseClick = false;
+			maxListener->mouseClick = false;
 		}
 		return;
 		
@@ -837,9 +960,9 @@ void minitech::updateDrawTwoTech() {
 		doublePair posLineLCen = {
 			posLT.x + paddingX, 
 			posLT.y - paddingY - contentOffsetY - iconSize/2
-			};	
+			};
 		
-		int currHintObjId = 0;
+		int highlightObjId = 0;
 		vector<pair<mouseListener*,int>> iconListenerIds;
 		for (int i=0; i<numOfLines; i++) {
 			if (i>0) posLineLCen.y -= iconSize+lineSpacing;
@@ -848,6 +971,44 @@ void minitech::updateDrawTwoTech() {
 			
 			// printf("DEBUG: %d + %d = %d + %d\n", trans->actor, trans->target, trans->newActor, trans->newTarget);
 			// printf("DEBUG: %d\n", trans->autoDecaySeconds);
+			
+			if (trans == NULL) {
+				
+				ObjectRecord* currentHintObj = getObject(currentHintObjId);
+				if (currentHintObj->numBiomes > 0) {
+					
+					doublePair pos = posLineLCen;
+					pos.x += iconSize/2;
+					pos.x += iconSize;
+					
+					doublePair firstLine = pos;
+					firstLine.y += tinyLineHeight/2;
+					drawStr("NATURALLY", firstLine, "tinyHandwritten", false);
+					firstLine.y -= tinyLineHeight;
+					drawStr("SPAWN IN:", firstLine, "tinyHandwritten", false);
+
+					pos.x += iconSize;
+					pos.x += iconSize;
+					if (currentHintObj->numBiomes < 3) pos.x += iconSize;
+					
+					for (int b = 0; b < currentHintObj->numBiomes; b++) {
+						GroundSpriteSet *s = groundSprites[ currentHintObj->biomes[b] ];
+						setDrawColor( 1, 1, 1, 1 );
+						drawSprite( s->squareTiles[0][0], pos, 0.25 *guiScale );
+						
+						doublePair iconLT = {pos.x - iconSize/2, pos.y + iconSize/2};
+						doublePair iconBR = {pos.x + iconSize/2, pos.y - iconSize/2};		
+						mouseListener* biomeIconListener = getMouseListenerByArea(
+							&twotechMouseListeners, sub(iconLT, screenPos), sub(iconBR, screenPos));
+						pair<mouseListener*,int> biomeIconListenerId(biomeIconListener, 100000 + currentHintObj->biomes[b]);
+						iconListenerIds.push_back(biomeIconListenerId);
+						
+						pos.x += iconSize;
+					}
+				}
+				
+				continue;
+			}
 			
 
 			doublePair posLineTL = {
@@ -864,18 +1025,18 @@ void minitech::updateDrawTwoTech() {
 			if (lineListener->mouseHover) {
 				doublePair posLineCen = {posCenter.x, posLineLCen.y};
 				setDrawColor( 1, 1, 1, 0.3 );
-				drawRect(posLineCen, recWidth/2, iconSize/2);
+				drawRect(posLineCen, recWidth/2, iconSize/2 * 1.25);
 				
 				int holdingID = ourLiveObject->holdingID;
 				holdingID = getDummyParent(holdingID);
 				if (trans->actor == trans->target) {
-					currHintObjId = trans->actor;
+					highlightObjId = trans->actor;
 				} else if (trans->actor > 0 && trans->actor != holdingID) {
-					currHintObjId = trans->actor;
+					highlightObjId = trans->actor;
 				} else if (trans->target > 0 && trans->target != holdingID) {
-					currHintObjId = trans->target;
+					highlightObjId = trans->target;
 				} else {
-					currHintObjId = 0;
+					highlightObjId = 0;
 				}
 			}
 			
@@ -884,8 +1045,17 @@ void minitech::updateDrawTwoTech() {
 			doublePair iconBR;
 			
 			doublePair pos = posLineLCen;
-			
 			pos.x += iconSize/2;
+			iconLT = {pos.x - iconSize/2, pos.y + iconSize/2};
+			iconBR = {pos.x + iconSize/2, pos.y - iconSize/2};		
+			mouseListener* iconAListener = getMouseListenerByArea(
+				&twotechMouseListeners, sub(iconLT, screenPos), sub(iconBR, screenPos));
+			pair<mouseListener*,int> iconAListenerId(iconAListener, trans->actor);
+			iconListenerIds.push_back(iconAListenerId);
+			if (iconAListener->mouseHover && trans->actor > 0) {
+				setDrawColor( 1, 1, 1, 0.3 );
+				drawRect(pos, iconSize/2, iconSize/2);
+			}
 			if (trans->actor == -1 && trans->autoDecaySeconds != 0) {
 				if ( trans->autoDecaySeconds < 0 ) {
 					drawObj(pos, trans->actor, "WAIT", to_string(- trans->autoDecaySeconds) + " HR");
@@ -901,54 +1071,70 @@ void minitech::updateDrawTwoTech() {
 			} else {
 				drawObj(pos, trans->actor);
 			}
-			iconLT = {pos.x - iconSize/2, pos.y + iconSize/2};
-			iconBR = {pos.x + iconSize/2, pos.y - iconSize/2};		
-			mouseListener* iconAListener = getMouseListenerByArea(
-				&twotechMouseListeners, sub(iconLT, screenPos), sub(iconBR, screenPos));
-			pair<mouseListener*,int> iconAListenerId(iconAListener, trans->actor);
-			iconListenerIds.push_back(iconAListenerId);
 			if (iconAListener->mouseClick && trans->actor > 0) {
 				currentHintObjId = trans->actor;
+				if (compareObjUse(trans->actor, trans->newActor) == -1) currentHintObjId = getDummyParent(trans->actor);
+				if (compareObjUse(trans->actor, trans->newActor) == 1) currentHintObjId = getDummyLastUse(trans->actor);
 			}
+
 			
 			pos.x += iconSize;
 			drawStr("+", pos, "handwritten", false);
 			
 			pos.x += iconSize;
-			if (trans->target == -1) {
-				drawObj(pos, trans->target, "EMPTY", "GROUND");
-			} else {
-				drawObj(pos, trans->target);
-			}
 			iconLT = {pos.x - iconSize/2, pos.y + iconSize/2};
 			iconBR = {pos.x + iconSize/2, pos.y - iconSize/2};		
 			mouseListener* iconBListener = getMouseListenerByArea(
 				&twotechMouseListeners, sub(iconLT, screenPos), sub(iconBR, screenPos));
 			pair<mouseListener*,int> iconBListenerId(iconBListener, trans->target);
 			iconListenerIds.push_back(iconBListenerId);
+			if (iconBListener->mouseHover && trans->target > 0) {
+				setDrawColor( 1, 1, 1, 0.3 );
+				drawRect(pos, iconSize/2, iconSize/2);
+			}
+			if (trans->target == -1) {
+				drawObj(pos, trans->target, "EMPTY", "GROUND");
+			} else {
+				drawObj(pos, trans->target);
+			}
 			if (iconBListener->mouseClick && trans->target > 0) {
 				currentHintObjId = trans->target;
+				if (compareObjUse(trans->target, trans->newTarget) == -1) currentHintObjId = getDummyParent(trans->target);
+				if (compareObjUse(trans->target, trans->newTarget) == 1) currentHintObjId = getDummyLastUse(trans->target);
 			}
+			
 			
 			pos.x += iconSize;
 			float transProb = getTransProbability(trans);
 			drawStr("=", pos, "handwritten", false);
 			if ( transProb != -1 ) {
 				string firstPart = "=";
-				string secondPart = to_string( transProb * 100 );
-				secondPart = secondPart.substr(0, secondPart.find(".") + 2) + "PCT";
+				string secondLine = to_string( transProb * 100 );
+				secondLine = secondLine.substr(0, secondLine.find(".") + 2) + "PCT";
 				doublePair chanceLinePos = pos;
 				float tinyLineHeight = 15.0*guiScale;
 				chanceLinePos.y -= tinyLineHeight;
-				drawStr(secondPart, chanceLinePos, "tinyHandwritten", false);
+				drawStr(secondLine, chanceLinePos, "tinyHandwritten", false);
 			}
 			
 			pos.x += iconSize;
+			iconLT = {pos.x - iconSize/2, pos.y + iconSize/2};
+			iconBR = {pos.x + iconSize/2, pos.y - iconSize/2};		
+			mouseListener* iconCListener = getMouseListenerByArea(
+				&twotechMouseListeners, sub(iconLT, screenPos), sub(iconBR, screenPos));
+			pair<mouseListener*,int> iconCListenerId(iconCListener, trans->newActor);
+			iconListenerIds.push_back(iconCListenerId);
+			if (iconCListener->mouseHover && trans->newActor > 0) {
+				setDrawColor( 1, 1, 1, 0.3 );
+				drawRect(pos, iconSize/2, iconSize/2);
+			}
 			if (trans->actor > 0 && trans->target > 0 && trans->newActor == 0) {
 				drawObj(pos, trans->newActor);
 			} else if (trans->actor == -1 && trans->autoDecaySeconds != 0 && trans->newActor == 0) {
-				if (trans->move !=0) {
+				if (trans->move != 0) {
 					drawStr("MOVING...", pos, "tinyHandwritten", false);
+				} else if (trans->newTarget == 0) {
+					drawStr("DESPAWNS", pos, "tinyHandwritten", false);
 				} else {
 					drawObj(pos, trans->newActor, "TURNING", "INTO...");
 				}
@@ -957,14 +1143,18 @@ void minitech::updateDrawTwoTech() {
 			} else {
 				drawObj(pos, trans->newActor);
 			}
-			iconLT = {pos.x - iconSize/2, pos.y + iconSize/2};
-			iconBR = {pos.x + iconSize/2, pos.y - iconSize/2};		
-			mouseListener* iconCListener = getMouseListenerByArea(
-				&twotechMouseListeners, sub(iconLT, screenPos), sub(iconBR, screenPos));
-			pair<mouseListener*,int> iconCListenerId(iconCListener, trans->newActor);
-			iconListenerIds.push_back(iconCListenerId);
+			if (trans->actorChangeChance != 1.0) {
+				string secondLine = to_string( trans->actorChangeChance * 100 );
+				secondLine = secondLine.substr(0, secondLine.find(".") + 2) + "PCT";
+				doublePair chanceLinePos = pos;
+				float tinyLineHeight = 15.0*guiScale;
+				chanceLinePos.y -= tinyLineHeight;
+				drawStr(secondLine, chanceLinePos, "tinyHandwritten", false);
+			}
 			if (iconCListener->mouseClick && trans->newActor > 0) {
 				currentHintObjId = trans->newActor;
+				if (compareObjUse(trans->newActor, trans->actor) == -1) currentHintObjId = getDummyParent(trans->newActor);
+				if (compareObjUse(trans->newActor, trans->actor) == 1) currentHintObjId = getDummyLastUse(trans->newActor);
 			}
 			
 			pos.x += iconSize;
@@ -975,21 +1165,39 @@ void minitech::updateDrawTwoTech() {
 			}
 			
 			pos.x += iconSize;
-			drawObj(pos, trans->newTarget, "EMPTY", "GROUND");
 			iconLT = {pos.x - iconSize/2, pos.y + iconSize/2};
 			iconBR = {pos.x + iconSize/2, pos.y - iconSize/2};		
 			mouseListener* iconDListener = getMouseListenerByArea(
 				&twotechMouseListeners, sub(iconLT, screenPos), sub(iconBR, screenPos));
 			pair<mouseListener*,int> iconDListenerId(iconDListener, trans->newTarget);
 			iconListenerIds.push_back(iconDListenerId);
+			if (iconDListener->mouseHover && trans->newTarget > 0) {
+				setDrawColor( 1, 1, 1, 0.3 );
+				drawRect(pos, iconSize/2, iconSize/2);
+			}
+			if (trans->actor == -1 && trans->autoDecaySeconds != 0 && trans->newTarget == 0) {
+				//Despawn transitions, "DESPAWNS" is written in the newActor slot, keep this slot empty
+			} else {
+				drawObj(pos, trans->newTarget, "EMPTY", "GROUND");
+			}
+			if (trans->targetChangeChance != 1.0) {
+				string secondLine = to_string( trans->targetChangeChance * 100 );
+				secondLine = secondLine.substr(0, secondLine.find(".") + 2) + "PCT";
+				doublePair chanceLinePos = pos;
+				float tinyLineHeight = 15.0*guiScale;
+				chanceLinePos.y -= tinyLineHeight;
+				drawStr(secondLine, chanceLinePos, "tinyHandwritten", false);
+			}
 			if (iconDListener->mouseClick && trans->newTarget > 0) {
 				currentHintObjId = trans->newTarget;
+				if (compareObjUse(trans->newTarget, trans->target) == -1) currentHintObjId = getDummyParent(trans->newTarget);
+				if (compareObjUse(trans->newTarget, trans->target) == 1) currentHintObjId = getDummyLastUse(trans->newTarget);
 			}
 		}
 		
-		if (currHintObjId > 0) {
+		if (highlightObjId > 0) {
 			GridPos currentPos = {currentX, currentY};
-			GridPos closestHintObjPos = getClosestTile(currentPos, currHintObjId);
+			GridPos closestHintObjPos = getClosestTile(currentPos, highlightObjId);
 			if ( !(closestHintObjPos.x == 9999 && closestHintObjPos.y == 9999) ) {
 				drawTileRect(closestHintObjPos.x, closestHintObjPos.y, "blue", true);
 			}
@@ -1046,6 +1254,14 @@ void minitech::updateDrawTwoTech() {
 			doublePair iconCen = { iconLT.x + iconSize/2, iconLT.y - iconSize/2 };
 			if (listener->mouseHover && id > 0) {
 				doublePair captionPos = {iconCen.x, iconCen.y + iconCaptionYOffset};
+				
+				if (id >= 100000) {
+					int biomeId = id - 100000;
+					string biomeName(biomeNames[biomeId]);
+					drawStr(biomeName, captionPos, "tinyHandwritten", true, true);
+					continue;
+				}
+				
 				string objName(livingLifePage->minitechGetDisplayObjectDescription(id));
 				drawStr(objName, captionPos, "tinyHandwritten", true, true);
 				
@@ -1186,13 +1402,6 @@ void minitech::livingLifeDraw(float mX, float mY) {
 		}
 	}
 	
-	
-		
-	ObjectRecord* currentHintObj = getObject(currentHintObjId);
-	if (currentHintObj != NULL) {
-		if (currentHintObj->isUseDummy) currentHintObjId = currentHintObj->useDummyParent;
-	}
-	
 	if ( lastHintObjId == 0 && currentHintObjId != 0 ) minitechMinimized = false;
 	
 	if (hintStr != lastHintStr) {
@@ -1263,6 +1472,10 @@ void minitech::livingLifeDraw(float mX, float mY) {
 			currentHintTrans = sortUsesTrans(unsortedTrans);
 		} else if (useOrMake == 1) {
 			currentHintTrans = sortProdTrans(unsortedTrans);
+			
+			ObjectRecord* currentHintObj = getObject(currentHintObjId);
+			if (currentHintObj != NULL && currentHintObj->numBiomes > 0 && currentHintObj->mapChance > 0) 
+				currentHintTrans.insert(currentHintTrans.begin(), NULL);
 		}
 
 	}
@@ -1286,6 +1499,8 @@ void minitech::livingLifeStep() {
 
 bool minitech::livingLifeKeyDown(unsigned char inASCII) {	
 	
+	if (livingLifePage->minitechSayFieldIsFocused()) return false;
+	
 	bool commandKey = isCommandKeyDown();
 	bool shiftKey = isShiftKeyDown();
 
@@ -1297,6 +1512,10 @@ bool minitech::livingLifeKeyDown(unsigned char inASCII) {
 	
 	if (!commandKey && shiftKey && inASCII == 9) {
 		currentTwoTechPage -= 1;
+	}
+	
+	if (!shiftKey && !commandKey && toupper(inASCII) == toupper(minimizeKey)) {
+		minitechMinimized = !minitechMinimized;
 	}
 	
 	// if ( inASCII == 'p' ) {
