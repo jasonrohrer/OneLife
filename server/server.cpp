@@ -1286,7 +1286,7 @@ LiveObject *getLiveObject( int inID );
 
 
 
-static char isMapSpotAllyOwned( LiveObject *inPlayer, int inX, int inY ) {    
+static char isMapSpotLeaderOwned( LiveObject *inPlayer, int inX, int inY ) {    
     // walk up leadership chain for inPlayer and see if anyone owns it
         
     LiveObject *nextToCheck = inPlayer;
@@ -1316,11 +1316,14 @@ static char isMapSpotAllyOwned( LiveObject *inPlayer, int inX, int inY ) {
 
 
 
-char isOwnedOrAllyOwned( LiveObject *inPlayer, int inX, int inY ) {
+char isOwnedOrAllyOwned( LiveObject *inPlayer, ObjectRecord *inObject,
+                         int inX, int inY ) {
     if( isOwned( inPlayer, inX, inY ) ) {
         return true;
         }
-    else if( isMapSpotAllyOwned( inPlayer, inX, inY ) ) {
+    // do allies have access to this object?  If so, look for a 
+    else if( inObject->blocksNonAlly && 
+             isMapSpotLeaderOwned( inPlayer, inX, inY ) ) {
         return true;
         }
     return false;
@@ -10371,7 +10374,7 @@ static char isMapSpotBlockingForPlayer( LiveObject *inPlayer,
     
     if( o->isOwned && o->blocksNonAlly ) {
         
-        if( isMapSpotAllyOwned( inPlayer, inX, inY ) ) {
+        if( isMapSpotLeaderOwned( inPlayer, inX, inY ) ) {
             return false;
             }
         return true;
@@ -15069,7 +15072,7 @@ static char isAccessBlocked( LiveObject *inPlayer,
             // make sure player owns this pos
             // (or is part of ally pool that can access it)
             ownershipBlocked = 
-                ! isOwnedOrAllyOwned( inPlayer, x, y );
+                ! isOwnedOrAllyOwned( inPlayer, targetObj, x, y );
 
             if( ownershipBlocked ) {
                 GridPos ourPos = getPlayerPos( inPlayer );

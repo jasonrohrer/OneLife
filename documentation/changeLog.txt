@@ -20,6 +20,11 @@ Server Fixes
 --Expert waystones no longer point you to an expert in a low population
   situation where specialist biomes are disabled.  Fixes #695
 
+--Fixed so that non-follower gates don't accidentally work like follower gates.
+  Forgot to check a separate case when testing for gate ownership.  Fixes #689
+
+
+
 
 
 Version 361    2020-September-25
