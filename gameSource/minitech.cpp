@@ -44,7 +44,7 @@ SimpleVector<int> *minitech::mMapContainedStacks;
 SimpleVector<SimpleVector<int>> *minitech::mMapSubContainedStacks;
 
 bool minitech::minitechMinimized = true;
-unsigned char minitech::minimizeKey = 'o';
+unsigned char minitech::minimizeKey;
 int minitech::stepCount;
 float minitech::currentX;
 float minitech::currentY;
@@ -90,6 +90,8 @@ void minitech::setLivingLifePage(
 	mMapSubContainedStacks = inmMapSubContainedStacks;
 	
 	minitechEnabled = SettingsManager::getIntSetting( "useMinitech", 1 );
+	char *minimizeKeyFromSetting = SettingsManager::getStringSetting("minitechMinimizeKey", "v");
+	minimizeKey = minimizeKeyFromSetting[0];
 }
 
 void minitech::initOnBirth() { 
