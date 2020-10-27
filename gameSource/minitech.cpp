@@ -55,8 +55,8 @@ int minitech::useOrMake;
 int minitech::lastUseOrMake;
 int minitech::currentHintObjId;
 int minitech::lastHintObjId;
-string minitech::hintStr;
 string minitech::lastHintStr;
+bool minitech::changeHintObjOnTouch;
 vector<minitech::mouseListener*> minitech::twotechMouseListeners;
 minitech::mouseListener* minitech::prevListener;
 minitech::mouseListener* minitech::nextListener;
@@ -102,6 +102,7 @@ void minitech::initOnBirth() {
 	
 	currentHintTrans.clear();
 	currentHintTrans.shrink_to_fit();
+	changeHintObjOnTouch = true;
 	
 	if (prevListener != NULL) delete(prevListener);
 	if (nextListener != NULL) delete(nextListener);
@@ -1278,22 +1279,28 @@ void minitech::updateDrawTwoTech() {
 	}
 
 
+
+
+	float barWidth = recWidth;
+	float barHeight = 0;
+	float barOffsetY = 0;
+	if (lastHintStr != "") {
+		barHeight = tinyLineHeight;
+		barOffsetY = - barHeight/2;
+	}
+
 	float headerWidth = recWidth;
-	float headerHeight = (paddingY + iconSize + paddingY);
-
+	float headerHeight = (paddingY + iconSize + barHeight + paddingY);
 	doublePair headerLT = {posLT.x, posLT.y + separatorHeight + headerHeight};
-	doublePair headerLCen = {headerLT.x + paddingX, headerLT.y - iconSize/2};
 	doublePair headerCen = {headerLT.x + headerWidth / 2, headerLT.y - headerHeight / 2};
-
 	setDrawColor( 0, 0, 0, 0.8 );
 	drawRect( headerCen, headerWidth/2, headerHeight/2);
-	
 
 	string useStr = "HOW DO I USE:";
 	string makeStr = "HOW DO I MAKE:";
 	float textWidth = tinyHandwritingFont->measureString( makeStr.c_str() );
 	float textXOffset = -iconSize/2 - centerXSeparation/2;
-	doublePair textCen = {headerCen.x + textXOffset, headerCen.y};
+	doublePair textCen = {headerCen.x + textXOffset, headerCen.y + barOffsetY};
 	doublePair firstLine = {textCen.x, textCen.y - tinyLineHeight};
 	doublePair secondLine = {textCen.x, textCen.y + tinyLineHeight};
 	doublePair firstLineLT = {firstLine.x - textWidth/2 - paddingX/2, firstLine.y + tinyLineHeight/2 + paddingY/2};
@@ -1323,7 +1330,7 @@ void minitech::updateDrawTwoTech() {
 
 
 	float iconXOffset = textWidth/2 + centerXSeparation/2;
-	doublePair iconCen = {headerCen.x + iconXOffset, headerCen.y - contentOffsetY};
+	doublePair iconCen = {headerCen.x + iconXOffset, headerCen.y + barOffsetY};
 	drawObj(iconCen, currentHintObjId);
 
 	doublePair iconTL = {iconCen.x - iconSize/2, iconCen.y + iconSize/2};
@@ -1346,11 +1353,16 @@ void minitech::updateDrawTwoTech() {
 			drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
 		}
 	}
-
-
-	doublePair headerRT = {headerLT.x + recWidth, headerLT.y};
-	doublePair minRT = {headerRT.x - iconSize/8, headerRT.y - iconSize/8};
-	doublePair minCen = {minRT.x - iconSize/4, minRT.y - iconSize/4};
+	
+	if (lastHintStr != "") {
+		string searchStr = "SEARCHING: " + lastHintStr;
+		doublePair barCen = {headerLT.x + barWidth / 2, headerLT.y - barHeight / 2 - paddingY/2};
+		drawStr(searchStr, barCen, "tinyHandwritten", false);
+	}
+	
+	doublePair headerRT = {headerLT.x + headerWidth, headerLT.y};
+	doublePair minRT = {headerRT.x - paddingX/2, headerRT.y - paddingY/2};
+	doublePair minCen = {minRT.x - tinyLineHeight/2, minRT.y - tinyLineHeight/2};
 	doublePair minLT = {minRT.x - iconSize/2, minRT.y};
 	doublePair minBR = {minRT.x, minRT.y - iconSize/2};
 	drawStr("[-]", minCen, "tinyHandwritten", false);
@@ -1368,6 +1380,46 @@ void minitech::updateDrawTwoTech() {
 	}
 }
 
+void minitech::inputHintStrToSearch(string hintStr) {
+	lastHintStr = hintStr;
+	if (hintStr == "") {
+		changeHintObjOnTouch = true;
+	} else {
+		changeHintObjOnTouch = false;
+	
+		int numHits = 0;
+		int numRemain = 0;
+		ObjectRecord **hitsSimpleVector = searchObjects( hintStr.c_str(),
+											 0,
+											 200,
+											 &numHits, &numRemain );
+		
+		if (numHits > 0) {
+			vector<ObjectRecord*> unsortedHits;
+			for (int i=0; i<numHits; i++) {
+				unsortedHits.push_back(hitsSimpleVector[i]);
+			}
+			
+			vector<std::size_t> index(unsortedHits.size());
+			iota(index.begin(), index.end(), 0);
+			sort(index.begin(), index.end(), [&](size_t a, size_t b) { 
+				// string aDesc(stringToUpperCase(unsortedHits[a]->description));
+				// string bDesc(stringToUpperCase(unsortedHits[b]->description));
+				// int aLDist = LevenshteinDistance(hintStr, aDesc); 
+				// int bLDist = LevenshteinDistance(hintStr, bDesc);
+				// return aLDist < bLDist;
+				return unsortedHits[a]->id < unsortedHits[b]->id;
+			});
+			
+			vector<ObjectRecord*> sortedHits(unsortedHits.size());
+			for ( int i=0; i<unsortedHits.size(); i++ ) {
+				sortedHits[i] = unsortedHits[index[i]];
+			}
+			
+			currentHintObjId = sortedHits[0]->id;
+		}
+	}
+}
 
 
 void minitech::livingLifeDraw(float mX, float mY) {
@@ -1404,46 +1456,9 @@ void minitech::livingLifeDraw(float mX, float mY) {
 	
 	if ( lastHintObjId == 0 && currentHintObjId != 0 ) minitechMinimized = false;
 	
-	if (hintStr != lastHintStr) {
-		lastHintStr = hintStr;
-        int numHits = 0;
-        int numRemain = 0;
-        ObjectRecord **hitsSimpleVector = searchObjects( hintStr.c_str(),
-                                             0,
-                                             200,
-                                             &numHits, &numRemain );
-		
-		if (numHits > 0) {
-			vector<ObjectRecord*> unsortedHits;
-			for (int i=0; i<numHits; i++) {
-				unsortedHits.push_back(hitsSimpleVector[i]);
-			}
-			
-			vector<std::size_t> index(unsortedHits.size());
-			iota(index.begin(), index.end(), 0);
-			sort(index.begin(), index.end(), [&](size_t a, size_t b) { 
-				// string aDesc(stringToUpperCase(unsortedHits[a]->description));
-				// string bDesc(stringToUpperCase(unsortedHits[b]->description));
-				// int aLDist = LevenshteinDistance(hintStr, aDesc); 
-				// int bLDist = LevenshteinDistance(hintStr, bDesc);
-				// return aLDist < bLDist;
-				return unsortedHits[a]->id < unsortedHits[b]->id;
-			});
-			
-			vector<ObjectRecord*> sortedHits(unsortedHits.size());
-			for ( int i=0; i<unsortedHits.size(); i++ ) {
-				sortedHits[i] = unsortedHits[index[i]];
-			}
-			
-			currentHintObjId = sortedHits[0]->id;
-		}
-	}
-	
 	if ( (lastHintObjId != currentHintObjId || lastUseOrMake != useOrMake) && !minitechMinimized ) {
 		lastHintObjId = currentHintObjId;
 		lastUseOrMake = useOrMake;
-		hintStr = "";
-		lastHintStr = "";
 		currentTwoTechPage = 0;
 		
 		for (auto p: twotechMouseListeners) {
