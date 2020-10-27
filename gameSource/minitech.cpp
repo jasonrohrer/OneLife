@@ -1286,7 +1286,9 @@ void minitech::updateDrawTwoTech() {
 	float barWidth = recWidth;
 	float barHeight = 0;
 	float barOffsetY = 0;
-	if (lastHintStr != "") {
+	bool showBar = lastHintStr != "" || (ourLiveObject->holdingID != 0 && ourLiveObject->holdingID == currentHintObjId);
+	
+	if (true) {
 		barHeight = tinyLineHeight;
 		barOffsetY = - barHeight/2;
 	}
@@ -1356,8 +1358,15 @@ void minitech::updateDrawTwoTech() {
 		}
 	}
 	
-	if (lastHintStr != "") {
-		string searchStr = "SEARCHING: " + lastHintStr;
+	if (showBar) {
+		string searchStr;
+		if (lastHintStr != "") {
+			searchStr = "SEARCHING: " + lastHintStr;
+		} else if (ourLiveObject->holdingID != 0 && ourLiveObject->holdingID == currentHintObjId) {
+			string objName(livingLifePage->minitechGetDisplayObjectDescription(currentHintObjId));
+			searchStr = "HOLDING: " + objName;
+		}
+		
 		doublePair barCen = {headerLT.x + barWidth / 2, headerLT.y - barHeight / 2 - paddingY/2};
 		drawStr(searchStr, barCen, "tinyHandwritten", false);
 	}
