@@ -9689,7 +9689,12 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                         incrementEvePlacement );
 
         
-        if( SettingsManager::getIntSetting( "specialBiomeBandMode", 0 ) ) {    
+        if( players.size() < 
+            SettingsManager::getIntSetting( "minActivePlayersForBirthlands", 
+                                            15 )
+            &&
+            SettingsManager::getIntSetting( "specialBiomeBandMode", 0 ) ) {
+            
             // shift Eve y position into center of her biome band
             startY = getSpecialBiomeBandYCenterForRace( 
                 getObject( newObject.displayID )->race );

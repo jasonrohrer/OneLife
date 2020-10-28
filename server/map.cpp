@@ -305,6 +305,9 @@ static SimpleVector<int> specialBiomeBandIndexOrder;
 
 static SimpleVector<int> specialBiomeBandYCenter;
 
+static int minActivePlayersForBirthlands;
+
+
 
 // the biome index to use in place of special biomes outside of the north-most
 // or south-most band
@@ -3954,6 +3957,10 @@ char initMap() {
     specialBiomeBandYCenter.push_back_other( specialBiomeBandYCenterList );
 
     delete specialBiomeBandYCenterList;
+
+
+    minActivePlayersForBirthlands = 
+        SettingsManager::getIntSetting( "minActivePlayersForBirthlands", 15 );
 
     
 
@@ -9822,7 +9829,8 @@ int isHomeland( int inX, int inY, int inLineageEveID ) {
 
 
 int isBirthland( int inX, int inY, int inLineageEveID, int inDisplayID ) {
-    if( specialBiomeBandMode ) {
+    if( specialBiomeBandMode && 
+        getNumPlayers() >= minActivePlayersForBirthlands ) {
         
         char outOfBand = false;
         
