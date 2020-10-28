@@ -9689,7 +9689,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                         incrementEvePlacement );
 
         
-        if( players.size() < 
+        if( players.size() >= 
             SettingsManager::getIntSetting( "minActivePlayersForBirthlands", 
                                             15 )
             &&
