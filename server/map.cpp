@@ -297,6 +297,17 @@ static float *specialBiomeCumuWeights;
 static float specialBiomeTotalWeight;
 
 
+static int specialBiomeBandMode;
+static int specialBiomeBandThickness;
+static SimpleVector<int> specialBiomeBandOrder;
+// contains indices into biomes array instead of biome numbers
+static SimpleVector<int> specialBiomeBandIndexOrder;
+
+// the biome index to use in place of special biomes outside of the north-most
+// or south-most band
+static int specialBiomeBandDefaultIndex;
+
+
 
 // one vector per biome
 static SimpleVector<int> *naturalMapIDs;
@@ -980,46 +991,92 @@ static int computeMapBiomeIndex( int inX, int inY,
     if( pickedBiome >= regularBiomeLimit && numSpecialBiomes > 0 ) {
         // special case:  on a peak, place a special biome here
 
-        // use patches mode for these
-        pickedBiome = -1;
 
+        if( specialBiomeBandMode ) {
+            // use band mode for these
+            pickedBiome = -1;
 
-        double maxValue = -10;
-        double secondMaxVal = -10;
-        
-        for( int i=regularBiomeLimit; i<numBiomes; i++ ) {
-            int biome = biomes[i];
-        
-            setXYRandomSeed( biome * 263 + biomeRandSeedA + 38475,
-                             biomeRandSeedB );
-
-            double randVal = getXYFractal(  inX,
-                                            inY,
-                                            0.55, 
-                                            2.4999 + 
-                                            0.2499 * numSpecialBiomes );
-        
-            if( randVal > maxValue ) {
-                if( maxValue != -10 ) {
-                    secondMaxVal = maxValue;
-                    }
-                maxValue = randVal;
-                pickedBiome = i;
-                }
-            }
-        
-        if( maxValue - secondMaxVal < 0.03 ) {
-            // close!  that means we're on a boundary between special biomes
+            int middleSpecial = ( specialBiomeBandIndexOrder.size() - 1 ) / 2;
             
-            // stick last regular biome on this boundary, so special
-            // biomes never touch
-            secondPlace = pickedBiome;
-            secondPlaceGap = 0.1;
-            pickedBiome = regularBiomeLimit - 1;
-            }        
-        else {
+            if( inY >= 0 ) {
+                // northern bands
+                int yJump = -floor( inY / (float)specialBiomeBandThickness );
+                
+                int specialI = middleSpecial + yJump;
+                
+                if( specialI >= 0 ) {
+                    pickedBiome = 
+                        specialBiomeBandIndexOrder.getElementDirect( specialI );
+                    }
+                else {
+                    // outside of north-most band
+                    // stick default there
+                    pickedBiome = specialBiomeBandDefaultIndex;
+                    }
+                }
+            else {
+                // southern bands
+                int yJump = 1 - ceil( inY / (float)specialBiomeBandThickness );
+                
+                int specialI = middleSpecial + yJump;
+                
+                if( specialI < specialBiomeBandIndexOrder.size() ) {
+                    pickedBiome = 
+                        specialBiomeBandIndexOrder.getElementDirect( specialI );
+                    }
+                else {
+                    // outside of south-most band
+                    // stick default there
+                    pickedBiome = specialBiomeBandDefaultIndex;
+                    }
+                }
+                
+            
             secondPlace = regularBiomeLimit - 1;
             secondPlaceGap = 0.1;
+            }
+        else {
+            // use patches mode for these
+            pickedBiome = -1;
+            
+            
+            double maxValue = -10;
+            double secondMaxVal = -10;
+            
+            for( int i=regularBiomeLimit; i<numBiomes; i++ ) {
+                int biome = biomes[i];
+                
+                setXYRandomSeed( biome * 263 + biomeRandSeedA + 38475,
+                                 biomeRandSeedB );
+                
+                double randVal = getXYFractal(  inX,
+                                                inY,
+                                                0.55, 
+                                                2.4999 + 
+                                                0.2499 * numSpecialBiomes );
+                
+                if( randVal > maxValue ) {
+                    if( maxValue != -10 ) {
+                        secondMaxVal = maxValue;
+                        }
+                    maxValue = randVal;
+                    pickedBiome = i;
+                    }
+                }
+            
+            if( maxValue - secondMaxVal < 0.03 ) {
+                // close!  that means we're on a boundary between special biomes
+                
+                // stick last regular biome on this boundary, so special
+                // biomes never touch
+                secondPlace = pickedBiome;
+                secondPlaceGap = 0.1;
+                pickedBiome = regularBiomeLimit - 1;
+                }        
+            else {
+                secondPlace = regularBiomeLimit - 1;
+                secondPlaceGap = 0.1;
+                }
             }
         }
     else {
@@ -3865,6 +3922,48 @@ char initMap() {
         }
 
 
+    specialBiomeBandMode = 
+        SettingsManager::getIntSetting( "specialBiomeBandMode", 0 );
+    
+    specialBiomeBandThickness = 
+        SettingsManager::getIntSetting( "specialBiomeBandThickness",
+                                        300 );
+    
+    SimpleVector<int> *specialBiomeOrderList =
+        SettingsManager::getIntSettingMulti( "specialBiomeBandOrder" );
+
+    specialBiomeBandOrder.push_back_other( specialBiomeOrderList );
+    
+    // look up biome index for each special biome
+    for( int i=0; i<specialBiomeBandOrder.size(); i++ ) {
+        int biomeNumber = specialBiomeBandOrder.getElementDirect( i );
+    
+        int biomeIndex = 0;
+
+        for( int j=0; j<numBiomes; j++ ) {
+            if( biomes[j] == biomeNumber ) {
+                biomeIndex = j;
+                break;
+                }
+            }
+        specialBiomeBandIndexOrder.push_back( biomeIndex );
+        }
+
+    delete specialBiomeOrderList;
+
+
+    int specialBiomeBandDefault = 
+        SettingsManager::getIntSetting( "specialBiomeBandDefault", 0 );
+    
+    // look up biome index
+    specialBiomeBandDefaultIndex = 0;
+    for( int j=0; j<numBiomes; j++ ) {
+        if( biomes[j] == specialBiomeBandDefault ) {
+            specialBiomeBandDefaultIndex = j;
+            break;
+            }
+        }
+    
 
 
     naturalMapIDs = new SimpleVector<int>[ numBiomes ];
