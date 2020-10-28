@@ -366,4 +366,8 @@ int getDeadlyMovingMapObject( int inPosX, int inPosY,
                               int *outMovingDestX, int *outMovingDestY );
 
 
+
+int getSpecialBiomeBandYCenterForRace( int inRace );
+
+
 #endif

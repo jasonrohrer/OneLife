@@ -34,7 +34,9 @@ char isPolylingual( int inDisplayID );
 
 // returns race number of first race that is polylingual
 // returns -1 if there's no polylingual race
-int getPolylingualRace();
+// Defaults to saying there's no polylingual race if population size is
+// too small for specialty biomes.
+int getPolylingualRace( char inIgnorePopulationSize = false );
 
 
 

@@ -45,6 +45,9 @@ Server Fixes
 --Homelands for birth now coincide with the special biome bands.  Outside of
   your home band, you can't have babies.
  
+--Eve Y location shifted up into center of her homeland biome band.
+
+
 
 
 Version 361    2020-September-25

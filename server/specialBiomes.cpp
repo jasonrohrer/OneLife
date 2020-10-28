@@ -246,8 +246,9 @@ char isPolylingual( int inDisplayID ) {
     }
 
 
-int getPolylingualRace() {
-    if( curNumPlayers < minNumPlayers ) {
+int getPolylingualRace( char inIgnorePopulationSize ) {
+    if( ! inIgnorePopulationSize && 
+        curNumPlayers < minNumPlayers ) {
         return -1;
         }
     

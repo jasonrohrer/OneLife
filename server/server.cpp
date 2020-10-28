@@ -9688,6 +9688,14 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                         &otherPeoplePos, allowEveRespawn, 
                         incrementEvePlacement );
 
+        
+        if( SettingsManager::getIntSetting( "specialBiomeBandMode", 0 ) ) {    
+            // shift Eve y position into center of her biome band
+            startY = getSpecialBiomeBandYCenterForRace( 
+                getObject( newObject.displayID )->race );
+            }
+        
+
         if( inCurseStatus.curseLevel > 0 ) {
             // keep cursed players away
 

@@ -303,6 +303,9 @@ static SimpleVector<int> specialBiomeBandOrder;
 // contains indices into biomes array instead of biome numbers
 static SimpleVector<int> specialBiomeBandIndexOrder;
 
+static SimpleVector<int> specialBiomeBandYCenter;
+
+
 // the biome index to use in place of special biomes outside of the north-most
 // or south-most band
 static int specialBiomeBandDefaultIndex;
@@ -883,51 +886,19 @@ static void biomePutCached( int inX, int inY, int inBiome, int inSecondPlace,
 
 
 static int getSpecialBiomeIndexForYBand( int inY, char *outOfBand = NULL ) {
-    int pickedBiome = -1;
+    // new method, use y centers and thickness
+    int radius = specialBiomeBandThickness / 2;
     
-    int middleSpecial = ( specialBiomeBandIndexOrder.size() - 1 ) / 2;
-    
-    if( inY >= 0 ) {
-        // northern bands
-        int yJump = -floor( inY / (float)specialBiomeBandThickness );
+    for( int i=0; i<specialBiomeBandYCenter.size(); i++ ) {
+        int yCenter = specialBiomeBandYCenter.getElementDirect( i );
         
-        int specialI = middleSpecial + yJump;
-        
-        if( specialI >= 0 ) {
-            pickedBiome = 
-                specialBiomeBandIndexOrder.getElementDirect( specialI );
-            }
-        else {
-            // outside of north-most band
-            // stick default there
-            pickedBiome = specialBiomeBandDefaultIndex;
-            if( outOfBand != NULL ) {
-                *outOfBand = true;
-                }
-            }
-        }
-    else {
-        // southern bands
-        int yJump = 1 - ceil( inY / (float)specialBiomeBandThickness );
-        
-        int specialI = middleSpecial + yJump;
-        
-        if( specialI < specialBiomeBandIndexOrder.size() ) {
-            pickedBiome = 
-                specialBiomeBandIndexOrder.getElementDirect( specialI );
-            }
-        else {
-            // outside of south-most band
-            // stick default there
-            pickedBiome = specialBiomeBandDefaultIndex;
-            
-            if( outOfBand != NULL ) {
-                *outOfBand = true;
-                }
+        if( abs( inY - yCenter ) <= radius ) {
+            return specialBiomeBandIndexOrder.getElementDirect( i );
             }
         }
     
-    return pickedBiome;
+    // else not in radius of any band
+    return specialBiomeBandDefaultIndex;
     }
 
 
@@ -3977,6 +3948,14 @@ char initMap() {
         }
     
 
+    SimpleVector<int> *specialBiomeBandYCenterList =
+        SettingsManager::getIntSettingMulti( "specialBiomeBandYCenter" );
+
+    specialBiomeBandYCenter.push_back_other( specialBiomeBandYCenterList );
+
+    delete specialBiomeBandYCenterList;
+
+    
 
     naturalMapIDs = new SimpleVector<int>[ numBiomes ];
     naturalMapChances = new SimpleVector<float>[ numBiomes ];
@@ -9870,7 +9849,7 @@ int isBirthland( int inX, int inY, int inLineageEveID, int inDisplayID ) {
         else {
             // in-band, but no specialist race defined
             // "language expert" band?
-            if( personRace == getPolylingualRace() ) {
+            if( personRace == getPolylingualRace( true ) ) {
                 return 1;
                 }
             else {
@@ -9882,6 +9861,47 @@ int isBirthland( int inX, int inY, int inLineageEveID, int inDisplayID ) {
     else {
         return isHomeland( inX, inY, inLineageEveID );
         }
+    }
+
+
+
+
+int getSpecialBiomeBandYCenterForRace( int inRace ) {
+    int bandIndex = -1;
+    
+    for( int i=0; i<specialBiomeBandOrder.size(); i++ ) {
+        
+        int biomeNumber = specialBiomeBandOrder.getElementDirect( i );
+        
+        if( getSpecialistRace( biomeNumber ) == inRace ) {
+            // hit
+            bandIndex = i;
+            break;
+            }
+        }
+    
+    if( bandIndex == -1 ) {
+        // no hit...
+        // treat as polylingual
+        for( int i=0; i<specialBiomeBandOrder.size(); i++ ) {
+        
+            int biomeNumber = specialBiomeBandOrder.getElementDirect( i );
+            
+            // find non-specialist specialBiomeBand for polylingual race
+            if( getSpecialistRace( biomeNumber ) == -1 ) {
+                bandIndex = i;
+                break;
+                }
+            }
+        }
+    
+
+    if( bandIndex == -1 ) {
+        AppLog::errorF( "Could not find biome band for race %d", inRace );
+        return 0;
+        }
+    
+    return specialBiomeBandYCenter.getElementDirect( bandIndex );
     }
 
 
