@@ -48,5 +48,8 @@ char *getBadBiomeMessage( int inDisplayID );
 // returns -1 if there's no specialist
 int getSpecialistRace( ObjectRecord *inObject );
 
+// returns -1 if there's no specialist
+int getSpecialistRace( int inBiomeNumber );
+
 
 const char *getBadBiomeName( ObjectRecord *inObject );

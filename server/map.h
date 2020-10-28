@@ -351,6 +351,14 @@ typedef struct HomelandInfo {
 SimpleVector<HomelandInfo> getHomelandChanges();
 
 
+// if birthland bands are enabled, returns 1 if in birthland band, 
+// or -1 otherwise
+// if birthland bands are disabled, returns same result as isHomeland
+// 1 if birthland
+// -1 if outside of birthland
+int isBirthland( int inX, int inY, int inLineageEveID, int inDisplayID );
+
+
 
 // looks for deadly object that is crossing inPos
 // passes out moving object's destination

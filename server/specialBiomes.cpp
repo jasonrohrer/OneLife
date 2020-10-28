@@ -338,3 +338,12 @@ const char *getBadBiomeName( ObjectRecord *inObject ) {
     }
 
 
+
+int getSpecialistRace( int inBiomeNumber ) {
+    if( inBiomeNumber >= MAX_BIOME_NUMBER || inBiomeNumber < 0 ) {
+        return -1;
+        }
+    
+    return specialBiomes[inBiomeNumber].specialistRace;
+    }
+

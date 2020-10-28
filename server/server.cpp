@@ -8648,8 +8648,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 }
 
             GridPos motherPos = getPlayerPos( player );
-            int homeStatus = isHomeland( motherPos.x, motherPos.y,
-                                         player->lineageEveID );
+            int homeStatus = isBirthland( motherPos.x, motherPos.y,
+                                          player->lineageEveID,
+                                          player->displayID );
             
             if( homeStatus == -1 ||
                 ( homeStatus == 0 &&
@@ -20147,21 +20148,29 @@ int main() {
                                     // in/out of home
 
                                     int homeStart =
-                                        isHomeland( 
+                                        isBirthland( 
                                             nextPlayer->xs,
                                             nextPlayer->ys,
-                                            nextPlayer->lineageEveID );
+                                            nextPlayer->lineageEveID,
+                                            nextPlayer->displayID );
                                     
                                     int endStep = nextPlayer->pathLength - 1;
                                     
                                     int homeEnd =
-                                        isHomeland( 
+                                        isBirthland( 
                                             nextPlayer->pathToDest[endStep].x,
                                             nextPlayer->pathToDest[endStep].y,
-                                            nextPlayer->lineageEveID );
+                                            nextPlayer->lineageEveID,
+                                            nextPlayer->displayID );
 
                                     char boundaryCross = false;
-                                    if( homeStart == homeEnd &&
+
+                                    // skip this now
+                                    // used to want to emphasize being homesick
+                                    // again when ENTERING another homeland
+                                    // but we don't need to do this anymore
+                                    if( false && 
+                                        homeStart == homeEnd &&
                                         homeEnd == -1 ) {
                                         // player still outside homeland
                                         // but did they cross a boundary

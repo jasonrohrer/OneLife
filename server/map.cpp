@@ -882,6 +882,54 @@ static void biomePutCached( int inX, int inY, int inBiome, int inSecondPlace,
 
 
 
+static int getSpecialBiomeIndexForYBand( int inY, char *outOfBand = NULL ) {
+    int pickedBiome = -1;
+    
+    int middleSpecial = ( specialBiomeBandIndexOrder.size() - 1 ) / 2;
+    
+    if( inY >= 0 ) {
+        // northern bands
+        int yJump = -floor( inY / (float)specialBiomeBandThickness );
+        
+        int specialI = middleSpecial + yJump;
+        
+        if( specialI >= 0 ) {
+            pickedBiome = 
+                specialBiomeBandIndexOrder.getElementDirect( specialI );
+            }
+        else {
+            // outside of north-most band
+            // stick default there
+            pickedBiome = specialBiomeBandDefaultIndex;
+            if( outOfBand != NULL ) {
+                *outOfBand = true;
+                }
+            }
+        }
+    else {
+        // southern bands
+        int yJump = 1 - ceil( inY / (float)specialBiomeBandThickness );
+        
+        int specialI = middleSpecial + yJump;
+        
+        if( specialI < specialBiomeBandIndexOrder.size() ) {
+            pickedBiome = 
+                specialBiomeBandIndexOrder.getElementDirect( specialI );
+            }
+        else {
+            // outside of south-most band
+            // stick default there
+            pickedBiome = specialBiomeBandDefaultIndex;
+            
+            if( outOfBand != NULL ) {
+                *outOfBand = true;
+                }
+            }
+        }
+    
+    return pickedBiome;
+    }
+
 
 
 
@@ -994,43 +1042,7 @@ static int computeMapBiomeIndex( int inX, int inY,
 
         if( specialBiomeBandMode ) {
             // use band mode for these
-            pickedBiome = -1;
-
-            int middleSpecial = ( specialBiomeBandIndexOrder.size() - 1 ) / 2;
-            
-            if( inY >= 0 ) {
-                // northern bands
-                int yJump = -floor( inY / (float)specialBiomeBandThickness );
-                
-                int specialI = middleSpecial + yJump;
-                
-                if( specialI >= 0 ) {
-                    pickedBiome = 
-                        specialBiomeBandIndexOrder.getElementDirect( specialI );
-                    }
-                else {
-                    // outside of north-most band
-                    // stick default there
-                    pickedBiome = specialBiomeBandDefaultIndex;
-                    }
-                }
-            else {
-                // southern bands
-                int yJump = 1 - ceil( inY / (float)specialBiomeBandThickness );
-                
-                int specialI = middleSpecial + yJump;
-                
-                if( specialI < specialBiomeBandIndexOrder.size() ) {
-                    pickedBiome = 
-                        specialBiomeBandIndexOrder.getElementDirect( specialI );
-                    }
-                else {
-                    // outside of south-most band
-                    // stick default there
-                    pickedBiome = specialBiomeBandDefaultIndex;
-                    }
-                }
-                
+            pickedBiome = getSpecialBiomeIndexForYBand( inY );
             
             secondPlace = regularBiomeLimit - 1;
             secondPlaceGap = 0.1;
@@ -9823,6 +9835,55 @@ int isHomeland( int inX, int inY, int inLineageEveID ) {
     // report that they don't have one
     return 0;
     }
+
+
+
+
+#include "specialBiomes.h"
+
+
+int isBirthland( int inX, int inY, int inLineageEveID, int inDisplayID ) {
+    if( specialBiomeBandMode ) {
+        
+        char outOfBand = false;
+        
+        int pickedBiome = getSpecialBiomeIndexForYBand( inY, &outOfBand );
+        
+        if( pickedBiome == -1 || outOfBand ) {
+            return -1;
+            }
+        
+        int biomeNumber = biomes[ pickedBiome ];
+        
+        int personRace = getObject( inDisplayID )->race;
+
+        int specialistRace = getSpecialistRace( biomeNumber );
+        
+        if( specialistRace != -1 ) {
+            if( personRace == specialistRace ) {
+                return 1;
+                }
+            else {
+                return -1;
+                }
+            }
+        else {
+            // in-band, but no specialist race defined
+            // "language expert" band?
+            if( personRace == getPolylingualRace() ) {
+                return 1;
+                }
+            else {
+                return -1;
+                }
+            }
+
+        }
+    else {
+        return isHomeland( inX, inY, inLineageEveID );
+        }
+    }
+
 
 
 

@@ -38,10 +38,13 @@ Server Fixes
   surrounded by bad biome, in such a way that you are blocked from reaching it
   to pick it back up again.  Fixes #694
 
---Special biomes now occur in horizontal bands, 300 tiles thick, with snow to
+--Special biomes now occur in horizontal bands, 200 tiles thick, with snow to
   the north, then mountain, then jungle, and then desert to the south, and
   mountain outside of those bands farther north and south.
 
+--Homelands for birth now coincide with the special biome bands.  Outside of
+  your home band, you can't have babies.
+ 
 
 
 Version 361    2020-September-25
