@@ -20671,7 +20671,39 @@ int main() {
                                      otherToFollow->id ) {
                                 nextPlayer->followingID = otherToFollow->id;
                                 nextPlayer->followingUpdate = true;
-                                
+
+
+                                if( ! isExiled( otherToFollow,
+                                                nextPlayer )
+                                    && 
+                                    nextPlayer->lineageEveID !=
+                                    otherToFollow->lineageEveID ) {
+
+                                    // tell the new leader about their
+                                    // new follower who is from another family
+
+                                    const char *name = "NAMELESS PERSON";
+                                    if( nextPlayer->name != NULL ) {
+                                        name = nextPlayer->name;
+                                        }
+                                    char *message = autoSprintf( 
+                                        "PS\n"
+                                        "%d/0 OUTSIDER %s IS MY NEW FOLLOWER "
+                                        "*visitor %d *map %d %d\n#",
+                                        otherToFollow->id,
+                                        name,
+                                        nextPlayer->id,
+                                        nextPlayer->xs - 
+                                        otherToFollow->birthPos.x,
+                                        nextPlayer->ys - 
+                                        otherToFollow->birthPos.y );
+                                    sendMessageToPlayer( otherToFollow, 
+                                                         message, 
+                                                         strlen( message ) );
+                                    delete [] message; 
+                                    }
+
+
                                 if( otherToFollow->leadingColorIndex == -1 ) {
                                     otherToFollow->leadingColorIndex =
                                         getUnusedLeadershipColor();

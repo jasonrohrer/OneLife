@@ -47,6 +47,12 @@ Server Fixes
  
 --Eve Y location shifted up into center of her homeland biome band.
 
+--When an outsider (non family member) follows you, who you haven't exiled yet,
+  you get a notice about it and an arrow pointing toward them.  A visitor to
+  your follower gate can see your name and follow you to come through your
+  gate, so now you get a notice that they've done this, and you can go to deal
+  with them if needed.
+
 
 
 
