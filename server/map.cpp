@@ -5337,7 +5337,9 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             // no further decay
                             leftMapETA = 0;
                             }
-                        setEtaDecay( inX, inY, leftMapETA );
+						//for movement from posA to posB, we want posA to be potentially always live tracked as well
+						//leftDecayT is passed to check if it should be always live tracked
+                        setEtaDecay( inX, inY, leftMapETA, leftDecayT );
                         }
                     else {
                         // leave empty spot behind
@@ -6492,6 +6494,31 @@ static char runTapoutOperation( int inX, int inY,
             
             if( newTarget != -1 ) {
                 setMapObjectRaw( x, y, newTarget );
+				
+				TransRecord *newDecayT = getMetaTrans( -1, newTarget );
+				
+				timeSec_t mapETA = 0;
+	 
+				if( newDecayT != NULL ) {
+	 
+					// add some random variation to avoid lock-step
+					// especially after a server restart
+					int tweakedSeconds =
+						randSource.getRandomBoundedInt(
+							lrint( newDecayT->autoDecaySeconds * 0.9 ),
+							newDecayT->autoDecaySeconds );
+				   
+					if( tweakedSeconds < 1 ) {
+						tweakedSeconds = 1;
+						}
+					mapETA = MAP_TIMESEC + tweakedSeconds;
+					}
+				else {
+					// no further decay
+					mapETA = 0;
+					}          
+	 
+				setEtaDecay( x, y, mapETA, newDecayT );
                 }
             }
         }
