@@ -9267,10 +9267,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.indoorBonusTime = 0;
     newObject.indoorBonusFraction = 0;
 
-
-    newObject.foodDecrementETASeconds =
-        currentTime + 
-        computeFoodDecrementTimeSeconds( &newObject );
+    
+    
                 
     newObject.foodUpdate = true;
     newObject.lastAteID = 0;
@@ -10041,6 +10039,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             lrint( halfLifeFactor * newPlayerFoodDecrementSecondsBonus );
         }
     
+    newObject.foodDecrementETASeconds =
+        currentTime + 
+        computeFoodDecrementTimeSeconds( &newObject );
+
         
     if( forceSpawn ) {
         newObject.forceSpawn = true;
