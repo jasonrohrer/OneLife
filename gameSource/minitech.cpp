@@ -325,6 +325,8 @@ int minitech::compareObjUse(int idA, int idB) {
 	//return 1 if a and b have the same parent and a's use < b's
 	//return 0 otherwise
 	
+	if (idA <= 0 || idB <= 0) return 0;
+	
 	ObjectRecord* a = getObject(idA);
 	ObjectRecord* b = getObject(idB);
 	
