@@ -2023,6 +2023,17 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "USE" ) == 0 ) {
         m.type = USE;
+        // read optional id parameter
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.id ), &( m.i ) );
+        
+        if( numRead < 5 ) {
+            m.i = -1;
+            }
+        if( numRead < 4 ) {
+            m.id = -1;
+            }
         }
     else if( strcmp( nameBuffer, "SELF" ) == 0 ) {
         m.type = SELF;
@@ -7469,7 +7480,71 @@ static int getContainerSwapIndex( LiveObject *inPlayer,
     return -1;
     }
 
+
+
+// checks for granular +cont containment limitations
+// assumes that container size limitation and 
+// containable property checked elsewhere
+static char containmentPermitted( int inContainerID, int inContainedID ) {
+    ObjectRecord *containedO = getObject( inContainedID );
     
+    char *contLoc = strstr( containedO->description, "+cont" );
+    
+    if( contLoc == NULL ) {
+        // not a limited containable object
+        return true;
+        }
+    
+    char *limitNameLoc = &( contLoc[5] );
+    
+    if( limitNameLoc[0] != ' ' &&
+        limitNameLoc[0] != '\0' ) {
+
+        // there's something after +cont
+        // scan the whole thing, including +cont
+
+        char tag[100];
+        
+        int numRead = sscanf( contLoc, "%99s", tag );
+        
+        if( numRead == 1 ) {
+            
+            // clean up # character that might delimit end of string
+            int tagLen = strlen( tag );
+            
+            for( int i=0; i<tagLen; i++ ) {
+                if( tag[i] == '#' ) {
+                    tag[i] = '\0';
+                    tagLen = i;
+                    break;
+                    }
+                }
+
+            char *locInContainerName =
+                strstr( getObject( inContainerID )->description, tag );
+            
+            if( locInContainerName != NULL ) {
+                // skip to end of tag
+                // and make sure tag isn't a sub-tag of container tag
+                // don't want contained to be +contHot
+                // and contaienr to be +contHotPlates
+                
+                char end = locInContainerName[ tagLen ];
+                
+                if( end == ' ' ||
+                    end == '\0'||
+                    end == '#' ) {
+                    return true;
+                    }
+                }
+            return false;
+            }
+        }
+    
+    // +cont with nothing after it, no limit
+    return true;
+    }
+
         
 
 
@@ -7546,7 +7621,8 @@ static char addHeldToContainer( LiveObject *inPlayer,
     if( isRoom &&
         isContainable( 
             inPlayer->holdingID ) &&
-        containSize <= slotSize ) {
+        containSize <= slotSize &&
+        containmentPermitted( inTargetID, inPlayer->holdingID ) ) {
         
         // add to container
         
@@ -7890,9 +7966,17 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
             getObject( inPlayer->holdingID )->
             containSize;
     
+        char permitted = false;
         
         if( containSize <= slotSize &&
             cObj->numSlots > 0 &&
+            containmentPermitted( cObj->id, inPlayer->holdingID ) ) {
+            permitted = true;
+            }
+        
+        if( containSize <= slotSize &&
+            cObj->numSlots > 0 &&
+            permitted &&
             outCouldHaveGoneIn != NULL ) {
             *outCouldHaveGoneIn = true;
             }
@@ -7900,7 +7984,8 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
         if( ( oldNum < cObj->numSlots
               || ( oldNum == cObj->numSlots && inWillSwap ) )
             &&
-            containSize <= slotSize ) {
+            containSize <= slotSize &&
+            permitted ) {
             // room (or will swap, so we can over-pack it)
             inPlayer->clothingContained[inC].
                 push_back( 
@@ -7944,6 +8029,61 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
         }
 
     return false;
+    }
+
+
+
+static void changeContained( int inX, int inY, int inSlotNumber, 
+                             int inNewObjectID ) {
+    
+    int numContained = 0;
+    int *contained = getContained( inX, inY, &numContained );
+
+    timeSec_t *containedETA = 
+        getContainedEtaDecay( inX, inY, &numContained );
+    
+    timeSec_t curTimeSec = Time::timeSec();
+    
+    if( contained != NULL && containedETA != NULL &&
+        numContained > inSlotNumber ) {
+    
+        int oldObjectID = contained[ inSlotNumber ];
+        timeSec_t oldETA = containedETA[ inSlotNumber ];
+        
+        if( oldObjectID > 0 ) {
+            
+            TransRecord *oldDecayTrans = getTrans( -1, oldObjectID );
+
+            TransRecord *newDecayTrans = getTrans( -1, inNewObjectID );
+            
+
+            timeSec_t newETA = 0;
+            
+            if( newDecayTrans != NULL ) {
+                newETA = curTimeSec + newDecayTrans->autoDecaySeconds;
+                }
+            
+            if( oldDecayTrans != NULL && newDecayTrans != NULL &&
+                oldDecayTrans->autoDecaySeconds == 
+                newDecayTrans->autoDecaySeconds ) {
+                // preserve remaining seconds from old object
+                newETA = oldETA;
+                }
+            
+            contained[ inSlotNumber ] = inNewObjectID;
+            containedETA[ inSlotNumber ] = newETA;
+
+            setContained( inX, inY, numContained, contained );
+            setContainedEtaDecay( inX, inY, numContained, containedETA );
+            }
+        }
+
+    if( contained != NULL ) {
+        delete [] contained;
+        }
+    if( containedETA != NULL ) {
+        delete [] containedETA;
+        }
     }
 
 
@@ -14180,22 +14320,121 @@ int main() {
                                     
                                     pickupToHold( nextPlayer, m.x, m.y,
                                                   target );
-                                    }
-                                else if( nextPlayer->holdingID == 0 &&
-                                         targetObj->permanent ) {
-                                    
-                                    // try removing from permanent
-                                    // container
-                                    removeFromContainerToHold( nextPlayer,
-                                                               m.x, m.y,
-                                                               m.i );
                                     }         
-                                else if( nextPlayer->holdingID > 0 ) {
-                                    // try adding what we're holding to
-                                    // target container
+                                else if( nextPlayer->holdingID >= 0 ) {
                                     
-                                    addHeldToContainer(
-                                        nextPlayer, target, m.x, m.y );
+                                    char handled = false;
+                                    
+                                    if( m.i != -1 && targetObj->permanent &&
+                                        targetObj->numSlots > m.i &&
+                                        getNumContained( m.x, m.y ) > m.i &&
+                                        strstr( targetObj->description,
+                                                "+useOnContained" ) != NULL ) {
+                                        // a valid slot specified to use
+                                        // held object on.
+                                        // AND container allows this
+                                        
+                                        int contTarget = 
+                                            getContained( m.x, m.y, m.i );
+                                        
+                                        char isSubCont = false;
+                                        if( contTarget < 0 ) {
+                                            contTarget = -contTarget;
+                                            isSubCont = true;
+                                            }
+
+                                        ObjectRecord *contTargetObj =
+                                            getObject( contTarget );
+                                        
+                                        TransRecord *contTrans =
+                                            getPTrans( nextPlayer->holdingID,
+                                                       contTarget );
+                                        
+                                        ObjectRecord *newTarget = NULL;
+                                        
+                                        if( ! isSubCont &&
+                                            contTrans != NULL &&
+                                            ( contTrans->newActor == 
+                                              nextPlayer->holdingID ||
+                                              contTrans->newActor == 0 ||
+                                              canPickup( 
+                                                  contTrans->newActor,
+                                                  computeAge( 
+                                                      nextPlayer ) ) ) ) {
+
+                                            // a trans applies, and we
+                                            // can hold the resulting actor
+                                            if( contTrans->newTarget > 0 ) {
+                                                newTarget = getObject(
+                                                    contTrans->newTarget );
+                                                }
+                                            }
+                                        if( newTarget != NULL &&
+                                            isContainable( 
+                                                contTrans->newTarget ) &&
+                                            newTarget->containSize <=
+                                            targetObj->slotSize &&
+                                            containmentPermitted(
+                                                targetObj->id,
+                                                newTarget->id ) ) {
+                                                
+                                            int oldHeld = 
+                                                nextPlayer->holdingID;
+                                            
+                                            handleHoldingChange( 
+                                                nextPlayer,
+                                                contTrans->newActor );
+                                            
+                                            nextPlayer->heldOriginValid = 0;
+                                            nextPlayer->heldOriginX = 0;
+                                            nextPlayer->heldOriginY = 0;
+                                            nextPlayer->
+                                                heldTransitionSourceID = 0;
+                                            
+                                            if( contTrans->newActor > 0 && 
+                                                contTrans->newActor !=
+                                                oldHeld ) {
+                                                
+                                                nextPlayer->
+                                                    heldTransitionSourceID
+                                                    = contTargetObj->id;
+                                                }
+
+                                            
+                                            setResponsiblePlayer( 
+                                                - nextPlayer->id );
+                                            
+                                            changeContained( 
+                                                m.x, m.y,
+                                                m.i, 
+                                                contTrans->newTarget );
+                                            
+                                            setResponsiblePlayer( -1 );
+                                            handled = true;
+                                            }
+                                        }
+
+                                    
+                                    // consider other cases
+                                    if( ! handled ) {
+                                        if( nextPlayer->holdingID == 0 &&
+                                            targetObj->permanent ) {
+                                    
+                                            // try removing from permanent
+                                            // container
+                                            removeFromContainerToHold( 
+                                                nextPlayer,
+                                                m.x, m.y,
+                                                m.i );
+                                            }
+                                        else if( nextPlayer->holdingID > 0 ) {
+                                            // try adding what we're holding to
+                                            // target container
+                                            
+                                            addHeldToContainer(
+                                                nextPlayer, target, m.x, m.y );
+                                            }
+                                        }
                                     }
                                 
 
@@ -15529,56 +15768,77 @@ int main() {
                                         if( canDrop &&
                                             droppedObj->containable &&
                                             targetSlotSize >=
-                                            droppedObj->containSize ) {
+                                            droppedObj->containSize &&
+                                            containmentPermitted( 
+                                                target,
+                                                droppedObj->id ) ) {
                                             canGoIn = true;
                                             }
                                         
+                                        char forceUse = false;
+                                        
+                                        if( canDrop && 
+                                            canGoIn &&
+                                            targetSlots > 0 &&
+                                            nextPlayer->numContained == 0 &&
+                                            getNumContained( m.x, m.y ) == 0 ) {
+                                            
+                                            // container empty
+                                            // is there a transition that might
+                                            // apply instead?
+                                            
+                                            // only consider a consuming
+                                            // transition (custom containment
+                                            // like grapes in a basket which
+                                            // aren't in container slots )
+
+                                            TransRecord *t = 
+                                                getPTrans( 
+                                                    nextPlayer->holdingID, 
+                                                    target );
+                                            
+                                            if( t != NULL && 
+                                                t->newActor == 0 ) {
+                                                forceUse = true;
+                                                }
+                                            }
                                         
 
                                         // DROP indicates they 
                                         // right-clicked on container
                                         // so use swap mode
                                         if( canDrop && 
-                                            canGoIn && 
+                                            canGoIn &&
+                                            ! forceUse &&
                                             addHeldToContainer( 
                                                 nextPlayer,
                                                 target,
                                                 m.x, m.y, true ) ) {
                                             // handled
                                             }
-                                        else if( canDrop && 
-                                                 ! canGoIn &&
-                                                 targetObj->permanent &&
-                                                 nextPlayer->numContained 
-                                                 == 0 ) {
+                                        else if( forceUse ||
+                                                 ( canDrop && 
+                                                   ! canGoIn &&
+                                                   targetObj->permanent &&
+                                                   nextPlayer->numContained 
+                                                   == 0 ) ) {
                                             // try treating it like
                                             // a USE action
-                                            
-                                            TransRecord *useTrans =
-                                                getPTrans( 
-                                                    nextPlayer->holdingID,
-                                                    target );
-                                            // handle simple case
-                                            // stacking containers
-                                            // client sends DROP for this
-                                            if( useTrans != NULL &&
-                                                useTrans->newActor == 0 ) {
-                                                
-                                                handleHoldingChange(
-                                                    nextPlayer,
-                                                    useTrans->newActor );
-                                                
-                                                setMapObject( 
-                                                    m.x, m.y,
-                                                    useTrans->newTarget );
-                                                }
+                                            m.type = USE;
+                                            m.id = -1;
+                                            m.c = -1;
+                                            playerIndicesToSendUpdatesAbout.
+                                                deleteElementEqualTo( i );
+                                            goto RESTART_MESSAGE_ACTION;
                                             }
                                         else if( canDrop && 
                                                  ! canGoIn &&
                                                  ! targetObj->permanent 
                                                  &&
-                                                 targetObj->minPickupAge <=
-                                                 computeAge( nextPlayer ) ) {
+                                                 canPickup( 
+                                                     targetObj->id,
+                                                     computeAge( 
+                                                         nextPlayer ) ) ) {
                                             // drop onto a spot where
                                             // something exists, and it's
                                             // not a container
@@ -15588,6 +15848,8 @@ int main() {
                                             
                                             int oldHeld = 
                                                 nextPlayer->holdingID;
+                                            int oldNumContained =
+                                                nextPlayer->numContained;
                                             
                                             // now swap
                                             swapHeldWithGround( 
@@ -15595,11 +15857,14 @@ int main() {
                                              &playerIndicesToSendUpdatesAbout );
                                             
                                             if( oldHeld == 
-                                                nextPlayer->holdingID ) {
+                                                nextPlayer->holdingID &&
+                                                oldNumContained ==
+                                                nextPlayer->numContained ) {
                                                 // no change
                                                 // are they the same object?
-                                                if( oldHeld == target ) {
-                                                    // try using held
+                                                if( oldNumContained == 0 && 
+                                                    oldHeld == target ) {
+                                                    // try using empty held
                                                     // on target
                                                     TransRecord *sameTrans
                                                         = getPTrans(
