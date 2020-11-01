@@ -53,6 +53,10 @@ Server Fixes
   gate, so now you get a notice that they've done this, and you can go to deal
   with them if needed.
 
+--Fixed crash when informing a leader about a new follower and there's a
+  leadership loop.
+
+
 
 
 

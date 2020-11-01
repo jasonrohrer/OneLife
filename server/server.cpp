@@ -20671,8 +20671,28 @@ int main() {
                                      otherToFollow->id ) {
                                 nextPlayer->followingID = otherToFollow->id;
                                 nextPlayer->followingUpdate = true;
+                                
+                                if( otherToFollow->leadingColorIndex == -1 ) {
+                                    otherToFollow->leadingColorIndex =
+                                        getUnusedLeadershipColor();
+                                    }
 
+                                // break any loops
+                                LiveObject *o = nextPlayer;
+                                
+                                while( o != NULL && o->followingID != -1 ) {
+                                    if( o->followingID == nextPlayer->id ) {
+                                        // loop
+                                        // break it by having next player's
+                                        // new leader follow no one
+                                        otherToFollow->followingID = -1;
+                                        otherToFollow->followingUpdate = true;
+                                        break;
+                                        }
+                                    o = getLiveObject( o->followingID );
+                                    }
 
+                                
                                 if( ! isExiled( otherToFollow,
                                                 nextPlayer )
                                     && 
@@ -20701,27 +20721,6 @@ int main() {
                                                          message, 
                                                          strlen( message ) );
                                     delete [] message; 
-                                    }
-
-
-                                if( otherToFollow->leadingColorIndex == -1 ) {
-                                    otherToFollow->leadingColorIndex =
-                                        getUnusedLeadershipColor();
-                                    }
-
-                                // break any loops
-                                LiveObject *o = nextPlayer;
-                                
-                                while( o != NULL && o->followingID != -1 ) {
-                                    if( o->followingID == nextPlayer->id ) {
-                                        // loop
-                                        // break it by having next player's
-                                        // new leader follow no one
-                                        otherToFollow->followingID = -1;
-                                        otherToFollow->followingUpdate = true;
-                                        break;
-                                        }
-                                    o = getLiveObject( o->followingID );
                                     }
                                 }
                             }
