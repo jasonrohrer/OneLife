@@ -195,6 +195,8 @@ minitech::mouseListener* minitech::getMouseListenerByArea(
 
 GridPos minitech::getClosestTile(GridPos src, int objId) {
 	
+	objId = getDummyParent(objId);
+	
 	int *mMap = livingLifePage->mMap;
 		
 	int mMapOffsetX = livingLifePage->mMapOffsetX;
@@ -435,6 +437,7 @@ vector<bool> minitech::getObjIsCloseVector() {
 				
 				if ( ! (!id || id <= 0 || id >= maxObjects) ) {
 					objIsClose[id] = true;
+					objIsClose[getDummyParent(id)] = true;
 					foundInThisTile = true;
 				}
 				
@@ -442,6 +445,7 @@ vector<bool> minitech::getObjIsCloseVector() {
 					for (int i=0; i < mMapContainedStacks[mapI].size(); i++) {
 						id = mMapContainedStacks[mapI].getElementDirect(i);
 						objIsClose[id] = true;
+						objIsClose[getDummyParent(id)] = true;
 						foundInThisTile = true;
 					}
 					if (foundInThisTile) continue;
@@ -453,6 +457,7 @@ vector<bool> minitech::getObjIsCloseVector() {
 						for (int k=0; k < subContainedStack.size(); k++) {
 							id = subContainedStack.getElementDirect(k);
 							objIsClose[id] = true;
+							objIsClose[getDummyParent(id)] = true;
 							foundInThisTile = true;
 						}
 					}
@@ -1466,6 +1471,8 @@ void minitech::livingLifeDraw(float mX, float mY) {
 			nextListener = NULL;
 		}
 	}
+	
+	// currentHintObjId = getDummyParent(currentHintObjId);
 	
 	if ( lastHintObjId == 0 && currentHintObjId != 0 ) minitechMinimized = false;
 	
