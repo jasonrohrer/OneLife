@@ -513,8 +513,13 @@ static void setupObjectPasswordStatus( ObjectRecord *inR ) {
 
                 *(id-4) = '\0';
                 p = p+5;
-                inR->IndPass.push_back( p );
-                std::cout << ", secret word: " << p;
+				std::string pw(buf);
+				std::size_t pos = pw.find("word:");
+				pw = pw.substr(pos+5);
+				char* pwc = new char[48];
+				strcpy (pwc, pw.c_str());
+                inR->IndPass.push_back( pwc );
+                std::cout << ", secret word: " << pwc;
 
                 *(p-6) = '\0';
                 y = y+2;
