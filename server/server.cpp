@@ -13879,6 +13879,49 @@ int main() {
                                                   target );
                                     }
 
+                                if( r != NULL &&
+                                    targetObj->numSlots > 0 ) {
+                                    // target has number of slots
+                                    
+                                    int numContained = 
+                                        getNumContained( m.x, m.y );
+                                    
+                                    int numSlotsInNew = 0;
+                                    
+                                    if( r->newTarget > 0 ) {
+                                        numSlotsInNew =
+                                            getObject( r->newTarget )->numSlots;
+                                        }
+                                    
+                                    if( numContained > numSlotsInNew &&
+                                        numSlotsInNew == 0 ) {
+                                        // not enough room in new target
+
+                                        // check if new actor will contain
+                                        // them (reverse containment transfer)
+                                        
+                                        if( r->newActor > 0 &&
+                                            nextPlayer->numContained == 0 ) {
+                                            // old actor empty
+                                            
+                                            int numSlotsNewActor =
+                                                getObject( r->newActor )->
+                                                numSlots;
+                                         
+                                            numSlotsInNew = numSlotsNewActor;
+                                            }
+                                        }
+
+
+                                    if( numContained > numSlotsInNew ) {
+                                        // would result in shrinking
+                                        // and flinging some contained
+                                        // objects
+                                        // block it.
+                                        heldCanBeUsed = false;
+                                        r = NULL;
+                                        }
+                                    }
                                   
                                 if( r == NULL && 
                                     ( nextPlayer->holdingID != 0 || 
