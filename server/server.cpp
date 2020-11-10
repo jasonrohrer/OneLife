@@ -14095,18 +14095,30 @@ int main() {
                                         ( target > 0) && ( r->newTarget > 0 ) && ( target != r->newTarget ) &&
                                          getObject( target )->canHaveInGamePassword ) {
                                         
-                                        //first of all, if transition was allowed, then old object loses the password record in any case
-                                        char *pass = NULL;
-                                        for( int i=0; i<targetObj->IndX.size(); i++ ) {
-                                            if ( m.x == getObject( target )->IndX.getElementDirect(i) && m.y == getObject( target )->IndY.getElementDirect(i) ) {
-                                                pass = getObject( target )->IndPass.getElementDirect(i);
-                                                    AppLog::infoF( "2HOL DEBUG: the password is deleted from the object with ID %i, located at the position (%i,%i).", getObject( target )->id, m.x, m.y);
-                                                getObject( target )->IndPass.deleteElement(i);
-                                                getObject( target )->IndX.deleteElement(i);
-                                                getObject( target )->IndY.deleteElement(i);
-                                                break;
-                                            }
-                                        }
+										//first of all, if transition was allowed, then old object loses the password record in any case
+										
+										//Instead of removing GridPos only from the target object,
+										//we go through all possible pw-protected object and remove such GridPos if we see them
+										//This is because upon server restart, we ignore the saved ids and load all the pw-locked GridPos into all possible pw objects.
+										//See setupObjectPasswordStatus() in objectBank.cpp
+										int maxId = getMaxObjectID();
+										char *pass = NULL;
+
+										for ( int id=0; id<maxId; id++ ) {
+											ObjectRecord *obj = getObject(id);
+											if (obj != NULL && obj->canHaveInGamePassword) {
+												for( int i=0; i<obj->IndX.size(); i++ ) {
+													if ( m.x == obj->IndX.getElementDirect(i) && m.y == obj->IndY.getElementDirect(i) ) {
+														if (targetObj->id == id) pass = obj->IndPass.getElementDirect(i);
+															AppLog::infoF( "2HOL DEBUG: the password is deleted from the object with ID %i, located at the position (%i,%i).", obj->id, m.x, m.y);
+														obj->IndPass.deleteElement(i);
+														obj->IndX.deleteElement(i);
+														obj->IndY.deleteElement(i);
+														break;
+													}
+												}
+											}
+										}
                                         
                                         //then, if the result of the transition isn't protected by password (either newTarget is without password, or there is no newTarget), that's it;
                                         //otherwise, the password needs to be reapplied to the new object
