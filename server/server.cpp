@@ -14050,6 +14050,17 @@ int main() {
                                             // else { if ( found[0] == '\0' ) {AppLog::infoF( "    2HOL DEBUG: password string is empty." );} }
                                             
                                             if ( ( found != NULL ) && ( found[0] != '\0') ) {
+												
+												//Clear old passwords before assigning the new one to this tile
+												//These old passwords are from password restoration after server restart, not from players
+												for( int i=0; i<getObject( r->newTarget )->IndX.size(); i++ ) {
+													if ( m.x == getObject( r->newTarget )->IndX.getElementDirect(i) && m.y == getObject( r->newTarget )->IndY.getElementDirect(i) ) {
+														getObject( r->newTarget )->IndPass.deleteElement(i);
+														getObject( r->newTarget )->IndX.deleteElement(i);
+														getObject( r->newTarget )->IndY.deleteElement(i);
+														break;
+													}
+												}
                                                
                                                 getObject( r->newTarget )->IndX.push_back( m.x );
                                                 getObject( r->newTarget )->IndY.push_back( m.y );
