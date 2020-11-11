@@ -670,8 +670,8 @@ vector<TransRecord*> minitech::getUsesTrans(int objId) {
 			continue;
 		}
 		
-		if ( isUseDummyAndNotLastUse(idA) && isUseDummyAndNotLastUse(idC) ) continue;
-		if ( isUseDummyAndNotLastUse(idB) && isUseDummyAndNotLastUse(idD) ) continue;
+		if ( isUseDummyAndNotLastUse(idA) && isUseDummyAndNotLastUse(idC) && idA != objId ) continue;
+		if ( isUseDummyAndNotLastUse(idB) && isUseDummyAndNotLastUse(idD) && idB != objId ) continue;
 		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
 		
@@ -702,8 +702,8 @@ vector<TransRecord*> minitech::getProdTrans(int objId) {
 		int idD = trans->newTarget;
 		
 		if ( idA == objId || idB == objId ) continue;
-		if ( isUseDummyAndNotLastUse(idA) && isUseDummyAndNotLastUse(idC) ) continue;
-		if ( isUseDummyAndNotLastUse(idB) && isUseDummyAndNotLastUse(idD) ) continue;
+		if ( isUseDummyAndNotLastUse(idA) && isUseDummyAndNotLastUse(idC) && idC != objId ) continue;
+		if ( isUseDummyAndNotLastUse(idB) && isUseDummyAndNotLastUse(idD) && idD != objId ) continue;
 		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
 		
