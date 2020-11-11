@@ -674,6 +674,7 @@ vector<TransRecord*> minitech::getUsesTrans(int objId) {
 		if ( isUseDummyAndNotLastUse(idB) && isUseDummyAndNotLastUse(idD) && idB != objId ) continue;
 		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
+		if (idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0) continue;
 		
 		results.push_back(trans);
 
@@ -706,6 +707,7 @@ vector<TransRecord*> minitech::getProdTrans(int objId) {
 		if ( isUseDummyAndNotLastUse(idB) && isUseDummyAndNotLastUse(idD) && idD != objId ) continue;
 		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
+		if (idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0) continue;
 		
 		results.push_back(trans);
 
@@ -1103,7 +1105,11 @@ void minitech::updateDrawTwoTech() {
 				drawRect(pos, iconSize/2, iconSize/2);
 			}
 			if (trans->target == -1) {
-				drawObj(pos, trans->target, "EMPTY", "GROUND");
+				if (trans->newTarget == 0) {
+					drawStr("MOUTH", pos, "tinyHandwritten", false);
+				} else {
+					drawObj(pos, trans->target, "EMPTY", "GROUND");
+				}
 			} else {
 				drawObj(pos, trans->target);
 			}
@@ -1170,6 +1176,8 @@ void minitech::updateDrawTwoTech() {
 			pos.x += iconSize;
 			if (trans->actor == -1 && trans->autoDecaySeconds != 0 && trans->newActor == 0) {
 				//not drawing the plus sign for pure Changes over time...
+			} else if (trans->target == -1 && trans->newTarget == 0) {
+				//not drawing the plus sign for eating transitions
 			} else {
 				drawStr("+", pos, "handwritten", false);
 			}
@@ -1187,6 +1195,9 @@ void minitech::updateDrawTwoTech() {
 			}
 			if (trans->actor == -1 && trans->autoDecaySeconds != 0 && trans->newTarget == 0) {
 				//Despawn transitions, "DESPAWNS" is written in the newActor slot, keep this slot empty
+			} else if (trans->target == -1 && trans->newTarget == 0) {
+				//Eating transitions
+				//Other generic use transitions in which target has no food value should be filtered out in getUsesTrans and getProdTrans
 			} else {
 				drawObj(pos, trans->newTarget, "EMPTY", "GROUND");
 			}
