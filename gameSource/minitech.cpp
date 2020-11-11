@@ -651,6 +651,7 @@ vector<TransRecord*> minitech::getUsesTrans(int objId) {
 		int idC = trans->newActor;
 		int idD = trans->newTarget;
 		
+		//parse probabilitySet transitions (e.g. fishing)
 		int cOrD = -1;
 		if ( isProbabilitySet(idC) ) cOrD = 0;
 		if ( isProbabilitySet(idD) ) cOrD = 1;
@@ -670,11 +671,15 @@ vector<TransRecord*> minitech::getUsesTrans(int objId) {
 			continue;
 		}
 		
+		//Skip useDummy when not holding them (e.g. holding bowl, skip bucket of water useDummies, only keep first and last use)
 		if ( isUseDummyAndNotLastUse(idA) && isUseDummyAndNotLastUse(idC) && idA != objId ) continue;
 		if ( isUseDummyAndNotLastUse(idB) && isUseDummyAndNotLastUse(idD) && idB != objId ) continue;
+		//Skip categories
 		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
+		//Skip raw lastUse transitions, the proper ones are auto-generated and not tagged as lastUse
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
-		if (idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0) continue;
+		//Skip generic use transitions when they are not food
+		if (idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0) continue; 
 		
 		results.push_back(trans);
 
@@ -702,12 +707,20 @@ vector<TransRecord*> minitech::getProdTrans(int objId) {
 		int idC = trans->newActor;
 		int idD = trans->newTarget;
 		
+		//Skip the use of the object which returns the object itself (e.g. sharp stone on branches)
 		if ( idA == objId || idB == objId ) continue;
+		//Skip useDummy when not holding them (e.g. holding bowl, skip bucket of water useDummies, only keep first and last use)
 		if ( isUseDummyAndNotLastUse(idA) && isUseDummyAndNotLastUse(idC) && idC != objId ) continue;
 		if ( isUseDummyAndNotLastUse(idB) && isUseDummyAndNotLastUse(idD) && idD != objId ) continue;
+		//Skip categories
 		if ( isCategory(idA) || isCategory(idB) || isCategory(idC) || isCategory(idD) ) continue;
+		//Skip raw lastUse transitions, the proper ones are auto-generated and not tagged as lastUse
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
+		//Skip generic use transitions when they are not food
 		if (idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0) continue;
+		
+		//Strangely there are results that do not make the object at all e.g. bowl of water, reason unknown yet
+		if (idC != objId && idD != objId) continue;
 		
 		results.push_back(trans);
 
