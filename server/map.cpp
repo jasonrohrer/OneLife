@@ -5268,8 +5268,8 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 if( newX != inX || newY != inY ) {
                     // a reall move!
                    
-                    //printf( "Object moving from (%d,%d) to (%d,%d)\n",
-                    //        inX, inY, newX, newY );
+                    printf( "Object moving from (%d,%d) to (%d,%d)\n",
+                           inX, inY, newX, newY );
                    
                     // move object
                    
