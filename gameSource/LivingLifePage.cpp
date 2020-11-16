@@ -13846,7 +13846,7 @@ void LivingLifePage::step() {
                             mNextHintIndex = 
                                 mHintBookmarks[ mNextHintObjectID ];
 								
-							minitech::currentHintObjId = mNextHintObjectID;
+							if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = mNextHintObjectID;
                             }
 
 
@@ -19605,20 +19605,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 // give hint about dest object which will be unchanged 
                 mNextHintObjectID = destID;
                 mNextHintIndex = mHintBookmarks[ destID ];
-				minitech::currentHintObjId = destID;
+				if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = destID;
                 }
             else if( tr->newActor > 0 && 
                      ourLiveObject->holdingID != tr->newActor ) {
                 // give hint about how what we're holding will change
                 mNextHintObjectID = tr->newActor;
                 mNextHintIndex = mHintBookmarks[ tr->newTarget ];
-				minitech::currentHintObjId = tr->newActor;
+				if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = tr->newActor;
                 }
             else if( tr->newTarget > 0 ) {
                 // give hint about changed target after we act on it
                 mNextHintObjectID = tr->newTarget;
                 mNextHintIndex = mHintBookmarks[ tr->newTarget ];
-				minitech::currentHintObjId = tr->newTarget;
+				if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = tr->newTarget;
                 }
             }
         else {
@@ -19628,7 +19628,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( getTrans( 0, destID ) == NULL ) {
                 mNextHintObjectID = destID;
                 mNextHintIndex = mHintBookmarks[ destID ];
-				minitech::currentHintObjId = destID;
+				if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = destID;
                 }
             }
         }
@@ -21053,14 +21053,17 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 
                                 int filterStringLen = 
                                     strlen( trimmedFilterString );
-                            
+							
                                 if( filterStringLen > 0 ) {
                                     // not blank
                                     mHintFilterString = 
                                         stringDuplicate( trimmedFilterString );
 										
-									minitech::hintStr = mHintFilterString;
+									minitech::inputHintStrToSearch( mHintFilterString );
                                     }
+								else {
+									minitech::inputHintStrToSearch( "" );;
+								}
                             
                                 delete [] trimmedFilterString;
                             
