@@ -1870,9 +1870,29 @@ TransRecord *getPTrans( int inActor, int inTarget,
 
     if( actorProbSet ) {
         rStatic->newActor = pickFromProbSet( rStatic->newActor );
+		
+		ObjectRecord *actor = getObject(rStatic->actor);
+		ObjectRecord *newActor = getObject(rStatic->newActor);
+		if (actor != NULL && actor->isUseDummy && newActor != NULL && newActor->numUses > 1) {
+			ObjectRecord *actorParent = getObject(actor->useDummyParent);
+			if (actorParent != NULL && actorParent->numUses == newActor->numUses) {
+				rStatic->newActor = newActor->useDummyIDs[actor->thisUseDummyIndex];
+				}
+			}
+        
         }
     if( targetProbSet ) {
         rStatic->newTarget = pickFromProbSet( rStatic->newTarget );
+		
+		ObjectRecord *target = getObject(rStatic->target);
+		ObjectRecord *newTarget = getObject(rStatic->newTarget);
+		if (target != NULL && target->isUseDummy && newTarget != NULL && newTarget->numUses > 1) {
+			ObjectRecord *targetParent = getObject(target->useDummyParent);
+			if (targetParent != NULL && targetParent->numUses == newTarget->numUses) {
+				rStatic->newTarget = newTarget->useDummyIDs[target->thisUseDummyIndex];
+				}
+			}
+		
         }
     
     
