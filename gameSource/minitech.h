@@ -50,8 +50,8 @@ public:
 	static bool minitechMinimized;
 	static unsigned char minimizeKey;
 	static int stepCount;
-	static float currentX;
-	static float currentY;
+	static int currentX;
+	static int currentY;
 
 	static bool posWithinArea(doublePair pos, doublePair areaTL, doublePair areaBR);
 	static bool posEqual(doublePair pos1, doublePair pos2);

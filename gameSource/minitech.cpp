@@ -46,8 +46,8 @@ SimpleVector<SimpleVector<int>> *minitech::mMapSubContainedStacks;
 bool minitech::minitechMinimized = true;
 unsigned char minitech::minimizeKey;
 int minitech::stepCount;
-float minitech::currentX;
-float minitech::currentY;
+int minitech::currentX;
+int minitech::currentY;
 
 vector<TransRecord*> minitech::currentHintTrans;
 int minitech::currentTwoTechPage;
@@ -177,7 +177,8 @@ bool minitech::isCategory(int objId) {
 
 minitech::mouseListener* minitech::getMouseListenerByArea( 
 	vector<mouseListener*>* listeners, doublePair posTL, doublePair posBR ) {
-	for (int i=0; i<listeners->size(); i++) {
+	int size = listeners->size();
+	for (int i=0; i<size; i++) {
 		if (
 			posEqual( (*listeners)[i]->posTL, posTL) &&
 			posEqual( (*listeners)[i]->posBR, posBR)
@@ -206,7 +207,7 @@ GridPos minitech::getClosestTile(GridPos src, int objId) {
 	int pathOffsetY = pathFindingD/2 - currentY;
 	
 	float foundBestDist = 9999;
-	float foundBestX, foundBestY;
+	int foundBestX, foundBestY;
 	
 	bool tileFound = false;
 
@@ -421,11 +422,11 @@ vector<bool> minitech::getObjIsCloseVector() {
 	
 	for( int y=0; y<pathFindingD; y++ ) {
 		int mapY = ( y - pathOffsetY ) + mMapD / 2 - mMapOffsetY;
-		int mapY_abs = mapY + mMapOffsetY - mMapD / 2;
+		//int mapY_abs = mapY + mMapOffsetY - mMapD / 2;
 		
 		for( int x=0; x<pathFindingD; x++ ) {
 			int mapX = ( x - pathOffsetX ) + mMapD / 2 - mMapOffsetX;
-			int mapX_abs = mapX + mMapOffsetX - mMapD / 2;
+			//int mapX_abs = mapX + mMapOffsetX - mMapD / 2;
 			
 			if( mapY >= 0 && mapY < mMapD &&
 				mapX >= 0 && mapX < mMapD ) { 
@@ -759,14 +760,15 @@ vector<TransRecord*> minitech::sortUsesTrans(vector<TransRecord*> unsortedTrans)
 	vector<bool> boolCloseVect = getObjIsCloseVector();
 	vector<float> rankScores(unsortedTrans.size(), 0);
 	
-	for ( int i=0; i<unsortedTrans.size(); i++ ) {
+	int size = unsortedTrans.size();
+	for ( int i=0; i<size; i++ ) {
 		TransRecord *trans = unsortedTrans[i];
 		
 		int idA = trans->actor;
 		int idB = trans->target;
-		int idC = trans->newActor;
-		int idD = trans->newTarget;
-		int holdingID = getDummyParent(ourLiveObject->holdingID);
+		//int idC = trans->newActor;
+		//int idD = trans->newTarget;
+		//int holdingID = getDummyParent(ourLiveObject->holdingID);
 		
 		GridPos currentPos = {currentX, currentY};
 		
@@ -811,7 +813,9 @@ vector<TransRecord*> minitech::sortUsesTrans(vector<TransRecord*> unsortedTrans)
 	sort(index.begin(), index.end(), [&](size_t a, size_t b) { return rankScores[a] < rankScores[b]; });
 	
 	vector<TransRecord*> temp(unsortedTrans.size());
-	for ( int i=0; i<unsortedTrans.size(); i++ ) {
+	
+	size = unsortedTrans.size();
+	for ( int i=0; i<size; i++ ) {
 		temp[i] = unsortedTrans[index[i]];
 	}
 	return temp;
@@ -822,14 +826,15 @@ vector<TransRecord*> minitech::sortProdTrans(vector<TransRecord*> unsortedTrans)
 	vector<bool> boolCloseVect = getObjIsCloseVector();
 	vector<float> rankScores(unsortedTrans.size(), 0);
 	
-	for ( int i=0; i<unsortedTrans.size(); i++ ) {
+	int size = unsortedTrans.size();
+	for ( int i=0; i<size; i++ ) {
 		TransRecord *trans = unsortedTrans[i];
 		
 		int idA = trans->actor;
 		int idB = trans->target;
 		int idC = trans->newActor;
-		int idD = trans->newTarget;
-		int holdingID = getDummyParent(ourLiveObject->holdingID);
+		//int idD = trans->newTarget;
+		//int holdingID = getDummyParent(ourLiveObject->holdingID);
 		
 		GridPos currentPos = {currentX, currentY};
 		
@@ -884,7 +889,9 @@ vector<TransRecord*> minitech::sortProdTrans(vector<TransRecord*> unsortedTrans)
 	sort(index.begin(), index.end(), [&](size_t a, size_t b) { return rankScores[a] < rankScores[b]; });
 	
 	vector<TransRecord*> temp(unsortedTrans.size());
-	for ( int i=0; i<unsortedTrans.size(); i++ ) {
+	
+	size = unsortedTrans.size();
+	for ( int i=0; i<size; i++ ) {
 		temp[i] = unsortedTrans[index[i]];
 	}
 	return temp;
@@ -1281,7 +1288,8 @@ void minitech::updateDrawTwoTech() {
 			drawStr(pageInd, pos, "tinyMain", false);
 		}
 		
-		for (int i=0; i<iconListenerIds.size(); i++) {
+		int size = iconListenerIds.size();
+		for (int i=0; i<size; i++) {
 			mouseListener* listener = iconListenerIds[i].first;
 			int id = iconListenerIds[i].second;
 			doublePair iconLT = add(listener->posTL, screenPos);
@@ -1608,7 +1616,8 @@ bool minitech::livingLifePageMouseDown( float mX, float mY ) {
 	doublePair mousePosScreenAdj = sub(mousePos, screenPos);
 	
 	bool clickCaught = false;
-	for ( int i=0; i<twotechMouseListeners.size(); i++ ) {
+	int size = twotechMouseListeners.size();
+	for ( int i=0; i<size; i++ ) {
 		mouseListener* listener = twotechMouseListeners[i];
 		if ( posWithinArea(mousePosScreenAdj, listener->posTL, listener->posBR) ) {
 			listener->mouseClick = true;

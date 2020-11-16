@@ -4333,9 +4333,9 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         if ( passwordInvocationAndSettingAreSeparated ) {
             sayingPassword = isPasswordInvokingSay( inToSay );
             if( sayingPassword != NULL ) {
-                AppLog::infoF( "2HOL DEBUG: Player says password. New password assigned to a player." );
+                // AppLog::infoF( "2HOL DEBUG: Player says password. New password assigned to a player." );
                 inPlayer->saidPassword = stringDuplicate( sayingPassword );
-                AppLog::infoF( "2HOL DEBUG: Player's password is %s", inPlayer->saidPassword );
+                // AppLog::infoF( "2HOL DEBUG: Player's password is %s", inPlayer->saidPassword );
 				//if passwordSilent = true, no need to display anything, as well as make any further checks, just cut it after the assignment is done
 				if( passwordSilent ) { return; }
                 }
@@ -4345,10 +4345,10 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     
         assigningPassword = isPasswordSettingSay( inToSay );
         if( assigningPassword != NULL ) {
-            AppLog::infoF( "2HOL DEBUG: Player sets new password for future assignment." );
+            // AppLog::infoF( "2HOL DEBUG: Player sets new password for future assignment." );
             inPlayer->assignedPassword = stringDuplicate( assigningPassword );
             if ( !passwordInvocationAndSettingAreSeparated ) { inPlayer->saidPassword = stringDuplicate( assigningPassword ); }
-            AppLog::infoF( "2HOL DEBUG: Password for future assignment password is %s", inPlayer->assignedPassword );
+            // AppLog::infoF( "2HOL DEBUG: Password for future assignment password is %s", inPlayer->assignedPassword );
             //if passwordSilent = true, no need to display anything, as well as make any further checks, just cut it after the assignment is done
             if( passwordSilent ) { return; }
             }
@@ -10157,26 +10157,26 @@ static char isAccessBlocked( LiveObject *inPlayer,
 		//2HOL additions for: password-protected objects
 		//the check to block the transition for the object which password was not guessed correctly
 		if( passwordTransitionsAllowed && targetObj->canHaveInGamePassword ) {
-			AppLog::infoF( "2HOL DEBUG: attempt to interact with an object potentially having password" );
-			AppLog::infoF( "2HOL DEBUG: there are %i protected tiles with object ID %i in the world", targetObj->IndX.size(), targetObj->id );
-			AppLog::infoF( "2HOL DEBUG: interaction location, x: %i", x );
-			AppLog::infoF( "2HOL DEBUG: interaction location, y: %i", y );
+			// AppLog::infoF( "2HOL DEBUG: attempt to interact with an object potentially having password" );
+			// AppLog::infoF( "2HOL DEBUG: there are %i protected tiles with object ID %i in the world", targetObj->IndX.size(), targetObj->id );
+			// AppLog::infoF( "2HOL DEBUG: interaction location, x: %i", x );
+			// AppLog::infoF( "2HOL DEBUG: interaction location, y: %i", y );
 			for( int i=0; i<targetObj->IndX.size(); i++ ) {
 				if ( x == targetObj->IndX.getElementDirect(i) && y == targetObj->IndY.getElementDirect(i) ) {
-					AppLog::infoF( "2HOL DEBUG: protected tile #%i, password: %s", i, targetObj->IndPass.getElementDirect(i) );
+					// AppLog::infoF( "2HOL DEBUG: protected tile #%i, password: %s", i, targetObj->IndPass.getElementDirect(i) );
 					if ( inPlayer->saidPassword == NULL ) {
-							AppLog::infoF( "2HOL DEBUG: player didn't say any password." );
+							// AppLog::infoF( "2HOL DEBUG: player didn't say any password." );
 							blockedByPassword = true;
 					}
 					else {
-						AppLog::infoF( "2HOL DEBUG: player's password: %s", inPlayer->saidPassword );
+						// AppLog::infoF( "2HOL DEBUG: player's password: %s", inPlayer->saidPassword );
 						char *pass = strstr( inPlayer->saidPassword, targetObj->IndPass.getElementDirect(i) );
 						if ( pass ) {
-							AppLog::infoF( "2HOL DEBUG: passwords match." );
+							// AppLog::infoF( "2HOL DEBUG: passwords match." );
 							blockedByPassword = false;
 							}
 						else {
-							AppLog::infoF( "2HOL DEBUG: passwords do not match." );
+							// AppLog::infoF( "2HOL DEBUG: passwords do not match." );
 							blockedByPassword = true;
 							}
 						}
@@ -10185,7 +10185,7 @@ static char isAccessBlocked( LiveObject *inPlayer,
 				}
 			// 2HOL, password-protected objects: or for which the password was not guessed
 			if ( blockedByPassword ) {
-				 AppLog::infoF( "2HOL DEBUG: attempt to interact was blocked: wrong password." );
+				 // AppLog::infoF( "2HOL DEBUG: attempt to interact was blocked: wrong password." );
 				}
 			}
         }
@@ -12002,8 +12002,8 @@ int main() {
             if( message != NULL ) {
                 someClientMessageReceived = true;
                 
-                //AppLog::infoF( "Got client message from %d: %s",
-                //               nextPlayer->id, message );
+                AppLog::infoF( "Got client message from %d: %s",
+                              nextPlayer->id, message );
                 
                 ClientMessage m = parseMessage( nextPlayer, message );
                 
@@ -14043,13 +14043,24 @@ int main() {
                                          getObject( oldHolding )->canGetInGamePassword &&
                                          getObject( r->newTarget )->canHaveInGamePassword ) {                                           
 
-                                            AppLog::infoF( "2HOL DEBUG: retrieving player's password." );
+                                            // AppLog::infoF( "2HOL DEBUG: retrieving player's password." );
                                             char *found = nextPlayer->assignedPassword;
                                             
-                                            if ( found == NULL ) {AppLog::infoF( "    2HOL DEBUG: password returned NULL." );}
-                                            else { if ( found[0] == '\0' ) {AppLog::infoF( "    2HOL DEBUG: password string is empty." );} }
+                                            // if ( found == NULL ) {AppLog::infoF( "    2HOL DEBUG: password returned NULL." );}
+                                            // else { if ( found[0] == '\0' ) {AppLog::infoF( "    2HOL DEBUG: password string is empty." );} }
                                             
                                             if ( ( found != NULL ) && ( found[0] != '\0') ) {
+												
+												//Clear old passwords before assigning the new one to this tile
+												//These old passwords are from password restoration after server restart, not from players
+												for( int i=0; i<getObject( r->newTarget )->IndX.size(); i++ ) {
+													if ( m.x == getObject( r->newTarget )->IndX.getElementDirect(i) && m.y == getObject( r->newTarget )->IndY.getElementDirect(i) ) {
+														getObject( r->newTarget )->IndPass.deleteElement(i);
+														getObject( r->newTarget )->IndX.deleteElement(i);
+														getObject( r->newTarget )->IndY.deleteElement(i);
+														break;
+													}
+												}
                                                
                                                 getObject( r->newTarget )->IndX.push_back( m.x );
                                                 getObject( r->newTarget )->IndY.push_back( m.y );
@@ -14078,12 +14089,12 @@ int main() {
                                                 //erasing player's password after each successful transition
                                                 nextPlayer->assignedPassword = NULL;
                                                 
-                                                                                              AppLog::infoF( "2HOL DEBUG: saved password-protected position, x = %i", getObject( r->newTarget )->IndX.getElementDirect(getObject( r->newTarget )->IndX.size()-1));
-                                                AppLog::infoF( "2HOL DEBUG: saved password-protected position, y = %i", getObject( r->newTarget )->IndY.getElementDirect(getObject( r->newTarget )->IndY.size()-1));
-                                                AppLog::infoF( "2HOL DEBUG: saved password: %s", getObject( r->newTarget )->IndPass.getElementDirect(getObject( r->newTarget )->IndPass.size()-1));
+                                                                                              // AppLog::infoF( "2HOL DEBUG: saved password-protected position, x = %i", getObject( r->newTarget )->IndX.getElementDirect(getObject( r->newTarget )->IndX.size()-1));
+                                                // AppLog::infoF( "2HOL DEBUG: saved password-protected position, y = %i", getObject( r->newTarget )->IndY.getElementDirect(getObject( r->newTarget )->IndY.size()-1));
+                                                // AppLog::infoF( "2HOL DEBUG: saved password: %s", getObject( r->newTarget )->IndPass.getElementDirect(getObject( r->newTarget )->IndPass.size()-1));
                                             }
                                             else {
-                                                AppLog::infoF( "2HOL DEBUG: object has no password to copy.");
+                                                // AppLog::infoF( "2HOL DEBUG: object has no password to copy.");
                                             }
                                             
                                         }
@@ -14095,18 +14106,30 @@ int main() {
                                         ( target > 0) && ( r->newTarget > 0 ) && ( target != r->newTarget ) &&
                                          getObject( target )->canHaveInGamePassword ) {
                                         
-                                        //first of all, if transition was allowed, then old object loses the password record in any case
-                                        char *pass = NULL;
-                                        for( int i=0; i<targetObj->IndX.size(); i++ ) {
-                                            if ( m.x == getObject( target )->IndX.getElementDirect(i) && m.y == getObject( target )->IndY.getElementDirect(i) ) {
-                                                pass = getObject( target )->IndPass.getElementDirect(i);
-                                                    AppLog::infoF( "2HOL DEBUG: the password is deleted from the object with ID %i, located at the position (%i,%i).", getObject( target )->id, m.x, m.y);
-                                                getObject( target )->IndPass.deleteElement(i);
-                                                getObject( target )->IndX.deleteElement(i);
-                                                getObject( target )->IndY.deleteElement(i);
-                                                break;
-                                            }
-                                        }
+										//first of all, if transition was allowed, then old object loses the password record in any case
+										
+										//Instead of removing GridPos only from the target object,
+										//we go through all possible pw-protected object and remove such GridPos if we see them
+										//This is because upon server restart, we ignore the saved ids and load all the pw-locked GridPos into all possible pw objects.
+										//See setupObjectPasswordStatus() in objectBank.cpp
+										int maxId = getMaxObjectID();
+										char *pass = NULL;
+
+										for ( int id=0; id<maxId; id++ ) {
+											ObjectRecord *obj = getObject(id);
+											if (obj != NULL && obj->canHaveInGamePassword) {
+												for( int i=0; i<obj->IndX.size(); i++ ) {
+													if ( m.x == obj->IndX.getElementDirect(i) && m.y == obj->IndY.getElementDirect(i) ) {
+														if (targetObj->id == id) pass = obj->IndPass.getElementDirect(i);
+															// AppLog::infoF( "2HOL DEBUG: the password is deleted from the object with ID %i, located at the position (%i,%i).", obj->id, m.x, m.y);
+														obj->IndPass.deleteElement(i);
+														obj->IndX.deleteElement(i);
+														obj->IndY.deleteElement(i);
+														break;
+													}
+												}
+											}
+										}
                                         
                                         //then, if the result of the transition isn't protected by password (either newTarget is without password, or there is no newTarget), that's it;
                                         //otherwise, the password needs to be reapplied to the new object
@@ -14117,9 +14140,9 @@ int main() {
                                             getObject( r->newTarget )->IndY.push_back( m.y );
                                             getObject( r->newTarget )->IndPass.push_back( pass );
                                                 
-                                            AppLog::infoF( "2HOL DEBUG: updated password-protected position, x = %i", getObject( r->newTarget )->IndX.getElementDirect(getObject( r->newTarget )->IndX.size()-1));
-                                            AppLog::infoF( "2HOL DEBUG: updated password-protected position, y = %i", getObject( r->newTarget )->IndY.getElementDirect(getObject( r->newTarget )->IndY.size()-1));
-                                            AppLog::infoF( "2HOL DEBUG: password: %s", getObject( r->newTarget )->IndPass.getElementDirect(getObject( r->newTarget )->IndPass.size()-1));
+                                            // AppLog::infoF( "2HOL DEBUG: updated password-protected position, x = %i", getObject( r->newTarget )->IndX.getElementDirect(getObject( r->newTarget )->IndX.size()-1));
+                                            // AppLog::infoF( "2HOL DEBUG: updated password-protected position, y = %i", getObject( r->newTarget )->IndY.getElementDirect(getObject( r->newTarget )->IndY.size()-1));
+                                            // AppLog::infoF( "2HOL DEBUG: password: %s", getObject( r->newTarget )->IndPass.getElementDirect(getObject( r->newTarget )->IndPass.size()-1));
                                         }
                                     }
 
@@ -17306,9 +17329,9 @@ int main() {
             
             char *updateListString = updateList.getElementString();
             
-            //AppLog::infoF( "Need to send updates about these %d players: %s",
-            //               playerIndicesToSendUpdatesAbout.size(),
-            //               updateListString );
+            AppLog::infoF( "Need to send updates about these %d players: %s",
+                          playerIndicesToSendUpdatesAbout.size(),
+                          updateListString );
             delete [] updateListString;
             }
         
@@ -17594,9 +17617,9 @@ int main() {
             
             char *updateListString = trueUpdateList.getElementString();
             
-            //AppLog::infoF( "Sending updates about these %d players: %s",
-            //               newUpdatePlayerIDs.size(),
-            //               updateListString );
+            AppLog::infoF( "Sending updates about these %d players: %s",
+                          newUpdatePlayerIDs.size(),
+                          updateListString );
             delete [] updateListString;
             }
         
@@ -19622,10 +19645,10 @@ int main() {
             
             char *playerListString = playerList.getElementString();
 
-            //AppLog::infoF( "%d/%d players were sent part of a %d-line PU: %s",
-            //               playersReceivingPlayerUpdate.size(),
-            //               numLive, newUpdates.size(),
-            //               playerListString );
+            AppLog::infoF( "%d/%d players were sent part of a %d-line PU: %s",
+                          playersReceivingPlayerUpdate.size(),
+                          numLive, newUpdates.size(),
+                          playerListString );
             
             delete [] playerListString;
             }

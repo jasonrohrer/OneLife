@@ -50,6 +50,7 @@ class SettingsPage : public GamePage, public ActionListener {
         CheckboxButton mFullscreenBox;
         CheckboxButton mBorderlessBox;
         
+		CheckboxButton mEnableNudeBox;
 
         ValueSlider mMusicLoudnessSlider;
         ValueSlider mSoundEffectsLoudnessSlider;
@@ -60,7 +61,5 @@ class SettingsPage : public GamePage, public ActionListener {
         RadioButtonSet *mCursorModeSet;
         
         ValueSlider mCursorScaleSlider;
-        
-        CheckboxButton mEnableNudeBox;
 
     };
