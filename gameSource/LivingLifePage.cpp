@@ -12474,6 +12474,18 @@ void LivingLifePage::step() {
                             mMap[mapI] = newID;
                             
                             delete [] ints[0];
+							
+                            SimpleVector<int> oldContained;
+                            // player triggered
+                            // with no changed to container
+                            // look for contained change
+                            if( speed == 0 &&
+                                old == newID && 
+                                responsiblePlayerID < 0 ) {
+                            
+                                oldContained.push_back_other( 
+                                    &( mMapContainedStacks[mapI] ) );
+                                }
 
                             mMapContainedStacks[mapI].deleteAll();
                             mMapSubContainedStacks[mapI].deleteAll();
@@ -12516,6 +12528,93 @@ void LivingLifePage::step() {
                                 delete [] ints[ c + 1 ];
                                 }
                             delete [] ints;
+
+                            if( speed == 0 &&
+                                old == newID && 
+                                responsiblePlayerID < 0
+                                &&
+                                oldContained.size() ==
+                                mMapContainedStacks[mapI].size() ) {
+                                // no change in number of items
+                                // count number that change
+                                int changeCount = 0;
+                                int changeIndex = -1;
+                                for( int i=0; i<oldContained.size(); i++ ) {
+                                    if( oldContained.
+                                        getElementDirect( i ) 
+                                        !=
+                                        mMapContainedStacks[mapI].
+                                        getElementDirect( i ) ) {
+                                        changeCount++;
+                                        changeIndex = i;
+                                        }
+                                    }
+                                if( changeCount == 1 ) {
+                                    // single item changed
+                                    // play sound for it?
+
+                                    int oldContID =
+                                        oldContained.
+                                        getElementDirect( changeIndex );
+                                    int newContID =
+                                        mMapContainedStacks[mapI].
+                                        getElementDirect( changeIndex );
+                                    
+                                    
+                                    // watch out for swap case, with single
+                                    // item
+                                    // don't play sound then
+                                    LiveObject *causingPlayer =
+                                        getLiveObject( - responsiblePlayerID );
+
+                                    if( causingPlayer != NULL &&
+                                        causingPlayer->holdingID 
+                                        != oldContID ) {
+                                        
+
+                                        ObjectRecord *newObj = 
+                                            getObject( newContID );
+                                        
+                                        if( shouldCreationSoundPlay(
+                                                oldContID, newContID ) ) {
+                                            if( newObj->
+                                                creationSound.numSubSounds 
+                                                > 0 ) {
+                                                
+                                                playSound( 
+                                                    newObj->creationSound,
+                                                    getVectorFromCamera( 
+                                                        x, y ) );
+                                                }
+                                            }
+                                        else if(
+                                            causingPlayer != NULL &&
+                                            causingPlayer->holdingID == 0 &&
+                                            bothSameUseParent( newContID,
+                                                               oldContID ) &&
+                                            newObj->
+                                            usingSound.numSubSounds > 0 ) {
+                                        
+                                            ObjectRecord *oldObj = 
+                                                getObject( oldContID );
+                                        
+                                            // only play sound if new is
+                                            // less used than old (filling back
+                                            // up sound)
+                                            if( getObjectParent( oldContID ) ==
+                                                newContID ||
+                                                oldObj->thisUseDummyIndex <
+                                                newObj->thisUseDummyIndex ) {
+                                        
+                                                playSound( 
+                                                    newObj->usingSound,
+                                                    getVectorFromCamera( 
+                                                        x, y ) );
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         else {
                             // a single int
@@ -19985,6 +20084,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
 
     
+    // for USE actions that specify a slot number
+    int useExtraIParam = -1;
+    
 
     if( !killMode && 
         destID == 0 && !modClick && !tryingToPickUpBaby && !useOnBabyLater && 
@@ -20295,6 +20397,39 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 // distinction between left and right click
 
                 action = "REMV";
+
+                if( ! modClick ) {
+                    // no bare-hand action
+                    // but check if this object decays in 1 second
+                    // and if so, a bare-hand action applies after that
+                    TransRecord *decayTrans = getTrans( -1, destID );
+                    if( decayTrans != NULL &&
+                        decayTrans->newTarget > 0 &&
+                        decayTrans->autoDecaySeconds == 1 ) {
+                        
+                        if( getTrans( 0, decayTrans->newTarget ) != NULL ) {
+                            // switch to USE in this case
+                            // because server will force object to decay
+                            // so a transition can go through
+                            action = "USE";
+                            }
+                        }
+                    }
+                else {
+                    // in case of mod-click, if we clicked a contained item
+                    // directly, and it has a bare hand transition,
+                    // consider doing that as a USE
+                    ObjectRecord *destObj = getObject( destID );
+                    
+                    if( destObj->numSlots > p.hitSlotIndex &&
+                        strstr( destObj->description, "+useOnContained" )
+                        != NULL ) {
+                        action = "USE";
+                        useExtraIParam = p.hitSlotIndex;
+                        }
+                    }
+                
+
                 send = true;
                 delete [] extra;
                 extra = autoSprintf( " %d", p.hitSlotIndex );
@@ -20350,7 +20485,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                             }
                         }
                     }
+                else if( ourLiveObject->holdingID > 0 &&
+                         p.hitSlotIndex != -1 &&
+                         getNumContainerSlots( destID ) > p.hitSlotIndex ) {
+                    
+                    // USE on a slot?  Only if allowed by container
 
+                    ObjectRecord *destObj = getObject( destID );
+                    
+                    if( strstr( destObj->description, "+useOnContained" )
+                        != NULL ) {
+                        useExtraIParam = p.hitSlotIndex;
+                        }
+                    }
+                
                 send = true;
                 }
             
@@ -20358,6 +20506,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 delete [] extra;
                 nextActionDropping = true;
                 extra = stringDuplicate( " -1" );
+                }
+
+            if( strcmp( action, "USE" ) == 0 &&
+                destID > 0 ) {
+                // optional ID param for USE, specifying that we clicked
+                // on something
+                delete [] extra;
+                
+                if( useExtraIParam != -1 ) {
+                    extra = autoSprintf( " %d %d", destID, useExtraIParam );
+                    }
+                else {
+                    extra = autoSprintf( " %d", destID );
+                    }
                 }
             
             
