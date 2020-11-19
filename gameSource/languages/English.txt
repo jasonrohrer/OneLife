@@ -394,6 +394,7 @@ pingCommand "/PING"
 
 disconnectCommand "/DISCONNECT"
 
+helpCommand "/HELP"
 
 
 fps "FPS"

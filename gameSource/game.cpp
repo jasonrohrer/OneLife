@@ -310,6 +310,8 @@ Font *pencilErasedFont;
 
 Font *smallFont;
 
+Font *titleFont;
+
 
 char *shutdownMessage = NULL;
 
@@ -522,6 +524,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     numbersFontFixed->setMinimumPositionPrecision( 1 );
     
     smallFont = new Font( getFontTGAFileName(), 3, 8, false, 8 );
+
+    titleFont = 
+        new Font( "font_handwriting_32_32.tga", 3, 6, false, 20 );
 
 
     handwritingFont = 
