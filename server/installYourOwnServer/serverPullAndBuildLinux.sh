@@ -1,29 +1,23 @@
 #!/bin/bash
 
-
-git clone https://github.com/jasonrohrer/minorGems.git	
-git clone https://github.com/jasonrohrer/OneLife.git
-git clone https://github.com/jasonrohrer/OneLifeData7.git	
-
-
-
+git clone https://github.com/twohoursonelife/minorGems.git
+git clone https://github.com/twohoursonelife/OneLife.git
+git clone https://github.com/twohoursonelife/OneLifeData7.git
 
 cd minorGems
 git fetch --tags
-latestTaggedVersion=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//'`
-git checkout -q OneLife_v$latestTaggedVersion
-
+latestTaggedVersion=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/2HOL_v* | sed -e 's/2HOL_v//'`
+git checkout -q 2HOL_v$latestTaggedVersion
 
 cd ../OneLife
 git fetch --tags
-latestTaggedVersionA=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//'`
-git checkout -q OneLife_v$latestTaggedVersionA
-
+latestTaggedVersionA=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/2HOL_v* | sed -e 's/2HOL_v//'`
+git checkout -q 2HOL_v$latestTaggedVersionA
 
 cd ../OneLifeData7
 git fetch --tags
-latestTaggedVersionB=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//'`
-git checkout -q OneLife_v$latestTaggedVersionB
+latestTaggedVersionB=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/2HOL_v* | sed -e 's/2HOL_v//'`
+git checkout -q 2HOL_v$latestTaggedVersionB
 
 
 cd ..
@@ -43,7 +37,7 @@ ln -s ../../OneLifeData7/categories .
 ln -s ../../OneLifeData7/tutorialMaps .
 ln -s ../../OneLifeData7/dataVersionNumber.txt .
 
-git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=2 refs/tags | grep "OneLife_v" | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
+git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=2 refs/tags | grep "2HOL_v" | sed -e 's/2HOL_v//' > serverCodeVersionNumber.txt
 
 
 serverVersion=`cat serverCodeVersionNumber.txt`
@@ -59,5 +53,3 @@ echo
 echo "cd OneLife/server"
 echo "./OneLifeServer"
 echo
-
-
