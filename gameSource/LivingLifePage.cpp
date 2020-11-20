@@ -8210,7 +8210,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 }
             
-
+			if ( showHelp ) {
+				setDrawColor( 1, 1, 1, 0.2f );
+				}
             drawSprite( mHungerSlipSprites[i], slipPos );
             }
         }
