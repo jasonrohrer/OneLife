@@ -10310,7 +10310,9 @@ static char isAccessBlocked( LiveObject *inPlayer,
 					}
 					else {
 						// AppLog::infoF( "2HOL DEBUG: player's password: %s", inPlayer->saidPassword );
-						char *pass = strstr( inPlayer->saidPassword, targetObj->IndPass.getElementDirect(i) );
+						std::string tryPw( inPlayer->saidPassword );
+						std::string truePw( targetObj->IndPass.getElementDirect(i) );
+						bool pass = tryPw.compare(truePw) == 0;
 						if ( pass ) {
 							// AppLog::infoF( "2HOL DEBUG: passwords match." );
 							blockedByPassword = false;
