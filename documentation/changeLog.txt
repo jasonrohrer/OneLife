@@ -56,6 +56,8 @@ Server Fixes
 --Fixed crash when informing a leader about a new follower and there's a
   leadership loop.
 
+--New player food decrement bonus 18 seconds (was 12).
+
 
 
 
