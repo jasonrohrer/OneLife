@@ -58,6 +58,7 @@
 #include "curseDB.h"
 #include "specialBiomes.h"
 #include "cravings.h"
+#include "offspringTracker.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -117,8 +118,9 @@ int maxEmotesInWindow = 10;
 double emoteCooldownSeconds = 120.0;
 
 
-
-int maxLineageTracked = 20;
+// each generation is at minimum 14 minutes apart
+// so 1024 generations is approximately 10 days
+int maxLineageTracked = 1024;
 
 int apocalypsePossible = 0;
 char apocalypseTriggered = false;
@@ -2258,6 +2260,8 @@ void quitCleanup() {
 
     freeSpecialBiomes();
     
+    freeOffspringTracker();
+    
 
     freeMap();
 
@@ -3499,6 +3503,16 @@ double computeAge( LiveObject *inPlayer ) {
         inPlayer->error = true;
         
         age = forceDeathAge;
+
+        // they lived to old age
+        // that means they can get born to their descendants in future
+        int lineageID = inPlayer->id;
+        if( ! getFemale( inPlayer ) ) {
+            // use mother's ID instead
+            lineageID = inPlayer->parentID;
+            }
+        
+        trackOffspring( inPlayer->email, lineageID );
         }
     return age;
     }
@@ -8630,6 +8644,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     char checkCooldown = true;
     char checkLineageLimit = true;
     
+    int forceOffspringLineageID = getOffspringLineageID( newObject.email );
+    clearOffspringLineageID( newObject.email );
+    
+
     for( int p=0; p<3; p++ ) {
     
         for( int i=0; i<numPlayers; i++ ) {
@@ -8683,6 +8701,19 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 GridPos motherPos = getPlayerPos( player );
                 
                 if( checkLineageLimit &&
+                    forceOffspringLineageID != -1 ) {
+                    // we're trying to force this player to be born
+                    // to their descendants
+                    if( player->lineage->getElementIndex( 
+                            forceOffspringLineageID ) == -1 ) {
+                        // this possible mother is NOT
+                        // a descendant
+                        // skip
+                        continue;
+                        }
+                    }
+                // otherwise, respect normal lineage ban
+                else if( checkLineageLimit &&
                     ! isLinePermitted( newObject.email, motherPos ) ) {
                     // this line forbidden for new player
                     continue;
@@ -8783,7 +8814,14 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         if( p == 1 || p == 2 ) {
             // had to resort to second/third pass with no cool-downs
             
-            if( parentChoices.size() > 0 ) {
+            if( parentChoices.size() > 0 &&
+                forceOffspringLineageID != -1 ) {
+                // we're forcing a baby on an overwhelmed mother (on cooldown)
+                // BUT, this is an offspring placement, so we should assume
+                // the baby is wanted
+                // don't consider spawning this one as Eve
+                }
+            else if( parentChoices.size() > 0 ) {
                 // we're about to force a baby on an overwhelmed mother
                 // how overwhelmed are they?
                 
@@ -9026,6 +9064,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                    inFitnessScore, maxRecentScore );
 
     
+    // don't consider forced-spawn offspring as candidates for a needed Eve
+    if( forceOffspringLineageID == -1 )
     if( inFitnessScore >= maxRecentScore )
     if( parentChoices.size() > 0 ) {
         // make sure one race isn't entirely extinct
@@ -9059,6 +9099,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
 
     
+    if( forceOffspringLineageID == -1 )
     if( inFitnessScore >= maxRecentScore )
     if( parentChoices.size() > 0 ) {
         int generationNumber =
@@ -16758,6 +16799,8 @@ int main() {
     initLineageLimit();
     
     initCurseDB();
+
+    initOffspringTracker();
     
 
 
