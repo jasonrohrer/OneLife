@@ -3509,6 +3509,12 @@ double computeAge( LiveObject *inPlayer ) {
         int lineageID = inPlayer->id;
         if( ! getFemale( inPlayer ) ) {
             // use mother's ID instead
+            // since men have no direct descendants
+            // their sisters (and their decendants) count as their descendants
+            // Note that it's impossible to get reborn to your older sister
+            // (because she'll already be dead when you die of old age), 
+            // but it might be possible to get reborn to your much-younger 
+            // sister.
             lineageID = inPlayer->parentID;
             }
         

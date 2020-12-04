@@ -58,6 +58,16 @@ Server Fixes
 
 --New player food decrement bonus 18 seconds (was 12).
 
+--New system that allows you to get reborn to your descendants in your next
+  life if you live to old age.  For women, descendants are children,
+  grandchildren, etc.  For men, descendants are nieces, grand-nieces, etc.,
+  and in rare cases, much-younger sisters.  Descendants are tracked for 1024 
+  generations (10 days).  This means that if you die of old age in your last
+  life today, and come back to play again a few days later, you will be born to
+  your descendants if they're still alive.  This preference for getting born to
+  descendants will override Eve placement and mother birth cooldowns, but not
+  curses.  Dying even slightly younger than 60 will break you out of getting
+  born to your descendants again.
 
 
 

@@ -5,9 +5,9 @@
 #include "minorGems/system/Time.h"
 
 
-// expire after 1 week of no activity, so stale emails don't linger
+// expire after 10 days of no activity, so stale emails don't linger
 // indefinitely
-static double expirationSeconds = 3600 * 24 * 7;
+static double expirationSeconds = 3600 * 24 * 10;
 
 static double lastCheckTime = 0;
 
