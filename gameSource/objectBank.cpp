@@ -495,38 +495,60 @@ static void setupObjectPasswordStatus( ObjectRecord *inR ) {
         }
         
     //look through saved passwords and get ones that belong to the currently processed object kind
-    char buf[100]; char *p, *x, *y, *id;
     std::ifstream file;
     file.open( "2HOL passwords.txt" );
     if ( !file.is_open() ) return;
     //parsing 2HOL passwords.txt, the expected format is "x:%i|y:%i|word:%s|id:%i"
-    while ( file >> buf ) {
-        //std::cout << '\n' << buf;
-        p = strstr( buf, "word:" );
-        x = strstr( buf, "x:" );
-        y = strstr( buf, "y:" );
-        id = strstr( buf, "id:" );
-        if( p && x && y && id ) {
-            id = id+3;
-            if ( atoi( id ) == inR->id ) {
-                std::cout << "\nRestoring secret word for object with ID:" << id;
-
-                *(id-4) = '\0';
-                p = p+5;
-                inR->IndPass.push_back( p );
-                std::cout << ", secret word: " << p;
-
-                *(p-6) = '\0';
-                y = y+2;
-                inR->IndY.push_back( atoi( y ) );
-                std::cout << "; coordinates: y:" << y;
-
-                *(y-3) = '\0';
-                x = x+2;
-                inR->IndX.push_back( atoi( x ) );
-                std::cout << "; x:" << x << ".\n";
-                }
-            }
+	for ( std::string line; std::getline(file, line); ) {
+		
+		if ( line.find("id:") == std::string::npos ) continue;
+		
+		int posId = line.find("id:") + 3;
+		int lenId = line.find("|", posId) - posId;
+		int posX = line.find("x:") + 2;
+		int lenX = line.find("|", posX) - posX;
+		int posY = line.find("y:") + 2;
+		int lenY = line.find("|", posY) - posY;
+		int posPw = line.find("word:") + 5;
+		
+		int id = stoi(line.substr(posId, lenId));
+		int x = stoi(line.substr(posX, lenX));
+		int y = stoi(line.substr(posY, lenY));
+		std::string pw = line.substr(posPw, line.length());
+		
+		//The saved objId may not be accruate e.g. we assign pw to opened door, but we usually leave the door closed
+		//Therefore we ignore the saved id here, and assign the pw and GridPos to all possible password-protected objects
+		//This should not cause problems unless multiple pw-protected objects are in the same tile,
+		//which would not be possible in the current system anyway.
+		//The duplicated GridPos on the irrelevant objects will be removed when the GridPos is being interacted with 
+		//(either open/close door or password removal)
+		if ( inR->canHaveInGamePassword ) {
+			
+			//remove duplicated saved passwords for the same GridPos
+			//so only the last row counts
+			for( int i=0; i<inR->IndX.size(); i++ ) {
+				if ( x == inR->IndX.getElementDirect(i) && y == inR->IndY.getElementDirect(i) ) {
+					inR->IndPass.deleteElement(i);
+					inR->IndX.deleteElement(i);
+					inR->IndY.deleteElement(i);
+					break;
+					}
+				}
+			
+			std::cout << "\nRestoring secret word for object with ID:" << inR->id;
+			
+			char* pwc = new char[48];
+			strcpy (pwc, pw.c_str());
+			inR->IndPass.push_back( pwc );
+			std::cout << ", secret word: " << pwc;
+			
+			inR->IndY.push_back( y );
+			std::cout << "; coordinates: y:" << y;
+			
+			inR->IndX.push_back( x );
+			std::cout << "; x:" << x << ".\n";
+			
+			}
         }
     file.close();
     
@@ -581,12 +603,6 @@ static void setupWall( ObjectRecord *inR ) {
 
 static void setupTapout( ObjectRecord *inR ) {
     inR->isTapOutTrigger = false;
-    
-    if( inR->isUseDummy || inR->isVariableDummy ) {
-        // only parent object counts tapouts
-        return;
-        }
-    
 
     char *triggerPos = strstr( inR->description, "+tapoutTrigger" );
                 
@@ -3842,7 +3858,14 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
                 inHeldNotInPlaceYet,
                 inClothing );
 
-    
+    char allBehind = true;
+    for( int i=0; i< inObject->numSprites; i++ ) {
+        if( ! inObject->spriteBehindSlots[i] ) {
+            allBehind = false;
+            break;
+            }
+        }
+
     setDrawnObjectContained( true );
     
     int numSlots = getNumContainerSlots( inObject->id );
@@ -3856,8 +3879,15 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
         ObjectRecord *contained = getObject( inContainedIDs[i] );
         
 
-        doublePair centerOffset = getObjectCenterOffset( contained );
-        
+        doublePair centerOffset;
+
+        if( allBehind ) {
+            centerOffset = getObjectBottomCenterOffset( contained );
+            }
+        else {
+            centerOffset = getObjectCenterOffset( contained );
+            }
+
         double rot = inRot;
         
         if( inObject->slotVert[i] ) {
@@ -5417,6 +5447,79 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject ) {
 
 
 
+
+doublePair getObjectBottomCenterOffset( ObjectRecord *inObject ) {
+
+
+    // find center of lowessprite
+
+    SpriteRecord *lowestRecord = NULL;
+    
+    int lowestIndex = -1;
+    double lowestYPos = 0;
+    
+    for( int i=0; i<inObject->numSprites; i++ ) {
+        SpriteRecord *sprite = getSpriteRecord( inObject->sprites[i] );
+    
+        if( sprite->multiplicativeBlend ) {
+            // don't consider translucent sprites when finding bottom
+            continue;
+            }
+
+        if( inObject->spriteInvisibleWhenWorn[i] == 2 ) {
+            // don't consider parts visible only when worn
+            continue;
+            }
+
+        if( inObject->spriteInvisibleWhenContained[i] == 1 ) {
+            // don't consider parts visible only when not contained
+            continue;
+            }
+        
+
+        double y = inObject->spritePos[i].y;
+
+
+        if( lowestRecord == NULL ||
+            // wider than what we've seen so far
+            y < lowestYPos ) {
+
+            lowestRecord = sprite;
+            lowestIndex = i;
+            lowestYPos = inObject->spritePos[i].y;
+            }
+        }
+    
+
+    if( lowestRecord == NULL ) {
+        doublePair result = { 0, 0 };
+        return result;
+        }
+    
+    
+        
+    doublePair centerOffset = { (double)lowestRecord->centerXOffset,
+                                (double)lowestRecord->centerYOffset };
+        
+    centerOffset = rotate( centerOffset, 
+                           2 * M_PI * inObject->spriteRot[lowestIndex] );
+
+    doublePair spriteCenter = add( inObject->spritePos[lowestIndex], 
+                                   centerOffset );
+
+    doublePair wideCenter = getObjectCenterOffset( inObject );
+    
+    
+    // adjust y based on lowest sprite
+    // but keep center from widest sprite
+    // (in case object has "feet" that are not centered)
+    wideCenter.y = spriteCenter.y;
+
+    return wideCenter;    
+    }
+
+
+
 int getMaxWideRadius() {
     return maxWideRadius;
     }
@@ -5681,8 +5784,27 @@ char bothSameUseParent( int inAObjectID, int inBObjectID ) {
 
 
 
+int getObjectParent( int inObjectID ) {
+    if( inObjectID > 0 ) {    
+        ObjectRecord *o = getObject( inObjectID );
+        
+        if( o != NULL ) {
+            if( o->isUseDummy ) {
+                return o->useDummyParent;
+                }
+            if( o->isVariableDummy ) {
+                return o->variableDummyParent;
+                }
+            }
+        }
+    
+    return inObjectID;
+    }
 
-int hideIDForClient( int inObjectID ) {    
+
+
+
+int hideIDForClient( int inObjectID ) { 
     if( inObjectID > 0 ) {
         ObjectRecord *o = getObject( inObjectID );
         if( o->isVariableDummy && o->isVariableHidden ) {

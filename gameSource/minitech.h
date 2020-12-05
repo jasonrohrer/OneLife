@@ -48,18 +48,23 @@ public:
 	static SimpleVector<SimpleVector<int>> *mMapSubContainedStacks;
 	
 	static bool minitechMinimized;
+	static unsigned char minimizeKey;
 	static int stepCount;
-	static float currentX;
-	static float currentY;
+	static int currentX;
+	static int currentY;
 
 	static bool posWithinArea(doublePair pos, doublePair areaTL, doublePair areaBR);
 	static bool posEqual(doublePair pos1, doublePair pos2);
 	static int getDummyParent(int objId);
+	static int getDummyLastUse(int objId);
 	static bool isCategory(int objId);
 	static mouseListener* getMouseListenerByArea(
 		std::vector<mouseListener*>* listeners, doublePair posTL, doublePair posBR );
 	static GridPos getClosestTile(GridPos src, int objId);	
 	static bool isUseDummy(int objId);
+	static bool isUseDummyAndNotLastUse(int objId);
+	static int getDummyUse(int objId);
+	static int compareObjUse(int idA, int idB);
 	static bool isProbabilitySet(int objId);
 	static float getTransProbability(TransRecord* trans);
 	static unsigned int LevenshteinDistance(const std::string& s1, const std::string& s2);
@@ -82,6 +87,7 @@ public:
 		bool withBackground = true, 
 		bool avoidOffScreen = false);
 	static void drawTileRect( int x, int y, std::string color, bool flashing = false );
+	static void drawBox(doublePair posCen, float height, float width, float lineWidth);
 	
 	static void initOnBirth();
 	static void livingLifeStep();
@@ -95,14 +101,15 @@ public:
 	static int lastUseOrMake;
 	static int currentHintObjId;
 	static int lastHintObjId;
-	static std::string hintStr;
 	static std::string lastHintStr;
+	static bool changeHintObjOnTouch;
 	static std::vector<mouseListener*> twotechMouseListeners;
 	static mouseListener* prevListener;
 	static mouseListener* nextListener;
 	static std::vector<TransRecord*> sortUsesTrans(std::vector<TransRecord*> unsortedTrans);
 	static std::vector<TransRecord*> sortProdTrans(std::vector<TransRecord*> unsortedTrans);
 	static void updateDrawTwoTech();
+	static void inputHintStrToSearch(std::string hintStr);
 
 	
 

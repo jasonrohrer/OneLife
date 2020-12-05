@@ -70,6 +70,7 @@ extern Font *handwritingFont;
 extern Font *pencilFont;
 extern Font *pencilErasedFont;
 
+extern Font *titleFont;
 
 // to make all erased pencil fonts lighter
 static float pencilErasedFontExtraFade = 0.75;
@@ -186,6 +187,7 @@ static SimpleVector<GridPos> ownerRequestPos;
 
 
 static char showPing = false;
+static char showHelp = false;
 static double pingSentTime = -1;
 static double pongDeltaTime = -1;
 static double pingDisplayStartTime = -1;
@@ -900,7 +902,7 @@ static char *getDisplayObjectDescription( int inID ) {
 char *LivingLifePage::minitechGetDisplayObjectDescription( int objId ) { 
     ObjectRecord *o = getObject( objId );
     if( o == NULL ) {
-		return "";
+		return NULL;
     }
 	return getDisplayObjectDescription(objId);
 }
@@ -7466,7 +7468,140 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
     
-    
+	if( showHelp ) {
+	int columnNumber = 0;
+	int columnWidth = 450;
+	int columnHeight = 600;
+	int columnOffset = 300;
+	
+	int lastDrawnColumn = 0;
+	int lineHeight = 40;
+	
+	int columnStartX = -600;
+	int columnStartY = -100;
+	
+	doublePair writePos;
+	writePos.x = lastScreenViewCenter.x + columnStartX;
+	writePos.y = lastScreenViewCenter.y + columnStartY + columnHeight / 2;
+	
+	File languagesDir( NULL, "languages" );
+	if ( languagesDir.exists() && languagesDir.isDirectory() ) {
+		File *helpFile = languagesDir.getChildFile( "help_English" );
+		char *helpFileContents = helpFile->readFileContents();
+		if( helpFileContents != NULL ) {
+			int numLines;
+			char **lines = split( helpFileContents, "\n", &numLines );
+			char *subString;
+			for( int i=0; i<numLines; i++ ) {
+				bool isTitle = false;
+				bool isSub = false;
+				if ( (lines[i][0] == '\0') || (lines[i][0] == '\r') ) {
+					//continue;
+					}
+				else if ( strstr( lines[i], "@COLUMN_W" ) != NULL ) {
+					sscanf( lines[i], "@COLUMN_W=%d", &( columnWidth ) );
+					continue;
+					}
+				else if ( strstr( lines[i], "@COLUMN_H" ) != NULL ) {
+					sscanf( lines[i], "@COLUMN_H=%d", &( columnHeight ) );
+					writePos.y = lastScreenViewCenter.y + columnHeight / 2;
+					continue;
+					}
+				else if ( strstr( lines[i], "@COLUMN_O=" ) != NULL ) {
+					sscanf( lines[i], "@COLUMN_O=%d", &( columnOffset ) );
+					continue;
+					}
+				else if ( strstr( lines[i], "@START_X" ) != NULL ) {
+					sscanf( lines[i], "@START_X=%d", &( columnStartX ) );
+					writePos.x = lastScreenViewCenter.x + columnStartX;
+					continue;
+					}
+				else if ( strstr( lines[i], "@START_Y" ) != NULL ) {
+					sscanf( lines[i], "@START_Y=%d", &( columnStartY ) );
+					writePos.y = lastScreenViewCenter.y + columnStartY + columnHeight / 2;
+					continue;
+					}
+				else if ( strstr( lines[i], "@LINEHEIGHT" ) != NULL ) {
+					sscanf( lines[i], "@LINEHEIGHT=%d", &( lineHeight ) );
+					continue;
+					}					
+				else if ( strstr( lines[i], "#sheet" ) != NULL ) {
+					sscanf( lines[i], "#sheet%d", &( columnNumber ) );
+					writePos.y = lastScreenViewCenter.y + columnStartY + columnHeight / 2; //reset lineHeight additions
+					continue;
+					}
+				else if ( strstr( lines[i], "title$" ) != NULL ) {
+					int hNumLines;
+					char **holder;
+					holder = split( lines[i], "$", &hNumLines);
+					lines[i] = holder[1];
+					isTitle = true;
+					}
+				else if ( strstr( lines[i], "sub$" ) != NULL ) {
+					int hNumLines;
+					char **holder;
+					holder = split( lines[i], "$", &hNumLines);
+					lines[i] = holder[1];
+					subString = holder[2];
+					isSub = true;
+					}
+				else if ( strstr( lines[i], "space$" ) != NULL ) {
+					float lineScale;
+					sscanf( lines[i], "space$%f", &( lineScale ) );
+					writePos.y -= lineHeight * lineScale;
+					continue;
+					}
+				
+				if ( columnNumber == 0 ) {
+					continue;
+					}
+				else if ( columnNumber > 1 ) {
+					int current_columnX = columnStartX + ( abs( columnWidth ) + columnOffset ) * ( columnNumber - 1 );
+					writePos.x = lastScreenViewCenter.x + current_columnX;
+					}
+				
+				setDrawColor( 1, 1, 1, 0.85f );
+				if ( lastDrawnColumn != columnNumber ) {											
+					if ( sheetSprites[columnNumber] == nullptr ) {
+						char columnName[11] = "sheet";
+						char n[6];
+						sprintf( n, "%d.tga", columnNumber );
+						strcat( columnName, n );
+						sheetSprites[columnNumber] = loadSprite( columnName, false );
+						}
+						
+					doublePair drawPos;
+					drawPos.x = writePos.x + columnWidth / 2;
+					drawPos.y = lastScreenViewCenter.y + columnStartY;
+					drawSprite( sheetSprites[columnNumber], drawPos );
+					lastDrawnColumn = columnNumber;
+					}
+				
+				if ( isTitle ) {
+					setDrawColor( 0.1f, 0.1f, 0.1f, 1 );
+					int titleSize = titleFont->measureString( lines[i] );
+					titleFont->drawString( lines[i], { writePos.x + ( columnWidth - titleSize ) / 2, writePos.y - lineHeight }, alignLeft );
+					writePos.y -= lineHeight * 1.5f;
+					}
+				else if ( isSub ) {
+					setDrawColor( 0.2f, 0.4f, 0.6f, 1 );
+					handwritingFont->drawString( lines[i], { writePos.x + 60, writePos.y - lineHeight * 0.75f }, alignLeft );
+					int subSize = handwritingFont->measureString( lines[i] );
+					setDrawColor( 0.1f, 0.1f, 0.1f, 1 );
+					pencilFont->drawString( subString, { writePos.x + subSize + 80 , writePos.y - lineHeight * 0.75f }, alignLeft );
+					writePos.y -= lineHeight * 0.75;
+					}
+				else {
+					setDrawColor( 0.1f, 0.1f, 0.1f, 1 );
+					pencilFont->drawString( lines[i], { writePos.x + 40, writePos.y - lineHeight * 0.75f }, alignLeft );
+					writePos.y -= lineHeight;
+					}
+				}
+			delete [] lines;
+			}
+		}
+	}
+
 
 
     doublePair slipPos = add( mHomeSlipPosOffset, lastScreenViewCenter );
@@ -12474,6 +12609,18 @@ void LivingLifePage::step() {
                             mMap[mapI] = newID;
                             
                             delete [] ints[0];
+							
+                            SimpleVector<int> oldContained;
+                            // player triggered
+                            // with no changed to container
+                            // look for contained change
+                            if( speed == 0 &&
+                                old == newID && 
+                                responsiblePlayerID < 0 ) {
+                            
+                                oldContained.push_back_other( 
+                                    &( mMapContainedStacks[mapI] ) );
+                                }
 
                             mMapContainedStacks[mapI].deleteAll();
                             mMapSubContainedStacks[mapI].deleteAll();
@@ -12516,6 +12663,93 @@ void LivingLifePage::step() {
                                 delete [] ints[ c + 1 ];
                                 }
                             delete [] ints;
+
+                            if( speed == 0 &&
+                                old == newID && 
+                                responsiblePlayerID < 0
+                                &&
+                                oldContained.size() ==
+                                mMapContainedStacks[mapI].size() ) {
+                                // no change in number of items
+                                // count number that change
+                                int changeCount = 0;
+                                int changeIndex = -1;
+                                for( int i=0; i<oldContained.size(); i++ ) {
+                                    if( oldContained.
+                                        getElementDirect( i ) 
+                                        !=
+                                        mMapContainedStacks[mapI].
+                                        getElementDirect( i ) ) {
+                                        changeCount++;
+                                        changeIndex = i;
+                                        }
+                                    }
+                                if( changeCount == 1 ) {
+                                    // single item changed
+                                    // play sound for it?
+
+                                    int oldContID =
+                                        oldContained.
+                                        getElementDirect( changeIndex );
+                                    int newContID =
+                                        mMapContainedStacks[mapI].
+                                        getElementDirect( changeIndex );
+                                    
+                                    
+                                    // watch out for swap case, with single
+                                    // item
+                                    // don't play sound then
+                                    LiveObject *causingPlayer =
+                                        getLiveObject( - responsiblePlayerID );
+
+                                    if( causingPlayer != NULL &&
+                                        causingPlayer->holdingID 
+                                        != oldContID ) {
+                                        
+
+                                        ObjectRecord *newObj = 
+                                            getObject( newContID );
+                                        
+                                        if( shouldCreationSoundPlay(
+                                                oldContID, newContID ) ) {
+                                            if( newObj->
+                                                creationSound.numSubSounds 
+                                                > 0 ) {
+                                                
+                                                playSound( 
+                                                    newObj->creationSound,
+                                                    getVectorFromCamera( 
+                                                        x, y ) );
+                                                }
+                                            }
+                                        else if(
+                                            causingPlayer != NULL &&
+                                            causingPlayer->holdingID == 0 &&
+                                            bothSameUseParent( newContID,
+                                                               oldContID ) &&
+                                            newObj->
+                                            usingSound.numSubSounds > 0 ) {
+                                        
+                                            ObjectRecord *oldObj = 
+                                                getObject( oldContID );
+                                        
+                                            // only play sound if new is
+                                            // less used than old (filling back
+                                            // up sound)
+                                            if( getObjectParent( oldContID ) ==
+                                                newContID ||
+                                                oldObj->thisUseDummyIndex <
+                                                newObj->thisUseDummyIndex ) {
+                                        
+                                                playSound( 
+                                                    newObj->usingSound,
+                                                    getVectorFromCamera( 
+                                                        x, y ) );
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         else {
                             // a single int
@@ -13846,7 +14080,7 @@ void LivingLifePage::step() {
                             mNextHintIndex = 
                                 mHintBookmarks[ mNextHintObjectID ];
 								
-							minitech::currentHintObjId = mNextHintObjectID;
+							if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = mNextHintObjectID;
                             }
 
 
@@ -18160,6 +18394,7 @@ void LivingLifePage::makeActive( char inFresh ) {
     showFPS = false;
     showNet = false;
     showPing = false;
+	showHelp = false;
     
     waitForFrameMessages = false;
 
@@ -19605,20 +19840,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 // give hint about dest object which will be unchanged 
                 mNextHintObjectID = destID;
                 mNextHintIndex = mHintBookmarks[ destID ];
-				minitech::currentHintObjId = destID;
+				if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = destID;
                 }
             else if( tr->newActor > 0 && 
                      ourLiveObject->holdingID != tr->newActor ) {
                 // give hint about how what we're holding will change
                 mNextHintObjectID = tr->newActor;
                 mNextHintIndex = mHintBookmarks[ tr->newTarget ];
-				minitech::currentHintObjId = tr->newActor;
+				if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = tr->newActor;
                 }
             else if( tr->newTarget > 0 ) {
                 // give hint about changed target after we act on it
                 mNextHintObjectID = tr->newTarget;
                 mNextHintIndex = mHintBookmarks[ tr->newTarget ];
-				minitech::currentHintObjId = tr->newTarget;
+				if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = tr->newTarget;
                 }
             }
         else {
@@ -19628,7 +19863,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( getTrans( 0, destID ) == NULL ) {
                 mNextHintObjectID = destID;
                 mNextHintIndex = mHintBookmarks[ destID ];
-				minitech::currentHintObjId = destID;
+				if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = destID;
                 }
             }
         }
@@ -19985,6 +20220,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
 
     
+    // for USE actions that specify a slot number
+    int useExtraIParam = -1;
+    
 
     if( !killMode && 
         destID == 0 && !modClick && !tryingToPickUpBaby && !useOnBabyLater && 
@@ -20295,6 +20533,39 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 // distinction between left and right click
 
                 action = "REMV";
+
+                if( ! modClick ) {
+                    // no bare-hand action
+                    // but check if this object decays in 1 second
+                    // and if so, a bare-hand action applies after that
+                    TransRecord *decayTrans = getTrans( -1, destID );
+                    if( decayTrans != NULL &&
+                        decayTrans->newTarget > 0 &&
+                        decayTrans->autoDecaySeconds == 1 ) {
+                        
+                        if( getTrans( 0, decayTrans->newTarget ) != NULL ) {
+                            // switch to USE in this case
+                            // because server will force object to decay
+                            // so a transition can go through
+                            action = "USE";
+                            }
+                        }
+                    }
+                else {
+                    // in case of mod-click, if we clicked a contained item
+                    // directly, and it has a bare hand transition,
+                    // consider doing that as a USE
+                    ObjectRecord *destObj = getObject( destID );
+                    
+                    if( destObj->numSlots > p.hitSlotIndex &&
+                        strstr( destObj->description, "+useOnContained" )
+                        != NULL ) {
+                        action = "USE";
+                        useExtraIParam = p.hitSlotIndex;
+                        }
+                    }
+                
+
                 send = true;
                 delete [] extra;
                 extra = autoSprintf( " %d", p.hitSlotIndex );
@@ -20350,7 +20621,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                             }
                         }
                     }
+                else if( ourLiveObject->holdingID > 0 &&
+                         p.hitSlotIndex != -1 &&
+                         getNumContainerSlots( destID ) > p.hitSlotIndex ) {
+                    
+                    // USE on a slot?  Only if allowed by container
 
+                    ObjectRecord *destObj = getObject( destID );
+                    
+                    if( strstr( destObj->description, "+useOnContained" )
+                        != NULL ) {
+                        useExtraIParam = p.hitSlotIndex;
+                        }
+                    }
+                
                 send = true;
                 }
             
@@ -20358,6 +20642,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 delete [] extra;
                 nextActionDropping = true;
                 extra = stringDuplicate( " -1" );
+                }
+
+            if( strcmp( action, "USE" ) == 0 &&
+                destID > 0 ) {
+                // optional ID param for USE, specifying that we clicked
+                // on something
+                delete [] extra;
+                
+                if( useExtraIParam != -1 ) {
+                    extra = autoSprintf( " %d %d", destID, useExtraIParam );
+                    }
+                else {
+                    extra = autoSprintf( " %d", destID );
+                    }
                 }
             
             
@@ -20865,6 +21163,12 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 mEKeyDown = true;
                 }
             break;
+        case 'h':
+        case 'H':
+            if( ! mSayField.isFocused() ) {
+                showHelp = ! showHelp;
+                }
+            break;
         case 'z':
         case 'Z':
             if( mUsingSteam && ! mSayField.isFocused() ) {
@@ -21037,6 +21341,11 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                      == typedText ) {
                                 forceDisconnect = true;
                                 }
+                            else if( strstr( typedText,
+                                             translate( "helpCommand" ) ) 
+                                     == typedText ) {
+                                showHelp = ! showHelp;
+                                }
                             else {
                                 // filter hints
                                 char *filterString = 
@@ -21053,14 +21362,17 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 
                                 int filterStringLen = 
                                     strlen( trimmedFilterString );
-                            
+							
                                 if( filterStringLen > 0 ) {
                                     // not blank
                                     mHintFilterString = 
                                         stringDuplicate( trimmedFilterString );
 										
-									minitech::hintStr = mHintFilterString;
+									minitech::inputHintStrToSearch( mHintFilterString );
                                     }
+								else {
+									minitech::inputHintStrToSearch( "" );;
+								}
                             
                                 delete [] trimmedFilterString;
                             

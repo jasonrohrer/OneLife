@@ -3344,7 +3344,15 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
                     inClothingContained,
                     slotRots,
                     slotOffsets );
-
+    
+    char allBehind = true;
+    for( int i=0; i< obj->numSprites; i++ ) {
+        if( ! obj->spriteBehindSlots[i] ) {
+            allBehind = false;
+            break;
+            }
+        }
+    
     
     // next, draw jiggling (never rotating) objects in slots
     // can't safely rotate them, because they may be compound objects
@@ -3377,7 +3385,14 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
 
             doublePair pos = obj->slotPos[i];
             
-            doublePair centerOffset = getObjectCenterOffset( contained );
+            doublePair centerOffset;
+
+            if( allBehind ) {
+                centerOffset = getObjectBottomCenterOffset( contained );
+                }
+            else {
+                centerOffset = getObjectCenterOffset( contained );
+                }
             
             double rot = inRot;
             

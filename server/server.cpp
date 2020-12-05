@@ -2023,6 +2023,17 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "USE" ) == 0 ) {
         m.type = USE;
+        // read optional id parameter
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.id ), &( m.i ) );
+        
+        if( numRead < 5 ) {
+            m.i = -1;
+            }
+        if( numRead < 4 ) {
+            m.id = -1;
+            }
         }
     else if( strcmp( nameBuffer, "SELF" ) == 0 ) {
         m.type = SELF;
@@ -4333,9 +4344,9 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         if ( passwordInvocationAndSettingAreSeparated ) {
             sayingPassword = isPasswordInvokingSay( inToSay );
             if( sayingPassword != NULL ) {
-                AppLog::infoF( "2HOL DEBUG: Player says password. New password assigned to a player." );
+                // AppLog::infoF( "2HOL DEBUG: Player says password. New password assigned to a player." );
                 inPlayer->saidPassword = stringDuplicate( sayingPassword );
-                AppLog::infoF( "2HOL DEBUG: Player's password is %s", inPlayer->saidPassword );
+                // AppLog::infoF( "2HOL DEBUG: Player's password is %s", inPlayer->saidPassword );
 				//if passwordSilent = true, no need to display anything, as well as make any further checks, just cut it after the assignment is done
 				if( passwordSilent ) { return; }
                 }
@@ -4345,10 +4356,10 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     
         assigningPassword = isPasswordSettingSay( inToSay );
         if( assigningPassword != NULL ) {
-            AppLog::infoF( "2HOL DEBUG: Player sets new password for future assignment." );
+            // AppLog::infoF( "2HOL DEBUG: Player sets new password for future assignment." );
             inPlayer->assignedPassword = stringDuplicate( assigningPassword );
             if ( !passwordInvocationAndSettingAreSeparated ) { inPlayer->saidPassword = stringDuplicate( assigningPassword ); }
-            AppLog::infoF( "2HOL DEBUG: Password for future assignment password is %s", inPlayer->assignedPassword );
+            // AppLog::infoF( "2HOL DEBUG: Password for future assignment password is %s", inPlayer->assignedPassword );
             //if passwordSilent = true, no need to display anything, as well as make any further checks, just cut it after the assignment is done
             if( passwordSilent ) { return; }
             }
@@ -7469,7 +7480,71 @@ static int getContainerSwapIndex( LiveObject *inPlayer,
     return -1;
     }
 
+
+
+// checks for granular +cont containment limitations
+// assumes that container size limitation and 
+// containable property checked elsewhere
+static char containmentPermitted( int inContainerID, int inContainedID ) {
+    ObjectRecord *containedO = getObject( inContainedID );
     
+    char *contLoc = strstr( containedO->description, "+cont" );
+    
+    if( contLoc == NULL ) {
+        // not a limited containable object
+        return true;
+        }
+    
+    char *limitNameLoc = &( contLoc[5] );
+    
+    if( limitNameLoc[0] != ' ' &&
+        limitNameLoc[0] != '\0' ) {
+
+        // there's something after +cont
+        // scan the whole thing, including +cont
+
+        char tag[100];
+        
+        int numRead = sscanf( contLoc, "%99s", tag );
+        
+        if( numRead == 1 ) {
+            
+            // clean up # character that might delimit end of string
+            int tagLen = strlen( tag );
+            
+            for( int i=0; i<tagLen; i++ ) {
+                if( tag[i] == '#' ) {
+                    tag[i] = '\0';
+                    tagLen = i;
+                    break;
+                    }
+                }
+
+            char *locInContainerName =
+                strstr( getObject( inContainerID )->description, tag );
+            
+            if( locInContainerName != NULL ) {
+                // skip to end of tag
+                // and make sure tag isn't a sub-tag of container tag
+                // don't want contained to be +contHot
+                // and contaienr to be +contHotPlates
+                
+                char end = locInContainerName[ tagLen ];
+                
+                if( end == ' ' ||
+                    end == '\0'||
+                    end == '#' ) {
+                    return true;
+                    }
+                }
+            return false;
+            }
+        }
+    
+    // +cont with nothing after it, no limit
+    return true;
+    }
+
         
 
 
@@ -7546,7 +7621,8 @@ static char addHeldToContainer( LiveObject *inPlayer,
     if( isRoom &&
         isContainable( 
             inPlayer->holdingID ) &&
-        containSize <= slotSize ) {
+        containSize <= slotSize &&
+        containmentPermitted( inTargetID, inPlayer->holdingID ) ) {
         
         // add to container
         
@@ -7890,9 +7966,17 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
             getObject( inPlayer->holdingID )->
             containSize;
     
+        char permitted = false;
         
         if( containSize <= slotSize &&
             cObj->numSlots > 0 &&
+            containmentPermitted( cObj->id, inPlayer->holdingID ) ) {
+            permitted = true;
+            }
+        
+        if( containSize <= slotSize &&
+            cObj->numSlots > 0 &&
+            permitted &&
             outCouldHaveGoneIn != NULL ) {
             *outCouldHaveGoneIn = true;
             }
@@ -7900,7 +7984,8 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
         if( ( oldNum < cObj->numSlots
               || ( oldNum == cObj->numSlots && inWillSwap ) )
             &&
-            containSize <= slotSize ) {
+            containSize <= slotSize &&
+            permitted ) {
             // room (or will swap, so we can over-pack it)
             inPlayer->clothingContained[inC].
                 push_back( 
@@ -7944,6 +8029,61 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
         }
 
     return false;
+    }
+
+
+
+static void changeContained( int inX, int inY, int inSlotNumber, 
+                             int inNewObjectID ) {
+    
+    int numContained = 0;
+    int *contained = getContained( inX, inY, &numContained );
+
+    timeSec_t *containedETA = 
+        getContainedEtaDecay( inX, inY, &numContained );
+    
+    timeSec_t curTimeSec = Time::timeSec();
+    
+    if( contained != NULL && containedETA != NULL &&
+        numContained > inSlotNumber ) {
+    
+        int oldObjectID = contained[ inSlotNumber ];
+        timeSec_t oldETA = containedETA[ inSlotNumber ];
+        
+        if( oldObjectID > 0 ) {
+            
+            TransRecord *oldDecayTrans = getTrans( -1, oldObjectID );
+
+            TransRecord *newDecayTrans = getTrans( -1, inNewObjectID );
+            
+
+            timeSec_t newETA = 0;
+            
+            if( newDecayTrans != NULL ) {
+                newETA = curTimeSec + newDecayTrans->autoDecaySeconds;
+                }
+            
+            if( oldDecayTrans != NULL && newDecayTrans != NULL &&
+                oldDecayTrans->autoDecaySeconds == 
+                newDecayTrans->autoDecaySeconds ) {
+                // preserve remaining seconds from old object
+                newETA = oldETA;
+                }
+            
+            contained[ inSlotNumber ] = inNewObjectID;
+            containedETA[ inSlotNumber ] = newETA;
+
+            setContained( inX, inY, numContained, contained );
+            setContainedEtaDecay( inX, inY, numContained, containedETA );
+            }
+        }
+
+    if( contained != NULL ) {
+        delete [] contained;
+        }
+    if( containedETA != NULL ) {
+        delete [] containedETA;
+        }
     }
 
 
@@ -10157,26 +10297,28 @@ static char isAccessBlocked( LiveObject *inPlayer,
 		//2HOL additions for: password-protected objects
 		//the check to block the transition for the object which password was not guessed correctly
 		if( passwordTransitionsAllowed && targetObj->canHaveInGamePassword ) {
-			AppLog::infoF( "2HOL DEBUG: attempt to interact with an object potentially having password" );
-			AppLog::infoF( "2HOL DEBUG: there are %i protected tiles with object ID %i in the world", targetObj->IndX.size(), targetObj->id );
-			AppLog::infoF( "2HOL DEBUG: interaction location, x: %i", x );
-			AppLog::infoF( "2HOL DEBUG: interaction location, y: %i", y );
+			// AppLog::infoF( "2HOL DEBUG: attempt to interact with an object potentially having password" );
+			// AppLog::infoF( "2HOL DEBUG: there are %i protected tiles with object ID %i in the world", targetObj->IndX.size(), targetObj->id );
+			// AppLog::infoF( "2HOL DEBUG: interaction location, x: %i", x );
+			// AppLog::infoF( "2HOL DEBUG: interaction location, y: %i", y );
 			for( int i=0; i<targetObj->IndX.size(); i++ ) {
 				if ( x == targetObj->IndX.getElementDirect(i) && y == targetObj->IndY.getElementDirect(i) ) {
-					AppLog::infoF( "2HOL DEBUG: protected tile #%i, password: %s", i, targetObj->IndPass.getElementDirect(i) );
+					// AppLog::infoF( "2HOL DEBUG: protected tile #%i, password: %s", i, targetObj->IndPass.getElementDirect(i) );
 					if ( inPlayer->saidPassword == NULL ) {
-							AppLog::infoF( "2HOL DEBUG: player didn't say any password." );
+							// AppLog::infoF( "2HOL DEBUG: player didn't say any password." );
 							blockedByPassword = true;
 					}
 					else {
-						AppLog::infoF( "2HOL DEBUG: player's password: %s", inPlayer->saidPassword );
-						char *pass = strstr( inPlayer->saidPassword, targetObj->IndPass.getElementDirect(i) );
+						// AppLog::infoF( "2HOL DEBUG: player's password: %s", inPlayer->saidPassword );
+						std::string tryPw( inPlayer->saidPassword );
+						std::string truePw( targetObj->IndPass.getElementDirect(i) );
+						bool pass = tryPw.compare(truePw) == 0;
 						if ( pass ) {
-							AppLog::infoF( "2HOL DEBUG: passwords match." );
+							// AppLog::infoF( "2HOL DEBUG: passwords match." );
 							blockedByPassword = false;
 							}
 						else {
-							AppLog::infoF( "2HOL DEBUG: passwords do not match." );
+							// AppLog::infoF( "2HOL DEBUG: passwords do not match." );
 							blockedByPassword = true;
 							}
 						}
@@ -10185,7 +10327,7 @@ static char isAccessBlocked( LiveObject *inPlayer,
 				}
 			// 2HOL, password-protected objects: or for which the password was not guessed
 			if ( blockedByPassword ) {
-				 AppLog::infoF( "2HOL DEBUG: attempt to interact was blocked: wrong password." );
+				 // AppLog::infoF( "2HOL DEBUG: attempt to interact was blocked: wrong password." );
 				}
 			}
         }
@@ -12002,8 +12144,8 @@ int main() {
             if( message != NULL ) {
                 someClientMessageReceived = true;
                 
-                //AppLog::infoF( "Got client message from %d: %s",
-                //               nextPlayer->id, message );
+                AppLog::infoF( "Got client message from %d: %s",
+                              nextPlayer->id, message );
                 
                 ClientMessage m = parseMessage( nextPlayer, message );
                 
@@ -13739,6 +13881,49 @@ int main() {
                                                   target );
                                     }
 
+                                if( r != NULL &&
+                                    targetObj->numSlots > 0 ) {
+                                    // target has number of slots
+                                    
+                                    int numContained = 
+                                        getNumContained( m.x, m.y );
+                                    
+                                    int numSlotsInNew = 0;
+                                    
+                                    if( r->newTarget > 0 ) {
+                                        numSlotsInNew =
+                                            getObject( r->newTarget )->numSlots;
+                                        }
+                                    
+                                    if( numContained > numSlotsInNew &&
+                                        numSlotsInNew == 0 ) {
+                                        // not enough room in new target
+
+                                        // check if new actor will contain
+                                        // them (reverse containment transfer)
+                                        
+                                        if( r->newActor > 0 &&
+                                            nextPlayer->numContained == 0 ) {
+                                            // old actor empty
+                                            
+                                            int numSlotsNewActor =
+                                                getObject( r->newActor )->
+                                                numSlots;
+                                         
+                                            numSlotsInNew = numSlotsNewActor;
+                                            }
+                                        }
+
+
+                                    if( numContained > numSlotsInNew ) {
+                                        // would result in shrinking
+                                        // and flinging some contained
+                                        // objects
+                                        // block it.
+                                        heldCanBeUsed = false;
+                                        r = NULL;
+                                        }
+                                    }
                                   
                                 if( r == NULL && 
                                     ( nextPlayer->holdingID != 0 || 
@@ -14043,13 +14228,24 @@ int main() {
                                          getObject( oldHolding )->canGetInGamePassword &&
                                          getObject( r->newTarget )->canHaveInGamePassword ) {                                           
 
-                                            AppLog::infoF( "2HOL DEBUG: retrieving player's password." );
+                                            // AppLog::infoF( "2HOL DEBUG: retrieving player's password." );
                                             char *found = nextPlayer->assignedPassword;
                                             
-                                            if ( found == NULL ) {AppLog::infoF( "    2HOL DEBUG: password returned NULL." );}
-                                            else { if ( found[0] == '\0' ) {AppLog::infoF( "    2HOL DEBUG: password string is empty." );} }
+                                            // if ( found == NULL ) {AppLog::infoF( "    2HOL DEBUG: password returned NULL." );}
+                                            // else { if ( found[0] == '\0' ) {AppLog::infoF( "    2HOL DEBUG: password string is empty." );} }
                                             
                                             if ( ( found != NULL ) && ( found[0] != '\0') ) {
+												
+												//Clear old passwords before assigning the new one to this tile
+												//These old passwords are from password restoration after server restart, not from players
+												for( int i=0; i<getObject( r->newTarget )->IndX.size(); i++ ) {
+													if ( m.x == getObject( r->newTarget )->IndX.getElementDirect(i) && m.y == getObject( r->newTarget )->IndY.getElementDirect(i) ) {
+														getObject( r->newTarget )->IndPass.deleteElement(i);
+														getObject( r->newTarget )->IndX.deleteElement(i);
+														getObject( r->newTarget )->IndY.deleteElement(i);
+														break;
+													}
+												}
                                                
                                                 getObject( r->newTarget )->IndX.push_back( m.x );
                                                 getObject( r->newTarget )->IndY.push_back( m.y );
@@ -14078,12 +14274,12 @@ int main() {
                                                 //erasing player's password after each successful transition
                                                 nextPlayer->assignedPassword = NULL;
                                                 
-                                                                                              AppLog::infoF( "2HOL DEBUG: saved password-protected position, x = %i", getObject( r->newTarget )->IndX.getElementDirect(getObject( r->newTarget )->IndX.size()-1));
-                                                AppLog::infoF( "2HOL DEBUG: saved password-protected position, y = %i", getObject( r->newTarget )->IndY.getElementDirect(getObject( r->newTarget )->IndY.size()-1));
-                                                AppLog::infoF( "2HOL DEBUG: saved password: %s", getObject( r->newTarget )->IndPass.getElementDirect(getObject( r->newTarget )->IndPass.size()-1));
+                                                                                              // AppLog::infoF( "2HOL DEBUG: saved password-protected position, x = %i", getObject( r->newTarget )->IndX.getElementDirect(getObject( r->newTarget )->IndX.size()-1));
+                                                // AppLog::infoF( "2HOL DEBUG: saved password-protected position, y = %i", getObject( r->newTarget )->IndY.getElementDirect(getObject( r->newTarget )->IndY.size()-1));
+                                                // AppLog::infoF( "2HOL DEBUG: saved password: %s", getObject( r->newTarget )->IndPass.getElementDirect(getObject( r->newTarget )->IndPass.size()-1));
                                             }
                                             else {
-                                                AppLog::infoF( "2HOL DEBUG: object has no password to copy.");
+                                                // AppLog::infoF( "2HOL DEBUG: object has no password to copy.");
                                             }
                                             
                                         }
@@ -14095,18 +14291,30 @@ int main() {
                                         ( target > 0) && ( r->newTarget > 0 ) && ( target != r->newTarget ) &&
                                          getObject( target )->canHaveInGamePassword ) {
                                         
-                                        //first of all, if transition was allowed, then old object loses the password record in any case
-                                        char *pass = NULL;
-                                        for( int i=0; i<targetObj->IndX.size(); i++ ) {
-                                            if ( m.x == getObject( target )->IndX.getElementDirect(i) && m.y == getObject( target )->IndY.getElementDirect(i) ) {
-                                                pass = getObject( target )->IndPass.getElementDirect(i);
-                                                    AppLog::infoF( "2HOL DEBUG: the password is deleted from the object with ID %i, located at the position (%i,%i).", getObject( target )->id, m.x, m.y);
-                                                getObject( target )->IndPass.deleteElement(i);
-                                                getObject( target )->IndX.deleteElement(i);
-                                                getObject( target )->IndY.deleteElement(i);
-                                                break;
-                                            }
-                                        }
+										//first of all, if transition was allowed, then old object loses the password record in any case
+										
+										//Instead of removing GridPos only from the target object,
+										//we go through all possible pw-protected object and remove such GridPos if we see them
+										//This is because upon server restart, we ignore the saved ids and load all the pw-locked GridPos into all possible pw objects.
+										//See setupObjectPasswordStatus() in objectBank.cpp
+										int maxId = getMaxObjectID();
+										char *pass = NULL;
+
+										for ( int id=0; id<maxId; id++ ) {
+											ObjectRecord *obj = getObject(id);
+											if (obj != NULL && obj->canHaveInGamePassword) {
+												for( int i=0; i<obj->IndX.size(); i++ ) {
+													if ( m.x == obj->IndX.getElementDirect(i) && m.y == obj->IndY.getElementDirect(i) ) {
+														if (targetObj->id == id) pass = obj->IndPass.getElementDirect(i);
+															// AppLog::infoF( "2HOL DEBUG: the password is deleted from the object with ID %i, located at the position (%i,%i).", obj->id, m.x, m.y);
+														obj->IndPass.deleteElement(i);
+														obj->IndX.deleteElement(i);
+														obj->IndY.deleteElement(i);
+														break;
+													}
+												}
+											}
+										}
                                         
                                         //then, if the result of the transition isn't protected by password (either newTarget is without password, or there is no newTarget), that's it;
                                         //otherwise, the password needs to be reapplied to the new object
@@ -14117,9 +14325,9 @@ int main() {
                                             getObject( r->newTarget )->IndY.push_back( m.y );
                                             getObject( r->newTarget )->IndPass.push_back( pass );
                                                 
-                                            AppLog::infoF( "2HOL DEBUG: updated password-protected position, x = %i", getObject( r->newTarget )->IndX.getElementDirect(getObject( r->newTarget )->IndX.size()-1));
-                                            AppLog::infoF( "2HOL DEBUG: updated password-protected position, y = %i", getObject( r->newTarget )->IndY.getElementDirect(getObject( r->newTarget )->IndY.size()-1));
-                                            AppLog::infoF( "2HOL DEBUG: password: %s", getObject( r->newTarget )->IndPass.getElementDirect(getObject( r->newTarget )->IndPass.size()-1));
+                                            // AppLog::infoF( "2HOL DEBUG: updated password-protected position, x = %i", getObject( r->newTarget )->IndX.getElementDirect(getObject( r->newTarget )->IndX.size()-1));
+                                            // AppLog::infoF( "2HOL DEBUG: updated password-protected position, y = %i", getObject( r->newTarget )->IndY.getElementDirect(getObject( r->newTarget )->IndY.size()-1));
+                                            // AppLog::infoF( "2HOL DEBUG: password: %s", getObject( r->newTarget )->IndPass.getElementDirect(getObject( r->newTarget )->IndPass.size()-1));
                                         }
                                     }
 
@@ -14180,22 +14388,121 @@ int main() {
                                     
                                     pickupToHold( nextPlayer, m.x, m.y,
                                                   target );
-                                    }
-                                else if( nextPlayer->holdingID == 0 &&
-                                         targetObj->permanent ) {
-                                    
-                                    // try removing from permanent
-                                    // container
-                                    removeFromContainerToHold( nextPlayer,
-                                                               m.x, m.y,
-                                                               m.i );
                                     }         
-                                else if( nextPlayer->holdingID > 0 ) {
-                                    // try adding what we're holding to
-                                    // target container
+                                else if( nextPlayer->holdingID >= 0 ) {
                                     
-                                    addHeldToContainer(
-                                        nextPlayer, target, m.x, m.y );
+                                    char handled = false;
+                                    
+                                    if( m.i != -1 && targetObj->permanent &&
+                                        targetObj->numSlots > m.i &&
+                                        getNumContained( m.x, m.y ) > m.i &&
+                                        strstr( targetObj->description,
+                                                "+useOnContained" ) != NULL ) {
+                                        // a valid slot specified to use
+                                        // held object on.
+                                        // AND container allows this
+                                        
+                                        int contTarget = 
+                                            getContained( m.x, m.y, m.i );
+                                        
+                                        char isSubCont = false;
+                                        if( contTarget < 0 ) {
+                                            contTarget = -contTarget;
+                                            isSubCont = true;
+                                            }
+
+                                        ObjectRecord *contTargetObj =
+                                            getObject( contTarget );
+                                        
+                                        TransRecord *contTrans =
+                                            getPTrans( nextPlayer->holdingID,
+                                                       contTarget );
+                                        
+                                        ObjectRecord *newTarget = NULL;
+                                        
+                                        if( ! isSubCont &&
+                                            contTrans != NULL &&
+                                            ( contTrans->newActor == 
+                                              nextPlayer->holdingID ||
+                                              contTrans->newActor == 0 ||
+                                              canPickup( 
+                                                  contTrans->newActor,
+                                                  computeAge( 
+                                                      nextPlayer ) ) ) ) {
+
+                                            // a trans applies, and we
+                                            // can hold the resulting actor
+                                            if( contTrans->newTarget > 0 ) {
+                                                newTarget = getObject(
+                                                    contTrans->newTarget );
+                                                }
+                                            }
+                                        if( newTarget != NULL &&
+                                            isContainable( 
+                                                contTrans->newTarget ) &&
+                                            newTarget->containSize <=
+                                            targetObj->slotSize &&
+                                            containmentPermitted(
+                                                targetObj->id,
+                                                newTarget->id ) ) {
+                                                
+                                            int oldHeld = 
+                                                nextPlayer->holdingID;
+                                            
+                                            handleHoldingChange( 
+                                                nextPlayer,
+                                                contTrans->newActor );
+                                            
+                                            nextPlayer->heldOriginValid = 0;
+                                            nextPlayer->heldOriginX = 0;
+                                            nextPlayer->heldOriginY = 0;
+                                            nextPlayer->
+                                                heldTransitionSourceID = 0;
+                                            
+                                            if( contTrans->newActor > 0 && 
+                                                contTrans->newActor !=
+                                                oldHeld ) {
+                                                
+                                                nextPlayer->
+                                                    heldTransitionSourceID
+                                                    = contTargetObj->id;
+                                                }
+
+                                            
+                                            setResponsiblePlayer( 
+                                                - nextPlayer->id );
+                                            
+                                            changeContained( 
+                                                m.x, m.y,
+                                                m.i, 
+                                                contTrans->newTarget );
+                                            
+                                            setResponsiblePlayer( -1 );
+                                            handled = true;
+                                            }
+                                        }
+
+                                    
+                                    // consider other cases
+                                    if( ! handled ) {
+                                        if( nextPlayer->holdingID == 0 &&
+                                            targetObj->permanent ) {
+                                    
+                                            // try removing from permanent
+                                            // container
+                                            removeFromContainerToHold( 
+                                                nextPlayer,
+                                                m.x, m.y,
+                                                m.i );
+                                            }
+                                        else if( nextPlayer->holdingID > 0 ) {
+                                            // try adding what we're holding to
+                                            // target container
+                                            
+                                            addHeldToContainer(
+                                                nextPlayer, target, m.x, m.y );
+                                            }
+                                        }
                                     }
                                 
 
@@ -15529,56 +15836,77 @@ int main() {
                                         if( canDrop &&
                                             droppedObj->containable &&
                                             targetSlotSize >=
-                                            droppedObj->containSize ) {
+                                            droppedObj->containSize &&
+                                            containmentPermitted( 
+                                                target,
+                                                droppedObj->id ) ) {
                                             canGoIn = true;
                                             }
                                         
+                                        char forceUse = false;
+                                        
+                                        if( canDrop && 
+                                            canGoIn &&
+                                            targetSlots > 0 &&
+                                            nextPlayer->numContained == 0 &&
+                                            getNumContained( m.x, m.y ) == 0 ) {
+                                            
+                                            // container empty
+                                            // is there a transition that might
+                                            // apply instead?
+                                            
+                                            // only consider a consuming
+                                            // transition (custom containment
+                                            // like grapes in a basket which
+                                            // aren't in container slots )
+
+                                            TransRecord *t = 
+                                                getPTrans( 
+                                                    nextPlayer->holdingID, 
+                                                    target );
+                                            
+                                            if( t != NULL && 
+                                                t->newActor == 0 ) {
+                                                forceUse = true;
+                                                }
+                                            }
                                         
 
                                         // DROP indicates they 
                                         // right-clicked on container
                                         // so use swap mode
                                         if( canDrop && 
-                                            canGoIn && 
+                                            canGoIn &&
+                                            ! forceUse &&
                                             addHeldToContainer( 
                                                 nextPlayer,
                                                 target,
                                                 m.x, m.y, true ) ) {
                                             // handled
                                             }
-                                        else if( canDrop && 
-                                                 ! canGoIn &&
-                                                 targetObj->permanent &&
-                                                 nextPlayer->numContained 
-                                                 == 0 ) {
+                                        else if( forceUse ||
+                                                 ( canDrop && 
+                                                   ! canGoIn &&
+                                                   targetObj->permanent &&
+                                                   nextPlayer->numContained 
+                                                   == 0 ) ) {
                                             // try treating it like
                                             // a USE action
-                                            
-                                            TransRecord *useTrans =
-                                                getPTrans( 
-                                                    nextPlayer->holdingID,
-                                                    target );
-                                            // handle simple case
-                                            // stacking containers
-                                            // client sends DROP for this
-                                            if( useTrans != NULL &&
-                                                useTrans->newActor == 0 ) {
-                                                
-                                                handleHoldingChange(
-                                                    nextPlayer,
-                                                    useTrans->newActor );
-                                                
-                                                setMapObject( 
-                                                    m.x, m.y,
-                                                    useTrans->newTarget );
-                                                }
+                                            m.type = USE;
+                                            m.id = -1;
+                                            m.c = -1;
+                                            playerIndicesToSendUpdatesAbout.
+                                                deleteElementEqualTo( i );
+                                            goto RESTART_MESSAGE_ACTION;
                                             }
                                         else if( canDrop && 
                                                  ! canGoIn &&
                                                  ! targetObj->permanent 
                                                  &&
-                                                 targetObj->minPickupAge <=
-                                                 computeAge( nextPlayer ) ) {
+                                                 canPickup( 
+                                                     targetObj->id,
+                                                     computeAge( 
+                                                         nextPlayer ) ) ) {
                                             // drop onto a spot where
                                             // something exists, and it's
                                             // not a container
@@ -15588,6 +15916,8 @@ int main() {
                                             
                                             int oldHeld = 
                                                 nextPlayer->holdingID;
+                                            int oldNumContained =
+                                                nextPlayer->numContained;
                                             
                                             // now swap
                                             swapHeldWithGround( 
@@ -15595,11 +15925,14 @@ int main() {
                                              &playerIndicesToSendUpdatesAbout );
                                             
                                             if( oldHeld == 
-                                                nextPlayer->holdingID ) {
+                                                nextPlayer->holdingID &&
+                                                oldNumContained ==
+                                                nextPlayer->numContained ) {
                                                 // no change
                                                 // are they the same object?
-                                                if( oldHeld == target ) {
-                                                    // try using held
+                                                if( oldNumContained == 0 && 
+                                                    oldHeld == target ) {
+                                                    // try using empty held
                                                     // on target
                                                     TransRecord *sameTrans
                                                         = getPTrans(
@@ -17306,9 +17639,9 @@ int main() {
             
             char *updateListString = updateList.getElementString();
             
-            //AppLog::infoF( "Need to send updates about these %d players: %s",
-            //               playerIndicesToSendUpdatesAbout.size(),
-            //               updateListString );
+            AppLog::infoF( "Need to send updates about these %d players: %s",
+                          playerIndicesToSendUpdatesAbout.size(),
+                          updateListString );
             delete [] updateListString;
             }
         
@@ -17594,9 +17927,9 @@ int main() {
             
             char *updateListString = trueUpdateList.getElementString();
             
-            //AppLog::infoF( "Sending updates about these %d players: %s",
-            //               newUpdatePlayerIDs.size(),
-            //               updateListString );
+            AppLog::infoF( "Sending updates about these %d players: %s",
+                          newUpdatePlayerIDs.size(),
+                          updateListString );
             delete [] updateListString;
             }
         
@@ -19622,10 +19955,10 @@ int main() {
             
             char *playerListString = playerList.getElementString();
 
-            //AppLog::infoF( "%d/%d players were sent part of a %d-line PU: %s",
-            //               playersReceivingPlayerUpdate.size(),
-            //               numLive, newUpdates.size(),
-            //               playerListString );
+            AppLog::infoF( "%d/%d players were sent part of a %d-line PU: %s",
+                          playersReceivingPlayerUpdate.size(),
+                          numLive, newUpdates.size(),
+                          playerListString );
             
             delete [] playerListString;
             }

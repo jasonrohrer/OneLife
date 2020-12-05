@@ -473,6 +473,7 @@ class LivingLifePage : public GamePage, public ActionListener {
 
 		doublePair minitechGetLastScreenViewCenter();
 		char *minitechGetDisplayObjectDescription(int objId);
+		bool minitechSayFieldIsFocused() { return mSayField.isFocused(); }
 
         virtual void actionPerformed( GUIComponent *inTarget );
         
@@ -614,6 +615,8 @@ class LivingLifePage : public GamePage, public ActionListener {
         SpriteHandle mHomeSlipSprite;
         SpriteHandle mHomeArrowSprites[ NUM_HOME_ARROWS ];
         SpriteHandle mHomeArrowErasedSprites[ NUM_HOME_ARROWS ];
+		
+		SpriteHandle sheetSprites[9] = {nullptr};
         
         HomeArrow mHomeArrowStates[ NUM_HOME_ARROWS ];
 
