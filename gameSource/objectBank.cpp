@@ -665,6 +665,22 @@ static void setupNoBackAccess( ObjectRecord *inR ) {
     }
 
 
+static void setupBlocksMoving( ObjectRecord *inR ) {
+    inR->blocksMoving = false;
+    
+    if( inR->blocksWalking ) {
+        inR->blocksMoving = true;
+        return;
+        }
+    
+    char *pos = strstr( inR->description, "+blocksMoving" );
+
+    if( pos != NULL ) {
+        inR->blocksMoving = true;
+        }
+    }
+
+
 
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
@@ -858,6 +874,8 @@ float initObjectBankStep() {
 
                 next++;
 
+                
+                setupBlocksMoving( r );
 
                 
                 
@@ -3308,6 +3326,8 @@ int addObject( const char *inDescription,
     setupNoBackAccess( r );            
 
     setupWall( r );
+
+    setupBlocksMoving( r );
 
     r->horizontalVersionID = -1;
     r->verticalVersionID = -1;
