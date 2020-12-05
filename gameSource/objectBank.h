@@ -395,7 +395,9 @@ typedef struct ObjectRecord {
 		
 		char isTapOutTrigger;
 		
-		char noBackAccess;
+        char autoDefaultTrans;
+
+        char noBackAccess;
         
         //2HOL additions for: password-protected doors      
         //true for object that can transition into password-bearer, similar to how "writtable" and "written" flags are related

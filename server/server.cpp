@@ -13431,6 +13431,76 @@ int main() {
                                     secondsAlreadyDone;
                             
                                 nextPlayer->newMove = true;
+                                
+                                
+                                // check if path passes over
+                                // an object with autoDefaultTrans
+                                for( int p=0; p< nextPlayer->pathLength; p++ ) {
+                                    int x = nextPlayer->pathToDest[p].x;
+                                    int y = nextPlayer->pathToDest[p].y;
+                                    
+                                    int oID = getMapObject( x, y );
+                                    
+                                    if( oID > 0 &&
+                                        getObject( oID )->autoDefaultTrans ) {
+                                        TransRecord *t = getPTrans( -2, oID );
+                                        
+                                        if( t == NULL ) {
+                                            // also consider applying bare-hand
+                                            // action, if defined and if
+                                            // it produces nothing in the hand
+                                            t = getPTrans( 0, oID );
+                                            
+                                            if( t != NULL &&
+                                                t->newActor > 0 ) {
+                                                t = NULL;
+                                                }
+                                            }
+
+                                        if( t != NULL && t->newTarget > 0 ) {
+                                            int newTarg = t->newTarget;
+                                            setMapObject( x, y, newTarg );
+
+                                            TransRecord *timeT =
+                                                getPTrans( -1, newTarg );
+                                            
+                                            if( timeT != NULL &&
+                                                timeT->autoDecaySeconds < 20 ) {
+                                                // target will decay to
+                                                // something else in a short
+                                                // time
+                                                // Likely meant to reset
+                                                // after person passes through
+                                                
+                                                // fix the time based on our
+                                                // pass-through time
+                                                double timeLeft =
+                                                    nextPlayer->moveTotalSeconds
+                                                    - secondsAlreadyDone;
+                                                
+                                                double plannedETADecay =
+                                                    Time::getCurrentTime()
+                                                    + timeLeft 
+                                                    // pad with extra second
+                                                    + 1;
+                                                
+                                                timeSec_t actual =
+                                                    getEtaDecay( x, y );
+                                                
+                                                // don't ever shorten
+                                                // we could be interrupting
+                                                // another player who
+                                                // is on a longer path
+                                                // through the same object
+                                                if( plannedETADecay >
+                                                    actual ) {
+                                                    setEtaDecay( 
+                                                        x, y, plannedETADecay );
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
