@@ -7486,7 +7486,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 	
 	File languagesDir( NULL, "languages" );
 	if ( languagesDir.exists() && languagesDir.isDirectory() ) {
-		File *helpFile = languagesDir.getChildFile( "help_English" );
+		File *helpFile = languagesDir.getChildFile( "help_English.txt" );
 		char *helpFileContents = helpFile->readFileContents();
 		if( helpFileContents != NULL ) {
 			int numLines;
