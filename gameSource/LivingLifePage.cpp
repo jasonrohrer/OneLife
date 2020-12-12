@@ -8210,7 +8210,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 }
             
-
+			if ( showHelp ) {
+				setDrawColor( 1, 1, 1, 0.2f );
+				}
             drawSprite( mHungerSlipSprites[i], slipPos );
             }
         }
@@ -21165,7 +21167,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             break;
         case 'h':
         case 'H':
-            if( ! mSayField.isFocused() ) {
+            if( ! mSayField.isFocused() && ! vogMode ) {
                 showHelp = ! showHelp;
                 }
             break;
