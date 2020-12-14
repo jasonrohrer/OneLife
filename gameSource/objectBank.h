@@ -86,6 +86,12 @@ typedef struct ObjectRecord {
         // true for objects that cannot be walked through
         char blocksWalking;
         
+        // true for objects that moving objects (like animals) can't pass
+        // through.  All blocksWalking objects, plus some others that people
+        // can walk through.
+        char blocksMoving;
+        
+
         // true if sticks out and blocks on left or right of center tile
         char wide;
         
@@ -395,7 +401,9 @@ typedef struct ObjectRecord {
 		
 		char isTapOutTrigger;
 		
-		char noBackAccess;
+        char autoDefaultTrans;
+
+        char noBackAccess;
         
         //2HOL additions for: password-protected doors      
         //true for object that can transition into password-bearer, similar to how "writtable" and "written" flags are related

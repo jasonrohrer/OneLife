@@ -512,6 +512,10 @@ typedef struct LiveObject {
         char waitingForForceResponse;
         
         int lastMoveSequenceNumber;
+
+
+        int facingLeft;
+        double lastFlipTime;
         
 
         int pathLength;
@@ -1806,6 +1810,7 @@ typedef enum messageType {
     VOGT,
     VOGX,
     PHOTO,
+    FLIP,
     UNKNOWN
     } messageType;
 
@@ -2216,6 +2221,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         if( numRead != 4 ) {
             m.id = 0;
             }
+        }
+    else if( strcmp( nameBuffer, "FLIP" ) == 0 ) {
+        m.type = FLIP;
         }
      else {
         m.type = UNKNOWN;
@@ -6298,6 +6306,8 @@ int processLoggedInPlayer( char inAllowReconnect,
         newObject.foodStore -= 6;
         }
     
+    double currentTime = Time::getCurrentTime();
+    
 
     newObject.envHeat = targetHeat;
     newObject.bodyHeat = targetHeat;
@@ -6305,12 +6315,12 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.lastBiomeHeat = targetHeat;
     newObject.heat = 0.5;
     newObject.heatUpdate = false;
-    newObject.lastHeatUpdate = Time::getCurrentTime();
+    newObject.lastHeatUpdate = currentTime;
     newObject.isIndoors = false;
     
 
     newObject.foodDecrementETASeconds =
-        Time::getCurrentTime() + 
+        currentTime + 
         computeFoodDecrementTimeSeconds( &newObject );
                 
     newObject.foodUpdate = true;
@@ -6331,6 +6341,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.ys = 0;
     newObject.xd = 0;
     newObject.yd = 0;
+    
+    newObject.facingLeft = 0;
+    newObject.lastFlipTime = currentTime;
     
     newObject.lastRegionLookTime = 0;
     newObject.playerCrossingCheckTime = 0;
@@ -11874,6 +11887,10 @@ int main() {
         SimpleVector<ChangePosition> newUpdatesPos;
         SimpleVector<int> newUpdatePlayerIDs;
 
+        SimpleVector<int> newFlipPlayerIDs;
+        SimpleVector<int> newFlipFacingLeft;
+        SimpleVector<GridPos> newFlipPositions;
+
 
         // these are global, so they're not tagged with positions for
         // spatial filtering
@@ -12869,7 +12886,31 @@ int main() {
                                          strlen( message ) );
                     delete [] message;
                     }
-
+                else if( m.type == FLIP ) {
+                    
+                    if( currentTime - nextPlayer->lastFlipTime > 1.75 ) {
+                        // client should send at most one flip ever 2 seconds
+                        // allow some wiggle room
+                        GridPos p = getPlayerPos( nextPlayer );
+                        
+                        int oldFacingLeft = nextPlayer->facingLeft;
+                        
+                        if( m.x > p.x ) {
+                            nextPlayer-> facingLeft = 0;
+                            }
+                        else if( m.x < p.x ) {
+                            nextPlayer->facingLeft = 1;
+                            }
+                        
+                        if( oldFacingLeft != nextPlayer->facingLeft ) {
+                            nextPlayer->lastFlipTime = currentTime;
+                            newFlipPlayerIDs.push_back( nextPlayer->id );
+                            newFlipFacingLeft.push_back( 
+                                nextPlayer->facingLeft );
+                            newFlipPositions.push_back( p );
+                            }
+                        }
+                    }
                 else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
                     // if we're waiting for a FORCE response, ignore
@@ -13390,6 +13431,76 @@ int main() {
                                     secondsAlreadyDone;
                             
                                 nextPlayer->newMove = true;
+                                
+                                
+                                // check if path passes over
+                                // an object with autoDefaultTrans
+                                for( int p=0; p< nextPlayer->pathLength; p++ ) {
+                                    int x = nextPlayer->pathToDest[p].x;
+                                    int y = nextPlayer->pathToDest[p].y;
+                                    
+                                    int oID = getMapObject( x, y );
+                                    
+                                    if( oID > 0 &&
+                                        getObject( oID )->autoDefaultTrans ) {
+                                        TransRecord *t = getPTrans( -2, oID );
+                                        
+                                        if( t == NULL ) {
+                                            // also consider applying bare-hand
+                                            // action, if defined and if
+                                            // it produces nothing in the hand
+                                            t = getPTrans( 0, oID );
+                                            
+                                            if( t != NULL &&
+                                                t->newActor > 0 ) {
+                                                t = NULL;
+                                                }
+                                            }
+
+                                        if( t != NULL && t->newTarget > 0 ) {
+                                            int newTarg = t->newTarget;
+                                            setMapObject( x, y, newTarg );
+
+                                            TransRecord *timeT =
+                                                getPTrans( -1, newTarg );
+                                            
+                                            if( timeT != NULL &&
+                                                timeT->autoDecaySeconds < 20 ) {
+                                                // target will decay to
+                                                // something else in a short
+                                                // time
+                                                // Likely meant to reset
+                                                // after person passes through
+                                                
+                                                // fix the time based on our
+                                                // pass-through time
+                                                double timeLeft =
+                                                    nextPlayer->moveTotalSeconds
+                                                    - secondsAlreadyDone;
+                                                
+                                                double plannedETADecay =
+                                                    Time::getCurrentTime()
+                                                    + timeLeft 
+                                                    // pad with extra second
+                                                    + 1;
+                                                
+                                                timeSec_t actual =
+                                                    getEtaDecay( x, y );
+                                                
+                                                // don't ever shorten
+                                                // we could be interrupting
+                                                // another player who
+                                                // is on a longer path
+                                                // through the same object
+                                                if( plannedETADecay >
+                                                    actual ) {
+                                                    setEtaDecay( 
+                                                        x, y, plannedETADecay );
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -18791,6 +18902,8 @@ int main() {
                 
                 // everyone gets all owner change messages
                 if( newOwnerPos.size() > 0 ) {
+
+                    GridPos nextPlayerPos = getPlayerPos( nextPlayer );
                     
                     // compose OW messages for this player
                     for( int u=0; u<newOwnerPos.size(); u++ ) {
@@ -18805,7 +18918,7 @@ int main() {
                         char known = isKnownOwned( nextPlayer, p );
                         
                         if( known ||
-                            distance( p, getPlayerPos( nextPlayer ) )
+                            distance( p, nextPlayerPos )
                             < maxDist2 
                             ||
                             isOwned( nextPlayer, p ) ) {
@@ -18828,6 +18941,50 @@ int main() {
                                                  strlen( ownerMessage ) );
                             delete [] ownerMessage;
                             }
+                        }
+                    }
+
+
+
+                if( newFlipPlayerIDs.size() > 0 ) {
+
+                    GridPos nextPlayerPos = getPlayerPos( nextPlayer );
+
+                    // compose FL messages for this player
+                    // only for in-range players that flipped
+                    SimpleVector<char> messageWorking;
+                    
+                    char firstLine = true;
+                    
+                    for( int u=0; u<newFlipPlayerIDs.size(); u++ ) {
+                        GridPos p = newFlipPositions.getElementDirect( u );
+                        
+                        if( distance( p, nextPlayerPos ) < maxDist2 ) {
+
+                            if( firstLine ) {
+                                messageWorking.appendElementString( "FL\n" );
+                                firstLine = false;
+                                }
+
+                            char *line = 
+                                autoSprintf( 
+                                    "%d %d\n",
+                                    newFlipPlayerIDs.getElementDirect( u ),
+                                    newFlipFacingLeft.getElementDirect( u ) );
+                            
+                            messageWorking.appendElementString( line );
+                            
+                            delete [] line;
+                            }
+                        }
+                    if( messageWorking.size() > 0 ) {
+                        messageWorking.push_back( '#' );
+                            
+                        char *message = messageWorking.getElementString();
+                        
+                        sendMessageToPlayer( nextPlayer, message,
+                                             strlen( message ) );
+                        delete [] message;
                         }
                     }
 
