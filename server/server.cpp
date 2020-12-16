@@ -13991,7 +13991,29 @@ int main() {
                                     r = getPTrans( nextPlayer->holdingID,
                                                   target );
                                     }
+                                
 
+                                if( r != NULL &&
+                                    r->newActor > 0 &&
+                                    getObject( r->newActor )->floor ) {
+                                    // special case:
+                                    // ending up with floor in hand means
+                                    // we stick floor UNDER target
+                                    // object on ground
+                                    
+                                    // but only if there's no floor there
+                                    // already
+                                    if( getMapFloor( m.x, m.y ) == 0 ) {    
+                                        setMapFloor( m.x, m.y, r->newActor );
+                                        nextPlayer->holdingID = 0;
+                                        nextPlayer->holdingEtaDecay = 0;
+                                        }
+                                    
+                                    // always cancel transition in either case
+                                    r = NULL;
+                                    }
+
+                                
                                 if( r != NULL &&
                                     targetObj->numSlots > 0 ) {
                                     // target has number of slots
