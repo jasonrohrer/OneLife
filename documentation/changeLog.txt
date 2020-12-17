@@ -81,6 +81,10 @@ Server Fixes
   over as leader, we now ignore exiled followers (unless we have no choice, and
   all followers are exiled).  Fixes #708
 
+--If multiple DING messages would be sent to client at same time, making them
+  pass by instantly and be unreadable, the server queues them up instead and
+  sends one to the client every 7 seconds.  Fixes #723
+
 
 
 

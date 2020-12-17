@@ -1106,6 +1106,13 @@ typedef struct LiveObject {
         double personalFoodDecrementSecondsBonus;
         
 
+        // don't send global messages too quickly
+        // give player chance to read each one
+        double lastGlobalMessageTime;
+        
+        SimpleVector<char*> globalMessageQueue;
+
+
     } LiveObject;
 
 
@@ -1356,6 +1363,10 @@ char isKnownOwned( LiveObject *inPlayer, GridPos inPos ) {
     return isKnownOwned( inPlayer, inPos.x, inPos.y );
     }
 
+
+// messages with no follow-up hang out on client for 10 seconds
+// 7 seconds should be long enough to read if there's a follow-up waiting
+static double minGlobalMessageSpacingSeconds = 7;
 
 
 void sendGlobalMessage( char *inMessage,
@@ -2203,7 +2214,9 @@ void quitCleanup() {
             delete [] nextPlayer->murderPerpEmail;
             }
 
-
+        nextPlayer->globalMessageQueue.deallocateStringElements();
+        
+        
         freePlayerContainedArrays( nextPlayer );
         
         
@@ -4822,6 +4835,9 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
 // if inOnePlayerOnly set, we only send to that player
 void sendGlobalMessage( char *inMessage,
                         LiveObject *inOnePlayerOnly ) {
+    
+    double curTime = Time::getCurrentTime();
+    
     char found;
     char *noSpaceMessage = replaceAll( inMessage, " ", "_", &found );
 
@@ -4839,13 +4855,26 @@ void sendGlobalMessage( char *inMessage,
             }
 
         if( ! o->error && ! o->isTutorial && o->connected ) {
-            int numSent = 
-                o->sock->send( (unsigned char*)fullMessage, 
-                               len, 
-                               false, false );
-        
-            if( numSent != len ) {
-                setPlayerDisconnected( o, "Socket write failed" );
+
+
+            if( curTime - o->lastGlobalMessageTime > 
+                minGlobalMessageSpacingSeconds ) {
+                
+                int numSent = 
+                    o->sock->send( (unsigned char*)fullMessage, 
+                                   len, 
+                                   false, false );
+                
+                o->lastGlobalMessageTime = curTime;
+                
+                if( numSent != len ) {
+                    setPlayerDisconnected( o, "Socket write failed" );
+                    }
+                }
+            else {
+                // messages are coming too quickly for this player to read
+                // them, wait before sending this one
+                o->globalMessageQueue.push_back( stringDuplicate( inMessage ) );
                 }
             }
         }
@@ -10120,6 +10149,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         delete [] forceSpawnInfo.firstName;
         delete [] forceSpawnInfo.lastName;
         }
+    
+
+    newObject.lastGlobalMessageTime = 0;
     
 
     newObject.birthPos.x = newObject.xd;
@@ -17239,6 +17271,21 @@ int main() {
                     nextPlayer->cravingFood.uniqueID < lowestCravingID ) {
                     
                     lowestCravingID = nextPlayer->cravingFood.uniqueID;
+                    }
+
+                // also send queued global messages
+                if( nextPlayer->globalMessageQueue.size() > 0 &&
+                    curStepTime - nextPlayer->lastGlobalMessageTime > 
+                    minGlobalMessageSpacingSeconds ) {
+                    
+                    // send next one
+                    char *message = 
+                        nextPlayer->globalMessageQueue.getElementDirect( 0 );
+                    nextPlayer->globalMessageQueue.deleteElement( 0 );
+                    
+                    sendGlobalMessage( message, nextPlayer );
+                    
+                    delete [] message;
                     }
                 }
             purgeStaleCravings( lowestCravingID );
@@ -28955,6 +29002,8 @@ int main() {
                     delete [] nextPlayer->deathReason;
                     }
                 
+                nextPlayer->globalMessageQueue.deallocateStringElements();
+
                 delete nextPlayer->babyBirthTimes;
                 delete nextPlayer->babyIDs;
 
