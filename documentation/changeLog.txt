@@ -69,6 +69,9 @@ Server Fixes
   curses.  Dying even slightly younger than 60 will break you out of getting
   born to your descendants again.
 
+--Fixed special biome band placement so that boundary does not line up with
+  natural spring lines.  Shifted all bands north by 20.  Fixes #709
+
 
 
 
