@@ -15312,17 +15312,60 @@ char isHungryWorkBlocked( LiveObject *inPlayer,
 
 
 // returns NULL if not found
-static LiveObject *getPlayerByName( char *inName, LiveObject *inSkip ) {
+static LiveObject *getPlayerByName( char *inName, 
+                                    LiveObject *inPlayerSayingName ) {
     for( int j=0; j<players.size(); j++ ) {
         LiveObject *otherPlayer = players.getElement( j );
         if( ! otherPlayer->error &&
-            otherPlayer != inSkip &&
+            otherPlayer != inPlayerSayingName &&
             otherPlayer->name != NULL &&
             strcmp( otherPlayer->name, inName ) == 0 ) {
             
             return otherPlayer;
             }
         }
+    
+    // no exact match.
+
+    // does name contain no space?
+    char *spacePos = strstr( inName, " " );
+
+    if( spacePos == NULL ) {
+        // try again, using just the first name for each potential target
+
+        // stick a space at the end to forbid matching prefix of someone's name
+        char *firstName = autoSprintf( "%s ", inName );
+
+        LiveObject *matchingPlayer = NULL;
+        double matchingDistance = DBL_MAX;
+        
+        GridPos playerPos = getPlayerPos( inPlayerSayingName );
+        
+
+        for( int j=0; j<players.size(); j++ ) {
+            LiveObject *otherPlayer = players.getElement( j );
+            if( ! otherPlayer->error &&
+                otherPlayer != inPlayerSayingName &&
+                otherPlayer->name != NULL &&
+                // does their name start with firstName
+                strstr( otherPlayer->name, firstName ) == otherPlayer->name ) {
+                
+                GridPos pos = getPlayerPos( otherPlayer );            
+                double d = distance( pos, playerPos );
+                
+                if( d < matchingDistance ) {
+                    matchingDistance = d;
+                    matchingPlayer = otherPlayer;
+                    }
+                }
+            }
+        
+        delete [] firstName;
+
+        return matchingPlayer;
+        }
+        
+
     return NULL;
     }
 

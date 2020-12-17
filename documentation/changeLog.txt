@@ -72,6 +72,11 @@ Server Fixes
 --Fixed special biome band placement so that boundary does not line up with
   natural spring lines.  Shifted all bands north by 20.  Fixes #709
 
+--You can now exile, redeem, forgive, give ownership to, etc. someone using
+  just their first name, and it will find the closest person with that first
+  name.  This works for anything but curses, which still require you to say
+  their full name, to curse them by name.  Fixes #710
+
 
 
 
