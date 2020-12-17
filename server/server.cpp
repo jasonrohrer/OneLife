@@ -15706,29 +15706,6 @@ static char isFollower( LiveObject *inLeader, LiveObject *inTestFollower ) {
 static void leaderDied( LiveObject *inLeader ) {
     char *leaderName = getLeadershipName( inLeader );
     
-    SimpleVector<LiveObject*> exiledByThisLeader;
-    
-    for( int i=0; i<players.size(); i++ ) {
-        
-        LiveObject *otherPlayer = players.getElement( i );
-        
-        if( otherPlayer != inLeader &&
-            ! otherPlayer->error ) {
-            
-            int exileIndex = otherPlayer->
-                exiledByIDs.getElementIndex( inLeader->id );
-            
-            if( exileIndex != -1 ) {
-                
-                // we have this other exiled
-                exiledByThisLeader.push_back( otherPlayer );
-                
-                // take ourselves off their list, we're dead
-                otherPlayer->exiledByIDs.deleteElement( exileIndex );
-                otherPlayer->exileUpdate = true;
-                }
-            }
-        }
 
 
     SimpleVector<LiveObject*> oldFollowers;
@@ -15752,23 +15729,43 @@ static void leaderDied( LiveObject *inLeader ) {
 
     // if leader is following no one (they haven't picked an heir to take over)
     // have them follow their fittest direct follower now automatically
-    
+    // ignore followers that this leader sees as exiled
+    // (unless we have no choice, and they're all exiled)
+
     if( inLeader->followingID == -1 &&
         directFollowers.size() > 0 ) {
         
         LiveObject *fittestFollower = directFollowers.getElementDirect( 0 );
-        double fittestFitness = 0;
+        // -1, because lowest possible score is 0
+        // we will find a non-exiled follower this way
+        double fittestFitness = -1;
         
         for( int i=0; i<directFollowers.size(); i++ ) {
             LiveObject *otherPlayer = directFollowers.getElementDirect( i );
             
-            if( otherPlayer->fitnessScore > fittestFitness ) {
+            if( otherPlayer->fitnessScore > fittestFitness &&
+                ! isExiled( inLeader, otherPlayer ) ) {
                 
                 fittestFitness = otherPlayer->fitnessScore;
                 fittestFollower = otherPlayer;
                 }
             }
         
+        // if all are exiled, then we find fittest follower
+        if( fittestFitness == -1 ) {
+            for( int i=0; i<directFollowers.size(); i++ ) {
+                LiveObject *otherPlayer = directFollowers.getElementDirect( i );
+            
+                // ignore exile status this time
+                if( otherPlayer->fitnessScore > fittestFitness ) {
+                
+                    fittestFitness = otherPlayer->fitnessScore;
+                    fittestFollower = otherPlayer;
+                    }
+                }
+            }
+        
+
         inLeader->followingID = fittestFollower->id;
         
         // they become top of tree, following no one
@@ -15792,6 +15789,34 @@ static void leaderDied( LiveObject *inLeader ) {
         
         sendGlobalMessage( message, fittestFollower );
         delete [] message;
+        }
+
+
+
+    // get list of people that this leader has exiled directly
+    // and clear this leader off their exiled-by lists
+    SimpleVector<LiveObject*> exiledByThisLeader;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        
+        LiveObject *otherPlayer = players.getElement( i );
+        
+        if( otherPlayer != inLeader &&
+            ! otherPlayer->error ) {
+            
+            int exileIndex = otherPlayer->
+                exiledByIDs.getElementIndex( inLeader->id );
+            
+            if( exileIndex != -1 ) {
+                
+                // we have this other exiled
+                exiledByThisLeader.push_back( otherPlayer );
+                
+                // take ourselves off their list, we're dead
+                otherPlayer->exiledByIDs.deleteElement( exileIndex );
+                otherPlayer->exileUpdate = true;
+                }
+            }
         }
 
 

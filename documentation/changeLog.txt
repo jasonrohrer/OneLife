@@ -77,6 +77,10 @@ Server Fixes
   name.  This works for anything but curses, which still require you to say
   their full name, to curse them by name.  Fixes #710
 
+--When a leaderless leader dies, and we pick their fittest follower to take
+  over as leader, we now ignore exiled followers (unless we have no choice, and
+  all followers are exiled).  Fixes #708
+
 
 
 
