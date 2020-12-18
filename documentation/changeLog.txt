@@ -90,6 +90,10 @@ Server Fixes
   the connection is closed before the client receives and processes the
   message.  Fixes #726
 
+--Fixed so that victim or terrified emote does not stop incorrect after victim
+  steps out of a bad biome (biome relief emote code was interfering with it).
+
+
 
 
 Version 361    2020-September-25
