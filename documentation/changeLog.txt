@@ -85,6 +85,10 @@ Server Fixes
   pass by instantly and be unreadable, the server queues them up instead and
   sends one to the client every 7 seconds.  Fixes #723
 
+--Server now keeps client connection open longer (10 seconds, was 5 seconds)
+  after sending death message to client.  This should reduce the chance that
+  the connection is closed before the client receives and processes the
+  message.  Fixes #726
 
 
 

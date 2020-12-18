@@ -24666,9 +24666,9 @@ int main() {
                 nextPlayer->isNew = false;
                 
                 nextPlayer->deleteSent = true;
-                // wait 5 seconds before closing their connection
+                // wait 10 seconds before closing their connection
                 // so they can get the message
-                nextPlayer->deleteSentDoneETA = Time::getCurrentTime() + 5;
+                nextPlayer->deleteSentDoneETA = Time::getCurrentTime() + 10;
                 
                 if( areTriggersEnabled() ) {
                     // add extra time so that rest of triggers can be received
