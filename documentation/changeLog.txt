@@ -93,6 +93,10 @@ Server Fixes
 --Fixed so that victim or terrified emote does not stop incorrect after victim
   steps out of a bad biome (biome relief emote code was interfering with it).
 
+--Fixed detection of out-of-band situation so that language-specialist family
+  isn't fertile out of band to far north of far south. Fixes #725
+
+
 
 
 

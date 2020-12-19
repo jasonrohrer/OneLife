@@ -889,6 +889,10 @@ static void biomePutCached( int inX, int inY, int inBiome, int inSecondPlace,
 
 
 static int getSpecialBiomeIndexForYBand( int inY, char *outOfBand = NULL ) {
+    if( outOfBand != NULL ) {
+        *outOfBand = false;
+        }
+    
     // new method, use y centers and thickness
     int radius = specialBiomeBandThickness / 2;
     
@@ -900,7 +904,12 @@ static int getSpecialBiomeIndexForYBand( int inY, char *outOfBand = NULL ) {
             }
         }
     
+
     // else not in radius of any band
+    if( outOfBand != NULL ) {
+        *outOfBand = true;
+        }
+    
     return specialBiomeBandDefaultIndex;
     }
 
