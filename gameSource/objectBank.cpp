@@ -645,12 +645,38 @@ static void setupTapout( ObjectRecord *inR ) {
 
 
 
+static void setupAutoDefaultTrans( ObjectRecord *inR ) {
+    inR->autoDefaultTrans = false;
+
+    char *pos = strstr( inR->description, "+autoDefaultTrans" );
+    if( pos != NULL ) {
+        inR->autoDefaultTrans = true;
+        }
+    }
+
+
 static void setupNoBackAccess( ObjectRecord *inR ) {
     inR->noBackAccess = false;
 
     char *pos = strstr( inR->description, "+noBackAccess" );
     if( pos != NULL ) {
         inR->noBackAccess = true;
+        }
+    }
+
+
+static void setupBlocksMoving( ObjectRecord *inR ) {
+    inR->blocksMoving = false;
+    
+    if( inR->blocksWalking ) {
+        inR->blocksMoving = true;
+        return;
+        }
+    
+    char *pos = strstr( inR->description, "+blocksMoving" );
+
+    if( pos != NULL ) {
+        inR->blocksMoving = true;
         }
     }
 
@@ -722,8 +748,10 @@ float initObjectBankStep() {
                 setupNoHighlight( r );
                 
                 setupMaxPickupAge( r );
-				
-				setupNoBackAccess( r );                
+                
+                setupAutoDefaultTrans( r );
+                
+                setupNoBackAccess( r );                
                 
                 // do this later, after we parse floorHugging
                 // setupWall( r );
@@ -846,6 +874,8 @@ float initObjectBankStep() {
 
                 next++;
 
+                
+                setupBlocksMoving( r );
 
                 
                 
@@ -3290,10 +3320,14 @@ int addObject( const char *inDescription,
     setupNoHighlight( r );
                 
     setupMaxPickupAge( r );
-	
-	setupNoBackAccess( r );            
+
+    setupAutoDefaultTrans( r );
+
+    setupNoBackAccess( r );            
 
     setupWall( r );
+
+    setupBlocksMoving( r );
 
     r->horizontalVersionID = -1;
     r->verticalVersionID = -1;
