@@ -5426,6 +5426,11 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject ) {
             // don't consider translucent sprites when computing wideness
             continue;
             }
+
+        if( inObject->spriteInvisibleWhenWorn[i] == 2 ) {
+            // don't consider parts visible only when worn
+            continue;
+            }
         
 
         int w = sprite->visibleW;
