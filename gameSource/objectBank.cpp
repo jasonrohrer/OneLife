@@ -535,18 +535,18 @@ static void setupObjectPasswordStatus( ObjectRecord *inR ) {
 					}
 				}
 			
-			std::cout << "\nRestoring secret word for object with ID:" << inR->id;
+			// std::cout << "\nRestoring secret word for object with ID:" << inR->id;
 			
 			char* pwc = new char[48];
 			strcpy (pwc, pw.c_str());
 			inR->IndPass.push_back( pwc );
-			std::cout << ", secret word: " << pwc;
+			// std::cout << ", secret word: " << pwc;
 			
 			inR->IndY.push_back( y );
-			std::cout << "; coordinates: y:" << y;
+			// std::cout << "; coordinates: y:" << y;
 			
 			inR->IndX.push_back( x );
-			std::cout << "; x:" << x << ".\n";
+			// std::cout << "; x:" << x << ".\n";
 			
 			}
         }
