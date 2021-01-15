@@ -4564,7 +4564,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 
                 newLocationSpeech.push_back( stringDuplicate( inToSay ) );
                 
-                ChangePosition outChangePos = { outPos.x, outPos.y, false };
+                ChangePosition outChangePos = { outPos.x, outPos.y, false, -1 };
                 newLocationSpeechPos.push_back( outChangePos );
                 }
             }
@@ -4641,6 +4641,7 @@ static void forceObjectToRead( LiveObject *inPlayer,
 		cp.x = inReadPos.x;
 		cp.y = inReadPos.y;
 		cp.global = false;
+		cp.responsiblePlayerID = inPlayer->id;
 
 		newLocationSpeechPos.push_back( cp );
 		newLocationSpeech.push_back( 
@@ -12571,6 +12572,7 @@ int main() {
                         cp.x = p.x;
                         cp.y = p.y;
                         cp.global = false;
+						cp.responsiblePlayerID = -1;
 
                         newLocationSpeechPos.push_back( cp );
                         }
@@ -19931,6 +19933,11 @@ int main() {
                         ChangePosition *p = 
                             newLocationSpeechPos.getElement( u );
                         
+						//responsiblePlayerID = -1 for range-based speech
+						if( p->responsiblePlayerID != -1 && 
+							p->responsiblePlayerID != nextPlayer->id ) 
+							continue;
+						
                         // locationSpeech never global
 
                         double d = intDist( p->x, p->y, 
@@ -19951,6 +19958,11 @@ int main() {
                         for( int u=0; u<newLocationSpeechPos.size(); u++ ) {
                             ChangePosition *p = 
                                 newLocationSpeechPos.getElement( u );
+								
+							//responsiblePlayerID = -1 for range-based speech
+							if( p->responsiblePlayerID != -1 && 
+								p->responsiblePlayerID != nextPlayer->id ) 
+								continue;
                             
                             char *line = autoSprintf( 
                                 "%d %d %s\n",
