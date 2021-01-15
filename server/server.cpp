@@ -748,9 +748,12 @@ typedef struct LiveObject {
         // list of owned positions that this player has heard about
         SimpleVector<GridPos> knownOwnedPositions;
 		
-		//2HOL written object reading mechanics
+		//2HOL mechanics to read written objects
 		//positions already read while in range
 		SimpleVector<GridPos> readPositions;
+		
+		//time when read position is expired and can be read again
+		SimpleVector<double> readPositionsETA;
 
     } LiveObject;
 
@@ -4606,8 +4609,26 @@ static void forcePlayerToRead( LiveObject *inPlayer,
 //2HOL mechanics to read written objects
 static void forceObjectToRead( LiveObject *inPlayer,
                                int inObjectID,
-							   GridPos inReadPos ) {
-            
+							   GridPos inReadPos,
+							   bool passToRead ) {
+
+	//avoid spamming location speech
+	//different behavior for clickToRead and/or passToRead objects
+	for( int j = 0; j < inPlayer->readPositions.size(); j++ ) {
+		GridPos p = inPlayer->readPositions.getElementDirect( j );
+		double eta = inPlayer->readPositionsETA.getElementDirect( j );
+		
+		if( !passToRead )
+		if( p.x == inReadPos.x && p.y == inReadPos.y && Time::getCurrentTime() <= eta ){
+			return;
+		}
+		
+		if( passToRead )
+		if( p.x == inReadPos.x && p.y == inReadPos.y ){
+			return;
+		}
+	}
+
     char metaData[ MAP_METADATA_LENGTH ];
     char found = getMetadata( inObjectID, 
                               (unsigned char*)metaData );
@@ -4624,7 +4645,12 @@ static void forceObjectToRead( LiveObject *inPlayer,
 		newLocationSpeechPos.push_back( cp );
 		newLocationSpeech.push_back( 
 			stringDuplicate( quotedPhrase ) );
+		
+		//longer time for longer speech
+		//roughly matching but slightly longer than client speech bubbles duration
+		double speechETA = Time::getCurrentTime() + 3.25 + strlen( quotedPhrase ) / 5;
 		inPlayer->readPositions.push_back( inReadPos );
+		inPlayer->readPositionsETA.push_back( speechETA );
 		
         delete [] quotedPhrase;
         }
@@ -12196,11 +12222,16 @@ int main() {
 			
 			float readRange = 3.0;
 			
-			//Refresh positions already read when players get out of range
+			//Remove positions already read when players get out of range and speech bubbles are expired 
 			for( int j = nextPlayer->readPositions.size() - 1; j >= 0; j-- ) {
 				GridPos p = nextPlayer->readPositions.getElementDirect( j );
-				if( distance( p, playerPos ) > readRange ) {
+				double eta = nextPlayer->readPositionsETA.getElementDirect( j );
+				if( 
+					distance( p, playerPos ) > readRange && 
+					Time::getCurrentTime() > eta
+					) {
 					nextPlayer->readPositions.deleteElement( j );
+					nextPlayer->readPositionsETA.deleteElement( j );
 				}
 			}
 			
@@ -12211,22 +12242,10 @@ int main() {
 					if( dist > readRange ) continue;
 					int objId = getMapObject( playerPos.x + dx, playerPos.y + dy );
 					if( objId <= 0 ) continue;
-					
-					//avoid spamming location speech
-					bool readAlready = false;
-					for( int j = 0; j < nextPlayer->readPositions.size(); j++ ) {
-						GridPos p = nextPlayer->readPositions.getElementDirect( j );
-						if( p.x == playerPos.x + dx && p.y == playerPos.y + dy ) {
-							readAlready = true;
-							break;
-						}
-					}
-					if (readAlready) continue;
-					
 					ObjectRecord *obj = getObject( objId );
 					if( obj != NULL && obj->written && obj->passToRead ) {
 						GridPos readPos = { playerPos.x + dx, playerPos.y + dy };
-						forceObjectToRead( nextPlayer, objId, readPos );
+						forceObjectToRead( nextPlayer, objId, readPos, true );
 					}
 				}
 			}
@@ -14020,7 +14039,7 @@ int main() {
 								if( targetObj->written &&
                                     targetObj->clickToRead ) {
 									GridPos readPos = { m.x, m.y };
-                                    forceObjectToRead( nextPlayer, target, readPos );
+                                    forceObjectToRead( nextPlayer, target, readPos, false );
                                     }
                                 
                                 // try using object on this target 
@@ -16233,7 +16252,7 @@ int main() {
 								if( targetObj->written &&
 									targetObj->clickToRead ) {
 									GridPos readPos = { m.x, m.y };
-									forceObjectToRead( nextPlayer, target, readPos );
+									forceObjectToRead( nextPlayer, target, readPos, false );
 									}
 								}
 
