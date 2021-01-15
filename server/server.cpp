@@ -13922,6 +13922,178 @@ int main() {
                                 // or that players don't own
 
                                 }
+							else if( nextPlayer->dying ) {
+								
+								bool healed = false;
+									
+								// try healing wound
+								
+								TransRecord *healTrans =
+									getMetaTrans( nextPlayer->holdingID,
+												  target );
+								
+								int healTarget = 0;
+
+								if( healTrans != NULL ) {
+									
+									nextPlayer->holdingID = 
+										healTrans->newActor;
+									holdingSomethingNew( nextPlayer );
+									
+									// their wound has been changed
+									// no longer track embedded weapon
+									nextPlayer->embeddedWeaponID = 0;
+									nextPlayer->embeddedWeaponEtaDecay = 0;
+									
+									setMapObject( m.x, m.y,
+												  healTrans->newTarget );
+									
+									setResponsiblePlayer( -1 );
+									
+									healed = true;
+									healTarget = healTrans->target;
+									
+									}
+								else {
+									
+									ObjectRecord *targetObj = getObject( target );
+									
+									if( targetObj != NULL )
+									if( m.i != -1 && targetObj->permanent &&
+										targetObj->numSlots > m.i &&
+										getNumContained( m.x, m.y ) > m.i &&
+										strstr( targetObj->description,
+												"+useOnContained" ) != NULL ) {
+										// a valid slot specified to use
+										// held object on.
+										// AND container allows this
+										
+										int contTarget = 
+											getContained( m.x, m.y, m.i );
+										
+										char isSubCont = false;
+										if( contTarget < 0 ) {
+											contTarget = -contTarget;
+											isSubCont = true;
+											}
+
+										ObjectRecord *contTargetObj =
+											getObject( contTarget );
+										
+										TransRecord *contTrans =
+											getPTrans( nextPlayer->holdingID,
+													   contTarget );
+										
+										ObjectRecord *newTarget = NULL;
+										
+										if( ! isSubCont &&
+											contTrans != NULL &&
+											( contTrans->newActor == 
+											  nextPlayer->holdingID ||
+											  contTrans->newActor == 0 ||
+											  canPickup( 
+												  contTrans->newActor,
+												  computeAge( 
+													  nextPlayer ) ) ) ) {
+
+											// a trans applies, and we
+											// can hold the resulting actor
+											if( contTrans->newTarget > 0 ) {
+												newTarget = getObject(
+													contTrans->newTarget );
+												}
+											}
+										if( newTarget != NULL &&
+											isContainable( 
+												contTrans->newTarget ) &&
+											newTarget->containSize <=
+											targetObj->slotSize &&
+											containmentPermitted(
+												targetObj->id,
+												newTarget->id ) ) {
+												
+											int oldHeld = 
+												nextPlayer->holdingID;
+											
+											handleHoldingChange( 
+												nextPlayer,
+												contTrans->newActor );
+											
+											nextPlayer->heldOriginValid = 0;
+											nextPlayer->heldOriginX = 0;
+											nextPlayer->heldOriginY = 0;
+											nextPlayer->
+												heldTransitionSourceID = 0;
+											
+											if( contTrans->newActor > 0 && 
+												contTrans->newActor !=
+												oldHeld ) {
+												
+												nextPlayer->
+													heldTransitionSourceID
+													= contTargetObj->id;
+												}
+
+											
+											setResponsiblePlayer( 
+												- nextPlayer->id );
+											
+											changeContained( 
+												m.x, m.y,
+												m.i, 
+												contTrans->newTarget );
+											
+											setResponsiblePlayer( -1 );
+											
+											healed = true;
+											healTarget = contTarget;
+
+											}
+										}
+									}
+								
+								if ( healed ) {
+									
+									nextPlayer->heldOriginValid = 0;
+									nextPlayer->heldOriginX = 0;
+									nextPlayer->heldOriginY = 0;
+									nextPlayer->heldTransitionSourceID = 
+										healTarget;
+									
+									if( nextPlayer->holdingID == 0 ) {
+										// not dying anymore
+										setNoLongerDying( 
+											nextPlayer,
+											&playerIndicesToSendHealingAbout );
+										}
+									else {
+										// wound changed?
+
+										ForcedEffects e = 
+											checkForForcedEffects( 
+												nextPlayer->holdingID );
+
+										if( e.emotIndex != -1 ) {
+											nextPlayer->emotFrozen = true;
+											newEmotPlayerIDs.push_back( 
+												nextPlayer->id );
+											newEmotIndices.push_back( 
+												e.emotIndex );
+											newEmotTTLs.push_back( e.ttlSec );
+											interruptAnyKillEmots( 
+												nextPlayer->id, e.ttlSec );
+											}
+										if( e.foodCapModifier != 1 ) {
+											nextPlayer->foodCapModifier = 
+												e.foodCapModifier;
+											nextPlayer->foodUpdate = true;
+											}
+										if( e.feverSet ) {
+											nextPlayer->fever = e.fever;
+											}
+										}
+									}
+								}
                             else if( target != 0 ) {
 
                                 ObjectRecord *targetObj = getObject( target );
