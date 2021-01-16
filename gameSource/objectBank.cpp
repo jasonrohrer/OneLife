@@ -380,6 +380,19 @@ static void setupObjectWritingStatus( ObjectRecord *inR ) {
             inR->mayHaveMetadata = true;
             }
         }
+	
+	//2HOL mechanics to read written objects
+	inR->clickToRead = false;
+	inR->passToRead = false;
+		
+    if( strstr( inR->description, "+" ) != NULL ) {
+        if( strstr( inR->description, "+clickToRead" ) != NULL ) {
+            inR->clickToRead = true;
+            }
+        if( strstr( inR->description, "+passToRead" ) != NULL ) {
+            inR->passToRead = true;
+            }
+        }
     }
 
 

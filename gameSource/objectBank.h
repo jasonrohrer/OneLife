@@ -414,6 +414,10 @@ typedef struct ObjectRecord {
         char hasInGamePassword;
         int passID;
         
+		//2HOL mechanics to read written objects
+		char clickToRead;
+		char passToRead;
+		
         SimpleVector<int> IndX;
         SimpleVector<int> IndY;
         SimpleVector<char*> IndPass;

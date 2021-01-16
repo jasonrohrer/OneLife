@@ -747,6 +747,13 @@ typedef struct LiveObject {
 
         // list of owned positions that this player has heard about
         SimpleVector<GridPos> knownOwnedPositions;
+		
+		//2HOL mechanics to read written objects
+		//positions already read while in range
+		SimpleVector<GridPos> readPositions;
+		
+		//time when read position is expired and can be read again
+		SimpleVector<double> readPositionsETA;
 
     } LiveObject;
 
@@ -4557,7 +4564,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 
                 newLocationSpeech.push_back( stringDuplicate( inToSay ) );
                 
-                ChangePosition outChangePos = { outPos.x, outPos.y, false };
+                ChangePosition outChangePos = { outPos.x, outPos.y, false, -1 };
                 newLocationSpeechPos.push_back( outChangePos );
                 }
             }
@@ -4565,6 +4572,90 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     }
 
 
+static void forcePlayerToRead( LiveObject *inPlayer,
+                               int inObjectID ) {
+            
+    char metaData[ MAP_METADATA_LENGTH ];
+    char found = getMetadata( inObjectID, 
+                              (unsigned char*)metaData );
+
+    if( found ) {
+        // read what they picked up, subject to limit
+                
+        unsigned int sayLimit = getSayLimit( inPlayer );
+        
+        if( computeAge( inPlayer ) < 10 &&
+            strlen( metaData ) > sayLimit ) {
+            // truncate with ...
+            metaData[ sayLimit ] = '.';
+            metaData[ sayLimit + 1 ] = '.';
+            metaData[ sayLimit + 2 ] = '.';
+            metaData[ sayLimit + 3 ] = '\0';
+            
+            // watch for truncated map metadata
+            // trim it off (too young to read maps)
+            char *starLoc = strstr( metaData, " *" );
+            
+            if( starLoc != NULL ) {
+                starLoc[0] = '\0';
+                }
+            }
+        char *quotedPhrase = autoSprintf( ":%s", metaData );
+        makePlayerSay( inPlayer, quotedPhrase );
+        delete [] quotedPhrase;
+        }
+    }
+	
+//2HOL mechanics to read written objects
+static void forceObjectToRead( LiveObject *inPlayer,
+                               int inObjectID,
+							   GridPos inReadPos,
+							   bool passToRead ) {
+
+	//avoid spamming location speech
+	//different behavior for clickToRead and/or passToRead objects
+	for( int j = 0; j < inPlayer->readPositions.size(); j++ ) {
+		GridPos p = inPlayer->readPositions.getElementDirect( j );
+		double eta = inPlayer->readPositionsETA.getElementDirect( j );
+		
+		if( !passToRead )
+		if( p.x == inReadPos.x && p.y == inReadPos.y && Time::getCurrentTime() <= eta ){
+			return;
+		}
+		
+		if( passToRead )
+		if( p.x == inReadPos.x && p.y == inReadPos.y ){
+			return;
+		}
+	}
+
+    char metaData[ MAP_METADATA_LENGTH ];
+    char found = getMetadata( inObjectID, 
+                              (unsigned char*)metaData );
+
+    if( found ) {
+		//speech limit is ignored here
+        char *quotedPhrase = autoSprintf( ":%s", metaData );
+		
+		ChangePosition cp;
+		cp.x = inReadPos.x;
+		cp.y = inReadPos.y;
+		cp.global = false;
+		cp.responsiblePlayerID = inPlayer->id;
+
+		newLocationSpeechPos.push_back( cp );
+		newLocationSpeech.push_back( 
+			stringDuplicate( quotedPhrase ) );
+		
+		//longer time for longer speech
+		//roughly matching but slightly longer than client speech bubbles duration
+		double speechETA = Time::getCurrentTime() + 3.25 + strlen( quotedPhrase ) / 5;
+		inPlayer->readPositions.push_back( inReadPos );
+		inPlayer->readPositionsETA.push_back( speechETA );
+		
+        delete [] quotedPhrase;
+        }
+    }
 
 static void holdingSomethingNew( LiveObject *inPlayer, 
                                  int inOldHoldingID = 0 ) {
@@ -4580,28 +4671,8 @@ static void holdingSomethingNew( LiveObject *inPlayer,
         if( o->written &&
             ( oldO == NULL ||
               ! ( oldO->written || oldO->writable ) ) ) {
-            
-            char metaData[ MAP_METADATA_LENGTH ];
-            char found = getMetadata( inPlayer->holdingID, 
-                                      (unsigned char*)metaData );
 
-            if( found ) {
-                // read what they picked up, subject to limit
-                
-                unsigned int sayLimit = getSayLimit( inPlayer );
-                        
-                if( computeAge( inPlayer ) < 10 &&
-                    strlen( metaData ) > sayLimit ) {
-                    // truncate with ...
-                    metaData[ sayLimit ] = '.';
-                    metaData[ sayLimit + 1 ] = '.';
-                    metaData[ sayLimit + 2 ] = '.';
-                    metaData[ sayLimit + 3 ] = '\0';
-                    }
-                char *quotedPhrase = autoSprintf( ":%s", metaData );
-                makePlayerSay( inPlayer, quotedPhrase );
-                delete [] quotedPhrase;
-                }
+            forcePlayerToRead( inPlayer, inPlayer->holdingID );
             }
 
         if( o->isFlying ) {
@@ -12140,6 +12211,45 @@ int main() {
                               nextPlayer->xd + 8, nextPlayer->yd + 7 );
                 nextPlayer->lastRegionLookTime = curLookTime;
                 }
+				
+			//2HOL mechanics to read written objects
+			GridPos playerPos;
+			if( nextPlayer->xs == nextPlayer->xd && nextPlayer->ys == nextPlayer->yd ) {
+				playerPos.x = nextPlayer->xd;
+				playerPos.y = nextPlayer->yd;
+			} else {
+				playerPos = computePartialMoveSpot( nextPlayer );
+			}
+			
+			float readRange = 3.0;
+			
+			//Remove positions already read when players get out of range and speech bubbles are expired 
+			for( int j = nextPlayer->readPositions.size() - 1; j >= 0; j-- ) {
+				GridPos p = nextPlayer->readPositions.getElementDirect( j );
+				double eta = nextPlayer->readPositionsETA.getElementDirect( j );
+				if( 
+					distance( p, playerPos ) > readRange && 
+					Time::getCurrentTime() > eta
+					) {
+					nextPlayer->readPositions.deleteElement( j );
+					nextPlayer->readPositionsETA.deleteElement( j );
+				}
+			}
+			
+			//Scan area around players for pass-to-read objects
+			for( int dx = -3; dx <= 3; dx++ ) {
+				for( int dy = -3; dy <= 3; dy++ ) {
+					float dist = sqrt(dx * dx + dy * dy);
+					if( dist > readRange ) continue;
+					int objId = getMapObject( playerPos.x + dx, playerPos.y + dy );
+					if( objId <= 0 ) continue;
+					ObjectRecord *obj = getObject( objId );
+					if( obj != NULL && obj->written && obj->passToRead ) {
+						GridPos readPos = { playerPos.x + dx, playerPos.y + dy };
+						forceObjectToRead( nextPlayer, objId, readPos, true );
+					}
+				}
+			}
 
             char *message = NULL;
             
@@ -12462,6 +12572,7 @@ int main() {
                         cp.x = p.x;
                         cp.y = p.y;
                         cp.global = false;
+						cp.responsiblePlayerID = -1;
 
                         newLocationSpeechPos.push_back( cp );
                         }
@@ -14097,6 +14208,13 @@ int main() {
                             else if( target != 0 ) {
 
                                 ObjectRecord *targetObj = getObject( target );
+								
+                                //2HOL mechanics to read written objects
+								if( targetObj->written &&
+                                    targetObj->clickToRead ) {
+									GridPos readPos = { m.x, m.y };
+                                    forceObjectToRead( nextPlayer, target, readPos, false );
+                                    }
                                 
                                 // try using object on this target 
                                 
@@ -16299,6 +16417,18 @@ int main() {
                               m.y == nextPlayer->yd ) ) {
 							
                             int target = getMapObject( m.x, m.y );
+							
+							//2HOL mechanics to read written objects
+							if( target > 0 ) {
+								ObjectRecord *targetObj = 
+									getObject( target );
+
+								if( targetObj->written &&
+									targetObj->clickToRead ) {
+									GridPos readPos = { m.x, m.y };
+									forceObjectToRead( nextPlayer, target, readPos, false );
+									}
+								}
 
                             char accessBlocked =
                                 isAccessBlocked( nextPlayer, m.x, m.y, target );
@@ -19975,6 +20105,11 @@ int main() {
                         ChangePosition *p = 
                             newLocationSpeechPos.getElement( u );
                         
+						//responsiblePlayerID = -1 for range-based speech
+						if( p->responsiblePlayerID != -1 && 
+							p->responsiblePlayerID != nextPlayer->id ) 
+							continue;
+						
                         // locationSpeech never global
 
                         double d = intDist( p->x, p->y, 
@@ -19995,6 +20130,11 @@ int main() {
                         for( int u=0; u<newLocationSpeechPos.size(); u++ ) {
                             ChangePosition *p = 
                                 newLocationSpeechPos.getElement( u );
+								
+							//responsiblePlayerID = -1 for range-based speech
+							if( p->responsiblePlayerID != -1 && 
+								p->responsiblePlayerID != nextPlayer->id ) 
+								continue;
                             
                             char *line = autoSprintf( 
                                 "%d %d %s\n",
