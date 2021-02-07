@@ -6,6 +6,10 @@ global $fs_version;
 $fs_version = "1";
 
 
+global $numLivesInAverage;
+$numLivesInAverage = 10;
+
+
 
 // edit settings.php to change server' settings
 include( "settings.php" );
@@ -158,11 +162,17 @@ else if( $action == "show_data" ) {
 else if( $action == "show_detail" ) {
     fs_showDetail();
     }
+else if( $action == "reset_scores" ) {
+    fs_resetScores();
+    }
 else if( $action == "logout" ) {
     fs_logout();
     }
 else if( $action == "show_leaderboard" ) {
     fs_showLeaderboard();
+    }
+else if( $action == "leaderboard_detail" ) {
+    fs_leaderboardDetail();
     }
 else if( $action == "fs_setup" ) {
     global $setup_header, $setup_footer;
@@ -356,6 +366,7 @@ function fs_setupDatabase() {
         $query =
             "CREATE TABLE $tableName(" .
             "id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "life_player_id INT UNSIGNED NOT NULL,".
             "name VARCHAR(254) NOT NULL,".
             // age at time of death in years
             "age FLOAT UNSIGNED NOT NULL,".
@@ -382,9 +393,9 @@ function fs_setupDatabase() {
             // or Granddaughter, etc.
             "relation_name VARCHAR(254) NOT NULL,".
             // player_id's score before this offspring
-            "old_score FLOAT UNSIGNED NOT NULL,".
+            "old_score FLOAT NOT NULL,".
             // player_id's score after this offspring
-            "new_score FLOAT UNSIGNED NOT NULL,".
+            "new_score FLOAT NOT NULL,".
             "death_time DATETIME NOT NULL,".
             // for fast filtering/sorting of most-recent 20
             // offspring for a given player
@@ -446,33 +457,81 @@ function fs_setupDatabase() {
 function fs_showLog() {
     fs_checkPassword( "show_log" );
 
-     echo "[<a href=\"server.php?action=show_data" .
-         "\">Main</a>]<br><br><br>";
+    echo "[<a href=\"server.php?action=show_data" .
+        "\">Main</a>]<br><br><br>";
+
+    $entriesPerPage = 1000;
+    
+    $skip = fs_requestFilter( "skip", "/\d+/", 0 );
+
     
     global $tableNamePrefix;
 
-    $query = "SELECT * FROM $tableNamePrefix"."log ".
-        "ORDER BY entry_time DESC;";
+
+    // first, count results
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."log;";
+
+    $result = fs_queryDatabase( $query );
+    $totalEntries = fs_mysqli_result( $result, 0, 0 );
+
+
+    
+    $query = "SELECT entry, entry_time FROM $tableNamePrefix"."log ".
+        "ORDER BY entry_time DESC LIMIT $skip, $entriesPerPage;";
     $result = fs_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
 
 
 
-    echo "<a href=\"server.php?action=clear_log\">".
-        "Clear log</a>";
+    $startSkip = $skip + 1;
+    
+    $endSkip = $startSkip + $entriesPerPage - 1;
+
+    if( $endSkip > $totalEntries ) {
+        $endSkip = $totalEntries;
+        }
+
+    
+
+    
+    echo "$totalEntries Log entries".
+        " (showing $startSkip - $endSkip):<br>\n";
+
+    
+    $nextSkip = $skip + $entriesPerPage;
+
+    $prevSkip = $skip - $entriesPerPage;
+
+    if( $skip > 0 && $prevSkip < 0 ) {
+        $prevSkip = 0;
+        }
+    
+    if( $prevSkip >= 0 ) {
+        echo "[<a href=\"server.php?action=show_log" .
+            "&skip=$prevSkip\">".
+            "Previous Page</a>] ";
+        }
+    if( $nextSkip < $totalEntries ) {
+        echo "[<a href=\"server.php?action=show_log" .
+            "&skip=$nextSkip\">".
+            "Next Page</a>]";
+        }
+    
         
     echo "<hr>";
-        
-    echo "$numRows log entries:<br><br><br>\n";
-        
 
+        
+    
     for( $i=0; $i<$numRows; $i++ ) {
         $time = fs_mysqli_result( $result, $i, "entry_time" );
         $entry = htmlspecialchars( fs_mysqli_result( $result, $i, "entry" ) );
 
-        echo "<b>$time</b>:<br>$entry<hr>\n";
+        echo "<b>$time</b>:<br><pre>$entry</pre><hr>\n";
         }
+
+    echo "<br><br><hr><a href=\"server.php?action=clear_log\">".
+        "Clear log</a>";
     }
 
 
@@ -700,7 +759,22 @@ function fs_showData( $checkPassword = true ) {
 
 
     echo "<hr>";
-    
+
+    global $startingScore;
+?>
+    <FORM ACTION="server.php" METHOD="post">
+         New Score: 
+    <INPUT TYPE="hidden" NAME="action" VALUE="reset_scores">
+    <INPUT TYPE="text" MAXLENGTH=10 SIZE=5 NAME="target_score"
+           VALUE="<?php echo $startingScore;?>">
+
+    <INPUT TYPE="checkbox" NAME="confirm" VALUE=1> Confirm  
+    <INPUT TYPE="Submit" VALUE="Reset All Scores">
+    </FORM>
+<?php
+
+    echo "<hr>";
+         
     echo "<a href=\"server.php?action=show_log\">".
         "Show log</a>";
     echo "<hr>";
@@ -726,22 +800,42 @@ function fs_showDetail( $checkPassword = true ) {
     global $tableNamePrefix;
     
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i" );
-            
-    $query = "SELECT id ".
-        "FROM $tableNamePrefix"."users ".
-        "WHERE email = '$email';";
-    $result = fs_queryDatabase( $query );
+    // two possible params... id or email
 
-    $id = fs_mysqli_result( $result, 0, "id" );
+    $id = fs_requestFilter( "id", "/[0-9]+/i", -1 );
+    $email = "";
 
+    
+    if( $id != -1 ) {
+        $query = "SELECT email ".
+            "FROM $tableNamePrefix"."users ".
+            "WHERE id = '$id';";
+        $result = fs_queryDatabase( $query );
+        
+        $email = fs_mysqli_result( $result, 0, "email" );
+        }
+    else {
+        $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
+    
+        $query = "SELECT id ".
+            "FROM $tableNamePrefix"."users ".
+            "WHERE email = '$email';";
+        $result = fs_queryDatabase( $query );
+        
+        $id = fs_mysqli_result( $result, 0, "id" );
+        }
+
+    
+    $aveAge = fs_getAveAge( $email );
+    
+
+    
     $query = "SELECT name, age, relation_name, ".
-        "old_score, new_score, death_time ".
+        "old_score, new_score, death_time, life_player_id ".
         "FROM $tableNamePrefix"."offspring AS offspring ".
         "INNER JOIN $tableNamePrefix"."lives AS lives ".
         "ON offspring.life_id = lives.id ".
-        "WHERE offspring.player_id = $id ORDER BY offspring.death_time DESC ".
-        "LIMIT 20";
+        "WHERE offspring.player_id = $id ORDER BY offspring.death_time DESC";
 
     
     $result = fs_queryDatabase( $query );
@@ -750,10 +844,14 @@ function fs_showDetail( $checkPassword = true ) {
     
     echo "<b>ID:</b> $id<br><br>";
     echo "<b>Email:</b> $email<br><br>";
+    echo "<font color=green><b>Ave Age:</b> $aveAge</font><br><br>";
     echo "</td></tr></table>";
 
     $numRows = mysqli_num_rows( $result );
 
+    global $numLivesInAverage;
+    $numYouLives = 0;
+    
     echo "<table border=1 cellpadding=10 cellspacing=0>";
     for( $i=0; $i<$numRows; $i++ ) {
         $name = fs_mysqli_result( $result, $i, "name" );
@@ -763,7 +861,11 @@ function fs_showDetail( $checkPassword = true ) {
         $new_score = fs_mysqli_result( $result, $i, "new_score" );
         $death_time = fs_mysqli_result( $result, $i, "death_time" );
 
-        $delta = $new_score - $old_score;
+        $otherLifePlayerID =
+            fs_mysqli_result( $result, $i, "life_player_id" );
+
+        
+        $delta = round( $new_score - $old_score, 3 );
 
         $deltaString;
 
@@ -776,8 +878,24 @@ function fs_showDetail( $checkPassword = true ) {
         
         echo "<tr>";
 
-        echo "<td>$name</td>";
-        echo "<td>$age years old</td>";
+        if( $relation_name != "You" ) {
+            // link to other player
+            echo "<td><a href='server.php?".
+                "action=show_detail&id=$otherLifePlayerID'>$name</a></td>";
+            }
+        else {
+            echo "<td>$name</td>";
+            }
+        
+        if( $old_score != $new_score &&
+            $relation_name == "You" &&
+            $numYouLives < $numLivesInAverage ) {
+            echo "<td><font color=green><b>$age years old</b></font></td>";
+            $numYouLives ++;
+            }
+        else {
+            echo "<td>$age years old</td>";
+            }
         echo "<td>$relation_name</td>";
         echo "<td>$old_score</td>";
         echo "<td>$deltaString</td>";
@@ -787,6 +905,68 @@ function fs_showDetail( $checkPassword = true ) {
     echo "</table></center>";
     }
 
+
+function fs_resetScores( $checkPassword = true ) {
+    if( $checkPassword ) {
+        fs_checkPassword( "reset_scores" );
+        }
+    
+    echo "[<a href=\"server.php?action=show_data" .
+         "\">Main</a>]<br><br><br>";
+    
+    global $tableNamePrefix;
+
+    $confirm = fs_requestFilter( "confirm", "/[01]/i", 0 );
+
+    if( $confirm == 0 ) {
+        echo "Must confirm";
+        return;
+        }
+    $targetScore = fs_requestFilter( "target_score", "/[0-9\-]+/i", -999 );
+
+    if( $targetScore == -999 ) {
+        echo "Invalid target score";
+        return;
+        }
+
+    $query = "INSERT INTO $tableNamePrefix"."lives ".
+        "SET name = 'Score_Reset', age = 42.0, display_id =3201, ".
+        "life_player_id=-1";
+
+    fs_queryDatabase( $query );
+    
+    global $fs_mysqlLink;
+    $life_id = mysqli_insert_id( $fs_mysqlLink );
+
+    
+    $query = "SELECT id, score ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE score != $targetScore;";
+
+    $result = fs_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+    
+    for( $i=0; $i<$numRows; $i++ ) {
+        
+        $id = fs_mysqli_result( $result, $i, "id" );
+        $score = fs_mysqli_result( $result, $i, "score" );
+
+        $query = "INSERT into $tableNamePrefix"."offspring ".
+            "SET player_id = $id, life_id = $life_id, ".
+            "relation_name = 'Affects_Everyone', ".
+            "old_score = $score, ".
+            "new_score = $targetScore, ".
+            "death_time = CURRENT_TIMESTAMP; ";
+        fs_queryDatabase( $query );
+        
+        $query = "UPDATE $tableNamePrefix"."users ".
+            "SET score = $targetScore WHERE id = $id;";
+        fs_queryDatabase( $query );
+        }
+
+    echo "<br>Processed $numRows users<br><br>";
+    }
 
 
 
@@ -802,7 +982,7 @@ function fs_showLeaderboard() {
 
     global $leaderboardHours;
     
-    $query = "SELECT leaderboard_name, score ".
+    $query = "SELECT id, leaderboard_name, score ".
         "FROM $tableNamePrefix"."users ".
         "WHERE last_action_time > ".
         "   DATE_SUB( NOW(), INTERVAL $leaderboardHours HOUR )".
@@ -817,15 +997,183 @@ function fs_showLeaderboard() {
     for( $i=0; $i<$numRows; $i++ ) {
         $place = $i + 1;
         
+        $id = fs_mysqli_result( $result, $i, "id" );
         $name = fs_mysqli_result( $result, $i, "leaderboard_name" );
         $score = fs_mysqli_result( $result, $i, "score" );
 
-        echo "<tr><td>$place.</td><td>$name</td><td>$score</td></tr>";
+        echo "<tr><td>$place.</td>".
+            "<td>".
+            "<a href=\"server.php?action=leaderboard_detail&id=$id\">".
+            "$name</a></td><td>$score</td></tr>";
         }
     echo "</table>";
     
         
     echo "</center>";
+
+    eval( $footer );
+    }
+
+
+
+
+
+function fs_leaderboardDetail() {
+    
+    global $tableNamePrefix;
+
+    global $header, $footer;
+
+    eval( $header );
+
+    echo "<center>";
+
+    
+    $id = fs_requestFilter( "id", "/[0-9]+/", 0 );
+
+    
+    $query = "SELECT email, leaderboard_name ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE id = $id;";
+    $result = fs_queryDatabase( $query );
+
+    $email = fs_mysqli_result( $result, 0, "email" );
+    $leaderboard_name = fs_mysqli_result( $result, 0, "leaderboard_name" );
+
+    $aveAge = fs_getAveAge( $email );
+
+    $aveAge = round( $aveAge, 3 );
+    
+    $query = "SELECT life_id, life_player_id, name, age, relation_name, ".
+        "old_score, new_score, death_time ".
+        "FROM $tableNamePrefix"."offspring AS offspring ".
+        "INNER JOIN $tableNamePrefix"."lives AS lives ".
+        "ON offspring.life_id = lives.id ".
+        "WHERE offspring.player_id = $id ORDER BY offspring.death_time DESC";
+
+    
+    $result = fs_queryDatabase( $query );
+
+    echo "<center><table border=0><tr>";
+    
+    echo "<td><b>Leaderboard Name:</b></td><td>$leaderboard_name</td></tr>";
+    echo "<td><font color=green><b>Ave Age:</b></font></td>".
+        "<td><font color=green>$aveAge</font>";
+    echo "</td></tr></table>";
+
+    $numRows = mysqli_num_rows( $result );
+
+    global $numLivesInAverage;
+    $numYouLives = 0;
+    
+    echo "<table border=1 cellpadding=10 cellspacing=0>";
+    for( $i=0; $i<$numRows; $i++ ) {
+        $name = fs_mysqli_result( $result, $i, "name" );
+        $age = fs_mysqli_result( $result, $i, "age" );
+        $relation_name = fs_mysqli_result( $result, $i, "relation_name" );
+        $old_score = fs_mysqli_result( $result, $i, "old_score" );
+        $new_score = fs_mysqli_result( $result, $i, "new_score" );
+        $death_time = fs_mysqli_result( $result, $i, "death_time" );
+
+
+        $life_id = fs_mysqli_result( $result, $i, "life_id" );
+
+        $life_player_id = fs_mysqli_result( $result, $i, "life_player_id" );
+
+        
+        $deathAgoSec = strtotime( "now" ) - strtotime( $death_time );
+        
+        $deathAgo = fs_secondsToAgeSummary( $deathAgoSec );
+
+        
+        $delta = round( $new_score - $old_score, 3 );
+
+        $deltaString;
+
+        if( $delta < 0 ) {
+            $deltaString = " - " . abs( $delta );
+            }
+        else {
+            $deltaString = " + " . $delta;
+            }
+
+        $old_score = round( $old_score, 3 );
+        $new_score = round( $new_score, 3 );
+        
+        echo "<tr>";
+
+        $name = str_replace( "_", " ", $name );
+
+
+        if( $life_player_id == -1 ||
+            $relation_name == "You" ||
+            $relation_name == "Affects_Everyone" ) {
+            echo "<td>$name</td>";
+            }
+        else {
+            // link to other player who lived this life
+            
+
+            if( $life_player_id == 0 ) {
+                $life_player_id = -1;
+                
+                // life_player_id hasn't been set yet
+                // this must be an older entry
+                // see if we can set it now
+                
+                $query = "SELECT player_id FROM $tableNamePrefix"."offspring ".
+                    "WHERE life_id = $life_id AND ".
+                    "relation_name = 'You';";
+                
+                $resultSub = fs_queryDatabase( $query );
+                
+                if( mysqli_num_rows( $resultSub ) == 1 ) {
+                    
+                    $life_player_id =
+                        fs_mysqli_result( $resultSub, 0, "player_id" );
+                    }
+                
+                // otherwise, set it to -1 so we don't have to try
+                // settting it again later
+
+                $query = "UPDATE $tableNamePrefix"."lives ".
+                    "SET life_player_id = $life_player_id ".
+                    "WHERE id = $life_id;";
+                fs_queryDatabase( $query );
+                }
+            
+            if( $life_player_id > 0 ) {
+                echo "<td>".
+                    "<a href=\"server.php?".
+                    "action=leaderboard_detail&id=$life_player_id\">".
+                    "$name</a></td>";
+                }
+            else {
+                echo "<td>$name</td>";
+                }
+            }
+        
+        $age = round( $age, 3 );
+        
+        if( $old_score != $new_score &&
+            $relation_name == "You" &&
+            $numYouLives < $numLivesInAverage ) {
+            echo "<td><font color=green><b>$age years old</b></font></td>";
+            $numYouLives ++;
+            }
+        else {
+            echo "<td>$age years old</td>";
+            }
+
+        $relation_name = str_replace( "_", " ", $relation_name );
+        
+        echo "<td>$relation_name</td>";
+        echo "<td>$old_score</td>";
+        echo "<td nowrap='nowrap'>$deltaString</td>";
+        echo "<td>$new_score</td>";
+        echo "<td>$deathAgo ago</td>";
+        }
+    echo "</table></center>";
 
     eval( $footer );
     }
@@ -841,7 +1189,7 @@ function fs_getClientSequenceNumber() {
     global $tableNamePrefix;
     
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     if( $email == "" ) {
         $rawEmail = $_REQUEST[ "email" ];
@@ -1098,10 +1446,41 @@ function fs_pickLeaderboardName( $inEmail ) {
 
 
 
+function sign( $n ) {
+    return ( $n > 0 ) - ( $n < 0 );
+    }
+
+
+
+function fs_getUserID( $inEmail ) {
+    global $tableNamePrefix;
+
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
+        "WHERE email = '$inEmail';";
+
+    $result = fs_queryDatabase( $query );
+    $count = fs_mysqli_result( $result, 0, 0 );
+
+    if( $count == 0 ) {
+        fs_addUserRecord( $inEmail );
+        }
+
+    $query = "SELECT id, score FROM $tableNamePrefix"."users ".
+        "WHERE email = '$inEmail';";
+
+    $result = fs_queryDatabase( $query );
+    return fs_mysqli_result( $result, 0, "id" );
+    }
+
+
+
 // log a death that will affect the score of $inEmail
 // if $inNoScore is true, the relationship is still logged, but the
-// score change is fixed at 0
+// score change is fixed at 0 AND the last_action_time isn't updated
+// (to prevent noScore lives from bringing an expired player back to the
+//  leaderboard)
 function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
+                      $inDeadPersonScore,
                       $inNoScore = false ) {
     global $tableNamePrefix;
 
@@ -1123,14 +1502,80 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
     $old_score = fs_mysqli_result( $result, 0, "score" );
 
 
+    $query = "SELECT COUNT(*) from $tableNamePrefix"."offspring ".
+        "WHERE player_id = $player_id AND life_id = $life_id;";
+    $result = fs_queryDatabase( $query );
+
+    $count = fs_mysqli_result( $result, 0, 0 );
+
+    if( $count > 0 ) {
+        // this life has already been counted toward the score of this
+        // email address
+        // (perhaps this life was our daughter in a previous life
+        //  and our mother in this life---we've already counted the score
+        //  from this life as our daughter.)
+        // Don't double-count.
+        return;
+        }
+    
+    
     // score update
     global $formulaR, $formulaK;
 
 
-    $delta = $inAge - $old_score;
+    $delta = $inAge - $inDeadPersonScore;
 
+
+    // wondible's suggestion:
+
+    // Map this delta, which is in their score range,
+    // into the range of OUR score
+
+    // note that if we ARE the dead person (updating our own score)
+    // this operation should have no effect, because $inDeadPersonScore
+    // will be equal to old_score
+    
+    $mappedDelta = 0;
+
+    if( $inAge < $inDeadPersonScore ) {
+        // they lived shorter than average
+        $fraction = $inAge / $inDeadPersonScore;
+
+        $mappedAge = $fraction * $old_score;
+
+        $mappedDelta = $mappedAge - $old_score;
+        }
+    else if( $inAge > $inDeadPersonScore ) {
+        // here we have see how far they are away from the cap
+        // and map that a similar gap-closing between our score and the
+        // cap
+        $cap = 60;
+        
+        $gap = $cap - $inDeadPersonScore;
+
+        $gapFraction = $delta / $gap;
+
+        $ourGap = $cap - $old_score;
+
+        $mappedDelta = $ourGap * $gapFraction;
+        }
+
+
+    // now apply formula to the mapped delta value
+    $delta = $mappedDelta;
+    
+    
     if( $formulaR != 1 ) {
+        // preserve sign after power operation
+        $s = sign( $delta );
+
+        // remove any negative
+        $delta *= $s;
+        
         $delta = pow( $delta, $formulaR );
+
+        // restore any negative
+        $delta *= $s;
         }
     $delta /= $formulaK;
 
@@ -1150,10 +1595,15 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
     fs_queryDatabase( $query );
 
 
+    $timeUpdateClause = "";
+
+    if( ! $inNoScore ) {
+        $timeUpdateClause = ", last_action_time = CURRENT_TIMESTAMP";
+        }
     
     $query = "UPDATE $tableNamePrefix"."users ".
         "SET lives_affecting_score = lives_affecting_score + 1, ".
-        "score = $new_score, last_action_time = CURRENT_TIMESTAMP ".
+        "score = $new_score $timeUpdateClause ".
         "WHERE email = '$inEmail';";
     
     fs_queryDatabase( $query );
@@ -1194,7 +1644,7 @@ function fs_checkAndUpdateServerSeqNumber() {
 function fs_checkAndUpdateClientSeqNumber() {
     global $tableNamePrefix;
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     $trueSeq = fs_checkClientSeqHash( $email );
     
@@ -1219,11 +1669,11 @@ function fs_checkAndUpdateClientSeqNumber() {
 function fs_addUserRecord( $inEmail ) {
     $leaderboard_name = fs_pickLeaderboardName( $inEmail );
 
-    global $tableNamePrefix;
+    global $tableNamePrefix, $startingScore;
     
     $query = "INSERT INTO $tableNamePrefix"."users ".
         "SET email = '$inEmail', leaderboard_name = '$leaderboard_name', ".
-        "lives_affecting_score = 0, score=0, ".
+        "lives_affecting_score = 0, score=$startingScore, ".
         "last_action_time=CURRENT_TIMESTAMP, client_sequence_number=1;";
     
     fs_queryDatabase( $query );
@@ -1231,29 +1681,15 @@ function fs_addUserRecord( $inEmail ) {
 
 
 
-
-// cleans old offspring from table that count for $email
-// and deletes the lives themselves if they aren't in the offspring table
-// for anyone anymore
-function fs_cleanOldLives( $email ) {
-    global $tableNamePrefix, $maxOffspringHistoryToKeep;
-
-    $query = "SELECT id FROM $tableNamePrefix"."users ".
-        "WHERE email = '$email';";
-
-    $result = fs_queryDatabase( $query );
+function fs_cleanLifeType( $player_id, $relationNameClause, $numToKeep,
+                           $removedOffspring ) {
+    global $tableNamePrefix;
     
-    if( mysqli_num_rows( $result ) == 0 ) {
-        return;
-        }
-    
-    $player_id = fs_mysqli_result( $result, 0, "id" );
-
-    // skip $maxOffspringHistoryToKeep, and get all records after that
     $query = "SELECT life_id ".
         "FROM $tableNamePrefix"."offspring ".
-        "WHERE player_id = $player_id ORDER BY death_time DESC ".
-        "LIMIT $maxOffspringHistoryToKeep,9999999";
+        "WHERE player_id = $player_id AND $relationNameClause ".
+        "ORDER BY death_time DESC ".
+        "LIMIT $numToKeep,9999999";
 
     $result = fs_queryDatabase( $query );
     
@@ -1272,7 +1708,44 @@ function fs_cleanOldLives( $email ) {
         fs_queryDatabase( $query );
         $numOffspringRemoved ++;
         }
+    }
 
+
+
+// cleans old offspring from table that count for $email
+// and deletes the lives themselves if they aren't in the offspring table
+// for anyone anymore
+function fs_cleanOldLives( $email ) {
+    global $tableNamePrefix, $maxOffspringHistoryToKeep, $numLivesInAverage;
+
+    $query = "SELECT id FROM $tableNamePrefix"."users ".
+        "WHERE email = '$email';";
+
+    $result = fs_queryDatabase( $query );
+    
+    if( mysqli_num_rows( $result ) == 0 ) {
+        return;
+        }
+    
+    $player_id = fs_mysqli_result( $result, 0, "id" );
+
+    $removedOffspring = array();
+    
+    // skip $maxOffspringHistoryToKeep for non-You lives,
+    // and delete all non-You records after that
+    fs_cleanLifeType( $player_id,
+                      " relation_name != 'You' ",
+                      $maxOffspringHistoryToKeep,
+                      $removedOffspring );
+
+    // skip $numLivesInAverage for You lives,
+    // and delete all You records after that
+    fs_cleanLifeType( $player_id,
+                      " relation_name = 'You' ",
+                      $numLivesInAverage,
+                      $removedOffspring );
+
+    
     // now we need to check offspring table and see if any of these
     // life_ids aren't anyone's offspring anymore
     $numLivesRemoved = 0;
@@ -1299,6 +1772,93 @@ function fs_cleanOldLives( $email ) {
 
 
 
+
+function fs_getPlayerScore( $inEmail ) {
+    global $startingScore, $tableNamePrefix;
+    
+    $query = "SELECT score FROM $tableNamePrefix"."users ".
+        "WHERE email = '$inEmail';";
+
+    $result = fs_queryDatabase( $query );
+
+    $score = $startingScore;
+
+    if( mysqli_num_rows( $result ) > 0 ) {    
+        $score = fs_mysqli_result( $result, 0, "score" );
+        }
+
+    return $score;
+    }
+
+
+
+function fs_getAveAge( $inEmail ) {
+    global $startingScore, $tableNamePrefix;
+    
+    $query = "SELECT id FROM $tableNamePrefix"."users ".
+        "WHERE email = '$inEmail';";
+
+    $result = fs_queryDatabase( $query );
+
+    $id = -1;
+
+    if( mysqli_num_rows( $result ) > 0 ) {    
+        $id = fs_mysqli_result( $result, 0, "id" );
+        }
+
+    if( $id == -1 ) {
+        return $startingScore;
+        }
+
+    
+    global $numLivesInAverage;
+
+    // don't include lives in average that didn't affect our score
+    // (like Eve lives, tutorial lives, etc.)
+    $query = "SELECT life_id FROM $tableNamePrefix"."offspring ".
+        "WHERE player_id = $id AND relation_name = 'You' ".
+        "AND old_score != new_score ".
+        "order by death_time desc limit $numLivesInAverage;";
+
+    $result = fs_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+    
+    $lifeTotal = 0;
+    $numCounted = 0;
+    for( $i=0; $i<$numRows; $i++ ) {
+        $life_id = fs_mysqli_result( $result, $i, "life_id" );
+
+        $query = "SELECT age FROM $tableNamePrefix"."lives ".
+            "WHERE id = $life_id;";
+
+        $resultB = fs_queryDatabase( $query );
+        
+        $numRowsB = mysqli_num_rows( $result );
+
+        if( $numRowsB > 0 ) {
+            $age = fs_mysqli_result( $resultB, $i, "age" );
+
+            $lifeTotal += $age;
+            $numCounted ++;
+            }
+        }
+
+    if( $numCounted < $numLivesInAverage ) {
+
+        // pad average
+        for( $i=$numCounted; $i<$numLivesInAverage; $i++ ) {
+            $lifeTotal += $startingScore;
+            }   
+        }
+
+    $ave = $lifeTotal / $numLivesInAverage;
+
+    return $ave;
+    }
+
+
+
 function fs_reportDeath() {
     fs_checkAndUpdateServerSeqNumber();
     
@@ -1306,7 +1866,7 @@ function fs_reportDeath() {
     global $tableNamePrefix;
 
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     if( $email == "" ) {
         echo "DENIED";
@@ -1323,7 +1883,11 @@ function fs_reportDeath() {
     $name = preg_replace( '/ /', '_', $name );
 
     
+    $player_id = fs_getUserID( $email );
+    
+    
     $query = "INSERT INTO $tableNamePrefix". "lives SET " .
+        "life_player_id = $player_id, ".
         "name = '$name', ".
         "age = $age, ".
         "display_id = $display_id;";
@@ -1347,6 +1911,9 @@ function fs_reportDeath() {
         $ancestor_list = $_REQUEST[ "ancestor_list" ];
         }
 
+    $deadPlayerScore = fs_getPlayerScore( $email );
+    
+    
     if( $ancestor_list != "" ) {
         
         $listParts = explode( ",", $ancestor_list );
@@ -1355,7 +1922,16 @@ function fs_reportDeath() {
 
             list( $ancestorEmail, $relName ) = explode( " ", $part, 2 );
 
-            fs_logDeath( $ancestorEmail, $life_id, $relName, $age );
+
+            // watch for malformed emails in list
+            $ancestorEmail =
+                fs_filter( $ancestorEmail,
+                           "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+
+            if( $ancestorEmail != "" ) {
+                fs_logDeath( $ancestorEmail, $life_id, $relName, $age,
+                             $deadPlayerScore );
+                }
             $numAncestors ++;
             }
         }
@@ -1370,7 +1946,8 @@ function fs_reportDeath() {
         $noScore = true;
         }
     
-    fs_logDeath( $email, $life_id, $self_rel_name, $age, $noScore );
+    fs_logDeath( $email, $life_id, $self_rel_name, $age, $deadPlayerScore,
+                 $noScore );
 
 
     fs_cleanOldLives( $email );
@@ -1388,7 +1965,7 @@ function fs_getScore() {
     global $tableNamePrefix;
 
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     if( $email == "" ) {
         echo "DENIED";
@@ -1400,7 +1977,9 @@ function fs_getScore() {
 
     $result = fs_queryDatabase( $query );
 
-    $score = 0;
+    global $startingScore;
+    
+    $score = $startingScore;
 
     if( mysqli_num_rows( $result ) > 0 ) {    
         $score = fs_mysqli_result( $result, 0, "score" );
@@ -1441,12 +2020,16 @@ function fs_outputBasicScore( $inEmail ) {
         $rank = 0;
 
         if( $sec_passed < 3600 * $leaderboardHours ) {
-        
+
+            // due to rounding errors when fetching $score above
+            // finding scores > $score sometimes counts the target player
+            // by accident.  Make sure we ignore them by email.
             $query =
                 "SELECT count(*) FROM $tableNamePrefix"."users ".
                 "WHERE last_action_time > ".
                 "DATE_SUB( NOW(), INTERVAL $leaderboardHours HOUR ) ".
-                "AND score > $score;";
+                "AND score > $score ".
+                "AND email != '$inEmail';";
 
             $result = fs_queryDatabase( $query );
 
@@ -1465,7 +2048,7 @@ function fs_getClientScore() {
     global $tableNamePrefix;
 
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     if( $email == "" ) {
         echo "DENIED";
@@ -1485,7 +2068,7 @@ function fs_getClientScoreDetails() {
     global $tableNamePrefix;
 
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     if( $email == "" ) {
         echo "DENIED";
