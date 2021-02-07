@@ -15759,6 +15759,23 @@ static void leaderDied( LiveObject *inLeader ) {
         }
 
 
+    // somewhere else in code, we have a condition that sometimes
+    // allows someone to keep following a dead and removed player
+    // this condition can cause a crash when we go to look up that leader's
+    // name
+    // 
+    // check for that here and correct for it, so we don't pass that stale
+    // leader on to others (or cause a crash by looking up their name).
+    if( inLeader->followingID != -1 ) {
+        LiveObject *higherLeader = getLiveObject( inLeader->followingID );
+        
+        if( higherLeader == NULL ||
+            higherLeader->error ) {
+            
+            inLeader->followingID = -1;
+            }
+        }
+
 
     // if leader is following no one (they haven't picked an heir to take over)
     // have them follow their fittest direct follower now automatically

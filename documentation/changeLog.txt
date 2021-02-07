@@ -101,6 +101,8 @@ Server Fixes
   uncrossable boundary between jungle and desert (crossing code assumes there
   is a grey biome gap between specialty biomes).
 
+--Fixed server crash when a leader dies who is still following a stale,
+  dead-and-removed leader.
 
 
 
