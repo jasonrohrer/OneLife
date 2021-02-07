@@ -31,21 +31,11 @@ $mainSiteURL = "http://localhost/jcr13/";
 
 // Customization settings
 
-// Adjust these to change the way the server  works.
+// the score is a rolling sum of parenting time of the previous $scoreRollingWindow hours
 
-// formula for adjusting score after a life/offspring lifespan is
-// new_score = old_score + ( ( lifespan - old_score ) ^ R ) / K
-
-// note that the sign of ( lifespan - old_score ) is preserved in the case
-// of even R that would normally make negatives positve
-
-$formulaR = 1.0;
-$formulaK = 46.5;
-
-
-// how recently do players have to have played to count in leaderboards
+// how recently do the parenting lives have to be lived to count in leaderboards
 // and rankings?
-$leaderboardHours = 24;
+$scoreRollingWindow = 24 * 7;
 
 
 // maximum number of historical offspring (and selves) to report to the

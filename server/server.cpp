@@ -469,6 +469,7 @@ typedef struct LiveObject {
         SimpleVector<char*> *ancestorEmails;
         SimpleVector<char*> *ancestorRelNames;
         SimpleVector<double> *ancestorLifeStartTimeSeconds;
+		SimpleVector<double> *ancestorLifeEndTimeSeconds;
         
 
         // id of Eve that started this line
@@ -1507,6 +1508,7 @@ void quitCleanup() {
         delete nextPlayer->ancestorRelNames;
         
         delete nextPlayer->ancestorLifeStartTimeSeconds;
+		delete nextPlayer->ancestorLifeEndTimeSeconds;
         
 
         if( nextPlayer->name != NULL ) {
@@ -7086,6 +7088,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.ancestorEmails = new SimpleVector<char*>();
     newObject.ancestorRelNames = new SimpleVector<char*>();
     newObject.ancestorLifeStartTimeSeconds = new SimpleVector<double>();
+	newObject.ancestorLifeEndTimeSeconds = new SimpleVector<double>();
                                                   
     for( int j=0; j<players.size(); j++ ) {
         LiveObject *otherPlayer = players.getElement( j );
@@ -7105,47 +7108,8 @@ int processLoggedInPlayer( char inAllowReconnect,
             ( ! getFemale( otherPlayer ) ||
               countLivingChildren( otherPlayer->id ) == 0 ) ) {
             
-            // check if his mother is an ancestor
-            // (then he's an uncle, or she's a childless aunt)
-            if( otherPlayer->parentID > 0 ) {
-                
-                // look at lineage above parent
-                // don't count brothers, only uncles
-                for( int i=1; i<newObject.lineage->size(); i++ ) {
-                    
-                    if( newObject.lineage->getElementDirect( i ) ==
-                        otherPlayer->parentID ) {
-                        
-                        newObject.ancestorIDs->push_back( otherPlayer->id );
+				//Only direct mother-son/daughter parenting is counted
 
-                        newObject.ancestorEmails->push_back( 
-                            stringDuplicate( otherPlayer->email ) );
-
-                        // i tells us how many greats
-                        SimpleVector<char> workingName;
-                        
-                        for( int g=2; g<=i; g++ ) {
-                            workingName.appendElementString( "Great_" );
-                            }
-                        if( ! getFemale( &newObject ) ) {
-                            workingName.appendElementString( "Nephew" );
-                            }
-                        else {
-                            workingName.appendElementString( "Niece" );
-                            }
-
-                        newObject.ancestorRelNames->push_back(
-                            workingName.getElementString() );
-                        
-                        newObject.ancestorLifeStartTimeSeconds->push_back(
-                            otherPlayer->lifeStartTimeSeconds );
-                        newObject.ancestorLifeEndTimeSeconds->push_back(
-                            -1.0 );
-                        
-                        break;
-                        }
-                    }
-                }
             }
         else {
             // females, look for direct ancestry
@@ -7155,6 +7119,9 @@ int processLoggedInPlayer( char inAllowReconnect,
                 if( newObject.lineage->getElementDirect( i ) ==
                     otherPlayer->id ) {
                         
+                    //Only direct mother-son/daughter parenting is counted
+					if( i != 0 ) continue;
+                    
                     newObject.ancestorIDs->push_back( otherPlayer->id );
 
                     newObject.ancestorEmails->push_back( 
@@ -7162,16 +7129,13 @@ int processLoggedInPlayer( char inAllowReconnect,
 
                     // i tells us how many greats and grands
                     SimpleVector<char> workingName;
-                    SimpleVector<char> workingMotherName;
                     
                     for( int g=1; g<=i; g++ ) {
                         if( g == i ) {
                             workingName.appendElementString( "Grand" );
-                            workingMotherName.appendElementString( "Grand" );
                             }
                         else {
                             workingName.appendElementString( "Great_" );
-                            workingMotherName.appendElementString( "Great_" );
                             }
                         }
                     
@@ -7183,7 +7147,6 @@ int processLoggedInPlayer( char inAllowReconnect,
                         else {
                             workingName.appendElementString( "daughter" );
                             }
-                        workingMotherName.appendElementString( "mother" );
                         }
                     else {
                         // no "Grand"
@@ -7193,7 +7156,6 @@ int processLoggedInPlayer( char inAllowReconnect,
                         else {
                             workingName.appendElementString( "Daughter" );
                             }
-                        workingMotherName.appendElementString( "Mother" );
                         }
                     
                     
@@ -7205,72 +7167,12 @@ int processLoggedInPlayer( char inAllowReconnect,
                     newObject.ancestorLifeEndTimeSeconds->push_back(
                             -1.0 );
                     
-                    // this is the only case of bi-directionality
-                    // players should try to prevent their mothers, gma,
-                    // ggma, etc from dying
-
-                    otherPlayer->ancestorIDs->push_back( newObject.id );
-                    otherPlayer->ancestorEmails->push_back( 
-                        stringDuplicate( newObject.email ) );
-                    otherPlayer->ancestorRelNames->push_back( 
-                        workingMotherName.getElementString() );
-                    otherPlayer->ancestorLifeStartTimeSeconds->push_back(
-                        newObject.lifeStartTimeSeconds );
-                    
                     break;
                     }
                 }
             }
         
-        // if we got here, they aren't our mother, g-ma, g-g-ma, etc.
-        // nor are they our uncle
 
-        
-        // are they our sibling?
-        // note that this is only uni-directional
-        // (we're checking here for this new baby born)
-        // so only our OLDER sibs count as our ancestors (and thus
-        // they care about protecting us).
-
-        // this is a little weird, but it does make some sense
-        // you are more protective of little sibs
-
-        // anyway, the point of this is to close the "just care about yourself
-        // and avoid having kids" exploit.  If your mother has kids after you
-        // (which is totally out of your control), then their survival
-        // will affect your score.
-        
-        if( newObject.parentID > 0 &&
-            newObject.parentID == otherPlayer->parentID &&
-            ( firstTwinID == -1 || otherPlayer->id < firstTwinID ) ) {
-            
-            // sibs, but NOT twins
-            // only consider sibs that joined before the firstTwinID in
-            // our twin set
-            
-            newObject.ancestorIDs->push_back( otherPlayer->id );
-
-            newObject.ancestorEmails->push_back( 
-                stringDuplicate( otherPlayer->email ) );
-
-            const char *relName;
-            
-            if( ! getFemale( &newObject ) ) {
-                relName = "Little_Brother";
-                }
-            else {
-                relName = "Little_Sister";
-                }
-
-            newObject.ancestorRelNames->push_back( stringDuplicate( relName ) );
-            
-            newObject.ancestorLifeStartTimeSeconds->push_back(
-                otherPlayer->lifeStartTimeSeconds );
-            newObject.ancestorLifeEndTimeSeconds->push_back(
-                -1.0 );
-                        
-            continue;
-            }
         }
     
 
@@ -10426,6 +10328,36 @@ void getLineageLineForPlayer( LiveObject *inPlayer,
 
 
 void logFitnessDeath( LiveObject *nextPlayer ) {
+	
+	double curTime = Time::getCurrentTime();
+	for( int i=0; i<players.size(); i++ ) {
+			
+		LiveObject *o = players.getElement( i );
+		
+		if( o->error ||
+			o->isTutorial ||
+			o->id == nextPlayer->id ) {
+			continue;
+		}
+		
+		SimpleVector<double> *newAncestorLifeEndTimeSeconds = new SimpleVector<double>();
+
+		for( int e=0; e< o->ancestorIDs->size(); e++ ) {
+			
+			if( o->ancestorIDs->getElementDirect( e ) == nextPlayer->id ) {
+				newAncestorLifeEndTimeSeconds->push_back( curTime );
+			} else {
+				newAncestorLifeEndTimeSeconds->push_back( o->ancestorLifeEndTimeSeconds->getElementDirect( e ) );
+			}
+		}
+			
+		for( int e=0; e< o->ancestorIDs->size(); e++ ) {
+			o->ancestorLifeEndTimeSeconds->deleteElement( e );
+		}
+		delete o->ancestorLifeEndTimeSeconds;
+		o->ancestorLifeEndTimeSeconds = newAncestorLifeEndTimeSeconds;
+		
+	}
     
     // log this death for fitness purposes,
     // for both tutorial and non    
@@ -10471,6 +10403,7 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
                     o->ancestorRelNames->deleteElement( e );
                     
                     o->ancestorLifeStartTimeSeconds->deleteElement( e );
+					o->ancestorLifeEndTimeSeconds->deleteElement( e );
 
                     break;
                     }
@@ -10483,6 +10416,7 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
     SimpleVector<char*> emptyAncestorEmails;
     SimpleVector<char*> emptyAncestorRelNames;
     SimpleVector<double> emptyAncestorLifeStartTimeSeconds;
+	SimpleVector<double> emptyAncestorLifeEndTimeSeconds;
     
 
     SimpleVector<int> *ancestorIDs = nextPlayer->ancestorIDs;
@@ -10490,6 +10424,8 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
     SimpleVector<char*> *ancestorRelNames = nextPlayer->ancestorRelNames;
     SimpleVector<double> *ancestorLifeStartTimeSeconds = 
         nextPlayer->ancestorLifeStartTimeSeconds;
+    SimpleVector<double> *ancestorLifeEndTimeSeconds = 
+        nextPlayer->ancestorLifeEndTimeSeconds;
     
 
     if( nextPlayer->suicide ) {
@@ -10498,6 +10434,7 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
         ancestorEmails = &emptyAncestorEmails;
         ancestorRelNames = &emptyAncestorRelNames;
         ancestorLifeStartTimeSeconds = &emptyAncestorLifeStartTimeSeconds;
+		ancestorLifeEndTimeSeconds = &emptyAncestorLifeEndTimeSeconds;
         }
     else {
         // any that never made it to age 3+ by the time this person died
@@ -10525,20 +10462,44 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
                 ancestorRelNames->deleteElement( i );
                 
                 ancestorLifeStartTimeSeconds->deleteElement( i );
+				ancestorLifeEndTimeSeconds->deleteElement( i );
                 
                 i--;
                 }
             }
         
         }    
- 
+
+	SimpleVector<char*> ancestorData;
+	double deadPersonLifeStartTime = nextPlayer->trueStartTimeSeconds;
+	double ageRate = getAgeRate();
+	
+	for( int i=0; i<ancestorEmails->size(); i++ ) {
+		
+		double endTime = ancestorLifeEndTimeSeconds->getElementDirect( i );
+		double parentingTime = 0.0;
+		
+		if( endTime > 0 ) {
+			parentingTime = ageRate * (endTime - deadPersonLifeStartTime);
+		} else {
+			parentingTime = ageRate * (curTime - deadPersonLifeStartTime);
+		}
+		
+		char buffer[16];
+		snprintf(buffer, sizeof buffer, "%.6f", parentingTime);
+		
+		ancestorData.push_back( buffer );
+		
+	} 
 
     logFitnessDeath( players.size(),
                      nextPlayer->email, 
                      nextPlayer->name, nextPlayer->displayID,
                      computeAge( nextPlayer ),
                      ancestorEmails, 
-                     ancestorRelNames );
+                     ancestorRelNames,
+					 &ancestorData
+					 );
     }
 
     
@@ -17027,20 +16988,21 @@ int main() {
                 
                 char male = ! getFemale( nextPlayer );
                 
-                if( ! nextPlayer->isTutorial )
-                recordPlayerLineage( nextPlayer->email, 
-                                     age,
-                                     nextPlayer->id,
-                                     nextPlayer->parentID,
-                                     nextPlayer->displayID,
-                                     killerID,
-                                     nextPlayer->name,
-                                     nextPlayer->lastSay,
-                                     male );
+                if( ! nextPlayer->isTutorial ) {
+					recordPlayerLineage( nextPlayer->email, 
+										 age,
+										 nextPlayer->id,
+										 nextPlayer->parentID,
+										 nextPlayer->displayID,
+										 killerID,
+										 nextPlayer->name,
+										 nextPlayer->lastSay,
+										 male );
 
 
-                // both tutorial and non-tutorial players
-                logFitnessDeath( nextPlayer );
+					// non-tutorial players only
+					logFitnessDeath( nextPlayer );
+					}
                 
 
 
@@ -20777,6 +20739,7 @@ int main() {
                 delete nextPlayer->ancestorRelNames;
                 
                 delete nextPlayer->ancestorLifeStartTimeSeconds;
+				delete nextPlayer->ancestorLifeEndTimeSeconds;
 
 
                 if( nextPlayer->name != NULL ) {

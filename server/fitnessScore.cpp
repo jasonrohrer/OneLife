@@ -311,7 +311,8 @@ void logFitnessDeath( int inNumLivePlayers,
                       char *inEmail, char *inName, int inDisplayID,
                       double inAge,
                       SimpleVector<char*> *inAncestorEmails,
-                      SimpleVector<char*> *inAncestorRelNames ) {
+                      SimpleVector<char*> *inAncestorRelNames,
+                      SimpleVector<char*> *inAncestorData ) {
 
     if( SettingsManager::getIntSetting( "useFitnessServer", 0 ) == 0 ||
         SettingsManager::getIntSetting( "remoteReport", 0 ) == 0 ) {
@@ -343,12 +344,15 @@ void logFitnessDeath( int inNumLivePlayers,
 
 
     SimpleVector<char> workingList;
+	SimpleVector<char> workingDataList;
     
     int num = inAncestorEmails->size();
     
     for( int i=0; i<num; i++ ) {
         workingList.appendElementString( 
             inAncestorEmails->getElementDirect( i ) );
+        workingDataList.appendElementString( 
+            inAncestorData->getElementDirect( i ) );
         
         workingList.appendElementString( " " );
         
@@ -362,6 +366,7 @@ void logFitnessDeath( int inNumLivePlayers,
 
         if( i < num-1 ) {    
             workingList.appendElementString( "," );
+			workingDataList.appendElementString( "," );
             }
         
         delete [] relNameNoSpace;
@@ -369,10 +374,13 @@ void logFitnessDeath( int inNumLivePlayers,
 
 
     char *ancestorList = workingList.getElementString();
+	char *ancestorDataList = workingDataList.getElementString();
     
     char *encodedList = URLUtils::urlEncode( ancestorList );
+	char *encodedDataList = URLUtils::urlEncode( ancestorDataList );
 
     delete [] ancestorList;
+	delete [] ancestorDataList;
 
 
     r.extraParams = 
@@ -382,14 +390,18 @@ void logFitnessDeath( int inNumLivePlayers,
             "display_id=%d&"
             "self_rel_name=You&"
             "age=%f&"
-            "ancestor_list=%s",
+            "ancestor_list=%s&"
+            "data_list=%s",
             encodedName,
             inDisplayID,
             inAge,
-            encodedList );
+            encodedList,
+			encodedDataList
+			);
 
     delete [] encodedName;
     delete [] encodedList;
+	delete [] encodedDataList;
 
     r.isScoreRequest = false;
 
