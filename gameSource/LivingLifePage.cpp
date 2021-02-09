@@ -189,7 +189,7 @@ static SimpleVector<GridPos> ownerRequestPos;
 static char showPing = false;
 static char showHelp = false;
 
-static char *closeMessage;
+static char *closeMessage = NULL;
 
 static double pingSentTime = -1;
 static double pongDeltaTime = -1;
@@ -8281,7 +8281,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     panelPos.y -= 242 + 32 + 16 + 6;
     drawSprite( mGuiPanelSprite, panelPos );
     
-    if ( showHelp ) {
+    if ( showHelp && closeMessage != NULL ) {
     	setDrawColor( 0.4f, 0.1f, 0.1f, 1 );
 		handwritingFont->drawString( closeMessage, { lastScreenViewCenter.x - 0.5 * handwritingFont->measureString( closeMessage ), lastScreenViewCenter.y - 285 }, alignLeft );
     }
