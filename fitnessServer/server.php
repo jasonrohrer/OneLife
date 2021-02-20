@@ -340,9 +340,6 @@ function fs_setupDatabase() {
             "email VARCHAR(254) NOT NULL," .
             "UNIQUE KEY( email )," .
             "leaderboard_name varchar(254) NOT NULL,".
-														   
-									 
-							   
             "last_action_time DATETIME NOT NULL,".
             "index( last_action_time ),".
             // for use with client connections
@@ -393,9 +390,6 @@ function fs_setupDatabase() {
             // this will be You for self
             // or Granddaughter, etc.
             "relation_name VARCHAR(254) NOT NULL,".
-													  
-										
-													 
             "score_change FLOAT NOT NULL,".
             "death_time DATETIME NOT NULL,".
             // for fast filtering/sorting of most-recent 20
@@ -1503,7 +1497,6 @@ function fs_getUserID( $inEmail ) {
 //  leaderboard)
 function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
                       $inParentingTime ) {
-											
     global $tableNamePrefix;
 
     $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
@@ -1521,94 +1514,16 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
 
     $result = fs_queryDatabase( $query );
     $player_id = fs_mysqli_result( $result, 0, "id" );
-														 
 
 
-																  
-															   
-										 
 	
-											   
 
-					  
-																	  
-						
-																 
-																		 
-											
-							  
-			   
-		 
     
     
     // score update
-								
     
     
-										 
     
-
-							 
-
-													 
-								  
-
-																   
-																	   
-								 
-	
-					 
-
-									   
-										  
-												
-
-											
-
-											   
-		 
-											
-															  
-																	   
-			  
-				  
-		
-										 
-
-									 
-
-									
-
-											  
-		 
-
-
-												  
-						  
-	
-	
-						  
-											  
-							
-
-							  
-					 
-		
-										  
-
-							   
-					 
-		 
-						
-
-					  
-				   
-		 
-	
-									 
-	
-	
-	
     $query = "INSERT into $tableNamePrefix"."offspring ".
         "SET player_id = $player_id, life_id = $life_id, ".
         "relation_name = '$inRelName', score_change = $inParentingTime,".
@@ -1616,16 +1531,8 @@ function fs_logDeath( $inEmail, $life_id, $inRelName, $inAge,
 
     fs_queryDatabase( $query );
     
-
-						   
-
-						
-																	 
-		 
-	
     $query = "UPDATE $tableNamePrefix"."users ".
 		"SET last_action_time = CURRENT_TIMESTAMP ".
-												
         "WHERE email = '$inEmail';";
     
     fs_queryDatabase( $query );
@@ -2012,16 +1919,8 @@ function fs_reportDeath() {
 
 
     // log effect of own death
-					 
-										   
-												  
-														  
-														 
-						
-		 
     
     fs_logDeath( $email, $life_id, $self_rel_name, $age, $totalParentingTime );
-							
 
 
     fs_cleanOldLives( $email );
