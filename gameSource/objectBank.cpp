@@ -5504,6 +5504,11 @@ doublePair getObjectBottomCenterOffset( ObjectRecord *inObject ) {
 
 
     // find center of lowessprite
+	
+	//2HOL drawing tweak: instead of finding sprite with lowest center
+	//we look for sprite with lowest bottom 
+	//this way we make sure that no sprite of an object is drawn 
+	//lower than the bottom edge of a slot
 
     SpriteRecord *lowestRecord = NULL;
     
@@ -5527,18 +5532,37 @@ doublePair getObjectBottomCenterOffset( ObjectRecord *inObject ) {
             // don't consider parts visible only when not contained
             continue;
             }
-        
+			
+		if( inObject->spriteColor[i].r < 1.0 && inObject->spriteColor[i].r > 0.998 ) {
+			// special flag to skip sprite when calculating position to draw object
+			continue;
+		}
 
-        double y = inObject->spritePos[i].y;
+        int h = sprite->visibleH;
+		
+		doublePair dimensions = { sprite->visibleW, sprite->visibleH };
+		
+		dimensions = rotate( dimensions, 
+							   2 * M_PI * inObject->spriteRot[i] );
+		
+		doublePair centerOffset = { (double)sprite->centerXOffset,
+									(double)sprite->centerYOffset };
+			
+		centerOffset = rotate( centerOffset, 
+							   2 * M_PI * inObject->spriteRot[i] );
 
+		doublePair spriteCenter = add( inObject->spritePos[i], 
+									   centerOffset );
+		
+		double y = spriteCenter.y - dimensions.y / 2 + sprite->centerAnchorYOffset;
 
         if( lowestRecord == NULL ||
-            // wider than what we've seen so far
+            // lowest point of sprite is lower than what we've seen so far
             y < lowestYPos ) {
 
             lowestRecord = sprite;
             lowestIndex = i;
-            lowestYPos = inObject->spritePos[i].y;
+            lowestYPos = y;
             }
         }
     
@@ -5547,25 +5571,16 @@ doublePair getObjectBottomCenterOffset( ObjectRecord *inObject ) {
         doublePair result = { 0, 0 };
         return result;
         }
-    
-    
-        
-    doublePair centerOffset = { (double)lowestRecord->centerXOffset,
-                                (double)lowestRecord->centerYOffset };
-        
-    centerOffset = rotate( centerOffset, 
-                           2 * M_PI * inObject->spriteRot[lowestIndex] );
-
-    doublePair spriteCenter = add( inObject->spritePos[lowestIndex], 
-                                   centerOffset );
 
     doublePair wideCenter = getObjectCenterOffset( inObject );
-    
-    
-    // adjust y based on lowest sprite
+	
+	//Adjust y so that the lowest point of an object sits
+	//on the bottom edge of a slot
     // but keep center from widest sprite
     // (in case object has "feet" that are not centered)
-    wideCenter.y = spriteCenter.y;
+	
+	wideCenter.y = lowestYPos + 8.0; //slot has height of 16.0
+
 
     return wideCenter;    
     }
