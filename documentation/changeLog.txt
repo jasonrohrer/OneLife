@@ -107,6 +107,10 @@ Server Fixes
 --Fixed a few instances of char to signed char, because on Rasberry Pi, char
   defaults to unsigned.
 
+--Fixed so that extreme homeland outliers can't shift average unilaterally and
+  screw up placement of future Eves.  We now discard the largest outliers one
+  by one until all considered homelands are 1500 from the remaining average x
+  position.
 
 
 

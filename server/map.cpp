@@ -8626,39 +8626,68 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             // in middle of active homelands
             
             int homelandXSum = 0;
-            int homelandXCount = 0;
-            
+
+            SimpleVector<Homeland*> consideredHomelands;
+
             for( int i=0; i<homelands.size(); i++ ) {
                 Homeland *h = homelands.getElement( i );
                 
                 // any d-town or tutorial homelands are ignored
                 if( ! h->expired && ! h->ignoredForEve ) {
-                    homelandXCount ++;
                     homelandXSum += h->x;
+                    consideredHomelands.push_back( h );
                     }
                 }
+
+            int homelandXAve = 0;
+            int maxAveDistance = 9999999;
+
+            int outlierDist = 1500;
             
-            if( homelandXCount > 0 ) {
-                int homelandXAve = homelandXSum / homelandXCount;
-            
-                for( int i=0; i<homelands.size(); i++ ) {
+            // keep discarding the homeland that is max distance from the ave
+            // until all we have left is homelands that are within 2000 from ave
+            // and keep adjusting ave as we go along
+            // (Essentially, we discard farthest outlier repeatedly, until
+            //  there are no far outliers left).
+            while( consideredHomelands.size() > 0 && 
+                   maxAveDistance > outlierDist ) {
+                
+                homelandXAve = homelandXSum / consideredHomelands.size();
+                
+                int maxDist = 0;
+                int maxIndex = -1;
+                for( int i=0; i<consideredHomelands.size(); i++ ) {
+                    Homeland *h = consideredHomelands.getElementDirect( i );
                     
-                    Homeland *h = homelands.getElement( i );
+                    int dist = abs( h->x - homelandXAve );
+                    if( dist > maxDist ) {
+                        maxDist = dist;
+                        maxIndex = i;
+                        }
+                    }
+                if( maxDist > outlierDist ) {
+                    homelandXSum -= 
+                        consideredHomelands.getElementDirect( maxIndex )->x;
+                        
+                    consideredHomelands.deleteElement( maxIndex );
+                    }
+                maxAveDistance = maxDist;
+                }
+
+
+            if( consideredHomelands.size() > 0 ) {
+                for( int i=0; i<consideredHomelands.size(); i++ ) {
                     
-                    // avoid extreme outlier homelands that are more
-                    // than 1500 to the West of the average homeland location
-                    if( ! h->expired && ! h->ignoredForEve &&
-                        h->x > homelandXAve - 1500 ) {
+                    Homeland *h = consideredHomelands.getElementDirect( i );
+                    
+                    int xBoundary = h->x - 2 * h->radius;
                         
-                        int xBoundary = h->x - 2 * h->radius;
+                    if( xBoundary < ave.x ) {
+                        ave.x = xBoundary;
                         
-                        if( xBoundary < ave.x ) {
-                            ave.x = xBoundary;
-                            
-                            AppLog::infoF( 
-                                "Pushing Eve to west of homeland at x=%d\n",
-                                h->x );
-                            }
+                        AppLog::infoF( 
+                            "Pushing Eve to west of homeland at x=%d\n",
+                            h->x );
                         }
                     }
                 }
