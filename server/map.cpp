@@ -2083,7 +2083,7 @@ static DBTimeCacheRecord dbTimeCache[ DB_CACHE_SIZE ];
 typedef struct BlockingCacheRecord {
         int x, y;
         // -1 if not present
-        char blocking;
+        signed char blocking;
     } BlockingCacheRecord;
     
 static BlockingCacheRecord blockingCache[ DB_CACHE_SIZE ];
@@ -2169,7 +2169,7 @@ static void dbTimePutCached( int inX, int inY, int inSlot, int inSubCont,
 
 
 // returns -1 on miss
-static char blockingGetCached( int inX, int inY ) {
+static signed char blockingGetCached( int inX, int inY ) {
     BlockingCacheRecord r =
         blockingCache[ computeBLCacheHash( inX, inY ) ];
 
@@ -6749,7 +6749,7 @@ unsigned char *getChunkMessage( int inStartX, int inStartY,
 
 char isMapSpotBlocking( int inX, int inY ) {
     
-    char cachedVal = blockingGetCached( inX, inY );
+    signed char cachedVal = blockingGetCached( inX, inY );
     if( cachedVal != -1 ) {
         
         return cachedVal;

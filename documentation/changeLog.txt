@@ -104,6 +104,9 @@ Server Fixes
 --Fixed server crash when a leader dies who is still following a stale,
   dead-and-removed leader.
 
+--Fixed a few instances of char to signed char, because on Rasberry Pi, char
+  defaults to unsigned.
+
 
 
 
