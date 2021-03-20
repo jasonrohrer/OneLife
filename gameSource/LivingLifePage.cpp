@@ -188,6 +188,9 @@ static SimpleVector<GridPos> ownerRequestPos;
 
 static char showPing = false;
 static char showHelp = false;
+
+static char *closeMessage = NULL;
+
 static double pingSentTime = -1;
 static double pongDeltaTime = -1;
 static double pingDisplayStartTime = -1;
@@ -7499,6 +7502,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 			for( int i=0; i<numLines; i++ ) {
 				bool isTitle = false;
 				bool isSub = false;
+				bool isCloseMessage = false;
 				if ( (lines[i][0] == '\0') || (lines[i][0] == '\r') ) {
 					//continue;
 					}
@@ -7533,6 +7537,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
 					sscanf( lines[i], "#sheet%d", &( columnNumber ) );
 					writePos.y = lastScreenViewCenter.y + columnStartY + columnHeight / 2; //reset lineHeight additions
 					continue;
+					}
+				else if ( strstr( lines[i], "warning$" ) != NULL ) {
+					int hNumLines;
+					char **holder;
+					holder = split( lines[i], "$", &hNumLines);
+					lines[i] = holder[1];
+					isCloseMessage = true;
 					}
 				else if ( strstr( lines[i], "title$" ) != NULL ) {
 					int hNumLines;
@@ -7580,8 +7591,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
 					drawSprite( sheetSprites[columnNumber], drawPos );
 					lastDrawnColumn = columnNumber;
 					}
-				
-				if ( isTitle ) {
+					
+				if ( isCloseMessage ) {
+					closeMessage = lines[i];
+					}
+				else if ( isTitle ) {
 					setDrawColor( 0.1f, 0.1f, 0.1f, 1 );
 					int titleSize = titleFont->measureString( lines[i] );
 					titleFont->drawString( lines[i], { writePos.x + ( columnWidth - titleSize ) / 2, writePos.y - lineHeight }, alignLeft );
@@ -8266,6 +8280,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
     doublePair panelPos = lastScreenViewCenter;
     panelPos.y -= 242 + 32 + 16 + 6;
     drawSprite( mGuiPanelSprite, panelPos );
+    
+    if ( showHelp && closeMessage != NULL ) {
+    	setDrawColor( 0.4f, 0.1f, 0.1f, 1 );
+		handwritingFont->drawString( closeMessage, { lastScreenViewCenter.x - 0.5 * handwritingFont->measureString( closeMessage ), lastScreenViewCenter.y - 285 }, alignLeft );
+    }
 
     if( ourLiveObject != NULL &&
         ourLiveObject->dying  &&
