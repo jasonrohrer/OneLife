@@ -125,6 +125,8 @@ Server Fixes
 
 --Unblocked twins/trips/quads from earning curse tokens.
 
+--Unblocked twins/trips/quads from cursing other players.
+
 
 
 
