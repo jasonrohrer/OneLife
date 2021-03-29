@@ -6120,8 +6120,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
 
 
     if( isCurse ) {
-        if( ! inPlayer->isTwin && 
-            inPlayer->curseStatus.curseLevel == 0 &&
+        if( inPlayer->curseStatus.curseLevel == 0 &&
             hasCurseToken( inPlayer->email ) ) {
             inPlayer->curseTokenCount = 1;
             }
@@ -9877,7 +9876,6 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     
 
     if( newObject.curseStatus.curseLevel == 0 &&
-        ! newObject.isTwin &&
         hasCurseToken( inEmail ) ) {
         newObject.curseTokenCount = 1;
         }

@@ -123,6 +123,8 @@ Server Fixes
   players that aren't Eve eligible for other reasons (tutorial players, d-town
   players, or players that are cycling back to the same family again).
 
+--Unblocked twins/trips/quads from earning curse tokens.
+
 
 
 
