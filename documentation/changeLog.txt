@@ -115,6 +115,10 @@ Server Fixes
 --Reduced outlier radius to 500 (was 1500) when computing cluster of existing
   homelands for next Eve placement.
 
+--Tutorial lives don't count toward last-life-was-short trigger for
+  posse-joining restrictions.
+
+
 
 
 Version 361    2020-September-25

@@ -24762,7 +24762,7 @@ int main() {
                 logFitnessDeath( nextPlayer );
                 
 
-                if( age < shortLifeAge ) {
+                if( ! nextPlayer->isTutorial && age < shortLifeAge ) {
                     addShortLife( nextPlayer->email );
                     }
 
