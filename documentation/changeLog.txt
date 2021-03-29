@@ -112,6 +112,9 @@ Server Fixes
   by one until all considered homelands are 1500 from the remaining average x
   position.
 
+--Reduced outlier radius to 500 (was 1500) when computing cluster of existing
+  homelands for next Eve placement.
+
 
 
 Version 361    2020-September-25

@@ -8642,10 +8642,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             int homelandXAve = 0;
             int maxAveDistance = 9999999;
 
-            int outlierDist = 1500;
+            int outlierDist = 500;
             
             // keep discarding the homeland that is max distance from the ave
-            // until all we have left is homelands that are within 2000 from ave
+            // until all we have left is homelands that are within 500 from ave
             // and keep adjusting ave as we go along
             // (Essentially, we discard farthest outlier repeatedly, until
             //  there are no far outliers left).
