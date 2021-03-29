@@ -118,6 +118,11 @@ Server Fixes
 --Tutorial lives don't count toward last-life-was-short trigger for
   posse-joining restrictions.
 
+--Fixed so that when we're tracking a window of the ten highest-fitness recent
+  players, to judge the fitness level for the next Eve player, we don't count
+  players that aren't Eve eligible for other reasons (tutorial players, d-town
+  players, or players that are cycling back to the same family again).
+
 
 
 

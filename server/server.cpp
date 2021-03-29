@@ -10383,7 +10383,18 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         }
     
 
-    addRecentScore( newObject.email, inFitnessScore );
+    // don't count in recent score pool for
+    // -- tutorial players
+    // -- players that are cycling back to same family
+    // -- d-town players
+    if( ! newObject.isTutorial
+        &&
+        forceOffspringLineageID == -1  
+        &&
+        newObject.curseStatus.curseLevel == 0 ) {
+        
+        addRecentScore( newObject.email, inFitnessScore );
+        }
     
 
     if( ! newObject.isTutorial )        
