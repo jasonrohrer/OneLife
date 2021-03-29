@@ -127,6 +127,10 @@ Server Fixes
 
 --Unblocked twins/trips/quads from cursing other players.
 
+--Only considering primary homelands when looking at homeland cluster for Eve
+  placement, so one family can't spam wells to swamp the cluster average
+  location.
+
 
 
 
