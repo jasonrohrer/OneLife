@@ -8632,8 +8632,9 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             for( int i=0; i<homelands.size(); i++ ) {
                 Homeland *h = homelands.getElement( i );
                 
+                // only primary homelands are considered
                 // any d-town or tutorial homelands are ignored
-                if( ! h->expired && ! h->ignoredForEve ) {
+                if( h->primary && ! h->expired && ! h->ignoredForEve ) {
                     homelandXSum += h->x;
                     consideredHomelands.push_back( h );
                     }
