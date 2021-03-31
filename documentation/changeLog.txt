@@ -131,6 +131,8 @@ Server Fixes
   placement, so one family can't spam wells to swamp the cluster average
   location.
 
+--Min active players for specialty biomes increased to 30 (was 15).
+
 
 
 
