@@ -9824,6 +9824,64 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 Time::getCurrentTime() - forceAge * ( 1.0 / getAgeRate() );
             }
         }
+
+
+    
+    if( SettingsManager::getIntSetting( "maleOverrideEnabled", 0 ) &&
+        getObject( newObject.displayID )->male ) {
+        
+        int targetRace = getObject( newObject.displayID )->race;
+        
+        char *cont = SettingsManager::getSettingContents( "maleOverride" );
+    
+        if( cont != NULL ) {
+            
+            int numParts;
+            char **lines = split( cont, "\n", &numParts );
+
+            delete [] cont;
+    
+            for( int i=0; i<numParts; i++ ) {
+                ForceSpawnRecord r;
+
+                int race = 0;
+
+                int numRead = sscanf(
+                    lines[i],
+                    "%d %d %d %d %d %d %d", 
+                    &race,
+                    &r.displayID,
+                    &r.hatID,
+                    &r.tunicID,
+                    &r.bottomID,
+                    &r.frontShoeID,
+                    &r.backShoeID );
+                        
+                if( numRead == 7 ) {
+                    if( race == targetRace ) {
+                        newObject.displayID = r.displayID;
+        
+                        newObject.clothing.hat = getObject( r.hatID, true );
+                        newObject.clothing.tunic = getObject( r.tunicID, true );
+                        newObject.clothing.bottom =
+                            getObject( r.bottomID, true );
+                        newObject.clothing.frontShoe = 
+                            getObject( r.frontShoeID, true );
+                        newObject.clothing.backShoe = 
+                            getObject( r.backShoeID, true );
+
+                        break;
+                        }
+                    }
+                }
+
+            for( int i=0; i<numParts; i++ ) {
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }        
+        }
+    
     
 
     newObject.holdingID = 0;
