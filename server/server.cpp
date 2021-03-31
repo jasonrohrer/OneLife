@@ -737,7 +737,7 @@ typedef struct LiveObject {
         // they can have their first baby right away.
         timeSec_t birthCoolDown;
         
-		bool fertile;
+		bool declaredInfertile;
 
         timeSec_t lastRegionLookTime;
         
@@ -6414,7 +6414,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                 }
 				
 			//skips over solo players who declare themselves infertile
-		    if( !player->fertile ) {
+		    if( player->declaredInfertile ) {
 				continue;
 				}
 
@@ -7230,7 +7230,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.babyIDs = new SimpleVector<int>();
     
     newObject.birthCoolDown = 0;
-	newObject.fertile = true;
+	newObject.declaredInfertile = false;
     
     newObject.monumentPosSet = false;
     newObject.monumentPosSent = true;
@@ -14215,7 +14215,7 @@ int main() {
                                     }
 								
 								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
-								if ( !nextPlayer->fertile ) {
+								if ( nextPlayer->declaredInfertile ) {
 									std::string strName(nextPlayer->name);
 									strName += strInfertilitySuffix;
 									nextPlayer->displayedName = strdup( strName.c_str() );
@@ -14231,8 +14231,8 @@ int main() {
 						if( getFemale( nextPlayer ) ) {
 							char *infertilityDeclaring = isInfertilityDeclaringSay( m.saidText );
 							char *fertilityDeclaring = isFertilityDeclaringSay( m.saidText );
-							if( infertilityDeclaring != NULL && nextPlayer->fertile ) {
-								nextPlayer->fertile = false;
+							if( infertilityDeclaring != NULL && !nextPlayer->declaredInfertile ) {
+								nextPlayer->declaredInfertile = true;
 								
 								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
 								if (nextPlayer->name == NULL) {
@@ -14245,8 +14245,8 @@ int main() {
 								
 								playerIndicesToSendNamesAbout.push_back( i );
 								
-							} else if( fertilityDeclaring != NULL && !nextPlayer->fertile ) {
-								nextPlayer->fertile = true;
+							} else if( fertilityDeclaring != NULL && nextPlayer->declaredInfertile ) {
+								nextPlayer->declaredInfertile = false;
 								
 								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
 								if (nextPlayer->name == NULL) {
@@ -14276,7 +14276,7 @@ int main() {
                                               &playerIndicesToSendNamesAbout );
 									
 									if ( babyO->displayedName != NULL ) delete [] babyO->displayedName;
-									if ( !babyO->fertile ) {
+									if ( babyO->declaredInfertile ) {
 										std::string strName(babyO->name);
 										strName += strInfertilitySuffix;
 										babyO->displayedName = strdup( strName.c_str() );
@@ -14306,7 +14306,7 @@ int main() {
                                               &playerIndicesToSendNamesAbout );
 									
 									if ( closestOther->displayedName != NULL ) delete [] closestOther->displayedName;
-									if ( !closestOther->fertile ) {
+									if ( closestOther->declaredInfertile ) {
 										std::string strName(closestOther->name);
 										strName += strInfertilitySuffix;
 										closestOther->displayedName = strdup( strName.c_str() );
