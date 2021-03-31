@@ -7018,7 +7018,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             }
         
 
-        if( SettingsManager::getIntSetting( "forceEveLocation", 0 ) ) {
+        if( SettingsManager::getIntSetting( "forceEveLocation", 0 ) && inCurseStatus.curseLevel == 0 ) {
 
             startX = 
                 SettingsManager::getIntSetting( "forceEveLocationX", 0 );
