@@ -16104,6 +16104,97 @@ int main() {
                                         }
                                     }
                                 }
+							else if( targetPlayer == nextPlayer &&
+									 nextPlayer->dying &&
+									 m.i >= 0 && 
+									 m.i < NUM_CLOTHING_PIECES ) {
+								
+								ObjectRecord *clickedClothing = 
+									clothingByIndex( nextPlayer->clothing, 
+													 m.i );
+													 
+								int clickedClothingID = 0;
+								
+								if( clickedClothing != NULL ) {
+									clickedClothingID = clickedClothing->id;
+								}
+								
+								bool healed = false;
+									
+								// try healing wound
+								
+								TransRecord *healTrans =
+									getMetaTrans( nextPlayer->holdingID,
+												  clickedClothingID );
+								
+								int healTarget = 0;
+
+								if( healTrans != NULL ) {
+									
+									nextPlayer->holdingID = 
+										healTrans->newActor;
+									holdingSomethingNew( nextPlayer );
+									
+									// their wound has been changed
+									// no longer track embedded weapon
+									nextPlayer->embeddedWeaponID = 0;
+									nextPlayer->embeddedWeaponEtaDecay = 0;
+												  
+                                    setClothingByIndex( 
+                                        &( nextPlayer->clothing ), 
+                                        m.i,
+                                        getObject( 
+                                            healTrans->newTarget ) );
+									
+									setResponsiblePlayer( -1 );
+									
+									healed = true;
+									healTarget = healTrans->target;
+									
+									}
+								
+								if ( healed ) {
+									
+									nextPlayer->heldOriginValid = 0;
+									nextPlayer->heldOriginX = 0;
+									nextPlayer->heldOriginY = 0;
+									nextPlayer->heldTransitionSourceID = 
+										healTarget;
+									
+									if( nextPlayer->holdingID == 0 ) {
+										// not dying anymore
+										setNoLongerDying( 
+											nextPlayer,
+											&playerIndicesToSendHealingAbout );
+										}
+									else {
+										// wound changed?
+
+										ForcedEffects e = 
+											checkForForcedEffects( 
+												nextPlayer->holdingID );
+
+										if( e.emotIndex != -1 ) {
+											nextPlayer->emotFrozen = true;
+											newEmotPlayerIDs.push_back( 
+												nextPlayer->id );
+											newEmotIndices.push_back( 
+												e.emotIndex );
+											newEmotTTLs.push_back( e.ttlSec );
+											interruptAnyKillEmots( 
+												nextPlayer->id, e.ttlSec );
+											}
+										if( e.foodCapModifier != 1 ) {
+											nextPlayer->foodCapModifier = 
+												e.foodCapModifier;
+											nextPlayer->foodUpdate = true;
+											}
+										if( e.feverSet ) {
+											nextPlayer->fever = e.fever;
+											}
+										}
+									}
+								}
                             else if( nextPlayer->holdingID > 0 ) {
                                 ObjectRecord *obj = 
                                     getObject( nextPlayer->holdingID );
