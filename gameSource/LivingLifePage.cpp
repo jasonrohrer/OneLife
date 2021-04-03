@@ -17200,7 +17200,7 @@ void LivingLifePage::step() {
         
 
         // current age
-        double age = computeCurrentAge( ourLiveObject );
+        double age = computeCurrentAgeNoOverride( ourLiveObject );
 
         int sayCap = getSayLimit( age );
 
