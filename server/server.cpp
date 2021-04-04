@@ -2618,6 +2618,39 @@ static int countFertileMothersOnServer() {
 
 
 
+static int countYoungFemalesInLineage( int inLineageEveID ) {
+    int count = 0;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+		
+		if( o->error ) {
+			continue;
+			}
+        if( o->isTutorial ) {
+            continue;
+            }    
+        if( o->vogMode ) {
+            continue;
+            }
+        if( o->curseStatus.curseLevel > 0 ) {
+            continue;
+            }
+			
+		if( o->lineageEveID == inLineageEveID ) {
+			double age = computeAge( o );
+			char f = getFemale( o );
+			if( age <= oldAge && f ) {
+				count ++;
+				}
+            }
+			
+        }
+    return count;
+    }
+
+
+
 
 int computeFoodCapacity( LiveObject *inPlayer ) {
     int ageInYears = lrint( computeAge( inPlayer ) );
@@ -6891,6 +6924,12 @@ int processLoggedInPlayer( char inAllowReconnect,
                     }
                 
                 if( childRace == parentObject->race ) {
+					
+					if( countYoungFemalesInLineage( parent->lineageEveID ) <
+						SettingsManager::getIntSetting( "minYoungFemalesToForceGirl", 2 ) ) {
+						forceGirl = true;
+						}
+					
                     newObject.displayID = getRandomFamilyMember( 
                         parentObject->race, parent->displayID, familySpan,
                         forceGirl );
