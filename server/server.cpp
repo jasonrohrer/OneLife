@@ -2595,6 +2595,19 @@ static int countFertileMothersOnServer() {
     
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *o = players.getElement( i );
+		
+		if( o->error ) {
+			continue;
+			}
+        if( o->isTutorial ) {
+            continue;
+            }    
+        if( o->vogMode ) {
+            continue;
+            }
+        if( o->curseStatus.curseLevel > 0 ) {
+            continue;
+            }
         
         if( isFertileAge( o ) && !o->declaredInfertile ) {
             count ++;
@@ -14253,7 +14266,7 @@ int main() {
 							char *fertilityDeclaring = isFertilityDeclaringSay( m.saidText );
 							if( infertilityDeclaring != NULL && !nextPlayer->declaredInfertile ) {
 									
-								if( countFertileMothersOnServer() >=
+								if( countFertileMothersOnServer() >
 									SettingsManager::getIntSetting( "minFertileMothersForInfertility", 0 ) ) {
 								
 									nextPlayer->declaredInfertile = true;
