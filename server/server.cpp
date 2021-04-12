@@ -2590,34 +2590,6 @@ char isFertileAge( LiveObject *inPlayer ) {
 
 
 
-static int countFertileMothersOnServer() {
-    int count = 0;
-    
-    for( int i=0; i<players.size(); i++ ) {
-        LiveObject *o = players.getElement( i );
-		
-		if( o->error ) {
-			continue;
-			}
-        if( o->isTutorial ) {
-            continue;
-            }    
-        if( o->vogMode ) {
-            continue;
-            }
-        if( o->curseStatus.curseLevel > 0 ) {
-            continue;
-            }
-        
-        if( isFertileAge( o ) && !o->declaredInfertile ) {
-            count ++;
-            }
-        }
-    return count;
-    }
-
-
-
 static int countYoungFemalesInLineage( int inLineageEveID ) {
     int count = 0;
     
@@ -14297,41 +14269,23 @@ int main() {
                                 playerIndicesToSendNamesAbout.push_back( i );
                                 }
                             }
-							
-						bool speechOverride = false;
 						
 						if( getFemale( nextPlayer ) ) {
 							char *infertilityDeclaring = isInfertilityDeclaringSay( m.saidText );
 							char *fertilityDeclaring = isFertilityDeclaringSay( m.saidText );
 							if( infertilityDeclaring != NULL && !nextPlayer->declaredInfertile ) {
-									
-								if( countFertileMothersOnServer() >
-									SettingsManager::getIntSetting( "minFertileMothersForInfertility", 0 ) ) {
+								nextPlayer->declaredInfertile = true;
 								
-									nextPlayer->declaredInfertile = true;
-									
-									if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
-									if (nextPlayer->name == NULL) {
-										nextPlayer->displayedName = strdup( infertilitySuffix );
-									} else {
-										std::string strName(nextPlayer->name);
-										strName += strInfertilitySuffix;
-										nextPlayer->displayedName = strdup( strName.c_str() );
-									}
-									
-									playerIndicesToSendNamesAbout.push_back( i );
-								
+								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
+								if (nextPlayer->name == NULL) {
+									nextPlayer->displayedName = strdup( infertilitySuffix );
 								} else {
-									
-									char *message = autoSprintf( "PS\n"
-																 "%d/0 +SERVER DOES NOT HAVE ENOUGH FERTILE MOTHERS, INFERTILITY DECLARATION DENIED+\n#",
-																 nextPlayer->id );
-									sendMessageToPlayer( nextPlayer, message, strlen( message ) );
-									delete [] message;
-									
-									speechOverride = true;
-									
+									std::string strName(nextPlayer->name);
+									strName += strInfertilitySuffix;
+									nextPlayer->displayedName = strdup( strName.c_str() );
 								}
+								
+								playerIndicesToSendNamesAbout.push_back( i );
 								
 							} else if( fertilityDeclaring != NULL && nextPlayer->declaredInfertile ) {
 								nextPlayer->declaredInfertile = false;
@@ -14444,7 +14398,6 @@ int main() {
                                 }
                             }
                         
-						if (!speechOverride)
                         makePlayerSay( nextPlayer, m.saidText );
                         }
                     else if( m.type == KILL ) {
