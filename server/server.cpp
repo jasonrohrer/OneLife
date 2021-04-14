@@ -6790,13 +6790,65 @@ int processLoggedInPlayer( char inAllowReconnect,
             startY = 
                 SettingsManager::getIntSetting( "forceEveLocationY", 0 );
             }
+        
+        uint32_t tempHashedSpawnSeed;
+        int useSeedList = SettingsManager::getIntSetting( "useSeedList", 0 );
+        //pick a random seed from a list to be the default spawn
+        if ( useSeedList && hashedSpawnSeed == 0 ) {
+            
+            //parse the seeds
+            SimpleVector<char *> *list = 
+                SettingsManager::getSetting( 
+                    "defaultSeedList" );
+            
+            //chose a random seed from the list
+            int seedIndex = 
+                randSource.getRandomBoundedInt( 0, list->size() - 1 );
+            
+            char *choseSeed;
+            for( int i=0; i<list->size(); i++ ) {
+                if( seedIndex == i ) {
+                    choseSeed = list->getElementDirect( i );
+                    break;
+                    }
+                }
+                
+            std::string seed( choseSeed );
+            
+            //convert and apply seed hash (copy pasted code)
+            //make this a separate method in the future to prevent redundancy
+            
+            // FNV-1a Hashing algorithm
+            auto hashStr = [](std::string &s, const uint32_t FNV_init = 2166136261u){
+                const size_t FNV_prime = 111337;
 
-        if( hashedSpawnSeed != 0 ) {
+                // Hash seed to 4 byte int
+                uint32_t hash = FNV_init;
+                for( auto c : s ) {
+                    hash ^= c;
+                    hash *= FNV_prime;
+                }
+
+                return hash;
+            };
+            
+            // Get the substr from one after the seed delim
+            std::string seedSalt { SettingsManager::getStringSetting("seedSalt", "default salt") };
+            
+            tempHashedSpawnSeed =
+                hashStr(seed, hashStr(seedSalt));
+          }
+        else {
+            //use defalt seed configuration
+            tempHashedSpawnSeed = hashedSpawnSeed;
+        }
+
+        if( tempHashedSpawnSeed != 0 ) {
             // Get bounding box from setting, default to 10k
             int seedSpawnBoundingBox =
                 SettingsManager::getIntSetting( "seedSpawnBoundingBox", 10000 );
 
-            std::seed_seq ssq { hashedSpawnSeed };
+            std::seed_seq ssq { tempHashedSpawnSeed };
             std::mt19937_64 mt { ssq };
 
             std::uniform_int_distribution<int> dist( -seedSpawnBoundingBox/2, seedSpawnBoundingBox/2 );
