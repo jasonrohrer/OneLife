@@ -10691,50 +10691,7 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
     SimpleVector<double> *ancestorLifeStartTimeSeconds = 
         nextPlayer->ancestorLifeStartTimeSeconds;
     SimpleVector<double> *ancestorLifeEndTimeSeconds = 
-        nextPlayer->ancestorLifeEndTimeSeconds;
-    
-
-    if( nextPlayer->suicide ) {
-        // don't let this suicide death affect scores of any ancestors
-        ancestorIDs = &emptyAncestorIDs;
-        ancestorEmails = &emptyAncestorEmails;
-        ancestorRelNames = &emptyAncestorRelNames;
-        ancestorLifeStartTimeSeconds = &emptyAncestorLifeStartTimeSeconds;
-		ancestorLifeEndTimeSeconds = &emptyAncestorLifeEndTimeSeconds;
-        }
-    else {
-        // any that never made it to age 3+ by the time this person died
-        // should not be counted.  What could they have done to keep us alive
-        // Note that this misses one case... an older sib that died at age 2.5
-        // and then we died at age 10 or whatever.  They are age "12.5" right
-        // now, even though they are dead.  We're not still tracking them,
-        // though, so we don't know.
-        double curTime = Time::getCurrentTime();
-        
-        double ageRate = getAgeRate();
-        
-        for( int i=0; i<ancestorEmails->size(); i++ ) {
-            double startTime = 
-                ancestorLifeStartTimeSeconds->getElementDirect( i );
-            
-            if( ageRate * ( curTime - startTime ) < defaultActionAge ) {
-                // too young to have taken action to help this person
-                ancestorIDs->deleteElement( i );
-                
-                delete [] ancestorEmails->getElementDirect( i );
-                ancestorEmails->deleteElement( i );
-                
-                delete [] ancestorRelNames->getElementDirect( i );
-                ancestorRelNames->deleteElement( i );
-                
-                ancestorLifeStartTimeSeconds->deleteElement( i );
-				ancestorLifeEndTimeSeconds->deleteElement( i );
-                
-                i--;
-                }
-            }
-        
-        }    
+        nextPlayer->ancestorLifeEndTimeSeconds;   
 
 	SimpleVector<char*> ancestorData;
 	double deadPersonLifeStartTime = nextPlayer->trueStartTimeSeconds;
