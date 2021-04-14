@@ -13304,8 +13304,6 @@ int main() {
                             }
                         }
 						else {
-							nextPlayer->suicide = true;
-
 							setDeathReason( nextPlayer, "suicide" );
 
 							nextPlayer->error = true;
