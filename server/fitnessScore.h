@@ -21,4 +21,5 @@ void logFitnessDeath( int inNumLivePlayers,
                       char *inEmail, char *inName, int inDisplayID,
                       double inAge,
                       SimpleVector<char*> *inAncestorEmails,
-                      SimpleVector<char*> *inAncestorRelNames );
+                      SimpleVector<char*> *inAncestorRelNames,
+                      SimpleVector<char*> *inAncestorData );

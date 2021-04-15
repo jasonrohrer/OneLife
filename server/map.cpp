@@ -115,7 +115,7 @@
  
 #include <stdarg.h>
 #include <math.h>
-#include <values.h>
+#include <float.h>
 #include <stdint.h>
  
  
@@ -518,7 +518,7 @@ typedef struct TestMapRecord {
  
  
  
- 
+/* 
  
 // four ints to a 16-byte key
 void intQuadToKey( int inX, int inY, int inSlot, int inB,
@@ -579,7 +579,7 @@ timeSec_t valueToTime( unsigned char *inValue ) {
     // caste back to timeSec_t
     return doubleTime;
     }
- 
+*/ 
  
  
  

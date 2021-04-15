@@ -35,6 +35,7 @@ map.cpp \
 ../gameSource/objectMetadata.cpp \
 ../gameSource/GridPos.cpp \
 ../commonSource/fractalNoise.cpp \
+../commonSource/sayLimit.cpp \
 kissdb.cpp \
 lineardb3.cpp \
 lifeLog.cpp \
@@ -58,6 +59,7 @@ lifeTokens.cpp \
 fitnessScore.cpp \
 CoordinateTimeTracking.cpp \
 arcReport.cpp \
+curseDB.cpp \
 
 
 
