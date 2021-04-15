@@ -177,6 +177,10 @@ static SimpleVector<char*> cursingPhrases;
 char *curseYouPhrase = NULL;
 char *curseBabyPhrase = NULL;
 
+static SimpleVector<char*> forgivingPhrases;
+static SimpleVector<char*> youForgivingPhrases;
+
+
 static SimpleVector<char*> youGivingPhrases;
 static SimpleVector<char*> namedGivingPhrases;
 
@@ -1651,6 +1655,10 @@ void quitCleanup() {
     nameGivingPhrases.deallocateStringElements();
     familyNameGivingPhrases.deallocateStringElements();
     cursingPhrases.deallocateStringElements();
+    
+    forgivingPhrases.deallocateStringElements();
+    youForgivingPhrases.deallocateStringElements();
+    
     youGivingPhrases.deallocateStringElements();
     namedGivingPhrases.deallocateStringElements();
 	infertilityDeclaringPhrases.deallocateStringElements();
@@ -9074,7 +9082,9 @@ char *isFertilityDeclaringSay( char *inSaidString ) {
     }
 
 
-char isYouGivingSay( char *inSaidString ) {
+
+static char isWildcardGivingSay( char *inSaidString,
+                                 SimpleVector<char*> *inPhrases ) {
     if( inSaidString[0] == ':' ) {
         // first : indicates reading a written phrase.
         // reading written phrase aloud does not have usual effects
@@ -9082,16 +9092,29 @@ char isYouGivingSay( char *inSaidString ) {
         return false;
         }
 
-    for( int i=0; i<youGivingPhrases.size(); i++ ) {
-        char *testString = youGivingPhrases.getElementDirect( i );
+    for( int i=0; i<inPhrases->size(); i++ ) {
+        char *testString = inPhrases->getElementDirect( i );
         
-        char *hitLoc = strstr( inSaidString, testString );
-
-        if( hitLoc != NULL ) {
+        if( strcmp( inSaidString, testString ) == 0 ) {
             return true;
             }
         }
     return false;
+    }
+
+
+char isYouGivingSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youGivingPhrases );
+    }
+
+
+char isYouForgivingSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youForgivingPhrases );
+    }
+
+// returns pointer into inSaidString
+char *isNamedForgivingSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &forgivingPhrases );
     }
 
 //2HOL additions for: password-protected objects
@@ -10809,6 +10832,66 @@ static char isAccessBlocked( LiveObject *inPlayer,
         }
     return wrongSide || ownershipBlocked || blockedByPassword;
     }
+
+
+
+// returns NULL if not found
+static LiveObject *getPlayerByName( char *inName, 
+                                    LiveObject *inPlayerSayingName ) {
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = players.getElement( j );
+        if( ! otherPlayer->error &&
+            otherPlayer != inPlayerSayingName &&
+            otherPlayer->name != NULL &&
+            strcmp( otherPlayer->name, inName ) == 0 ) {
+            
+            return otherPlayer;
+            }
+        }
+    
+    // no exact match.
+
+    // does name contain no space?
+    char *spacePos = strstr( inName, " " );
+
+    if( spacePos == NULL ) {
+        // try again, using just the first name for each potential target
+
+        // stick a space at the end to forbid matching prefix of someone's name
+        char *firstName = autoSprintf( "%s ", inName );
+
+        LiveObject *matchingPlayer = NULL;
+        double matchingDistance = DBL_MAX;
+        
+        GridPos playerPos = getPlayerPos( inPlayerSayingName );
+        
+
+        for( int j=0; j<players.size(); j++ ) {
+            LiveObject *otherPlayer = players.getElement( j );
+            if( ! otherPlayer->error &&
+                otherPlayer != inPlayerSayingName &&
+                otherPlayer->name != NULL &&
+                // does their name start with firstName
+                strstr( otherPlayer->name, firstName ) == otherPlayer->name ) {
+                
+                GridPos pos = getPlayerPos( otherPlayer );            
+                double d = distance( pos, playerPos );
+                
+                if( d < matchingDistance ) {
+                    matchingDistance = d;
+                    matchingPlayer = otherPlayer;
+                    }
+                }
+            }
+        
+        delete [] firstName;
+
+        return matchingPlayer;
+        }
+        
+
+    return NULL;
+    }
 	
 	
 
@@ -10936,6 +11019,9 @@ int main() {
     readPhrases( "familyNamingPhrases", &familyNameGivingPhrases );
 
     readPhrases( "cursingPhrases", &cursingPhrases );
+
+    readPhrases( "forgivingPhrases", &forgivingPhrases );
+    readPhrases( "forgiveYouPhrases", &youForgivingPhrases );
 
     
     readPhrases( "youGivingPhrases", &youGivingPhrases );
@@ -14254,7 +14340,41 @@ int main() {
 								
 								playerIndicesToSendNamesAbout.push_back( i );
 							}
-						}
+                        }
+                        
+
+                        
+                        LiveObject *otherToForgive = NULL;
+                        
+                        if( isYouForgivingSay( m.saidText ) ) {
+                            otherToForgive = 
+                                getClosestOtherPlayer( nextPlayer );
+                            }
+                        else {
+                            char *forgiveName = isNamedForgivingSay( m.saidText );
+                            if( forgiveName != NULL ) {
+                                otherToForgive =
+                                    getPlayerByName( forgiveName, nextPlayer );
+                                
+                                }
+                            }
+                        
+                        if( otherToForgive != NULL ) {
+                            clearDBCurse( nextPlayer->email, 
+                                          otherToForgive->email );
+                            
+                            char *message = 
+                                autoSprintf( 
+                                    "CU\n%d 0 %s_%s\n#", 
+                                    otherToForgive->id,
+                                    getCurseWord( nextPlayer->email,
+                                                  otherToForgive->email, 0 ),
+                                    getCurseWord( nextPlayer->email,
+                                                  otherToForgive->email, 1 ) );
+                            sendMessageToPlayer( nextPlayer,
+                                                 message, strlen( message ) );
+                            delete [] message;
+                            }
 
                         if( nextPlayer->holdingID < 0 ) {
 
