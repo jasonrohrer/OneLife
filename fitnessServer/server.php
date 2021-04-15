@@ -826,10 +826,11 @@ function fs_showDetail( $checkPassword = true ) {
 	
 	$score = fs_getLeaderboardScore( $id );
     
-
+	global $scoreRollingWindow;
     
     $query = "SELECT name, age, relation_name, ".
-        "offspring.score_change, offspring.death_time, life_player_id ".
+        "offspring.score_change, offspring.death_time, life_player_id, ".
+		"offspring.death_time > DATE_SUB( NOW(), INTERVAL $scoreRollingWindow HOUR ) AS withinRollingWindow ".
         "FROM $tableNamePrefix"."offspring AS offspring ".
         "INNER JOIN $tableNamePrefix"."lives AS lives ".
         "ON offspring.life_id = lives.id ".
@@ -853,12 +854,21 @@ function fs_showDetail( $checkPassword = true ) {
     
     echo "<table border=1 cellpadding=10 cellspacing=0>";
     for( $i=0; $i<$numRows; $i++ ) {
+		
+		$old_score = $score;
+		for( $j=0; $j<=$i; $j++ ) {
+			$old_score -= fs_mysqli_result( $result, $j, "score_change" );
+		}		
+		
         $name = fs_mysqli_result( $result, $i, "name" );
         $age = fs_mysqli_result( $result, $i, "age" );
         $relation_name = fs_mysqli_result( $result, $i, "relation_name" );
         // $old_score = fs_mysqli_result( $result, $i, "old_score" );
         // $new_score = fs_mysqli_result( $result, $i, "new_score" );
-		$score_change = fs_mysqli_result( $result, $i, "score_change" );
+		
+		$score_change = fs_mysqli_result( $result, $i, "score_change" );		
+		$new_score = $old_score + $score_change;
+		
         $death_time = fs_mysqli_result( $result, $i, "death_time" );
 
         $otherLifePlayerID =
@@ -875,6 +885,11 @@ function fs_showDetail( $checkPassword = true ) {
         else {
             $deltaString = " + " . $delta;
             }
+			
+        $old_score = round( $old_score, 3 );
+        $new_score = round( $new_score, 3 );
+		if( $old_score == 0 ) $old_score = +0;
+		if( $new_score == 0 ) $new_score = +0;
         
         echo "<tr>";
 
@@ -897,10 +912,19 @@ function fs_showDetail( $checkPassword = true ) {
         else {
             echo "<td>$age years old</td>";
             }
+			
+		$old_score_string = "$old_score";
+		$new_score_string = "$new_score";
+		
+		if( !fs_mysqli_result( $result, $i, "withinRollingWindow" ) ) {
+			$old_score_string = " - ";
+			$new_score_string = " - ";
+		}
+			
         echo "<td>$relation_name</td>";
-        // echo "<td>$old_score</td>";
+        echo "<td>$old_score_string</td>";
         echo "<td>$deltaString</td>";
-        // echo "<td>$new_score</td>";
+        echo "<td>$new_score_string</td>";
         echo "<td>$death_time</td>";
         }
     echo "</table></center>";
