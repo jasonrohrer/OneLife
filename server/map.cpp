@@ -8630,6 +8630,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             fprintf( tempLog, "Placing Eve for %s at time %.f:\n",
                      inEmail, Time::timeSec() );
 
+
+            fprintf( tempLog, "    Primary homeland list:  " );
+
+
             int homelandXSum = 0;
 
             SimpleVector<Homeland*> consideredHomelands;
@@ -8642,8 +8646,13 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                 if( h->primary && ! h->expired && ! h->ignoredForEve ) {
                     homelandXSum += h->x;
                     consideredHomelands.push_back( h );
+                    
+                    fprintf( tempLog, "(%d,%d)  ", h->x, h->y );
                     }
-                }
+                }            
+
+            fprintf( tempLog, "\n" );
+
 
             int homelandXAve = 0;
             int maxAveDistance = 9999999;
@@ -8682,9 +8691,14 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                         }
                     }
                 if( maxDist > outlierDist ) {
-                    homelandXSum -= 
-                        consideredHomelands.getElementDirect( maxIndex )->x;
-                        
+                    Homeland *h = 
+                        consideredHomelands.getElementDirect( maxIndex );
+                    
+                    homelandXSum -= h->x;
+                    
+                    fprintf( tempLog, "    Discarding outlier (%d,%d)\n",
+                             h->x, h->y );
+
                     consideredHomelands.deleteElement( maxIndex );
                     }
                 maxAveDistance = maxDist;
