@@ -42,6 +42,7 @@ class SettingsPage : public GamePage, public ActionListener {
         double mMusicStartTime;
 
 
+        TextButton mInfoSeeds;
         TextButton mBackButton;
         TextButton mEditAccountButton;
         TextButton mRestartButton;

@@ -22,7 +22,8 @@ extern float musicLoudness;
 
 
 SettingsPage::SettingsPage()
-        : mBackButton( mainFont, -542, -280, translate( "backButton" ) ),
+        : mInfoSeeds( mainFont, 542, -150, "?" ),
+		  mBackButton( mainFont, -542, -280, translate( "backButton" ) ),
           mEditAccountButton( mainFont, -463, 129, translate( "editAccount" ) ),
           mRestartButton( mainFont, 128, 128, translate( "restartButton" ) ),
           mRedetectButton( mainFont, 153, 249, translate( "redetectButton" ) ),
@@ -35,7 +36,7 @@ SettingsPage::SettingsPage()
           mSoundEffectsLoudnessSlider( mainFont, 0, -48, 4, 200, 30,
                                        0.0, 1.0, 
                                        translate( "soundLoudness" ) ),
-          mSpawnSeed( mainFont, 306, -150, 14, false, 
+          mSpawnSeed( mainFont, 226, -150, 14, false, 
                                      translate( "spawnSeed" ),
                                      NULL,
                                      // forbid spaces
@@ -63,10 +64,14 @@ SettingsPage::SettingsPage()
     mCursorScaleSlider.toggleField( false );
 
 
+	setButtonStyle( &mInfoSeeds );
     setButtonStyle( &mBackButton );
     setButtonStyle( &mEditAccountButton );
     setButtonStyle( &mRestartButton );
     setButtonStyle( &mRedetectButton );
+
+	addComponent( &mInfoSeeds);
+	mInfoSeeds.addActionListener( this );
 
     addComponent( &mBackButton );
     mBackButton.addActionListener( this );
@@ -147,6 +152,13 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
         setSignal( "back" );
         setMusicLoudness( 0 );
         }
+	else if( inTarget == &mInfoSeeds ) {
+		 char *url = strdup("https://twohoursonelife.fandom.com/wiki/Spawn_seeds");
+		 
+		 if( strcmp( url, "" ) != 0 ) {
+			 launchURL( url );
+			}
+		}
     else if( inTarget == &mEditAccountButton ) {
         
         setSignal( "editAccount" );
