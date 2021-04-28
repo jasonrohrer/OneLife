@@ -8625,6 +8625,11 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             // now move her farther west, to avoid plopping her down
             // in middle of active homelands
             
+            FILE *tempLog = fopen( "evePlacementHomelandLog.txt", "a" );
+            
+            fprintf( tempLog, "Placing Eve for %s at time %.f:\n",
+                     inEmail, Time::timeSec() );
+
             int homelandXSum = 0;
 
             SimpleVector<Homeland*> consideredHomelands;
@@ -8644,6 +8649,16 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             int maxAveDistance = 9999999;
 
             int outlierDist = 500;
+            
+            
+            if( consideredHomelands.size() > 0 ) {
+                homelandXAve = homelandXSum / consideredHomelands.size();
+                }
+            
+            fprintf( tempLog, "    Found %d primary homelands with average "
+                     "x position %d\n",
+                     consideredHomelands.size(), homelandXAve );
+
             
             // keep discarding the homeland that is max distance from the ave
             // until all we have left is homelands that are within 500 from ave
@@ -8675,6 +8690,12 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                 maxAveDistance = maxDist;
                 }
 
+            
+            fprintf( tempLog, "    After discarding outliers, "
+                     "have %d primary homelands with average x position %d\n",
+                     consideredHomelands.size(), homelandXAve );
+
+
 
             if( consideredHomelands.size() > 0 ) {
                 for( int i=0; i<consideredHomelands.size(); i++ ) {
@@ -8687,11 +8708,18 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                         ave.x = xBoundary;
                         
                         AppLog::infoF( 
-                            "Pushing Eve to west of homeland at x=%d\n",
-                            h->x );
+                            "Pushing Eve to west of homeland %d at x=%d\n",
+                            i, h->x );
+
+                        fprintf( 
+                            tempLog, 
+                            "    Pushing Eve to west of homeland %d at x=%d\n",
+                            i, h->x );
                         }
                     }
                 }
+
+            fclose( tempLog );
             }
         }
     else {

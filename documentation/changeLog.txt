@@ -135,6 +135,8 @@ Server Fixes
 
 --Male override support.
 
+--Special logging of eve placement relative to non-outlier homelands.
+
 
 
 
