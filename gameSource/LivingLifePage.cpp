@@ -110,6 +110,37 @@ static char vogPickerOn = false;
 
 extern float musicLoudness;
 
+//KB
+bool firstMovementStep = true;
+int magnetMoveDir = -1;
+int magnetWrongMoveDir = -1;
+int magnetMoveCount = 0;
+
+bool upKeyDown;
+bool downKeyDown;
+bool leftKeyDown;
+bool rightKeyDown;
+
+int lastDoorToOpenX;
+int lastDoorToOpenY;
+
+float lastPosX;
+float lastPosY;
+
+unsigned char charKey_Up = 'w';
+unsigned char charKey_Down = 's';
+unsigned char charKey_Left = 'a';
+unsigned char charKey_Right = 'd';
+unsigned char charKey_TileStandingOn = ' ';
+
+unsigned char charKey_Backpack = 'q';
+unsigned char charKey_TakeOffBackpack = 'b';
+unsigned char charKey_Pocket = 't';
+unsigned char charKey_Eat = 'e';
+unsigned char charKey_Baby = 'c';
+
+static bool waitForDoorToOpen;
+
 //FOV
 extern int gui_hud_mode;
 extern float gui_fov_scale;
@@ -2119,6 +2150,178 @@ static double apocalypseDisplaySeconds = 6;
 
 static double remapPeakSeconds = 60;
 static double remapDelaySeconds = 30;
+
+
+//EXTENDED FUNCTIONALITY
+void LivingLifePage::setNextActionMessage(const char* msg, int x, int y) {
+	if( nextActionMessageToSend != NULL ) {
+		delete [] nextActionMessageToSend;
+		nextActionMessageToSend = NULL;
+	}
+
+	playerActionTargetX = x;
+	playerActionTargetY = y;
+	playerActionTargetNotAdjacent = true;
+	nextActionDropping = false;
+	nextActionEating = false;
+	nextActionMessageToSend = autoSprintf( "%s", msg );
+}
+
+int LivingLifePage::getObjId( int tileX, int tileY ) {
+	int mapX = tileX - mMapOffsetX + mMapD / 2;
+	int mapY = tileY - mMapOffsetY + mMapD / 2;
+	int i = mapY * mMapD + mapX;
+	if (i < 0 || i >= mMapD*mMapD) return -1;
+	return mMap[i];
+}
+
+bool LivingLifePage::objIdReverseAction( int objId ) {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	
+	if (objId <= 0) return false;
+
+	bool r = false;
+	if ( ourLiveObject->holdingID <= 0 ) {
+		switch (objId) {
+			case 253: // full berry clay bowl
+			case 225: // wheat bundle
+				return true;
+				break;
+		}
+		if ( getObject(objId) ) {
+			char* descr	= getObject(objId)->description;
+			if ( strstr(descr, "Bowl of") != NULL ) {
+				return true;
+			}
+		}
+	}
+	return r;
+}
+
+void LivingLifePage::pickUpBabyInRange() {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	
+	if ( computeCurrentAge( ourLiveObject ) < 13 ) return;
+
+	if ( ourLiveObject->holdingID != 0 ) {
+		dropTileRelativeToMe( 0, 0 );
+		return;
+	}
+
+	// find new baby to pick up - prefer babies further away
+	int babyFound = false;
+	int babyX = 0;
+	int babyY = 0;
+	for(int i=0; i<gameObjects.size(); i++) {
+		LiveObject *o = gameObjects.getElement( i );
+			
+		if ( computeCurrentAge( o ) > 5 ) continue;
+
+		if ( o->xd != ourLiveObject->xd && o->yd != ourLiveObject->yd ) continue; 
+		if ( !babyFound ) {
+			if ( o->xd == ourLiveObject->xd && o->yd == ourLiveObject->yd ) {
+				babyFound = true;
+				babyX = o->xd;
+				babyY = o->yd;
+				continue;
+			}
+		}
+		int posDiff = 0;
+		if ( o->xd == ourLiveObject->xd) posDiff = o->yd - ourLiveObject->yd;
+		else if ( o->yd == ourLiveObject->yd) posDiff = o->xd - ourLiveObject->xd;
+		if (posDiff > 1 || posDiff < -1) continue;
+
+		pickUpBaby( o->xd, o->yd );
+		return;
+	}
+	if ( !babyFound ) return;
+	pickUpBaby( babyX, babyY );
+}
+
+void LivingLifePage::pickUpBaby( int x, int y ) {
+	char msg[32];
+	sprintf( msg, "BABY %d %d#", x, y );
+	setNextActionMessage( msg, x, y );
+}
+
+void LivingLifePage::useBackpack(bool replace) {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	
+	int clothingSlot = 5; // backpack clothing slot
+
+	int x, y;
+	setOurSendPosXY(x, y);
+
+	char msg[32];
+	if( ourLiveObject->holdingID > 0 ) {
+		if (replace) {
+			sprintf( msg, "DROP %d %d %d#", x, y, clothingSlot );
+		} else {
+			sprintf( msg, "SELF %d %d %d#", x, y, clothingSlot );
+		}
+		setNextActionMessage( msg, x, y );
+		nextActionDropping = true;
+	} else {
+		sprintf( msg, "SREMV %d %d %d %d#", x, y, clothingSlot, -1 );
+		setNextActionMessage( msg, x, y );
+	}
+}
+
+void LivingLifePage::usePocket(int clothingID) {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	
+	int x, y;
+	setOurSendPosXY(x, y);
+
+	char msg[32];
+	if( ourLiveObject->holdingID > 0 ) {
+		sprintf( msg, "DROP %d %d %d#", x, y, clothingID );
+		setNextActionMessage( msg, x, y );
+		nextActionDropping = true;
+	} else {
+		sprintf( msg, "SREMV %d %d %d %d#", x, y, clothingID, -1 );
+		setNextActionMessage( msg, x, y );
+	}
+}
+
+void LivingLifePage::useOnSelf() {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	
+	int x, y;
+	setOurSendPosXY(x, y);
+
+	if( ourLiveObject->holdingID <= 0 ) return;
+
+	char msg[32];
+	sprintf( msg, "SELF %d %d %d#", x, y, -1 );
+	setNextActionMessage( msg, x, y );
+
+	if( getObject( ourLiveObject->holdingID )->foodValue > 0)
+		nextActionEating = true;
+}
+
+void LivingLifePage::takeOffBackpack() {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	
+	char message[32];
+	sprintf(message, "SELF %i %i 5#", ourLiveObject->xd, ourLiveObject->yd);
+	sendToServerSocket( message );
+}
+
+void LivingLifePage::setOurSendPosXY(int &x, int &y) {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	
+	x = round( ourLiveObject->xd );
+	y = round( ourLiveObject->yd );
+	x = sendX(x);
+	y = sendY(y);
+}
+
+bool LivingLifePage::isCharKey(unsigned char c, unsigned char key) {
+	char tKey = key;
+	return (c == key || c == toupper(tKey));
+}
+
 
 
 static Image *expandToPowersOfTwoWhite( Image *inImage ) {
@@ -11514,6 +11717,8 @@ void LivingLifePage::step() {
         sendToServerSocket( (char*)"KA 0 0#" );
         }
     
+	movementStep();
+	
 	minitech::livingLifeStep();
 
     char *message = getNextServerMessage();
@@ -19726,10 +19931,23 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         // dead
         return;
         }
+	
+	int mouseButton = getLastMouseButton();
+	bool scaling = false;
+	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { scaling = true; }
+	
+    if( vogMode ) {
+        return;
+        }
+
+    char modClick = false;
     
+    if( ( mEKeyDown && mEKeyEnabled ) || ( isLastMouseButtonRight() && !mForceGroundClick ) ) {
+        modClick = true;
+        }
+   
 	//FOV
-    int mouseButton = getLastMouseButton();
-	if( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) {
+	if( scaling ) {
 		float currentScale = SettingsManager::getFloatSetting( "fovScale", 1.0f );
 		float newScale = ( mouseButton == MouseButton::WHEELUP ) ? currentScale -= 0.25f : currentScale += 0.25f;
 		if ( isShiftKeyDown() ) {
@@ -19744,16 +19962,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             }
 		return;
 	}
-	
-    if( vogMode ) {
-        return;
-        }
-
-    char modClick = false;
-    
-    if( ( mEKeyDown && mEKeyEnabled ) || isLastMouseButtonRight() ) {
-        modClick = true;
-        }
     
     mLastMouseOverID = 0;
     
@@ -21355,6 +21563,118 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         return;
         }
 
+	bool commandKey = isCommandKeyDown();
+	bool shiftKey = isShiftKeyDown();
+
+	if (! mSayField.isFocused()) {
+		if (!commandKey && !shiftKey && inASCII == 27) { // ESCAPE KEY
+			upKeyDown = false;
+			leftKeyDown = false;
+			downKeyDown = false;
+			rightKeyDown = false;
+			lastPosX = 9999;
+			lastPosY = 9999;
+		}
+
+		if (commandKey) {
+			if (isCharKey(inASCII, charKey_TileStandingOn)) {
+				actionBetaRelativeToMe( 0, 0 );
+				return;
+			}
+		} else {
+			if (isCharKey(inASCII, charKey_TileStandingOn)) {
+				actionAlphaRelativeToMe( 0, 0 );
+				return;
+			}
+		}
+		
+		if (!shiftKey && !commandKey) {
+			if (inASCII == charKey_Up || inASCII == toupper(charKey_Up)) {
+				upKeyDown = true;
+				//stopAutoRoadRun = true;
+				return;
+			}
+			if (inASCII == charKey_Left || inASCII == toupper(charKey_Left)) {
+				leftKeyDown = true;
+				//stopAutoRoadRun = true;
+				return;
+			}
+			if (inASCII == charKey_Down || inASCII == toupper(charKey_Down)) {
+				downKeyDown = true;
+				//stopAutoRoadRun = true;
+				return;
+			}
+			if (inASCII == charKey_Right || inASCII == toupper(charKey_Right)) {
+				rightKeyDown = true;
+				//stopAutoRoadRun = true;
+				return;
+			}
+		} else if (commandKey) {
+			if (inASCII+64 == toupper(charKey_Up)) {
+				actionBetaRelativeToMe( 0, 1 );
+				return;
+			}
+			if (inASCII+64 == toupper(charKey_Left)) {
+				actionBetaRelativeToMe( -1, 0 );
+				return;
+			}
+			if (inASCII+64 == toupper(charKey_Down)) {
+				actionBetaRelativeToMe( 0, -1 );
+				return;
+			}
+			if (inASCII+64 == toupper(charKey_Right)) {
+				actionBetaRelativeToMe( 1, 0 );
+				return;
+			}
+		} else if (shiftKey) {
+			if (inASCII == charKey_Up || inASCII == toupper(charKey_Up)) {
+				actionAlphaRelativeToMe( 0, 1 );
+				return;
+			}
+			if (inASCII == charKey_Left || inASCII == toupper(charKey_Left)) {
+				actionAlphaRelativeToMe( -1, 0 );
+				return;
+			}
+			if (inASCII == charKey_Down || inASCII == toupper(charKey_Down)) {
+				actionAlphaRelativeToMe( 0, -1 );
+				return;
+			}
+			if (inASCII == charKey_Right || inASCII == toupper(charKey_Right)) {
+				actionAlphaRelativeToMe( 1, 0 );
+				return;
+			}
+		}
+
+		if (!shiftKey && isCharKey(inASCII, charKey_Backpack)) {
+			useBackpack();
+			return;
+		}
+		if ((shiftKey || commandKey) && isCharKey(inASCII, charKey_Backpack)) {
+			useBackpack(true);
+			return;
+		}
+		if (isCharKey(inASCII, charKey_Eat)) {
+			useOnSelf();
+			return;
+		}
+		if (isCharKey(inASCII, charKey_Baby)) {
+			pickUpBabyInRange();
+			return;
+		}
+		if (!commandKey && !shiftKey && isCharKey(inASCII, charKey_TakeOffBackpack)) {
+			takeOffBackpack();
+			return;
+		}
+		if (shiftKey && isCharKey(inASCII, charKey_Pocket)) {
+			usePocket(1);
+			return;
+		}
+		if (!shiftKey && isCharKey(inASCII, charKey_Pocket)) {
+			usePocket(4);
+			return;
+		}
+	}
+
 	if (minitech::livingLifeKeyDown(inASCII)) return;
     
     switch( inASCII ) {
@@ -21990,8 +22310,45 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
     }
 
 
-        
+            
 void LivingLifePage::keyUp( unsigned char inASCII ) {
+
+	bool commandKey = isCommandKeyDown();
+
+	if (inASCII == charKey_Up || inASCII == toupper(charKey_Up)) {
+		upKeyDown = false;
+	}
+	if (inASCII == charKey_Left || inASCII == toupper(charKey_Left)) {
+		leftKeyDown = false;
+	}
+	if (inASCII == charKey_Down || inASCII == toupper(charKey_Down)) {
+		downKeyDown = false;
+	}
+	if (inASCII == charKey_Right || inASCII == toupper(charKey_Right)) {
+		rightKeyDown = false;
+	}
+	if (commandKey) {
+		if (inASCII+64 == toupper(charKey_Up)) {
+			upKeyDown = false;
+		}
+		if (inASCII+64 == toupper(charKey_Left)) {
+			leftKeyDown = false;
+		}
+		if (inASCII+64 == toupper(charKey_Down)) {
+			downKeyDown = false;
+		}
+		if (inASCII+64 == toupper(charKey_Right)) {
+			rightKeyDown = false;
+		}
+	}
+
+	if (!upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown) {
+		lastPosX = 9999;
+		lastPosY = 9999;
+		magnetMoveDir = -1;
+		magnetWrongMoveDir = -1;
+		magnetMoveCount = 0;
+	}
 
     switch( inASCII ) {
         case 'e':
@@ -22074,6 +22431,7 @@ void LivingLifePage::putInMap( int inMapI, ExtraMapObject *inObj ) {
 
 
 
+//FIELD OF VIEW
 void LivingLifePage::calcFontScale( float newScale, Font *font ) {
 	float scale = font->getScaleFactor();
 	scale /= gui_fov_scale;
@@ -22160,4 +22518,290 @@ void LivingLifePage::calcOffsetHUD() {
     gui_fov_offset_x = (int)(((1280 * gui_fov_target_scale_hud) - 1280)/2);
     gui_fov_offset_y = (int)(((720 * gui_fov_target_scale_hud) - 720)/2);
     }
+
+
+
+//KEYBOARD ACTIONS
+void LivingLifePage::actionAlphaRelativeToMe( int x, int y ) {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	
+	x += ourLiveObject->xd;
+	y += ourLiveObject->yd;
+
+	int objId = getObjId( x, y );
+	bool use = false;
+
+	if (objId > 0) use = true;
+	else use = false;
+
+	if( ourLiveObject->holdingID > 0 ) {
+		ObjectRecord *held = getObject( ourLiveObject->holdingID );
+
+		if( held->foodValue == 0 ) {
+			TransRecord *r = getTrans( ourLiveObject->holdingID, -1 );
+			if( r != NULL && r->newTarget != 0 ) { // a use-on-ground transition exists!
+                use = true;	// override the drop action
+			}
+		}
+	}
+
+	bool remove = false;
+	if (objIdReverseAction(objId)) remove = true;
+	
+	if ( ourLiveObject->holdingID < 0 ) {
+		remove = false;
+		use = false;
+	}
+
+	x = sendX(x);
+	y = sendY(y);
+	char msg[32];
+	if (remove) sprintf( msg, "REMV %d %d -1#", x, y);
+	else if (use) sprintf( msg, "USE %d %d#", x, y);
+	else sprintf( msg, "DROP %d %d -1#", x, y);
+	setNextActionMessage( msg, x, y );
+}
+
+void LivingLifePage::actionBetaRelativeToMe( int x, int y ) {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	
+	x += ourLiveObject->xd;
+	y += ourLiveObject->yd;
+
+	bool remove = false;
+	if (ourLiveObject->holdingID <= 0) {
+		remove = true;
+	}
+	bool use = false;
+	int objId = getObjId( x, y );
+	if (objId > 0) {
+		ObjectRecord* obj = getObject(objId);
+		if (obj->numSlots == 0 && obj->blocksWalking) {
+			TransRecord *r = getTrans( ourLiveObject->holdingID, objId );
+			if ( r != NULL && r->newTarget != 0 ) {
+				use = true;
+			}
+		}
+	}
+
+	if ( objIdReverseAction( objId ) ) use = true;
+
+	if ( ourLiveObject->holdingID < 0 ) { // holding babay
+		remove = false;
+		use = false;
+	}
+
+	x = sendX(x);
+	y = sendY(y);
+	char msg[32];
+	if (use) sprintf( msg, "USE %d %d#", x, y);
+	else if (remove) sprintf( msg, "REMV %d %d -1#", x, y);
+	else sprintf( msg, "DROP %d %d -1#", x, y);
+	setNextActionMessage( msg, x, y );
+	if (!remove) nextActionDropping = true;
+}
+
+void LivingLifePage::useTileRelativeToMe( int x, int y ) {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	
+	x += ourLiveObject->xd;
+	y += ourLiveObject->yd;
+	x = sendX(x);
+	y = sendY(y);
+	char msg[32];
+	sprintf( msg, "USE %d %d#", x, y);
+	setNextActionMessage( msg, x, y );
+}
+
+void LivingLifePage::dropTileRelativeToMe( int x, int y ) {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	
+	x += ourLiveObject->xd;
+	y += ourLiveObject->yd;
+	x = sendX(x);
+	y = sendY(y);
+	char msg[32];
+	sprintf( msg, "DROP %d %d -1#", x, y);
+	setNextActionMessage( msg, x, y );
+}
+
+//KEYBOARD MOVEMENT
+void LivingLifePage::movementStep() {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	
+	if (!upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown) return;
+
+	int x = round(ourLiveObject->currentPos.x);
+	int y = round(ourLiveObject->currentPos.y);
+
+	if (x == lastPosX && y == lastPosY && ourLiveObject->inMotion) return;
+
+	int objId = getObjId(x, y);
+	if (objId > 0 && getObject(objId)->blocksWalking && ourLiveObject->inMotion) return;
+
+	int sX = x;
+	int sY = y;
+
+	int dir = getMoveDirection();
+	if (dir <= 0) return;
+
+	if (!findNextMove(x, y, dir)) return; // sets x and y
+
+	lastPosX = sX;
+	lastPosY = sY;
+
+	if (waitForDoorToOpen && (lastDoorToOpenX != x || lastDoorToOpenY != y)) {
+		waitForDoorToOpen = false;
+	} else if (waitForDoorToOpen) {
+		if (tileHasClosedDoor( lastDoorToOpenX, lastDoorToOpenY ))
+			return;
+		waitForDoorToOpen = false;
+	} else if (tileHasClosedDoor( x, y )) {
+		char msg[32];
+		sprintf( msg, "USE %d %d#", sendX(x), sendY(y));
+		setNextActionMessage( msg, x, y );
+		waitForDoorToOpen = true;
+		lastDoorToOpenX = (int)x;
+		lastDoorToOpenY = (int)y;
+		return;
+	}
+
+	x *= CELL_D;
+	y *= CELL_D;
+
+	float tMouseX = lastMouseX;
+	float tMouseY = lastMouseY;
+	mForceGroundClick = true;
+	pointerDown( x, y );
+	pointerUp( x, y );
+	mForceGroundClick = false;
+	lastMouseX = tMouseX;
+	lastMouseY = tMouseY;
+	
+	magnetMoveCount++;
+
+	//debugRecPos.x = x;
+	//debugRecPos.y = y;
+}
+
+bool LivingLifePage::findNextMove(int &x, int &y, int dir) {
+	if (dir <= 0) return false;
+	
+	if (magnetMoveDir > 0) {
+		if (magnetWrongMoveDir != dir || magnetMoveCount > 2) {
+			magnetWrongMoveDir = -1;
+			magnetMoveDir = -1;
+		} else {
+			if (setMoveDirIfSafe(x, y, magnetMoveDir)) {
+				magnetWrongMoveDir = -1;
+				magnetMoveDir = -1;
+				return true;
+			}
+		}
+	}
+
+	if (setMoveDirIfSafe(x, y, dir)) return true;
+
+	int nextMoveDir = getNextMoveDir(dir, 1);
+	if (dirIsSafeToWalk(x, y, nextMoveDir)) {
+		setMoveDirection(x, y, nextMoveDir);
+		if (dir % 2 == 0) {
+			magnetWrongMoveDir = dir;
+			magnetMoveDir = getNextMoveDir(dir, -1);
+			magnetMoveCount = 0;
+		}
+		return true;
+	}
+	nextMoveDir = getNextMoveDir(dir, -1);
+	if (dirIsSafeToWalk(x, y, nextMoveDir)) {
+		setMoveDirection(x, y, nextMoveDir);
+		if (dir % 2 == 0) {
+			magnetWrongMoveDir = dir;
+			magnetMoveDir = getNextMoveDir(dir, 1);
+			magnetMoveCount = 0;
+		}
+		return true;
+	}
+
+	return false;
+}
+
+int LivingLifePage::getNextMoveDir(int direction, int add) {
+	direction += add;
+	while (direction < 1) direction += 8;
+	while (direction > 8) direction -= 8;
+	return direction;
+}
+
+int LivingLifePage::getMoveDirection() {
+	if (!upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown) return 0;
+	if (upKeyDown && leftKeyDown && !downKeyDown && !rightKeyDown) return 1;
+	if (upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown) return 2;
+	if (upKeyDown && !leftKeyDown && !downKeyDown && rightKeyDown) return 3;
+	if (!upKeyDown && !leftKeyDown && !downKeyDown && rightKeyDown) return 4;
+	if (!upKeyDown && !leftKeyDown && downKeyDown && rightKeyDown) return 5;
+	if (!upKeyDown && !leftKeyDown && downKeyDown && !rightKeyDown) return 6;
+	if (!upKeyDown && leftKeyDown && downKeyDown && !rightKeyDown) return 7;
+	if (!upKeyDown && leftKeyDown && !downKeyDown && !rightKeyDown) return 8;
+	return 0;
+}
+
+bool LivingLifePage::setMoveDirIfSafe(int &x, int &y, int dir) {
+	if (!dirIsSafeToWalk(x, y, dir)) return false;
+	setMoveDirection(x, y, dir);
+	return true;
+}
+
+void LivingLifePage::setMoveDirection(int &x, int &y, int direction) {
+	switch (direction) {
+		case 1: x--; y++; break;
+		case 2: y++; break;
+		case 3: x++; y++; break;
+		case 4: x++; break;
+		case 5: x++; y--; break;
+		case 6: y--; break;
+		case 7: x--; y--; break;
+		case 8: x--; break;
+	}
+}
+
+bool LivingLifePage::tileHasClosedDoor(int x, int y) {
+	int closedDoorIDs [10] = { 116, 2759, 876, 1930, 2757, 877, 115, 1851, 2984, 2962 }; 
+	
+	int objId = getObjId( x, y);
+	if (objId > 0) {
+		for (int i = 0; i < 10; i++) {
+			if (objId == closedDoorIDs[i]) return true;
+		}
+	}
+	return false;
+}
+
+bool LivingLifePage::dirIsSafeToWalk(int x, int y, int dir) {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	
+	int tX, tY;
+
+	tX = x; tY = y; setMoveDirection(tX, tY, dir);
+	
+	int objId = getObjId( tX, tY);
+	if (objId > 0) {
+
+		ObjectRecord* obj = getObject(objId);
+		if (obj && obj->blocksWalking) {
+			if (ourLiveObject->xd == x || ourLiveObject->yd == y)
+				if (!tileHasClosedDoor( x, y )) return false;
+		}
+	}
+
+	if (dir % 2 == 0) return true; // is not a corner dir
+
+	int nextDir = getNextMoveDir(dir, 1);
+	tX = x; tY = y; setMoveDirection(tX, tY, nextDir);
+
+	nextDir = getNextMoveDir(dir, -1);
+	tX = x; tY = y; setMoveDirection(tX, tY, nextDir);
+
+	return true;
+}
 
