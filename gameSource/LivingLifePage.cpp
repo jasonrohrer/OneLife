@@ -35,6 +35,7 @@
 #include "minorGems/util/random/JenkinsRandomSource.h"
 #include "minorGems/game/drawUtils.h"
 #include "minorGems/game/gameGraphics.h"
+#include "zoomView.h"
 
 #include "minorGems/io/file/File.h"
 
@@ -83,8 +84,6 @@ doublePair LivingLifePage::minitechGetLastScreenViewCenter() { return lastScreen
 
 static char shouldMoveCamera = true;
 
-static bool resetScale = true;
-
 
 extern double viewWidth;
 extern double viewHeight;
@@ -111,6 +110,8 @@ static char vogPickerOn = false;
 extern float musicLoudness;
 
 //KB
+bool blockMouseScaling = false;
+
 bool firstMovementStep = true;
 int magnetMoveDir = -1;
 int magnetWrongMoveDir = -1;
@@ -5229,12 +5230,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
         return;
         }
 
-	if ( resetScale ) {
-		changeFOV( SettingsManager::getFloatSetting( "fovDefault", 1.25f ) );
-		changeHUDFOV( SettingsManager::getFloatSetting( "fovScaleHUD", 1.25f ) );
-		resetScale = false;
-		}
-
 
     //setDrawColor( 1, 1, 1, 1 );
     //drawSquare( lastScreenViewCenter, viewWidth );
@@ -5304,11 +5299,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
     // tiles drawn on top).  However, given that we're not drawing anything
     // else out there, this should be okay from a performance standpoint.
 
-    int yStartFloor = gridCenterY - (int)(ceil(3 * gui_fov_scale + 1));
-    int yEndFloor = gridCenterY + (int)(ceil(3 * gui_fov_scale));
+    int yStartFloor = gridCenterY - (int)(ceil(4 * gui_fov_scale + 1));
+    int yEndFloor = gridCenterY + (int)(ceil(4 * gui_fov_scale));
 
-    int xStartFloor = gridCenterX - (int)(ceil(5 * gui_fov_scale));
-    int xEndFloor = gridCenterX + (int)(ceil(5 * gui_fov_scale) + 1);
+    int xStartFloor = gridCenterX - (int)(ceil(6 * gui_fov_scale));
+    int xEndFloor = gridCenterX + (int)(ceil(6 * gui_fov_scale) + 1);
 
     
 
@@ -12913,6 +12908,10 @@ void LivingLifePage::step() {
                     // first map chunk just recieved
 					
 					minitech::initOnBirth();
+					
+					//reset fov on birth
+					changeFOV( SettingsManager::getFloatSetting( "fovDefault", 1.25f ) );
+					changeHUDFOV( SettingsManager::getFloatSetting( "fovScaleHUD", 1.25f ) );
                     
                     char found = false;
                     int closestX = 0;
@@ -15703,7 +15702,6 @@ void LivingLifePage::step() {
                 else if( o.id == ourID && 
                          strstr( lines[i], "X X" ) != NULL  ) {
                     // we died
-					changeFOV( SettingsManager::getFloatSetting( "fovDefault", 1.25f ) );
 
                     printf( "Got X X death message for our ID %d\n",
                             ourID );
@@ -16031,6 +16029,7 @@ void LivingLifePage::step() {
                     gameObjects.getElement( recentInsertedGameObjectIndex );
                 
                 ourID = ourObject->id;
+				
 
                 if( ourID != lastPlayerID ) {
 					minitech::initOnBirth();
@@ -19935,6 +19934,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 	int mouseButton = getLastMouseButton();
 	bool scaling = false;
 	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { scaling = true; }
+	if ( blockMouseScaling ) { scaling = false; }
 	
     if( vogMode ) {
         return;
@@ -22669,6 +22669,8 @@ void LivingLifePage::movementStep() {
 	x *= CELL_D;
 	y *= CELL_D;
 
+	blockMouseScaling = true;
+
 	float tMouseX = lastMouseX;
 	float tMouseY = lastMouseY;
 	mForceGroundClick = true;
@@ -22679,9 +22681,8 @@ void LivingLifePage::movementStep() {
 	lastMouseY = tMouseY;
 	
 	magnetMoveCount++;
-
-	//debugRecPos.x = x;
-	//debugRecPos.y = y;
+	
+	blockMouseScaling = false;
 }
 
 bool LivingLifePage::findNextMove(int &x, int &y, int dir) {
