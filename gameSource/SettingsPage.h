@@ -36,6 +36,8 @@ class SettingsPage : public GamePage, public ActionListener {
         int mOldFullscreenSetting;
         int mOldBorderlessSetting;
         int mEnableNudeSetting;
+        int mEnableFOVSetting;
+        int mEnableKActionsSetting;
         
         SoundUsage mTestSound;
 
@@ -51,6 +53,8 @@ class SettingsPage : public GamePage, public ActionListener {
         CheckboxButton mBorderlessBox;
         
 		CheckboxButton mEnableNudeBox;
+		CheckboxButton mEnableFOVBox;
+		CheckboxButton mEnableKActionsBox;
 
         ValueSlider mMusicLoudnessSlider;
         ValueSlider mSoundEffectsLoudnessSlider;

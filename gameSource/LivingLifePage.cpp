@@ -11712,7 +11712,7 @@ void LivingLifePage::step() {
         sendToServerSocket( (char*)"KA 0 0#" );
         }
     
-	movementStep();
+	if ( SettingsManager::getIntSetting( "keyboardActions", 1 ) ) movementStep();
 	
 	minitech::livingLifeStep();
 
@@ -12910,7 +12910,12 @@ void LivingLifePage::step() {
 					minitech::initOnBirth();
 					
 					//reset fov on birth
-					changeFOV( SettingsManager::getFloatSetting( "fovDefault", 1.25f ) );
+					if ( SettingsManager::getIntSetting( "fovEnabled", 1 ) ) {
+						changeFOV( SettingsManager::getFloatSetting( "fovDefault", 1.25f ) );
+						}
+					else {
+						changeFOV( 1.0f );
+						}
 					changeHUDFOV( SettingsManager::getFloatSetting( "fovScaleHUD", 1.25f ) );
                     
                     char found = false;
@@ -19958,7 +19963,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             newScale = ( mouseButton == MouseButton::WHEELUP ) ? currentHUDScale -= 0.25f : currentHUDScale += 0.25f;
             changeHUDFOV( newScale );
         } else {
-            changeFOV( newScale );
+            	if ( SettingsManager::getIntSetting( "fovEnabled", 1 ) ) changeFOV( newScale );
             }
 		return;
 	}
@@ -21566,112 +21571,114 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
 	bool commandKey = isCommandKeyDown();
 	bool shiftKey = isShiftKeyDown();
 
-	if (! mSayField.isFocused()) {
-		if (!commandKey && !shiftKey && inASCII == 27) { // ESCAPE KEY
-			upKeyDown = false;
-			leftKeyDown = false;
-			downKeyDown = false;
-			rightKeyDown = false;
-			lastPosX = 9999;
-			lastPosY = 9999;
-		}
+	if ( SettingsManager::getIntSetting( "keyboardActions", 1 ) ) {
+		if (! mSayField.isFocused()) {
+			if (!commandKey && !shiftKey && inASCII == 27) { // ESCAPE KEY
+				upKeyDown = false;
+				leftKeyDown = false;
+				downKeyDown = false;
+				rightKeyDown = false;
+				lastPosX = 9999;
+				lastPosY = 9999;
+			}
 
-		if (commandKey) {
-			if (isCharKey(inASCII, charKey_TileStandingOn)) {
-				actionBetaRelativeToMe( 0, 0 );
-				return;
+			if (commandKey) {
+				if (isCharKey(inASCII, charKey_TileStandingOn)) {
+					actionBetaRelativeToMe( 0, 0 );
+					return;
+				}
+			} else {
+				if (isCharKey(inASCII, charKey_TileStandingOn)) {
+					actionAlphaRelativeToMe( 0, 0 );
+					return;
+				}
 			}
-		} else {
-			if (isCharKey(inASCII, charKey_TileStandingOn)) {
-				actionAlphaRelativeToMe( 0, 0 );
-				return;
+			
+			if (!shiftKey && !commandKey) {
+				if (inASCII == charKey_Up || inASCII == toupper(charKey_Up)) {
+					upKeyDown = true;
+					//stopAutoRoadRun = true;
+					return;
+				}
+				if (inASCII == charKey_Left || inASCII == toupper(charKey_Left)) {
+					leftKeyDown = true;
+					//stopAutoRoadRun = true;
+					return;
+				}
+				if (inASCII == charKey_Down || inASCII == toupper(charKey_Down)) {
+					downKeyDown = true;
+					//stopAutoRoadRun = true;
+					return;
+				}
+				if (inASCII == charKey_Right || inASCII == toupper(charKey_Right)) {
+					rightKeyDown = true;
+					//stopAutoRoadRun = true;
+					return;
+				}
+			} else if (commandKey) {
+				if (inASCII+64 == toupper(charKey_Up)) {
+					actionBetaRelativeToMe( 0, 1 );
+					return;
+				}
+				if (inASCII+64 == toupper(charKey_Left)) {
+					actionBetaRelativeToMe( -1, 0 );
+					return;
+				}
+				if (inASCII+64 == toupper(charKey_Down)) {
+					actionBetaRelativeToMe( 0, -1 );
+					return;
+				}
+				if (inASCII+64 == toupper(charKey_Right)) {
+					actionBetaRelativeToMe( 1, 0 );
+					return;
+				}
+			} else if (shiftKey) {
+				if (inASCII == charKey_Up || inASCII == toupper(charKey_Up)) {
+					actionAlphaRelativeToMe( 0, 1 );
+					return;
+				}
+				if (inASCII == charKey_Left || inASCII == toupper(charKey_Left)) {
+					actionAlphaRelativeToMe( -1, 0 );
+					return;
+				}
+				if (inASCII == charKey_Down || inASCII == toupper(charKey_Down)) {
+					actionAlphaRelativeToMe( 0, -1 );
+					return;
+				}
+				if (inASCII == charKey_Right || inASCII == toupper(charKey_Right)) {
+					actionAlphaRelativeToMe( 1, 0 );
+					return;
+				}
 			}
-		}
-		
-		if (!shiftKey && !commandKey) {
-			if (inASCII == charKey_Up || inASCII == toupper(charKey_Up)) {
-				upKeyDown = true;
-				//stopAutoRoadRun = true;
-				return;
-			}
-			if (inASCII == charKey_Left || inASCII == toupper(charKey_Left)) {
-				leftKeyDown = true;
-				//stopAutoRoadRun = true;
-				return;
-			}
-			if (inASCII == charKey_Down || inASCII == toupper(charKey_Down)) {
-				downKeyDown = true;
-				//stopAutoRoadRun = true;
-				return;
-			}
-			if (inASCII == charKey_Right || inASCII == toupper(charKey_Right)) {
-				rightKeyDown = true;
-				//stopAutoRoadRun = true;
-				return;
-			}
-		} else if (commandKey) {
-			if (inASCII+64 == toupper(charKey_Up)) {
-				actionBetaRelativeToMe( 0, 1 );
-				return;
-			}
-			if (inASCII+64 == toupper(charKey_Left)) {
-				actionBetaRelativeToMe( -1, 0 );
-				return;
-			}
-			if (inASCII+64 == toupper(charKey_Down)) {
-				actionBetaRelativeToMe( 0, -1 );
-				return;
-			}
-			if (inASCII+64 == toupper(charKey_Right)) {
-				actionBetaRelativeToMe( 1, 0 );
-				return;
-			}
-		} else if (shiftKey) {
-			if (inASCII == charKey_Up || inASCII == toupper(charKey_Up)) {
-				actionAlphaRelativeToMe( 0, 1 );
-				return;
-			}
-			if (inASCII == charKey_Left || inASCII == toupper(charKey_Left)) {
-				actionAlphaRelativeToMe( -1, 0 );
-				return;
-			}
-			if (inASCII == charKey_Down || inASCII == toupper(charKey_Down)) {
-				actionAlphaRelativeToMe( 0, -1 );
-				return;
-			}
-			if (inASCII == charKey_Right || inASCII == toupper(charKey_Right)) {
-				actionAlphaRelativeToMe( 1, 0 );
-				return;
-			}
-		}
 
-		if (!shiftKey && isCharKey(inASCII, charKey_Backpack)) {
-			useBackpack();
-			return;
-		}
-		if ((shiftKey || commandKey) && isCharKey(inASCII, charKey_Backpack)) {
-			useBackpack(true);
-			return;
-		}
-		if (isCharKey(inASCII, charKey_Eat)) {
-			useOnSelf();
-			return;
-		}
-		if (isCharKey(inASCII, charKey_Baby)) {
-			pickUpBabyInRange();
-			return;
-		}
-		if (!commandKey && !shiftKey && isCharKey(inASCII, charKey_TakeOffBackpack)) {
-			takeOffBackpack();
-			return;
-		}
-		if (shiftKey && isCharKey(inASCII, charKey_Pocket)) {
-			usePocket(1);
-			return;
-		}
-		if (!shiftKey && isCharKey(inASCII, charKey_Pocket)) {
-			usePocket(4);
-			return;
+			if (!shiftKey && isCharKey(inASCII, charKey_Backpack)) {
+				useBackpack();
+				return;
+			}
+			if ((shiftKey || commandKey) && isCharKey(inASCII, charKey_Backpack)) {
+				useBackpack(true);
+				return;
+			}
+			if (isCharKey(inASCII, charKey_Eat)) {
+				useOnSelf();
+				return;
+			}
+			if (isCharKey(inASCII, charKey_Baby)) {
+				pickUpBabyInRange();
+				return;
+			}
+			if (!commandKey && !shiftKey && isCharKey(inASCII, charKey_TakeOffBackpack)) {
+				takeOffBackpack();
+				return;
+			}
+			if (shiftKey && isCharKey(inASCII, charKey_Pocket)) {
+				usePocket(1);
+				return;
+			}
+			if (!shiftKey && isCharKey(inASCII, charKey_Pocket)) {
+				usePocket(4);
+				return;
+			}
 		}
 	}
 
@@ -22155,7 +22162,7 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
             newScale = ( inKeyCode == MG_KEY_LEFT ) ? currentHUDScale -= 0.25f : currentHUDScale += 0.25f;
             changeHUDFOV( newScale );
         } else {
-		    changeFOV( newScale );
+		    if ( SettingsManager::getIntSetting( "fovEnabled", 1 ) ) changeFOV( newScale );
             }
 		return;
 	    }
@@ -22494,7 +22501,7 @@ void LivingLifePage::changeFOV( float newScale ) {
 	setViewSize( 1280 * newScale );
     }
 
-void LivingLifePage::changeHUDFOV( float newScale ) {	
+void LivingLifePage::changeHUDFOV( float newScale ) {
 	if( newScale < 1 ) {
 		newScale = 1.0f;
 	} else if ( newScale > 1.75f ) {
