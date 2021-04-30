@@ -7,6 +7,8 @@
 #include "minorGems/ui/event/ActionListener.h"
 #include "minorGems/util/SimpleVector.h"
 
+#include "minorGems/util/SettingsManager.h"
+
 #include "minorGems/game/game.h"
 
 
@@ -37,6 +39,12 @@
 
 #define NUM_YUM_SLIPS 4
 
+namespace fovmod {
+    extern float gui_fov_scale;
+    extern int gui_fov_scale_hud;
+    extern int gui_fov_offset_x;
+    extern int gui_fov_offset_y;
+}
 
 typedef struct LiveObject {
         int id;
@@ -939,6 +947,13 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         char mUsingSteam;
         char mZKeyDown;
+
+        
+        //FOV
+        void changeHUDFOV( float newScale = 1.0f );
+        void changeFOV( float newScale = 1.0f );
+        void calcOffsetHUD();
+        void calcFontScale( float newScale, Font* font );
 
         char mPlayerInFlight;
 

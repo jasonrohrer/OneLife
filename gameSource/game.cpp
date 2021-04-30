@@ -169,6 +169,16 @@ doublePair lastScreenViewCenter = {0, 0 };
 
 
 // world width of one view
+//FOV
+int gui_hud_mode = 0;
+float gui_fov_scale = 1.0f;
+float gui_fov_scale_hud = 1.0f;
+float gui_fov_target_scale_hud = 1.0f;
+float gui_fov_preferred_max_scale = 3.0f;
+int gui_fov_offset_x = (int)(((1280 * gui_fov_target_scale_hud) - 1280)/2);
+int gui_fov_offset_y = (int)(((720 * gui_fov_target_scale_hud) - 720)/2);
+
+
 double viewWidth = 1280;
 double viewHeight = 720;
 
@@ -180,6 +190,37 @@ double viewHeight = 720;
 // and we will put letterbox bars on the top and bottom 
 double visibleViewWidth = viewWidth;
 
+
+
+void setFOVScale() {
+
+	gui_hud_mode = SettingsManager::getIntSetting( "hudDrawMode", 0 );
+	if( gui_hud_mode < 0 ) gui_hud_mode = 0;
+	else if( gui_hud_mode > 2 ) gui_hud_mode = 2;
+	SettingsManager::setSetting( "hudDrawMode", gui_hud_mode );
+
+    gui_fov_scale = SettingsManager::getFloatSetting( "fovDefault", 1.25f );
+    if( ! gui_fov_scale || gui_fov_scale < 1 )
+		gui_fov_scale = 1.0f;
+    else if ( gui_fov_scale > 6 )
+		gui_fov_scale = 6.0f;
+	SettingsManager::setSetting( "fovDefault", gui_fov_scale );
+	SettingsManager::setSetting( "fovScale", gui_fov_scale );
+
+    gui_fov_preferred_max_scale = SettingsManager::getFloatSetting( "fovMax", 3.0f );
+    if( ! gui_fov_preferred_max_scale || gui_fov_preferred_max_scale < 1 )
+		gui_fov_preferred_max_scale = 1.0f;
+	else if ( gui_fov_preferred_max_scale > 6 )
+		gui_fov_preferred_max_scale = 6.0f;
+	SettingsManager::setSetting( "fovMax", gui_fov_preferred_max_scale );
+
+	gui_fov_scale_hud = gui_fov_scale / gui_fov_target_scale_hud;
+    gui_fov_offset_x = (int)(((1280 * gui_fov_target_scale_hud) - 1280)/2);
+    gui_fov_offset_y = (int)(((720 * gui_fov_target_scale_hud) - 720)/2);
+    viewWidth = 1280 * gui_fov_scale;
+    viewHeight = 720 * gui_fov_scale;
+    visibleViewWidth = viewWidth;
+}
 
 
 // fraction of viewWidth visible vertically (aspect ratio)
@@ -412,6 +453,8 @@ char *getHashSalt() {
 
 void initDrawString( int inWidth, int inHeight ) {
 
+	setFOVScale();
+
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
     toggleMipMapMinFilter( true );
@@ -523,24 +566,23 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     mainFontFixed->setMinimumPositionPrecision( 1 );
     numbersFontFixed->setMinimumPositionPrecision( 1 );
     
-    smallFont = new Font( getFontTGAFileName(), 3, 8, false, 8 );
+    smallFont = new Font( getFontTGAFileName(), 3, 8, false, 8 * gui_fov_scale_hud );
 
     titleFont = 
-        new Font( "font_handwriting_32_32.tga", 3, 6, false, 20 );
-
-
+        new Font( "font_handwriting_32_32.tga", 3, 6, false, 20 * gui_fov_scale_hud );
+	
     handwritingFont = 
-        new Font( "font_handwriting_32_32.tga", 3, 6, false, 16 );
+        new Font( "font_handwriting_32_32.tga", 3, 6, false, 16 * gui_fov_scale_hud );
 
     handwritingFont->setMinimumPositionPrecision( 1 );
 
     pencilFont = 
-        new Font( "font_pencil_32_32.tga", 3, 6, false, 16 );
+        new Font( "font_pencil_32_32.tga", 3, 6, false, 16 * gui_fov_scale_hud );
 
     pencilFont->setMinimumPositionPrecision( 1 );
 
     pencilErasedFont = 
-        new Font( "font_pencil_erased_32_32.tga", 3, 6, false, 16 );
+        new Font( "font_pencil_erased_32_32.tga", 3, 6, false, 16 * gui_fov_scale_hud );
 
     pencilErasedFont->setMinimumPositionPrecision( 1 );
 
@@ -835,7 +877,7 @@ static void drawPauseScreen() {
         
         drawPos = add( drawPos, lastScreenViewCenter );
 
-        drawSprite( instructionsSprite, drawPos );
+        drawSprite( instructionsSprite, drawPos, gui_fov_scale );
         }
     
 

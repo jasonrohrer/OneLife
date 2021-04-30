@@ -832,7 +832,7 @@ vector<TransRecord*> minitech::sortProdTrans(vector<TransRecord*> unsortedTrans)
 		
 		int idA = trans->actor;
 		int idB = trans->target;
-		int idC = trans->newActor;
+		//int idC = trans->newActor;
 		//int idD = trans->newTarget;
 		//int holdingID = getDummyParent(ourLiveObject->holdingID);
 		
@@ -928,7 +928,7 @@ void minitech::updateDrawTwoTech() {
 		
 		recWidth = paddingX + 7*iconSize + paddingX;
 		recHeight = paddingY/2 + lineHeight/2 + paddingY/2;
-		posLT.y = posLT.y + recHeight + (60); //panel height = 60
+		posLT.y = posLT.y + recHeight + (50 * guiScale); //panel height = 60
 		posLT.x = posLT.x - recWidth;
 		doublePair posCenter = {posLT.x + recWidth / 2, posLT.y - recHeight / 2};
 		doublePair posBR = {posLT.x + recWidth, posLT.y - recHeight};
@@ -956,7 +956,7 @@ void minitech::updateDrawTwoTech() {
 		
 		recWidth = paddingX + 7*iconSize + paddingX;
 		recHeight = paddingY + 1*iconSize + paddingY;
-		posLT.y = posLT.y + recHeight + (60); //panel height = 60
+		posLT.y = posLT.y + recHeight + (55 * guiScale); //panel height = 60
 		posLT.x = posLT.x - recWidth;
 		doublePair posCenter = {posLT.x + recWidth / 2, posLT.y - recHeight / 2};
 		setDrawColor( 0, 0, 0, 0.8 );
@@ -982,7 +982,7 @@ void minitech::updateDrawTwoTech() {
 		recWidth = paddingX + 7*iconSize + paddingX;
 		recHeight = paddingY + (numOfLines-1)*lineSpacing + numOfLines*iconSize + buttonHeight + paddingY;
 		
-		posLT.y = posLT.y + recHeight + (60); //panel height = 60
+		posLT.y = posLT.y + recHeight + (55 * guiScale); //panel height = 60
 		posLT.x = posLT.x - recWidth;
 		
 		doublePair posCenter = {posLT.x + recWidth / 2, posLT.y - recHeight / 2};
@@ -1462,7 +1462,7 @@ void minitech::inputHintStrToSearch(string hintStr) {
 			});
 			
 			vector<ObjectRecord*> sortedHits(unsortedHits.size());
-			for ( int i=0; i<unsortedHits.size(); i++ ) {
+			for ( int i=0; i<(int)unsortedHits.size(); i++ ) {
 				sortedHits[i] = unsortedHits[index[i]];
 			}
 			
