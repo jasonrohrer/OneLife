@@ -15707,6 +15707,9 @@ void LivingLifePage::step() {
                 else if( o.id == ourID && 
                          strstr( lines[i], "X X" ) != NULL  ) {
                     // we died
+					
+					//reset fov on death
+					changeFOV( 1.0f );
 
                     printf( "Got X X death message for our ID %d\n",
                             ourID );
