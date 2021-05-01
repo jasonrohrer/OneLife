@@ -177,8 +177,7 @@ bool minitech::isCategory(int objId) {
 
 minitech::mouseListener* minitech::getMouseListenerByArea( 
 	vector<mouseListener*>* listeners, doublePair posTL, doublePair posBR ) {
-	int size = listeners->size();
-	for (int i=0; i<size; i++) {
+	for (int i=0; i<(int)listeners->size(); i++) {
 		if (
 			posEqual( (*listeners)[i]->posTL, posTL) &&
 			posEqual( (*listeners)[i]->posBR, posBR)
@@ -537,7 +536,7 @@ void minitech::drawStr(
 	doublePair screenCenter = livingLifePage->minitechGetLastScreenViewCenter();
 	
 	char sBuf[64];
-	sprintf( sBuf, str.c_str() );
+	sprintf( sBuf, "%s", str.c_str() );
 	float textWidth = 0;
 	if (font == "handwritten") {
 		textWidth = handwritingFont->measureString( sBuf );
@@ -760,8 +759,7 @@ vector<TransRecord*> minitech::sortUsesTrans(vector<TransRecord*> unsortedTrans)
 	vector<bool> boolCloseVect = getObjIsCloseVector();
 	vector<float> rankScores(unsortedTrans.size(), 0);
 	
-	int size = unsortedTrans.size();
-	for ( int i=0; i<size; i++ ) {
+	for ( int i=0; i<(int)unsortedTrans.size(); i++ ) {
 		TransRecord *trans = unsortedTrans[i];
 		
 		int idA = trans->actor;
@@ -814,8 +812,7 @@ vector<TransRecord*> minitech::sortUsesTrans(vector<TransRecord*> unsortedTrans)
 	
 	vector<TransRecord*> temp(unsortedTrans.size());
 	
-	size = unsortedTrans.size();
-	for ( int i=0; i<size; i++ ) {
+	for ( int i=0; i<(int)unsortedTrans.size(); i++ ) {
 		temp[i] = unsortedTrans[index[i]];
 	}
 	return temp;
@@ -826,8 +823,7 @@ vector<TransRecord*> minitech::sortProdTrans(vector<TransRecord*> unsortedTrans)
 	vector<bool> boolCloseVect = getObjIsCloseVector();
 	vector<float> rankScores(unsortedTrans.size(), 0);
 	
-	int size = unsortedTrans.size();
-	for ( int i=0; i<size; i++ ) {
+	for ( int i=0; i<(int)unsortedTrans.size(); i++ ) {
 		TransRecord *trans = unsortedTrans[i];
 		
 		int idA = trans->actor;
@@ -890,8 +886,7 @@ vector<TransRecord*> minitech::sortProdTrans(vector<TransRecord*> unsortedTrans)
 	
 	vector<TransRecord*> temp(unsortedTrans.size());
 	
-	size = unsortedTrans.size();
-	for ( int i=0; i<size; i++ ) {
+	for ( int i=0; i<(int)unsortedTrans.size(); i++ ) {
 		temp[i] = unsortedTrans[index[i]];
 	}
 	return temp;
@@ -1288,8 +1283,7 @@ void minitech::updateDrawTwoTech() {
 			drawStr(pageInd, pos, "tinyMain", false);
 		}
 		
-		int size = iconListenerIds.size();
-		for (int i=0; i<size; i++) {
+		for (int i=0; i<(int)iconListenerIds.size(); i++) {
 			mouseListener* listener = iconListenerIds[i].first;
 			int id = iconListenerIds[i].second;
 			doublePair iconLT = add(listener->posTL, screenPos);
@@ -1616,8 +1610,7 @@ bool minitech::livingLifePageMouseDown( float mX, float mY ) {
 	doublePair mousePosScreenAdj = sub(mousePos, screenPos);
 	
 	bool clickCaught = false;
-	int size = twotechMouseListeners.size();
-	for ( int i=0; i<size; i++ ) {
+	for ( int i=0; i<(int)twotechMouseListeners.size(); i++ ) {
 		mouseListener* listener = twotechMouseListeners[i];
 		if ( posWithinArea(mousePosScreenAdj, listener->posTL, listener->posBR) ) {
 			listener->mouseClick = true;

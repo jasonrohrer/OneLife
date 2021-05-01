@@ -1387,7 +1387,7 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
         // if gap is 1.0, it should never happen
  
         // larger values make second place less likely
-		double secondPlaceReduction = 10.0;
+		//double secondPlaceReduction = 10.0;
 
         //printf( "Second place gap = %f, random(%d,%d)=%f\n", secondPlaceGap,
         //        inX, inY, getXYRandom( 2087 + inX, 793 + inY ) );
