@@ -6454,7 +6454,7 @@ int processLoggedInPlayer( char inAllowReconnect,
 				continue;
 				}
 
-            GridPos motherPos = getPlayerPos( player );
+            //GridPos motherPos = getPlayerPos( player );
                 
             
             if( player->lastSidsBabyEmail != NULL &&
@@ -10760,11 +10760,11 @@ void logFitnessDeath( LiveObject *nextPlayer ) {
 	SimpleVector<double> emptyAncestorLifeEndTimeSeconds;
     
 
-    SimpleVector<int> *ancestorIDs = nextPlayer->ancestorIDs;
+    //SimpleVector<int> *ancestorIDs = nextPlayer->ancestorIDs;
     SimpleVector<char*> *ancestorEmails = nextPlayer->ancestorEmails;
     SimpleVector<char*> *ancestorRelNames = nextPlayer->ancestorRelNames;
-    SimpleVector<double> *ancestorLifeStartTimeSeconds = 
-        nextPlayer->ancestorLifeStartTimeSeconds;
+    //SimpleVector<double> *ancestorLifeStartTimeSeconds = 
+    //    nextPlayer->ancestorLifeStartTimeSeconds;
     SimpleVector<double> *ancestorLifeEndTimeSeconds = 
         nextPlayer->ancestorLifeEndTimeSeconds;   
 

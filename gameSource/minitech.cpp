@@ -177,8 +177,7 @@ bool minitech::isCategory(int objId) {
 
 minitech::mouseListener* minitech::getMouseListenerByArea( 
 	vector<mouseListener*>* listeners, doublePair posTL, doublePair posBR ) {
-	int size = listeners->size();
-	for (int i=0; i<size; i++) {
+	for (int i=0; i<(int)listeners->size(); i++) {
 		if (
 			posEqual( (*listeners)[i]->posTL, posTL) &&
 			posEqual( (*listeners)[i]->posBR, posBR)
@@ -537,7 +536,7 @@ void minitech::drawStr(
 	doublePair screenCenter = livingLifePage->minitechGetLastScreenViewCenter();
 	
 	char sBuf[64];
-	sprintf( sBuf, str.c_str() );
+	sprintf( sBuf, "%s", str.c_str() );
 	float textWidth = 0;
 	if (font == "handwritten") {
 		textWidth = handwritingFont->measureString( sBuf );
@@ -760,8 +759,7 @@ vector<TransRecord*> minitech::sortUsesTrans(vector<TransRecord*> unsortedTrans)
 	vector<bool> boolCloseVect = getObjIsCloseVector();
 	vector<float> rankScores(unsortedTrans.size(), 0);
 	
-	int size = unsortedTrans.size();
-	for ( int i=0; i<size; i++ ) {
+	for ( int i=0; i<(int)unsortedTrans.size(); i++ ) {
 		TransRecord *trans = unsortedTrans[i];
 		
 		int idA = trans->actor;
@@ -814,8 +812,7 @@ vector<TransRecord*> minitech::sortUsesTrans(vector<TransRecord*> unsortedTrans)
 	
 	vector<TransRecord*> temp(unsortedTrans.size());
 	
-	size = unsortedTrans.size();
-	for ( int i=0; i<size; i++ ) {
+	for ( int i=0; i<(int)unsortedTrans.size(); i++ ) {
 		temp[i] = unsortedTrans[index[i]];
 	}
 	return temp;
@@ -826,13 +823,12 @@ vector<TransRecord*> minitech::sortProdTrans(vector<TransRecord*> unsortedTrans)
 	vector<bool> boolCloseVect = getObjIsCloseVector();
 	vector<float> rankScores(unsortedTrans.size(), 0);
 	
-	int size = unsortedTrans.size();
-	for ( int i=0; i<size; i++ ) {
+	for ( int i=0; i<(int)unsortedTrans.size(); i++ ) {
 		TransRecord *trans = unsortedTrans[i];
 		
 		int idA = trans->actor;
 		int idB = trans->target;
-		int idC = trans->newActor;
+		//int idC = trans->newActor;
 		//int idD = trans->newTarget;
 		//int holdingID = getDummyParent(ourLiveObject->holdingID);
 		
@@ -890,8 +886,7 @@ vector<TransRecord*> minitech::sortProdTrans(vector<TransRecord*> unsortedTrans)
 	
 	vector<TransRecord*> temp(unsortedTrans.size());
 	
-	size = unsortedTrans.size();
-	for ( int i=0; i<size; i++ ) {
+	for ( int i=0; i<(int)unsortedTrans.size(); i++ ) {
 		temp[i] = unsortedTrans[index[i]];
 	}
 	return temp;
@@ -928,7 +923,7 @@ void minitech::updateDrawTwoTech() {
 		
 		recWidth = paddingX + 7*iconSize + paddingX;
 		recHeight = paddingY/2 + lineHeight/2 + paddingY/2;
-		posLT.y = posLT.y + recHeight + (60); //panel height = 60
+		posLT.y = posLT.y + recHeight + (50 * guiScale); //panel height = 60
 		posLT.x = posLT.x - recWidth;
 		doublePair posCenter = {posLT.x + recWidth / 2, posLT.y - recHeight / 2};
 		doublePair posBR = {posLT.x + recWidth, posLT.y - recHeight};
@@ -956,7 +951,7 @@ void minitech::updateDrawTwoTech() {
 		
 		recWidth = paddingX + 7*iconSize + paddingX;
 		recHeight = paddingY + 1*iconSize + paddingY;
-		posLT.y = posLT.y + recHeight + (60); //panel height = 60
+		posLT.y = posLT.y + recHeight + (55 * guiScale); //panel height = 60
 		posLT.x = posLT.x - recWidth;
 		doublePair posCenter = {posLT.x + recWidth / 2, posLT.y - recHeight / 2};
 		setDrawColor( 0, 0, 0, 0.8 );
@@ -982,7 +977,7 @@ void minitech::updateDrawTwoTech() {
 		recWidth = paddingX + 7*iconSize + paddingX;
 		recHeight = paddingY + (numOfLines-1)*lineSpacing + numOfLines*iconSize + buttonHeight + paddingY;
 		
-		posLT.y = posLT.y + recHeight + (60); //panel height = 60
+		posLT.y = posLT.y + recHeight + (55 * guiScale); //panel height = 60
 		posLT.x = posLT.x - recWidth;
 		
 		doublePair posCenter = {posLT.x + recWidth / 2, posLT.y - recHeight / 2};
@@ -1288,8 +1283,7 @@ void minitech::updateDrawTwoTech() {
 			drawStr(pageInd, pos, "tinyMain", false);
 		}
 		
-		int size = iconListenerIds.size();
-		for (int i=0; i<size; i++) {
+		for (int i=0; i<(int)iconListenerIds.size(); i++) {
 			mouseListener* listener = iconListenerIds[i].first;
 			int id = iconListenerIds[i].second;
 			doublePair iconLT = add(listener->posTL, screenPos);
@@ -1462,7 +1456,7 @@ void minitech::inputHintStrToSearch(string hintStr) {
 			});
 			
 			vector<ObjectRecord*> sortedHits(unsortedHits.size());
-			for ( int i=0; i<unsortedHits.size(); i++ ) {
+			for ( int i=0; i<(int)unsortedHits.size(); i++ ) {
 				sortedHits[i] = unsortedHits[index[i]];
 			}
 			
@@ -1616,8 +1610,7 @@ bool minitech::livingLifePageMouseDown( float mX, float mY ) {
 	doublePair mousePosScreenAdj = sub(mousePos, screenPos);
 	
 	bool clickCaught = false;
-	int size = twotechMouseListeners.size();
-	for ( int i=0; i<size; i++ ) {
+	for ( int i=0; i<(int)twotechMouseListeners.size(); i++ ) {
 		mouseListener* listener = twotechMouseListeners[i];
 		if ( posWithinArea(mousePosScreenAdj, listener->posTL, listener->posBR) ) {
 			listener->mouseClick = true;

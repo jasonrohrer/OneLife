@@ -7,6 +7,8 @@
 #include "minorGems/ui/event/ActionListener.h"
 #include "minorGems/util/SimpleVector.h"
 
+#include "minorGems/util/SettingsManager.h"
+
 #include "minorGems/game/game.h"
 
 
@@ -37,6 +39,12 @@
 
 #define NUM_YUM_SLIPS 4
 
+namespace fovmod {
+    extern float gui_fov_scale;
+    extern int gui_fov_scale_hud;
+    extern int gui_fov_offset_x;
+    extern int gui_fov_offset_y;
+}
 
 typedef struct LiveObject {
         int id;
@@ -473,6 +481,35 @@ class LivingLifePage : public GamePage, public ActionListener {
         int getRequiredVersion() {
             return mRequiredVersion;
             }
+			
+
+		void setNextActionMessage( const char* str, int x, int y );
+		int getObjId( int mapX, int mapY );
+		bool objIdReverseAction( int objId );
+		void pickUpBabyInRange();
+		void pickUpBaby( int x, int y );
+		void useBackpack( bool replace = false );
+		void usePocket( int clothingID );
+		void useOnSelf();
+		void takeOffBackpack();
+		void setOurSendPosXY(int &x, int &y);
+		bool isCharKey(unsigned char c, unsigned char key);
+		
+		void actionAlphaRelativeToMe( int x, int y );
+		void actionBetaRelativeToMe( int x, int y );
+		void useTileRelativeToMe( int x, int y ) ;
+		void dropTileRelativeToMe( int x, int y ) ;
+		
+		void movementStep();
+		bool findNextMove(int &x, int &y, int dir);
+		int getNextMoveDir(int direction, int add);
+		int getMoveDirection();
+		bool setMoveDirIfSafe(int &x, int &y, int dir);
+		void setMoveDirection(int &x, int &y, int direction);
+		bool tileHasClosedDoor(int x, int y);
+		bool dirIsSafeToWalk(int x, int y, int dir);
+
+
 
 		doublePair minitechGetLastScreenViewCenter();
 		char *minitechGetDisplayObjectDescription(int objId);
@@ -520,14 +557,19 @@ class LivingLifePage : public GamePage, public ActionListener {
         // conversion function for received coordinates into local coords
         void applyReceiveOffset( int *inX, int *inY );
         // converts local coors for sending back to server
+		
+	public:
+        
         int sendX( int inX );
         int sendY( int inY );
 
 
         int mMapD;
-		public: // minitech
+		
         int *mMap;
-        protected: // minitech
+        
+	protected:
+        
         int *mMapBiomes;
         int *mMapFloors;
 
@@ -939,6 +981,13 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         char mUsingSteam;
         char mZKeyDown;
+
+        
+        //FOV
+        void changeHUDFOV( float newScale = 1.0f );
+        void changeFOV( float newScale = 1.0f );
+        void calcOffsetHUD();
+        void calcFontScale( float newScale, Font* font );
 
         char mPlayerInFlight;
 

@@ -516,15 +516,15 @@ static void setupObjectPasswordStatus( ObjectRecord *inR ) {
 		
 		if ( line.find("id:") == std::string::npos ) continue;
 		
-		int posId = line.find("id:") + 3;
-		int lenId = line.find("|", posId) - posId;
+		//int posId = line.find("id:") + 3;
+		//int lenId = line.find("|", posId) - posId;
 		int posX = line.find("x:") + 2;
 		int lenX = line.find("|", posX) - posX;
 		int posY = line.find("y:") + 2;
 		int lenY = line.find("|", posY) - posY;
 		int posPw = line.find("word:") + 5;
 		
-		int id = stoi(line.substr(posId, lenId));
+		//int id = stoi(line.substr(posId, lenId));
 		int x = stoi(line.substr(posX, lenX));
 		int y = stoi(line.substr(posY, lenY));
 		std::string pw = line.substr(posPw, line.length());
@@ -5512,7 +5512,7 @@ doublePair getObjectBottomCenterOffset( ObjectRecord *inObject ) {
 
     SpriteRecord *lowestRecord = NULL;
     
-    int lowestIndex = -1;
+    //int lowestIndex = -1;
     double lowestYPos = 0;
     
     for( int i=0; i<inObject->numSprites; i++ ) {
@@ -5538,9 +5538,9 @@ doublePair getObjectBottomCenterOffset( ObjectRecord *inObject ) {
 			continue;
 		}
 
-        int h = sprite->visibleH;
+        //int h = sprite->visibleH;
 		
-		doublePair dimensions = { sprite->visibleW, sprite->visibleH };
+		doublePair dimensions = { (double)sprite->visibleW, (double)sprite->visibleH };
 		
 		dimensions = rotate( dimensions, 
 							   2 * M_PI * inObject->spriteRot[i] );
@@ -5561,7 +5561,7 @@ doublePair getObjectBottomCenterOffset( ObjectRecord *inObject ) {
             y < lowestYPos ) {
 
             lowestRecord = sprite;
-            lowestIndex = i;
+            //lowestIndex = i;
             lowestYPos = y;
             }
         }
