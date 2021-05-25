@@ -137,6 +137,11 @@ Server Fixes
 
 --Special logging of eve placement relative to non-outlier homelands.
 
+--Realized that many families don't have primary homelands, since they resettle
+  old villages and don't necessarily tap out new iron.  Thus, for detecting
+  homeland cluster for future Eve placement, we now use each family's first
+  homeland instead of only their primary one.
+
 
 
 

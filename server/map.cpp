@@ -562,6 +562,11 @@ typedef struct Homeland {
         // should Eve placement ignore this homeland?
         char ignoredForEve;
 
+        // was this homeland the first for this lineageEveID?
+        // this can be true even if not primary, if eve resettles an old village
+        // and does not tapout trigger anything
+        char firstHomelandForFamily;
+
     } Homeland;
 
 
@@ -7464,6 +7469,21 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
             double t = Time::getCurrentTime();
                                   
             if( h == NULL ) {
+
+                // is this the family's first homeland?
+                char firstHomelandForFamily = true;
+                
+                for( int i=0; i<homelands.size(); i++ ) {
+                    Homeland *h = homelands.getElement( i );
+                    
+                    // watch for stale
+                    if( ! h->expired &&
+                        h->lineageEveID == lineage ) {
+                        firstHomelandForFamily = false;
+                        break;
+                        }
+                    }
+                
                 Homeland newH = { inX, inY, o->famUseDist,
                                   lineage,
                                   t,
@@ -7471,7 +7491,8 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                                   // changed
                                   true,
                                   tappedOutPrimaryHomeland,
-                                  isPlayerIgnoredForEvePlacement( p ) };
+                                  isPlayerIgnoredForEvePlacement( p ),
+                                  firstHomelandForFamily };
                 homelands.push_back( newH );
                 }
             else if( h->expired ) {
@@ -8631,7 +8652,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                      inEmail, Time::timeSec() );
 
 
-            fprintf( tempLog, "    Primary homeland list:  " );
+            fprintf( tempLog, "    First homeland list:  " );
 
 
             int homelandXSum = 0;
@@ -8641,9 +8662,10 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             for( int i=0; i<homelands.size(); i++ ) {
                 Homeland *h = homelands.getElement( i );
                 
-                // only primary homelands are considered
+                // only first homelands are considered
                 // any d-town or tutorial homelands are ignored
-                if( h->primary && ! h->expired && ! h->ignoredForEve ) {
+                if( h->firstHomelandForFamily && 
+                    ! h->expired && ! h->ignoredForEve ) {
                     homelandXSum += h->x;
                     consideredHomelands.push_back( h );
                     
@@ -8664,7 +8686,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                 homelandXAve = homelandXSum / consideredHomelands.size();
                 }
             
-            fprintf( tempLog, "    Found %d primary homelands with average "
+            fprintf( tempLog, "    Found %d first homelands with average "
                      "x position %d\n",
                      consideredHomelands.size(), homelandXAve );
 
@@ -8706,7 +8728,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
             
             fprintf( tempLog, "    After discarding outliers, "
-                     "have %d primary homelands with average x position %d\n",
+                     "have %d first homelands with average x position %d\n",
                      consideredHomelands.size(), homelandXAve );
 
 
