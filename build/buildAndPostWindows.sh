@@ -106,14 +106,14 @@ read userIn
 scp steamLatest.tar.gz jcr15@onehouronelife.com: 
 
 
-echo
-echo -n "Press ENTER to run remote steam build process."
+# new, run remotely
+
+echo "Please ssh to server and run:"
+echo "~/checkout/OneLifeWorking/scripts/runWindowsSteamDepotBuild.sh $2"
+echo ""
+echo -n "Press ENTER when done"
 
 read userIn
-
-
-# new, run remotely
-ssh jcr15@onehouronelife.com 'rm -rf steamLatest; tar xzf steamLatest.tar.gz; cd ~/checkout/OneLifeWorking; git pull; ~/checkout/OneLifeWorking/scripts/runWindowsSteamDepotBuild.sh $2'
 
 
 
