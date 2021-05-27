@@ -113,7 +113,7 @@ read userIn
 
 
 # new, run remotely
-ssh jcr15@onehouronelife.com 'rm -rf steamLatest; tar xzf steamLatest.tar.gz; cd ~/checkout/OneLifeWorking; git pull; ~/checkout/OneLifeWorking/scripts/runWindowsSteamDepotBuild.sh'
+ssh jcr15@onehouronelife.com 'rm -rf steamLatest; tar xzf steamLatest.tar.gz; cd ~/checkout/OneLifeWorking; git pull; ~/checkout/OneLifeWorking/scripts/runWindowsSteamDepotBuild.sh $2'
 
 
 
