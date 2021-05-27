@@ -58,6 +58,7 @@
 #include "curseDB.h"
 #include "specialBiomes.h"
 #include "cravings.h"
+#include "offspringTracker.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -119,8 +120,9 @@ int maxEmotesInWindow = 10;
 double emoteCooldownSeconds = 120.0;
 
 
-
-int maxLineageTracked = 20;
+// each generation is at minimum 14 minutes apart
+// so 1024 generations is approximately 10 days
+int maxLineageTracked = 1024;
 
 int apocalypsePossible = 0;
 char apocalypseTriggered = false;
@@ -1106,12 +1108,24 @@ typedef struct LiveObject {
         double personalFoodDecrementSecondsBonus;
         
 
+        // don't send global messages too quickly
+        // give player chance to read each one
+        double lastGlobalMessageTime;
+        
+        SimpleVector<char*> globalMessageQueue;
+
+
     } LiveObject;
 
 
 
 SimpleVector<LiveObject> players;
 SimpleVector<LiveObject> tutorialLoadingPlayers;
+
+
+int getNumPlayers() {
+    return players.size();
+    }
 
 
 
@@ -1288,7 +1302,7 @@ LiveObject *getLiveObject( int inID );
 
 
 
-static char isMapSpotAllyOwned( LiveObject *inPlayer, int inX, int inY ) {    
+static char isMapSpotLeaderOwned( LiveObject *inPlayer, int inX, int inY ) {    
     // walk up leadership chain for inPlayer and see if anyone owns it
         
     LiveObject *nextToCheck = inPlayer;
@@ -1318,11 +1332,15 @@ static char isMapSpotAllyOwned( LiveObject *inPlayer, int inX, int inY ) {
 
 
 
-char isOwnedOrAllyOwned( LiveObject *inPlayer, int inX, int inY ) {
+char isOwnedOrAllyOwned( LiveObject *inPlayer, ObjectRecord *inObject,
+                         int inX, int inY ) {
     if( isOwned( inPlayer, inX, inY ) ) {
         return true;
         }
-    else if( isMapSpotAllyOwned( inPlayer, inX, inY ) ) {
+    // do followers have access to this object?  If so, look for a leader above
+    // who owns it
+    else if( inObject->isFollowerOwned && 
+             isMapSpotLeaderOwned( inPlayer, inX, inY ) ) {
         return true;
         }
     return false;
@@ -1347,6 +1365,10 @@ char isKnownOwned( LiveObject *inPlayer, GridPos inPos ) {
     return isKnownOwned( inPlayer, inPos.x, inPos.y );
     }
 
+
+// messages with no follow-up hang out on client for 10 seconds
+// 7 seconds should be long enough to read if there's a follow-up waiting
+static double minGlobalMessageSpacingSeconds = 7;
 
 
 void sendGlobalMessage( char *inMessage,
@@ -2194,7 +2216,9 @@ void quitCleanup() {
             delete [] nextPlayer->murderPerpEmail;
             }
 
-
+        nextPlayer->globalMessageQueue.deallocateStringElements();
+        
+        
         freePlayerContainedArrays( nextPlayer );
         
         
@@ -2250,6 +2274,8 @@ void quitCleanup() {
     freeTriggers();
 
     freeSpecialBiomes();
+    
+    freeOffspringTracker();
     
 
     freeMap();
@@ -3492,6 +3518,22 @@ double computeAge( LiveObject *inPlayer ) {
         inPlayer->error = true;
         
         age = forceDeathAge;
+
+        // they lived to old age
+        // that means they can get born to their descendants in future
+        int lineageID = inPlayer->id;
+        if( ! getFemale( inPlayer ) ) {
+            // use mother's ID instead
+            // since men have no direct descendants
+            // their sisters (and their decendants) count as their descendants
+            // Note that it's impossible to get reborn to your older sister
+            // (because she'll already be dead when you die of old age), 
+            // but it might be possible to get reborn to your much-younger 
+            // sister.
+            lineageID = inPlayer->parentID;
+            }
+        
+        trackOffspring( inPlayer->email, lineageID );
         }
     return age;
     }
@@ -4795,6 +4837,9 @@ static void setPlayerDisconnected( LiveObject *inPlayer,
 // if inOnePlayerOnly set, we only send to that player
 void sendGlobalMessage( char *inMessage,
                         LiveObject *inOnePlayerOnly ) {
+    
+    double curTime = Time::getCurrentTime();
+    
     char found;
     char *noSpaceMessage = replaceAll( inMessage, " ", "_", &found );
 
@@ -4812,13 +4857,26 @@ void sendGlobalMessage( char *inMessage,
             }
 
         if( ! o->error && ! o->isTutorial && o->connected ) {
-            int numSent = 
-                o->sock->send( (unsigned char*)fullMessage, 
-                               len, 
-                               false, false );
-        
-            if( numSent != len ) {
-                setPlayerDisconnected( o, "Socket write failed" );
+
+
+            if( curTime - o->lastGlobalMessageTime > 
+                minGlobalMessageSpacingSeconds ) {
+                
+                int numSent = 
+                    o->sock->send( (unsigned char*)fullMessage, 
+                                   len, 
+                                   false, false );
+                
+                o->lastGlobalMessageTime = curTime;
+                
+                if( numSent != len ) {
+                    setPlayerDisconnected( o, "Socket write failed" );
+                    }
+                }
+            else {
+                // messages are coming too quickly for this player to read
+                // them, wait before sending this one
+                o->globalMessageQueue.push_back( stringDuplicate( inMessage ) );
                 }
             }
         }
@@ -5761,17 +5819,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         }
     if( strcmp( inToSay, curseBabyPhrase ) == 0 ) {
         isBabyShortcut = true;
-        }
-
-    
-    if( inPlayer->isTwin ) {
-        // block twins from cursing
-        cursedName = NULL;
-        
-        isYouShortcut = false;
-        isBabyShortcut = false;
-        }
-    
+        }    
     
     
     if( cursedName != NULL || isYouShortcut ) {
@@ -5809,8 +5857,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     int curseDistance = SettingsManager::getIntSetting( "curseDistance", 200 );
     
         
-    if( ! inPlayer->isTwin &&
-        cursedName == NULL &&
+    if( cursedName == NULL &&
         players.size() >= minActivePlayersForLanguages ) {
         
         // consider cursing in other languages
@@ -6064,8 +6111,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
 
 
     if( isCurse ) {
-        if( ! inPlayer->isTwin && 
-            inPlayer->curseStatus.curseLevel == 0 &&
+        if( inPlayer->curseStatus.curseLevel == 0 &&
             hasCurseToken( inPlayer->email ) ) {
             inPlayer->curseTokenCount = 1;
             }
@@ -8623,6 +8669,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     char checkCooldown = true;
     char checkLineageLimit = true;
     
+    int forceOffspringLineageID = getOffspringLineageID( newObject.email );
+    clearOffspringLineageID( newObject.email );
+    
+
     for( int p=0; p<3; p++ ) {
     
         for( int i=0; i<numPlayers; i++ ) {
@@ -8641,8 +8691,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 }
 
             GridPos motherPos = getPlayerPos( player );
-            int homeStatus = isHomeland( motherPos.x, motherPos.y,
-                                         player->lineageEveID );
+            int homeStatus = isBirthland( motherPos.x, motherPos.y,
+                                          player->lineageEveID,
+                                          player->displayID );
             
             if( homeStatus == -1 ||
                 ( homeStatus == 0 &&
@@ -8675,6 +8726,19 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 GridPos motherPos = getPlayerPos( player );
                 
                 if( checkLineageLimit &&
+                    forceOffspringLineageID != -1 ) {
+                    // we're trying to force this player to be born
+                    // to their descendants
+                    if( player->lineage->getElementIndex( 
+                            forceOffspringLineageID ) == -1 ) {
+                        // this possible mother is NOT
+                        // a descendant
+                        // skip
+                        continue;
+                        }
+                    }
+                // otherwise, respect normal lineage ban
+                else if( checkLineageLimit &&
                     ! isLinePermitted( newObject.email, motherPos ) ) {
                     // this line forbidden for new player
                     continue;
@@ -8775,7 +8839,14 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         if( p == 1 || p == 2 ) {
             // had to resort to second/third pass with no cool-downs
             
-            if( parentChoices.size() > 0 ) {
+            if( parentChoices.size() > 0 &&
+                forceOffspringLineageID != -1 ) {
+                // we're forcing a baby on an overwhelmed mother (on cooldown)
+                // BUT, this is an offspring placement, so we should assume
+                // the baby is wanted
+                // don't consider spawning this one as Eve
+                }
+            else if( parentChoices.size() > 0 ) {
                 // we're about to force a baby on an overwhelmed mother
                 // how overwhelmed are they?
                 
@@ -9018,6 +9089,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                    inFitnessScore, maxRecentScore );
 
     
+    // don't consider forced-spawn offspring as candidates for a needed Eve
+    if( forceOffspringLineageID == -1 )
     if( inFitnessScore >= maxRecentScore )
     if( parentChoices.size() > 0 ) {
         // make sure one race isn't entirely extinct
@@ -9051,6 +9124,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
 
     
+    if( forceOffspringLineageID == -1 )
     if( inFitnessScore >= maxRecentScore )
     if( parentChoices.size() > 0 ) {
         int generationNumber =
@@ -9259,10 +9333,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.indoorBonusTime = 0;
     newObject.indoorBonusFraction = 0;
 
-
-    newObject.foodDecrementETASeconds =
-        currentTime + 
-        computeFoodDecrementTimeSeconds( &newObject );
+    
+    
                 
     newObject.foodUpdate = true;
     newObject.lastAteID = 0;
@@ -9680,6 +9752,19 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                         &otherPeoplePos, allowEveRespawn, 
                         incrementEvePlacement );
 
+        
+        if( players.size() >= 
+            SettingsManager::getIntSetting( "minActivePlayersForBirthlands", 
+                                            15 )
+            &&
+            SettingsManager::getIntSetting( "specialBiomeBandMode", 0 ) ) {
+            
+            // shift Eve y position into center of her biome band
+            startY = getSpecialBiomeBandYCenterForRace( 
+                getObject( newObject.displayID )->race );
+            }
+        
+
         if( inCurseStatus.curseLevel > 0 ) {
             // keep cursed players away
 
@@ -9741,6 +9826,64 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 Time::getCurrentTime() - forceAge * ( 1.0 / getAgeRate() );
             }
         }
+
+
+    
+    if( SettingsManager::getIntSetting( "maleOverrideEnabled", 0 ) &&
+        getObject( newObject.displayID )->male ) {
+        
+        int targetRace = getObject( newObject.displayID )->race;
+        
+        char *cont = SettingsManager::getSettingContents( "maleOverride" );
+    
+        if( cont != NULL ) {
+            
+            int numParts;
+            char **lines = split( cont, "\n", &numParts );
+
+            delete [] cont;
+    
+            for( int i=0; i<numParts; i++ ) {
+                ForceSpawnRecord r;
+
+                int race = 0;
+
+                int numRead = sscanf(
+                    lines[i],
+                    "%d %d %d %d %d %d %d", 
+                    &race,
+                    &r.displayID,
+                    &r.hatID,
+                    &r.tunicID,
+                    &r.bottomID,
+                    &r.frontShoeID,
+                    &r.backShoeID );
+                        
+                if( numRead == 7 ) {
+                    if( race == targetRace ) {
+                        newObject.displayID = r.displayID;
+        
+                        newObject.clothing.hat = getObject( r.hatID, true );
+                        newObject.clothing.tunic = getObject( r.tunicID, true );
+                        newObject.clothing.bottom =
+                            getObject( r.bottomID, true );
+                        newObject.clothing.frontShoe = 
+                            getObject( r.frontShoeID, true );
+                        newObject.clothing.backShoe = 
+                            getObject( r.backShoeID, true );
+
+                        break;
+                        }
+                    }
+                }
+
+            for( int i=0; i<numParts; i++ ) {
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }        
+        }
+    
     
 
     newObject.holdingID = 0;
@@ -9782,7 +9925,6 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     
 
     if( newObject.curseStatus.curseLevel == 0 &&
-        ! newObject.isTwin &&
         hasCurseToken( inEmail ) ) {
         newObject.curseTokenCount = 1;
         }
@@ -10020,6 +10162,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             lrint( halfLifeFactor * newPlayerFoodDecrementSecondsBonus );
         }
     
+    newObject.foodDecrementETASeconds =
+        currentTime + 
+        computeFoodDecrementTimeSeconds( &newObject );
+
         
     if( forceSpawn ) {
         newObject.forceSpawn = true;
@@ -10050,6 +10196,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         delete [] forceSpawnInfo.firstName;
         delete [] forceSpawnInfo.lastName;
         }
+    
+
+    newObject.lastGlobalMessageTime = 0;
     
 
     newObject.birthPos.x = newObject.xd;
@@ -10281,7 +10430,18 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         }
     
 
-    addRecentScore( newObject.email, inFitnessScore );
+    // don't count in recent score pool for
+    // -- tutorial players
+    // -- players that are cycling back to same family
+    // -- d-town players
+    if( ! newObject.isTutorial
+        &&
+        forceOffspringLineageID == -1  
+        &&
+        newObject.curseStatus.curseLevel == 0 ) {
+        
+        addRecentScore( newObject.email, inFitnessScore );
+        }
     
 
     if( ! newObject.isTutorial )        
@@ -10371,9 +10531,9 @@ static char isMapSpotBlockingForPlayer( LiveObject *inPlayer,
 
     ObjectRecord *o = getObject( oID );
     
-    if( o->isOwned && o->blocksNonAlly ) {
+    if( o->isOwned && o->blocksNonFollower ) {
         
-        if( isMapSpotAllyOwned( inPlayer, inX, inY ) ) {
+        if( isMapSpotLeaderOwned( inPlayer, inX, inY ) ) {
             return false;
             }
         return true;
@@ -14578,7 +14738,8 @@ static void endBiomeSickness(
     // relief emot
     nextPlayer->emotFrozen = false;
     nextPlayer->emotUnfreezeETA = 0;
-        
+    nextPlayer->emotFrozenIndex = 0;
+    
     newEmotPlayerIDs.push_back( 
         nextPlayer->id );
         
@@ -15035,7 +15196,8 @@ static void tryToForceDropHeld(
 // access blocked b/c of access direction or ownership?
 static char isAccessBlocked( LiveObject *inPlayer, 
                              int inTargetX, int inTargetY,
-                             int inTargetID ) {
+                             int inTargetID,
+                             int inHoldingID = 0 ) {
     int target = inTargetID;
     
     int x = inTargetX;
@@ -15071,7 +15233,39 @@ static char isAccessBlocked( LiveObject *inPlayer,
             // make sure player owns this pos
             // (or is part of ally pool that can access it)
             ownershipBlocked = 
-                ! isOwnedOrAllyOwned( inPlayer, x, y );
+                ! isOwnedOrAllyOwned( inPlayer, targetObj, x, y );
+            
+            if( ownershipBlocked && 
+                targetObj->isTempOwned &&
+                inHoldingID > 0 ) {
+                // if they are attempting a transition that leads to a
+                // non-owned object, let it through, because ownership
+                // of the target object is on shaky footing
+                TransRecord *t = getTrans( inHoldingID, inTargetID );
+                if( t != NULL && 
+                    ( t->newTarget <= 0 ||
+                      ! getObject( t->newTarget )->isOwned ) ) {
+                    ownershipBlocked = false;
+                    }
+                }
+            else if( ! ownershipBlocked &&
+                     ! targetObj->isTempOwned &&
+                     inHoldingID > 0 &&
+                     ! isOwned( inPlayer, x, y ) ) {
+                // they're not blocked, but they don't own it directly
+                // their leader must own it
+                // make sure this action isn't going to destroy it
+                // (only a direct owner, not a follower, can destroy owned
+                //  property and convert it into a non-owned object)
+                TransRecord *t = getTrans( inHoldingID, inTargetID );
+                if( t != NULL && 
+                    ( t->newTarget <= 0 ||
+                      ! getObject( t->newTarget )->isOwned ) ) {
+                    ownershipBlocked = true;
+                    }
+                }
+            
+            
 
             if( ownershipBlocked ) {
                 GridPos ourPos = getPlayerPos( inPlayer );
@@ -15209,17 +15403,60 @@ char isHungryWorkBlocked( LiveObject *inPlayer,
 
 
 // returns NULL if not found
-static LiveObject *getPlayerByName( char *inName, LiveObject *inSkip ) {
+static LiveObject *getPlayerByName( char *inName, 
+                                    LiveObject *inPlayerSayingName ) {
     for( int j=0; j<players.size(); j++ ) {
         LiveObject *otherPlayer = players.getElement( j );
         if( ! otherPlayer->error &&
-            otherPlayer != inSkip &&
+            otherPlayer != inPlayerSayingName &&
             otherPlayer->name != NULL &&
             strcmp( otherPlayer->name, inName ) == 0 ) {
             
             return otherPlayer;
             }
         }
+    
+    // no exact match.
+
+    // does name contain no space?
+    char *spacePos = strstr( inName, " " );
+
+    if( spacePos == NULL ) {
+        // try again, using just the first name for each potential target
+
+        // stick a space at the end to forbid matching prefix of someone's name
+        char *firstName = autoSprintf( "%s ", inName );
+
+        LiveObject *matchingPlayer = NULL;
+        double matchingDistance = DBL_MAX;
+        
+        GridPos playerPos = getPlayerPos( inPlayerSayingName );
+        
+
+        for( int j=0; j<players.size(); j++ ) {
+            LiveObject *otherPlayer = players.getElement( j );
+            if( ! otherPlayer->error &&
+                otherPlayer != inPlayerSayingName &&
+                otherPlayer->name != NULL &&
+                // does their name start with firstName
+                strstr( otherPlayer->name, firstName ) == otherPlayer->name ) {
+                
+                GridPos pos = getPlayerPos( otherPlayer );            
+                double d = distance( pos, playerPos );
+                
+                if( d < matchingDistance ) {
+                    matchingDistance = d;
+                    matchingPlayer = otherPlayer;
+                    }
+                }
+            }
+        
+        delete [] firstName;
+
+        return matchingPlayer;
+        }
+        
+
     return NULL;
     }
 
@@ -15228,6 +15465,11 @@ static LiveObject *getPlayerByName( char *inName, LiveObject *inSkip ) {
 
 static void findExpertForPlayer( LiveObject *inPlayer, 
                                  ObjectRecord *inTouchedObject ) {
+    
+    if( ! specialBiomesActive() ) {
+        return;
+        }
+
     int race = getSpecialistRace( inTouchedObject );
     
 
@@ -15555,29 +15797,6 @@ static char isFollower( LiveObject *inLeader, LiveObject *inTestFollower ) {
 static void leaderDied( LiveObject *inLeader ) {
     char *leaderName = getLeadershipName( inLeader );
     
-    SimpleVector<LiveObject*> exiledByThisLeader;
-    
-    for( int i=0; i<players.size(); i++ ) {
-        
-        LiveObject *otherPlayer = players.getElement( i );
-        
-        if( otherPlayer != inLeader &&
-            ! otherPlayer->error ) {
-            
-            int exileIndex = otherPlayer->
-                exiledByIDs.getElementIndex( inLeader->id );
-            
-            if( exileIndex != -1 ) {
-                
-                // we have this other exiled
-                exiledByThisLeader.push_back( otherPlayer );
-                
-                // take ourselves off their list, we're dead
-                otherPlayer->exiledByIDs.deleteElement( exileIndex );
-                otherPlayer->exileUpdate = true;
-                }
-            }
-        }
 
 
     SimpleVector<LiveObject*> oldFollowers;
@@ -15598,26 +15817,63 @@ static void leaderDied( LiveObject *inLeader ) {
         }
 
 
+    // somewhere else in code, we have a condition that sometimes
+    // allows someone to keep following a dead and removed player
+    // this condition can cause a crash when we go to look up that leader's
+    // name
+    // 
+    // check for that here and correct for it, so we don't pass that stale
+    // leader on to others (or cause a crash by looking up their name).
+    if( inLeader->followingID != -1 ) {
+        LiveObject *higherLeader = getLiveObject( inLeader->followingID );
+        
+        if( higherLeader == NULL ||
+            higherLeader->error ) {
+            
+            inLeader->followingID = -1;
+            }
+        }
+
 
     // if leader is following no one (they haven't picked an heir to take over)
     // have them follow their fittest direct follower now automatically
-    
+    // ignore followers that this leader sees as exiled
+    // (unless we have no choice, and they're all exiled)
+
     if( inLeader->followingID == -1 &&
         directFollowers.size() > 0 ) {
         
         LiveObject *fittestFollower = directFollowers.getElementDirect( 0 );
-        double fittestFitness = 0;
+        // -1, because lowest possible score is 0
+        // we will find a non-exiled follower this way
+        double fittestFitness = -1;
         
         for( int i=0; i<directFollowers.size(); i++ ) {
             LiveObject *otherPlayer = directFollowers.getElementDirect( i );
             
-            if( otherPlayer->fitnessScore > fittestFitness ) {
+            if( otherPlayer->fitnessScore > fittestFitness &&
+                ! isExiled( inLeader, otherPlayer ) ) {
                 
                 fittestFitness = otherPlayer->fitnessScore;
                 fittestFollower = otherPlayer;
                 }
             }
         
+        // if all are exiled, then we find fittest follower
+        if( fittestFitness == -1 ) {
+            for( int i=0; i<directFollowers.size(); i++ ) {
+                LiveObject *otherPlayer = directFollowers.getElementDirect( i );
+            
+                // ignore exile status this time
+                if( otherPlayer->fitnessScore > fittestFitness ) {
+                
+                    fittestFitness = otherPlayer->fitnessScore;
+                    fittestFollower = otherPlayer;
+                    }
+                }
+            }
+        
+
         inLeader->followingID = fittestFollower->id;
         
         // they become top of tree, following no one
@@ -15641,6 +15897,34 @@ static void leaderDied( LiveObject *inLeader ) {
         
         sendGlobalMessage( message, fittestFollower );
         delete [] message;
+        }
+
+
+
+    // get list of people that this leader has exiled directly
+    // and clear this leader off their exiled-by lists
+    SimpleVector<LiveObject*> exiledByThisLeader;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        
+        LiveObject *otherPlayer = players.getElement( i );
+        
+        if( otherPlayer != inLeader &&
+            ! otherPlayer->error ) {
+            
+            int exileIndex = otherPlayer->
+                exiledByIDs.getElementIndex( inLeader->id );
+            
+            if( exileIndex != -1 ) {
+                
+                // we have this other exiled
+                exiledByThisLeader.push_back( otherPlayer );
+                
+                // take ourselves off their list, we're dead
+                otherPlayer->exiledByIDs.deleteElement( exileIndex );
+                otherPlayer->exileUpdate = true;
+                }
+            }
         }
 
 
@@ -16711,6 +16995,8 @@ int main() {
     initLineageLimit();
     
     initCurseDB();
+
+    initOffspringTracker();
     
 
 
@@ -17075,6 +17361,21 @@ int main() {
                     nextPlayer->cravingFood.uniqueID < lowestCravingID ) {
                     
                     lowestCravingID = nextPlayer->cravingFood.uniqueID;
+                    }
+
+                // also send queued global messages
+                if( nextPlayer->globalMessageQueue.size() > 0 &&
+                    curStepTime - nextPlayer->lastGlobalMessageTime > 
+                    minGlobalMessageSpacingSeconds ) {
+                    
+                    // send next one
+                    char *message = 
+                        nextPlayer->globalMessageQueue.getElementDirect( 0 );
+                    nextPlayer->globalMessageQueue.deleteElement( 0 );
+                    
+                    sendGlobalMessage( message, nextPlayer );
+                    
+                    delete [] message;
                     }
                 }
             purgeStaleCravings( lowestCravingID );
@@ -18218,14 +18519,19 @@ int main() {
 
                 GridPos deadlyDestPos = curPos;
 
-                if( ! riding && curOverID > 0 ) {
+                if( ! riding ) {
                     // check if player is standing on
-                    // a non-deadly object
+                    // a non-deadly object OR on nothing
                     // if so, moving deadly objects might still be able
                     // to get them
-                    ObjectRecord *curOverObj = getObject( curOverID );
+                    ObjectRecord *curOverObj = NULL;
                     
-                    if( ! curOverObj->permanent ||
+                    if( curOverID > 0 ) {
+                        curOverObj = getObject( curOverID );
+                        }
+                    
+                    if( curOverObj == NULL ||
+                        ! curOverObj->permanent ||
                         curOverObj->deadlyDistance == 0 ) {
                         
                         int movingDestX, movingDestY;
@@ -20111,21 +20417,29 @@ int main() {
                                     // in/out of home
 
                                     int homeStart =
-                                        isHomeland( 
+                                        isBirthland( 
                                             nextPlayer->xs,
                                             nextPlayer->ys,
-                                            nextPlayer->lineageEveID );
+                                            nextPlayer->lineageEveID,
+                                            nextPlayer->displayID );
                                     
                                     int endStep = nextPlayer->pathLength - 1;
                                     
                                     int homeEnd =
-                                        isHomeland( 
+                                        isBirthland( 
                                             nextPlayer->pathToDest[endStep].x,
                                             nextPlayer->pathToDest[endStep].y,
-                                            nextPlayer->lineageEveID );
+                                            nextPlayer->lineageEveID,
+                                            nextPlayer->displayID );
 
                                     char boundaryCross = false;
-                                    if( homeStart == homeEnd &&
+
+                                    // skip this now
+                                    // used to want to emphasize being homesick
+                                    // again when ENTERING another homeland
+                                    // but we don't need to do this anymore
+                                    if( false && 
+                                        homeStart == homeEnd &&
                                         homeEnd == -1 ) {
                                         // player still outside homeland
                                         // but did they cross a boundary
@@ -20630,6 +20944,37 @@ int main() {
                                         break;
                                         }
                                     o = getLiveObject( o->followingID );
+                                    }
+
+                                
+                                if( ! isExiled( otherToFollow,
+                                                nextPlayer )
+                                    && 
+                                    nextPlayer->lineageEveID !=
+                                    otherToFollow->lineageEveID ) {
+
+                                    // tell the new leader about their
+                                    // new follower who is from another family
+
+                                    const char *name = "NAMELESS PERSON";
+                                    if( nextPlayer->name != NULL ) {
+                                        name = nextPlayer->name;
+                                        }
+                                    char *message = autoSprintf( 
+                                        "PS\n"
+                                        "%d/0 OUTSIDER %s IS MY NEW FOLLOWER "
+                                        "*visitor %d *map %d %d\n#",
+                                        otherToFollow->id,
+                                        name,
+                                        nextPlayer->id,
+                                        nextPlayer->xs - 
+                                        otherToFollow->birthPos.x,
+                                        nextPlayer->ys - 
+                                        otherToFollow->birthPos.y );
+                                    sendMessageToPlayer( otherToFollow, 
+                                                         message, 
+                                                         strlen( message ) );
+                                    delete [] message; 
                                     }
                                 }
                             }
@@ -21250,7 +21595,8 @@ int main() {
                             int oldHolding = nextPlayer->holdingID;
                             
                             char accessBlocked =
-                                isAccessBlocked( nextPlayer, m.x, m.y, target );
+                                isAccessBlocked( nextPlayer, m.x, m.y, target,
+                                                 oldHolding );
                             
                             if( accessBlocked ) {
                                 // ignore action from wrong side
@@ -21687,7 +22033,8 @@ int main() {
                                             r = NULL;
                                             }
                                         }
-                                    if( newTargetObj->isBiomeLimited &&
+                                    if( r != NULL &&
+                                        newTargetObj->isBiomeLimited &&
                                         ! canBuildInBiome( 
                                             newTargetObj,
                                             getMapBiome( m.x,
@@ -22392,6 +22739,41 @@ int main() {
                                                                   m.y ) ) ) {
                                             // can't make this object
                                             // in this biome
+                                            canPlace = false;
+                                            }
+                                        else if( newTargetObj->blocksWalking &&
+                                                 ( ( newTargetObj->sideAccess 
+                                                     &&
+                                                     ! isBiomeAllowedForPlayer( 
+                                                         nextPlayer, 
+                                                         m.x - 1, 
+                                                         m.y ) &&
+                                                     ! isBiomeAllowedForPlayer( 
+                                                         nextPlayer, 
+                                                         m.x + 1, 
+                                                         m.y ) )
+                                                   ||
+                                                   ( newTargetObj->noBackAccess
+                                                     &&
+                                                     ! isBiomeAllowedForPlayer( 
+                                                         nextPlayer, 
+                                                         m.x, 
+                                                         m.y - 1 ) )
+                                                   ||
+                                                   ( ! isBiomeAllowedForPlayer( 
+                                                       nextPlayer, 
+                                                       m.x, 
+                                                       m.y + 1 ) &&
+                                                     ! isBiomeAllowedForPlayer( 
+                                                         nextPlayer, 
+                                                         m.x, 
+                                                         m.y - 1 ) ) ) ) {
+                                            // we're setting down something that
+                                            // will block us walking to that 
+                                            // tile again
+                                            // So we'll need to access it from
+                                            // an adjacent tile, and those
+                                            // adjacent tiles are in bad biomes
                                             canPlace = false;
                                             }
                                         }
@@ -24374,9 +24756,9 @@ int main() {
                 nextPlayer->isNew = false;
                 
                 nextPlayer->deleteSent = true;
-                // wait 5 seconds before closing their connection
+                // wait 10 seconds before closing their connection
                 // so they can get the message
-                nextPlayer->deleteSentDoneETA = Time::getCurrentTime() + 5;
+                nextPlayer->deleteSentDoneETA = Time::getCurrentTime() + 10;
                 
                 if( areTriggersEnabled() ) {
                     // add extra time so that rest of triggers can be received
@@ -24452,7 +24834,7 @@ int main() {
                 logFitnessDeath( nextPlayer );
                 
 
-                if( age < shortLifeAge ) {
+                if( ! nextPlayer->isTutorial && age < shortLifeAge ) {
                     addShortLife( nextPlayer->email );
                     }
 
@@ -28710,6 +29092,8 @@ int main() {
                     delete [] nextPlayer->deathReason;
                     }
                 
+                nextPlayer->globalMessageQueue.deallocateStringElements();
+
                 delete nextPlayer->babyBirthTimes;
                 delete nextPlayer->babyIDs;
 
