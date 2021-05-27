@@ -90,9 +90,35 @@ echo -n 0 > settings/reportWildBugToUser.ini
 # don't use internal updater
 echo -n 1 > settings/useSteamUpdate.ini
 
+cd ..
+
+rm steamLatest.tar.gz
+tar czf steamLatest.tar.gz steamLatest
 
 
-/c/steamSDK/tools/ContentBuilder/builder/steamcmd.exe +login "jasonrohrergames" +run_app_build -desc OneLifeClient_Windows_v$2 /c/cpp/OneLife/build/steam/app_build_windows_595690.vdf +quit
+echo
+echo -n "Press ENTER to scp steamLatest bundle to web server."
+
+read userIn
+
+
+
+scp steamLatest.tar.gz jcr15@onehouronelife.com: 
+
+
+echo
+echo -n "Press ENTER to run remote steam build process."
+
+read userIn
+
+
+# new, run remotely
+ssh jcr15@onehouronelife.com 'rm -rf steamLatest; tar xzf steamLatest.tar.gz; cd ~/checkout/OneLifeWorking; git pull; ~/checkout/OneLifeWorking/scripts/runWindowsSteamDepotBuild.sh'
+
+
+
+# Old, run locally
+# /c/steamSDK/tools/ContentBuilder/builder/steamcmd.exe +login "jasonrohrergames" +run_app_build -desc OneLifeClient_Windows_v$2 /c/cpp/OneLife/build/steam/app_build_windows_595690.vdf +quit
 
 echo
 echo "Steam depot build is done."
