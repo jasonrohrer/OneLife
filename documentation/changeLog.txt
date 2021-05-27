@@ -4,6 +4,150 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 364    2021-May-26
+
+--Network stats command is now /NETWORK to avoid blocking crafting filter
+  for /NET.  Fixes #692
+
+--Tweaked hint sheet paper sprite position to keep text from getting too close
+  to edge.
+
+--Merged pull requiest #665, fixing out of range sound bug.  Thanks Justin L.
+
+
+
+
+
+Server Fixes
+
+--Expert waystones no longer point you to an expert in a low population
+  situation where specialist biomes are disabled.  Fixes #695
+
+--Fixed so that non-follower gates don't accidentally work like follower gates.
+  Forgot to check a separate case when testing for gate ownership.  Fixes #689
+
+--Fixed so that shaky gates can be destroyed by non-owners (whoops) and so that
+  follower gates can be opened by followers, but can only be destroyed by the
+  actual owners.  Fixes #688
+
+--Apocalypse is impossible if there are less than 15 players on server.
+  Fixes #693
+
+--Fixed so that deadly animal passing over an empty tile (in a 2 or more tile
+  jump) can still attack you if you're standing there (before, it could only
+  attack you if the tile was non-empty).  Fixes #690
+
+--Fixed so that you can't set a blocking object down in a sliver of good biome,
+  surrounded by bad biome, in such a way that you are blocked from reaching it
+  to pick it back up again.  Fixes #694
+
+--Special biomes now occur in horizontal bands, 200 tiles thick, with snow to
+  the north, then mountain, then jungle, and then desert to the south, and
+  mountain outside of those bands farther north and south.
+
+--Homelands for birth now coincide with the special biome bands.  Outside of
+  your home band, you can't have babies.
+ 
+--Eve Y location shifted up into center of her homeland biome band.
+
+--When an outsider (non family member) follows you, who you haven't exiled yet,
+  you get a notice about it and an arrow pointing toward them.  A visitor to
+  your follower gate can see your name and follow you to come through your
+  gate, so now you get a notice that they've done this, and you can go to deal
+  with them if needed.
+
+--Fixed crash when informing a leader about a new follower and there's a
+  leadership loop.
+
+--New player food decrement bonus 18 seconds (was 12).
+
+--New system that allows you to get reborn to your descendants in your next
+  life if you live to old age.  For women, descendants are children,
+  grandchildren, etc.  For men, descendants are nieces, grand-nieces, etc.,
+  and in rare cases, much-younger sisters.  Descendants are tracked for 1024 
+  generations (10 days).  This means that if you die of old age in your last
+  life today, and come back to play again a few days later, you will be born to
+  your descendants if they're still alive.  This preference for getting born to
+  descendants will override Eve placement and mother birth cooldowns, but not
+  curses.  Dying even slightly younger than 60 will break you out of getting
+  born to your descendants again.
+
+--Fixed special biome band placement so that boundary does not line up with
+  natural spring lines.  Shifted all bands north by 20.  Fixes #709
+
+--You can now exile, redeem, forgive, give ownership to, etc. someone using
+  just their first name, and it will find the closest person with that first
+  name.  This works for anything but curses, which still require you to say
+  their full name, to curse them by name.  Fixes #710
+
+--When a leaderless leader dies, and we pick their fittest follower to take
+  over as leader, we now ignore exiled followers (unless we have no choice, and
+  all followers are exiled).  Fixes #708
+
+--If multiple DING messages would be sent to client at same time, making them
+  pass by instantly and be unreadable, the server queues them up instead and
+  sends one to the client every 7 seconds.  Fixes #723
+
+--Server now keeps client connection open longer (10 seconds, was 5 seconds)
+  after sending death message to client.  This should reduce the chance that
+  the connection is closed before the client receives and processes the
+  message.  Fixes #726
+
+--Fixed so that victim or terrified emote does not stop incorrect after victim
+  steps out of a bad biome (biome relief emote code was interfering with it).
+
+--Fixed detection of out-of-band situation so that language-specialist family
+  isn't fertile out of band to far north of far south. Fixes #725
+
+--Moved south-most desert band 2 tiles further south, to leave a gap between
+  jungle and desert, so that folks who get sick in both biomes don't face an
+  uncrossable boundary between jungle and desert (crossing code assumes there
+  is a grey biome gap between specialty biomes).
+
+--Fixed server crash when a leader dies who is still following a stale,
+  dead-and-removed leader.
+
+--Fixed a few instances of char to signed char, because on Rasberry Pi, char
+  defaults to unsigned.
+
+--Fixed so that extreme homeland outliers can't shift average unilaterally and
+  screw up placement of future Eves.  We now discard the largest outliers one
+  by one until all considered homelands are 1500 from the remaining average x
+  position.
+
+--Reduced outlier radius to 500 (was 1500) when computing cluster of existing
+  homelands for next Eve placement.
+
+--Tutorial lives don't count toward last-life-was-short trigger for
+  posse-joining restrictions.
+
+--Fixed so that when we're tracking a window of the ten highest-fitness recent
+  players, to judge the fitness level for the next Eve player, we don't count
+  players that aren't Eve eligible for other reasons (tutorial players, d-town
+  players, or players that are cycling back to the same family again).
+
+--Unblocked twins/trips/quads from earning curse tokens.
+
+--Unblocked twins/trips/quads from cursing other players.
+
+--Only considering primary homelands when looking at homeland cluster for Eve
+  placement, so one family can't spam wells to swamp the cluster average
+  location.
+
+--Min active players for specialty biomes increased to 30 (was 15).
+
+--Male override support.
+
+--Special logging of eve placement relative to non-outlier homelands.
+
+--Realized that many families don't have primary homelands, since they resettle
+  old villages and don't necessarily tap out new iron.  Thus, for detecting
+  homeland cluster for future Eve placement, we now use each family's first
+  homeland instead of only their primary one.
+
+
+
+
 Version 361    2020-September-25
 
 NOTE:  Must update server and data this week before client.

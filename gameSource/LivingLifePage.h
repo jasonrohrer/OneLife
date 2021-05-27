@@ -763,6 +763,9 @@ class LivingLifePage : public GamePage, public ActionListener {
         
         doublePair mHintExtraOffset[NUM_HINT_SHEETS];
 
+        double mHintSheetXTweak[NUM_HINT_SHEETS];
+        
+
         // # separates lines
         char *mHintMessage[NUM_HINT_SHEETS];
         int mHintMessageIndex[NUM_HINT_SHEETS];

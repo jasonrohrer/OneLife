@@ -2921,8 +2921,12 @@ LivingLifePage::LivingLifePage()
         mHintMessageIndex[i] = 0;
         
         mNumTotalHints[i] = 0;
+        mHintSheetXTweak[i] = 0;
         }
-    
+    // manual tweaks
+    mHintSheetXTweak[1] = -6;
+    mHintSheetXTweak[2] = -4;
+
     mLiveHintSheetIndex = -1;
 
     mForceHintRefresh = false;
@@ -9693,7 +9697,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 drawSprite( mHintSheetSprites[i], sheetPos, sheetCoords );
                 }
             else {
-                drawSprite( mHintSheetSprites[i], hintPos, gui_fov_scale_hud );
+                doublePair sheetSpritePos = hintPos;
+                sheetSpritePos.x += mHintSheetXTweak[i];
+                
+                drawSprite( mHintSheetSprites[i], sheetSpritePos, gui_fov_scale_hud );
                 }
             
 
@@ -21207,7 +21214,7 @@ void LivingLifePage::step() {
             o->heldFrozenRotFrameCount += animSpeed / BASE_SPEED;
             }
         
-        if( o->holdingID > 0 ) {
+        if( o->holdingID > 0 && ! o->outOfRange ) {
             handleAnimSound( o->id,
                              o->holdingID, 0, o->curHeldAnim,
                              oldFrameCount, o->heldAnimationFrameCount,

@@ -393,6 +393,8 @@ typedef struct ObjectRecord {
         char isFlightLanding;
         
         char isOwned;
+        char isTempOwned;
+        char isFollowerOwned;
         
         char noHighlight;
         
@@ -469,9 +471,9 @@ typedef struct ObjectRecord {
         char varIsNumeral;
 
         
-        // true if generally non-blocking, but should block non-allies
+        // true if generally non-blocking, but should block non-followers
         // of owners
-        char blocksNonAlly;
+        char blocksNonFollower;
 
         char hasBadgePos;
         doublePair badgePos;
