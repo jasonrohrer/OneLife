@@ -4,13 +4,16 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 363    ???
+Version 364    2021-May-26
 
 --Network stats command is now /NETWORK to avoid blocking crafting filter
   for /NET.  Fixes #692
 
 --Tweaked hint sheet paper sprite position to keep text from getting too close
   to edge.
+
+--Merged pull requiest #665, fixing out of range sound bug.  Thanks Justin L.
+
 
 
 
