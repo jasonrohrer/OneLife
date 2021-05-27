@@ -1,0 +1,111 @@
+// script for windows client depot
+// this is built on a windows machine
+
+"DepotBuildConfig"
+{
+	// Set your assigned depot ID here
+	"DepotID" "595692"
+
+	// Set a root for all content.
+	// All relative paths specified below (LocalPath in FileMapping entries, and FileExclusion paths)
+	// will be resolved relative to this root.
+	// If you don't define ContentRoot, then it will be assumed to be
+	// the location of this script file, which probably isn't what you want
+	
+	// this is the location of the latest data as created by 
+	// generateDataOnlyDiffBundle
+	"ContentRoot"	"/home/jcr15/steamLatest"
+
+	// include all files recursivley
+  "FileMapping"
+  {
+  	// This can be a full path, or a path relative to ContentRoot
+    "LocalPath" "*"
+    
+    // This is a path relative to the install folder of your game
+    "DepotPath" "."
+    
+    // If LocalPath contains wildcards, setting this means that all
+    // matching files within subdirectories of LocalPath will also
+    // be included.
+    "recursive" "1"
+  }
+
+	// but exclude all symbol files  
+	// This can be a full path, or a path relative to ContentRoot
+   //"FileExclusion" "*.pdb"
+
+
+
+ // these files will be modified during runtime
+ // don't overwrite them with default values during update/verify
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\borderless.ini" 
+      "Attributes" "userconfig" 
+    }
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\customServerAddress.ini" 
+      "Attributes" "userconfig" 
+    }
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\customServerPort.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\fullscreen.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\loginSuccess.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\musicLoudness.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\soundEffectsLoudness.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\tutorialDone.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\twinCode.ini" 
+      "Attributes" "userconfig" 
+    }
+
+
+	"FileProperties" 
+    { 
+      "LocalPath" "settings\\useCustomServer.ini" 
+      "Attributes" "userconfig" 
+    }
+
+}
