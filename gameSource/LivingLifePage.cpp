@@ -21855,7 +21855,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 mZKeyDown = true;
                 }
             break;
-        case ' ':
+        case 'f':
+        case 'F':
             if( ! mSayField.isFocused() ) {
                 shouldMoveCamera = false;
                 }
@@ -22369,7 +22370,8 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
         case 'Z':
             mZKeyDown = false;
             break;
-        case ' ':
+        case 'f':
+        case 'F':
             shouldMoveCamera = true;
             break;
         }
