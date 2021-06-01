@@ -388,7 +388,7 @@ dieCommand "/DIE"
 
 fpsCommand "/FPS"
 
-netCommand "/NET"
+netCommand "/NETWORK"
 
 pingCommand "/PING"
 
