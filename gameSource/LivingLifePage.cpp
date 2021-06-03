@@ -8662,7 +8662,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
     if ( showHelp && closeMessage != NULL ) {
     	setDrawColor( 0.4f, 0.1f, 0.1f, 1 );
-		handwritingFont->drawString( closeMessage, { lastScreenViewCenter.x - 0.5 * handwritingFont->measureString( closeMessage ), lastScreenViewCenter.y - 285 }, alignLeft );
+		handwritingFont->drawString( closeMessage, { lastScreenViewCenter.x - 0.5 * handwritingFont->measureString( closeMessage ), lastScreenViewCenter.y - 285 * gui_fov_scale }, alignLeft );
     }
 
     if( ourLiveObject != NULL &&
@@ -15757,6 +15757,35 @@ void LivingLifePage::step() {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonSID" ) );
                             }
+                        else if( strcmp( reasonString, "suicide" ) == 0 ) {
+                            ObjectRecord *holdingO = NULL;
+
+                            if( ourLiveObject->holdingID > 0 ) {
+                                holdingO = getObject( ourLiveObject->holdingID );
+                                }
+
+                            if( holdingO == NULL ) {
+                                mDeathReason = autoSprintf( 
+                                    "%s%s",
+                                    translate( "reasonKilled" ),
+                                    translate( "you" ) );
+                                }
+                            else {
+
+                                char *stringUpper = stringToUpperCase( 
+                                    holdingO->description );
+
+                                stripDescriptionComment( stringUpper );
+
+
+                                mDeathReason = autoSprintf( 
+                                    "%s%s",
+                                    translate( "reasonKilled" ),
+                                    stringUpper );
+
+                                delete [] stringUpper;
+                                }
+                            }
                         else if( strcmp( reasonString, "age" ) == 0 ) {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonOldAge" ) );
@@ -21855,7 +21884,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 mZKeyDown = true;
                 }
             break;
-        case ' ':
+        case 'f':
+        case 'F':
             if( ! mSayField.isFocused() ) {
                 shouldMoveCamera = false;
                 }
@@ -21975,8 +22005,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 }
                             else if( strstr( typedText,
                                              translate( "dieCommand" ) ) 
-                                     == typedText &&
-                                     computeCurrentAge( ourLiveObject ) < 2 ) {
+                                     == typedText ) {
                                 // die command issued from baby
                                 char *message = 
                                     autoSprintf( "DIE 0 0#" );
@@ -22369,7 +22398,8 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
         case 'Z':
             mZKeyDown = false;
             break;
-        case ' ':
+        case 'f':
+        case 'F':
             shouldMoveCamera = true;
             break;
         }

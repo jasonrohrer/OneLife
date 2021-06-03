@@ -207,7 +207,7 @@ void setFOVScale() {
 	SettingsManager::setSetting( "fovDefault", gui_fov_scale );
 	SettingsManager::setSetting( "fovScale", gui_fov_scale );
 
-    gui_fov_preferred_max_scale = SettingsManager::getFloatSetting( "fovMax", 3.0f );
+    gui_fov_preferred_max_scale = SettingsManager::getFloatSetting( "fovMax", 2.25f );
     if( ! gui_fov_preferred_max_scale || gui_fov_preferred_max_scale < 1 )
 		gui_fov_preferred_max_scale = 1.0f;
 	else if ( gui_fov_preferred_max_scale > 6 )
