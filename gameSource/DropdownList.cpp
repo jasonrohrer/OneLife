@@ -185,6 +185,8 @@ void DropdownList::setList( const char *inText ) {
 	
 	for( int i=0; i<numLines; i++ ) {
 		
+		if( i == 0 ) setText( lines[i] );
+		
 		if( strcmp( lines[i], "" ) != 0 ) {
 			mRawText = concatonate( mRawText, lines[i] );
 			mRawText = concatonate( mRawText, "\n" );
@@ -208,26 +210,33 @@ void DropdownList::setList( const char *inText ) {
 
 
 char *DropdownList::getAndUpdateList() {
-	if( strcmp( mText, "" ) != 0 ) {
-		
-		bool duplicated = false;
-		
+	
+	char *newList = "";
+	
+	if( strcmp( mRawText, "" ) != 0 ) {
 		int numLines;
 		char **lines = split( mRawText, "\n", &numLines );
 		
 		for( int i=0; i<numLines; i++ ) {
-			if( strcmp( mText, lines[i] ) == 0 ) duplicated = true;
+			if( strcmp( mText, lines[i] ) != 0 ) {
+				newList = concatonate( newList, "\n" );
+				newList = concatonate( newList, lines[i] );
+				}
 			delete [] lines[i];
 			}
 		delete [] lines;
 		
-		if( !duplicated ) {
-			if( strcmp( mRawText, "" ) != 0 ) mRawText = concatonate( "\n", mRawText );
-			mRawText = concatonate( mText, mRawText );
-			}
-			
+		newList = trimWhitespace( newList );
+		if( strcmp( newList, "" ) != 0 ) newList = concatonate( "\n", newList );
 		}
-    return stringDuplicate( mRawText );
+	
+	newList = concatonate( mText, newList );
+	
+	delete [] mRawText;
+	mRawText = stringDuplicate( newList );
+	delete [] newList;
+	
+	return stringDuplicate( mRawText );
     }
 	
 	
