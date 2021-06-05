@@ -617,6 +617,9 @@ void DropdownList::draw() {
 				doublePair linePos = { centerPos.x, centerPos.y - (i + 1) * mHigh };
 				float backgroundAlpha = 0.3;
 				if( hoverIndex == i ) backgroundAlpha = 0.7;
+				setDrawColor( 0, 0, 0, 1 );
+				drawRect( - mWide / 2, linePos.y - mHigh / 2, 
+					mWide / 2, linePos.y + mHigh / 2 );
 				setDrawColor( 1, 1, 1, backgroundAlpha );
 				drawRect( - mWide / 2, linePos.y - mHigh / 2, 
 					mWide / 2, linePos.y + mHigh / 2 );
