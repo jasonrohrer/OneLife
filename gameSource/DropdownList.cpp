@@ -1,4 +1,5 @@
 #include "DropdownList.h"
+#include "TextField.h"
 
 #include <string.h>
 
@@ -1383,6 +1384,8 @@ void DropdownList::focus() {
         // unfocus last focused
         sFocusedDropdownList->unfocus();
         }
+		
+    TextField::unfocusAll();
 
     mFocused = true;
     sFocusedDropdownList = this;
