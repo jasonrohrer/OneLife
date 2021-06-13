@@ -14,6 +14,14 @@ Server Fixes
   until 0 active players (and no 0 active players and 0 new connections) before
   shutting down.
 
+--Added an ipBanList, for IP addresses that make 10 bad connections to a server
+  in a row (badly formatted messages, failure to login in a timely manner, 
+  etc.).  After 10 bad connections, that IP is insta-rejected for 5 minutes
+  before it can try making another connection.  If a bot is hammering the
+  server long-term, that cool-down time for the IP will grow over time, beyond
+  5 minutes.
+
+
 
 
 Version 364    2021-May-26

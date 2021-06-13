@@ -64,6 +64,7 @@ eveMovingGrid.cpp \
 specialBiomes.cpp \
 cravings.cpp \
 offspringTracker.cpp \
+ipBanList.cpp \
 
 
 

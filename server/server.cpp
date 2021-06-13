@@ -59,6 +59,7 @@
 #include "specialBiomes.h"
 #include "cravings.h"
 #include "offspringTracker.h"
+#include "ipBanList.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -642,6 +643,9 @@ typedef struct FreshConnection {
         // for tracking connections that have failed to LOGIN 
         // in a timely manner
         double connectionStartTimeSeconds;
+
+        char *ipAddress;
+
 
         char *email;
         
@@ -2049,6 +2053,10 @@ static void deleteMembers( FreshConnection *inConnection ) {
         delete inConnection->ticketServerRequest;
         }
     
+    if( inConnection->ipAddress != NULL ) {
+        delete [] inConnection->ipAddress;
+        }
+
     if( inConnection->email != NULL ) {
         delete [] inConnection->email;
         }
@@ -2275,6 +2283,8 @@ void quitCleanup() {
     
     freeOffspringTracker();
     
+    freeIPBanList();
+
 
     freeMap();
 
@@ -17008,6 +17018,7 @@ int main() {
 
     initOffspringTracker();
     
+    initIPBanList();
 
 
     char rebuilding;
@@ -17619,18 +17630,46 @@ int main() {
 
             if( sock != NULL ) {
                 HostAddress *a = sock->getRemoteHostAddress();
+
+                if( a == NULL ) {
+                    // reject connection from unknown address
+                    delete sock;
+                    sock = NULL;
+                    }
+                else {
+                    if( isIPBanned( a->mAddressString ) ) {
+                        // reject connection from banned IP
+                        // don't even print a log message about this
+                        // save disk space when we are getting hammered by bots
+                        delete sock;
+                        sock = NULL;
+                        }
+                    delete a;
+                    }
+                }
+            
+
+            if( sock != NULL ) {
+                FreshConnection newConnection;
+
+                HostAddress *a = sock->getRemoteHostAddress();
                 
                 if( a == NULL ) {    
                     AppLog::info( "Got connection from unknown address" );
+                    
+                    newConnection.ipAddress = stringDuplicate( "" );
                     }
                 else {
                     AppLog::infoF( "Got connection from %s:%d",
                                   a->mAddressString, a->mPort );
+                    
+                    newConnection.ipAddress = 
+                        stringDuplicate( a->mAddressString );
+
                     delete a;
                     }
             
 
-                FreshConnection newConnection;
                 
                 newConnection.connectionStartTimeSeconds = 
                     Time::getCurrentTime();
@@ -18064,6 +18103,8 @@ int main() {
                         // force connection close right away
                         // don't send REJECTED message and wait
                         nextConnection->rejectedSendTime = 1;
+                        
+                        addBadConnectionForIP( nextConnection->ipAddress );
                         }
                     }
                 
@@ -18299,6 +18340,8 @@ int main() {
                         // force connection close right away
                         // don't send REJECTED message and wait
                         nextConnection->rejectedSendTime = 1;
+
+                        addBadConnectionForIP( nextConnection->ipAddress );
                         }
                     
                     delete [] message;
@@ -18316,6 +18359,14 @@ int main() {
                     nextConnection->error = true;
                     nextConnection->errorCauseString =
                         "Login timeout";
+                    
+                    // note that this is a less noxious offense than sending
+                    // bad first messages
+                    // A slow client could do this innocently sometimes
+                    // but if they do it repeatedly, we ban them for a while.
+                    // Because a DDOS attack could just connect and sit there
+                    // silently, to fill up slots.
+                    addBadConnectionForIP( nextConnection->ipAddress );    
                     }
                 }
             }
@@ -18345,6 +18396,8 @@ int main() {
                     
                 nextConnection->errorCauseString =
                     "Socket read failed";
+                
+                addBadConnectionForIP( nextConnection->ipAddress );        
                 }
             }
             
