@@ -4,6 +4,18 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--Web bots hammering the server will no longer fill up possible player slots,
+  since we notice that they aren't sending OHOL protocol messages and
+  disconnect them immediately (before, we gave them a 10-second grace period to
+  send a valid message, which consumed a connection slot).  They will also not
+  prevent the server from shutting down gracefully, since we now only wait
+  until 0 active players (and no 0 active players and 0 new connections) before
+  shutting down.
+
+
+
 Version 364    2021-May-26
 
 --Network stats command is now /NETWORK to avoid blocking crafting filter

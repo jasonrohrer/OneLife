@@ -2539,7 +2539,14 @@ char readSocketFull( Socket *inSock, SimpleVector<char> *inBuffer ) {
 
 
 // NULL if there's no full message available
-char *getNextClientMessage( SimpleVector<char> *inBuffer ) {
+// if inLoginMessageOnly true, then we look for messages that start with
+// LOGIN or RLOGIN, and count sufficiently long messages that don't
+// start with either string as NONSENSE (this allows us to instantly reject 
+// web requests and other non-OHOL messages that don't end with # and don't
+// exceed our 200 char limit)
+char *getNextClientMessage( SimpleVector<char> *inBuffer,
+                            char inLoginMessageOnly = false ) {
+
     // find first terminal character #
 
     int index = inBuffer->getElementIndex( '#' );
@@ -2557,6 +2564,25 @@ char *getNextClientMessage( SimpleVector<char> *inBuffer ) {
             
             return stringDuplicate( "NONSENSE 0 0" );
             }
+        else if( inLoginMessageOnly && inBuffer->size() >= 6 ) {
+            char *buffString = inBuffer->getElementString();
+            
+            if( strstr( buffString, "LOGIN" ) != buffString &&
+                strstr( buffString, "RLOGIN" ) != buffString ) {
+                delete [] buffString;
+                
+                AppLog::info( 
+                    "More than 6 characters in client receive buffer "
+                    "with no LOGIN or RLOGIN present, when inLoginMessageOnly "
+                    "set, generating NONSENSE message." );
+                
+                return stringDuplicate( "NONSENSE 0 0" );
+                }
+            
+            delete [] buffString;
+            }
+        
+
 
         return NULL;
         }
@@ -18004,10 +18030,41 @@ int main() {
                 
                 if( ! nextConnection->shutdownMode ) {
                     message = 
-                        getNextClientMessage( nextConnection->sockBuffer );
+                        getNextClientMessage( nextConnection->sockBuffer,
+                                              // treat non-LOGIN and non-RLOGIN
+                                              // messages as NONSENSE
+                                              true );
                     }
                 else {
                     timeLimit = 5;
+
+                    
+                    // client shouldn't be sending anything after
+                    // they see shutdown message
+                    // If we do receive something, it's probably a non
+                    // client or a web bot, sending us junk
+                    // don't keep a connection open to them
+                    message = 
+                        getNextClientMessage( nextConnection->sockBuffer,
+                                              // treat non-LOGIN and non-RLOGIN
+                                              // messages as NONSENSE
+                                              true );
+                    if( message != NULL ) {
+                        delete [] message;
+                        message = NULL;
+                        
+                        AppLog::info( "Client incorrectly sent a message "
+                                      "after receiving SHUTDOWN or SERVER_FULL "
+                                      "message, "
+                                      "client rejected immediately." );
+                        nextConnection->error = true;
+                        nextConnection->errorCauseString =
+                            "Unexpected post-shutdown message";
+                        
+                        // force connection close right away
+                        // don't send REJECTED message and wait
+                        nextConnection->rejectedSendTime = 1;
+                        }
                     }
                 
                 if( message != NULL ) {
@@ -18221,6 +18278,11 @@ int main() {
                             nextConnection->error = true;
                             nextConnection->errorCauseString =
                                 "Bad login message";
+                            
+                            // close connection with REJECTED
+                            // message and grace period
+                            // they at least tried to send a LOGIN
+                            // message of some kind
                             }
 
 
@@ -18229,10 +18291,14 @@ int main() {
                         }
                     else {
                         AppLog::info( "Client's first message not LOGIN, "
-                                      "client rejected." );
+                                      "client rejected immediately." );
                         nextConnection->error = true;
                         nextConnection->errorCauseString =
                             "Unexpected first message";
+                        
+                        // force connection close right away
+                        // don't send REJECTED message and wait
+                        nextConnection->rejectedSendTime = 1;
                         }
                     
                     delete [] message;
@@ -29087,9 +29153,9 @@ int main() {
             }
 
 
-        if( players.size() == 0 && newConnections.size() == 0 ) {
+        if( players.size() == 0 ) {
             if( shutdownMode ) {
-                AppLog::info( "No live players or connections in shutdown " 
+                AppLog::info( "No live players in shutdown " 
                               " mode, auto-quitting." );
                 quit = true;
                 }
