@@ -129,12 +129,12 @@ SettingsPage::SettingsPage()
     mEnableNudeBox.setToggled( mEnableNudeSetting );
 	
 	mEnableFOVSetting =
-        SettingsManager::getIntSetting( "fovEnabled", 1 );
+        SettingsManager::getIntSetting( "fovEnabled", 0 );
 	
 	mEnableFOVBox.setToggled( mEnableFOVSetting );
     
 	mEnableKActionsSetting =
-        SettingsManager::getIntSetting( "keyboardActions", 1 );
+        SettingsManager::getIntSetting( "keyboardActions", 0 );
 	
 	mEnableKActionsBox.setToggled( mEnableKActionsSetting );
     
