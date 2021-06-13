@@ -15,6 +15,8 @@
 #include "objectBank.h"
 #include "buttonStyle.h"
 
+#include "DropdownList.h"
+
 
 extern Font *mainFont;
 
@@ -161,10 +163,10 @@ SettingsPage::~SettingsPage() {
 void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mBackButton ) {
         
-        char *seed = mSpawnSeed.getText();
+        char *seedList = mSpawnSeed.getAndUpdateList();
         
-        SettingsManager::setSetting( "spawnSeed", seed );
-        delete [] seed;
+        SettingsManager::setSetting( "spawnSeed", seedList );
+        delete [] seedList;
         
         setSignal( "back" );
         setMusicLoudness( 0 );
@@ -418,10 +420,10 @@ void SettingsPage::makeActive( char inFresh ) {
 
 
         char *seed = 
-            SettingsManager::getStringSetting( "spawnSeed",
+            SettingsManager::getSettingContents( "spawnSeed",
                                                "" );
         
-        mSpawnSeed.setText( seed );
+        mSpawnSeed.setList( seed );
         
         delete [] seed;
         

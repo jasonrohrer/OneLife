@@ -11943,17 +11943,25 @@ void LivingLifePage::step() {
             if( strlen( userEmail ) > 0 ) {
                 std::string seededEmail = std::string( userEmail );
 
-                // If user doesn't have a seed in their email field
-                if( seededEmail.find('|') == std::string::npos ) {
-                    std::string seed = SettingsManager::getStringSetting( "spawnSeed", "" );
+				// If user doesn't have a seed in their email field
+				if( seededEmail.find('|') == std::string::npos ) {
+					std::string seedList = SettingsManager::getSettingContents( "spawnSeed", "" );
+					std::string seed = "";
+					if( seedList == "" ) {
+						seed = "";
+					} else if( seedList.find('\n') == std::string::npos ) {
+						seed = seedList;
+					} else if( seedList.find('\n') != std::string::npos ) {
+						seed = seedList.substr( 0, seedList.find('\n') );
+					}
 
-                    // And if the user has a seed set in settings
-                    if( seed != "" ) {
-                        // Add seed delim and then seed
-                        seededEmail += '|';
-                        seededEmail += seed;
-                        }
-                    }
+					// And if the user has a seed set in settings
+					if( seed != "" ) {
+						// Add seed delim and then seed
+						seededEmail += '|';
+						seededEmail += seed;
+						}
+					}
 
                 tempEmail = stringDuplicate( seededEmail.c_str() );
                 }

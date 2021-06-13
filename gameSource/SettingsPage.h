@@ -5,6 +5,7 @@
 #include "RadioButtonSet.h"
 #include "ValueSlider.h"
 #include "SoundUsage.h"
+#include "DropdownList.h"
 
 
 #include "minorGems/ui/event/ActionListener.h"
@@ -61,7 +62,7 @@ class SettingsPage : public GamePage, public ActionListener {
         ValueSlider mSoundEffectsLoudnessSlider;
 
 
-        TextField mSpawnSeed;
+        DropdownList mSpawnSeed;
 
         RadioButtonSet *mCursorModeSet;
         

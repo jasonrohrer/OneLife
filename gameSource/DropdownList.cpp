@@ -1,5 +1,5 @@
-#include "TextField.h"
 #include "DropdownList.h"
+#include "TextField.h"
 
 #include <string.h>
 
@@ -13,17 +13,17 @@
 
 
 // start:  none focused
-TextField *TextField::sFocusedTextField = NULL;
+DropdownList *DropdownList::sFocusedDropdownList = NULL;
 
 extern double frameRateFactor;
 
-int TextField::sDeleteFirstDelaySteps = 30 / frameRateFactor;
-int TextField::sDeleteNextDelaySteps = 2 / frameRateFactor;
+int DropdownList::sDeleteFirstDelaySteps = 30 / frameRateFactor;
+int DropdownList::sDeleteNextDelaySteps = 2 / frameRateFactor;
 
 
 
 
-TextField::TextField( Font *inDisplayFont, 
+DropdownList::DropdownList( Font *inDisplayFont, 
                       double inX, double inY, int inCharsWide,
                       char inForceCaps,
                       const char *inLabelText,
@@ -41,6 +41,11 @@ TextField::TextField( Font *inDisplayFont,
           mForceCaps( inForceCaps ),
           mLabelText( NULL ),
           mAllowedChars( NULL ), mForbiddenChars( NULL ),
+		  
+		  mRawText( new char[1] ),
+		  hoverIndex( -1 ),
+		  nearRightEdge( 0 ),
+		  
           mFocused( false ), mText( new char[1] ),
           mTextLen( 0 ),
           mCursorPosition( 0 ),
@@ -54,7 +59,8 @@ TextField::TextField( Font *inDisplayFont,
           mSelectionStart( -1 ),
           mSelectionEnd( -1 ),
           mShiftPlusArrowsCanSelect( false ),
-          mCursorFlashSteps( 0 ) {
+          mCursorFlashSteps( 0 ),
+          mUsePasteShortcut( false ) {
     
     if( inLabelText != NULL ) {
         mLabelText = stringDuplicate( inLabelText );
@@ -119,10 +125,10 @@ TextField::TextField( Font *inDisplayFont,
 
 
 
-TextField::~TextField() {
-    if( this == sFocusedTextField ) {
+DropdownList::~DropdownList() {
+    if( this == sFocusedDropdownList ) {
         // we're focused, now nothing is focused
-        sFocusedTextField = NULL;
+        sFocusedDropdownList = NULL;
         }
 
     delete [] mText;
@@ -149,18 +155,15 @@ TextField::~TextField() {
 
 
 
-void TextField::setContentsHidden( char inHidden ) {
+void DropdownList::setContentsHidden( char inHidden ) {
     mContentsHidden = inHidden;
     }
 
 
 
 
-void TextField::setText( const char *inText ) {
-    delete [] mText;
-    
-    mSelectionStart = -1;
-    mSelectionEnd = -1;
+void DropdownList::setList( const char *inText ) {
+    delete [] mRawText;
 
     // obeys same rules as typing (skip blocked characters)
     SimpleVector<char> filteredText;
@@ -174,8 +177,78 @@ void TextField::setText( const char *inText ) {
             }
         }
     
+	char *rawStringWithEmptyLines = filteredText.getElementString();
+	int numLines;
+	char **lines = split( rawStringWithEmptyLines, "\n", &numLines );
+	delete [] rawStringWithEmptyLines;
+	
+	mRawText = "";
+	
+	for( int i=0; i<numLines; i++ ) {
+		
+		if( i == 0 ) setText( lines[i] );
+		
+		if( strcmp( lines[i], "" ) != 0 ) {
+			mRawText = concatonate( mRawText, lines[i] );
+			mRawText = concatonate( mRawText, "\n" );
+			}
+		
+		delete [] lines[i];
+		}
+	delete [] lines;
+	
+	mRawText = trimWhitespace( mRawText );
+	lines = split( mRawText, "\n", &numLines );
+	listLen = numLines;
+	
+	for( int i=0; i<numLines; i++ ) {
+		delete [] lines[i];
+		}
+	delete [] lines;
+	
+    }
 
-    mText = filteredText.getElementString();
+
+
+char *DropdownList::getAndUpdateList() {
+	
+	char *newList = "";
+	
+	if( strcmp( mRawText, "" ) != 0 ) {
+		int numLines;
+		char **lines = split( mRawText, "\n", &numLines );
+		
+		for( int i=0; i<numLines; i++ ) {
+			if( strcmp( mText, lines[i] ) != 0 ) {
+				newList = concatonate( newList, "\n" );
+				newList = concatonate( newList, lines[i] );
+				}
+			delete [] lines[i];
+			}
+		delete [] lines;
+		
+		newList = trimWhitespace( newList );
+		if( strcmp( newList, "" ) != 0 ) newList = concatonate( "\n", newList );
+		}
+	
+	newList = concatonate( mText, newList );
+	
+	delete [] mRawText;
+	mRawText = stringDuplicate( newList );
+	delete [] newList;
+	
+	return stringDuplicate( mRawText );
+    }
+	
+	
+void DropdownList::setText( const char *inText ) {
+    delete [] mText;
+    
+    mSelectionStart = -1;
+    mSelectionEnd = -1;
+    
+	mText = stringDuplicate( inText );
+	
     mTextLen = strlen( mText );
     
     mCursorPosition = strlen( mText );
@@ -186,28 +259,64 @@ void TextField::setText( const char *inText ) {
 
     clearArrowRepeat();
     }
+	
+char *DropdownList::getText() {
+	return stringDuplicate( mText );
+	}
+	
+void DropdownList::selectOption( int index ) {	
+	if( index < 0 || index >= listLen ) return;
+	
+	int numLines;
+	char **lines = split( mRawText, "\n", &numLines );
+	setText( lines[index] );
+	
+	for( int i=0; i<numLines; i++ ) {
+		delete [] lines[i];
+		}
+	delete [] lines;
+	}
+	
+void DropdownList::deleteOption( int index ) {
+	if( index < 0 || index >= listLen ) return;
+	
+	int numLines;
+	char **lines = split( mRawText, "\n", &numLines );
+	
+	delete [] mRawText;
+	mRawText = "";
+	
+	for( int i=0; i<numLines; i++ ) {
+		
+		if( i != index ) {
+			mRawText = concatonate( mRawText, lines[i] );
+			if( i < numLines - 1 ) mRawText = concatonate( mRawText, "\n" );
+			}
+		
+		delete [] lines[i];
+		}
+	delete [] lines;
+	
+	mRawText = trimWhitespace( mRawText );
+	listLen = listLen - 1;
+	
+	}
 
 
 
-char *TextField::getText() {
-    return stringDuplicate( mText );
-    }
-
-
-
-void TextField::setMaxLength( int inLimit ) {
+void DropdownList::setMaxLength( int inLimit ) {
     mMaxLength = inLimit;
     }
 
 
 
-int TextField::getMaxLength() {
+int DropdownList::getMaxLength() {
     return mMaxLength;
     }
 
 
 
-char TextField::isAtLimit() {
+char DropdownList::isAtLimit() {
     if( mMaxLength == -1 ) {
         return false;
         }
@@ -219,19 +328,19 @@ char TextField::isAtLimit() {
 
 
 
-void TextField::setActive( char inActive ) {
+void DropdownList::setActive( char inActive ) {
     mActive = inActive;
     }
 
 
 
-char TextField::isActive() {
+char DropdownList::isActive() {
     return mActive;
     }
         
 
 
-void TextField::step() {
+void DropdownList::step() {
 
     mCursorFlashSteps ++;
 
@@ -287,7 +396,7 @@ void TextField::step() {
 
         
         
-void TextField::draw() {
+void DropdownList::draw() {
     
     if( mFocused ) {    
         setDrawColor( 1, 1, 1, 1 );
@@ -369,6 +478,8 @@ void TextField::draw() {
     if( mContentsHidden ) {
         return;
         }
+
+
 
 
     doublePair textPos = { - mWide/2 + mBorderWide, 0 };
@@ -495,7 +606,69 @@ void TextField::draw() {
         mFont->drawString( mDrawnText, textPos2, alignLeft );
         mDrawnTextX = textPos2.x;
         }
-    
+		
+		
+	if ( mFocused ) {
+		if( strcmp( mRawText, "" ) != 0 ) {
+			int numLines;
+			char **lines = split( mRawText, "\n", &numLines );
+			
+			for( int i=0; i<numLines; i++ ) {
+				
+				doublePair linePos = { centerPos.x, centerPos.y - (i + 1) * mHigh };
+				float backgroundAlpha = 0.3;
+				if( hoverIndex == i ) backgroundAlpha = 0.7;
+				setDrawColor( 0, 0, 0, 1 );
+				drawRect( - mWide / 2, linePos.y - mHigh / 2, 
+					mWide / 2, linePos.y + mHigh / 2 );
+				setDrawColor( 1, 1, 1, backgroundAlpha );
+				drawRect( - mWide / 2, linePos.y - mHigh / 2, 
+					mWide / 2, linePos.y + mHigh / 2 );
+				doublePair lineTextPos = { textPos.x, textPos.y - (i + 1) * mHigh };
+					
+				setDrawColor( 0, 0, 0, 0.5 );
+				float buttonRightOffset = mFont->measureString( "x" );
+				doublePair lineDeleteButtonPos = { mWide / 2 - buttonRightOffset, lineTextPos.y };
+				if( hoverIndex == i && nearRightEdge ) {
+					drawRect( 
+						lineDeleteButtonPos.x - buttonRightOffset / 2 - mBorderWide / 2, 
+						lineDeleteButtonPos.y - buttonRightOffset / 2 - mBorderWide / 2, 
+						lineDeleteButtonPos.x + buttonRightOffset / 2 + mBorderWide / 2, 
+						lineDeleteButtonPos.y + buttonRightOffset / 2 + mBorderWide / 2 );
+					}
+				
+				setDrawColor( 1, 1, 1, 1 );
+				char *lineText = stringDuplicate( lines[i] );
+				
+				if( mFont->measureString( lineText ) 
+					+ mFont->measureString( "...   " ) 
+					> mWide - 2 * mBorderWide ) {
+
+					while( mFont->measureString( lineText ) + mFont->measureString( "...   " ) > 
+						   mWide - 2 * mBorderWide ) {
+						
+						lineText[ strlen( lineText ) - 1 ] = '\0';
+						
+						}
+						
+					lineText = concatonate( lineText, "...   " );
+					
+					}
+				
+				mFont->drawString( lineText, lineTextPos, alignLeft );
+				
+				setDrawColor( 1, 1, 1, 1 );
+				mFont->drawString( "x", lineDeleteButtonPos, alignCenter );
+				
+				
+				
+				delete [] lines[i];
+				}
+			delete [] lines;
+			
+			}
+		}
+	
 
     double shadeWidth = 4 * mCharWidth;
     
@@ -584,9 +757,49 @@ void TextField::draw() {
     delete [] textBeforeCursorBase;
     delete [] textAfterCursorBase;
     }
+	
+	
+int DropdownList::insideIndex( float inX, float inY ) {
+	if( !mFocused ) return -1;
+	if( fabs( inX ) >= mWide / 2 ) return -1;
+	int index = - ( inY - mHigh / 2 ) / mHigh;
+	if( index <= 0 ) return -1;
+	index = index - 1;
+	if( index >= listLen ) return -1;
+	return index;
+    }
+	
+char DropdownList::isInsideTextBox( float inX, float inY ) {
+    return fabs( inX ) < mWide / 2 &&
+        fabs( inY ) < mHigh / 2;
+    }
+	
+char DropdownList::isNearRightEdge( float inX, float inY ) {
+    return inX > 0 && hoverIndex != -1 && 
+		fabs( inX - ( mWide / 2 - mFont->measureString( "x" ) ) ) < mFont->measureString( "x" );
+    }
 
 
-void TextField::pointerUp( float inX, float inY ) {
+
+void DropdownList::pointerMove( float inX, float inY ) {
+	hoverIndex = insideIndex( inX, inY );
+	nearRightEdge = isNearRightEdge( inX, inY );
+    }
+
+
+void DropdownList::pointerDown( float inX, float inY ) {
+	hoverIndex = insideIndex( inX, inY );
+	if( !isInsideTextBox( inX, inY ) && !nearRightEdge ) unfocus();
+	if( hoverIndex == -1 ) return;
+	if( !nearRightEdge ) {
+		selectOption( hoverIndex );
+	} else {
+		deleteOption( hoverIndex );
+		}
+    }
+
+
+void DropdownList::pointerUp( float inX, float inY ) {
     if( mIgnoreMouse ) {
         return;
         }
@@ -643,7 +856,7 @@ void TextField::pointerUp( float inX, float inY ) {
 
 
 
-unsigned char TextField::processCharacter( unsigned char inASCII ) {
+unsigned char DropdownList::processCharacter( unsigned char inASCII ) {
 
     unsigned char processedChar = inASCII;
         
@@ -693,7 +906,7 @@ unsigned char TextField::processCharacter( unsigned char inASCII ) {
 
 
 
-void TextField::insertCharacter( unsigned char inASCII ) {
+void DropdownList::insertCharacter( unsigned char inASCII ) {
     
     if( isAnythingSelected() ) {
         // delete selected first
@@ -727,7 +940,7 @@ void TextField::insertCharacter( unsigned char inASCII ) {
 
 
 
-void TextField::insertString( char *inString ) {
+void DropdownList::insertString( char *inString ) {
     if( isAnythingSelected() ) {
         // delete selected first
         deleteHit();
@@ -772,49 +985,49 @@ void TextField::insertString( char *inString ) {
 
 
 
-int TextField::getCursorPosition() {
+int DropdownList::getCursorPosition() {
     return mCursorPosition;
     }
 
 
-void TextField::cursorReset() {
+void DropdownList::cursorReset() {
     mCursorPosition = 0;
     }
 
 
 
-void TextField::setIgnoreArrowKeys( char inIgnore ) {
+void DropdownList::setIgnoreArrowKeys( char inIgnore ) {
     mIgnoreArrowKeys = inIgnore;
     }
 
 
 
-void TextField::setIgnoreMouse( char inIgnore ) {
+void DropdownList::setIgnoreMouse( char inIgnore ) {
     mIgnoreMouse = inIgnore;
     }
 
 
 
-double TextField::getRightEdgeX() {
+double DropdownList::getRightEdgeX() {
     
     return mX + mWide / 2;
     }
 
 
 
-void TextField::setFireOnAnyTextChange( char inFireOnAny ) {
+void DropdownList::setFireOnAnyTextChange( char inFireOnAny ) {
     mFireOnAnyChange = inFireOnAny;
     }
 
 
-void TextField::setFireOnLoseFocus( char inFireOnLeave ) {
+void DropdownList::setFireOnLoseFocus( char inFireOnLeave ) {
     mFireOnLeave = inFireOnLeave;
     }
 
 
 
 
-void TextField::keyDown( unsigned char inASCII ) {
+void DropdownList::keyDown( unsigned char inASCII ) {
     if( !mFocused ) {
         return;
         }
@@ -823,6 +1036,38 @@ void TextField::keyDown( unsigned char inASCII ) {
     if( isCommandKeyDown() ) {
         // not a normal key stroke (command key)
         // ignore it as input
+
+        if( mUsePasteShortcut && ( inASCII == 'v' || inASCII == 22 ) ) {
+            // ctrl-v is SYN on some platforms
+            
+            // paste!
+            if( isClipboardSupported() ) {
+                char *clipboardText = getClipboardText();
+        
+                int len = strlen( clipboardText );
+                
+                for( int i=0; i<len; i++ ) {
+                    
+                    unsigned char processedChar = 
+                        processCharacter( clipboardText[i] );    
+
+                    if( processedChar != 0 ) {
+                        
+                        insertCharacter( processedChar );
+                        }
+                    }
+                delete [] clipboardText;
+                
+                mHoldDeleteSteps = -1;
+                mFirstDeleteRepeatDone = false;
+                
+                clearArrowRepeat();
+                
+                if( mFireOnAnyChange ) {
+                    fireActionPerformed( this );
+                    }
+                }
+            }
 
         // but ONLY if it's an alphabetical key (A-Z,a-z)
         // Some international keyboards use ALT to type certain symbols
@@ -889,7 +1134,7 @@ void TextField::keyDown( unsigned char inASCII ) {
 
 
 
-void TextField::keyUp( unsigned char inASCII ) {
+void DropdownList::keyUp( unsigned char inASCII ) {
     if( inASCII == 127 || inASCII == 8 ) {
         // end delete hold down
         mHoldDeleteSteps = -1;
@@ -899,7 +1144,7 @@ void TextField::keyUp( unsigned char inASCII ) {
 
 
 
-void TextField::deleteHit() {
+void DropdownList::deleteHit() {
     if( mCursorPosition > 0 || isAnythingSelected() ) {
         mCursorFlashSteps = 0;
     
@@ -964,7 +1209,7 @@ void TextField::deleteHit() {
 
 
 
-void TextField::clearArrowRepeat() {
+void DropdownList::clearArrowRepeat() {
     for( int i=0; i<2; i++ ) {
         mHoldArrowSteps[i] = -1;
         mFirstArrowRepeatDone[i] = false;
@@ -973,7 +1218,7 @@ void TextField::clearArrowRepeat() {
 
 
 
-void TextField::leftHit() {
+void DropdownList::leftHit() {
     mCursorFlashSteps = 0;
     
     if( isShiftKeyDown() && mShiftPlusArrowsCanSelect ) {
@@ -1030,7 +1275,7 @@ void TextField::leftHit() {
 
 
 
-void TextField::rightHit() {
+void DropdownList::rightHit() {
     mCursorFlashSteps = 0;
     
     if( isShiftKeyDown() && mShiftPlusArrowsCanSelect ) {
@@ -1090,7 +1335,7 @@ void TextField::rightHit() {
 
 
 
-void TextField::specialKeyDown( int inKeyCode ) {
+void DropdownList::specialKeyDown( int inKeyCode ) {
     if( !mFocused ) {
         return;
         }
@@ -1120,7 +1365,7 @@ void TextField::specialKeyDown( int inKeyCode ) {
 
 
 
-void TextField::specialKeyUp( int inKeyCode ) {
+void DropdownList::specialKeyUp( int inKeyCode ) {
     if( inKeyCode == MG_KEY_LEFT ) {
         mHoldArrowSteps[0] = -1;
         mFirstArrowRepeatDone[0] = false;
@@ -1133,24 +1378,24 @@ void TextField::specialKeyUp( int inKeyCode ) {
 
 
 
-void TextField::focus() {
+void DropdownList::focus() {
     
-    if( sFocusedTextField != NULL && sFocusedTextField != this ) {
+    if( sFocusedDropdownList != NULL && sFocusedDropdownList != this ) {
         // unfocus last focused
-        sFocusedTextField->unfocus();
+        sFocusedDropdownList->unfocus();
         }
 		
-	DropdownList::unfocusAll();
+    TextField::unfocusAll();
 
     mFocused = true;
-    sFocusedTextField = this;
+    sFocusedDropdownList = this;
 
     mContentsHidden = false;
     }
 
 
 
-void TextField::unfocus() {
+void DropdownList::unfocus() {
     mFocused = false;
  
     // hold-down broken if not focused
@@ -1159,8 +1404,8 @@ void TextField::unfocus() {
 
     clearArrowRepeat();
 
-    if( sFocusedTextField == this ) {
-        sFocusedTextField = NULL;
+    if( sFocusedDropdownList == this ) {
+        sFocusedDropdownList = NULL;
         if( mFireOnLeave ) {
             fireActionPerformed( this );
             }
@@ -1169,13 +1414,13 @@ void TextField::unfocus() {
 
 
 
-char TextField::isFocused() {
+char DropdownList::isFocused() {
     return mFocused;
     }
 
 
 
-void TextField::setDeleteRepeatDelays( int inFirstDelaySteps,
+void DropdownList::setDeleteRepeatDelays( int inFirstDelaySteps,
                                        int inNextDelaySteps ) {
     sDeleteFirstDelaySteps = inFirstDelaySteps;
     sDeleteNextDelaySteps = inNextDelaySteps;
@@ -1183,8 +1428,8 @@ void TextField::setDeleteRepeatDelays( int inFirstDelaySteps,
 
 
 
-char TextField::isAnyFocused() {
-    if( sFocusedTextField != NULL ) {
+char DropdownList::isAnyFocused() {
+    if( sFocusedDropdownList != NULL ) {
         return true;
         }
     return false;
@@ -1192,105 +1437,32 @@ char TextField::isAnyFocused() {
 
 
         
-void TextField::unfocusAll() {
+void DropdownList::unfocusAll() {
     
-    if( sFocusedTextField != NULL ) {
+    if( sFocusedDropdownList != NULL ) {
         // unfocus last focused
-        sFocusedTextField->unfocus();
+        sFocusedDropdownList->unfocus();
         }
 
-    sFocusedTextField = NULL;
+    sFocusedDropdownList = NULL;
     }
 
 
 
 
-int TextField::getInt() {
-    char *text = getText();
-    
-    int i = 0;
-    
-    sscanf( text, "%d", &i );
-    
-    delete [] text;
-            
-    return i;
-    }
-
-        
-        
-float TextField::getFloat() {
-    char *text = getText();
-            
-    float f = 0;
-    
-    sscanf( text, "%f", &f );
-    
-    delete [] text;
-    
-    return f;
-    }
-
-
-
-void TextField::setInt( int inI ) {
-    char *text = autoSprintf( "%d", inI );
-    
-    setText( text );
-    delete [] text;
-    }
-
-        
-
-void TextField::setFloat( float inF, int inDigitsAfterDecimal, 
-                          char inTrimZeros ) {
-
-    char *formatString;
-    
-    if( inDigitsAfterDecimal == -1 ) {
-        formatString = stringDuplicate( "%f" );
-        }
-    else {
-        formatString = autoSprintf( "%%.%df", inDigitsAfterDecimal );
-        }
-
-    char *text = autoSprintf( formatString, inF );
-    
-    if( inTrimZeros && strstr( text, "." ) != NULL ) {
-        int index = strlen( text ) - 1;
-        
-        while( index > 1 && text[index] == '0' ) {
-            if( text[index-1] == '.' ) {
-                // leave one zero after .
-                break;
-                }
-            text[index] = '\0';
-            index --;
-            }
-        }
-
-    delete [] formatString;
-
-    setText( text );
-    delete [] text;
-    }
-
-
-
-
-void TextField::setLabelSide( char inLabelOnRight ) {
+void DropdownList::setLabelSide( char inLabelOnRight ) {
     mLabelOnRight = inLabelOnRight;
     }
 
 
 
-void TextField::setLabelTop( char inLabelOnTop ) {
+void DropdownList::setLabelTop( char inLabelOnTop ) {
     mLabelOnTop = inLabelOnTop;
     }
 
 
         
-char TextField::isAnythingSelected() {
+char DropdownList::isAnythingSelected() {
     return 
         ( mSelectionStart != -1 && 
           mSelectionEnd != -1 &&
@@ -1299,7 +1471,7 @@ char TextField::isAnythingSelected() {
 
 
 
-char *TextField::getSelectedText() {
+char *DropdownList::getSelectedText() {
 
     if( ! isAnythingSelected() ) {
         return NULL;
@@ -1320,7 +1492,7 @@ char *TextField::getSelectedText() {
 
 
 
-void TextField::fixSelectionStartEnd() {
+void DropdownList::fixSelectionStartEnd() {
     if( mSelectionEnd < mSelectionStart ) {
         int temp = mSelectionEnd;
         mSelectionEnd = mSelectionStart;
@@ -1341,7 +1513,14 @@ void TextField::fixSelectionStartEnd() {
 
 
 
-void TextField::setShiftArrowsCanSelect( char inCanSelect ) {
+void DropdownList::setShiftArrowsCanSelect( char inCanSelect ) {
     mShiftPlusArrowsCanSelect = inCanSelect;
     }
+
+
+
+void DropdownList::usePasteShortcut( char inShortcutOn ) {
+    mUsePasteShortcut = inShortcutOn;
+    }
+
 

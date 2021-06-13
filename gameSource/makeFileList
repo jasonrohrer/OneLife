@@ -35,6 +35,7 @@ Button.cpp \
 TextButton.cpp \
 RebirthChoicePage.cpp \
 TextField.cpp \
+DropdownList.cpp \
 LoadingPage.cpp \
 folderCache.cpp \
 binFolderCache.cpp \
