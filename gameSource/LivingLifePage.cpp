@@ -21083,10 +21083,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                                      p.hitOtherPersonID );
                 send = true;
                 }
-            else if( modClick && destID == 0 && 
-                     ourLiveObject->holdingID >= 0 ) {
+            else if( modClick && destID == 0 ) {
                 
-                if( ourLiveObject->holdingID > 0 ) {
+                if( ourLiveObject->holdingID != 0 ) {
                     action = "DROP";
                     nextActionDropping = true;
                     }
