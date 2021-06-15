@@ -9,6 +9,7 @@
 
 
 extern Font *mainFont;
+extern float gui_fov_scale;
 
 static TextAlignment messageAlign = alignCenter;
 
@@ -51,7 +52,7 @@ void drawMessage( const char *inTranslationKey, doublePair inCenter,
             
             if( strcmp( subMessages[i], "~~" ) == 0 ) {
                 // half-skip
-                thisMessagePos.y += 15;
+                thisMessagePos.y += 15 * gui_fov_scale;
                 }
             else {
                 mainFont->drawString( subMessages[i], 
@@ -59,7 +60,7 @@ void drawMessage( const char *inTranslationKey, doublePair inCenter,
                 }
             delete [] subMessages[i];
 
-            thisMessagePos.y -= 30;
+            thisMessagePos.y -= 30 * gui_fov_scale;
             }
 
         delete [] subMessages;

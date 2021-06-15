@@ -887,21 +887,21 @@ static void drawPauseScreen() {
 
         drawPos = lastScreenViewCenter;
         
-        drawPos.x -= 600;
-        drawPos.y += 320;
+        drawPos.x -= 600 * gui_fov_scale;
+        drawPos.y += 320 * gui_fov_scale;
         
 
         doublePair rectPos = drawPos;
-        rectPos.x += 155;
-        rectPos.y -= 320;
+        rectPos.x += 155 * gui_fov_scale;
+        rectPos.y -= 320 * gui_fov_scale;
         
         setDrawColor( 1, 1, 1, 0.5 * pauseScreenFade );
         
-        drawRect( rectPos, 182, 362 );
+        drawRect( rectPos, 182 * gui_fov_scale, 362 * gui_fov_scale );
 
         setDrawColor( 0.2, 0.2, 0.2, 0.85 * pauseScreenFade  );
 
-        drawRect( rectPos, 170, 350  );
+        drawRect( rectPos, 170 * gui_fov_scale, 350 * gui_fov_scale  );
 
         
         setMessageAlign( alignLeft );
@@ -912,21 +912,21 @@ static void drawPauseScreen() {
 
         drawPos = lastScreenViewCenter;
         
-        drawPos.x += 285;
-        drawPos.y += 320;
+        drawPos.x += 285 * gui_fov_scale;
+        drawPos.y += 320 * gui_fov_scale;
         
 
         rectPos = drawPos;
-        rectPos.x += 160;
-        rectPos.y -= 320;
+        rectPos.x += 160 * gui_fov_scale;
+        rectPos.y -= 320 * gui_fov_scale;
         
         setDrawColor( 1, 1, 1, 0.5 * pauseScreenFade );
         
-        drawRect( rectPos, 187, 362 );
+        drawRect( rectPos, 187 * gui_fov_scale, 362 * gui_fov_scale );
 
         setDrawColor( 0.2, 0.2, 0.2, 0.85 * pauseScreenFade  );
 
-        drawRect( rectPos, 175, 350  );
+        drawRect( rectPos, 175 * gui_fov_scale, 350 * gui_fov_scale  );
 
         
         setMessageAlign( alignLeft );
