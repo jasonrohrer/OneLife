@@ -101,6 +101,8 @@ CustomRandomSource randSource( 34957197 );
 
 #include "whiteSprites.h"
 
+#include "message.h"
+
 
 // should we pull the map
 static char mapPullMode = 0;
@@ -878,6 +880,60 @@ static void drawPauseScreen() {
         drawPos = add( drawPos, lastScreenViewCenter );
 
         drawSprite( instructionsSprite, drawPos, gui_fov_scale );
+
+        TextAlignment a = getMessageAlign();
+
+
+
+        drawPos = lastScreenViewCenter;
+        
+        drawPos.x -= 600 * gui_fov_scale;
+        drawPos.y += 320 * gui_fov_scale;
+        
+
+        doublePair rectPos = drawPos;
+        rectPos.x += 155 * gui_fov_scale;
+        rectPos.y -= 320 * gui_fov_scale;
+        
+        setDrawColor( 1, 1, 1, 0.5 * pauseScreenFade );
+        
+        drawRect( rectPos, 182 * gui_fov_scale, 362 * gui_fov_scale );
+
+        setDrawColor( 0.2, 0.2, 0.2, 0.85 * pauseScreenFade  );
+
+        drawRect( rectPos, 170 * gui_fov_scale, 350 * gui_fov_scale  );
+
+        
+        setMessageAlign( alignLeft );
+        drawMessage( translate( "commandHintsA" ), drawPos, false, 
+                     pauseScreenFade );
+
+
+
+        drawPos = lastScreenViewCenter;
+        
+        drawPos.x += 285 * gui_fov_scale;
+        drawPos.y += 320 * gui_fov_scale;
+        
+
+        rectPos = drawPos;
+        rectPos.x += 160 * gui_fov_scale;
+        rectPos.y -= 320 * gui_fov_scale;
+        
+        setDrawColor( 1, 1, 1, 0.5 * pauseScreenFade );
+        
+        drawRect( rectPos, 187 * gui_fov_scale, 362 * gui_fov_scale );
+
+        setDrawColor( 0.2, 0.2, 0.2, 0.85 * pauseScreenFade  );
+
+        drawRect( rectPos, 175 * gui_fov_scale, 350 * gui_fov_scale  );
+
+        
+        setMessageAlign( alignLeft );
+        drawMessage( translate( "commandHintsB" ), drawPos, false, 
+                     pauseScreenFade );
+        
+        setMessageAlign( a );
         }
     
 
