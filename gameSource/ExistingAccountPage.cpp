@@ -42,7 +42,7 @@ extern char loginEditOverride;
 
 ExistingAccountPage::ExistingAccountPage()
         : mEmailField( mainFont, 0, 128, 10, false, 
-                       translate( "USERNAME:" ),
+                       translate( "username" ),
                        NULL,
                        // forbid only spaces
                        " " ),
@@ -159,7 +159,7 @@ ExistingAccountPage::ExistingAccountPage()
     
     mAtSignButton.setMouseOverTip( translate( "atSignTip" ) );
 
-    mLoginButton.setMouseOverTip( translate( "saveTip" ) );
+    mLoginButton.setMouseOverTip( translate( "getAccountTip" ) );
     mClearAccountButton.setMouseOverTip( translate( "clearAccountTip" ) );
     
     int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
@@ -335,6 +335,8 @@ void ExistingAccountPage::makeActive( char inFresh ) {
         mReviewButton.setVisible( true );
         mViewAccountButton.setVisible( false );
         }
+		
+	mReviewButton.setVisible( false );
     }
 
 

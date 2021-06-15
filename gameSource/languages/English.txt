@@ -38,12 +38,14 @@ categoriesRebuild "CATEGORIES##(REBUILDING CACHE)"
 
 
 email "EMAIL:"
+username "USERNAME:"
 atSignTip "INSERT '@' SIGN (INTL KEYBOARDS)"
 
 
 loginButton "LOGIN"
 friendsButton "FRIENDS"
 familyTrees "FAMILY TREES"
+techTree "TECH"
 genesButton "GENES"
 geneticHistoryButton "GENETIC HISTORY"
 
@@ -87,7 +89,14 @@ submit "SUBMIT"
 
 
 saveTip "LOGIN AND STORE DETAILS LOCALLY"
+getAccountTip "TYPE -KEY ON DISCORD TO GET YOUR ACCOUNT"
 clearAccountTip "DELETES ACCOUNT DETAILS FROM DISK"
+
+friendsTip "GET BORN WITH FRIENDS"
+genesTip "GENETIC SCORE DETAILS"
+
+familyTreesTip "OPEN FAMILY TREES IN WEB BROWSER"
+techTreeTip "OPEN TECH TREE IN WEB BROWSER"
 
 
 accountKey "KEY:"
@@ -619,6 +628,14 @@ pauseMessage3 "PRESS [%] TO QUIT"
 pauseMessage3b "YOU CAN'T QUIT NOW"
 
 pauseMessage4 "-"
+
+
+
+commandHintsA "CHAT COMMANDS:##~~##/HELP##/DIE##/DISCONNECT##/FPS##/NETWORK##/PING####/HAPPY##/MAD##/ANGRY##/SAD##/DEVIOUS##/JOY##/BLUSH##/HUBBA##/ILL##/YOOHOO##/HMPH##/LOVE##/OREALLY##/SHOCK"
+
+
+commandHintsB "MORE COMMANDS:##~~####TO NAME YOURSELF:##I AM [NAME]####TO NAME OTHERS:##YOU ARE [NAME]####TO PLAY SOLO:##LET ME BE INFERTILE.####TO UNDO THAT:##LET ME BE FERTILE.####TO BLOCK SOMEONE AS BB:##CURSE [NAME]####TO UNDO THAT:##I FORGIVE [NAME]"
+
 
 
 
