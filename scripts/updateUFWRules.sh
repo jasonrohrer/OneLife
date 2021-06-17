@@ -8,6 +8,8 @@ echo ""
 echo -n "Hit [ENTER] when ready: "
 read
 
+cd ~/checkout/OneLifeWorking
+git pull
 
 
 # feed file through grep to add newlines at the end of each line
@@ -15,7 +17,9 @@ read
 while read user server port
 do
   echo "  Updating before.rules on $server"
-  ssh -n root@$server 'mkdir checkout; cd checkout; git clone https://github.com/jasonrohrer/OneLife.git; cat OneLife/scripts/before.rules > /etc/ufw/before.rules; cd ..; rm -r checkout'
+  scp scripts/before.rules root@$server:
+
+  ssh -n root@$server 'cat before.rules > /etc/ufw/before.rules; rm before.rules'
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
