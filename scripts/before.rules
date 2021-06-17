@@ -87,6 +87,11 @@
 # Enter rule
 # -A ufw-before-input -p tcp --dport 80 -j ufw-jcr-rate-limit
 # -A ufw-before-input -p tcp --dport 443 -j ufw-jcr-rate-limit
+
+# for direct connections from onehouronelife.com (reflector requests), accept
+# with no rate limit
+-A ufw-before-input -p tcp -s 72.14.184.149 --dport 8005 -j ACCEPT
+
 -A ufw-before-input -p tcp --dport 8005 -j ufw-jcr-rate-limit
 
 

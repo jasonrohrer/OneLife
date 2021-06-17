@@ -54,8 +54,8 @@ git clone https://github.com/jasonrohrer/OneLife.git
 # not sure if cp would do that.
 cat OneLife/scripts/before.rules > /etc/ufw/before.rules
 
-rm -r OneLife
 cd ..
+rm -r checkout
 
 
 
