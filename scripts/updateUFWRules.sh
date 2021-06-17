@@ -19,7 +19,7 @@ do
   echo "  Updating before.rules on $server"
   scp scripts/before.rules root@$server:
 
-  ssh -n root@$server 'cat before.rules > /etc/ufw/before.rules; rm before.rules'
+  ssh -n root@$server 'cat before.rules > /etc/ufw/before.rules; rm before.rules ufw reload'
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
