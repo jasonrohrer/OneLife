@@ -3,7 +3,7 @@ set logging file gdb.output
 set logging on
 
 
-break 17622
+break server.cpp:17622
 cont
 
 
