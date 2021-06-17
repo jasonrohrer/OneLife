@@ -349,6 +349,14 @@ static float getHighestRecentScore() {
 
 
 
+WebRequest *defaultTimeoutWebRequest( const char *inURL ) {
+    // 10 second timeout for all web requests that server makes
+    return new WebRequest( "GET", inURL, NULL, NULL, 10 );
+    }
+
+
+
+
 
 static double eveWindowStart = 0;
 static char eveWindowOver = false;
@@ -12467,7 +12475,7 @@ void apocalypseStep() {
                                          reflectorURL );
         
                 apocalypseRequest =
-                    new WebRequest( "GET", url, NULL );
+                    defaultTimeoutWebRequest( url );
             
                 delete [] url;
                 }
@@ -12623,7 +12631,7 @@ void apocalypseStep() {
                     printf( "Starting new web request for %s\n", url );
                     
                     apocalypseRequest =
-                        new WebRequest( "GET", url, NULL );
+                        defaultTimeoutWebRequest( url );
                                 
                     delete [] url;
                     delete [] reflectorSharedSecret;
@@ -18236,7 +18244,7 @@ int main() {
                                 delete [] encodedEmail;
 
                                 nextConnection->ticketServerRequest =
-                                    new WebRequest( "GET", url, NULL );
+                                    defaultTimeoutWebRequest( url );
                                 nextConnection->ticketServerAccepted = false;
 
                                 nextConnection->ticketServerRequestStartTime

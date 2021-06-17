@@ -21,6 +21,14 @@ Server Fixes
   server long-term, that cool-down time for the IP will grow over time, beyond
   5 minutes.
 
+--All server outbound web requests (to various utility servers, like stats 
+  server, ticket server, etc.) now have a timeout of 10 seconds each.  A
+  firewall bug was causing some of these to never finish, leaving a bunch of
+  clients hanging in an unfinished login limbo state.  Now the login process is
+  more robust, and will always finish, even in the face of unresponsive utility
+  servers.
+
+
 
 
 
