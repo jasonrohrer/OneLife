@@ -9571,8 +9571,11 @@ void LivingLifePage::handleOurDeath( char inDisconnect ) {
     if( inDisconnect ) {
         setSignal( "disconnect" );
         }
-    else {
-        setSignal( "died" );
+    else {				
+		//reset fov on death
+		changeFOV( SettingsManager::getFloatSetting( "fovDefault", 1.25f ) );
+        
+		setSignal( "died" );
         }
     
     instantStopMusic();
@@ -15715,9 +15718,6 @@ void LivingLifePage::step() {
                 else if( o.id == ourID && 
                          strstr( lines[i], "X X" ) != NULL  ) {
                     // we died
-					
-					//reset fov on death
-					changeFOV( 1.0f );
 
                     printf( "Got X X death message for our ID %d\n",
                             ourID );
@@ -17656,7 +17656,7 @@ void LivingLifePage::step() {
         doublePair screenTargetPos = 
             mult( targetObjectPos, CELL_D );
         
-        if( vogMode ) {
+        if( vogMode || SettingsManager::getIntSetting( "centerCamera", 0 ) ) {
             // don't adjust camera
             }
         else if( 
@@ -21912,9 +21912,14 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 mZKeyDown = true;
                 }
             break;
+        case ' ':
+		if( ! mSayField.isFocused() && ! SettingsManager::getIntSetting( "keyboardActions", 1 ) ) {
+                shouldMoveCamera = false;
+                }
+            break;
         case 'f':
         case 'F':
-            if( ! mSayField.isFocused() ) {
+            if( ! mSayField.isFocused() && SettingsManager::getIntSetting( "keyboardActions", 1 ) ) {
                 shouldMoveCamera = false;
                 }
             break;
@@ -22426,9 +22431,12 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
         case 'Z':
             mZKeyDown = false;
             break;
+        case ' ':
+            if (! SettingsManager::getIntSetting( "keyboardActions", 1 )) shouldMoveCamera = true;
+            break;
         case 'f':
         case 'F':
-            shouldMoveCamera = true;
+            if (SettingsManager::getIntSetting( "keyboardActions", 1 )) shouldMoveCamera = true;
             break;
         }
 
