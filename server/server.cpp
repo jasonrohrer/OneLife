@@ -15621,12 +15621,6 @@ int main() {
                                         
                                         nextPlayer->foodStore = cap;
 
-                                        int overflowCap = 
-                                            computeOverflowFoodCapacity( cap );
-
-                                        if( over > overflowCap ) {
-                                            over = overflowCap;
-                                            }
                                         nextPlayer->yummyBonusStore += over;
                                         }
 
@@ -16490,12 +16484,6 @@ int main() {
                                         
                                         targetPlayer->foodStore = cap;
 
-                                        int overflowCap = 
-                                            computeOverflowFoodCapacity( cap );
-
-                                        if( over > overflowCap ) {
-                                            over = overflowCap;
-                                            }
                                         targetPlayer->yummyBonusStore += over;
                                         }
                                     targetPlayer->foodDecrementETASeconds =
