@@ -16092,6 +16092,10 @@ void LivingLifePage::step() {
 
                 remapRandSource.reseed( ourID );
 
+                mCurrentRemapFraction = 0;
+                mRemapPeak = 0;
+                setRemapFraction( mCurrentRemapFraction );
+
                 printf( "Got first PLAYER_UPDATE message, our ID = %d\n",
                         ourID );
 
