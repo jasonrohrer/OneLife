@@ -11454,8 +11454,11 @@ int main() {
             stepArcReport();
             
             int arcMilestone = getArcYearsToReport( secondsPerYear, 100 );
+
+            int enableArcReport = 
+                SettingsManager::getIntSetting( "enableArcReport", 1 );
             
-            if( arcMilestone != -1 ) {
+            if( arcMilestone != -1 && enableArcReport ) {
                 int familyLimitAfterEveWindow = 
                     SettingsManager::getIntSetting( 
                         "familyLimitAfterEveWindow", 15 );
