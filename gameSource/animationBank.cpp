@@ -2376,6 +2376,13 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             drawWithEmot->mouthEmot != 0 ) {
             skipSprite = true;
             }
+			
+        if( i == eyesIndex && drawWithEmot != NULL &&
+            drawWithEmot->eyeEmot != 0 &&
+			strstr( getObject( drawWithEmot->eyeEmot )->description, "Eyes" )
+			) {
+            skipSprite = true;
+            }
         
 
         if( obj->clothing != 'n' &&
