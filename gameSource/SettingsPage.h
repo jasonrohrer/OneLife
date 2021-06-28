@@ -39,6 +39,7 @@ class SettingsPage : public GamePage, public ActionListener {
         int mEnableNudeSetting;
         int mEnableFOVSetting;
         int mEnableKActionsSetting;
+        int mEnableCenterCameraSetting;
         
         SoundUsage mTestSound;
 
@@ -57,6 +58,7 @@ class SettingsPage : public GamePage, public ActionListener {
 		CheckboxButton mEnableNudeBox;
 		CheckboxButton mEnableFOVBox;
 		CheckboxButton mEnableKActionsBox;
+		CheckboxButton mEnableCenterCameraBox;
 
         ValueSlider mMusicLoudnessSlider;
         ValueSlider mSoundEffectsLoudnessSlider;
