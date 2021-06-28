@@ -146,6 +146,15 @@ static int babyBirthFoodDecrement = 10;
 // makes whole server a bit easier (or harder, if negative)
 static int eatBonus = 0;
 
+static double eatBonusFloor = 0;
+static double eatBonusHalfLife = 50;
+
+static int canYumChainBreak = 0;
+
+
+static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
+
+
 
 static int minActivePlayersForLanguages = 15;
 
@@ -2673,6 +2682,17 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
 
     return ceil( returnVal * inPlayer->foodCapModifier );
     }
+
+
+
+int computeOverflowFoodCapacity( int inBaseCapacity ) {
+    // even littlest baby has +2 overflow, to get everyone used to the
+    // concept.
+    // by adulthood (when base cap is 20), overflow cap is 91.6
+    return 2 + pow( inBaseCapacity, 8 ) * 0.0000000035;
+    }
+
+
 
 
 
@@ -5547,7 +5567,7 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
         // chain broken
         
         // only feeding self can break chain
-        if( inFedSelf ) {
+        if( inFedSelf && canYumChainBreak ) {
             inPlayer->yummyFoodChain.deleteAll();
             }
         }
@@ -6317,6 +6337,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     minActivePlayersForLanguages =
         SettingsManager::getIntSetting( "minActivePlayersForLanguages", 15 );
 
+    canYumChainBreak = SettingsManager::getIntSetting( "canYumChainBreak", 0 );
+    
 
     numConnections ++;
                 
@@ -15597,7 +15619,12 @@ int main() {
                                         computeFoodCapacity( nextPlayer );
                                     
                                     if( nextPlayer->foodStore > cap ) {
+    
+                                        int over = nextPlayer->foodStore - cap;
+                                        
                                         nextPlayer->foodStore = cap;
+
+                                        nextPlayer->yummyBonusStore += over;
                                         }
 
                                     
@@ -16455,7 +16482,12 @@ int main() {
 
                                     
                                     if( targetPlayer->foodStore > cap ) {
+                                        int over = 
+                                            targetPlayer->foodStore - cap;
+                                        
                                         targetPlayer->foodStore = cap;
+
+                                        targetPlayer->yummyBonusStore += over;
                                         }
                                     targetPlayer->foodDecrementETASeconds =
                                         Time::getCurrentTime() +

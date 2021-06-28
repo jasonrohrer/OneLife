@@ -17518,7 +17518,7 @@ void LivingLifePage::step() {
 
                         mHungerSlipVisible = 0;
                         }
-                    else if( ourLiveObject->foodStore <= 4 &&
+                    else if( ourLiveObject->foodStore + mYumBonus <= 4 &&
                              computeCurrentAge( ourLiveObject ) < 117.33 ) {
                         
                         // don't play hunger sounds at end of life
@@ -17549,7 +17549,7 @@ void LivingLifePage::step() {
                                 }
                             }
                         }
-                    else if( ourLiveObject->foodStore <= 8 ) {
+                    else if( ourLiveObject->foodStore + mYumBonus <= 8 ) {
                         mHungerSlipVisible = 1;
                         mPulseHungerSound = false;
                         }
@@ -17557,7 +17557,7 @@ void LivingLifePage::step() {
                         mHungerSlipVisible = -1;
                         }
 
-                    if( ourLiveObject->foodStore > 4 ||
+                    if( ourLiveObject->foodStore + mYumBonus > 4 ||
                         computeCurrentAge( ourLiveObject ) >= 57 ) {
                         // restore music
                         setMusicLoudness( musicLoudness );
