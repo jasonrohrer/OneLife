@@ -218,6 +218,12 @@ static const char *allowedSayChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! ";
 
 
 static int killEmotionIndex = 2;
+static int victimEmotionIndex = 2;
+
+static int starvingEmotionIndex = 2;
+
+static int afkEmotionIndex = 2;
+static double afkTimeSeconds = 0;
 
 
 static double lastBabyPassedThresholdTime = 0;
@@ -638,7 +644,11 @@ typedef struct LiveObject {
         // in cases where their held wound produces a forced emot
         char emotFrozen;
         double emotUnfreezeETA;
+        int emotFrozenIndex;
         
+        char starving;
+        
+
         char connected;
         
         char error;
@@ -788,6 +798,14 @@ typedef struct LiveObject {
 		
 		//time when read position is expired and can be read again
 		SimpleVector<double> readPositionsETA;
+
+        SimpleVector<int> permanentEmots;
+				
+		//2HOL: last time player does something
+		double lastActionTime;
+		
+		//2HOL: player is either disconnected or inactive
+		bool isAFK;
 
     } LiveObject;
 
@@ -1047,6 +1065,9 @@ static void backToBasics( LiveObject *inPlayer ) {
         p->clothingContained[c].deleteAll();
         p->clothingContainedEtaDecays[c].deleteAll();
         }
+
+    p->emotFrozen = false;
+    p->emotUnfreezeETA = 0;
     }
 
 
@@ -7320,10 +7341,16 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     newObject.emotFrozen = false;
     newObject.emotUnfreezeETA = 0;
+    newObject.emotFrozenIndex = 0;
     
+    newObject.starving = false;
+
     newObject.connected = true;
     newObject.error = false;
     newObject.errorCauseString = "";
+	
+	newObject.lastActionTime = Time::getCurrentTime();
+	newObject.isAFK = false;
     
     newObject.customGraveID = -1;
     newObject.deathReason = NULL;
@@ -9253,6 +9280,21 @@ int readIntFromFile( const char *inFileName, int inDefaultValue ) {
 
 
 
+typedef struct KillState {
+        int killerID;
+        int killerWeaponID;
+        int targetID;
+        double killStartTime;
+        double emotStartTime;
+        int emotRefreshSeconds;
+    } KillState;
+
+
+SimpleVector<KillState> activeKillStates;
+
+
+
+
 void apocalypseStep() {
     
     double curTime = Time::getCurrentTime();
@@ -9518,7 +9560,8 @@ void apocalypseStep() {
                                Time::getCurrentTime() - startTime );
                 
                 peaceTreaties.deleteAll();
-
+                warPeaceRecords.deleteAll();
+                activeKillStates.deleteAll();
 
                 lastRemoteApocalypseCheckTime = curTime;
                 
@@ -10021,16 +10064,57 @@ typedef struct FlightDest {
         
 
 
-typedef struct KillState {
-        int killerID;
-        int killerWeaponID;
-        int targetID;
-        double emotStartTime;
-        int emotRefreshSeconds;
-    } KillState;
+
+static SimpleVector<int> newEmotPlayerIDs;
+static SimpleVector<int> newEmotIndices;
+// 0 if no ttl specified
+static SimpleVector<int> newEmotTTLs;
 
 
-SimpleVector<KillState> activeKillStates;
+// inEatenID = 0 for nursing
+static void checkForFoodEatingEmot( LiveObject *inPlayer,
+                                    int inEatenID ) {
+    
+    char wasStarving = inPlayer->starving;
+    inPlayer->starving = false;
+
+    
+    if( inEatenID > 0 ) {
+        
+        ObjectRecord *o = getObject( inEatenID );
+        
+        if( o != NULL ) {
+            char *emotPos = strstr( o->description, "emotEat_" );
+            
+            if( emotPos != NULL ) {
+                int e, t;
+                int numRead = sscanf( emotPos, "emotEat_%d_%d", &e, &t );
+                
+                if( numRead == 2 ) {
+                    inPlayer->emotFrozen = true;
+                    inPlayer->emotFrozenIndex = e;
+                    
+                    inPlayer->emotUnfreezeETA = Time::getCurrentTime() + t;
+                    
+                    newEmotPlayerIDs.push_back( inPlayer->id );
+                    newEmotIndices.push_back( e );
+                    newEmotTTLs.push_back( t );
+                    return;
+                    }
+                }
+            }
+        }
+
+    // no food emot found
+    if( wasStarving ) {
+        // clear their starving emot
+        newEmotPlayerIDs.push_back( inPlayer->id );
+        newEmotIndices.push_back( -1 );
+        newEmotTTLs.push_back( 0 );
+        }
+                
+    }
+    
 
 
 // return true if it worked
@@ -10053,7 +10137,11 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
             found = true;
             s->killerWeaponID = inKiller->holdingID;
             s->targetID = inTarget->id;
-            s->emotStartTime = Time::getCurrentTime();
+
+            double curTime = Time::getCurrentTime();
+            s->emotStartTime = curTime;
+            s->killStartTime = curTime;
+
             s->emotRefreshSeconds = 30;
             break;
             }
@@ -10067,9 +10155,72 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
                         Time::getCurrentTime(),
                         30 };
         activeKillStates.push_back( s );
+
+        // force target to gasp
+        makePlayerSay( inTarget, (char*)"[GASP]" );
         }
     return true;
     }
+
+
+
+static void removeKillState( LiveObject *inKiller, LiveObject *inTarget ) {
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+    
+        if( s->killerID == inKiller->id &&
+            s->targetID == inTarget->id ) {
+            activeKillStates.deleteElement( i );
+            
+            break;
+            }
+        }
+
+    if( inKiller != NULL ) {
+        // clear their emot
+        inKiller->emotFrozen = false;
+        inKiller->emotUnfreezeETA = 0;
+        
+        newEmotPlayerIDs.push_back( inKiller->id );
+        
+        newEmotIndices.push_back( -1 );
+        newEmotTTLs.push_back( 0 );
+        }
+    
+    if( inTarget != NULL &&
+        inTarget->emotFrozen &&
+        inTarget->emotFrozenIndex == victimEmotionIndex ) {
+        
+        // inTarget's emot hasn't been replaced, end it
+        inTarget->emotFrozen = false;
+        inTarget->emotUnfreezeETA = 0;
+        
+        newEmotPlayerIDs.push_back( inTarget->id );
+        
+        newEmotIndices.push_back( -1 );
+        newEmotTTLs.push_back( 0 );
+        }
+    }
+
+
+
+static void removeAnyKillState( LiveObject *inKiller ) {
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+    
+        if( s->killerID == inKiller->id ) {
+            
+            LiveObject *target = getLiveObject( s->targetID );
+            
+            if( target != NULL ) {
+                removeKillState( inKiller, target );
+                i--;
+                }
+            }
+        }
+    }
+
+            
 
 
 
@@ -10238,6 +10389,7 @@ void executeKillAction( int inKillerIndex,
                         if( e.emotIndex != -1 ) {
                             hitPlayer->emotFrozen = 
                                 true;
+                            hitPlayer->emotFrozenIndex = e.emotIndex;
                             
                             hitPlayer->emotUnfreezeETA =
                                 Time::getCurrentTime() + e.ttlSec;
@@ -10427,6 +10579,8 @@ void executeKillAction( int inKillerIndex,
                             if( e.emotIndex != -1 ) {
                                 hitPlayer->emotFrozen = 
                                     true;
+                                hitPlayer->emotFrozenIndex = e.emotIndex;
+                                
                                 newEmotPlayerIDs->push_back( 
                                     hitPlayer->id );
                                 newEmotIndices->push_back( 
@@ -11144,6 +11298,18 @@ int main() {
     
     killEmotionIndex =
         SettingsManager::getIntSetting( "killEmotionIndex", 2 );
+
+    victimEmotionIndex =
+        SettingsManager::getIntSetting( "victimEmotionIndex", 2 );
+
+    starvingEmotionIndex =
+        SettingsManager::getIntSetting( "starvingEmotionIndex", 2 );
+
+    afkEmotionIndex =
+        SettingsManager::getIntSetting( "afkEmotionIndex", 2 );
+
+    afkTimeSeconds =
+        SettingsManager::getDoubleSetting( "afkTimeSeconds", 120.0 );
 
 
     FILE *f = fopen( "curseWordList.txt", "r" );
@@ -12539,12 +12705,6 @@ int main() {
 
         newOwnerPos.push_back_other( &recentlyRemovedOwnerPos );
         recentlyRemovedOwnerPos.deleteAll();
-        
-
-        SimpleVector<int> newEmotPlayerIDs;
-        SimpleVector<int> newEmotIndices;
-        // 0 if no ttl specified
-        SimpleVector<int> newEmotTTLs;
 
 
         SimpleVector<UpdateRecord> newUpdates;
@@ -12746,6 +12906,8 @@ int main() {
                             
                                 if( e.emotIndex != -1 ) {
                                     nextPlayer->emotFrozen = true;
+                                    nextPlayer->emotFrozenIndex = e.emotIndex;
+                                    
                                     newEmotPlayerIDs.push_back( 
                                         nextPlayer->id );
                                     newEmotIndices.push_back( e.emotIndex );
@@ -12870,6 +13032,26 @@ int main() {
                 ClientMessage m = parseMessage( nextPlayer, message );
                 
                 delete [] message;
+				
+				
+				//2HOL: Player not AFK
+				//Skipping EMOT because modded player sends EMOT automatically
+				if( m.type != EMOT ) {
+					//Clear afk emote if they were afk
+					if( nextPlayer->isAFK ) {
+
+						nextPlayer->emotFrozen = false;
+						nextPlayer->emotUnfreezeETA = 0;
+						
+						newEmotPlayerIDs.push_back( nextPlayer->id );
+						newEmotIndices.push_back( -1 );
+						newEmotTTLs.push_back( 0 );
+						
+						}
+					
+					nextPlayer->isAFK = false;
+					nextPlayer->lastActionTime = Time::getCurrentTime();
+					}
                 
 
                 //Thread::staticSleep( 
@@ -14591,6 +14773,7 @@ int main() {
                                         }
                                     
                                     if( ! weaponBlocked ) {
+                                        removeAnyKillState( nextPlayer );
                                         
                                         char enteredState =
                                             addKillState( nextPlayer,
@@ -14598,11 +14781,27 @@ int main() {
                                         
                                         if( enteredState ) {
                                             nextPlayer->emotFrozen = true;
+                                            nextPlayer->emotFrozenIndex = 
+                                                killEmotionIndex;
+                                            
                                             newEmotPlayerIDs.push_back( 
                                                 nextPlayer->id );
                                             newEmotIndices.push_back( 
                                                 killEmotionIndex );
                                             newEmotTTLs.push_back( 120 );
+                                            
+                                            if( ! targetPlayer->emotFrozen ) {
+                                                
+                                                targetPlayer->emotFrozen = true;
+                                                targetPlayer->emotFrozenIndex =
+                                                    victimEmotionIndex;
+                                                
+                                                newEmotPlayerIDs.push_back( 
+                                                    targetPlayer->id );
+                                                newEmotIndices.push_back( 
+                                                    victimEmotionIndex );
+                                                newEmotTTLs.push_back( 120 );
+                                                }
                                             }
                                         }
                                     }
@@ -15615,6 +15814,9 @@ int main() {
                                     
                                     nextPlayer->foodStore += eatBonus;
 
+                                    checkForFoodEatingEmot( nextPlayer,
+                                                            targetObj->id );
+
                                     int cap =
                                         computeFoodCapacity( nextPlayer );
                                     
@@ -15997,6 +16199,9 @@ int main() {
                                             Time::getCurrentTime() +
                                             computeFoodDecrementTimeSeconds( 
                                                 hitPlayer );
+                                            
+										checkForFoodEatingEmot( hitPlayer,
+																0 );
 
                                         // fixed cost to pick up baby
                                         // this still encourages baby-parent
@@ -16247,6 +16452,8 @@ int main() {
                             
                                         if( e.emotIndex != -1 ) {
                                             targetPlayer->emotFrozen = true;
+                                            targetPlayer->emotFrozenIndex =
+                                                e.emotIndex;
                                             newEmotPlayerIDs.push_back( 
                                                 targetPlayer->id );
                                             newEmotIndices.push_back( 
@@ -16480,6 +16687,8 @@ int main() {
                                     
                                     targetPlayer->foodStore += eatBonus;
 
+                                    checkForFoodEatingEmot( targetPlayer,
+                                                            obj->id );
                                     
                                     if( targetPlayer->foodStore > cap ) {
                                         int over = 
@@ -17353,22 +17562,15 @@ int main() {
             
             if( killer == NULL || target == NULL ||
                 killer->error || target->error ||
-                killer->holdingID != s->killerWeaponID ) {
+                killer->holdingID != s->killerWeaponID ||
+                target->heldByOther ) {
                 // either player dead, or held-weapon change
+                // or target baby now picked up (safe)
                 
                 // kill request done
-                if( killer != NULL ) {
-                    // clear their emot
-                    killer->emotFrozen = false;
-                    killer->emotUnfreezeETA = 0;
-                    
-                    newEmotPlayerIDs.push_back( killer->id );
-                            
-                    newEmotIndices.push_back( -1 );
-                    newEmotTTLs.push_back( 0 );
-                    }
                 
-                activeKillStates.deleteElement( i );
+                removeKillState( killer, target );
+
                 i--;
                 continue;
                 }
@@ -17409,12 +17611,38 @@ int main() {
                             
                     newEmotIndices.push_back( killEmotionIndex );
                     newEmotTTLs.push_back( 120 );
+
+                    newEmotPlayerIDs.push_back( target->id );
+                            
+                    newEmotIndices.push_back( victimEmotionIndex );
+                    newEmotTTLs.push_back( 120 );
                     }
                 }
             }
         
-
-
+		//2HOL: check if player is afk
+		for( int i=0; i<numLive; i++ ) {
+			LiveObject *nextPlayer = players.getElement( i );
+			
+			if( nextPlayer->connected == false ||
+				( afkTimeSeconds > 0 &&
+				Time::getCurrentTime() - nextPlayer->lastActionTime > afkTimeSeconds ) ) {
+			
+				nextPlayer->isAFK = true;
+				
+				//Emotes from wound or starvation take priority
+				if( !nextPlayer->emotFrozen ) {
+					nextPlayer->emotFrozen = true;
+					nextPlayer->emotFrozenIndex = afkEmotionIndex;
+					nextPlayer->emotUnfreezeETA = afkTimeSeconds;
+					
+					newEmotPlayerIDs.push_back( nextPlayer->id );
+					newEmotIndices.push_back( afkEmotionIndex );
+					newEmotTTLs.push_back( afkTimeSeconds );
+					}
+				}
+			}
+			
         // now that messages have been processed for all
         // loop over and handle all post-message checks
 
@@ -18841,6 +19069,33 @@ int main() {
                     
                     if( decrementedPlayer != NULL ) {
                         decrementedPlayer->foodUpdate = true;
+
+                        if( computeAge( decrementedPlayer ) > 
+                            defaultActionAge ) {
+                            
+                            double decTime = 
+                                computeFoodDecrementTimeSeconds( 
+                                    decrementedPlayer );
+                            
+                            int totalFood = 
+                                decrementedPlayer->yummyBonusStore
+                                + decrementedPlayer->foodStore;
+
+                            double totalTime = decTime * totalFood;
+                            
+                            if( totalTime < 20 ) {
+                                // 20 seconds left before death
+                                // show starving emote
+                                newEmotPlayerIDs.push_back( 
+                                    decrementedPlayer->id );
+                            
+                                newEmotIndices.push_back( 
+                                    starvingEmotionIndex );
+                                
+                                newEmotTTLs.push_back( 30 );
+                                decrementedPlayer->starving = true;
+                                }
+                            }
                         }
                     }
                 
@@ -19486,21 +19741,27 @@ int main() {
             for( int i=0; i<newEmotPlayerIDs.size(); i++ ) {
                 
                 int ttl = newEmotTTLs.getElementDirect( i );
-
+                int pID = newEmotPlayerIDs.getElementDirect( i );
+                int eInd = newEmotIndices.getElementDirect( i );
+                
                 char *line;
                 
                 if( ttl == 0  ) {
                     line = autoSprintf( 
-                        "%d %d\n", 
-                        newEmotPlayerIDs.getElementDirect( i ), 
-                        newEmotIndices.getElementDirect( i ) );
+                        "%d %d\n", pID, eInd );
                     }
                 else {
                     line = autoSprintf( 
-                        "%d %d %d\n", 
-                        newEmotPlayerIDs.getElementDirect( i ), 
-                        newEmotIndices.getElementDirect( i ),
-                        newEmotTTLs.getElementDirect( i ) );
+                        "%d %d %d\n", pID, eInd, ttl );
+                        
+                    if( ttl == -1 ) {
+                        // a new permanent emot
+                        LiveObject *pO = getLiveObject( pID );
+                        if( pO != NULL ) {
+                            pO->permanentEmots.push_back( eInd );
+                            }
+                        }
+                        
                     }
                 
                 numAdded++;
@@ -19916,6 +20177,36 @@ int main() {
                 
                     delete [] dyingMessage;
                     }
+
+                // tell them about all permanent emots
+                SimpleVector<char> emotMessageWorking;
+                emotMessageWorking.appendElementString( "PE\n" );
+                for( int i=0; i<numPlayers; i++ ) {
+                
+                    LiveObject *o = players.getElement( i );
+                
+                    if( o->error ) {
+                        continue;
+                        }
+                    for( int e=0; e< o->permanentEmots.size(); e ++ ) {
+                        // ttl -2 for permanent but not new
+                        char *line = autoSprintf( 
+                            "%d %d -2\n",
+                            o->id, 
+                            o->permanentEmots.getElementDirect( e ) );
+                        emotMessageWorking.appendElementString( line );
+                        delete [] line;
+                        }
+                    }
+                emotMessageWorking.push_back( '#' );
+                
+                char *emotMessage = emotMessageWorking.getElementString();
+                
+                sendMessageToPlayer( nextPlayer, emotMessage, 
+                                     strlen( emotMessage ) );
+                    
+                delete [] emotMessage;
+                    
 
                 
                 nextPlayer->firstMessageSent = true;
@@ -21320,6 +21611,11 @@ int main() {
 		//2HOL additions for: password-protected objects
 		//These flags correspond to newSpeechPos, need to be cleared every loop as well
         newSpeechPasswordFlags.deleteAll();
+        
+        newEmotPlayerIDs.deleteAll();
+        newEmotIndices.deleteAll();
+        newEmotTTLs.deleteAll();
+        
 
         
         // handle end-of-frame for all players that need it
