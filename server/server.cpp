@@ -10225,7 +10225,7 @@ static void checkForFoodEatingEmot( LiveObject *inPlayer,
                 int e, t;
                 int numRead = sscanf( emotPos, "emotEat_%d_%d", &e, &t );
                 
-                if( numRead == 2 ) {
+                if( numRead == 2 && !inPlayer->emotFrozen ) {
                     inPlayer->emotFrozen = true;
                     inPlayer->emotFrozenIndex = e;
                     
@@ -10241,7 +10241,7 @@ static void checkForFoodEatingEmot( LiveObject *inPlayer,
         }
 
     // no food emot found
-    if( wasStarving ) {
+    if( wasStarving && !inPlayer->emotFrozen ) {
         // clear their starving emot
         newEmotPlayerIDs.push_back( inPlayer->id );
         newEmotIndices.push_back( -1 );
@@ -10277,18 +10277,20 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
             s->emotStartTime = curTime;
             s->killStartTime = curTime;
 
-            s->emotRefreshSeconds = 30;
+            s->emotRefreshSeconds = 10;
             break;
             }
         }
     
     if( !found ) {
         // add new
+		double curTime = Time::getCurrentTime();
         KillState s = { inKiller->id, 
                         inKiller->holdingID,
                         inTarget->id, 
-                        Time::getCurrentTime(),
-                        30 };
+                        curTime,
+						curTime,
+                        10 };
         activeKillStates.push_back( s );
 
         // force target to gasp
@@ -17749,19 +17751,23 @@ int main() {
                 if( curTime - s->emotStartTime > s->emotRefreshSeconds ) {
                     s->emotStartTime = curTime;
                     
-                    // refresh again in 30 seconds, even if we had a shorter
+                    // refresh again in 10 seconds, even if we had a shorter
                     // refresh time because of an intervening emot
-                    s->emotRefreshSeconds = 30;
+                    s->emotRefreshSeconds = 10;
 
                     newEmotPlayerIDs.push_back( killer->id );
                             
                     newEmotIndices.push_back( killEmotionIndex );
                     newEmotTTLs.push_back( 120 );
 
-                    newEmotPlayerIDs.push_back( target->id );
-                            
-                    newEmotIndices.push_back( victimEmotionIndex );
-                    newEmotTTLs.push_back( 120 );
+                    if( !target->emotFrozen ) {
+						target->emotFrozen = true;
+						newEmotPlayerIDs.push_back( target->id );
+								
+						newEmotIndices.push_back( victimEmotionIndex );
+						target->emotFrozenIndex = victimEmotionIndex;
+						newEmotTTLs.push_back( 120 );
+						}
                     }
                 }
             }
@@ -19240,14 +19246,28 @@ int main() {
                             if( totalTime < 20 ) {
                                 // 20 seconds left before death
                                 // show starving emote
-                                newEmotPlayerIDs.push_back( 
-                                    decrementedPlayer->id );
-                            
-                                newEmotIndices.push_back( 
-                                    starvingEmotionIndex );
                                 
-                                newEmotTTLs.push_back( 30 );
-                                decrementedPlayer->starving = true;
+								// only if their emote isn't frozen
+								
+								// Otherwise it always overwrites 
+								// yellow fever emote for example.
+								
+								// Note also that starving emote 
+								// won't show during tripping and drunk emote
+								
+								// But player chose to be in those states,
+								// they should be responsible not to
+								// starve themselves.
+								if( !decrementedPlayer->emotFrozen ) {
+									newEmotPlayerIDs.push_back( 
+										decrementedPlayer->id );
+								
+									newEmotIndices.push_back( 
+										starvingEmotionIndex );
+									
+									newEmotTTLs.push_back( 30 );
+									}
+								decrementedPlayer->starving = true;
                                 }
                             }
                         }
