@@ -225,6 +225,8 @@ static int starvingEmotionIndex = 2;
 static int afkEmotionIndex = 2;
 static double afkTimeSeconds = 0;
 
+static int drunkEmotionIndex = 2;
+
 
 static double lastBabyPassedThresholdTime = 0;
 
@@ -710,6 +712,8 @@ typedef struct LiveObject {
         double foodCapModifier;
 
         double drunkenness;
+		bool drunkennessEffect;
+		double drunkennessEffectETA;
 
 
         double fever;
@@ -2718,27 +2722,6 @@ int computeOverflowFoodCapacity( int inBaseCapacity ) {
 
 
 
-static void drinkAlcohol( LiveObject *inPlayer, int inAlcoholAmount ) {
-    double doneGrowingAge = 16;
-    
-    double multiplier = 1.0;
-    
-
-    double age = computeAge( inPlayer );
-    
-    // alcohol affects a baby 2x
-    // affects an 8-y-o 1.5x
-    if( age < doneGrowingAge ) {
-        multiplier += 1.0 - age / doneGrowingAge;
-        }
-
-    double amount = inAlcoholAmount * multiplier;
-    
-    inPlayer->drunkenness += amount;
-    }
-
-
-
 char *slurSpeech( int inSpeakerID,
                   char *inTranslatedPhrase, double inDrunkenness ) {
     char *working = stringDuplicate( inTranslatedPhrase );
@@ -2937,6 +2920,10 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
                 speed *= c->speedMult;
                 }
             }
+			
+		if( inPlayer->drunkennessEffect ) {
+			speed *= 0.9;
+			}
         }
 
     // never move at 0 speed, divide by 0 errors for eta times
@@ -6809,6 +6796,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.foodStore = computeFoodCapacity( &newObject );
 
     newObject.drunkenness = 0;
+	newObject.drunkennessEffectETA = 0;
+	newObject.drunkennessEffect = false;
     
 
     if( ! newObject.isEve ) {
@@ -10251,6 +10240,35 @@ static void checkForFoodEatingEmot( LiveObject *inPlayer,
                 
     }
     
+static void drinkAlcohol( LiveObject *inPlayer, int inAlcoholAmount ) {
+    double doneGrowingAge = 16;
+    
+    double multiplier = 1.0;
+    
+
+    double age = computeAge( inPlayer );
+    
+    // alcohol affects a baby 2x
+    // affects an 8-y-o 1.5x
+    if( age < doneGrowingAge ) {
+        multiplier += 1.0 - age / doneGrowingAge;
+        }
+
+    double amount = inAlcoholAmount * multiplier;
+    
+    inPlayer->drunkenness += amount;
+	
+	if( inPlayer->drunkenness >= 6 ) {
+		
+		double drunkennessEffectDuration = 60.0;
+		
+		inPlayer->drunkennessEffectETA = Time::getCurrentTime() + drunkennessEffectDuration;
+		inPlayer->drunkennessEffect = true;
+		
+		makePlayerSay( inPlayer, (char*)"+DRUNK+", true );
+		
+		}
+    }
 
 
 // return true if it worked
@@ -11445,6 +11463,9 @@ int main() {
 
     afkEmotionIndex =
         SettingsManager::getIntSetting( "afkEmotionIndex", 2 );
+		
+    drunkEmotionIndex =
+        SettingsManager::getIntSetting( "drunkEmotionIndex", 2 );
 
     afkTimeSeconds =
         SettingsManager::getDoubleSetting( "afkTimeSeconds", 120.0 );
@@ -17773,9 +17794,38 @@ int main() {
                 }
             }
         
-		//2HOL: check if player is afk
+		//2HOL: check if player is afk or drunk
 		for( int i=0; i<numLive; i++ ) {
 			LiveObject *nextPlayer = players.getElement( i );
+			
+			if( nextPlayer->drunkennessEffect ) {
+				if( Time::getCurrentTime() >= nextPlayer->drunkennessEffectETA ) {
+					nextPlayer->drunkennessEffect = false;
+					
+					if( nextPlayer->emotFrozen &&
+						nextPlayer->emotFrozenIndex == drunkEmotionIndex ) {
+							
+						nextPlayer->emotFrozen = false;
+						nextPlayer->emotUnfreezeETA = 0;
+						
+						newEmotPlayerIDs.push_back( nextPlayer->id );
+						newEmotIndices.push_back( -1 );
+						newEmotTTLs.push_back( 0 );
+							
+						}
+					
+					}
+				else if( !nextPlayer->emotFrozen &&
+					Time::getCurrentTime() < nextPlayer->drunkennessEffectETA ) {
+					nextPlayer->emotFrozen = true;
+					nextPlayer->emotFrozenIndex = drunkEmotionIndex;
+					nextPlayer->emotUnfreezeETA = nextPlayer->drunkennessEffectETA;
+					
+					newEmotPlayerIDs.push_back( nextPlayer->id );
+					newEmotIndices.push_back( drunkEmotionIndex );
+					newEmotTTLs.push_back( nextPlayer->drunkennessEffectETA );
+					}
+				}
 			
 			if( nextPlayer->connected == false ||
 				( afkTimeSeconds > 0 &&
@@ -19156,9 +19206,9 @@ int main() {
                         computeFoodDecrementTimeSeconds( nextPlayer );
 
                     if( nextPlayer->drunkenness > 0 ) {
-                        // for every unit of food consumed, consume one
+                        // for every unit of food consumed, consume half a
                         // unit of drunkenness
-                        nextPlayer->drunkenness -= 1.0;
+                        nextPlayer->drunkenness -= 0.5;
                         if( nextPlayer->drunkenness < 0 ) {
                             nextPlayer->drunkenness = 0;
                             }
@@ -21282,7 +21332,10 @@ int main() {
                                     ( speakerObj != NULL &&
                                       speakerObj->vogMode ) ||
                                     players.size() < 
-                                    minActivePlayersForLanguages ) {
+                                    minActivePlayersForLanguages ||
+									strlen( newSpeechPhrases.getElementDirect( u ) ) == 0 ||
+									newSpeechPhrases.getElementDirect( u )[0] == '[' ||
+									newSpeechPhrases.getElementDirect( u )[0] == '+' ) {
                                     
                                     translatedPhrase =
                                         stringDuplicate( 
@@ -21335,7 +21388,9 @@ int main() {
                                         }
                                     }
                                 
-                                if( speakerObj != NULL &&
+                                if( translatedPhrase[0] != '+' &&
+									translatedPhrase[0] != '[' &&
+									speakerObj != NULL &&
                                     speakerObj->drunkenness > 0 ) {
                                     // slur their speech
                                     

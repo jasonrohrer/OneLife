@@ -902,6 +902,9 @@ class LivingLifePage : public GamePage, public ActionListener {
         LiveObject *getOurLiveObject();
         LiveObject *getLiveObject( int inID );
         protected: // minitech
+		
+		bool tileBlocked( int x, int y );
+		void drunkWalk( GridPos *path, int pathLen, bool actionMove );
 
         void clearLiveObjects();
         
