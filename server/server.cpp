@@ -16427,10 +16427,10 @@ int main() {
                             if( obj->foodValue > 0 ) {
                                 holdingFood = true;
 
-                                if( strstr( obj->description, "remapStart" )
+                                if( strstr( obj->description, "noFeeding" )
                                     != NULL ) {
-                                    // don't count drugs as food to 
-                                    // feed other people
+                                    // food that triggers effects cannot
+									// be fed to other people
                                     holdingFood = false;
                                     holdingDrugs = true;
                                     }
