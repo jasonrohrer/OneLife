@@ -79,7 +79,8 @@ int getMetaTriggerObject( int inTriggerIndex ) {
     return globalTriggers.getElementDirect( inTriggerIndex ).onTriggerID;
     }
 
-
+extern bool isTrippingEffectOn;
+extern void setTrippingColor( double x, double y );
 
 
 
@@ -3840,6 +3841,10 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             if( additive ) {
                 toggleAdditiveBlend( true );
                 }
+				
+			if( !multiplicative ) {
+				if( isTrippingEffectOn ) setTrippingColor( pos.x, pos.y );
+				}
 
             drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
                         rot, 

@@ -905,6 +905,7 @@ class LivingLifePage : public GamePage, public ActionListener {
 		
 		bool tileBlocked( int x, int y );
 		void drunkWalk( GridPos *path, int pathLen, bool actionMove );
+		bool isTripping();
 
         void clearLiveObjects();
         

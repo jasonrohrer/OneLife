@@ -201,7 +201,7 @@ static char *photoSig = NULL;
 static double emotDuration = 10;
 
 static int drunkEmotionIndex = -1;
-
+static int trippingEmotionIndex = -1;
 
 static int historyGraphLength = 100;
 
@@ -314,6 +314,10 @@ static SimpleVector<HomePos> oldHomePosStack;
 
 // used on reconnect to decide whether to delete old home positions
 static int lastPlayerID = -1;
+
+
+extern bool isTrippingEffectOn;
+extern void setTrippingColor( double x, double y );
 
 
 
@@ -2488,6 +2492,9 @@ LivingLifePage::LivingLifePage()
 	
     drunkEmotionIndex =
         SettingsManager::getIntSetting( "drunkEmotionIndex", 2 );
+	
+    trippingEmotionIndex =
+        SettingsManager::getIntSetting( "trippingEmotionIndex", 2 );
           
     hideGuiPanel = SettingsManager::getIntSetting( "hideGameUI", 0 );
 
@@ -3219,6 +3226,17 @@ void LivingLifePage::drunkWalk( GridPos *path, int pathLen, bool actionMove ) {
 		
 		}
 	
+	}
+	
+
+bool LivingLifePage::isTripping() {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	if( ourLiveObject == NULL ) return false;
+	return 
+		trippingEmotionIndex != -1 &&
+		ourLiveObject->currentEmot != NULL &&
+		strcmp( ourLiveObject->currentEmot->triggerWord, 
+		getEmotion( trippingEmotionIndex )->triggerWord ) == 0;
 	}
 
 
@@ -5389,6 +5407,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int xEndFloor = gridCenterX + (int)(ceil(6 * gui_fov_scale) + 1);
 
     
+	
+	// For tripping color effect
+	isTrippingEffectOn = isTripping();
+	
 
 
     int numCells = mMapD * mMapD;
@@ -5531,9 +5553,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                         doublePair sheetPos = mult( add( pos, lastCornerPos ),
                                                     0.5 );
+
+                        if( !isTrippingEffectOn ) // All tiles are drawn to change color independently
+						drawSprite( s->wholeSheet, sheetPos );
                         
-                        drawSprite( s->wholeSheet, sheetPos );
-                        
+						if( !isTrippingEffectOn )
                         // mark all cells under sheet as drawn
                         for( int sY = y; sY > y - s->numTilesHigh; sY-- ) {
                         
@@ -5572,7 +5596,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         diagB = mMapBiomes[ mapI + mMapD + 1 ];
                         }
                     
-                    if( leftB == b &&
+					if( isTrippingEffectOn ) setTrippingColor( pos.x, pos.y );
+					
+                    if( !isTrippingEffectOn && // All tiles are drawn to change color independently
+					    leftB == b &&
                         aboveB == b &&
                         diagB == b ) {
                         
