@@ -24,7 +24,7 @@ cd ..
 
 cd OneLife
 git pull --tags
-git checkout OneLife_liveServer
+git checkout 2HOL_liveServer
 cd ..
 
 
