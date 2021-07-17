@@ -10393,6 +10393,26 @@ static void doDrug( LiveObject *inPlayer ) {
 		}
 		
     }
+	
+	
+// returns true if frozen emote cleared successfully
+static bool clearFrozenEmote( LiveObject *inPlayer, int inEmoteIndex ) {
+	
+	if( inPlayer->emotFrozen &&
+		inPlayer->emotFrozenIndex == inEmoteIndex ) {
+			
+		inPlayer->emotFrozen = false;
+		inPlayer->emotUnfreezeETA = 0;
+		
+		newEmotPlayerIDs.push_back( inPlayer->id );
+		newEmotIndices.push_back( -1 );
+		newEmotTTLs.push_back( 0 );
+		
+		return true;
+		}
+	
+	return false;
+    }
 
 
 // return true if it worked
@@ -13326,12 +13346,7 @@ int main() {
 					//Clear afk emote if they were afk
 					if( nextPlayer->isAFK ) {
 
-						nextPlayer->emotFrozen = false;
-						nextPlayer->emotUnfreezeETA = 0;
-						
-						newEmotPlayerIDs.push_back( nextPlayer->id );
-						newEmotIndices.push_back( -1 );
-						newEmotTTLs.push_back( 0 );
+						clearFrozenEmote( nextPlayer, afkEmotionIndex );
 						
 						}
 					
@@ -17961,17 +17976,7 @@ int main() {
 				if( curTime >= nextPlayer->trippingEffectETA ) {
 					nextPlayer->tripping = false;
 					
-					if( nextPlayer->emotFrozen &&
-						nextPlayer->emotFrozenIndex == trippingEmotionIndex ) {
-							
-						nextPlayer->emotFrozen = false;
-						nextPlayer->emotUnfreezeETA = 0;
-						
-						newEmotPlayerIDs.push_back( nextPlayer->id );
-						newEmotIndices.push_back( -1 );
-						newEmotTTLs.push_back( 0 );
-							
-						}
+					clearFrozenEmote( nextPlayer, trippingEmotionIndex );
 					
 					}
 				else if( !nextPlayer->emotFrozen &&
@@ -17990,17 +17995,7 @@ int main() {
 				if( Time::getCurrentTime() >= nextPlayer->drunkennessEffectETA ) {
 					nextPlayer->drunkennessEffect = false;
 					
-					if( nextPlayer->emotFrozen &&
-						nextPlayer->emotFrozenIndex == drunkEmotionIndex ) {
-							
-						nextPlayer->emotFrozen = false;
-						nextPlayer->emotUnfreezeETA = 0;
-						
-						newEmotPlayerIDs.push_back( nextPlayer->id );
-						newEmotIndices.push_back( -1 );
-						newEmotTTLs.push_back( 0 );
-							
-						}
+					clearFrozenEmote( nextPlayer, drunkEmotionIndex );
 					
 					}
 				else if( !nextPlayer->emotFrozen &&
