@@ -18026,11 +18026,11 @@ int main() {
 				if( !nextPlayer->emotFrozen ) {
 					nextPlayer->emotFrozen = true;
 					nextPlayer->emotFrozenIndex = afkEmotionIndex;
-					nextPlayer->emotUnfreezeETA = afkTimeSeconds;
+					nextPlayer->emotUnfreezeETA = curTime + afkTimeSeconds;
 					
 					newEmotPlayerIDs.push_back( nextPlayer->id );
 					newEmotIndices.push_back( afkEmotionIndex );
-					newEmotTTLs.push_back( afkTimeSeconds );
+					newEmotTTLs.push_back( curTime + afkTimeSeconds );
 					}
 				}
 			}
