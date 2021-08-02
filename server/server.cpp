@@ -225,6 +225,13 @@ static int starvingEmotionIndex = 2;
 static int afkEmotionIndex = 2;
 static double afkTimeSeconds = 0;
 
+static int drunkEmotionIndex = 2;
+static int trippingEmotionIndex = 2;
+
+//These are defined client-side, not used here
+bool isTrippingEffectOn = false;
+void setTrippingColor( double x, double y ) {};
+
 
 static double lastBabyPassedThresholdTime = 0;
 
@@ -708,6 +715,16 @@ typedef struct LiveObject {
         int foodStore;
         
         double foodCapModifier;
+
+        double drunkenness;
+		bool drunkennessEffect;
+		double drunkennessEffectETA;
+		
+		bool tripping;
+		bool gonnaBeTripping;
+		double trippingEffectStartTime;
+		double trippingEffectETA;
+
 
         double fever;
         
@@ -2498,7 +2515,23 @@ void forcePlayerAge( const char *inEmail, double inAge ) {
 
 
 double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
-    double value = maxFoodDecrementSeconds * 2 * inPlayer->heat;
+	
+	float baseHeat = inPlayer->heat;
+	
+	if( inPlayer->tripping ) {
+		
+		// Increased food drain when tripping
+		if( inPlayer->heat >= 0.5 ) {
+			baseHeat =  1.0 - (2/3) * ( 1.0 - baseHeat );
+			} 
+		else {
+			baseHeat = (2/3) * baseHeat;
+			}
+		
+		}
+	
+	
+    double value = maxFoodDecrementSeconds * 2 * baseHeat;
     
     if( value > maxFoodDecrementSeconds ) {
         // also reduce if too hot (above 0.5 heat)
@@ -2715,6 +2748,180 @@ int computeOverflowFoodCapacity( int inBaseCapacity ) {
 
 
 
+char *slurSpeech( int inSpeakerID,
+                  char *inTranslatedPhrase, double inDrunkenness ) {
+    char *working = stringDuplicate( inTranslatedPhrase );
+    
+    char *starPos = strstr( working, " *" );
+
+    char *extraData = NULL;
+    
+    if( starPos != NULL ) {
+        extraData = stringDuplicate( starPos );
+        starPos[0] = '\0';
+        }
+    
+    SimpleVector<char> slurredChars;
+    
+    // 1 in 10 letters slurred with 1 drunkenness
+    // all characters slurred with 10 drunkenness
+    double baseSlurChance = 0.1;
+    
+    double slurChance = baseSlurChance * inDrunkenness;
+
+    // 2 in 10 words mixed up in order with 6 drunkenness
+    // all words mixed up at 10 drunkenness
+    double baseWordSwapChance = 0.1;
+
+    // but don't start mixing up words at all until 6 drunkenness
+    // thus, the 0 to 100% mix up range is from 6 to 10 drunkenness
+    double wordSwapChance = 2 * baseWordSwapChance * ( inDrunkenness - 5 );
+
+
+
+    // first, swap word order
+    SimpleVector<char *> *words = tokenizeString( working );
+
+    // always slurr exactly the same for a given speaker
+    // repeating the same phrase won't keep remapping
+    // but map different length phrases differently
+    JenkinsRandomSource slurRand( inSpeakerID + 
+                                  words->size() + 
+                                  inDrunkenness );
+    
+
+    for( int i=0; i<words->size(); i++ ) {
+        if( slurRand.getRandomBoundedDouble( 0, 1 ) < wordSwapChance ) {
+            char *temp = words->getElementDirect( i );
+            
+            // possible swap distance based on drunkenness
+            
+            // again, don't start reording words until 6 drunkenness
+            int maxDist = inDrunkenness - 5;
+
+            if( maxDist >= words->size() - i ) {
+                maxDist = words->size() - i - 1;
+                }
+            
+            if( maxDist > 0 ) {
+                int jump = slurRand.getRandomBoundedInt( 0, maxDist );
+            
+                
+                *( words->getElement( i ) ) = 
+                    words->getElementDirect( i + jump );
+            
+                *( words->getElement( i + jump ) ) = temp;
+                }
+            }
+        }
+    
+
+    char **allWords = words->getElementArray();
+    char *wordsTogether = join( allWords, words->size(), " " );
+    
+    words->deallocateStringElements();
+    delete words;
+    
+    delete [] allWords;
+
+    delete [] working;
+    
+    working = wordsTogether;
+
+
+    int len = strlen( working );
+    for( int i=0; i<len; i++ ) {
+        char c = working[i];
+        
+        slurredChars.push_back( c );
+
+        if( c < 'A' || c > 'Z' ) {
+            // only A-Z, no slurred punctuation
+            continue;
+            }
+
+        if( slurRand.getRandomBoundedDouble( 0, 1 ) < slurChance ) {
+            slurredChars.push_back( c );
+            }
+        }
+
+    delete [] working;
+    
+    if( extraData != NULL ) {
+        slurredChars.appendElementString( extraData );
+        delete [] extraData;
+        }
+    
+
+    return slurredChars.getElementString();
+    }
+
+
+char *yellingSpeech( int inSpeakerID,
+                  char *inTranslatedPhrase ) {
+    char *working = stringDuplicate( inTranslatedPhrase );
+    
+    char *starPos = strstr( working, " *" );
+
+    char *extraData = NULL;
+    
+    if( starPos != NULL ) {
+        extraData = stringDuplicate( starPos );
+        starPos[0] = '\0';
+        }
+    
+    SimpleVector<char> workedChars;
+
+    int len = strlen( working );
+    for( int i=0; i<len; i++ ) {
+        char c = working[i];
+		
+		char r;
+
+        if( c == 'A' ) {
+            r = c;
+            }
+		else if( c == 'E' ) {
+			r = c;
+			}
+		else if( c == 'O' ) {
+			r = c;
+			}
+		else if( c == 'Y' ) {
+			r = c;
+			}
+		else if( c == ',' || c == '.' || c == '!' ) {
+			r = '!';
+			}
+		else {
+			workedChars.push_back( c );
+			continue;
+			}
+			
+
+        for(int i = 0; i < 5; i++) {
+            workedChars.push_back( r );
+            }
+        }
+
+    delete [] working;
+	
+	if( len > 0 ) {
+		int repeatLen = randSource.getRandomBoundedDouble( 0, 1 ) * 4 + 1;
+        for(int i = 0; i < repeatLen; i++) {
+            workedChars.push_back( '!' );
+            }
+		}
+    
+    if( extraData != NULL ) {
+        workedChars.appendElementString( extraData );
+        delete [] extraData;
+        }
+    
+
+    return workedChars.getElementString();
+    }
+
 
 
 // with 128-wide tiles, character moves at 480 pixels per second
@@ -2803,6 +3010,13 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
                 speed *= c->speedMult;
                 }
             }
+			
+		if( inPlayer->tripping ) {
+			speed *= 1.2;
+			}
+		else if( inPlayer->drunkennessEffect ) {
+			speed *= 0.9;
+			}
         }
 
     // never move at 0 speed, divide by 0 errors for eta times
@@ -4555,7 +4769,7 @@ char *isCurseNamingSay( char *inSaidString );
 char *isPasswordSettingSay( char *inSaidString );
 char *isPasswordInvokingSay( char *inSaidString );
 
-static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {    
+static void makePlayerSay( LiveObject *inPlayer, char *inToSay, bool inPrivate = false ) {    
                         
     if( inPlayer->lastSay != NULL ) {
         delete [] inPlayer->lastSay;
@@ -4903,7 +5117,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     newSpeechPasswordFlags.push_back( passwordFlag );
 
                         
-    ChangePosition p = { inPlayer->xd, inPlayer->yd, false };
+    ChangePosition p = { inPlayer->xd, inPlayer->yd, false, -1 };
+	if( inPrivate ) p.responsiblePlayerID = inPlayer->id;
                         
     // if held, speech happens where held
     if( inPlayer->heldByOther ) {
@@ -4917,7 +5132,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         }
 
     newSpeechPos.push_back( p );
-
+	if( inPrivate ) return;
 
 
     SimpleVector<int> pipesIn;
@@ -4946,7 +5161,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 
                 newLocationSpeech.push_back( stringDuplicate( inToSay ) );
                 
-                ChangePosition outChangePos = { outPos.x, outPos.y, false };
+                ChangePosition outChangePos = { outPos.x, outPos.y, false, -1 };
                 newLocationSpeechPos.push_back( outChangePos );
                 }
             }
@@ -6673,6 +6888,14 @@ int processLoggedInPlayer( char inAllowReconnect,
     // start full up to capacity with food
     newObject.foodStore = computeFoodCapacity( &newObject );
 
+    newObject.drunkenness = 0;
+	newObject.drunkennessEffectETA = 0;
+	newObject.drunkennessEffect = false;
+	
+	newObject.tripping = false;
+	newObject.gonnaBeTripping = false;
+	newObject.trippingEffectStartTime = 0;
+	newObject.trippingEffectETA = 0;
     
 
     if( ! newObject.isEve ) {
@@ -10090,7 +10313,7 @@ static void checkForFoodEatingEmot( LiveObject *inPlayer,
                 int e, t;
                 int numRead = sscanf( emotPos, "emotEat_%d_%d", &e, &t );
                 
-                if( numRead == 2 ) {
+                if( numRead == 2 && !inPlayer->emotFrozen ) {
                     inPlayer->emotFrozen = true;
                     inPlayer->emotFrozenIndex = e;
                     
@@ -10106,7 +10329,7 @@ static void checkForFoodEatingEmot( LiveObject *inPlayer,
         }
 
     // no food emot found
-    if( wasStarving ) {
+    if( wasStarving && !inPlayer->emotFrozen ) {
         // clear their starving emot
         newEmotPlayerIDs.push_back( inPlayer->id );
         newEmotIndices.push_back( -1 );
@@ -10115,6 +10338,81 @@ static void checkForFoodEatingEmot( LiveObject *inPlayer,
                 
     }
     
+static void drinkAlcohol( LiveObject *inPlayer, int inAlcoholAmount ) {
+    double doneGrowingAge = 16;
+    
+    double multiplier = 1.0;
+    
+
+    double age = computeAge( inPlayer );
+    
+    // alcohol affects a baby 2x
+    // affects an 8-y-o 1.5x
+    if( age < doneGrowingAge ) {
+        multiplier += 1.0 - age / doneGrowingAge;
+        }
+
+    double amount = inAlcoholAmount * multiplier;
+    
+    inPlayer->drunkenness += amount;
+	
+	if( inPlayer->drunkenness >= 6 ) {
+		
+		double drunkennessEffectDuration = 60.0;
+		
+		inPlayer->drunkennessEffectETA = Time::getCurrentTime() + drunkennessEffectDuration;
+		inPlayer->drunkennessEffect = true;
+		
+		makePlayerSay( inPlayer, (char*)"+DRUNK+", true );
+		
+		}
+    }
+
+
+static void doDrug( LiveObject *inPlayer ) {
+	
+	double trippingEffectDelay = 15.0;
+	double trippingEffectDuration = 30.0;
+	double curTime = Time::getCurrentTime();
+	
+	if( !inPlayer->tripping && !inPlayer->gonnaBeTripping ) {
+		inPlayer->gonnaBeTripping = true;
+		inPlayer->trippingEffectStartTime = curTime + trippingEffectDelay;
+		inPlayer->trippingEffectETA = curTime + trippingEffectDelay + trippingEffectDuration;
+		}
+	else if( !inPlayer->tripping && inPlayer->gonnaBeTripping ) {
+		// Half the delay if they keep munching drug before effect hits
+		float remainingDelay = inPlayer->trippingEffectStartTime - curTime;
+		if( remainingDelay > 0 ) {
+			inPlayer->trippingEffectStartTime = curTime + 0.5 * remainingDelay;
+			}
+		}
+	else {
+		// Refresh duration if they are already tripping
+		inPlayer->trippingEffectETA = curTime + trippingEffectDuration;
+		}
+		
+    }
+	
+	
+// returns true if frozen emote cleared successfully
+static bool clearFrozenEmote( LiveObject *inPlayer, int inEmoteIndex ) {
+	
+	if( inPlayer->emotFrozen &&
+		inPlayer->emotFrozenIndex == inEmoteIndex ) {
+			
+		inPlayer->emotFrozen = false;
+		inPlayer->emotUnfreezeETA = 0;
+		
+		newEmotPlayerIDs.push_back( inPlayer->id );
+		newEmotIndices.push_back( -1 );
+		newEmotTTLs.push_back( 0 );
+		
+		return true;
+		}
+	
+	return false;
+    }
 
 
 // return true if it worked
@@ -10142,18 +10440,20 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
             s->emotStartTime = curTime;
             s->killStartTime = curTime;
 
-            s->emotRefreshSeconds = 30;
+            s->emotRefreshSeconds = 10;
             break;
             }
         }
     
     if( !found ) {
         // add new
+		double curTime = Time::getCurrentTime();
         KillState s = { inKiller->id, 
                         inKiller->holdingID,
                         inTarget->id, 
-                        Time::getCurrentTime(),
-                        30 };
+                        curTime,
+						curTime,
+                        10 };
         activeKillStates.push_back( s );
 
         // force target to gasp
@@ -11307,6 +11607,12 @@ int main() {
 
     afkEmotionIndex =
         SettingsManager::getIntSetting( "afkEmotionIndex", 2 );
+
+    drunkEmotionIndex =
+        SettingsManager::getIntSetting( "drunkEmotionIndex", 2 );
+
+    trippingEmotionIndex =
+        SettingsManager::getIntSetting( "trippingEmotionIndex", 2 );
 
     afkTimeSeconds =
         SettingsManager::getDoubleSetting( "afkTimeSeconds", 120.0 );
@@ -13040,12 +13346,7 @@ int main() {
 					//Clear afk emote if they were afk
 					if( nextPlayer->isAFK ) {
 
-						nextPlayer->emotFrozen = false;
-						nextPlayer->emotUnfreezeETA = 0;
-						
-						newEmotPlayerIDs.push_back( nextPlayer->id );
-						newEmotIndices.push_back( -1 );
-						newEmotTTLs.push_back( 0 );
+						clearFrozenEmote( nextPlayer, afkEmotionIndex );
 						
 						}
 					
@@ -15852,6 +16153,15 @@ int main() {
                                         
                                         }
                                     
+                                    
+                                    if( targetObj->alcohol != 0 ) {
+                                        drinkAlcohol( nextPlayer,
+                                                      targetObj->alcohol );
+                                        }
+										
+                                    if( strstr( targetObj->description, "+drug" ) != NULL ) {
+                                        doDrug( nextPlayer );
+                                        }
 
 
                                     nextPlayer->foodDecrementETASeconds =
@@ -16263,10 +16573,10 @@ int main() {
                             if( obj->foodValue > 0 ) {
                                 holdingFood = true;
 
-                                if( strstr( obj->description, "remapStart" )
+                                if( strstr( obj->description, "noFeeding" )
                                     != NULL ) {
-                                    // don't count drugs as food to 
-                                    // feed other people
+                                    // food that triggers effects cannot
+									// be fed to other people
                                     holdingFood = false;
                                     holdingDrugs = true;
                                     }
@@ -16729,6 +17039,16 @@ int main() {
                                         nextPlayer->holdingEtaDecay = 0;
                                         }
                                     
+                                    if( obj->alcohol != 0 ) {
+                                        drinkAlcohol( targetPlayer,
+                                                      obj->alcohol );
+                                        }
+										
+                                    if( strstr( obj->description, "+drug" ) != NULL ) {
+                                        doDrug( targetPlayer );
+                                        }
+
+
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
                                     nextPlayer->heldOriginY = 0;
@@ -17603,26 +17923,92 @@ int main() {
                 if( curTime - s->emotStartTime > s->emotRefreshSeconds ) {
                     s->emotStartTime = curTime;
                     
-                    // refresh again in 30 seconds, even if we had a shorter
+                    // refresh again in 10 seconds, even if we had a shorter
                     // refresh time because of an intervening emot
-                    s->emotRefreshSeconds = 30;
+                    s->emotRefreshSeconds = 10;
 
                     newEmotPlayerIDs.push_back( killer->id );
                             
                     newEmotIndices.push_back( killEmotionIndex );
                     newEmotTTLs.push_back( 120 );
 
-                    newEmotPlayerIDs.push_back( target->id );
-                            
-                    newEmotIndices.push_back( victimEmotionIndex );
-                    newEmotTTLs.push_back( 120 );
+                    if( !target->emotFrozen ) {
+						target->emotFrozen = true;
+						newEmotPlayerIDs.push_back( target->id );
+								
+						newEmotIndices.push_back( victimEmotionIndex );
+						target->emotFrozenIndex = victimEmotionIndex;
+						newEmotTTLs.push_back( 120 );
+						}
                     }
                 }
             }
         
-		//2HOL: check if player is afk
+		//2HOL: check if player is afk or has food effects
 		for( int i=0; i<numLive; i++ ) {
 			LiveObject *nextPlayer = players.getElement( i );
+			double curTime = Time::getCurrentTime();
+			
+			if( !nextPlayer->tripping && nextPlayer->gonnaBeTripping ) {
+				if( curTime >= nextPlayer->trippingEffectStartTime ) {
+					nextPlayer->tripping = true;
+					nextPlayer->gonnaBeTripping = false;
+					makePlayerSay( nextPlayer, (char*)"+TRIPPING+", true );
+					}
+				}
+			
+			if( nextPlayer->tripping ) {
+				
+				// Uncontrollably flipping
+				if( curTime - nextPlayer->lastFlipTime > 0.25 ) {
+					
+					GridPos p = getPlayerPos( nextPlayer );
+					
+					nextPlayer->facingLeft = !nextPlayer->facingLeft;
+					
+					nextPlayer->lastFlipTime = curTime;
+					newFlipPlayerIDs.push_back( nextPlayer->id );
+					newFlipFacingLeft.push_back( 
+						nextPlayer->facingLeft );
+					newFlipPositions.push_back( p );
+					}
+				
+				if( curTime >= nextPlayer->trippingEffectETA ) {
+					nextPlayer->tripping = false;
+					
+					clearFrozenEmote( nextPlayer, trippingEmotionIndex );
+					
+					}
+				else if( !nextPlayer->emotFrozen &&
+					curTime < nextPlayer->trippingEffectETA ) {
+					nextPlayer->emotFrozen = true;
+					nextPlayer->emotFrozenIndex = trippingEmotionIndex;
+					nextPlayer->emotUnfreezeETA = nextPlayer->trippingEffectETA;
+					
+					newEmotPlayerIDs.push_back( nextPlayer->id );
+					newEmotIndices.push_back( trippingEmotionIndex );
+					newEmotTTLs.push_back( nextPlayer->trippingEffectETA );
+					}
+				}
+			
+			if( nextPlayer->drunkennessEffect ) {
+				if( Time::getCurrentTime() >= nextPlayer->drunkennessEffectETA ) {
+					nextPlayer->drunkennessEffect = false;
+					
+					clearFrozenEmote( nextPlayer, drunkEmotionIndex );
+					
+					}
+				else if( !nextPlayer->emotFrozen &&
+					Time::getCurrentTime() < nextPlayer->drunkennessEffectETA ) {
+					nextPlayer->emotFrozen = true;
+					nextPlayer->emotFrozenIndex = drunkEmotionIndex;
+					nextPlayer->emotUnfreezeETA = nextPlayer->drunkennessEffectETA;
+					
+					newEmotPlayerIDs.push_back( nextPlayer->id );
+					newEmotIndices.push_back( drunkEmotionIndex );
+					newEmotTTLs.push_back( nextPlayer->drunkennessEffectETA );
+					}
+				}
 			
 			if( nextPlayer->connected == false ||
 				( afkTimeSeconds > 0 &&
@@ -17630,15 +18016,16 @@ int main() {
 			
 				nextPlayer->isAFK = true;
 				
-				//Emotes from wound or starvation take priority
+				//Other frozen emotes take priority
+				//wounds, murder, food effects, starving, afk
 				if( !nextPlayer->emotFrozen ) {
 					nextPlayer->emotFrozen = true;
 					nextPlayer->emotFrozenIndex = afkEmotionIndex;
-					nextPlayer->emotUnfreezeETA = afkTimeSeconds;
+					nextPlayer->emotUnfreezeETA = curTime + afkTimeSeconds;
 					
 					newEmotPlayerIDs.push_back( nextPlayer->id );
 					newEmotIndices.push_back( afkEmotionIndex );
-					newEmotTTLs.push_back( afkTimeSeconds );
+					newEmotTTLs.push_back( curTime + afkTimeSeconds );
 					}
 				}
 			}
@@ -19002,6 +19389,14 @@ int main() {
                     nextPlayer->foodDecrementETASeconds = curTime +
                         computeFoodDecrementTimeSeconds( nextPlayer );
 
+                    if( nextPlayer->drunkenness > 0 ) {
+                        // for every unit of food consumed, consume half a
+                        // unit of drunkenness
+                        nextPlayer->drunkenness -= 0.5;
+                        if( nextPlayer->drunkenness < 0 ) {
+                            nextPlayer->drunkenness = 0;
+                            }
+                        }
                     
 
                     if( decrementedPlayer != NULL &&
@@ -19086,14 +19481,28 @@ int main() {
                             if( totalTime < 20 ) {
                                 // 20 seconds left before death
                                 // show starving emote
-                                newEmotPlayerIDs.push_back( 
-                                    decrementedPlayer->id );
-                            
-                                newEmotIndices.push_back( 
-                                    starvingEmotionIndex );
                                 
-                                newEmotTTLs.push_back( 30 );
-                                decrementedPlayer->starving = true;
+								// only if their emote isn't frozen
+								
+								// Otherwise it always overwrites 
+								// yellow fever emote for example.
+								
+								// Note also that starving emote 
+								// won't show during tripping and drunk emote
+								
+								// But player chose to be in those states,
+								// they should be responsible not to
+								// starve themselves.
+								if( !decrementedPlayer->emotFrozen ) {
+									newEmotPlayerIDs.push_back( 
+										decrementedPlayer->id );
+								
+									newEmotIndices.push_back( 
+										starvingEmotionIndex );
+									
+									newEmotTTLs.push_back( 30 );
+									}
+								decrementedPlayer->starving = true;
                                 }
                             }
                         }
@@ -21056,6 +21465,10 @@ int main() {
                         for( int u=0; u<newSpeechPos.size(); u++ ) {
 
                             ChangePosition *p = newSpeechPos.getElement( u );
+
+							if( p->responsiblePlayerID != -1 && 
+								p->responsiblePlayerID != nextPlayer->id ) 
+								continue;
                         
                             // speech never global
                             
@@ -21103,7 +21516,10 @@ int main() {
                                     ( speakerObj != NULL &&
                                       speakerObj->vogMode ) ||
                                     players.size() < 
-                                    minActivePlayersForLanguages ) {
+                                    minActivePlayersForLanguages ||
+									strlen( newSpeechPhrases.getElementDirect( u ) ) == 0 ||
+									newSpeechPhrases.getElementDirect( u )[0] == '[' ||
+									newSpeechPhrases.getElementDirect( u )[0] == '+' ) {
                                     
                                     translatedPhrase =
                                         stringDuplicate( 
@@ -21111,6 +21527,13 @@ int main() {
                                             getElementDirect( u ) );
                                     }
                                 else {
+                                    int speakerDrunkenness = 0;
+                                    
+                                    if( speakerObj != NULL ) {
+                                        speakerDrunkenness =
+                                            speakerObj->drunkenness;
+                                        }
+
                                     translatedPhrase =
                                         mapLanguagePhrase( 
                                             newSpeechPhrases.
@@ -21149,6 +21572,35 @@ int main() {
                                         }
                                     }
                                 
+                                if( translatedPhrase[0] != '+' &&
+									translatedPhrase[0] != '[' ) {
+									if( speakerObj != NULL &&
+										speakerObj->drunkenness > 0 ) {
+										// slur their speech
+										
+										char *slurredPhrase =
+											slurSpeech( speakerObj->id,
+														translatedPhrase,
+														speakerObj->drunkenness );
+										
+										delete [] translatedPhrase;
+										translatedPhrase = slurredPhrase;
+										}
+										
+									if( speakerObj != NULL &&
+										speakerObj->tripping ) {
+										// player is high on drugs and yelling
+										
+										char *processedPhrase =
+											yellingSpeech( speakerObj->id,
+														translatedPhrase );
+										
+										delete [] translatedPhrase;
+										translatedPhrase = processedPhrase;
+										}
+									}
+                                
+
                                 int curseFlag =
                                     newSpeechCurseFlags.getElementDirect( u );
 

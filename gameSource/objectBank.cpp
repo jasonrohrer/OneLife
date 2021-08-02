@@ -79,7 +79,8 @@ int getMetaTriggerObject( int inTriggerIndex ) {
     return globalTriggers.getElementDirect( inTriggerIndex ).onTriggerID;
     }
 
-
+extern bool isTrippingEffectOn;
+extern void setTrippingColor( double x, double y );
 
 
 
@@ -678,6 +679,7 @@ static void setupNoBackAccess( ObjectRecord *inR ) {
     }
 
 
+
 static void setupBlocksMoving( ObjectRecord *inR ) {
     inR->blocksMoving = false;
     
@@ -690,6 +692,18 @@ static void setupBlocksMoving( ObjectRecord *inR ) {
 
     if( pos != NULL ) {
         inR->blocksMoving = true;
+        }
+    }
+
+
+static void setupAlcohol( ObjectRecord *inR ) {
+    inR->alcohol = 0;
+
+    char *pos = strstr( inR->description, "+alcohol" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+alcohol%d", &( inR->alcohol ) );
         }
     }
 
@@ -765,7 +779,11 @@ float initObjectBankStep() {
                 setupAutoDefaultTrans( r );
                 
                 setupNoBackAccess( r );                
-                
+
+
+                setupAlcohol( r );
+
+
                 // do this later, after we parse floorHugging
                 // setupWall( r );
                 
@@ -3338,6 +3356,8 @@ int addObject( const char *inDescription,
 
     setupNoBackAccess( r );            
 
+    setupAlcohol( r );
+
     setupWall( r );
 
     setupBlocksMoving( r );
@@ -3821,6 +3841,10 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             if( additive ) {
                 toggleAdditiveBlend( true );
                 }
+				
+			if( !multiplicative ) {
+				if( isTrippingEffectOn ) setTrippingColor( pos.x, pos.y );
+				}
 
             drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
                         rot, 

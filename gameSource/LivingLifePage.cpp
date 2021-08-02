@@ -200,6 +200,8 @@ static char *photoSig = NULL;
 
 static double emotDuration = 10;
 
+static int drunkEmotionIndex = -1;
+static int trippingEmotionIndex = -1;
 
 static int historyGraphLength = 100;
 
@@ -312,6 +314,10 @@ static SimpleVector<HomePos> oldHomePosStack;
 
 // used on reconnect to decide whether to delete old home positions
 static int lastPlayerID = -1;
+
+
+extern bool isTrippingEffectOn;
+extern void setTrippingColor( double x, double y );
 
 
 
@@ -2483,6 +2489,12 @@ LivingLifePage::LivingLifePage()
     mMapGlobalOffset.y = 0;
 
     emotDuration = SettingsManager::getFloatSetting( "emotDuration", 10 );
+	
+    drunkEmotionIndex =
+        SettingsManager::getIntSetting( "drunkEmotionIndex", 2 );
+	
+    trippingEmotionIndex =
+        SettingsManager::getIntSetting( "trippingEmotionIndex", 2 );
           
     hideGuiPanel = SettingsManager::getIntSetting( "hideGameUI", 0 );
 
@@ -3139,6 +3151,93 @@ LiveObject *LivingLifePage::getLiveObject( int inID ) {
         }
     return obj;
     }
+
+
+bool LivingLifePage::tileBlocked( int x, int y ) {
+	int oid = getObjId( x, y );
+	int oid_right = getObjId( x + 1, y );
+	int oid_left = getObjId( x - 1, y );
+	ObjectRecord *o = NULL;
+	ObjectRecord *o_right = NULL;
+	ObjectRecord *o_left = NULL;
+	if( oid > 0 ) o = getObject( oid );
+	if( oid_right > 0 ) o_right = getObject( oid_right );
+	if( oid_left > 0 ) o_left = getObject( oid_left );
+	bool blocked_center = true;
+	bool blocked_from_right = true;
+	bool blocked_from_left = true;
+	if( oid == 0 || ( o != NULL && !o->blocksWalking ) ) blocked_center = false;
+	if( oid_right == 0 || ( o_right != NULL && o_right->leftBlockingRadius == 0 ) ) blocked_from_right = false;
+	if( oid_left == 0 || ( o_left != NULL && o_left->rightBlockingRadius == 0 ) ) blocked_from_left = false;
+	if( blocked_center || blocked_from_right || blocked_from_left ) return true;
+	return false;
+	}
+	
+
+
+void LivingLifePage::drunkWalk( GridPos *path, int pathLen, bool actionMove ) {
+	
+	if( pathLen >= 3 ) {
+		bool changeThis = true;
+		
+		for( int i = 1; i < pathLen - 1; i++ ) {
+			if( changeThis ) {
+				int xDis = path[ i + 1 ].x - path[ i - 1 ].x;
+				int yDis = path[ i + 1 ].y - path[ i - 1 ].y;
+				
+				if( abs(xDis) + abs(yDis) < 4 ) {
+					int newXDis = 2;
+					int newYDis = 2;
+					int signX = xDis / abs(xDis);
+					int signY = yDis / abs(yDis);
+				
+					if( abs(xDis) == 0 ) newXDis = randSource.getRandomBoundedInt( -1, 1 );
+					if( abs(xDis) == 1 ) newXDis = signX * randSource.getRandomBoundedInt( 0, 1 );
+					if( abs(yDis) == 0 ) newYDis = randSource.getRandomBoundedInt( -1, 1 );
+					if( abs(yDis) == 1 ) newYDis = signY * randSource.getRandomBoundedInt( 0, 1 );
+					
+					int newX = path[ i ].x;
+					int newY = path[ i ].y;
+					if( newXDis != 2 ) newX = path[ i - 1 ].x + newXDis;
+					if( newYDis != 2 ) newY = path[ i - 1 ].y + newYDis;
+					
+					if( !tileBlocked( newX, newY ) ) path[ i ] = { newX, newY };
+					}
+				}
+			changeThis = !changeThis;
+			}
+		}
+	else if( pathLen == 2 && !actionMove ) {
+		
+		int xDis = path[ 1 ].x - path[ 0 ].x;
+		int yDis = path[ 1 ].y - path[ 0 ].y;
+		int newXDis = 2;
+		int newYDis = 2;
+		
+		if( abs(xDis) == 0 ) newXDis = randSource.getRandomBoundedInt( -1, 1 );
+		if( abs(yDis) == 0 ) newYDis = randSource.getRandomBoundedInt( -1, 1 );
+		
+		int newX = path[ 1 ].x;
+		int newY = path[ 1 ].y;
+		if( newXDis != 2 ) newX = path[ 0 ].x + newXDis;
+		if( newYDis != 2 ) newY = path[ 0 ].y + newYDis;
+		
+		if( !tileBlocked( newX, newY ) ) path[ 1 ] = { newX, newY };
+		
+		}
+	
+	}
+	
+
+bool LivingLifePage::isTripping() {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	if( ourLiveObject == NULL ) return false;
+	return 
+		trippingEmotionIndex != -1 &&
+		ourLiveObject->currentEmot != NULL &&
+		strcmp( ourLiveObject->currentEmot->triggerWord, 
+		getEmotion( trippingEmotionIndex )->triggerWord ) == 0;
+	}
 
 
 
@@ -5308,6 +5407,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
     int xEndFloor = gridCenterX + (int)(ceil(6 * gui_fov_scale) + 1);
 
     
+	
+	// For tripping color effect
+	isTrippingEffectOn = isTripping();
+	
 
 
     int numCells = mMapD * mMapD;
@@ -5450,9 +5553,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                         doublePair sheetPos = mult( add( pos, lastCornerPos ),
                                                     0.5 );
+
+                        if( !isTrippingEffectOn ) // All tiles are drawn to change color independently
+						drawSprite( s->wholeSheet, sheetPos );
                         
-                        drawSprite( s->wholeSheet, sheetPos );
-                        
+						if( !isTrippingEffectOn )
                         // mark all cells under sheet as drawn
                         for( int sY = y; sY > y - s->numTilesHigh; sY-- ) {
                         
@@ -5491,7 +5596,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         diagB = mMapBiomes[ mapI + mMapD + 1 ];
                         }
                     
-                    if( leftB == b &&
+					if( isTrippingEffectOn ) setTrippingColor( pos.x, pos.y );
+					
+                    if( !isTrippingEffectOn && // All tiles are drawn to change color independently
+					    leftB == b &&
                         aboveB == b &&
                         diagB == b ) {
                         
@@ -20873,7 +20981,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     
     // for USE actions that specify a slot number
     int useExtraIParam = -1;
-    
+	
+	// whether this move is short and 
+	// an action is gonna be sent shortly
+    bool actionMove = false;
 
     if( !killMode && 
         destID == 0 && !modClick && !tryingToPickUpBaby && !useOnBabyLater && 
@@ -21104,7 +21215,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
 
         if( canExecute && ! killMode ) {
-            
+			
+            actionMove = true;
+			
             const char *action = "";
             char *extra = stringDuplicate( "" );
             
@@ -21521,7 +21634,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             oldPathToDest = NULL;
             }
             
-
+		if( drunkEmotionIndex != -1 &&
+			ourLiveObject->currentEmot != NULL &&
+			strcmp( ourLiveObject->currentEmot->triggerWord, 
+			getEmotion( drunkEmotionIndex )->triggerWord ) == 0 ) {
+			drunkWalk( (ourLiveObject->pathToDest), ourLiveObject->pathLength, actionMove );
+			ourLiveObject->xd = ourLiveObject->pathToDest[ ourLiveObject->pathLength - 1 ].x;
+			ourLiveObject->yd = ourLiveObject->pathToDest[ ourLiveObject->pathLength - 1 ].y;
+			}
 
         // send move right away
         //Thread::staticSleep( 2000 );
