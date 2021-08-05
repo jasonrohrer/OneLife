@@ -6,6 +6,34 @@
 
 
 #include "minorGems/ui/event/ActionListener.h"
+#include "PageComponent.h"
+
+
+
+class Background : public PageComponent, public ActionListenerList {
+        
+    public:
+        
+        // text field width based on widest allowed 
+        // (or non-forbidden) character
+
+        // label text and char maps copied internally
+        Background( const char *inImageName, float inOpacity = 1.0f, doublePair inPosition = {0, 0} );
+        
+        
+        
+        virtual void draw();
+        
+
+        
+    protected:
+        SpriteHandle mImage;
+
+        float mOpacity;
+
+        doublePair mPosition;
+        
+    };
 
 
 class ExistingAccountPage : public GamePage, public ActionListener {
@@ -58,6 +86,9 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         KeyEquivalentTextButton mPasteButton;
 
         TextButton mDisableCustomServerButton;
+        
+        Background mBackground;
+        Background mGameLogo;
         
         TextButton mLoginButton;
         TextButton mFriendsButton;

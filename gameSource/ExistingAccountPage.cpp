@@ -54,6 +54,8 @@ ExistingAccountPage::ExistingAccountPage()
           mPasteButton( mainFont, 0, -112, translate( "paste" ), 'v', 'V' ),
           mDisableCustomServerButton( mainFont, 0, 220, 
                                       translate( "disableCustomServer" ) ),
+          mBackground( "background.tga", 0.75f ),
+          mGameLogo( "logo.tga", 1.0f, {-360, 256} ),
           mLoginButton( mainFont, -360, -64, translate( "loginButton" ) ),
           mFriendsButton( mainFont, -360, -64, translate( "friendsButton" ) ),
           mGenesButton( mainFont, 522, 300, translate( "genesButton" ) ),
@@ -118,6 +120,9 @@ ExistingAccountPage::ExistingAccountPage()
     mFields[1] = &mKeyField;
 
     
+    addComponent( &mBackground );
+    addComponent( &mGameLogo );
+                                     
     addComponent( &mLoginButton );
     addComponent( &mFriendsButton );
     addComponent( &mGenesButton );
@@ -771,3 +776,20 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
         }
     }
 
+
+
+Background::Background( const char *inImageName, float inOpacity, doublePair inPosition )
+        : PageComponent( 0, 0 ),
+          mImage( loadSprite( inImageName, false ) ),
+          mOpacity( inOpacity ),
+          mPosition( inPosition ) {
+    }
+
+   
+void Background::draw() {
+    setDrawColor( 1, 1, 1, mOpacity );
+    
+    if (! isPaused() && mImage != NULL ) {
+        drawSprite( mImage, mPosition );
+        }
+    }
