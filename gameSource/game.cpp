@@ -319,7 +319,7 @@ const char *getLinuxAppName() {
 
 
 const char *getFontTGAFileName() {
-    return "font_32_64.tga";
+    return "newfont_32_64.tga";
     }
 
 
@@ -462,7 +462,8 @@ void initDrawString( int inWidth, int inHeight ) {
     toggleMipMapMinFilter( true );
     toggleTransparentCropping( true );
     
-    mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16 );
+    //mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16 );
+    mainFont = new Font( getFontTGAFileName(), 3, 6, false, 16 );
     mainFont->setMinimumPositionPrecision( 1 );
 
     setViewCenterPosition( lastScreenViewCenter.x, lastScreenViewCenter.y );
