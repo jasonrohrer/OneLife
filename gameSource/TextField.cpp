@@ -591,7 +591,7 @@ void TextField::draw() {
 
 
 void TextField::pointerUp( float inX, float inY ) {
-    if( mIgnoreMouse ) {
+    if( mIgnoreMouse || mIgnoreEvents ) {
         return;
         }
     

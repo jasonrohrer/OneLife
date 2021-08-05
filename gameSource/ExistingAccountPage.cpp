@@ -24,6 +24,7 @@
 
 static JenkinsRandomSource randSource;
 
+char fieldsLocked = true;
 
 extern Font *mainFont;
 
@@ -63,6 +64,7 @@ ExistingAccountPage::ExistingAccountPage()
           mBackground( "background.tga", 0.75f ),
           mGameLogo( "logo.tga", 1.0f, {-360, 256} ),
           mSeedButton( mainFont, -360, -64, "SEED" ),
+          mUnlockButton( mainFont, -360, -256, "UNLOCK FIELDS" ),
           mLoginButton( mainFont, -360, -64, translate( "loginButton" ) ),
           mFriendsButton( mainFont, -360, -64, translate( "friendsButton" ) ),
           mGenesButton( mainFont, 522, 300, translate( "genesButton" ) ),
@@ -123,6 +125,7 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mTutorialButton );
 
     setButtonStyle( &mDisableCustomServerButton );
+    setButtonStyle( &mUnlockButton );
     setButtonStyle( &mSeedButton );
     
     mFields[0] = &mEmailField;
@@ -152,6 +155,7 @@ ExistingAccountPage::ExistingAccountPage()
     addComponent( &mViewAccountButton );
     addComponent( &mTutorialButton );
 
+    addComponent( &mUnlockButton );
     addComponent( &mSeedButton );
     addComponent( &mSpawnSeed );
     
@@ -188,7 +192,8 @@ ExistingAccountPage::ExistingAccountPage()
     mTutorialButton.addActionListener( this );
     
     mDisableCustomServerButton.addActionListener( this );
-
+    mUnlockButton.addActionListener( this );
+    
     mRetryButton.setVisible( false );
     mRedetectButton.setVisible( false );
     mDisableCustomServerButton.setVisible( false );
@@ -312,7 +317,16 @@ void ExistingAccountPage::makeActive( char inFresh ) {
     char *emailText = mEmailField.getText();
     char *keyText = mKeyField.getText();
 
+    mUnlockButton.setLabelText( "LOCK FIELDS" );
+    fieldsLocked = false;
+
+    if ( SettingsManager::getIntSetting( "streamProtection", 0 ) ) {
+        mUnlockButton.setLabelText( "UNLOCK FIELDS" );
+        fieldsLocked = true;
+        }
+
     mSpawnSeed.setContentsHidden( true );
+    mSpawnSeed.setIgnoreEvents( fieldsLocked );
 
 
     // don't hide field contents unless there is something to hide
@@ -331,6 +345,9 @@ void ExistingAccountPage::makeActive( char inFresh ) {
         
         mEmailField.setContentsHidden( true );
         mKeyField.setContentsHidden( true );
+        
+        mEmailField.setIgnoreEvents( fieldsLocked );
+        mKeyField.setIgnoreEvents( fieldsLocked );
         
         char *url = SettingsManager::getStringSetting( "lineageServerURL", "" );
 
@@ -413,15 +430,15 @@ void ExistingAccountPage::step() {
                              mKeyField.isFocused() );
     //mAtSignButton.setVisible( mEmailField.isFocused() );
     
-    int blockClicks;
+    int blockClicks = false;
     if ( mSpawnSeed.isFocused() ) { blockClicks = true; }
     
     mLoginButton.setIgnoreEvents( blockClicks );
     mSeedButton.setIgnoreEvents( blockClicks );
     mFriendsButton.setIgnoreEvents( blockClicks );
     
-    mEmailField.setIgnoreEvents( blockClicks );
-    mKeyField.setIgnoreEvents( blockClicks );
+    mEmailField.setIgnoreEvents( fieldsLocked ? true : blockClicks );
+    mKeyField.setIgnoreEvents( fieldsLocked ? true : blockClicks );
     }
 
 
@@ -584,6 +601,32 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         SettingsManager::setSetting( "useCustomServer", 0 );
         mDisableCustomServerButton.setVisible( false );
         processLogin( true, "done" );
+        }
+    else if( inTarget == &mUnlockButton ) {
+        if ( fieldsLocked ) {
+            mUnlockButton.setLabelText( "LOCK FIELDS" );
+
+            SettingsManager::setSetting( "streamProtection", 0 );
+            fieldsLocked = false;
+            }
+        else {
+            mUnlockButton.setLabelText( "UNLOCK FIELDS" );
+
+            SettingsManager::setSetting( "streamProtection", 1 );
+            fieldsLocked = true;
+            }
+
+        mEmailField.setContentsHidden( true );
+        mKeyField.setContentsHidden( true );
+        mSpawnSeed.setContentsHidden( true );
+        
+        mEmailField.setIgnoreEvents( fieldsLocked );
+        mKeyField.setIgnoreEvents( fieldsLocked );
+        mSpawnSeed.setIgnoreEvents( fieldsLocked );
+        
+        mEmailField.unfocus();
+        mKeyField.unfocus();
+        mSpawnSeed.unfocus();
         }
     }
 

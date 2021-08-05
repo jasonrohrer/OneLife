@@ -789,7 +789,7 @@ void DropdownList::pointerMove( float inX, float inY ) {
 
 void DropdownList::pointerDown( float inX, float inY ) {
 	hoverIndex = insideIndex( inX, inY );
-	if( !isInsideTextBox( inX, inY ) && !nearRightEdge ) unfocus();
+	//if( !isInsideTextBox( inX, inY ) && !nearRightEdge ) unfocus();
 	if( hoverIndex == -1 ) return;
 	if( !nearRightEdge ) {
 		selectOption( hoverIndex );
@@ -800,7 +800,9 @@ void DropdownList::pointerDown( float inX, float inY ) {
 
 
 void DropdownList::pointerUp( float inX, float inY ) {
-    if( mIgnoreMouse ) {
+    if( !isInsideTextBox( inX, inY ) && !nearRightEdge ) unfocus();
+    
+    if( mIgnoreMouse || mIgnoreEvents ) {
         return;
         }
     
