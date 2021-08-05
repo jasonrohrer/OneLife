@@ -806,6 +806,20 @@ double TextField::getRightEdgeX() {
 
 
 
+double TextField::getLeftEdgeX() {
+    
+    return mX - mWide / 2;
+    }
+
+
+
+double TextField::getWidth() {
+    
+    return mWide;
+    }
+
+
+
 void TextField::setFireOnAnyTextChange( char inFireOnAny ) {
     mFireOnAnyChange = inFireOnAny;
     }
