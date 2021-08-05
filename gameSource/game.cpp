@@ -120,6 +120,8 @@ char *serverIP = NULL;
 int serverPort = 0;
 
 
+char useSpawnSeed;
+
 char *userEmail = NULL;
 char *accountKey = NULL;
 char *userTwinCode = NULL;

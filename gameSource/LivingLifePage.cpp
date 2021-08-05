@@ -94,6 +94,7 @@ extern char usingCustomServer;
 extern char *serverIP;
 extern int serverPort;
 
+extern char useSpawnSeed;
 extern char *userEmail;
 extern char *userTwinCode;
 extern int userTwinCount;
@@ -11944,7 +11945,7 @@ void LivingLifePage::step() {
                 std::string seededEmail = std::string( userEmail );
 
 				// If user doesn't have a seed in their email field
-				if( seededEmail.find('|') == std::string::npos ) {
+				if( seededEmail.find('|') == std::string::npos && useSpawnSeed ) {
 					std::string seedList = SettingsManager::getSettingContents( "spawnSeed", "" );
 					std::string seed = "";
 					if( seedList == "" ) {
@@ -22020,7 +22021,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                         if( strstr( typedText, filterCommand ) == typedText ) {
                             // starts with filter command
                             
-                            LiveObject *ourLiveObject = getOurLiveObject();
+                            //LiveObject *ourLiveObject = getOurLiveObject();
                             
                             int emotIndex = getEmotionIndex( typedText );
                             
