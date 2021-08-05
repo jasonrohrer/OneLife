@@ -42,7 +42,7 @@ username "USERNAME:"
 atSignTip "INSERT '@' SIGN (INTL KEYBOARDS)"
 
 
-loginButton "LOGIN"
+loginButton "BE BORN"
 friendsButton "FRIENDS"
 familyTrees "FAMILY TREES"
 techTree "TECH"

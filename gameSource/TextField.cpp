@@ -300,7 +300,8 @@ void TextField::draw() {
     drawRect( - mWide / 2, - mHigh / 2, 
               mWide / 2, mHigh / 2 );
     
-    setDrawColor( 0.25, 0.25, 0.25, 1 );
+    // make the inside of the box yellow
+    setDrawColor( 1, 0.75, 0.2, 1 );
     double pixWidth = mCharWidth / 8;
 
 
@@ -467,6 +468,9 @@ void TextField::draw() {
     char leftAlign = true;
     char cursorCentered = false;
     doublePair centerPos = { 0, 0 };
+    
+    // make inside text always black 
+    setDrawColor( 0, 0, 0, 1 );
     
     if( ! tooLongFront ) {
         mFont->drawString( mDrawnText, textPos, alignLeft );
