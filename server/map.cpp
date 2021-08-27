@@ -8757,6 +8757,24 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
             fclose( tempLog );
             }
+
+        if( inIncrementPosition ) {
+            // keep pushing Eve grid to the west of wherever we ended up putting
+            // this Eve
+            if( ave.x != eveLocation.x ||
+                ave.y != eveLocation.y ) {
+        
+                eveLocation.x = ave.x;
+                eveLocation.y = ave.y;
+                
+                File eveLocFile( NULL, "lastEveLocation.txt" );
+                char *locString = 
+                    autoSprintf( "%d,%d", eveLocation.x, eveLocation.y );
+                eveLocFile.writeToFile( locString );
+                delete [] locString;
+                }
+            }
+        
         }
     else {
         // player has never been an Eve that survived to old age before

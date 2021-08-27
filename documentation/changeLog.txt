@@ -28,6 +28,12 @@ Server Fixes
   more robust, and will always finish, even in the face of unresponsive utility
   servers.
 
+--Another fix to Eve placement to prevent eastward jump-backs:  we now use
+  west-of-homeland Eve placements to keep pushing the last-eve position further
+  west, so if we ever have to default to the walking grid later (because there
+  are no first homelands left), then the new walking grid will start to the
+  west of the last non-grid Eve spawn.  Thanks Teliot.
+
 
 
 
