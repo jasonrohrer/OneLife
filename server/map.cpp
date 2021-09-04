@@ -4964,8 +4964,16 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 int desiredMoveDist = t->desiredMoveDist;
  
                 char stayInBiome = false;
-               
- 
+                
+                char avoidFloor = false;
+                
+                if( t->newTarget > 0 &&
+                    strstr( getObject( t->newTarget )->description, 
+                            "groundOnly" ) ) {
+                    avoidFloor = true;
+                    }
+                
+
                 if( t->move < 3 ) {
                    
                     GridPos p = getClosestPlayerPos( inX, inY );
@@ -5120,16 +5128,29 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                 trans = getPTrans( newID, -1 );
                                 }
                             }
-                           
- 
- 
+                        
+                        
+                        char blockedByFloor = false;
+                        
+                        if( oID == 0 &&
+                            avoidFloor ) {
+                            int floorID = getMapFloor( testX, testY );
+                        
+                            if( floorID > 0 ) {
+                                blockedByFloor = true;
+                                }
+                            }
+
+
                         if( i >= tryDist && oID == 0 ) {
-                            // found a bare ground spot for it to move
-                            newX = testX;
-                            newY = testY;
-                            // keep any bare ground transition (or NULL)
-                            destTrans = trans;
-                            break;
+                            if( ! blockedByFloor ) {
+                                // found a bare ground spot for it to move
+                                newX = testX;
+                                newY = testY;
+                                // keep any bare ground transition (or NULL)
+                                destTrans = trans;
+                                break;
+                                }
                             }
                         else if( i >= tryDist && trans != NULL ) {
                             newX = testX;
@@ -5232,7 +5253,16 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                        
                                         continue;
                                         }
- 
+                                    if( avoidFloor ) {
+                                        int floorID = 
+                                            getMapFloor( testX, testY );
+                        
+                                        if( floorID > 0 ) {
+                                            // blocked by floor
+                                            continue;
+                                            }
+                                        }
+
                                     possibleX[ numPossibleDirs ] = testX;
                                     possibleY[ numPossibleDirs ] = testY;
                                     numPossibleDirs++;
