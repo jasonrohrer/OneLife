@@ -13,6 +13,13 @@ int versionNumber = 60;
 #include <malloc.h>
 #endif
 
+//These are defined client-side, not used here
+bool isTrippingEffectOn = false;
+void setTrippingColor( double x, double y ) {};
+
+//These are defined client-side, not used here
+float gui_fov_scale = 1.0f;
+
 
 #include "minorGems/graphics/Color.h"
 
