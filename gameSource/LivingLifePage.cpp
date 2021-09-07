@@ -2545,12 +2545,12 @@ LivingLifePage::LivingLifePage()
 
 
     for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
-        mYumSlipHideOffset[i].x = -600;
+        mYumSlipHideOffset[i].x = -140;
         mYumSlipHideOffset[i].y = -330;
         }
     
-    mYumSlipHideOffset[2].x += 70;
-    mYumSlipHideOffset[3].x += 80;
+    mYumSlipHideOffset[2].x += 60;
+    mYumSlipHideOffset[3].x += 70;
 
     for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
         mYumSlipPosOffset[i] = mYumSlipHideOffset[i];
@@ -8555,7 +8555,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             doublePair slipPos = 
                 add( mult( recalcOffset( mYumSlipPosOffset[i] ), gui_fov_scale ), lastScreenViewCenter );
         
-            slipPos.y += lrint( highestCravingYOffset / 1.75 ) * gui_fov_scale_hud;
+            // slipPos.y += lrint( highestCravingYOffset / 1.75 ) * gui_fov_scale_hud;
             
             setDrawColor( 1, 1, 1, 1 );
             drawSprite( mYumSlipSprites[i], slipPos, gui_fov_scale_hud );
