@@ -8541,7 +8541,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 				setDrawColor( 1, 1, 1, 0.2f );
 				}
 
-            slipPos.y += lrint( highestCravingYOffset / 1.75 );
+            slipPos.y += lrint( highestCravingYOffset / 1.75 ) * gui_fov_scale_hud;
 
             drawSprite( mHungerSlipSprites[i], slipPos, gui_fov_scale_hud );
             }
@@ -8555,7 +8555,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             doublePair slipPos = 
                 add( mult( recalcOffset( mYumSlipPosOffset[i] ), gui_fov_scale ), lastScreenViewCenter );
         
-            slipPos.y += lrint( highestCravingYOffset / 1.75 );
+            slipPos.y += lrint( highestCravingYOffset / 1.75 ) * gui_fov_scale_hud;
             
             setDrawColor( 1, 1, 1, 1 );
             drawSprite( mYumSlipSprites[i], slipPos, gui_fov_scale_hud );
@@ -8595,22 +8595,22 @@ void LivingLifePage::draw( doublePair inViewCenter,
         if( ! equal( mCravingPosOffset[i], mCravingHideOffset[i] ) ) {
             
             doublePair cravingPos  = 
-                add( mCravingPosOffset[i], lastScreenViewCenter );
+				add( mult( recalcOffset( mCravingPosOffset[i] ), gui_fov_scale ), lastScreenViewCenter );
             
-            cravingPos = add( cravingPos, mCravingExtraOffset[i] );
+			cravingPos = add( cravingPos, mult( mCravingExtraOffset[i], gui_fov_scale_hud ) );
             
             setDrawColor( 1, 1, 1, 1.0 );
             // flip, don't rotate
-            drawSprite( mHintSheetSprites[i], cravingPos, 1.0, 0.0, true );
+            drawSprite( mHintSheetSprites[i], cravingPos, gui_fov_scale_hud, 0.0, true );
                 
             setDrawColor( 0, 0, 0, 1.0f );
             
             doublePair lineStart = cravingPos;
             
-            lineStart.x += 298;
-            lineStart.x -= mCravingExtraOffset[i].x;
+            lineStart.x += 298 * gui_fov_scale_hud;
+            lineStart.x -= mCravingExtraOffset[i].x * gui_fov_scale_hud;
             
-            lineStart.y += 26;
+            lineStart.y += 26 * gui_fov_scale_hud;
                 
             handwritingFont->drawString( mCravingMessage[i],
                                          lineStart, alignLeft );
