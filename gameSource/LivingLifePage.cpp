@@ -3177,6 +3177,7 @@ bool LivingLifePage::tileBlocked( int x, int y ) {
 
 void LivingLifePage::drunkWalk( GridPos *path, int pathLen, bool actionMove ) {
 	
+	if( path == NULL ) return;	
 	if( pathLen >= 3 ) {
 		bool changeThis = true;
 		
@@ -3188,8 +3189,10 @@ void LivingLifePage::drunkWalk( GridPos *path, int pathLen, bool actionMove ) {
 				if( abs(xDis) + abs(yDis) < 4 ) {
 					int newXDis = 2;
 					int newYDis = 2;
-					int signX = xDis / abs(xDis);
-					int signY = yDis / abs(yDis);
+					int signX = 0;
+					int signY = 0;
+					if( xDis != 0 ) signX = xDis / abs(xDis);
+					if( yDis != 0 ) signY = yDis / abs(yDis);
 				
 					if( abs(xDis) == 0 ) newXDis = randSource.getRandomBoundedInt( -1, 1 );
 					if( abs(xDis) == 1 ) newXDis = signX * randSource.getRandomBoundedInt( 0, 1 );
