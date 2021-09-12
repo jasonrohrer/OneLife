@@ -5809,6 +5809,31 @@ static char isYummy( LiveObject *inPlayer, int inObjectID ) {
         }
     return true;
     }
+    
+static char isReallyYummy( LiveObject *inPlayer, int inObjectID ) {
+    
+    // whether the food is actually not in the yum chain
+    // return false for meh food that the player is craving
+    // which is displayed "yum" client-side
+    
+    ObjectRecord *o = getObject( inObjectID );
+    
+    if( o->isUseDummy ) {
+        inObjectID = o->useDummyParent;
+        o = getObject( inObjectID );
+        }
+
+    if( o->foodValue == 0 ) {
+        return false;
+        }
+
+    for( int i=0; i<inPlayer->yummyFoodChain.size(); i++ ) {
+        if( inObjectID == inPlayer->yummyFoodChain.getElementDirect(i) ) {
+            return false;
+            }
+        }
+    return true;
+    }
 
 
 
@@ -5843,13 +5868,22 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
         inPlayer->yummyFoodChain.size() == 0 ) {
         
         int eatenID = inFoodEatenID;
-
-        inPlayer->yummyFoodChain.push_back( eatenID );
+        
+        if( isReallyYummy( inPlayer, eatenID ) ) {
+            inPlayer->yummyFoodChain.push_back( eatenID );
+            }
+		
+        // now it is possible to "grief" the craving pool
+        // by eating high tech food without craving them
+        // but this also means that it requires more effort to
+        // cheese the craving system by deliberately eating
+        // easy food first in an advanced town
+        logFoodDepth( inPlayer->lineageEveID, eatenID );
         
         if( eatenID == inPlayer->cravingFood.foodID &&
             computeAge( inPlayer ) >= minAgeForCravings ) {
             
-            for( int i=0; i< inPlayer->cravingFoodYumIncrement; i++ ) {
+            for( int i=0; i< inPlayer->cravingFood.bonus; i++ ) {
                 // add extra copies to YUM chain as a bonus
                 inPlayer->yummyFoodChain.push_back( eatenID );
                 }
@@ -6937,14 +6971,6 @@ int processLoggedInPlayer( char inAllowReconnect,
                                                newObject.parentChainLength );
         // initilize increment
         newObject.cravingFoodYumIncrement = 1;
-
-        
-        
-        // she starts off craving a food right away
-        // newObject.cravingFood = getCravedFood( newObject.lineageEveID,
-                                               // newObject.parentChainLength );
-        // initilize increment
-        // newObject.cravingFoodYumIncrement = 1;
 
         int femaleID = getRandomFemalePersonObject();
         
@@ -11504,11 +11530,15 @@ static LiveObject *getPlayerByName( char *inName,
 
 
 static void sendCraving( LiveObject *inPlayer ) {
-    // they earn the normal YUM multiplier increase (+1) PLUS the bonus
+    // they earn the normal YUM multiplier increase (+1) if food is actually yum PLUS the bonus
     // increase, so send them the total.
+    
+    int totalBonus = inPlayer->cravingFood.bonus;
+    if( isReallyYummy( inPlayer, inPlayer->cravingFood.foodID ) ) totalBonus = totalBonus + 1;
+    
     char *message = autoSprintf( "CR\n%d %d\n#", 
                                  inPlayer->cravingFood.foodID,
-                                 inPlayer->cravingFoodYumIncrement + 1 );
+                                 totalBonus );
     sendMessageToPlayer( inPlayer, message, strlen( message ) );
     delete [] message;
 

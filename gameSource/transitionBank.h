@@ -224,6 +224,8 @@ void printTrans( TransRecord *inTrans );
 
 int getObjectDepth( int inObjectID );
 
+int getMaxDepth();
+
 
 // true for objects that are not naturally occurring
 // or for natural objects that can be moved by humans

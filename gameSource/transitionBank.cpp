@@ -40,6 +40,8 @@ static SimpleVector<TransRecord *> *producesMap;
 static int depthMapSize = 0;
 static int *depthMap = NULL;
 
+static int maxDepth = 0;
+
 
 static int humanMadeMapSize = 0;
 static char *humanMadeMap = NULL;
@@ -1596,6 +1598,13 @@ void regenerateDepthMap() {
         index ++;
         }
     
+    
+    for( int i=0; i<depthMapSize; i++ ) {
+        if( depthMap[i] > maxDepth && depthMap[i] < UNREACHABLE ) {
+            maxDepth = depthMap[i];
+            }
+        }
+    
     }
 
 
@@ -2896,6 +2905,11 @@ int getObjectDepth( int inObjectID ) {
     else {
         return depthMap[ inObjectID ];
         }
+    }
+    
+
+int getMaxDepth() {
+    return maxDepth;
     }
 
 
