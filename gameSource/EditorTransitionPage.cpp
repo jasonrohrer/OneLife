@@ -69,9 +69,9 @@ static ObjectPickable objectPickable;
 static ObjectPickable objectPickableAlt;
 
 
-#define NUM_MOVE_BUTTONS 8
+#define NUM_MOVE_BUTTONS 9
 static const char *moveButtonNames[NUM_MOVE_BUTTONS] =
-{ "None", "Chase", "Flee", "Random", "North", "South", "East", "West" };
+{ "None", "Chase", "Flee", "Random", "North", "South", "East", "West", "Find" };
 
 
 EditorTransitionPage::EditorTransitionPage()
