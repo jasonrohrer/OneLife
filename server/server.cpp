@@ -16627,7 +16627,8 @@ int main() {
                                     hitPlayer = NULL;
                                     }
 
-                                if( hitPlayer == NULL ||
+                                if( false ) //food with noFeeding tag cannot be fed even to elderly
+								if( hitPlayer == NULL ||
                                     hitPlayer == nextPlayer ) {
                                     // try click on elderly
                                     hitPlayer = 
