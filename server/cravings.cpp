@@ -194,6 +194,11 @@ void logFoodDepth( int inLineageEveID, int inEatenID ) {
     
     // the food with max depth ever eaten is
     // the way we gauge how advanced the tech is for a lineage
+    
+    int d = getObjectDepth( inEatenID );
+    
+    // do not include uncraftable food in determining cravings
+    if( d == UNREACHABLE ) return;
 
     CravingList *l = getListForLineage( inLineageEveID );
    
@@ -206,8 +211,6 @@ void logFoodDepth( int inLineageEveID, int inEatenID ) {
         
         l = getListForLineage( inLineageEveID );
         }
-
-	int d = getObjectDepth( inEatenID );
 
 	if( d > l->lineageMaxFoodDepth ) {
 		l->lineageMaxFoodDepth = d;
