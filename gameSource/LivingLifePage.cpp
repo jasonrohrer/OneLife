@@ -10502,7 +10502,7 @@ static double getLongestLine( char *inMessage ) {
                           "#", &numLines );
     
     for( int l=0; l<numLines; l++ ) {
-        double len = handwritingFont->measureString( lines[l] );
+        double len = handwritingFont->measureString( lines[l] ) / gui_fov_scale_hud;
         
         if( len > longestLine ) {
             longestLine = len;
