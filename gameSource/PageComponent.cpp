@@ -150,9 +150,6 @@ void PageComponent::base_pointerDown( float inX, float inY ){
     if( mIgnoreEvents ) {
         return;
         }
-	
-	int mouseButton = getLastMouseButton();
-	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { return; }
     
     inX -= mX;
     inY -= mY;

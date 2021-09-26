@@ -788,6 +788,10 @@ void DropdownList::pointerMove( float inX, float inY ) {
 
 
 void DropdownList::pointerDown( float inX, float inY ) {
+    
+	int mouseButton = getLastMouseButton();
+	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { return; }
+    
 	hoverIndex = insideIndex( inX, inY );
 	if( !isInsideTextBox( inX, inY ) && !nearRightEdge ) unfocus();
 	if( hoverIndex == -1 ) return;
@@ -803,6 +807,9 @@ void DropdownList::pointerUp( float inX, float inY ) {
     if( mIgnoreMouse ) {
         return;
         }
+        
+	int mouseButton = getLastMouseButton();
+	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { return; }
     
     if( inX > - mWide / 2 &&
         inX < + mWide / 2 &&

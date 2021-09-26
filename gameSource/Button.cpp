@@ -237,6 +237,10 @@ void Button::pointerMove( float inX, float inY ) {
 
 
 void Button::pointerDown( float inX, float inY ) {
+    
+	int mouseButton = getLastMouseButton();
+	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { return; }
+    
     if( isInside( inX, inY ) ) {
         mPressStartedHere = true;
         pointerDrag( inX, inY );
