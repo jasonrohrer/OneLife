@@ -590,6 +590,9 @@ void TextField::pointerUp( float inX, float inY ) {
     if( mIgnoreMouse ) {
         return;
         }
+        
+	int mouseButton = getLastMouseButton();
+	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { return; }
     
     if( inX > - mWide / 2 &&
         inX < + mWide / 2 &&
