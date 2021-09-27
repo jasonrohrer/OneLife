@@ -55,7 +55,7 @@ static Craving getRandomFood( int inLineageMaxFoodDepth,
         // the next craving is drawn with certain probability to "advance the tech"
         // which controls how many difficult food is in the craving pool vs the easy food
         
-        double harderCravingProb = SettingsManager::getDoubleSetting( "harderCravingProb", 0.3 );
+        double harderCravingProb = SettingsManager::getDoubleSetting( "harderCravingProb", 0.5 );
         
         for( int i=0; i<allFoods->size(); i++ ) {
             int id = allFoods->getElementDirect( i );
