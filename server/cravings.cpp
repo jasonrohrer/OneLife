@@ -114,7 +114,9 @@ static Craving getRandomFood( int inLineageMaxFoodDepth,
             
         int pickedFood = possibleFoods.getElementDirect( pick );
         
-        int bonus = getObjectDepth( pickedFood ) - inLineageMaxFoodDepth;
+        double cravingBonusScale = SettingsManager::getDoubleSetting( "cravingBonusScale", 0.2 );
+        
+        int bonus = lrint( ( getObjectDepth( pickedFood ) - inLineageMaxFoodDepth ) * cravingBonusScale );
         
         if( bonus < 1 ) bonus = 1;
     
