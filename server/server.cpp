@@ -8190,14 +8190,14 @@ static int getContainerSwapIndex( LiveObject *inPlayer,
 // checks for granular +cont containment limitations
 // assumes that container size limitation and 
 // containable property checked elsewhere
-static char containmentPermitted( int inContainerID, int inContainedID ) {
+static char isContainmentWithMatchedTags( int inContainerID, int inContainedID ) {
     ObjectRecord *containedO = getObject( inContainedID );
     
     char *contLoc = strstr( containedO->description, "+cont" );
     
     if( contLoc == NULL ) {
         // not a limited containable object
-        return true;
+        return false;
         }
     
     char *limitNameLoc = &( contLoc[5] );
@@ -8247,12 +8247,35 @@ static char containmentPermitted( int inContainerID, int inContainedID ) {
         }
     
     // +cont with nothing after it, no limit
-    return true;
+    return false;
     }
 
         
 
-
+// check whether container has slots, containability, size and tags
+// whether container has empty slot is checked elsewhere
+static char containmentPermitted( int inContainerID, int inContainedID ) {
+    
+    // avoid container-ception
+    if( inContainerID == inContainedID ) return false;    
+    
+    // container does not have slots
+    if( getObject( inContainerID )->numSlots == 0 ) return false;
+    
+    // matching tags for container and object, skip other checks
+    if( isContainmentWithMatchedTags( inContainerID, inContainedID ) ) return true;
+    
+    // object not containable
+    if( !isContainable( inContainedID ) ) return false;
+    
+    float slotSize = getObject( inContainerID )->slotSize;
+    float objectSize = getObject( inContainedID )->containSize;
+    
+    // object is too big for the container
+    if( objectSize > slotSize ) return false;
+    
+    return true;
+    }
 
 
 // swap indicates that we want to put the held item at the bottom
@@ -8324,9 +8347,6 @@ static char addHeldToContainer( LiveObject *inPlayer,
 
     
     if( isRoom &&
-        isContainable( 
-            inPlayer->holdingID ) &&
-        containSize <= slotSize &&
         containmentPermitted( inTargetID, inPlayer->holdingID ) ) {
         
         // add to container
@@ -8673,9 +8693,7 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
     
         char permitted = false;
         
-        if( containSize <= slotSize &&
-            cObj->numSlots > 0 &&
-            containmentPermitted( cObj->id, inPlayer->holdingID ) ) {
+        if( containmentPermitted( cObj->id, inPlayer->holdingID ) ) {
             permitted = true;
             }
         
@@ -15273,10 +15291,6 @@ int main() {
 												}
 											}
 										if( newTarget != NULL &&
-											isContainable( 
-												contTrans->newTarget ) &&
-											newTarget->containSize <=
-											targetObj->slotSize &&
 											containmentPermitted(
 												targetObj->id,
 												newTarget->id ) ) {
@@ -16018,14 +16032,10 @@ int main() {
                                                     contTrans->newTarget );
                                                 }
                                             }
-                                        if( newTarget != NULL &&
-                                            isContainable( 
-                                                contTrans->newTarget ) &&
-                                            newTarget->containSize <=
-                                            targetObj->slotSize &&
-                                            containmentPermitted(
-                                                targetObj->id,
-                                                newTarget->id ) ) {
+										if( newTarget != NULL &&
+											containmentPermitted(
+												targetObj->id,
+												newTarget->id ) ) {
                                                 
                                             int oldHeld = 
                                                 nextPlayer->holdingID;
@@ -17546,9 +17556,6 @@ int main() {
                                         char canGoIn = false;
                                         
                                         if( canDrop &&
-                                            droppedObj->containable &&
-                                            targetSlotSize >=
-                                            droppedObj->containSize &&
                                             containmentPermitted( 
                                                 target,
                                                 droppedObj->id ) ) {
