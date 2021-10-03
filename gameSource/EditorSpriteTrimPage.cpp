@@ -630,6 +630,7 @@ void EditorSpriteTrimPage::actionPerformed( GUIComponent *inTarget ) {
                        slotParent,
                        1,
                        false,
+                       false,
                        numSprites, spriteIDs, 
                        spritePos,
                        spriteRot,

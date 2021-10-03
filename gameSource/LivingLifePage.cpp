@@ -21349,6 +21349,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     }
                 
 
+                // if container doesn't allow swap
+                // forget the the slot index
+                if( getObject( destID )->slotsNoSwap ) p.hitSlotIndex = -1;
+                
                 send = true;
                 delete [] extra;
                 extra = autoSprintf( " %d", p.hitSlotIndex );
