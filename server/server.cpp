@@ -63,6 +63,7 @@
 #include "fitnessScore.h"
 #include "arcReport.h"
 #include "curseDB.h"
+#include "cravings.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -151,6 +152,8 @@ static double eatBonusHalfLife = 50;
 
 static int canYumChainBreak = 0;
 
+static double minAgeForCravings = 10;
+
 
 static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
 
@@ -221,6 +224,7 @@ static int killEmotionIndex = 2;
 static int victimEmotionIndex = 2;
 
 static int starvingEmotionIndex = 2;
+static int satisfiedEmotionIndex = 2;
 
 static int afkEmotionIndex = 2;
 static double afkTimeSeconds = 0;
@@ -823,6 +827,10 @@ typedef struct LiveObject {
 		
 		//2HOL: player is either disconnected or inactive
 		bool isAFK;
+
+        Craving cravingFood;
+        int cravingFoodYumIncrement;
+        char cravingKnown;
 
     } LiveObject;
 
@@ -5770,7 +5778,44 @@ static char *getUpdateLineFromRecord(
 
 
 
+static SimpleVector<int> newEmotPlayerIDs;
+static SimpleVector<int> newEmotIndices;
+// 0 if no ttl specified
+static SimpleVector<int> newEmotTTLs;
+
+
+
 static char isYummy( LiveObject *inPlayer, int inObjectID ) {
+    ObjectRecord *o = getObject( inObjectID );
+    
+    if( o->isUseDummy ) {
+        inObjectID = o->useDummyParent;
+        o = getObject( inObjectID );
+        }
+
+    if( o->foodValue == 0 ) {
+        return false;
+        }
+
+    if( inObjectID == inPlayer->cravingFood.foodID &&
+        computeAge( inPlayer ) >= minAgeForCravings ) {
+        return true;
+        }
+
+    for( int i=0; i<inPlayer->yummyFoodChain.size(); i++ ) {
+        if( inObjectID == inPlayer->yummyFoodChain.getElementDirect(i) ) {
+            return false;
+            }
+        }
+    return true;
+    }
+    
+static char isReallyYummy( LiveObject *inPlayer, int inObjectID ) {
+    
+    // whether the food is actually not in the yum chain
+    // return false for meh food that the player is craving
+    // which is displayed "yum" client-side
+    
     ObjectRecord *o = getObject( inObjectID );
     
     if( o->isUseDummy ) {
@@ -5822,7 +5867,55 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
     if( wasYummy ||
         inPlayer->yummyFoodChain.size() == 0 ) {
         
-        inPlayer->yummyFoodChain.push_back( inFoodEatenID );
+        int eatenID = inFoodEatenID;
+        
+        if( isReallyYummy( inPlayer, eatenID ) ) {
+            inPlayer->yummyFoodChain.push_back( eatenID );
+            }
+		
+        // now it is possible to "grief" the craving pool
+        // by eating high tech food without craving them
+        // but this also means that it requires more effort to
+        // cheese the craving system by deliberately eating
+        // easy food first in an advanced town
+        logFoodDepth( inPlayer->lineageEveID, eatenID );
+        
+        if( eatenID == inPlayer->cravingFood.foodID &&
+            computeAge( inPlayer ) >= minAgeForCravings ) {
+            
+            for( int i=0; i< inPlayer->cravingFood.bonus; i++ ) {
+                // add extra copies to YUM chain as a bonus
+                inPlayer->yummyFoodChain.push_back( eatenID );
+                }
+            
+            // craving satisfied, go on to next thing in list
+            inPlayer->cravingFood = 
+                getCravedFood( inPlayer->lineageEveID,
+                               inPlayer->parentChainLength,
+                               inPlayer->cravingFood );
+            // reset generational bonus counter
+            inPlayer->cravingFoodYumIncrement = 1;
+            
+            // flag them for getting a new craving message
+            inPlayer->cravingKnown = false;
+            
+            // satisfied emot
+            
+            if( satisfiedEmotionIndex != -1 ) {
+                inPlayer->emotFrozen = false;
+                inPlayer->emotUnfreezeETA = 0;
+        
+                newEmotPlayerIDs.push_back( inPlayer->id );
+                
+                newEmotIndices.push_back( satisfiedEmotionIndex );
+                // 3 sec
+                newEmotTTLs.push_back( 1 );
+                
+                // don't leave starving status, or else non-starving
+                // change might override our satisfied emote
+                inPlayer->starving = false;
+                }
+            }
         }
     
 
@@ -6467,6 +6560,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             o->inFlight = false;
             
             o->connected = true;
+            o->cravingKnown = false;
             
             if( o->heldByOther ) {
                 // they're held, so they may have moved far away from their
@@ -6576,6 +6670,11 @@ int processLoggedInPlayer( char inAllowReconnect,
     canYumChainBreak = SettingsManager::getIntSetting( "canYumChainBreak", 0 );
     
 
+    
+    minAgeForCravings = SettingsManager::getDoubleSetting( "minAgeForCravings",
+                                                           10 );
+    
+
     numConnections ++;
                 
     LiveObject newObject;
@@ -6586,6 +6685,10 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.lastSidsBabyEmail = NULL;
 
     newObject.lastBabyEmail = NULL;
+
+    newObject.cravingFood = noCraving;
+    newObject.cravingFoodYumIncrement = 0;
+    newObject.cravingKnown = false;
     
     newObject.id = nextID;
     nextID++;
@@ -6864,10 +6967,10 @@ int processLoggedInPlayer( char inAllowReconnect,
         newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
         
         // she starts off craving a food right away
-        // newObject.cravingFood = getCravedFood( newObject.lineageEveID,
-                                               // newObject.parentChainLength );
+        newObject.cravingFood = getCravedFood( newObject.lineageEveID,
+                                               newObject.parentChainLength );
         // initilize increment
-        // newObject.cravingFoodYumIncrement = 1;
+        newObject.cravingFoodYumIncrement = 1;
 
         int femaleID = getRandomFemalePersonObject();
         
@@ -7631,6 +7734,14 @@ int processLoggedInPlayer( char inAllowReconnect,
 
         // mother
         newObject.lineage->push_back( newObject.parentID );
+
+        
+        // inherit mother's craving at time of birth
+        newObject.cravingFood = parent->cravingFood;
+        
+        // increment for next generation
+        newObject.cravingFoodYumIncrement = parent->cravingFoodYumIncrement + 1;
+        
 
         // inherit last heard monument, if any, from parent
         newObject.monumentPosSet = parent->monumentPosSet;
@@ -10288,12 +10399,6 @@ typedef struct FlightDest {
 
 
 
-static SimpleVector<int> newEmotPlayerIDs;
-static SimpleVector<int> newEmotIndices;
-// 0 if no ttl specified
-static SimpleVector<int> newEmotTTLs;
-
-
 // inEatenID = 0 for nursing
 static void checkForFoodEatingEmot( LiveObject *inPlayer,
                                     int inEatenID ) {
@@ -11424,6 +11529,25 @@ static LiveObject *getPlayerByName( char *inName,
 	
 
 
+static void sendCraving( LiveObject *inPlayer ) {
+    // they earn the normal YUM multiplier increase (+1) if food is actually yum PLUS the bonus
+    // increase, so send them the total.
+    
+    int totalBonus = inPlayer->cravingFood.bonus;
+    if( isReallyYummy( inPlayer, inPlayer->cravingFood.foodID ) ) totalBonus = totalBonus + 1;
+    
+    char *message = autoSprintf( "CR\n%d %d\n#", 
+                                 inPlayer->cravingFood.foodID,
+                                 totalBonus );
+    sendMessageToPlayer( inPlayer, message, strlen( message ) );
+    delete [] message;
+
+    inPlayer->cravingKnown = true;
+    }
+
+
+
+
 int main() {
 
     if( checkReadOnly() ) {
@@ -11616,6 +11740,9 @@ int main() {
 
     afkTimeSeconds =
         SettingsManager::getDoubleSetting( "afkTimeSeconds", 120.0 );
+
+    satisfiedEmotionIndex =
+        SettingsManager::getIntSetting( "satisfiedEmotionIndex", 2 );
 
 
     FILE *f = fopen( "curseWordList.txt", "r" );
@@ -11992,6 +12119,20 @@ int main() {
 
             
             checkCustomGlobalMessage();
+            
+
+            int lowestCravingID = INT_MAX;
+            
+            for( int i=0; i< players.size(); i++ ) {
+                LiveObject *nextPlayer = players.getElement( i );
+                
+                if( nextPlayer->cravingFood.uniqueID > -1 && 
+                    nextPlayer->cravingFood.uniqueID < lowestCravingID ) {
+                    
+                    lowestCravingID = nextPlayer->cravingFood.uniqueID;
+                    }
+                }
+            purgeStaleCravings( lowestCravingID );
             }
         
         
@@ -18051,6 +18192,14 @@ int main() {
                 nextPlayer->emotUnfreezeETA = 0;
                 }
             
+            if( ! nextPlayer->error &&
+                ! nextPlayer->cravingKnown &&
+                computeAge( nextPlayer ) >= minAgeForCravings ) {
+                
+                sendCraving( nextPlayer );
+                }
+                
+
 
             if( nextPlayer->dying && ! nextPlayer->error &&
                 curTime >= nextPlayer->dyingETA ) {

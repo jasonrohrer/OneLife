@@ -53,6 +53,8 @@ static SimpleVector<int> deathMarkerObjectIDs;
 // (marked with fromDeath in description)
 static SimpleVector<int> allPossibleDeathMarkerIDs;
 
+static SimpleVector<int> allPossibleFoodIDs;
+
 
 static SimpleVector<TapoutRecord> tapoutRecords;
 
@@ -1040,7 +1042,11 @@ float initObjectBankStep() {
                             
                 sscanf( lines[next], "foodValue=%d", 
                         &( r->foodValue ) );
-                            
+                
+                if( r->foodValue > 0 ) {
+                    allPossibleFoodIDs.push_back( r->id );
+                    }
+
                 next++;
                             
                             
@@ -2313,7 +2319,8 @@ static void freeObjectRecord( int inID ) {
             monumentCallObjectIDs.deleteElementEqualTo( inID );
             deathMarkerObjectIDs.deleteElementEqualTo( inID );
             allPossibleDeathMarkerIDs.deleteElementEqualTo( inID );
-            
+            allPossibleFoodIDs.deleteElementEqualTo( inID );
+
             if( race <= MAX_RACE ) {
                 racePersonObjectIDs[ race ].deleteElementEqualTo( inID );
                 }
@@ -2401,6 +2408,7 @@ void freeObjectBank() {
     monumentCallObjectIDs.deleteAll();
     deathMarkerObjectIDs.deleteAll();
     allPossibleDeathMarkerIDs.deleteAll();
+    allPossibleFoodIDs.deleteAll();
     
     for( int i=0; i<= MAX_RACE; i++ ) {
         racePersonObjectIDs[i].deleteAll();
@@ -3218,6 +3226,7 @@ int addObject( const char *inDescription,
     
     deathMarkerObjectIDs.deleteElementEqualTo( newID );
     allPossibleDeathMarkerIDs.deleteElementEqualTo( newID );
+    allPossibleFoodIDs.deleteElementEqualTo( newID );
     
     if( r->deathMarker ) {
         deathMarkerObjectIDs.push_back( newID );
@@ -3231,6 +3240,18 @@ int addObject( const char *inDescription,
     r->floor = inFloor;
     r->floorHugging = inFloorHugging;
     r->foodValue = inFoodValue;
+
+    
+    // do NOT add to food list
+    // addObject is only called for generated objects NOT loaded from disk 
+    // (use dummies, etc).
+    // Don't include them in list of foods
+    
+    // if( r->foodValue > 0 ) {
+    //    allPossibleFoodIDs.push_back( newID );
+    //    }
+
+    
     r->speedMult = inSpeedMult;
     r->heldOffset = inHeldOffset;
     r->clothing = inClothing;
@@ -4410,6 +4431,11 @@ SimpleVector<int> *getAllPossibleDeathIDs() {
     return &allPossibleDeathMarkerIDs;
     }
 
+
+
+SimpleVector<int> *getAllPossibleFoodIDs() {
+    return &allPossibleFoodIDs;
+    }
 
 
 

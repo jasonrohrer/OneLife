@@ -785,6 +785,21 @@ class LivingLifePage : public GamePage, public ActionListener {
 
 
 
+        doublePair mCravingHideOffset[NUM_HINT_SHEETS];
+        doublePair mCravingPosOffset[NUM_HINT_SHEETS];
+        doublePair mCravingTargetOffset[NUM_HINT_SHEETS];
+
+        doublePair mCravingExtraOffset[NUM_HINT_SHEETS];
+
+        char *mCravingMessage[NUM_HINT_SHEETS];
+
+        int mLiveCravingSheetIndex;
+        
+        void setNewCraving( int inFoodID, int inYumBonus );
+
+        
+
+
         // relative to map corner, but not necessary in bounds
         // of locally stored map
         GridPos getMapPos( int inWorldX, int inWorldY );

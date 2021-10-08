@@ -707,6 +707,11 @@ int getRandomDeathMarker();
 // NOT destroyed or modified by caller
 SimpleVector<int> *getAllPossibleDeathIDs();
 
+// NOT destroyed or modified by caller
+// does NOT included use dummies
+SimpleVector<int> *getAllPossibleFoodIDs();
+
+
 
 
 // return array destroyed by caller
