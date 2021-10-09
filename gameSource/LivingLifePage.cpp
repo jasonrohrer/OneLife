@@ -22934,10 +22934,10 @@ void LivingLifePage::changeFOV( float newScale ) {
 	minitech::viewHeight = 720 * newScale;
 	minitech::guiScale = 1.25 * gui_fov_scale_hud;
 
-	minitech::handwritingFont->setScaleFactor( 16*minitech::guiScale );
-	minitech::mainFont->setScaleFactor( 16*minitech::guiScale );
-	minitech::tinyHandwritingFont->setScaleFactor( 16/2*minitech::guiScale );
-	minitech::tinyMainFont->setScaleFactor( 16/2*minitech::guiScale );
+	if(minitech::handwritingFont != NULL) minitech::handwritingFont->setScaleFactor( 16*minitech::guiScale );
+	if(minitech::mainFont != NULL) minitech::mainFont->setScaleFactor( 16*minitech::guiScale );
+	if(minitech::tinyHandwritingFont != NULL) minitech::tinyHandwritingFont->setScaleFactor( 16/2*minitech::guiScale );
+	if(minitech::tinyMainFont != NULL) minitech::tinyMainFont->setScaleFactor( 16/2*minitech::guiScale );
 
 	calcOffsetHUD();
 
