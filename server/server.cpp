@@ -232,10 +232,6 @@ static double afkTimeSeconds = 0;
 static int drunkEmotionIndex = 2;
 static int trippingEmotionIndex = 2;
 
-//These are defined client-side, not used here
-bool isTrippingEffectOn = false;
-void setTrippingColor( double x, double y ) {};
-
 
 static double lastBabyPassedThresholdTime = 0;
 

@@ -492,6 +492,16 @@ float initObjectBankStep();
 void initObjectBankFinish();
 
 
+
+// Used in hue shifting objects, animaionts and ground sprites
+// when the character is tripping
+// to be called in livingLifePage
+void setObjectBankTrippingEffect( bool isTripping );
+
+void setTrippingColor( double x, double y );
+
+
+
 // can only be called after bank init is complete
 int getMaxObjectID();
 

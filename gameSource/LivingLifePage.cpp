@@ -316,8 +316,7 @@ static SimpleVector<HomePos> oldHomePosStack;
 static int lastPlayerID = -1;
 
 
-extern bool isTrippingEffectOn;
-extern void setTrippingColor( double x, double y );
+static bool isTrippingEffectOn;
 
 
 
@@ -5435,6 +5434,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 	
 	// For tripping color effect
 	isTrippingEffectOn = isTripping();
+    setObjectBankTrippingEffect( isTrippingEffectOn );
+	setAnimationBankTrippingEffect( isTrippingEffectOn );
 	
 
 
