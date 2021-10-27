@@ -477,6 +477,10 @@ typedef struct ObjectRecord {
 
         char hasBadgePos;
         doublePair badgePos;
+        
+        // true if this is an emot that hides the head of the person
+        char hideHead;
+        
 
     } ObjectRecord;
 

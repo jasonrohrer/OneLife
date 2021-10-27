@@ -898,6 +898,16 @@ static void setupVarIsNumeral( ObjectRecord *inR ) {
         }
     }
 
+
+static void setupHideHead( ObjectRecord *inR ) {
+    inR->hideHead = false;    
+    
+    char *pos = strstr( inR->description, "+hideHead" );
+
+    if( pos != NULL ) {
+        inR->hideHead = true;
+        }
+    }
     
 
 
@@ -1117,7 +1127,7 @@ float initObjectBankStep() {
                 setupBlocksMoving( r );
                 setupBlocksNonFollower( r );
                 setupBadgePos( r );
-
+                setupHideHead( r );
                 
                 
                 r->mapChance = 0;      
@@ -4063,6 +4073,7 @@ int addObject( const char *inDescription,
     setupBlocksMoving( r );
     setupBlocksNonFollower( r );
     setupBadgePos( r );
+    setupHideHead( r );
     
     
     r->toolSetIndex = -1;
