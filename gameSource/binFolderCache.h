@@ -15,6 +15,8 @@ typedef struct BinFolderCache {
 
 BinFolderCache initBinFolderCache( const char *inFolderName,
                                    // example:  ".tga"
+                                   // multiple patterns can be separated
+                                   // by | like:  ".aiff|.ogg"
                                    const char *inFilePattern,
                                    char *outRebuildingCache );
 

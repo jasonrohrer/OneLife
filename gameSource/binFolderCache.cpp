@@ -163,18 +163,35 @@ BinFolderCache initBinFolderCache( const char *inFolderName,
         
         c.numFiles = numChildFiles;
         
+        int numPatternParts = 0;
+        char **patternParts = split( inPattern, "|", &numPatternParts );
+
         for( int i=0; i<numChildFiles; i++ ) {
             char *name = childFiles[i]->getFileName();
             
-            if( strstr( name, inPattern ) != NULL ) {
-                c.dirFiles->push_back( childFiles[i] );
+            char matchedPattern = false;
+
+            for( int j=0; j<numPatternParts; j++ ) {
+                if( strstr( name, patternParts[j] ) != NULL ) {
+                    c.dirFiles->push_back( childFiles[i] );
+                    matchedPattern = true;
+                    break;
+                    }
                 }
-            else {
+            
+            if( !matchedPattern ) {
                 delete childFiles[i];
                 }
             delete [] name;
             }
         delete [] childFiles;
+        
+        
+        for( int j=0; j<numPatternParts; j++ ) {
+            delete [] patternParts[j];
+            }
+        delete [] patternParts;
+        
 
         c.numFiles = c.dirFiles->size();
 

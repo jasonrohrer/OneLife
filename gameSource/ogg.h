@@ -28,6 +28,11 @@ int readNextSamplesOGG( OGGHandle inOGG,
                         float *inLeftBuffer,
                         float *inRightBuffer );
 
+
+void readAllMonoSamplesOGG( OGGHandle inOGG,
+                            int16_t *inMonoBuffer );
+
+
 // seeks in the OGG 
 char seekOGG( OGGHandle inOGG, int inNextSample );
 

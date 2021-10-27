@@ -49,6 +49,7 @@ soundBank.cpp \
 SoundWidget.cpp \
 convolution.cpp \
 fft.cpp \
+ogg.cpp \
 zoomView.cpp \
 categoryBank.cpp \
 EditorCategoryPage.cpp \
