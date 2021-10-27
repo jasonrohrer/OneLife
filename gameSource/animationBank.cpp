@@ -1679,6 +1679,9 @@ static double workingSlotRots[MAX_WORKING_SPRITES];
 static doublePair workingSlotOffsets[MAX_WORKING_SPRITES];
 
 
+static char headlessSkipFlags[MAX_WORKING_SPRITES];
+
+
 static double processFrameTimeWithPauses( AnimationRecord *inAnim,
                                           int inLayerIndex,
                                           // true if sprite, false if slot
@@ -1940,7 +1943,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     // otherEmote (over face) has power to hide head entirely
     char headless = false;
     if( headIndex != -1 &&
-        drawWithEmots.size() > 0 ) {
+        drawWithEmots.size() > 0 &&
+        obj->numSprites < MAX_WORKING_SPRITES ) {
         
         for( int e=0; e<drawWithEmots.size(); e++ ) {
             if( drawWithEmots.getElementDirect(e)->otherEmot != 0 ) {
@@ -1951,6 +1955,28 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     headless = true;
                     }
                 }
+            }
+
+        if( headless ) {
+            
+            // look for a part that's even lower than head
+            // but has head as a parent
+            for( int i=0; i<obj->numSprites; i++ ) {
+                // flag all objects that have head as parent
+                headlessSkipFlags[i] = false;
+                
+                int p = obj->spriteParent[i];
+
+                // walk up parent chain until we reach head or fall off
+                while( p != -1 && p != headIndex ) {
+                    p = obj->spriteParent[p];
+                    }
+
+                if( p == headIndex ) {
+                    headlessSkipFlags[i] = true;
+                    } 
+                }
+            headlessSkipFlags[headIndex] = true;
             }
         }
     
@@ -2533,8 +2559,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         
 
         if( headless &&
-            i >= headIndex ) {
-            // skip drawing head and everything above it
+            headlessSkipFlags[i] ) {
+            // skip drawing head and everything that is a child of it
             // this should still draw hat floating above
             skipSprite = true;
             }
