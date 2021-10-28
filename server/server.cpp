@@ -6381,6 +6381,54 @@ static void holdingSomethingNew( LiveObject *inPlayer,
         else {
             inPlayer->holdingFlightObject = false;
             }
+
+        if( o->giveClue ) {
+            
+            char *contMixed = 
+                SettingsManager::getSettingContents( "secretMessage" );
+            char *cont = stringToUpperCase( contMixed );
+            
+            delete [] contMixed;
+
+            int contLen = strlen( cont );
+            
+            if( contLen > 2 ) {
+                
+                
+                int tryCount = 0;
+            
+                int letterPick = -1;
+                
+                while( tryCount < 100 &&
+                       ( letterPick == -1 
+                         ||
+                         cont[letterPick] == ' ' 
+                         ||
+                         cont[letterPick] == '\n' ) ) {
+                    
+                    letterPick = 
+                        randSource.getRandomBoundedInt( 0, contLen - 1 );
+                    }
+                
+                
+                if( letterPick != -1 &&
+                    cont[letterPick] != ' ' 
+                    &&
+                    cont[letterPick] != '\n' ) {
+                    
+                    
+                    char *message = 
+                        autoSprintf( 
+                            "ANOTHER NECK HAS MET YOUR SWORD.**"
+                            "ANOTHER CLUE (I KEEP MY WORD):  %d:%c",
+                            letterPick + 1, cont[letterPick] );
+        
+                    sendGlobalMessage( message, inPlayer );
+                    delete [] message;
+                    }
+                }
+            delete [] cont;
+            }
         }
     else {
         inPlayer->holdingFlightObject = false;
@@ -18018,6 +18066,9 @@ int main() {
                     
                     delete [] nextConnection->clientTag;
                     nextConnection->clientTag = NULL;
+                    
+                    delete [] nextConnection->ipAddress;
+                    nextConnection->ipAddress = NULL;
 
                     if( nextConnection->twinCode != NULL
                         && 
