@@ -12,6 +12,11 @@ Version 365    ???
 
 --Support for rideable objects that +hideRider.
 
+--More robust implementation of +neverDrop, so that object isn't manually
+  dropable or swappable even if use-on-bare-ground transition defined (that
+  transition only applies when object force-dropped, like when holder is
+  wounded).
+
 
 
 

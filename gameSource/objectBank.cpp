@@ -921,6 +921,18 @@ static void setupHideRider( ObjectRecord *inR ) {
         inR->hideRider = true;
         }
     }
+
+
+
+static void setupNeverDrop( ObjectRecord *inR ) {
+    inR->neverDrop = false;    
+    
+    char *pos = strstr( inR->description, "+neverDrop" );
+
+    if( pos != NULL ) {
+        inR->neverDrop = true;
+        }
+    }
     
 
 
@@ -1142,6 +1154,7 @@ float initObjectBankStep() {
                 setupBadgePos( r );
                 setupHideHead( r );
                 setupHideRider( r );
+                setupNeverDrop( r );
                 
                 
                 r->mapChance = 0;      
@@ -4089,6 +4102,7 @@ int addObject( const char *inDescription,
     setupBadgePos( r );
     setupHideHead( r );
     setupHideRider( r );
+    setupNeverDrop( r );
     
     
     r->toolSetIndex = -1;

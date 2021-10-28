@@ -15202,9 +15202,7 @@ static char isPlayerBlockedFromHoldingByPosse( LiveObject *inPlayer ) {
 static char heldNeverDrop( LiveObject *inPlayer ) {
     if( inPlayer->holdingID > 0 ) {        
         ObjectRecord *o = getObject( inPlayer->holdingID );
-        if( strstr( o->description, "+neverDrop" ) != NULL ) {
-            return true;
-            }
+        return o->neverDrop;
         }
     return false;
     }
@@ -22793,7 +22791,8 @@ int main() {
                                 
                                 if( ! usedOnFloor && obj->foodValue == 0 &&
                                     // player didn't try to click something
-                                    m.id == -1 ) {
+                                    m.id == -1 &&
+                                    ! obj->neverDrop ) {
                                     
                                     // get no-target transtion
                                     // (not a food transition, since food
@@ -24089,6 +24088,8 @@ int main() {
 
                                     
                                             if( ! targetObj->permanent
+                                                &&
+                                                ! droppedObj->neverDrop
                                                 &&
                                                 canPickup( 
                                                     targetObj->id,

@@ -484,6 +484,11 @@ typedef struct ObjectRecord {
         // for rideable objects that make rider invisible
         char hideRider;
 
+        // object stuck being held, can't be manually dropped
+        // (even if use-on-bare ground defined, it's only triggered by
+        //  a forced drop of some kind)
+        char neverDrop;
+
     } ObjectRecord;
 
 
