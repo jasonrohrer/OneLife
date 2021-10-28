@@ -17,6 +17,8 @@ Version 365    ???
   transition only applies when object force-dropped, like when holder is
   wounded).
 
+--Support for HELL arrow.
+
 
 
 
