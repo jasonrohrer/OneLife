@@ -3,6 +3,17 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 365    ???
+
+--Sound effects can now be OGG files (in sounds folder) to deal with longer
+  sounds, like snippets of music, without wasting disk space.
+
+--Emotes can now +hideHead of emoting person.
+
+--Support for rideable objects that +hideRider.
+
+
+
 
 Server Fixes
 
