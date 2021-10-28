@@ -259,6 +259,9 @@ static SimpleVector<char*> namedKillPhrases;
 static SimpleVector<char*> namedAfterKillPhrases;
 
 
+static SimpleVector<int> clueIndicesLeftToGive;
+
+
 
 static int nextOrderNumber = 1;
 
@@ -6391,41 +6394,37 @@ static void holdingSomethingNew( LiveObject *inPlayer,
             delete [] contMixed;
 
             int contLen = strlen( cont );
-            
-            if( contLen > 2 ) {
-                
-                
-                int tryCount = 0;
-            
-                int letterPick = -1;
-                
-                while( tryCount < 100 &&
-                       ( letterPick == -1 
-                         ||
-                         cont[letterPick] == ' ' 
-                         ||
-                         cont[letterPick] == '\n' ) ) {
-                    
-                    letterPick = 
-                        randSource.getRandomBoundedInt( 0, contLen - 1 );
+
+            if( clueIndicesLeftToGive.size() == 0 ) {
+                // all have been given (or this is our first clue)
+                // refill with valid indices
+                for( int i=0; i<contLen; i++ ) {
+                    if( cont[i] != ' ' 
+                         &&
+                        cont[i] != '\n' ) {
+                        clueIndicesLeftToGive.push_back( i );
+                        }
                     }
+                }
+            
+            
+            if( clueIndicesLeftToGive.size() > 0 ) {
+                int i = 
+                    randSource.getRandomBoundedInt( 
+                        0, 
+                        clueIndicesLeftToGive.size() - 1 );
+
+                int letterPick = clueIndicesLeftToGive.getElementDirect( i );
+                clueIndicesLeftToGive.deleteElement( i );
                 
+                char *message = 
+                    autoSprintf( 
+                        "ANOTHER NECK HAS MET YOUR SWORD.**"
+                        "ANOTHER CLUE (I KEEP MY WORD):  %d : %c",
+                        letterPick + 1, cont[letterPick] );
                 
-                if( letterPick != -1 &&
-                    cont[letterPick] != ' ' 
-                    &&
-                    cont[letterPick] != '\n' ) {
-                    
-                    
-                    char *message = 
-                        autoSprintf( 
-                            "ANOTHER NECK HAS MET YOUR SWORD.**"
-                            "ANOTHER CLUE (I KEEP MY WORD):  %d:%c",
-                            letterPick + 1, cont[letterPick] );
-        
-                    sendGlobalMessage( message, inPlayer );
-                    delete [] message;
-                    }
+                sendGlobalMessage( message, inPlayer );
+                delete [] message;
                 }
             delete [] cont;
             }

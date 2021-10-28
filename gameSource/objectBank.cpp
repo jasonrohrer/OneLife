@@ -933,6 +933,17 @@ static void setupNeverDrop( ObjectRecord *inR ) {
         inR->neverDrop = true;
         }
     }
+
+
+static void setupGiveClue( ObjectRecord *inR ) {
+    inR->giveClue = false;    
+    
+    char *pos = strstr( inR->description, "+giveClue" );
+
+    if( pos != NULL ) {
+        inR->giveClue = true;
+        }
+    }
     
 
 
@@ -1155,6 +1166,7 @@ float initObjectBankStep() {
                 setupHideHead( r );
                 setupHideRider( r );
                 setupNeverDrop( r );
+                setupGiveClue( r );
                 
                 
                 r->mapChance = 0;      
@@ -4103,6 +4115,7 @@ int addObject( const char *inDescription,
     setupHideHead( r );
     setupHideRider( r );
     setupNeverDrop( r );
+    setupGiveClue( r );
     
     
     r->toolSetIndex = -1;

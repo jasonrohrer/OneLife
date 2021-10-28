@@ -19,6 +19,9 @@ Version 365    ???
 
 --Support for HELL arrow.
 
+--Fixed a memory leak in server newConnection ipAddress tracking.
+
+--Added support for +giveClue
 
 
 

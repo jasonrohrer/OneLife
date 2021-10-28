@@ -489,6 +489,9 @@ typedef struct ObjectRecord {
         //  a forced drop of some kind)
         char neverDrop;
 
+        // gives clue whenever player is newly holding this object
+        char giveClue;
+
     } ObjectRecord;
 
 
