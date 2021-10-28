@@ -5203,6 +5203,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 }
 
             // rideable object
+            if( ! heldObject->hideRider )
             holdingPos =
                 drawObjectAnim( inObj->displayID, 2, curType, 
                                 timeVal,
