@@ -6384,50 +6384,6 @@ static void holdingSomethingNew( LiveObject *inPlayer,
         else {
             inPlayer->holdingFlightObject = false;
             }
-
-        if( o->giveClue ) {
-            
-            char *contMixed = 
-                SettingsManager::getSettingContents( "secretMessage" );
-            char *cont = stringToUpperCase( contMixed );
-            
-            delete [] contMixed;
-
-            int contLen = strlen( cont );
-
-            if( clueIndicesLeftToGive.size() == 0 ) {
-                // all have been given (or this is our first clue)
-                // refill with valid indices
-                for( int i=0; i<contLen; i++ ) {
-                    if( cont[i] != ' ' 
-                         &&
-                        cont[i] != '\n' ) {
-                        clueIndicesLeftToGive.push_back( i );
-                        }
-                    }
-                }
-            
-            
-            if( clueIndicesLeftToGive.size() > 0 ) {
-                int i = 
-                    randSource.getRandomBoundedInt( 
-                        0, 
-                        clueIndicesLeftToGive.size() - 1 );
-
-                int letterPick = clueIndicesLeftToGive.getElementDirect( i );
-                clueIndicesLeftToGive.deleteElement( i );
-                
-                char *message = 
-                    autoSprintf( 
-                        "ANOTHER NECK HAS MET YOUR SWORD.**"
-                        "ANOTHER CLUE (I KEEP MY WORD):  %d : %c",
-                        letterPick + 1, cont[letterPick] );
-                
-                sendGlobalMessage( message, inPlayer );
-                delete [] message;
-                }
-            delete [] cont;
-            }
         }
     else {
         inPlayer->holdingFlightObject = false;
@@ -13906,6 +13862,7 @@ static void interruptAnyKillEmots( int inPlayerID,
 
 
 static void setPerpetratorHoldingAfterKill( LiveObject *nextPlayer,
+                                            LiveObject *hitPlayer,
                                             TransRecord *woundHit,
                                             TransRecord *rHit,
                                             TransRecord *r ) {
@@ -13927,6 +13884,86 @@ static void setPerpetratorHoldingAfterKill( LiveObject *nextPlayer,
         // specified in wound trans
         nextPlayer->holdingID = 
             woundHit->newActor;
+
+        
+        if( nextPlayer->holdingID > 0 && hitPlayer != NULL ) {
+            if( getObject( nextPlayer->holdingID )->giveClue ) {
+                
+                char newVictimEmot = false;
+                
+                if( woundHit->newTarget > 0 ) {
+                    ForcedEffects e = 
+                        checkForForcedEffects( woundHit->newTarget );
+                    if( e.emotIndex > 0 && 
+                        e.ttlSec == -1 ) {
+                        // permanent emot specified
+                        // make sure player doesn't already have this
+                        // emot in place
+                        if( hitPlayer->
+                            permanentEmots.getElementIndex( e.emotIndex )
+                            == -1 ) {
+                            newVictimEmot = true;
+                            }
+                        }
+                    }
+                
+                if( newVictimEmot ) {
+                
+                    char *contMixed = 
+                        SettingsManager::getSettingContents( "secretMessage" );
+                    char *cont = stringToUpperCase( contMixed );
+            
+                    delete [] contMixed;
+                    
+                    int contLen = strlen( cont );
+                    
+                    if( clueIndicesLeftToGive.size() == 0 ) {
+                        // all have been given (or this is our first clue)
+                        // refill with valid indices
+                        for( int i=0; i<contLen; i++ ) {
+                            if( cont[i] != ' ' 
+                                &&
+                                cont[i] != '\n' ) {
+                                clueIndicesLeftToGive.push_back( i );
+                                }
+                            }
+                        }
+                    
+                    
+                    if( clueIndicesLeftToGive.size() > 0 ) {
+                        int i = 
+                            randSource.getRandomBoundedInt( 
+                                0, 
+                                clueIndicesLeftToGive.size() - 1 );
+                        
+                        int letterPick = 
+                            clueIndicesLeftToGive.getElementDirect( i );
+                        clueIndicesLeftToGive.deleteElement( i );
+                        
+                        char *message = 
+                            autoSprintf( 
+                                "ANOTHER NECK HAS MET YOUR SWORD.**"
+                                "ANOTHER CLUE (I KEEP MY WORD):  %d : %c",
+                                letterPick + 1, cont[letterPick] );
+                        
+                        sendGlobalMessage( message, nextPlayer );
+                        delete [] message;
+                        }
+                    delete [] cont;
+                    }
+                else {
+                    char *message = 
+                        autoSprintf( 
+                            "THAT NECK WAS 'READY CUT IN TWO.**"
+                            "FIND MORE FRESH NECKS TO EARN YOUR CLUE." );
+                    
+                    sendGlobalMessage( message, nextPlayer );
+                    delete [] message;
+                    }
+                }
+            }
+        
+
         holdingSomethingNew( nextPlayer,
                              oldHolding );
         }
@@ -14187,6 +14224,7 @@ void executeKillAction( int inKillerIndex,
                             getPTrans( nextPlayer->holdingID, 0 );
 
                         setPerpetratorHoldingAfterKill( nextPlayer,
+                                                        hitPlayer,
                                                         woundHit, rHit, r );
                         
                         ForcedEffects e = 
@@ -14435,7 +14473,8 @@ void executeKillAction( int inKillerIndex,
 
                 int oldHolding = nextPlayer->holdingID;
 
-                setPerpetratorHoldingAfterKill( nextPlayer, 
+                setPerpetratorHoldingAfterKill( nextPlayer,
+                                                hitPlayer,
                                                 woundHit, rHit, r );
 
                 // if they are moving, end their move NOW
@@ -26941,7 +26980,10 @@ int main() {
                         // a new permanent emot
                         LiveObject *pO = getLiveObject( pID );
                         if( pO != NULL ) {
-                            pO->permanentEmots.push_back( eInd );
+                            if( pO->permanentEmots.getElementIndex( eInd ) ==
+                                -1 ) {
+                                pO->permanentEmots.push_back( eInd );
+                                }
                             }
                         }
                         

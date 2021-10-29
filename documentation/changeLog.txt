@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes
+
+--Fixed so that +giveClue only works if victim is given a new permanent emot
+  that they don't already have.
+
+
+
 Version 365    2021-October-28
 
 --Sound effects can now be OGG files (in sounds folder) to deal with longer
