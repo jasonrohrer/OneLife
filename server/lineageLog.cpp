@@ -1,4 +1,5 @@
 #include "lineageLog.h"
+#include "serverCalls.h"
 
 
 #include "minorGems/util/log/AppLog.h"
@@ -112,7 +113,7 @@ void recordPlayerLineage( char *inEmail, double inAge,
         
         delete [] encodedEmail;
         
-        request = new WebRequest( "GET", url, NULL );
+        request = defaultTimeoutWebRequest( url );
         printf( "Starting new web request for %s\n", url );
         
         delete [] url;
@@ -223,7 +224,7 @@ void stepLineageLog() {
                     delete [] encodedLastSay;
                     delete [] hash;
 
-                    r->request = new WebRequest( "GET", url, NULL );
+                    r->request = defaultTimeoutWebRequest( url );
                     printf( "Starting new web request for %s\n", url );
                     
                     delete [] url;

@@ -171,6 +171,8 @@ $totalCap = 0;
 if( $handle ) {
 
     if( $reportOnly ) {
+        $dateStamp = date("D M j G:i:s T Y");
+        echo "$dateStamp<br><br>";
         echo "Remote servers:<br><br>";
         }
     

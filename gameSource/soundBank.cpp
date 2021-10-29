@@ -1,5 +1,6 @@
 
 #include "soundBank.h"
+#include "ogg.h"
 #include "objectBank.h"
 #include "animationBank.h"
 
@@ -390,7 +391,8 @@ int initSoundBankStart( char *outRebuildingCache ) {
     char rebuildingSounds, rebuildingReverbs;
     
     
-    soundCache = initBinFolderCache( "sounds", ".aiff", &rebuildingSounds );
+    soundCache = initBinFolderCache( "sounds", 
+                                     ".aiff|.ogg", &rebuildingSounds );
     
     reverbCache = 
         initBinFolderCache( "reverbCache", ".aiff", &rebuildingReverbs );
@@ -462,6 +464,10 @@ int initSoundBankStart( char *outRebuildingCache ) {
                     delete childFiles[i];
                     
                     // skip all non-AIFF files 
+                    // note that we do NOT generate reverbs for OGG files,
+                    // since those tend to be longer (snippets of music)
+                    // and aren't positioned in the environment in the same
+                    // way as one-hit sounds
                     if( strstr( fileName, ".aiff" ) != NULL ) {
                         
                         int id = 0;
@@ -509,8 +515,9 @@ float initSoundBankStep() {
         
         char *fileName = getFileName( soundCache, i );
     
-        // skip all non-AIFF files 
-        if( strstr( fileName, ".aiff" ) != NULL ) {
+        // skip all non-AIFF, non-OGG files 
+        if( strstr( fileName, ".aiff" ) != NULL ||
+            strstr( fileName, ".ogg" ) != NULL ) {
             char added = false;
             
             SoundRecord *r = new SoundRecord;
@@ -525,18 +532,37 @@ float initSoundBankStep() {
             
             r->id = 0;
             
-            sscanf( fileName, "%d.aiff", &( r->id ) );
+            sscanf( fileName, "%d.", &( r->id ) );
             
-            int aiffDataLength;
-            unsigned char *aiffData = 
+            int soundDataLength;
+            unsigned char *soundData = 
                 getFileContents( soundCache, i, 
-                                fileName, &aiffDataLength );
+                                 fileName, &soundDataLength );
             
-            if( aiffData != NULL ) {
+            if( soundData != NULL ) {
                 
                 int numSamples;
-                int16_t *samples =
-                    readMono16AIFFData( aiffData, aiffDataLength, &numSamples );
+                int16_t *samples;
+                
+                if( strstr( fileName, ".aiff" ) != NULL ) {
+                    samples =
+                        readMono16AIFFData( soundData, 
+                                            soundDataLength, &numSamples );
+                    }
+                else if( strstr( fileName, ".ogg" ) != NULL ) {
+                    OGGHandle o = openOGG( soundData, soundDataLength );
+
+                    int numChan = getOGGChannels( o );
+                    if( numChan == 1 ) {
+                        numSamples = getOGGTotalSamples( o );
+                        samples = new int16_t[ numSamples ];
+                        
+                        readAllMonoSamplesOGG( o, samples );
+                        }
+                    // skip non-mono OGG files
+                    
+                    closeOGG( o );
+                    }
                 
 
                 if( samples != NULL ) {
@@ -552,7 +578,7 @@ float initSoundBankStep() {
 
                     delete [] samples;                    
                     }
-                delete [] aiffData;
+                delete [] soundData;
                 }
 
             if( !added ) {

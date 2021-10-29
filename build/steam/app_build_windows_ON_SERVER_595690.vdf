@@ -1,0 +1,25 @@
+"appbuild"
+{
+	"appid"	"595690"
+
+	"desc" "Replaced On Command Line" // description for this build
+
+	"buildoutput" "/home/jcr15/steamOutput" // build output folder for .log, .csm & .csd files, relative to location of this file
+
+	"contentroot" "/home/jcr15/steamLatest" // root content folder, relative to location of this file
+
+	// NOT auto-setting this build to live with setlive public
+	// we need to make sure that all other platforms are built and ready
+	// to deploy, so we have to make this build live manually
+	
+	"setlive"	"" // branch to set live after successful build, non if empty
+
+	"preview" "0" // to enable preview builds
+
+	"local"	""	// set to flie path of local content server 
+	
+	"depots"
+	{
+		"595692" "depot_build_windows_ON_SERVER_595692.vdf"
+	}
+}

@@ -61,6 +61,20 @@ int readNextSamplesOGG( OGGHandle inOGG,
     }
 
 
+
+void readAllMonoSamplesOGG( OGGHandle inOGG,
+                            int16_t *inMonoBuffer ) {
+    stb_vorbis *v = (stb_vorbis*)inOGG;
+
+    int16_t *buffers[1] = { inMonoBuffer };
+    
+
+    stb_vorbis_get_samples_short( v, 1, buffers, 
+                                  getOGGTotalSamples( inOGG ) );
+    }
+
+
+
 char seekOGG( OGGHandle inOGG, int inNextSample ) {
     stb_vorbis *v = (stb_vorbis*)inOGG;
     

@@ -59,6 +59,7 @@
 #include "specialBiomes.h"
 #include "cravings.h"
 #include "offspringTracker.h"
+#include "ipBanList.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -260,6 +261,9 @@ static SimpleVector<char*> namedKillPhrases;
 static SimpleVector<char*> namedAfterKillPhrases;
 
 
+static SimpleVector<int> clueIndicesLeftToGive;
+
+
 
 static int nextOrderNumber = 1;
 
@@ -347,6 +351,14 @@ static float getHighestRecentScore() {
         }
     return highest;
     }
+
+
+
+WebRequest *defaultTimeoutWebRequest( const char *inURL ) {
+    // 10 second timeout for all web requests that server makes
+    return new WebRequest( "GET", inURL, NULL, NULL, 10 );
+    }
+
 
 
 
@@ -644,6 +656,9 @@ typedef struct FreshConnection {
         // for tracking connections that have failed to LOGIN 
         // in a timely manner
         double connectionStartTimeSeconds;
+
+        char *ipAddress;
+
 
         char *email;
         
@@ -2051,6 +2066,10 @@ static void deleteMembers( FreshConnection *inConnection ) {
         delete inConnection->ticketServerRequest;
         }
     
+    if( inConnection->ipAddress != NULL ) {
+        delete [] inConnection->ipAddress;
+        }
+
     if( inConnection->email != NULL ) {
         delete [] inConnection->email;
         }
@@ -2277,6 +2296,8 @@ void quitCleanup() {
     
     freeOffspringTracker();
     
+    freeIPBanList();
+
 
     freeMap();
 
@@ -2541,7 +2562,14 @@ char readSocketFull( Socket *inSock, SimpleVector<char> *inBuffer ) {
 
 
 // NULL if there's no full message available
-char *getNextClientMessage( SimpleVector<char> *inBuffer ) {
+// if inLoginMessageOnly true, then we look for messages that start with
+// LOGIN or RLOGIN, and count sufficiently long messages that don't
+// start with either string as NONSENSE (this allows us to instantly reject 
+// web requests and other non-OHOL messages that don't end with # and don't
+// exceed our 200 char limit)
+char *getNextClientMessage( SimpleVector<char> *inBuffer,
+                            char inLoginMessageOnly = false ) {
+
     // find first terminal character #
 
     int index = inBuffer->getElementIndex( '#' );
@@ -2559,6 +2587,25 @@ char *getNextClientMessage( SimpleVector<char> *inBuffer ) {
             
             return stringDuplicate( "NONSENSE 0 0" );
             }
+        else if( inLoginMessageOnly && inBuffer->size() >= 6 ) {
+            char *buffString = inBuffer->getElementString();
+            
+            if( strstr( buffString, "LOGIN" ) != buffString &&
+                strstr( buffString, "RLOGIN" ) != buffString ) {
+                delete [] buffString;
+                
+                AppLog::info( 
+                    "More than 6 characters in client receive buffer "
+                    "with no LOGIN or RLOGIN present, when inLoginMessageOnly "
+                    "set, generating NONSENSE message." );
+                
+                return stringDuplicate( "NONSENSE 0 0" );
+                }
+            
+            delete [] buffString;
+            }
+        
+
 
         return NULL;
         }
@@ -6338,6 +6385,50 @@ static void holdingSomethingNew( LiveObject *inPlayer,
             }
         else {
             inPlayer->holdingFlightObject = false;
+            }
+
+        if( o->giveClue ) {
+            
+            char *contMixed = 
+                SettingsManager::getSettingContents( "secretMessage" );
+            char *cont = stringToUpperCase( contMixed );
+            
+            delete [] contMixed;
+
+            int contLen = strlen( cont );
+
+            if( clueIndicesLeftToGive.size() == 0 ) {
+                // all have been given (or this is our first clue)
+                // refill with valid indices
+                for( int i=0; i<contLen; i++ ) {
+                    if( cont[i] != ' ' 
+                         &&
+                        cont[i] != '\n' ) {
+                        clueIndicesLeftToGive.push_back( i );
+                        }
+                    }
+                }
+            
+            
+            if( clueIndicesLeftToGive.size() > 0 ) {
+                int i = 
+                    randSource.getRandomBoundedInt( 
+                        0, 
+                        clueIndicesLeftToGive.size() - 1 );
+
+                int letterPick = clueIndicesLeftToGive.getElementDirect( i );
+                clueIndicesLeftToGive.deleteElement( i );
+                
+                char *message = 
+                    autoSprintf( 
+                        "ANOTHER NECK HAS MET YOUR SWORD.**"
+                        "ANOTHER CLUE (I KEEP MY WORD):  %d : %c",
+                        letterPick + 1, cont[letterPick] );
+                
+                sendGlobalMessage( message, inPlayer );
+                delete [] message;
+                }
+            delete [] cont;
             }
         }
     else {
@@ -12433,7 +12524,7 @@ void apocalypseStep() {
                                          reflectorURL );
         
                 apocalypseRequest =
-                    new WebRequest( "GET", url, NULL );
+                    defaultTimeoutWebRequest( url );
             
                 delete [] url;
                 }
@@ -12589,7 +12680,7 @@ void apocalypseStep() {
                     printf( "Starting new web request for %s\n", url );
                     
                     apocalypseRequest =
-                        new WebRequest( "GET", url, NULL );
+                        defaultTimeoutWebRequest( url );
                                 
                     delete [] url;
                     delete [] reflectorSharedSecret;
@@ -15160,9 +15251,7 @@ static char isPlayerBlockedFromHoldingByPosse( LiveObject *inPlayer ) {
 static char heldNeverDrop( LiveObject *inPlayer ) {
     if( inPlayer->holdingID > 0 ) {        
         ObjectRecord *o = getObject( inPlayer->holdingID );
-        if( strstr( o->description, "+neverDrop" ) != NULL ) {
-            return true;
-            }
+        return o->neverDrop;
         }
     return false;
     }
@@ -16998,6 +17087,7 @@ int main() {
 
     initOffspringTracker();
     
+    initIPBanList();
 
 
     char rebuilding;
@@ -17609,18 +17699,46 @@ int main() {
 
             if( sock != NULL ) {
                 HostAddress *a = sock->getRemoteHostAddress();
+
+                if( a == NULL ) {
+                    // reject connection from unknown address
+                    delete sock;
+                    sock = NULL;
+                    }
+                else {
+                    if( isIPBanned( a->mAddressString ) ) {
+                        // reject connection from banned IP
+                        // don't even print a log message about this
+                        // save disk space when we are getting hammered by bots
+                        delete sock;
+                        sock = NULL;
+                        }
+                    delete a;
+                    }
+                }
+            
+
+            if( sock != NULL ) {
+                FreshConnection newConnection;
+
+                HostAddress *a = sock->getRemoteHostAddress();
                 
                 if( a == NULL ) {    
                     AppLog::info( "Got connection from unknown address" );
+                    
+                    newConnection.ipAddress = stringDuplicate( "" );
                     }
                 else {
                     AppLog::infoF( "Got connection from %s:%d",
                                   a->mAddressString, a->mPort );
+                    
+                    newConnection.ipAddress = 
+                        stringDuplicate( a->mAddressString );
+
                     delete a;
                     }
             
 
-                FreshConnection newConnection;
                 
                 newConnection.connectionStartTimeSeconds = 
                     Time::getCurrentTime();
@@ -17963,6 +18081,9 @@ int main() {
                     
                     delete [] nextConnection->clientTag;
                     nextConnection->clientTag = NULL;
+                    
+                    delete [] nextConnection->ipAddress;
+                    nextConnection->ipAddress = NULL;
 
                     if( nextConnection->twinCode != NULL
                         && 
@@ -18020,10 +18141,43 @@ int main() {
                 
                 if( ! nextConnection->shutdownMode ) {
                     message = 
-                        getNextClientMessage( nextConnection->sockBuffer );
+                        getNextClientMessage( nextConnection->sockBuffer,
+                                              // treat non-LOGIN and non-RLOGIN
+                                              // messages as NONSENSE
+                                              true );
                     }
                 else {
                     timeLimit = 5;
+
+                    
+                    // client shouldn't be sending anything after
+                    // they see shutdown message
+                    // If we do receive something, it's probably a non
+                    // client or a web bot, sending us junk
+                    // don't keep a connection open to them
+                    message = 
+                        getNextClientMessage( nextConnection->sockBuffer,
+                                              // treat non-LOGIN and non-RLOGIN
+                                              // messages as NONSENSE
+                                              true );
+                    if( message != NULL ) {
+                        delete [] message;
+                        message = NULL;
+                        
+                        AppLog::info( "Client incorrectly sent a message "
+                                      "after receiving SHUTDOWN or SERVER_FULL "
+                                      "message, "
+                                      "client rejected immediately." );
+                        nextConnection->error = true;
+                        nextConnection->errorCauseString =
+                            "Unexpected post-shutdown message";
+                        
+                        // force connection close right away
+                        // don't send REJECTED message and wait
+                        nextConnection->rejectedSendTime = 1;
+                        
+                        addBadConnectionForIP( nextConnection->ipAddress );
+                        }
                     }
                 
                 if( message != NULL ) {
@@ -18154,7 +18308,7 @@ int main() {
                                 delete [] encodedEmail;
 
                                 nextConnection->ticketServerRequest =
-                                    new WebRequest( "GET", url, NULL );
+                                    defaultTimeoutWebRequest( url );
                                 nextConnection->ticketServerAccepted = false;
 
                                 nextConnection->ticketServerRequestStartTime
@@ -18237,6 +18391,11 @@ int main() {
                             nextConnection->error = true;
                             nextConnection->errorCauseString =
                                 "Bad login message";
+                            
+                            // close connection with REJECTED
+                            // message and grace period
+                            // they at least tried to send a LOGIN
+                            // message of some kind
                             }
 
 
@@ -18245,10 +18404,16 @@ int main() {
                         }
                     else {
                         AppLog::info( "Client's first message not LOGIN, "
-                                      "client rejected." );
+                                      "client rejected immediately." );
                         nextConnection->error = true;
                         nextConnection->errorCauseString =
                             "Unexpected first message";
+                        
+                        // force connection close right away
+                        // don't send REJECTED message and wait
+                        nextConnection->rejectedSendTime = 1;
+
+                        addBadConnectionForIP( nextConnection->ipAddress );
                         }
                     
                     delete [] message;
@@ -18266,6 +18431,14 @@ int main() {
                     nextConnection->error = true;
                     nextConnection->errorCauseString =
                         "Login timeout";
+                    
+                    // note that this is a less noxious offense than sending
+                    // bad first messages
+                    // A slow client could do this innocently sometimes
+                    // but if they do it repeatedly, we ban them for a while.
+                    // Because a DDOS attack could just connect and sit there
+                    // silently, to fill up slots.
+                    addBadConnectionForIP( nextConnection->ipAddress );    
                     }
                 }
             }
@@ -18295,6 +18468,8 @@ int main() {
                     
                 nextConnection->errorCauseString =
                     "Socket read failed";
+                
+                addBadConnectionForIP( nextConnection->ipAddress );        
                 }
             }
             
@@ -22682,7 +22857,8 @@ int main() {
                                 
                                 if( ! usedOnFloor && obj->foodValue == 0 &&
                                     // player didn't try to click something
-                                    m.id == -1 ) {
+                                    m.id == -1 &&
+                                    ! obj->neverDrop ) {
                                     
                                     // get no-target transtion
                                     // (not a food transition, since food
@@ -23978,6 +24154,8 @@ int main() {
 
                                     
                                             if( ! targetObj->permanent
+                                                &&
+                                                ! droppedObj->neverDrop
                                                 &&
                                                 canPickup( 
                                                     targetObj->id,
@@ -29103,9 +29281,9 @@ int main() {
             }
 
 
-        if( players.size() == 0 && newConnections.size() == 0 ) {
+        if( players.size() == 0 ) {
             if( shutdownMode ) {
-                AppLog::info( "No live players or connections in shutdown " 
+                AppLog::info( "No live players in shutdown " 
                               " mode, auto-quitting." );
                 quit = true;
                 }

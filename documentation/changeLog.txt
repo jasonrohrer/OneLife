@@ -3,6 +3,61 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 365    2021-October-28
+
+--Sound effects can now be OGG files (in sounds folder) to deal with longer
+  sounds, like snippets of music, without wasting disk space.
+
+--Emotes can now +hideHead of emoting person.
+
+--Support for rideable objects that +hideRider.
+
+--More robust implementation of +neverDrop, so that object isn't manually
+  dropable or swappable even if use-on-bare-ground transition defined (that
+  transition only applies when object force-dropped, like when holder is
+  wounded).
+
+--Support for HELL arrow.
+
+--Fixed a memory leak in server newConnection ipAddress tracking.
+
+--Added support for +giveClue
+
+
+
+Server Fixes
+
+--Web bots hammering the server will no longer fill up possible player slots,
+  since we notice that they aren't sending OHOL protocol messages and
+  disconnect them immediately (before, we gave them a 10-second grace period to
+  send a valid message, which consumed a connection slot).  They will also not
+  prevent the server from shutting down gracefully, since we now only wait
+  until 0 active players (and no 0 active players and 0 new connections) before
+  shutting down.
+
+--Added an ipBanList, for IP addresses that make 10 bad connections to a server
+  in a row (badly formatted messages, failure to login in a timely manner, 
+  etc.).  After 10 bad connections, that IP is insta-rejected for 5 minutes
+  before it can try making another connection.  If a bot is hammering the
+  server long-term, that cool-down time for the IP will grow over time, beyond
+  5 minutes.
+
+--All server outbound web requests (to various utility servers, like stats 
+  server, ticket server, etc.) now have a timeout of 10 seconds each.  A
+  firewall bug was causing some of these to never finish, leaving a bunch of
+  clients hanging in an unfinished login limbo state.  Now the login process is
+  more robust, and will always finish, even in the face of unresponsive utility
+  servers.
+
+--Another fix to Eve placement to prevent eastward jump-backs:  we now use
+  west-of-homeland Eve placements to keep pushing the last-eve position further
+  west, so if we ever have to default to the walking grid later (because there
+  are no first homelands left), then the new walking grid will start to the
+  west of the last non-grid Eve spawn.  Thanks Teliot.
+
+
+
+
 
 Version 364    2021-May-26
 

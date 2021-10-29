@@ -1,3 +1,4 @@
+#include "serverCalls.h"
 
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/SettingsManager.h"
@@ -167,7 +168,7 @@ static int stepOpRequest( OpRequest *inR ) {
             delete [] hash;
             delete [] serverURL;
             
-            r->mainW = new WebRequest( "GET", url, NULL );
+            r->mainW = defaultTimeoutWebRequest( url );
             printf( "Starting new web request for %s\n", url );
                     
             delete [] url;
@@ -192,7 +193,7 @@ static int stepOpRequest( OpRequest *inR ) {
         delete [] encodedEmail;
         delete [] serverURL;
 
-        r->seqW = new WebRequest( "GET", url, NULL );
+        r->seqW = defaultTimeoutWebRequest( url );
         printf( "Starting new web request for %s\n", url );
 
         delete [] url;

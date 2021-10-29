@@ -1,4 +1,5 @@
 #include "arcReport.h"
+#include "serverCalls.h"
 
 #include "minorGems/network/web/WebRequest.h"
 #include "minorGems/util/SettingsManager.h"
@@ -68,7 +69,7 @@ void reportArcEnd() {
     
     printf( "Starting new web request for %s\n", url );
     
-    webRequest = new WebRequest( "GET", url, NULL );
+    webRequest = defaultTimeoutWebRequest( url );
     delete [] url;
 
     resetArcName();
@@ -147,7 +148,7 @@ void stepArcReport() {
             
             printf( "Starting new web request for %s\n", url );
             
-            webRequest = new WebRequest( "GET", url, NULL );
+            webRequest = defaultTimeoutWebRequest( url );
             delete [] url;
             }
         }

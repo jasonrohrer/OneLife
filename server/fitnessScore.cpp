@@ -1,4 +1,5 @@
 #include "fitnessScore.h"
+#include "serverCalls.h"
 
 
 #include "minorGems/util/SettingsManager.h"
@@ -177,7 +178,7 @@ static int stepOpRequest( FitnessOpRequest *inR ) {
             delete [] hash;
             delete [] serverURL;
             
-            r->mainW = new WebRequest( "GET", url, NULL );
+            r->mainW = defaultTimeoutWebRequest( url );
             printf( "Starting new web request for %s\n", url );
                     
             delete [] url;
@@ -202,7 +203,7 @@ static int stepOpRequest( FitnessOpRequest *inR ) {
         delete [] encodedName;
         delete [] serverURL;
 
-        r->seqW = new WebRequest( "GET", url, NULL );
+        r->seqW = defaultTimeoutWebRequest( url );
         printf( "Starting new web request for %s\n", url );
 
         delete [] url;

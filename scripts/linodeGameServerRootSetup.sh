@@ -40,6 +40,27 @@ apt-get -y install emacs-nox mercurial git g++ expect gdb make fail2ban ufw
 
 echo ""
 echo ""
+echo "Installing UFW rate limit of 10 connections per 10 seconds per IP"
+echo "on game server port 8005"
+echo ""
+echo ""
+
+mkdir checkout
+cd checkout
+
+git clone https://github.com/jasonrohrer/OneLife.git
+
+# this is a certain way to preserve permissions on target file
+# not sure if cp would do that.
+cat OneLife/scripts/before.rules > /etc/ufw/before.rules
+
+cd ..
+rm -r checkout
+
+
+
+echo ""
+echo ""
 echo "Whitelisting only main server and backup server IP address for ssh"
 echo "Opening port 8005 for game server"
 echo ""
@@ -49,6 +70,8 @@ ufw allow from 72.14.184.149 to any port 22
 ufw allow from 173.230.147.48 to any port 22
 ufw allow 8005
 ufw --force enable
+ufw reload
+
 
 echo ""
 echo ""

@@ -1,4 +1,5 @@
 #include "playerStats.h"
+#include "serverCalls.h"
 
 #include "kissdb.h"
 #include "dbCommon.h"
@@ -170,7 +171,7 @@ int getPlayerLifeStats( char *inEmail, int *outNumLives,
         
         delete [] encodedEmail;
         
-        request = new WebRequest( "GET", url, NULL );
+        request = defaultTimeoutWebRequest( url );
         printf( "Starting new web request for %s\n", url );
         
         delete [] url;
@@ -224,7 +225,7 @@ void recordPlayerLifeStats( char *inEmail, int inNumSecondsLived ) {
         
         delete [] encodedEmail;
         
-        request = new WebRequest( "GET", url, NULL );
+        request = defaultTimeoutWebRequest( url );
         printf( "Starting new web request for %s\n", url );
         
         delete [] url;
@@ -340,7 +341,7 @@ void stepPlayerStats() {
                     delete [] encodedEmail;
                     delete [] hash;
 
-                    r->request = new WebRequest( "GET", url, NULL );
+                    r->request = defaultTimeoutWebRequest( url );
                     printf( "Starting new web request for %s\n", url );
                     
                     delete [] url;

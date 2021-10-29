@@ -898,6 +898,52 @@ static void setupVarIsNumeral( ObjectRecord *inR ) {
         }
     }
 
+
+
+static void setupHideHead( ObjectRecord *inR ) {
+    inR->hideHead = false;    
+    
+    char *pos = strstr( inR->description, "+hideHead" );
+
+    if( pos != NULL ) {
+        inR->hideHead = true;
+        }
+    }
+
+
+
+static void setupHideRider( ObjectRecord *inR ) {
+    inR->hideRider = false;    
+    
+    char *pos = strstr( inR->description, "+hideRider" );
+
+    if( pos != NULL ) {
+        inR->hideRider = true;
+        }
+    }
+
+
+
+static void setupNeverDrop( ObjectRecord *inR ) {
+    inR->neverDrop = false;    
+    
+    char *pos = strstr( inR->description, "+neverDrop" );
+
+    if( pos != NULL ) {
+        inR->neverDrop = true;
+        }
+    }
+
+
+static void setupGiveClue( ObjectRecord *inR ) {
+    inR->giveClue = false;    
+    
+    char *pos = strstr( inR->description, "+giveClue" );
+
+    if( pos != NULL ) {
+        inR->giveClue = true;
+        }
+    }
     
 
 
@@ -1117,7 +1163,10 @@ float initObjectBankStep() {
                 setupBlocksMoving( r );
                 setupBlocksNonFollower( r );
                 setupBadgePos( r );
-
+                setupHideHead( r );
+                setupHideRider( r );
+                setupNeverDrop( r );
+                setupGiveClue( r );
                 
                 
                 r->mapChance = 0;      
@@ -4063,6 +4112,10 @@ int addObject( const char *inDescription,
     setupBlocksMoving( r );
     setupBlocksNonFollower( r );
     setupBadgePos( r );
+    setupHideHead( r );
+    setupHideRider( r );
+    setupNeverDrop( r );
+    setupGiveClue( r );
     
     
     r->toolSetIndex = -1;
