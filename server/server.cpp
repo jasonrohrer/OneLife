@@ -10804,12 +10804,13 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                 strcmp( nextConnection->twinCode, twinCode ) == 0 ) {
                 
                 delete [] nextConnection->twinCode;
-                waitingForTwinConnections.deleteElement( i );
-
+                
                 if( nextConnection->ipAddress != NULL ) {
                     delete [] nextConnection->ipAddress;
                     nextConnection->ipAddress = NULL;
                     }
+
+                waitingForTwinConnections.deleteElement( i );                
 
                 i--;
                 }
