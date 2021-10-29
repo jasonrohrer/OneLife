@@ -10685,6 +10685,11 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                 delete [] inConnection.twinCode;
                 inConnection.twinCode = NULL;
                 }
+            if( inConnection.ipAddress != NULL ) {
+                delete [] inConnection.ipAddress;
+                inConnection.ipAddress = NULL;
+                }
+            
             nextLogInTwin = false;
             return;
             }
@@ -10800,6 +10805,12 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                 
                 delete [] nextConnection->twinCode;
                 waitingForTwinConnections.deleteElement( i );
+
+                if( nextConnection->ipAddress != NULL ) {
+                    delete [] nextConnection->ipAddress;
+                    nextConnection->ipAddress = NULL;
+                    }
+
                 i--;
                 }
             }
@@ -18105,8 +18116,6 @@ int main() {
                     delete [] nextConnection->clientTag;
                     nextConnection->clientTag = NULL;
                     
-                    delete [] nextConnection->ipAddress;
-                    nextConnection->ipAddress = NULL;
 
                     if( nextConnection->twinCode != NULL
                         && 
@@ -18118,7 +18127,12 @@ int main() {
                             delete [] nextConnection->twinCode;
                             nextConnection->twinCode = NULL;
                             }
-                                
+
+                        if( nextConnection->ipAddress != NULL ) {
+                            delete [] nextConnection->ipAddress;
+                            nextConnection->ipAddress = NULL;
+                            }
+                        
                         processLoggedInPlayer( 
                             nextConnection->reconnectOnly ? 2 : true,
                             nextConnection->sock,
@@ -18391,6 +18405,13 @@ int main() {
                                             delete [] nextConnection->twinCode;
                                             nextConnection->twinCode = NULL;
                                             }
+                                        if( nextConnection->ipAddress
+                                            != NULL ) {
+                                            delete []
+                                                nextConnection->ipAddress;
+                                            nextConnection->ipAddress = NULL;
+                                            }
+                                        
                                         processLoggedInPlayer(
                                             nextConnection->reconnectOnly ? 
                                             2 : true,

@@ -9,6 +9,8 @@ Server Fixes
 --Fixed so that +giveClue only works if victim is given a new permanent emot
   that they don't already have.
 
+--Fixed twin-caused crash due to ipAddress memory leak fix.
+
 
 
 Version 365    2021-October-28

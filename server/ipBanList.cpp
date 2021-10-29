@@ -131,6 +131,10 @@ static void processStaleRecords() {
 
 void addBadConnectionForIP( char *inIPAddress ) {
     processStaleRecords();
+
+    if( inIPAddress == NULL ) {
+        return;
+        }
     
     IPRecord *r = getRecordForIP( inIPAddress );
     
