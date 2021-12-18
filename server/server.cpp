@@ -147,15 +147,15 @@ static int babyBirthFoodDecrement = 10;
 // makes whole server a bit easier (or harder, if negative)
 static int eatBonus = 0;
 
-static double eatBonusFloor = 0;
-static double eatBonusHalfLife = 50;
+// static double eatBonusFloor = 0;
+// static double eatBonusHalfLife = 50;
 
 static int canYumChainBreak = 0;
 
 static double minAgeForCravings = 10;
 
 
-static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
+// static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
 
 
 
@@ -231,10 +231,6 @@ static double afkTimeSeconds = 0;
 
 static int drunkEmotionIndex = 2;
 static int trippingEmotionIndex = 2;
-
-//These are defined client-side, not used here
-bool isTrippingEffectOn = false;
-void setTrippingColor( double x, double y ) {};
 
 
 static double lastBabyPassedThresholdTime = 0;
@@ -21677,12 +21673,12 @@ int main() {
                                             getElementDirect( u ) );
                                     }
                                 else {
-                                    int speakerDrunkenness = 0;
+                                    // int speakerDrunkenness = 0;
                                     
-                                    if( speakerObj != NULL ) {
-                                        speakerDrunkenness =
-                                            speakerObj->drunkenness;
-                                        }
+                                    // if( speakerObj != NULL ) {
+                                        // speakerDrunkenness =
+                                            // speakerObj->drunkenness;
+                                        // }
 
                                     translatedPhrase =
                                         mapLanguagePhrase( 

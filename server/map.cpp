@@ -6898,9 +6898,9 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
         
         if( r != NULL ) {
 			
-			char tappedOutPrimaryHomeland = false; //primaryHomeland is not in 2HOL
+			// char tappedOutPrimaryHomeland = false; //primaryHomeland is not in 2HOL
 
-            tappedOutPrimaryHomeland = 
+            // tappedOutPrimaryHomeland = 
             runTapoutOperation( inX, inY, 
                                 r->limitX, r->limitY,
                                 r->gridSpacingX, r->gridSpacingY, 
@@ -6914,7 +6914,7 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                 r->buildCount >= r->buildCountLimit ) {
                 // hit limit!
                 // tapout a larger radius now
-                tappedOutPrimaryHomeland =
+                // tappedOutPrimaryHomeland =
                 runTapoutOperation( inX, inY, 
                                     r->postBuildLimitX, r->postBuildLimitY,
                                     r->gridSpacingX, r->gridSpacingY, 

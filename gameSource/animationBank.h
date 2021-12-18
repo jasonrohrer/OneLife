@@ -175,6 +175,12 @@ SoundAnimationRecord copyRecord( SoundAnimationRecord inRecord,
 void freeRecord( SoundAnimationRecord *inRecord );
 
 
+// Used in hue shifting objects, animaionts and ground sprites
+// when the character is tripping
+// to be called in livingLifePage
+void setAnimationBankTrippingEffect( bool isTripping );
+
+
 
 // returns number of animations that need to be loaded
 int initAnimationBankStart( char *outRebuildingCache );

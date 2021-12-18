@@ -182,7 +182,7 @@ void DropdownList::setList( const char *inText ) {
 	char **lines = split( rawStringWithEmptyLines, "\n", &numLines );
 	delete [] rawStringWithEmptyLines;
 	
-	mRawText = "";
+	mRawText = strdup("");
 	
 	for( int i=0; i<numLines; i++ ) {
 		
@@ -212,7 +212,7 @@ void DropdownList::setList( const char *inText ) {
 
 char *DropdownList::getAndUpdateList() {
 	
-	char *newList = "";
+	char *newList = strdup("");
 	
 	if( strcmp( mRawText, "" ) != 0 ) {
 		int numLines;
@@ -284,7 +284,7 @@ void DropdownList::deleteOption( int index ) {
 	char **lines = split( mRawText, "\n", &numLines );
 	
 	delete [] mRawText;
-	mRawText = "";
+	mRawText = strdup("");
 	
 	for( int i=0; i<numLines; i++ ) {
 		

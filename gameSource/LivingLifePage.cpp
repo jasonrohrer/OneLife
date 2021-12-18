@@ -316,8 +316,7 @@ static SimpleVector<HomePos> oldHomePosStack;
 static int lastPlayerID = -1;
 
 
-extern bool isTrippingEffectOn;
-extern void setTrippingColor( double x, double y );
+static bool isTrippingEffectOn;
 
 
 
@@ -5435,6 +5434,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 	
 	// For tripping color effect
 	isTrippingEffectOn = isTripping();
+    setObjectBankTrippingEffect( isTrippingEffectOn );
+	setAnimationBankTrippingEffect( isTrippingEffectOn );
 	
 
 
@@ -5579,22 +5580,24 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         doublePair sheetPos = mult( add( pos, lastCornerPos ),
                                                     0.5 );
 
-                        if( !isTrippingEffectOn ) // All tiles are drawn to change color independently
-						drawSprite( s->wholeSheet, sheetPos );
+                        if( !isTrippingEffectOn ) {// All tiles are drawn to change color independently
+                            drawSprite( s->wholeSheet, sheetPos );
+                            }
                         
-						if( !isTrippingEffectOn )
+						if( !isTrippingEffectOn ) {
                         // mark all cells under sheet as drawn
-                        for( int sY = y; sY > y - s->numTilesHigh; sY-- ) {
-                        
-                            if( sY >=0 && sY < mMapD ) {
+                            for( int sY = y; sY > y - s->numTilesHigh; sY-- ) {
                             
-                                for( int sX = x; 
-                                     sX < x + s->numTilesWide; sX++ ) {
+                                if( sY >=0 && sY < mMapD ) {
                                 
-                                    if( sX >=0 && sX < mMapD ) {
-                                        int sI = sY * mMapD + sX;
-                                        
-                                        mMapCellDrawnFlags[sI] = true;
+                                    for( int sX = x; 
+                                         sX < x + s->numTilesWide; sX++ ) {
+                                    
+                                        if( sX >=0 && sX < mMapD ) {
+                                            int sI = sY * mMapD + sX;
+                                            
+                                            mMapCellDrawnFlags[sI] = true;
+                                            }
                                         }
                                     }
                                 }
@@ -22402,7 +22405,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                         if( strstr( typedText, filterCommand ) == typedText ) {
                             // starts with filter command
                             
-                            LiveObject *ourLiveObject = getOurLiveObject();
+                            // LiveObject *ourLiveObject = getOurLiveObject();
                             
                             int emotIndex = getEmotionIndex( typedText );
                             
