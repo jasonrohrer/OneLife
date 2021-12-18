@@ -2972,6 +2972,9 @@ void printTrans( TransRecord *inTrans ) {
             case 7:
                 moveName = "wst";
                 break;
+            case 8:
+                moveName = "find";
+                break;
             }
         
 

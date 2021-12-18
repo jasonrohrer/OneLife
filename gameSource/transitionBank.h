@@ -55,6 +55,7 @@ typedef struct TransRecord {
         // 5 for S
         // 6 for E
         // 7 for W
+        // 8 for finding objects
         int move;
 
         // for things that move longer distances per move
