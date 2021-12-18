@@ -615,7 +615,7 @@ void DropdownList::draw() {
 			
 			for( int i=0; i<numLines; i++ ) {
 				
-				doublePair linePos = { centerPos.x, centerPos.y - (i + 1) * mHigh };
+				doublePair linePos = { centerPos.x, centerPos.y + (i + 1) * mHigh };
 				float backgroundAlpha = 0.3;
 				if( hoverIndex == i ) backgroundAlpha = 0.7;
 				setDrawColor( 0, 0, 0, 1 );
@@ -624,7 +624,7 @@ void DropdownList::draw() {
 				setDrawColor( 1, 1, 1, backgroundAlpha );
 				drawRect( - mWide / 2, linePos.y - mHigh / 2, 
 					mWide / 2, linePos.y + mHigh / 2 );
-				doublePair lineTextPos = { textPos.x, textPos.y - (i + 1) * mHigh };
+				doublePair lineTextPos = { textPos.x, textPos.y + (i + 1) * mHigh };
 					
 				setDrawColor( 0, 0, 0, 0.5 );
 				float buttonRightOffset = mFont->measureString( "x" );
@@ -762,9 +762,9 @@ void DropdownList::draw() {
 int DropdownList::insideIndex( float inX, float inY ) {
 	if( !mFocused ) return -1;
 	if( fabs( inX ) >= mWide / 2 ) return -1;
-	int index = - ( inY - mHigh / 2 ) / mHigh;
-	if( index <= 0 ) return -1;
-	index = index - 1;
+	int index = + ( inY - mHigh / 2 ) / mHigh;
+	if( index < 0 ) return -1;
+	//index = index - 1;
 	if( index >= listLen ) return -1;
 	return index;
     }
@@ -793,7 +793,7 @@ void DropdownList::pointerDown( float inX, float inY ) {
 	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { return; }
     
 	hoverIndex = insideIndex( inX, inY );
-	if( !isInsideTextBox( inX, inY ) && !nearRightEdge ) unfocus();
+	//if( !isInsideTextBox( inX, inY ) && !nearRightEdge ) unfocus();
 	if( hoverIndex == -1 ) return;
 	if( !nearRightEdge ) {
 		selectOption( hoverIndex );
@@ -804,7 +804,9 @@ void DropdownList::pointerDown( float inX, float inY ) {
 
 
 void DropdownList::pointerUp( float inX, float inY ) {
-    if( mIgnoreMouse ) {
+    if( !isInsideTextBox( inX, inY ) && !nearRightEdge ) unfocus();
+    
+    if( mIgnoreMouse || mIgnoreEvents ) {
         return;
         }
         

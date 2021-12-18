@@ -75,8 +75,8 @@ SettingsPage::SettingsPage()
     setButtonStyle( &mRestartButton );
     setButtonStyle( &mRedetectButton );
 
-	addComponent( &mInfoSeeds);
-	mInfoSeeds.addActionListener( this );
+	//addComponent( &mInfoSeeds );
+	//mInfoSeeds.addActionListener( this );
 
     addComponent( &mBackButton );
     mBackButton.addActionListener( this );
@@ -108,7 +108,7 @@ SettingsPage::SettingsPage()
     addComponent( &mRedetectButton );
     mRedetectButton.addActionListener( this );
 
-    addComponent( &mSpawnSeed);
+    //addComponent( &mSpawnSeed );
     
     mRestartButton.setVisible( false );
     

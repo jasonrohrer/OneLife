@@ -120,6 +120,8 @@ char *serverIP = NULL;
 int serverPort = 0;
 
 
+char useSpawnSeed;
+
 char *userEmail = NULL;
 char *accountKey = NULL;
 char *userTwinCode = NULL;
@@ -201,12 +203,13 @@ void setFOVScale() {
 	else if( gui_hud_mode > 2 ) gui_hud_mode = 2;
 	SettingsManager::setSetting( "hudDrawMode", gui_hud_mode );
 
-    gui_fov_scale = SettingsManager::getFloatSetting( "fovDefault", 1.25f );
+    gui_fov_scale = 1.0f;
+    //gui_fov_scale = SettingsManager::getFloatSetting( "fovDefault", 1.25f );
     if( ! gui_fov_scale || gui_fov_scale < 1 )
 		gui_fov_scale = 1.0f;
     else if ( gui_fov_scale > 6 )
 		gui_fov_scale = 6.0f;
-	SettingsManager::setSetting( "fovDefault", gui_fov_scale );
+	//SettingsManager::setSetting( "fovDefault", gui_fov_scale );
 	SettingsManager::setSetting( "fovScale", gui_fov_scale );
 
     gui_fov_preferred_max_scale = SettingsManager::getFloatSetting( "fovMax", 2.25f );
@@ -319,7 +322,7 @@ const char *getLinuxAppName() {
 
 
 const char *getFontTGAFileName() {
-    return "font_32_64.tga";
+    return "newfont_32_64.tga";
     }
 
 
@@ -462,7 +465,8 @@ void initDrawString( int inWidth, int inHeight ) {
     toggleMipMapMinFilter( true );
     toggleTransparentCropping( true );
     
-    mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16 );
+    //mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16 );
+    mainFont = new Font( getFontTGAFileName(), 3, 6, false, 16 );
     mainFont->setMinimumPositionPrecision( 1 );
 
     setViewCenterPosition( lastScreenViewCenter.x, lastScreenViewCenter.y );

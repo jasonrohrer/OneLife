@@ -24,12 +24,14 @@
 
 static JenkinsRandomSource randSource;
 
+char fieldsLocked = true;
 
 extern Font *mainFont;
 
 
 extern char gamePlayingBack;
 
+extern char useSpawnSeed;
 extern char *userEmail;
 extern char *accountKey;
 
@@ -41,36 +43,45 @@ extern char loginEditOverride;
 
 
 ExistingAccountPage::ExistingAccountPage()
-        : mEmailField( mainFont, 0, 128, 10, false, 
+        : mEmailField( mainFont, -360, 96, 10, false, 
                        translate( "username" ),
                        NULL,
                        // forbid only spaces
                        " " ),
-          mKeyField( mainFont, 0, 0, 15, true,
+          mKeyField( mainFont, -360, 0, 15, true,
                      translate( "accountKey" ),
                      // allow only ticket code characters
                      "23456789ABCDEFGHJKLMNPQRSTUVWXYZ-" ),
+          mSpawnSeed( mainFont, -360, -192, 10, false, 
+                                     translate( "spawnSeed" ),
+                                     NULL,
+                                     // forbid spaces
+                                     " " ),
           mAtSignButton( mainFont, 252, 128, "@" ),
-          mPasteButton( mainFont, 0, -80, translate( "paste" ), 'v', 'V' ),
+          mPasteButton( mainFont, 0, -112, translate( "paste" ), 'v', 'V' ),
           mDisableCustomServerButton( mainFont, 0, 220, 
                                       translate( "disableCustomServer" ) ),
-          mLoginButton( mainFont, 400, 0, translate( "loginButton" ) ),
-          mFriendsButton( mainFont, 400, -80, translate( "friendsButton" ) ),
-          mGenesButton( mainFont, 550, 0, translate( "genesButton" ) ),
-          mFamilyTreesButton( mainFont, 320, -160, translate( "familyTrees" ) ),
-          mTechTreeButton( mainFont, 550, -160, translate( "techTree" ) ),
-          mClearAccountButton( mainFont, 400, -280, 
+          mBackground( "background.tga", 0.75f ),
+          mGameLogo( "logo.tga", 1.0f, {-360, 256} ),
+          mSeedButton( mainFont, -360, -64, "SEED" ),
+          mUnlockButton( mainFont, -360, -256, "UNLOCK FIELDS" ),
+          mLoginButton( mainFont, -360, -64, translate( "loginButton" ) ),
+          mFriendsButton( mainFont, -360, -64, translate( "friendsButton" ) ),
+          mGenesButton( mainFont, 522, 300, translate( "genesButton" ) ),
+          mFamilyTreesButton( mainFont, 360, 16, translate( "familyTrees" ) ),
+          mTechTreeButton( mainFont, 360, -176, translate( "techTree" ) ),
+          mClearAccountButton( mainFont, -360, -64, 
                                translate( "clearAccount" ) ),
-          mCancelButton( mainFont, -400, -280, 
+          mCancelButton( mainFont, 360, -272, 
                          translate( "quit" ) ),
-          mSettingsButton( mainFont, -400, -120, 
+          mSettingsButton( mainFont, 360, -80,
                            translate( "settingsButton" ) ),
           mReviewButton( mainFont, -400, -200, 
                          translate( "postReviewButton" ) ),
           mRetryButton( mainFont, -100, 198, translate( "retryButton" ) ),
           mRedetectButton( mainFont, 100, 198, translate( "redetectButton" ) ),
           mViewAccountButton( mainFont, 0, 64, translate( "view" ) ),
-          mTutorialButton( mainFont, 522, 300, 
+          mTutorialButton( mainFont, 360, 112, 
                            translate( "tutorial" ) ),
           mPageActiveStartTime( 0 ),
           mFramesCounted( 0 ),
@@ -79,15 +90,19 @@ ExistingAccountPage::ExistingAccountPage()
     
     
     // center this in free space
-    /*
-    mPasteButton.setPosition( ( 333 + mKeyField.getRightEdgeX() ) / 2,
-                              -64 );
-    */
+    
+    mPasteButton.setPosition( mKeyField.getRightEdgeX() + 64,
+                              47 );
+    
     // align this one with the paste button
     mAtSignButton.setPosition( mEmailField.getRightEdgeX() + 48,
                                128 );
     
     
+    mLoginButton.setPosition( mEmailField.getRightEdgeX() - ( mLoginButton.getWidth()/2 ), -64 );
+    mSeedButton.setPosition( -360 + ( mFriendsButton.getWidth() - mLoginButton.getWidth() )/2, -64 );
+    mFriendsButton.setPosition( mEmailField.getLeftEdgeX() + ( mFriendsButton.getWidth()/2 ), -64 );
+
     if( userEmail != NULL && accountKey != NULL ) {
         mEmailField.setText( userEmail );
         mKeyField.setText( accountKey );
@@ -110,17 +125,22 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mTutorialButton );
 
     setButtonStyle( &mDisableCustomServerButton );
+    setButtonStyle( &mUnlockButton );
+    setButtonStyle( &mSeedButton );
     
     mFields[0] = &mEmailField;
     mFields[1] = &mKeyField;
 
     
+    addComponent( &mBackground );
+    addComponent( &mGameLogo );
+                                     
     addComponent( &mLoginButton );
     addComponent( &mFriendsButton );
     addComponent( &mGenesButton );
     addComponent( &mFamilyTreesButton );
     addComponent( &mTechTreeButton );
-    addComponent( &mClearAccountButton );
+    //addComponent( &mClearAccountButton );
     addComponent( &mCancelButton );
     addComponent( &mSettingsButton );
     addComponent( &mReviewButton );
@@ -134,9 +154,25 @@ ExistingAccountPage::ExistingAccountPage()
 
     addComponent( &mViewAccountButton );
     addComponent( &mTutorialButton );
+
+    addComponent( &mUnlockButton );
+    addComponent( &mSeedButton );
+    addComponent( &mSpawnSeed );
+    
+    // this section have all buttons with the same width
+    mTutorialButton.setSize( 175, 60 );
+    mSettingsButton.setSize( 175, 60 );
+    mFamilyTreesButton.setSize( 175, 60 );
+    mTechTreeButton.setSize( 175, 60 );
+    mCancelButton.setSize( 175, 60 );
+    
+    mEmailField.setLabelTop( true );
+    mKeyField.setLabelTop( true );
+    mSpawnSeed.setLabelTop( true );
     
     mLoginButton.addActionListener( this );
     mFriendsButton.addActionListener( this );
+    mSeedButton.addActionListener( this );
     mGenesButton.addActionListener( this );
     mFamilyTreesButton.addActionListener( this );
     mTechTreeButton.addActionListener( this );
@@ -156,7 +192,8 @@ ExistingAccountPage::ExistingAccountPage()
     mTutorialButton.addActionListener( this );
     
     mDisableCustomServerButton.addActionListener( this );
-
+    mUnlockButton.addActionListener( this );
+    
     mRetryButton.setVisible( false );
     mRedetectButton.setVisible( false );
     mDisableCustomServerButton.setVisible( false );
@@ -221,6 +258,18 @@ void ExistingAccountPage::makeActive( char inFresh ) {
         // tutorial forced anyway
         mTutorialButton.setVisible( false );
         }
+
+    useSpawnSeed = false;
+
+    char *seed = 
+        SettingsManager::getSettingContents( "spawnSeed", "" );
+
+    mSpawnSeed.setList( seed );
+        
+    delete [] seed;
+
+
+
     
 
     mFramesCounted = 0;
@@ -232,6 +281,7 @@ void ExistingAccountPage::makeActive( char inFresh ) {
     //mFPSMeasureDone = false;
     
     mLoginButton.setVisible( false );
+    mSeedButton.setVisible( false );
     mFriendsButton.setVisible( false );
     mGenesButton.setVisible( false );
     
@@ -248,6 +298,7 @@ void ExistingAccountPage::makeActive( char inFresh ) {
         // skipping measure OR we are returning to this page later
         // and not measuring again
         mLoginButton.setVisible( true );
+        mSeedButton.setVisible( true );
         mFriendsButton.setVisible( true );
         triggerLifeTokenUpdate();
         triggerFitnessScoreUpdate();
@@ -266,6 +317,18 @@ void ExistingAccountPage::makeActive( char inFresh ) {
     char *emailText = mEmailField.getText();
     char *keyText = mKeyField.getText();
 
+    mUnlockButton.setLabelText( "LOCK FIELDS" );
+    fieldsLocked = false;
+
+    if ( SettingsManager::getIntSetting( "streamProtection", 0 ) ) {
+        mUnlockButton.setLabelText( "UNLOCK FIELDS" );
+        fieldsLocked = true;
+        }
+
+    mSpawnSeed.setContentsHidden( true );
+    mSpawnSeed.setIgnoreEvents( fieldsLocked );
+
+
     // don't hide field contents unless there is something to hide
     if( ! pastSuccess || 
         ( strcmp( emailText, "" ) == 0 
@@ -282,6 +345,9 @@ void ExistingAccountPage::makeActive( char inFresh ) {
         
         mEmailField.setContentsHidden( true );
         mKeyField.setContentsHidden( true );
+        
+        mEmailField.setIgnoreEvents( fieldsLocked );
+        mKeyField.setIgnoreEvents( fieldsLocked );
         
         char *url = SettingsManager::getStringSetting( "lineageServerURL", "" );
 
@@ -362,13 +428,34 @@ void ExistingAccountPage::makeNotActive() {
 void ExistingAccountPage::step() {
     mPasteButton.setVisible( isClipboardSupported() &&
                              mKeyField.isFocused() );
-    mAtSignButton.setVisible( mEmailField.isFocused() );
+    //mAtSignButton.setVisible( mEmailField.isFocused() );
+    
+    int blockClicks = false;
+    if ( mSpawnSeed.isFocused() ) { blockClicks = true; }
+    
+    mLoginButton.setIgnoreEvents( blockClicks );
+    mSeedButton.setIgnoreEvents( blockClicks );
+    mFriendsButton.setIgnoreEvents( blockClicks );
+    
+    mEmailField.setIgnoreEvents( fieldsLocked ? true : blockClicks );
+    mKeyField.setIgnoreEvents( fieldsLocked ? true : blockClicks );
     }
 
 
 
 void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
+    //saves seed setting on any action performed
+    char *seedList = mSpawnSeed.getAndUpdateList();
+
+    SettingsManager::setSetting( "spawnSeed", seedList );
+    delete [] seedList;
+
     if( inTarget == &mLoginButton ) {
+        processLogin( true, "done" );
+        }
+    else if( inTarget == &mSeedButton ) {
+        useSpawnSeed = true;
+        
         processLogin( true, "done" );
         }
     else if( inTarget == &mTutorialButton ) {
@@ -515,6 +602,32 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         mDisableCustomServerButton.setVisible( false );
         processLogin( true, "done" );
         }
+    else if( inTarget == &mUnlockButton ) {
+        if ( fieldsLocked ) {
+            mUnlockButton.setLabelText( "LOCK FIELDS" );
+
+            SettingsManager::setSetting( "streamProtection", 0 );
+            fieldsLocked = false;
+            }
+        else {
+            mUnlockButton.setLabelText( "UNLOCK FIELDS" );
+
+            SettingsManager::setSetting( "streamProtection", 1 );
+            fieldsLocked = true;
+            }
+
+        mEmailField.setContentsHidden( true );
+        mKeyField.setContentsHidden( true );
+        mSpawnSeed.setContentsHidden( true );
+        
+        mEmailField.setIgnoreEvents( fieldsLocked );
+        mKeyField.setIgnoreEvents( fieldsLocked );
+        mSpawnSeed.setIgnoreEvents( fieldsLocked );
+        
+        mEmailField.unfocus();
+        mKeyField.unfocus();
+        mSpawnSeed.unfocus();
+        }
     }
 
 
@@ -629,10 +742,12 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
 
             if( !fpsFailed ) {
                 mLoginButton.setVisible( true );
+                mSeedButton.setVisible( true );
                 
                 int pastSuccess = 
                     SettingsManager::getIntSetting( "loginSuccess", 0 );
-                if( pastSuccess ) {
+                // friendsButton visible whenever loginButton is visible
+                if( pastSuccess || true ) {
                     mFriendsButton.setVisible( true );
                     }
                 
@@ -661,9 +776,9 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
     setDrawColor( 1, 1, 1, 1 );
     
 
-    doublePair pos = { -9, -225 };
+    doublePair pos = { 0, -175 };
     
-    drawSprite( instructionsSprite, pos );
+    //drawSprite( instructionsSprite, pos );
 
 
     if( ! mEmailField.isVisible() ) {
@@ -757,3 +872,20 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
         }
     }
 
+
+
+Background::Background( const char *inImageName, float inOpacity, doublePair inPosition )
+        : PageComponent( 0, 0 ),
+          mImage( loadSprite( inImageName, false ) ),
+          mOpacity( inOpacity ),
+          mPosition( inPosition ) {
+    }
+
+   
+void Background::draw() {
+    setDrawColor( 1, 1, 1, mOpacity );
+    
+    if (! isPaused() && mImage != NULL ) {
+        drawSprite( mImage, mPosition );
+        }
+    }

@@ -190,7 +190,7 @@ void Button::drawContents() {
 
 
 void Button::drawBorder() {
-    if( mBracketCoverLength >= 0 ) {
+    if( mBracketCoverLength >= 0 && false ) {
         // one rect on either end
         drawRect( - mWide / 2, 
                   - mHigh / 2, 
