@@ -182,7 +182,7 @@ void DropdownList::setList( const char *inText ) {
 	char **lines = split( rawStringWithEmptyLines, "\n", &numLines );
 	delete [] rawStringWithEmptyLines;
 	
-	mRawText = "";
+	mRawText = strdup("");
 	
 	for( int i=0; i<numLines; i++ ) {
 		
@@ -212,7 +212,7 @@ void DropdownList::setList( const char *inText ) {
 
 char *DropdownList::getAndUpdateList() {
 	
-	char *newList = "";
+	char *newList = strdup("");
 	
 	if( strcmp( mRawText, "" ) != 0 ) {
 		int numLines;
@@ -284,7 +284,7 @@ void DropdownList::deleteOption( int index ) {
 	char **lines = split( mRawText, "\n", &numLines );
 	
 	delete [] mRawText;
-	mRawText = "";
+	mRawText = strdup("");
 	
 	for( int i=0; i<numLines; i++ ) {
 		
@@ -788,6 +788,10 @@ void DropdownList::pointerMove( float inX, float inY ) {
 
 
 void DropdownList::pointerDown( float inX, float inY ) {
+    
+	int mouseButton = getLastMouseButton();
+	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { return; }
+    
 	hoverIndex = insideIndex( inX, inY );
 	//if( !isInsideTextBox( inX, inY ) && !nearRightEdge ) unfocus();
 	if( hoverIndex == -1 ) return;
@@ -805,6 +809,9 @@ void DropdownList::pointerUp( float inX, float inY ) {
     if( mIgnoreMouse || mIgnoreEvents ) {
         return;
         }
+        
+	int mouseButton = getLastMouseButton();
+	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { return; }
     
     if( inX > - mWide / 2 &&
         inX < + mWide / 2 &&

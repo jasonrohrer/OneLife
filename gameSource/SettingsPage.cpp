@@ -34,6 +34,7 @@ SettingsPage::SettingsPage()
           mEnableNudeBox( -335, 148, 4 ),
 		  mEnableFOVBox( 561, 128, 3),
 		  mEnableKActionsBox( 561, 90, 3),
+		  mEnableCenterCameraBox( 561, 52, 3),
           mMusicLoudnessSlider( mainFont, 0, 40, 4, 200, 30,
                                 0.0, 1.0, 
                                 translate( "musicLoudness" ) ),
@@ -97,6 +98,9 @@ SettingsPage::SettingsPage()
 	
 	addComponent( &mEnableKActionsBox );
     mEnableKActionsBox.addActionListener( this );
+	
+	addComponent( &mEnableCenterCameraBox );
+    mEnableCenterCameraBox.addActionListener( this );
 
     addComponent( &mRestartButton );
     mRestartButton.addActionListener( this );
@@ -139,6 +143,11 @@ SettingsPage::SettingsPage()
         SettingsManager::getIntSetting( "keyboardActions", 0 );
 	
 	mEnableKActionsBox.setToggled( mEnableKActionsSetting );
+        
+	mEnableCenterCameraSetting =
+        SettingsManager::getIntSetting( "centerCamera", 0 );
+	
+	mEnableCenterCameraBox.setToggled( mEnableCenterCameraSetting );
     
 
     addComponent( &mMusicLoudnessSlider );
@@ -215,6 +224,11 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
         int newSetting = mEnableKActionsBox.getToggled();
         
         SettingsManager::setSetting( "keyboardActions", newSetting );
+        }
+	else if( inTarget == &mEnableCenterCameraBox ) {
+        int newSetting = mEnableCenterCameraBox.getToggled();
+        
+        SettingsManager::setSetting( "centerCamera", newSetting );
         }
     else if( inTarget == &mRestartButton ||
              inTarget == &mRedetectButton ) {
@@ -375,6 +389,13 @@ void SettingsPage::draw( doublePair inViewCenter,
     pos.y -= 2;
 
     mainFont->drawString( "Keyboard Actions", pos, alignRight );
+	
+	pos = mEnableCenterCameraBox.getPosition();
+    
+    pos.x -= 30;
+    pos.y -= 2;
+
+    mainFont->drawString( "Center Camera", pos, alignRight );
 
 
     pos = mCursorModeSet->getPosition();

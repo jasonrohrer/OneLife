@@ -175,6 +175,12 @@ SoundAnimationRecord copyRecord( SoundAnimationRecord inRecord,
 void freeRecord( SoundAnimationRecord *inRecord );
 
 
+// Used in hue shifting objects, animaionts and ground sprites
+// when the character is tripping
+// to be called in livingLifePage
+void setAnimationBankTrippingEffect( bool isTripping );
+
+
 
 // returns number of animations that need to be loaded
 int initAnimationBankStart( char *outRebuildingCache );
@@ -270,7 +276,7 @@ typedef struct ObjectAnimPack {
         int *inContainedIDs;
         SimpleVector<int> *inSubContained;
         
-        Emotion *setEmot;
+        SimpleVector<Emotion*> setEmots;
 
         // can be added by caller after this structure
         // is returned by drawObjectAnimPacked
@@ -443,7 +449,12 @@ char isSoundUsedByAnim( int inSoundID );
 
 
 // sets emotion for subsequent drawObjectAnim calls, or NULL for no emotion
+// clear extra layers
 void setAnimationEmotion( Emotion *inEmotion );
+
+// add an extra layer of emotion for drawObjectAnim calls
+void addExtraAnimationEmotions( SimpleVector<Emotion*> *inList );
+
 
 
 // sets fade values for clothing highlights of next drawn person

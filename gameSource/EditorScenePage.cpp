@@ -109,7 +109,7 @@ EditorScenePage::EditorScenePage()
                                "0123456789." ),
           mPersonEmotField( smallFont, 360, -290, 7,
                                true, "Emot",
-                               "/ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" ),
+                               "*/ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789," ),
           mCellDestSprite( loadSprite( "centerMark.tga" ) ),
           mPersonDestSprite( loadSprite( "internalPaperMark.tga" ) ),
           mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
@@ -633,9 +633,26 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mPersonEmotField ) {
         char *text = mPersonEmotField.getText();
 
-        if( strstr( text, "/" ) == text ) {
-            // starts with /
-            p->currentEmot = getEmotion( getEmotionIndex( text ) );
+        if( strstr( text, "/" ) == text ||
+            strstr( text, "*" ) == text ) {
+            // starts with / or *
+            
+            int numParts = 0;
+            char **parts = split( text, ",", &numParts );
+            
+            if( numParts > 0 ) {
+                p->currentEmot = getEmotion( getEmotionIndex( parts[0] ) );
+                delete [] parts[0];
+                }
+            p->extraEmot.deleteAll();
+            for( int i=1; i<numParts; i++ ) {
+                Emotion *e = getEmotion( getEmotionIndex( parts[i] ) );
+                if( e != NULL ) {
+                    p->extraEmot.push_back( e );
+                    }
+                delete [] parts[i];
+                }
+            delete [] parts;
             }
         else {
             // check for straight number
@@ -864,6 +881,13 @@ void EditorScenePage::checkVisible() {
 
         if( p->currentEmot != NULL ) {
             mPersonEmotField.setText( p->currentEmot->triggerWord );
+            for( int i=0; i < p->extraEmot.size(); i++ ) {
+                char *s = autoSprintf( 
+                    ",%s", 
+                    p->extraEmot.getElementDirect( i )->triggerWord );
+                mPersonEmotField.insertString( s );
+                delete [] s;
+                }
             }
         else {
             mPersonEmotField.setText( "" );
@@ -1387,6 +1411,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         else {
                             
                             setAnimationEmotion( p->currentEmot );
+                            addExtraAnimationEmotions( &( p->extraEmot ) );
                             
                             ClothingSet clothingToDraw = p->clothing;
                             
@@ -1468,6 +1493,8 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                 p->subContained.getElementArray();
 
                             setAnimationEmotion( p->heldEmotion );
+                            addExtraAnimationEmotions( 
+                                &( p->heldExtraEmotion ) );
                             
                             if( splitHeld ) {
                                 // draw behind part
@@ -2243,6 +2270,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
                 p->heldAge = mCopyBuffer.age;
                 p->returnHeldAge = p->heldAge;
                 p->heldEmotion = mCopyBuffer.currentEmot;
+                p->heldExtraEmotion = mCopyBuffer.extraEmot;
                 }
             }
         }
@@ -2305,6 +2333,7 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->heldClothing = getEmptyClothingSet();
     
     inCell->heldEmotion = NULL;
+    inCell->heldExtraEmotion.deleteAll();
     
     inCell->contained.deleteAll();
     inCell->subContained.deleteAll();    
@@ -2327,6 +2356,7 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->moveDelayTime = 0;
     
     inCell->currentEmot = NULL;
+    inCell->extraEmot.deleteAll();
     }
 
 

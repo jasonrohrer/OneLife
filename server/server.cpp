@@ -63,6 +63,7 @@
 #include "fitnessScore.h"
 #include "arcReport.h"
 #include "curseDB.h"
+#include "cravings.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -146,6 +147,17 @@ static int babyBirthFoodDecrement = 10;
 // makes whole server a bit easier (or harder, if negative)
 static int eatBonus = 0;
 
+// static double eatBonusFloor = 0;
+// static double eatBonusHalfLife = 50;
+
+static int canYumChainBreak = 0;
+
+static double minAgeForCravings = 10;
+
+
+// static double posseSizeSpeedMultipliers[4] = { 0.75, 1.25, 1.5, 2.0 };
+
+
 
 static int minActivePlayersForLanguages = 15;
 
@@ -209,6 +221,16 @@ static const char *allowedSayChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! ";
 
 
 static int killEmotionIndex = 2;
+static int victimEmotionIndex = 2;
+
+static int starvingEmotionIndex = 2;
+static int satisfiedEmotionIndex = 2;
+
+static int afkEmotionIndex = 2;
+static double afkTimeSeconds = 0;
+
+static int drunkEmotionIndex = 2;
+static int trippingEmotionIndex = 2;
 
 
 static double lastBabyPassedThresholdTime = 0;
@@ -629,7 +651,11 @@ typedef struct LiveObject {
         // in cases where their held wound produces a forced emot
         char emotFrozen;
         double emotUnfreezeETA;
+        int emotFrozenIndex;
         
+        char starving;
+        
+
         char connected;
         
         char error;
@@ -689,6 +715,16 @@ typedef struct LiveObject {
         int foodStore;
         
         double foodCapModifier;
+
+        double drunkenness;
+		bool drunkennessEffect;
+		double drunkennessEffectETA;
+		
+		bool tripping;
+		bool gonnaBeTripping;
+		double trippingEffectStartTime;
+		double trippingEffectETA;
+
 
         double fever;
         
@@ -779,6 +815,18 @@ typedef struct LiveObject {
 		
 		//time when read position is expired and can be read again
 		SimpleVector<double> readPositionsETA;
+
+        SimpleVector<int> permanentEmots;
+				
+		//2HOL: last time player does something
+		double lastActionTime;
+		
+		//2HOL: player is either disconnected or inactive
+		bool isAFK;
+
+        Craving cravingFood;
+        int cravingFoodYumIncrement;
+        char cravingKnown;
 
     } LiveObject;
 
@@ -1038,6 +1086,9 @@ static void backToBasics( LiveObject *inPlayer ) {
         p->clothingContained[c].deleteAll();
         p->clothingContainedEtaDecays[c].deleteAll();
         }
+
+    p->emotFrozen = false;
+    p->emotUnfreezeETA = 0;
     }
 
 
@@ -2468,7 +2519,23 @@ void forcePlayerAge( const char *inEmail, double inAge ) {
 
 
 double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
-    double value = maxFoodDecrementSeconds * 2 * inPlayer->heat;
+	
+	float baseHeat = inPlayer->heat;
+	
+	if( inPlayer->tripping ) {
+		
+		// Increased food drain when tripping
+		if( inPlayer->heat >= 0.5 ) {
+			baseHeat =  1.0 - (2/3) * ( 1.0 - baseHeat );
+			} 
+		else {
+			baseHeat = (2/3) * baseHeat;
+			}
+		
+		}
+	
+	
+    double value = maxFoodDecrementSeconds * 2 * baseHeat;
     
     if( value > maxFoodDecrementSeconds ) {
         // also reduce if too hot (above 0.5 heat)
@@ -2676,6 +2743,191 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
 
 
 
+int computeOverflowFoodCapacity( int inBaseCapacity ) {
+    // even littlest baby has +2 overflow, to get everyone used to the
+    // concept.
+    // by adulthood (when base cap is 20), overflow cap is 91.6
+    return 2 + pow( inBaseCapacity, 8 ) * 0.0000000035;
+    }
+
+
+
+char *slurSpeech( int inSpeakerID,
+                  char *inTranslatedPhrase, double inDrunkenness ) {
+    char *working = stringDuplicate( inTranslatedPhrase );
+    
+    char *starPos = strstr( working, " *" );
+
+    char *extraData = NULL;
+    
+    if( starPos != NULL ) {
+        extraData = stringDuplicate( starPos );
+        starPos[0] = '\0';
+        }
+    
+    SimpleVector<char> slurredChars;
+    
+    // 1 in 10 letters slurred with 1 drunkenness
+    // all characters slurred with 10 drunkenness
+    double baseSlurChance = 0.1;
+    
+    double slurChance = baseSlurChance * inDrunkenness;
+
+    // 2 in 10 words mixed up in order with 6 drunkenness
+    // all words mixed up at 10 drunkenness
+    double baseWordSwapChance = 0.1;
+
+    // but don't start mixing up words at all until 6 drunkenness
+    // thus, the 0 to 100% mix up range is from 6 to 10 drunkenness
+    double wordSwapChance = 2 * baseWordSwapChance * ( inDrunkenness - 5 );
+
+
+
+    // first, swap word order
+    SimpleVector<char *> *words = tokenizeString( working );
+
+    // always slurr exactly the same for a given speaker
+    // repeating the same phrase won't keep remapping
+    // but map different length phrases differently
+    JenkinsRandomSource slurRand( inSpeakerID + 
+                                  words->size() + 
+                                  inDrunkenness );
+    
+
+    for( int i=0; i<words->size(); i++ ) {
+        if( slurRand.getRandomBoundedDouble( 0, 1 ) < wordSwapChance ) {
+            char *temp = words->getElementDirect( i );
+            
+            // possible swap distance based on drunkenness
+            
+            // again, don't start reording words until 6 drunkenness
+            int maxDist = inDrunkenness - 5;
+
+            if( maxDist >= words->size() - i ) {
+                maxDist = words->size() - i - 1;
+                }
+            
+            if( maxDist > 0 ) {
+                int jump = slurRand.getRandomBoundedInt( 0, maxDist );
+            
+                
+                *( words->getElement( i ) ) = 
+                    words->getElementDirect( i + jump );
+            
+                *( words->getElement( i + jump ) ) = temp;
+                }
+            }
+        }
+    
+
+    char **allWords = words->getElementArray();
+    char *wordsTogether = join( allWords, words->size(), " " );
+    
+    words->deallocateStringElements();
+    delete words;
+    
+    delete [] allWords;
+
+    delete [] working;
+    
+    working = wordsTogether;
+
+
+    int len = strlen( working );
+    for( int i=0; i<len; i++ ) {
+        char c = working[i];
+        
+        slurredChars.push_back( c );
+
+        if( c < 'A' || c > 'Z' ) {
+            // only A-Z, no slurred punctuation
+            continue;
+            }
+
+        if( slurRand.getRandomBoundedDouble( 0, 1 ) < slurChance ) {
+            slurredChars.push_back( c );
+            }
+        }
+
+    delete [] working;
+    
+    if( extraData != NULL ) {
+        slurredChars.appendElementString( extraData );
+        delete [] extraData;
+        }
+    
+
+    return slurredChars.getElementString();
+    }
+
+
+char *yellingSpeech( int inSpeakerID,
+                  char *inTranslatedPhrase ) {
+    char *working = stringDuplicate( inTranslatedPhrase );
+    
+    char *starPos = strstr( working, " *" );
+
+    char *extraData = NULL;
+    
+    if( starPos != NULL ) {
+        extraData = stringDuplicate( starPos );
+        starPos[0] = '\0';
+        }
+    
+    SimpleVector<char> workedChars;
+
+    int len = strlen( working );
+    for( int i=0; i<len; i++ ) {
+        char c = working[i];
+		
+		char r;
+
+        if( c == 'A' ) {
+            r = c;
+            }
+		else if( c == 'E' ) {
+			r = c;
+			}
+		else if( c == 'O' ) {
+			r = c;
+			}
+		else if( c == 'Y' ) {
+			r = c;
+			}
+		else if( c == ',' || c == '.' || c == '!' ) {
+			r = '!';
+			}
+		else {
+			workedChars.push_back( c );
+			continue;
+			}
+			
+
+        for(int i = 0; i < 5; i++) {
+            workedChars.push_back( r );
+            }
+        }
+
+    delete [] working;
+	
+	if( len > 0 ) {
+		int repeatLen = randSource.getRandomBoundedDouble( 0, 1 ) * 4 + 1;
+        for(int i = 0; i < repeatLen; i++) {
+            workedChars.push_back( '!' );
+            }
+		}
+    
+    if( extraData != NULL ) {
+        workedChars.appendElementString( extraData );
+        delete [] extraData;
+        }
+    
+
+    return workedChars.getElementString();
+    }
+
+
+
 // with 128-wide tiles, character moves at 480 pixels per second
 // at 60 fps, this is 8 pixels per frame
 // important that it's a whole number of pixels for smooth camera movement
@@ -2762,6 +3014,13 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
                 speed *= c->speedMult;
                 }
             }
+			
+		if( inPlayer->tripping ) {
+			speed *= 1.2;
+			}
+		else if( inPlayer->drunkennessEffect ) {
+			speed *= 0.9;
+			}
         }
 
     // never move at 0 speed, divide by 0 errors for eta times
@@ -4514,7 +4773,7 @@ char *isCurseNamingSay( char *inSaidString );
 char *isPasswordSettingSay( char *inSaidString );
 char *isPasswordInvokingSay( char *inSaidString );
 
-static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {    
+static void makePlayerSay( LiveObject *inPlayer, char *inToSay, bool inPrivate = false ) {    
                         
     if( inPlayer->lastSay != NULL ) {
         delete [] inPlayer->lastSay;
@@ -4862,7 +5121,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     newSpeechPasswordFlags.push_back( passwordFlag );
 
                         
-    ChangePosition p = { inPlayer->xd, inPlayer->yd, false };
+    ChangePosition p = { inPlayer->xd, inPlayer->yd, false, -1 };
+	if( inPrivate ) p.responsiblePlayerID = inPlayer->id;
                         
     // if held, speech happens where held
     if( inPlayer->heldByOther ) {
@@ -4876,7 +5136,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         }
 
     newSpeechPos.push_back( p );
-
+	if( inPrivate ) return;
 
 
     SimpleVector<int> pipesIn;
@@ -4905,7 +5165,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 
                 newLocationSpeech.push_back( stringDuplicate( inToSay ) );
                 
-                ChangePosition outChangePos = { outPos.x, outPos.y, false };
+                ChangePosition outChangePos = { outPos.x, outPos.y, false, -1 };
                 newLocationSpeechPos.push_back( outChangePos );
                 }
             }
@@ -5514,7 +5774,44 @@ static char *getUpdateLineFromRecord(
 
 
 
+static SimpleVector<int> newEmotPlayerIDs;
+static SimpleVector<int> newEmotIndices;
+// 0 if no ttl specified
+static SimpleVector<int> newEmotTTLs;
+
+
+
 static char isYummy( LiveObject *inPlayer, int inObjectID ) {
+    ObjectRecord *o = getObject( inObjectID );
+    
+    if( o->isUseDummy ) {
+        inObjectID = o->useDummyParent;
+        o = getObject( inObjectID );
+        }
+
+    if( o->foodValue == 0 ) {
+        return false;
+        }
+
+    if( inObjectID == inPlayer->cravingFood.foodID &&
+        computeAge( inPlayer ) >= minAgeForCravings ) {
+        return true;
+        }
+
+    for( int i=0; i<inPlayer->yummyFoodChain.size(); i++ ) {
+        if( inObjectID == inPlayer->yummyFoodChain.getElementDirect(i) ) {
+            return false;
+            }
+        }
+    return true;
+    }
+    
+static char isReallyYummy( LiveObject *inPlayer, int inObjectID ) {
+    
+    // whether the food is actually not in the yum chain
+    // return false for meh food that the player is craving
+    // which is displayed "yum" client-side
+    
     ObjectRecord *o = getObject( inObjectID );
     
     if( o->isUseDummy ) {
@@ -5547,7 +5844,7 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
         // chain broken
         
         // only feeding self can break chain
-        if( inFedSelf ) {
+        if( inFedSelf && canYumChainBreak ) {
             inPlayer->yummyFoodChain.deleteAll();
             }
         }
@@ -5566,7 +5863,55 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
     if( wasYummy ||
         inPlayer->yummyFoodChain.size() == 0 ) {
         
-        inPlayer->yummyFoodChain.push_back( inFoodEatenID );
+        int eatenID = inFoodEatenID;
+        
+        if( isReallyYummy( inPlayer, eatenID ) ) {
+            inPlayer->yummyFoodChain.push_back( eatenID );
+            }
+		
+        // now it is possible to "grief" the craving pool
+        // by eating high tech food without craving them
+        // but this also means that it requires more effort to
+        // cheese the craving system by deliberately eating
+        // easy food first in an advanced town
+        logFoodDepth( inPlayer->lineageEveID, eatenID );
+        
+        if( eatenID == inPlayer->cravingFood.foodID &&
+            computeAge( inPlayer ) >= minAgeForCravings ) {
+            
+            for( int i=0; i< inPlayer->cravingFood.bonus; i++ ) {
+                // add extra copies to YUM chain as a bonus
+                inPlayer->yummyFoodChain.push_back( eatenID );
+                }
+            
+            // craving satisfied, go on to next thing in list
+            inPlayer->cravingFood = 
+                getCravedFood( inPlayer->lineageEveID,
+                               inPlayer->parentChainLength,
+                               inPlayer->cravingFood );
+            // reset generational bonus counter
+            inPlayer->cravingFoodYumIncrement = 1;
+            
+            // flag them for getting a new craving message
+            inPlayer->cravingKnown = false;
+            
+            // satisfied emot
+            
+            if( satisfiedEmotionIndex != -1 ) {
+                inPlayer->emotFrozen = false;
+                inPlayer->emotUnfreezeETA = 0;
+        
+                newEmotPlayerIDs.push_back( inPlayer->id );
+                
+                newEmotIndices.push_back( satisfiedEmotionIndex );
+                // 3 sec
+                newEmotTTLs.push_back( 1 );
+                
+                // don't leave starving status, or else non-starving
+                // change might override our satisfied emote
+                inPlayer->starving = false;
+                }
+            }
         }
     
 
@@ -6211,6 +6556,7 @@ int processLoggedInPlayer( char inAllowReconnect,
             o->inFlight = false;
             
             o->connected = true;
+            o->cravingKnown = false;
             
             if( o->heldByOther ) {
                 // they're held, so they may have moved far away from their
@@ -6317,6 +6663,13 @@ int processLoggedInPlayer( char inAllowReconnect,
     minActivePlayersForLanguages =
         SettingsManager::getIntSetting( "minActivePlayersForLanguages", 15 );
 
+    canYumChainBreak = SettingsManager::getIntSetting( "canYumChainBreak", 0 );
+    
+
+    
+    minAgeForCravings = SettingsManager::getDoubleSetting( "minAgeForCravings",
+                                                           10 );
+    
 
     numConnections ++;
                 
@@ -6328,6 +6681,10 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.lastSidsBabyEmail = NULL;
 
     newObject.lastBabyEmail = NULL;
+
+    newObject.cravingFood = noCraving;
+    newObject.cravingFoodYumIncrement = 0;
+    newObject.cravingKnown = false;
     
     newObject.id = nextID;
     nextID++;
@@ -6606,10 +6963,10 @@ int processLoggedInPlayer( char inAllowReconnect,
         newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
         
         // she starts off craving a food right away
-        // newObject.cravingFood = getCravedFood( newObject.lineageEveID,
-                                               // newObject.parentChainLength );
+        newObject.cravingFood = getCravedFood( newObject.lineageEveID,
+                                               newObject.parentChainLength );
         // initilize increment
-        // newObject.cravingFoodYumIncrement = 1;
+        newObject.cravingFoodYumIncrement = 1;
 
         int femaleID = getRandomFemalePersonObject();
         
@@ -6630,6 +6987,14 @@ int processLoggedInPlayer( char inAllowReconnect,
     // start full up to capacity with food
     newObject.foodStore = computeFoodCapacity( &newObject );
 
+    newObject.drunkenness = 0;
+	newObject.drunkennessEffectETA = 0;
+	newObject.drunkennessEffect = false;
+	
+	newObject.tripping = false;
+	newObject.gonnaBeTripping = false;
+	newObject.trippingEffectStartTime = 0;
+	newObject.trippingEffectETA = 0;
     
 
     if( ! newObject.isEve ) {
@@ -7298,10 +7663,16 @@ int processLoggedInPlayer( char inAllowReconnect,
     
     newObject.emotFrozen = false;
     newObject.emotUnfreezeETA = 0;
+    newObject.emotFrozenIndex = 0;
     
+    newObject.starving = false;
+
     newObject.connected = true;
     newObject.error = false;
     newObject.errorCauseString = "";
+	
+	newObject.lastActionTime = Time::getCurrentTime();
+	newObject.isAFK = false;
     
     newObject.customGraveID = -1;
     newObject.deathReason = NULL;
@@ -7359,6 +7730,14 @@ int processLoggedInPlayer( char inAllowReconnect,
 
         // mother
         newObject.lineage->push_back( newObject.parentID );
+
+        
+        // inherit mother's craving at time of birth
+        newObject.cravingFood = parent->cravingFood;
+        
+        // increment for next generation
+        newObject.cravingFoodYumIncrement = parent->cravingFoodYumIncrement + 1;
+        
 
         // inherit last heard monument, if any, from parent
         newObject.monumentPosSet = parent->monumentPosSet;
@@ -9231,6 +9610,21 @@ int readIntFromFile( const char *inFileName, int inDefaultValue ) {
 
 
 
+typedef struct KillState {
+        int killerID;
+        int killerWeaponID;
+        int targetID;
+        double killStartTime;
+        double emotStartTime;
+        int emotRefreshSeconds;
+    } KillState;
+
+
+SimpleVector<KillState> activeKillStates;
+
+
+
+
 void apocalypseStep() {
     
     double curTime = Time::getCurrentTime();
@@ -9496,7 +9890,8 @@ void apocalypseStep() {
                                Time::getCurrentTime() - startTime );
                 
                 peaceTreaties.deleteAll();
-
+                warPeaceRecords.deleteAll();
+                activeKillStates.deleteAll();
 
                 lastRemoteApocalypseCheckTime = curTime;
                 
@@ -9999,16 +10394,126 @@ typedef struct FlightDest {
         
 
 
-typedef struct KillState {
-        int killerID;
-        int killerWeaponID;
-        int targetID;
-        double emotStartTime;
-        int emotRefreshSeconds;
-    } KillState;
+
+// inEatenID = 0 for nursing
+static void checkForFoodEatingEmot( LiveObject *inPlayer,
+                                    int inEatenID ) {
+    
+    char wasStarving = inPlayer->starving;
+    inPlayer->starving = false;
+
+    
+    if( inEatenID > 0 ) {
+        
+        ObjectRecord *o = getObject( inEatenID );
+        
+        if( o != NULL ) {
+            char *emotPos = strstr( o->description, "emotEat_" );
+            
+            if( emotPos != NULL ) {
+                int e, t;
+                int numRead = sscanf( emotPos, "emotEat_%d_%d", &e, &t );
+                
+                if( numRead == 2 && !inPlayer->emotFrozen ) {
+                    inPlayer->emotFrozen = true;
+                    inPlayer->emotFrozenIndex = e;
+                    
+                    inPlayer->emotUnfreezeETA = Time::getCurrentTime() + t;
+                    
+                    newEmotPlayerIDs.push_back( inPlayer->id );
+                    newEmotIndices.push_back( e );
+                    newEmotTTLs.push_back( t );
+                    return;
+                    }
+                }
+            }
+        }
+
+    // no food emot found
+    if( wasStarving && !inPlayer->emotFrozen ) {
+        // clear their starving emot
+        newEmotPlayerIDs.push_back( inPlayer->id );
+        newEmotIndices.push_back( -1 );
+        newEmotTTLs.push_back( 0 );
+        }
+                
+    }
+    
+static void drinkAlcohol( LiveObject *inPlayer, int inAlcoholAmount ) {
+    double doneGrowingAge = 16;
+    
+    double multiplier = 1.0;
+    
+
+    double age = computeAge( inPlayer );
+    
+    // alcohol affects a baby 2x
+    // affects an 8-y-o 1.5x
+    if( age < doneGrowingAge ) {
+        multiplier += 1.0 - age / doneGrowingAge;
+        }
+
+    double amount = inAlcoholAmount * multiplier;
+    
+    inPlayer->drunkenness += amount;
+	
+	if( inPlayer->drunkenness >= 6 ) {
+		
+		double drunkennessEffectDuration = 60.0;
+		
+		inPlayer->drunkennessEffectETA = Time::getCurrentTime() + drunkennessEffectDuration;
+		inPlayer->drunkennessEffect = true;
+		
+		makePlayerSay( inPlayer, (char*)"+DRUNK+", true );
+		
+		}
+    }
 
 
-SimpleVector<KillState> activeKillStates;
+static void doDrug( LiveObject *inPlayer ) {
+	
+	double trippingEffectDelay = 15.0;
+	double trippingEffectDuration = 30.0;
+	double curTime = Time::getCurrentTime();
+	
+	if( !inPlayer->tripping && !inPlayer->gonnaBeTripping ) {
+		inPlayer->gonnaBeTripping = true;
+		inPlayer->trippingEffectStartTime = curTime + trippingEffectDelay;
+		inPlayer->trippingEffectETA = curTime + trippingEffectDelay + trippingEffectDuration;
+		}
+	else if( !inPlayer->tripping && inPlayer->gonnaBeTripping ) {
+		// Half the delay if they keep munching drug before effect hits
+		float remainingDelay = inPlayer->trippingEffectStartTime - curTime;
+		if( remainingDelay > 0 ) {
+			inPlayer->trippingEffectStartTime = curTime + 0.5 * remainingDelay;
+			}
+		}
+	else {
+		// Refresh duration if they are already tripping
+		inPlayer->trippingEffectETA = curTime + trippingEffectDuration;
+		}
+		
+    }
+	
+	
+// returns true if frozen emote cleared successfully
+static bool clearFrozenEmote( LiveObject *inPlayer, int inEmoteIndex ) {
+	
+	if( inPlayer->emotFrozen &&
+		inPlayer->emotFrozenIndex == inEmoteIndex ) {
+			
+		inPlayer->emotFrozen = false;
+		inPlayer->emotUnfreezeETA = 0;
+		
+		newEmotPlayerIDs.push_back( inPlayer->id );
+		newEmotIndices.push_back( -1 );
+		newEmotTTLs.push_back( 0 );
+		
+		return true;
+		}
+	
+	return false;
+    }
 
 
 // return true if it worked
@@ -10031,23 +10536,92 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget ) {
             found = true;
             s->killerWeaponID = inKiller->holdingID;
             s->targetID = inTarget->id;
-            s->emotStartTime = Time::getCurrentTime();
-            s->emotRefreshSeconds = 30;
+
+            double curTime = Time::getCurrentTime();
+            s->emotStartTime = curTime;
+            s->killStartTime = curTime;
+
+            s->emotRefreshSeconds = 10;
             break;
             }
         }
     
     if( !found ) {
         // add new
+		double curTime = Time::getCurrentTime();
         KillState s = { inKiller->id, 
                         inKiller->holdingID,
                         inTarget->id, 
-                        Time::getCurrentTime(),
-                        30 };
+                        curTime,
+						curTime,
+                        10 };
         activeKillStates.push_back( s );
+
+        // force target to gasp
+        makePlayerSay( inTarget, (char*)"[GASP]" );
         }
     return true;
     }
+
+
+
+static void removeKillState( LiveObject *inKiller, LiveObject *inTarget ) {
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+    
+        if( s->killerID == inKiller->id &&
+            s->targetID == inTarget->id ) {
+            activeKillStates.deleteElement( i );
+            
+            break;
+            }
+        }
+
+    if( inKiller != NULL ) {
+        // clear their emot
+        inKiller->emotFrozen = false;
+        inKiller->emotUnfreezeETA = 0;
+        
+        newEmotPlayerIDs.push_back( inKiller->id );
+        
+        newEmotIndices.push_back( -1 );
+        newEmotTTLs.push_back( 0 );
+        }
+    
+    if( inTarget != NULL &&
+        inTarget->emotFrozen &&
+        inTarget->emotFrozenIndex == victimEmotionIndex ) {
+        
+        // inTarget's emot hasn't been replaced, end it
+        inTarget->emotFrozen = false;
+        inTarget->emotUnfreezeETA = 0;
+        
+        newEmotPlayerIDs.push_back( inTarget->id );
+        
+        newEmotIndices.push_back( -1 );
+        newEmotTTLs.push_back( 0 );
+        }
+    }
+
+
+
+static void removeAnyKillState( LiveObject *inKiller ) {
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+    
+        if( s->killerID == inKiller->id ) {
+            
+            LiveObject *target = getLiveObject( s->targetID );
+            
+            if( target != NULL ) {
+                removeKillState( inKiller, target );
+                i--;
+                }
+            }
+        }
+    }
+
+            
 
 
 
@@ -10216,6 +10790,7 @@ void executeKillAction( int inKillerIndex,
                         if( e.emotIndex != -1 ) {
                             hitPlayer->emotFrozen = 
                                 true;
+                            hitPlayer->emotFrozenIndex = e.emotIndex;
                             
                             hitPlayer->emotUnfreezeETA =
                                 Time::getCurrentTime() + e.ttlSec;
@@ -10405,6 +10980,8 @@ void executeKillAction( int inKillerIndex,
                             if( e.emotIndex != -1 ) {
                                 hitPlayer->emotFrozen = 
                                     true;
+                                hitPlayer->emotFrozenIndex = e.emotIndex;
+                                
                                 newEmotPlayerIDs->push_back( 
                                     hitPlayer->id );
                                 newEmotIndices->push_back( 
@@ -10948,6 +11525,25 @@ static LiveObject *getPlayerByName( char *inName,
 	
 
 
+static void sendCraving( LiveObject *inPlayer ) {
+    // they earn the normal YUM multiplier increase (+1) if food is actually yum PLUS the bonus
+    // increase, so send them the total.
+    
+    int totalBonus = inPlayer->cravingFood.bonus;
+    if( isReallyYummy( inPlayer, inPlayer->cravingFood.foodID ) ) totalBonus = totalBonus + 1;
+    
+    char *message = autoSprintf( "CR\n%d %d\n#", 
+                                 inPlayer->cravingFood.foodID,
+                                 totalBonus );
+    sendMessageToPlayer( inPlayer, message, strlen( message ) );
+    delete [] message;
+
+    inPlayer->cravingKnown = true;
+    }
+
+
+
+
 int main() {
 
     if( checkReadOnly() ) {
@@ -11122,6 +11718,27 @@ int main() {
     
     killEmotionIndex =
         SettingsManager::getIntSetting( "killEmotionIndex", 2 );
+
+    victimEmotionIndex =
+        SettingsManager::getIntSetting( "victimEmotionIndex", 2 );
+
+    starvingEmotionIndex =
+        SettingsManager::getIntSetting( "starvingEmotionIndex", 2 );
+
+    afkEmotionIndex =
+        SettingsManager::getIntSetting( "afkEmotionIndex", 2 );
+
+    drunkEmotionIndex =
+        SettingsManager::getIntSetting( "drunkEmotionIndex", 2 );
+
+    trippingEmotionIndex =
+        SettingsManager::getIntSetting( "trippingEmotionIndex", 2 );
+
+    afkTimeSeconds =
+        SettingsManager::getDoubleSetting( "afkTimeSeconds", 120.0 );
+
+    satisfiedEmotionIndex =
+        SettingsManager::getIntSetting( "satisfiedEmotionIndex", 2 );
 
 
     FILE *f = fopen( "curseWordList.txt", "r" );
@@ -11454,8 +12071,11 @@ int main() {
             stepArcReport();
             
             int arcMilestone = getArcYearsToReport( secondsPerYear, 100 );
+
+            int enableArcReport = 
+                SettingsManager::getIntSetting( "enableArcReport", 1 );
             
-            if( arcMilestone != -1 ) {
+            if( arcMilestone != -1 && enableArcReport ) {
                 int familyLimitAfterEveWindow = 
                     SettingsManager::getIntSetting( 
                         "familyLimitAfterEveWindow", 15 );
@@ -11495,6 +12115,20 @@ int main() {
 
             
             checkCustomGlobalMessage();
+            
+
+            int lowestCravingID = INT_MAX;
+            
+            for( int i=0; i< players.size(); i++ ) {
+                LiveObject *nextPlayer = players.getElement( i );
+                
+                if( nextPlayer->cravingFood.uniqueID > -1 && 
+                    nextPlayer->cravingFood.uniqueID < lowestCravingID ) {
+                    
+                    lowestCravingID = nextPlayer->cravingFood.uniqueID;
+                    }
+                }
+            purgeStaleCravings( lowestCravingID );
             }
         
         
@@ -12514,12 +13148,6 @@ int main() {
 
         newOwnerPos.push_back_other( &recentlyRemovedOwnerPos );
         recentlyRemovedOwnerPos.deleteAll();
-        
-
-        SimpleVector<int> newEmotPlayerIDs;
-        SimpleVector<int> newEmotIndices;
-        // 0 if no ttl specified
-        SimpleVector<int> newEmotTTLs;
 
 
         SimpleVector<UpdateRecord> newUpdates;
@@ -12721,6 +13349,8 @@ int main() {
                             
                                 if( e.emotIndex != -1 ) {
                                     nextPlayer->emotFrozen = true;
+                                    nextPlayer->emotFrozenIndex = e.emotIndex;
+                                    
                                     newEmotPlayerIDs.push_back( 
                                         nextPlayer->id );
                                     newEmotIndices.push_back( e.emotIndex );
@@ -12845,6 +13475,21 @@ int main() {
                 ClientMessage m = parseMessage( nextPlayer, message );
                 
                 delete [] message;
+				
+				
+				//2HOL: Player not AFK
+				//Skipping EMOT because modded player sends EMOT automatically
+				if( m.type != EMOT ) {
+					//Clear afk emote if they were afk
+					if( nextPlayer->isAFK ) {
+
+						clearFrozenEmote( nextPlayer, afkEmotionIndex );
+						
+						}
+					
+					nextPlayer->isAFK = false;
+					nextPlayer->lastActionTime = Time::getCurrentTime();
+					}
                 
 
                 //Thread::staticSleep( 
@@ -14566,6 +15211,7 @@ int main() {
                                         }
                                     
                                     if( ! weaponBlocked ) {
+                                        removeAnyKillState( nextPlayer );
                                         
                                         char enteredState =
                                             addKillState( nextPlayer,
@@ -14573,11 +15219,27 @@ int main() {
                                         
                                         if( enteredState ) {
                                             nextPlayer->emotFrozen = true;
+                                            nextPlayer->emotFrozenIndex = 
+                                                killEmotionIndex;
+                                            
                                             newEmotPlayerIDs.push_back( 
                                                 nextPlayer->id );
                                             newEmotIndices.push_back( 
                                                 killEmotionIndex );
                                             newEmotTTLs.push_back( 120 );
+                                            
+                                            if( ! targetPlayer->emotFrozen ) {
+                                                
+                                                targetPlayer->emotFrozen = true;
+                                                targetPlayer->emotFrozenIndex =
+                                                    victimEmotionIndex;
+                                                
+                                                newEmotPlayerIDs.push_back( 
+                                                    targetPlayer->id );
+                                                newEmotIndices.push_back( 
+                                                    victimEmotionIndex );
+                                                newEmotTTLs.push_back( 120 );
+                                                }
                                             }
                                         }
                                     }
@@ -15590,11 +16252,19 @@ int main() {
                                     
                                     nextPlayer->foodStore += eatBonus;
 
+                                    checkForFoodEatingEmot( nextPlayer,
+                                                            targetObj->id );
+
                                     int cap =
                                         computeFoodCapacity( nextPlayer );
                                     
                                     if( nextPlayer->foodStore > cap ) {
+    
+                                        int over = nextPlayer->foodStore - cap;
+                                        
                                         nextPlayer->foodStore = cap;
+
+                                        nextPlayer->yummyBonusStore += over;
                                         }
 
                                     
@@ -15620,6 +16290,15 @@ int main() {
                                         
                                         }
                                     
+                                    
+                                    if( targetObj->alcohol != 0 ) {
+                                        drinkAlcohol( nextPlayer,
+                                                      targetObj->alcohol );
+                                        }
+										
+                                    if( strstr( targetObj->description, "+drug" ) != NULL ) {
+                                        doDrug( nextPlayer );
+                                        }
 
 
                                     nextPlayer->foodDecrementETASeconds =
@@ -15967,6 +16646,9 @@ int main() {
                                             Time::getCurrentTime() +
                                             computeFoodDecrementTimeSeconds( 
                                                 hitPlayer );
+                                            
+										checkForFoodEatingEmot( hitPlayer,
+																0 );
 
                                         // fixed cost to pick up baby
                                         // this still encourages baby-parent
@@ -16028,10 +16710,10 @@ int main() {
                             if( obj->foodValue > 0 ) {
                                 holdingFood = true;
 
-                                if( strstr( obj->description, "remapStart" )
+                                if( strstr( obj->description, "noFeeding" )
                                     != NULL ) {
-                                    // don't count drugs as food to 
-                                    // feed other people
+                                    // food that triggers effects cannot
+									// be fed to other people
                                     holdingFood = false;
                                     holdingDrugs = true;
                                     }
@@ -16082,7 +16764,8 @@ int main() {
                                     hitPlayer = NULL;
                                     }
 
-                                if( hitPlayer == NULL ||
+                                if( false ) //food with noFeeding tag cannot be fed even to elderly
+								if( hitPlayer == NULL ||
                                     hitPlayer == nextPlayer ) {
                                     // try click on elderly
                                     hitPlayer = 
@@ -16217,6 +16900,8 @@ int main() {
                             
                                         if( e.emotIndex != -1 ) {
                                             targetPlayer->emotFrozen = true;
+                                            targetPlayer->emotFrozenIndex =
+                                                e.emotIndex;
                                             newEmotPlayerIDs.push_back( 
                                                 targetPlayer->id );
                                             newEmotIndices.push_back( 
@@ -16450,9 +17135,16 @@ int main() {
                                     
                                     targetPlayer->foodStore += eatBonus;
 
+                                    checkForFoodEatingEmot( targetPlayer,
+                                                            obj->id );
                                     
                                     if( targetPlayer->foodStore > cap ) {
+                                        int over = 
+                                            targetPlayer->foodStore - cap;
+                                        
                                         targetPlayer->foodStore = cap;
+
+                                        targetPlayer->yummyBonusStore += over;
                                         }
                                     targetPlayer->foodDecrementETASeconds =
                                         Time::getCurrentTime() +
@@ -16485,6 +17177,16 @@ int main() {
                                         nextPlayer->holdingEtaDecay = 0;
                                         }
                                     
+                                    if( obj->alcohol != 0 ) {
+                                        drinkAlcohol( targetPlayer,
+                                                      obj->alcohol );
+                                        }
+										
+                                    if( strstr( obj->description, "+drug" ) != NULL ) {
+                                        doDrug( targetPlayer );
+                                        }
+
+
                                     nextPlayer->heldOriginValid = 0;
                                     nextPlayer->heldOriginX = 0;
                                     nextPlayer->heldOriginY = 0;
@@ -17318,22 +18020,15 @@ int main() {
             
             if( killer == NULL || target == NULL ||
                 killer->error || target->error ||
-                killer->holdingID != s->killerWeaponID ) {
+                killer->holdingID != s->killerWeaponID ||
+                target->heldByOther ) {
                 // either player dead, or held-weapon change
+                // or target baby now picked up (safe)
                 
                 // kill request done
-                if( killer != NULL ) {
-                    // clear their emot
-                    killer->emotFrozen = false;
-                    killer->emotUnfreezeETA = 0;
-                    
-                    newEmotPlayerIDs.push_back( killer->id );
-                            
-                    newEmotIndices.push_back( -1 );
-                    newEmotTTLs.push_back( 0 );
-                    }
                 
-                activeKillStates.deleteElement( i );
+                removeKillState( killer, target );
+
                 i--;
                 continue;
                 }
@@ -17366,20 +18061,113 @@ int main() {
                 if( curTime - s->emotStartTime > s->emotRefreshSeconds ) {
                     s->emotStartTime = curTime;
                     
-                    // refresh again in 30 seconds, even if we had a shorter
+                    // refresh again in 10 seconds, even if we had a shorter
                     // refresh time because of an intervening emot
-                    s->emotRefreshSeconds = 30;
+                    s->emotRefreshSeconds = 10;
 
                     newEmotPlayerIDs.push_back( killer->id );
                             
                     newEmotIndices.push_back( killEmotionIndex );
                     newEmotTTLs.push_back( 120 );
+
+                    if( !target->emotFrozen ) {
+						target->emotFrozen = true;
+						newEmotPlayerIDs.push_back( target->id );
+								
+						newEmotIndices.push_back( victimEmotionIndex );
+						target->emotFrozenIndex = victimEmotionIndex;
+						newEmotTTLs.push_back( 120 );
+						}
                     }
                 }
             }
         
-
-
+		//2HOL: check if player is afk or has food effects
+		for( int i=0; i<numLive; i++ ) {
+			LiveObject *nextPlayer = players.getElement( i );
+			double curTime = Time::getCurrentTime();
+			
+			if( !nextPlayer->tripping && nextPlayer->gonnaBeTripping ) {
+				if( curTime >= nextPlayer->trippingEffectStartTime ) {
+					nextPlayer->tripping = true;
+					nextPlayer->gonnaBeTripping = false;
+					makePlayerSay( nextPlayer, (char*)"+TRIPPING+", true );
+					}
+				}
+			
+			if( nextPlayer->tripping ) {
+				
+				// Uncontrollably flipping
+				if( curTime - nextPlayer->lastFlipTime > 0.25 ) {
+					
+					GridPos p = getPlayerPos( nextPlayer );
+					
+					nextPlayer->facingLeft = !nextPlayer->facingLeft;
+					
+					nextPlayer->lastFlipTime = curTime;
+					newFlipPlayerIDs.push_back( nextPlayer->id );
+					newFlipFacingLeft.push_back( 
+						nextPlayer->facingLeft );
+					newFlipPositions.push_back( p );
+					}
+				
+				if( curTime >= nextPlayer->trippingEffectETA ) {
+					nextPlayer->tripping = false;
+					
+					clearFrozenEmote( nextPlayer, trippingEmotionIndex );
+					
+					}
+				else if( !nextPlayer->emotFrozen &&
+					curTime < nextPlayer->trippingEffectETA ) {
+					nextPlayer->emotFrozen = true;
+					nextPlayer->emotFrozenIndex = trippingEmotionIndex;
+					nextPlayer->emotUnfreezeETA = nextPlayer->trippingEffectETA;
+					
+					newEmotPlayerIDs.push_back( nextPlayer->id );
+					newEmotIndices.push_back( trippingEmotionIndex );
+					newEmotTTLs.push_back( nextPlayer->trippingEffectETA );
+					}
+				}
+			
+			if( nextPlayer->drunkennessEffect ) {
+				if( Time::getCurrentTime() >= nextPlayer->drunkennessEffectETA ) {
+					nextPlayer->drunkennessEffect = false;
+					
+					clearFrozenEmote( nextPlayer, drunkEmotionIndex );
+					
+					}
+				else if( !nextPlayer->emotFrozen &&
+					Time::getCurrentTime() < nextPlayer->drunkennessEffectETA ) {
+					nextPlayer->emotFrozen = true;
+					nextPlayer->emotFrozenIndex = drunkEmotionIndex;
+					nextPlayer->emotUnfreezeETA = nextPlayer->drunkennessEffectETA;
+					
+					newEmotPlayerIDs.push_back( nextPlayer->id );
+					newEmotIndices.push_back( drunkEmotionIndex );
+					newEmotTTLs.push_back( nextPlayer->drunkennessEffectETA );
+					}
+				}
+			
+			if( nextPlayer->connected == false ||
+				( afkTimeSeconds > 0 &&
+				Time::getCurrentTime() - nextPlayer->lastActionTime > afkTimeSeconds ) ) {
+			
+				nextPlayer->isAFK = true;
+				
+				//Other frozen emotes take priority
+				//wounds, murder, food effects, starving, afk
+				if( !nextPlayer->emotFrozen ) {
+					nextPlayer->emotFrozen = true;
+					nextPlayer->emotFrozenIndex = afkEmotionIndex;
+					nextPlayer->emotUnfreezeETA = curTime + afkTimeSeconds;
+					
+					newEmotPlayerIDs.push_back( nextPlayer->id );
+					newEmotIndices.push_back( afkEmotionIndex );
+					newEmotTTLs.push_back( curTime + afkTimeSeconds );
+					}
+				}
+			}
+			
         // now that messages have been processed for all
         // loop over and handle all post-message checks
 
@@ -17400,6 +18188,14 @@ int main() {
                 nextPlayer->emotUnfreezeETA = 0;
                 }
             
+            if( ! nextPlayer->error &&
+                ! nextPlayer->cravingKnown &&
+                computeAge( nextPlayer ) >= minAgeForCravings ) {
+                
+                sendCraving( nextPlayer );
+                }
+                
+
 
             if( nextPlayer->dying && ! nextPlayer->error &&
                 curTime >= nextPlayer->dyingETA ) {
@@ -18739,6 +19535,14 @@ int main() {
                     nextPlayer->foodDecrementETASeconds = curTime +
                         computeFoodDecrementTimeSeconds( nextPlayer );
 
+                    if( nextPlayer->drunkenness > 0 ) {
+                        // for every unit of food consumed, consume half a
+                        // unit of drunkenness
+                        nextPlayer->drunkenness -= 0.5;
+                        if( nextPlayer->drunkenness < 0 ) {
+                            nextPlayer->drunkenness = 0;
+                            }
+                        }
                     
 
                     if( decrementedPlayer != NULL &&
@@ -18806,6 +19610,47 @@ int main() {
                     
                     if( decrementedPlayer != NULL ) {
                         decrementedPlayer->foodUpdate = true;
+
+                        if( computeAge( decrementedPlayer ) > 
+                            defaultActionAge ) {
+                            
+                            double decTime = 
+                                computeFoodDecrementTimeSeconds( 
+                                    decrementedPlayer );
+                            
+                            int totalFood = 
+                                decrementedPlayer->yummyBonusStore
+                                + decrementedPlayer->foodStore;
+
+                            double totalTime = decTime * totalFood;
+                            
+                            if( totalTime < 20 ) {
+                                // 20 seconds left before death
+                                // show starving emote
+                                
+								// only if their emote isn't frozen
+								
+								// Otherwise it always overwrites 
+								// yellow fever emote for example.
+								
+								// Note also that starving emote 
+								// won't show during tripping and drunk emote
+								
+								// But player chose to be in those states,
+								// they should be responsible not to
+								// starve themselves.
+								if( !decrementedPlayer->emotFrozen ) {
+									newEmotPlayerIDs.push_back( 
+										decrementedPlayer->id );
+								
+									newEmotIndices.push_back( 
+										starvingEmotionIndex );
+									
+									newEmotTTLs.push_back( 30 );
+									}
+								decrementedPlayer->starving = true;
+                                }
+                            }
                         }
                     }
                 
@@ -19451,21 +20296,27 @@ int main() {
             for( int i=0; i<newEmotPlayerIDs.size(); i++ ) {
                 
                 int ttl = newEmotTTLs.getElementDirect( i );
-
+                int pID = newEmotPlayerIDs.getElementDirect( i );
+                int eInd = newEmotIndices.getElementDirect( i );
+                
                 char *line;
                 
                 if( ttl == 0  ) {
                     line = autoSprintf( 
-                        "%d %d\n", 
-                        newEmotPlayerIDs.getElementDirect( i ), 
-                        newEmotIndices.getElementDirect( i ) );
+                        "%d %d\n", pID, eInd );
                     }
                 else {
                     line = autoSprintf( 
-                        "%d %d %d\n", 
-                        newEmotPlayerIDs.getElementDirect( i ), 
-                        newEmotIndices.getElementDirect( i ),
-                        newEmotTTLs.getElementDirect( i ) );
+                        "%d %d %d\n", pID, eInd, ttl );
+                        
+                    if( ttl == -1 ) {
+                        // a new permanent emot
+                        LiveObject *pO = getLiveObject( pID );
+                        if( pO != NULL ) {
+                            pO->permanentEmots.push_back( eInd );
+                            }
+                        }
+                        
                     }
                 
                 numAdded++;
@@ -19881,6 +20732,36 @@ int main() {
                 
                     delete [] dyingMessage;
                     }
+
+                // tell them about all permanent emots
+                SimpleVector<char> emotMessageWorking;
+                emotMessageWorking.appendElementString( "PE\n" );
+                for( int i=0; i<numPlayers; i++ ) {
+                
+                    LiveObject *o = players.getElement( i );
+                
+                    if( o->error ) {
+                        continue;
+                        }
+                    for( int e=0; e< o->permanentEmots.size(); e ++ ) {
+                        // ttl -2 for permanent but not new
+                        char *line = autoSprintf( 
+                            "%d %d -2\n",
+                            o->id, 
+                            o->permanentEmots.getElementDirect( e ) );
+                        emotMessageWorking.appendElementString( line );
+                        delete [] line;
+                        }
+                    }
+                emotMessageWorking.push_back( '#' );
+                
+                char *emotMessage = emotMessageWorking.getElementString();
+                
+                sendMessageToPlayer( nextPlayer, emotMessage, 
+                                     strlen( emotMessage ) );
+                    
+                delete [] emotMessage;
+                    
 
                 
                 nextPlayer->firstMessageSent = true;
@@ -20730,6 +21611,10 @@ int main() {
                         for( int u=0; u<newSpeechPos.size(); u++ ) {
 
                             ChangePosition *p = newSpeechPos.getElement( u );
+
+							if( p->responsiblePlayerID != -1 && 
+								p->responsiblePlayerID != nextPlayer->id ) 
+								continue;
                         
                             // speech never global
                             
@@ -20777,7 +21662,10 @@ int main() {
                                     ( speakerObj != NULL &&
                                       speakerObj->vogMode ) ||
                                     players.size() < 
-                                    minActivePlayersForLanguages ) {
+                                    minActivePlayersForLanguages ||
+									strlen( newSpeechPhrases.getElementDirect( u ) ) == 0 ||
+									newSpeechPhrases.getElementDirect( u )[0] == '[' ||
+									newSpeechPhrases.getElementDirect( u )[0] == '+' ) {
                                     
                                     translatedPhrase =
                                         stringDuplicate( 
@@ -20785,6 +21673,13 @@ int main() {
                                             getElementDirect( u ) );
                                     }
                                 else {
+                                    // int speakerDrunkenness = 0;
+                                    
+                                    // if( speakerObj != NULL ) {
+                                        // speakerDrunkenness =
+                                            // speakerObj->drunkenness;
+                                        // }
+
                                     translatedPhrase =
                                         mapLanguagePhrase( 
                                             newSpeechPhrases.
@@ -20823,6 +21718,35 @@ int main() {
                                         }
                                     }
                                 
+                                if( translatedPhrase[0] != '+' &&
+									translatedPhrase[0] != '[' ) {
+									if( speakerObj != NULL &&
+										speakerObj->drunkenness > 0 ) {
+										// slur their speech
+										
+										char *slurredPhrase =
+											slurSpeech( speakerObj->id,
+														translatedPhrase,
+														speakerObj->drunkenness );
+										
+										delete [] translatedPhrase;
+										translatedPhrase = slurredPhrase;
+										}
+										
+									if( speakerObj != NULL &&
+										speakerObj->tripping ) {
+										// player is high on drugs and yelling
+										
+										char *processedPhrase =
+											yellingSpeech( speakerObj->id,
+														translatedPhrase );
+										
+										delete [] translatedPhrase;
+										translatedPhrase = processedPhrase;
+										}
+									}
+                                
+
                                 int curseFlag =
                                     newSpeechCurseFlags.getElementDirect( u );
 
@@ -21285,6 +22209,11 @@ int main() {
 		//2HOL additions for: password-protected objects
 		//These flags correspond to newSpeechPos, need to be cleared every loop as well
         newSpeechPasswordFlags.deleteAll();
+        
+        newEmotPlayerIDs.deleteAll();
+        newEmotIndices.deleteAll();
+        newEmotTTLs.deleteAll();
+        
 
         
         // handle end-of-frame for all players that need it

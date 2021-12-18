@@ -14,6 +14,10 @@ int versionNumber = 60;
 #endif
 
 
+//These are defined client-side, not used here
+float gui_fov_scale = 1.0f;
+
+
 #include "minorGems/graphics/Color.h"
 
 

@@ -313,6 +313,9 @@ typedef struct LiveObject {
         // wall clock time when emot clears
         double emotClearETATime;
 
+        SimpleVector<Emotion*> permanentEmots;
+        
+
         char killMode;
         int killWithID;
 
@@ -782,6 +785,21 @@ class LivingLifePage : public GamePage, public ActionListener {
 
 
 
+        doublePair mCravingHideOffset[NUM_HINT_SHEETS];
+        doublePair mCravingPosOffset[NUM_HINT_SHEETS];
+        doublePair mCravingTargetOffset[NUM_HINT_SHEETS];
+
+        doublePair mCravingExtraOffset[NUM_HINT_SHEETS];
+
+        char *mCravingMessage[NUM_HINT_SHEETS];
+
+        int mLiveCravingSheetIndex;
+        
+        void setNewCraving( int inFoodID, int inYumBonus );
+
+        
+
+
         // relative to map corner, but not necessary in bounds
         // of locally stored map
         GridPos getMapPos( int inWorldX, int inWorldY );
@@ -899,6 +917,10 @@ class LivingLifePage : public GamePage, public ActionListener {
         LiveObject *getOurLiveObject();
         LiveObject *getLiveObject( int inID );
         protected: // minitech
+		
+		bool tileBlocked( int x, int y );
+		void drunkWalk( GridPos *path, int pathLen, bool actionMove );
+		bool isTripping();
 
         void clearLiveObjects();
         

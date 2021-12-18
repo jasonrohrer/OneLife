@@ -40,6 +40,8 @@ static SimpleVector<TransRecord *> *producesMap;
 static int depthMapSize = 0;
 static int *depthMap = NULL;
 
+static int maxDepth = 0;
+
 
 static int humanMadeMapSize = 0;
 static char *humanMadeMap = NULL;
@@ -227,19 +229,33 @@ typedef struct TransIDPair {
     
 
 
-void initTransBankFinish() {
+
+static void handleWhatProbSetProduces( int inPossibleSetID,
+                                       TransRecord *inT ) {
     
-    freeFolderCache( cache );
+    CategoryRecord *cr = getCategory( inPossibleSetID );
+    
+    if( cr != NULL &&
+        cr->isProbabilitySet ) {
+        for( int i=0; i< cr->objectIDSet.size(); i++ ) {
+            if( cr->objectWeights.getElementDirect( i ) > 0 ) {
+                int oID = cr->objectIDSet.getElementDirect( i );
+                
+                producesMap[ oID ].push_back( inT );
+                }
+            }
+        }
+    }
 
 
-    mapSize = maxID + 1;
-    
 
-    usesMap = new SimpleVector<TransRecord *>[ mapSize ];
-        
-    producesMap = new SimpleVector<TransRecord *>[ mapSize ];
-    
-    
+static void regenUsesAndProducesMaps() {
+    for( int i=0; i<mapSize; i++ ) {
+        usesMap[i].deleteAll();
+        producesMap[i].deleteAll();
+        }
+
+
     int numRecords = records.size();
     
     for( int i=0; i<numRecords; i++ ) {
@@ -257,13 +273,52 @@ void initTransBankFinish() {
         
         if( t->newActor != 0 ) {
             producesMap[t->newActor].push_back( t );
+            handleWhatProbSetProduces( t->newActor, t );
+            }
+
+        if( t->actorChangeChance < 1.0 && t->newActorNoChange != 0 &&
+            t->newActorNoChange != t->newActor ) {
+            producesMap[t->newActorNoChange].push_back( t );
+            handleWhatProbSetProduces( t->newActorNoChange, t );
             }
         
         // no duplicate records
         if( t->newTarget != 0 && t->newTarget != t->newActor ) {    
             producesMap[t->newTarget].push_back( t );
+            handleWhatProbSetProduces( t->newTarget, t );
             }
+
+        if( t->targetChangeChance < 1.0 && t->newTargetNoChange != 0 &&
+            t->newTargetNoChange != t->newTarget &&
+            t->newTargetNoChange != t->newActor &&
+            t->newTargetNoChange != t->newActorNoChange ) {
+            producesMap[t->newTargetNoChange].push_back( t );
+            handleWhatProbSetProduces( t->newTargetNoChange, t );
+            }
+        
         }
+    }
+
+
+
+
+void initTransBankFinish() {
+    
+    freeFolderCache( cache );
+
+
+    mapSize = maxID + 1;
+    
+
+    usesMap = new SimpleVector<TransRecord *>[ mapSize ];
+        
+    producesMap = new SimpleVector<TransRecord *>[ mapSize ];
+
+    
+    regenUsesAndProducesMaps();
+    
+
+    int numRecords = records.size();    
     
     printf( "Loaded %d transitions from transitions folder\n", numRecords );
 
@@ -1577,15 +1632,47 @@ void regenerateDepthMap() {
             if( nextDepth < UNREACHABLE ) {
                     
                 if( tr->newActor > 0 ) {
-                    if( depthMap[ tr->newActor ] == UNREACHABLE ) {
-                        depthMap[ tr->newActor ] = nextDepth;
-                        treeHorizon.push_back( tr->newActor );
+                    CategoryRecord *cr = getCategory( tr->newActor );
+                    
+                    if( cr != NULL && cr->isProbabilitySet ) {
+                        for( int s=0; s<cr->objectIDSet.size(); s++ ) {
+                            if( cr->objectWeights.getElementDirect( s ) > 0 ) {
+                                int oID = cr->objectIDSet.getElementDirect( s );
+                                
+                                if( depthMap[ oID ] == UNREACHABLE ) {
+                                    depthMap[ oID ] = nextDepth;
+                                    treeHorizon.push_back( oID );
+                                    }
+                                }
+                            }
+                        }
+                    else {
+                        if( depthMap[ tr->newActor ] == UNREACHABLE ) {
+                            depthMap[ tr->newActor ] = nextDepth;
+                            treeHorizon.push_back( tr->newActor );
+                            }
                         }
                     }
                 if( tr->newTarget > 0 ) {
-                    if( depthMap[ tr->newTarget ] == UNREACHABLE ) {
-                        depthMap[ tr->newTarget ] = nextDepth;
-                        treeHorizon.push_back( tr->newTarget );
+                    CategoryRecord *cr = getCategory( tr->newTarget );
+                    
+                    if( cr != NULL && cr->isProbabilitySet ) {
+                        for( int s=0; s<cr->objectIDSet.size(); s++ ) {
+                            if( cr->objectWeights.getElementDirect( s ) > 0 ) {
+                                int oID = cr->objectIDSet.getElementDirect( s );
+                                
+                                if( depthMap[ oID ] == UNREACHABLE ) {
+                                    depthMap[ oID ] = nextDepth;
+                                    treeHorizon.push_back( oID );
+                                    }
+                                }
+                            }
+                        }
+                    else {
+                        if( depthMap[ tr->newTarget ] == UNREACHABLE ) {
+                            depthMap[ tr->newTarget ] = nextDepth;
+                            treeHorizon.push_back( tr->newTarget );
+                            }
                         }
                     }
                 }
@@ -1594,6 +1681,13 @@ void regenerateDepthMap() {
             }
 
         index ++;
+        }
+    
+    
+    for( int i=0; i<depthMapSize; i++ ) {
+        if( depthMap[i] > maxDepth && depthMap[i] < UNREACHABLE ) {
+            maxDepth = depthMap[i];
+            }
         }
     
     }
@@ -2878,6 +2972,9 @@ void printTrans( TransRecord *inTrans ) {
             case 7:
                 moveName = "wst";
                 break;
+            case 8:
+                moveName = "find";
+                break;
             }
         
 
@@ -2896,6 +2993,11 @@ int getObjectDepth( int inObjectID ) {
     else {
         return depthMap[ inObjectID ];
         }
+    }
+    
+
+int getMaxDepth() {
+    return maxDepth;
     }
 
 

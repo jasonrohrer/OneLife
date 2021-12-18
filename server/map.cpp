@@ -4964,8 +4964,16 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 int desiredMoveDist = t->desiredMoveDist;
  
                 char stayInBiome = false;
-               
- 
+                
+                char avoidFloor = false;
+                
+                if( t->newTarget > 0 &&
+                    strstr( getObject( t->newTarget )->description, 
+                            "groundOnly" ) ) {
+                    avoidFloor = true;
+                    }
+                
+
                 if( t->move < 3 ) {
                    
                     GridPos p = getClosestPlayerPos( inX, inY );
@@ -5006,7 +5014,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         dir = mult( dir, -1 );
                         }
                     }
-                else if( t->move > 3 ) {
+                else if( t->move > 3 && t->move < 8 ) {
                     // NSEW
  
                     switch( t->move ) {
@@ -5023,6 +5031,75 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             dir.x = -1;
                             break;
                         }
+                    }
+                else if( t->move == 8 ) {
+                
+                    // prioritize picking the direction with
+                    // transition-able object on the path
+                    
+                    int startDirX = randSource.getRandomBoundedInt( -1, 1 );
+                    int startDirY = randSource.getRandomBoundedInt( -1, 1 );
+                    
+                    for( int dx = 0; dx < 3; dx++ ) {
+                        for( int dy = 0; dy < 3; dy++ ) {
+                            
+                            int newDirX = ( (startDirX + 1) + dx ) % 3 - 1;
+                            int newDirY = ( (startDirY + 1) + dy ) % 3 - 1;
+                            
+                            if( newDirX == 0 && newDirY == 0 ) continue;
+                            
+                            int tryDist = t->desiredMoveDist;
+                           
+                            if( tryDist < 1 ) {
+                                tryDist = 1;
+                                }
+                           
+                            int tryRadius = 4;
+                            
+                            while( newX == inX && newY == inY && tryDist > 0 ) {
+
+                                for( int i = 1; i <= tryDist + tryRadius; i++ ) {
+                                    
+                                    int testX = lrint( inX + newDirX * i );
+                                    int testY = lrint( inY + newDirY * i );
+                               
+                                    int oID = getMapObjectRaw( testX, testY );
+                                    
+                                    TransRecord *trans = NULL;
+                                   
+                                    if( oID > 0 ) {
+                                        trans = getPTrans( inID, oID );
+                                       
+                                        if( trans == NULL ) {
+                                            trans = getPTrans( newID, oID );
+                                            }
+                                        }
+                                        
+                                    if( i >= tryDist && trans != NULL ) {
+                                        dir.x = (double)newDirX;
+                                        dir.y = (double)newDirY;
+                                        newX = testX;
+                                        newY = testY;
+                                        destTrans = trans;
+                                        break;
+                                        }
+                                    else if( oID > 0 && getObject( oID ) != NULL &&
+                                             getObject( oID )->blocksMoving ) {
+                                        break;
+                                        }
+                                    }
+                                    
+                                tryDist--;
+                               
+                                if( tryRadius != 0 ) {
+                                    tryRadius = 1;
+                                    }
+                                }
+                                
+                            if( newX != inX && newY != inY ) break;
+                            }
+                        }
+                        
                     }
                
                 // round to 1000ths to avoid rounding errors
@@ -5120,16 +5197,29 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                 trans = getPTrans( newID, -1 );
                                 }
                             }
-                           
- 
- 
+                        
+                        
+                        char blockedByFloor = false;
+                        
+                        if( oID == 0 &&
+                            avoidFloor ) {
+                            int floorID = getMapFloor( testX, testY );
+                        
+                            if( floorID > 0 ) {
+                                blockedByFloor = true;
+                                }
+                            }
+
+
                         if( i >= tryDist && oID == 0 ) {
-                            // found a bare ground spot for it to move
-                            newX = testX;
-                            newY = testY;
-                            // keep any bare ground transition (or NULL)
-                            destTrans = trans;
-                            break;
+                            if( ! blockedByFloor ) {
+                                // found a bare ground spot for it to move
+                                newX = testX;
+                                newY = testY;
+                                // keep any bare ground transition (or NULL)
+                                destTrans = trans;
+                                break;
+                                }
                             }
                         else if( i >= tryDist && trans != NULL ) {
                             newX = testX;
@@ -5232,7 +5322,16 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                        
                                         continue;
                                         }
- 
+                                    if( avoidFloor ) {
+                                        int floorID = 
+                                            getMapFloor( testX, testY );
+                        
+                                        if( floorID > 0 ) {
+                                            // blocked by floor
+                                            continue;
+                                            }
+                                        }
+
                                     possibleX[ numPossibleDirs ] = testX;
                                     possibleY[ numPossibleDirs ] = testY;
                                     numPossibleDirs++;
@@ -6799,9 +6898,9 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
         
         if( r != NULL ) {
 			
-			char tappedOutPrimaryHomeland = false; //primaryHomeland is not in 2HOL
+			// char tappedOutPrimaryHomeland = false; //primaryHomeland is not in 2HOL
 
-            tappedOutPrimaryHomeland = 
+            // tappedOutPrimaryHomeland = 
             runTapoutOperation( inX, inY, 
                                 r->limitX, r->limitY,
                                 r->gridSpacingX, r->gridSpacingY, 
@@ -6815,7 +6914,7 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                 r->buildCount >= r->buildCountLimit ) {
                 // hit limit!
                 // tapout a larger radius now
-                tappedOutPrimaryHomeland =
+                // tappedOutPrimaryHomeland =
                 runTapoutOperation( inX, inY, 
                                     r->postBuildLimitX, r->postBuildLimitY,
                                     r->gridSpacingX, r->gridSpacingY, 

@@ -191,12 +191,7 @@ class DropdownList : public PageComponent, public ActionListenerList {
         
         
 
-        char mFocused;
-
-        char *mText;
-        int mTextLen;
-		
-		char *mRawText;
+        char *mRawText;
 		int listLen;
 		
 		int hoverIndex;
@@ -204,6 +199,12 @@ class DropdownList : public PageComponent, public ActionListenerList {
 		char isInsideTextBox( float inX, float inY );
 		bool nearRightEdge;
 		char isNearRightEdge( float inX, float inY );
+        
+        
+        char mFocused;
+        
+        char *mText;
+        int mTextLen;
         
         int mCursorPosition;
         

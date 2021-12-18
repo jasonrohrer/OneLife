@@ -422,6 +422,8 @@ typedef struct ObjectRecord {
         SimpleVector<int> IndY;
         SimpleVector<char*> IndPass;
 
+        int alcohol;
+
     } ObjectRecord;
 
 
@@ -488,6 +490,16 @@ int initObjectBankStart( char *outRebuildingCache,
 // returns progress... ready for Finish when progress == 1.0
 float initObjectBankStep();
 void initObjectBankFinish();
+
+
+
+// Used in hue shifting objects, animaionts and ground sprites
+// when the character is tripping
+// to be called in livingLifePage
+void setObjectBankTrippingEffect( bool isTripping );
+
+void setTrippingColor( double x, double y );
+
 
 
 // can only be called after bank init is complete
@@ -704,6 +716,11 @@ int getRandomDeathMarker();
 
 // NOT destroyed or modified by caller
 SimpleVector<int> *getAllPossibleDeathIDs();
+
+// NOT destroyed or modified by caller
+// does NOT included use dummies
+SimpleVector<int> *getAllPossibleFoodIDs();
+
 
 
 

@@ -3,6 +3,7 @@
 #include "minorGems/util/stringUtils.h"
 
 #include "minorGems/game/drawUtils.h"
+#include "minorGems/game/game.h"
 
 
 
@@ -190,6 +191,10 @@ char ValueSlider::isInBar( float inX, float inY ) {
 
 
 void ValueSlider::pointerDown( float inX, float inY ) {
+    
+	int mouseButton = getLastMouseButton();
+	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { return; }
+    
     if( isInBar( inX, inY ) ) {
         mPointerDown = true;
         }
@@ -226,6 +231,10 @@ void ValueSlider::pointerDrag( float inX, float inY ) {
 
 
 void ValueSlider::pointerUp( float inX, float inY ) {
+    
+	int mouseButton = getLastMouseButton();
+	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { return; }
+    
     char wasDown = mPointerDown;
     
     pointerDrag( inX, inY );
