@@ -68,7 +68,10 @@ const char *biomeNames[] = {"GRASSLANDS",
 							"TUNDRA",
 							"DESERT",
 							"JUNGLE",
-							"OCEAN"};
+							"OCEAN",
+							"FLOWER FIELDS"
+                            };
+static int numBiomes = 9;
 
 
 
@@ -1293,7 +1296,8 @@ void minitech::updateDrawTwoTech() {
 				
 				if (id >= 100000) {
 					int biomeId = id - 100000;
-					string biomeName(biomeNames[biomeId]);
+					string biomeName = "NEW BIOME";
+					if (biomeId < numBiomes) biomeName = biomeNames[biomeId];
 					drawStr(biomeName, captionPos, "tinyHandwritten", true, true);
 					continue;
 				}

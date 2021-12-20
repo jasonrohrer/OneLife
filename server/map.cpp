@@ -1665,7 +1665,9 @@ void outputMapImage() {
                                  "Snow  ",
                                  "Desert",
                                  "Jungle",
-                                 "Ocean"};    
+                                 "Ocean ",
+                                 "Flower"
+                                 };    
  
     for( int j=0; j<numBiomes; j++ ) {
         const char *name = "unknwn";
