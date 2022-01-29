@@ -79,6 +79,7 @@ GeneticHistoryPage.cpp \
 
 
 GAME_GRAPHICS = \
+graphics/newfont_32_64.tga \
 graphics/font_32_64.tga \
 graphics/font_handwriting_32_32.tga \
 graphics/font_pencil_32_32.tga \
@@ -122,6 +123,10 @@ graphics/yumSlip2.tga \
 graphics/yumSlip3.tga \
 graphics/yumSlip4.tga \
 graphics/photoBorder.tga \
+graphics/sheet1.tga \
+graphics/sheet2.tga \
+graphics/background.tga \
+graphics/logo.tga \
 
 
 

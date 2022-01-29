@@ -9770,14 +9770,14 @@ void LivingLifePage::handleOurDeath( char inDisconnect ) {
 
     setWaiting( false );
 
+    //reset fov on death or disconnect
+		changeFOV( 1.0 );
+
     if( inDisconnect ) {
         setSignal( "disconnect" );
         }
-    else {				
-		//reset fov on death
-		changeFOV( SettingsManager::getFloatSetting( "fovDefault", 1.25f ) );
-        
-		setSignal( "died" );
+    else {    
+        setSignal( "died" );
         }
     
     instantStopMusic();
