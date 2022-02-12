@@ -2683,6 +2683,13 @@ static int countYoungFemalesInLineage( int inLineageEveID ) {
         if( o->curseStatus.curseLevel > 0 ) {
             continue;
             }
+        
+        // while this doesn't match up with what this function is called, the way it's used
+        // is for counting how many potentially fertile females a lineage has currently
+        // for the force baby girl feature
+        if( o->declaredInfertile ) {
+            continue;
+            }
 			
 		if( o->lineageEveID == inLineageEveID ) {
 			double age = computeAge( o );
