@@ -5650,14 +5650,20 @@ doublePair getObjectBottomCenterOffset( ObjectRecord *inObject ) {
 		
 		doublePair centerOffset = { (double)sprite->centerXOffset,
 									(double)sprite->centerYOffset };
+                                    
+		doublePair centerAnchorOffset = { (double)sprite->centerAnchorXOffset,
+                                          (double)sprite->centerAnchorYOffset };
 			
 		centerOffset = rotate( centerOffset, 
+							   2 * M_PI * inObject->spriteRot[i] );
+                               
+		centerAnchorOffset = rotate( centerAnchorOffset, 
 							   2 * M_PI * inObject->spriteRot[i] );
 
 		doublePair spriteCenter = add( inObject->spritePos[i], 
 									   centerOffset );
 		
-		double y = spriteCenter.y - dimensions.y / 2 + sprite->centerAnchorYOffset;
+		double y = spriteCenter.y - abs(dimensions.y) / 2 + centerAnchorOffset.y;
 
         if( lowestRecord == NULL ||
             // lowest point of sprite is lower than what we've seen so far
