@@ -5547,6 +5547,11 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject ) {
             // don't consider parts visible only when worn
             continue;
             }
+            
+		if( inObject->spriteColor[i].r < 1.0 && inObject->spriteColor[i].r > 0.998 ) {
+			// special flag to skip sprite when calculating position to draw object
+			continue;
+		}
         
 
         int w = sprite->visibleW;
