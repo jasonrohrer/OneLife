@@ -460,7 +460,7 @@ typedef struct LiveObject {
         
         char *name;
         char nameHasSuffix;
-		char *displayedName;
+		char *tag;
         
         char *familyName;
         
@@ -1593,8 +1593,9 @@ void quitCleanup() {
             delete [] nextPlayer->name;
             }
 
-        if( nextPlayer->displayedName != NULL ) {
-            delete [] nextPlayer->displayedName;
+        if( nextPlayer->tag != NULL ) {
+            delete [] nextPlayer->tag;
+            nextPlayer->tag = NULL;
             }
 
         if( nextPlayer->familyName != NULL ) {
@@ -7591,7 +7592,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.lineage = new SimpleVector<int>();
     
     newObject.name = NULL;
-	newObject.displayedName = NULL;
+	newObject.tag = NULL;
     newObject.familyName = NULL;
     
     newObject.nameHasSuffix = false;
@@ -11703,14 +11704,6 @@ int main() {
         SettingsManager::getStringSetting( "infertilitySuffix", "+INFERTILE+" );
     fertilitySuffix = 
         SettingsManager::getStringSetting( "fertilitySuffix", "+FERTILE+" );
-	//Pad the suffix to have some space between player name and the suffix
-	//padding it in the ini file wouldnt work, for some unknown reason...
-	std::string strInfertilitySuffix(infertilitySuffix);
-	std::string strFertilitySuffix(fertilitySuffix);
-	strInfertilitySuffix = " " + strInfertilitySuffix;
-	strFertilitySuffix = " " + strFertilitySuffix;
-	infertilitySuffix = strdup( strInfertilitySuffix.c_str() );
-	fertilitySuffix = strdup( strFertilitySuffix.c_str() );
     
     curseYouPhrase = 
         SettingsManager::getSettingContents( "curseYouPhrase", 
@@ -15001,15 +14994,10 @@ int main() {
                                              nextPlayer->lineageEveID );
                                     }
 								
-								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
-								if ( nextPlayer->declaredInfertile ) {
-									std::string strName(nextPlayer->name);
-									strName += strInfertilitySuffix;
-									nextPlayer->displayedName = strdup( strName.c_str() );
-									} 
-								else {
-									nextPlayer->displayedName = strdup( nextPlayer->name );
-									}
+								if ( nextPlayer->tag != NULL && !nextPlayer->declaredInfertile ) {
+                                    delete [] nextPlayer->tag;
+                                    nextPlayer->tag = NULL;
+                                    }
                                 
                                 playerIndicesToSendNamesAbout.push_back( i );
                                 }
@@ -15020,30 +15008,17 @@ int main() {
 							char *fertilityDeclaring = isFertilityDeclaringSay( m.saidText );
 							if( infertilityDeclaring != NULL && !nextPlayer->declaredInfertile ) {
 								nextPlayer->declaredInfertile = true;
-								
-								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
-								if (nextPlayer->name == NULL) {
-									nextPlayer->displayedName = strdup( infertilitySuffix );
-								} else {
-									std::string strName(nextPlayer->name);
-									strName += strInfertilitySuffix;
-									nextPlayer->displayedName = strdup( strName.c_str() );
-								}
-								
-								playerIndicesToSendNamesAbout.push_back( i );
-								
+                                nextPlayer->tag = stringDuplicate( infertilitySuffix );
 							} else if( fertilityDeclaring != NULL && nextPlayer->declaredInfertile ) {
 								nextPlayer->declaredInfertile = false;
-								
-								if ( nextPlayer->displayedName != NULL ) delete [] nextPlayer->displayedName;
-								if (nextPlayer->name == NULL) {
-									nextPlayer->displayedName = strdup( fertilitySuffix );
-								} else {
-									nextPlayer->displayedName = strdup( nextPlayer->name );
-								}
-								
-								playerIndicesToSendNamesAbout.push_back( i );
+								if ( nextPlayer->tag != NULL ) {
+                                    delete [] nextPlayer->tag;
+                                    nextPlayer->tag = NULL;
+                                }
+								if (nextPlayer->name == NULL) nextPlayer->tag = stringDuplicate( fertilitySuffix );
 							}
+                            
+                        playerIndicesToSendNamesAbout.push_back( i );
                         }
                         
 
@@ -15096,15 +15071,7 @@ int main() {
                                     nameBaby( nextPlayer, babyO, name,
                                               &playerIndicesToSendNamesAbout );
 									
-									if ( babyO->displayedName != NULL ) delete [] babyO->displayedName;
-									if ( babyO->declaredInfertile ) {
-										std::string strName(babyO->name);
-										strName += strInfertilitySuffix;
-										babyO->displayedName = strdup( strName.c_str() );
-										} 
-									else {
-										babyO->displayedName = strdup( babyO->name );
-										}
+									if ( babyO->tag != NULL && !babyO->declaredInfertile ) delete [] babyO->tag;
                                     }
                                 }
                             }
@@ -15126,15 +15093,13 @@ int main() {
                                               name, 
                                               &playerIndicesToSendNamesAbout );
 									
-									if ( closestOther->displayedName != NULL ) delete [] closestOther->displayedName;
-									if ( closestOther->declaredInfertile ) {
-										std::string strName(closestOther->name);
-										strName += strInfertilitySuffix;
-										closestOther->displayedName = strdup( strName.c_str() );
-										} 
-									else {
-										closestOther->displayedName = strdup( closestOther->name );
-										}
+									if ( closestOther->tag != NULL &&
+                                         !closestOther->declaredInfertile &&
+                                         closestOther->name != NULL
+                                         ) {
+                                        delete [] closestOther->tag;
+                                        closestOther->tag = NULL;
+                                        }
                                     }
                                 }
 
@@ -18637,13 +18602,10 @@ int main() {
                         
                         GraveInfo graveInfo = { dropPos, nextPlayer->id,
                                                 nextPlayer->lineageEveID };
-						//Only use GV message for players which name and displayedName match
+						
+                        //Only use GV message for players without tag
 						//otherwise use GO message to update clients with names for graves
-						if (
-							(nextPlayer->name == NULL && nextPlayer->displayedName == NULL) ||
-							(nextPlayer->name != NULL && nextPlayer->displayedName != NULL && 
-							strcmp(nextPlayer->name, nextPlayer->displayedName) == 0)
-							) 
+						if ( nextPlayer->tag != NULL ) 
 							newGraves.push_back( graveInfo );
                         
                         setGravePlayerID( dropPos.x, dropPos.y,
@@ -20152,12 +20114,25 @@ int main() {
                 LiveObject *nextPlayer = players.getElement( 
                     playerIndicesToSendNamesAbout.getElementDirect( i ) );
 
-                if( nextPlayer->error ) {
+                if( nextPlayer->error || 
+                    (nextPlayer->name == NULL && nextPlayer->tag == NULL)
+                    ) {
                     continue;
                     }
 
-                char *line = autoSprintf( "%d %s\n", nextPlayer->id,
-                                          nextPlayer->displayedName );
+                char *line;
+                if( nextPlayer->name != NULL && nextPlayer->tag != NULL ) {
+                    line = autoSprintf( "%d %s %s\n", nextPlayer->id,
+                                              nextPlayer->name, nextPlayer->tag );
+                    }
+                else if( nextPlayer->name != NULL ) {
+                    line = autoSprintf( "%d %s\n", nextPlayer->id, 
+                                              nextPlayer->name );
+                    }
+                else if( nextPlayer->tag != NULL ) {
+                    line = autoSprintf( "%d %s\n", nextPlayer->id, 
+                                              nextPlayer->tag );
+                    }
                 numAdded++;
                 namesWorking.appendElementString( line );
                 delete [] line;
@@ -20612,11 +20587,26 @@ int main() {
                 
                     LiveObject *o = players.getElement( i );
                 
-                    if( o->error || o->displayedName == NULL) {
+                    if( o->error || 
+                        (o->name == NULL && o->tag == NULL)
+                        ) {
                         continue;
                         }
 
-                    char *line = autoSprintf( "%d %s\n", o->id, o->displayedName );
+                    char *line;
+                    if( o->name != NULL && o->tag != NULL ) {
+                        line = autoSprintf( "%d %s %s\n", o->id,
+                                                  o->name, o->tag );
+                        }
+                    else if( o->name != NULL ) {
+                        line = autoSprintf( "%d %s\n", o->id, 
+                                                  o->name );
+                        }
+                    else if( o->tag != NULL ) {
+                        line = autoSprintf( "%d %s\n", o->id, 
+                                                  o->tag );
+                        }
+
                     namesWorking.appendElementString( line );
                     delete [] line;
                     
@@ -22291,8 +22281,9 @@ int main() {
                     delete [] nextPlayer->name;
                     }
 					
-                if( nextPlayer->displayedName != NULL ) {
-                    delete [] nextPlayer->displayedName;
+                if( nextPlayer->tag != NULL ) {
+                    delete [] nextPlayer->tag;
+                    nextPlayer->tag = NULL;
                     }
 
                 if( nextPlayer->familyName != NULL ) {

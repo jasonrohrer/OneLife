@@ -72,6 +72,7 @@ typedef struct LiveObject {
         char sick;
         
         char *name;
+        char *tag;
 
         char *relationName;
         
