@@ -19215,6 +19215,13 @@ int main() {
 
                         nextPlayer->vogJumpIndex--;
 
+                        // if several people have died since last VOGP
+                        // sent by this player, their vogJumpIndex can
+                        // be out of bounds
+                        if( nextPlayer->vogJumpIndex >= players.size() ) {
+                            nextPlayer->vogJumpIndex = players.size() - 1;
+                            }
+
                         if( nextPlayer->vogJumpIndex == i ) {
                             nextPlayer->vogJumpIndex--;
                             }
