@@ -9,6 +9,8 @@ Server Fixes
 
 --Fixed VOGP crash, if player count shrinks between invocations.
 
+--Wildcard support on vog allow list.
+
 
 
 
