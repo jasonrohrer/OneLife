@@ -11,6 +11,8 @@ Server Fixes
 
 --Fixed twin-caused crash due to ipAddress memory leak fix.
 
+--Wildcard support on vog allow list.
+
 
 
 Version 365    2021-October-28
