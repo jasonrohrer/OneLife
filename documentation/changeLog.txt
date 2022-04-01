@@ -13,6 +13,8 @@ Server Fixes
 
 --Wildcard support on vog allow list.
 
+--Fixed VOGP crash, if player count shrinks between invocations.
+
 
 
 Version 365    2021-October-28
