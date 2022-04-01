@@ -2862,6 +2862,10 @@ void LivingLifePage::clearLiveObjects() {
         if( nextObject->name != NULL ) {
             delete [] nextObject->name;
             }
+            
+        if( nextObject->tag != NULL ) {
+            delete [] nextObject->tag;
+            }
 
         delete nextObject->futureAnimStack;
         delete nextObject->futureHeldAnimStack;
@@ -9170,9 +9174,25 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 else {
                     des = (char*)translate( "you" );
-                    if( ourLiveObject->name != NULL ) {
+                    if( ourLiveObject->name != NULL || ourLiveObject->tag != NULL ) {
+                        
+                        char* displayName;
+                        if( ourLiveObject->name != NULL && ourLiveObject->tag != NULL ) {
+                            displayName = autoSprintf( "%s %s",
+                                               ourLiveObject->name, 
+                                               ourLiveObject->tag );
+                            }
+                        else if( ourLiveObject->name != NULL ) {
+                            displayName = autoSprintf( "%s",
+                                               ourLiveObject->name );
+                            }
+                        else if( ourLiveObject->tag != NULL ) {
+                            displayName = autoSprintf( "%s",
+                                               ourLiveObject->tag );
+                            }
+
                         des = autoSprintf( "%s - %s", des, 
-                                           ourLiveObject->name );
+                                           displayName );
                         desToDelete = des;
                         }
                     }
@@ -9186,9 +9206,27 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 if( des == NULL ) {
                     des = (char*)translate( "unrelated" );
                     }
-                if( otherObj != NULL && otherObj->name != NULL ) {
+                if( otherObj != NULL && 
+                    ( otherObj->name != NULL || otherObj->tag != NULL )
+                    ) {
+                        
+                    char* displayName;
+                    if( otherObj->name != NULL && otherObj->tag != NULL ) {
+                        displayName = autoSprintf( "%s %s",
+                                           otherObj->name, 
+                                           otherObj->tag );
+                        }
+                    else if( otherObj->name != NULL ) {
+                        displayName = autoSprintf( "%s",
+                                           otherObj->name );
+                        }
+                    else if( otherObj->tag != NULL ) {
+                        displayName = autoSprintf( "%s",
+                                           otherObj->tag );
+                        }
+                        
                     des = autoSprintf( "%s - %s",
-                                       otherObj->name, des );
+                                       displayName, des );
                     desToDelete = des;
                     }
                 if( otherObj != NULL && 
@@ -14253,6 +14291,7 @@ void LivingLifePage::step() {
 
                 o.name = NULL;
                 o.relationName = NULL;
+                o.tag = NULL;
 
                 o.curseLevel = 0;
                 o.excessCursePoints = 0;
@@ -17450,16 +17489,34 @@ void LivingLifePage::step() {
                             if( existing->name != NULL ) {
                                 delete [] existing->name;
                                 }
+                                
+                            if( existing->tag != NULL ) {
+                                delete [] existing->tag;
+                                existing->tag = NULL;
+                                }
                             
                             char *firstSpace = strstr( lines[i], " " );
         
                             if( firstSpace != NULL ) {
 
+                                
+                                char *firstPlus = strstr( lines[i], "+" );
+                                
+                                if( firstPlus != NULL ) {
+                                    char *tagStart = &( firstPlus[0] );
+                                    existing->tag = stringDuplicate( tagStart );
+                                    (firstPlus - 1)[0] = '\0';
+                                    }
+
                                 char *nameStart = &( firstSpace[1] );
                                 
-                                existing->name = stringDuplicate( nameStart );
-								
-								LiveObject *ourLiveObject = getOurLiveObject();
+                                if( firstSpace[1] != '+' ) {
+                                
+                                    existing->name = stringDuplicate( nameStart );
+                                    
+                                    }
+                                    
+                                LiveObject *ourLiveObject = getOurLiveObject();
 								if ( id == ourLiveObject->id && 
 									//Little hack here to not have the ding
 									//when we are just reconnected
