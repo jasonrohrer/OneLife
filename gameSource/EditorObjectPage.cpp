@@ -185,7 +185,7 @@ EditorObjectPage::EditorObjectPage()
           mDemoClothesButton( smallFont, 300, 200, "Pos" ),
           mEndClothesDemoButton( smallFont, 300, 160, "XPos" ),
           mDemoSlotsButton( smallFont, -200, -166, "Demo Slots" ),
-          mClearSlotsDemoButton( smallFont, -200, -212, "End Demo" ),
+          mClearSlotsDemoButton( smallFont, -200, -166, "End Demo" ),
           mSetHeldPosButton( smallFont, 250, -32, "Held Pos" ),
           mEndSetHeldPosButton( smallFont, 240, -76, "End Held" ),
           mNextHeldDemoButton( smallFont, 312, -76, ">" ),
