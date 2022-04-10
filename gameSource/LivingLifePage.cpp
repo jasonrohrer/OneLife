@@ -21580,6 +21580,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                          ) 
                        )
                      && ourLiveObject->holdingID == 0 &&
+                     destNumContained > 0 &&
                      getNumContainerSlots( destID ) > 0 ) {
                 
                 // for permanent container objects that have no bare-hand
@@ -21620,6 +21621,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     }
                 
 
+                // if container doesn't allow swap
+                // forget the the slot index
+                if( getObject( destID )->slotsNoSwap ) p.hitSlotIndex = -1;
+                
                 send = true;
                 delete [] extra;
                 extra = autoSprintf( " %d", p.hitSlotIndex );
@@ -23083,11 +23088,27 @@ void LivingLifePage::actionBetaRelativeToMe( int x, int y ) {
 	y += ourLiveObject->yd;
 
 	bool remove = false;
+    bool use = false;
+    int objId = getObjId( x, y );
 	if (ourLiveObject->holdingID <= 0) {
-		remove = true;
+        int numContained = 0;
+        int mapX = x - mMapOffsetX + mMapD / 2;
+        int mapY = y - mMapOffsetY + mMapD / 2;
+        int mapI = mapY * mMapD + mapX;
+        if (mapI >= 0 && mapI < mMapD*mMapD) numContained = mMapContainedStacks[ mapI ].size();
+        
+        bool hasPickupTrans = false;
+        if (objId > 0) {
+            TransRecord *r = getTrans( 0, objId );
+            if ( r != NULL && r->newTarget == 0 ) hasPickupTrans = true;
+        }
+        
+        if (numContained == 0 && hasPickupTrans) {
+            use = true;
+        } else {
+            remove = true;
+        }
 	}
-	bool use = false;
-	int objId = getObjId( x, y );
 	if (objId > 0) {
 		ObjectRecord* obj = getObject(objId);
 		if (obj->numSlots == 0 && obj->blocksWalking) {
