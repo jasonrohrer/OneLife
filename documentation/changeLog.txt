@@ -3,6 +3,17 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+
+Server Fixes
+
+--Fixed VOGP crash, if player count shrinks between invocations.
+
+--Wildcard support on vog allow list.
+
+
+
+
 Server Fixes
 
 --Family limit failure condition set to 35 (was 23).
