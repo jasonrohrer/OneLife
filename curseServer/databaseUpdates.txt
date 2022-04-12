@@ -1,5 +1,0 @@
-// Add eve_life_id column
-
-ALTER TABLE curseServer_users ADD total_curse_score INT NOT NULL AFTER extra_life_sec;
-
-UPDATE curseServer_users SET total_curse_score = curse_score;

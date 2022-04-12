@@ -1,1 +1,0 @@
-<?php $sharedSecret="replace_me_with_something_secret"; ?>
