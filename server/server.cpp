@@ -8215,7 +8215,8 @@ static char directLineBlocked( GridPos inSource, GridPos inDest ) {
 
 char removeFromContainerToHold( LiveObject *inPlayer, 
                                 int inContX, int inContY,
-                                int inSlotNumber );
+                                int inSlotNumber,
+                                char inSwap );
 
 
 
@@ -8560,26 +8561,57 @@ static char addHeldToContainer( LiveObject *inPlayer,
 
         int numInNow = getNumContained( inContX, inContY );
         
+        int swapInd = -1;
+        
         if( inSwap &&  numInNow > 1 ) {
             
-            int swapInd = getContainerSwapIndex( inPlayer, 
-                                                 idToAdd,
-                                                 false,
-                                                 // don't consider top slot
-                                                 // where we just put this
-                                                 // new item
-                                                 numInNow - 1,
-                                                 inContX, inContY );
+            swapInd = getContainerSwapIndex( inPlayer, 
+                                             idToAdd,
+                                             false,
+                                             // don't consider top slot
+                                             // where we just put this
+                                             // new item
+                                             numInNow - 1,
+                                             inContX, inContY );
             if( swapInd != -1 ) {
                 // found one to swap
                 removeFromContainerToHold( inPlayer, inContX, inContY, 
-                                           swapInd );
+                                           swapInd, true );
                 }
             // if we didn't remove one, it means whole container is full
             // of identical items.
             // the swap action doesn't work, so we just let it
             // behave like an add action instead.
             }
+            
+        // Check containment transitions
+        
+        numInNow = getNumContained( inContX, inContY );
+        
+        TransRecord *contTrans = NULL;
+        
+        if( numInNow == 1 ) {
+            contTrans = getPTrans( idToAdd, target, false, false, 1 );
+            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 1 );
+        } else if( targetSlots == numInNow ) {
+            contTrans = getPTrans( idToAdd, target, false, false, 2 );
+            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 2 );
+        }
+        
+        if( contTrans == NULL && swapInd == -1 ) {
+            contTrans = getPTrans( idToAdd, target, false, false, 3 );
+            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 3 );
+        }
+        
+        if( contTrans == NULL ) {
+            contTrans = getPTrans( idToAdd, target, false, false, 4 );
+            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 4 );
+        }
+        
+        if( contTrans != NULL ) {
+            setResponsiblePlayer( -inPlayer->id );
+            setMapObject( inContX, inContY, contTrans->newTarget );
+        }
 
         return true;
         }
@@ -8592,7 +8624,8 @@ static char addHeldToContainer( LiveObject *inPlayer,
 // returns true if succeeded
 char removeFromContainerToHold( LiveObject *inPlayer, 
                                 int inContX, int inContY,
-                                int inSlotNumber ) {
+                                int inSlotNumber,
+                                char inSwap = false ) {
     inPlayer->heldOriginValid = 0;
     inPlayer->heldOriginX = 0;
     inPlayer->heldOriginY = 0;                        
@@ -8696,6 +8729,36 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                 getObject( toRemoveID )->minPickupAge <= 
                 computeAge( inPlayer ) ) {
                 // get from container
+
+
+                // Check containment transitions
+                
+                int targetSlots = 
+                    getNumContainerSlots( target );
+                
+                TransRecord *contTrans = NULL;
+                
+                if( numIn == 1 ) {
+                    contTrans = getPTrans( target, toRemoveID, false, false, 2 );
+                    if( contTrans == NULL ) contTrans = getPTrans( target, -1, false, false, 2 );
+                } else if( targetSlots == numIn ) {
+                    contTrans = getPTrans( target, toRemoveID, false, false, 1 );
+                    if( contTrans == NULL ) contTrans = getPTrans( target, -1, false, false, 1 );
+                }
+                
+                if( contTrans == NULL && !inSwap ) {
+                    contTrans = getPTrans( target, toRemoveID, false, false, 3 );
+                    if( contTrans == NULL ) contTrans = getPTrans( target, -1, false, false, 3 );
+                }
+                
+                if( contTrans == NULL ) {
+                    contTrans = getPTrans( target, toRemoveID, false, false, 4 );
+                    if( contTrans == NULL ) contTrans = getPTrans( target, -1, false, false, 4 );
+                }
+                
+                if( contTrans != NULL ) {
+                    setMapObject( inContX, inContY, contTrans->newActor );
+                }
 
 
                 if( subContain ) {

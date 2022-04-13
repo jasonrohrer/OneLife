@@ -29,6 +29,17 @@ typedef struct TransRecord {
         char lastUseActor;
         char lastUseTarget;
         
+        // specially flagged containment transitions
+        
+        // can take values of 0, 1, 2, 3 or 4
+        // 0 meaning not a containment transition
+        // 1 meaning "first", can be "first one in" or "first one out"
+        // depending on whether the container is the actor or the target
+        // 2 meaning "last"
+        // 3 meaning "any except swap"
+        // 4 meaning "any"
+        int contTransFlag;
+        
         // true if this transition undoes a use
         char reverseUseActor;
         char reverseUseTarget;
@@ -104,7 +115,8 @@ void freeTransBank();
 // returns NULL if no trans defined
 TransRecord *getTrans( int inActor, int inTarget, 
                        char inLastUseActor = false,
-                       char inLastUseTarget = false );
+                       char inLastUseTarget = false,
+                       int inContTransFlag = false );
 
 
 // same as getTrans, with actorChangeChance and targetChangeChance applied
@@ -115,7 +127,8 @@ TransRecord *getTrans( int inActor, int inTarget,
 // Also works if newActor or newTarget is a Probability Set Category
 TransRecord *getPTrans( int inActor, int inTarget, 
                         char inLastUseActor = false,
-                        char inLastUseTarget = false );
+                        char inLastUseTarget = false,
+                        int inContTransFlag = false );
 
 
 
@@ -186,6 +199,7 @@ void addTrans( int inActor, int inTarget,
                int inNewActor, int inNewTarget,
                char inLastUseActor,
                char inLastUseTarget,
+               int inContTransFlag,
                char inReverseUseActor,
                char inReverseUseTarget,
                char inNoUseActor,
@@ -206,6 +220,7 @@ void addTrans( int inActor, int inTarget,
 void deleteTransFromBank( int inActor, int inTarget,
                           char inLastUseActor,
                           char inLastUseTarget,
+                          int inContTransFlag,
                           char inNoWriteToFile = false );
 
 

@@ -60,7 +60,9 @@ class EditorTransitionPage : public GamePage, public ActionListener {
     protected:
         
         TextField mAutoDecayTimeField;
-
+        
+        RadioButtonSet mContTransModesButtons;
+        
         CheckboxButton mLastUseActorCheckbox;
         CheckboxButton mLastUseTargetCheckbox;
 
