@@ -73,12 +73,18 @@ static ObjectPickable objectPickableAlt;
 static const char *moveButtonNames[NUM_MOVE_BUTTONS] =
 { "None", "Chase", "Flee", "Random", "North", "South", "East", "West", "Find" };
 
+#define NUM_CONTTRANS_MODES 5
+static const char *contTransModeNames[NUM_CONTTRANS_MODES] =
+{ "None", "First", "Last", "Not Swap", "Any" };
+
 
 EditorTransitionPage::EditorTransitionPage()
         : mAutoDecayTimeField( smallFont, 
                                0,  -170, 6,
                                false,
                                "AutoDecay Seconds", "-0123456789", NULL ),
+          mContTransModesButtons( smallFont, -330, -170,
+                            NUM_CONTTRANS_MODES, contTransModeNames, true, 2 ),
           mLastUseActorCheckbox( -330, 75, 2 ),
           mLastUseTargetCheckbox( 130, 75, 2 ),
           mReverseUseActorCheckbox( -330, -75, 2 ),
@@ -123,6 +129,9 @@ EditorTransitionPage::EditorTransitionPage()
 
     addComponent( &mAutoDecayTimeField );
     mAutoDecayTimeField.setVisible( false );
+
+    addComponent( &mContTransModesButtons );
+    mContTransModesButtons.addActionListener( this );
     
     addComponent( &mLastUseActorCheckbox );
     mLastUseActorCheckbox.addActionListener( this );
@@ -215,6 +224,7 @@ EditorTransitionPage::EditorTransitionPage()
     mCurrentTransition.newActor = 0;
     mCurrentTransition.newTarget = 0;
     mCurrentTransition.autoDecaySeconds = 0;
+    mCurrentTransition.contTransFlag = 0;
     mCurrentTransition.lastUseActor = false;
     mCurrentTransition.lastUseTarget = false;
     mCurrentTransition.reverseUseActor = false;
@@ -367,6 +377,8 @@ void EditorTransitionPage::checkIfSaveVisible() {
 
     mDelButton.setVisible( delVis );
     mDelConfirmButton.setVisible( false );
+
+    mContTransModesButtons.setSelectedItem( mCurrentTransition.contTransFlag );
 
     mLastUseActorCheckbox.setToggled( mCurrentTransition.lastUseActor );
     mLastUseTargetCheckbox.setToggled( mCurrentTransition.lastUseTarget );
@@ -698,6 +710,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                   mCurrentTransition.newTarget,
                   mCurrentTransition.lastUseActor,
                   mCurrentTransition.lastUseTarget,
+                  mContTransModesButtons.getSelectedItem(),
                   mCurrentTransition.reverseUseActor,
                   mCurrentTransition.reverseUseTarget,
                   mCurrentTransition.noUseActor,
@@ -763,7 +776,8 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
 
         deleteTransFromBank( actor, target, 
                              mLastUseActorCheckbox.getToggled(),
-                             mLastUseTargetCheckbox.getToggled() );
+                             mLastUseTargetCheckbox.getToggled(),
+                             mContTransModesButtons.getSelectedItem() );
                              
         for( int i=0; i<4; i++ ) {
             setObjectByIndex( &mCurrentTransition, i, 0 );
@@ -794,6 +808,23 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             }
         
         }
+    else if( inTarget == &mContTransModesButtons ) {
+        mCurrentTransition.contTransFlag = mContTransModesButtons.getSelectedItem();
+        
+        if( mCurrentTransition.contTransFlag > 0 ) {
+            mAutoDecayTimeField.setVisible( false );
+            mAutoDecayTimeField.setText( "" );
+
+            mMovementButtons.setSelectedItem( 0 );
+            mMovementButtons.setVisible( false );
+            
+            mDesiredMoveDistField.setInt( 1 );
+            mDesiredMoveDistField.setVisible( false );    
+            }
+        else {   
+            checkIfSaveVisible();
+            }
+        }
     else if( inTarget == &mLastUseActorCheckbox ) {
         mCurrentTransition.lastUseActor = mLastUseActorCheckbox.getToggled();
         }
@@ -821,6 +852,7 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
         
         if( mCurrentTransition.move > 0 ) {
             mDesiredMoveDistField.setVisible( true );
+            mContTransModesButtons.setSelectedItem( 0 );
             }
         else {
             mDesiredMoveDistField.setInt( 1 );
@@ -1281,6 +1313,12 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
         }
     
     setDrawColor( 1, 1, 1, 1 );
+    
+    if( mContTransModesButtons.isVisible() ) {
+        doublePair pos = mContTransModesButtons.getPosition();
+        pos.x -= checkboxSep;
+        smallFont->drawString( "Cont Trans", pos, alignRight );
+        }
     
     if( mLastUseActorCheckbox.isVisible() ) {
         doublePair pos = mLastUseActorCheckbox.getPosition();

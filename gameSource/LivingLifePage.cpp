@@ -13795,6 +13795,10 @@ void LivingLifePage::step() {
                             responsiblePlayerObject = 
                                 getGameObject( responsiblePlayerID );
                             }
+                        if( responsiblePlayerID < -1 ) {
+                            responsiblePlayerObject = 
+                                getGameObject( -responsiblePlayerID );
+                            }
                         
                         if( old > 0 &&
                             newID > 0 &&
@@ -13814,12 +13818,27 @@ void LivingLifePage::step() {
                             }
                         
 
-                        if( old > 0 &&
+                        if( (old > 0 &&
                             old == newID &&
                             mMapContainedStacks[mapI].size() > 
                             oldContainedCount &&
                             responsiblePlayerObject != NULL &&
-                            responsiblePlayerObject->holdingID == 0 ) {
+                            responsiblePlayerObject->holdingID == 0) 
+                            
+                            ||
+                            
+                            // exception case for containment transition
+                            // denoted by responsiblePlayerID being negative of the actual
+                            // newID could have changed in this case
+                            // but we still want the container using sound
+                            (old > 0 &&
+                            mMapContainedStacks[mapI].size() > 
+                            oldContainedCount &&
+                            responsiblePlayerObject != NULL &&
+                            responsiblePlayerID < -1 &&
+                            responsiblePlayerObject->holdingID == 0)
+
+                            ) {
                             
                             // target is changed container and
                             // responsible player's hands now empty
