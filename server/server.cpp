@@ -8514,8 +8514,62 @@ static char addHeldToContainer( LiveObject *inPlayer,
             idToAdd *= -1;
             }
 
+        // Check for containment transitions
         
+        TransRecord *contTrans = NULL;
+        
+        if( numIn == 0 ) {
+            contTrans = getPTrans( inPlayer->holdingID, target, false, false, 1 );
+            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 1 );
+        } else if( targetSlots - 1 == numIn ) {
+            contTrans = getPTrans( inPlayer->holdingID, target, false, false, 2 );
+            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 2 );
+        }
+        
+        if( contTrans == NULL ) {
+            contTrans = getPTrans( inPlayer->holdingID, target, false, false, 3 );
+            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 3 );
+            
+            // If object will transition after going into the container
+            // We use the new object to consider potential swapping
+            // Similar to how Set-down transitions are handled above before swapping is done
+            int idToConsiderSwap = inPlayer->holdingID;
+            if( contTrans != NULL ) {
+                idToConsiderSwap = contTrans->newActor;
+                }
+            if( inPlayer->numContained > 0 ) {
+                // negative to indicate sub-container
+                idToConsiderSwap *= -1;
+                }
+             
+            int swapInd = getContainerSwapIndex( inPlayer, 
+                                                 idToConsiderSwap,
+                                                 true,
+                                                 numIn,
+                                                 inContX, inContY ); 
+             
+            if( swapInd != -1 && inSwap ) contTrans = NULL;
+        }
+        
+        if( contTrans == NULL ) {
+            contTrans = getPTrans( inPlayer->holdingID, target, false, false, 4 );
+            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 4 );
+        }
+        
+        // Execute containment transitions
+        
+        if( contTrans != NULL && contTrans->newActor > 0 ) {
+                                
+            idToAdd = contTrans->newActor;
+            
+            if( inPlayer->numContained > 0 ) {
+                // negative to indicate sub-container
+                idToAdd *= -1;
+                }
+            
+        }
 
+        
         addContained( 
             inContX, inContY,
             idToAdd,
@@ -8561,18 +8615,16 @@ static char addHeldToContainer( LiveObject *inPlayer,
 
         int numInNow = getNumContained( inContX, inContY );
         
-        int swapInd = -1;
-        
         if( inSwap &&  numInNow > 1 ) {
             
-            swapInd = getContainerSwapIndex( inPlayer, 
-                                             idToAdd,
-                                             false,
-                                             // don't consider top slot
-                                             // where we just put this
-                                             // new item
-                                             numInNow - 1,
-                                             inContX, inContY );
+            int swapInd = getContainerSwapIndex( inPlayer, 
+                                                 idToAdd,
+                                                 false,
+                                                 // don't consider top slot
+                                                 // where we just put this
+                                                 // new item
+                                                 numInNow - 1,
+                                                 inContX, inContY );
             if( swapInd != -1 ) {
                 // found one to swap
                 removeFromContainerToHold( inPlayer, inContX, inContY, 
@@ -8584,29 +8636,7 @@ static char addHeldToContainer( LiveObject *inPlayer,
             // behave like an add action instead.
             }
             
-        // Check containment transitions
-        
-        numInNow = getNumContained( inContX, inContY );
-        
-        TransRecord *contTrans = NULL;
-        
-        if( numInNow == 1 ) {
-            contTrans = getPTrans( idToAdd, target, false, false, 1 );
-            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 1 );
-        } else if( targetSlots == numInNow ) {
-            contTrans = getPTrans( idToAdd, target, false, false, 2 );
-            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 2 );
-        }
-        
-        if( contTrans == NULL && swapInd == -1 ) {
-            contTrans = getPTrans( idToAdd, target, false, false, 3 );
-            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 3 );
-        }
-        
-        if( contTrans == NULL ) {
-            contTrans = getPTrans( idToAdd, target, false, false, 4 );
-            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 4 );
-        }
+        // Execute containment transitions
         
         if( contTrans != NULL ) {
             setResponsiblePlayer( -inPlayer->id );
@@ -8731,7 +8761,7 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                 // get from container
 
 
-                // Check containment transitions
+                // Check for containment transitions
                 
                 int targetSlots = 
                     getNumContainerSlots( target );
@@ -8755,6 +8785,8 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                     contTrans = getPTrans( target, toRemoveID, false, false, 4 );
                     if( contTrans == NULL ) contTrans = getPTrans( target, -1, false, false, 4 );
                 }
+                
+                // Execute containment transitions
                 
                 if( contTrans != NULL ) {
                     setMapObject( inContX, inContY, contTrans->newActor );
@@ -8795,7 +8827,18 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                     removeContained( 
                         inContX, inContY, inSlotNumber,
                         &( inPlayer->holdingEtaDecay ) );
+                        
+                if( inPlayer->holdingID < 0 ) {
+                    // sub-contained
+                    
+                    inPlayer->holdingID *= -1;    
+                    }
+                    
+                // Execute containment transitions
                 
+                if( contTrans != NULL ) {
+                    if( contTrans->newTarget > 0 ) handleHoldingChange( inPlayer, contTrans->newTarget );
+                    }
 
                 // does bare-hand action apply to this newly-held object
                 // one that results in something new in the hand and
@@ -8813,14 +8856,8 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                 else {
                     holdingSomethingNew( inPlayer );
                     }
-                
-                setResponsiblePlayer( -1 );
 
-                if( inPlayer->holdingID < 0 ) {
-                    // sub-contained
-                    
-                    inPlayer->holdingID *= -1;    
-                    }
+                setResponsiblePlayer( -1 );
                 
                 // contained objects aren't animating
                 // in a way that needs to be smooth
