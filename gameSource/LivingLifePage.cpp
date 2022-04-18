@@ -20760,12 +20760,24 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         
         destObjInClickedTile = destID;
 
+        destNumContained = mMapContainedStacks[ mapY * mMapD + mapX ].size();
+        
+        int newActorSlots = 0;
+        TransRecord *barehandTrans = getPTrans( 0, destObjInClickedTile );
+        if( barehandTrans != NULL ) {
+            ObjectRecord *newActor = getObject( barehandTrans->newActor );
+            if( newActor != NULL ) {
+                newActorSlots = newActor->numSlots;
+                }
+            }
+        
         if( destObjInClickedTile > 0 ) {
             destObjInClickedTilePermanent =
-                getObject( destObjInClickedTile )->permanent;
+                getObject( destObjInClickedTile )->permanent &&
+                !(barehandTrans != NULL &&
+                barehandTrans->newTarget == 0 &&
+                newActorSlots >= destNumContained);
             }
-    
-        destNumContained = mMapContainedStacks[ mapY * mMapD + mapX ].size();
         
 
         // if holding something, and this is a set-down action
