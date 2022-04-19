@@ -15692,6 +15692,7 @@ int main() {
 
                                 char heldCanBeUsed = false;
                                 char containmentTransfer = false;
+                                char containmentTransition = false;
                                 if( // if what we're holding contains
                                     // stuff, block it from being
                                     // used as a tool
@@ -15748,6 +15749,13 @@ int main() {
                                     // (and no bare hand action available)
                                     r = getPTrans( nextPlayer->holdingID,
                                                   target );
+                                                  
+                                    // also check for containment transitions
+                                    if( r == NULL && targetObj->numSlots == 0 ) {
+                                        r = getPTrans( nextPlayer->holdingID,
+                                                      target, false, false, 1 );
+                                        containmentTransition = true;
+                                        }
                                     }
                                 
 
@@ -16069,6 +16077,20 @@ int main() {
                                     else {    
                                         setMapObject( m.x, m.y, r->newTarget );
                                         newGroundObject = r->newTarget;
+                                        }
+                                        
+                                    // Execute containment transitions
+                                    if( containmentTransition ) {
+                                        int idToAdd = nextPlayer->holdingID;
+                                        if( r->newActor > 0 ) idToAdd = r->newActor;
+                 
+                                        addContained( 
+                                            m.x, m.y,
+                                            idToAdd,
+                                            nextPlayer->holdingEtaDecay );
+                                            
+                                        handleHoldingChange( nextPlayer,
+                                                             0 );
                                         }
                                     
                                     if( hungryWorkCost > 0 ) {
