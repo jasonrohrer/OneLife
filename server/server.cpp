@@ -8242,8 +8242,11 @@ static int getContainerSwapIndex( LiveObject *inPlayer,
             getContained( inContX, inContY, botInd, 0 );
         
         if( bottomItem > 0 &&
-            getObject( bottomItem )->minPickupAge > playerAge ) {
+            ( getObject( bottomItem )->minPickupAge > playerAge ||
+            getObject( bottomItem )->permanent )
+            ) {
             // too young to hold!
+            // or contained object is permanent
             same = true;
             }
         else if( bottomItem == idToAdd ) {
@@ -8714,8 +8717,8 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                     }
                 
                 while( inSlotNumber > 0 &&
-                       getObject( toRemoveID )->minPickupAge >
-                       playerAge )  {
+                       (getObject( toRemoveID )->minPickupAge > playerAge ||
+                       getObject( toRemoveID )->permanent) )  {
             
                     inSlotNumber--;
                     
@@ -8757,7 +8760,9 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                 numIn > 0 &&
                 // old enough to handle it
                 getObject( toRemoveID )->minPickupAge <= 
-                computeAge( inPlayer ) ) {
+                computeAge( inPlayer ) &&
+                // permanent object cannot be removed from container
+                !getObject( toRemoveID )->permanent ) {
                 // get from container
 
 
@@ -9144,9 +9149,12 @@ static char removeFromClothingContainerToHold( LiveObject *inPlayer,
         // find top-most object that they can actually pick up
 
         while( slotToRemove > 0 &&
-               getObject( inPlayer->clothingContained[inC].
+               ( getObject( inPlayer->clothingContained[inC].
                           getElementDirect( slotToRemove ) )->minPickupAge >
-               playerAge ) {
+               playerAge ||
+               getObject( inPlayer->clothingContained[inC].
+                          getElementDirect( slotToRemove ) )->permanent )
+               ) {
             
             slotToRemove --;
             }
@@ -9167,7 +9175,9 @@ static char removeFromClothingContainerToHold( LiveObject *inPlayer,
         oldNumContained > slotToRemove &&
         slotToRemove >= 0 &&
         // old enough to handle it
-        getObject( toRemoveID )->minPickupAge <= playerAge ) {
+        getObject( toRemoveID )->minPickupAge <= playerAge &&
+        // permanent object cannot be removed from container
+        !getObject( toRemoveID )->permanent ) {
                                     
 
         inPlayer->holdingID = 
@@ -17800,7 +17810,8 @@ int main() {
                                             if( otherID != 
                                                 oldHeldAfterTrans &&
                                                 getObject( otherID )->
-                                                minPickupAge <= playerAge ) {
+                                                minPickupAge <= playerAge &&
+                                                !getObject( otherID )->permanent ) {
                                                 
                                               removeFromClothingContainerToHold(
                                                     nextPlayer, m.c, s, true );
