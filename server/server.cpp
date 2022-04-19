@@ -8884,15 +8884,16 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
                                         // true if we should over-pack
                                         // container in anticipation of a swap
                                         char inWillSwap = false,
-                                        char *outCouldHaveGoneIn = NULL ) {    
+                                        char *outCouldHaveGoneIn = NULL,
+                                        char skipContainmentCheck = false ) {    
     // drop into own clothing
     ObjectRecord *cObj = 
         clothingByIndex( 
             inPlayer->clothing,
             inC );
                                     
-    if( cObj != NULL &&
-        containmentPermitted( cObj->id, inPlayer->holdingID ) ) {
+    if( skipContainmentCheck || (cObj != NULL &&
+        containmentPermitted( cObj->id, inPlayer->holdingID ) ) ) {
                                         
         int oldNum =
             inPlayer->
@@ -17222,6 +17223,10 @@ int main() {
 
                                 ObjectRecord *clickedClothing = NULL;
                                 TransRecord *clickedClothingTrans = NULL;
+                                
+                                // is this clickedClothingTrans a containment transition? 
+                                char isContainmentTransition = false;
+                                
                                 if( m.i >= 0 &&
                                     m.i < NUM_CLOTHING_PIECES ) {
                                     clickedClothing =
@@ -17233,6 +17238,14 @@ int main() {
                                         clickedClothingTrans =
                                             getPTrans( nextPlayer->holdingID,
                                                        clickedClothing->id );
+                                                       
+                                        // Check for containment transitions
+                                        if( clickedClothingTrans == NULL ) {
+                                            clickedClothingTrans =
+                                                getPTrans( nextPlayer->holdingID,
+                                                           clickedClothing->id, false, false, 1 );
+                                            isContainmentTransition = true;
+                                            }
                                         
                                         if( clickedClothingTrans != NULL ) {
                                             int na =
@@ -17298,6 +17311,16 @@ int main() {
                                         m.i,
                                         getObject( 
                                             clickedClothingTrans->newTarget ) );
+                                            
+                                    // Execute containment transitions
+                                    if( isContainmentTransition ) {
+                                        addHeldToClothingContainer( 
+                                            nextPlayer,
+                                            m.i,
+                                            false,
+                                            &couldHaveGoneIn, true);
+                                        }
+                                            
                                     }
                                 // next case, holding food
                                 // that couldn't be put into clicked clothing
