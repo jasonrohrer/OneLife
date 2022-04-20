@@ -18051,6 +18051,30 @@ int main() {
                                                             sameTrans->
                                                             newTarget );
                                                         }
+                                                    else {
+                                                        
+                                                        // try containment transitions
+                                                        
+                                                        TransRecord *contTrans
+                                                            = getPTrans(
+                                                                oldHeld, target, false, false, 1 );
+                                                        if( contTrans != NULL ) {
+                                                            handleHoldingChange(
+                                                                nextPlayer,
+                                                                0 );
+                                                            
+                                                            setMapObject(
+                                                                m.x, m.y,
+                                                                contTrans->
+                                                                newTarget );
+                                                                
+                                                            addContained( 
+                                                                m.x, m.y,
+                                                                contTrans->
+                                                                newActor,
+                                                                nextPlayer->holdingEtaDecay );
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
