@@ -38,6 +38,10 @@ typedef struct TransRecord {
         // 2 meaning "last"
         // 3 meaning "any except swap"
         // 4 meaning "any"
+        
+        // Furthermore, if a transition is flagged 1 and the target is not a container
+        // then it is "creation", the newTarget container is created from target
+        // and the actor, now changed into newActor, goes in that container
         int contTransFlag;
         
         // true if this transition undoes a use

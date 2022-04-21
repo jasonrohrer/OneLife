@@ -8242,8 +8242,11 @@ static int getContainerSwapIndex( LiveObject *inPlayer,
             getContained( inContX, inContY, botInd, 0 );
         
         if( bottomItem > 0 &&
-            getObject( bottomItem )->minPickupAge > playerAge ) {
+            ( getObject( bottomItem )->minPickupAge > playerAge ||
+            getObject( bottomItem )->permanent )
+            ) {
             // too young to hold!
+            // or contained object is permanent
             same = true;
             }
         else if( bottomItem == idToAdd ) {
@@ -8572,8 +8575,62 @@ static char addHeldToContainer( LiveObject *inPlayer,
             idToAdd *= -1;
             }
 
+        // Check for containment transitions
         
+        TransRecord *contTrans = NULL;
+        
+        if( numIn == 0 ) {
+            contTrans = getPTrans( inPlayer->holdingID, target, false, false, 1 );
+            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 1 );
+        } else if( targetSlots - 1 == numIn ) {
+            contTrans = getPTrans( inPlayer->holdingID, target, false, false, 2 );
+            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 2 );
+        }
+        
+        if( contTrans == NULL ) {
+            contTrans = getPTrans( inPlayer->holdingID, target, false, false, 3 );
+            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 3 );
+            
+            // If object will transition after going into the container
+            // We use the new object to consider potential swapping
+            // Similar to how Set-down transitions are handled above before swapping is done
+            int idToConsiderSwap = inPlayer->holdingID;
+            if( contTrans != NULL ) {
+                idToConsiderSwap = contTrans->newActor;
+                }
+            if( inPlayer->numContained > 0 ) {
+                // negative to indicate sub-container
+                idToConsiderSwap *= -1;
+                }
+             
+            int swapInd = getContainerSwapIndex( inPlayer, 
+                                                 idToConsiderSwap,
+                                                 true,
+                                                 numIn,
+                                                 inContX, inContY ); 
+             
+            if( swapInd != -1 && inSwap ) contTrans = NULL;
+        }
+        
+        if( contTrans == NULL ) {
+            contTrans = getPTrans( inPlayer->holdingID, target, false, false, 4 );
+            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 4 );
+        }
+        
+        // Execute containment transitions
+        
+        if( contTrans != NULL && contTrans->newActor > 0 ) {
+                                
+            idToAdd = contTrans->newActor;
+            
+            if( inPlayer->numContained > 0 ) {
+                // negative to indicate sub-container
+                idToAdd *= -1;
+                }
+            
+        }
 
+        
         addContained( 
             inContX, inContY,
             idToAdd,
@@ -8619,18 +8676,16 @@ static char addHeldToContainer( LiveObject *inPlayer,
 
         int numInNow = getNumContained( inContX, inContY );
         
-        int swapInd = -1;
-        
         if( inSwap &&  numInNow > 1 ) {
             
-            swapInd = getContainerSwapIndex( inPlayer, 
-                                             idToAdd,
-                                             false,
-                                             // don't consider top slot
-                                             // where we just put this
-                                             // new item
-                                             numInNow - 1,
-                                             inContX, inContY );
+            int swapInd = getContainerSwapIndex( inPlayer, 
+                                                 idToAdd,
+                                                 false,
+                                                 // don't consider top slot
+                                                 // where we just put this
+                                                 // new item
+                                                 numInNow - 1,
+                                                 inContX, inContY );
             if( swapInd != -1 ) {
                 // found one to swap
                 removeFromContainerToHold( inPlayer, inContX, inContY, 
@@ -8642,29 +8697,7 @@ static char addHeldToContainer( LiveObject *inPlayer,
             // behave like an add action instead.
             }
             
-        // Check containment transitions
-        
-        numInNow = getNumContained( inContX, inContY );
-        
-        TransRecord *contTrans = NULL;
-        
-        if( numInNow == 1 ) {
-            contTrans = getPTrans( idToAdd, target, false, false, 1 );
-            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 1 );
-        } else if( targetSlots == numInNow ) {
-            contTrans = getPTrans( idToAdd, target, false, false, 2 );
-            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 2 );
-        }
-        
-        if( contTrans == NULL && swapInd == -1 ) {
-            contTrans = getPTrans( idToAdd, target, false, false, 3 );
-            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 3 );
-        }
-        
-        if( contTrans == NULL ) {
-            contTrans = getPTrans( idToAdd, target, false, false, 4 );
-            if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 4 );
-        }
+        // Execute containment transitions
         
         if( contTrans != NULL ) {
             setResponsiblePlayer( -inPlayer->id );
@@ -8742,8 +8775,8 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                     }
                 
                 while( inSlotNumber > 0 &&
-                       getObject( toRemoveID )->minPickupAge >
-                       playerAge )  {
+                       (getObject( toRemoveID )->minPickupAge > playerAge ||
+                       getObject( toRemoveID )->permanent) )  {
             
                     inSlotNumber--;
                     
@@ -8785,11 +8818,13 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                 numIn > 0 &&
                 // old enough to handle it
                 getObject( toRemoveID )->minPickupAge <= 
-                computeAge( inPlayer ) ) {
+                computeAge( inPlayer ) &&
+                // permanent object cannot be removed from container
+                !getObject( toRemoveID )->permanent ) {
                 // get from container
 
 
-                // Check containment transitions
+                // Check for containment transitions
                 
                 int targetSlots = 
                     getNumContainerSlots( target );
@@ -8813,6 +8848,8 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                     contTrans = getPTrans( target, toRemoveID, false, false, 4 );
                     if( contTrans == NULL ) contTrans = getPTrans( target, -1, false, false, 4 );
                 }
+                
+                // Execute containment transitions
                 
                 if( contTrans != NULL ) {
                     setMapObject( inContX, inContY, contTrans->newActor );
@@ -8853,7 +8890,18 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                     removeContained( 
                         inContX, inContY, inSlotNumber,
                         &( inPlayer->holdingEtaDecay ) );
+                        
+                if( inPlayer->holdingID < 0 ) {
+                    // sub-contained
+                    
+                    inPlayer->holdingID *= -1;    
+                    }
+                    
+                // Execute containment transitions
                 
+                if( contTrans != NULL ) {
+                    if( contTrans->newTarget > 0 ) handleHoldingChange( inPlayer, contTrans->newTarget );
+                    }
 
                 // does bare-hand action apply to this newly-held object
                 // one that results in something new in the hand and
@@ -8871,14 +8919,8 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                 else {
                     holdingSomethingNew( inPlayer );
                     }
-                
-                setResponsiblePlayer( -1 );
 
-                if( inPlayer->holdingID < 0 ) {
-                    // sub-contained
-                    
-                    inPlayer->holdingID *= -1;    
-                    }
+                setResponsiblePlayer( -1 );
                 
                 // contained objects aren't animating
                 // in a way that needs to be smooth
@@ -8905,16 +8947,16 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
                                         // true if we should over-pack
                                         // container in anticipation of a swap
                                         char inWillSwap = false,
-                                        char *outCouldHaveGoneIn = NULL ) {    
+                                        char *outCouldHaveGoneIn = NULL,
+                                        char skipContainmentCheck = false ) {    
     // drop into own clothing
     ObjectRecord *cObj = 
         clothingByIndex( 
             inPlayer->clothing,
             inC );
                                     
-    if( cObj != NULL &&
-        isContainable( 
-            inPlayer->holdingID ) ) {
+    if( skipContainmentCheck || (cObj != NULL &&
+        containmentPermitted( cObj->id, inPlayer->holdingID ) ) ) {
                                         
         int oldNum =
             inPlayer->
@@ -8926,25 +8968,57 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
         float containSize =
             getObject( inPlayer->holdingID )->
             containSize;
-    
-        char permitted = false;
         
-        if( containmentPermitted( cObj->id, inPlayer->holdingID ) ) {
-            permitted = true;
-            }
-        
-        if( containSize <= slotSize &&
-            cObj->numSlots > 0 &&
-            permitted &&
+        if( cObj->numSlots > 0 &&
             outCouldHaveGoneIn != NULL ) {
             *outCouldHaveGoneIn = true;
             }
 
-        if( ( oldNum < cObj->numSlots
-              || ( oldNum == cObj->numSlots && inWillSwap ) )
-            &&
-            containSize <= slotSize &&
-            permitted ) {
+        if( oldNum < cObj->numSlots
+            || ( oldNum == cObj->numSlots && inWillSwap ) ) {
+                
+            // Check for containment transitions
+            
+            int containedID = inPlayer->holdingID;
+            int containerID = cObj->id;
+            int numSlots = cObj->numSlots;
+            
+            TransRecord *contTrans = NULL;
+            
+            if( oldNum == 0 ) {
+                contTrans = getPTrans( containedID, containerID, false, false, 1 );
+                if( contTrans == NULL ) contTrans = getPTrans( 0, containerID, false, false, 1 );
+            } else if( numSlots == oldNum ) {
+                contTrans = getPTrans( containedID, containerID, false, false, 2 );
+                if( contTrans == NULL ) contTrans = getPTrans( 0, containerID, false, false, 2 );
+            }
+            
+            if( contTrans == NULL && !inWillSwap ) {
+                contTrans = getPTrans( containedID, containerID, false, false, 3 );
+                if( contTrans == NULL ) contTrans = getPTrans( 0, containerID, false, false, 3 );
+            }
+            
+            if( contTrans == NULL ) {
+                contTrans = getPTrans( containedID, containerID, false, false, 4 );
+                if( contTrans == NULL ) contTrans = getPTrans( 0, containerID, false, false, 4 );
+            }
+                
+            int idToAdd = inPlayer->holdingID;
+            
+            if( contTrans != NULL ) {
+                
+                if( contTrans->newActor > 0 ) handleHoldingChange( inPlayer, contTrans->newActor );
+                
+                // idToAdd = contTrans->newActor;
+                
+                setClothingByIndex( 
+                    &( inPlayer->clothing ), 
+                    inC,
+                    getObject( contTrans->newTarget ) );
+                    
+            }
+                
+                
             // room (or will swap, so we can over-pack it)
             inPlayer->clothingContained[inC].
                 push_back( 
@@ -9105,7 +9179,8 @@ static void pickupToHold( LiveObject *inPlayer, int inX, int inY,
 // returns true if it worked
 static char removeFromClothingContainerToHold( LiveObject *inPlayer,
                                                int inC,
-                                               int inI = -1 ) {    
+                                               int inI = -1,
+                                               bool inSwap = false ) {    
     
     ObjectRecord *cObj = 
         clothingByIndex( inPlayer->clothing, 
@@ -9132,9 +9207,12 @@ static char removeFromClothingContainerToHold( LiveObject *inPlayer,
         // find top-most object that they can actually pick up
 
         while( slotToRemove > 0 &&
-               getObject( inPlayer->clothingContained[inC].
+               ( getObject( inPlayer->clothingContained[inC].
                           getElementDirect( slotToRemove ) )->minPickupAge >
-               playerAge ) {
+               playerAge ||
+               getObject( inPlayer->clothingContained[inC].
+                          getElementDirect( slotToRemove ) )->permanent )
+               ) {
             
             slotToRemove --;
             }
@@ -9155,7 +9233,9 @@ static char removeFromClothingContainerToHold( LiveObject *inPlayer,
         oldNumContained > slotToRemove &&
         slotToRemove >= 0 &&
         // old enough to handle it
-        getObject( toRemoveID )->minPickupAge <= playerAge ) {
+        getObject( toRemoveID )->minPickupAge <= playerAge &&
+        // permanent object cannot be removed from container
+        !getObject( toRemoveID )->permanent ) {
                                     
 
         inPlayer->holdingID = 
@@ -9179,6 +9259,47 @@ static char removeFromClothingContainerToHold( LiveObject *inPlayer,
             inPlayer->holdingEtaDecay =
                 curTime + offset;
             }
+            
+        
+        // Check for containment transitions
+        
+        int containedID = inPlayer->holdingID;
+        int containerID = cObj->id;
+        int numSlots = cObj->numSlots;
+        
+        TransRecord *contTrans = NULL;
+        
+        if( oldNumContained == 1 ) {
+            contTrans = getPTrans( containerID, containedID, false, false, 2 );
+            if( contTrans == NULL ) contTrans = getPTrans( containerID, -1, false, false, 2 );
+        } else if( numSlots == oldNumContained ) {
+            contTrans = getPTrans( containerID, containedID, false, false, 1 );
+            if( contTrans == NULL ) contTrans = getPTrans( containerID, -1, false, false, 1 );
+        }
+        
+        if( contTrans == NULL && !inSwap ) {
+            contTrans = getPTrans( containerID, containedID, false, false, 3 );
+            if( contTrans == NULL ) contTrans = getPTrans( containerID, -1, false, false, 3 );
+        }
+        
+        if( contTrans == NULL ) {
+            contTrans = getPTrans( containerID, containedID, false, false, 4 );
+            if( contTrans == NULL ) contTrans = getPTrans( containerID, -1, false, false, 4 );
+        }
+        
+        if( contTrans != NULL ) {
+            
+            if( contTrans->newTarget > 0 ) handleHoldingChange( inPlayer, contTrans->newTarget );
+            
+            // idToAdd = contTrans->newActor;
+            
+            setClothingByIndex( 
+                &( inPlayer->clothing ), 
+                inC,
+                getObject( contTrans->newActor ) );
+                
+        }
+            
 
         inPlayer->clothingContained[inC].
             deleteElement( slotToRemove );
@@ -15640,6 +15761,7 @@ int main() {
 
                                 char heldCanBeUsed = false;
                                 char containmentTransfer = false;
+                                char containmentTransition = false;
                                 if( // if what we're holding contains
                                     // stuff, block it from being
                                     // used as a tool
@@ -15696,6 +15818,13 @@ int main() {
                                     // (and no bare hand action available)
                                     r = getPTrans( nextPlayer->holdingID,
                                                   target );
+                                                  
+                                    // also check for containment transitions
+                                    if( r == NULL && targetObj->numSlots == 0 ) {
+                                        r = getPTrans( nextPlayer->holdingID,
+                                                      target, false, false, 1 );
+                                        containmentTransition = true;
+                                        }
                                     }
                                 
 
@@ -16017,6 +16146,20 @@ int main() {
                                     else {    
                                         setMapObject( m.x, m.y, r->newTarget );
                                         newGroundObject = r->newTarget;
+                                        }
+                                        
+                                    // Execute containment transitions
+                                    if( containmentTransition ) {
+                                        int idToAdd = nextPlayer->holdingID;
+                                        if( r->newActor > 0 ) idToAdd = r->newActor;
+                 
+                                        addContained( 
+                                            m.x, m.y,
+                                            idToAdd,
+                                            nextPlayer->holdingEtaDecay );
+                                            
+                                        handleHoldingChange( nextPlayer,
+                                                             0 );
                                         }
                                     
                                     if( hungryWorkCost > 0 ) {
@@ -17148,6 +17291,10 @@ int main() {
 
                                 ObjectRecord *clickedClothing = NULL;
                                 TransRecord *clickedClothingTrans = NULL;
+                                
+                                // is this clickedClothingTrans a containment transition? 
+                                char isContainmentTransition = false;
+                                
                                 if( m.i >= 0 &&
                                     m.i < NUM_CLOTHING_PIECES ) {
                                     clickedClothing =
@@ -17159,6 +17306,14 @@ int main() {
                                         clickedClothingTrans =
                                             getPTrans( nextPlayer->holdingID,
                                                        clickedClothing->id );
+                                                       
+                                        // Check for containment transitions
+                                        if( clickedClothingTrans == NULL ) {
+                                            clickedClothingTrans =
+                                                getPTrans( nextPlayer->holdingID,
+                                                           clickedClothing->id, false, false, 1 );
+                                            isContainmentTransition = true;
+                                            }
                                         
                                         if( clickedClothingTrans != NULL ) {
                                             int na =
@@ -17224,6 +17379,16 @@ int main() {
                                         m.i,
                                         getObject( 
                                             clickedClothingTrans->newTarget ) );
+                                            
+                                    // Execute containment transitions
+                                    if( isContainmentTransition ) {
+                                        addHeldToClothingContainer( 
+                                            nextPlayer,
+                                            m.i,
+                                            false,
+                                            &couldHaveGoneIn, true);
+                                        }
+                                            
                                     }
                                 // next case, holding food
                                 // that couldn't be put into clicked clothing
@@ -17694,14 +17859,20 @@ int main() {
                                                 nextPlayer->
                                                 clothingContained[m.c].
                                                 getElementDirect( s );
+                                                
+                                            int oldHeldAfterTrans =
+                                                nextPlayer->
+                                                clothingContained[m.c].
+                                                getElementDirect( nextPlayer->clothingContained[m.c].size() - 1 );
                                             
                                             if( otherID != 
-                                                oldHeld &&
+                                                oldHeldAfterTrans &&
                                                 getObject( otherID )->
-                                                minPickupAge <= playerAge ) {
+                                                minPickupAge <= playerAge &&
+                                                !getObject( otherID )->permanent ) {
                                                 
                                               removeFromClothingContainerToHold(
-                                                    nextPlayer, m.c, s );
+                                                    nextPlayer, m.c, s, true );
                                                 break;
                                                 }
                                             }
@@ -17721,7 +17892,7 @@ int main() {
                                                 nextPlayer, m.c, 
                                                 nextPlayer->
                                                 clothingContained[m.c].
-                                                size() - 1 );
+                                                size() - 1, true );
                                             }
                                         }
                                     
@@ -17937,6 +18108,30 @@ int main() {
                                                             m.x, m.y,
                                                             sameTrans->
                                                             newTarget );
+                                                        }
+                                                    else {
+                                                        
+                                                        // try containment transitions
+                                                        
+                                                        TransRecord *contTrans
+                                                            = getPTrans(
+                                                                oldHeld, target, false, false, 1 );
+                                                        if( contTrans != NULL ) {
+                                                            handleHoldingChange(
+                                                                nextPlayer,
+                                                                0 );
+                                                            
+                                                            setMapObject(
+                                                                m.x, m.y,
+                                                                contTrans->
+                                                                newTarget );
+                                                                
+                                                            addContained( 
+                                                                m.x, m.y,
+                                                                contTrans->
+                                                                newActor,
+                                                                nextPlayer->holdingEtaDecay );
+                                                            }
                                                         }
                                                     }
                                                 }
