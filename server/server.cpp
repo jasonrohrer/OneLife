@@ -8371,6 +8371,13 @@ static char isContainmentWithMatchedTags( int inContainerID, int inContainedID )
 // whether container has empty slot is checked elsewhere
 static char containmentPermitted( int inContainerID, int inContainedID ) {
     
+    // Use the container's and object's dummy parents to judge
+    // So use objects also inherit the cont tag
+    ObjectRecord *containerObj = getObject( inContainerID );
+    ObjectRecord *containedObj = getObject( inContainedID );
+    if( containerObj->isUseDummy ) inContainerID = containerObj->useDummyParent;
+    if( containedObj->isUseDummy ) inContainedID = containedObj->useDummyParent;a
+    
     // avoid container-ception
     if( inContainerID == inContainedID ) return false;    
     
