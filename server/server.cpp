@@ -8376,7 +8376,7 @@ static char containmentPermitted( int inContainerID, int inContainedID ) {
     ObjectRecord *containerObj = getObject( inContainerID );
     ObjectRecord *containedObj = getObject( inContainedID );
     if( containerObj->isUseDummy ) inContainerID = containerObj->useDummyParent;
-    if( containedObj->isUseDummy ) inContainedID = containedObj->useDummyParent;a
+    if( containedObj->isUseDummy ) inContainedID = containedObj->useDummyParent;
     
     // avoid container-ception
     if( inContainerID == inContainedID ) return false;    
