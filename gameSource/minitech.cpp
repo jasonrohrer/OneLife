@@ -175,6 +175,7 @@ bool minitech::isCategory(int objId) {
 	CategoryRecord *c = getCategory( objId );
 	if (c == NULL) return false;
     if( !c->isPattern && c->objectIDSet.size() > 0 ) return true;
+    if( c->isPattern ) return true;
     return false;
 }
 
