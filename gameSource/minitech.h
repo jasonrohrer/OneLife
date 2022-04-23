@@ -4,6 +4,7 @@
 #include "LivingLifePage.h"
 #include <vector>
 #include <string>
+#include <regex>
 
 
 class minitech
@@ -71,6 +72,7 @@ public:
 	static float getTransProbability(TransRecord* trans);
     static bool isUncraftable(int objId);
 	static unsigned int LevenshteinDistance(const std::string& s1, const std::string& s2);
+    static std::vector<std::string> Tokenize( const std::string str );
 	
 	static int objIdFromXY( int x, int y );
 	static std::vector<bool> getObjIsCloseVector();

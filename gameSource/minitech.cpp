@@ -5,6 +5,7 @@
 #include <numeric> //iota
 #include <cmath> //pow and sqrt
 #include <algorithm> //vector sort
+#include <regex> //to tokenize object names for whole word matching
 
 #include "LivingLifePage.h"
 #include "groundSprites.h"
@@ -499,6 +500,19 @@ unsigned int minitech::LevenshteinDistance(const std::string& s1, const std::str
                       // for C++98 use std::min(std::min(arg1, arg2), arg3)
                       d[i][j] = std::min({ d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 0 : 1) });
 	return d[len1][len2];
+}
+
+std::vector<std::string> minitech::Tokenize( const string str ) {
+    using namespace std;
+    regex re( "[\\s]+" );
+    std::vector<string> result;
+    sregex_token_iterator it( str.begin(), str.end(), re, -1 );
+    sregex_token_iterator reg_end;
+    for ( ; it != reg_end; ++it ) {
+        if ( !it->str().empty() ) //token could be empty:check
+            result.emplace_back( it->str() );
+    }
+    return result;
 }
 
 
@@ -1463,6 +1477,9 @@ void minitech::inputHintStrToSearch(string hintStr) {
 			for (int i=0; i<numHits; i++) {
 				unsortedHits.push_back(hitsSimpleVector[i]);
 			}
+            
+            std::vector<std::string> hintWords = Tokenize( hintStr );
+            std::vector<std::vector<std::string>> descWords(unsortedHits.size());
 			
 			vector<std::size_t> index(unsortedHits.size());
 			iota(index.begin(), index.end(), 0);
@@ -1472,7 +1489,36 @@ void minitech::inputHintStrToSearch(string hintStr) {
 				// int aLDist = LevenshteinDistance(hintStr, aDesc); 
 				// int bLDist = LevenshteinDistance(hintStr, bDesc);
 				// return aLDist < bLDist;
-				return unsortedHits[a]->id < unsortedHits[b]->id;
+                
+				string aDesc(stringToUpperCase(unsortedHits[a]->description));
+				string bDesc(stringToUpperCase(unsortedHits[b]->description));
+
+                if( descWords[a].size() == 0 ) descWords[a] = Tokenize( aDesc );
+                if( descWords[b].size() == 0 ) descWords[b] = Tokenize( bDesc );                
+                std::vector<std::string> aDescWords = descWords[a];
+                std::vector<std::string> bDescWords = descWords[b];
+                
+                int aScore = 0;
+                int bScore = 0;
+                
+                for ( int i=0; i<(int)hintWords.size(); i++ ) {
+                    string hintWord = hintWords[i];
+                    for ( int j=0; j<(int)aDescWords.size(); j++ ) {
+                        if( hintWord.compare( aDescWords[j] ) == 0 ) aScore++;
+                    }
+                    for ( int k=0; k<(int)bDescWords.size(); k++ ) {
+                        if( hintWord.compare( bDescWords[k] ) == 0 ) bScore++;
+                    }
+                }
+                
+                float aScoreF = (float)aScore / (float)aDescWords.size();
+                float bScoreF = (float)bScore / (float)bDescWords.size();
+                
+                if( aScoreF == bScoreF ) {
+                    return unsortedHits[a]->id < unsortedHits[b]->id;
+                } else {
+                    return aScoreF > bScoreF;
+                }
 			});
 			
 			vector<ObjectRecord*> sortedHits(unsortedHits.size());
@@ -1484,8 +1530,10 @@ void minitech::inputHintStrToSearch(string hintStr) {
                 currentHintObjId = sortedHits[0]->id;
             } else {
                 for ( int i=0; i<(int)sortedHits.size(); i++ ) {
-                    if ( !isUncraftable(sortedHits[i]->id) ) 
+                    if ( !isUncraftable(sortedHits[i]->id) ) {
                         currentHintObjId = sortedHits[i]->id;
+                        break;
+                    }
                 }
             }
 		}
