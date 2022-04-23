@@ -8559,6 +8559,44 @@ static char addHeldToContainer( LiveObject *inPlayer,
             if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 4 );
         }
         
+        if( contTrans != NULL ) {
+            
+            // Check that the new container can contain all the objects
+            
+            int newNumSlots = getNumContainerSlots( contTrans->newTarget );
+            
+            if( numIn > newNumSlots || (numIn == newNumSlots && !inSwap) ) {
+                return false;
+                } 
+            else {
+                int slotNumber = numIn - 1;
+                
+                int contID = getContained( 
+                    inContX, inContY,
+                    slotNumber );
+            
+                while( slotNumber >= 0 &&
+                       containmentPermitted( contTrans->newTarget, contID ) )  {
+            
+                    slotNumber--;
+                    
+                    if( slotNumber < 0 ) break;
+                    
+                    contID = getContained( 
+                        inContX, inContY,
+                        slotNumber );
+                
+                    if( contID < 0 ) {
+                        contID *= -1;
+                        }
+                    }
+                    
+                if( slotNumber >= 0 ) {
+                    return false;
+                    }
+                }
+            }
+            
         // Execute containment transitions
         
         if( contTrans != NULL && contTrans->newActor > 0 ) {
@@ -8790,6 +8828,48 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                     contTrans = getPTrans( target, toRemoveID, false, false, 4 );
                     if( contTrans == NULL ) contTrans = getPTrans( target, -1, false, false, 4 );
                 }
+                
+                if( contTrans != NULL ) {
+                    
+                    // Check that the new container can contain all the objects
+                    
+                    int newNumSlots = getNumContainerSlots( contTrans->newActor );
+                    
+                    int slotNumber = numIn - 1;
+                    
+                    if( inSlotNumber == slotNumber ) slotNumber--;
+                    
+                    int contID = getContained( 
+                        inContX, inContY,
+                        slotNumber );
+                        
+                    if( contID < 0 ) contID *= -1;
+
+                
+                    while( slotNumber >= 0 &&
+                           containmentPermitted( contTrans->newActor, contID ) )  {
+                
+                        slotNumber--;
+                        
+                        if( inSlotNumber == slotNumber ) slotNumber--;
+                        
+                        if( slotNumber < 0 ) break;
+                        
+                        contID = getContained( 
+                            inContX, inContY,
+                            slotNumber );
+                    
+                        if( contID < 0 ) {
+                            contID *= -1;
+                            }
+                        }
+                        
+                    if( slotNumber >= 0 ) {
+                        contTrans = NULL;
+                        }
+                        
+                    }
+
                 
                 // Execute containment transitions
                 
