@@ -1602,8 +1602,12 @@ bool minitech::livingLifeKeyDown(unsigned char inASCII) {
 		currentTwoTechPage -= 1;
 	}
 	
-	if (!shiftKey && !commandKey && toupper(inASCII) == toupper(minimizeKey)) {
+	if (!shiftKey && !commandKey && toupper(inASCII) == toupper(minimizeKey)) { //V
 		minitechMinimized = !minitechMinimized;
+	}
+    
+	if (!shiftKey && commandKey && inASCII + 64 == toupper(minimizeKey)) { //Ctrl + V
+		useOrMake = 1 - useOrMake;
 	}
 	
 	// if ( inASCII == 'p' ) {
