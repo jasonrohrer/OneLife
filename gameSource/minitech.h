@@ -14,6 +14,8 @@ public:
 	
 	static bool minitechEnabled;
 	static float guiScale;
+    
+    static bool showUncraftables;
 	
 	static float viewWidth;
 	static float viewHeight;
@@ -67,6 +69,7 @@ public:
 	static int compareObjUse(int idA, int idB);
 	static bool isProbabilitySet(int objId);
 	static float getTransProbability(TransRecord* trans);
+    static bool isUncraftable(int objId);
 	static unsigned int LevenshteinDistance(const std::string& s1, const std::string& s2);
 	
 	static int objIdFromXY( int x, int y );

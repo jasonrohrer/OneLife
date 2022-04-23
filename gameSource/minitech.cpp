@@ -26,6 +26,8 @@ using namespace std;
 bool minitech::minitechEnabled = true;
 float minitech::guiScale = 1.0f;
 
+bool minitech::showUncraftables = false;
+
 float minitech::viewWidth = 1280.0;
 float minitech::viewHeight = 720.0;
 
@@ -95,6 +97,8 @@ void minitech::setLivingLifePage(
 	minitechEnabled = SettingsManager::getIntSetting( "useMinitech", 1 );
 	char *minimizeKeyFromSetting = SettingsManager::getStringSetting("minitechMinimizeKey", "v");
 	minimizeKey = minimizeKeyFromSetting[0];
+    
+    showUncraftables = SettingsManager::getIntSetting( "minitechShowUncraftables", 0 );
 }
 
 void minitech::initOnBirth() { 
@@ -474,6 +478,13 @@ vector<bool> minitech::getObjIsCloseVector() {
 	return objIsClose;
 }
 
+bool minitech::isUncraftable(int objId) {
+    if( objId <= 0 ) return false;
+    int d = getObjectDepth( objId );
+    if( d == UNREACHABLE ) return true;
+    return false;
+}
+
 unsigned int minitech::LevenshteinDistance(const std::string& s1, const std::string& s2) {
 	const std::size_t len1 = s1.size(), len2 = s2.size();
 	std::vector<std::vector<unsigned int>> d(len1 + 1, std::vector<unsigned int>(len2 + 1));
@@ -684,6 +695,8 @@ vector<TransRecord*> minitech::getUsesTrans(int objId) {
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
 		//Skip generic use transitions when they are not food
 		if (idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0) continue; 
+        //Skip transitions that involve uncraftable objects
+        if ( !showUncraftables && (isUncraftable(idA) || isUncraftable(idB) || isUncraftable(idC) || isUncraftable(idD)) ) continue;
 		
 		results.push_back(trans);
 
@@ -722,6 +735,8 @@ vector<TransRecord*> minitech::getProdTrans(int objId) {
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
 		//Skip generic use transitions when they are not food
 		if (idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0) continue;
+        //Skip transitions that involve uncraftable objects
+        if ( !showUncraftables && (isUncraftable(idA) || isUncraftable(idB) || isUncraftable(idC) || isUncraftable(idD)) ) continue;
 		
 		//Strangely there are results that do not make the object at all e.g. bowl of water, reason unknown yet
 		if (idC != objId && idD != objId) continue;
@@ -1465,7 +1480,14 @@ void minitech::inputHintStrToSearch(string hintStr) {
 				sortedHits[i] = unsortedHits[index[i]];
 			}
 			
-			currentHintObjId = sortedHits[0]->id;
+            if (showUncraftables) {
+                currentHintObjId = sortedHits[0]->id;
+            } else {
+                for ( int i=0; i<(int)sortedHits.size(); i++ ) {
+                    if ( !isUncraftable(sortedHits[i]->id) ) 
+                        currentHintObjId = sortedHits[i]->id;
+                }
+            }
 		}
 	}
 }
