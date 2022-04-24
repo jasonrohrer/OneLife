@@ -16520,44 +16520,69 @@ int main() {
                                                 
                                                 int newNumSlots = getNumContainerSlots( newContainerID );
                                                 
-                                                if( numContained > newNumSlots ) {
+                                                if( (isOutContTrans && containmentTrans->target != containmentTrans->newTarget) ||
+                                                    (!isOutContTrans && containmentTrans->actor != containmentTrans->newActor) ) {
+                                                    // This case should not happen.
+                                                    // It means that the useOnContained transition
+                                                    // triggers a containment transition,
+                                                    // both trying to change the object being taken out.
+                                                    containmentTrans = NULL;
+                                                    blockedByContainmentTrans = true;
+                                                    }
+                                                else if( numContained > newNumSlots ) {
                                                     containmentTrans = NULL;
                                                     blockedByContainmentTrans = true;
                                                     } 
                                                 else {
-                                                    int slotNumber = numContained - 1;
+                                                    bool newContainedOK = false;
+                                                    bool otherContainedOK = false;
                                                     
-                                                    int contID = getContained( 
-                                                        m.x, m.y,
-                                                        slotNumber );
+                                                    newContainedOK = containmentPermitted( newContainerID, contTrans->newTarget );
+                                                    
+                                                    int slotNumber = numContained - 1;
+                                                    if( isOutContTrans && slotNumber == m.i ) slotNumber--;
+                                                    
+                                                    if( slotNumber >= 0 ) {
                                                         
-                                                    if( isOutContTrans && slotNumber == m.i ) contID = containmentTrans->newTarget;
-                                                        
-                                                    if( contID < 0 ) contID *= -1;
-                                                
-                                                    while( slotNumber >= 0 &&
-                                                           containmentPermitted( newContainerID, contID ) )  {
-                                                
-                                                        slotNumber--;
-                                                        
-                                                        if( slotNumber < 0 ) break;
-                                                        
-                                                        contID = getContained( 
+                                                        int contID = getContained( 
                                                             m.x, m.y,
                                                             slotNumber );
                                                             
-                                                        if( isOutContTrans && slotNumber == m.i ) contID = containmentTrans->newTarget;
+                                                        if( contID < 0 ) contID *= -1;
                                                     
-                                                        if( contID < 0 ) {
-                                                            contID *= -1;
+                                                        while( slotNumber >= 0 &&
+                                                               containmentPermitted( newContainerID, contID ) )  {
+                                                    
+                                                            slotNumber--;
+                                                            
+                                                            if( isOutContTrans && slotNumber == m.i ) slotNumber--;
+                                                            
+                                                            if( slotNumber < 0 ) break;
+                                                            
+                                                            contID = getContained( 
+                                                                m.x, m.y,
+                                                                slotNumber );
+                                                                
+                                                        
+                                                            if( contID < 0 ) {
+                                                                contID *= -1;
+                                                                }
+                                                                
                                                             }
+                                                            
+                                                        if( slotNumber >= 0 ) {
+                                                            otherContainedOK = false;
+                                                            }
+                                                        else {
+                                                            otherContainedOK = true;
+                                                            }
+                                                        } 
+                                                    else {
+                                                        otherContainedOK = true;
                                                         }
                                                         
-                                                    if( slotNumber >= 0 ) {
-                                                        containmentTrans = NULL;
-                                                        if ( !isOutContTrans || ( isOutContTrans && slotNumber != m.i ) )
-                                                            blockedByContainmentTrans = true;
-                                                        }
+                                                    if( !otherContainedOK || !newContainedOK ) containmentTrans = NULL;
+                                                    if( !isOutContTrans && !newContainedOK ) blockedByContainmentTrans = true;
                                                     }
                                                 }
                                             }
