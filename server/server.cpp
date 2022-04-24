@@ -15226,7 +15226,36 @@ int main() {
                                 m.saidText[c] = ' ';
                                 }
                             }
+                        
+                        // now clean up gratuitous runs of spaces left behind
+                        // by removed characters (or submitted by a wayward
+                        // client)
+                        SimpleVector<char *> *tokens = 
+                            tokenizeString( m.saidText );
 
+                        char *cleanedString;
+                        if( tokens->size() > 0 ) {
+                        
+                            char **tokensArray = 
+                                tokens->getElementArray();
+                        
+                            // join words with single spaces
+                            cleanedString = join( tokensArray,
+                                                  tokens->size(),
+                                                  " " );
+                        
+                            tokens->deallocateStringElements();
+                            delete [] tokensArray;
+                            }
+                        else {
+                            cleanedString = stringDuplicate( "" );
+                            }
+
+                        delete tokens;
+                        
+                        delete [] m.saidText;
+                        m.saidText = cleanedString;
+                        
                         
                         if( nextPlayer->ownedPositions.size() > 0 ) {
                             // consider phrases that assign ownership
@@ -15484,7 +15513,16 @@ int main() {
                                 }
                             }
                         
-                        makePlayerSay( nextPlayer, m.saidText );
+                        // trim whitespace and make sure we're not
+                        // adding an empty string
+                        // empty or whitespace strings causes trouble
+                        // elsewhere in code
+                        char *cleanSay = trimWhitespace( m.saidText );
+                        
+                        if( strcmp( cleanSay, "" ) != 0 ) {
+                            makePlayerSay( nextPlayer, cleanSay );
+                            }
+                        delete [] cleanSay;
                         }
                     else if( m.type == KILL ) {
                         playerIndicesToSendUpdatesAbout.push_back( i );
