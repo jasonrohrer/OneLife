@@ -710,7 +710,16 @@ vector<TransRecord*> minitech::getUsesTrans(int objId) {
 		//Skip raw lastUse transitions, the proper ones are auto-generated and not tagged as lastUse
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
 		//Skip generic use transitions when they are not food
-		if (idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0) continue; 
+		if ( idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0 && trans->contTransFlag == 0 ) continue;
+        
+        if ( trans->contTransFlag != 0 ) {
+            //No container-ception, this probably results from cont tag inheritance
+            if( idA == idB ) continue;
+            //Similarly, this results from cont tag inheritance
+            if( getObject(idA) != NULL && getObject(idB) != NULL &&
+                getObject(idA)->permanent && getObject(idB)->permanent ) continue;
+        }
+        
         //Skip transitions that involve uncraftable objects
         if ( !showUncraftables && (isUncraftable(idA) || isUncraftable(idB) || isUncraftable(idC) || isUncraftable(idD)) ) continue;
 		
@@ -750,7 +759,16 @@ vector<TransRecord*> minitech::getProdTrans(int objId) {
 		//Skip raw lastUse transitions, the proper ones are auto-generated and not tagged as lastUse
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
 		//Skip generic use transitions when they are not food
-		if (idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0) continue;
+		if ( idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0 && trans->contTransFlag == 0 ) continue;
+        
+        if ( trans->contTransFlag != 0 ) {
+            //No container-ception, this probably results from cont tag inheritance
+            if( idA == idB ) continue;
+            //Similarly, this results from cont tag inheritance
+            if( getObject(idA) != NULL && getObject(idB) != NULL &&
+                getObject(idA)->permanent && getObject(idB)->permanent ) continue;
+        }
+        
         //Skip transitions that involve uncraftable objects
         if ( !showUncraftables && (isUncraftable(idA) || isUncraftable(idB) || isUncraftable(idC) || isUncraftable(idD)) ) continue;
 		
@@ -1072,15 +1090,37 @@ void minitech::updateDrawTwoTech() {
 				continue;
 			}
 			
+            
+            // Check if it is a containment transition
+            int inOrOutContainmentTrans = -1;
+            
+            if( trans->contTransFlag != 0 ) {
+                ObjectRecord* newTarget = getObject(trans->newTarget);
+                ObjectRecord* newActor = getObject(trans->newActor);
+                
+                if( newTarget != NULL && 
+                    newTarget->numSlots > 0 &&
+                    ( newActor == NULL || 
+                        ( newActor->numSlots == 0 || 
+                        !newActor->permanent )
+                    )
+                ) {
+                    // in
+                    inOrOutContainmentTrans = 0;
+                } else {
+                    // out
+                    inOrOutContainmentTrans = 1;
+                }
+            }
 
-			doublePair posLineTL = {
-				posLineLCen.x - paddingX,
-				posLineLCen.y + iconSize/2
-			};
-			doublePair posLineBR = {
-				posLineTL.x + recWidth,
-				posLineTL.y - iconSize
-			};
+            doublePair posLineTL = {
+                posLineLCen.x - paddingX,
+                posLineLCen.y + iconSize/2
+            };
+            doublePair posLineBR = {
+                posLineTL.x + recWidth,
+                posLineTL.y - iconSize
+            };
 
 			mouseListener* lineListener = getMouseListenerByArea(
 				&twotechMouseListeners, sub(posLineTL, screenPos), sub(posLineBR, screenPos));
@@ -1130,6 +1170,8 @@ void minitech::updateDrawTwoTech() {
 						drawObj(pos, trans->actor, "WAIT", to_string(decayTime) + " SEC");
 					}
 				}
+			} else if (trans->actor == 0 && trans->contTransFlag != 0) {                
+                drawObj(pos, trans->actor, "ANY", "ITEM");
 			} else {
 				drawObj(pos, trans->actor);
 			}
@@ -1141,7 +1183,56 @@ void minitech::updateDrawTwoTech() {
 
 			
 			pos.x += iconSize;
-			drawStr("+", pos, "handwritten", false);
+            if( trans->contTransFlag == 0 ) {
+                drawStr("+", pos, "handwritten", false);
+            } else {
+                
+                string firstLineWords = "";
+                string secondLineWords = "";
+                string thirdLineWords = "";
+                
+                if( inOrOutContainmentTrans == 0 ) {
+                    firstLineWords = "PUT";
+                    secondLineWords = "INTO";
+                } else if( inOrOutContainmentTrans == 1 ) {
+                    firstLineWords = "TAKE";
+                    secondLineWords = "OUT";                    
+                }
+                
+                if( trans->contTransFlag == 1 ) {
+                    thirdLineWords = "(FIRST)";
+                } else if ( trans->contTransFlag == 2 ) {
+                    thirdLineWords = "(LAST)";
+                } else if ( trans->contTransFlag == 3 ) {
+                    thirdLineWords = "";
+                } else if ( trans->contTransFlag == 4 ) {
+                    if( inOrOutContainmentTrans == 0 ) {
+                        firstLineWords = "PUT/";
+                        secondLineWords = "SWAP";
+                        thirdLineWords = "INTO";
+                    } else if( inOrOutContainmentTrans == 1 ) {
+                        firstLineWords = "TAKE/";
+                        secondLineWords = "SWAP";
+                        thirdLineWords = "OUT";
+                    }
+                }
+                
+                doublePair firstLine = pos;
+                doublePair secondLine = pos;
+                doublePair thirdLine = pos;
+                firstLine.y += tinyLineHeight;
+                thirdLine.y -= tinyLineHeight;
+                if( thirdLineWords == "" ) {
+                    firstLine.y = pos.y + tinyLineHeight/2;
+                    secondLine.y = pos.y - tinyLineHeight/2;
+                }
+                
+                drawStr(firstLineWords, firstLine, "tinyHandwritten", false);
+                drawStr(secondLineWords, secondLine, "tinyHandwritten", false);
+                if( thirdLineWords != "" ) drawStr(thirdLineWords, thirdLine, "tinyHandwritten", false);
+                
+            }
+			
 			
 			pos.x += iconSize;
 			iconLT = {pos.x - iconSize/2, pos.y + iconSize/2};
@@ -1154,12 +1245,14 @@ void minitech::updateDrawTwoTech() {
 				setDrawColor( 1, 1, 1, 0.3 );
 				drawRect(pos, iconSize/2, iconSize/2);
 			}
-			if (trans->target == -1) {
+			if (trans->target == -1 && trans->contTransFlag == 0) {
 				if (trans->newTarget == 0) {
 					drawStr("MOUTH", pos, "tinyHandwritten", false);
 				} else {
 					drawObj(pos, trans->target, "EMPTY", "GROUND");
 				}
+			} else if (trans->target == -1 && trans->contTransFlag != 0) {
+                drawObj(pos, trans->target, "ANY", "ITEM");
 			} else {
 				drawObj(pos, trans->target);
 			}
@@ -1194,7 +1287,17 @@ void minitech::updateDrawTwoTech() {
 				setDrawColor( 1, 1, 1, 0.3 );
 				drawRect(pos, iconSize/2, iconSize/2);
 			}
-			if (trans->actor > 0 && trans->target > 0 && trans->newActor == 0) {
+			if (trans->newActor == 0 && trans->contTransFlag != 0) {
+                if( trans->actor == 0 && trans->newActor == 0 ) {
+                    drawObj(pos, trans->newActor, "ANY", "ITEM");
+                } else {
+                    //This should not happen, not currently implemented.
+                    // drawStr("DESPAWNS", pos, "tinyHandwritten", false);
+                    
+                    //Draw actor instead...
+                    drawObj(pos, trans->actor, "ANY", "ITEM");
+                }
+			} else if (trans->actor > 0 && trans->target > 0 && trans->newActor == 0) {
 				drawObj(pos, trans->newActor);
 			} else if (trans->actor == -1 && trans->autoDecaySeconds != 0 && trans->newActor == 0) {
 				if (trans->move != 0) {
@@ -1229,7 +1332,11 @@ void minitech::updateDrawTwoTech() {
 			} else if (trans->target == -1 && trans->newTarget == 0) {
 				//not drawing the plus sign for eating transitions
 			} else {
-				drawStr("+", pos, "handwritten", false);
+                if( trans->contTransFlag == 0 || inOrOutContainmentTrans ) {
+                    drawStr("+", pos, "handwritten", false);
+                } else {
+                    drawStr("IN", pos, "tinyHandwritten", false);
+                }
 			}
 			
 			pos.x += iconSize;
@@ -1243,7 +1350,17 @@ void minitech::updateDrawTwoTech() {
 				setDrawColor( 1, 1, 1, 0.3 );
 				drawRect(pos, iconSize/2, iconSize/2);
 			}
-			if (trans->actor == -1 && trans->autoDecaySeconds != 0 && trans->newTarget == 0) {
+			if (trans->newTarget == 0 && trans->contTransFlag != 0) {
+                if( trans->target == 0 && trans->newTarget == 0 ) {
+                    drawObj(pos, trans->newTarget, "ANY", "ITEM");
+                } else {
+                    //This should not happen, not currently implemented.
+                    // drawStr("DESPAWNS", pos, "tinyHandwritten", false);
+                    
+                    //Draw target instead...
+                    drawObj(pos, trans->target, "ANY", "ITEM");
+                }
+			} else if (trans->actor == -1 && trans->autoDecaySeconds != 0 && trans->newTarget == 0) {
 				//Despawn transitions, "DESPAWNS" is written in the newActor slot, keep this slot empty
 			} else if (trans->target == -1 && trans->newTarget == 0) {
 				//Eating transitions
