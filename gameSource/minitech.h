@@ -4,6 +4,7 @@
 #include "LivingLifePage.h"
 #include <vector>
 #include <string>
+#include <regex>
 
 
 class minitech
@@ -14,6 +15,9 @@ public:
 	
 	static bool minitechEnabled;
 	static float guiScale;
+    
+    static bool showUncraftables;
+    static bool showCommentsAndTagsInObjectDescription;
 	
 	static float viewWidth;
 	static float viewHeight;
@@ -67,7 +71,9 @@ public:
 	static int compareObjUse(int idA, int idB);
 	static bool isProbabilitySet(int objId);
 	static float getTransProbability(TransRecord* trans);
+    static bool isUncraftable(int objId);
 	static unsigned int LevenshteinDistance(const std::string& s1, const std::string& s2);
+    static std::vector<std::string> Tokenize( const std::string str, const std::string regpattern );
 	
 	static int objIdFromXY( int x, int y );
 	static std::vector<bool> getObjIsCloseVector();
@@ -102,6 +108,7 @@ public:
 	static int currentHintObjId;
 	static int lastHintObjId;
 	static std::string lastHintStr;
+    static bool lastHintSearchNoResults;
 	static bool changeHintObjOnTouch;
 	static std::vector<mouseListener*> twotechMouseListeners;
 	static mouseListener* prevListener;
@@ -110,6 +117,7 @@ public:
 	static std::vector<TransRecord*> sortProdTrans(std::vector<TransRecord*> unsortedTrans);
 	static void updateDrawTwoTech();
 	static void inputHintStrToSearch(std::string hintStr);
+    static void changeCurrentHintObjId(int objID);
 
 	
 

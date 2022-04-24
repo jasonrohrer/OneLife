@@ -5,6 +5,7 @@
 #include <numeric> //iota
 #include <cmath> //pow and sqrt
 #include <algorithm> //vector sort
+#include <regex> //to tokenize object names for whole word matching, and comment stripping
 
 #include "LivingLifePage.h"
 #include "groundSprites.h"
@@ -25,6 +26,9 @@ using namespace std;
 
 bool minitech::minitechEnabled = true;
 float minitech::guiScale = 1.0f;
+
+bool minitech::showUncraftables = false;
+bool minitech::showCommentsAndTagsInObjectDescription = true;
 
 float minitech::viewWidth = 1280.0;
 float minitech::viewHeight = 720.0;
@@ -56,6 +60,7 @@ int minitech::lastUseOrMake;
 int minitech::currentHintObjId;
 int minitech::lastHintObjId;
 string minitech::lastHintStr;
+bool minitech::lastHintSearchNoResults = false;
 bool minitech::changeHintObjOnTouch;
 vector<minitech::mouseListener*> minitech::twotechMouseListeners;
 minitech::mouseListener* minitech::prevListener;
@@ -95,6 +100,8 @@ void minitech::setLivingLifePage(
 	minitechEnabled = SettingsManager::getIntSetting( "useMinitech", 1 );
 	char *minimizeKeyFromSetting = SettingsManager::getStringSetting("minitechMinimizeKey", "v");
 	minimizeKey = minimizeKeyFromSetting[0];
+    
+    showUncraftables = SettingsManager::getIntSetting( "minitechShowUncraftables", 0 );
 }
 
 void minitech::initOnBirth() { 
@@ -175,6 +182,7 @@ bool minitech::isCategory(int objId) {
 	CategoryRecord *c = getCategory( objId );
 	if (c == NULL) return false;
     if( !c->isPattern && c->objectIDSet.size() > 0 ) return true;
+    if( c->isPattern ) return true;
     return false;
 }
 
@@ -473,6 +481,13 @@ vector<bool> minitech::getObjIsCloseVector() {
 	return objIsClose;
 }
 
+bool minitech::isUncraftable(int objId) {
+    if( objId <= 0 ) return false;
+    int d = getObjectDepth( objId );
+    if( d == UNREACHABLE ) return true;
+    return false;
+}
+
 unsigned int minitech::LevenshteinDistance(const std::string& s1, const std::string& s2) {
 	const std::size_t len1 = s1.size(), len2 = s2.size();
 	std::vector<std::vector<unsigned int>> d(len1 + 1, std::vector<unsigned int>(len2 + 1));
@@ -487,6 +502,19 @@ unsigned int minitech::LevenshteinDistance(const std::string& s1, const std::str
                       // for C++98 use std::min(std::min(arg1, arg2), arg3)
                       d[i][j] = std::min({ d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 0 : 1) });
 	return d[len1][len2];
+}
+
+std::vector<std::string> minitech::Tokenize( const string str, const string regpattern ) {
+    using namespace std;
+    regex re( regpattern );
+    std::vector<string> result;
+    sregex_token_iterator it( str.begin(), str.end(), re, -1 );
+    sregex_token_iterator reg_end;
+    for ( ; it != reg_end; ++it ) {
+        if ( !it->str().empty() ) //token could be empty:check
+            result.emplace_back( it->str() );
+    }
+    return result;
 }
 
 
@@ -682,7 +710,18 @@ vector<TransRecord*> minitech::getUsesTrans(int objId) {
 		//Skip raw lastUse transitions, the proper ones are auto-generated and not tagged as lastUse
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
 		//Skip generic use transitions when they are not food
-		if (idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0) continue; 
+		if ( idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0 && trans->contTransFlag == 0 ) continue;
+        
+        if ( trans->contTransFlag != 0 ) {
+            //No container-ception, this probably results from cont tag inheritance
+            if( idA == idB ) continue;
+            //Similarly, this results from cont tag inheritance
+            if( getObject(idA) != NULL && getObject(idB) != NULL &&
+                getObject(idA)->permanent && getObject(idB)->permanent ) continue;
+        }
+        
+        //Skip transitions that involve uncraftable objects
+        if ( !showUncraftables && (isUncraftable(idA) || isUncraftable(idB) || isUncraftable(idC) || isUncraftable(idD)) ) continue;
 		
 		results.push_back(trans);
 
@@ -720,7 +759,18 @@ vector<TransRecord*> minitech::getProdTrans(int objId) {
 		//Skip raw lastUse transitions, the proper ones are auto-generated and not tagged as lastUse
 		if ( trans->lastUseActor || trans->lastUseTarget ) continue;
 		//Skip generic use transitions when they are not food
-		if (idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0) continue;
+		if ( idB == -1 && idD == 0 && getObject(idA) != NULL && getObject(idA)->foodValue == 0 && trans->contTransFlag == 0 ) continue;
+        
+        if ( trans->contTransFlag != 0 ) {
+            //No container-ception, this probably results from cont tag inheritance
+            if( idA == idB ) continue;
+            //Similarly, this results from cont tag inheritance
+            if( getObject(idA) != NULL && getObject(idB) != NULL &&
+                getObject(idA)->permanent && getObject(idB)->permanent ) continue;
+        }
+        
+        //Skip transitions that involve uncraftable objects
+        if ( !showUncraftables && (isUncraftable(idA) || isUncraftable(idB) || isUncraftable(idC) || isUncraftable(idD)) ) continue;
 		
 		//Strangely there are results that do not make the object at all e.g. bowl of water, reason unknown yet
 		if (idC != objId && idD != objId) continue;
@@ -1040,15 +1090,37 @@ void minitech::updateDrawTwoTech() {
 				continue;
 			}
 			
+            
+            // Check if it is a containment transition
+            int inOrOutContainmentTrans = -1;
+            
+            if( trans->contTransFlag != 0 ) {
+                ObjectRecord* newTarget = getObject(trans->newTarget);
+                ObjectRecord* newActor = getObject(trans->newActor);
+                
+                if( newTarget != NULL && 
+                    newTarget->numSlots > 0 &&
+                    ( newActor == NULL || 
+                        ( newActor->numSlots == 0 || 
+                        !newActor->permanent )
+                    )
+                ) {
+                    // in
+                    inOrOutContainmentTrans = 0;
+                } else {
+                    // out
+                    inOrOutContainmentTrans = 1;
+                }
+            }
 
-			doublePair posLineTL = {
-				posLineLCen.x - paddingX,
-				posLineLCen.y + iconSize/2
-			};
-			doublePair posLineBR = {
-				posLineTL.x + recWidth,
-				posLineTL.y - iconSize
-			};
+            doublePair posLineTL = {
+                posLineLCen.x - paddingX,
+                posLineLCen.y + iconSize/2
+            };
+            doublePair posLineBR = {
+                posLineTL.x + recWidth,
+                posLineTL.y - iconSize
+            };
 
 			mouseListener* lineListener = getMouseListenerByArea(
 				&twotechMouseListeners, sub(posLineTL, screenPos), sub(posLineBR, screenPos));
@@ -1098,6 +1170,8 @@ void minitech::updateDrawTwoTech() {
 						drawObj(pos, trans->actor, "WAIT", to_string(decayTime) + " SEC");
 					}
 				}
+			} else if (trans->actor == 0 && trans->contTransFlag != 0) {                
+                drawObj(pos, trans->actor, "ANY", "ITEM");
 			} else {
 				drawObj(pos, trans->actor);
 			}
@@ -1109,7 +1183,56 @@ void minitech::updateDrawTwoTech() {
 
 			
 			pos.x += iconSize;
-			drawStr("+", pos, "handwritten", false);
+            if( trans->contTransFlag == 0 ) {
+                drawStr("+", pos, "handwritten", false);
+            } else {
+                
+                string firstLineWords = "";
+                string secondLineWords = "";
+                string thirdLineWords = "";
+                
+                if( inOrOutContainmentTrans == 0 ) {
+                    firstLineWords = "PUT";
+                    secondLineWords = "INTO";
+                } else if( inOrOutContainmentTrans == 1 ) {
+                    firstLineWords = "TAKE";
+                    secondLineWords = "OUT";                    
+                }
+                
+                if( trans->contTransFlag == 1 ) {
+                    thirdLineWords = "(FIRST)";
+                } else if ( trans->contTransFlag == 2 ) {
+                    thirdLineWords = "(LAST)";
+                } else if ( trans->contTransFlag == 3 ) {
+                    thirdLineWords = "";
+                } else if ( trans->contTransFlag == 4 ) {
+                    if( inOrOutContainmentTrans == 0 ) {
+                        firstLineWords = "PUT/";
+                        secondLineWords = "SWAP";
+                        thirdLineWords = "INTO";
+                    } else if( inOrOutContainmentTrans == 1 ) {
+                        firstLineWords = "TAKE/";
+                        secondLineWords = "SWAP";
+                        thirdLineWords = "OUT";
+                    }
+                }
+                
+                doublePair firstLine = pos;
+                doublePair secondLine = pos;
+                doublePair thirdLine = pos;
+                firstLine.y += tinyLineHeight;
+                thirdLine.y -= tinyLineHeight;
+                if( thirdLineWords == "" ) {
+                    firstLine.y = pos.y + tinyLineHeight/2;
+                    secondLine.y = pos.y - tinyLineHeight/2;
+                }
+                
+                drawStr(firstLineWords, firstLine, "tinyHandwritten", false);
+                drawStr(secondLineWords, secondLine, "tinyHandwritten", false);
+                if( thirdLineWords != "" ) drawStr(thirdLineWords, thirdLine, "tinyHandwritten", false);
+                
+            }
+			
 			
 			pos.x += iconSize;
 			iconLT = {pos.x - iconSize/2, pos.y + iconSize/2};
@@ -1122,12 +1245,14 @@ void minitech::updateDrawTwoTech() {
 				setDrawColor( 1, 1, 1, 0.3 );
 				drawRect(pos, iconSize/2, iconSize/2);
 			}
-			if (trans->target == -1) {
+			if (trans->target == -1 && trans->contTransFlag == 0) {
 				if (trans->newTarget == 0) {
 					drawStr("MOUTH", pos, "tinyHandwritten", false);
 				} else {
 					drawObj(pos, trans->target, "EMPTY", "GROUND");
 				}
+			} else if (trans->target == -1 && trans->contTransFlag != 0) {
+                drawObj(pos, trans->target, "ANY", "ITEM");
 			} else {
 				drawObj(pos, trans->target);
 			}
@@ -1162,7 +1287,17 @@ void minitech::updateDrawTwoTech() {
 				setDrawColor( 1, 1, 1, 0.3 );
 				drawRect(pos, iconSize/2, iconSize/2);
 			}
-			if (trans->actor > 0 && trans->target > 0 && trans->newActor == 0) {
+			if (trans->newActor == 0 && trans->contTransFlag != 0) {
+                if( trans->actor == 0 && trans->newActor == 0 ) {
+                    drawObj(pos, trans->newActor, "ANY", "ITEM");
+                } else {
+                    //This should not happen, not currently implemented.
+                    // drawStr("DESPAWNS", pos, "tinyHandwritten", false);
+                    
+                    //Draw actor instead...
+                    drawObj(pos, trans->actor, "ANY", "ITEM");
+                }
+			} else if (trans->actor > 0 && trans->target > 0 && trans->newActor == 0) {
 				drawObj(pos, trans->newActor);
 			} else if (trans->actor == -1 && trans->autoDecaySeconds != 0 && trans->newActor == 0) {
 				if (trans->move != 0) {
@@ -1197,7 +1332,11 @@ void minitech::updateDrawTwoTech() {
 			} else if (trans->target == -1 && trans->newTarget == 0) {
 				//not drawing the plus sign for eating transitions
 			} else {
-				drawStr("+", pos, "handwritten", false);
+                if( trans->contTransFlag == 0 || inOrOutContainmentTrans ) {
+                    drawStr("+", pos, "handwritten", false);
+                } else {
+                    drawStr("IN", pos, "tinyHandwritten", false);
+                }
 			}
 			
 			pos.x += iconSize;
@@ -1211,7 +1350,17 @@ void minitech::updateDrawTwoTech() {
 				setDrawColor( 1, 1, 1, 0.3 );
 				drawRect(pos, iconSize/2, iconSize/2);
 			}
-			if (trans->actor == -1 && trans->autoDecaySeconds != 0 && trans->newTarget == 0) {
+			if (trans->newTarget == 0 && trans->contTransFlag != 0) {
+                if( trans->target == 0 && trans->newTarget == 0 ) {
+                    drawObj(pos, trans->newTarget, "ANY", "ITEM");
+                } else {
+                    //This should not happen, not currently implemented.
+                    // drawStr("DESPAWNS", pos, "tinyHandwritten", false);
+                    
+                    //Draw target instead...
+                    drawObj(pos, trans->target, "ANY", "ITEM");
+                }
+			} else if (trans->actor == -1 && trans->autoDecaySeconds != 0 && trans->newTarget == 0) {
 				//Despawn transitions, "DESPAWNS" is written in the newActor slot, keep this slot empty
 			} else if (trans->target == -1 && trans->newTarget == 0) {
 				//Eating transitions
@@ -1307,12 +1456,27 @@ void minitech::updateDrawTwoTech() {
 				
 				ObjectRecord* o = getObject(id);
 				string objFullDesc(stringToUpperCase(o->description));
-				int poundPos = objFullDesc.find("#");
-				if (poundPos != -1) {
-					string objDesc(objFullDesc.substr(poundPos + 1));
-					captionPos.y -= tinyLineHeight*2;
-					drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
-				}
+                int poundPos = objFullDesc.find("#");
+                if (poundPos != -1) {
+                    string displayedComments = "";
+                    string objDesc(objFullDesc.substr(poundPos + 1));
+                    
+                    if( !showCommentsAndTagsInObjectDescription ) {
+                        std::vector<std::string> parts = Tokenize( objDesc, "[#]+" );
+                        for ( int j=0; j<(int)parts.size(); j++ ) {
+                            // if( parts[j].find(" USE") != std::string::npos ) {
+                            if( parts[j].rfind(" USE", 0) == 0 ) {
+                                displayedComments = parts[j];
+                            }
+                        }
+                    } else {
+                        displayedComments = objDesc;
+                    }
+                    if( displayedComments != "" ) {
+                        captionPos.y -= tinyLineHeight*2;
+                        drawStr(displayedComments, captionPos, "tinyHandwritten", true, true);
+                    }
+                }
 			}
 		}
 	}
@@ -1389,16 +1553,35 @@ void minitech::updateDrawTwoTech() {
 		string objFullDesc(stringToUpperCase(o->description));
 		int poundPos = objFullDesc.find("#");
 		if (poundPos != -1) {
-			string objDesc(objFullDesc.substr(poundPos + 1));
-			captionPos.y -= tinyLineHeight*2;
-			drawStr(objDesc, captionPos, "tinyHandwritten", true, true);
+            string displayedComments = "";
+            string objDesc(objFullDesc.substr(poundPos + 1));
+            
+            if( !showCommentsAndTagsInObjectDescription ) {
+                std::vector<std::string> parts = Tokenize( objDesc, "[#]+" );
+                for ( int j=0; j<(int)parts.size(); j++ ) {
+                    // if( parts[j].find(" USE") != std::string::npos ) {
+                    if( parts[j].rfind(" USE", 0) == 0 ) {
+                        displayedComments = parts[j];
+                    }
+                }
+            } else {
+                displayedComments = objDesc;
+            }
+            if( displayedComments != "" ) {
+                captionPos.y -= tinyLineHeight*2;
+                drawStr(displayedComments, captionPos, "tinyHandwritten", true, true);
+            }
 		}
 	}
 	
 	if (showBar) {
 		string searchStr;
 		if (lastHintStr != "") {
-			searchStr = "SEARCHING: " + lastHintStr;
+            if (lastHintSearchNoResults) {
+                searchStr = "SEARCHING: " + lastHintStr + " (NO RESULTS)";
+            } else {
+                searchStr = "SEARCHING: " + lastHintStr;
+            }
 		} else if (ourLiveObject->holdingID != 0 && ourLiveObject->holdingID == currentHintObjId) {
 			string objName(livingLifePage->minitechGetDisplayObjectDescription(currentHintObjId));
 			searchStr = "HOLDING: " + objName;
@@ -1430,6 +1613,7 @@ void minitech::updateDrawTwoTech() {
 
 void minitech::inputHintStrToSearch(string hintStr) {
 	lastHintStr = hintStr;
+    lastHintSearchNoResults = false;
 	if (hintStr == "") {
 		changeHintObjOnTouch = true;
 	} else {
@@ -1445,28 +1629,93 @@ void minitech::inputHintStrToSearch(string hintStr) {
 		if (numHits > 0) {
 			vector<ObjectRecord*> unsortedHits;
 			for (int i=0; i<numHits; i++) {
-				unsortedHits.push_back(hitsSimpleVector[i]);
+                if( !showCommentsAndTagsInObjectDescription ) {
+                    string strippedName(livingLifePage->minitechGetDisplayObjectDescription(hitsSimpleVector[i]->id)); 
+                    if( strippedName.find(hintStr) != std::string::npos )
+                        unsortedHits.push_back(hitsSimpleVector[i]);
+                } else {
+                    unsortedHits.push_back(hitsSimpleVector[i]);
+                }
 			}
-			
-			vector<std::size_t> index(unsortedHits.size());
-			iota(index.begin(), index.end(), 0);
-			sort(index.begin(), index.end(), [&](size_t a, size_t b) { 
-				// string aDesc(stringToUpperCase(unsortedHits[a]->description));
-				// string bDesc(stringToUpperCase(unsortedHits[b]->description));
-				// int aLDist = LevenshteinDistance(hintStr, aDesc); 
-				// int bLDist = LevenshteinDistance(hintStr, bDesc);
-				// return aLDist < bLDist;
-				return unsortedHits[a]->id < unsortedHits[b]->id;
-			});
-			
-			vector<ObjectRecord*> sortedHits(unsortedHits.size());
-			for ( int i=0; i<(int)unsortedHits.size(); i++ ) {
-				sortedHits[i] = unsortedHits[index[i]];
-			}
-			
-			currentHintObjId = sortedHits[0]->id;
-		}
+            
+            if( unsortedHits.size() > 0 ) {
+            
+                std::vector<std::string> hintWords = Tokenize( hintStr, "[\\s]+" );
+                std::vector<std::vector<std::string>> descWords(unsortedHits.size());
+                
+                vector<std::size_t> index(unsortedHits.size());
+                iota(index.begin(), index.end(), 0);
+                sort(index.begin(), index.end(), [&](size_t a, size_t b) { 
+                    // string aDesc(stringToUpperCase(unsortedHits[a]->description));
+                    // string bDesc(stringToUpperCase(unsortedHits[b]->description));
+                    // int aLDist = LevenshteinDistance(hintStr, aDesc); 
+                    // int bLDist = LevenshteinDistance(hintStr, bDesc);
+                    // return aLDist < bLDist;
+                    
+                    string aDesc;
+                    string bDesc;
+                    if( !showCommentsAndTagsInObjectDescription ) {
+                        aDesc = livingLifePage->minitechGetDisplayObjectDescription(unsortedHits[a]->id);
+                        bDesc = livingLifePage->minitechGetDisplayObjectDescription(unsortedHits[b]->id);
+                    } else {
+                        aDesc = stringToUpperCase(unsortedHits[a]->description);
+                        bDesc = stringToUpperCase(unsortedHits[b]->description);
+                    }
+
+                    if( descWords[a].size() == 0 ) descWords[a] = Tokenize( aDesc, "[\\s]+" );
+                    if( descWords[b].size() == 0 ) descWords[b] = Tokenize( bDesc, "[\\s]+" );                
+                    std::vector<std::string> aDescWords = descWords[a];
+                    std::vector<std::string> bDescWords = descWords[b];
+                    
+                    int aScore = 0;
+                    int bScore = 0;
+                    
+                    for ( int i=0; i<(int)hintWords.size(); i++ ) {
+                        string hintWord = hintWords[i];
+                        for ( int j=0; j<(int)aDescWords.size(); j++ ) {
+                            if( hintWord.compare( aDescWords[j] ) == 0 ) aScore++;
+                        }
+                        for ( int k=0; k<(int)bDescWords.size(); k++ ) {
+                            if( hintWord.compare( bDescWords[k] ) == 0 ) bScore++;
+                        }
+                    }
+                    
+                    float aScoreF = (float)aScore / (float)aDescWords.size();
+                    float bScoreF = (float)bScore / (float)bDescWords.size();
+                    
+                    if( aScoreF == bScoreF ) {
+                        return unsortedHits[a]->id < unsortedHits[b]->id;
+                    } else {
+                        return aScoreF > bScoreF;
+                    }
+                });
+                
+                vector<ObjectRecord*> sortedHits(unsortedHits.size());
+                for ( int i=0; i<(int)unsortedHits.size(); i++ ) {
+                    sortedHits[i] = unsortedHits[index[i]];
+                }
+                
+                if (showUncraftables) {
+                    currentHintObjId = sortedHits[0]->id;
+                    return;
+                } else {
+                    for ( int i=0; i<(int)sortedHits.size(); i++ ) {
+                        if ( !isUncraftable(sortedHits[i]->id) ) {
+                            currentHintObjId = sortedHits[i]->id;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        lastHintSearchNoResults = true;
+        changeHintObjOnTouch = true;
 	}
+}
+
+void minitech::changeCurrentHintObjId(int objID) {
+    lastHintStr = "";
+    currentHintObjId = objID;
 }
 
 
@@ -1579,8 +1828,12 @@ bool minitech::livingLifeKeyDown(unsigned char inASCII) {
 		currentTwoTechPage -= 1;
 	}
 	
-	if (!shiftKey && !commandKey && toupper(inASCII) == toupper(minimizeKey)) {
+	if (!shiftKey && !commandKey && toupper(inASCII) == toupper(minimizeKey)) { //V
 		minitechMinimized = !minitechMinimized;
+	}
+    
+	if (!shiftKey && commandKey && inASCII + 64 == toupper(minimizeKey)) { //Ctrl + V
+		useOrMake = 1 - useOrMake;
 	}
 	
 	// if ( inASCII == 'p' ) {
