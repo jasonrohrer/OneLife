@@ -8617,6 +8617,44 @@ static char addHeldToContainer( LiveObject *inPlayer,
             if( contTrans == NULL ) contTrans = getPTrans( 0, target, false, false, 4 );
         }
         
+        if( contTrans != NULL ) {
+            
+            // Check that the new container can contain all the objects
+            
+            int newNumSlots = getNumContainerSlots( contTrans->newTarget );
+            
+            if( numIn > newNumSlots || (numIn == newNumSlots && !inSwap) ) {
+                return false;
+                } 
+            else {
+                int slotNumber = numIn - 1;
+                
+                int contID = getContained( 
+                    inContX, inContY,
+                    slotNumber );
+            
+                while( slotNumber >= 0 &&
+                       containmentPermitted( contTrans->newTarget, contID ) )  {
+            
+                    slotNumber--;
+                    
+                    if( slotNumber < 0 ) break;
+                    
+                    contID = getContained( 
+                        inContX, inContY,
+                        slotNumber );
+                
+                    if( contID < 0 ) {
+                        contID *= -1;
+                        }
+                    }
+                    
+                if( slotNumber >= 0 ) {
+                    return false;
+                    }
+                }
+            }
+            
         // Execute containment transitions
         
         if( contTrans != NULL && contTrans->newActor > 0 ) {
@@ -8848,6 +8886,48 @@ char removeFromContainerToHold( LiveObject *inPlayer,
                     contTrans = getPTrans( target, toRemoveID, false, false, 4 );
                     if( contTrans == NULL ) contTrans = getPTrans( target, -1, false, false, 4 );
                 }
+                
+                if( contTrans != NULL ) {
+                    
+                    // Check that the new container can contain all the objects
+                    
+                    int newNumSlots = getNumContainerSlots( contTrans->newActor );
+                    
+                    int slotNumber = numIn - 1;
+                    
+                    if( inSlotNumber == slotNumber ) slotNumber--;
+                    
+                    int contID = getContained( 
+                        inContX, inContY,
+                        slotNumber );
+                        
+                    if( contID < 0 ) contID *= -1;
+
+                
+                    while( slotNumber >= 0 &&
+                           containmentPermitted( contTrans->newActor, contID ) )  {
+                
+                        slotNumber--;
+                        
+                        if( inSlotNumber == slotNumber ) slotNumber--;
+                        
+                        if( slotNumber < 0 ) break;
+                        
+                        contID = getContained( 
+                            inContX, inContY,
+                            slotNumber );
+                    
+                        if( contID < 0 ) {
+                            contID *= -1;
+                            }
+                        }
+                        
+                    if( slotNumber >= 0 ) {
+                        contTrans = NULL;
+                        }
+                        
+                    }
+
                 
                 // Execute containment transitions
                 
@@ -16402,6 +16482,15 @@ int main() {
                                         
                                         ObjectRecord *newTarget = NULL;
                                         
+                                        // Check if this transition will trigger
+                                        // a containment transition
+                                        
+                                        TransRecord *containmentTrans = NULL;
+                                        bool noInContTrans = false;
+                                        bool isOutContTrans = false;
+                                        
+                                        bool blockedByContainmentTrans = false;
+                                        
                                         if( ! isSubCont &&
                                             contTrans != NULL &&
                                             ( contTrans->newActor == 
@@ -16418,11 +16507,124 @@ int main() {
                                                 newTarget = getObject(
                                                     contTrans->newTarget );
                                                 }
+                                                
+                                            // Check if this transition will trigger
+                                            // a containment transition
+                                                
+                                            int numContained = 
+                                                getNumContained( m.x, m.y );
+                                                           
+                                            int containerID = targetObj->id;
+                                            int containedID = contTrans->newTarget;
+                                            int oldContainedID = contTrans->target;
+                                            
+                                            // IN containment transitions
+                                            
+                                            if( numContained == 1 ) {
+                                                containmentTrans = getPTrans( containedID, containerID, false, false, 1 );
+                                                if( containmentTrans == NULL ) containmentTrans = getPTrans( 0, containerID, false, false, 1 );
+                                            } else if( targetObj->numSlots == numContained ) {
+                                                containmentTrans = getPTrans( containedID, containerID, false, false, 2 );
+                                                if( containmentTrans == NULL ) containmentTrans = getPTrans( 0, containerID, false, false, 2 );
                                             }
+                                            
+                                            // Any No Swap flag doesn't make sense here as we are useOnContained
+                                            // Still keeping it here to potentially preceed Any
+                                            if( containmentTrans == NULL ) {
+                                                containmentTrans = getPTrans( containedID, containerID, false, false, 3 );
+                                                if( containmentTrans == NULL ) containmentTrans = getPTrans( 0, containerID, false, false, 3 );
+                                            }
+                                            
+                                            if( containmentTrans == NULL ) {
+                                                containmentTrans = getPTrans( containedID, target, false, false, 4 );
+                                                if( containmentTrans == NULL ) containmentTrans = getPTrans( 0, target, false, false, 4 );
+                                            }
+                                            
+                                            if( containmentTrans == NULL ) noInContTrans = true;
+                                            
+                                            // OUT containment transitions
+                                            
+                                            if( containmentTrans == NULL ) {
+                                                if( numContained == 1 ) {
+                                                    containmentTrans = getPTrans( containerID, oldContainedID, false, false, 2 );
+                                                    if( containmentTrans == NULL ) containmentTrans = getPTrans( containerID, 0, false, false, 2 );
+                                                } else if( targetObj->numSlots == numContained ) {
+                                                    containmentTrans = getPTrans( containerID, oldContainedID, false, false, 1 );
+                                                    if( containmentTrans == NULL ) containmentTrans = getPTrans( containerID, 0, false, false, 1 );
+                                                }
+                                            }
+                                            
+                                            // Any No Swap flag doesn't make sense here as we are useOnContained
+                                            // Still keeping it here to potentially preceed Any
+                                            if( containmentTrans == NULL ) {
+                                                containmentTrans = getPTrans( containerID, oldContainedID, false, false, 3 );
+                                                if( containmentTrans == NULL ) containmentTrans = getPTrans( containerID, 0, false, false, 3 );
+                                            }
+                                            
+                                            if( containmentTrans == NULL ) {
+                                                containmentTrans = getPTrans( target, oldContainedID, false, false, 4 );
+                                                if( containmentTrans == NULL ) containmentTrans = getPTrans( target, 0, false, false, 4 );
+                                            }
+                                            
+                                            if( containmentTrans != NULL && noInContTrans ) isOutContTrans = true;
+                                            
+                                            
+                                            if( containmentTrans != NULL ) {
+                                                
+                                                // Check that the new container can contain all the objects
+                                                
+                                                int newContainerID = containmentTrans->newTarget;
+                                                if( isOutContTrans ) newContainerID = containmentTrans->newActor;
+                                                
+                                                int newNumSlots = getNumContainerSlots( newContainerID );
+                                                
+                                                if( numContained > newNumSlots ) {
+                                                    containmentTrans = NULL;
+                                                    blockedByContainmentTrans = true;
+                                                    } 
+                                                else {
+                                                    int slotNumber = numContained - 1;
+                                                    
+                                                    int contID = getContained( 
+                                                        m.x, m.y,
+                                                        slotNumber );
+                                                        
+                                                    if( isOutContTrans && slotNumber == m.i ) contID = containmentTrans->newTarget;
+                                                        
+                                                    if( contID < 0 ) contID *= -1;
+                                                
+                                                    while( slotNumber >= 0 &&
+                                                           containmentPermitted( newContainerID, contID ) )  {
+                                                
+                                                        slotNumber--;
+                                                        
+                                                        if( slotNumber < 0 ) break;
+                                                        
+                                                        contID = getContained( 
+                                                            m.x, m.y,
+                                                            slotNumber );
+                                                            
+                                                        if( isOutContTrans && slotNumber == m.i ) contID = containmentTrans->newTarget;
+                                                    
+                                                        if( contID < 0 ) {
+                                                            contID *= -1;
+                                                            }
+                                                        }
+                                                        
+                                                    if( slotNumber >= 0 ) {
+                                                        containmentTrans = NULL;
+                                                        if ( !isOutContTrans || ( isOutContTrans && slotNumber != m.i ) )
+                                                            blockedByContainmentTrans = true;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            
 										if( newTarget != NULL &&
 											containmentPermitted(
 												targetObj->id,
-												newTarget->id ) ) {
+												newTarget->id ) &&
+                                                !blockedByContainmentTrans ) {
                                                 
                                             int oldHeld = 
                                                 nextPlayer->holdingID;
@@ -16454,6 +16656,13 @@ int main() {
                                                 m.x, m.y,
                                                 m.i, 
                                                 contTrans->newTarget );
+                                                
+                                            if( containmentTrans != NULL ) {
+                                                int newContainerID = containmentTrans->newTarget;
+                                                if( isOutContTrans ) newContainerID = containmentTrans->newActor;
+                                                if( containmentTrans == NULL ) setResponsiblePlayer( -1 );
+                                                setMapObject( m.x, m.y, newContainerID );
+                                                }                     
                                             
                                             setResponsiblePlayer( -1 );
                                             handled = true;
