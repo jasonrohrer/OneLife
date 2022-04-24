@@ -8375,6 +8375,13 @@ static char isContainmentWithMatchedTags( int inContainerID, int inContainedID )
 // whether container has empty slot is checked elsewhere
 static char containmentPermitted( int inContainerID, int inContainedID ) {
     
+    // Use the container's and object's dummy parents to judge
+    // So use objects also inherit the cont tag
+    ObjectRecord *containerObj = getObject( inContainerID );
+    ObjectRecord *containedObj = getObject( inContainedID );
+    if( containerObj->isUseDummy ) inContainerID = containerObj->useDummyParent;
+    if( containedObj->isUseDummy ) inContainedID = containedObj->useDummyParent;
+    
     // avoid container-ception
     if( inContainerID == inContainedID ) return false;    
     
@@ -8384,63 +8391,44 @@ static char containmentPermitted( int inContainerID, int inContainedID ) {
     // matching tags for container and object, skip other checks
     if( isContainmentWithMatchedTags( inContainerID, inContainedID ) ) return true;
     
-    // container and object have parent categories which have matching tags, skip other checks
+    // either or both container and object have parent categories which have matching tags, skip other checks
     
     ReverseCategoryRecord *containedRecord = getReverseCategory( inContainedID );
-        
-    if( containedRecord != NULL ) {    
+    ReverseCategoryRecord *containerRecord = getReverseCategory( inContainerID );
+    
+    if( containerRecord != NULL && containedRecord != NULL ) {
+        for( int i=0; i< containerRecord->categoryIDSet.size(); i++ ) {
+            int containerCID = containerRecord->categoryIDSet.getElementDirect( i );
+            CategoryRecord *containerCategory = getCategory( containerCID );
+            if( containerCategory == NULL ) continue;
+            int containerPID = containerCategory->parentID;
             
-        for( int j=0; j< containedRecord->categoryIDSet.size(); j++ ) {
-                
-            int containedCID = containedRecord->categoryIDSet.getElementDirect( j );
-            
-            CategoryRecord *containedCategory = getCategory( containedCID );
-                
-            if( containedCategory != NULL ) {
+            for( int j=0; j< containedRecord->categoryIDSet.size(); j++ ) {
+                int containedCID = containedRecord->categoryIDSet.getElementDirect( j );
+                CategoryRecord *containedCategory = getCategory( containedCID );
+                if( containedCategory == NULL ) continue;
                 int containedPID = containedCategory->parentID;
                 
-                if( isContainmentWithMatchedTags( inContainerID, containedPID ) ) return true;
-                
-                }
+                if( isContainmentWithMatchedTags( containerPID, containedPID ) ) return true;
             }
         }
-    
-    ReverseCategoryRecord *containerRecord = getReverseCategory( inContainerID );
-        
-    if( containerRecord != NULL ) {    
-            
+    } else if ( containerRecord != NULL ) {
         for( int i=0; i< containerRecord->categoryIDSet.size(); i++ ) {
-                
             int containerCID = containerRecord->categoryIDSet.getElementDirect( i );
-            
             CategoryRecord *containerCategory = getCategory( containerCID );
-                
-            if( containerCategory != NULL ) {
-                int containerPID = containerCategory->parentID;
-                
-                if( isContainmentWithMatchedTags( containerPID, inContainedID ) ) return true;
-                
-                ReverseCategoryRecord *containedRecord = getReverseCategory( inContainedID );
-                    
-                if( containedRecord != NULL ) {    
-                        
-                    for( int j=0; j< containedRecord->categoryIDSet.size(); j++ ) {
-                            
-                        int containedCID = containedRecord->categoryIDSet.getElementDirect( j );
-                        
-                        CategoryRecord *containedCategory = getCategory( containedCID );
-                            
-                        if( containedCategory != NULL ) {
-                            int containedPID = containedCategory->parentID;
-                            
-                            if( isContainmentWithMatchedTags( containerPID, containedPID ) ) return true;
-                            
-                            }
-                        }
-                    }
-                }
-            }
+            if( containerCategory == NULL ) continue;
+            int containerPID = containerCategory->parentID;
+            if( isContainmentWithMatchedTags( containerPID, inContainedID ) ) return true;
         }
+    } else if ( containedRecord != NULL ) {
+        for( int j=0; j< containedRecord->categoryIDSet.size(); j++ ) {
+            int containedCID = containedRecord->categoryIDSet.getElementDirect( j );
+            CategoryRecord *containedCategory = getCategory( containedCID );
+            if( containedCategory == NULL ) continue;
+            int containedPID = containedCategory->parentID;
+            if( isContainmentWithMatchedTags( inContainerID, containedPID ) ) return true;
+        }
+    }
     
     // object not containable
     if( !isContainable( inContainedID ) ) return false;
