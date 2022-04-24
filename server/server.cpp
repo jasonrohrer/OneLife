@@ -16582,7 +16582,13 @@ int main() {
                                                         }
                                                         
                                                     if( !otherContainedOK || !newContainedOK ) containmentTrans = NULL;
-                                                    if( !isOutContTrans && !newContainedOK ) blockedByContainmentTrans = true;
+                                                    if( !newContainedOK ) {
+                                                        // Check that the old container can contain the new object
+                                                        // If not, block it
+                                                        if( !containmentPermitted( containerID, contTrans->newTarget ) ) {
+                                                            blockedByContainmentTrans = true;
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
