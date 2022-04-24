@@ -14931,7 +14931,7 @@ void LivingLifePage::step() {
                             mNextHintIndex = 
                                 mHintBookmarks[ mNextHintObjectID ];
 								
-							if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = mNextHintObjectID;
+							if (minitech::changeHintObjOnTouch) minitech::changeCurrentHintObjId(mNextHintObjectID);
                             }
 
 
@@ -20906,20 +20906,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 // give hint about dest object which will be unchanged 
                 mNextHintObjectID = destID;
                 mNextHintIndex = mHintBookmarks[ destID ];
-				if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = destID;
+				if (minitech::changeHintObjOnTouch) minitech::changeCurrentHintObjId(destID);
                 }
             else if( tr->newActor > 0 && 
                      ourLiveObject->holdingID != tr->newActor ) {
                 // give hint about how what we're holding will change
                 mNextHintObjectID = tr->newActor;
                 mNextHintIndex = mHintBookmarks[ tr->newTarget ];
-				if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = tr->newActor;
+				if (minitech::changeHintObjOnTouch) minitech::changeCurrentHintObjId(tr->newActor);
                 }
             else if( tr->newTarget > 0 ) {
                 // give hint about changed target after we act on it
                 mNextHintObjectID = tr->newTarget;
                 mNextHintIndex = mHintBookmarks[ tr->newTarget ];
-				if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = tr->newTarget;
+				if (minitech::changeHintObjOnTouch) minitech::changeCurrentHintObjId(tr->newTarget);
                 }
             }
         else {
@@ -20929,7 +20929,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( getTrans( 0, destID ) == NULL ) {
                 mNextHintObjectID = destID;
                 mNextHintIndex = mHintBookmarks[ destID ];
-				if (minitech::changeHintObjOnTouch) minitech::currentHintObjId = destID;
+				if (minitech::changeHintObjOnTouch) minitech::changeCurrentHintObjId(destID);
                 }
             }
         }

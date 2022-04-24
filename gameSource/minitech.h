@@ -107,6 +107,7 @@ public:
 	static int currentHintObjId;
 	static int lastHintObjId;
 	static std::string lastHintStr;
+    static bool lastHintSearchNoResults;
 	static bool changeHintObjOnTouch;
 	static std::vector<mouseListener*> twotechMouseListeners;
 	static mouseListener* prevListener;
@@ -115,6 +116,7 @@ public:
 	static std::vector<TransRecord*> sortProdTrans(std::vector<TransRecord*> unsortedTrans);
 	static void updateDrawTwoTech();
 	static void inputHintStrToSearch(std::string hintStr);
+    static void changeCurrentHintObjId(int objID);
 
 	
 
