@@ -16526,11 +16526,12 @@ int main() {
                                                     } 
                                                 else {
                                                     int slotNumber = numContained - 1;
-                                                    if( isOutContTrans && slotNumber == m.i ) slotNumber--;
                                                     
                                                     int contID = getContained( 
                                                         m.x, m.y,
                                                         slotNumber );
+                                                        
+                                                    if( isOutContTrans && slotNumber == m.i ) contID = containmentTrans->newTarget;
                                                         
                                                     if( contID < 0 ) contID *= -1;
                                                 
@@ -16539,13 +16540,13 @@ int main() {
                                                 
                                                         slotNumber--;
                                                         
-                                                        if( isOutContTrans && slotNumber == m.i ) slotNumber--;
-                                                        
                                                         if( slotNumber < 0 ) break;
                                                         
                                                         contID = getContained( 
                                                             m.x, m.y,
                                                             slotNumber );
+                                                            
+                                                        if( isOutContTrans && slotNumber == m.i ) contID = containmentTrans->newTarget;
                                                     
                                                         if( contID < 0 ) {
                                                             contID *= -1;
@@ -16554,7 +16555,7 @@ int main() {
                                                         
                                                     if( slotNumber >= 0 ) {
                                                         containmentTrans = NULL;
-                                                        if ( !isOutContTrans || ( isOutContTrans && slotNumber == m.i ) )
+                                                        if ( !isOutContTrans || ( isOutContTrans && slotNumber != m.i ) )
                                                             blockedByContainmentTrans = true;
                                                         }
                                                     }
