@@ -17,6 +17,7 @@ public:
 	static float guiScale;
     
     static bool showUncraftables;
+    static bool showCommentsAndTagsInObjectDescription;
 	
 	static float viewWidth;
 	static float viewHeight;
@@ -72,7 +73,7 @@ public:
 	static float getTransProbability(TransRecord* trans);
     static bool isUncraftable(int objId);
 	static unsigned int LevenshteinDistance(const std::string& s1, const std::string& s2);
-    static std::vector<std::string> Tokenize( const std::string str );
+    static std::vector<std::string> Tokenize( const std::string str, const std::string regpattern );
 	
 	static int objIdFromXY( int x, int y );
 	static std::vector<bool> getObjIsCloseVector();
