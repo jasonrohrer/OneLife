@@ -15,6 +15,8 @@ Server Fixes
 
 --Fixed VOGP crash, if player count shrinks between invocations.
 
+--Fixed so you can't FOLLOW someone from more than 5000 tiles away.
+  People in donkeytown were spam follow/unfollowing to annoy people.
 
 
 Version 365    2021-October-28

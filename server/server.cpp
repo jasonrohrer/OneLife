@@ -21149,6 +21149,10 @@ int main() {
                             }
                         
                         if( otherToFollow != NULL ) {
+                            int followDistance = 
+                                SettingsManager::getIntSetting( 
+                                    "followDistance", 5000 );
+
                             if( otherToFollow == nextPlayer ) {
                                 if( nextPlayer->followingID != -1 ) {
                                     nextPlayer->followingID = -1;
@@ -21156,7 +21160,14 @@ int main() {
                                     }
                                 }
                             else if( nextPlayer->followingID != 
-                                     otherToFollow->id ) {
+                                     otherToFollow->id 
+                                     &&
+                                     // forbid follow action from
+                                     // very far away
+                                     distance( getPlayerPos( nextPlayer ),
+                                               getPlayerPos( otherToFollow ) ) 
+                                     <= followDistance ) {
+                                
                                 nextPlayer->followingID = otherToFollow->id;
                                 nextPlayer->followingUpdate = true;
                                 
