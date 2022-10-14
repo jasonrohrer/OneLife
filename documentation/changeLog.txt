@@ -18,6 +18,12 @@ Server Fixes
 --Fixed so you can't FOLLOW someone from more than 5000 tiles away.
   People in donkeytown were spam follow/unfollowing to annoy people.
 
+--Fixed so you can't FOLLOW someone from more than 200 tiles away, since
+  long-distance follow was allowing people to locate Eve and grief her.
+  Thanks Astral W.
+
+
+
 
 Version 365    2021-October-28
 
