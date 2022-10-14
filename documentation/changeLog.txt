@@ -22,6 +22,9 @@ Server Fixes
   long-distance follow was allowing people to locate Eve and grief her.
   Thanks Astral W.
 
+--Added forced disconnection for clients that are spamming too many messages
+  per second.  Thanks QuirkySmirkyIan.
+
 
 
 
