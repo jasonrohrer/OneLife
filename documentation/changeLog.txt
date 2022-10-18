@@ -28,6 +28,9 @@ Server Fixes
 --Rolled back the forced disconnection for now.  Considering a new way to deal
   with clients that spam messages without waiting for server response.
 
+--New force-disconnect code that pinpoints only macro/bot-based exploit, with a
+  limit of 40 action messages per 5 seconds, or 80 move messages per 5 seconds.
+
 
 
 

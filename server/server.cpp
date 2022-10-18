@@ -1127,7 +1127,17 @@ typedef struct LiveObject {
         
         SimpleVector<char*> globalMessageQueue;
 
-
+        
+        // we count how many messages are received over a given block of time
+        // if too many messages are received, player is spamming messages
+        // with a macro or bot
+        // We disconnect them when this happens
+        // index 0 is for non-move messages
+        // index 1 is for move messages
+        double messageFloodBatchStartTime[2];
+        int messageFloodBatchCount[2];
+        
+        
     } LiveObject;
 
 
@@ -10245,6 +10255,11 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     newObject.lastGlobalMessageTime = 0;
     
+    newObject.messageFloodBatchStartTime[0] = 0;
+    newObject.messageFloodBatchCount[0] = 0;
+    newObject.messageFloodBatchStartTime[1] = 0;
+    newObject.messageFloodBatchCount[1] = 0;
+
 
     newObject.birthPos.x = newObject.xd;
     newObject.birthPos.y = newObject.yd;
@@ -16858,6 +16873,80 @@ static void sendCraving( LiveObject *inPlayer ) {
 
 
 
+// returns true if a flood detected for this player
+static char messageFloodCheck( LiveObject *inPlayer, messageType inType ) {
+    
+    // currently no limit on these messages
+    // Mousing over a huge graveyard or set of gates can send loads of OWNER
+    // or GRAVE messages all at once
+    // (And note that OWNER and GRAVE messages don't result in anything being
+    //  sent to nearby players)
+    if( inType == OWNER ||
+        inType == GRAVE ) {
+        return false;
+        }
+    
+    //  FLIP and SAY are already throttled elsewhere in the server code
+
+
+    // all other message types, including MOVE, result in messages being
+    // sent to all nearby players.
+    // Thus, if there's a true flood of these from one client (like actually
+    // buggy behavior), it can cause other player's message queues to fill up,
+    // leading to force-disconnects for nearby high-latency players
+
+    // even WASD movement shouldn't be sending dozens of messages per second
+    
+    // BUT... the current backpack button in one mod is allowing a ridiculous
+    // message flood.  Players who are exploiting that to flood other players
+    // will be disconnected.
+
+    // 60 messages in 5 seconds means 12 messages per second
+    // Pretty safe to assume that no non-bot/macro player is clicking that fast
+    // World record for human mouse clicks is currently 11.6 per second.
+
+    // Note that the real way to fix this would be to watch for clients that are
+    // sending multiple "blocking" messages (like USE or DROP) without waiting
+    // for a server response.  Correct behavior is to receve the result of 
+    // your action from the server before sending another action to the server.
+
+    // However, some mod clients are apparently "railroading" action messages in
+    // the normal course of play, and I don't want to break the game
+    // for all the players using those mods.
+
+
+    int index = 0;
+    int maxMessageRate = 40;
+    
+    if( inType == MOVE ) {
+        index = 1;
+        maxMessageRate = 80;
+        }
+    
+    inPlayer->messageFloodBatchCount[index] ++;
+
+    double curTime = Time::getCurrentTime();
+
+
+    char flooding = false;
+
+    if( curTime - inPlayer->messageFloodBatchStartTime[index] >= 5 ) {
+        // a 5-second batch is finished
+
+        if( inPlayer->messageFloodBatchCount[index] >= maxMessageRate ) {
+            flooding = true;
+            }
+        
+        // start a new batch
+        inPlayer->messageFloodBatchStartTime[index] = curTime;
+        inPlayer->messageFloodBatchCount[index] = 0;
+        }
+
+    return flooding;
+    }
+
+
+
 
 int main() {
 
@@ -19001,7 +19090,12 @@ int main() {
                 // as a different type
                 RESTART_MESSAGE_ACTION:
                 
-                if( m.type == UNKNOWN ) {
+
+                if( messageFloodCheck( nextPlayer, m.type ) ) {
+                    setPlayerDisconnected( nextPlayer, 
+                                           "Message flooding detected" );
+                    }
+                else if( m.type == UNKNOWN ) {
                     AppLog::info( "Client error, unknown message type." );
                     
                     //setPlayerDisconnected( nextPlayer, 
