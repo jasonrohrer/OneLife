@@ -25,6 +25,9 @@ Server Fixes
 --Added forced disconnection for clients that are spamming too many messages
   per second.  Thanks QuirkySmirkyIan.
 
+--Rolled back the forced disconnection for now.  Considering a new way to deal
+  with clients that spam messages without waiting for server response.
+
 
 
 

@@ -1127,15 +1127,7 @@ typedef struct LiveObject {
         
         SimpleVector<char*> globalMessageQueue;
 
-        
-        // we count how many messages are received over a given block of time
-        // if too many messages are received, player is spamming messages
-        // with a macro or bot
-        // We disconnect them when this happens
-        double messageFloodBatchStartTime;
-        int messageFloodBatchCount;
-        
-        
+
     } LiveObject;
 
 
@@ -10253,9 +10245,6 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     newObject.lastGlobalMessageTime = 0;
     
-    newObject.messageFloodBatchStartTime = 0;
-    newObject.messageFloodBatchCount = 0;
-
 
     newObject.birthPos.x = newObject.xd;
     newObject.birthPos.y = newObject.yd;
@@ -16869,37 +16858,6 @@ static void sendCraving( LiveObject *inPlayer ) {
 
 
 
-// returns the number of messages that happened in current 5-second time block
-static int messageFloodCheck( LiveObject *inPlayer, messageType inType ) {
-    inPlayer->messageFloodBatchCount ++;
-
-    double curTime = Time::getCurrentTime();
-
-
-    char flooding = false;
-
-    if( curTime - inPlayer->messageFloodBatchStartTime >= 5 ) {
-        // a 5-second batch is finished
-
-        if( inType != MOVE && inPlayer->messageFloodBatchCount >= 15 ) {
-            // 3 non-move messages per second is inhuman
-            flooding = true;
-            }
-        else if( inType == MOVE && inPlayer->messageFloodBatchCount >= 30 ) {
-            // limit move spamming to 6 per second
-            flooding = true;
-            }
-        
-        // start a new batch
-        inPlayer->messageFloodBatchStartTime = curTime;
-        inPlayer->messageFloodBatchCount = 0;
-        }
-
-    return flooding;
-    }
-
-
-
 
 int main() {
 
@@ -19043,12 +19001,7 @@ int main() {
                 // as a different type
                 RESTART_MESSAGE_ACTION:
                 
-
-                if( messageFloodCheck( nextPlayer, m.type ) ) {
-                    setPlayerDisconnected( nextPlayer, 
-                                           "Message flooding detected" );
-                    }
-                else if( m.type == UNKNOWN ) {
+                if( m.type == UNKNOWN ) {
                     AppLog::info( "Client error, unknown message type." );
                     
                     //setPlayerDisconnected( nextPlayer, 
