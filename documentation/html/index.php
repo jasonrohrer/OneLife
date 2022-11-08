@@ -120,7 +120,7 @@ if( $rs_reviewCount > 0 ) {
 <table border=0><tr>
 <td><?php showLogo( "noDRM.png", "No DRM" ); ?></td>
 <td><?php showLogo( "noTie.png", "No middle-person" ); ?></td>
-<td><?php showLogo( "crossPlatform.png", "Cross-platform" ); ?></td>
+<td><?php showLogo( "crossPlatformNoMac.png", "Cross-platform" ); ?></td>
 <td><?php showLogo( "openSource.png", "Open Source" ); ?></td>
 </tr></table>                                  
 </center>
