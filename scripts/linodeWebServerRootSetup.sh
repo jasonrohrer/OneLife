@@ -52,6 +52,7 @@ echo ""
 ufw allow from 72.14.184.149 to any port 22
 ufw allow from 173.230.147.48 to any port 22
 ufw allow 80
+ufw allow 443
 ufw --force enable
 
 
