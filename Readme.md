@@ -37,6 +37,19 @@
 ><sub>This is a community created repository, we caution that it is not officially developed or endorsed by the creator of One Hour One Life, Jason Rohrer.</sub>\
 ><sub>Credits to [connorhsm](https://github.com/connorhsm), [IraCasper](https://github.com/IraCasper), and [risvh](https://github.com/risvh) for their contributions to the miniOneLifeCompile repository.
   
+
+## **Quick Gameplay**
+>+ Joining a new game you will be born into the world as another player's child or if you're lucky you will be born as a female adult, otherwise known as an Eve.
+>+ Left mouse click is used to interact with most objects in game, such as picking up items, crafting, and eating.
+>+ Right mouse click is used to drop or switch items, remove items from containers, and to use your weapons.
+>+ The enter key is used to access the chatbox which lets you socialize with other characters, specify your surname, or name your children.
+>>+ <sub>MY NAME IS DOE</sub>
+>>+ <sub>YOUR NAME IS JANE</sub>
+>+ You will not be able to procreate after the age of 40, so ensure not to waste time as the name suggests you have one hour to live your life (Should you not die sooner).
+>+ Pay attention to your food meter and ensure you keep it as full as possible, there are many options such as fruits and herbs to eat when starting out.
+>+ You will largely be harvesting resources from materials found around you in the world, which will then be used for crafting.
+>+ Remember that One Hour One Life is a game of cooperation, work with friendly players to develop a more advanced civilization.
+
 ## **Official Links & Documentation**
 >[**Official Website**](https://onehouronelife.com)\
 >[**Support Forums**](https://onehouronelife.com/forums/)\
