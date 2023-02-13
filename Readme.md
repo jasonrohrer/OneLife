@@ -1,10 +1,10 @@
 ![One Hour One Life](./documentation/art/logo2_1200.png)
 
 ## **Table of Contents**
->1. [Description](https://github.com/sweiberg/OneLife-Readme/edit/master/Readme.md#description)
->2. [Compilation](https://github.com/sweiberg/OneLife-Readme/edit/master/Readme.md#compilation)
->3. [Quick Gameplay](https://github.com/sweiberg/OneLife-Readme/edit/master/Readme.md#quick-gameplay)
->4. [Official Links & Documentation](https://github.com/sweiberg/OneLife-Readme/edit/master/Readme.md#official-links--documentation)
+>1. [Description](https://github.com/sweiberg/OneLife-Readme#description)
+>2. [Compilation](https://github.com/sweiberg/OneLife-Readme#compilation)
+>3. [Quick Gameplay](https://github.com/sweiberg/OneLife-Readme#quick-gameplay)
+>4. [Official Links & Documentation](https://github.com/sweiberg/OneLife-Readme#official-links--documentation)
 
 ## **Description**
 > ### A multiplayer survival game of parenting and civilization building. Get born to another player as your mother. Live an entire life in one hour. Have babies of your own in the form of other players. Leave a legacy for the next generation as you help to rebuild civilization from scratch.
