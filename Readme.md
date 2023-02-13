@@ -38,7 +38,7 @@
 >[**OneHourOneLife.com**](http://onehouronelife.com/compileNotes.php). \
 >\
 >**This Repository**\
->To compile the Client, Editor, and Server from this repository you will need to use the appropriate script within the [scripts folder](./scripts).\
+>To compile the Client, Editor, and Server from this repository you will need to use the appropriate script within the [scripts folder](./scripts).
 >><sub>Currently, crossplatform compilation of the source files is not supported, you will need to use Linux to compile both the Linux and Windows versions of One Hour One Life.</sub>\
 >><sub>You can use Windows Subsystem for Linux (Ex. Ubuntu on the Windows Store) to compile through Windows.</sub>\
 >><sub>You will still need to install the necessary libraries recommended in the Purchased section above.</sub>\
