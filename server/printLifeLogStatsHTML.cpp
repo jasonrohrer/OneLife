@@ -5,6 +5,12 @@
 #include "minorGems/util/stringUtils.h"
 
 
+// enable this to generate MySQL to populate review database stats
+// disable this to dramatically improve performance
+const char generateMySQL = false;
+
+
+
 void usage() {
     printf( "Usage:\n" );
     printf( "printLifeLogStatsHTML path_to_server_dir outHTMLFile\n\n" );
@@ -197,8 +203,9 @@ void processLogFile( File *inFile ) {
                     if( l.id == id && strcmp( l.email, lowerEmail ) == 0 ) {
                         yearsLived -= l.birthAge;
                         
-                        addPlayerGame( l.email, l.birthTime, time );
-
+                        if( generateMySQL ) {
+                            addPlayerGame( l.email, l.birthTime, time );
+                            }
                         delete [] l.email;
                         currentLiving.deleteElement( i );
                         foundBirth = true;
@@ -491,26 +498,31 @@ int main( int inNumArgs, char **inArgs ) {
             }
         
 
-        printf( "\n\nMySQL query to kickstart stats database:\n\n" );
+        if( generateMySQL ) {
+            
+            printf( "\n\nMySQL query to kickstart stats database:\n\n" );
         
-        for( int i=0; i<allPlayers.size(); i++ ) {
-            Player p = allPlayers.getElementDirect( i );
-            
-            
-            printf( 
-                "INSERT INTO reviewServer_user_stats SET " 
-                "email='%s', sequence_number=1, "
-                "first_game_date=FROM_UNIXTIME( %.0f ), "
-                "last_game_date=FROM_UNIXTIME( %.0f ), "
-                "last_game_seconds=%d, game_count=%d, game_total_seconds=%d, "
-                "review_score=-1, review_name='', review_text='', "
-                "review_date=CURRENT_TIMESTAMP, review_game_seconds=0, "
-                "review_game_count=0, review_votes=0;\n\n",
-                p.email, p.firstGameTime, p.lastGameTime, p.lastGameSeconds,
-                p.gameCount, p.gameTotalSeconds );
+            for( int i=0; i<allPlayers.size(); i++ ) {
+                Player p = allPlayers.getElementDirect( i );
+                
+                
+                printf( 
+                    "INSERT INTO reviewServer_user_stats SET " 
+                    "email='%s', sequence_number=1, "
+                    "first_game_date=FROM_UNIXTIME( %.0f ), "
+                    "last_game_date=FROM_UNIXTIME( %.0f ), "
+                    "last_game_seconds=%d, game_count=%d, "
+                    "game_total_seconds=%d, "
+                    "review_score=-1, review_name='', review_text='', "
+                    "review_date=CURRENT_TIMESTAMP, review_game_seconds=0, "
+                    "review_game_count=0, review_votes=0;\n\n",
+                    p.email, p.firstGameTime, p.lastGameTime, p.lastGameSeconds,
+                    p.gameCount, p.gameTotalSeconds );
 
-            delete [] p.email;
+                delete [] p.email;
+                }
             }
+        
         }
     else {
         usage();
