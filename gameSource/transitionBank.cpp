@@ -144,78 +144,98 @@ float initTransBankStep() {
                 int move = 0;
                 int desiredMoveDist = 1;
                 
-                sscanf( contents, "%d %d %d %f %f %d %d %d %d %d %d", 
-                        &newActor, &newTarget, &autoDecaySeconds,
-                        &actorMinUseFraction, &targetMinUseFraction,
-                        &reverseUseActorFlag,
-                        &reverseUseTargetFlag,
-                        &move,
-                        &desiredMoveDist,
-                        &noUseActorFlag,
-                        &noUseTargetFlag );
-                
-                if( autoDecaySeconds < 0 ) {
-                    epochAutoDecay = -autoDecaySeconds;
-                    }
+                int numParts;
+                char **parts = split( contents, "\n", &numParts );
 
-                TransRecord *r = new TransRecord;
+                if( numParts > 0 ) {
+                    
+
+                    sscanf( parts[0], "%d %d %d %f %f %d %d %d %d %d %d", 
+                            &newActor, &newTarget, &autoDecaySeconds,
+                            &actorMinUseFraction, &targetMinUseFraction,
+                            &reverseUseActorFlag,
+                            &reverseUseTargetFlag,
+                            &move,
+                            &desiredMoveDist,
+                            &noUseActorFlag,
+                            &noUseTargetFlag );
+                
+                    if( autoDecaySeconds < 0 ) {
+                        epochAutoDecay = -autoDecaySeconds;
+                        }
+
+                    TransRecord *r = new TransRecord;
                             
-                r->actor = actor;
-                r->target = target;
-                r->newActor = newActor;
-                r->newTarget = newTarget;
-                r->autoDecaySeconds = autoDecaySeconds;
-                r->epochAutoDecay = epochAutoDecay;
-                r->lastUseActor = lastUseActor;
-                r->lastUseTarget = lastUseTarget;
+                    r->actor = actor;
+                    r->target = target;
+                    r->newActor = newActor;
+                    r->newTarget = newTarget;
+                    r->autoDecaySeconds = autoDecaySeconds;
+                    r->epochAutoDecay = epochAutoDecay;
+                    r->lastUseActor = lastUseActor;
+                    r->lastUseTarget = lastUseTarget;
 
-                r->move = move;
-                r->desiredMoveDist = desiredMoveDist;
+                    r->move = move;
+                    r->desiredMoveDist = desiredMoveDist;
 
-                r->actorChangeChance = 1.0f;
-                r->targetChangeChance = 1.0f;
-                r->newActorNoChange = -1;
-                r->newTargetNoChange = -1;
+                    r->actorChangeChance = 1.0f;
+                    r->targetChangeChance = 1.0f;
+                    r->newActorNoChange = -1;
+                    r->newTargetNoChange = -1;
                 
-                r->reverseUseActor = false;
-                if( reverseUseActorFlag == 1 ) {
-                    r->reverseUseActor = true;
-                    }
+                    r->reverseUseActor = false;
+                    if( reverseUseActorFlag == 1 ) {
+                        r->reverseUseActor = true;
+                        }
 
-                r->reverseUseTarget = false;
-                if( reverseUseTargetFlag == 1 ) {
-                    r->reverseUseTarget = true;
-                    }
+                    r->reverseUseTarget = false;
+                    if( reverseUseTargetFlag == 1 ) {
+                        r->reverseUseTarget = true;
+                        }
 
 
-                r->noUseActor = false;
-                if( noUseActorFlag == 1 ) {
-                    r->noUseActor = true;
-                    }
+                    r->noUseActor = false;
+                    if( noUseActorFlag == 1 ) {
+                        r->noUseActor = true;
+                        }
 
-                r->noUseTarget = false;
-                if( noUseTargetFlag == 1 ) {
-                    r->noUseTarget = true;
-                    }
+                    r->noUseTarget = false;
+                    if( noUseTargetFlag == 1 ) {
+                        r->noUseTarget = true;
+                        }
                 
-                r->actorMinUseFraction = actorMinUseFraction;
-                r->targetMinUseFraction = targetMinUseFraction;
+                    r->actorMinUseFraction = actorMinUseFraction;
+                    r->targetMinUseFraction = targetMinUseFraction;
+                    
+                    if( numParts > 1 ) {
+                        r->comment = trimWhitespace( parts[1] );
+                        }
+                    else {
+                        r->comment = stringDuplicate( "" );
+                        }
                 
-                
-                records.push_back( r );
+                    records.push_back( r );
                             
-                if( actor > maxID ) {
-                    maxID = actor;
+                    if( actor > maxID ) {
+                        maxID = actor;
+                        }
+                    if( target > maxID ) {
+                        maxID = target;
+                        }
+                    if( newActor > maxID ) {
+                        maxID = newActor;
+                        }
+                    if( newTarget > maxID ) {
+                        maxID = newTarget;
+                        }
                     }
-                if( target > maxID ) {
-                    maxID = target;
+                
+                for( int i=0; i<numParts; i++ ) {
+                    delete [] parts[i];
                     }
-                if( newActor > maxID ) {
-                    maxID = newActor;
-                    }
-                if( newTarget > maxID ) {
-                    maxID = newTarget;
-                    }
+
+                delete [] parts;
+
 
                 delete [] contents;
                 }
@@ -441,6 +461,8 @@ void initTransBankFinish() {
                                   tr->targetMinUseFraction, 
                                   tr->move,
                                   tr->desiredMoveDist,
+                                  // blank comment
+                                  "",
                                   tr->actorChangeChance,
                                   tr->targetChangeChance,
                                   tr->newActorNoChange,
@@ -477,6 +499,8 @@ void initTransBankFinish() {
                                   tr->targetMinUseFraction, 
                                   tr->move,
                                   tr->desiredMoveDist,
+                                  // blank comment
+                                  "",
                                   tr->actorChangeChance,
                                   tr->targetChangeChance,
                                   tr->newActorNoChange,
@@ -512,6 +536,8 @@ void initTransBankFinish() {
                                   tr->targetMinUseFraction, 
                                   tr->move,
                                   tr->desiredMoveDist,
+                                  // blank comment
+                                  "",
                                   tr->actorChangeChance,
                                   tr->targetChangeChance,
                                   tr->newActorNoChange,
@@ -625,6 +651,8 @@ void initTransBankFinish() {
                                   tr->targetMinUseFraction, 
                                   tr->move,
                                   tr->desiredMoveDist,
+                                  // blank comment
+                                  "",
                                   tr->actorChangeChance,
                                   tr->targetChangeChance,
                                   tr->newActorNoChange,
@@ -775,6 +803,8 @@ void initTransBankFinish() {
                       tr.targetMinUseFraction,
                       tr.move,
                       tr.desiredMoveDist,
+                      // blank comment
+                      "",
                       tr.actorChangeChance,
                       tr.targetChangeChance,
                       tr.newActorNoChange,
@@ -1404,6 +1434,8 @@ void initTransBankFinish() {
                       newTrans->targetMinUseFraction,
                       newTrans->move,
                       newTrans->desiredMoveDist,
+                      // blank comment
+                      "",
                       newTrans->actorChangeChance,
                       newTrans->targetChangeChance,
                       newTrans->newActorNoChange,
@@ -1571,6 +1603,8 @@ void initTransBankFinish() {
                       newTrans->targetMinUseFraction,
                       newTrans->move,
                       newTrans->desiredMoveDist,
+                      // blank comment
+                      "",
                       newTrans->actorChangeChance,
                       newTrans->targetChangeChance,
                       newTrans->newActorNoChange,
@@ -1602,7 +1636,10 @@ void initTransBankFinish() {
 
 void freeTransBank() {
     for( int i=0; i<records.size(); i++ ) {
-        delete records.getElementDirect(i);
+        TransRecord *r = records.getElementDirect(i);
+
+        delete [] r->comment;
+        delete r;
         }
     
     records.deleteAll();
@@ -2482,6 +2519,7 @@ void addTrans( int inActor, int inTarget,
                float inTargetMinUseFraction,
                int inMove,
                int inDesiredMoveDist,
+               const char *inComment,
                float inActorChangeChance,
                float inTargetChangeChance,
                int inNewActorNoChange,
@@ -2577,6 +2615,7 @@ void addTrans( int inActor, int inTarget,
         t->newActorNoChange = inNewActorNoChange;
         t->newTargetNoChange = inNewTargetNoChange;
         
+        t->comment = stringDuplicate( inComment );
 
         records.push_back( t );
 
@@ -2620,7 +2659,9 @@ void addTrans( int inActor, int inTarget,
             t->actorChangeChance == inActorChangeChance &&
             t->targetChangeChance == inTargetChangeChance &&
             t->newActorNoChange == inNewActorNoChange &&
-            t->newTargetNoChange == inNewTargetNoChange ) {
+            t->newTargetNoChange == inNewTargetNoChange &&
+            strcmp( t->comment, inComment ) == 0 ) {
+            
             
             // no change to produces map either... 
 
@@ -2665,6 +2706,9 @@ void addTrans( int inActor, int inTarget,
 
             t->newActorNoChange = inNewActorNoChange;
             t->newTargetNoChange = inNewTargetNoChange;
+            
+            delete [] t->comment;
+            t->comment = stringDuplicate( inComment );
 
             if( inNewActor != 0 ) {
                 producesMap[inNewActor].push_back( t );
@@ -2735,7 +2779,7 @@ void addTrans( int inActor, int inTarget,
             // it's only for auto-generated transitions
 
             char *fileContents = autoSprintf( "%d %d %d %f %f %d %d "
-                                              "%d %d %d %d", 
+                                              "%d %d %d %d\n%s", 
                                               inNewActor, inNewTarget,
                                               inAutoDecaySeconds,
                                               inActorMinUseFraction,
@@ -2745,7 +2789,8 @@ void addTrans( int inActor, int inTarget,
                                               inMove,
                                               inDesiredMoveDist,
                                               noUseActorFlag,
-                                              noUseTargetFlag );
+                                              noUseTargetFlag,
+                                              inComment );
 
         
             File *cacheFile = transDir.getChildFile( "cache.fcz" );
@@ -2832,7 +2877,9 @@ void deleteTransFromBank( int inActor, int inTarget,
         
 
         records.deleteElementEqualTo( t );
-
+        
+        delete [] t->comment;
+        
         delete t;
         }
     }

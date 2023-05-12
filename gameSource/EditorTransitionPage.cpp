@@ -113,7 +113,11 @@ EditorTransitionPage::EditorTransitionPage()
           mSwapActorButton( "swapButton.tga", -200, 0 ),
           mSwapTargetButton( "swapButton.tga", 0, 0 ),
           mSwapTopButton( "swapButtonH.tga", -100, 120 ),
-          mSwapBottomButton( "swapButtonH.tga", -100, -120 ) {
+          mSwapBottomButton( "swapButtonH.tga", -100, -120 ),
+          mCommentField( smallFont,
+                         -50,  -196, 36,
+                         false,
+                         "Comment", NULL, NULL ) {
 
     mSwapActorButton.setPixelSize( 2 );
     mSwapTargetButton.setPixelSize( 2 );
@@ -176,6 +180,10 @@ EditorTransitionPage::EditorTransitionPage()
     addComponent( &mSwapTopButton );
     addComponent( &mSwapBottomButton );
     
+    mCommentField.usePasteShortcut( true );
+
+    addComponent( &mCommentField );
+
 
     mSaveTransitionButton.addActionListener( this );
     mObjectEditorButton.addActionListener( this );
@@ -228,6 +236,8 @@ EditorTransitionPage::EditorTransitionPage()
     
     mCurrentTransition.move = 0;
     mCurrentTransition.desiredMoveDist = 1;
+
+    mCurrentTransition.comment = (char*)"";
 
     mCurrentlyReplacing = 0;
     
@@ -383,7 +393,8 @@ void EditorTransitionPage::checkIfSaveVisible() {
     mTargetMinUseFractionField.setFloat( 
         mCurrentTransition.targetMinUseFraction, -1, true );
     
-
+    mCommentField.setText( mCurrentTransition.comment );
+    
     if( saveVis && 
         getObjectByIndex( &mCurrentTransition, 0 ) <= 0 &&
         getObjectByIndex( &mCurrentTransition, 2 ) == 0 ) {
@@ -692,6 +703,8 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             actor = -2;
             }
         
+        char *comment = mCommentField.getText();
+        
         addTrans( actor,
                   target,
                   mCurrentTransition.newActor,
@@ -706,7 +719,10 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
                   mActorMinUseFractionField.getFloat(),
                   mTargetMinUseFractionField.getFloat(),
                   mMovementButtons.getSelectedItem(),
-                  mDesiredMoveDistField.getInt() );
+                  mDesiredMoveDistField.getInt(),
+                  comment );
+        
+        delete [] comment;
             
         redoTransSearches( mLastSearchID, true );
         }
