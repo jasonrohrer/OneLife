@@ -9,6 +9,9 @@ Version 366    2023-05-12
 --Added comment field to transitions (in editor), for leaving notes about
   complex, special-purpose transitions.
 
+--Fixed windows script for makeRegenerateCaches to handle ogg.cpp building.
+
+
 
 
 Server Fixes
