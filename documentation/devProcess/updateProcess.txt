@@ -65,7 +65,9 @@ Run a server code update (local and remote) NOW.
 Generating platform-specific (binary code) update for a platform.
 ++++
 
-1. Update game.cpp version number.
+1. Update game.cpp version number.  Note that this should come after the
+   latest OneLife tagged version number AND after the latest
+   OneLifeData7 tagged version number.  These numbers are interleaved.
 
 NOTE:  On Mac and Linux, steps 2-4 can be accomplished with these scripts:
        pullBuildAndPostMac.sh
@@ -74,6 +76,9 @@ NOTE:  On Mac and Linux, steps 2-4 can be accomplished with these scripts:
        On Windows, a manual pull is needed in both minorGems and OneLife,
        and then steps 2-4 can be accomplished with:
        buildAndPostWindows.sh
+
+       These scripts take the previous OneLife version number and
+       the new version number.
 
 2. Build on each platform
 
