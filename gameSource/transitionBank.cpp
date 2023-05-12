@@ -2774,12 +2774,24 @@ void addTrans( int inActor, int inTarget,
                 noUseTargetFlag = 1;
                 }
 
+
+            const char *commentPart = "";
+            char commentPartAllocated = false;
+            
+
+            if( strcmp( inComment, "" ) != 0 ) {
+                // only add extra line if comment not blank
+                commentPart = autoSprintf( "\n%s", inComment );
+                commentPartAllocated = true;
+                }
+
             
             // don't save change chance to file
             // it's only for auto-generated transitions
 
             char *fileContents = autoSprintf( "%d %d %d %f %f %d %d "
-                                              "%d %d %d %d\n%s", 
+                                              "%d %d %d %d"
+                                              "%s", 
                                               inNewActor, inNewTarget,
                                               inAutoDecaySeconds,
                                               inActorMinUseFraction,
@@ -2790,7 +2802,11 @@ void addTrans( int inActor, int inTarget,
                                               inDesiredMoveDist,
                                               noUseActorFlag,
                                               noUseTargetFlag,
-                                              inComment );
+                                              commentPart );
+
+            if( commentPartAllocated ) {
+                delete [] commentPart;
+                }
 
         
             File *cacheFile = transDir.getChildFile( "cache.fcz" );
