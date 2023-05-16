@@ -1000,6 +1000,18 @@ typedef struct LiveObject {
         double indoorBonusTime;
         double indoorBonusFraction;
         
+        // if isIndoors is false, when were they last indoors?
+        // this allows the effects of isIndoors to fade gradually over time
+        // and even-out briefly opened doors a bit more
+        double wasIndoorsLastAtTimestamp;
+        
+        // note that after isIndoors becomes false, indoorBonusFraction 
+        // stays set at last fraction when they were indoors
+        // so as time passes (away from the wasIndoorsLastAtTimestamp),
+        // we remember the last effect that they had when they were indoors
+        // and fade that.
+
+
 
         int foodStore;
         
@@ -3487,16 +3499,30 @@ double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
 
     inPlayer->indoorBonusTime = 0;
     
-    if( inPlayer->isIndoors &&
-        inPlayer->indoorBonusFraction > 0 &&
+    if( inPlayer->indoorBonusFraction > 0 &&
         computeAge( inPlayer ) > defaultActionAge ) {
         
-        // non-babies get a bonus for being indoors
-        inPlayer->indoorBonusTime = 
-            indoorFoodDecrementSecondsBonus *
-            inPlayer->indoorBonusFraction;
+        double fadeFactor = 1.0;
         
-        value += inPlayer->indoorBonusTime;
+        double maxFadeSeconds = 10;
+        
+        if( ! inPlayer->isIndoors ) {
+            double deltaTime = 
+                Time::getCurrentTime() - inPlayer->wasIndoorsLastAtTimestamp;
+            
+            // goes from 1 to 0 linearly over maxFadeSeconds
+            fadeFactor = 1 - deltaTime / maxFadeSeconds;
+            }
+        
+
+        if( fadeFactor > 0 ) {
+            // non-babies get a bonus for being indoors
+            inPlayer->indoorBonusTime = 
+                fadeFactor * indoorFoodDecrementSecondsBonus *
+                inPlayer->indoorBonusFraction;
+            
+            value += inPlayer->indoorBonusTime;
+            }
         }
     
     inPlayer->foodDrainTime = value;
@@ -4445,6 +4471,8 @@ static void recomputeHeatMap( LiveObject *inPlayer ) {
     if( inPlayer->isIndoors ) {
         // the more insulating the boundary, the bigger the bonus
         inPlayer->indoorBonusFraction = rBoundaryAverage;
+        
+        inPlayer->wasIndoorsLastAtTimestamp = Time::getCurrentTime();
         }
     
     
@@ -9388,6 +9416,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.indoorBonusTime = 0;
     newObject.indoorBonusFraction = 0;
 
+    newObject.wasIndoorsLastAtTimestamp = 0;
     
     
                 

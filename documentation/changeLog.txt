@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--Indoor bonus fades over 10 seconds (instead of instantly) when door is opened
+   or player otherwise leaves indoors.  Thanks Arcurus.  Fixes #729
+
+
+
+
 Version 369    2023-05-12
 
 --Added comment field to transitions (in editor), for leaving notes about
