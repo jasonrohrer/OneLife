@@ -4,6 +4,17 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 371    ???
+
+--Fixed so that actor-to-newTarget numUses pass-through only happens if they
+  have the same numUses AND the same useChance.  This was causing a bug when
+  partially-used skewer (with 4 uses) was producing less rubber dough in the
+  resulting bucket (4 uses) than expected.  Also fixed the same issue with
+  target-to-newActor numUses pass-through, though it wasn't currently
+  affecting any transitions.  Fixes #746  Fixes jasonrohrer/OneLifeData7#874
+
+
+
 Server Fixes
 
 --Indoor bonus fades over 10 seconds (instead of instantly) when door is opened

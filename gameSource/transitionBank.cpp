@@ -1124,7 +1124,8 @@ void initTransBankFinish() {
                     if( target != NULL && newActor != NULL 
                         &&
                         target->numUses > 1 &&
-                        target->numUses == newActor->numUses ) {
+                        target->numUses == newActor->numUses &&
+                        target->useChance == newActor->useChance ) {
                         // use preservation between target and new actor
                         
                         // generate one for each use dummy
@@ -1139,7 +1140,8 @@ void initTransBankFinish() {
                     else if( actor != NULL && newTarget != NULL 
                         &&
                         actor->numUses > 1 &&
-                        actor->numUses == newTarget->numUses ) {
+                        actor->numUses == newTarget->numUses &&
+                        actor->useChance == newTarget->useChance ) {
                         // use preservation between actor and new target
                         
                         // generate one for each use dummy
