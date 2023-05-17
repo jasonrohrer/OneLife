@@ -1590,6 +1590,10 @@ static char checkReadOnly() {
 
 
 
+static void setupToolSlots( LiveObject *inPlayer );
+
+
+
 // returns a person to their natural state
 static void backToBasics( LiveObject *inPlayer ) {
     LiveObject *p = inPlayer;
@@ -1635,6 +1639,9 @@ static void backToBasics( LiveObject *inPlayer ) {
 
     p->learnedTools.deleteAll();
     p->partiallyLearnedTools.deleteAll();
+    p->numToolSlots = -1;
+    
+    setupToolSlots( p );
     }
 
 
