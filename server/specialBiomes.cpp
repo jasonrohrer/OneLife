@@ -34,6 +34,9 @@ static SpecialBiome specialBiomes[ MAX_BIOME_NUMBER ];
 static int curNumPlayers;
 static int minNumPlayers;
 
+static int minNumPlayersForLanguages;
+
+
 
 void initSpecialBiomes() {
     for( int i=0; i < MAX_BIOME_NUMBER; i++ ) {
@@ -62,6 +65,10 @@ void updateSpecialBiomes( int inNumPlayers ) {
     minNumPlayers = 
         SettingsManager::getIntSetting( 
             "minActivePlayersForSpecialBiomes", 15 );
+
+    minNumPlayersForLanguages = 
+        SettingsManager::getIntSetting( 
+            "minActivePlayersForLanguages", 15 );
 
     polylingualRaces.deleteAll();
     
@@ -228,7 +235,10 @@ int getBiomeReliefEmot( int inSicknessObjectID ) {
 
 
 char isPolylingual( int inDisplayID ) {
-    if( curNumPlayers < minNumPlayers ) {
+    if( curNumPlayers < minNumPlayers &&
+        curNumPlayers < minNumPlayersForLanguages ) {
+        // if languages are still active, even if special biomes are not active
+        // let polylingual races remain polylingual
         return false;
         }
     

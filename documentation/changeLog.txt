@@ -23,6 +23,10 @@ Server Fixes
 --Fixed so that disabled tool slot feature doesn't suddenly come into play
   after apocalypse.  Fixes #741
 
+--Specialty biomes disabled below 30 players, but languages still enabled at 15
+  players or above.  Fixed so that language specialist race keeps polylingual
+  abilities between 15 and 30 player population.  Fixes #753
+
 
 
 Version 369    2023-05-12
