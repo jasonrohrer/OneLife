@@ -1231,10 +1231,10 @@ static LiveObject *findHeir( LiveObject *inPlayer ) {
     if( offspring == NULL ) {
         // no direct offspring found
         
-        // walk up through lineage and find oldest close relative
-        // oldest person who shares our mother
-        // oldest person who shares our gma
-        // oldest person who shares our ggma
+        // walk up through lineage and find fittest close relative
+        // fittest person who shares our mother
+        // fittest person who shares our gma
+        // fittest person who shares our ggma
         
         // start with ma
         int lineageStep = 0;
