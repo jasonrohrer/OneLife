@@ -16077,33 +16077,80 @@ static void leaderDied( LiveObject *inLeader ) {
 
     if( inLeader->followingID == -1 &&
         directFollowers.size() > 0 ) {
+
+        int maxDistance = 
+            SettingsManager::getIntSetting( "followDistance", 5000 );
+
+        GridPos location = getPlayerPos( inLeader );
         
+
         LiveObject *fittestFollower = directFollowers.getElementDirect( 0 );
         // -1, because lowest possible score is 0
         // we will find a non-exiled follower this way
         double fittestFitness = -1;
-        
+
         for( int i=0; i<directFollowers.size(); i++ ) {
             LiveObject *otherPlayer = directFollowers.getElementDirect( i );
             
-            if( otherPlayer->fitnessScore > fittestFitness &&
+            if( otherPlayer->fitnessScore > fittestFitness
+                &&
+                distance( location, getPlayerPos( otherPlayer ) ) <= maxDistance
+                &&
                 ! isExiled( inLeader, otherPlayer ) ) {
                 
                 fittestFitness = otherPlayer->fitnessScore;
                 fittestFollower = otherPlayer;
                 }
+            }        
+
+        if( fittestFitness == -1 ) {
+            // didn't find one within radius
+            // try again with no radius limit
+
+            for( int i=0; i<directFollowers.size(); i++ ) {
+                LiveObject *otherPlayer = directFollowers.getElementDirect( i );
+                
+                if( otherPlayer->fitnessScore > fittestFitness &&
+                    ! isExiled( inLeader, otherPlayer ) ) {
+                    
+                    fittestFitness = otherPlayer->fitnessScore;
+                    fittestFollower = otherPlayer;
+                    }
+                }
             }
         
+
         // if all are exiled, then we find fittest follower
         if( fittestFitness == -1 ) {
+            
+            // first, look in limited radius
             for( int i=0; i<directFollowers.size(); i++ ) {
                 LiveObject *otherPlayer = directFollowers.getElementDirect( i );
             
                 // ignore exile status this time
-                if( otherPlayer->fitnessScore > fittestFitness ) {
+                if( otherPlayer->fitnessScore > fittestFitness 
+                    &&
+                    distance( location, getPlayerPos( otherPlayer ) ) 
+                    <= maxDistance ) {
                 
                     fittestFitness = otherPlayer->fitnessScore;
                     fittestFollower = otherPlayer;
+                    }
+                }
+
+            if( fittestFitness == -1 ) {
+                // no exiled followers in radius
+                // try again with no radius limit
+                for( int i=0; i<directFollowers.size(); i++ ) {
+                    LiveObject *otherPlayer = 
+                        directFollowers.getElementDirect( i );
+            
+                    // ignore exile status this time
+                    if( otherPlayer->fitnessScore > fittestFitness ) {
+                        
+                        fittestFitness = otherPlayer->fitnessScore;
+                        fittestFollower = otherPlayer;
+                        }
                     }
                 }
             }

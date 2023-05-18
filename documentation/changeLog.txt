@@ -32,7 +32,15 @@ Server Fixes
   distance.  If not found, we then search for fittest relative within 200 tile
   radius.  If not found, we then finally look at fittest relative at any
   distance.  Distant folks no longer inherit property unless there's no closer
-  choice.  Part of #765
+  choice.  Thanks Doug L.  Part of #765
+
+--When finding follower to inherit dead leader's position, we first search for
+  fittest non-exiled follower within 200 tile radius.  If not found, we then
+  look for fittest non-exiled follower at any distance.  If not found, we then
+  search for fittest exiled follower within 200 tile radius.  If not found, we
+  then searh for fittest exiled follower at any distance.  Distant folks no
+  longer inherit leadership unless there's no closer choice.  Thanks Doug L.
+  Fixes #765
 
 
 
