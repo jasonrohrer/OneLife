@@ -1189,9 +1189,16 @@ char getFemale( LiveObject *inPlayer ) {
     }
 
 
+GridPos getPlayerPos( LiveObject *inPlayer );
 
-// find most fit offspring
-static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID ) {
+
+
+// find most fit offspring within maxDistance from inLocation
+// returns NULL if none found
+static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID,
+                                         GridPos inLocation,
+                                         int inMaxDistance ) {
+
     LiveObject *fittestOffspring = NULL;
     double fittestOffspringFitness = 0;
 
@@ -1202,15 +1209,20 @@ static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID ) {
             otherPlayer->id != inPlayerID &&
             otherPlayer->id != inSkipID ) {
             
-            if( otherPlayer->fitnessScore > fittestOffspringFitness ) {
+            if( distance( getPlayerPos( otherPlayer ), inLocation )
+                <= inMaxDistance ) {
                 
-                if( otherPlayer->lineage->getElementIndex( inPlayerID ) 
-                    != -1 ) {
+
+                if( otherPlayer->fitnessScore > fittestOffspringFitness ) {
+                
+                    if( otherPlayer->lineage->getElementIndex( inPlayerID ) 
+                        != -1 ) {
                     
-                    // player is direct offspring of inPlayer
-                    // (child, grandchild, etc).
-                    fittestOffspring = otherPlayer;
-                    fittestOffspringFitness = otherPlayer->fitnessScore;
+                        // player is direct offspring of inPlayer
+                        // (child, grandchild, etc).
+                        fittestOffspring = otherPlayer;
+                        fittestOffspringFitness = otherPlayer->fitnessScore;
+                        }
                     }
                 }
             }
@@ -1218,35 +1230,69 @@ static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID ) {
     
     return fittestOffspring;
     }
+
+
+
+static LiveObject *findFittestCloseRelative( LiveObject *inPlayer,
+                                             int inMaxDistance ) {
+
+    GridPos location = getPlayerPos( inPlayer );
+
+    LiveObject *offspring = NULL;
     
+    // walk up through lineage and find fittest close relative
+    // fittest person who shares our mother
+    // fittest person who shares our gma
+    // fittest person who shares our ggma
+    
+    // start with ma
+    int lineageStep = 0;
+    
+    while( offspring == NULL &&
+           lineageStep < inPlayer->lineage->size() ) {
+            
+        offspring = findFittestOffspring( 
+            inPlayer->lineage->getElementDirect( lineageStep ),
+            inPlayer->id, location, inMaxDistance );
+        
+        lineageStep++;
+        }
+    return offspring;
+    }
+
 
 
 static LiveObject *findHeir( LiveObject *inPlayer ) {
+    GridPos location = getPlayerPos( inPlayer );
+    
+    // use followDistance to limit consideration for heir
+    int maxDistance = 
+        SettingsManager::getIntSetting( "followDistance", 5000 );
+
+    int hugeDistance = 999999999;
+
+
     LiveObject *offspring = NULL;
     
     if( getFemale( inPlayer ) ) {
-        offspring = findFittestOffspring( inPlayer->id, inPlayer->id );
+        offspring = findFittestOffspring( inPlayer->id, inPlayer->id,
+                                          location, maxDistance );
+        
+        if( offspring == NULL ) {
+            // none found in maxDistance, search in much larger distance
+            offspring = findFittestOffspring( inPlayer->id, inPlayer->id,
+                                              location, hugeDistance );
+            }
         }
     
     if( offspring == NULL ) {
         // no direct offspring found
         
-        // walk up through lineage and find fittest close relative
-        // fittest person who shares our mother
-        // fittest person who shares our gma
-        // fittest person who shares our ggma
+        offspring = findFittestCloseRelative( inPlayer, maxDistance );
         
-        // start with ma
-        int lineageStep = 0;
-        
-        while( offspring == NULL &&
-               lineageStep < inPlayer->lineage->size() ) {
-            
-            offspring = findFittestOffspring( 
-                inPlayer->lineage->getElementDirect( lineageStep ),
-                inPlayer->id );
-            
-            lineageStep++;
+        if( offspring != NULL ) {
+            // none found in maxDistance, search in much larger distance
+            findFittestCloseRelative( inPlayer, hugeDistance );
             }
         }
 

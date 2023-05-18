@@ -27,6 +27,14 @@ Server Fixes
   players or above.  Fixed so that language specialist race keeps polylingual
   abilities between 15 and 30 player population.  Fixes #753
 
+--When finding heir for property, we first search for fittest offspring within
+  200 tile radius.  If not found, we then look for fittest offspring at any
+  distance.  If not found, we then search for fittest relative within 200 tile
+  radius.  If not found, we then finally look at fittest relative at any
+  distance.  Distant folks no longer inherit property unless there's no closer
+  choice.  Part of #765
+
+
 
 
 Version 369    2023-05-12
