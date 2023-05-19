@@ -20,6 +20,14 @@ Version 371    ???
   backpacks full of bananas was surpassing this limit, causing glitches.
   Part of #784
 
+--Fixed so that there's no longer a 500-character limit on the holdingIDString
+  and the clothingString when parsing a PLAYER_UPDATE (PU) message in the
+  client.  If the player picked up a delivery truck full of backpacks full of
+  bananas, the 500-character limit was surpassed, causing glitches that led to
+  a disconnect.  We never had any examples of the clothingString limit being a
+  problem, but I fixed that in the same way.  Thanks D-rey-a.  Fixes #784
+
+
 
 
 

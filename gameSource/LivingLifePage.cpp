@@ -15285,7 +15285,7 @@ void LivingLifePage::step() {
                 // scan everything but 4th token, which is a string of 
                 // unknown length.  %*s will scan it but skip
                 // saving it in a variable
-                
+                // numRead won't include this skipped string in the count
                 int numRead = sscanf( lines[i], "%d %d %d %*s %d %d %d %f",
                                       &x, &y, &floorID, 
                                       // skip 4th token
@@ -15313,7 +15313,7 @@ void LivingLifePage::step() {
                     delete tokenPointers;
                     
                     // we also don't need to worry about deleting idBuffer
-                    // since it's a pointer into lineCopy;
+                    // since it's a pointer into lineCopy
 
                     // lineCopy is now mangled and full of \0, but that's okay
                     // because it's a copy
@@ -16342,12 +16342,12 @@ void LivingLifePage::step() {
                 int forced = 0;
                 int done_moving = 0;
                 
-                char *holdingIDBuffer = new char[500];
+                char *holdingIDBuffer = NULL;
 
                 int heldOriginValid, heldOriginX, heldOriginY,
                     heldTransitionSourceID;
                 
-                char *clothingBuffer = new char[500];
+                char *clothingBuffer = NULL;
                 
                 int justAte = 0;
                 int justAteID = 0;
@@ -16364,13 +16364,17 @@ void LivingLifePage::step() {
                 int heldYum = 0;
                 int heldLearned = 1;
                 
+                // skip strings of unknown length in middle
+                // 7th string and 20th string
+                // %*s skips them
+                // numRead won't include these skipped strings in the count
                 int numRead = sscanf( lines[i], 
                                       "%d %d "
                                       "%d "
                                       "%d "
                                       "%d %d "
-                                      "%499s %d %d %d %d %f %d %d %d %d "
-                                      "%lf %lf %lf %499s %d %d %d "
+                                      "%*s %d %d %d %d %f %d %d %d %d "
+                                      "%lf %lf %lf %*s %d %d %d "
                                       "%d %d",
                                       &( o.id ),
                                       &( o.displayID ),
@@ -16378,7 +16382,7 @@ void LivingLifePage::step() {
                                       &actionAttempt,
                                       &actionTargetX,
                                       &actionTargetY,
-                                      holdingIDBuffer,
+                                      // skip 7th string
                                       &heldOriginValid,
                                       &heldOriginX,
                                       &heldOriginY,
@@ -16391,16 +16395,51 @@ void LivingLifePage::step() {
                                       &( o.age ),
                                       &invAgeRate,
                                       &( o.lastSpeed ),
-                                      clothingBuffer,
+                                      // skip 20th string
                                       &justAte,
                                       &justAteID,
                                       &responsiblePlayerID,
                                       &heldYum,
                                       &heldLearned );
                 
+                char *lineCopy = NULL;
+                if( numRead >= 21 ) {
+                    // scanned all but skipped strings
+                    
+                    // now tokenize to extract them
+                    // do this in place to avoid allocating a bunch
+                    // of strings that we don't need
+
+                    lineCopy = stringDuplicate( lines[i] );
+
+                    SimpleVector<char *> *tokenPointers = 
+                        tokenizeStringInPlace( lineCopy );
+                    
+                    if( tokenPointers->size() >= 20 ) {
+                        // 7th string
+                        holdingIDBuffer = tokenPointers->getElementDirect( 6 );
+                        // 20th string
+                        clothingBuffer = tokenPointers->getElementDirect( 19 );
+                        }
+                    
+                    // we can safely delete vector, since it only
+                    // contains pointers into lineCopy
+                    delete tokenPointers;
+                    
+                    // we also don't need to worry about deleting either
+                    // id buffer
+                    // since they're pointers into lineCopy
+
+                    // lineCopy is now mangled and full of \0, but that's okay
+                    // because it's a copy
+
+                    // and we just scanned two more tokens
+                    numRead += 2;
+                    }
                 
+
                 // heldYum is 24th value, optional
-                // heldLearned is 26th value, optional
+                // heldLearned is 25th value, optional
                 if( numRead >= 23 ) {
 
                     applyReceiveOffset( &actionTargetX, &actionTargetY );
@@ -18352,10 +18391,12 @@ void LivingLifePage::step() {
                         }
                     }
                 
-                delete [] holdingIDBuffer;
-                delete [] clothingBuffer;
                 
                 delete [] lines[i];
+                
+                if( lineCopy != NULL ) {
+                    delete [] lineCopy;
+                    }
                 }
             
             for( int i=0; i<unusedHolderID.size(); i++ ) {
