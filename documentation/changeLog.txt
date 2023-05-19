@@ -42,6 +42,9 @@ Server Fixes
   longer inherit leadership unless there's no closer choice.  Thanks Doug L.
   Fixes #765
 
+--Added missing stuff to protocol.txt doc about *map and player pointers in
+  player speech PS messages.  Thanks Arcurus.  Fixes #770
+
 
 
 

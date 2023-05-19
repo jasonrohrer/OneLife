@@ -482,6 +482,54 @@ PS
 #
 
 
+The "text" part of PS messages can also contain pointers to map locations or
+particular players.
+These aren't necessarily part of the protocol, because spoken messages can
+contain any text except for newlines.  However, these extra bits of data
+in a spoken message are a convention shared between the server and the official
+client.  Also note that some of these special-purpose PS message are only sent
+by the server to the client of the speaking player (they are like the player
+thinking to themselves), and nearby players don't get these PS messages.  Or
+in other situations, nearby players only get the spoken part of the message,
+with the player/map pointers stripped off.
+
+
+For straight map locations, the format is:
+p_id/isCurse *map x y map_age_seconds
+
+Example:
+
+PS
+38499/0 :SPECIAL SPOT *map 13 6 92
+#
+
+(Note that the colon in this message has no protocol significance.  It is sent
+ by the server whenever a player is reading out loud from written words.)
+
+
+
+For locations of players, the format is:
+p_id/isCurse *target_label target_p_id *map x y
+
+Example:
+
+PS
+38501/0 OUTSIDER NAMELESS PERSON IS MY NEW FOLLOWER *visitor 38500 *map 3 0
+#
+
+Known *target_label values are:
+
+*baby
+*leader
+*follower
+*expert
+*owner
+*visitor
+*prop
+
+
+
+
 
 
 
