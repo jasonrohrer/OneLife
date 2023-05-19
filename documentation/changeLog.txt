@@ -13,6 +13,8 @@ Version 371    ???
   target-to-newActor numUses pass-through, though it wasn't currently
   affecting any transitions.  Fixes #746  Fixes jasonrohrer/OneLifeData7#874
 
+--165 added to list of possible monitor refresh rates.  Fixes #771
+
 
 
 Server Fixes
