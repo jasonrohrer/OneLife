@@ -15273,19 +15273,56 @@ void LivingLifePage::step() {
                 delete [] lines[0];
                 }
             
-            char idBuffer[500];
-            
+
             for( int i=1; i<numLines; i++ ) {
                 
                 int x, y, floorID, responsiblePlayerID;
                 int oldX, oldY;
                 float speed = 0;
                                 
+                char *lineCopy = NULL;
                 
-                int numRead = sscanf( lines[i], "%d %d %d %499s %d %d %d %f",
+                // scan everything but 4th token, which is a string of 
+                // unknown length.  %*s will scan it but skip
+                // saving it in a variable
+                
+                int numRead = sscanf( lines[i], "%d %d %d %*s %d %d %d %f",
                                       &x, &y, &floorID, 
-                                      idBuffer, &responsiblePlayerID,
+                                      // skip 4th token
+                                      &responsiblePlayerID,
                                       &oldX, &oldY, &speed );
+                char *idBuffer = NULL;
+                
+                if( numRead >= 4 ) {
+                    // we scanned past the 4th skipped token
+                    // now tokenize to extract it
+                    // do this in place to avoid allocating a bunch
+                    // of strings that we don't need
+
+                    lineCopy = stringDuplicate( lines[i] );
+
+                    SimpleVector<char *> *tokenPointers = 
+                        tokenizeStringInPlace( lineCopy );
+                    
+                    if( tokenPointers->size() >= 4 ) {
+                        idBuffer = tokenPointers->getElementDirect( 3 );
+                        }
+                    
+                    // we can safely delete vector, since it only
+                    // contains pointers into lineCopy
+                    delete tokenPointers;
+                    
+                    // we also don't need to worry about deleting idBuffer
+                    // since it's a pointer into lineCopy;
+
+                    // lineCopy is now mangled and full of \0, but that's okay
+                    // because it's a copy
+
+                    // and we just scanned one more token
+                    numRead ++;
+                    }
+                
+
                 if( numRead == 5 || numRead == 8) {
 
                     applyReceiveOffset( &x, &y );
@@ -15333,6 +15370,9 @@ void LivingLifePage::step() {
                                                  lines[i] ) );
                                 
                                 delete [] lines[i];
+                                if( lineCopy != NULL ) {
+                                    delete [] lineCopy;
+                                    }
                                 continue;
                                 }
                             }
@@ -16160,6 +16200,9 @@ void LivingLifePage::step() {
                     }
                 
                 delete [] lines[i];
+                if( lineCopy != NULL ) {
+                    delete [] lineCopy;
+                    }
                 }
             
             delete [] lines;

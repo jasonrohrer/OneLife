@@ -15,6 +15,12 @@ Version 371    ???
 
 --165 added to list of possible monitor refresh rates.  Fixes #771
 
+--Fixed so that there's no longer a 500-character limit to the idString when
+  parsing a MAP_CHANGE (MX) message in the client.  A delivery truck full of
+  backpacks full of bananas was surpassing this limit, causing glitches.
+  Part of #784
+
+
 
 
 Server Fixes
