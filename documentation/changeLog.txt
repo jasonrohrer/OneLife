@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 371    ???
+Version 371    2023-05-19
 
 --Fixed so that actor-to-newTarget numUses pass-through only happens if they
   have the same numUses AND the same useChance.  This was causing a bug when
