@@ -13776,11 +13776,17 @@ void LivingLifePage::step() {
             if( mTutorialNumber <= 0 ) {
                 // not in tutorial
                 // display this message
+
+                int numLines;
+                char **lines = split( message, "\n", &numLines );
                 
-                char messageFromServer[200];
-                sscanf( message, "MS\n%199s", messageFromServer );            
-                
-                displayGlobalMessage( messageFromServer );
+                if( numLines > 1 ) {
+                    displayGlobalMessage( lines[1] );
+                    }
+                for( int i=0; i<numLines; i++ ) {
+                    delete [] lines[i];
+                    }
+                delete [] lines;
                 }
             }
         else if( type == WAR_REPORT ) {
