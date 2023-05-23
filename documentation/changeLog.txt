@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 372    ???
+
+--Fixed so that LivingLifePage uses visibleViewWidth for all calculations (like
+  player position) instead of viewWidth.  This fixes issues with camera
+  position relative to player on ultrawide monitors.  Related to #782
+
+
+
 Version 371    2023-05-19
 
 --Fixed so that actor-to-newTarget numUses pass-through only happens if they
