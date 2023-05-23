@@ -10,6 +10,9 @@ Version 372    ???
   player position) instead of viewWidth.  This fixes issues with camera
   position relative to player on ultrawide monitors.  Related to #782
 
+--Fixed calling convention for two windows callbacks.  Thanks Justin L.
+
+
 
 
 Version 371    2023-05-19
