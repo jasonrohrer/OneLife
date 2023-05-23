@@ -25665,6 +25665,10 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                                    "unfollowCommand" ) ) {
                                 sendToServerSocket( (char*)"UNFOL 0 0#" );
                                 }
+                            else if( commandTyped( typedText, 
+                                                   "propertyCommand" ) ) {
+                                sendToServerSocket( (char*)"PROP 0 0#" );
+                                }
                             else {
                                 // filter hints
                                 char *filterString = 

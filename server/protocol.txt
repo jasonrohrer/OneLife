@@ -1105,6 +1105,7 @@ VOGX x y#
 PHOTO x y seq#
 LEAD x y#
 UNFOL x y#
+PROP x y#
 FLIP x y#
 
 KA   is a keep-alive message used to keep the connection alive when the client
@@ -1211,6 +1212,10 @@ LEAD requests the player's top leader's position as spoken map coordinates.
      x and y are ignored
 
 UNFOL makes the player follow no one (same as saying "I FOLLOW MYSELF")
+
+PROP requests the player's most recently-acquired property position as spoken 
+     map coordinates.
+     x and y are ignored
 
 FLIP requests flip to player's orientation, new facing toward x y
 

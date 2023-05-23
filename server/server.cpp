@@ -1106,6 +1106,11 @@ typedef struct LiveObject {
 
         // list of positions owned by this player
         SimpleVector<GridPos> ownedPositions;
+        
+        // when player issues /property command, we tell them about
+        // the next property in their property list
+        int lastOwnedPositionInformed;
+        
 
         // list of owned positions that this player has heard about
         SimpleVector<GridPos> knownOwnedPositions;
@@ -1478,6 +1483,12 @@ static void endOwnership( int inX, int inY, int inObjectID ) {
 
 
 
+
+static const char *getPropertyNameWord( int inX, int inY, int inWordIndex );
+
+
+
+
 SimpleVector<GridPos> newOwnerPos;
 
 SimpleVector<GridPos> recentlyRemovedOwnerPos;
@@ -1548,9 +1559,13 @@ void removeAllOwnership( LiveObject *inPlayer, char inProcessInherit = true ) {
                     
                     // send them a map pointer too
                     message = autoSprintf( "PS\n"
-                                           "%d/0 MY INHERITED PROPERTY "
+                                           "%d/0 MY INHERITED '%s %s' PROPERTY "
                                            "*prop %d *map %d %d\n#",
                                            heir->id,
+                                           getPropertyNameWord( p->x, p->y,
+                                                                0 ),
+                                           getPropertyNameWord( p->x, p->y,
+                                                                1 ),
                                            0,
                                            p->x - heir->birthPos.x,
                                            p->y - heir->birthPos.y );
@@ -2544,6 +2559,43 @@ static const char *getCurseWord( char *inSenderEmail,
 
 
 
+// result NOT destroyed by caller
+// a common property name for property gate at position x,y
+// all players see the same name
+static const char *getPropertyNameWord( int inX, int inY, int inWordIndex ) {
+    
+    if( curseWords.size() == 0 ) {
+        return "X";
+        }
+
+    if( curseSecret == NULL ) {
+        curseSecret = 
+            SettingsManager::getStringSetting( 
+                "statsServerSharedSecret", "sdfmlk3490sadfm3ug9324" );
+        }
+    
+    char *coordsPlusSecret = 
+        autoSprintf( "%d_%d_%s", inX, inY, curseSecret );
+    
+    unsigned int c = crc32( (unsigned char*)coordsPlusSecret, 
+                            strlen( coordsPlusSecret ) );
+    
+    delete [] coordsPlusSecret;
+
+    curseSource.reseed( c );
+    
+    // mix based on index
+    for( int i=0; i<inWordIndex; i++ ) {
+        curseSource.getRandomDouble();
+        }
+
+    int index = curseSource.getRandomBoundedInt( 0, curseWords.size() - 1 );
+    
+    return curseWords.getElementDirect( index );
+    }
+
+
+
 
 volatile char quit = false;
 
@@ -2746,6 +2798,7 @@ typedef enum messageType {
     PHOTO,
     LEAD,
     UNFOL,
+    PROP,
     FLIP,
     UNKNOWN
     } messageType;
@@ -3171,6 +3224,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "UNFOL" ) == 0 ) {
         m.type = UNFOL;
+        }
+    else if( strcmp( nameBuffer, "PROP" ) == 0 ) {
+        m.type = PROP;
         }
     else if( strcmp( nameBuffer, "FLIP" ) == 0 ) {
         m.type = FLIP;
@@ -8672,6 +8728,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.lastBabyEmail = NULL;
 
     newObject.everHomesick = false;
+
+    newObject.lastOwnedPositionInformed = -1;
+    
 
     newObject.lastGateVisitorNoticeTime = 0;
     newObject.lastNewBabyNoticeTime = 0;
@@ -20044,6 +20103,52 @@ int main() {
                         autoSprintf( "PS\n"
                                      "%d/0 +NO LEADER+\n#",
                                  nextPlayer->id );
+                    sendMessageToPlayer( nextPlayer, 
+                                         psMessage, strlen( psMessage ) );
+                    delete [] psMessage;
+                    }
+                else if( m.type == PROP ) {
+
+                    char *psMessage;
+                    
+                    if( nextPlayer->ownedPositions.size() > 0 ) {
+                        
+                        // inform them about next one
+                        nextPlayer->lastOwnedPositionInformed++;
+
+                        if( nextPlayer->lastOwnedPositionInformed >=
+                            nextPlayer->ownedPositions.size() ) {
+                            // wrap around
+                            nextPlayer->lastOwnedPositionInformed = 0;
+                            }
+                        
+
+                        GridPos *p = 
+                            nextPlayer->ownedPositions.getElement(
+                                nextPlayer->lastOwnedPositionInformed );
+                        
+                        // send them a map pointer
+                        psMessage = 
+                            autoSprintf( "PS\n"
+                                         "%d/0 MY '%s %s' PROPERTY "
+                                         "*prop %d *map %d %d\n#",
+                                         nextPlayer->id,
+                                         getPropertyNameWord( p->x, p->y,
+                                                              0 ),
+                                         getPropertyNameWord( p->x, p->y,
+                                                              1 ),
+                                         0,
+                                         p->x - nextPlayer->birthPos.x,
+                                         p->y - nextPlayer->birthPos.y );
+                        }
+                    else {
+                        // they own nothing
+                        psMessage = 
+                            autoSprintf( "PS\n"
+                                         "%d/0 +NO PROPERTY+\n#",
+                                         nextPlayer->id );
+                        }
+                    
                     sendMessageToPlayer( nextPlayer, 
                                          psMessage, strlen( psMessage ) );
                     delete [] psMessage;
