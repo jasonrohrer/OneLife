@@ -1213,7 +1213,7 @@ LEAD requests the player's top leader's position as spoken map coordinates.
 
 UNFOL makes the player follow no one (same as saying "I FOLLOW MYSELF")
 
-PROP requests the player's most recently-acquired property position as spoken 
+PROP cycles through player's owned property positions as spoken 
      map coordinates.
      x and y are ignored
 
