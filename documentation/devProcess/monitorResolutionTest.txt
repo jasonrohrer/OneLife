@@ -1,0 +1,27 @@
+Find modeline with:
+
+gtf 1280 720 60
+
+
+Add mode:
+
+xrandr --newmode "1280x720_60.00"  74.48  1280 1336 1472 1664  720 721 724 746  -HSync +Vsync
+
+
+Add mode to monitor:
+
+xrandr --addmode eDP-1 "1280x720_60.00"
+
+
+
+NOTE:  this seems to cause a problem.
+Disable stretching:
+
+xrandr --output eDP-1 --set "scaling mode" "Full aspect"
+
+
+
+
+Switch to mode using monitor control panel
+
+
