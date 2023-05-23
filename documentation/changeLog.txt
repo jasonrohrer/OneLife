@@ -18,6 +18,8 @@ Version 372    ???
   trying to move toward.  Upon inheriting a property, this same name is also
   displayed.  Thanks Cordy.  Fixes #800
 
+--Unique two-word name is displayed when you finish constructing a property
+  fence.
 
 
 

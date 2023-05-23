@@ -22836,6 +22836,25 @@ int main() {
                                         nextPlayer->
                                             ownedPositions.push_back( newPos );
                                         newOwnerPos.push_back( newPos );
+
+                                        // make them speak the new name
+                                        // to themselves
+                                        char *psMessage = 
+                                            autoSprintf(
+                                              "PS\n"
+                                              "%d/0 MY NEW '%s %s' PROPERTY\n#",
+                                              nextPlayer->id,
+                                              getPropertyNameWord( m.x, m.y,
+                                                                   0 ),
+                                              getPropertyNameWord( m.x, m.y,
+                                                                   1 ) );
+                                                
+                                        sendMessageToPlayer( 
+                                            nextPlayer, 
+                                            psMessage, 
+                                            strlen( psMessage ) );
+                                        
+                                        delete [] psMessage;
                                         }
                                 
 
