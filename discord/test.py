@@ -1,4 +1,7 @@
-import requests;
+import requests
+import json
+import time
+from datetime import datetime
 
 botToken = "PUT_TOKEN_HERE"
 
@@ -24,7 +27,7 @@ postData = '{"content":"Posting as a bot"}';
 # this isn't that useful, because members are in ID order
 # You can get 1000 at a time, and page through, but there's no way
 # to get most recent members
-endpoint = 'https://discordapp.com/api/guilds/328215300279500800/members?limit=10'
+endpoint = 'https://discordapp.com/api/guilds/328215300279500800/members?limit=1000'
 
 
 
@@ -39,9 +42,9 @@ endpoint = 'https://discordapp.com/api/guilds/328215300279500800/members?limit=1
 # must use PUT command for this:
 # endpoint for adding a role to a user
 # test user ID:  478252140348047360
-# test role ID:  1064657025386152058
+# test role ID:  1110719232804655115
 
-#endpoint = 'https://discordapp.com/api/guilds/328215300279500800/members/478252140348047360/roles/1064657025386152058'
+#endpoint = 'https://discordapp.com/api/guilds/328215300279500800/members/478252140348047360/roles/1110719232804655115'
 
 
 
@@ -82,16 +85,86 @@ postData = '{ "name": "unlock", "description":"Unlock the Insiders area.", "type
 
 
 #response = requests.post( endpoint, headers = headers, data = postData )
+endpoint = 'https://discordapp.com/api/guilds/328215300279500800/members?limit=1000'
 
-response = requests.get( endpoint, headers = headers )
+endpointCurrent = endpoint
 
+numFetched = 1000;
+
+oldEnoughIDs = [];
+
+
+while numFetched == 1000 :
+    print( "Fetching " + endpointCurrent )
+    response = requests.get( endpointCurrent, headers = headers )
+    decoded = json.loads( response.text );
+    
+    maxID = 0
+
+    for r in decoded :
+        
+        # trim off time part
+        dateString = r[ "joined_at" ]
+        dateParts = dateString.split( "T" )
+        
+        d = datetime.strptime( dateParts[0], "%Y-%m-%d" )
+        t = time.mktime( d.timetuple() )
+        
+        curTime = time.time();
+
+        id = int( r[ "user" ][ "id" ] )
+
+        # print accounts that are at least two weeks old
+        if curTime - t > 3600 * 24 * 14 :
+            #print( r[ "user" ][ "username" ] )
+            #print( r[ "joined_at" ] )
+            oldEnoughIDs.append( id )
+        
+        if id > maxID :
+            maxID = id
+    numFetched = len( decoded )
+    endpointCurrent = endpoint + "&after=" + str( maxID )
+    
+
+numOldEnough = len( oldEnoughIDs )
+
+print( "Old enough " + str( numOldEnough ) )
+
+
+# now give them the OHOL Voting role
+
+# note:  bot must have Manage Roles permissions 
+# AND the bot's auto-generated role (when added to the server) must be ABOVE
+# the role that it is trying to manage.
+
+countSuccess = 0
+
+for u in oldEnoughIDs :
+    time.sleep( 1 )
+
+    endpoint = "https://discordapp.com/api/guilds/328215300279500800/members/" + str( u ) + "/roles/1110719232804655115"
+    print( "Fetching endpoint " + endpoint )
+
+    response = requests.put( endpoint, headers = headers )
+    
+    if response.status_code == 204 :
+        countSuccess = countSuccess + 1
+    else :
+        print( "Failed with code " + str( response.status_code ) )
+        print( "Raw response:  " + 
+               str( response.content ) )
+
+print( "Added role correctly " + str( countSuccess ) + " times" )
+    
 #response = requests.delete( endpoint, headers = headers )
 
 #response = requests.put( endpoint, headers = headers )
 
 
-print( "Response code:  " + 
-       str( response.status_code ) )
+#print( "Response code:  " + 
+#       str( response.status_code ) )
 
-print( "Raw response:  " + 
-       str( response.content ) )
+#print( "Raw response:  " + 
+#       str( response.content ) )
+
+
