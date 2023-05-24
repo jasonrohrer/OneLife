@@ -140,6 +140,7 @@ print( "Old enough " + str( numOldEnough ) )
 countSuccess = 0
 
 for u in oldEnoughIDs :
+    # avoid rate limit by sleeping between requests
     time.sleep( 1 )
 
     endpoint = "https://discordapp.com/api/guilds/328215300279500800/members/" + str( u ) + "/roles/1110719232804655115"
