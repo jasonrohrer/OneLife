@@ -29,7 +29,8 @@ Server Fixes
 --Photo server web UI now lets you page through older photos.  Thanks Cordy.
   Fixes #802
 
-
+--Photo server provides width/height html hints for photos, to smooth page
+  loading.
 
 
 

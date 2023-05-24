@@ -722,7 +722,7 @@ function ps_displayPhoto( $url, $author_name, $subject_names,
     
     echo "<table width=400 border=0><tr><td colspan=2>";
         
-    echo "<img src='$url'></td></tr>";
+    echo "<img width=400 height=400 src='$url'></td></tr>";
 
         
     echo "<tr><td>by $author_name</td>";
