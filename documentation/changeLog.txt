@@ -40,6 +40,13 @@ Server Fixes
   YOU, and several other variants are now logged correctly.  Thanks Cordy.
   Fixes #809
 
+--Removed use of 1000-character static buffer when loading map files, instead
+  measuring length of object/slots string before scanning it into a
+  dynamically-allocated buffer.  Complex containers were already running
+  aground on 500-character static buffers (fixed elsewhere).  We might hit the
+  1000-character limit eventually.  Fixes #810
+
+
 
 
 
