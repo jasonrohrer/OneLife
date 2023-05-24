@@ -23,6 +23,17 @@ Version 372    ???
 
 
 
+
+Server Fixes
+
+--Photo server web UI now lets you page through older photos.  Thanks Cordy.
+  Fixes #802
+
+
+
+
+
+
 Version 371    2023-05-19
 
 --Fixed so that actor-to-newTarget numUses pass-through only happens if they

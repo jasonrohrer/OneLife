@@ -873,18 +873,77 @@ function ps_photoAppearances() {
 
 
 function ps_frontPage() {
-    global $header, $footer;
+
+    $page = ps_requestFilter( "page", "/[0-9]+/i", "0" );
+
+    global $tableNamePrefix;
+    
+    $query = "SELECT COUNT(*) ".
+        "FROM $tableNamePrefix"."photos;";
+    
+    $result = ps_queryDatabase( $query );
+    $totalPhotos = ps_mysqli_result( $result, 0, 0 );
+        
+        
+    global $header, $footer, $fullServerURL;
 
     eval( $header );
 
+    $numPerPage = 10;
+    $skipAmount = $numPerPage * $page;
+
+    
     echo "<center>";
 
     echo "<br><font size=5>Recent Photographs:</font><br><br>";
-    
-    
-    ps_displayPhotoList( "", "LIMIT 10" );
 
-    echo "</center>";
+    echo "<table border=0 width=400>";
+    echo "<tr><td width=50%>";
+
+    if( $page > 0 ) {
+        // prev button
+        $prevPage = $page - 1;
+        echo "[<a href=$fullServerURL?action=front_page".
+            "&page=$prevPage>Previous</a>]";
+        }
+    echo "</td>";
+    echo "<td width=50% align=right>";
+    
+    if( $totalPhotos > $skipAmount + $numPerPage ) {
+        // next button
+        $nextPage = $page + 1;
+        echo "[<a href=$fullServerURL?action=front_page".
+            "&page=$nextPage>Next</a>]";
+        }
+    echo "</td></tr></table>";
+
+    
+    ps_displayPhotoList( "", "LIMIT $skipAmount, $numPerPage" );
+
+
+
+    echo "<table border=0 width=400>";
+    echo "<tr><td width=50%>";
+
+    if( $page > 0 ) {
+        // prev button
+        $prevPage = $page - 1;
+        echo "[<a href=$fullServerURL?action=front_page".
+            "&page=$prevPage>Previous</a>]";
+        }
+    echo "</td>";
+    echo "<td width=50% align=right>";
+    
+    if( $totalPhotos > $skipAmount + $numPerPage ) {
+        // next button
+        $nextPage = $page + 1;
+        echo "[<a href=$fullServerURL?action=front_page".
+            "&page=$nextPage>Next</a>]";
+        }
+    echo "</td></tr></table>";
+    
+    echo "</center><br><br><br>";
+
     
     eval( $footer );
     }
