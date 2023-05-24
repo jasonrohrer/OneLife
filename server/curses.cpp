@@ -324,7 +324,6 @@ static void stepCurses() {
             if( r->livedTimeSinceScoreDecrement + aliveTime >= decrementTime ) {
                 r->score --;
                 
-                logCurseScore( r->email, r->score );
                 
                 r->livedTimeSinceScoreDecrement = 0;
                 r->aliveStartTimeSinceScoreDecrement = curTime;
@@ -656,9 +655,6 @@ char cursePlayer( int inGiverID, int inGiverLineageEveID, char *inGiverEmail,
         receiverRecord->aliveStartTimeSinceScoreDecrement = curTime;
         }
 
-    logCurse( inGiverID, inGiverEmail, receiverRecord->email );
-    
-    logCurseScore( receiverRecord->email, receiverRecord->score );
     
 
     if( useCurseServer ) {

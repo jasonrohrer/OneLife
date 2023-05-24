@@ -6,6 +6,8 @@
 #include "lineardb3.h"
 #include "dbCommon.h"
 
+#include "curseLog.h"
+
 
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/log/AppLog.h"
@@ -537,7 +539,8 @@ static void stepStaleCurseCulling() {
 
                     
 
-void setDBCurse( const char *inSenderEmail, const char *inReceiverEmail ) {
+void setDBCurse( int inSenderID, 
+                 const char *inSenderEmail, const char *inReceiverEmail ) {
     checkSettings();
 
     char alreadyCursedByThisPerson = isCursed( inSenderEmail, inReceiverEmail );
@@ -561,6 +564,11 @@ void setDBCurse( const char *inSenderEmail, const char *inReceiverEmail ) {
     if( ! alreadyCursedByThisPerson ) {
         incrementCurseCount( inReceiverEmail );
         }
+
+    
+    logCurse( inSenderID, (char*)inSenderEmail, (char*)inReceiverEmail );
+
+    logCurseScore( (char*)inReceiverEmail, getCurseCount( inReceiverEmail ) );
     }
 
 

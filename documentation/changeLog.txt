@@ -35,6 +35,12 @@ Server Fixes
 --Fixed spelling error in family tree server (Eighth).  Thanks Cordy.
   Fixes #805
 
+--Moved curse logging calls into setDBCurse to log all cases of cursing, and
+  removed them from to mostly redundant cursePlayer call.  CURSE MY BABY, CURSE
+  YOU, and several other variants are now logged correctly.  Thanks Cordy.
+  Fixes #809
+
+
 
 
 Version 371    2023-05-19

@@ -7,7 +7,8 @@ void initCurseDB();
 void freeCurseDB();
 
 
-void setDBCurse( const char *inSenderEmail, const char *inReceiverEmail );
+void setDBCurse( int inSenderID, 
+                 const char *inSenderEmail, const char *inReceiverEmail );
 
 void clearDBCurse( const char *inSenderEmail, const char *inReceiverEmail );
 
