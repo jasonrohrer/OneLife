@@ -32,6 +32,8 @@ Server Fixes
 --Photo server provides width/height html hints for photos, to smooth page
   loading.
 
+--Fixed spelling error in family tree server (Eighth).  Thanks Cordy.
+  Fixes #805
 
 
 
