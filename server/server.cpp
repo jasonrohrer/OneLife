@@ -8542,6 +8542,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             o->connected = true;
             o->cravingKnown = false;
             
+            o->curseTokenUpdate = true;
+            
             if( o->heldByOther ) {
                 // they're held, so they may have moved far away from their
                 // original location

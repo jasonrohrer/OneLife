@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+
+Server Fixes
+
+--Now re-sends curse token status upon reconnection.  Thanks Cordy.  Fixes #821
+
+
+
+
 Version 372    2023-05-24
 
 --Fixed so that LivingLifePage uses visibleViewWidth for all calculations (like
