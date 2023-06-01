@@ -9,6 +9,18 @@ Server Fixes
 
 --Now re-sends curse token status upon reconnection.  Thanks Cordy.  Fixes #821
 
+--When the container that we're holding changes size suddenly (like when riding
+  over something deadly that tips the horse cart), we temporarily throw the
+  thing on the ground before shrinking it, so that it can empty/scatter its
+  contents around, before deleting it from the ground.  Old code made a
+  sometimes-incorrect assumption about where the item will be temporarily
+  dropped (since handleDrop respects biome boundaries), which means that
+  sometimes we'd go to delete this temporary object in the wrong spot, leaving
+  it behind in its actual spot.  This is the source of the horse-cart
+  duplication bug.  handleDrop has been changed to return the actual location
+  where the drop lands, and thus we can delete the temporarily-dropped horse
+  cart where it actually is.  Thanks Doug L. and many others.  Fixes #814
+
 
 
 
