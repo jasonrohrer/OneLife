@@ -21,6 +21,10 @@ Server Fixes
   where the drop lands, and thus we can delete the temporarily-dropped horse
   cart where it actually is.  Thanks Doug L. and many others.  Fixes #814
 
+--Items can now have multiple +cont tags which limit them to being contained
+  only in particular containers.  For example, the bowl of water now has both
+  +contFoodDish and +contLabDish, allowing it to go on both the food table and
+  the lab table.
 
 
 

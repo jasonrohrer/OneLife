@@ -11152,54 +11152,77 @@ static char containmentPermitted( int inContainerID, int inContainedID ) {
         // not a limited containable object
         return true;
         }
+
+    char anyWithLimitNameFound = false;
     
-    char *limitNameLoc = &( contLoc[5] );
+    while( contLoc != NULL ) {
+        
     
-    if( limitNameLoc[0] != ' ' &&
-        limitNameLoc[0] != '\0' ) {
+        char *limitNameLoc = &( contLoc[5] );
+    
+        if( limitNameLoc[0] != ' ' &&
+            limitNameLoc[0] != '\0' ) {
 
-        // there's something after +cont
-        // scan the whole thing, including +cont
+            // there's something after +cont
+            // scan the whole thing, including +cont
+            
+            anyWithLimitNameFound = true;
 
-        char tag[100];
-        
-        int numRead = sscanf( contLoc, "%99s", tag );
-        
-        if( numRead == 1 ) {
+            char tag[100];
             
-            // clean up # character that might delimit end of string
-            int tagLen = strlen( tag );
+            int numRead = sscanf( contLoc, "%99s", tag );
             
-            for( int i=0; i<tagLen; i++ ) {
-                if( tag[i] == '#' ) {
-                    tag[i] = '\0';
-                    tagLen = i;
-                    break;
-                    }
-                }
-
-            char *locInContainerName =
-                strstr( getObject( inContainerID )->description, tag );
-            
-            if( locInContainerName != NULL ) {
-                // skip to end of tag
-                // and make sure tag isn't a sub-tag of container tag
-                // don't want contained to be +contHot
-                // and contaienr to be +contHotPlates
+            if( numRead == 1 ) {
                 
-                char end = locInContainerName[ tagLen ];
+                // clean up # character that might delimit end of string
+                int tagLen = strlen( tag );
                 
-                if( end == ' ' ||
-                    end == '\0'||
-                    end == '#' ) {
-                    return true;
+                for( int i=0; i<tagLen; i++ ) {
+                    if( tag[i] == '#' ) {
+                        tag[i] = '\0';
+                        tagLen = i;
+                        break;
+                        }
                     }
+                
+                char *locInContainerName =
+                    strstr( getObject( inContainerID )->description, tag );
+                
+                if( locInContainerName != NULL ) {
+                    // skip to end of tag
+                    // and make sure tag isn't a sub-tag of container tag
+                    // don't want contained to be +contHot
+                    // and contaienr to be +contHotPlates
+                    
+                    char end = locInContainerName[ tagLen ];
+                    
+                    if( end == ' ' ||
+                        end == '\0'||
+                        end == '#' ) {
+                        return true;
+                        }
+                    }
+                // no match with this container so far, 
+                // but we can keep trying other +cont tags
+                // in our contained object
                 }
-            return false;
             }
+        else {
+            // +cont with nothing after it, no limit based on this tag
+            }
+
+        // keep looking beyond last limit loc
+        contLoc = strstr( limitNameLoc, "+cont" );
+        }
+
+    if( anyWithLimitNameFound ) {
+        // item is limited to some types of container, and this
+        // container didn't match any of the limit names
+        return false;
         }
     
-    // +cont with nothing after it, no limit
+
+    // we get here if we found +cont in the item, but no limit name after it
     return true;
     }
 
