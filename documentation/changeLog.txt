@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 374    2023-???
+
+--Fixed photo aiming/placement on screen resolutions other than 1280x720.
+  Thanks Twisted.  Fixes #827
+
+
 
 Server Fixes
 

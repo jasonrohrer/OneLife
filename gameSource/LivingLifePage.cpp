@@ -9089,12 +9089,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
             pos = mult( pos, CELL_D );
             pos = sub( pos, lastScreenViewCenter );
             
-            int screenWidth, screenHeight;
-            getScreenDimensions( &screenWidth, &screenHeight );
+            // pos is currently in world/pixel coordinates           
             
-            pos.x += screenWidth / 2;
-            pos.y += screenHeight / 2;
-        
+            // do NOT adjust camera pos relative to screen corner yet
+            // we need to take screen scaling into acount
+            // and we don't want to recompute screen scaling here
+            // (we will do that in the photo code)
+            // pos.x += screenWidth / 2;
+            // pos.y += screenHeight / 2;
+
+
             char *ourName;
             
             if( ourLiveObject->name != NULL ) {

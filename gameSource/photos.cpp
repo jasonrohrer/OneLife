@@ -14,15 +14,27 @@
 #include "minorGems/graphics/filters/FastBlurFilter.h"
 #include "minorGems/graphics/filters/BoxBlurFilter.h"
 
+#include "minorGems/graphics/RGBAImage.h"
+
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include "stb_image_write.h"
 
 
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+
+#include "stb_image_resize.h"
+
+
 extern char *userEmail;
 extern char *serverIP;
 extern int ourID;
+
+extern double viewWidth;
+extern double viewHeight;
+extern double visibleViewWidth;
+
 
 Image *photoBorder;
 
@@ -151,10 +163,16 @@ static inline double intDist( int inXA, int inYA, int inXB, int inYB ) {
 
 
 
+
+// inCameraLocation is in world pixels relative to screen center
+// (World pixel units assume CELL_D pixels per tile).
+// Note that world pixels may differ from screen pixels if screen
+// size does not match our native game resolution
+
 // Don't muck with this code in a way that tricks the photo server.
 // read OneLife/photoServer/protocol.txt for your very serious warning
 // about this.
-void takePhoto( doublePair inCamerLocation, int inCameraFacing,
+void takePhoto( doublePair inCameraLocation, int inCameraFacing,
                 int inSequenceNumber,
                 char *inServerSig,
                 int inAuthorID,
@@ -172,30 +190,75 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing,
     int screenWidth, screenHeight;
     getScreenDimensions( &screenWidth, &screenHeight );
         
-    int rectStartX = lrint( inCamerLocation.x );
-    if( inCameraFacing == -1 ) {
-        rectStartX -= 400 + CELL_D / 2;
+    double targetAspectRatio = visibleViewWidth / (double)viewHeight;
+    
+    double screenAspectRatio = screenWidth / (double)screenHeight;
+    
+    double screenScale;
+    
+    if( screenAspectRatio > targetAspectRatio ) {
+        screenScale = screenHeight / (double) viewHeight;
         }
     else {
-        rectStartX += CELL_D / 2;
+        screenScale = screenWidth / visibleViewWidth;
+        }
+
+    // now we can convert cam position into screen pixels, relative to center of
+    // screen
+    inCameraLocation = mult( inCameraLocation, screenScale );
+    
+    // now that it's in screen pixels, we can compute it relative to
+    // corner of screen
+    inCameraLocation.x += screenWidth / 2;
+    inCameraLocation.y += screenHeight / 2;
+
+
+    int rectStartX = lrint( inCameraLocation.x );
+    if( inCameraFacing == -1 ) {
+        rectStartX -= screenScale * ( 400 + CELL_D / 2 );
+        }
+    else {
+        rectStartX += screenScale * ( CELL_D / 2 );
         }
     if( rectStartX < 0 ) {
         rectStartX = 0;
         }
-    if( rectStartX >= screenWidth - 400 ) {
-        rectStartX = screenWidth - 401;
+    if( rectStartX >= screenWidth - screenScale * 400 ) {
+        rectStartX = screenWidth - screenScale * 400 - 1;
         }
         
-    int rectStartY = lrint( inCamerLocation.y ) - CELL_D;
+    int rectStartY = lrint( inCameraLocation.y ) - screenScale * CELL_D;
     
     if( rectStartY < 0 ) {
         rectStartY = 0;
         }
-    if( rectStartY >= screenHeight - 400 ) {
-        rectStartY = screenHeight - 401;
+    if( rectStartY >= screenHeight - screenScale * 400 ) {
+        rectStartY = screenHeight - screenScale * 400 - 1;
         }
+    
+    Image *im = getScreenRegionRaw( rectStartX, rectStartY, 
+                                    screenScale * 400, screenScale * 400 );
 
-    Image *im = getScreenRegionRaw( rectStartX, rectStartY, 400, 400 );
+    if( screenScale != 1.0 ) {
+        // resize the image to 400x400
+
+        unsigned char *bytes = RGBAImage::getRGBABytes( im );
+        
+        unsigned char *outBytes = new unsigned char[ 400 * 400 * 4 ];
+
+        int result = stbir_resize_uint8( bytes, 
+                                         im->getWidth(), im->getHeight(),
+                                         0, outBytes, 400, 400, 0, 4 );
+        if( result == 1 ) {
+            delete im;
+            
+            im = RGBAImage::getImageFromBytes( outBytes, 400, 400, 4 );
+            }
+
+        delete [] bytes;
+        delete [] outBytes;
+        }
+    
     
     double *r = im->getChannel( 0 );
     double *g = im->getChannel( 1 );
