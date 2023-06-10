@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 374    2023-???
+Version 374    2023-June-9
 
 --Fixed photo aiming/placement on screen resolutions other than 1280x720.
   Thanks Twisted.  Fixes #827
@@ -12,6 +12,7 @@ Version 374    2023-???
 --Transitions that require unsed items now show (FRESH) or (FULL) in crafting
   hints.  For example, you can see that a pie requires a full bowl of berries,
   and you can see that a diesel mining pick requires a fresh chisel.
+
 
 
 
@@ -38,7 +39,7 @@ Server Fixes
 
 
 
-Version 372    2023-05-24
+Version 372    2023-May-24
 
 --Fixed so that LivingLifePage uses visibleViewWidth for all calculations (like
   player position) instead of viewWidth.  This fixes issues with camera
@@ -84,7 +85,7 @@ Server Fixes
 
 
 
-Version 371    2023-05-19
+Version 371    2023-May-19
 
 --Fixed so that actor-to-newTarget numUses pass-through only happens if they
   have the same numUses AND the same useChance.  This was causing a bug when
@@ -145,7 +146,7 @@ Server Fixes
 
 
 
-Version 369    2023-05-12
+Version 369    2023-May-12
 
 --Added comment field to transitions (in editor), for leaving notes about
   complex, special-purpose transitions.
