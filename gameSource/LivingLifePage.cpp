@@ -11949,6 +11949,40 @@ static double getLongestLine( char *inMessage ) {
 
 
 
+// tags with new or fresh if needed
+// inBaseString is destroyed internally if it needs to change
+//  and a new string is returned.
+// If it doesn't need to change, inBaseString is returned directly
+static char *tagObjectStringWithQualifier( char *inBaseString,
+                                           ObjectRecord *inO ) {
+    if( inO->useChance == 1.0 ) {
+        // an object that steps through uses
+        // probably something that gets visibly used up
+        // step by step.
+        // actorMinUseFraction == 1.0 means "full"
+        char *taggedString =
+            autoSprintf( "%s %s", inBaseString,
+                         translate( "fullHint" ) );
+        delete [] inBaseString;
+        return taggedString;
+        }
+    else if( inO->useChance < 1.0 &&
+             inO->useChance > 0 ) {
+        // an object that wears out somewhat randomly
+        // actorMinUseFraction == 1.0 means "unused new object"
+        char *taggedString =
+            autoSprintf( "%s %s", inBaseString,
+                         translate( "freshHint" ) );
+        delete [] inBaseString;
+        return taggedString;
+        }
+
+    return inBaseString;
+    }
+
+
+                                           
+
 char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
                                       int inDoNotPointAtThis ) {
 
@@ -11975,8 +12009,17 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
         char *actorString;
         
         if( actor > 0 ) {
-            actorString = stringToUpperCase( getObject( actor )->description );
+            ObjectRecord *actorO = getObject( actor );
+
+            actorString = stringToUpperCase( actorO->description );
             stripDescriptionComment( actorString );
+
+            if( found->actorMinUseFraction == 1.0 &&
+                actorO->numUses > 1 ) {
+                
+                actorString = tagObjectStringWithQualifier( actorString,
+                                                            actorO );
+                }
             }
         else if( actor == 0 || actor == -2 ) {
             // show bare hand for default actions too
@@ -11995,9 +12038,18 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
         char *targetString;
         
         if( target > 0 ) {
+            ObjectRecord *targetO = getObject( target );
+
             targetString = 
-                stringToUpperCase( getObject( target )->description );
+                stringToUpperCase( targetO->description );
             stripDescriptionComment( targetString );
+            
+            if( found->targetMinUseFraction == 1.0 &&
+                targetO->numUses > 1 ) {
+                
+                targetString = tagObjectStringWithQualifier( targetString,
+                                                             targetO );
+                }
             }
         else if( target == -1 && actor > 0 ) {
             ObjectRecord *actorObj = getObject( actor );

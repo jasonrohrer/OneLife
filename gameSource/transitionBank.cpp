@@ -869,8 +869,17 @@ void initTransBankFinish() {
             newTrans.reverseUseTarget = false;
             newTrans.noUseActor = false;
             newTrans.noUseTarget = false;
-            newTrans.actorMinUseFraction = 0.0f;
-            newTrans.targetMinUseFraction = 0.0f;
+            // these values are only used when setting up use-dummy
+            // transitions (to tell us where the cut-off might be,
+            // when an object is too used to have a transition)
+            // In old code, we set these to 0.0 for all dummy transitions.
+            // However, our tool tip logic now uses this (to show a (FRESH)
+            // or (FULL) tag to show limits of which objects can be used
+            // in a transition.
+            // Thus, it's fine if these values "ride along" in
+            // dummy transitions.
+            newTrans.actorMinUseFraction = tr->actorMinUseFraction;
+            newTrans.targetMinUseFraction = tr->targetMinUseFraction;
             
             char processed = false;
 
