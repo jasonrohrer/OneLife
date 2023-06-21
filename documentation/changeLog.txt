@@ -12,6 +12,16 @@ Version 376    ???
 
 
 
+Server Fixes
+
+--Fixed so that if you destroy a property gate, ownership is removed correctly.
+  Before, the ownership record for that x,y location would linger, breaking
+  "you own this" as well as construction of new owned gates at that same spot.
+  Fixes #831
+
+
+
+
 
 
 Version 374    2023-June-9

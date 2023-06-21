@@ -22886,7 +22886,37 @@ int main() {
                                         
                                         delete [] psMessage;
                                         }
-                                
+                                    else if( target > 0 && r->newTarget > 0 &&
+                                        target != r->newTarget &&
+                                        getObject( target )->isOwned &&
+                                        ! getObject( r->newTarget )->isOwned ) {
+                                        // player just destroyed an owned
+                                        // (or tempOwned) object here
+                                        
+                                        // need to remove records of ownership
+                                        // from this location
+                                        for( int j=0; j<players.size(); j++ ) {
+                                            LiveObject *p = 
+                                                players.getElement( j );
+
+                                            for( int i=0; 
+                                                 i < p->ownedPositions.size(); 
+                                                 i++ ) {
+                                            
+                                                GridPos *pos = 
+                                                    p->ownedPositions.
+                                                    getElement( i );
+                                                
+                                                if( pos->x == m.x &&
+                                                    pos->y == m.y ) {
+                                                    p->ownedPositions.
+                                                        deleteElement( i );
+                                                    i--;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    
 
                                     if( r->actor == 0 &&
                                         target > 0 && r->newTarget > 0 &&
