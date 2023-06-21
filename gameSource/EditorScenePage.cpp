@@ -66,6 +66,7 @@ EditorScenePage::EditorScenePage()
           mReplaceButton( smallFont, -500, 260, "Replace" ),
           mDeleteButton( smallFont, 500, 260, "Delete" ),
           mSaveTestMapButton( smallFont, -300, 200, "Export Test Map" ),
+          mLoadTestMapButton( smallFont, -500, 200, "Import Test Map" ),
           mNextSceneButton( smallFont, -420, 260, ">" ),
           mPrevSceneButton( smallFont, -580, 260, "<" ),
           mClearSceneButton( smallFont, 350, 260, "Clear" ),
@@ -154,6 +155,16 @@ EditorScenePage::EditorScenePage()
 
     addComponent( &mSaveTestMapButton );
     mSaveTestMapButton.addActionListener( this );
+
+    addComponent( &mLoadTestMapButton );
+    mLoadTestMapButton.addActionListener( this );
+
+    File *testSceneFile = new File( NULL, "testMapScene.txt" );
+    
+    mLoadTestMapButton.setVisible( testSceneFile->exists() );
+    
+    delete testSceneFile;
+    
 
 
     addComponent( &mNextSceneButton );
@@ -487,6 +498,16 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         checkNextPrevVisible();
         }
     else if( inTarget == &mSaveTestMapButton ) {
+        // save as scene file too, for easy re-loading later
+        File *sceneFile = new File( NULL, "testMapScene.txt" );
+        
+        writeSceneToFile( sceneFile );
+        
+        delete sceneFile;
+        
+        mLoadTestMapButton.setVisible( true );
+
+
         FILE *f = fopen( "testMap.txt", "w" );
         
         if( f != NULL ) {
@@ -528,6 +549,18 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                     }
                 }
             fclose( f );
+            }
+        }
+    else if( inTarget == &mLoadTestMapButton ) {
+        // just re-load our saved test scene file
+        File *sceneFile = new File( NULL, "testMapScene.txt" );
+        
+        char r = tryLoadScene( sceneFile );
+        
+        delete sceneFile;
+
+        if( !r ) {
+            printf( "Failed to load scene from testMapScene.txt\n" );
             }
         }
     else if( inTarget == &mReplaceButton ) {
@@ -2622,6 +2655,15 @@ void addCellLines( SimpleVector<char*> *inLines,
 
 void EditorScenePage::writeSceneToFile( int inIDToUse ) {
     File *f = getSceneFile( inIDToUse );
+    
+    writeSceneToFile( f );
+    
+    delete f;
+    }
+
+
+
+void EditorScenePage::writeSceneToFile( File *inFile ) {
 
     SimpleVector<char*> lines;
         
@@ -2662,10 +2704,8 @@ void EditorScenePage::writeSceneToFile( int inIDToUse ) {
     delete [] linesArray;
     lines.deallocateStringElements();
 
-    f->writeToFile( contents );
+    inFile->writeToFile( contents );
     delete [] contents;
-
-    delete f;
     }
 
 
@@ -2838,88 +2878,97 @@ char EditorScenePage::tryLoadScene( int inSceneID ) {
     if( f->exists() && ! f->isDirectory() ) {
         printf( "Trying to load scene %d\n", inSceneID );
         
-        
-        char *fileText = f->readFileContents();
-        
-        if( fileText != NULL ) {
-            
-            int numLines = 0;
-            
-            char **lines = split( fileText, "\n", &numLines );
-            delete [] fileText;
-            
-            int next = 0;
-            
-            
-            int w = mSceneW;
-            int h = mSceneH;
-            
-            sscanf( lines[next], "w=%d", &w );
-            next++;
-            sscanf( lines[next], "h=%d", &h );
-            next++;
-            
-            if( w != mSceneW || h != mSceneH ) {
-                resizeGrid( h, w );
-                }
-
-            if( strstr( lines[next], "origin" ) != NULL ) {
-                sscanf( lines[next], "origin=%d,%d", &mZeroX, &mZeroY );
-                next++;
-                }
-            
-            char floorPresent = false;
-            
-            if( strstr( lines[next], "floorPresent" ) != NULL ) {
-                floorPresent = true;
-                next++;
-                }
-            
-
-            clearScene();
-            
-            int numRead = 0;
-            
-            int x, y;
-            
-            numRead = sscanf( lines[next], "x=%d,y=%d", &x, &y );
-            next++;
-            
-            while( numRead == 2 ) {
-                SceneCell *c = &( mCells[y][x] );
-                SceneCell *p = &( mPersonCells[y][x] );
-                SceneCell *f = &( mFloorCells[y][x] );
-                    
-                next = scanCell( lines, next, c );
-                next = scanCell( lines, next, p );
-                
-                if( floorPresent ) {
-                    next = scanCell( lines, next, f );
-                    }
-                
-                numRead = 0;
-                
-                if( next < numLines ) {    
-                    numRead = sscanf( lines[next], "x=%d,y=%d", &x, &y );
-                    next++;
-                    }
-                }
-            
-            for( int i=0; i<numLines; i++ ) {
-                delete [] lines[i];
-                }
-            delete [] lines;
-
-            r = true;
-            mCurX = mZeroX;
-            mCurY = mZeroY;
-            mShiftX = 0;
-            mShiftY = 0;
-            }
+        r = tryLoadScene( f );
         }
     
-    
     delete f;
+    
+    return r;
+    }
+
+
+
+char EditorScenePage::tryLoadScene( File *inFile ) {
+    
+    char r = false;
+
+    char *fileText = inFile->readFileContents();
+        
+    if( fileText != NULL ) {
+            
+        int numLines = 0;
+            
+        char **lines = split( fileText, "\n", &numLines );
+        delete [] fileText;
+            
+        int next = 0;
+            
+            
+        int w = mSceneW;
+        int h = mSceneH;
+            
+        sscanf( lines[next], "w=%d", &w );
+        next++;
+        sscanf( lines[next], "h=%d", &h );
+        next++;
+            
+        if( w != mSceneW || h != mSceneH ) {
+            resizeGrid( h, w );
+            }
+
+        if( strstr( lines[next], "origin" ) != NULL ) {
+            sscanf( lines[next], "origin=%d,%d", &mZeroX, &mZeroY );
+            next++;
+            }
+            
+        char floorPresent = false;
+            
+        if( strstr( lines[next], "floorPresent" ) != NULL ) {
+            floorPresent = true;
+            next++;
+            }
+            
+
+        clearScene();
+            
+        int numRead = 0;
+            
+        int x, y;
+            
+        numRead = sscanf( lines[next], "x=%d,y=%d", &x, &y );
+        next++;
+            
+        while( numRead == 2 ) {
+            SceneCell *c = &( mCells[y][x] );
+            SceneCell *p = &( mPersonCells[y][x] );
+            SceneCell *f = &( mFloorCells[y][x] );
+                    
+            next = scanCell( lines, next, c );
+            next = scanCell( lines, next, p );
+                
+            if( floorPresent ) {
+                next = scanCell( lines, next, f );
+                }
+                
+            numRead = 0;
+                
+            if( next < numLines ) {    
+                numRead = sscanf( lines[next], "x=%d,y=%d", &x, &y );
+                next++;
+                }
+            }
+            
+        for( int i=0; i<numLines; i++ ) {
+            delete [] lines[i];
+            }
+        delete [] lines;
+
+        r = true;
+        mCurX = mZeroX;
+        mCurY = mZeroY;
+        mShiftX = 0;
+        mShiftY = 0;
+        }
     
     return r;
     }

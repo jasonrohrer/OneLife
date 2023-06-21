@@ -4,6 +4,16 @@ http://onehouronelife.com/updateLog.php
 
 
 
+
+Version 376    ???
+
+--Editor now supports importing temporary test map (so you can work on and
+  tweak a test map without actually saving a scene into the scene folder).
+
+
+
+
+
 Version 374    2023-June-9
 
 --Fixed photo aiming/placement on screen resolutions other than 1280x720.
