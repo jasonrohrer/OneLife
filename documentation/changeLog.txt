@@ -19,6 +19,10 @@ Server Fixes
   "you own this" as well as construction of new owned gates at that same spot.
   Fixes #831
 
+--You have to be closer than 20 tiles away from a gate to assign ownership of
+  it to someone else.  Part of #832
+
+
 
 
 

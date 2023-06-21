@@ -21288,8 +21288,8 @@ int main() {
                                         }
                                     }
 
-                                if( minDist < DBL_MAX ) {
-                                    // found one
+                                if( minDist < 20 ) {
+                                    // found one that's not too far away
                                     for( int n=0; n<newOwners.size(); n++ ) {
                                         LiveObject *newOwnerPlayer = 
                                             newOwners.getElementDirect( n );
