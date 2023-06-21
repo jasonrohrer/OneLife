@@ -1489,6 +1489,34 @@ static const char *getPropertyNameWord( int inX, int inY, int inWordIndex );
 
 
 
+static void tellPlayerAboutTheirNewProperty( LiveObject *inPlayer, 
+                                             int inX, int inY,
+                                             const char *inPhrase ) {
+
+    // make them speak the new name
+    // to themselves
+    char *psMessage = 
+        autoSprintf(
+            "PS\n"
+            "%d/0 %s '%s %s' PROPERTY\n#",
+            inPlayer->id,
+            inPhrase,
+            getPropertyNameWord( inX, inY,
+                                 0 ),
+            getPropertyNameWord( inX, inY,
+                                 1 ) );
+    
+    sendMessageToPlayer( 
+        inPlayer, 
+        psMessage, 
+        strlen( psMessage ) );
+    
+    delete [] psMessage;
+    }
+
+
+
+
 SimpleVector<GridPos> newOwnerPos;
 
 SimpleVector<GridPos> recentlyRemovedOwnerPos;
@@ -21220,7 +21248,19 @@ int main() {
                                     getPlayerByName( namedOwner, nextPlayer );
                                 
                                 if( o != NULL ) {
-                                    newOwners.push_back( o );
+                                    
+                                    // don't let them name a new owner
+                                    // that is too far away
+                                    int followDistance = 
+                                        SettingsManager::getIntSetting( 
+                                            "followDistance", 5000 );
+                                    
+                                    if( distance( getPlayerPos( nextPlayer ),
+                                               getPlayerPos( o ) ) <= 
+                                        followDistance ) {
+
+                                        newOwners.push_back( o );
+                                        }
                                     }
                                 delete [] namedOwner;
                                 }
@@ -21300,6 +21340,11 @@ int main() {
                                                 ownedPositions.push_back( 
                                                     closePos );
                                             newOwnerPos.push_back( closePos );
+                                            
+                                            tellPlayerAboutTheirNewProperty(
+                                                newOwnerPlayer,
+                                                closePos.x, closePos.y,
+                                                "I WAS GIVEN THE" );
                                             }
                                         }
                                     }
@@ -22867,24 +22912,9 @@ int main() {
                                             ownedPositions.push_back( newPos );
                                         newOwnerPos.push_back( newPos );
 
-                                        // make them speak the new name
-                                        // to themselves
-                                        char *psMessage = 
-                                            autoSprintf(
-                                              "PS\n"
-                                              "%d/0 MY NEW '%s %s' PROPERTY\n#",
-                                              nextPlayer->id,
-                                              getPropertyNameWord( m.x, m.y,
-                                                                   0 ),
-                                              getPropertyNameWord( m.x, m.y,
-                                                                   1 ) );
-                                                
-                                        sendMessageToPlayer( 
-                                            nextPlayer, 
-                                            psMessage, 
-                                            strlen( psMessage ) );
-                                        
-                                        delete [] psMessage;
+                                        tellPlayerAboutTheirNewProperty(
+                                            nextPlayer, m.x, m.y,
+                                            "MY NEW" );
                                         }
                                     else if( target > 0 && r->newTarget > 0 &&
                                         target != r->newTarget &&

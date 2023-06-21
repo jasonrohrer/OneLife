@@ -22,6 +22,15 @@ Server Fixes
 --You have to be closer than 20 tiles away from a gate to assign ownership of
   it to someone else.  Part of #832
 
+--You can't name a person to give property (with BOB SMITH OWNS THIS) if the
+  target person is more than 200 tiles away.  Also, the target person, if they
+  are successfully given property, gets a speech-bubble message about it.  This
+  message does not include a map pointer, so it won't disrupt their current
+  pointer, but they can always ask for a pointer to their new property with the
+  /PROPERTY command.  Fixes #832
+
+
+
 
 
 
