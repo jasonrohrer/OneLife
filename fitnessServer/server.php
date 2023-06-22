@@ -622,7 +622,7 @@ function fs_showData( $checkPassword = true ) {
         
 
         $keywordClause = "WHERE ( email LIKE '%$search%' " .
-            "OR id LIKE '%$search%' ) ";
+            "OR id LIKE '%$search%' OR leaderboard_name LIKE '%$search%' ) ";
 
         $searchDisplay = " matching <b>$search</b>";
         }

@@ -29,6 +29,8 @@ Server Fixes
   pointer, but they can always ask for a pointer to their new property with the
   /PROPERTY command.  Fixes #832
 
+--Fitness server backend now allows admin to search by leaderboard name.
+
 
 
 
