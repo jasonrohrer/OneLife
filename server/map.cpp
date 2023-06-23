@@ -7074,6 +7074,25 @@ static int applyTapoutGradientRotate( int inX, int inY,
 
 
 
+extern void removeOwnership( int inX, int inY );
+
+
+
+static char isOwnedAtAll( int inObjectID ) {
+    ObjectRecord *o = getObject( inObjectID );
+    
+    if( o == NULL ) {
+        return false;
+        }
+
+    if( o->isOwned ||
+        o->isFollowerOwned ) {
+        return true;
+        }
+    return false;
+    }
+
+
 
 // returns true if tapout-triggered a +primaryHomeland object
 static char runTapoutOperation( int inX, int inY, 
@@ -7154,6 +7173,14 @@ static char runTapoutOperation( int inX, int inY,
             
             if( newTarget != -1 ) {
                 setMapObjectRaw( x, y, newTarget );
+
+                if( newTarget != id &&
+                    isOwnedAtAll( id ) &&
+                    ! isOwnedAtAll( newTarget ) ) {
+                    
+                    // was owned, but no longer
+                    removeOwnership( x, y );
+                    }    
                 }
             }
         }

@@ -17193,6 +17193,31 @@ static char messageFloodCheck( LiveObject *inPlayer, messageType inType ) {
 
 
 
+void removeOwnership( int inX, int inY ) {
+    
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *p = 
+            players.getElement( j );
+
+        for( int i=0; 
+             i < p->ownedPositions.size(); 
+             i++ ) {
+                                            
+            GridPos *pos = 
+                p->ownedPositions.
+                getElement( i );
+                                                
+            if( pos->x == inX &&
+                pos->y == inY ) {
+                p->ownedPositions.
+                    deleteElement( i );
+                i--;
+                }
+            }
+        }
+    }
+
+
 
 int main() {
 
@@ -22925,26 +22950,9 @@ int main() {
                                         
                                         // need to remove records of ownership
                                         // from this location
-                                        for( int j=0; j<players.size(); j++ ) {
-                                            LiveObject *p = 
-                                                players.getElement( j );
+                                        
+                                        removeOwnership( m.x, m.y );
 
-                                            for( int i=0; 
-                                                 i < p->ownedPositions.size(); 
-                                                 i++ ) {
-                                            
-                                                GridPos *pos = 
-                                                    p->ownedPositions.
-                                                    getElement( i );
-                                                
-                                                if( pos->x == m.x &&
-                                                    pos->y == m.y ) {
-                                                    p->ownedPositions.
-                                                        deleteElement( i );
-                                                    i--;
-                                                    }
-                                                }
-                                            }
                                         }
                                     
 

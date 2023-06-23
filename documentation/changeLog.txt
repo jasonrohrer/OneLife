@@ -10,6 +10,9 @@ Version 376    ???
 --Editor now supports importing temporary test map (so you can work on and
   tweak a test map without actually saving a scene into the scene folder).
 
+--Support for tapoutTriggers clearing ownership.
+  Part of jasonrohrer/OneLifeData7#1011
+
 
 
 Server Fixes
