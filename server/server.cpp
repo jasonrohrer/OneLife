@@ -10487,9 +10487,11 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
                         // i tells us how many greats
                         SimpleVector<char> workingName;
+                        SimpleVector<char> workingReverseName;
                         
                         for( int g=2; g<=i; g++ ) {
                             workingName.appendElementString( "Great_" );
+                            workingReverseName.appendElementString( "Great_" );
                             }
                         if( ! getFemale( &newObject ) ) {
                             workingName.appendElementString( "Nephew" );
@@ -10497,6 +10499,14 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                         else {
                             workingName.appendElementString( "Niece" );
                             }
+                        
+                        if( getFemale( otherPlayer ) ) {
+                            workingReverseName.appendElementString( "Aunt" );
+                            }
+                        else {
+                            workingReverseName.appendElementString( "Uncle" );
+                            }
+
 
                         newObject.ancestorRelNames->push_back(
                             workingName.getElementString() );
@@ -10504,6 +10514,19 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                         newObject.ancestorLifeStartTimeSeconds->push_back(
                             otherPlayer->lifeStartTimeSeconds );
                         
+
+                        // we do bi-directionality here too
+                        // players should try to prevent their
+                        // uncles and aunts from dying
+
+                        otherPlayer->ancestorIDs->push_back( newObject.id );
+                        otherPlayer->ancestorEmails->push_back( 
+                            stringDuplicate( newObject.email ) );
+                        otherPlayer->ancestorRelNames->push_back( 
+                            workingReverseName.getElementString() );
+                        otherPlayer->ancestorLifeStartTimeSeconds->push_back(
+                            newObject.lifeStartTimeSeconds );
+
                         break;
                         }
                     }
@@ -10565,7 +10588,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                     newObject.ancestorLifeStartTimeSeconds->push_back(
                             otherPlayer->lifeStartTimeSeconds );
                     
-                    // this is the only case of bi-directionality
+                    // this is another case of bi-directionality
                     // players should try to prevent their mothers, gma,
                     // ggma, etc from dying
 
@@ -10587,16 +10610,14 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
         
         // are they our sibling?
-        // note that this is only uni-directional
         // (we're checking here for this new baby born)
-        // so only our OLDER sibs count as our ancestors (and thus
-        // they care about protecting us).
-
-        // this is a little weird, but it does make some sense
-        // you are more protective of little sibs
+        
+        // we're now setting this up bidirectionally
+        // so you are protective of both your older and younger sibs
 
         // anyway, the point of this is to close the "just care about yourself
         // and avoid having kids" exploit.  If your mother has kids after you
+        // or before you
         // (which is totally out of your control), then their survival
         // will affect your score.
         
@@ -10626,7 +10647,27 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             
             newObject.ancestorLifeStartTimeSeconds->push_back(
                 otherPlayer->lifeStartTimeSeconds );
-                        
+
+            
+            // bi-directional part here:
+            const char *reverseRelName;
+            
+            if( ! getFemale( otherPlayer ) ) {
+                reverseRelName = "Big_Brother";
+                }
+            else {
+                reverseRelName = "Big_Sister";
+                }
+            
+            otherPlayer->ancestorIDs->push_back( newObject.id );
+            otherPlayer->ancestorEmails->push_back( 
+                stringDuplicate( newObject.email ) );
+            otherPlayer->ancestorRelNames->push_back( 
+                stringDuplicate( reverseRelName ) );
+            otherPlayer->ancestorLifeStartTimeSeconds->push_back(
+                newObject.lifeStartTimeSeconds );
+
+       
             continue;
             }
         }

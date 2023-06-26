@@ -12,6 +12,16 @@ Version ???    ???
 
 
 
+Server Fixes
+
+--Gene score effects used to only be bi-directional for mother, grandma, etc
+  that died before you died (their age at death would affect your gene score).
+  Now bi-directionality works for childless aunts, uncles, and older siblings.
+  If any of these people die before you do, they affect your gene score.
+  Fixes #833
+
+
+
 
 Server Fixes
 
