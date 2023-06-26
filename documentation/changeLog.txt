@@ -20,6 +20,11 @@ Server Fixes
   If any of these people die before you do, they affect your gene score.
   Fixes #833
 
+--Now counting aunts with children for gene score (used to only count childless
+  aunts).  Also, fixed a potential bug where a childless grandmother (if your
+  mother had died) could be double-counted as an aunt for gene score.
+
+
 
 
 
