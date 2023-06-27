@@ -37,6 +37,10 @@ Server Fixes
   wouldn't be practical, and shouldn't generally be as interesting as the main
   game anyway.  Fixes #835
 
+--Fleeing and random-moving objects can now cross biome boundaries if they
+  don't have a biome number set.  So, for example, an escaped riding horse is
+  no longer biome-bound, while rattle snakes and other animals native to
+  specific biomes will still stay in their biome.  Fixes #836
 
 
 

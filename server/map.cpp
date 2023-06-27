@@ -5406,7 +5406,22 @@ int checkDecayObject( int inX, int inY, int inID ) {
                         }
                     if( t->move == 2 ) {
                         // flee
-                        stayInBiome = true;
+                        
+                        if( t->target > 0 ) {
+                            ObjectRecord *targetObject = 
+                                getObject( t->target );
+                            
+                            if( targetObject->numBiomes > 0 &&
+                                targetObject->biomes[0] != 0 ) {
+                            
+                                // object has biomes specified
+                                // stay in biome when fleeing
+                                stayInBiome = true;
+                                }
+                            }
+                        // else can flee to any biome
+                        
+
                         dir = mult( dir, -1 );
                         }
                     }
@@ -5462,8 +5477,21 @@ int checkDecayObject( int inX, int inY, int inID ) {
 
                 if( dir.x == 0 && dir.y == 0 ) {
                     // random instead
-                    
-                    stayInBiome = true;
+
+                    if( t->target > 0 ) {
+                        ObjectRecord *targetObject = 
+                            getObject( t->target );
+                        
+                        if( targetObject->numBiomes > 0 &&
+                            targetObject->biomes[0] != 0 ) {
+                            
+                            // object has biomes specified
+                            // stay in biome when moving randomly
+                            stayInBiome = true;
+                            }
+                        }
+                    // else can move randomly to any biome
+
                     
                     dir.x = 1;
                     dir.y = 0;
