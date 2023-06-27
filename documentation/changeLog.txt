@@ -24,6 +24,19 @@ Server Fixes
   aunts).  Also, fixed a potential bug where a childless grandmother (if your
   mother had died) could be double-counted as an aunt for gene score.
 
+--Before, all Donkeytown residents were spawned as Eve, instead of being born
+  as a baby to a Donkeytown mother, which was an unintended side-effect of
+  switching over to the new personal curse system.  Now a fertile mother in
+  Donkeytown is chosen, and you're born as a Donkeytown baby whenever possible.
+  This does not try to balance families or races in Donkeytown, nor does it
+  observe birth cooldowns for Donkeytown mothers.  Donkeytown births will be
+  completely random for now, and everyone will be in one big family out there.
+  Due to biome race specialization, this means that Donkeytown civilization
+  will be somewhat limited, but that's okay for now.  The assumption is that
+  Donkeytown will be rather small (so balancing families and races there
+  wouldn't be practical, and shouldn't generally be as interesting as the main
+  game anyway.  Fixes #835
+
 
 
 

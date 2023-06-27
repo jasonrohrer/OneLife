@@ -9189,6 +9189,44 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 "Only fertile mom on server has us curse-blocked.  "
                 "Avoiding her, and not going to d-town, spawning new Eve" );   
         }
+    else if( parentChoices.size() == 0 &&
+             numBirthLocationsCurseBlocked > 0 ) {
+
+        // they are blocked from being born EVERYWHERE by curses
+
+        AppLog::infoF( "No available mothers, and %d are curse blocked, "
+                       "looking for a d-town mother",
+                       numBirthLocationsCurseBlocked );
+
+
+        // they are going to d-town
+        inCurseStatus.curseLevel = 1;
+        inCurseStatus.excessPoints = 1;
+        
+        // add all existing fertile d-town residents as possible parents
+        
+        // we're not going to do any special balancing here
+        // d-town births will be random to fertile mothers there
+
+        // we're also going to skip proping up races and families in d-town
+        // there will be just one big family there
+        for( int i=0; i<numPlayers; i++ ) {
+            LiveObject *player = players.getElement( i );
+            
+            
+            if( ! player->error &&
+                ! player->isTutorial &&
+                ! player->vogMode &&
+                player->curseStatus.curseLevel > 0 &&
+                isFertileAge( player ) ) {
+                
+                parentChoices.push_back( player );
+                }
+            }
+        
+        AppLog::infoF( "Found %d d-town mothers", parentChoices.size() );
+        }
+    
 
     
     if( parentChoices.size() > 0 &&
@@ -9294,15 +9332,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
 
     if( parentChoices.size() == 0 && numBirthLocationsCurseBlocked > 0 ) {
-        // they are blocked from being born EVERYWHERE by curses
-
-        AppLog::infoF( "No available mothers, and %d are curse blocked, "
-                       "sending a new Eve to donkeytown",
-                       numBirthLocationsCurseBlocked );
-
-        // d-town
-        inCurseStatus.curseLevel = 1;
-        inCurseStatus.excessPoints = 1;
+        AppLog::infoF( "No available mothers in d-town, "
+                       "sending a new Eve to donkeytown" );
         }
 
     
