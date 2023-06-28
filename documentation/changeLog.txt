@@ -42,6 +42,11 @@ Server Fixes
   no longer biome-bound, while rattle snakes and other animals native to
   specific biomes will still stay in their biome.  Fixes #836
 
+--Turns out that trying to cast an unsigned 64-bit int x to a signed 64-bit int
+  by doing (signed)x doesn't work, since 'signed' is shorthand for 'int' and
+  thus you cast to 32-bit (on most platforms) in the process.  Fixed by casting
+  to (off_t) instead, which is the type returned by ftello.  This is likely
+  the cause of #838 , but I'm still testing it.
 
 
 

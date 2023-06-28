@@ -1029,7 +1029,7 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
             
             // never seek unless we have to
             if( inDB->lastOp == opWrite || 
-                ftello( inDB->file ) != (signed)filePosRec ) {
+                ftello( inDB->file ) != (off_t)filePosRec ) {
 
                 if( fseeko( inDB->file, filePosRec, SEEK_SET ) ) {
                     return -1;
@@ -1059,7 +1059,7 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
                 // the file pos is already waiting at the end of the file
                 // for us
                 if( inDB->lastOp == opRead ||
-                    ftello( inDB->file ) != (signed)filePosRec ) {
+                    ftello( inDB->file ) != (off_t)filePosRec ) {
                     
                     // no seeking done yet
                     // go to end of file
@@ -1068,7 +1068,7 @@ static int LINEARDB3_considerFingerprintBucket( LINEARDB3 *inDB,
                         }
                     // make sure it matches where we've documented that
                     // the record should go
-                    if( ftello( inDB->file ) != (signed)filePosRec ) {
+                    if( ftello( inDB->file ) != (off_t)filePosRec ) {
                         return -1;
                         }
                     }
@@ -1232,7 +1232,7 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
 
             // don't seek unless we have to
             if( inDB->lastOp == opRead ||
-                ftello( inDB->file ) != (signed)filePosRec ) {
+                ftello( inDB->file ) != (off_t)filePosRec ) {
             
                 // go to end of file
                 if( fseeko( inDB->file, 0, SEEK_END ) ) {
@@ -1241,7 +1241,7 @@ int LINEARDB3_getOrPut( LINEARDB3 *inDB, const void *inKey, void *inOutValue,
             
                 // make sure it matches where we've documented that
                 // the record should go
-                if( ftello( inDB->file ) != (signed)filePosRec ) {
+                if( ftello( inDB->file ) != (off_t)filePosRec ) {
                     return -1;
                     }
                 }
@@ -1326,7 +1326,7 @@ int LINEARDB3_Iterator_next( LINEARDB3_Iterator *inDBi,
         
                     
         if( db->lastOp == opWrite ||
-            ftello( db->file ) != (signed)fileRecPos ) {
+            ftello( db->file ) != (off_t)fileRecPos ) {
     
             if( fseeko( db->file, fileRecPos, SEEK_SET ) ) {
                 return -1;
