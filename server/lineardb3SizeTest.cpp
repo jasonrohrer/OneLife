@@ -19,7 +19,7 @@ int main() {
         "sizeTest_ldb3.db",
         0,
         80000,
-        4,
+        16,
         4 );
 
     if( result != 0 ) {
@@ -27,19 +27,21 @@ int main() {
         return 1;
         }
     
-    int numInserts = 268000000;
+    //int numInserts = 268000000;
+    int numInserts = 22000000;
     
-    unsigned char key[4];
+    unsigned char key[16];
     unsigned char value[4];
     
 
     for( int i=0; i<numInserts; i++ ) {
         if( i % 1000000 == 0 ) {
             printf( "Inserted %d (file size %d MiB)\n", i,
-                    ( i * 4 ) / (1024 * 1024 ) );
+                    ( i * 20 ) / (1024 * 1024 ) );
             }
         
-        intToValue( i, key );
+        intQuadToKey( i, i, i, i, key );
+        
         intToValue( valueFunction( i ), value );
         
 
@@ -49,7 +51,7 @@ int main() {
 
     for( int i=0; i<numInserts; i++ ) {
         
-        intToValue( i, key );
+        intQuadToKey( i, i, i, i, key );
         
         LINEARDB3_get( &db, key, value );
         
