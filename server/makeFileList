@@ -60,6 +60,7 @@ fitnessScore.cpp \
 CoordinateTimeTracking.cpp \
 arcReport.cpp \
 curseDB.cpp \
+trustDB.cpp \
 eveMovingGrid.cpp \
 specialBiomes.cpp \
 cravings.cpp \

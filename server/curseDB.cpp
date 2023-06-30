@@ -8,6 +8,8 @@
 
 #include "curseLog.h"
 
+#include "trustDB.h"
+
 
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/log/AppLog.h"
@@ -541,6 +543,10 @@ static void stepStaleCurseCulling() {
 
 void setDBCurse( int inSenderID, 
                  const char *inSenderEmail, const char *inReceiverEmail ) {
+    // a cursed person is no longer trusted
+    // cursing someone is how to clear trust
+    clearDBTrust( inSenderEmail, inReceiverEmail );
+    
     checkSettings();
 
     char alreadyCursedByThisPerson = isCursed( inSenderEmail, inReceiverEmail );

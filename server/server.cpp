@@ -56,6 +56,7 @@
 #include "fitnessScore.h"
 #include "arcReport.h"
 #include "curseDB.h"
+#include "trustDB.h"
 #include "specialBiomes.h"
 #include "cravings.h"
 #include "offspringTracker.h"
@@ -232,6 +233,9 @@ char *curseBabyPhrase = NULL;
 
 static SimpleVector<char*> forgivingPhrases;
 static SimpleVector<char*> youForgivingPhrases;
+
+static SimpleVector<char*> trustingPhrases;
+static SimpleVector<char*> youTrustingPhrases;
 
 
 static SimpleVector<char*> youGivingPhrases;
@@ -2391,6 +2395,7 @@ void quitCleanup() {
     freeCurses();
     
     freeCurseDB();
+    freeTrustDB();
 
     freeLifeTokens();
 
@@ -2448,6 +2453,9 @@ void quitCleanup() {
     
     forgivingPhrases.deallocateStringElements();
     youForgivingPhrases.deallocateStringElements();
+
+    trustingPhrases.deallocateStringElements();
+    youTrustingPhrases.deallocateStringElements();
     
     youGivingPhrases.deallocateStringElements();
     namedGivingPhrases.deallocateStringElements();
@@ -12673,6 +12681,17 @@ char *isNamedForgivingSay( char *inSaidString ) {
 
 
 
+char isYouTrustingSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youTrustingPhrases );
+    }
+
+// returns pointer into inSaidString
+char *isNamedTrustingSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &trustingPhrases );
+    }
+
+
+
 
 LiveObject *getClosestOtherPlayer( LiveObject *inThisPlayer,
                                    double inMinAge = 0,
@@ -17439,6 +17458,9 @@ int main() {
     readPhrases( "forgivingPhrases", &forgivingPhrases );
     readPhrases( "forgiveYouPhrases", &youForgivingPhrases );
 
+    readPhrases( "trustingPhrases", &trustingPhrases );
+    readPhrases( "trustYouPhrases", &youTrustingPhrases );
+
     
     readPhrases( "youGivingPhrases", &youGivingPhrases );
     readPhrases( "namedGivingPhrases", &namedGivingPhrases );
@@ -17552,6 +17574,7 @@ int main() {
     initLineageLimit();
     
     initCurseDB();
+    initTrustDB();
 
     initOffspringTracker();
     
@@ -21623,6 +21646,31 @@ int main() {
                                                  message, strlen( message ) );
                             delete [] message;
                             }
+
+
+
+
+                        LiveObject *otherToTrust = NULL;
+                        
+                        if( isYouTrustingSay( m.saidText ) ) {
+                            otherToTrust = 
+                                getClosestOtherPlayer( nextPlayer );
+                            }
+                        else {
+                            char *trustName = isNamedTrustingSay( m.saidText );
+                            if( trustName != NULL ) {
+                                otherToTrust =
+                                    getPlayerByName( trustName, nextPlayer );
+                                
+                                }
+                            }
+                        
+                        if( otherToTrust != NULL ) {
+                            setDBTrust( nextPlayer->id,
+                                        nextPlayer->email, 
+                                        otherToTrust->email );
+                            }
+
                         
                         
                         LiveObject *otherToFollow = NULL;
@@ -29218,11 +29266,24 @@ int main() {
 
                                 int curseFlag =
                                     newSpeechCurseFlags.getElementDirect( u );
+                                
+                                const char *trustMarkerStart = "";
+                                const char *trustMarkerEnd = "";
+                                
+                                if( speakerID != listenerID &&
+                                    isTrusted( nextPlayer->email,
+                                               speakerObj->email ) ) {
+                                    trustMarkerStart = "+ ";
+                                    trustMarkerEnd = " +";
+                                    }
+                                
 
-                                char *line = autoSprintf( "%d/%d %s\n", 
+                                char *line = autoSprintf( "%d/%d %s%s%s\n", 
                                                           speakerID,
                                                           curseFlag,
-                                                          translatedPhrase );
+                                                          trustMarkerStart,
+                                                          translatedPhrase,
+                                                          trustMarkerEnd );
                                 delete [] translatedPhrase;
                                 delete [] trimmedPhrase;
                                 

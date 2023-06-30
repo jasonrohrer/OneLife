@@ -48,6 +48,13 @@ Server Fixes
   to (off_t) instead, which is the type returned by ftello.  This is likely
   the cause of #838 , but I'm still testing it.
 
+--New personal trust system.  By saying 'I TRUST SALLY SMITH' or 'I TRUST YOU'
+  to the closest person, that player is added to your trust list.  Whenver that
+  player speaks in the future, you will see '+' signs around what they say.
+  This persists across lives.  Cursing someone removes them from your trust
+  list.
+
+
 
 
 Server Fixes
