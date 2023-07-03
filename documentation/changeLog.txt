@@ -12,7 +12,19 @@ Version ???    ???
 
 
 
+
 Server Fixes
+
+--Respawning Eves (that return to their own camps) on low-pop servers now crave
+  all foods for their second craving and beyond.  Their first craving is still
+  limited to low-tier foods.  Thanks Slinky.  Fixes #842
+
+
+
+
+
+
+Server Fixes  (2023-June-30)
 
 --Gene score effects used to only be bi-directional for mother, grandma, etc
   that died before you died (their age at death would affect your gene score).
@@ -57,7 +69,7 @@ Server Fixes
 
 
 
-Server Fixes
+Server Fixes   (2023-June-23)
 
 --Fixed so that if you destroy a property gate, ownership is removed correctly.
   Before, the ownership record for that x,y location would linger, breaking

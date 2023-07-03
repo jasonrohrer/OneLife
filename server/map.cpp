@@ -8691,10 +8691,12 @@ extern char doesEveLineExist( int inEveID );
 
 
 
-void getEvePosition( const char *inEmail, int inID, int *outX, int *outY, 
+char getEvePosition( const char *inEmail, int inID, int *outX, int *outY, 
                      SimpleVector<GridPos> *inOtherPeoplePos,
                      char inAllowRespawn,
                      char inIncrementPosition ) {
+
+    char didEveRespawn = false;
 
     int currentEveRadius = eveRadius;
 
@@ -8717,6 +8719,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         ave.x = pX;
         ave.y = pY;
         currentEveRadius = pR;
+        didEveRespawn = true;
         }
     else if( SettingsManager::getIntSetting( "useEveMovingGrid", 0 ) ) {
         printf( "Placing new Eve:  "
@@ -9061,7 +9064,7 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                 *outX += v.x;
                 *outY += v.y;
                 
-                return;
+                return didEveRespawn;
                 }
             else {
                 AppLog::info( "Unable to find location for Eve "
@@ -9316,6 +9319,9 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
     // later
 
     clearRecentPlacements();
+
+    
+    return didEveRespawn;
     }
 
 

@@ -722,7 +722,8 @@ typedef struct LiveObject {
 
 
         char isEve;        
-
+        char isRespawningEve;
+        
         char isTutorial;
 
         char isTwin;
@@ -7386,9 +7387,17 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
                 }
             
             // craving satisfied, go on to next thing in list
+            
+            int parentChainLength = inPlayer->parentChainLength;
+            if( inPlayer->isRespawningEve ) {
+                // Eves that respawn in their same camp on low-pop
+                // servers crave everything
+                parentChainLength = 1000;
+                }
+            
             inPlayer->cravingFood = 
                 getCravedFood( inPlayer->lineageEveID,
-                               inPlayer->parentChainLength,
+                               parentChainLength,
                                inPlayer->cravingFood );
             // reset generational bonus counter
             inPlayer->cravingFoodYumIncrement = 1;
@@ -8848,6 +8857,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.displayID = getRandomPersonObject();
     
     newObject.isEve = false;
+    newObject.isRespawningEve = false;
     
     newObject.isTutorial = false;
     
@@ -9480,6 +9490,11 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         newObject.lifeStartTimeSeconds -= 14 * ( 1.0 / getAgeRate() );
         
         // she starts off craving a food right away
+        
+        // for respawned Eve, give her a low-tier food early
+        // on in her life (use here parentChainLength = 0)
+        // but after she eats this, we will expand to all possible foods
+        // on her second craving
         newObject.cravingFood = getCravedFood( newObject.lineageEveID,
                                                newObject.parentChainLength );
         // initilize increment
@@ -10013,10 +10028,17 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             }
 
         int startX, startY;
-        getEvePosition( newObject.email, 
-                        newObject.id, &startX, &startY, 
-                        &otherPeoplePos, allowEveRespawn, 
-                        incrementEvePlacement );
+        char didEveRespawn =
+            getEvePosition( newObject.email, 
+                            newObject.id, &startX, &startY, 
+                            &otherPeoplePos, allowEveRespawn, 
+                            incrementEvePlacement );
+        
+        
+        if( newObject.isEve ) {
+            newObject.isRespawningEve = didEveRespawn;
+            }
+        
 
         
         if( players.size() >= 

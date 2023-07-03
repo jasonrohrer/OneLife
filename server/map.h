@@ -60,7 +60,10 @@ void resetEveRadius();
 // gets new Eve position on outskirts of civilization
 // if inAllowRespawn, this player's last Eve old-age-death will be
 // considered.
-void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
+//
+// Returns true if this is an Eve respawning in their own camp
+// (low-pop solo server mode)
+char getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                      SimpleVector<GridPos> *inOtherPeoplePos,
                      char inAllowRespawn = true,
                      // true if we should increment position for advancing
