@@ -21,6 +21,10 @@ Server Fixes
 
 --Fixed counting of mothers, grandmothers, etc. in fitness.  Fixes #846
 
+--Makefile now includes -auto-orient option to imagemagick convert command, as
+  a work-around for a bug in certain versions of convert that flips images
+  upside-down when converting to TGA.  Fixes jasonrohrer/OneLife#848
+
 
 
 
