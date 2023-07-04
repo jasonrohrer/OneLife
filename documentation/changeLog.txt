@@ -19,6 +19,8 @@ Server Fixes
   all foods for their second craving and beyond.  Their first craving is still
   limited to low-tier foods.  Thanks Slinky.  Fixes #842
 
+--Fixed counting of mothers, grandmothers, etc. in fitness.  Fixes #846
+
 
 
 

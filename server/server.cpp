@@ -10526,14 +10526,16 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         // Note that we used to only consider childless women
         // but now all aunts (even those with their own children)
         // count.
-        if( newObject.parentID != otherPlayer->id ) {
-            
-            // check if their mother is an ancestor
-            // AND they are NOT *our* ancestor (don't look for mother,
+        if( newObject.parentID != otherPlayer->id
+            // Make sure they are NOT *our* ancestor (don't look for mother,
             // grandmother, etc. here... only aunts)
             // i.e., make sure they aren't in our lineage directly
-            if( otherPlayer->parentID > 0 &&
-                newObject.lineage->getElementIndex( otherPlayer->id ) == -1 ) {
+            && newObject.lineage->getElementIndex( otherPlayer->id ) == -1  ) {
+            
+            if( otherPlayer->parentID > 0 ) {
+                // they have a mother
+                
+                // check if their mother is an ancestor of newObject
                 
                 // look at lineage above parent
                 // don't count brothers/sisters, only uncles/aunts
@@ -10595,7 +10597,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 }
             }
         else {
-            // females, look for direct ancestry
+            // else we found them in our ancestry above
+            // handle case of mother, grandmother, etc here.
 
             for( int i=0; i<newObject.lineage->size(); i++ ) {
                     
