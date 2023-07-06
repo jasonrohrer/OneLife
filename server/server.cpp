@@ -1299,9 +1299,10 @@ static LiveObject *findHeir( LiveObject *inPlayer, GridPos inLocation ) {
         offspring = findFittestCloseRelative( inPlayer, 
                                               inLocation, maxDistance );
         
-        if( offspring != NULL ) {
+        if( offspring == NULL ) {
             // none found in maxDistance, search in much larger distance
-            findFittestCloseRelative( inPlayer, inLocation, hugeDistance );
+            offspring = 
+                findFittestCloseRelative( inPlayer, inLocation, hugeDistance );
             }
         }
 
@@ -1854,6 +1855,8 @@ char isPlayerIgnoredForEvePlacement( int inID ) {
 
 
 static double pickBirthCooldownSeconds() {
+    return 0;
+    
     // Kumaraswamy distribution
     // PDF:
     // k(x,a,b) = a * b * x**( a - 1 ) * (1-x**a)**(b-1)

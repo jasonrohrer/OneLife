@@ -32,7 +32,9 @@ Server Fixes
   property, we still consider offspring (or relatives) at any distance as a
   fall-back.
 
-
+--Fixed bug in code that searched for physically-distant relatives to inherit
+  your property (if you had no offspring or physically-close relatives).
+  Fixes #850
 
 
 
