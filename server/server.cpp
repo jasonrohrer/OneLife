@@ -1244,9 +1244,8 @@ static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID,
 
 
 static LiveObject *findFittestCloseRelative( LiveObject *inPlayer,
+                                             GridPos inLocation,
                                              int inMaxDistance ) {
-
-    GridPos location = getPlayerPos( inPlayer );
 
     LiveObject *offspring = NULL;
     
@@ -1263,7 +1262,7 @@ static LiveObject *findFittestCloseRelative( LiveObject *inPlayer,
             
         offspring = findFittestOffspring( 
             inPlayer->lineage->getElementDirect( lineageStep ),
-            inPlayer->id, location, inMaxDistance );
+            inPlayer->id, inLocation, inMaxDistance );
         
         lineageStep++;
         }
@@ -1272,8 +1271,7 @@ static LiveObject *findFittestCloseRelative( LiveObject *inPlayer,
 
 
 
-static LiveObject *findHeir( LiveObject *inPlayer ) {
-    GridPos location = getPlayerPos( inPlayer );
+static LiveObject *findHeir( LiveObject *inPlayer, GridPos inLocation ) {
     
     // use followDistance to limit consideration for heir
     int maxDistance = 
@@ -1286,23 +1284,24 @@ static LiveObject *findHeir( LiveObject *inPlayer ) {
     
     if( getFemale( inPlayer ) ) {
         offspring = findFittestOffspring( inPlayer->id, inPlayer->id,
-                                          location, maxDistance );
+                                          inLocation, maxDistance );
         
         if( offspring == NULL ) {
             // none found in maxDistance, search in much larger distance
             offspring = findFittestOffspring( inPlayer->id, inPlayer->id,
-                                              location, hugeDistance );
+                                              inLocation, hugeDistance );
             }
         }
     
     if( offspring == NULL ) {
         // no direct offspring found
         
-        offspring = findFittestCloseRelative( inPlayer, maxDistance );
+        offspring = findFittestCloseRelative( inPlayer, 
+                                              inLocation, maxDistance );
         
         if( offspring != NULL ) {
             // none found in maxDistance, search in much larger distance
-            findFittestCloseRelative( inPlayer, hugeDistance );
+            findFittestCloseRelative( inPlayer, inLocation, hugeDistance );
             }
         }
 
@@ -1562,7 +1561,8 @@ void removeAllOwnership( LiveObject *inPlayer, char inProcessInherit = true ) {
         if( noOtherOwners && inProcessInherit ) {
             // find closest relative
             
-            LiveObject *heir = findHeir( inPlayer );
+            // find the closest heir to this property location
+            LiveObject *heir = findHeir( inPlayer, *p );
             
             if( heir != NULL ) {
                 heir->ownedPositions.push_back( *p );

@@ -25,6 +25,13 @@ Server Fixes
   a work-around for a bug in certain versions of convert that flips images
   upside-down when converting to TGA.  Fixes jasonrohrer/OneLife#848
 
+--Fixed so that heir that inherits property is fittest offspring or relative
+  within 200 tiles of property itself (used to be fittest one that is within
+  200 tiles of where the owner died, even if the owner was far away from the
+  property in question).  Note that if none is found within 200 tiles of
+  property, we still consider offspring (or relatives) at any distance as a
+  fall-back.
+
 
 
 
