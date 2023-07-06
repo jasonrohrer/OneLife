@@ -36,6 +36,12 @@ Server Fixes
   your property (if you had no offspring or physically-close relatives).
   Fixes #850
 
+--Fixed a weird typo/bug in curseDB where we check for stale records by looking
+  for ones that are older than curseDuration * curseCount, when it should just
+  be older than curseDuration.  This may be left over from back when curse
+  blocking got longer as the count grew.
+
+
 
 
 

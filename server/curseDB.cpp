@@ -188,7 +188,7 @@ static char cullStaleCount() {
 
         timeSec_t elapsedTime = Time::timeSec() - curseTime;
         
-        if( forceStale || elapsedTime > curseDuration * count ) {
+        if( forceStale || elapsedTime > curseDuration ) {
             // completely decremented to 0 due to elapsed time
             // the newest curse record for this person is stale
             // that means all of them are stale
