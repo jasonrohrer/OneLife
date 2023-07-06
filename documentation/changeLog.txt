@@ -41,6 +41,9 @@ Server Fixes
   be older than curseDuration.  This may be left over from back when curse
   blocking got longer as the count grew.
 
+--Changed block duration of personal curses (how long someone can't be born
+  near you after you curse them) from 90 days to 50 years.  Fixes #851
+
 
 
 
