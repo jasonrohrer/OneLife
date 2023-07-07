@@ -55,7 +55,11 @@ Server Fixes
 
 --Added utility program for printing curseCount db stats.  Part of #855
 
-
+--Changed block duration of personal curses (how long someone can't be born
+  near you after you curse them) from 50 years to 5 years.  97% of players earn
+  1 or less curses in 90 days, so this means than we can expect those players
+  to have less than 20 curses after 5 years, when their curses start expiring.
+  Part of #855
 
 
 
