@@ -49,6 +49,11 @@ Server Fixes
   of 2500.  Note that someone who has cursed you still need to be online for
   you to be blocked at all.  Part of #855
  
+--Added server setting allowBabyCurses (which toggles whether CURSE MY BABY is
+  allowed), and turned it off for now (so CURSE MY BABY is disabled).
+  Part of #855
+
+
 
 
 

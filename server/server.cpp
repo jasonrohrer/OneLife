@@ -6049,7 +6049,11 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     if( strcmp( inToSay, curseYouPhrase ) == 0 ) {
         isYouShortcut = true;
         }
-    if( strcmp( inToSay, curseBabyPhrase ) == 0 ) {
+    
+    if( strcmp( inToSay, curseBabyPhrase ) == 0
+        &&
+        SettingsManager::getIntSetting( "allowBabyCursing", 0 ) ) {
+        
         isBabyShortcut = true;
         }    
     
