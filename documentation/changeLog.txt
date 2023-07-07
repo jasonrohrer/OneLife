@@ -53,6 +53,9 @@ Server Fixes
   allowed), and turned it off for now (so CURSE MY BABY is disabled).
   Part of #855
 
+--Added utility program for printing curseCount db stats.  Part of #855
+
+
 
 
 
