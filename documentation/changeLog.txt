@@ -13,7 +13,7 @@ Version ???    ???
 
 
 
-Server Fixes
+Server Fixes  (2023-July-7)
 
 --Respawning Eves (that return to their own camps) on low-pop servers now crave
   all foods for their second craving and beyond.  Their first craving is still
