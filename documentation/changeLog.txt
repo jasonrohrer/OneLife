@@ -61,6 +61,15 @@ Server Fixes
   to have less than 20 curses after 5 years, when their curses start expiring.
   Part of #855
 
+--The exponent applied to the total number of players who have cursed you
+  (including offline players) restored to 2.0 (was reduced to 1.5).  This
+  factor gives a boost to your curse block radius, and if 97% of players never
+  get more than 20 curses total (in 5 years before they start expiring), we
+  expect their radius boost to be 400, which is fine (this is also assuming
+  that one of the 20 people who have them cursed is actually online).  The
+  worst player in the database currently has 24 curses (with our expiry time
+  of 90 days), so we don't want to reduce the exponent (24 ^ 2 is 576, which is
+  already pretty small).  Part of #855
 
 
 
