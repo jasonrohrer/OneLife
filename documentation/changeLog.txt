@@ -44,6 +44,11 @@ Server Fixes
 --Changed block duration of personal curses (how long someone can't be born
   near you after you curse them) from 90 days to 50 years.  Fixes #851
 
+--Changed curse-offline-count exponent from 2 to 1.5.  Thus, if 50 people total
+  have curses against you, your block radius will be increased by 353 instead
+  of 2500.  Note that someone who has cursed you still need to be online for
+  you to be blocked at all.  Part of #855
+ 
 
 
 
