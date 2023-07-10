@@ -28,6 +28,10 @@ Server Fixes
   pushing them in the X direction only, we allow Y-placement of Donkeytown Eves
   to still land in their home biome bands.  Fixes #856
 
+--New FORGIVE EVERYONE command (which undoes all curses that you've ever
+  issued).  CurseLog now includes lines for expiring curses (E) and forgiving
+  everyone (A).  CurseDB code no longer worries about old key format (which
+  changed more than 90 days ago).  Fixes #858
 
 
 

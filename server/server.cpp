@@ -263,6 +263,10 @@ static SimpleVector<char*> namedKillPhrases;
 static SimpleVector<char*> namedAfterKillPhrases;
 
 
+static SimpleVector<char*> forgiveEveryonePhrases;
+
+
+
 static SimpleVector<int> clueIndicesLeftToGive;
 
 
@@ -2483,6 +2487,9 @@ void quitCleanup() {
     namedKillPhrases.deallocateStringElements();
     namedAfterKillPhrases.deallocateStringElements();
     
+    forgiveEveryonePhrases.deallocateStringElements();
+    
+
     if( orderPhrase != NULL ) {
         delete [] orderPhrase;
         orderPhrase = NULL;
@@ -12723,6 +12730,11 @@ char *isNamedTrustingSay( char *inSaidString ) {
     }
 
 
+char isForgiveEveryoneSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &forgiveEveryonePhrases );
+    }
+
+
 
 
 LiveObject *getClosestOtherPlayer( LiveObject *inThisPlayer,
@@ -17518,6 +17530,8 @@ int main() {
     readPhrases( "namedKillPhrases", &namedKillPhrases );
     readPhrases( "namedAfterKillPhrases", &namedAfterKillPhrases );
 
+    readPhrases( "forgiveEveryonePhrases", &forgiveEveryonePhrases );
+
 
     orderPhrase = 
         SettingsManager::getSettingContents( "orderPhrase", 
@@ -21680,7 +21694,54 @@ int main() {
                             delete [] message;
                             }
 
+                        
 
+                        if( isForgiveEveryoneSay( m.saidText ) ) {
+                            
+                            // this kicks off a process
+                            // that happens gradually when
+                            // we do our regular curse db iterative culling
+                            clearAllDBCurse( nextPlayer->id, 
+                                             nextPlayer->email );
+                            
+                            
+                            // But right now, do it for all living players
+                            // that this player has cursed.
+                            // This causes the effect to happen instantly
+                            // for them
+                            // (so we don't have to wait to iterate through
+                            //  the db, which wouldn't send them CU
+                            //  update messsages anyway)
+                            
+                            for( int p=0; p<players.size(); p++ ) {
+                                LiveObject *otherToForgive =
+                                    players.getElement( p );
+                                
+                                if( isCursed( nextPlayer->email, 
+                                              otherToForgive->email ) ) {
+                                    
+                                    clearDBCurse( nextPlayer->id, 
+                                                  nextPlayer->email, 
+                                                  otherToForgive->email );
+                            
+                                    char *message = 
+                                        autoSprintf( 
+                                            "CU\n%d 0 %s_%s\n#", 
+                                            otherToForgive->id,
+                                            getCurseWord( 
+                                                nextPlayer->email,
+                                                otherToForgive->email, 0 ),
+                                            getCurseWord( 
+                                                nextPlayer->email,
+                                                otherToForgive->email, 1 ) );
+                                    sendMessageToPlayer( 
+                                        nextPlayer,
+                                        message, strlen( message ) );
+                                    delete [] message;
+                                    }
+                                }
+                            }
+                        
 
 
                         LiveObject *otherToTrust = NULL;

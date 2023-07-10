@@ -35,6 +35,28 @@ static double curseBlockOfflineExponent = 2.0;
 static double settingCheckInterval = 60;
 
 
+// list of emails that have forgiven everyone
+// we clear all discovered curses by these people during our 
+// incremental cull operation
+static SimpleVector<char*> everyoneForgiverList;
+static SimpleVector<char*> nextEveryoneForgiverList;
+
+
+static char isInEveryoneForgiverList( char *inEmail ) {
+    for( int i=0; i<everyoneForgiverList.size(); i++ ) {
+        char *email = everyoneForgiverList.getElementDirect( i );
+        
+        if( strcmp( email, inEmail ) == 0 ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
+
+
 static void checkSettings() {
     double curTime = Time::getCurrentTime();
     
@@ -239,8 +261,7 @@ void initCurseDB() {
                                 10000,
                                 // sender email (truncated to 39 chars max)
                                 // with receiver email (trucated to 39) 
-                                // appended,
-                                // space separating them
+                                // with comma separating them
                                 // terminated by a NULL character
                                 // append spaces to the end if needed
                                 // (after the NULL character) to fill
@@ -305,6 +326,9 @@ void freeCurseDB() {
         LINEARDB3_close( &dbCount );
         dbCountOpen = false;
         }
+
+    everyoneForgiverList.deallocateStringElements();
+    nextEveryoneForgiverList.deallocateStringElements();
     }
 
 
@@ -316,6 +340,26 @@ static void getKey( const char *inSenderEmail, const char *inReceiverEmail,
     memset( outKey, ' ', 80 );
 
     sprintf( (char*)outKey, "%.39s,%.39s", inSenderEmail, inReceiverEmail );
+    }
+
+
+
+// inIndex = 0 for sender, 1 for receiver
+// result NOT destroyed by caller (pointer to internal buffer)
+
+char senderBuffer[40];
+char receiverBuffer[40];
+
+static char *getEmailFromKey( unsigned char *inKey, int inIndex ) {
+    
+    sscanf( (char*)inKey, "%39[^,],%39s", senderBuffer, receiverBuffer );
+    
+    if( inIndex == 0 ) {
+        return senderBuffer;
+        }
+    else {
+        return receiverBuffer;
+        }
     }
 
 
@@ -332,7 +376,7 @@ static void getOldKey( const char *inSenderEmail, const char *inReceiverEmail,
 
 
 // set to false later, after no non-space keys remain in DB
-static char considerOldKey = true;
+static char considerOldKey = false;
 
 
 
@@ -459,6 +503,9 @@ static int numRecordsSeenByIterator = 0;
 static int numRecordsMarked = 0;
 
 
+
+
+
 static void stepStaleCurseCulling() {
     if( !cullingIteratorSet ) {
         LINEARDB3_Iterator_init( &db, &cullingIterator );
@@ -482,13 +529,25 @@ static void stepStaleCurseCulling() {
             if( numRecordsSeenByIterator != 0 ) {
                 AppLog::infoF( 
                     "Curse stale cull iterated through %d curse db entries,"
-                    " marked %d as stale.",
+                    " marked %d as stale (or forgiven).",
                     numRecordsSeenByIterator,
                     numRecordsMarked );
                 }
             numRecordsSeenByIterator = 0;
             numRecordsMarked = 0;
             
+            // we're done iterating
+            // which means that we're done with this list
+            everyoneForgiverList.deallocateStringElements();
+            
+            // nextEveryoneForgiverList contains new emails
+            // that forgave everyone DURING our previous iteration
+            // Now that we're done iterating and starting over, we can move
+            // those pending emails into our main list
+            everyoneForgiverList.push_back_other( &nextEveryoneForgiverList );
+            nextEveryoneForgiverList.deleteAll();
+            
+
             // break loop when we reach end, so we don't busy-cycle
             // in a very short list repeatedly in one step
             break;
@@ -499,9 +558,27 @@ static void stepStaleCurseCulling() {
 
         timeSec_t curseTime = valueToTime( value );
 
+        char forgiven = false;
+
+
+        if( everyoneForgiverList.size() > 0 ) {
+            // have emails that are in the process of forgiving everyone
+            
+            char *senderEmail = getEmailFromKey( key, 0 );
+            
+            if( isInEveryoneForgiverList( senderEmail ) ) {
+                // they have forgiven everyone
+                forgiven = true;
+                }
+            }
+        
+
+        
         if( curseTime != 0 &&
-            curTimeSec - curseTime > curseDuration ) {
-            // non-marked, but stale
+            ( forgiven || 
+              curTimeSec - curseTime > curseDuration ) ) {
+            
+            // non-marked, but stale or to be forgiven
             
 
             // is this our newer-style key, with both emails
@@ -517,9 +594,22 @@ static void stepStaleCurseCulling() {
                 
                 char *receiverEmail = &( commaPos[1] );
                 
+                char *senderEmail = getEmailFromKey( key, 0 );
+
+                if( forgiven ) {    
+                    logForgiveAllEffect( senderEmail, receiverEmail );
+                    }
+                else {
+                    logCurseExpire( senderEmail, receiverEmail );
+                    }
+                
 
                 decrementCurseCount( receiverEmail );
                 
+          
+                logCurseScore( receiverEmail, getCurseCount( receiverEmail ) );
+
+
                 // mark this curse so we don't decrement again in future
                 timeToValue( 0, value );
                 LINEARDB3_put( &db, key, value );
@@ -610,10 +700,19 @@ void clearDBCurse( int inSenderID,
         }
 
 
-    logUnCurse( inSenderID, (char*)inSenderEmail, (char*)inReceiverEmail );
+    logForgive( inSenderID, (char*)inSenderEmail, (char*)inReceiverEmail );
 
     logCurseScore( (char*)inReceiverEmail, getCurseCount( inReceiverEmail ) );
     }
+
+
+
+void clearAllDBCurse( int inSenderID, const char *inSenderEmail ) {
+    nextEveryoneForgiverList.push_back( stringDuplicate( inSenderEmail ) );
+    
+    logForgiveAll( inSenderID, (char*)inSenderEmail );
+    }
+
 
 
 
@@ -651,6 +750,12 @@ char isCursed( const char *inSenderEmail, const char *inReceiverEmail ) {
                 timeToValue( 0, value );
                 LINEARDB3_put( &db, key, value );
                 
+                logCurseExpire( (char*)inSenderEmail,
+                                (char*)inReceiverEmail );
+
+                logCurseScore( (char*)inReceiverEmail, 
+                               getCurseCount( inReceiverEmail ) );
+
                 return false;
                 }
             }

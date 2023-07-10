@@ -9,8 +9,18 @@ void freeCurseLog();
 void logCurse( int inPlayerID, char *inPlayerEmail,
                char *inTargetPlayerEmail );
 
-void logUnCurse( int inPlayerID, char *inPlayerEmail,
+void logForgive( int inPlayerID, char *inPlayerEmail,
                  char *inTargetPlayerEmail );
+
+// when player 
+void logForgiveAll( int inPlayerID, char *inPlayerEmail );
+
+void logForgiveAllEffect( char *inPlayerEmail,
+                          char *inReceiverEmail );
+
+void logCurseExpire( char *inPlayerEmail,
+                     char *inTargetPlayerEmail );
+
 
 
 void logTrust( int inPlayerID, char *inPlayerEmail,

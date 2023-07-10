@@ -137,7 +137,7 @@ void logCurse( int inPlayerID, char *inPlayerEmail,
 
 
 
-void logUnCurse( int inPlayerID, char *inPlayerEmail,
+void logForgive( int inPlayerID, char *inPlayerEmail,
                  char *inTargetPlayerEmail ) {
     
     if( logFile != NULL ) {
@@ -155,6 +155,64 @@ void logUnCurse( int inPlayerID, char *inPlayerEmail,
         }
     }
 
+
+
+void logForgiveAll( int inPlayerID, char *inPlayerEmail ) {
+    
+    if( logFile != NULL ) {
+        stepLog();
+
+        if( logFile != NULL ) {
+
+            fprintf( logFile, "A %.0f %d %s\n",
+                     Time::timeSec(),
+                     inPlayerID, inPlayerEmail );
+            
+            fflush( logFile );
+            }
+        }
+    }
+
+
+
+void logForgiveAllEffect( char *inPlayerEmail,
+                          char *inTargetPlayerEmail ) {
+    
+    if( logFile != NULL ) {
+        stepLog();
+
+        if( logFile != NULL ) {
+
+            fprintf( logFile, "A %.0f %s => %s\n",
+                     Time::timeSec(),
+                     inPlayerEmail, 
+                     inTargetPlayerEmail );
+            
+            fflush( logFile );
+            }
+        }
+    }
+
+
+
+
+void logCurseExpire( char *inPlayerEmail,
+                     char *inTargetPlayerEmail ) {
+    
+    if( logFile != NULL ) {
+        stepLog();
+
+        if( logFile != NULL ) {
+
+            fprintf( logFile, "E %.0f %s => %s\n",
+                     Time::timeSec(),
+                     inPlayerEmail, 
+                     inTargetPlayerEmail );
+            
+            fflush( logFile );
+            }
+        }
+    }
 
 
 
