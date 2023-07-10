@@ -12,6 +12,16 @@ Version ???    ???
 
 
 
+Server Fixes
+
+--Whoops, never followed up after d7e614bcf699c27aaf6526e8a360ae95023305d4 back
+  in 2020.  That setting that cleared curse counts on server startup was
+  supposed to be a temporary thing for one startup only.  Set it to 0 now.
+  Part of #857
+
+
+
+
 
 Server Fixes  (2023-July-7)
 
