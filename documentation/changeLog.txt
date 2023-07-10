@@ -10,6 +10,15 @@ Version ???    ???
 --Editor now supports importing temporary test map (so you can work on and
   tweak a test map without actually saving a scene into the scene folder).
 
+--Finally found source of disconnect-on-death bug.  When client receives its
+  own X X death message, it instantly closes the socket to the server.
+  However, later code in the remainder of that client step sometimes sends
+  messages to the server (in the case of FLIP, for example).  When this
+  happens, the send was failing, and the disconnection signal was being raised,
+  overriding the you-died signal.  Fixed by simply not sending a message
+  through the socket if it's already closed.  Thanks Agne for sending a log
+  catching the problem.  Fixes #852
+
 
 
 Server Fixes

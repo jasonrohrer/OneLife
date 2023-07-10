@@ -1043,6 +1043,12 @@ void LivingLifePage::sendToServerSocket( char *inMessage ) {
     timeLastMessageSent = game_getCurrentTime();
     
     printf( "Sending message to server: %s\n", inMessage );
+
+    if( mServerSocket == -1 ) {
+        printf( "Server socket already closed, skipping sending message: %s\n",
+                inMessage );
+        return;
+        }
     
     replaceLastMessageSent( stringDuplicate( inMessage ) );    
 
@@ -3134,6 +3140,7 @@ LivingLifePage::~LivingLifePage() {
     
     if( mServerSocket != -1 ) {
         closeSocket( mServerSocket );
+        mServerSocket = -1;
         }
     
     for( int j=0; j<2; j++ ) {
