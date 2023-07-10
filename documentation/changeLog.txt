@@ -19,6 +19,7 @@ Server Fixes
   supposed to be a temporary thing for one startup only.  Set it to 0 now.
   Part of #857
 
+--Forgiveness now logged in curseLog with F.  Fixes #857
 
 
 

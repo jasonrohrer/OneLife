@@ -182,8 +182,6 @@ static char cullStaleCount() {
     while( LINEARDB3_Iterator_next( &dbi, key, value ) > 0 ) {
         total++;
         
-        int count = valueToInt( value );
-
         timeSec_t curseTime = valueToTime( &( value[4] ) );
 
         timeSec_t elapsedTime = Time::timeSec() - curseTime;
@@ -580,7 +578,8 @@ void setDBCurse( int inSenderID,
 
 
 
-void clearDBCurse( const char *inSenderEmail, const char *inReceiverEmail ) {
+void clearDBCurse( int inSenderID,
+                   const char *inSenderEmail, const char *inReceiverEmail ) {
     
     unsigned char key[80];
     unsigned char value[8];
@@ -609,6 +608,11 @@ void clearDBCurse( const char *inSenderEmail, const char *inReceiverEmail ) {
             LINEARDB3_put( &db, key, value );
             }
         }
+
+
+    logUnCurse( inSenderID, (char*)inSenderEmail, (char*)inReceiverEmail );
+
+    logCurseScore( (char*)inReceiverEmail, getCurseCount( inReceiverEmail ) );
     }
 
 

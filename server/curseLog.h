@@ -9,6 +9,10 @@ void freeCurseLog();
 void logCurse( int inPlayerID, char *inPlayerEmail,
                char *inTargetPlayerEmail );
 
+void logUnCurse( int inPlayerID, char *inPlayerEmail,
+                 char *inTargetPlayerEmail );
+
+
 void logTrust( int inPlayerID, char *inPlayerEmail,
                char *inTargetPlayerEmail );
 

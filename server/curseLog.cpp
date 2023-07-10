@@ -137,6 +137,26 @@ void logCurse( int inPlayerID, char *inPlayerEmail,
 
 
 
+void logUnCurse( int inPlayerID, char *inPlayerEmail,
+                 char *inTargetPlayerEmail ) {
+    
+    if( logFile != NULL ) {
+        stepLog();
+
+        if( logFile != NULL ) {
+
+            fprintf( logFile, "F %.0f %d %s => %s\n",
+                     Time::timeSec(),
+                     inPlayerID, inPlayerEmail, 
+                     inTargetPlayerEmail );
+            
+            fflush( logFile );
+            }
+        }
+    }
+
+
+
 
 void logTrust( int inPlayerID, char *inPlayerEmail,
                char *inTargetPlayerEmail ) {
