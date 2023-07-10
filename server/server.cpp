@@ -8465,11 +8465,11 @@ static double posseDelayReductionFactor = 2.0;
 
 
 
-// for placement of tutorials out of the way 
+// for placement of tutorials out of the way, 5,000,000 to East of 0 to start 
 static int maxPlacementX = 5000000;
 
-// tutorial is alwasy placed 400,000 to East of furthest birth/Eve
-// location
+// tutorial is always placed 400,000 to East of furthest birth/Eve
+// location and 400,000 to East of furthest other tutorial
 static int tutorialOffsetX = 400000;
 
 
@@ -10061,20 +10061,20 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         
 
         if( inCurseStatus.curseLevel > 0 ) {
-            // keep cursed players away
+            // keep cursed players away by sticking them in Donkeytown 
 
-            // 20K away in X and 20K away in Y, pushing out away from 0
+            // 200M away in X pushing out away from 0
             // in both directions
 
+            // note that since we only push out in X, we keep Y from the above
+            // placement code, which means we might place Donkeytown Eve in
+            // a biome band, etc.
+
             if( startX > 0 )
-                startX += 20000;
+                startX += 200000000;
             else
-                startX -= 20000;
+                startX -= 200000000;
             
-            if( startY > 0 )
-                startY += 20000;
-            else
-                startY -= 20000;
             }
         
 

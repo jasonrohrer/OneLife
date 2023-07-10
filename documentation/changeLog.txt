@@ -21,6 +21,13 @@ Server Fixes
 
 --Forgiveness now logged in curseLog with F.  Fixes #857
 
+--We now push Donkeytown players out by 200M tiles in X only, instead of 20K
+  tiles in both X and Y.  This puts them far enough away that they will never
+  be able to travel to interact with other players, nor will they be able to
+  screw up the land ahead of other player's westward progress.  Also, by
+  pushing them in the X direction only, we allow Y-placement of Donkeytown Eves
+  to still land in their home biome bands.  Fixes #856
+
 
 
 
