@@ -80,6 +80,28 @@ static void checkSettings() {
 
 
 
+
+// inIndex = 0 for sender, 1 for receiver
+// result NOT destroyed by caller (pointer to internal buffer)
+
+char senderBuffer[40];
+char receiverBuffer[40];
+
+static char *getEmailFromKey( unsigned char *inKey, int inIndex ) {
+    
+    sscanf( (char*)inKey, "%39[^,],%39s", senderBuffer, receiverBuffer );
+    
+    if( inIndex == 0 ) {
+        return senderBuffer;
+        }
+    else {
+        return receiverBuffer;
+        }
+    }
+
+
+
+
 // returns true if db left in an open state
 static char cullStale() {
     LINEARDB3 tempDB;
@@ -108,6 +130,7 @@ static char cullStale() {
     
     int total = 0;
     int stale = 0;
+    int oldKey = 0;
     int nonStale = 0;
     
     // first, just count
@@ -116,12 +139,21 @@ static char cullStale() {
         
         timeSec_t curseTime = valueToTime( value );
 
+        char *receiverEmail = getEmailFromKey( key, 1 );
+        
+
         // look for those that have been previously marked as stale
         // with a 0 time
         // don't do time calculation for non-marked records here,
         // because we're not decrementing curseCount as we do this
         if( curseTime == 0 ) {
             stale ++;
+            }
+        else if( strcmp( receiverEmail, "" ) == 0 ) {
+            // blank receiver email?
+            // that means there's no comma.  Old key format, from 3 years ago
+            // we can safely cull these now
+            oldKey++;
             }
         else {
             nonStale ++;
@@ -130,8 +162,8 @@ static char cullStale() {
         }
 
     printf( "Culling curses.db found "
-            "%d total entries, %d stale, %d non-stale\n",
-            total, stale, nonStale );
+            "%d total entries, %d stale, %d old keys removed, %d non-stale\n",
+            total, stale, oldKey, nonStale );
     
     
 
@@ -163,23 +195,6 @@ static char cullStale() {
 
 
 
-// inIndex = 0 for sender, 1 for receiver
-// result NOT destroyed by caller (pointer to internal buffer)
-
-char senderBuffer[40];
-char receiverBuffer[40];
-
-static char *getEmailFromKey( unsigned char *inKey, int inIndex ) {
-    
-    sscanf( (char*)inKey, "%39[^,],%39s", senderBuffer, receiverBuffer );
-    
-    if( inIndex == 0 ) {
-        return senderBuffer;
-        }
-    else {
-        return receiverBuffer;
-        }
-    }
 
 
 

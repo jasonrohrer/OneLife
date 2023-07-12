@@ -47,6 +47,9 @@ Server Fixes
   everyone by accident, so these counts are way below the true counts for most
   accounts).  Fixes #861
 
+--There were thousands of old-key-style (from three years ago) entries in the
+  curse database.  They were never marked as 0-time for culling.  Server now
+  auto-culls these at startup.
 
 
 
