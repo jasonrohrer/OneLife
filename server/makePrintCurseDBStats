@@ -1,1 +1,1 @@
-g++ -I../.. -o printCurseDBStats printCurseDBStats.cpp lineardb3.cpp dbCommon.cpp
+g++ -g -I../.. -o printCurseDBStats printCurseDBStats.cpp lineardb3.cpp dbCommon.cpp
