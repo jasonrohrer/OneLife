@@ -42,6 +42,12 @@ Server Fixes
   everyone (A).  CurseDB code no longer worries about old key format (which
   changed more than 90 days ago).  Fixes #858
 
+--Server now rebuilds curse count for each player from curse database on every
+  startup (the curse counts were being cleared at every server startup for
+  everyone by accident, so these counts are way below the true counts for most
+  accounts).  Fixes #861
+
+
 
 
 Server Fixes  (2023-July-7)

@@ -163,91 +163,89 @@ static char cullStale() {
 
 
 
-// returns true if db left in an open state
-static char cullStaleCount() {
-    LINEARDB3 tempDB;
+// inIndex = 0 for sender, 1 for receiver
+// result NOT destroyed by caller (pointer to internal buffer)
+
+char senderBuffer[40];
+char receiverBuffer[40];
+
+static char *getEmailFromKey( unsigned char *inKey, int inIndex ) {
     
-    int error = LINEARDB3_open( &tempDB, 
-                                "curseCount.db.temp", 
+    sscanf( (char*)inKey, "%39[^,],%39s", senderBuffer, receiverBuffer );
+    
+    if( inIndex == 0 ) {
+        return senderBuffer;
+        }
+    else {
+        return receiverBuffer;
+        }
+    }
+
+
+
+
+void incrementCurseCount( const char *inReceiverEmail );
+
+
+
+
+// rebuilds dbCount on disk from scratch by walking through actual
+// curse DB and tallying counts
+// returns true if db left in an open state
+static char rebuildCountDB() {
+    
+    double startTime = Time::getCurrentTime();
+    
+
+    // first, close and delete our curseCount.db file
+
+    LINEARDB3_close( &dbCount );
+
+    
+    File dbFile( NULL, "curseCount.db" );
+    
+    dbFile.remove();
+
+    int error = LINEARDB3_open( &dbCount, 
+                                "curseCount.db", 
                                 KISSDB_OPEN_MODE_RWCREAT,
                                 10000,
                                 40, 
                                 12 );
 
     if( error ) {
-        AppLog::errorF( "Error %d opening curseCount temp LinearDB3", error );
-        return true;
+        AppLog::errorF( "Error %d re-opening fresh curseCount LinearDB3", 
+                        error );
+        return false;
         }
+
     
+    
+    // walk through main curse db and add to counts
 
     LINEARDB3_Iterator dbi;
     
     
-    LINEARDB3_Iterator_init( &dbCount, &dbi );
+    LINEARDB3_Iterator_init( &db, &dbi );
     
-    unsigned char key[40];
+    unsigned char key[80];
     
-    unsigned char value[12];
+    unsigned char value[8];
     
     int total = 0;
-    int stale = 0;
-    int nonStale = 0;
-    
-    char forceStale = false;
-    
-    if( SettingsManager::getIntSetting( "clearCurseCountsOnStartup", 0 ) ) {
-        printf( "Culling curseCount.db clearCurseCountsOnStartup setting, "
-            "treating all records as stale.\n" );
-        forceStale = true;
-        }
     
     while( LINEARDB3_Iterator_next( &dbi, key, value ) > 0 ) {
-        total++;
+        char *receiverEmail = getEmailFromKey( key, 1 );
         
-        timeSec_t curseTime = valueToTime( &( value[4] ) );
-
-        timeSec_t elapsedTime = Time::timeSec() - curseTime;
-        
-        if( forceStale || elapsedTime > curseDuration ) {
-            // completely decremented to 0 due to elapsed time
-            // the newest curse record for this person is stale
-            // that means all of them are stale
-            stale ++;
-            }
-        else {
-            nonStale ++;
-            LINEARDB3_put( &tempDB, key, value );
-            }
+        incrementCurseCount( receiverEmail );
+        total ++;
         }
 
-    printf( "Culling curseCount.db found "
-            "%d total entries, %d stale, %d non-stale\n",
-            total, stale, nonStale );
+    printf( "Rebuilding curseCount.db with %d count increments "
+            "took %.2f seconds\n",
+            total, Time::getCurrentTime() - startTime );
     
     
-
-    LINEARDB3_close( &tempDB );
-    LINEARDB3_close( &dbCount );
-
-    
-    File dbFile( NULL, "curseCount.db" );
-    File dbTempFile( NULL, "curseCount.db.temp" );
-    
-    dbTempFile.copy( &dbFile );
-    dbTempFile.remove();
-
-    error = LINEARDB3_open( &dbCount, 
-                            "curseCount.db", 
-                            KISSDB_OPEN_MODE_RWCREAT,
-                            10000,
-                            40, 
-                            12 );
-
-    if( error ) {
-        AppLog::errorF( "Error %d re-opening curseCount LinearDB3", error );
-        return false;
-        }
-
     return true;
     }
 
@@ -311,7 +309,7 @@ void initCurseDB() {
         return;
         }
     
-    dbCountOpen = cullStaleCount();
+    dbCountOpen = rebuildCountDB();
     }
 
 
@@ -344,23 +342,7 @@ static void getKey( const char *inSenderEmail, const char *inReceiverEmail,
 
 
 
-// inIndex = 0 for sender, 1 for receiver
-// result NOT destroyed by caller (pointer to internal buffer)
 
-char senderBuffer[40];
-char receiverBuffer[40];
-
-static char *getEmailFromKey( unsigned char *inKey, int inIndex ) {
-    
-    sscanf( (char*)inKey, "%39[^,],%39s", senderBuffer, receiverBuffer );
-    
-    if( inIndex == 0 ) {
-        return senderBuffer;
-        }
-    else {
-        return receiverBuffer;
-        }
-    }
 
 
 
