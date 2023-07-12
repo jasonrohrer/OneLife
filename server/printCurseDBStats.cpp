@@ -148,7 +148,7 @@ int main() {
         if( strcmp( receiverEmail, "" ) == 0 ) {
             char *senderEmail = getEmailFromKey( keyB, 0 );
             
-            timeSec_t curseTime = valueToTime( value );
+            timeSec_t curseTime = valueToTime( valueB );
             timeSec_t curTimeSec = Time::timeSec();
             
             int daysAgo = ( curTimeSec - curseTime ) /
