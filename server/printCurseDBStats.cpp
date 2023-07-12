@@ -147,8 +147,15 @@ int main() {
 
         if( strcmp( receiverEmail, "" ) == 0 ) {
             char *senderEmail = getEmailFromKey( keyB, 0 );
-            printf( "BLANK RECEIVER EMAIL found for %s -> %s\n",
-                    senderEmail, receiverEmail );
+            
+            timeSec_t curseTime = valueToTime( value );
+            timeSec_t curTimeSec = Time::timeSec();
+            
+            int daysAgo = ( curTimeSec - curseTime ) /
+                ( 3600 * 24 );
+            
+            printf( "%d days ago BLANK RECEIVER EMAIL found for %s -> %s\n",
+                    daysAgo, senderEmail, receiverEmail );
             }
         }
 
