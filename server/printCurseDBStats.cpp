@@ -144,6 +144,12 @@ int main() {
         CountRecord *r = findRecord( receiverEmail );
         
         r->recount ++;
+
+        if( strcmp( receiverEmail, "" ) == 0 ) {
+            char *senderEmail = getEmailFromKey( keyB, 0 );
+            printf( "BLANK RECEIVER EMAIL found for %s -> %s\n",
+                    senderEmail, receiverEmail );
+            }
         }
 
     
