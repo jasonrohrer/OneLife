@@ -119,6 +119,22 @@ quadruplets "QUADRUPLETS"
 cancel "CANCEL"
 
 
+services "SERVICES"
+
+servicesTip "VERIFY YOUR ACCOUNT WITH EXTERNAL SERVICES"
+
+serviceChallengeField "CHALLENGE:"
+
+serviceHashLabel "HASH:"
+serviceEmailLabel "EMAIL:"
+
+servicesPaste "PASTE CHALLENGE"
+servicesCopyHash "COPY HASH"
+servicesCopyEmail "COPY EMAIL"
+
+
+
+
 backButton "BACK"
 restartButton "RESTART"
 fullscreen "FULLSCREEN:"

@@ -73,6 +73,7 @@ lifeTokens.cpp \
 PollPage.cpp \
 fitnessScore.cpp \
 GeneticHistoryPage.cpp \
+ServicesPage.cpp \
 
 
 

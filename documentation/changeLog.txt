@@ -19,6 +19,13 @@ Version ???    ???
   through the socket if it's already closed.  Thanks Agne for sending a log
   catching the problem.  Fixes #852
 
+--New Services screen accessible from login screen, which provides a
+  Challenge/Hash interface for verifying your account with external services.
+  External services can verify these hashes with
+  http://onehouronelife.com/ticketServer/server.php?action=check_ticket_hash
+  Fixes #860
+
+
 
 
 Server Fixes

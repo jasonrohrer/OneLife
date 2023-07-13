@@ -74,6 +74,8 @@ ExistingAccountPage::ExistingAccountPage()
           mViewAccountButton( mainFont, 0, 64, translate( "view" ) ),
           mTutorialButton( mainFont, 522, 300, 
                            translate( "tutorial" ) ),
+          mServicesButton( mainFont, -522, 300, 
+                           translate( "services" ) ),
           mPageActiveStartTime( 0 ),
           mFramesCounted( 0 ),
           mFPSMeasureDone( false ),
@@ -111,6 +113,7 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mRedetectButton );
     setButtonStyle( &mViewAccountButton );
     setButtonStyle( &mTutorialButton );
+    setButtonStyle( &mServicesButton );
 
     setButtonStyle( &mDisableCustomServerButton );
     
@@ -138,6 +141,7 @@ ExistingAccountPage::ExistingAccountPage()
 
     addComponent( &mViewAccountButton );
     addComponent( &mTutorialButton );
+    addComponent( &mServicesButton );
     
     mLoginButton.addActionListener( this );
     mFriendsButton.addActionListener( this );
@@ -159,6 +163,7 @@ ExistingAccountPage::ExistingAccountPage()
 
     mViewAccountButton.addActionListener( this );
     mTutorialButton.addActionListener( this );
+    mServicesButton.addActionListener( this );
     
     mDisableCustomServerButton.addActionListener( this );
 
@@ -379,6 +384,9 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mTutorialButton ) {
         processLogin( true, "tutorial" );
+        }
+    else if( inTarget == &mServicesButton ) {
+        setSignal( "services" );
         }
     else if( inTarget == &mClearAccountButton ) {
         SettingsManager::setSetting( "email", "" );
