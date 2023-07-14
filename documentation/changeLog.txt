@@ -5,7 +5,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version ???    ???
+Version 379    2023-July-14
 
 --Editor now supports importing temporary test map (so you can work on and
   tweak a test map without actually saving a scene into the scene folder).
@@ -30,7 +30,7 @@ Version ???    ???
 
 
 
-Server Fixes
+Server Fixes    (2023-July-14)
 
 --Whoops, never followed up after d7e614bcf699c27aaf6526e8a360ae95023305d4 back
   in 2020.  That setting that cleared curse counts on server startup was
