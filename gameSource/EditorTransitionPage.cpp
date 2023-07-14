@@ -1185,11 +1185,11 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
 
             if( mProducesType[i] == 1 ) {
                 setDrawColor( 1, 1, 0.5, 1 );
-                noteString = "From Category:";
+                noteString = "From Category ^";
                 }
             else if( mProducesType[i] == 2 ) {
                 setDrawColor( 1, 0.75, 0.75, 1 );
-                noteString = "From Pattern:";
+                noteString = "From Pattern ^";
                 }
             else {
                 setDrawColor( 1, 1, 1, 1 );
@@ -1197,7 +1197,7 @@ void EditorTransitionPage::draw( doublePair inViewCenter,
 
             doublePair notePos = pos;
             notePos.x -= 48;
-            notePos.y += 60;
+            notePos.y -= 60;
             smallFont->drawString( noteString, 
                                    notePos, alignLeft );
 

@@ -29,6 +29,10 @@ Version 379    2023-July-14
 
 --Fixed bad pointer access in editor after transition deleted. 
 
+--Fixed From Pattern and From Category labels in Transition Editor that were
+  overlapping with the new transition comment field.
+
+
 
 
 Server Fixes    (2023-July-14)
