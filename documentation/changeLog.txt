@@ -25,6 +25,8 @@ Version ???    ???
   http://onehouronelife.com/ticketServer/server.php?action=check_ticket_hash
   Fixes #860
 
+--Fixed so that creation sound's initalOnly is respected for floor objects.
+
 
 
 
