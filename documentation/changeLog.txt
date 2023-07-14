@@ -27,6 +27,7 @@ Version 379    2023-July-14
 
 --Fixed so that creation sound's initalOnly is respected for floor objects.
 
+--Fixed bad pointer access in editor after transition deleted. 
 
 
 

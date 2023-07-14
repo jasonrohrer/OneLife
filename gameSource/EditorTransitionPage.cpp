@@ -786,6 +786,8 @@ void EditorTransitionPage::actionPerformed( GUIComponent *inTarget ) {
             }
         mCurrentTransition.autoDecaySeconds = 0;
         
+        mCurrentTransition.comment = (char*)"";
+
         checkIfSaveVisible();
 
         redoTransSearches( 0, true );
