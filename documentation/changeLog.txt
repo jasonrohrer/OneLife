@@ -5,6 +5,15 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 381    ????
+
+--Moved tool tip and status message up slightly, and split warning about
+  editing a Steam account onto two lines (to avoid overlapping with Tutorial
+  and Services buttons).  Fixes #870
+
+
+
+
 Version 379    2023-July-14
 
 --Editor now supports importing temporary test map (so you can work on and

@@ -179,7 +179,7 @@ steamID  "STEAM ID:"
 
 editAccount "EDIT ACCOUNT"
 
-editAccountWarning "DON'T EDIT ACCOUNT UNLESS YOU KNOW WHAT YOU'RE DOING"
+editAccountWarning "DON'T EDIT ACCOUNT UNLESS##YOU KNOW WHAT YOU'RE DOING"
 
 view "VIEW"
 hide "HIDE"

@@ -212,7 +212,7 @@ void GamePage::base_draw( doublePair inViewCenter,
     char statusDrawn = false;
     
     if( mStatusMessageKey != NULL ) {
-        doublePair labelPos = { 0, -280 };
+        doublePair labelPos = { 0, -300 };
         
         if( mStatusAtTopOfScreen ) {
             labelPos.y *= -1;
@@ -222,7 +222,7 @@ void GamePage::base_draw( doublePair inViewCenter,
         statusDrawn = true;
         }
     else if( mStatusMessage != NULL ) {
-        doublePair labelPos = { 0, -280 };
+        doublePair labelPos = { 0, -300 };
         
         if( mStatusAtTopOfScreen ) {
             labelPos.y *= -1;
@@ -236,7 +236,7 @@ void GamePage::base_draw( doublePair inViewCenter,
     // skip drawing tip if status showing
     if( ! statusDrawn ) {
         
-        doublePair tipPosition = { 0, -280 };
+        doublePair tipPosition = { 0, -300 };
         
         if( mTipAtTopOfScreen ) {
             tipPosition.y *= -1;
