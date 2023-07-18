@@ -22,6 +22,10 @@ Server Fixes
 --Donkeytown players are never sent CU status messages (CURSES), so they can't
   identfy each other using globally-assigned curse status words.  Fixes #873
 
+--No genetic fitness information logged for Donkeytown players.  Fixes #874
+
+
+
 
 
 

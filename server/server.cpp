@@ -25772,7 +25772,12 @@ int main() {
 
 
                 // both tutorial and non-tutorial players
-                logFitnessDeath( nextPlayer );
+                // but NOT Donkeytown players
+                
+                if( nextPlayer->curseStatus.curseLevel == 0 ) {
+                    logFitnessDeath( nextPlayer );
+                    }
+                
                 
 
                 if( ! nextPlayer->isTutorial && age < shortLifeAge ) {
