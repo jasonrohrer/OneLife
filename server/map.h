@@ -282,7 +282,9 @@ int addMetadata( int inObjectID, unsigned char *inBuffer );
 
 // gets speech pipe indices for IN pipes at or adjacent to inX,inY
 // vector passed in through outIndicies will be filled with indices
-void getSpeechPipesIn( int inX, int inY, SimpleVector<int> *outIndicies );
+void getSpeechPipesIn( int inX, int inY, 
+                       SimpleVector<int> *outIndicies,
+                       SimpleVector<GridPos> *outPositions );
 
 
 // returned vector NOT destroyed or modified by caller

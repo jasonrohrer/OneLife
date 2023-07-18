@@ -2918,7 +2918,10 @@ static char isAdjacent( GridPos inPos, int inX, int inY ) {
 
 
 
-void getSpeechPipesIn( int inX, int inY, SimpleVector<int> *outIndicies ) {
+void getSpeechPipesIn( int inX, int inY,
+                       SimpleVector<int> *outIndicies,
+                       SimpleVector<GridPos> *outPositions ) {
+    
     for( int i=0; i<numSpeechPipes; i++ ) {
         
         for( int p=0; p<speechPipesIn[ i ].size(); p++ ) {
@@ -2945,6 +2948,7 @@ void getSpeechPipesIn( int inX, int inY, SimpleVector<int> *outIndicies ) {
                     }
                 else {
                     outIndicies->push_back( i );
+                    outPositions->push_back( inPos );
                     break;
                     }
                 }

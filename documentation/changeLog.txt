@@ -15,6 +15,13 @@ Version 381    ????
 
 
 
+Server Fixes
+
+--New maxRadioDistance setting, set to 100,000 tiles.  Fixes #871
+
+
+
+
 
 Version 379    2023-July-14
 

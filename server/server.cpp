@@ -6396,6 +6396,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
 
 
     SimpleVector<int> pipesIn;
+    SimpleVector<GridPos> pipesInPos;
+
     GridPos playerPos = getPlayerPos( inPlayer );
     
     
@@ -6408,21 +6410,29 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             }
         }
     
-    getSpeechPipesIn( playerPos.x, playerPos.y, &pipesIn );
+    getSpeechPipesIn( playerPos.x, playerPos.y, &pipesIn, &pipesInPos );
     
     if( pipesIn.size() > 0 ) {
+
+        double maxDist = SettingsManager::getDoubleSetting( "maxRadioDistance",
+                                                            100000 );
         for( int p=0; p<pipesIn.size(); p++ ) {
             int pipeIndex = pipesIn.getElementDirect( p );
-
+            GridPos inPos = pipesInPos.getElementDirect( p );
+            
             SimpleVector<GridPos> *pipesOut = getSpeechPipesOut( pipeIndex );
 
             for( int i=0; i<pipesOut->size(); i++ ) {
                 GridPos outPos = pipesOut->getElementDirect( i );
+             
                 
-                newLocationSpeech.push_back( stringDuplicate( inToSay ) );
+                if( distance( outPos, inPos ) <= maxDist ) {
                 
-                ChangePosition outChangePos = { outPos.x, outPos.y, false };
-                newLocationSpeechPos.push_back( outChangePos );
+                    newLocationSpeech.push_back( stringDuplicate( inToSay ) );
+                
+                    ChangePosition outChangePos = { outPos.x, outPos.y, false };
+                    newLocationSpeechPos.push_back( outChangePos );
+                    }
                 }
             }
         }
