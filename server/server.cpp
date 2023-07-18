@@ -29637,7 +29637,11 @@ int main() {
 
 
                 // EVERYONE gets curse info
-                if( cursesMessage != NULL && nextPlayer->connected ) {
+                // except d-town players
+                
+                if( cursesMessage != NULL && nextPlayer->connected &&
+                    nextPlayer->curseStatus.curseLevel == 0 ) {
+
                     int numSent = 
                         nextPlayer->sock->send( 
                             cursesMessage, 
