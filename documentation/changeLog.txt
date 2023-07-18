@@ -19,6 +19,10 @@ Server Fixes
 
 --New maxRadioDistance setting, set to 100,000 tiles.  Fixes #871
 
+--Donkeytown players are never sent CU status messages (CURSES), so they can't
+  identfy each other using globally-assigned curse status words.  Fixes #873
+
+
 
 
 

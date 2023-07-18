@@ -6340,7 +6340,11 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     if( dbCurseTargetEmail != NULL && usePersonalCurses ) {
         LiveObject *targetP = getPlayerByEmail( dbCurseTargetEmail );
         
-        if( targetP != NULL ) {
+        if( targetP != NULL &&
+            // don't send CU messages with curse
+            // words to Donkeytown players
+            inPlayer->curseStatus.curseLevel == 0 ) {
+
             char *message = autoSprintf( "CU\n%d 1 %s_%s\n#", targetP->id,
                                          getCurseWord( inPlayer->email,
                                                        targetP->email, 0 ),
@@ -21691,17 +21695,25 @@ int main() {
                                           nextPlayer->email, 
                                           otherToForgive->email );
                             
-                            char *message = 
-                                autoSprintf( 
-                                    "CU\n%d 0 %s_%s\n#", 
-                                    otherToForgive->id,
-                                    getCurseWord( nextPlayer->email,
-                                                  otherToForgive->email, 0 ),
-                                    getCurseWord( nextPlayer->email,
-                                                  otherToForgive->email, 1 ) );
-                            sendMessageToPlayer( nextPlayer,
-                                                 message, strlen( message ) );
-                            delete [] message;
+                            // don't send CU messages with curse
+                            // words to Donkeytown players
+                            if( nextPlayer->curseStatus.curseLevel == 0 ) {
+                                
+                                char *message = 
+                                    autoSprintf( 
+                                        "CU\n%d 0 %s_%s\n#", 
+                                        otherToForgive->id,
+                                        getCurseWord( nextPlayer->email,
+                                                      otherToForgive->email, 
+                                                      0 ),
+                                        getCurseWord( nextPlayer->email,
+                                                      otherToForgive->email, 
+                                                      1 ) );
+                                sendMessageToPlayer( nextPlayer,
+                                                     message, 
+                                                     strlen( message ) );
+                                delete [] message;
+                                }
                             }
 
                         
@@ -21734,20 +21746,27 @@ int main() {
                                                   nextPlayer->email, 
                                                   otherToForgive->email );
                             
-                                    char *message = 
-                                        autoSprintf( 
-                                            "CU\n%d 0 %s_%s\n#", 
-                                            otherToForgive->id,
-                                            getCurseWord( 
-                                                nextPlayer->email,
-                                                otherToForgive->email, 0 ),
-                                            getCurseWord( 
-                                                nextPlayer->email,
-                                                otherToForgive->email, 1 ) );
-                                    sendMessageToPlayer( 
-                                        nextPlayer,
-                                        message, strlen( message ) );
-                                    delete [] message;
+                                    // don't send CU messages with curse
+                                    // words to Donkeytown players
+                                    if( nextPlayer->
+                                        curseStatus.curseLevel == 0 ) {
+                                        
+                                        char *message = 
+                                            autoSprintf( 
+                                                "CU\n%d 0 %s_%s\n#", 
+                                                otherToForgive->id,
+                                                getCurseWord( 
+                                                    nextPlayer->email,
+                                                    otherToForgive->email, 0 ),
+                                                getCurseWord( 
+                                                    nextPlayer->email,
+                                                    otherToForgive->email, 
+                                                    1 ) );
+                                        sendMessageToPlayer( 
+                                            nextPlayer,
+                                            message, strlen( message ) );
+                                        delete [] message;
+                                        }
                                     }
                                 }
                             }
@@ -25559,7 +25578,11 @@ int main() {
                         }
                     
                     if( isCursed( otherPlayer->email, 
-                                  nextPlayer->email ) ) {
+                                  nextPlayer->email ) &&
+                        // don't send CU messages with curse
+                        // words to Donkeytown players
+                        otherPlayer->curseStatus.curseLevel == 0 ) {
+
                         char *message = autoSprintf( 
                             "CU\n%d 1 %s_%s\n#",
                             nextPlayer->id,
@@ -28137,7 +28160,11 @@ int main() {
                 
                 cursesWorking.push_back( '#' );
             
-                if( numAdded > 0 ) {
+                if( numAdded > 0 &&
+                    // don't send CU messages with curse
+                    // words to Donkeytown players
+                    nextPlayer->curseStatus.curseLevel == 0 ) {
+                    
                     char *cursesMessage = cursesWorking.getElementString();
 
 
