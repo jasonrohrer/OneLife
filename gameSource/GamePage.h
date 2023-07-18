@@ -30,7 +30,7 @@ class GamePage : public PageComponent {
 
         // overrides default status position
         // status messages default to bottom of screen
-        void setStatusPositiion( char inTop );
+        void setStatusPosition( char inTop );
         
         
         // override these from PageComponent to actually SHOW

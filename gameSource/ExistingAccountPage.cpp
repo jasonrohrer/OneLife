@@ -668,7 +668,7 @@ void ExistingAccountPage::draw( doublePair inViewCenter,
                 setStatusDirect( message, true );
                 delete [] message;
 
-                setStatusPositiion( true );
+                setStatusPosition( true );
                 mRetryButton.setVisible( true );
                 mRedetectButton.setVisible( true );
                 }

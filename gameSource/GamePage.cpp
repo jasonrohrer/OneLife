@@ -183,7 +183,7 @@ void GamePage::setTipPosition( char inTop ) {
     }
 
 
-void GamePage::setStatusPositiion( char inTop ) {
+void GamePage::setStatusPosition( char inTop ) {
     mStatusAtTopOfScreen = inTop;
     }
 

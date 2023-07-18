@@ -11,6 +11,8 @@ Version 381    ????
   editing a Steam account onto two lines (to avoid overlapping with Tutorial
   and Services buttons).  Fixes #870
 
+--Fixed typo in name of setStatusPosition.
+
 
 
 
