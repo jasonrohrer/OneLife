@@ -13,6 +13,9 @@ Version 381    ????
 
 --Fixed typo in name of setStatusPosition.
 
+--Category editor now allows copying a category list to clipboard as CSV
+  (for examining pattern-based transitions in a spreadsheet).
+
 
 
 Server Fixes

@@ -120,6 +120,7 @@ EditorCategoryPage::EditorCategoryPage()
     addKeyClassDescription( &mKeyLegend, "Pg Up/Down", "Change order" );
     addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger jumps" );
     addKeyClassDescription( &mKeyLegend, "Bkspce", "Remv item" );
+    addKeyDescription( &mKeyLegend, 'c', "Copy CSV to clipboard" );
 
     addKeyDescription( &mKeyLegendPattern, 'd', "Duplicate item in place" );
     addKeyDescription( &mKeyLegendPattern, 'D', "Duplicate item to bottom" );
@@ -664,6 +665,32 @@ void EditorCategoryPage::keyDown( unsigned char inASCII ) {
                 }
 
             updateCheckbox();
+            }
+        }
+
+    if( inASCII == 'c' && mCurrentCategory != -1 ) {
+        CategoryRecord *cat = getCategory( mCurrentCategory );
+        
+        if( cat != NULL ) {
+
+            SimpleVector<char> workingCSV;
+            
+            
+            for( int i=0; i< cat->objectIDSet.size(); i++ ) {
+                int id = cat->objectIDSet.getElementDirect( i );
+                
+                ObjectRecord *o = getObject( id );
+                
+                workingCSV.appendElementString( "\"" );
+                workingCSV.appendElementString( o->description );
+                workingCSV.appendElementString( "\"\n" );
+                }
+            
+            char *csvText = workingCSV.getElementString();
+            
+            setClipboardText( csvText );
+
+            delete [] csvText;
             }
         }
     }
