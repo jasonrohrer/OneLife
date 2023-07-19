@@ -2860,54 +2860,84 @@ void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
 
         int d = inUsesRemaining;
         
-        // hide some sprites
+
         
-        int numSpritesLeft = 
-            ( d * (numVanishingSprites) ) / numUses;
+        // hide some vanishing sprites
+        if( numVanishingSprites > 0 ) {
+            
+            int numSpritesLeft = 
+                ( d * (numVanishingSprites) ) / numUses;
+            
+            int numInLastDummy = numVanishingSprites / numUses;
+            
+            int numInFirstDummy = ( ( numUses - 1 ) *
+                                    numVanishingSprites ) / numUses;
+            
+            if( numInLastDummy == 0 ) {
+                // add 1 to everything to pad up, so last
+                // dummy has 1 sprite in it
+                numSpritesLeft += 1;
+                
+                numInFirstDummy += 1;
+                }
+
+            if( numSpritesLeft > numVanishingSprites ) {
+                numSpritesLeft = numVanishingSprites;
+                }
+            if( numInFirstDummy > numVanishingSprites ) {
+                numInFirstDummy = numVanishingSprites;
+                }
         
-        int numInLastDummy = numVanishingSprites / numUses;
+
+            if( numInFirstDummy == numVanishingSprites ) {
+                // no change between full object and first dummy (between full
+                // and one less than full)
+                
+                // Need a visual change here too
+                
+                // pull all the non-1-sprite phases down
+                // this ensures that none of them look like the full object
+                if( numSpritesLeft > 1 ) {
+                    numSpritesLeft --;
+                    }
+                }        
+            
+            
+            for( int v=numSpritesLeft; v<numVanishingSprites; v++ ) {
+                
+                inSpriteSkipDrawing[ vanishingIndices.getElementDirect( v ) ] = 
+                    true;
+                }
+            }
         
-        if( numInLastDummy == 0 ) {
+
+
+        // now handle appearing sprites
+        if( numAppearingSprites > 0 ) {
+            
+            int numInvisSpritesLeft = 
+                lrint( ( d * (numAppearingSprites) ) / (double)numUses );
+            
+            /*
+            // testing... do we need to do this?
+            int numInvisInLastDummy = numAppearingSprites / numUses;
+            
+            if( numInLastDummy == 0 ) {
             // add 1 to everything to pad up, so last
             // dummy has 1 sprite in it
             numSpritesLeft += 1;
             }
-                        
-
-        if( numSpritesLeft > numVanishingSprites ) {
-            numSpritesLeft = numVanishingSprites;
-            }
-
-        for( int v=numSpritesLeft; v<numVanishingSprites; v++ ) {
-            
-            inSpriteSkipDrawing[ vanishingIndices.getElementDirect( v ) ] = 
-                true;
-            }
-
-
-        // now handle appearing sprites
-        int numInvisSpritesLeft = 
-            lrint( ( d * (numAppearingSprites) ) / (double)numUses );
-                        
-        /*
-        // testing... do we need to do this?
-        int numInvisInLastDummy = numAppearingSprites / numUses;
+            */
         
-        if( numInLastDummy == 0 ) {
-        // add 1 to everything to pad up, so last
-        // dummy has 1 sprite in it
-        numSpritesLeft += 1;
-        }
-        */
-        
-        if( numInvisSpritesLeft > numAppearingSprites ) {
-            numInvisSpritesLeft = numAppearingSprites;
-            }
-
-        for( int v=0; v<numAppearingSprites - numInvisSpritesLeft; v++ ) {
+            if( numInvisSpritesLeft > numAppearingSprites ) {
+                numInvisSpritesLeft = numAppearingSprites;
+                }
             
-            inSpriteSkipDrawing[ appearingIndices.getElementDirect( v ) ] = 
-                false;
+            for( int v=0; v<numAppearingSprites - numInvisSpritesLeft; v++ ) {
+                
+                inSpriteSkipDrawing[ appearingIndices.getElementDirect( v ) ] = 
+                    false;
+                }
             }
         }
     }

@@ -16,6 +16,11 @@ Version 381    ????
 --Category editor now allows copying a category list to clipboard as CSV
   (for examining pattern-based transitions in a spreadsheet).
 
+--When a useable object has vanishing sprites (as object gets used up), we now
+  make sure full object and one-less-than-full object have a different number
+  of vanishing sprites (so object changes visually when it goes from full to
+  one less than full).  Fixes jasonrohrer/OneLifeData7#869
+
 
 
 Server Fixes
