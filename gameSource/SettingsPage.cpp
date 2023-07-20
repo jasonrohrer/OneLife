@@ -20,15 +20,22 @@ extern Font *mainFont;
 
 extern float musicLoudness;
 
+extern int targetFramesPerSecond;
+
+
 
 SettingsPage::SettingsPage()
         : mBackButton( mainFont, -542, -280, translate( "backButton" ) ),
           mEditAccountButton( mainFont, -463, 129, translate( "editAccount" ) ),
           mRestartButton( mainFont, 128, 128, translate( "restartButton" ) ),
-          mRedetectButton( mainFont, 153, 249, translate( "redetectButton" ) ),
+          mRedetectButton( mainFont, 173, 249, translate( "redetectButton" ) ),
           mVsyncBox( 0, 208, 4 ),
           mFullscreenBox( 0, 128, 4 ),
           mBorderlessBox( 0, 168, 4 ),
+          mTargetFrameRateField( mainFont, 22, 268, 3, false, 
+                                 "", // no label
+                                 "0123456789",
+                                 NULL ),
           mMusicLoudnessSlider( mainFont, 0, 40, 4, 200, 30,
                                 0.0, 1.0, 
                                 translate( "musicLoudness" ) ),
@@ -91,6 +98,11 @@ SettingsPage::SettingsPage()
     addComponent( &mBorderlessBox );
     mBorderlessBox.addActionListener( this );
 
+    addComponent( &mTargetFrameRateField );
+    mTargetFrameRateField.addActionListener( this );
+    
+    mTargetFrameRateField.setFireOnAnyTextChange( true );
+
     addComponent( &mRestartButton );
     mRestartButton.addActionListener( this );
     
@@ -142,6 +154,12 @@ SettingsPage::SettingsPage()
     mMusicLoudnessSlider.addActionListener( this );
     mSoundEffectsLoudnessSlider.addActionListener( this );
 
+
+    mTargetFrameRateField.setInt( targetFramesPerSecond );
+
+    if( getCountingOnVsync() ) {
+        mTargetFrameRateField.setVisible( false );
+        }
     }
 
 
@@ -168,7 +186,10 @@ void SettingsPage::checkRestartButtonVisibility() {
         ||
         mOldFullscreenSetting != newFullscreenSetting
         ||
-        mOldBorderlessSetting != newBorderlessSetting ) {
+        mOldBorderlessSetting != newBorderlessSetting 
+        ||
+        ( mTargetFrameRateField.isVisible() && 
+          mTargetFrameRateField.getInt() != targetFramesPerSecond ) ) {
 
         mRestartButton.setVisible( true );
         }
@@ -205,12 +226,41 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
         setSignal( "editAccount" );
         setMusicLoudness( 0 );
         }
+    else if( inTarget == &mTargetFrameRateField ) {
+        
+        int newValue = mTargetFrameRateField.getInt();
+        
+        if( newValue > 0 ) {
+            
+            // if we're manually manipulating target frame rate
+            // any tweaked halfFrameRate setting should be cleared
+            SettingsManager::setSetting( "halfFrameRate", 0 );
+
+            SettingsManager::setSetting( "targetFrameRate", newValue );
+
+            checkRestartButtonVisibility();
+            }
+        }
     else if( inTarget == &mVsyncBox ) {
         int newSetting = mVsyncBox.getToggled();
         
         SettingsManager::setSetting( "countingOnVsync", newSetting );
         
         checkRestartButtonVisibility();
+
+        if( ! newSetting ) {
+            mTargetFrameRateField.setVisible( true );
+            mTargetFrameRateField.setInt( targetFramesPerSecond );
+            }
+        else {
+            mTargetFrameRateField.setVisible( false );
+            
+            // if we're manually manipulating target frame rate
+            // any tweaked halfFrameRate setting should be cleared
+            SettingsManager::setSetting( "halfFrameRate", 0 );
+            SettingsManager::setSetting( "targetFramesPerSecond",
+                                         targetFramesPerSecond );
+            }
         }
     else if( inTarget == &mFullscreenBox ) {
         int newSetting = mFullscreenBox.getToggled();
@@ -417,7 +467,6 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
     }
 
 
-extern int targetFramesPerSecond;
 
 
 void SettingsPage::draw( doublePair inViewCenter, 
@@ -427,7 +476,7 @@ void SettingsPage::draw( doublePair inViewCenter,
     
     doublePair pos = mVsyncBox.getPosition();
     
-    pos.x -= 30;
+    pos.x -= 24;
     pos.y -= 2;
     
     mainFont->drawString( translate( "vsyncOn" ), pos, alignRight );
@@ -436,7 +485,7 @@ void SettingsPage::draw( doublePair inViewCenter,
     
     pos = mFullscreenBox.getPosition();
     
-    pos.x -= 30;
+    pos.x -= 24;
     pos.y -= 2;
     
     mainFont->drawString( translate( "fullscreen" ), pos, alignRight );
@@ -444,7 +493,7 @@ void SettingsPage::draw( doublePair inViewCenter,
 
     pos = mUseCustomServerBox.getPosition();
     
-    pos.x -= 30;
+    pos.x -= 24;
     pos.y -= 2;
     
     mainFont->drawString( translate( "useCustomServer" ), pos, alignRight );
@@ -453,7 +502,7 @@ void SettingsPage::draw( doublePair inViewCenter,
     if( mBorderlessBox.isVisible() ) {
         pos = mBorderlessBox.getPosition();
     
-        pos.x -= 30;
+        pos.x -= 24;
         pos.y -= 2;
         
         mainFont->drawString( translate( "borderless" ), pos, alignRight );
@@ -463,15 +512,18 @@ void SettingsPage::draw( doublePair inViewCenter,
     pos = mFullscreenBox.getPosition();
     
     pos.y += 96;
-    pos.x -= 16;
+    pos.x -= 8;
     
     pos.y += 44;
 
-    char *fpsString = autoSprintf( "%d", targetFramesPerSecond );
-    
-    mainFont->drawString( fpsString, pos, alignLeft );
-    delete [] fpsString;
 
+    if( ! mTargetFrameRateField.isVisible() ) {
+        char *fpsString = autoSprintf( "%d", targetFramesPerSecond );
+        
+        mainFont->drawString( fpsString, pos, alignLeft );
+        delete [] fpsString;
+        }
+    
 
     pos.y += 44;
 
@@ -482,7 +534,7 @@ void SettingsPage::draw( doublePair inViewCenter,
     
 
     pos = mFullscreenBox.getPosition();
-    pos.x -= 30;
+    pos.x -= 24;
 
     pos.y += 96;
 

@@ -23,6 +23,9 @@ Version 381    ????
 
 --Can now toggle vsync from Settings screen.  Part of #875
 
+--Can now manually type in a custom frame rate on Settings screen when vsync
+  is disabled.  Fixes #875
+
 
 
 

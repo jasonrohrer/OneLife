@@ -49,7 +49,9 @@ class SettingsPage : public GamePage, public ActionListener {
         CheckboxButton mVsyncBox;
         CheckboxButton mFullscreenBox;
         CheckboxButton mBorderlessBox;
-        
+
+        TextField mTargetFrameRateField;
+
 
         ValueSlider mMusicLoudnessSlider;
         ValueSlider mSoundEffectsLoudnessSlider;
