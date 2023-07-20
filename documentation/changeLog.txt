@@ -21,6 +21,9 @@ Version 381    ????
   of vanishing sprites (so object changes visually when it goes from full to
   one less than full).  Fixes jasonrohrer/OneLifeData7#869
 
+--Can now toggle vsync from Settings screen.  Part of #875
+
+
 
 
 Server Fixes
