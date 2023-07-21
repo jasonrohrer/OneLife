@@ -50,7 +50,13 @@ Server Fixes
 --No longer consider Donkeytown or tutorial players as possible experts when
   someone touches a speciatly biome expert waystone.  Part of #877
 
-
+--Biome expert waystones now function the same way whether specialty biomes
+  are active or not.  For one thing, the active player threshold for languages
+  and specilty biomes is different (15 and 30), so there was a gap in which
+  you still might need a language expert, but the waystones wouldn't help you
+  find one.  But also, waystone behavior might as well be consistent.
+  Fixes #877
+ 
 
 
 
