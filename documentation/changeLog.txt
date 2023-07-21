@@ -47,6 +47,9 @@ Server Fixes
   dropped during your life, the inhospitable tool-tips would still be
   displayed.  Fixes #876
 
+--No longer consider Donkeytown or tutorial players as possible experts when
+  someone touches a speciatly biome expert waystone.  Part of #877
+
 
 
 

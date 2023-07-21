@@ -16010,6 +16010,12 @@ static void findExpertForPlayer( LiveObject *inPlayer,
         for( int i=0; i<players.size(); i++ ) {
             LiveObject *p = players.getElement( i );
             
+            if( p->isTutorial || p->curseStatus.curseLevel > 0 ) {
+                // skip tutorial or donkeytown players
+                continue;
+                }
+            
+
             if( getObject( p->displayID )->race == race ) {
                 GridPos pos = getPlayerPos( p );            
                 double d = distance( pos, playerPos );
