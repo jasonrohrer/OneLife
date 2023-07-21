@@ -5,7 +5,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 381    ????
+Version 381    2023-July-21
 
 --Moved tool tip and status message up slightly, and split warning about
   editing a Steam account onto two lines (to avoid overlapping with Tutorial
