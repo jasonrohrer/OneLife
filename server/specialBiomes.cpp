@@ -34,6 +34,16 @@ static SpecialBiome specialBiomes[ MAX_BIOME_NUMBER ];
 static int curNumPlayers;
 static int minNumPlayers;
 
+// if we ever go from biomes active to non-active because of a player-count
+// drop, we temporarily push our threshold up to prevent flip-flopping
+// once that new threshold is hit, and biomes become active again,
+// we go back to our normal threshold
+static int playerNumberBuffer;
+
+static int minNumPlayersOverride = -1;
+
+
+
 static int minNumPlayersForLanguages;
 
 
@@ -42,6 +52,18 @@ void initSpecialBiomes() {
     for( int i=0; i < MAX_BIOME_NUMBER; i++ ) {
         specialBiomes[i].badBiomeName = NULL;
         }
+
+    minNumPlayers = 
+        SettingsManager::getIntSetting( 
+            "minActivePlayersForSpecialBiomes", 15 );
+
+    playerNumberBuffer = 
+        SettingsManager::getIntSetting( 
+            "minActivePlayersForSpecialBiomesBuffer", 10 );
+
+    minNumPlayersForLanguages = 
+        SettingsManager::getIntSetting( 
+            "minActivePlayersForLanguages", 15 );
 
     updateSpecialBiomes( 0 );
     }
@@ -68,6 +90,10 @@ char updateSpecialBiomes( int inNumPlayers ) {
     minNumPlayers = 
         SettingsManager::getIntSetting( 
             "minActivePlayersForSpecialBiomes", 15 );
+
+    playerNumberBuffer = 
+        SettingsManager::getIntSetting( 
+            "minActivePlayersForSpecialBiomesBuffer", 10 );
 
     minNumPlayersForLanguages = 
         SettingsManager::getIntSetting( 
@@ -147,9 +173,53 @@ char updateSpecialBiomes( int inNumPlayers ) {
 
     if( specialBiomesActive() != wasActive ) {
         // change in active status
+
+        if( wasActive ) {
+            // was active, and now it's not
+            
+            // raise threshold before it becomes active again
+            // to avoid flip-flopping
+            minNumPlayersOverride = minNumPlayers + playerNumberBuffer;
+            
+            minNumPlayers = minNumPlayersOverride;
+            }
+        else {
+            // was not active, and now it's active again
+            // we've surpassed our threshold
+            
+            // clear the buffered threshold
+            minNumPlayersOverride = -1;
+            }
+        
         return true;
         }
-    return false;
+    else {
+        // no change in active status
+        
+        if( minNumPlayersOverride > -1 ) {
+            // replace our threshold with our override threshold
+            
+            // we do this because there are many places in code here
+            // where we check minNumPlayers
+            // We don't want to have to change each of those spots
+            // to check if override is active.
+
+            // every time we updateSpecialBiomes(), we restore
+            // minNumPlayers to the setting from the settings folder
+            
+            // but if nothing has changed (special biomes are still active
+            // or not), if we have our override set, we will land
+            // here and override minNumPlayers
+
+            // if our override is *not* set, minNumPlayers from the
+            // settings folder will stand.
+            
+            minNumPlayers = minNumPlayersOverride;
+            }
+
+        return false;
+        }
+    
     }
 
 
@@ -170,10 +240,35 @@ static SpecialBiome getBiomeRecord( int inX, int inY ) {
 
 
 char specialBiomesActive() {
-    if( curNumPlayers < minNumPlayers ) {
-        return false;
+    // note that we only use our set threshold directly here
+    
+    // elsewhere, minNumPlayers is set to be equal to minNumPlayersOverride
+    // when the override is set.
+    
+    // however, immediately after re-reading our setting minNumPlayers
+    // in updateSpecialBiomes(), we then check whether specialBiomesActive()
+    // in that one case, minNumPlayers and minNumPlayersOverride might differ
+    // even if the override is set
+    
+    // but elsewhere in the code, we can ignore minNumPlayersOverride
+    // and just check minNumPlayers directly
+    
+    if( minNumPlayersOverride > -1 ) {
+        // override threshold in effect, use it
+        
+        if( curNumPlayers < minNumPlayersOverride ) {
+            return false;
+            }
+        return true;
         }
-    return true;
+    else {
+        // use regular threshold
+        
+        if( curNumPlayers < minNumPlayers ) {
+            return false;
+            }
+        return true;
+        }
     }
 
 

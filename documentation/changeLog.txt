@@ -57,6 +57,13 @@ Server Fixes
   find one.  But also, waystone behavior might as well be consistent.
   Fixes #877
  
+--When we drop down below 30 players and make specialty biomes inactive, we
+  now wait until we rise back up to 40 players before making them active again.
+  This 10-player buffer prevents flip-flopping between active and inactive
+  specialty biomes when the player population hovers around 30 in the wee
+  hours.  Fixes #878
+
+
 
 
 
