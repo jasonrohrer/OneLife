@@ -2846,6 +2846,7 @@ typedef enum messageType {
     LEAD,
     UNFOL,
     PROP,
+    ORDR,
     FLIP,
     UNKNOWN
     } messageType;
@@ -3274,6 +3275,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "PROP" ) == 0 ) {
         m.type = PROP;
+        }
+    else if( strcmp( nameBuffer, "ORDR" ) == 0 ) {
+        m.type = ORDR;
         }
     else if( strcmp( nameBuffer, "FLIP" ) == 0 ) {
         m.type = FLIP;
@@ -16986,6 +16990,43 @@ static char *translatePhraseFromSpeaker( char *inPhrase,
 
 
 
+static void sendCurrentOrderNotificationToPlayer( LiveObject *inPlayer ) {
+    if( inPlayer->currentOrder == NULL ) {
+        return;
+        }
+    
+    // everything after first ** should be translated
+                        
+    char *fullOrder = stringDuplicate( inPlayer->currentOrder );
+                        
+    char *messageStart = strstr( fullOrder, "**" );
+    
+    if( messageStart != NULL ) {
+        // terminate here
+        messageStart[0] = '\0';
+        
+        messageStart = &( messageStart[2] );
+        
+        char *transOrder = translatePhraseFromSpeaker( 
+            messageStart,
+            getLiveObject( inPlayer->currentOrderOriginatorID ),
+            inPlayer );
+        
+        char *fullTransOrder = autoSprintf( "%s**%s",
+                                            fullOrder,
+                                            transOrder );
+        delete [] transOrder;
+        delete [] fullOrder;
+        fullOrder = fullTransOrder;
+        }
+                                
+
+    sendGlobalMessage( fullOrder, inPlayer );
+    delete [] fullOrder;
+    }
+
+
+
 static int orderDistance = 10;
 
 
@@ -17047,34 +17088,8 @@ static void checkOrderPropagation() {
                     // but don't actually deliver message to them if exiled
                     if( ! exiled ) {
                         
-                        // everything after first ** should be translated
+                        sendCurrentOrderNotificationToPlayer( o );
                         
-                        char *fullOrder = stringDuplicate( l->currentOrder );
-                        
-                        char *messageStart = strstr( fullOrder, "**" );
-                        
-                        if( messageStart != NULL ) {
-                            // terminate here
-                            messageStart[0] = '\0';
-                            
-                            messageStart = &( messageStart[2] );
-                            
-                            char *transOrder = translatePhraseFromSpeaker( 
-                                messageStart,
-                                getLiveObject( l->currentOrderOriginatorID ),
-                                o );
-                            
-                            char *fullTransOrder = autoSprintf( "%s**%s",
-                                                                fullOrder,
-                                                                transOrder );
-                            delete [] transOrder;
-                            delete [] fullOrder;
-                            fullOrder = fullTransOrder;
-                            }
-                                
-
-                        sendGlobalMessage( fullOrder, o );
-                        delete [] fullOrder;
 
                         LiveObject *leaderO = 
                             getLiveObject( l->currentOrderOriginatorID );
@@ -20391,6 +20406,9 @@ int main() {
                     sendMessageToPlayer( nextPlayer, 
                                          psMessage, strlen( psMessage ) );
                     delete [] psMessage;
+                    }
+                else if( m.type == ORDR ) {
+                    sendCurrentOrderNotificationToPlayer( nextPlayer );
                     }
                 else if( m.type == FLIP ) {
                     

@@ -1106,6 +1106,7 @@ PHOTO x y seq#
 LEAD x y#
 UNFOL x y#
 PROP x y#
+ORDR x y#
 FLIP x y#
 
 KA   is a keep-alive message used to keep the connection alive when the client
@@ -1215,6 +1216,9 @@ UNFOL makes the player follow no one (same as saying "I FOLLOW MYSELF")
 
 PROP cycles through player's owned property positions as spoken 
      map coordinates.
+     x and y are ignored
+
+ORDR repeats display of last-heard order from this player's leader.
      x and y are ignored
 
 FLIP requests flip to player's orientation, new facing toward x y

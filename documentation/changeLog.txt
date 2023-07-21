@@ -26,6 +26,8 @@ Version 381    ????
 --Can now manually type in a custom frame rate on Settings screen when vsync
   is disabled.  Fixes #875
 
+--New /ORDER command that allows you to review the most recent oder received
+  from your leader, in case you missed it or what to re-read it.  Fixes #881
 
 
 
