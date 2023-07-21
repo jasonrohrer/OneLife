@@ -17919,8 +17919,33 @@ int main() {
             apocalypseStep();
             monumentStep();
             
-            updateSpecialBiomes( players.size() );
+            char specialBiomeStatusChanged = 
+                updateSpecialBiomes( players.size() );
             
+            if( specialBiomeStatusChanged ) {
+                for( int i=0; i< players.size(); i++ ) {
+                    LiveObject *nextPlayer = players.getElement( i );
+                    if( nextPlayer->connected &&
+                        ! nextPlayer->error && 
+                        ! nextPlayer->isTutorial &&
+                        ! nextPlayer->forceSpawn ) {
+                        
+                        // not skipping vog mode here, b/c it's never
+                        // enabled until after first message sent
+                        // so VOG mode hears about bad biomes
+
+                        // tell them about their own bad biomes
+                        char *bbMessage = 
+                            getBadBiomeMessage( nextPlayer->displayID );
+                        sendMessageToPlayer( nextPlayer, bbMessage, 
+                                             strlen( bbMessage ) );
+                    
+                        delete [] bbMessage;
+                        }
+                    }
+                }
+            
+
             //checkBackup();
 
             stepFoodLog();

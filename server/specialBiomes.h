@@ -6,8 +6,10 @@ void initSpecialBiomes();
 void freeSpecialBiomes();
 
 
-// reload settings
-void updateSpecialBiomes( int inNumPlayers );
+// reload settings, and re-tests number of active players against settings
+// returns true if special biome status changes (from on to off, or off to on)
+// returns false if status hasn't changed (stays on or stays off)
+char updateSpecialBiomes( int inNumPlayers );
 
 
 // returns true if special biomes are currently active on server

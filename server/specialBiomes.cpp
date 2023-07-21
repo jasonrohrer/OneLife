@@ -59,7 +59,10 @@ void freeSpecialBiomes() {
 
 
 // reload settings
-void updateSpecialBiomes( int inNumPlayers ) {
+char updateSpecialBiomes( int inNumPlayers ) {
+    char wasActive = specialBiomesActive();
+    
+    
     curNumPlayers = inNumPlayers;
 
     minNumPlayers = 
@@ -141,6 +144,12 @@ void updateSpecialBiomes( int inNumPlayers ) {
     parts->deallocateStringElements();
     
     delete parts;
+
+    if( specialBiomesActive() != wasActive ) {
+        // change in active status
+        return true;
+        }
+    return false;
     }
 
 

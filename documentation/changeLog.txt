@@ -40,7 +40,12 @@ Server Fixes
 
 --No genetic fitness information logged for Donkeytown players.  Fixes #874
 
-
+--Server now re-sends BAD_BIOMES (BB) message whenever bad biomes are turned on
+  or off (due to player count changes).  This causes client-side tool tips to
+  match the current biome status (only displaying the bad biome name, like
+  FRIGID ARCTIC, when it's actually inhospitable).  Before, if player count
+  dropped during your life, the inhospitable tool-tips would still be
+  displayed.  Fixes #876
 
 
 
