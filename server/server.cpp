@@ -9402,9 +9402,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     if( parentChoices.size() > 0 ) {
         // make sure one race isn't entirely extinct
         
-        if( numPlayers >= 
-            SettingsManager::getIntSetting( 
-                "minActivePlayersForSpecialBiomes", 15 ) ) {
+        if( specialBiomesActive() ) {
 
             int numRaces;
             int *races = getRaces( &numRaces );

@@ -9,6 +9,10 @@ Server Fixes
 
 --Added missing fflush for name logging in lifeLog.  Fixes #880
 
+--Deciding to spawn new Eves to create special biome families now correctly
+  observes the 10-player buffer implemented in the fix for #878.  Fixes #887
+
+
 
 
 Version 381    2023-July-21
