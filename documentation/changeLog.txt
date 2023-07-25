@@ -5,6 +5,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--Added missing fflush for name logging in lifeLog.  Fixes #880
+
+
+
 Version 381    2023-July-21
 
 --Moved tool tip and status message up slightly, and split warning about

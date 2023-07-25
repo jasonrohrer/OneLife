@@ -278,6 +278,7 @@ void logName( int inPlayerID, char *inEmail, char *inName,
               int inLineageEveID ) {
     if( nameLogFile != NULL ) {
         fprintf( nameLogFile, "%d %s\n", inPlayerID, inName );
+        fflush( nameLogFile );
         }
     logPlayerNameForCurses( inEmail, inName, inLineageEveID );
     }
