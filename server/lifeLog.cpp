@@ -7,6 +7,8 @@
 
 #include "curses.h"
 
+#include "../gameSource/objectBank.h"
+
 
 
 #include "minorGems/util/stringUtils.h"
@@ -234,12 +236,40 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
             char *causeString;
         
             if( inKillerEmail == NULL ) {
-                if( inDisconnect ) {
-                    causeString = stringDuplicate( "disconnect" );
+                // inDisconnect doesn't mean anything anymore
+                // because no one ever dies from being disconnected
+                // so ignore this signal
+
+                if( inAge >= forceDeathAge ) {
+                    causeString = stringDuplicate( "oldAge" );
                     }
                 else {
-                    if( inAge >= forceDeathAge ) {
-                        causeString = stringDuplicate( "oldAge" );
+                        
+                    if( inKillerID == inPlayerID ) {
+                        causeString = stringDuplicate( "suicide" );
+                        }
+                    else if( inKillerID < -1 ) {
+                        
+                        // use cleaned-up non-human object string
+                        // as cause of death
+                        
+                        ObjectRecord *o = getObject( - inKillerID, true );
+                        if( o != NULL ) {
+                            causeString = 
+                                stringDuplicate( o->description );
+                            
+                            // terminate at comment
+                            char *commentStart = strstr( causeString, "#" );
+                            if( commentStart != NULL ) {
+                                commentStart[0] = '\0';
+                                }
+                            
+                            char *nextSpace = strstr( causeString, " " );
+                            while( nextSpace != NULL ) {
+                                nextSpace[0] = '_';
+                                nextSpace = strstr( nextSpace, " " );
+                                }
+                            }
                         }
                     else {
                         causeString = stringDuplicate( "hunger" );

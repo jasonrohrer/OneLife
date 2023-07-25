@@ -25555,6 +25555,17 @@ int main() {
                 if( ! nextPlayer->isTutorial ) {
                     GridPos deathPos = 
                         getPlayerPos( nextPlayer );
+                    
+                    int killerID = -1;
+                    if( nextPlayer->murderPerpID > 0 ) {
+                        killerID = nextPlayer->murderPerpID;
+                        }
+                    else if( nextPlayer->deathSourceID > 0 ) {
+                        // include as negative of ID
+                        killerID = - nextPlayer->deathSourceID;
+                        }
+                    // never have suicide in this case
+
                     logDeath( nextPlayer->id,
                               nextPlayer->email,
                               nextPlayer->isEve,
@@ -25565,7 +25576,7 @@ int main() {
                               deathPos.x, deathPos.y,
                               players.size() - 1,
                               false,
-                              nextPlayer->murderPerpID,
+                              killerID,
                               nextPlayer->murderPerpEmail );
                                             
                     if( shutdownMode ) {
@@ -25941,7 +25952,7 @@ int main() {
                                   dropPos.x, dropPos.y,
                                   players.size() - 1,
                                   disconnect,
-                                  nextPlayer->murderPerpID,
+                                  killerID,
                                   nextPlayer->murderPerpEmail );
                     
                         if( shutdownMode ) {
@@ -27014,6 +27025,23 @@ int main() {
                         
                         if( ! decrementedPlayer->deathLogged &&
                             ! decrementedPlayer->isTutorial ) {    
+                            
+                            
+                            // yes, they starved to death here
+                            // but also log case where they were wounded
+                            // before starving.  Thus, the true cause
+                            // of death should be the wounding that made
+                            // them helpless and caused them to starve
+                            int killerID = -1;
+                            if( nextPlayer->murderPerpID > 0 ) {
+                                killerID = nextPlayer->murderPerpID;
+                                }
+                            else if( nextPlayer->deathSourceID > 0 ) {
+                                // include as negative of ID
+                                killerID = - nextPlayer->deathSourceID;
+                                }
+                            // never have suicide in this case
+
                             logDeath( decrementedPlayer->id,
                                       decrementedPlayer->email,
                                       decrementedPlayer->isEve,
@@ -27023,7 +27051,7 @@ int main() {
                                       deathPos.x, deathPos.y,
                                       players.size() - 1,
                                       false,
-                                      nextPlayer->murderPerpID,
+                                      killerID,
                                       nextPlayer->murderPerpEmail );
                             }
                         

@@ -27,6 +27,8 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
                int inMapX, int inMapY,  
                int inTotalRemainingPopulation,
                char inDisconnect = false,
+               // can be negative objectID if death caused by non-player object
+               // can be own ID if died from suicide
                int inKillerID = -1, 
                char *inKillerEmail = NULL );
 

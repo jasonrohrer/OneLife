@@ -18,6 +18,8 @@ Server Fixes
 --Deciding to spawn new Eves to create special biome families now correctly
   observes the 10-player buffer implemented in the fix for #878.  Fixes #887
 
+--Life log now correctly records cause of death.  Fixes #891
+
 
 
 
