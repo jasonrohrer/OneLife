@@ -5,6 +5,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 383    ???
+
+--Moved [@] button down to avoid overlap with genetic fitness.  Part of #885
+
+
+
 Server Fixes
 
 --Added missing fflush for name logging in lifeLog.  Fixes #880

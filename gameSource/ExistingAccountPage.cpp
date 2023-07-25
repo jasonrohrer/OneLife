@@ -51,7 +51,7 @@ ExistingAccountPage::ExistingAccountPage()
                      translate( "accountKey" ),
                      // allow only ticket code characters
                      "23456789ABCDEFGHJKLMNPQRSTUVWXYZ-" ),
-          mAtSignButton( mainFont, 252, 128, "@" ),
+          mAtSignButton( mainFont, 100, 68, "@" ),
           mPasteButton( mainFont, 0, -60, translate( "paste" ), 'v', 'V' ),
           mPasteEmailButton( mainFont, 0, 68, translate( "paste" ), 'v', 'V' ),
           mDisableCustomServerButton( mainFont, 0, 220, 
@@ -80,16 +80,6 @@ ExistingAccountPage::ExistingAccountPage()
           mFramesCounted( 0 ),
           mFPSMeasureDone( false ),
           mHideAccount( false ) {
-    
-    
-    // center this in free space
-    /*
-    mPasteButton.setPosition( ( 333 + mKeyField.getRightEdgeX() ) / 2,
-                              -64 );
-    */
-    // align this one with the paste button
-    mAtSignButton.setPosition( mEmailField.getRightEdgeX() + 48,
-                               128 );
     
     
     if( userEmail != NULL && accountKey != NULL ) {
