@@ -24,3 +24,10 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing,
                 char *inAuthorName,
                 SimpleVector<int> *inSubjectIDs,
                 SimpleVector<char*> *inSubjectNames );
+
+
+// after takePhoto, once photo is successfully posted
+// returns NULL if there's no new ID
+// Can return empty string "" on error posting photo
+// result destroyed by caller
+char *getPostedPhotoID();

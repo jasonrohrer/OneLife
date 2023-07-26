@@ -1103,6 +1103,7 @@ VOGI x y id#
 VOGT x y text# 
 VOGX x y#
 PHOTO x y seq#
+PHOID x y photo_id_string#
 LEAD x y#
 UNFOL x y#
 PROP x y#
@@ -1208,6 +1209,9 @@ PING is used to request a PONG response fromt the server.  The x and y
 
 PHOTO is used to request a photo approval and signature for position
       x y and sequence number seq
+
+PHOID is used to post a photo id string for position x y
+      photo_id_string is 40 digits of lowercase ascii hex   
 
 LEAD requests the player's top leader's position as spoken map coordinates.
      x and y are ignored

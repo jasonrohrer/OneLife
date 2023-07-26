@@ -69,9 +69,11 @@ action=submit_photo
 &photo_author_name=[string]
 &photo_subjects_names=[string]
 &jpg_base64=[jpg file as base 64]
+&negative_jpg_base64=[negative version of jpg file as base 64]
 
 Return:
 OK
+photo_id
 -or-
 DENIED
 
@@ -100,6 +102,15 @@ photo_subjects is comma-delimited list of character names in photo
 photo_author and photo_subjects must be URL-encoded (Maybe+Like+This)
 
 photo_subjects_ids is comma-delimited list of ints
+
+
+
+photo_id (returned value) is a lowercase 40-digit hex string 
+         like c63d4aaaba92dbf846b4f688a3663d075a8e5f96
+
+This returned ID can be used to fetch photos from the photo server later like:
+
+http://photos.onehouronelife.com/photos/c63d4aaaba92dbf846b4f688a3663d075a8e5f96.jpg
 
 
 

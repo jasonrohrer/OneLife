@@ -1,0 +1,14 @@
+Cut/tear out paper shape using plain white paper, scan in on black background.
+
+Clean up black and white areas of scan to remove noise.  Paper texture
+is not important at this stage, though detail along the edge is.  We're
+essentially making a black and white mask.
+
+Use this mask to select a paper-texture region from hintPaperBaseTexture.xcf
+
+This is the correct color and texture for paper slips in the game.
+
+Use this same mask to select a region from a solid black area.  Blur this
+black shape to make a drop shadow
+
+Drop shadows are Gaussian Blur, radius 7, with layer opacity 66.7%

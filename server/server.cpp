@@ -2843,6 +2843,7 @@ typedef enum messageType {
     VOGT,
     VOGX,
     PHOTO,
+    PHOID,
     LEAD,
     UNFOL,
     PROP,
@@ -2872,6 +2873,10 @@ typedef struct ClientMessage {
         
         // null if type not BUG
         char *bugText;
+        
+        // null if type not PHOID
+        char *photoIDString;
+        
 
         // for MOVE messages
         int sequenceNumber;
@@ -2905,6 +2910,7 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     m.extraPos = NULL;
     m.saidText = NULL;
     m.bugText = NULL;
+    m.photoIDString = NULL;
     m.sequenceNumber = -1;
     
     // don't require # terminator here
@@ -3266,6 +3272,16 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         if( numRead != 4 ) {
             m.id = 0;
             }
+        }
+    else if( strcmp( nameBuffer, "PHOID" ) == 0 ) {
+        m.type = PHOID;
+        
+        m.photoIDString = new char[41];
+        m.photoIDString[0] = '\0';
+        
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d %40s", 
+                          nameBuffer, &( m.x ), &( m.y ), m.photoIDString );
         }
     else if( strcmp( nameBuffer, "LEAD" ) == 0 ) {
         m.type = LEAD;
@@ -20315,6 +20331,61 @@ int main() {
                     sendMessageToPlayer( nextPlayer, message, 
                                          strlen( message ) );
                     delete [] message;
+                    }
+                else if( m.type == PHOID ) {
+                    // FIXME:  still need to test
+                    if( strlen( m.photoIDString ) == 40 ) {
+                        
+                        int oldObjectID = getMapObject( m.x, m.y );
+                        
+                        ObjectRecord *oldO = getObject( oldObjectID );
+                        
+                        if( oldO->writable &&
+                            strstr( oldO->description, "+negativePhoto" ) ) {
+                            
+                            TransRecord *writingHappenTrans =
+                                getMetaTrans( 0, oldObjectID );
+                                
+                            if( writingHappenTrans != NULL &&
+                                writingHappenTrans->newTarget > 0 &&
+                                getObject( writingHappenTrans->newTarget )
+                                ->written ) {
+                                // bare hands transition going from
+                                // writable to written
+                                // use this to transform object
+                                // with photo data
+                                
+                                char *textToAdd = autoSprintf( 
+                                    "*photo %s",
+                                    m.photoIDString );
+                                
+                                
+                                unsigned char metaData[ MAP_METADATA_LENGTH ];
+
+                                int lenToAdd = strlen( textToAdd );
+                                
+                                // leave room for null char at end
+                                if( lenToAdd > MAP_METADATA_LENGTH - 1 ) {
+                                    lenToAdd = MAP_METADATA_LENGTH - 1;
+                                    }
+
+                                memset( metaData, 0, MAP_METADATA_LENGTH );
+                                // this will leave 0 null character at end
+                                // left over from memset of full length
+                                memcpy( metaData, textToAdd, lenToAdd );
+                                
+                                delete [] textToAdd;
+                                
+                                int newObjectID =
+                                    addMetadata( 
+                                        writingHappenTrans->newTarget,
+                                        metaData );
+                                
+                                setMapObject( m.x, m.y, newObjectID );
+                                }
+                            }
+                        }
+                    delete [] m.photoIDString;
                     }
                 else if( m.type == LEAD ) {
                     LiveObject *topLeaderO = 
