@@ -18,6 +18,7 @@
 #include "emotion.h"
 
 #include "photos.h"
+#include "photoCache.h"
 
 #include "spriteDrawColorOverride.h"
 
@@ -3037,7 +3038,28 @@ LivingLifePage::LivingLifePage()
         
         mLineSegmentSprite = loadWhiteSprite( "lineSegment.tga" );
         }
-          
+         
+
+
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        char *name = autoSprintf( "photoDisplay%d.tga", i + 1 );    
+        mPhotoDisplaySprites[i] = loadSprite( name, false );
+        delete [] name;
+        
+        mPhotoToShowIDs[i] = NULL;
+        mPhotoToShowAreNegative[i] = false;
+        
+        mPhotoToShowSprites[i] = NULL;
+    
+        // offset separate pages in x direction slightly
+        mPhotoDisplayHideOffset[i].x = 430 - i * 10;
+        mPhotoDisplayHideOffset[i].y = 360 + 200;
+        
+        mPhotoDisplayPosOffset[i] = mPhotoDisplayHideOffset[i];
+        mPhotoDisplayPosTargetOffset[i] = mPhotoDisplayHideOffset[i];
+        }
+    mLivePhotoSheetIndex = 0;
+    
     
     int tutorialDone = SettingsManager::getIntSetting( "tutorialDone", 0 );
     
@@ -3236,7 +3258,22 @@ LivingLifePage::~LivingLifePage() {
         freeSprite( mTeaserArrowVeryShortSprite );
         freeSprite( mLineSegmentSprite );
         }
+
     
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        freeSprite( mPhotoDisplaySprites[i] );
+
+        if( mPhotoToShowIDs[i] != NULL ) {
+            delete [] mPhotoToShowIDs[i];
+            }
+        
+        if( mPhotoToShowSprites[i] != NULL ) {
+            freeSprite( mPhotoToShowSprites[i] );
+            mPhotoToShowSprites[i] = NULL;
+            }
+        }
+    
+
     for( int i=0; i<4; i++ ) {
         freeSprite( mGroundOverlaySprite[i] );
         }
@@ -9710,8 +9747,26 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
+    // now draw photo sheets    
+    setDrawColor( 1, 1, 1, 1 );
+    
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        if( ! equal( mPhotoDisplayPosOffset[i], mPhotoDisplayHideOffset[i] ) 
+            &&
+            mPhotoToShowSprites[i] != NULL ) {
 
+            doublePair sheetPos  = 
+                add( mPhotoDisplayPosOffset[i], lastScreenViewCenter );
 
+            drawSprite( mPhotoDisplaySprites[i], sheetPos );
+            
+            toggleMultiplicativeBlend( true );
+            
+            drawSprite( mPhotoToShowSprites[i], sheetPos );
+
+            toggleMultiplicativeBlend( false );
+            }
+        }
 
 
 
@@ -12499,6 +12554,50 @@ void LivingLifePage::setNewCraving( int inFoodID, int inYumBonus ) {
 
 
 
+void LivingLifePage::displayPhoto( const char *inPhotoID, char inNegative ) {
+    
+    if( strlen( inPhotoID ) != 40 ) {
+        printf( "Bad photo_id received from server in *photo metadata: %s\n",
+                inPhotoID );
+        return;
+        }    
+
+    
+    // use next sheet
+    mLivePhotoSheetIndex ++;
+    
+    if( mLivePhotoSheetIndex >= NUM_HINT_SHEETS ) {
+        mLivePhotoSheetIndex = 0;
+        }
+    
+
+    if( mPhotoToShowSprites[ mLivePhotoSheetIndex ] != NULL ) {
+        // currently showing a photo on a still-visible photo sheet
+
+        // skip adding another, because that will create a visual glitch
+        
+        // if the user is picking up photos that quickly, it's okay
+        // if they miss seeing one
+
+        printf( "User swapped viewed photos too quickly, had to skip one\n" );
+        return;
+        }
+
+    if( mPhotoToShowIDs[ mLivePhotoSheetIndex ] != NULL ) {
+        // ID already set, but not showing yet.
+        // cache must still be fetching it.
+        // okay to replace it now
+        delete [] mPhotoToShowIDs[ mLivePhotoSheetIndex ];
+        mPhotoToShowIDs[ mLivePhotoSheetIndex ] = NULL;
+        }
+    
+    // this kicks off the process of loading it from the cache
+    mPhotoToShowIDs[ mLivePhotoSheetIndex ] = stringDuplicate( inPhotoID );
+    mPhotoToShowAreNegative[ mLivePhotoSheetIndex ] = inNegative;
+    }
+
+
+
 // color list from here:
 // https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
 
@@ -12722,6 +12821,89 @@ void LivingLifePage::step() {
         }
     
 
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+
+        if( mPhotoToShowIDs[i] != NULL &&
+            mPhotoToShowSprites[i] == NULL ) {
+            
+            // see if it's ready from cache
+            mPhotoToShowSprites[i] = 
+                getCachedPhoto( mPhotoToShowIDs[i],
+                                mPhotoToShowAreNegative[i] );
+
+            if( mPhotoToShowSprites[i] != NULL ) {
+                // got it for first time from cache
+                // start timing display now
+                mPhotoDisplayStartTime[i] = game_getCurrentTime();
+                }
+            }
+                                                     
+        if( mPhotoToShowSprites[i] != NULL ) {
+            // we have a photo to show
+
+            if( mLivePhotoSheetIndex != i ||
+                game_getCurrentTime() - mPhotoDisplayStartTime[i] > 10 ) {
+                
+                // shown long enough, or we've moved on, hide photo slip
+                mPhotoDisplayPosTargetOffset[i] = mPhotoDisplayHideOffset[i];
+            
+                if( mPhotoDisplayPosOffset[i].y == 
+                    mPhotoDisplayHideOffset[i].y ) {
+                    // done hiding
+
+                    freeSprite( mPhotoToShowSprites[i] );
+                    mPhotoToShowSprites[i] = NULL;
+                    
+                    delete [] mPhotoToShowIDs[i];
+                    mPhotoToShowIDs[i] = NULL;
+                    }
+                }
+            else {
+                // keep showing it
+                mPhotoDisplayPosTargetOffset[i].y = 
+                    mPhotoDisplayHideOffset[i].y - 400;
+                }
+            
+            
+            // update positions
+            doublePair delta = 
+                sub( mPhotoDisplayPosTargetOffset[i], 
+                     mPhotoDisplayPosOffset[i] );
+            
+            double d = 
+                distance( mPhotoDisplayPosTargetOffset[i], 
+                          mPhotoDisplayPosOffset[i] );
+            
+            
+            if( d <= 1 ) {
+                mPhotoDisplayPosOffset[i] = mPhotoDisplayPosTargetOffset[i];
+                }
+            else {
+                int speed = frameRateFactor * 4;
+                
+                if( d < 8 ) {
+                    speed = lrint( frameRateFactor * d / 2 );
+                    }
+                
+                if( speed > d ) {
+                    speed = floor( d );
+                    }
+            
+                if( speed < 1 ) {
+                    speed = 1;
+                }
+                
+                doublePair dir = normalize( delta );
+                
+                mPhotoDisplayPosOffset[i] = 
+                    add( mPhotoDisplayPosOffset[i],
+                         mult( dir, speed ) );
+                }
+            
+            }
+        }
+    
+        
     // move moving objects
     int numCells = mMapD * mMapD;
     
@@ -19641,6 +19823,53 @@ void LivingLifePage::step() {
                                             
                                             existing->currentSpeech =
                                                 newSpeech;
+                                            }
+                                        }
+                                    else {
+                                        // no *map metadata in our speech
+
+                                        // look for *photo metadata
+                                        starPos = 
+                                            strstr( existing->currentSpeech,
+                                                    " *photo " );
+                                    
+                                        if( starPos != NULL ) {
+                                            
+                                            if( existing->holdingID > 0 ) {
+                                                ObjectRecord *held = 
+                                                    getObject( 
+                                                        existing->holdingID );
+
+                                                char visibleNegative = false;
+                                                char visiblePositive = false;
+                                                
+                                                if( strstr( 
+                                                    held->description,
+                                                    "+negativePhotoFixed" ) ) {
+                                                    visibleNegative = true;
+                                                    }
+                                                else if( strstr( 
+                                                    held->description,
+                                                    "+positivePhotoFixed" ) ) {
+                                                    visiblePositive = true;
+                                                    }
+                                                
+                                                if( visibleNegative || 
+                                                    visiblePositive ) {
+
+                                                    // skip it to find photo_id
+                                                    char *photoID = 
+                                                        &( starPos[8] );
+                                                    
+                                                    displayPhoto( 
+                                                        photoID,
+                                                        visibleNegative );
+                                                    }
+                                                }
+                                            
+                                            // strip metadata off for 
+                                            // spoken words
+                                            starPos[0] = '\0';
                                             }
                                         }
                                     }

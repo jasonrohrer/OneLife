@@ -20341,7 +20341,7 @@ int main() {
                         ObjectRecord *oldO = getObject( oldObjectID );
                         
                         if( oldO->writable &&
-                            strstr( oldO->description, "+negativePhoto" ) ) {
+                            strstr( oldO->description, "+photo" ) ) {
                             
                             TransRecord *writingHappenTrans =
                                 getMetaTrans( 0, oldObjectID );
@@ -20349,15 +20349,29 @@ int main() {
                             if( writingHappenTrans != NULL &&
                                 writingHappenTrans->newTarget > 0 &&
                                 getObject( writingHappenTrans->newTarget )
-                                ->written ) {
+                                ->written &&
+                                strstr( 
+                                    getObject( writingHappenTrans->newTarget )
+                                    ->description,
+                                    "+negativePhotoUnfixed" ) ) {
                                 // bare hands transition going from
                                 // writable to written
                                 // use this to transform object
                                 // with photo data
                                 
+                                const char *name;
+                                
+                                if( nextPlayer->name == NULL ) {
+                                    name = "UNKNOWN";
+                                    }
+                                else {
+                                    name = nextPlayer->name;
+                                    }
+                                
+
                                 char *textToAdd = autoSprintf( 
-                                    "*photo %s",
-                                    m.photoIDString );
+                                    "A PHOTO BY %s *photo %s",
+                                    name, m.photoIDString );
                                 
                                 
                                 unsigned char metaData[ MAP_METADATA_LENGTH ];

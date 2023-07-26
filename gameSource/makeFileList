@@ -74,6 +74,7 @@ PollPage.cpp \
 fitnessScore.cpp \
 GeneticHistoryPage.cpp \
 ServicesPage.cpp \
+photoCache.cpp \
 
 
 
@@ -123,6 +124,7 @@ graphics/yumSlip3.tga \
 graphics/yumSlip4.tga \
 graphics/photoBorder.tga \
 graphics/hintArrow.tga \
+graphics/photoDisplay.tga \
 
 
 
