@@ -11,4 +11,13 @@ This is the correct color and texture for paper slips in the game.
 Use this same mask to select a region from a solid black area.  Blur this
 black shape to make a drop shadow
 
+
+For smaller elements, like YUM slips:
+
 Drop shadows are Gaussian Blur, radius 7, with layer opacity 66.7%
+
+
+
+For larger elements, like hint sheets:
+
+Drop shadows are Gaussian Blur, radius 13, with layer opacity 85%
