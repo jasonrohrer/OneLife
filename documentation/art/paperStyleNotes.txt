@@ -1,8 +1,44 @@
 Cut/tear out paper shape using plain white paper, scan in on black background.
 
+Note that unsharp mask in the scanning software is *crucial* for this process
+to work correctly, since it creates strong black and white halos along the
+edge of the paper.  This is great, because we are going to fill the center
+with solid white, and fill the background with solid black.  These fills
+will "mate" with the black and white halos nicely.
+
 Clean up black and white areas of scan to remove noise.  Paper texture
 is not important at this stage, though detail along the edge is.  We're
 essentially making a black and white mask.
+
+One way to speed up this process is to use the Select By Color tool with
+an appropriate threshold value to select pretty much all of the black pixels.
+Turn AA off on this tool.
+
+After selecting almost all of the black pixesl, shrink the selection by 1 pixel
+to make sure plenty of "fuzzy edge" on the torn paper is preservered.
+
+In a new layer, fill this selection with black.
+
+Repeat a similar process by using Select By Color with a threshold to select
+most of the white pixels.  Since there may be more noise in the white, and
+we don't want to use the same shrink trick afterward, you can also add a big
+centeral rectangle to the selection.
+
+Don't use the shrink-by-one-pixel trick here, because we want to fill with
+solid white pretty much right up to the edge of where the paper stops.
+
+In a new layer, fill the selection with white.  Then inspect it for any "holes"
+near the edge (where there's a dark spot near the edge that shouldn't be there).
+
+Since we're using this as a mask, any dark spots inland in the paper will be
+transparent holes in the paper.  But dark spots right at the edge are good,
+because they make the torn, "hairy" edge of the paper.
+
+Once both black and white layers are done, enable all three layers.  You should
+see what looks like a solid white paper ona solid black background, but with
+a very natural-looking torn edge.
+
+Copy visible, to get a mask image.
 
 Use this mask to select a paper-texture region from hintPaperBaseTexture.xcf
 
