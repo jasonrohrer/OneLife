@@ -12562,6 +12562,13 @@ void LivingLifePage::displayPhoto( const char *inPhotoID, char inNegative ) {
         return;
         }    
 
+    if( mPhotoToShowIDs[mLivePhotoSheetIndex] != NULL &&
+        strcmp( inPhotoID, mPhotoToShowIDs[mLivePhotoSheetIndex] ) == 0 ) {
+        // currently showing this photo
+        // don't re-show it
+        return;
+        }
+    
     
     // use next sheet
     mLivePhotoSheetIndex ++;
