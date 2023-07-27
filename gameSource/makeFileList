@@ -124,7 +124,10 @@ graphics/yumSlip3.tga \
 graphics/yumSlip4.tga \
 graphics/photoBorder.tga \
 graphics/hintArrow.tga \
-graphics/photoDisplay.tga \
+graphics/photoDisplay1.tga \
+graphics/photoDisplay2.tga \
+graphics/photoDisplay3.tga \
+graphics/photoDisplay4.tga \
 
 
 

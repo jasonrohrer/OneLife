@@ -14,6 +14,9 @@ One way to speed up this process is to use the Select By Color tool with
 an appropriate threshold value to select pretty much all of the black pixels.
 Turn AA off on this tool.
 
+For black construction paper, a threshold of 60 seems to work well to select
+most black pixels.
+
 After selecting almost all of the black pixesl, shrink the selection by 1 pixel
 to make sure plenty of "fuzzy edge" on the torn paper is preservered.
 
@@ -23,6 +26,8 @@ Repeat a similar process by using Select By Color with a threshold to select
 most of the white pixels.  Since there may be more noise in the white, and
 we don't want to use the same shrink trick afterward, you can also add a big
 centeral rectangle to the selection.
+
+Seems like a threshold of 25 works well for the white.
 
 Don't use the shrink-by-one-pixel trick here, because we want to fill with
 solid white pretty much right up to the edge of where the paper stops.
