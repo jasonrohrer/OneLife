@@ -9,6 +9,12 @@ Version 383    ???
 
 --Moved [@] button down to avoid overlap with genetic fitness.  Part of #885
 
+--You can now process photograph negatives into positives and view both
+  photograph positives and negatives inside the game (before, you had to go
+  out to the website to see photographs... now they can exist in the world to
+  be treasured and discovered by future generations).  Fixes #888
+
+
 
 
 Server Fixes
