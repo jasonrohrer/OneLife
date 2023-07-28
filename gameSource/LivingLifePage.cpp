@@ -2870,6 +2870,8 @@ LivingLifePage::LivingLifePage()
     
     for( int i=0; i<2; i++ ) {
         mCurrentHintTargetObject[i] = 0;
+        mCurrentHintTargetObjectFull[i] = false;
+
         mCurrentHintTargetPointerBounce[i] = 0;
         mCurrentHintTargetPointerFade[i] = 0;
         
@@ -7162,6 +7164,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
           mCurrentHintTargetObject[1] > 0 ) ) {
 
         int actualWatchTargets[2] = { 0, 0 };
+        char actualWatchTargetsFull[2] = { false, false };
         
         int heldID = getObjectParent( ourLiveObject->holdingID );            
 
@@ -7220,12 +7223,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 if( forceShow || heldID != mCurrentHintTargetObject[i] ) {
                     actualWatchTargets[i] = mCurrentHintTargetObject[i];
+                    actualWatchTargetsFull[i] = 
+                        mCurrentHintTargetObjectFull[i];
+                    
                     }
                 }
             }
         
         
         startWatchForClosestObjectDraw( actualWatchTargets,
+                                        actualWatchTargetsFull,
                                         mult( ourLiveObject->currentPos,
                                               CELL_D ) );
         }
@@ -11446,6 +11453,10 @@ int LivingLifePage::getNumHints( int inObjectID ) {
     mCurrentHintTargetObject[0] = 0;
     mCurrentHintTargetObject[1] = 0;
 
+    mCurrentHintTargetObjectFull[0] = false;
+    mCurrentHintTargetObjectFull[1] = false;
+    
+
 
     // else need to regenerated sorted list
 
@@ -12237,15 +12248,25 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
         mCurrentHintTargetObject[0] = 0;
         mCurrentHintTargetObject[1] = 0;
 
+        mCurrentHintTargetObjectFull[0] = false;
+        mCurrentHintTargetObjectFull[1] = false;
+
+        
         // never show visual pointer toward what we're holding
         // we handle this elsewhere too, so just obey inDoNotPoint here
         if( target > 0 && 
             target != inDoNotPointAtThis ) {
             mCurrentHintTargetObject[1] = target;
+
+            mCurrentHintTargetObjectFull[1] = 
+                ( found->targetMinUseFraction == 1.0 );
             }
         if( actor > 0 &&
                  actor != inDoNotPointAtThis ) {
             mCurrentHintTargetObject[0] = actor;
+
+            mCurrentHintTargetObjectFull[0] = 
+                ( found->actorMinUseFraction == 1.0 );
             }
         
         if( actor > 0 && target > 0 &&
@@ -12254,6 +12275,11 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
             // show pointer to ones that are on the ground
             mCurrentHintTargetObject[0] = actor;
             mCurrentHintTargetObject[1] = 0;
+
+            mCurrentHintTargetObjectFull[0] = 
+                ( found->actorMinUseFraction == 1.0 );
+            
+            mCurrentHintTargetObjectFull[1] = false;
             }
         else if( actor == 0 && target > 0 && 
                  target != inDoNotPointAtThis ) {
@@ -12261,6 +12287,11 @@ char *LivingLifePage::getHintMessage( int inObjectID, int inIndex,
             // show target even if it matches what we're giving hints about
             mCurrentHintTargetObject[0] = target;
             mCurrentHintTargetObject[1] = 0;
+            
+            mCurrentHintTargetObjectFull[0] = 
+                ( found->targetMinUseFraction == 1.0 );
+            
+            mCurrentHintTargetObjectFull[1] = false;
             }
         
         
@@ -13463,6 +13494,9 @@ void LivingLifePage::step() {
                 // hide pointer until they start tabbing again
                 mCurrentHintTargetObject[0] = 0;
                 mCurrentHintTargetObject[1] = 0;
+                
+                mCurrentHintTargetObjectFull[0] = false;
+                mCurrentHintTargetObjectFull[1] = false;
                 }
             
 
@@ -13489,9 +13523,13 @@ void LivingLifePage::step() {
                 
                 if( t->actor != heldID ) {
                     mCurrentHintTargetObject[0] = t->actor;
+                    mCurrentHintTargetObjectFull[0] =
+                        ( t->actorMinUseFraction == 1.0 ); 
                     }
                 if( t->target != heldID ) {
                     mCurrentHintTargetObject[1] = t->target;
+                    mCurrentHintTargetObjectFull[1] =
+                        ( t->targetMinUseFraction == 1.0 ); 
                     }
                 }
             }
@@ -22482,6 +22520,9 @@ void LivingLifePage::makeActive( char inFresh ) {
     mCurrentHintTargetObject[0] = 0;
     mCurrentHintTargetObject[1] = 0;
     
+    mCurrentHintTargetObjectFull[0] = false;
+    mCurrentHintTargetObjectFull[1] = false;
+
     
     offScreenSounds.deleteAll();
     

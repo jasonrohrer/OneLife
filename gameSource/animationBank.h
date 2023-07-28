@@ -473,7 +473,12 @@ void hidePersonShadows( char inHide );
 
 
 // used by game to find the closest drawn instance of a given object
-void startWatchForClosestObjectDraw( int inObjecID[2], doublePair inPos );
+// or pair of objects
+// If inObjectsFull is true for an object, only full (unused) usable objects
+// are counted.
+void startWatchForClosestObjectDraw( int inObjecID[2], 
+                                     char inObjectsFull[2],
+                                     doublePair inPos );
 
 // fix pos to a cell, to avoid variable pos for contained objects
 void fixWatchedObjectDrawPos( doublePair inPos );

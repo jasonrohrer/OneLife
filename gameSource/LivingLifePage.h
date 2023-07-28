@@ -782,6 +782,12 @@ class LivingLifePage : public GamePage, public ActionListener {
         int mNextHintIndex;
 
         int mCurrentHintTargetObject[2];
+        
+        // true if only FULL or FRESH objects should be pointed to
+        // (if minUseFraction is 1.0 for either actor or target of
+        //  current hint transition)
+        char mCurrentHintTargetObjectFull[2];
+        
 
         double mCurrentHintTargetPointerBounce[2];
         float mCurrentHintTargetPointerFade[2];

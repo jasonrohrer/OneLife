@@ -1753,6 +1753,7 @@ doublePair closestObjectDrawPos[2] = { { 0, 0 }, { 0, 0 } };
 double closestObjectDrawDistance[2] = { DBL_MAX, DBL_MAX };
 
 int closestObjectDrawID[2] = { -1, -1 };
+char closestObjectDrawFull[2] = { false, false };
 
 char useFixedWatchedDrawPos = false;
 doublePair fixedWatchedDrawPos;
@@ -1779,13 +1780,17 @@ void ignoreWatchedObjectDraw( char inIgnore ) {
 
 
 
-void startWatchForClosestObjectDraw( int inObjecID[2], doublePair inPos ) {
+void startWatchForClosestObjectDraw( int inObjecID[2], 
+                                     char inObjecFull[2], doublePair inPos ) {
     closestObjectDrawDistance[0] = DBL_MAX;
     closestObjectDrawDistance[1] = DBL_MAX;
     
     closestObjectDrawAnchorPos = inPos;
     closestObjectDrawID[0] = inObjecID[0];
     closestObjectDrawID[1] = inObjecID[1];
+    
+    closestObjectDrawFull[0] = inObjecFull[0];
+    closestObjectDrawFull[1] = inObjecFull[1];
     }
 
 
@@ -1812,6 +1817,18 @@ void checkDrawPos( int inObjectID, doublePair inPos ) {
         
         if( inObjectID != closestObjectDrawID[0] &&
             inObjectID != closestObjectDrawID[1] ) return;
+
+        if( inObjectID == closestObjectDrawID[0] &&
+            closestObjectDrawFull[0] ) {
+            // full required for match, but matches parent object
+            return;
+            }
+        
+        if( inObjectID == closestObjectDrawID[1] &&
+            closestObjectDrawFull[1] ) {
+            // full required for match, but matches parent object
+            return;
+            }
         }
 
     int index = 0;

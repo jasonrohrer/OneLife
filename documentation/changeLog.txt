@@ -17,6 +17,14 @@ Version 383    ???
 --Fixed bug that was causing abstract pattern objects to appear in crafting
   hints.
 
+--Fixed so that blue crafting hint arrow doesn't point to a partially-used
+  object if the current crafting hint only applies to a fully-unused version
+  of that object.  For example, you can only dump full bowls into bottles, but
+  before, the blue arrow would point to a partially-empty bowl if you were
+  looking at a hint about how to fill the bottle.
+
+
+
 
 
 Server Fixes
