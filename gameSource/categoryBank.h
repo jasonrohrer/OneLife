@@ -9,9 +9,16 @@ typedef struct CategoryRecord {
         int parentID;
         
         // true if this category is a pattern
-        // means parendID is a real gameplay object, and that we add
-        // extra transitions only if another pattern matches for
-        // other elements of a transition
+        // means parentID can be a real gameplay object, and that we add
+        // extra transitions only if another pattern with the same number
+        // of members  matches for other parts of a transition
+        // For example, if actor and target are both patterns with the same
+        // number of elements, extra transitions will be generated
+        // for all the element pairs in the two patterns.
+        //
+        // Not that parentID can also be an abstract object that isn't
+        // a real gameplay object.  The parent object should have a
+        // description that starts with @ in that case.
         char isPattern;
         
         // true if this category is a set of probability-weighted objects

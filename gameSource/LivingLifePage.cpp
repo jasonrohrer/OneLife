@@ -11229,6 +11229,48 @@ static char isCategory( int inID ) {
     }
 
 
+
+// A pure pattern is a pattern object that is itself never instantiated
+// in the world and only defintes pattern-based transitions.
+// Unfortunately, there's no hard marking for these in the game data.
+//
+// Patterns started out *different* from categories, in that a master object
+// (like pink rose seeds) would serve as a pattern for other similar objects
+// And where the transitions defined for the master objects could
+// be automatically applied for the sub-objects, once the pattern was defined.
+//
+// But later on, it became convenient and more clear to set up patterns that
+// were just patterns, and not master objects that also occurred in the world.
+// For example, there are 30+ different types of bottles, and there's are
+// abstract bottle pattern objects that occur in bottle-related transitions.
+// But it's not one kind of bottle that serves as the master object for the
+// pattern.
+//
+// Currently, abstract objects (be they categories or patterns) are
+// marked in their descriptions with the @ symbol at the start.
+// 
+// We will use that here to detect them
+static char isPurePattern( int inID ) {
+    if( inID <= 0 ) {
+        return false;
+        }
+    
+    CategoryRecord *c = getCategory( inID );
+    
+    if( c == NULL ) {
+        return false;
+        }
+    if( c->isPattern && 
+        c->objectIDSet.size() > 0 &&
+        getObject( inID )->description[0] == '@' ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
+
 static char isFood( int inID ) {
     if( inID <= 0 ) {
         return false;
@@ -11267,6 +11309,16 @@ static char getTransHintable( TransRecord *inTrans ) {
         if( isCategory( inTrans->target ) ) {
             return false;
             }
+
+        
+        if( isPurePattern( inTrans->actor ) ) {
+            return false;
+            }
+        if( isPurePattern( inTrans->target ) ) {
+            return false;
+            }
+        
+            
         
         if( inTrans->target == -1 && inTrans->newTarget == 0 &&
             ! isFood( inTrans->actor ) ) {

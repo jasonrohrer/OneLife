@@ -14,6 +14,8 @@ Version 383    ???
   out to the website to see photographs... now they can exist in the world to
   be treasured and discovered by future generations).  Fixes #888
 
+--Fixed bug that was causing abstract pattern objects to appear in crafting
+  hints.
 
 
 
