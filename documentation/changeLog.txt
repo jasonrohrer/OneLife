@@ -5,7 +5,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 383    ???
+Version 383    2023-July-28
 
 --Moved [@] button down to avoid overlap with genetic fitness.  Part of #885
 
