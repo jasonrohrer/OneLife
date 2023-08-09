@@ -5,6 +5,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--Saying GOODBYE FOREVER as part of your final utterance when dying of old age
+  blocks you from getting reborn to your descendants.  Fixes #892
+
+
+
+
 Version 383    2023-July-28
 
 --Moved [@] button down to avoid overlap with genetic fitness.  Part of #885

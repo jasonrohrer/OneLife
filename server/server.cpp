@@ -3790,7 +3790,19 @@ double computeAge( LiveObject *inPlayer ) {
             lineageID = inPlayer->parentID;
             }
         
-        trackOffspring( inPlayer->email, lineageID );
+        if( inPlayer->lastSay == NULL ||
+            strstr( inPlayer->lastSay, "GOODBYE FOREVER" ) == NULL ) {
+            
+            // don't let them get reborn to their descendants if
+            // they say GOODBYE FOREVER as part of their final words
+            // For example, if they say
+            //    GOODBYE FOREVER MY DARLINGS
+            // That counts.
+            // Likewise:
+            //    I LOVE YOU ALL.  GOODBYE FOREVER
+
+            trackOffspring( inPlayer->email, lineageID );
+            }
         }
     return age;
     }
