@@ -10,6 +10,8 @@ Server Fixes
 --Saying GOODBYE FOREVER as part of your final utterance when dying of old age
   blocks you from getting reborn to your descendants.  Fixes #892
 
+--Donkeytown players get a DING message explaining their situation.  Fixes #893
+
 
 
 

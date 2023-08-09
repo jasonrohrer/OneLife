@@ -25697,6 +25697,11 @@ int main() {
                 
                 if( nextPlayer->curseStatus.curseLevel > 0 ) {
                     playerIndicesToSendCursesAbout.push_back( i );
+                    
+                    // tell the donkeytown player about their status
+                    
+                    sendGlobalMessage( (char*)"WELCOME TO DONKEYTOWN.",
+                                       nextPlayer );
                     }
                 
                 if( usePersonalCurses ) {
