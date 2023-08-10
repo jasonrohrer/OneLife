@@ -19,6 +19,9 @@ Version 385    ???
   ground (and may cause you to pick up something else in its place, depending
   on the situation).  Fixes #896
 
+--Avoid downloading updates if there's a minorGems hg/git checkout present,
+  since that means we're compiling from source.  Part of jasonrohrer/OneLife#899
+
 
 
 
@@ -29,7 +32,7 @@ Server Fixes
 
 --Donkeytown players get a DING message explaining their situation.  Fixes #893
 
---Life logs now include race label for each birth.
+--Life logs now include race label for each birth.  Fixes #897
 
 
 
