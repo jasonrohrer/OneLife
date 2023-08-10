@@ -39,6 +39,14 @@ Server Fixes
   other living players were using that last name, which blocked the ability to
   curse the previous EVE during the 5-minute window after her death.
 
+--Fixed so that we track separate death position for each name that player had,
+  instead of just their most recent death position, when deciding whether a
+  curse is close enough during the 5-minute post-death cursing window.  Before,
+  their next death position would override their last, and if they were reborn
+  and still alive, the curse would land regardless of the curser's distance
+  from the death position associated with the name they cursed.  This fixes
+  several bugs in behavior during post-death cursing.  Fixes #902
+  
 
 
 

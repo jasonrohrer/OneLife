@@ -193,6 +193,7 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
 // killer email NULL if died of natural causes
 void logDeath( int inPlayerID, char *inPlayerEmail,
                char inEve,
+               char *inName,
                double inAge,
                int inSecPlayed,
                char inIsMale,
@@ -207,7 +208,7 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
         }
 
     GridPos deathPos = { inMapX, inMapY };
-    cursesLogDeath( inPlayerEmail, yearsLived, deathPos );
+    cursesLogDeath( inPlayerEmail, inName, yearsLived, deathPos );
 
     recordPlayerLifeStats( inPlayerEmail, inSecPlayed );
     

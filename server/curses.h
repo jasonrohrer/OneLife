@@ -8,7 +8,10 @@ void freeCurses();
 
 
 void cursesLogBirth( char *inEmail );
-void cursesLogDeath( char *inEmail, double inAge, GridPos inDeathPos );
+
+// inName can be NULL if player has no name
+void cursesLogDeath( char *inEmail, char *inName,
+                     double inAge, GridPos inDeathPos );
 
 
 

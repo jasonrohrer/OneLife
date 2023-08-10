@@ -86,6 +86,8 @@ typedef struct PlayerNameRecord {
         char *email;
         double timeCreated;
         int lineageEveID;
+        char alive;
+        GridPos deathPos;
     } PlayerNameRecord;
 
 
@@ -443,7 +445,8 @@ void cursesLogBirth( char *inEmail ) {
 
 
 
-void cursesLogDeath( char *inEmail, double inAge, GridPos inDeathPos ) {
+void cursesLogDeath( char *inEmail, char *inName,
+                     double inAge, GridPos inDeathPos ) {
     CurseRecord *r = findCurseRecord( inEmail );
     
     if( r->alive ) {
@@ -464,15 +467,22 @@ void cursesLogDeath( char *inEmail, double inAge, GridPos inDeathPos ) {
         r->deathTime = curTime;
         }
 
+
+    if( inName != NULL )
     for( int i=0; i<playerNames.size(); i++ ) {
         PlayerNameRecord *r = playerNames.getElement( i );
         
-        if( strcmp( r->email, inEmail ) == 0 ) {
+        if( strcmp( r->name, inName ) == 0 ) {
             // allow name record to exist for 5 minutes after
             // player dies
             r->timeCreated = 
                 Time::getCurrentTime() + 60 * 5 - playerNameTimeout;
             
+            r->alive = false;
+            
+            r->deathPos = inDeathPos;
+
+
             // push to front of list
             PlayerNameRecord newRec = *r;
             playerNames.deleteElement( i );
@@ -632,11 +642,29 @@ char cursePlayer( int inGiverID, int inGiverLineageEveID, char *inGiverEmail,
         // giver is receiver, block
         return false;
         }
+    
+    
+    PlayerNameRecord *nameRecord = NULL;
+    
+    for( int i=0; i<playerNames.size(); i++ ) {
+        PlayerNameRecord *r = playerNames.getElement( i );
+        
+        if( strcmp( r->name, inReceiverName ) == 0 ) {
+            nameRecord = r;
+            break;
+            }
+        }
 
+    
+    if( nameRecord == NULL ) {
+        // no matching record for this receiver's name
+        return false;
+        }
+    
 
-    if( ! receiverRecord->alive &&
-        distance( inGiverPos, receiverRecord->deathPos ) > inMaxDistance ) {
-        // too far away from this death pos
+    if( ! nameRecord->alive &&
+        distance( inGiverPos, nameRecord->deathPos ) > inMaxDistance ) {
+        // too far away from the position they died at when they had this name
         return false;
         }
 
@@ -711,7 +739,9 @@ void logPlayerNameForCurses( char *inPlayerEmail, char *inPlayerName,
     PlayerNameRecord r = { stringDuplicate( inPlayerName ),
                            stringDuplicate( inPlayerEmail ),
                            Time::getCurrentTime(),
-                           inLineageEveID };
+                           inLineageEveID,
+                           false,
+                           { 0, 0 } };
     
     playerNames.push_back( r );
     }
