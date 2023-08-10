@@ -34,6 +34,11 @@ Server Fixes
 
 --Life logs now include race label for each birth.  Fixes #897
 
+--Fixed an obscure bug that allowed an EVE last name to be reused within 5
+  minutes of the death of a previous EVE that used that same last name, if no
+  other living players were using that last name, which blocked the ability to
+  curse the previous EVE during the 5-minute window after her death.
+
 
 
 

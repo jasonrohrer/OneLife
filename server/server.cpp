@@ -13451,6 +13451,19 @@ char *getUniqueCursableName( char *inPlayerName, char *outSuffixAdded,
                             }
                         }
                     
+                    if( ! dup ) {
+                        // not used by any living family
+                        // however, was this a recent EVE last name
+                        // that is still cursable?
+                        
+                        char *testName = autoSprintf( "EVE %s", tempLastName );
+                        
+                        dup = isNameDuplicateForCurses( testName );
+                        
+                        delete [] testName;
+                        }
+                    
+
                     if( dup ) {
                         i = nextI;
                         }
