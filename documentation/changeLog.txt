@@ -22,6 +22,9 @@ Version 385    ???
 --Avoid downloading updates if there's a minorGems hg/git checkout present,
   since that means we're compiling from source.  Part of jasonrohrer/OneLife#899
 
+--Fixed display of numbers of years above 1000, which didn't zero-pad
+  correctly, and displayed 1,054 as 1,54.  Fixes #904
+
 
 
 
