@@ -1086,6 +1086,7 @@ UBABY x y i id#
 REMV x y i#
 SREMV x y c i#
 DROP x y c#
+SWAP x y#
 KILL x y#
 KILL x y id#
 JUMP x y#
@@ -1121,6 +1122,17 @@ DROP is for setting held object down on empty grid square OR
      c is -1 except when adding something to own clothing, then c
      indicates clothing with:
      0=hat, 1=tunic, 2=frontShoe, 3=backShoe, 4=bottom, 5=backpack
+
+SWAP is for swapping held object with what's on the ground.
+     DROP is sent when the user mod-clicks directly on an object on the ground,
+     and this can result in an implicit swap.
+	 However, iF the object on the ground is a container, DROP will cause the
+     held object to be swapped with what's in the container (or added to an
+     empty container).
+     SWAP allows the held object to be swapped with the container
+     itself.
+     SWAP is always used when the user ground-clicks a tile with an object
+     while holding something.
 
 USE  is for bare-hand or held-object action on target object in non-empty 
      grid square, including picking something up (if there's no bare-handed 

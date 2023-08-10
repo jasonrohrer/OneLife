@@ -5,6 +5,23 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 385    ???
+
+--Added new SWAP protocol message to differentiate between right-clicking on
+  the bare ground around an object and right-clicking the object itself.  This
+  allows right-clicking the ground around a container to swap the held item
+  with the container itself, instead of putting/swapping held object into the
+  container.  You now have to right-click directly on a container to put/swap
+  held item into container.  This also fixes weird behavior when right-clicking
+  the ground around a blocking container, like a wooden box (it would swap held
+  item with a nearby item or even put held item into a nearby non-blocking
+  container).  Now right-clicking the ground always puts held object on the
+  ground (and may cause you to pick up something else in its place, depending
+  on the situation).  Fixes #896
+
+
+
+
 Server Fixes
 
 --Saying GOODBYE FOREVER as part of your final utterance when dying of old age

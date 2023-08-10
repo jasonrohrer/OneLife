@@ -2823,6 +2823,7 @@ typedef enum messageType {
     REMV,
     SREMV,
     DROP,
+    SWAP,
     KILL,
     SAY,
     EMOT,
@@ -3169,6 +3170,16 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
                           nameBuffer, &( m.x ), &( m.y ), &( m.c ) );
         
         if( numRead != 4 ) {
+            m.type = UNKNOWN;
+            }
+        }
+    else if( strcmp( nameBuffer, "SWAP" ) == 0 ) {
+        m.type = SWAP;
+        numRead = sscanf( inMessage, 
+                          "%99s %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ) );
+        
+        if( numRead != 3 ) {
             m.type = UNKNOWN;
             }
         }
@@ -24879,7 +24890,8 @@ int main() {
                                 }
                             }
                         }                    
-                    else if( m.type == DROP ) {
+                    else if( m.type == DROP ||
+                             m.type == SWAP ) {
                         //Thread::staticSleep( 2000 );
                         
                         // send update even if action fails (to let them
@@ -25106,7 +25118,8 @@ int main() {
                                         
                                         char canGoIn = false;
                                         
-                                        if( canDrop &&
+                                        if( m.type != SWAP && 
+                                            canDrop &&
                                             droppedObj->containable &&
                                             targetSlotSize >=
                                             droppedObj->containSize &&
@@ -25115,7 +25128,10 @@ int main() {
                                                 droppedObj->id ) ) {
                                             canGoIn = true;
                                             }
-                                        
+                                        // if SWAP specified, never
+                                        // try to put item in.
+
+
                                         char forceUse = false;
                                         
                                         if( canDrop && 

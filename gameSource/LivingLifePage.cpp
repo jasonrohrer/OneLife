@@ -24920,8 +24920,22 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             else if( modClick && destID == 0 ) {
                 
                 if( ourLiveObject->holdingID != 0 ) {
-                    action = "DROP";
-                    nextActionDropping = true;
+
+                    if( destObjInClickedTile != 0 ) {
+                        action = "SWAP";
+                        nextActionDropping = false;
+                        }
+                    else {
+                        // just plain drop
+                        // Note that DROP and SWAP do the same thing server-side
+                        // when the target tile contains a non-container
+                        // object, so we could use SWAP in all cases.
+                        // However, keep DROP for case of actually clicking
+                        // an empty tile, just for clarity.
+                        action = "DROP";
+                        nextActionDropping = true;
+                        }
+                        
                     }
                 else {
                     action = "USE";
