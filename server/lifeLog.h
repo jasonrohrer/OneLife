@@ -13,6 +13,7 @@ void freeLifeLog();
 void logBirth( int inPlayerID, char *inPlayerEmail,
                int inParentID, char *inParentEmail,
                char inIsMale,
+               int inRace,
                int inMapX, int inMapY,
                int inTotalPopulation,
                int inParentChainLength );

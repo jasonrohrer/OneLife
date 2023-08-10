@@ -29,6 +29,8 @@ Server Fixes
 
 --Donkeytown players get a DING message explaining their situation.  Fixes #893
 
+--Life logs now include race label for each birth.
+
 
 
 
