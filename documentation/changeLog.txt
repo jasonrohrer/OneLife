@@ -5,7 +5,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 385    ???
+Version 385    2023-July-11
 
 --Added new SWAP protocol message to differentiate between right-clicking on
   the bare ground around an object and right-clicking the object itself.  This
