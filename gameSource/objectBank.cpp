@@ -944,6 +944,31 @@ static void setupGiveClue( ObjectRecord *inR ) {
         inR->giveClue = true;
         }
     }
+
+
+static void setupNearPop( ObjectRecord *inR ) {
+    inR->nearPop = false;    
+    inR->nearPopFraction = 0;
+    inR->nearPopDistance = 0;
+    
+
+    char *pos = strstr( inR->description, "+nearPop" );
+
+    if( pos != NULL ) {
+        
+        int readPercent;
+        
+        int numRead = sscanf( pos, "+nearPop_%d_%d", &( readPercent ),
+                              &( inR->nearPopDistance ) );
+
+        if( numRead == 2 && inR->nearPopDistance > 0 &&
+            readPercent >= 0 && readPercent <= 100 ) {
+            
+            inR->nearPop = true;
+            inR->nearPopFraction = readPercent / 100.0f;
+            }
+        }
+    }
     
 
 
@@ -1167,6 +1192,7 @@ float initObjectBankStep() {
                 setupHideRider( r );
                 setupNeverDrop( r );
                 setupGiveClue( r );
+                setupNearPop( r );
                 
                 
                 r->mapChance = 0;      
@@ -4146,6 +4172,7 @@ int addObject( const char *inDescription,
     setupHideRider( r );
     setupNeverDrop( r );
     setupGiveClue( r );
+    setupNearPop( r );
     
     
     r->toolSetIndex = -1;

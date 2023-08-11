@@ -491,6 +491,14 @@ typedef struct ObjectRecord {
 
         // gives clue whenever player is newly holding this object
         char giveClue;
+        
+
+        // if enabled, object can only be created if nearPopFraction
+        // of active players on server are within nearPopDistance of creation
+        // spot
+        char nearPop;
+        float nearPopFraction;
+        int nearPopDistance;
 
     } ObjectRecord;
 

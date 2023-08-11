@@ -15959,6 +15959,67 @@ char isHungryWorkBlocked( LiveObject *inPlayer,
 
 
 
+
+void sendNearPopSpeech( LiveObject *inPlayer ) {
+    // tell player about it with private speech
+    char *message = autoSprintf( 
+        "PS\n"
+        "%d/0 +TOO FAR FROM EVERYONE+\n#",
+        inPlayer->id );
+    
+    sendMessageToPlayer( 
+        inPlayer, 
+        message, 
+        strlen( message ) );
+    delete [] message;
+    }
+
+
+
+
+char isNearPopBlocked( LiveObject *inPlayer, 
+                       int inNewTarget ) {
+
+    ObjectRecord *o = getObject( inNewTarget );
+    
+    if( ! o->nearPop ) {
+        return false;
+        }
+    
+    GridPos pos = getPlayerPos( inPlayer );
+    int countNear = 0;
+    int totalCount = 0;
+    
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = players.getElement( j );
+        
+        if( ! otherPlayer->error &&
+            ! otherPlayer->isTutorial &&
+            otherPlayer->curseStatus.curseLevel == 0 ) {
+            
+            totalCount++;
+                        
+            double d = distance( pos, getPlayerPos( otherPlayer ) );
+
+            if( d <= o->nearPopDistance ) {
+                countNear++;
+                }
+            }
+        }
+
+    
+    float fractionNear = (float)countNear / (float)totalCount;
+    
+    if( fractionNear < o->nearPopFraction ) {
+        return true;
+        }
+    
+    // else enough of the population are close, not blocked
+    return false;
+    }
+
+
+
 // returns NULL if not found
 static LiveObject *getPlayerByName( char *inName, 
                                     LiveObject *inPlayerSayingName ) {
@@ -22898,9 +22959,22 @@ int main() {
                                             &hCost );
                                         }
                                     
+                                    // and if blocked by nearPop constraint
+                                    char nearPopBlocked = false;
+                                    
+                                    if( ! insertion &&
+                                        r->newTarget > 0 ) {
+                                        nearPopBlocked =
+                                            isNearPopBlocked( nextPlayer,
+                                                              r->newTarget );
+                                        }
+                                    
+                                    
+                                    
 
                                     if( ! insertion &&
                                         ! hungBlocked &&
+                                        ! nearPopBlocked &&
                                         ! transformation &&
                                         ! nonTransformTarget && 
                                         ! canPlayerUseOrLearnTool( 
@@ -23151,6 +23225,13 @@ int main() {
                                         r = NULL;
                                         
                                         sendHungryWorkSpeech( nextPlayer );
+                                        }
+                                    else if( isNearPopBlocked( 
+                                            nextPlayer,
+                                            r->newTarget ) ) {
+                                        r = NULL;
+                                        
+                                        sendNearPopSpeech( nextPlayer );
                                         }
                                     }
 
