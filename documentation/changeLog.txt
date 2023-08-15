@@ -8,6 +8,19 @@ Server Fixes
 
 --Fixed bug that was preventing cursing living players by name.  Fixes #909
 
+--Fixed to send an intermediary PU message whenver a MOVE chain takes the
+  player more than 16 tiles away from where their last PU message occured.
+  This prevents out-of-date player status (like what they are holding/riding/
+  wearing) from being presented to other players when they move back into range
+  using a long move chain after being out of range, when their status changed
+  while they were out of range.  Before, no PU message would be sent until the
+  very end of a long move chain.  No more players zipping onto the screen and
+  suddenly having their delivery truck appear around them.  No more players
+  squeaking into view with a hand cart that they are no longer actually
+  holding, and then suddenly seeing the hand cart disappear when they stop
+  moving.  This still might be an issue on modded clients with a zoomed out
+  view, because the threshold is only 16 tiles, but it seems to work fine in
+  all cases on the official client.  Fixes #906
 
 
 

@@ -971,6 +971,25 @@ typedef struct LiveObject {
 
         char newMove;
         
+        // Absolute position used when generating last PU sent out about this
+        // player.
+        // If they are making a very long chained move, and their status
+        // isn't changing, they might not generate a PU message for a very
+        // long time.  This becomes a problem when them move out/in range
+        // of another player.  If their status (held item, etc) has changed
+        // while they are out of range, the other player won't see that
+        // status change when they come back in range (because the PU
+        // happened when they were out of range) and the long chained move
+        // isn't generating any PU messages now that they are back in range.
+        // Since modded clients might make very long MOVEs for each part
+        // of a MOVE chain (since they are zoomed out), we can't just count
+        // MOVE messages sent since the las PU message went out.
+        // We use this position to determine how far they've moved away
+        // from their last PU position, and send an intermediary PU if
+        // they get too far away
+        GridPos lastPlayerUpdateAbsolutePos;
+        
+
         // heat map that player carries around with them
         // every time they stop moving, it is updated to compute
         // their local temp
@@ -7608,6 +7627,9 @@ static UpdateRecord getUpdateRecord(
                                  inPlayer->posForced );
         r.absolutePosX = x;
         r.absolutePosY = y;
+
+        inPlayer->lastPlayerUpdateAbsolutePos.x = x;
+        inPlayer->lastPlayerUpdateAbsolutePos.y = y;
         }
     
     SimpleVector<char> clothingListBuffer;
@@ -10366,6 +10388,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.deathLogged = false;
     newObject.newMove = false;
     
+    newObject.lastPlayerUpdateAbsolutePos.x = 0;
+    newObject.lastPlayerUpdateAbsolutePos.y = 0;
+    
+
     newObject.posForced = false;
     newObject.waitingForForceResponse = false;
     
@@ -20975,6 +21001,19 @@ int main() {
                         nextPlayer->xd = m.extraPos[ m.numExtraPos - 1].x;
                         nextPlayer->yd = m.extraPos[ m.numExtraPos - 1].y;
                         
+
+                        if( distance( nextPlayer->lastPlayerUpdateAbsolutePos,
+                                      m.extraPos[ m.numExtraPos - 1] ) 
+                            > 
+                            getMaxChunkDimension() / 2 ) {
+                            // they have moved a long way since their
+                            // last PU was sent
+                            // Send one now, mid-move
+                            
+                            playerIndicesToSendUpdatesAbout.push_back( i );
+                            }
+                        
+
                         
                         if( nextPlayer->xd == nextPlayer->xs &&
                             nextPlayer->yd == nextPlayer->ys ) {
