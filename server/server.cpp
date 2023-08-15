@@ -6494,7 +6494,16 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 
                 if( distance( outPos, inPos ) <= maxDist ) {
                 
-                    newLocationSpeech.push_back( stringDuplicate( inToSay ) );
+                    char *newSpeech = stringDuplicate( inToSay );
+                    
+                    // trim off any metadata so it doesn't go through
+                    char *starLoc = strstr( newSpeech, " *" );
+                    
+                    if( starLoc != NULL ) {
+                        starLoc[0] = '\0';
+                        }
+
+                    newLocationSpeech.push_back( newSpeech );
                 
                     ChangePosition outChangePos = { outPos.x, outPos.y, false };
                     newLocationSpeechPos.push_back( outChangePos );

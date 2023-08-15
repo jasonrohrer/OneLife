@@ -22,6 +22,9 @@ Server Fixes
   view, because the threshold is only 16 tiles, but it seems to work fine in
   all cases on the official client.  Fixes #906
 
+--Fixed bug that sent metadata over radios.  Fixes #907
+
+
 
 
 Version 385    2023-July-11
