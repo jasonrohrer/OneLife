@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--Fixed bug that was preventing cursing living players by name.  Fixes #909
+
+
+
 
 Version 385    2023-July-11
 
