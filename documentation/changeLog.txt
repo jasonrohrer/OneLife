@@ -4,6 +4,15 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 387    2023-August-??
+
+--Added support for +containOffsetX/Y and +containOffsetBottomX/Y to micro-
+  adjust the automatic container position of an object.  Needed for how empty
+  glass bottles position on the table.  Part of jasonrohrer/OneLifeData7#1066
+
+
+
+
 Server Fixes
 
 --Fixed bug that was preventing cursing living players by name.  Fixes #909
