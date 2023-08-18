@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 387    2023-August-??
+Version 387    2023-August-18
 
 --Added support for +containOffsetX/Y and +containOffsetBottomX/Y to micro-
   adjust the automatic container position of an object.  Needed for how empty
