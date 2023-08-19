@@ -50,7 +50,13 @@ cp OneLife/documentation/Readme.txt .
 cp OneLife/no_copyright.txt .
 cp OneLife/gameSource/graphics/* ./graphics
 cp OneLife/gameSource/otherSounds/* ./otherSounds
-cp -u OneLife/gameSource/settings/* ./settings
+
+# mac doesn't have "cp -u"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    rsync -u OneLife/gameSource/settings/* ./settings
+else
+    cp -u OneLife/gameSource/settings/* ./settings
+fi
 cp OneLife/gameSource/languages/* ./languages
 cp OneLife/gameSource/language.txt ./
 cp OneLife/gameSource/us_english_60.txt ./
