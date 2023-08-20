@@ -48,7 +48,7 @@ echo "Copying items from build into directories"
 cp OneLife/gameSource/OneLife ./OneLifeApp
 cp OneLife/documentation/Readme.txt .
 cp OneLife/no_copyright.txt .
-cp OneLife/gameSource/graphics/* ./graphics
+cp -R OneLife/gameSource/graphics/* ./graphics
 cp OneLife/gameSource/otherSounds/* ./otherSounds
 
 # mac doesn't have "cp -u"
