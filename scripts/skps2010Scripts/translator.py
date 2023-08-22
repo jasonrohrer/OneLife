@@ -54,6 +54,8 @@ def main():
         for key in menuItems:
             f.write(f'{key} "{menuItems[key]}"\n')
 
+    print("翻譯成功！")
+
 
 if __name__ == '__main__':
     main()
