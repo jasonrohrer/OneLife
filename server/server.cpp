@@ -11396,6 +11396,21 @@ static char containmentPermitted( int inContainerID, int inContainedID ) {
     
     while( contLoc != NULL ) {
         
+        if( strstr( contLoc, "+containOffset" ) == contLoc ) {
+            // this is acutally a containment offset, not a +contFoodDish or 
+            // similiar.
+            
+            // skip it for consideration here
+            char *skipLoc = &( contLoc[5] );
+            
+            // search again after the skip
+            contLoc = strstr( skipLoc, "+cont" );
+
+            // re-enter while loop with the new location (which might be NULL)
+            continue;
+            }
+        
+
     
         char *limitNameLoc = &( contLoc[5] );
     

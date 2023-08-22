@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes
+
+--New +containOffset tags were being treated like +contFoodDish tags and
+  blocking containment.  Fixes #913
+
+
 Version 387    2023-August-18
 
 --Added support for +containOffsetX/Y and +containOffsetBottomX/Y to micro-
