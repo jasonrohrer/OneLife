@@ -16,20 +16,20 @@ This will download the newest version:
 
 這會下載最新版本：
 1. 下載 [skps2010Build.sh](https://github.com/skps2010/OneLife/blob/master/scripts/skps2010Scripts/skps2010Build.sh) 並放到空資料夾，然後執行。這會編譯遊戲。
-2. 執行 `python3 translator.py` 來獲得幫助. 執行 `python3 translator.py 1` 來將整個遊戲翻成正體中文.
+2. 執行 `python3 translator.py` 來獲得幫助。執行 `python3 translator.py 1` 來將整個遊戲翻成正體中文。
 3. 執行 `OneLifeApp` 來玩。
 
 ### Windows
 You need to download it everytime when the game updates.
 1. Go to [release page](https://github.com/skps2010/OneLife/releases) and download `OneLife_v???.zip` (??? is verison number).
 2. Unzip it and go into the folder.
-3. Run `翻成正體中文.bat` or `翻成減體中文.bat` to translate the whole game.
+3. Run `翻成正體中文.bat` or `翻成簡體中文.bat` to translate the whole game.
 4. Run `OneLife.exe` to play.
 
 每次遊戲更新時，都要重新下載。
 1. 去 [發布頁面](https://github.com/skps2010/OneLife/releases) 並下載 `OneLife_v???.zip` (??? 是版本號)。
 2. 解壓縮並進入資料夾。
-3. 執行 `翻成正體中文.bat` 或 `翻成減體中文.bat` 來翻譯整個遊戲。
+3. 執行 `翻成正體中文.bat` 或 `翻成簡體中文.bat` 來翻譯整個遊戲。
 4. 執行 `OneLife.exe` 來玩。
 
 ## Translation 翻譯
