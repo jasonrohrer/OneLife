@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ $# -lt 1 ] ; then
+   echo "Usage: $0 release_name"
+   exit 1
+fi
+
 # SDL lib for linux-windows cross compile
 if [ ! -e SDL-1.2.15 ]
 then
@@ -8,10 +13,10 @@ then
     rm SDL-devel-1.2.15-mingw32.tar.gz
 fi
 
-# if [ ! -e SDL ]
-# then
-#     ln -s SDL-1.2.15/include/SDL .
-# fi
+if [ ! -e SDL ]
+then
+    ln -s SDL-1.2.15/include/SDL .
+fi
 
 if [ ! -e Winsock.h ]
 then
