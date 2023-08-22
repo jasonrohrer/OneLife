@@ -38,11 +38,10 @@ rm */cache.fcz
 
 latestVersion=$latestTaggedVersionB
 
-
-if [ "$latestTaggedVersionA" -gt "$latestTaggedVersionB" ]
-then
-	latestVersion=$latestTaggedVersionA
-fi
+# if [ "$latestTaggedVersionA" -gt "$latestTaggedVersionB" ]
+# then
+# 	latestVersion=$latestTaggedVersionA
+# fi
 
 
 
@@ -108,7 +107,7 @@ fi
 cp OneLife/build/source/runToBuild .
 
 
-if [ "$OSTYPE" -eq "darwin"* ]; then
+if [ "$(uname)" = "Darwin" ]; then
     ./runToBuild 2
 else
     ./runToBuild 1
