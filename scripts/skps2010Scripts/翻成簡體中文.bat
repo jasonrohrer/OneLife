@@ -1,3 +1,3 @@
 cd %cd%
 python3 translator.py 2
-msg "%username%" 已翻譯成簡體中文
+msg * 已翻譯成簡體中文
