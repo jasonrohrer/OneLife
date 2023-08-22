@@ -53,7 +53,7 @@ else
 fi
 cp OneLife/documentation/Readme.txt .
 cp OneLife/no_copyright.txt .
-cp -R OneLife/gameSource/graphics/* ./graphics
+cp OneLife/gameSource/graphics/* ./graphics
 cp OneLife/gameSource/otherSounds/* ./otherSounds
 
 # mac doesn't have "cp -u"
