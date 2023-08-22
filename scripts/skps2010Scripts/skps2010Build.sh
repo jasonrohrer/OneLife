@@ -108,7 +108,6 @@ fi
 cp OneLife/build/source/runToBuild .
 
 
-./runToBuild 2
 if [[ "$OSTYPE" == "darwin"* ]]; then
     ./runToBuild 2
 else

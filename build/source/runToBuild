@@ -45,7 +45,12 @@ mkdir -p groundTileCache
 
 
 echo "Copying items from build into directories"
-cp OneLife/gameSource/OneLife ./OneLifeApp
+if [ "$1" = "5" ] # windows
+then
+    cp OneLife/gameSource/OneLife.exe ./OneLifeApp.exe
+else
+    cp OneLife/gameSource/OneLife ./OneLifeApp
+fi
 cp OneLife/documentation/Readme.txt .
 cp OneLife/no_copyright.txt .
 cp -R OneLife/gameSource/graphics/* ./graphics
