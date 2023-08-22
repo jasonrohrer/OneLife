@@ -28,7 +28,7 @@ def main():
             with open(f'objects/{data["key"][i]}') as f:
                 content = f.readlines()
             content[1] = data['value'][i] + '\n'
-            with open(f'objects/{data["key"][i]}', 'w') as f:
+            with open(f'objects/{data["key"][i]}', 'w', encoding='utf-8') as f:
                 f.writelines(content)
 
     menuItems = {}
@@ -50,7 +50,7 @@ def main():
         if data['value'][i] != '':
             menuItems[data['key'][i]] = data['value'][i]
 
-    with open('languages/English.txt', 'w') as f:
+    with open('languages/English.txt', 'w', encoding='utf-8') as f:
         for key in menuItems:
             f.write(f'{key} "{menuItems[key]}"\n')
 
