@@ -42,3 +42,7 @@ mv "windows/OneLife_v$1" "../../"
 cd ../../
 
 echo "done building OneLife_v$1"
+
+zip -r -q OneLife_v$1.zip OneLife_v$1
+
+echo "done zipping OneLife_v$1"
