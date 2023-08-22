@@ -9,13 +9,13 @@ It currently support Traditional Chinese and Simplified Chinese.
 
 ## How to use 如何使用
 Only works on Mac or Linux computer or now.
-1. Download [BunLifeBuild.sh](https://raw.githubusercontent.com/skps2010/BunLife/master/scripts/BunLifeBuild.sh) and run it.
-2. Download [translator.py](https://raw.githubusercontent.com/skps2010/BunLife/master/scripts/translator.py) and put it into the folder that has BunLifeBuild.sh
+1. Download [skps2010Build.sh](https://raw.githubusercontent.com/skps2010/BunLife/master/scripts/skps2010Scripts/skps2010Build.sh) and run it.
+2. Download [translator.py](https://raw.githubusercontent.com/skps2010/BunLife/master/scripts/skps2010Scripts/translator.py) and put it into the folder that has skps2010Build.sh
 3. Run `python3 translator.py` for help. Run `python3 translator.py 1` to translate the whole game into Traditional Chinese.
 
 目前只支援 Mac 或 Linux 電腦
-1. 下載 [BunLifeBuild.sh](https://raw.githubusercontent.com/skps2010/BunLife/master/scripts/BunLifeBuild.sh) 並執行。
-2. 下載 [translator.py](https://raw.githubusercontent.com/skps2010/BunLife/master/scripts/translator.py) 並放到有 BunLifeBuild.sh 的資料夾。
+1. 下載 [skps2010Build.sh](https://raw.githubusercontent.com/skps2010/BunLife/master/scripts/skps2010Scripts/skps2010Build.sh) 並執行。
+2. 下載 [translator.py](https://raw.githubusercontent.com/skps2010/BunLife/master/scripts/skps2010Scripts/translator.py) 並放到有 skps2010Build.sh 的資料夾。
 3. 執行 `python3 translator.py` 來獲得幫助. 執行 `python3 translator.py 1` 來將整個遊戲翻成正體中文.
 
 ## Translation 翻譯
