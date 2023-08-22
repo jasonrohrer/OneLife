@@ -1,4 +1,4 @@
-# BunLife 文字生命
+# OneLife
 The purpose of this mod is to translate One Hour One Life into different languages.  
 It supports unicode and has a translation tool.  
 It currently support Traditional Chinese and Simplified Chinese.  
@@ -26,8 +26,3 @@ You can join the [Dicord](https://discord.gg/SbRHcrPf) to help, we need better t
 所有翻譯來自此 [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818)。  
 我們會嘗試每禮拜更新。  
 你可加入 [Dicord](https://discord.gg/SbRHcrPf) 來幫忙，我們需要更好的翻譯和更多的語言。  
-
-## Other 其他
-BunLife's "Bun" comes from "文 Bûn" in Hokkien.
-
-BunLife 的「Bun」來自於台語的「文 Bûn」。
