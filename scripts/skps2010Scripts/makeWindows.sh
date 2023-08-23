@@ -47,4 +47,4 @@ echo "done building OneLife_v$1"
 
 zip -r -q OneLife_v$1.zip OneLife_v$1
 
-echo "done zipping OneLife_v$1"
+echo "done zipping OneLife_Windows_v$1"
