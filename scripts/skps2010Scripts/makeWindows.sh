@@ -36,6 +36,8 @@ cd ../build
 cp ../scripts/skps2010Scripts/translator.py "windows/OneLife_v$1"
 cp ../scripts/skps2010Scripts/翻成正體中文.bat "windows/OneLife_v$1"
 cp ../scripts/skps2010Scripts/翻成簡體中文.bat "windows/OneLife_v$1"
+cp ../scripts/skps2010Scripts/翻成正體中文.exe "windows/OneLife_v$1"
+cp ../scripts/skps2010Scripts/翻成簡體中文.exe "windows/OneLife_v$1"
 
 mv "windows/OneLife_v$1" "../../"
 

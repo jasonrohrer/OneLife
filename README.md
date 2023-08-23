@@ -23,20 +23,20 @@ This will download the newest version:
 You need to download it everytime when the game updates.
 1. Go to [release page](https://github.com/skps2010/OneLife/releases) and download `OneLife_v???.zip` (??? is verison number).
 2. Unzip it and go into the folder.
-3. Run `翻成正體中文.bat` or `翻成簡體中文.bat` to translate the whole game.
+3. Run `翻成正體中文.bat` or `翻成簡體中文.bat` (these two need Python3) or `翻成正體中文.exe` or `翻成簡體中文.exe` to translate the whole game.
 4. Run `OneLife.exe` to play.
 
 每次遊戲更新時，都要重新下載。
 1. 去 [發布頁面](https://github.com/skps2010/OneLife/releases) 並下載 `OneLife_v???.zip` (??? 是版本號)。
 2. 解壓縮並進入資料夾。
-3. 執行 `翻成正體中文.bat` 或 `翻成簡體中文.bat` 來翻譯整個遊戲。
+3. 執行 `翻成正體中文.bat` 或 `翻成簡體中文.bat`（這兩個需要 Python3）或 `翻成正體中文.exe` 或 `翻成簡體中文.exe` 來翻譯整個遊戲。
 4. 執行 `OneLife.exe` 來玩。
 
 ## Translation 翻譯
 All translation comes from this [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818).  
 We'll try to update it every week.  
-You can join the [Dicord](https://discord.gg/SbRHcrPf) to help, we need better translation and more languages.  
+You can join the [Discord](https://discord.gg/SbRHcrPf) to help, we need better translation and more languages.  
 
 所有翻譯來自此 [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818)。  
 我們會嘗試每禮拜更新。  
-你可加入 [Dicord](https://discord.gg/SbRHcrPf) 來幫忙，我們需要更好的翻譯和更多的語言。  
+你可加入 [Discord](https://discord.gg/SbRHcrPf) 來幫忙，我們需要更好的翻譯和更多的語言。  
