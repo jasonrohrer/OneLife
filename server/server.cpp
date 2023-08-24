@@ -8597,7 +8597,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                            // set to -2 to force Eve
                            int inForceParentID = -1,
                            int inForceDisplayID = -1,
-                           GridPos *inForcePlayerPos = NULL ) {
+                           GridPos *inForcePlayerPos = NULL,
+                           char inSkipBirthLogging = false ) {
     
 
     usePersonalCurses = SettingsManager::getIntSetting( "usePersonalCurses",
@@ -10886,7 +10887,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         }
     
 
-    if( ! newObject.isTutorial )        
+    if( ! newObject.isTutorial && ! inSkipBirthLogging )        
     logBirth( newObject.id,
               newObject.email,
               newObject.parentID,
@@ -11143,13 +11144,19 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                    nextConnection->email,
                                    // ignore tutorial number of all but
                                    // first player
+                                   // we don't want to spawn a new
+                                   // tutorial area for this other twin
                                    0,
                                    anyTwinCurseLevel,
                                    nextConnection->lifeStats,
                                    nextConnection->fitnessScore,
                                    parent,
                                    displayID,
-                                   forcedEvePos );
+                                   forcedEvePos,
+                                   // skip birth logging for other
+                                   // twins if lead twin is taking
+                                   // us to the tutorial
+                                   isTutorial );
             
             // just added is always last object in list
             

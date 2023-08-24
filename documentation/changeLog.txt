@@ -9,6 +9,11 @@ Server Fixes
 --New +containOffset tags were being treated like +contFoodDish tags and
   blocking containment.  Fixes #913
 
+--Twins that follow the lead twin to the tutorial area no longer have their
+  births logged (their deaths were already not being logged).  Fixes #914
+
+
+
 
 Version 387    2023-August-18
 
