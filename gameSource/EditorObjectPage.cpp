@@ -503,6 +503,11 @@ EditorObjectPage::EditorObjectPage()
     mCurrentObject.clothingOffset.x = 0;
     mCurrentObject.clothingOffset.y = 0;
     
+    mCurrentObject.containOffsetX = 0;
+    mCurrentObject.containOffsetY = 0;
+    mCurrentObject.containOffsetBottomX = 0;
+    mCurrentObject.containOffsetBottomY = 0;
+
     mCurrentObject.numSlots = 0;
     mCurrentObject.slotPos = new doublePair[ 0 ];
     mCurrentObject.slotVert = new char[ 0 ];
@@ -1738,6 +1743,11 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         mCurrentObject.heldOffset.x = 0;
         mCurrentObject.heldOffset.y = 0;
         
+        mCurrentObject.containOffsetX = 0;
+        mCurrentObject.containOffsetY = 0;
+        mCurrentObject.containOffsetBottomX = 0;
+        mCurrentObject.containOffsetBottomY = 0;
+
         for( int c=0; c<NUM_CLOTHING_CHECKBOXES; c++ ) {
             mClothingCheckboxes[c]->setToggled( false );
             }
@@ -2781,6 +2791,16 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.clothing = pickedRecord->clothing;
             mCurrentObject.clothingOffset = pickedRecord->clothingOffset;
 
+
+            mCurrentObject.containOffsetX = pickedRecord->containOffsetX;
+            mCurrentObject.containOffsetY = pickedRecord->containOffsetY;
+            
+            mCurrentObject.containOffsetBottomX = 
+                pickedRecord->containOffsetBottomX;
+            mCurrentObject.containOffsetBottomX = 
+                pickedRecord->containOffsetBottomY;
+
+
             mCurrentObject.numSlots = pickedRecord->numSlots;
 
             mCurrentObject.slotPos = 
@@ -3215,6 +3235,12 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
 
             mDemoSlotsButton.setVisible( false );
             mCurrentObject.numSlots = 0;
+
+            mCurrentObject.containOffsetX = 0;
+            mCurrentObject.containOffsetY = 0;
+            mCurrentObject.containOffsetBottomX = 0;
+            mCurrentObject.containOffsetBottomY = 0;
+                
 
             mDemoClothesButton.setVisible( false );
             mCurrentObject.clothing = 'n';

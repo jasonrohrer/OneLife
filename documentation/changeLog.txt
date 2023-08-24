@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Editor Fixes:
+
+--Fixed bug in held-position view in EditObjectPage due to failure to
+  initialize +containOffsets in local copy of object.
+
+
 Server Fixes
 
 --New +containOffset tags were being treated like +contFoodDish tags and
