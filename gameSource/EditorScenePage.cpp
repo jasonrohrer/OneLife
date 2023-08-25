@@ -893,11 +893,11 @@ void EditorScenePage::checkVisible() {
             if( maxVar > 0 ) {
                 mCellSpriteVarSlider.setVisible( true );
                 mCellSpriteVarSlider.setHighValue( maxVar );
-                mCellSpriteVanishSlider.setValue( c->varNumber );
+                mCellSpriteVarSlider.setValue( c->varNumber );
                 }
             }
         else {
-            mCellSpriteVanishSlider.setVisible( false );
+            mCellSpriteVarSlider.setVisible( false );
             }
 
 

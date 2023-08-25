@@ -9,6 +9,11 @@ Editor Fixes:
 --Fixed bug in held-position view in EditObjectPage due to failure to
   initialize +containOffsets in local copy of object.
 
+--Fixed bug in mCellSpriteVarSlider visibility in Scene Editor that was
+  making mCellSpriteVanishSlider invisible too.  Can now correctly pick
+  various use states for objects in scenes again.
+
+
 
 Server Fixes
 
