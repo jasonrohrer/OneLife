@@ -475,8 +475,11 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                     }
                 else {
                     c->oID = id;
+                    
                     c->contained.deleteAll();
                     c->subContained.deleteAll();
+                    c->containedNumUsesRemaining.deleteAll();
+                    
                     c->numUsesRemaining = o->numUses;
                     c->varNumber = 0;
                     }
@@ -1722,6 +1725,19 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                            cellO->spriteSkipDrawing );
                         }
                     
+                    for( int co=0; co < c->contained.size(); co++ ) {
+                        ObjectRecord *containedO = 
+                            getObject( c->contained.getElementDirect( co ) );
+
+                        if( containedO->numUses > 1 ) {
+                            setupSpriteUseVis( 
+                                containedO, 
+                                c->containedNumUsesRemaining.
+                                    getElementDirect( co ),
+                                containedO->spriteSkipDrawing );
+                            }
+                        }
+
                     if( c->varNumber > 0 ) {
                         setupNumericSprites( 
                             cellO, c->varNumber,
@@ -1778,6 +1794,18 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     if( cellO->numUses > 1 ) {
                         setupSpriteUseVis( cellO, cellO->numUses,
                                            cellO->spriteSkipDrawing );
+                        }
+                    
+                    for( int co=0; co < c->contained.size(); co++ ) {
+                        ObjectRecord *containedO = 
+                            getObject( c->contained.getElementDirect( co ) );
+                        
+                        if( containedO->numUses > 1 ) {
+                            setupSpriteUseVis( 
+                                containedO, 
+                                containedO->numUses,
+                                containedO->spriteSkipDrawing );
+                            }
                         }
 
                     }
@@ -2309,8 +2337,11 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
             // room
             
             c->contained.push_back( mCopyBuffer.oID );
-            SimpleVector<int> sub;            
+            c->containedNumUsesRemaining.
+                push_back( mCopyBuffer.numUsesRemaining );
             
+            SimpleVector<int> sub;            
+
             if( mCopyBuffer.contained.size() > 0 ) {
                 
                 int *pasteContained = mCopyBuffer.contained.getElementArray();
@@ -2331,6 +2362,9 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
             
             p->contained = mCopyBuffer.contained;
             p->subContained = mCopyBuffer.subContained;
+            
+            p->containedNumUsesRemaining = 
+                mCopyBuffer.containedNumUsesRemaining;
             
             if( getObject( p->heldID )->person ) {
                 // add their clothing too
@@ -2405,6 +2439,8 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     
     inCell->contained.deleteAll();
     inCell->subContained.deleteAll();    
+
+    inCell->containedNumUsesRemaining.deleteAll();
     
     inCell->anim = ground;
     inCell->frozenAnimTime = -2;
@@ -2606,6 +2642,11 @@ void addCellLines( SimpleVector<char*> *inLines,
             autoSprintf( "cont=%d", 
                          inCell->contained.getElementDirect( i ) ) );
         
+        inLines->push_back( 
+            autoSprintf( 
+                "contNumUsesRemaining=%d", 
+                inCell->containedNumUsesRemaining.getElementDirect( i ) ) );
+        
         int numSub = inCell->subContained.getElementDirect(i).size();
         
         inLines->push_back( autoSprintf( "numSubCont=%d", numSub ) );
@@ -2788,6 +2829,25 @@ int scanCell( char **inLines, int inNextLine, SceneCell *inCell ) {
         next++;
             
         inCell->contained.push_back( cont );
+        
+        
+        if( strstr( lines[next], "contNumUsesRemaining=" ) != NULL ) {
+            int contNumUsesRemaining;
+            sscanf( lines[next], "contNumUsesRemaining=%d", 
+                    &contNumUsesRemaining );
+            next++;
+
+            inCell->containedNumUsesRemaining.push_back( contNumUsesRemaining );
+            }
+        else {
+            // older format, uses not included for contained items
+            // assum full num uses remaining for object
+            ObjectRecord *contO = getObject( cont );
+            
+            inCell->containedNumUsesRemaining.push_back( contO->numUses );
+            }
+        
+
         
         int numSub;
         

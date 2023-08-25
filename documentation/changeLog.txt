@@ -13,6 +13,11 @@ Editor Fixes:
   making mCellSpriteVanishSlider invisible too.  Can now correctly pick
   various use states for objects in scenes again.
 
+--Fixed scene editor to allow variable uses displayed in contained objects (but
+  not in sub-contained objects, for now).  This is correctly saved into the
+  scene file format (but the code can still read the older style that doesn't
+  have these extra fields).
+
 
 
 Server Fixes

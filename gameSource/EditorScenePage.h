@@ -32,6 +32,8 @@ typedef struct SceneCell {
         SimpleVector<int> contained;
         SimpleVector< SimpleVector<int> > subContained;
 
+        SimpleVector<int> containedNumUsesRemaining;        
+
         ClothingSet clothing;
 
         char flipH;
