@@ -413,6 +413,8 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                 
                 if( getObject( c->oID )->numSlots > c->contained.size() ) {
                     c->contained.push_back( id );
+                    c->containedNumUsesRemaining.push_back(
+                        getObject( id )->numUses );
                     SimpleVector<int> sub;
                     c->subContained.push_back( sub );
                     placed = true;
