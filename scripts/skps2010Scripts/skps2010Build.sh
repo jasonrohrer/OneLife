@@ -30,6 +30,8 @@ fi
 
 cd OneLifeData7
 git fetch --tags
+# remove translated objects
+git checkout .
 latestTaggedVersionB=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//'`
 git checkout -q OneLife_v$latestTaggedVersionB
 
