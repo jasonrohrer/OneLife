@@ -4,6 +4,33 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Editor Fixes:
+
+--Fixed bug in held-position view in EditObjectPage due to failure to
+  initialize +containOffsets in local copy of object.
+
+--Fixed bug in mCellSpriteVarSlider visibility in Scene Editor that was
+  making mCellSpriteVanishSlider invisible too.  Can now correctly pick
+  various use states for objects in scenes again.
+
+--Fixed scene editor to allow variable uses displayed in contained objects (but
+  not in sub-contained objects, for now).  This is correctly saved into the
+  scene file format (but the code can still read the older style that doesn't
+  have these extra fields).
+
+
+
+Server Fixes
+
+--New +containOffset tags were being treated like +contFoodDish tags and
+  blocking containment.  Fixes #913
+
+--Twins that follow the lead twin to the tutorial area no longer have their
+  births logged (their deaths were already not being logged).  Fixes #914
+
+
+
+
 Version 387    2023-August-18
 
 --Added support for +containOffsetX/Y and +containOffsetBottomX/Y to micro-
