@@ -83,7 +83,7 @@ static double maxCurseTagDisplayGap = 15.0;
 
 
 // to make all erased pencil fonts lighter
-static float pencilErasedFontExtraFade = 0.75;
+static float pencilErasedFontExtraFade = 0.15;
 
 
 extern doublePair lastScreenViewCenter;
