@@ -35,8 +35,8 @@ You need to download it everytime when the game updates.
 ## Translation 翻譯
 All translation comes from this [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818).  
 We'll try to update it every week.  
-You can join the [Discord](https://discord.gg/SbRHcrPf) to help, we need better translation and more languages.  
+You can join the [Discord](https://discord.gg/UFZg3WXGrU) to help, we need better translation and more languages.  
 
 所有翻譯來自此 [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818)。  
 我們會嘗試每禮拜更新。  
-你可加入 [Discord](https://discord.gg/SbRHcrPf) 來幫忙，我們需要更好的翻譯和更多的語言。  
+你可加入 [Discord](https://discord.gg/UFZg3WXGrU) 來幫忙，我們需要更好的翻譯和更多的語言。  
