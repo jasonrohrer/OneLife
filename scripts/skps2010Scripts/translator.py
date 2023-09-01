@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
 import requests
-import sys
 import os
 
 
 def main():
-    try:
-        if len(sys.argv) != 2:
-            raise ValueError()
-        lang = int(sys.argv[1])
-    except ValueError:
-        print('./translator [lang]')
-        print('lang=0: English')
-        print('lang=1: 正體中文')
-        print('lang=2: 簡體中文')
-        return
+    print('0: English')
+    print('1: 正體中文')
+    print('2: 简体中文')
+    print('3: Україна')
+    print('Please input 0~3: ')
+    while 1:
+        try:
+            lang = int(input())
+            if lang < 0 or lang > 3:
+                raise ValueError
+            break
+        except ValueError:
+            print('Please input 0~3: ')
+
+    print("Translating...")
 
     if os.path.isfile('objects/cache.fcz'):
         os.remove('objects/cache.fcz')
@@ -54,7 +58,7 @@ def main():
         for key in menuItems:
             f.write(f'{key} "{menuItems[key]}"\n')
 
-    print("翻譯成功！")
+    print("Translating done!")
 
 
 if __name__ == '__main__':
