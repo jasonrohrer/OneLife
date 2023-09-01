@@ -7,7 +7,7 @@ def main():
     print('0: English')
     print('1: 正體中文')
     print('2: 简体中文')
-    print('3: Україна')
+    print('3: Українська')
     print('Please input 0~3: ')
     while 1:
         try:
