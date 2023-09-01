@@ -18,7 +18,7 @@ You need to download it everytime when the game updates.
 每次遊戲更新時，都要重新下載。
 1. 去 [發布頁面](https://github.com/skps2010/OneLife/releases) 並下載 `OneLife_Windows_v???.zip` (??? 是版本號)。
 2. 解壓縮並進入資料夾。
-3. 執行 `translato.exe`。他會要求你輸入一個數字，然後將整個遊戲翻成對應的語言。
+3. 執行 `translator.exe`。他會要求你輸入一個數字，然後將整個遊戲翻成對應的語言。
 4. 執行 `OneLife.exe` 來玩。
 
 ### Mac, Linux
