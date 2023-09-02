@@ -8,6 +8,11 @@ It currently support Traditional Chinese, Simplified Chinese and Ukrainian.
 目前支援正體中文、簡體中文和烏克蘭文。  
 
 ## How to use 如何使用
+### 中国版 (功能一致，只是语言预设简体中文，不需要连到 Google)
+1. 去 [发布页面](https://github.com/skps2010/OneLife/releases) 并下载 `OHOL_Simplified_Chinese_v???.exe` (??? 是版本号)。
+2. 执行他，安装程式会帮你装好游戏。
+3. 执行 `OneLife.exe` 来玩。
+
 ### Windows
 You need to download it everytime when the game updates.
 1. Go to [release page](https://github.com/skps2010/OneLife/releases) and download `OneLife_Windows_v???.zip` (??? is verison number).
