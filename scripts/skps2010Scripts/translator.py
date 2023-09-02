@@ -18,7 +18,7 @@ def main():
         except ValueError:
             print('Please input 0~3: ')
 
-    print("Translating...")
+    print("Translating Objects...")
 
     if os.path.isfile('objects/cache.fcz'):
         os.remove('objects/cache.fcz')
@@ -26,6 +26,11 @@ def main():
     r = requests.get(
         f'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec?lang={lang}&type=0'
     )
+
+    if r.status_code != 200:
+        print('Unable to connect to the Google sheet')
+        return
+
     data = r.json()
     for i in range(len(data['key'])):
         if data['value'][i] != '':
@@ -45,6 +50,8 @@ def main():
             value = data[data.index('"') + 1:-2]
             menuItems[name] = value
 
+    print("Translating Menu...")
+
     r = requests.get(
         f'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec?lang={lang}&type=1'
     )
@@ -57,6 +64,34 @@ def main():
     with open('languages/English.txt', 'w', encoding='utf-8') as f:
         for key in menuItems:
             f.write(f'{key} "{menuItems[key]}"\n')
+
+    print("Translating Images...")
+
+    r = requests.get(
+        f'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec?lang={lang}&type=2'
+    )
+    data = r.json()
+    for i in range(len(data['key'])):
+        link = data['value'][i]
+        if link != '':
+            r = requests.get(link)
+            if r.status_code != 200:
+                print(f'File can\'t be found: {link}')
+                continue
+            with open(f'graphics/{data["key"][i]}', 'wb') as f:
+                f.write(r.content)
+
+    print("Apply settings...")
+
+    r = requests.get(
+        f'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec?lang={lang}&type=3'
+    )
+    data = r.json()
+    for i in range(len(data['key'])):
+        value = data['value'][i]
+        if value != '':
+            with open(f'settings/{data["key"][i]}', 'w') as f:
+                f.write(str(value))
 
     print("Translating done!")
 
