@@ -7,8 +7,8 @@ It currently support Traditional Chinese, Simplified Chinese and Ukrainian.
 此模組支援 Unicode 並擁有翻譯工具。  
 目前支援正體中文、簡體中文和烏克蘭文。  
 
-此模组的目的是将 One Hour One Life 翻译成不同语言。
-此模组支持 Unicode 并拥有翻译工具。
+此模组的目的是将 One Hour One Life 翻译成不同语言。  
+此模组支持 Unicode 并拥有翻译工具。  
 目前支持简体中文、繁体中文和乌克兰文。
 
 ## How to use 如何使用
@@ -72,7 +72,7 @@ You can join the [Discord](https://discord.gg/UFZg3WXGrU) to help, we need bette
 你可加入 [Discord](https://discord.gg/UFZg3WXGrU) 來幫忙，我們需要更好的翻譯和更多的語言。  
 
 所有翻译来自此 [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818)。  
-我们会尝试每周更新。
+我们会尝试每周更新。  
 你可加入 [Discord](https://discord.gg/UFZg3WXGrU) 来帮忙，我们需要更好的翻译和更多的语言。
 
 ### contribute - 貢獻 - 贡献
