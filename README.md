@@ -52,7 +52,17 @@ This will download the newest version:
 2. 执行 'prthon3 translator.py'。它会要求你输入一个数字，然后将整个游戏翻成对应的语言。
 3. 执行 'OneLifeApp ' 来玩。
 
+```
+git https://github.com/skps2010/OneLife/blob/master/scripts/skps2010Scripts/skps2010Build.sh
+```
+```
+chmod +x skps2010Build.sh
+```
+```
+./skps2010Build.sh
+```
 ## Translation - 翻譯 - 翻译
+### outline 概要
 All translation comes from this [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818).  
 We'll try to update it every week.  
 You can join the [Discord](https://discord.gg/UFZg3WXGrU) to help, we need better translation and more languages.  
@@ -60,3 +70,14 @@ You can join the [Discord](https://discord.gg/UFZg3WXGrU) to help, we need bette
 所有翻譯來自此 [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818)。  
 我們會嘗試每禮拜更新。  
 你可加入 [Discord](https://discord.gg/UFZg3WXGrU) 來幫忙，我們需要更好的翻譯和更多的語言。  
+
+所有翻译来自此 [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818)。  
+我们会尝试每周更新。
+你可加入 [Discord](https://discord.gg/UFZg3WXGrU) 来帮忙，我们需要更好的翻译和更多的语言。
+
+### contribute - 貢獻 - 贡献
+|  语言  |  贡献者  |  进度 - menu  |  进度 - object  |  进度 - image  |
+| :---: | :----: | :----: | :----: | :----: |
+| zh_tw | skps2010 | ✔ | ✖ 部分机翻 | ✔ 1 |
+| zh_cn | 52Hertz | ~ | ✖ 部分机翻 | ✔ 1 |
+| ukr | gloompain | ~ | ✖ 部分机翻 | ✔ |
