@@ -1,8 +1,9 @@
-del OHOL简体中文版_%version%.zip
-del OHOL简体中文版_%version%.exe
 
-7z a -tzip OHOL简体中文版_%version%.zip OneLife_%version%
+del OneLife_%version%_Windows.zip 
+del OneLife_%version%_Windows.exe
 
-makesfx.exe /zip="OHOL简体中文版_%version%.zip" /sfx="OHOL简体中文版_%version%.exe" /title="One Hour One Life 简体中文版 %version%" /website="http://onehouronelife.com" /intro="这会解压缩游戏，执行 OneLife.exe 来玩。" /defaultpath="$curdir$" /icon="icon_installer.ico"
+7z a -tzip OneLife_%version%_Windows.zip OneLife_%version%
+
+makesfx.exe /zip="OneLife_%version%_Windows.zip" /sfx="OneLife_%version%_Windows.exe" /title="One Hour One Life %version%" /website="http://onehouronelife.com" /intro="This will extract the game." /defaultpath="$curdir$" /icon="..\win32\icon_installer.ico"
 
 pause

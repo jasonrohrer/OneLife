@@ -25,7 +25,11 @@ mv base/* windows
 
 
 cd ../gameSource
-sh makeRegenerateCaches
+if [[ "$OSTYPE" == "linux"* ]]; then
+    sh makeRegenerateCaches
+else
+    sh makeRegenerateCachesWindows
+fi
 
 cd ../build/windows/OneLife_$1
 
