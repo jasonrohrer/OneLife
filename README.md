@@ -12,10 +12,11 @@ It currently support Traditional Chinese, Simplified Chinese and Ukrainian.
 目前支持简体中文、繁体中文和乌克兰文。
 
 ## How to use 如何使用
-### 中文版 (功能一致，只是语言预设简体中文，不需要连到 Google)
+### 简体中文版
+功能一致，只是语言预设简体中文，不需要连到 Google
 1. 去 [发布页面](https://github.com/skps2010/OneLife/releases) 并下载 `OHOL_Simplified_Chinese_v???.exe` (??? 是版本号)。
 2. 执行它，安装程序会帮你装好游戏。
-3. 执行 'OneLife.exe' 来玩。
+3. 执行 `OneLife.exe` 来玩。
 
 ### Windows
 You need to download it everytime when the game updates.
@@ -33,8 +34,8 @@ You need to download it everytime when the game updates.
 每次游戏更新时，都要重新下载。
 1. 去 [发布页面](https://github.com/skps2010/OneLife/releases) 并下载 “OneLife_Windows_v???. zip' （??? 是版本号）。
 2. 解压缩并进入文件夹。
-3. 执行 'translator.exe'。 他会要求你输入一个数字，然后将整个游戏翻成对应的语言。
-4. 执行 'OneLife.exe' 来玩。
+3. 执行 `translator.exe`。 他会要求你输入一个数字，然后将整个游戏翻成对应的语言。
+4. 执行 `OneLife.exe` 来玩。
 
 ### Mac, Linux
 This will download the newest version:
@@ -49,20 +50,21 @@ This will download the newest version:
 
 这会下载最新版本：
 1. 下载 [skps2010Build.sh](https://github.com/skps2010/OneLife/blob/master/scripts/skps2010Scripts/skps2010Build.sh) 并放到空文件夹，然后执行。这会编译游戏。
-2. 执行 'prthon3 translator.py'。它会要求你输入一个数字，然后将整个游戏翻成对应的语言。
-3. 执行 'OneLifeApp ' 来玩。
+2. 执行 `prthon3 translator.py`。它会要求你输入一个数字，然后将整个游戏翻成对应的语言。
+3. 执行 `OneLifeApp` 来玩。
 
-```
-git https://github.com/skps2010/OneLife/blob/master/scripts/skps2010Scripts/skps2010Build.sh
-```
-```
-chmod +x skps2010Build.sh
-```
-```
-./skps2010Build.sh
-```
+## How to Login with Steam - 如何透過 Steam 登入
+1. 去[這個網頁](http://onehouronelife.com/steamGate/server.php?action=show_download_link)
+2. 此網頁會要求你透過 Steam 登入，登入後即可看到帳號跟密碼。
+3. 複製帳號跟密碼來登入
+
+另一種方法
+1. 對 Steam 收藏庫中的 One Hour One Life 點右鍵，選 管理，然後選 瀏覽本機檔案
+2. 此時會跳出遊戲資料夾，登入帳號在 `settings/email.ini`，登入密碼在 `settings/accountKey.ini`
+3. 複製帳號跟密碼來登入
+
 ## Translation - 翻譯 - 翻译
-### outline 概要
+### Outline 概要
 All translation comes from this [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818).  
 We'll try to update it every week.  
 You can join the [Discord](https://discord.gg/UFZg3WXGrU) to help, we need better translation and more languages.  
@@ -75,9 +77,9 @@ You can join the [Discord](https://discord.gg/UFZg3WXGrU) to help, we need bette
 我们会尝试每周更新。  
 你可加入 [Discord](https://discord.gg/UFZg3WXGrU) 来帮忙，我们需要更好的翻译和更多的语言。
 
-### contribute - 貢獻 - 贡献
+### Contribute - 貢獻 - 贡献
 |  语言  |  贡献者  |  进度 - menu  |  进度 - object  |  进度 - image  |
 | :---: | :----: | :----: | :----: | :----: |
-| zh_tw | skps2010 | ✔ | ✖ 部分机翻 | ✔ 1 |
-| zh_cn | 52Hertz | ~ | ✖ 部分机翻 | ✔ 1 |
-| ukr | gloompain | ~ | ✖ 部分机翻 | ✔ |
+| zh_tw | skps2010 | ✔ 部分机翻 | ✔ 部分机翻 | ✔ |
+| zh_cn | 52Hertz | ✔ 部分机翻 | ✔ 部分机翻 | ✔ |
+| ukr | gloompain | ✔ | ✔ 部分机翻 | ✔ |
