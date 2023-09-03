@@ -7,11 +7,15 @@ It currently support Traditional Chinese, Simplified Chinese and Ukrainian.
 此模組支援 Unicode 並擁有翻譯工具。  
 目前支援正體中文、簡體中文和烏克蘭文。  
 
+此模组的目的是将 One Hour One Life 翻译成不同语言。
+此模组支持 Unicode 并拥有翻译工具。
+目前支持简体中文、繁体中文和乌克兰文。
+
 ## How to use 如何使用
-### 中国版 (功能一致，只是语言预设简体中文，不需要连到 Google)
+### 中文版 (功能一致，只是语言预设简体中文，不需要连到 Google)
 1. 去 [发布页面](https://github.com/skps2010/OneLife/releases) 并下载 `OHOL_Simplified_Chinese_v???.exe` (??? 是版本号)。
-2. 执行他，安装程式会帮你装好游戏。
-3. 执行 `OneLife.exe` 来玩。
+2. 执行它，安装程序会帮你装好游戏。
+3. 执行 'OneLife.exe' 来玩。
 
 ### Windows
 You need to download it everytime when the game updates.
@@ -26,6 +30,12 @@ You need to download it everytime when the game updates.
 3. 執行 `translator.exe`。他會要求你輸入一個數字，然後將整個遊戲翻成對應的語言。
 4. 執行 `OneLife.exe` 來玩。
 
+每次游戏更新时，都要重新下载。
+1. 去 [发布页面](https://github.com/skps2010/OneLife/releases) 并下载 “OneLife_Windows_v???. zip' （??? 是版本号）。
+2. 解压缩并进入文件夹。
+3. 执行 'translator.exe'。 他会要求你输入一个数字，然后将整个游戏翻成对应的语言。
+4. 执行 'OneLife.exe' 来玩。
+
 ### Mac, Linux
 This will download the newest version:
 1. Download [skps2010Build.sh](https://github.com/skps2010/OneLife/blob/master/scripts/skps2010Scripts/skps2010Build.sh) and put it into an empty folder, then run it. This will compile the game.
@@ -37,7 +47,12 @@ This will download the newest version:
 2. 執行 `python3 translator.py`。他會要求你輸入一個數字，然後將整個遊戲翻成對應的語言。
 3. 執行 `OneLifeApp` 來玩。
 
-## Translation 翻譯
+这会下载最新版本：
+1. 下载 [skps2010Build.sh](https://github.com/skps2010/OneLife/blob/master/scripts/skps2010Scripts/skps2010Build.sh) 并放到空文件夹，然后执行。这会编译游戏。
+2. 执行 'prthon3 translator.py'。它会要求你输入一个数字，然后将整个游戏翻成对应的语言。
+3. 执行 'OneLifeApp ' 来玩。
+
+## Translation - 翻譯 - 翻译
 All translation comes from this [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818).  
 We'll try to update it every week.  
 You can join the [Discord](https://discord.gg/UFZg3WXGrU) to help, we need better translation and more languages.  
