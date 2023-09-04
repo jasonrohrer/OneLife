@@ -50,35 +50,38 @@ This will download the newest version:
 
 这会下载最新版本：
 1. 下载 [skps2010Build.sh](https://github.com/skps2010/OneLife/blob/master/scripts/skps2010Scripts/skps2010Build.sh) 并放到空文件夹，然后执行。这会编译游戏。
-2. 执行 `prthon3 translator.py`。它会要求你输入一个数字，然后将整个游戏翻成对应的语言。
+2. 执行 `python3 translator.py`。它会要求你输入一个数字，然后将整个游戏翻成对应的语言。
 3. 执行 `OneLifeApp` 来玩。
 
 ## How to Login with Steam - 如何透過 Steam 登入 - 如何通过 Steam 登入
-1. Go to [this page](http://onehouronelife.com/steamGate/server.php?action=show_download_link)
+Normal method
+1. Go to [this page](http://onehouronelife.com/steamGate/server.php?action=show_download_link).
 2. This page will ask you to sign in through Steam, and you will see your account and password after you sign in.
-3. Copy your account number and password to log in.
+3. Copy your account and password to log in.
 
 Alternative method  
 1. Right click on One Hour One Life in your Steam Library, select Manage, then Browse Local Files.
-2. The game folder will pop up, the login account is in 'settings/email.ini' and the login password is in 'settings/accountKey.ini'.
+2. The game folder will pop up, the login account is in `settings/email.ini` and the login password is in `settings/accountKey.ini`.
 3. Copy the account and password to log in.
 
-1. 去[這個網頁](http://onehouronelife.com/steamGate/server.php?action=show_download_link)
+正常方法
+1. 去[這個網頁](http://onehouronelife.com/steamGate/server.php?action=show_download_link)。
 2. 此網頁會要求你透過 Steam 登入，登入後即可看到帳號跟密碼。
 3. 複製帳號跟密碼來登入。
 
 另一種方法
-1. 對 Steam 收藏庫中的 One Hour One Life 點右鍵，選 管理，然後選 瀏覽本機檔案
-2. 此時會跳出遊戲資料夾，登入帳號在 `settings/email.ini`，登入密碼在 `settings/accountKey.ini`
+1. 對 Steam 收藏庫中的 One Hour One Life 點右鍵，選 管理，然後選 瀏覽本機檔案。
+2. 此時會跳出遊戲資料夾，登入帳號在 `settings/email.ini`，登入密碼在 `settings/accountKey.ini`。
 3. 複製帳號跟密碼來登入。
 
-1. 去[这个网页]（http://onehouronelife.com/steamGate/server.php?action=show_download_link）
+正常方法
+1. 去[这个网页]（http://onehouronelife.com/steamGate/server.php?action=show_download_link）。
 2. 此网页会要求你透过 Steam 登入，登入后即可看到帐号跟密码。
 3. 复制帐号跟密码来登入。
 
 另一种方法  
-1. 对 Steam 收藏库中的 One Hour One Life 点右键，选 管理，然后选 浏览本机文件
-2. 此时会跳出游戏文件夹，登入帐号在 'settings/email.ini'，登入密码在 'settings/accountKey.ini'
+1. 对 Steam 收藏库中的 One Hour One Life 点右键，选 管理，然后选 浏览本机文件。
+2. 此时会跳出游戏文件夹，登入帐号在 `settings/email.ini`，登入密码在 `settings/accountKey.ini`。
 3. 复制帐号跟密码来登入。
 
 ## Translation - 翻譯 - 翻译
