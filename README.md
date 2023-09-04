@@ -67,15 +67,18 @@ This will download the newest version:
 ### Outline 概要
 All translation comes from this [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818).  
 We'll try to update it every week.  
-You can join the [Discord](https://discord.gg/UFZg3WXGrU) to help, we need better translation and more languages.  
+You can join the [Discord](https://discord.gg/UFZg3WXGrU) to discuss or report bugs.  
+You can also join [Kook](https://kook.top/E9cHJL).
 
 所有翻譯來自此 [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818)。  
 我們會嘗試每禮拜更新。  
-你可加入 [Discord](https://discord.gg/UFZg3WXGrU) 來幫忙，我們需要更好的翻譯和更多的語言。  
+你可加入 [Discord](https://discord.gg/UFZg3WXGrU) 來討論或回報問題。  
+你也可以加入 [Kook](https://kook.top/E9cHJL)。
 
 所有翻译来自此 [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818)。  
 我们会尝试每周更新。  
-你可加入 [Discord](https://discord.gg/UFZg3WXGrU) 来帮忙，我们需要更好的翻译和更多的语言。
+你可加入 [Discord](https://discord.gg/UFZg3WXGrU) 来讨论或回报问题。
+你也可以加入 [Kook](https://kook.top/E9cHJL)。
 
 ### Contribute - 貢獻 - 贡献
 |  语言  |  贡献者  |  进度 - menu  |  进度 - object  |  进度 - image  |
