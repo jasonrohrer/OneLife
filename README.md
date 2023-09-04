@@ -77,7 +77,7 @@ You can also join [Kook](https://kook.top/E9cHJL).
 
 所有翻译来自此 [Google sheet](https://docs.google.com/spreadsheets/d/1AH6eZJJ5zkB1zT-iwlomVAUxsa4f7gIgYFS0X265GyM/edit#gid=682688818)。  
 我们会尝试每周更新。  
-你可加入 [Discord](https://discord.gg/UFZg3WXGrU) 来讨论或回报问题。
+你可加入 [Discord](https://discord.gg/UFZg3WXGrU) 来讨论或回报问题。  
 你也可以加入 [Kook](https://kook.top/E9cHJL)。
 
 ### Contribute - 貢獻 - 贡献
