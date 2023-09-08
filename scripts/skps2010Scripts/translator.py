@@ -8,15 +8,29 @@ def main():
     print('1: 正體中文')
     print('2: 简体中文')
     print('3: Українська')
-    print('Please input 0~3: ')
+    print('4: Deutsch')
+    print('Please input 0~4: ')
     while 1:
         try:
             lang = int(input())
-            if lang < 0 or lang > 3:
+            if lang < 0 or lang > 4:
                 raise ValueError
             break
         except ValueError:
-            print('Please input 0~3: ')
+            print('Please input 0~4: ')
+
+    print('\nAppend English after translated objects?')
+    print('0: No')
+    print('1: Yes')
+    print('Please input 0~1: ')
+    while 1:
+        try:
+            is_append = int(input())
+            if is_append < 0 or is_append > 1:
+                raise ValueError
+            break
+        except ValueError:
+            print('Please input 0~1: ')
 
     print("Translating Objects...")
 
@@ -31,12 +45,25 @@ def main():
         print('Unable to connect to the Google sheet')
         return
 
+    if is_append:
+        r2 = requests.get(
+            f'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec?lang=0&type=0'
+        )
+        data2 = r2.json()
+
     data = r.json()
     for i in range(len(data['key'])):
-        if data['value'][i] != '':
+        translated = data['value'][i]
+        if translated != '':
             with open(f'objects/{data["key"][i]}', encoding='utf-8') as f:
                 content = f.readlines()
-            content[1] = data['value'][i] + '\n'
+
+            if is_append and data2['value'][i] != '':
+                content[1] = translated.split(
+                    '#')[0] + data2['value'][i] + '\n'
+            else:
+                content[1] = translated + '\n'
+
             with open(f'objects/{data["key"][i]}', 'w', encoding='utf-8') as f:
                 f.writelines(content)
 
