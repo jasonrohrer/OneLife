@@ -18,6 +18,9 @@ Editor Fixes:
   scene file format (but the code can still read the older style that doesn't
   have these extra fields).
 
+--Fixed bug in maintaining producesMap in transition bank that was causing
+  duplicate transitions to appear in transition editor searches.
+
 
 
 Server Fixes
