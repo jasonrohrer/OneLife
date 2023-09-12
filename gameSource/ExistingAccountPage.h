@@ -78,6 +78,7 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         
         TextButton mTutorialButton;
         TextButton mServicesButton;
+        TextButton mTranslateButton;
         
 
         double mPageActiveStartTime;

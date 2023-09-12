@@ -21,6 +21,7 @@
 #include "minorGems/graphics/openGL/KeyboardHandlerGL.h"
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
+#include <sys/stat.h>
 
 static JenkinsRandomSource randSource;
 
@@ -76,6 +77,8 @@ ExistingAccountPage::ExistingAccountPage()
                            translate( "tutorial" ) ),
           mServicesButton( mainFont, -522, 300, 
                            translate( "services" ) ),
+          mTranslateButton( mainFont, -400, -40, 
+                           translate( "translateButton" ) ),
           mPageActiveStartTime( 0 ),
           mFramesCounted( 0 ),
           mFPSMeasureDone( false ),
@@ -104,6 +107,7 @@ ExistingAccountPage::ExistingAccountPage()
     setButtonStyle( &mViewAccountButton );
     setButtonStyle( &mTutorialButton );
     setButtonStyle( &mServicesButton );
+    setButtonStyle( &mTranslateButton );
 
     setButtonStyle( &mDisableCustomServerButton );
     
@@ -132,6 +136,7 @@ ExistingAccountPage::ExistingAccountPage()
     addComponent( &mViewAccountButton );
     addComponent( &mTutorialButton );
     addComponent( &mServicesButton );
+    addComponent( &mTranslateButton );
     
     mLoginButton.addActionListener( this );
     mFriendsButton.addActionListener( this );
@@ -154,6 +159,7 @@ ExistingAccountPage::ExistingAccountPage()
     mViewAccountButton.addActionListener( this );
     mTutorialButton.addActionListener( this );
     mServicesButton.addActionListener( this );
+    mTranslateButton.addActionListener( this );
     
     mDisableCustomServerButton.addActionListener( this );
 
@@ -170,6 +176,7 @@ ExistingAccountPage::ExistingAccountPage()
     mGenesButton.setMouseOverTip( translate( "genesTip" ) );
     mFamilyTreesButton.setMouseOverTip( translate( "familyTreesTip" ) );
     mTechTreeButton.setMouseOverTip( translate( "techTreeTip" ) );
+    mTranslateButton.setMouseOverTip( translate( "translateTip" ) );
     
 
     int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
@@ -525,6 +532,30 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         SettingsManager::setSetting( "useCustomServer", 0 );
         mDisableCustomServerButton.setVisible( false );
         processLogin( true, "done" );
+        }
+    else if( inTarget == &mTranslateButton ) {
+        struct stat buffer;
+        if(stat ("translator.exe", &buffer) == 0) {
+            system("translator.exe");
+        }
+        else {
+            system("python3 translator.py");
+// #ifdef __mac__
+//             system("osascript -e \"tell app \"Terminal\" to do script \"cd `pwd`; python3 translator.py\"\"");
+// #else
+//             system("x-terminal-emulator -e \"tell app \"Terminal\" to do script \"cd `pwd`; python3 translator.py\"\"");
+// #endif
+        }
+        char relaunched = relaunchGame();
+        
+        if( !relaunched ) {
+            printf( "Relaunch failed\n" );
+            setSignal( "relaunchFailed" );
+            }
+        else {
+            printf( "Relaunched... but did not exit?\n" );
+            setSignal( "relaunchFailed" );
+            }
         }
     }
 

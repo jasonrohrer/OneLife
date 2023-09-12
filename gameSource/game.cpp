@@ -1813,7 +1813,7 @@ void drawFrame( char inUpdate ) {
 
                 startConnecting();
                 }
-            else if( autoUpdatePage->checkSignal( "relaunchFailed" ) ) {
+            else if( existingAccountPage->checkSignal( "relaunchFailed" ) ) {
                 currentGamePage = finalMessagePage;
                         
                 finalMessagePage->setMessageKey( "manualRestartMessage" );
