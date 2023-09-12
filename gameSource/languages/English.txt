@@ -55,7 +55,7 @@ settingsButton "SETTINGS"
 postReviewButton "POST REVIEW"
 updateReviewButton "UPDATE REVIEW"
 translateButton "文／Ａ"
-translateTip "START THE TRANSLATOR AND RESTART THE GAME"
+translateTip "RUN TRANSLATOR AND RESTART GAME"
 
 reviewText "REVIEW TEXT"
 reviewName "DISPLAY NAME"
