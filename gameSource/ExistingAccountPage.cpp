@@ -540,11 +540,6 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         }
         else {
             system("python3 translator.py");
-// #ifdef __mac__
-//             system("osascript -e \"tell app \"Terminal\" to do script \"cd `pwd`; python3 translator.py\"\"");
-// #else
-//             system("x-terminal-emulator -e \"tell app \"Terminal\" to do script \"cd `pwd`; python3 translator.py\"\"");
-// #endif
         }
         char relaunched = relaunchGame();
         
