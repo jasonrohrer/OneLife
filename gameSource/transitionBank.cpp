@@ -2682,12 +2682,10 @@ void addTrans( int inActor, int inTarget,
             
             // remove record from producesMaps
             
-            if( t->newActor != 0 &&
-                t->newActor != inNewActor ) {
+            if( t->newActor != 0 ) {
                 producesMap[t->newActor].deleteElementEqualTo( t );
                 }
-            if( t->newTarget != 0 &&
-                t->newTarget != inNewTarget ) {                
+            if( t->newTarget != 0 ) {                
                 producesMap[t->newTarget].deleteElementEqualTo( t );
                 }
             
