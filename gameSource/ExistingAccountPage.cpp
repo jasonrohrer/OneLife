@@ -22,6 +22,7 @@
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
 #include <sys/stat.h>
+#include <unistd.h>
 
 static JenkinsRandomSource randSource;
 
@@ -535,11 +536,27 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mTranslateButton ) {
         struct stat buffer;
+        char cwd[PATH_MAX];
+        getcwd(cwd, sizeof(cwd));
         if(stat ("translator.exe", &buffer) == 0) {
-            system("translator.exe");
+            char *call = autoSprintf( 
+                "wmic process call create 'cmd /c start translator.exe', '%s'", cwd );    
+            system( call );
+            delete [] call;
         }
         else {
-            system("python3 translator.py");
+#ifdef __mac__
+            system("open translator.py -a Terminal; sleep 1.0; while pgrep -f translator.py >/dev/null; do sleep 1.0; done");
+
+#elif defined(WIN32)
+            char *call = autoSprintf( 
+                "wmic process call create 'cmd /c python3 translator.py', '%s'", cwd );    
+            system( call );
+            delete [] call;
+            
+#else
+            system("x-terminal-emulator -e python3 translator.py");
+#endif
         }
         char relaunched = relaunchGame();
         

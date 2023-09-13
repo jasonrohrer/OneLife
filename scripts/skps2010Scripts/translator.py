@@ -1,23 +1,31 @@
 #!/usr/bin/env python3
 import requests
 import os
+from inspect import getsourcefile
+from os.path import abspath, dirname
 
 
 def main():
-    print('0: English')
-    print('1: 正體中文')
-    print('2: 简体中文')
-    print('3: Українська')
-    print('4: Deutsch')
-    print('Please input 0~4: ')
+    os.chdir(dirname(abspath(getsourcefile(lambda:0))))
+    url = 'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec'
+    r = requests.get(f'{url}')
+
+    if r.status_code != 200:
+        print('Unable to connect to the Google sheet')
+        return
+
+    langs = r.json()
+    for i in range(len(langs)):
+        print(f'{i}: {langs[i]}')
+    print(f'Please input 0~{len(langs)-1}: ')
     while 1:
         try:
             lang = int(input())
-            if lang < 0 or lang > 4:
+            if lang < 0 or lang > len(langs) - 1:
                 raise ValueError
             break
         except ValueError:
-            print('Please input 0~4: ')
+            print(f'Please input 0~{len(langs)-1}: ')
 
     print('\nAppend English after translated objects?')
     print('0: No')
@@ -37,18 +45,10 @@ def main():
     if os.path.isfile('objects/cache.fcz'):
         os.remove('objects/cache.fcz')
 
-    r = requests.get(
-        f'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec?lang={lang}&type=0'
-    )
-
-    if r.status_code != 200:
-        print('Unable to connect to the Google sheet')
-        return
+    r = requests.get(f'{url}?lang={lang}&type=0')
 
     if is_append:
-        r2 = requests.get(
-            f'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec?lang=0&type=0'
-        )
+        r2 = requests.get(f'{url}?lang=0&type=0')
         data2 = r2.json()
 
     data = r.json()
@@ -59,8 +59,8 @@ def main():
                 content = f.readlines()
 
             if is_append and data2['value'][i] != '':
-                content[1] = translated.split(
-                    '#')[0] + data2['value'][i] + '\n'
+                content[1] = translated.split('#')[0].split(
+                    ' $')[0] + data2['value'][i] + '\n'
             else:
                 content[1] = translated + '\n'
 
@@ -79,9 +79,7 @@ def main():
 
     print("Translating Menu...")
 
-    r = requests.get(
-        f'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec?lang={lang}&type=1'
-    )
+    r = requests.get(f'{url}?lang={lang}&type=1')
     data = r.json()
 
     for i in range(len(data['key'])):
@@ -94,9 +92,7 @@ def main():
 
     print("Translating Images...")
 
-    r = requests.get(
-        f'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec?lang={lang}&type=2'
-    )
+    r = requests.get(f'{url}?lang={lang}&type=2')
     data = r.json()
     for i in range(len(data['key'])):
         link = data['value'][i]
@@ -110,9 +106,7 @@ def main():
 
     print("Apply settings...")
 
-    r = requests.get(
-        f'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec?lang={lang}&type=3'
-    )
+    r = requests.get(f'{url}?lang={lang}&type=3')
     data = r.json()
     for i in range(len(data['key'])):
         value = data['value'][i]
