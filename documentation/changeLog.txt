@@ -48,6 +48,10 @@ Server Fixes
   building.  This applies to all objects that have the floor-hugging property
   set.  Fixes #920
 
+--Player no longer phases through wall to left of landing strip upon landing.
+  Empty (or non-blocking) spot to W, E, S, N selected, and if none found, then
+  player is left standing on landing pad behind plane.  Fixes #922
+
 
 
 

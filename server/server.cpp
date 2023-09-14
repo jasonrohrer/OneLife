@@ -27164,7 +27164,44 @@ int main() {
                                             
                                         // stick player next to landing
                                         // pad
-                                        destPos.x --;
+                                        
+                                        
+                                        GridPos testPlayerPos = destPos;
+                                        char foundEmpty = false;
+                                        
+                                        int neighborX[4] = { -1, 1, 0, 0 };
+                                        int neighborY[4] = { 0, 0, -1, 1 };
+                                        
+                                        for( int n=0; n<4; n++ ) {
+                                            testPlayerPos = destPos;
+                                            
+                                            testPlayerPos.x += neighborX[n];
+                                            testPlayerPos.y += neighborY[n];
+
+                                            int nOID = 
+                                                getMapObject( testPlayerPos.x,
+                                                              testPlayerPos.y );
+                                            if( nOID == 0 ) {
+                                                // empty
+                                                foundEmpty = true;
+                                                break;
+                                                }
+                                            if( nOID > 0 && 
+                                                ! getObject( nOID )->
+                                                blocksWalking ) {
+                                                // non blocking
+                                                foundEmpty = true;
+                                                break;
+                                                }
+                                            // else keep looking
+                                            }
+
+                                        if( foundEmpty ) {
+                                            destPos = testPlayerPos;
+                                            }
+                                        // else stick player right on
+                                        // top of landed plane
+                                        // leave destPos alone
                                         }
                                     }
                                 if( ! heldTransHappened ) {
