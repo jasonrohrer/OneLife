@@ -291,8 +291,37 @@ char isBiomeAllowed( int inDisplayID, int inX, int inY, char inIgnoreFloor ) {
         }
 
     // floor blocks
-    if( ! inIgnoreFloor && getMapFloor( inX, inY ) != 0 ) {
-        return true;
+    if( ! inIgnoreFloor ) {
+        if( getMapFloor( inX, inY ) != 0 ) {
+            // item on floor, making it accessible to non-specialists
+            return true;
+            }
+
+        // not on floor directly
+        int oID = getMapObject( inX, inY );
+        ObjectRecord *touchedObject = getObject( oID );
+        
+        if( touchedObject->floorHugging ) {
+            // object might have extended floor depicted under it, though
+            // consider case where floor is to left, right, or below
+            // the touched object
+            // if floor is above only, it's visually behind the object
+            // (for example, a door to a building where you need to stand
+            // in the bad biome when you are outside the building to reach
+            // the door).
+            // In the case of trying to exit a building through a southern
+            // door, it will only be blocked if there's no floor under
+            // the door tile itself, which is something of a broken
+            // building.
+            if( getMapFloor( inX - 1, inY ) != 0
+                ||
+                getMapFloor( inX + 1, inY ) != 0
+                ||
+                getMapFloor( inX, inY - 1 ) != 0 ) {
+                
+                return true;
+                }
+            }
         }
     
     return false;
