@@ -6940,14 +6940,23 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 int cellOID = mMap[mapI];
                 
                 if( cellOID > 0 && getObject( cellOID )->floorHugging ) {
-                    
-                    if( x > 0 && mMapFloors[ mapI - 1 ] > 0 ) {
+
+                    // assume any floors with roadParentID defined
+                    // have special visual curves, etc, and don't make
+                    // them hug walls.  Single-tile floors and roads can
+                    // hug walls just fine.
+
+                    if( x > 0 && mMapFloors[ mapI - 1 ] > 0 &&
+                        getObject( mMapFloors[ mapI - 1 ] )->roadParentID 
+                        == -1 ) {
                         // floor to our left
                         passIDs[1] = mMapFloors[ mapI - 1 ];
                         drawHuggingFloor = true;
                         }
                     
-                    if( x < mMapD - 1 && mMapFloors[ mapI + 1 ] > 0 ) {
+                    if( x < mMapD - 1 && mMapFloors[ mapI + 1 ] > 0  &&
+                        getObject( mMapFloors[ mapI + 1 ] )->roadParentID 
+                        == -1 ) {
                         // floor to our right
                         passIDs[2] = mMapFloors[ mapI + 1 ];
                         drawHuggingFloor = true;

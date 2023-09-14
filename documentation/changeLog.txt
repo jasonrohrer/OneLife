@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 387    ???
+
+--Fixed visual glitch when paved road hugged nearby walls.  Fixes #921
+
+
+
+
+
 Editor Fixes:
 
 --Fixed bug in held-position view in EditObjectPage due to failure to
@@ -38,7 +46,7 @@ Server Fixes
   hidden floors directly in the same tile as the wall.  Before, you could be
   standing in a building and be unable to access a wall shelf clearly in the
   building.  This applies to all objects that have the floor-hugging property
-  set.  Fixe #920
+  set.  Fixes #920
 
 
 
