@@ -7646,6 +7646,55 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 }
             }
         }
+
+
+
+    // draw sprites marked as behind player (when whole object is not
+    // marked as behind player) in a separate layer, screen-wide
+    for( int y=yEnd; y>=yStart; y-- ) {
+        
+        int worldY = y + mMapOffsetY - mMapD / 2;
+
+        int screenY = CELL_D * worldY;
+        
+
+        // draw marked objects behind everything else, including players
+        
+        for( int x=xStart; x<=xEnd; x++ ) {
+            
+            int worldX = x + mMapOffsetX - mMapD / 2;
+
+
+            int mapI = y * mMapD + x;
+
+            if( cellDrawn[mapI] ) {
+                continue;
+                }
+
+            int screenX = CELL_D * worldX;
+            
+            if( mMap[ mapI ] > 0 && 
+                mMapMoveSpeeds[ mapI ] == 0 ) {
+               
+                ObjectRecord *o = getObject( mMap[ mapI ] );
+
+                if( o->anySpritesBehindPlayer ) {
+                    
+                    // draw only behind layers now
+                    prepareToSkipSprites( o, true );
+                    drawMapCell( mapI, screenX, screenY, false, 
+                                 // no time effects, because we'll draw
+                                 // again later
+                                 true );
+                    restoreSkipDrawing( o );
+                    }
+                
+                }
+            }
+        }
+    
+
+
     
 
     for( int y=yEnd; y>=yStart; y-- ) {
@@ -7676,20 +7725,20 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 ObjectRecord *o = getObject( mMap[ mapI ] );
 
                 if( o->drawBehindPlayer ) {
+                    if( o->anySpritesBehindPlayer ) {
+                        // skip the behind sprite layers drawn in loop above
+                        prepareToSkipSprites( o, false );
+                        }
+                    
+
                     drawMapCell( mapI, screenX, screenY );
+                    
+                    if( o->anySpritesBehindPlayer ) {
+                        restoreSkipDrawing( o );
+                        }
+                    
                     cellDrawn[mapI] = true;
                     }
-                else if( o->anySpritesBehindPlayer ) {
-                    
-                    // draw only behind layers now
-                    prepareToSkipSprites( o, true );
-                    drawMapCell( mapI, screenX, screenY, false, 
-                                 // no time effects, because we'll draw
-                                 // again later
-                                 true );
-                    restoreSkipDrawing( o );
-                    }
-                
                 }
 
             

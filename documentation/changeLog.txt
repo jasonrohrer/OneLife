@@ -8,6 +8,12 @@ Version 387    ???
 
 --Fixed visual glitch when paved road hugged nearby walls.  Fixes #921
 
+--Sprite layers that are marked as drawn behind player are now drawn as a
+  separate layer scene-wide (above biome and floor, behind everything else).
+  This allows thing to be drawn under overhanging open doors in layer to north.
+  I'm pretty sure that every sprite layer marked as drawn behind is a flat
+  layer that lays on the ground, and that this won't cause any other visual
+  problems.  Part of jasonrohrer/OneLifeData7#1038
 
 
 
