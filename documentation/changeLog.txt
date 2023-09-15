@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 387    ???
+Version 391    2023-September-15
 
 --Fixed visual glitch when paved road hugged nearby walls.  Fixes #921
 
