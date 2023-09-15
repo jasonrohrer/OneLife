@@ -15,6 +15,8 @@ Version 391    2023-September-15
   layer that lays on the ground, and that this won't cause any other visual
   problems.  Part of jasonrohrer/OneLifeData7#1038
 
+--Fixed photoCache compiling on mac.
+
 
 
 
