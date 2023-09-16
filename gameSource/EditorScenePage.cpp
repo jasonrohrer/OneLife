@@ -1205,13 +1205,22 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                 
                 if( cellOID > 0 && getObject( cellOID )->floorHugging ) {
                     
-                    if( x > 0 && mFloorCells[y][ x - 1 ].oID > 0 ) {
+                    // assume any floors with roadParentID defined
+                    // have special visual curves, etc, and don't make
+                    // them hug walls.  Single-tile floors and roads can
+                    // hug walls just fine.
+
+                    if( x > 0 && mFloorCells[y][ x - 1 ].oID > 0 &&
+                        getObject( mFloorCells[y][ x - 1 ].oID )->roadParentID 
+                        == -1 ) {
                         // floor to our left
                         passIDs[1] = mFloorCells[y][ x - 1 ].oID;
                         drawHuggingFloor = true;
                         }
                     
-                    if( x < mSceneW - 1 && mFloorCells[y][ x + 1 ].oID > 0 ) {
+                    if( x < mSceneW - 1 && mFloorCells[y][ x + 1 ].oID > 0 &&
+                        getObject( mFloorCells[y][ x + 1 ].oID )->roadParentID 
+                        == -1 ) {
                         // floor to our right
                         passIDs[2] = mFloorCells[y][ x + 1 ].oID;
                         drawHuggingFloor = true;
@@ -1334,7 +1343,9 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
         }
     
     
-
+    // loop twice to draw all behind-player sprite layers, scene-wide
+    // and then draw other thing after that
+    for( int f=0; f<2; f++ )
     for( int y=0; y<mSceneH; y++ ) {
         
         if( y > mCurY + 6 || 
@@ -1344,7 +1355,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
             }
 
 
-        // draw behind stuff first, b=0
+        // draw behind stuff first (whole objects, marked as behind), b=0
         // then people, b=1, with permanent objects in front
         // then non-permanent objects, b=2
         // then non-container walls (floor hugging, no slots), b=3
@@ -1669,8 +1680,12 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     
                     ObjectRecord *o = getObject( c->oID );
                     
-                    if( ( b == 0 && ! ( o->drawBehindPlayer || 
-                                        o->anySpritesBehindPlayer ) )
+                    if( f == 0 && ! o->anySpritesBehindPlayer ) {
+                        continue;
+                        }
+                    
+
+                    if( ( b == 0 && ! ( o->drawBehindPlayer ) )
                         ||
                         ( b != 0 && o->drawBehindPlayer ) ) {
                         continue;
@@ -1755,11 +1770,11 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     
 
                     char skippingSome = false;
-                    if( b == 0 && cellO->anySpritesBehindPlayer ) {
+                    if( f == 0 && cellO->anySpritesBehindPlayer ) {
                         prepareToSkipSprites( cellO, true );
                         skippingSome = true;
                         }
-                    else if( b != 0 && cellO->anySpritesBehindPlayer ) {
+                    else if( f == 1 && cellO->anySpritesBehindPlayer ) {
                         prepareToSkipSprites( cellO, false );
                         skippingSome = true;
                         }

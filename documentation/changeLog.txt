@@ -4,6 +4,22 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 391    2023-September-15
+
+--Fixed visual glitch when paved road hugged nearby walls.  Fixes #921
+
+--Sprite layers that are marked as drawn behind player are now drawn as a
+  separate layer scene-wide (above biome and floor, behind everything else).
+  This allows thing to be drawn under overhanging open doors in layer to north.
+  I'm pretty sure that every sprite layer marked as drawn behind is a flat
+  layer that lays on the ground, and that this won't cause any other visual
+  problems.  Part of jasonrohrer/OneLifeData7#1038
+
+--Fixed photoCache compiling on mac.
+
+
+
+
 Editor Fixes:
 
 --Fixed bug in held-position view in EditObjectPage due to failure to
@@ -30,6 +46,19 @@ Server Fixes
 
 --Twins that follow the lead twin to the tutorial area no longer have their
   births logged (their deaths were already not being logged).  Fixes #914
+
+--Fixed so that building components that appear on an auto-extended half-floor
+  in a bad biome are accessible to non-biome specialists.  If a door looks like
+  there's a floor under it, you can open it now.  This also applies to
+  horizontal walls that have completed floors in the tile below them, but no
+  hidden floors directly in the same tile as the wall.  Before, you could be
+  standing in a building and be unable to access a wall shelf clearly in the
+  building.  This applies to all objects that have the floor-hugging property
+  set.  Fixes #920
+
+--Player no longer phases through wall to left of landing strip upon landing.
+  Empty (or non-blocking) spot to W, E, S, N selected, and if none found, then
+  player is left standing on landing pad behind plane.  Fixes #922
 
 
 

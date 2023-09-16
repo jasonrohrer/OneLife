@@ -7,6 +7,11 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 
+#ifdef __mac__
+// g++ on old build platform OS 10.5 does not support thread-local storage
+#define STBI_NO_THREAD_LOCALS
+#endif
+
 #include "stb_image.h"
 
 
