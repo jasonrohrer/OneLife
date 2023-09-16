@@ -543,21 +543,24 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
                 "wmic process call create 'cmd /c start translator.exe', '%s'", cwd );    
             system( call );
             delete [] call;
+
+            sleep(1);
+            while(system("tasklist | find /i \"translator.exe\" >nul & IF NOT ERRORLEVEL 1 exit 1"))
+                sleep(1);
         }
         else {
 #ifdef __mac__
             system("open translator.py -a Terminal; sleep 1.0; while pgrep -f translator.py >/dev/null; do sleep 1.0; done");
 
 #elif defined(WIN32)
-            char *call = autoSprintf( 
-                "wmic process call create 'cmd /c python3 translator.py', '%s'", cwd );    
-            system( call );
-            delete [] call;
+            // Cna't get the Python process, so can't wait for it. Directly run instead.
+            system("python3 translator.py");
             
 #else
-            system("x-terminal-emulator -e python3 translator.py");
+            system("x-terminal-emulator -e python3 translator.py; sleep 1.0; while pgrep -f translator.py >/dev/null; do sleep 1.0; done");
 #endif
         }
+
         char relaunched = relaunchGame();
         
         if( !relaunched ) {
