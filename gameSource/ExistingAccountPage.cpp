@@ -539,14 +539,7 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         char cwd[PATH_MAX];
         getcwd(cwd, sizeof(cwd));
         if(stat ("translator.exe", &buffer) == 0) {
-            char *call = autoSprintf( 
-                "wmic process call create 'cmd /c start translator.exe', '%s'", cwd );    
-            system( call );
-            delete [] call;
-
-            sleep(1);
-            while(system("tasklist | find /i \"translator.exe\" >nul & IF NOT ERRORLEVEL 1 exit 1"))
-                sleep(1);
+            system("translator.exe");
         }
         else {
 #ifdef __mac__
