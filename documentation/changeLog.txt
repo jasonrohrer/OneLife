@@ -11,6 +11,11 @@ Server Fixes:
   even if population falls below special biome threshold.  Expert waystones
   always work, regardless of population size.  Fixes #924
 
+--Support for new wound-on-player generic transition that specifies what a
+  partly-healed wound would leave embedded in grave if person dies with that
+  wound.  For example, if you pull the arrow out, and leave the head embedded
+  in, they can now have the head left in their grave when they die. Part of
+  jasonrohrer/OneLifeData7#1047
 
 
 
