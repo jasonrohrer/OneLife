@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 import requests
 import os
-from inspect import getsourcefile
-from os.path import abspath, dirname
+from os.path import dirname
+import sys
 
 
 def main():
-    os.chdir(dirname(abspath(getsourcefile(lambda:0))))
+    if getattr(sys, 'frozen', False):
+        path = dirname(sys.executable)
+    else:
+        path = os.path.dirname(__file__)
+    os.chdir(path)
     url = 'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec'
     r = requests.get(f'{url}')
 
