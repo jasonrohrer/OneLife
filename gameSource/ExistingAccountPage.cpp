@@ -541,6 +541,9 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         if(stat ("translator.exe", &buffer) == 0) {
             system("translator.exe");
         }
+        else if(stat ("translator", &buffer) == 0) {
+            system("open translator; sleep 1.0; while pgrep -f translator >/dev/null; do sleep 1.0; done");
+        }
         else {
 #ifdef __mac__
             system("open translator.py -a Terminal; sleep 1.0; while pgrep -f translator.py >/dev/null; do sleep 1.0; done");

@@ -109,6 +109,7 @@ fi
 cp OneLife/build/source/runToBuild .
 cp OneLife/scripts/skps2010Scripts/cleanOldBuilds.sh .
 cp OneLife/scripts/skps2010Scripts/makeWindows.sh .
+cp OneLife/scripts/skps2010Scripts/makeMacOSX.sh .
 cp OneLife/scripts/skps2010Scripts/translator.py .
 
 

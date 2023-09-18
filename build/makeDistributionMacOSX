@@ -19,7 +19,7 @@ rm -rf mac/OneLife_$1
 
 ./makeBaseDistributionFolder $1
 
-
+mkdir mac
 mv base/* mac
 
 
@@ -43,14 +43,27 @@ rm */bin_*cache.fcz
 cd ../..
 
 
+onelife_app=mac/OneLife_$1/OneLife_$1.app/Contents/MacOS/OneLife
 cp -r macOSX/OneLife.app mac/OneLife_$1/OneLife_$1.app
-cp ../gameSource/OneLife mac/OneLife_$1/OneLife_$1.app/Contents/MacOS
+cp ../../OneLifeApp $onelife_app
 
 rm -r mac/OneLife_$1/OneLife_$1.app/Contents/MacOS/empty.txt
 rm -r mac/OneLife_$1/OneLife_$1.app/Contents/Frameworks/empty.txt
 
 # install SDL framework
-cp -r $3 mac/OneLife_$1/OneLife_$1.app/Contents/Frameworks/
+framework_folder=mac/OneLife_$1/OneLife_$1.app/Contents/Frameworks/
+cp -r $3 $framework_folder
+cp /usr/local/lib/libfreetype.6.dylib $framework_folder
+cp /usr/local/opt/libpng/lib/libpng16.16.dylib $framework_folder
+cp /usr/local/opt/sdl12-compat/lib/libSDL-1.2.0.dylib $framework_folder
+
+install_name_tool -change /usr/local/lib/libfreetype.6.dylib @executable_path/../Frameworks/libfreetype.6.dylib $onelife_app
+install_name_tool -change /usr/local/opt/libpng/lib/libpng16.16.dylib @executable_path/libpng16.16.dylib $framework_folder/libfreetype.6.dylib
+install_name_tool -id @executable_path/libpng16.16.dylib $framework_folder/libpng16.16.dylib
+install_name_tool -change /usr/local/opt/sdl12-compat/lib/libSDL-1.2.0.dylib @executable_path/../Frameworks/libSDL-1.2.0.dylib $onelife_app
+
+cp ../scripts/skps2010Scripts/translator.py mac/OneLife_$1
+cp ../../translator mac/OneLife_$1
 
 cd mac
 
@@ -59,9 +72,7 @@ d=`date`
 
 echo "$1 built on $d" > OneLife_$1/binary.txt
 
-
-tar cf "OneLife_$1_$2.tar" OneLife_$1
-gzip "OneLife_$1_$2.tar"
+zip -r -q OneLife_MacOSX_$1.zip OneLife_$1
 
 
 
