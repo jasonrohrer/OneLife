@@ -4,6 +4,16 @@ http://onehouronelife.com/updateLog.php
 
 
 
+
+Server Fixes:
+
+--Touching your own race's waystone now always points you to a language expert,
+  even if population falls below special biome threshold.  Expert waystones
+  always work, regardless of population size.  Fixes #924
+
+
+
+
 Version 391    2023-September-15
 
 --Fixed visual glitch when paved road hugged nearby walls.  Fixes #921

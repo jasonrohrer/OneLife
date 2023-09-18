@@ -16149,7 +16149,12 @@ static void findExpertForPlayer( LiveObject *inPlayer,
         // they ARE this expert themselves
         
         // point them toward polylingual race instead
-        race = getPolylingualRace();
+
+        // ignore pop limit for special biomes
+        // waystones always point to appropriate expert, regardless of
+        // population size
+        race = getPolylingualRace( true );
+        
         polylingual = true;
         }
 
