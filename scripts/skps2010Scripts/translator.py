@@ -6,13 +6,20 @@ import sys
 
 
 def main():
+    print('Connect to Google sheet...\n')
+
     if getattr(sys, 'frozen', False):
         path = dirname(sys.executable)
     else:
         path = os.path.dirname(__file__)
     os.chdir(path)
     url = 'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec'
-    r = requests.get(f'{url}')
+
+    try:
+        r = requests.get(f'{url}')
+    except requests.ConnectionError:
+        print('Unable to connect to the Google sheet')
+        return
 
     if r.status_code != 200:
         print('Unable to connect to the Google sheet')
