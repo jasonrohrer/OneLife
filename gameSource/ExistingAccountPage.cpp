@@ -545,12 +545,28 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
             system("open translator.py -a Terminal; sleep 1.0; while pgrep -f translator.py >/dev/null; do sleep 1.0; done");
 
 #elif defined(WIN32)
-            // Cna't get the Python process, so can't wait for it. Directly run instead.
-        if(stat ("translator.exe", &buffer) == 0) {
-            system("translator.exe");
+        char fullscreen = SettingsManager::getIntSetting("fullscreen", 0);
+        if(fullscreen) {
+            char cwd[PATH_MAX];
+            getcwd(cwd, sizeof(cwd));
+            char *call;
+
+            if(stat ("translator.exe", &buffer) == 0) {
+                call = autoSprintf("wmic process call create 'cmd /c start translator.exe', '%s'", cwd ); 
+            }
+            else
+                call = autoSprintf("wmic process call create 'cmd /c python3 translator.py', '%s'", cwd );    
+            system( call );
+            delete [] call;
+            exit(0);
         }
-        else
-            system("python3 translator.py");
+        else {
+            if(stat ("translator.exe", &buffer) == 0) {
+                system("translator.exe");
+            }
+            else
+                system("python3 translator.py");
+        }
             
 #else
         system("x-terminal-emulator -e python3 translator.py; sleep 1.0; while pgrep -f translator.py >/dev/null; do sleep 1.0; done");
