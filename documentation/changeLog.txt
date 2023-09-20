@@ -17,6 +17,12 @@ Server Fixes:
   in, they can now have the head left in their grave when they die. Part of
   jasonrohrer/OneLifeData7#1047
 
+--Fixed so server looks for camera-on-camera transition when taking photo,
+  instead of player-on-camera transition, so the player can't interrupt the
+   process by clicking on the camera again mid-photo.  Part of
+   jasonrohrer/OneLifeData7#1060
+
+
 
 
 Version 391    2023-September-15
