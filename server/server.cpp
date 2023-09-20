@@ -2869,6 +2869,7 @@ typedef enum messageType {
     PROP,
     ORDR,
     FLIP,
+    MOTH,
     UNKNOWN
     } messageType;
 
@@ -3327,6 +3328,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "FLIP" ) == 0 ) {
         m.type = FLIP;
+        }
+    else if( strcmp( nameBuffer, "MOTH" ) == 0 ) {
+        m.type = MOTH;
         }
     else {
         m.type = UNKNOWN;
@@ -20618,6 +20622,61 @@ int main() {
                         char *psMessage = 
                             autoSprintf( "PS\n"
                                          "%d/0 +NO LEADER+\n#",
+                                         nextPlayer->id );
+                        sendMessageToPlayer( nextPlayer, 
+                                             psMessage, strlen( psMessage ) );
+                        delete [] psMessage;
+                        }
+                    }
+                else if( m.type == MOTH ) {
+
+                    LiveObject *motherO = 
+                        getLiveObject( nextPlayer->parentID );
+
+                    if( motherO != NULL ) {
+                        
+                        // give them an arrow toward that mother
+                        
+                        // note that this will give them an arrow to
+                        // her grave location if she has just died 
+                        // and her LiveObject hasn't been cleared out yet
+                        // That's okay.
+
+                        GridPos lPos = getPlayerPos( motherO );
+                            
+                        char *motherName = motherO->name;
+                        
+                        char *fullMotherName = NULL;
+
+                        if( motherName == NULL ) {
+                            fullMotherName = stringDuplicate( "MOTHER" );
+                            }
+                        else {
+                            fullMotherName = autoSprintf( "MOTHER %s",
+                                                          motherName );
+                            }
+
+                        char *psMessage = 
+                            autoSprintf( "PS\n"
+                                         "%d/0 MY %s "
+                                         "*mother %d *map %d %d\n#",
+                                         nextPlayer->id,
+                                         fullMotherName,
+                                         motherO->id,
+                                         lPos.x - nextPlayer->birthPos.x,
+                                         lPos.y - nextPlayer->birthPos.y );
+                        
+                        delete [] fullMotherName;
+
+                        sendMessageToPlayer( nextPlayer, 
+                                             psMessage, 
+                                             strlen( psMessage ) );
+                        delete [] psMessage;
+                        }
+                    else {
+                        char *psMessage = 
+                            autoSprintf( "PS\n"
+                                         "%d/0 +NO MOTHER+\n#",
                                          nextPlayer->id );
                         sendMessageToPlayer( nextPlayer, 
                                              psMessage, strlen( psMessage ) );

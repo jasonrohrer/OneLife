@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 393    ???
+
+--New /MOTHER command to locate your mother (sometimes she's not your leader,
+  so the /LEADER command doesn't always work to find her).  Fixes #926
+
+
+
 
 Server Fixes:
 
