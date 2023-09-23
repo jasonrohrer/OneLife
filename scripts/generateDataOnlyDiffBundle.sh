@@ -73,7 +73,7 @@ then
 	echo "Check Steamworks and verify that this is correct."
 	echo ""
 	echo -n "Hit [ENTER] when ready: "
-	read
+	read goWord
 fi
 
 
