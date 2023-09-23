@@ -1,9 +1,12 @@
-# Language - 語言 - 语言 - мова
+# skps2010/OneLife
+## Language - 語言 - 语言 - мова
 + [English](https://github.com/skps2010/OneLife/#English)
 + [正體中文](https://github.com/skps2010/OneLife/#正體中文)
 + [简体中文](https://github.com/skps2010/OneLife/#简体中文)
 + [Українська мова]() *未完工*
 
+![Imgur](https://i.imgur.com/LHcp2Qy.png)
+![Imgur](https://i.imgur.com/9AjlblQ.png)
 * * *
 ### English
 # OneLife
