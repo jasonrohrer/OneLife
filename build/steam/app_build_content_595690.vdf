@@ -11,7 +11,16 @@
 	// according to answer given here, we can use setlive with special "public"
 	// alias to force a build to become live right away
 	// https://steamcommunity.com/groups/steamworks/discussions/0/3276824488719073026/
-	"setlive"	"public" // branch to set live after successful build, non if empty
+
+	// UPDATE 2023-Sept-22:
+	// Steam has new security settings preventing steamcmd from making a branch
+    // live like this.  See this post:
+	// https://steamcommunity.com/groups/steamworks/discussions/0/3887225762855891646/
+
+	// Having anything other than "" set here results in Access Denied.
+	// (used to have "public" set here to force the build to go live).
+	
+	"setlive"	"" // branch to set live after successful build, none if empty
 
 	"preview" "0" // to enable preview builds
 

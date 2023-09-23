@@ -2869,6 +2869,7 @@ typedef enum messageType {
     PROP,
     ORDR,
     FLIP,
+    MOTH,
     UNKNOWN
     } messageType;
 
@@ -3327,6 +3328,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "FLIP" ) == 0 ) {
         m.type = FLIP;
+        }
+    else if( strcmp( nameBuffer, "MOTH" ) == 0 ) {
+        m.type = MOTH;
         }
     else {
         m.type = UNKNOWN;
@@ -16149,7 +16153,12 @@ static void findExpertForPlayer( LiveObject *inPlayer,
         // they ARE this expert themselves
         
         // point them toward polylingual race instead
-        race = getPolylingualRace();
+
+        // ignore pop limit for special biomes
+        // waystones always point to appropriate expert, regardless of
+        // population size
+        race = getPolylingualRace( true );
+        
         polylingual = true;
         }
 
@@ -20488,7 +20497,6 @@ int main() {
                     delete [] message;
                     }
                 else if( m.type == PHOID ) {
-                    // FIXME:  still need to test
                     if( strlen( m.photoIDString ) == 40 ) {
                         
                         int oldObjectID = getMapObject( m.x, m.y );
@@ -20498,8 +20506,14 @@ int main() {
                         if( oldO->writable &&
                             strstr( oldO->description, "+photo" ) ) {
                             
+                            
+                            // camera-on-camera transition specifies
+                            // what should result if the photo succeeds.
+                            // (The player could never cause this transition
+                            //  manually, since the camera is permanent when
+                            //  it's in photo-taking mode)
                             TransRecord *writingHappenTrans =
-                                getMetaTrans( 0, oldObjectID );
+                                getMetaTrans( oldObjectID, oldObjectID );
                                 
                             if( writingHappenTrans != NULL &&
                                 writingHappenTrans->newTarget > 0 &&
@@ -20608,6 +20622,61 @@ int main() {
                         char *psMessage = 
                             autoSprintf( "PS\n"
                                          "%d/0 +NO LEADER+\n#",
+                                         nextPlayer->id );
+                        sendMessageToPlayer( nextPlayer, 
+                                             psMessage, strlen( psMessage ) );
+                        delete [] psMessage;
+                        }
+                    }
+                else if( m.type == MOTH ) {
+
+                    LiveObject *motherO = 
+                        getLiveObject( nextPlayer->parentID );
+
+                    if( motherO != NULL ) {
+                        
+                        // give them an arrow toward that mother
+                        
+                        // note that this will give them an arrow to
+                        // her grave location if she has just died 
+                        // and her LiveObject hasn't been cleared out yet
+                        // That's okay.
+
+                        GridPos lPos = getPlayerPos( motherO );
+                            
+                        char *motherName = motherO->name;
+                        
+                        char *fullMotherName = NULL;
+
+                        if( motherName == NULL ) {
+                            fullMotherName = stringDuplicate( "MOTHER" );
+                            }
+                        else {
+                            fullMotherName = autoSprintf( "MOTHER %s",
+                                                          motherName );
+                            }
+
+                        char *psMessage = 
+                            autoSprintf( "PS\n"
+                                         "%d/0 MY %s "
+                                         "*mother %d *map %d %d\n#",
+                                         nextPlayer->id,
+                                         fullMotherName,
+                                         motherO->id,
+                                         lPos.x - nextPlayer->birthPos.x,
+                                         lPos.y - nextPlayer->birthPos.y );
+                        
+                        delete [] fullMotherName;
+
+                        sendMessageToPlayer( nextPlayer, 
+                                             psMessage, 
+                                             strlen( psMessage ) );
+                        delete [] psMessage;
+                        }
+                    else {
+                        char *psMessage = 
+                            autoSprintf( "PS\n"
+                                         "%d/0 +NO MOTHER+\n#",
                                          nextPlayer->id );
                         sendMessageToPlayer( nextPlayer, 
                                              psMessage, strlen( psMessage ) );
@@ -24475,6 +24544,32 @@ int main() {
                                     targetPlayer->embeddedWeaponID = 0;
                                     targetPlayer->embeddedWeaponEtaDecay = 0;
                                     
+                                    // check if this new wound would leave
+                                    // something embedded in grave
+                                    TransRecord *newWoundEmbed = 
+                                        getPTrans( targetPlayer->holdingID,
+                                                   0, false, false ); 
+                                    
+                                    if( newWoundEmbed != NULL &&
+                                        newWoundEmbed->newTarget > 0 ) {
+                                        
+                                        targetPlayer->embeddedWeaponID = 
+                                            newWoundEmbed->newTarget;
+                                        TransRecord *newDecayT = 
+                                            getMetaTrans( 
+                                                -1, 
+                                                newWoundEmbed->newTarget );
+                    
+                                        if( newDecayT != NULL ) {
+                                            targetPlayer->
+                                                embeddedWeaponEtaDecay = 
+                                                Time::timeSec() + 
+                                                newDecayT->
+                                                autoDecaySeconds;
+                                            }
+                                        }
+                                    
+
                                     
                                     nextPlayer->holdingID = 
                                         healTrans->newActor;

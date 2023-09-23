@@ -450,6 +450,8 @@ static int getLocationKeyPriority( const char *inPersonKey ) {
         strcmp( inPersonKey, "expt" ) == 0 ||
         // explicitly touched a locked gate
         strcmp( inPersonKey, "owner" ) == 0 ||
+        // manually requested mother location
+        strcmp( inPersonKey, "mother" ) == 0 ||
         // manually-requested leader arrow
         ( leaderCommandTyped && strcmp( inPersonKey, "lead" ) == 0 ) ) {
         
@@ -19868,6 +19870,24 @@ void LivingLifePage::step() {
                                                 personKey = "visitor";
                                                 }
                                             }
+
+
+                                        if( ! person ) {
+                                            char *motherPos = 
+                                                strstr( 
+                                                    existing->currentSpeech, 
+                                                    " *mother" );
+                                            
+                                            if( motherPos != NULL ) {
+                                                person = true;
+                                                sscanf( motherPos, 
+                                                        " *mother %d", 
+                                                        &personID );
+
+                                                motherPos[0] = '\0';
+                                                personKey = "mother2";
+                                                }
+                                            }
                                         
 
                                         if( ! person ) {
@@ -26067,6 +26087,11 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                     showPlayerLabel( leadO, leaderLabel, eta );
                                     }
                                 sendToServerSocket( (char*)"LEAD 0 0#" );
+                                }
+                            else if( commandTyped( typedText, 
+                                                   "motherCommand" ) ) {
+
+                                sendToServerSocket( (char*)"MOTH 0 0#" );
                                 }
                             else if( commandTyped( typedText, 
                                                    "followerCommand" ) ) {

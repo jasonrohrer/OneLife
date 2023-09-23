@@ -34,26 +34,20 @@ pauseToVerify=0
 # two arguments means automation
 if [ $# -ne 2 ]
 then
-	echo ""
-	echo ""
-	echo "Pause to verify Steam build along the way?"
-	echo ""
-	echo "Enter YES to pause, or press [ENTER] to skip."
-	echo ""
-	echo -n "Pause later: "
-	read pauseWord
 
-	if [ "$pauseWord" = "YES" ]
-	then
-		echo
-		echo "Pausing later to verify Steam build."
-		echo
-		pauseToVerify=1
-	else
-		echo
-		echo "NOT pausing later."
-		echo
-	fi
+	echo ""
+	echo ""
+	echo "NOTE:  Automation no longer works for making Steam build live."
+	echo "It must be pushed live through the Steamworks website."
+	echo ""
+	echo "The build process will pause part-way through and wait for you"
+	echo "to confirm that you have pushed the build live manually."
+	echo ""
+	echo "Press [ENTER] to contine."
+	echo ""
+	read
+
+	pauseToVerify=1
 fi
 
 
@@ -616,7 +610,9 @@ echo ""
 if [ $pauseToVerify -eq 1 ]
 then
 	echo "" 
-	echo "As requested, PAUSING now that Steam build is done."
+	echo "PAUSING now."
+	echo ""
+	echo "Go into the Steamworks website and make the build live manually."
 	echo ""
 
 	echo "Press [ENTER] when ready."

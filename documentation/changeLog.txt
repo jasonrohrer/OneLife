@@ -4,6 +4,41 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 393    ???
+
+--New /MOTHER command to locate your mother (sometimes she's not your leader,
+  so the /LEADER command doesn't always work to find her).  Fixes #926
+
+
+
+
+Server Fixes:
+
+--Touching your own race's waystone now always points you to a language expert,
+  even if population falls below special biome threshold.  Expert waystones
+  always work, regardless of population size.  Fixes #924
+
+--Support for new wound-on-player generic transition that specifies what a
+  partly-healed wound would leave embedded in grave if person dies with that
+  wound.  For example, if you pull the arrow out, and leave the head embedded
+  in, they can now have the head left in their grave when they die. Part of
+  jasonrohrer/OneLifeData7#1047
+
+--Fixed so server looks for camera-on-camera transition when taking photo,
+  instead of player-on-camera transition, so the player can't interrupt the
+  process by clicking on the camera again mid-photo.  Part of
+  jasonrohrer/OneLifeData7#1060
+
+--Fixed content build scripts and Steam VDF file to not try to push build live
+  to the public branch automatically (which now gets Access Denied based on new
+  Steam security settings released in Sept 2023).  Instead the build script now
+  pauses and waits for the user to use the Steamworks website to manually make
+  the build live.
+
+
+
+
+
 Version 391    2023-September-15
 
 --Fixed visual glitch when paved road hugged nearby walls.  Fixes #921
