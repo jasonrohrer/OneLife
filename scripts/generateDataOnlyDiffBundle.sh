@@ -45,6 +45,8 @@ then
 	echo ""
 	echo "Press [ENTER] to contine."
 	echo ""
+	read
+
 	pauseToVerify=1
 fi
 
@@ -73,7 +75,7 @@ then
 	echo "Check Steamworks and verify that this is correct."
 	echo ""
 	echo -n "Hit [ENTER] when ready: "
-	read goWord
+	read
 fi
 
 
