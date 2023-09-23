@@ -66,8 +66,12 @@ def main():
     for i in range(len(data['key'])):
         translated = data['value'][i]
         if translated != '':
-            with open(f'objects/{data["key"][i]}', encoding='utf-8') as f:
-                content = f.readlines()
+            try:
+                with open(f'objects/{data["key"][i]}', encoding='utf-8') as f:
+                    content = f.readlines()
+            except FileNotFoundError as e:
+                print(e)
+                continue
 
             if is_append and data2['value'][i] != '':
                 content[1] = translated.split('#')[0].split(
@@ -79,14 +83,18 @@ def main():
                 f.writelines(content)
 
     menuItems = {}
-    with open('languages/English.txt', encoding='utf-8') as f:
-        datas = f.readlines()
-        for data in datas:
-            if data == '\n':
-                continue
-            name = data.split(' ')[0]
-            value = data[data.index('"') + 1:-2]
-            menuItems[name] = value
+    try:
+        with open('languages/English.txt', encoding='utf-8') as f:
+            datas = f.readlines()
+            for data in datas:
+                if data == '\n':
+                    continue
+                name = data.split(' ')[0]
+                value = data[data.index('"') + 1:-2]
+                menuItems[name] = value
+
+    except FileNotFoundError as e:
+        print(e)
 
     print("Translating Menu...")
 
