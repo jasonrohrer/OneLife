@@ -26,8 +26,15 @@ Server Fixes:
 
 --Fixed so server looks for camera-on-camera transition when taking photo,
   instead of player-on-camera transition, so the player can't interrupt the
-   process by clicking on the camera again mid-photo.  Part of
-   jasonrohrer/OneLifeData7#1060
+  process by clicking on the camera again mid-photo.  Part of
+  jasonrohrer/OneLifeData7#1060
+
+--Fixed content build scripts and Steam VDF file to not try to push build live
+  to the public branch automatically (which now gets Access Denied based on new
+  Steam security settings released in Sept 2023).  Instead the build script now
+  pauses and waits for the user to use the Steamworks website to manually make
+  the build live.
+
 
 
 
