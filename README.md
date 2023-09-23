@@ -1,9 +1,12 @@
-# Language - 語言 - 语言 - мова
+# skps2010/OneLife
+## Language - 語言 - 语言 - мова
 + [English](https://github.com/skps2010/OneLife/#English)
 + [正體中文](https://github.com/skps2010/OneLife/#正體中文)
 + [简体中文](https://github.com/skps2010/OneLife/#简体中文)
 + [Українська мова]() *未完工*
 
+![Imgur](https://i.imgur.com/LHcp2Qy.png)
+![Imgur](https://i.imgur.com/9AjlblQ.png)
 * * *
 ### English
 # OneLife
@@ -20,7 +23,14 @@ You need to download it everytime when the game updates.
 3. Run `translator.exe`. It will ask you to input a number, then it will translate the whole game into corresponding languages.
 4. Run `OneLife.exe` to play.
 
-### Mac, Linux
+### Mac
+You need to download it everytime when the game updates.
+1. Go to [release page](https://github.com/skps2010/OneLife/releases) and download `OneLife_MacOSX_v???.zip` (??? is verison number).
+2. Unzip it and go into the folder.
+3. Run `translator`. It will ask you to input a number, then it will translate the whole game into corresponding languages.
+4. Run `OneLife_v???.app` to play (??? is verison number).
+
+### Mac, Linux (Source Code)
 This will download the newest version:
 1. Download [skps2010Build.sh](https://github.com/skps2010/OneLife/blob/master/scripts/skps2010Scripts/skps2010Build.sh) and put it into an empty folder, then run it. This will compile the game.
 2. Run `python3 translator.py`. It will ask you to input a number, then it will translate the whole game into corresponding languages.
@@ -70,7 +80,14 @@ You can also join [Kook](https://kook.top/E9cHJL).
 3. 執行 `translator.exe`。他會要求你輸入一個數字，然後將整個遊戲翻成對應的語言。
 4. 執行 `OneLife.exe` 來玩。
 
-### Mac, Linux
+### Mac
+每次遊戲更新時，都要重新下載。  
+1. 去 [發布頁面](https://github.com/skps2010/OneLife/releases) 並下載 `OneLife_MacOSX_v???.zip` (??? 是版本號)。
+2. 解壓縮並進入資料夾。
+3. 執行 `translator`。他會要求你輸入一個數字，然後將整個遊戲翻成對應的語言。
+4. 執行 `OneLife_v???.app` 來玩 (??? 是版本號)。
+
+### Mac, Linux（原始碼）
 這會下載最新版本：
 1. 下載 [skps2010Build.sh](https://github.com/skps2010/OneLife/blob/master/scripts/skps2010Scripts/skps2010Build.sh) 並放到空資料夾，然後執行。這會編譯遊戲。
 2. 執行 `python3 translator.py`。他會要求你輸入一個數字，然後將整個遊戲翻成對應的語言。
@@ -122,12 +139,19 @@ You can also join [Kook](https://kook.top/E9cHJL).
 
 ### Windows
 每次游戏更新时，都要重新下载。
-1. 去 [发布页面](https://github.com/skps2010/OneLife/releases) 并下载 “OneLife_Windows_v???. zip' （??? 是版本号）。
+1. 去 [发布页面](https://github.com/skps2010/OneLife/releases) 并下载 “OneLife_Windows_v???.zip' （??? 是版本号）。
 2. 解压缩并进入文件夹。
 3. 执行 `translator.exe`。 他会要求你输入一个数字，然后将整个游戏翻成对应的语言。
 4. 执行 `OneLife.exe` 来玩。
 
-### Mac, Linux
+### Mac
+每次游戏更新时，都要重新下载。
+1. 去 [发布页面](https://github.com/skps2010/OneLife/releases) 并下载 “OneLife_MacOSX_v???.zip' （??? 是版本号）。
+2. 解压缩并进入文件夹。
+3. 执行 `translator`。 他会要求你输入一个数字，然后将整个游戏翻成对应的语言。
+4. 执行 `OneLife_v???.app` 来玩（??? 是版本号）。
+
+### Mac, Linux（源代码）
 这会下载最新版本：
 1. 下载 [skps2010Build.sh](https://github.com/skps2010/OneLife/blob/master/scripts/skps2010Scripts/skps2010Build.sh) 并放到空文件夹，然后执行。这会编译游戏。
 2. 执行 `python3 translator.py`。它会要求你输入一个数字，然后将整个游戏翻成对应的语言。
