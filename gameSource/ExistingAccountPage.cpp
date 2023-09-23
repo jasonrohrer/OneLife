@@ -569,7 +569,7 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         }
             
 #else
-        system("x-terminal-emulator -e python3 translator.py; sleep 1.0; while pgrep -f translator.py >/dev/null; do sleep 1.0; done");
+        system("x-terminal-emulator -e python3 translator.py");
 #endif
 
         char relaunched = relaunchGame();
