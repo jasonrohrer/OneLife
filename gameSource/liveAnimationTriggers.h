@@ -9,6 +9,8 @@ void initLiveTriggers();
 
 void freeLiveTriggers();
 
+char areLiveTriggersEnabled();
+
 
 char anyLiveTriggersLeft();
 

@@ -33,6 +33,11 @@ typedef struct Emotion {
         // drawn on top of everything (like a hat)
         int headEmot;
         
+        // -1 for no extra animation
+        // note that this field is optional in lines of emotionObjects.ini
+        // if not present, defaults to -1
+        int extraAnimIndex;
+
     } Emotion;
 
 

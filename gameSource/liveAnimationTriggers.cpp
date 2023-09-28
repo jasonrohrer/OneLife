@@ -163,6 +163,11 @@ void freeLiveTriggers() {
 
 
 
+char areLiveTriggersEnabled() {
+    return enabled;
+    }
+
+
 
 char anyLiveTriggersLeft() {
     if( !enabled ) {

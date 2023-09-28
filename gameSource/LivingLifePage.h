@@ -325,6 +325,13 @@ typedef struct LiveObject {
         SimpleVector<Emotion*> permanentEmots;
         
 
+        // either extra or extraB
+        // toggle back and forth as we switch emotes that have
+        // extraAnimIndex defined
+        AnimType extraAnimType;
+        
+
+
         char killMode;
         int killWithID;
         
