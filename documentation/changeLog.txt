@@ -15,6 +15,8 @@ Editor Fixes:
 --Made animation freeze slider in scene editor cover more time range, to be
   able to feeze action later in an animation.
 
+--Sound widget now has text field for volume instead of just a slider, making
+  even quieter volumes settable.
 
 
 

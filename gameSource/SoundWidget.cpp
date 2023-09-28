@@ -41,8 +41,8 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
           mClearButton( "clearButton.tga", 17, 0 ),
           mCopyButton( "copyButton.tga", 51, 0 ),
           mPasteButton( "pasteButton.tga", 85, 0 ),
-          mVolumeSlider( inDisplayFont, -70, -30, 2,
-                         124, 20,
+          mVolumeSlider( inDisplayFont, 10, -30, 2,
+                         44, 20,
                          0, 1.0, "V" ),
           mDefaultVolumeButton( inDisplayFont, 118, -30, "D" ) {
 
@@ -85,7 +85,7 @@ SoundWidget::SoundWidget( Font *inDisplayFont,
 
     styleButton( &mDefaultVolumeButton );
     
-    mVolumeSlider.toggleField( false );
+    mVolumeSlider.toggleField( true );
 
     mVolumeSlider.addActionListener( this );
     
