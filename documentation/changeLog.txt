@@ -10,6 +10,13 @@ Version 393    ???
   so the /LEADER command doesn't always work to find her).  Fixes #926
 
 
+Editor Fixes:
+
+--Made animation freeze slider in scene editor cover more time range, to be
+  able to feeze action later in an animation.
+
+
+
 
 
 Server Fixes:

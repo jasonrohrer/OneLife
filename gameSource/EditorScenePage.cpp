@@ -83,7 +83,7 @@ EditorScenePage::EditorScenePage()
                                    true, 2 ),                            
           mCellAnimFreezeSlider( smallFont, -450, -340, 2,
                                  300, 20,
-                                 -2, 2, "Cell Time" ),
+                                 -2, 4, "Cell Time" ),
           mPersonAnimFreezeSlider( smallFont, 50, -340, 2,
                                    300, 20,
                                    -2, 2, "Person Time" ),
