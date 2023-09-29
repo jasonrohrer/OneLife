@@ -4910,7 +4910,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             frozenArmType = moving;
             }
         if( fadeTargetType == ground2 || fadeTargetType == moving ||
-            fadeTargetType == extra || curType == extraB ) {
+            fadeTargetType == extra || fadeTargetType == extraB ) {
             frozenArmFadeTargetType = moving;
             }
         }
