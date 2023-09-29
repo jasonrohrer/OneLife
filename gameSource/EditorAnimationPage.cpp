@@ -681,6 +681,92 @@ static AnimationRecord *createRecordForObject( int inObjectID,
 
 
 
+// FIXME:
+// Eventually, show a cloneExtrasToAll button when a person is selected
+// that has extra animations defined
+// probably need a confirmation button of some kind too.
+static void cloneExtrasToOtherPeople( int inSourceObjectID ) {
+    
+    int firstPersonID = getNextPersonObject( -1 );
+    
+    int currentPersonID = firstPersonID;
+
+    while( true ) {
+        
+        if( currentPersonID == inSourceObjectID ) {
+            // skip source person
+            continue;
+            }
+        
+        
+         // clear the old ones first, because we might have a
+        // different number of extras now
+        int oldExtras = getNumExtraAnim( currentPersonID );
+        
+        for( int i=0; i<oldExtras; i++ ) {
+            setExtraIndex( i );
+            clearAnimation( currentPersonID, extra );
+            }
+
+        
+        int newExtras = getNumExtraAnim( inSourceObjectID );
+        
+
+        for( int i=0; i < newExtras; i++ ) {
+            setExtraIndex( i );
+
+            AnimationRecord *newRecord = 
+                createRecordForObject( currentPersonID, extra );
+            
+            AnimationRecord *sourceRecord = getAnimation( inSourceObjectID,
+                                                          extra );
+            
+            delete [] newRecord->soundAnim;
+            
+            newRecord->numSounds = sourceRecord->numSounds;
+            
+            newRecord->soundAnim = 
+                new SoundAnimationRecord[ newRecord->numSounds ];
+            for( int s=0; s < newRecord->numSounds; s++ ) {
+                newRecord->soundAnim[s] = 
+                    copyRecord( sourceRecord->soundAnim[s] );
+                }
+            
+
+            // FIXME:
+            // walk through each sprite animation in sourceRecord
+            // For each one, look at sprite's:
+            //  --id
+            //  --position
+            //  --age start and end
+            // Then walk through the currentPersonID object and look
+            // for a sprite that matches all three of these things
+            //
+            // --If found, copy that sprite animation into the corresponding
+            //   slot in newRecord
+
+            
+            addAnimation( newRecord );
+            
+            freeRecord( newRecord );
+            }
+
+        
+        
+        currentPersonID = getNextPersonObject( currentPersonID );
+
+        // looped back around
+        if( currentPersonID == firstPersonID ) {
+            break;
+            }
+        }
+    
+
+    }
+
+
+
+
 void EditorAnimationPage::populateCurrentAnim() {
     freeCurrentAnim();
 
