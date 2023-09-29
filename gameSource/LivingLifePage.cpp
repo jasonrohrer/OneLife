@@ -20197,8 +20197,18 @@ void LivingLifePage::step() {
                                 
                                 if( existing->currentEmot != NULL ) {
                                     if( existing->currentEmot->extraAnimIndex
-                                        > -1 ) {
+                                        > -1 
+                                        &&
+                                        computeCurrentAge( existing ) >= 1 ) {
                                         
+                                        // don't allow extra animations
+                                        // for emotes for people who
+                                        // are less that 1 year old
+                                        // since they can revert back
+                                        // to crying at any time
+                                        // and we don't want to interfere
+                                        // with their crying animaton
+
 
                                         // toggle back and forth
                                         // between extra slots so that
