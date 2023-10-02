@@ -138,7 +138,13 @@ EditorAnimationPage::EditorAnimationPage()
           mFullSoundPasteButton( smallFont, 130, -328, "Full Sound Paste" ),
           mSpeedMultField( smallFont, -500, -328, 4, false,
                            "Speed x", "0123456789." ),
-          mSpeedMultApplyButton( smallFont, -446, -328, "Apply" ) {
+          mSpeedMultApplyButton( smallFont, -446, -328, "Apply" ),
+          mCloneExtrasToOtherPeopleButton( 
+              smallFont, 390, 310,
+              "Clone Extras to All People" ),
+          mCloneExtrasToOtherPeopleButtonConfirm( 
+              smallFont, 190, 310,
+              "Really?" ) {
     
     
     for( int i=0; i<=extraB; i++ ) {
@@ -536,6 +542,16 @@ EditorAnimationPage::EditorAnimationPage()
     addKeyDescription( &mKeyLegend, 'h', "Hide/show UI" );
     
     addKeyClassDescription( &mKeyLegendB, "R-Click", "Copy animations" );
+
+
+    addComponent( &mCloneExtrasToOtherPeopleButton );
+    addComponent( &mCloneExtrasToOtherPeopleButtonConfirm );
+    
+    mCloneExtrasToOtherPeopleButton.addActionListener( this );
+    mCloneExtrasToOtherPeopleButtonConfirm.addActionListener( this );
+    
+    mCloneExtrasToOtherPeopleButton.setVisible( false );
+    mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
     }
 
 
@@ -681,25 +697,34 @@ static AnimationRecord *createRecordForObject( int inObjectID,
 
 
 
-// FIXME:
-// Eventually, show a cloneExtrasToAll button when a person is selected
-// that has extra animations defined
-// probably need a confirmation button of some kind too.
+
+// clone extra animations from inSourceObjectID to all other person objects
+// in the object bank
 static void cloneExtrasToOtherPeople( int inSourceObjectID ) {
     
     int firstPersonID = getNextPersonObject( -1 );
     
     int currentPersonID = firstPersonID;
 
+
+    ObjectRecord *sourceO = getObject( inSourceObjectID );
+
+    printf( "Cloning from person %d to all\n", inSourceObjectID );
+
     while( true ) {
         
         if( currentPersonID == inSourceObjectID ) {
             // skip source person
+            currentPersonID = getNextPersonObject( currentPersonID );
             continue;
             }
+
+        ObjectRecord *currentO = getObject( currentPersonID );        
+        
+        printf( "Cloning to person %d\n", currentPersonID );
         
         
-         // clear the old ones first, because we might have a
+        // clear the old ones first, because we might have a
         // different number of extras now
         int oldExtras = getNumExtraAnim( currentPersonID );
         
@@ -733,7 +758,14 @@ static void cloneExtrasToOtherPeople( int inSourceObjectID ) {
                 }
             
 
-            // FIXME:
+            for( int s=0; s < sourceRecord->numSlots; s++ ) {
+                if( s < currentO->numSlots ) {
+                    newRecord->slotAnim[s] = sourceRecord->slotAnim[s];
+                    }
+                }
+            
+            
+
             // walk through each sprite animation in sourceRecord
             // For each one, look at sprite's:
             //  --id
@@ -745,7 +777,32 @@ static void cloneExtrasToOtherPeople( int inSourceObjectID ) {
             // --If found, copy that sprite animation into the corresponding
             //   slot in newRecord
 
-            
+            for( int s=0; s < sourceRecord->numSprites; s++ ) {
+                
+                int id = sourceO->sprites[s];
+                doublePair pos = sourceO->spritePos[s];
+                
+                double ageStart = sourceO->spriteAgeStart[s];
+                double ageEnd = sourceO->spriteAgeEnd[s];
+                
+                
+                for( int s2=0; s2 < currentO->numSprites; s2++ ) {
+                    
+                    if( currentO->sprites[s2] == id 
+                        &&
+                        equal( currentO->spritePos[s2], pos )
+                        &&
+                        currentO->spriteAgeStart[s2] == ageStart
+                        &&
+                        currentO->spriteAgeEnd[s2] == ageEnd ) {
+                        
+                        // a match
+                        
+                        newRecord->spriteAnim[s2] =
+                            sourceRecord->spriteAnim[s];
+                        }
+                    }
+                }
             addAnimation( newRecord );
             
             freeRecord( newRecord );
@@ -760,8 +817,6 @@ static void cloneExtrasToOtherPeople( int inSourceObjectID ) {
             break;
             }
         }
-    
-
     }
 
 
@@ -918,6 +973,10 @@ void EditorAnimationPage::checkNextPrevVisible() {
         mCopyChainRandButton.setVisible( false );
         mCopyWalkButton.setVisible( false );
         mCopyUpButton.setVisible( false );
+        
+        mCloneExtrasToOtherPeopleButton.setVisible( false );
+        mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
+        
         return;
         }
     
@@ -960,9 +1019,13 @@ void EditorAnimationPage::checkNextPrevVisible() {
     
     if( r->person ) {
         mCopyWalkButton.setVisible( true );
+        mCloneExtrasToOtherPeopleButton.setVisible( true );
+        mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
         }
     else {
         mCopyWalkButton.setVisible( false );
+        mCloneExtrasToOtherPeopleButton.setVisible( false );
+        mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
         }
 
 
@@ -2529,6 +2592,16 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         else {
             mSpeedMultField.setText( "1.0" );
             }
+        }
+    else if( inTarget == &mCloneExtrasToOtherPeopleButton ) {
+        mCloneExtrasToOtherPeopleButton.setVisible( false );
+        mCloneExtrasToOtherPeopleButtonConfirm.setVisible( true );
+        }
+    else if( inTarget == &mCloneExtrasToOtherPeopleButtonConfirm ) {
+        mCloneExtrasToOtherPeopleButton.setVisible( false );
+        mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
+        
+        cloneExtrasToOtherPeople( mCurrentObjectID );
         }
     else {
         

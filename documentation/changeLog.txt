@@ -22,6 +22,10 @@ Editor Fixes:
 --Sound widget now has text field for volume instead of just a slider, making
   even quieter volumes settable.
 
+--Animation editor can now clone extras animations from one person to all other
+  people, with intelligent matching of sprites (with same position and age
+  range).
+
 
 
 
