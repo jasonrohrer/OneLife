@@ -144,7 +144,14 @@ EditorAnimationPage::EditorAnimationPage()
               "Clone Extras to All People" ),
           mCloneExtrasToOtherPeopleButtonConfirm( 
               smallFont, 190, 310,
-              "Really?" ) {
+              "Really?" ),
+          mCopyExtrasButton( 
+              smallFont, 560, 310,
+              "Copy Extras" ),
+          mClonedExtrasObjectID( -1 ),
+          mPasteClonedExtrasButton( 
+              smallFont, 190, 310,
+              "Paste Extras and Save" ) {
     
     
     for( int i=0; i<=extraB; i++ ) {
@@ -546,12 +553,19 @@ EditorAnimationPage::EditorAnimationPage()
 
     addComponent( &mCloneExtrasToOtherPeopleButton );
     addComponent( &mCloneExtrasToOtherPeopleButtonConfirm );
-    
+    addComponent( &mCopyExtrasButton );
+
     mCloneExtrasToOtherPeopleButton.addActionListener( this );
     mCloneExtrasToOtherPeopleButtonConfirm.addActionListener( this );
-    
+    mCopyExtrasButton.addActionListener( this );
+
     mCloneExtrasToOtherPeopleButton.setVisible( false );
     mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
+    mCopyExtrasButton.setVisible( false );
+
+    addComponent( &mPasteClonedExtrasButton );
+    mPasteClonedExtrasButton.addActionListener( this );
+    mPasteClonedExtrasButton.setVisible( false );
     }
 
 
@@ -697,6 +711,102 @@ static AnimationRecord *createRecordForObject( int inObjectID,
 
 
 
+static void cloneExtrasBetweenPeople( int inSourceObjectID, 
+                                      int inDestObjectID ) {
+    
+    ObjectRecord *sourceO = getObject( inSourceObjectID );
+
+    ObjectRecord *currentO = getObject( inDestObjectID );        
+        
+        
+    // clear the old ones first, because we might have a
+    // different number of extras now
+    int oldExtras = getNumExtraAnim( inDestObjectID );
+        
+    for( int i=0; i<oldExtras; i++ ) {
+        setExtraIndex( i );
+        clearAnimation( inDestObjectID, extra );
+        }
+
+        
+    int newExtras = getNumExtraAnim( inSourceObjectID );
+        
+
+    for( int i=0; i < newExtras; i++ ) {
+        setExtraIndex( i );
+
+        AnimationRecord *newRecord = 
+            createRecordForObject( inDestObjectID, extra );
+            
+        AnimationRecord *sourceRecord = getAnimation( inSourceObjectID,
+                                                      extra );
+            
+        delete [] newRecord->soundAnim;
+            
+        newRecord->numSounds = sourceRecord->numSounds;
+            
+        newRecord->soundAnim = 
+            new SoundAnimationRecord[ newRecord->numSounds ];
+        for( int s=0; s < newRecord->numSounds; s++ ) {
+            newRecord->soundAnim[s] = 
+                copyRecord( sourceRecord->soundAnim[s] );
+            }
+            
+
+        for( int s=0; s < sourceRecord->numSlots; s++ ) {
+            if( s < currentO->numSlots ) {
+                newRecord->slotAnim[s] = sourceRecord->slotAnim[s];
+                }
+            }
+            
+            
+
+        // walk through each sprite animation in sourceRecord
+        // For each one, look at sprite's:
+        //  --id
+        //  --position
+        //  --age start and end
+        // Then walk through the inDestObjectID object and look
+        // for a sprite that matches all three of these things
+        //
+        // --If found, copy that sprite animation into the corresponding
+        //   slot in newRecord
+
+        for( int s=0; s < sourceRecord->numSprites; s++ ) {
+                
+            int id = sourceO->sprites[s];
+            doublePair pos = sourceO->spritePos[s];
+                
+            double ageStart = sourceO->spriteAgeStart[s];
+            double ageEnd = sourceO->spriteAgeEnd[s];
+                
+                
+            for( int s2=0; s2 < currentO->numSprites; s2++ ) {
+                    
+                if( currentO->sprites[s2] == id 
+                    &&
+                    equal( currentO->spritePos[s2], pos )
+                    &&
+                    currentO->spriteAgeStart[s2] == ageStart
+                    &&
+                    currentO->spriteAgeEnd[s2] == ageEnd ) {
+                        
+                    // a match
+                        
+                    newRecord->spriteAnim[s2] =
+                        sourceRecord->spriteAnim[s];
+                    }
+                }
+            }
+        addAnimation( newRecord );
+            
+        freeRecord( newRecord );
+        }        
+    }
+
+        
+
+
 
 // clone extra animations from inSourceObjectID to all other person objects
 // in the object bank
@@ -707,9 +817,7 @@ static void cloneExtrasToOtherPeople( int inSourceObjectID ) {
     int currentPersonID = firstPersonID;
 
 
-    ObjectRecord *sourceO = getObject( inSourceObjectID );
 
-    printf( "Cloning from person %d to all\n", inSourceObjectID );
 
     while( true ) {
         
@@ -719,96 +827,7 @@ static void cloneExtrasToOtherPeople( int inSourceObjectID ) {
             continue;
             }
 
-        ObjectRecord *currentO = getObject( currentPersonID );        
-        
-        printf( "Cloning to person %d\n", currentPersonID );
-        
-        
-        // clear the old ones first, because we might have a
-        // different number of extras now
-        int oldExtras = getNumExtraAnim( currentPersonID );
-        
-        for( int i=0; i<oldExtras; i++ ) {
-            setExtraIndex( i );
-            clearAnimation( currentPersonID, extra );
-            }
-
-        
-        int newExtras = getNumExtraAnim( inSourceObjectID );
-        
-
-        for( int i=0; i < newExtras; i++ ) {
-            setExtraIndex( i );
-
-            AnimationRecord *newRecord = 
-                createRecordForObject( currentPersonID, extra );
-            
-            AnimationRecord *sourceRecord = getAnimation( inSourceObjectID,
-                                                          extra );
-            
-            delete [] newRecord->soundAnim;
-            
-            newRecord->numSounds = sourceRecord->numSounds;
-            
-            newRecord->soundAnim = 
-                new SoundAnimationRecord[ newRecord->numSounds ];
-            for( int s=0; s < newRecord->numSounds; s++ ) {
-                newRecord->soundAnim[s] = 
-                    copyRecord( sourceRecord->soundAnim[s] );
-                }
-            
-
-            for( int s=0; s < sourceRecord->numSlots; s++ ) {
-                if( s < currentO->numSlots ) {
-                    newRecord->slotAnim[s] = sourceRecord->slotAnim[s];
-                    }
-                }
-            
-            
-
-            // walk through each sprite animation in sourceRecord
-            // For each one, look at sprite's:
-            //  --id
-            //  --position
-            //  --age start and end
-            // Then walk through the currentPersonID object and look
-            // for a sprite that matches all three of these things
-            //
-            // --If found, copy that sprite animation into the corresponding
-            //   slot in newRecord
-
-            for( int s=0; s < sourceRecord->numSprites; s++ ) {
-                
-                int id = sourceO->sprites[s];
-                doublePair pos = sourceO->spritePos[s];
-                
-                double ageStart = sourceO->spriteAgeStart[s];
-                double ageEnd = sourceO->spriteAgeEnd[s];
-                
-                
-                for( int s2=0; s2 < currentO->numSprites; s2++ ) {
-                    
-                    if( currentO->sprites[s2] == id 
-                        &&
-                        equal( currentO->spritePos[s2], pos )
-                        &&
-                        currentO->spriteAgeStart[s2] == ageStart
-                        &&
-                        currentO->spriteAgeEnd[s2] == ageEnd ) {
-                        
-                        // a match
-                        
-                        newRecord->spriteAnim[s2] =
-                            sourceRecord->spriteAnim[s];
-                        }
-                    }
-                }
-            addAnimation( newRecord );
-            
-            freeRecord( newRecord );
-            }
-
-        
+        cloneExtrasBetweenPeople( inSourceObjectID, currentPersonID );
         
         currentPersonID = getNextPersonObject( currentPersonID );
 
@@ -977,6 +996,8 @@ void EditorAnimationPage::checkNextPrevVisible() {
         mCloneExtrasToOtherPeopleButton.setVisible( false );
         mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
         
+        mPasteClonedExtrasButton.setVisible( false );
+        mCopyExtrasButton.setVisible( false );
         return;
         }
     
@@ -1021,6 +1042,12 @@ void EditorAnimationPage::checkNextPrevVisible() {
         mCopyWalkButton.setVisible( true );
         mCloneExtrasToOtherPeopleButton.setVisible( true );
         mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
+        mCopyExtrasButton.setVisible( true );
+
+        if( mClonedExtrasObjectID > 0 &&
+            mCurrentObjectID != mClonedExtrasObjectID ) {
+            mPasteClonedExtrasButton.setVisible( true );
+            }
         }
     else {
         mCopyWalkButton.setVisible( false );
@@ -2602,6 +2629,23 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
         
         cloneExtrasToOtherPeople( mCurrentObjectID );
+        
+        mClonedExtrasObjectID = mCurrentObjectID;
+        }
+    else if( inTarget == &mCopyExtrasButton ) {
+        mClonedExtrasObjectID = mCurrentObjectID;
+        mCopyExtrasButton.setVisible( false );
+        }
+    else if( inTarget == &mPasteClonedExtrasButton ) {
+        cloneExtrasBetweenPeople( mClonedExtrasObjectID, mCurrentObjectID );
+        
+        // re-pick current object
+        actionPerformed( &mObjectPicker );
+        
+        // switch to extras
+        actionPerformed( mCheckboxes[5] );
+
+        mPasteClonedExtrasButton.setVisible( false );
         }
     else {
         

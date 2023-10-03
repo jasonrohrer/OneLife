@@ -26,6 +26,8 @@ Editor Fixes:
   people, with intelligent matching of sprites (with same position and age
   range).
 
+--Animation editor can now clone extras from one person object to another.
+
 
 
 

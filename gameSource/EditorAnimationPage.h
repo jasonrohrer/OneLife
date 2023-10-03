@@ -283,6 +283,12 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextButton mCloneExtrasToOtherPeopleButton;
         TextButton mCloneExtrasToOtherPeopleButtonConfirm;
         
+        TextButton mCopyExtrasButton;
+
+        int mClonedExtrasObjectID;
+
+        TextButton mPasteClonedExtrasButton;
+        
 
         void checkNextPrevVisible();
         
