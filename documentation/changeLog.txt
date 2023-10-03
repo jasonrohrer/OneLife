@@ -28,6 +28,8 @@ Editor Fixes:
 
 --Animation editor can now clone extras from one person object to another.
 
+--Scene editor can now display gesture emotes.
+
 
 
 
