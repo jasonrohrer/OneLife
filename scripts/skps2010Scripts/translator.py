@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import requests
 import os
-from os.path import dirname
+from os.path import dirname, realpath
 import sys
 
 
@@ -11,7 +11,7 @@ def main():
     if getattr(sys, 'frozen', False):
         path = dirname(sys.executable)
     else:
-        path = os.path.dirname(__file__)
+        path = dirname(realpath(__file__))
     os.chdir(path)
     url = 'https://script.google.com/macros/s/AKfycbx0agAIW99KUpLdLQX1ghFaMu81uopoQ7zNqHe7s3D5gWIZO8cb7tLRTGV8Gb8F4saC/exec'
 
