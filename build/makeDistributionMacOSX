@@ -56,7 +56,13 @@ cp -r $3 $framework_folder
 cp /usr/local/lib/libfreetype.6.dylib $framework_folder
 cp /usr/local/opt/libpng/lib/libpng16.16.dylib $framework_folder
 cp /usr/local/opt/sdl12-compat/lib/libSDL-1.2.0.dylib $framework_folder
-cp /usr/local/Cellar/sdl2/2.28.3/lib/libSDL2-2.0.0.dylib $framework_folder
+
+# allow to use custom SDL2
+if [ ! -e ../../libSDL2-2.0.0.dylib ]
+then
+	cp /usr/local/Cellar/sdl2/2.28.3/lib/libSDL2-2.0.0.dylib ../../
+fi
+cp ../../libSDL2-2.0.0.dylib $framework_folder
 
 install_name_tool -change /usr/local/lib/libfreetype.6.dylib @executable_path/../Frameworks/libfreetype.6.dylib $onelife_app
 install_name_tool -change /usr/local/opt/libpng/lib/libpng16.16.dylib @executable_path/../Frameworks/libfreetype.6.dylib $framework_folder/libfreetype.6.dylib
