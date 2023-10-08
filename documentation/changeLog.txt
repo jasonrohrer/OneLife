@@ -4,10 +4,31 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 393    ???
+Version 394    2023-October-6
 
 --New /MOTHER command to locate your mother (sometimes she's not your leader,
   so the /LEADER command doesn't always work to find her).  Fixes #926
+
+--Support for using extra animation slots in emotes.
+
+
+
+
+Editor Fixes:
+
+--Made animation freeze slider in scene editor cover more time range, to be
+  able to feeze action later in an animation.
+
+--Sound widget now has text field for volume instead of just a slider, making
+  even quieter volumes settable.
+
+--Animation editor can now clone extras animations from one person to all other
+  people, with intelligent matching of sprites (with same position and age
+  range).
+
+--Animation editor can now clone extras from one person object to another.
+
+--Scene editor can now display gesture emotes.
 
 
 

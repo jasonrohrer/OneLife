@@ -279,6 +279,16 @@ class EditorAnimationPage : public GamePage, public ActionListener {
         TextField mSpeedMultField;
         TextButton mSpeedMultApplyButton;
         
+        
+        TextButton mCloneExtrasToOtherPeopleButton;
+        TextButton mCloneExtrasToOtherPeopleButtonConfirm;
+        
+        TextButton mCopyExtrasButton;
+
+        int mClonedExtrasObjectID;
+
+        TextButton mPasteClonedExtrasButton;
+        
 
         void checkNextPrevVisible();
         

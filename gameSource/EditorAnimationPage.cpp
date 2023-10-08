@@ -138,7 +138,20 @@ EditorAnimationPage::EditorAnimationPage()
           mFullSoundPasteButton( smallFont, 130, -328, "Full Sound Paste" ),
           mSpeedMultField( smallFont, -500, -328, 4, false,
                            "Speed x", "0123456789." ),
-          mSpeedMultApplyButton( smallFont, -446, -328, "Apply" ) {
+          mSpeedMultApplyButton( smallFont, -446, -328, "Apply" ),
+          mCloneExtrasToOtherPeopleButton( 
+              smallFont, 390, 310,
+              "Clone Extras to All People" ),
+          mCloneExtrasToOtherPeopleButtonConfirm( 
+              smallFont, 190, 310,
+              "Really?" ),
+          mCopyExtrasButton( 
+              smallFont, 560, 310,
+              "Copy Extras" ),
+          mClonedExtrasObjectID( -1 ),
+          mPasteClonedExtrasButton( 
+              smallFont, 190, 310,
+              "Paste Extras and Save" ) {
     
     
     for( int i=0; i<=extraB; i++ ) {
@@ -536,6 +549,23 @@ EditorAnimationPage::EditorAnimationPage()
     addKeyDescription( &mKeyLegend, 'h', "Hide/show UI" );
     
     addKeyClassDescription( &mKeyLegendB, "R-Click", "Copy animations" );
+
+
+    addComponent( &mCloneExtrasToOtherPeopleButton );
+    addComponent( &mCloneExtrasToOtherPeopleButtonConfirm );
+    addComponent( &mCopyExtrasButton );
+
+    mCloneExtrasToOtherPeopleButton.addActionListener( this );
+    mCloneExtrasToOtherPeopleButtonConfirm.addActionListener( this );
+    mCopyExtrasButton.addActionListener( this );
+
+    mCloneExtrasToOtherPeopleButton.setVisible( false );
+    mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
+    mCopyExtrasButton.setVisible( false );
+
+    addComponent( &mPasteClonedExtrasButton );
+    mPasteClonedExtrasButton.addActionListener( this );
+    mPasteClonedExtrasButton.setVisible( false );
     }
 
 
@@ -676,6 +706,136 @@ static AnimationRecord *createRecordForObject( int inObjectID,
         }
 
     return r;
+    }
+
+
+
+
+static void cloneExtrasBetweenPeople( int inSourceObjectID, 
+                                      int inDestObjectID ) {
+    
+    ObjectRecord *sourceO = getObject( inSourceObjectID );
+
+    ObjectRecord *currentO = getObject( inDestObjectID );        
+        
+        
+    // clear the old ones first, because we might have a
+    // different number of extras now
+    int oldExtras = getNumExtraAnim( inDestObjectID );
+        
+    for( int i=0; i<oldExtras; i++ ) {
+        setExtraIndex( i );
+        clearAnimation( inDestObjectID, extra );
+        }
+
+        
+    int newExtras = getNumExtraAnim( inSourceObjectID );
+        
+
+    for( int i=0; i < newExtras; i++ ) {
+        setExtraIndex( i );
+
+        AnimationRecord *newRecord = 
+            createRecordForObject( inDestObjectID, extra );
+            
+        AnimationRecord *sourceRecord = getAnimation( inSourceObjectID,
+                                                      extra );
+            
+        delete [] newRecord->soundAnim;
+            
+        newRecord->numSounds = sourceRecord->numSounds;
+            
+        newRecord->soundAnim = 
+            new SoundAnimationRecord[ newRecord->numSounds ];
+        for( int s=0; s < newRecord->numSounds; s++ ) {
+            newRecord->soundAnim[s] = 
+                copyRecord( sourceRecord->soundAnim[s] );
+            }
+            
+
+        for( int s=0; s < sourceRecord->numSlots; s++ ) {
+            if( s < currentO->numSlots ) {
+                newRecord->slotAnim[s] = sourceRecord->slotAnim[s];
+                }
+            }
+            
+            
+
+        // walk through each sprite animation in sourceRecord
+        // For each one, look at sprite's:
+        //  --id
+        //  --position
+        //  --age start and end
+        // Then walk through the inDestObjectID object and look
+        // for a sprite that matches all three of these things
+        //
+        // --If found, copy that sprite animation into the corresponding
+        //   slot in newRecord
+
+        for( int s=0; s < sourceRecord->numSprites; s++ ) {
+                
+            int id = sourceO->sprites[s];
+            doublePair pos = sourceO->spritePos[s];
+                
+            double ageStart = sourceO->spriteAgeStart[s];
+            double ageEnd = sourceO->spriteAgeEnd[s];
+                
+                
+            for( int s2=0; s2 < currentO->numSprites; s2++ ) {
+                    
+                if( currentO->sprites[s2] == id 
+                    &&
+                    equal( currentO->spritePos[s2], pos )
+                    &&
+                    currentO->spriteAgeStart[s2] == ageStart
+                    &&
+                    currentO->spriteAgeEnd[s2] == ageEnd ) {
+                        
+                    // a match
+                        
+                    newRecord->spriteAnim[s2] =
+                        sourceRecord->spriteAnim[s];
+                    }
+                }
+            }
+        addAnimation( newRecord );
+            
+        freeRecord( newRecord );
+        }        
+    }
+
+        
+
+
+
+// clone extra animations from inSourceObjectID to all other person objects
+// in the object bank
+static void cloneExtrasToOtherPeople( int inSourceObjectID ) {
+    
+    int firstPersonID = getNextPersonObject( -1 );
+    
+    int currentPersonID = firstPersonID;
+
+
+
+
+    while( true ) {
+        
+        if( currentPersonID == inSourceObjectID ) {
+            // skip source person
+            currentPersonID = getNextPersonObject( currentPersonID );
+            continue;
+            }
+
+        cloneExtrasBetweenPeople( inSourceObjectID, currentPersonID );
+        
+        currentPersonID = getNextPersonObject( currentPersonID );
+
+        // looped back around
+        if( currentPersonID == firstPersonID ) {
+            break;
+            }
+        }
     }
 
 
@@ -832,6 +992,12 @@ void EditorAnimationPage::checkNextPrevVisible() {
         mCopyChainRandButton.setVisible( false );
         mCopyWalkButton.setVisible( false );
         mCopyUpButton.setVisible( false );
+        
+        mCloneExtrasToOtherPeopleButton.setVisible( false );
+        mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
+        
+        mPasteClonedExtrasButton.setVisible( false );
+        mCopyExtrasButton.setVisible( false );
         return;
         }
     
@@ -874,9 +1040,19 @@ void EditorAnimationPage::checkNextPrevVisible() {
     
     if( r->person ) {
         mCopyWalkButton.setVisible( true );
+        mCloneExtrasToOtherPeopleButton.setVisible( true );
+        mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
+        mCopyExtrasButton.setVisible( true );
+
+        if( mClonedExtrasObjectID > 0 &&
+            mCurrentObjectID != mClonedExtrasObjectID ) {
+            mPasteClonedExtrasButton.setVisible( true );
+            }
         }
     else {
         mCopyWalkButton.setVisible( false );
+        mCloneExtrasToOtherPeopleButton.setVisible( false );
+        mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
         }
 
 
@@ -2443,6 +2619,33 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         else {
             mSpeedMultField.setText( "1.0" );
             }
+        }
+    else if( inTarget == &mCloneExtrasToOtherPeopleButton ) {
+        mCloneExtrasToOtherPeopleButton.setVisible( false );
+        mCloneExtrasToOtherPeopleButtonConfirm.setVisible( true );
+        }
+    else if( inTarget == &mCloneExtrasToOtherPeopleButtonConfirm ) {
+        mCloneExtrasToOtherPeopleButton.setVisible( false );
+        mCloneExtrasToOtherPeopleButtonConfirm.setVisible( false );
+        
+        cloneExtrasToOtherPeople( mCurrentObjectID );
+        
+        mClonedExtrasObjectID = mCurrentObjectID;
+        }
+    else if( inTarget == &mCopyExtrasButton ) {
+        mClonedExtrasObjectID = mCurrentObjectID;
+        mCopyExtrasButton.setVisible( false );
+        }
+    else if( inTarget == &mPasteClonedExtrasButton ) {
+        cloneExtrasBetweenPeople( mClonedExtrasObjectID, mCurrentObjectID );
+        
+        // re-pick current object
+        actionPerformed( &mObjectPicker );
+        
+        // switch to extras
+        actionPerformed( mCheckboxes[5] );
+
+        mPasteClonedExtrasButton.setVisible( false );
         }
     else {
         

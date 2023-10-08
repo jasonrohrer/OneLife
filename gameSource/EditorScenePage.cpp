@@ -83,7 +83,7 @@ EditorScenePage::EditorScenePage()
                                    true, 2 ),                            
           mCellAnimFreezeSlider( smallFont, -450, -340, 2,
                                  300, 20,
-                                 -2, 2, "Cell Time" ),
+                                 -2, 4, "Cell Time" ),
           mPersonAnimFreezeSlider( smallFont, 50, -340, 2,
                                    300, 20,
                                    -2, 2, "Person Time" ),
@@ -1493,6 +1493,18 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             
                             ClothingSet clothingToDraw = p->clothing;
                             
+                            AnimType aType = p->anim;
+                            
+                            
+                            // for now, only first emote in comma-separated
+                            // list of emots can have extra anim associated
+                            // with it
+                            if( p->currentEmot != NULL &&
+                                p->currentEmot->extraAnimIndex > -1 ) {
+                                aType = extra;
+                                setExtraIndex( p->currentEmot->extraAnimIndex );
+                                }
+
                             if( splitHeld ) {
                                 // don't actually draw person now
                                 // sandwitch them in between layers of 
@@ -1506,7 +1518,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                             drawObjectAnim( p->oID, 2, p->anim, 
                                             thisFrameTime, 
                                             0,
-                                            p->anim,
+                                            aType,
                                             thisFrameTime,
                                             frozenRotFrameTime,
                                             &used,

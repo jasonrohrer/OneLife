@@ -4905,10 +4905,12 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
         ( inObj->lastHoldingID > 0 && 
           getObject( inObj->lastHoldingID )->rideable ) ) {
     
-        if( curType == ground2 || curType == moving ) {
+        if( curType == ground2 || curType == moving ||
+            curType == extra || curType == extraB ) {
             frozenArmType = moving;
             }
-        if( fadeTargetType == ground2 || fadeTargetType == moving ) {
+        if( fadeTargetType == ground2 || fadeTargetType == moving ||
+            fadeTargetType == extra || fadeTargetType == extraB ) {
             frozenArmFadeTargetType = moving;
             }
         }
@@ -13424,7 +13426,7 @@ void LivingLifePage::step() {
     
     
 
-    if( ourObject != NULL ) {
+    if( ourObject != NULL && areLiveTriggersEnabled() ) {
         char newTrigger = false;
         
         AnimType anim = stepLiveTriggers( &newTrigger );
@@ -16764,6 +16766,8 @@ void LivingLifePage::step() {
                 o.currentEmot = NULL;
                 o.emotClearETATime = 0;
                 
+                o.extraAnimType = extraB;
+
                 o.killMode = false;
                 o.killWithID = -1;
                 o.chasingUs = false;
@@ -20192,6 +20196,49 @@ void LivingLifePage::step() {
                                 if( oldEmot != existing->currentEmot &&
                                     existing->currentEmot != NULL ) {
                                     newEmotPlaySound = existing->currentEmot;
+                                    
+                                    }
+                                
+                                if( existing->currentEmot != NULL ) {
+                                    if( existing->currentEmot->extraAnimIndex
+                                        > -1 
+                                        &&
+                                        computeCurrentAge( existing ) >= 1 ) {
+                                        
+                                        // don't allow extra animations
+                                        // for emotes for people who
+                                        // are less that 1 year old
+                                        // since they can revert back
+                                        // to crying at any time
+                                        // and we don't want to interfere
+                                        // with their crying animaton
+
+
+                                        // toggle back and forth
+                                        // between extra slots so that
+                                        // extra animations can transition
+                                        // smoothly
+                                        if( existing->extraAnimType ==
+                                            extraB ) {
+                                            
+                                            setExtraIndex( 
+                                                existing->
+                                                currentEmot->extraAnimIndex );
+                                        
+                                            addNewAnimPlayerOnly( existing, 
+                                                                  extra );
+                                            existing->extraAnimType = extra;
+                                            }
+                                        else {
+                                            setExtraIndexB( 
+                                                existing->
+                                                currentEmot->extraAnimIndex );
+                                        
+                                            addNewAnimPlayerOnly( existing, 
+                                                                  extraB );
+                                            existing->extraAnimType = extraB;
+                                            }
+                                        }
                                     }
                                 }
                             

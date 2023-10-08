@@ -68,15 +68,16 @@ void initEmotion() {
             e->faceEmot = 0;
             e->bodyEmot = 0;
             e->headEmot = 0;
-            
+            e->extraAnimIndex = -1;
 
-            sscanf( parts[i], "%d %d %d %d %d %d", 
+            sscanf( parts[i], "%d %d %d %d %d %d %d", 
                     &( e->eyeEmot ), 
                     &( e->mouthEmot ), 
                     &( e->otherEmot ),
                     &( e->faceEmot ),
                     &( e->bodyEmot ),
-                    &( e->headEmot ) );
+                    &( e->headEmot ),
+                    &( e->extraAnimIndex ) );
             }
         delete [] parts[i];
         }
