@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  server:
+    container_name: ohol-server
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    ports:
+      - '8005:8005'
+    networks:
+      - ohol
+    volumes:
+      - ./docker/data:/ohol/data
+volumes:
+  server:
+    driver: local
+
+networks:
+  ohol:
+    name: ohol
+    driver: bridge
