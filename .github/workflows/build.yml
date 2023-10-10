@@ -9,12 +9,6 @@ jobs:
     name: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout OneLifeServer
-        uses: actions/checkout@v4
-        with:
-          path: OneLife
-          ref: OneLife_liveServer
-
       - name: Checkout minorGems
         uses: actions/checkout@v4
         with:
@@ -27,6 +21,12 @@ jobs:
           repository: jasonrohrer/OneLifeData7
           path: OneLifeData7
 
+      - name: Checkout OneLifeServer
+        uses: actions/checkout@v4
+        with:
+          path: OneLife
+          ref: OneLife_liveServer
+          
       - name: Install libraries
         run: |
           apt install g++-mingw-w64 make git -y
