@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: OneLife
-          ref: OneLife_liveServer
+          ref: refs/heads/OneLife_liveServer
           
       - name: Install libraries
         run: |
