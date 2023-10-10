@@ -1,0 +1,38 @@
+name: Build
+on:
+  push:
+    branches: master
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout OneLifeServer
+        uses: actions/checkout@v4
+        with:
+          path: OneLife
+          ref: OneLife_liveServer
+
+      - name: Checkout minorGems
+        uses: actions/checkout@v4
+        with:
+          repository: jasonrohrer/minorGems
+          path: minorGems
+
+      - name: Checkout OneLifeData7
+        uses: actions/checkout@v4
+        with:
+          repository: jasonrohrer/OneLifeData7
+          path: OneLifeData7
+
+      - name: Install libraries
+        run: |
+          apt install g++-mingw-w64 make git -y
+
+      - name: Compile server
+        run: |
+          cd OneLife/server
+          ./configure 1
+          make
