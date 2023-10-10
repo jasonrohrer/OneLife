@@ -24,6 +24,7 @@ jobs:
       - name: Checkout OneLifeServer
         uses: actions/checkout@v4
         with:
+          repository: jasonrohrer/OneLife
           path: OneLife
           ref: refs/heads/OneLife_liveServer
           
