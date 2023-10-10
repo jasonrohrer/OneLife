@@ -30,7 +30,7 @@ jobs:
           
       - name: Install libraries
         run: |
-          apt install g++-mingw-w64 make git -y
+          sudo apt install g++-mingw-w64 make git -y
 
       - name: Compile server
         run: |
