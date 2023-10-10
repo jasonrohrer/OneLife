@@ -26,7 +26,7 @@ jobs:
         with:
           repository: jasonrohrer/OneLife
           path: OneLife
-          ref: refs/heads/OneLife_liveServer
+          ref: refs/tags/OneLife_liveServer
           
       - name: Install libraries
         run: |
