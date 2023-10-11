@@ -8586,6 +8586,27 @@ static char nextLogInTwin = false;
 static int firstTwinID = -1;
 
 
+
+
+
+static char isEmailAliveButDisconnected( char *inEmail ) {
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( ! o->error && ! o->connected &&
+            strcmp( o->email, inEmail ) == 0 ) {
+            
+            return true;
+            }
+        }
+
+    return false;
+    }
+
+
+
+
 // inAllowOrForceReconnect is 0 for forbidden reconnect, 1 to allow, 
 // 2 to require
 // returns ID of new player,
@@ -18853,7 +18874,18 @@ int main() {
                     delete [] nextConnection->clientTag;
                     nextConnection->clientTag = NULL;
                     
+                    if( isEmailAliveButDisconnected( nextConnection->email ) ) {
+                        // don't allow new twin logins from anyone who
+                        // still has an existing life going
+                        
+                        // just ignore their twin request, and connect
+                        // them back to the same life again.
 
+                        // we will delete any twinCode below, since count is 0
+                        nextConnection->twinCount = 0;
+                        }                    
+
+                    
                     if( nextConnection->twinCode != NULL
                         && 
                         nextConnection->twinCount > 0 ) {

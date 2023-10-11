@@ -4,6 +4,16 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes:
+
+--Fixed so that if you disconnect and re-join the game, you always rejoin an
+  existing life if you're still alive, even if you request twin status during
+  the re-join.  Before, a request for twin status during rejoin would result in
+  your previous life suddenly ending.  Fixes #934
+
+
+
+
 Version 394    2023-October-6
 
 --New /MOTHER command to locate your mother (sometimes she's not your leader,
