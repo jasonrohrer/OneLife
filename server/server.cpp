@@ -20650,7 +20650,43 @@ int main() {
                             delete [] psMessage;
                             }
                         }
+                    else if( topLeaderO != NULL && topLeaderO == nextPlayer ) {
+                        // they are the top leader themselves
+                        char *topLeaderName = 
+                                getLeadershipName( topLeaderO );
+                        
+                        char *psMessage;
+
+                        if( topLeaderName != NULL ) {
+                            // they have followers and thus a title
+                            psMessage = 
+                                autoSprintf( "PS\n"
+                                             "%d/0 I AM THE %s "
+                                             "OF MY FOLLOWERS\n#",
+                                             nextPlayer->id,
+                                             topLeaderName );
+                            
+                            delete [] topLeaderName;
+                            }
+                        else {
+                            // title NULL means they have no followers
+                            psMessage = 
+                                autoSprintf( "PS\n"
+                                             "%d/0 +NO LEADER+\n#",
+                                             nextPlayer->id );
+                            }
+                        
+                        sendMessageToPlayer( nextPlayer, 
+                                             psMessage, 
+                                             strlen( psMessage ) );
+                        delete [] psMessage;
+                        } 
                     else {
+                        // seems like this case will never happen
+                        // seems like top leader is always player themselves
+                        // if they have no leader, so previous case will
+                        // handle that.
+                        
                         char *psMessage = 
                             autoSprintf( "PS\n"
                                          "%d/0 +NO LEADER+\n#",

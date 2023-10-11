@@ -11,6 +11,11 @@ Server Fixes:
   the re-join.  Before, a request for twin status during rejoin would result in
   your previous life suddenly ending.  Fixes #934
 
+--When top leader uses the /LEADER command, it now tells them that they are the
+  leader, and tells them their title.  It used to say +NO LEADER+, which was
+  confusing, since that is what is also shown for players who are leaderless.
+  Fixes #936
+
 
 
 
