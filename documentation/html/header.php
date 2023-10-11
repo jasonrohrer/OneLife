@@ -31,18 +31,18 @@ if( isset( $blockRobots ) && $blockRobots == 1 ) {
 
 
     
-    <table border=0 cellspacing=5 cellpadding=0 width=100%><tr>
+    <table border=0 cellspacing=10 cellpadding=0 width=100%><tr>
 
-    <td align=center width=10%>[<a href='http://onehouronelife.com'>Home</a>]</td>
-    <td align=center width=10%>[<a href='https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=<?php echo $referrer;?>'>Buy</a>]</td>
-    <td align=center width=10%>[<a href='http://onehouronelife.com/newsPage.php'>News</a>]</td>
-    <td align=center width=10%>[<a href='http://lineage.onehouronelife.com/server.php?action=front_page'>Family Trees</a>]</td>
-    <td align=center width=10%>[<a href='http://onehouronelife.com/fitnessServer/server.php?action=show_leaderboard'>Leaderboard</a>]</td>
-    <td align=center width=10%>[<a href='http://photos.onehouronelife.com/server.php?action=front_page'>Photos</a>]</td>
-    <td align=center width=10%>[<a href='http://onehouronelife.com/updateLog.php'>Update Log</a>]</td>
-    <td align=center width=10%>[<a href='https://onehouronelife.com/forums/viewtopic.php?pid=101114'>FAQ</a>]</td>
-    <td align=center width=10%>[<a href='https://onehouronelife.com/forums'>Forums</a>]</td>
-    <td align=center width=10%>[<a href='https://onetech.info/'>Tech Tree</a>]</td>
+    <td align=center width=20%>[<a href='http://onehouronelife.com'>Home</a>]</td>
+    <td align=center width=20%>[<a href='https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=<?php echo $referrer;?>'>Buy</a>]</td>
+    <td align=center width=20%>[<a href='http://onehouronelife.com/newsPage.php'>News</a>]</td>
+    <td align=center width=20%>[<a href='http://lineage.onehouronelife.com/server.php?action=front_page'>Family Trees</a>]</td>
+    <td align=center width=20%>[<a href='http://onehouronelife.com/fitnessServer/server.php?action=show_leaderboard'>Leaderboard</a>]</td></tr><tr>
+    <td align=center width=20%>[<a href='http://photos.onehouronelife.com/server.php?action=front_page'>Photos</a>]</td>
+    <td align=center width=20%>[<a href='http://onehouronelife.com/updateLog.php'>Update Log</a>]</td>
+    <td align=center width=20%>[<a href='https://onehouronelife.com/forums'>Forums</a>]</td>
+    <td align=center width=20%>[<a href='https://github.com/skps2010/OneLife'>Unicode Language Mod</a>]</td>
+    <td align=center width=20%>[<a href='https://onetech.info/'>Tech Tree</a>]</td>
 
 
 </tr></table>
