@@ -17567,24 +17567,37 @@ static char messageFloodCheck( LiveObject *inPlayer, messageType inType ) {
     
     inPlayer->messageFloodBatchCount[index] ++;
 
+
+    if( inPlayer->messageFloodBatchCount[index] >= maxMessageRate ) {
+        // player has sent more than the max number of messages during
+        // the current time batch
+
+        // cut them off whenever they cross this limit, even if the current
+        // time batch is far from ending
+        
+        // (like if they send 40 messages in the first second, don't
+        //  wait for 5 more seconds to pass before counting them as flooding)
+
+        // start a new batch
+        // (so they have a clean slate if they reconnect)
+        inPlayer->messageFloodBatchStartTime[index] = Time::getCurrentTime();
+        inPlayer->messageFloodBatchCount[index] = 0;
+
+        return true;
+        }
+
+
     double curTime = Time::getCurrentTime();
-
-
-    char flooding = false;
 
     if( curTime - inPlayer->messageFloodBatchStartTime[index] >= 5 ) {
         // a 5-second batch is finished
-
-        if( inPlayer->messageFloodBatchCount[index] >= maxMessageRate ) {
-            flooding = true;
-            }
         
         // start a new batch
         inPlayer->messageFloodBatchStartTime[index] = curTime;
         inPlayer->messageFloodBatchCount[index] = 0;
         }
 
-    return flooding;
+    return false;
     }
 
 

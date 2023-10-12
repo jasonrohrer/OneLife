@@ -22,6 +22,13 @@ Server Fixes:
   character, but that means that some races get picked more than others
   (because some races have more female characters than others).  Fixes #938
 
+--Message flood detection improved by not waiting for the full batch time (5
+  seconds) to elapse before checking how many messages have been received
+  during the current time batch.  I.e., if they send more than 40 messages in
+  the first second, we don't wait 4 more seconds before cutting them off.
+  Fixes #939
+
+
 
 
 
