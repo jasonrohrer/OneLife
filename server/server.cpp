@@ -9691,6 +9691,36 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         if( femaleID == -1 ) {       
             // all races present, or couldn't find female character
             // to use in weakest race
+
+            // just pick a race at random
+            // since they have been shuffled above, picking the first
+            // race will be a random one
+            int randomRace = races[0];
+            
+            // then pick a random female of that race
+            femaleID = getRandomPersonObjectOfRace( randomRace );
+            
+            int tryCount = 0;
+            while( getObject( femaleID )->male && tryCount < 10 ) {
+                femaleID = getRandomPersonObjectOfRace( randomRace );
+                tryCount++;
+                }
+            if( getObject( femaleID )->male ) {
+                femaleID = -1;
+                }
+            }
+        
+        
+        if( femaleID == -1 ) {       
+            // above thing where we picked a random race failed
+            // maybe we got unlucky and picked males 10x in a row
+
+            // default here to just picking a random female of any race
+        
+            // note that this results in an uneven distribution of Eves
+            // amoung races, because some races have more female characters
+            // than others (but this is okay in this rare edge case).
+
             femaleID = getRandomFemalePersonObject();
             }
         

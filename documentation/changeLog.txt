@@ -16,6 +16,12 @@ Server Fixes:
   confusing, since that is what is also shown for players who are leaderless.
   Fixes #936
 
+--Fixed so that when picking female character for Eve, when all races are
+  already evenly represented, with pick a race at random first, and then pick a
+  female character from that race.  Before, we just picked a random female
+  character, but that means that some races get picked more than others
+  (because some races have more female characters than others).  Fixes #938
+
 
 
 
