@@ -2752,6 +2752,7 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
             mCurrentObject.id = objectID;
                 
             mDescriptionField.setText( pickedRecord->description );
+            mDescriptionField.cursorReset();
 
             mMapChanceField.setFloat( pickedRecord->mapChance, 4 );
             

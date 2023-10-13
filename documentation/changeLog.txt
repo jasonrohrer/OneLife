@@ -17,6 +17,11 @@ Editor Fixes:
   moused item is expanded.  No more overlapping text in pickers, for items
   with long descriptions.
 
+--Description field in Object Editor automatically rewinds to start of field
+  when a new object is loaded (it used to auto-position at the end of the text
+  description).
+
+
 
 
 Server Fixes:
