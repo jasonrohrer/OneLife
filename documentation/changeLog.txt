@@ -11,6 +11,13 @@ Version 396    ???
 
 
 
+Editor Fixes:
+
+--Pickers now show 4 lines of text per item until mouse-over, when text of
+  moused item is expanded.  No more overlapping text in pickers, for items
+  with long descriptions.
+
+
 
 Server Fixes:
 

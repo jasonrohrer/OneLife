@@ -51,6 +51,9 @@ class Picker : public PageComponent, ActionListener,
     protected:
         virtual void draw();
 
+
+        virtual void pointerMove( float inX, float inY );
+
         virtual void pointerDown( float inX, float inY );
         virtual void pointerUp( float inX, float inY );
 
@@ -76,6 +79,7 @@ class Picker : public PageComponent, ActionListener,
         TextField mSearchField;
         
         int mSelectionIndex;
+        int mMouseOverIndex;
         
         char mSelectionRightClicked;
 
