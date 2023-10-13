@@ -26282,7 +26282,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                         // actual, spoken text, not a /command
                         
                         if( strstr( typedText,
-                                    translate( "orderCommand" ) ) 
+                                    translate( "orderPrefix" ) ) 
                             == typedText ) {
                             
                             // when issuing an order, place +FOLLOWER+

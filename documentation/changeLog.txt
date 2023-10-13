@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 396    ???
+
+--Fixed ambiguity in English.txt file with two orderCommand values defined.
+  Fixes #950
+
+
+
+
 Server Fixes:
 
 --Fixed so that if you disconnect and re-join the game, you always rejoin an
