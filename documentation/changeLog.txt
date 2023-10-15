@@ -48,6 +48,7 @@ Server Fixes:
   the first second, we don't wait 4 more seconds before cutting them off.
   Fixes #939
 
+--Fixed a crash caused by code changes for #938, when picking a new Eve.
 
 
 

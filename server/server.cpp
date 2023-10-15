@@ -9669,7 +9669,6 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 }
             }
         
-        delete [] races;
         delete [] counts;
         
 
@@ -9709,6 +9708,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 femaleID = -1;
                 }
             }
+
+
+        delete [] races;
         
         
         if( femaleID == -1 ) {       
