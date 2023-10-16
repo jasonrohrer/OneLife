@@ -4675,6 +4675,9 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
     SimpleVector<LiveObject *> *inSpeakers,
     SimpleVector<doublePair> *inSpeakersPos ) {    
 
+    setExtraIndex( inObj->extraAnimIndex );
+    setExtraIndexB( inObj->extraAnimIndexB );
+    
 
     ObjectAnimPack returnPack;
     returnPack.inObjectID = -1;
@@ -16777,6 +16780,8 @@ void LivingLifePage::step() {
                 o.emotClearETATime = 0;
                 
                 o.extraAnimType = extraB;
+                o.extraAnimIndex = 0;
+                o.extraAnimIndexB = 0;
 
                 o.killMode = false;
                 o.killWithID = -1;
@@ -20227,22 +20232,22 @@ void LivingLifePage::step() {
                                         if( existing->extraAnimType ==
                                             extraB ) {
                                             
-                                            setExtraIndex( 
-                                                existing->
-                                                currentEmot->extraAnimIndex );
-                                        
                                             addNewAnimPlayerOnly( existing, 
                                                                   extra );
                                             existing->extraAnimType = extra;
+                                            
+                                            existing->extraAnimIndex =
+                                                existing->currentEmot->
+                                                extraAnimIndex;
                                             }
                                         else {
-                                            setExtraIndexB( 
-                                                existing->
-                                                currentEmot->extraAnimIndex );
-                                        
                                             addNewAnimPlayerOnly( existing, 
                                                                   extraB );
                                             existing->extraAnimType = extraB;
+                                            
+                                            existing->extraAnimIndexB =
+                                                existing->currentEmot->
+                                                extraAnimIndex;
                                             }
                                         }
                                     }

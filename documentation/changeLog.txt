@@ -12,6 +12,11 @@ Version ???    ???
 --Gesture maintained when flipping left/right due to mouse movement.
   Part of #953
 
+--Fixed so that gestures from players don't overwrite each other (which was
+  causing a player's gestures to switch randomly as other players gesture on
+  the same sever).  Fixes #953
+
+
 
 
 

@@ -330,6 +330,10 @@ typedef struct LiveObject {
         // extraAnimIndex defined
         AnimType extraAnimType;
         
+        // for a given person, track what extraAnimIndex should be used
+        // for both extra and extraB slots
+        int extraAnimIndex;
+        int extraAnimIndexB;
 
 
         char killMode;
