@@ -14418,8 +14418,18 @@ void LivingLifePage::step() {
                             flip = true;
                             }
                         if( flip ) {
+                            
+                            AnimType returnToType = ground2;
+                            
+                            if( o->curAnim == extra ) {
+                                returnToType = extra;
+                                }
+                            else if( o->curAnim == extraB ) {
+                                returnToType = extraB;
+                                }
+                            
                             o->lastAnim = moving;
-                            o->curAnim = ground2;
+                            o->curAnim = returnToType;
                             o->lastAnimFade = 1;
 
                             o->lastHeldAnim = moving;
@@ -23699,8 +23709,18 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             }
 
         if( flip ) {
+            
+            AnimType returnToType = ground2;
+            
+            if( ourLiveObject->curAnim == extra ) {
+                returnToType = extra;
+                }
+            else if( ourLiveObject->curAnim == extraB ) {
+                returnToType = extraB;
+                }
+
             ourLiveObject->lastAnim = moving;
-            ourLiveObject->curAnim = ground2;
+            ourLiveObject->curAnim = returnToType;
             ourLiveObject->lastAnimFade = 1;
             
             ourLiveObject->lastHeldAnim = moving;

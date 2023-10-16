@@ -9,6 +9,10 @@ Version ???    ???
 --Fixed ambiguity in English.txt file with two orderCommand values defined.
   Fixes #950
 
+--Gesture maintained when flipping left/right due to mouse movement.
+  Part of #953
+
+
 
 
 Editor Fixes:
