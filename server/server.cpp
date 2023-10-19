@@ -21895,6 +21895,9 @@ int main() {
                         m.saidText = cleanedString;
                         
                         
+                        char somePropertyGivingSay = false;
+                        char givingMessageSent = false;
+                        
                         if( nextPlayer->ownedPositions.size() > 0 ) {
                             // consider phrases that assign ownership
                             SimpleVector<LiveObject*> newOwners;
@@ -21903,6 +21906,8 @@ int main() {
                             char *namedOwner = isNamedGivingSay( m.saidText );
                             
                             if( namedOwner != NULL ) {
+                                somePropertyGivingSay = true;
+                                
                                 LiveObject *o =
                                     getPlayerByName( namedOwner, nextPlayer );
                                 
@@ -21927,6 +21932,8 @@ int main() {
                             if( newOwners.size() == 0 ) {
                                 
                                 if( isYouGivingSay( m.saidText ) ) {
+                                    somePropertyGivingSay = true;
+                                
                                     // find closest other player
                                     LiveObject *newOwnerPlayer = 
                                         getClosestOtherPlayer( nextPlayer );
@@ -21936,6 +21943,8 @@ int main() {
                                         }
                                     }
                                 else if( isFamilyGivingSay( m.saidText ) ) {
+                                    somePropertyGivingSay = true;
+                                
                                     // add all family members
                                     for( int n=0; n<players.size(); n++ ) {
                                         LiveObject *o = players.getElement( n );
@@ -21950,6 +21959,8 @@ int main() {
                                         }
                                     }
                                 else if( isOffspringGivingSay( m.saidText ) ) {
+                                    somePropertyGivingSay = true;
+                                    
                                     // add all offspring
                                     for( int n=0; n<players.size(); n++ ) {
                                         LiveObject *o = players.getElement( n );
@@ -21989,6 +22000,9 @@ int main() {
 
                                 if( minDist < 20 ) {
                                     // found one that's not too far away
+
+                                    int numNewOwners = 0;
+                                    
                                     for( int n=0; n<newOwners.size(); n++ ) {
                                         LiveObject *newOwnerPlayer = 
                                             newOwners.getElementDirect( n );
@@ -22004,11 +22018,75 @@ int main() {
                                                 newOwnerPlayer,
                                                 closePos.x, closePos.y,
                                                 "I WAS GIVEN THE" );
+                                            
+                                            numNewOwners++;
                                             }
                                         }
+                                    
+                                    if( numNewOwners > 0 ) {
+                                        
+                                        const char *numberString = "ONE";
+                                        const char *ownerString = "OWNER";
+
+                                        if( numNewOwners > 1 ) {
+                                            ownerString = "OWNERS";
+
+                                            switch( numNewOwners ) {
+                                                case 2:
+                                                    numberString = "TWO";
+                                                    break;
+                                                case 3:
+                                                    numberString = "THREE";
+                                                    break;
+                                                case 4:
+                                                    numberString = "FOUR";
+                                                    break;
+                                                case 5:
+                                                    numberString = "FIVE";
+                                                    break;
+                                                case 6:
+                                                    numberString = "SIX";
+                                                    break;
+                                                default:
+                                                    numberString = "LOTS OF";
+                                                    break;
+                                                }
+                                            }
+                                        
+                                        
+                                        char *message =
+                                            autoSprintf( 
+                                                "PROPERTY NOW HAS %s NEW %s.",
+                                                numberString, ownerString );
+                                        
+                                        sendGlobalMessage( message, 
+                                                           nextPlayer );
+                                        delete [] message;
+                                        givingMessageSent = true;
+                                        }
+                                    }
+                                else {
+                                    const char *message = 
+                                        "NO PROPERTY IS CLOSE ENOUGH.";
+                                    sendGlobalMessage( (char*)message, 
+                                                       nextPlayer );
+                                    givingMessageSent = true;
                                     }
                                 }
                             }
+                        
+                        if( somePropertyGivingSay && ! givingMessageSent ) {
+                            // tried to give property, but no one received
+                            // it
+                            
+                            const char *message = 
+                                "NO ADDITIONAL PEOPLE FOUND TO "
+                                "RECEIVE PROPERTY.";
+                            sendGlobalMessage( (char*)message, nextPlayer );
+                            
+                            givingMessageSent = true;
+                            }
+                        
 
 
                         // they must be holding something to join a posse

@@ -59,6 +59,10 @@ Server Fixes:
 
 --Fixed a crash caused by code changes for #938, when picking a new Eve.
 
+--Fixed so that giver gets notice when their gift of property works (or doesn't
+   work).  Before, only receiver got notice.  Fixes #963
+
+
 
 
 
