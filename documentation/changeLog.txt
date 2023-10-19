@@ -62,6 +62,11 @@ Server Fixes:
 --Fixed so that giver gets notice when their gift of property works (or doesn't
    work).  Before, only receiver got notice.  Fixes #963
 
+--Whoops!  A forced birth cooldown of 0 seconds got pushed back in July 2023.
+  I sometimes do this during local testing, but I forgot to revert it before
+  committing back in July.  Fixed.
+
+
 
 
 

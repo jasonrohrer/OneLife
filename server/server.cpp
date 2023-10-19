@@ -1878,8 +1878,6 @@ char isPlayerIgnoredForEvePlacement( int inID ) {
 
 
 static double pickBirthCooldownSeconds() {
-    return 0;
-    
     // Kumaraswamy distribution
     // PDF:
     // k(x,a,b) = a * b * x**( a - 1 ) * (1-x**a)**(b-1)
