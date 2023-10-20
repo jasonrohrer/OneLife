@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version ???    ???
+Version 397    2023-October-20
 
 --Fixed ambiguity in English.txt file with two orderCommand values defined.
   Fixes #950
