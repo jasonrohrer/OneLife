@@ -8605,6 +8605,29 @@ static char isEmailAliveButDisconnected( char *inEmail ) {
 
 
 
+static char isNewPlayer( LiveObject *inPlayerObject,
+                         int inMinLives = -1, int inMinHours = -1 ) {
+    
+    if( inMinLives == -1 ) {
+        inMinLives = SettingsManager::getIntSetting( "newPlayerLifeCount", 5 );
+        }
+    if( inMinHours == -1 ) {
+        inMinHours = SettingsManager::getIntSetting( 
+            "newPlayerLifeTotalSeconds",
+            7200 ) / 3600;
+        }
+            
+    if( isUsingStatsServer() && 
+        ! inPlayerObject->lifeStats.error &&
+        ( inPlayerObject->lifeStats.lifeCount < inMinLives ||
+          inPlayerObject->lifeStats.lifeTotalSeconds < inMinHours * 3600 ) ) {
+        return true;
+        }
+    return false;
+    }
+
+
+
 // inAllowOrForceReconnect is 0 for forbidden reconnect, 1 to allow, 
 // 2 to require
 // returns ID of new player,
@@ -8905,6 +8928,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     newObject.lastOwnedPositionInformed = -1;
     
+    newObject.curseStatus = inCurseStatus;
+    newObject.lifeStats = inLifeStats;
+
 
     newObject.lastGateVisitorNoticeTime = 0;
     newObject.lastNewBabyNoticeTime = 0;
@@ -8969,6 +8995,16 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     
     newObject.fitnessScore = inFitnessScore;
     
+
+    if( isNewPlayer( &newObject, 25 ) ) {
+        // if they have lived less than 25 lives, treat their fitness
+        // score as suspect (too few data points, noisy)
+
+        // don't give them any special roles based on a high fitness score
+        newObject.fitnessScore = 0;
+        }
+    
+        
 
 
 
@@ -9487,12 +9523,12 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                    "this player's score is %f, max score in window is %f",
                    recentScoresForPickingEve.size(),
                    recentScoreWindowForPickingEve,
-                   inFitnessScore, maxRecentScore );
+                   newObject.fitnessScore, maxRecentScore );
 
     
     // don't consider forced-spawn offspring as candidates for a needed Eve
     if( forceOffspringLineageID == -1 )
-    if( inFitnessScore >= maxRecentScore )
+    if( newObject.fitnessScore >= maxRecentScore )
     if( parentChoices.size() > 0 ) {
         // make sure one race isn't entirely extinct
         
@@ -9509,7 +9545,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                         "AND player's score (%f) beats/ties "
                         "max score of last %d players (%f), forcing Eve.",
                         races[i],
-                        inFitnessScore,
+                        newObject.fitnessScore,
                         recentScoreWindowForPickingEve,
                         maxRecentScore );
                 
@@ -9524,7 +9560,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     
     if( forceOffspringLineageID == -1 )
-    if( inFitnessScore >= maxRecentScore )
+    if( newObject.fitnessScore >= maxRecentScore )
     if( parentChoices.size() > 0 ) {
         int generationNumber =
             SettingsManager::getIntSetting( "forceEveAfterGenerationNumber",
@@ -9550,7 +9586,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                         "AND player's score (%f) beats/ties "
                         "max score of last %d players (%f), forcing Eve.",
                         minGen, generationNumber,
-                        inFitnessScore,
+                        newObject.fitnessScore,
                         recentScoreWindowForPickingEve,
                         maxRecentScore );    
             parentChoices.deleteAll();
@@ -10364,8 +10400,6 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     
     newObject.nameHasSuffix = false;
     newObject.lastSay = NULL;
-    newObject.curseStatus = inCurseStatus;
-    newObject.lifeStats = inLifeStats;
     
 
     if( newObject.curseStatus.curseLevel == 0 &&
@@ -10569,13 +10603,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 "PLEASE HELP THEM LEARN THE GAME.  THANKS!  -JASON",
                 parent );
             }
-        else if( isUsingStatsServer() && 
-                 ! newObject.lifeStats.error &&
-                 ( newObject.lifeStats.lifeCount < 
-                   SettingsManager::getIntSetting( "newPlayerLifeCount", 5 ) ||
-                   newObject.lifeStats.lifeTotalSeconds < 
-                   SettingsManager::getIntSetting( "newPlayerLifeTotalSeconds",
-                                                   7200 ) ) ) {
+        else if( isNewPlayer( &newObject ) ) {
             // a new player (not at a PAX kiosk)
             // let mother know
             char *motherMessage =  
@@ -10938,7 +10966,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         &&
         newObject.curseStatus.curseLevel == 0 ) {
         
-        addRecentScore( newObject.email, inFitnessScore );
+        addRecentScore( newObject.email, newObject.fitnessScore );
         }
     
 

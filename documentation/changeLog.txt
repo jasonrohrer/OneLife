@@ -66,6 +66,9 @@ Server Fixes:
   I sometimes do this during local testing, but I forgot to revert it before
   committing back in July.  Fixed.
 
+--Players who have played less than 25 lives are not given special roles based
+  on their fitness scores.  Fixes #966
+
 
 
 
