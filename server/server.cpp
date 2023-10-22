@@ -9189,10 +9189,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                     }
                 
             
-                if( ( inCurseStatus.curseLevel <= 0 && 
+                if( ( newObject.curseStatus.curseLevel <= 0 && 
                       player->curseStatus.curseLevel <= 0 ) 
                     || 
-                    ( inCurseStatus.curseLevel > 0 && 
+                    ( newObject.curseStatus.curseLevel > 0 && 
                       player->curseStatus.curseLevel > 0 ) ) {
                     // cursed babies only born to cursed mothers
                     // non-cursed babies never born to cursed mothers
@@ -9380,8 +9380,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
 
         // they are going to d-town
-        inCurseStatus.curseLevel = 1;
-        inCurseStatus.excessPoints = 1;
+        newObject.curseStatus.curseLevel = 1;
+        newObject.curseStatus.excessPoints = 1;
         
         // add all existing fertile d-town residents as possible parents
         
@@ -10184,7 +10184,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         // Eve's curse status
         char seekingCursed = false;
         
-        if( inCurseStatus.curseLevel > 0 ) {
+        if( newObject.curseStatus.curseLevel > 0 ) {
             seekingCursed = true;
             }
         
@@ -10215,7 +10215,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         char incrementEvePlacement = true;        
 
         // don't increment Eve placement if this is a cursed player
-        if( inCurseStatus.curseLevel > 0 ) {
+        if( newObject.curseStatus.curseLevel > 0 ) {
             incrementEvePlacement = false;
             }
 
@@ -10245,7 +10245,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             }
         
 
-        if( inCurseStatus.curseLevel > 0 ) {
+        if( newObject.curseStatus.curseLevel > 0 ) {
             // keep cursed players away by sticking them in Donkeytown 
 
             // 200M away in X pushing out away from 0

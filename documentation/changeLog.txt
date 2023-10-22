@@ -4,6 +4,19 @@ http://onehouronelife.com/updateLog.php
 
 
 
+
+Server Fixes:
+
+--Fixed bug that wasn't actually setting cursed status of players that were
+  sent to Donkeytown.  This was causing all kinds of issues (non-Donkeytown
+  players could be born to them as mothers, they were being pointed toward as
+  experts, etc.)  This was apparently covered up for a long time while birth
+  cooldowns were mistakenly set to zero.  Related to #967
+
+
+
+
+
 Version 397    2023-October-20
 
 --Fixed ambiguity in English.txt file with two orderCommand values defined.
