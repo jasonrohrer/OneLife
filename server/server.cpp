@@ -30752,6 +30752,9 @@ int main() {
         if( healingMessage != NULL ) {
             delete [] healingMessage;
             }
+        if( ghostMessage != NULL ) {
+            delete [] ghostMessage;
+            }
         if( emotMessage != NULL ) {
             delete [] emotMessage;
             }
