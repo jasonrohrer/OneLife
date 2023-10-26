@@ -232,6 +232,8 @@ CRAVING (CR)
 
 FRAME (FM)
 
+GHOST (GH)
+
 PONG
 
 
@@ -1050,6 +1052,17 @@ FM
 
 Indicates the end of a server frame.  All messages since the last FM message
 are part of the same batch and can be played back together on the client.
+
+
+
+GH
+p_id
+p_id
+...
+p_id#
+
+Indicates that the players associated with listed p_id have become an invisible
+ghosts.
 
 
 

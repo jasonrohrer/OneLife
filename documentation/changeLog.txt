@@ -4,6 +4,11 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 399    ???
+
+--Support for new GH message.
+
+
 
 Server Fixes:
 
@@ -13,6 +18,7 @@ Server Fixes:
   experts, etc.)  This was apparently covered up for a long time while birth
   cooldowns were mistakenly set to zero.  Related to #967
 
+--Support for new GH message and sending associated emote.
 
 
 

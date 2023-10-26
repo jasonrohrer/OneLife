@@ -293,6 +293,8 @@ static int victimTerrifiedEmotionIndex = 2;
 static int starvingEmotionIndex = 2;
 static int satisfiedEmotionIndex = 2;
 
+static int ghostEmotionIndex = 2;
+
 
 static double lastBabyPassedThresholdTime = 0;
 
@@ -791,6 +793,9 @@ typedef struct LiveObject {
         // time when this player actually died
         double deathTimeSeconds;
         
+        char isGhost;
+        char ghostDestroyed;
+
         
         // the wall clock time when this life started
         // used for computing playtime, not age
@@ -3799,14 +3804,63 @@ double computeAge( double inLifeStartTimeSeconds ) {
 
 
 
+
+static SimpleVector<int> newEmotPlayerIDs;
+static SimpleVector<int> newEmotIndices;
+// 0 if no ttl specified
+static SimpleVector<int> newEmotTTLs;
+
+
+
+static SimpleVector<int> newGhostPlayers;
+
+
 double computeAge( LiveObject *inPlayer ) {
     double age = computeAge( inPlayer->lifeStartTimeSeconds );
+
+    if( inPlayer->isGhost &&
+        ! inPlayer->ghostDestroyed ) {
+        
+        // surviving ghost, age fixed
+        return forceDeathAge;
+        }
+    
+
     if( age >= forceDeathAge ) {
+        
+        
+        if( ! inPlayer->ghostDestroyed && 
+            ! inPlayer->isGhost &&
+            SettingsManager::getIntSetting( "allowGhosts", 0 ) ) {
+            
+            // player reached old age, and ghosts allowed, keep them around
+            // as a surviving ghost for now
+
+            inPlayer->isGhost = true;
+            
+            newGhostPlayers.push_back( inPlayer->id );
+            
+            
+            newEmotPlayerIDs.push_back( inPlayer->id );
+        
+            newEmotIndices.push_back( ghostEmotionIndex );
+            // ghost emote is permanent
+            newEmotTTLs.push_back( -1 );
+
+
+            return forceDeathAge;
+            }
+
+
+        // else they died of old age, or their surviving ghost was finally
+        // destroyed
+
+        age = forceDeathAge;
+
         setDeathReason( inPlayer, "age" );
         
         inPlayer->error = true;
-        
-        age = forceDeathAge;
+
 
         // they lived to old age
         // that means they can get born to their descendants in future
@@ -7281,10 +7335,6 @@ static char *getUpdateLineFromRecord(
 
 
 
-static SimpleVector<int> newEmotPlayerIDs;
-static SimpleVector<int> newEmotIndices;
-// 0 if no ttl specified
-static SimpleVector<int> newEmotTTLs;
 
 
 
@@ -9029,7 +9079,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     newObject.trueStartTimeSeconds = Time::getCurrentTime();
     newObject.lifeStartTimeSeconds = newObject.trueStartTimeSeconds;
-                            
+    
+    newObject.isGhost = false;
+    newObject.ghostDestroyed = false;
+
 
     newObject.lastSayTimeSeconds = Time::getCurrentTime();
     newObject.firstEmoteTimeSeconds = Time::getCurrentTime();
@@ -17868,6 +17921,10 @@ int main() {
 
     satisfiedEmotionIndex =
         SettingsManager::getIntSetting( "satisfiedEmotionIndex", 2 );
+
+
+    ghostEmotionIndex =
+        SettingsManager::getIntSetting( "ghostEmotionIndex", 2 );
 
 
     FILE *f = fopen( "curseWordList.txt", "r" );
@@ -28403,6 +28460,51 @@ int main() {
 
 
 
+        unsigned char *ghostMessage = NULL;
+        int ghostMessageLength = 0;
+        
+        if( newGhostPlayers.size() > 0 ) {
+            SimpleVector<char> ghostWorking;
+            ghostWorking.appendElementString( "GH\n" );
+            
+            int numAdded = 0;
+            for( int i=0; i<newGhostPlayers.size(); i++ ) {
+                char *line = autoSprintf( 
+                    "%d\n", 
+                    newGhostPlayers.getElementDirect( i ) );
+
+                numAdded++;
+                ghostWorking.appendElementString( line );
+                delete [] line;
+                }
+            
+            ghostWorking.push_back( '#' );
+            
+            if( numAdded > 0 ) {
+
+                char *ghostMessageText = ghostWorking.getElementString();
+                
+                ghostMessageLength = strlen( ghostMessageText );
+                
+                if( ghostMessageLength < maxUncompressedSize ) {
+                    ghostMessage = (unsigned char*)ghostMessageText;
+                    }
+                else {
+                    // compress for all players once here
+                    ghostMessage = makeCompressedMessage( 
+                        ghostMessageText, 
+                        ghostMessageLength, &ghostMessageLength );
+                    
+                    delete [] ghostMessageText;
+                    }
+                }
+            
+            newGhostPlayers.deleteAll();
+            }
+
+
+
+
         unsigned char *emotMessage = NULL;
         int emotMessageLength = 0;
         
@@ -29525,6 +29627,25 @@ int main() {
                                                "Socket write failed" );
                         }
                     }
+
+
+
+                // EVERYONE gets info about new ghost players           
+                if( ghostMessage != NULL && nextPlayer->connected ) {
+                    int numSent = 
+                        nextPlayer->sock->send( 
+                            ghostMessage, 
+                            ghostMessageLength, 
+                            false, false );
+                    
+                    nextPlayer->gotPartOfThisFrame = true;
+                    
+                    if( numSent != ghostMessageLength ) {
+                        setPlayerDisconnected( nextPlayer, 
+                                               "Socket write failed" );
+                        }
+                    }
+
 
 
                 // EVERYONE gets info about emots           

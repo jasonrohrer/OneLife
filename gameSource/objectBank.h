@@ -481,6 +481,10 @@ typedef struct ObjectRecord {
         // true if this is an emot that hides the head of the person
         char hideHead;
 
+        // true if this is an emot that hides the entire body of the person
+        // including their head
+        char hideBody;
+
         // for rideable objects that make rider invisible
         char hideRider;
 

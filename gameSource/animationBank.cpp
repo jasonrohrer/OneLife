@@ -1958,7 +1958,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
 
 
     // otherEmote (over face) has power to hide head entirely
+    // or hide entire body, including head
     char headless = false;
+    char bodyless = false;
     if( headIndex != -1 &&
         drawWithEmots.size() > 0 &&
         obj->numSprites < MAX_WORKING_SPRITES ) {
@@ -1970,6 +1972,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 
                 if( o->hideHead ) {
                     headless = true;
+                    }
+                if( o->hideBody ) {
+                    bodyless = true;
                     }
                 }
             }
@@ -1995,6 +2000,9 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                 }
             headlessSkipFlags[headIndex] = true;
             }
+        
+        // don't need a special sprite skip list for bodyless, since
+        // we can just skip drawing all sprites of object
         }
     
     
@@ -2582,6 +2590,19 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             skipSprite = true;
             }
         
+        
+        // if bodyless, we still go through the motions of drawing
+        // the sprites, to compute their position, etc.
+        // and then just skip the actual drawing part
+
+        // Note that headless works with skipSprite above, and hat
+        // is still drawn.  Not sure why that works differently than
+        // other body parts that have clothing or held objects associated
+        // with them
+
+        // Seems like hands and feet are particularly affected.
+        
+        
 
         if( !inHeldNotInPlaceYet && 
             inHideClosestArm == 1 && 
@@ -3088,8 +3109,12 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                         f = false;
                         }
                     
-                    drawSprite( sh, pos, 1.0, rot, 
-                                logicalXOR( f, obj->spriteHFlip[i] ) );
+                    // do everything *but* draw the actual 
+                    // sprite when bodyless, so we compute hand and foot
+                    // position, draw shoes, etc.
+                    if( !bodyless )
+                        drawSprite( sh, pos, 1.0, rot, 
+                                    logicalXOR( f, obj->spriteHFlip[i] ) );
                     }
                 }
             
