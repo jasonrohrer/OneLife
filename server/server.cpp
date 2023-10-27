@@ -30963,6 +30963,11 @@ void setDrawColor( float inR, float inG, float inB, float inA ) {
 void setDrawColor( FloatColor inColor ) {
     }
 
+FloatColor getDrawColor() {
+    FloatColor c = { 1, 1, 1, 1 };
+    return c;
+    }
+
 void setDrawFade( float ) {
     }
 
@@ -30976,7 +30981,13 @@ void toggleAdditiveTextureColoring( char inAdditive ) {
 void toggleAdditiveBlend( char ) {
     }
 
+void toggleInvertedBlend( char ) {
+    }
+
 void drawSquare( doublePair, double ) {
+    }
+
+void drawRect( doublePair, double, double ) {
     }
 
 void startAddingToStencil( char, char, float ) {

@@ -8007,9 +8007,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
                 ignoreWatchedObjectDraw( true );
 
+
+                if( ourLiveObject->isGhost ) {
+                    // ghosts can see other ghosts
+                    toggleInvertDrawBodyless( true );
+                    }
+                
                 ObjectAnimPack heldPack =
                     drawLiveObject( o, &speakers, &speakersPos );
-                
+
+                if( ourLiveObject->isGhost ) {
+                    toggleInvertDrawBodyless( false );
+                    }
+
                 if( heldPack.inObjectID != -1 ) {
                     // holding something, not drawn yet
                     

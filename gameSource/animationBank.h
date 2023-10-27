@@ -317,7 +317,11 @@ ObjectAnimPack drawObjectAnimPacked(
 // draw a packed animation now
 void drawObjectAnim( ObjectAnimPack inPack );
 
-        
+
+
+// toggles inverted drawing of body for those with emote that includes +hideBody
+void toggleInvertDrawBodyless( char inInvert );
+
 
 
 HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots, 
