@@ -228,6 +228,10 @@ static SimpleVector<char*> familyNameGivingPhrases;
 static SimpleVector<char*> eveNameGivingPhrases;
 static SimpleVector<char*> cursingPhrases;
 
+static SimpleVector<char*> ghostDestroyPhrases;
+static SimpleVector<char> ghostDestroyLetters;
+
+
 char *curseYouPhrase = NULL;
 char *curseBabyPhrase = NULL;
 
@@ -719,6 +723,9 @@ typedef struct LiveObject {
         
 
         char *lastSay;
+
+        SimpleVector<char*> *usedGhostDestroyLongWords;
+        
 
         CurseStatus curseStatus;
         PastLifeStats lifeStats;
@@ -2368,6 +2375,9 @@ void quitCleanup() {
             delete [] nextPlayer->lastSay;
             }
         
+        nextPlayer->usedGhostDestroyLongWords->deallocateStringElements();
+        delete nextPlayer->usedGhostDestroyLongWords;
+
         if( nextPlayer->email != NULL  ) {
             delete [] nextPlayer->email;
             }
@@ -2481,6 +2491,9 @@ void quitCleanup() {
     eveNameGivingPhrases.deallocateStringElements();
     cursingPhrases.deallocateStringElements();
     
+    ghostDestroyPhrases.deallocateStringElements();
+    
+
     forgivingPhrases.deallocateStringElements();
     youForgivingPhrases.deallocateStringElements();
 
@@ -3856,9 +3869,15 @@ double computeAge( LiveObject *inPlayer ) {
         // destroyed
 
         age = forceDeathAge;
-
-        setDeathReason( inPlayer, "age" );
         
+        if( inPlayer->isGhost && inPlayer->ghostDestroyed ) {
+            setDeathReason( inPlayer, "exorcism" );
+            }
+        else {
+            setDeathReason( inPlayer, "age" );
+            }
+        
+
         inPlayer->error = true;
 
 
@@ -10454,6 +10473,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.nameHasSuffix = false;
     newObject.lastSay = NULL;
     
+    newObject.usedGhostDestroyLongWords = new SimpleVector<char*>();
+
 
     if( newObject.curseStatus.curseLevel == 0 &&
         hasCurseToken( inEmail ) ) {
@@ -12981,6 +13002,77 @@ char *isNamedTrustingSay( char *inSaidString ) {
 
 char isForgiveEveryoneSay( char *inSaidString ) {
     return isWildcardGivingSay( inSaidString, &forgiveEveryonePhrases );
+    }
+
+
+
+char isGhostDestroySay( char *inSaidString ) {
+    char match = isWildcardGivingSay( inSaidString, &ghostDestroyPhrases );
+    
+    if( match ) {
+        return true;
+        }
+    
+    // else does it contain all the right letters?
+
+    SimpleVector<char *> *tokens = tokenizeString( inSaidString );
+
+    if( tokens->size() > 6 ) {
+        // too many words
+        tokens->deallocateStringElements();
+        delete tokens;
+        return false;
+        }
+    
+    SimpleVector<char> allLetters;
+    
+    for( int i=0; i< tokens->size(); i++ ) {
+        char *token = tokens->getElementDirect( i );
+        
+        if( strlen( token ) < 2 ) {
+            // one token too short, min lenght 2
+            tokens->deallocateStringElements();
+            delete tokens;
+            return false;
+            }
+        
+        allLetters.appendElementString( token );    
+        }
+    
+    tokens->deallocateStringElements();
+    delete tokens;
+
+    // 6 or less words of 2 or more letters each
+    
+    if( allLetters.size() != ghostDestroyLetters.size() ) {
+        // wrong number of total letters
+        return false;
+        }
+    
+    // right number of total letters
+    
+    // see if they are all the right letters
+    
+    // remove allLetters one by one as matches found
+    for( int i=0; i < ghostDestroyLetters.size(); i++ ) {
+        
+        int loc = allLetters.getElementIndex( 
+            ghostDestroyLetters.getElementDirect( i ) );
+        
+        if( loc > -1 ) {
+            allLetters.deleteElement( loc );
+            }
+        else {
+            // letter in list not found in allLetters
+            return false;
+            }
+        }
+
+    // if we got here, allLetters should be empty, which 
+    // means we found all individual letters in ghostDestroyLetters in 
+    // allLetters
+    
+    return true;
     }
 
 
@@ -17853,6 +17945,23 @@ int main() {
 
     readPhrases( "cursingPhrases", &cursingPhrases );
 
+    readPhrases( "ghostDestroyPhrases", &ghostDestroyPhrases );
+
+    if( ghostDestroyPhrases.size() > 0 ) {
+        char *firstPhrase = ghostDestroyPhrases.getElementDirect( 0 );
+        SimpleVector<char*> *tokens = tokenizeString( firstPhrase );
+        
+        for( int i=0; i< tokens->size(); i++ ) {
+            char *token = tokens->getElementDirect( i );
+            
+            ghostDestroyLetters.appendElementString( token );
+            }
+        tokens->deallocateStringElements();
+        delete tokens;
+        }
+    
+
+
     readPhrases( "forgivingPhrases", &forgivingPhrases );
     readPhrases( "forgiveYouPhrases", &youForgivingPhrases );
 
@@ -22685,6 +22794,77 @@ int main() {
                                     }
                                 }
                             }
+                        
+                        // ghosts can't destroy ghosts
+                        if( ! nextPlayer->isGhost &&
+                            isGhostDestroySay( m.saidText ) ) {
+                            
+                            char alreadyUsed = false;
+                            
+                            SimpleVector<char *> *newWords =
+                                tokenizeString( m.saidText );
+
+                            for( int w=0; w< newWords->size(); w++ ) {
+                                char *word = newWords->getElementDirect( w );
+                                
+                                for( int p=0; 
+                                     p< nextPlayer->
+                                         usedGhostDestroyLongWords->size();
+                                     p++ ) {
+                                
+                                    if( strcmp( 
+                                        word,
+                                        nextPlayer->usedGhostDestroyLongWords->
+                                        getElementDirect( p ) ) == 0 ) {
+                                        
+                                        alreadyUsed = true;
+                                        break;
+                                        }
+                                    }
+                                }
+
+                            if( ! alreadyUsed ) {
+                                // mark long words from this phrase as used
+                                for( int w=0; w< newWords->size(); w++ ) {
+                                    char *word = 
+                                        newWords->getElementDirect( w );
+                                    if( strlen( word ) >= 5 ) {
+                                        
+                                        nextPlayer->usedGhostDestroyLongWords->
+                                            push_back( 
+                                                stringDuplicate( word ) );
+                                        }
+                                    }
+                                
+                                // destroy all ghosts that are roughly on
+                                // screen
+                                GridPos ourPos = getPlayerPos( nextPlayer );
+                                
+                                for( int o=0; o<players.size(); o++ ) {
+                                    LiveObject *otherPlayer = 
+                                        players.getElement( o );
+            
+                                    if( otherPlayer == nextPlayer ||
+                                        otherPlayer->error ||
+                                        ! otherPlayer->isGhost ||
+                                        otherPlayer->ghostDestroyed ) {
+                                        continue;
+                                        }
+
+                                    double dist = 
+                                        distance( ourPos, 
+                                                  getPlayerPos( otherPlayer ) );
+
+                                    if( dist < getMaxChunkDimension() ) {
+                                        otherPlayer->ghostDestroyed = true;
+                                        }
+                                    }
+                                }
+                            
+                            newWords->deallocateStringElements();
+                            delete newWords;
+                            }
+                        
 
                         if( strstr( m.saidText, orderPhrase ) == m.saidText ) {
                             // starts with ORDER phrase
@@ -30896,6 +31076,11 @@ int main() {
                     delete [] nextPlayer->lastSay;
                     }
                 
+                nextPlayer->usedGhostDestroyLongWords->
+                    deallocateStringElements();
+                delete nextPlayer->usedGhostDestroyLongWords;
+
+
                 freePlayerContainedArrays( nextPlayer );
                 
                 if( nextPlayer->pathToDest != NULL ) {

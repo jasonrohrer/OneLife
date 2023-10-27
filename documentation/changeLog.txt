@@ -8,6 +8,8 @@ Version 399    ???
 
 --Support for new GH message.
 
+--Support for destroyed GH cause of death.
+
 
 
 Server Fixes:
@@ -19,6 +21,9 @@ Server Fixes:
   cooldowns were mistakenly set to zero.  Related to #967
 
 --Support for new GH message and sending associated emote.
+
+--Support for GH destroy phrases.
+
 
 
 

@@ -602,6 +602,9 @@ reasonUnknown "CAUSE:  UNKNOWN"
 
 reasonApocalypse "CAUSE:  THE APOCALYPSE"
 
+reasonExorcism "CAUSE:  EXORCISM"
+
+
 
 connectionLost "CONNECTION LOST"
 

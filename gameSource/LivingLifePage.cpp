@@ -18741,6 +18741,10 @@ void LivingLifePage::step() {
                                     "tutorialDone", mTutorialNumber );
                                 }
                             }
+                        else if( strcmp( reasonString, "exorcism" ) == 0 ) {
+                            mDeathReason = stringDuplicate( 
+                                translate( "reasonExorcism" ) );
+                            }
                         else if( strcmp( reasonString, "disconnected" ) == 0 ) {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonDisconnected" ) );
