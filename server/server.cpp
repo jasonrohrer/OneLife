@@ -29086,6 +29086,37 @@ int main() {
                     }
                 
                 
+
+                // tell them about all current ghosts
+                SimpleVector<char> ghostMessageWorking;
+                ghostMessageWorking.appendElementString( "GH\n" );
+                for( int i=0; i<numPlayers; i++ ) {
+                
+                    LiveObject *o = players.getElement( i );
+                
+                    if( o->error ) {
+                        continue;
+                        }
+                    if( o->isGhost && ! o->ghostDestroyed ) {
+                    
+                        char *line = autoSprintf( "%d\n", o->id );
+                        
+                        ghostMessageWorking.appendElementString( line );
+                        delete [] line;
+                        }
+                    }
+                ghostMessageWorking.push_back( '#' );
+                
+                char *ghostMessage = ghostMessageWorking.getElementString();
+                
+                sendMessageToPlayer( nextPlayer, ghostMessage, 
+                                     strlen( ghostMessage ) );
+                    
+                delete [] ghostMessage;
+                
+                
+
+
                 // tell them about all permanent emots
                 SimpleVector<char> emotMessageWorking;
                 emotMessageWorking.appendElementString( "PE\n" );
