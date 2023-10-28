@@ -1968,7 +1968,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
     // or hide entire body, including head
     char headless = false;
     char bodyless = false;
-    if( headIndex != -1 &&
+    if( obj->person &&
         drawWithEmots.size() > 0 &&
         obj->numSprites < MAX_WORKING_SPRITES ) {
         

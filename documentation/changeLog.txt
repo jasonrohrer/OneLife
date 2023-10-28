@@ -10,6 +10,9 @@ Version 399    ???
 
 --Support for destroyed GH cause of death.
 
+--Was depending on headIndex=-1 to detect person for headless/bodyless check,
+  but getHeadIndex never returns -1.  Check if object is a person instead.
+
 
 
 Server Fixes:
