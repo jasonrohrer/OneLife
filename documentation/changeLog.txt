@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 399    ???
+Version 399     2023-October-28
 
 --Support for new GH message.
 
@@ -12,6 +12,7 @@ Version 399    ???
 
 --Was depending on headIndex=-1 to detect person for headless/bodyless check,
   but getHeadIndex never returns -1.  Check if object is a person instead.
+
 
 
 
