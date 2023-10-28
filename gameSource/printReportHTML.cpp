@@ -423,6 +423,15 @@ void toggleAdditiveBlend( char ) {
 void drawSquare( doublePair, double ) {
     }
 
+
+void toggleInvertedBlend( char ) {
+    }
+
+
+void drawRect( doublePair, double, double ) {
+    }
+
+
 void startAddingToStencil( char, char, float ) {
     }
 
