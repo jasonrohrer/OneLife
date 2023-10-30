@@ -4,6 +4,16 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes:
+
+--Clearing new emotes list immediately after composing new emotes message,
+  instead of much later, so that emotes don't get added later, before clearing,
+  and then missed.  Fixes bug where some GH players don't get their permanent
+  emote assigned and sent properly.  Fixes #972
+
+
+
+
 Version 399     2023-October-28
 
 --Support for new GH message.
