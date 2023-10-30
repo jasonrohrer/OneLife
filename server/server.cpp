@@ -28817,9 +28817,9 @@ int main() {
         SimpleVector<int> playersReceivingPlayerUpdate;
         
 
-        for( int i=0; i<numLive; i++ ) {
+        for( int p=0; p<numLive; p++ ) {
             
-            LiveObject *nextPlayer = players.getElement(i);
+            LiveObject *nextPlayer = players.getElement(p);
             
             
             // everyone gets all flight messages
