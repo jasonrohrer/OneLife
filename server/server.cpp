@@ -18621,19 +18621,21 @@ int main() {
                     }
                 }
             
-            // look at old age death to
-            double ageLeft = forceDeathAge - computeAge( nextPlayer );
-            
-            double ageSecondsLeft = ageLeft * secPerYear;
-            
-            if( ageSecondsLeft < minMoveTime ) {
-                minMoveTime = ageSecondsLeft;
 
-                if( minMoveTime < 0 ) {
-                    minMoveTime = 0;
+            if( ! nextPlayer->isGhost ) {
+                // look at old age death too
+                double ageLeft = forceDeathAge - computeAge( nextPlayer );
+                
+                double ageSecondsLeft = ageLeft * secPerYear;
+                
+                if( ageSecondsLeft < minMoveTime ) {
+                    minMoveTime = ageSecondsLeft;
+                    
+                    if( minMoveTime < 0 ) {
+                        minMoveTime = 0;
+                        }
                     }
                 }
-            
 
             // as low as it can get, no need to check other players
             if( minMoveTime == 0 ) {
