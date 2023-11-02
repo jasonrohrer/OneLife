@@ -3844,7 +3844,9 @@ double computeAge( LiveObject *inPlayer ) {
         
         if( ! inPlayer->ghostDestroyed && 
             ! inPlayer->isGhost &&
-            SettingsManager::getIntSetting( "allowGhosts", 0 ) ) {
+            SettingsManager::getIntSetting( "allowGhosts", 0 ) &&
+            SettingsManager::getDoubleSetting( "ghostChance", 0.0 ) >=
+            randSource.getRandomDouble() ) {
             
             // player reached old age, and ghosts allowed, keep them around
             // as a surviving ghost for now

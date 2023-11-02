@@ -14,6 +14,8 @@ Server Fixes:
 --Fixed a busy-wait 100% cpu server bug caused by ghosts tripping the old age
   timer and setting our poll timeout (via minMoveTime) to 0.
 
+--Slim chance of GH players.
+
 
 
 
