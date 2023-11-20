@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version ???
+
+--Fixed so that BELL and HELL arrow labels are in English.txt translation file
+  instead of hard-coded.
+
+
+
 Server Fixes:
 
 --Clearing new emotes list immediately after composing new emotes message,

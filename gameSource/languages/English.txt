@@ -456,6 +456,9 @@ owner "OWN"
 visitor "VSTR"
 property "PROP"
 mother2 "MOM"
+bell "BELL"
+hell "HELL"
+
 
 
 babyLabel "+BABY+"

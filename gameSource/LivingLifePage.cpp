@@ -6163,9 +6163,9 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
             doublePair bellPos = distPos;
             bellPos.y += 20;    
             
-            const char *arrowWord = "BELL";
+            const char *arrowWord = translate( "bell" );
             if( isAncientHomePosHell ) {
-                arrowWord = "HELL";
+                arrowWord = translate( "hell" );
                 }
             handwritingFont->drawString( arrowWord, bellPos, alignCenter );
             }
