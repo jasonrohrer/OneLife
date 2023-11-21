@@ -8,7 +8,7 @@ displayed when mousing over the object in the game).
 
 +alcoholD
 
-Consuming adds D alcohol to consumer's drunkeness.  Example:  +alcohol1
+Consuming adds D alcohol to consumer's drunkenness.  Example:  +alcohol1
 
 
 
@@ -21,7 +21,7 @@ spring-loaded doors that auto-open.
 
 +badgePosX,Y
 
-Position of colored badge for an object owned/controled by a leader and
+Position of colored badge for an object owned/controlled by a leader and
 followers.  Example: +badgePos-101,-20
 
 
@@ -30,7 +30,7 @@ followers.  Example: +badgePos-101,-20
 
 For non-use objects that should turn into a specific use count in the newTarget
 after a transition.  This allows (for example), the same scrap box to result
-from scrapping different objects with differing amounts of resultings scrap
+from scrapping different objects with differing amounts of resulting scrap
 metal.  A nozzle is +becomeUse2, while a full piston head is +becomeUse6
 
 
@@ -300,16 +300,16 @@ Tutorial players and Donkeytown players cannot construct this object.
 
 +noWait
 
-Certain objects are techically weapons, in that they are used on players and
+Certain objects are technically weapons, in that they are used on players and
 may inflict a wound, but they don't have a waiting period before being executed.
-For example, snowballs and tatoo needles.
+For example, snowballs and tattoo needles.
 
 
 
 +offScreenSound_V
 
 When this object's creation sound happens off-screen, create an off-screen
-sound icon at the edge of the screen with lable V.
+sound icon at the edge of the screen with label V.
 Example:  +offScreenSound_H   for the hunger sound with the "H" icon.
 
 
