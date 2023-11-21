@@ -23,6 +23,21 @@ Server Fixes:
 
 --Slim chance of GH players.
 
+--Before, only a player's last SIDS-death mother would be remembered and
+  avoided.  If the player did /DIE repeatedly, this last SIDS mother would be
+  replaced, allowing them to revisit the same mother repeatedly over time,
+  which was annoying.  Now we maintin a full list of every mother for which a
+  given baby player has done /DIE, and we avoid those mothers as long as they
+  remain alive.  If the baby player runs out of mothers, they go to Donkeytown.
+  This will reduce the occurrence of SIDS generally, since players that are
+  doing this will skip mothers that they want to avoid after only one visit.
+  But also, it forces baby players to have some skin in the game.  If they SIDS
+  too much, they will run out of mothers and go to Donkeytown (temporarily,
+  until more mothers become available) instead of cycling through mothers
+  forever and annoying people.  Fixes #983
+
+
+ 
 
 
 
