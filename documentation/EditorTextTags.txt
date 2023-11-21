@@ -1,0 +1,496 @@
+Various special-purpose text tags occur in object descriptions, as part
+of the # comment in the object's description (everything after the # is not
+displayed when mousing over the object in the game).
+
+
+
+
+
++alcoholD
+
+Consuming adds D alcohol to consumer's drunkeness.  Example:  +alcohol1
+
+
+
++autoDefaultTrans
+
+Default transition is triggered when player path will cross that object.  For
+spring-loaded doors that auto-open.
+
+
+
++badgePosX,Y
+
+Position of colored badge for an object owned/controled by a leader and
+followers.  Example: +badgePos-101,-20
+
+
+
++becomeUseD
+
+For non-use objects that should turn into a specific use count in the newTarget
+after a transition.  This allows (for example), the same scrap box to result
+from scrapping different objects with differing amounts of resultings scrap
+metal.  A nozzle is +becomeUse2, while a full piston head is +becomeUse6
+
+
++biomeBlockD
+
+Prevents object from being constructed in biome D.  Example: +biomeBlock4
+
+
+
++biomeReqD
+
+Object can only be constructed in biome D.  Example: +biomeReq1
+
+
+
++biomeSetD
+
+Forces biome D under object.  Used to force a neutral biome under expert
+waystones to make them touchable by everyone.  Example: +biomeSet3
+
+
+
++blocksMoving
+
+Prevent moving objects from moving through non-blocking objects.  For example,
+auto-open doors let players pass through, but they still block animals.
+
+
+
++blocksNonFollower
+
+Prevents non-followers from passing through an otherwise non-blocking object.
+For example, an auto-opening gate that only allows followers to pass.
+
+
++causeAutoOrient
+
+Triggers auto-orientation of nearby auto-orienting objects (where this object
+doesn't have multiple orientations defined).  For example, wall shelves that can
+only be horizontal walls, but affect other nearby auto-orienting walls.
+
+
+
++causeAutoOrientH
+
+Triggers auto-orientation only on the east and west neighbor.
+
+
+
++causeAutoOrientV
+
+Triggers auto-orientation only on the north and south neighbor.
+
+
+
++containOffsetBottomX_4
++containOffsetBottomY_-15
+
+Sets X and Y offset for objects that are contained in a container that has no
+sprite in front of the contained objects (so their contained position is
+defined by their lowest sprite, like they're sitting on top of the container).
+For example, position of the object on a table.
+
+
+
++containOffsetX_70
++containOffsetY_-14
+
+Sets X and Y offset for objects that are contained in a container that has one
+or more sprites in front of the contained objects. For example, position of the
+object in a basket.
+
+
+
++contV
+
+For containers, define a class of containers with label V.
+For containable objects, mark them so that they an only go in containers
+with a matching label V.  This allows us to limit certain objects to certain
+kinds of containers.  For example, you can only set a glass of wine down on
+a food table.  You can't stuff it in a backpack.
+Examples:  +contAnyTable   +contFoodDish   +contLabDish
+
+
+
++cornerV
+
+Corner shape for auto-orienting object set with label V
+Examples:  +cornerA   +cornerAdobe
+
+
+
++default
+
+Sets this object as the default object, to be displayed if an unknown object
+ID is received from the server.
+
+
+
++drink
+
+Modifies tool tips and food-bar status info text for drinkable edible objects.
+(So the tool tip says DRINK GLASS OF WINE and not EAT GLASS OF WINE).
+
+
+
++emotEat_D_T
+
+Show emote with index number D for T seconds after eating an object.
+
+Example:  +emotEat_29_10
+
+
+
++expertFind
+
+Touching this object gives the player an arrow to the expert for this object's
+biome.
+
+
+
++famUseR
+
+Using this object, if no homeland for a family exists, creates a homeland
+of radius R around the object.  Example:  +famUse100
+
+
+
++fly
+
+This object is a flying object that can take off if it travels far enough
+on a straight road and land at the closest object in the take-off direction
+tagged with +land
+
+
+
++followerOwned
+
+This object is co-owned by all of the owner's current followers.
+
+
+
++frontWall
+
+This wall object is drawn in front of all other objects in its horizontal row.
+Normally, wall-like objects are drawn in order left to right.  This tag is for
+objects that stick out to the right in a way that looks bad with the default
+overlap.
+
+
+
++giveClue
+
+Holding this object gives a clue in the Headless Hunt contest.
+
+
+
++hellArrow
+
+This object's monumentCall arrow points to HELL instead of BELL.
+
+
+
++hideBody
+
+For an emote object that hides the entire body.
+
+
+
++hideHead
+
+For an emote object that hides the head.
+
+
+
++hideRider
+
+For a rideable object that hides the rider completely.
+
+
+
++horizontalV
+
+Horizontal shape for auto-orienting object set with label V
+Examples:  +horizontalA   +horizontalAdobe
+
+
+
+
+
++hungryWork10
+
+
++land
+
+This object is a landing location for objects tagged with +fly.
+
+
+
++leaderInherit
+
+This object is inherited by a deceased player's leadership heir instead of the
+deceased player's children.
+
+
+
++map
+
+This written object stores its creation location.  Whenever the written object
+is read, they will also read the location and receive an arrow pointing to the
+location.
+
+
+
++nearPop_50_10000
+
+This object can only be created if at least 50% of living players are within
+10,000 tiles from the creation location.
+
+
+
++negativePhotoFixed
+
+This object contains viewable negative photo information.
+
+
+
++negativePhotoUnfixed
+
+This object contains negative photo information in unfixed form.
+
+
+
++neverDrop
+
+Object is stuck in hand and never droppable, not even when entering a bad biome.
+
+
+
++noBackAccess
+
+Objects that can't be manipulated by a player standing on the north side.
+For example, a wall shelf can only be manipulated from the front side of the
+wall.
+
+
+
++noCover
+
+For floors that don't completely cover the underlying biome.  Thus, we
+cannot skip drawing the underling biome in that spot.  For example, curved
+roads.
+
+
+
++noHighlight
+
+Don't highlight this object when player mouses over it.
+
+
+
++normalOnly
+
+Tutorial players and Donkeytown players cannot construct this object.
+
+
+
++noWait
+
+Certain objects are techically weapons, in that they are used on players and
+may inflict a wound, but they don't have a waiting period before being executed.
+For example, snowballs and tatoo needles.
+
+
+
++offScreenSound_V
+
+When this object's creation sound happens off-screen, create an off-screen
+sound icon at the edge of the screen with lable V.
+Example:  +offScreenSound_H   for the hunger sound with the "H" icon.
+
+
+
++owned
+
+For objects that are owned upon creation, can only be manipulated by owners,
+and can be shared with other owners.
+
+
++photo
+
+This object creates a photo of the area in front of the object and posts it to
+the photo server in both positive and negative form, attaching the resulting
+photo ID to the object in its &written data.
+
+
+
++positivePhotoFixed
+
+This object contains viewable positive photo information.
+
+
+
++positivePhotoUnfixed
+
+This object contains positive photo information in unfixed form.
+
+
+
++primaryHomeland
+
+This object, when created through a tapoutTrigger, is limited to a family's
+primary homeland.
+
+
+
++roadD
+
+This road is part of a class of roads, defined by parent road object with ID
+D.  Example:  +road4426
+
+
+
++slotsInvis
+
+Objects in this container are not visible.
+
+
+
++tapoutTrigger,XS,YS,XR,YR
+
+When this object is created, it executes a tapout-trigger transition every
+XS tiles in the X direction, every YS tiles in the Y direction, for a total
+X,Y radius of XR,YR.  I.e., this object triggers a transition on a grid of objects near this object.  A tapout-trigger operation is defined as a transition
+of this object as actor with the target grid object as the target. 
+Examples:  +tapoutTrigger,1,1,1,1    +tapoutTrigger,40,40,160,0
+
+
+
++tempOwned
+
+While +owned objects can only be manipulated by their owners, +tempOwned objects
+still track ownership, but they can be pushed through transitions by non-owners.
+For example, a shaky gate that hasn't become permanent yet can be destroyed
+by a non-owner who doesn't approve of the gate's location.
+
+
+
++tool
+
+This object is a tool that can be learned (no longer used, part of the old skill
+system where you could chose a subset of tools to learn in a lifetime).
+
+
+
++toolV
+
+This object is a tool that can be learned as part of a group of tools with 
+label V (no longer used, part of the old skill system where you could chose a
+subset of tools to learn in a lifetime).
+Examples:  +toolBow_Drill   +toolChopping   +toolHoe
+
+
+
++useOnContained
+
+This container allows transitions to occur on contained objects.  For example,
+you can pour wine into an empty glass that is sitting on a table.
+
+
+
++varNumeral
+
+This is a variable object (see $D below) that displays its variable number
+visually by selectively displaying some of its Numeral#D sprites.  These digit
+sprites are arranged in columns (1's column, 10's column, etc.)
+
+
+
++varSerialNumberD
+
+This variable object counts up, server-wide, as instances of the object are
+created, giving each one an incremented variable value.  D is the ID of this
+sequence, so the server can track multiple separate sequences for different
+classes of objects.  Example:  +varSerialNumber1
+
+
+
++verticalV
+
+Vertical shape for auto-orienting object set with label V
+Examples:  +verticalA   +verticalAdobe
+
+
+
++wall
+
+Usually, objects are drawn in the wall layer based on their Hug Floor checkbox
+(floorHugging property).  Non floor-hugging objects can be forced into the wall
+drawing layer with the +wall tag.
+
+
+
++yumD
+
+This object is in the same yum class as parent object with id D.  For example,
+eating a single berry and a bowl of berries is in the same yum class.
+Examples:  +yum1175   +yum1463
+
+
+
+
+
+
+These are some weird ones that don't match the +tag format:
+
+
+
+$D
+
+This is a variable-numbered object with D possible versions.
+Examples:  $10
+
+
+
+fromDeath
+
+These objects get their sprites pre-loaded to avoid partial-sprite
+pop-in when someone dies.  Sprites for other object only get loaded if
+they are present on our section of the map or they are one transition
+away from what is present.  But death objects are special in that they aren't
+the result of transitions, so they don't get pre-loaded through the normal
+mechanism.
+
+
+
+monumentStep
+
+Part way to a monument.
+
+
+
+monumentDone
+
+The completion of a monument.
+
+
+
+monumentCall
+
+Object's creation sound is broadcast server-wide, and players get a BELL arrow
+to the monument's location.
+
+
+
+The Apocalypse
+
+If an object's description directly matches these words (case sensitive)
+then it triggers a server-wide apocalypse when it is created.
+
+
+
+&written, etc
