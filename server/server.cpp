@@ -9464,6 +9464,41 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                        "looking for a d-town mother",
                        numBirthLocationsCurseBlocked,
                        numBirthLocationsSidsBlocked );
+        
+
+        if( numBirthLocationsSidsBlocked > 0 ) {
+            // visiting d-town might be temporary in this case
+
+            // clear this player from all SIDS-block lists
+            // let them start over, and loop through mothers again,
+            // after their trip to d-town
+            
+            for( int i=0; i<numPlayers; i++ ) {
+                LiveObject *player = players.getElement( i );
+            
+                if( player->error ) {
+                    continue;
+                    }
+                
+                if( player->isTutorial ) {
+                    continue;
+                    }
+                
+                if( player->vogMode ) {
+                    continue;
+                    }
+            
+                int foundIndex =
+                    player->sidsBabyEmails.
+                    getMatchingStringIndex( newObject.email );
+                
+                if( foundIndex != -1 ) {                    
+                    player->sidsBabyEmails.deallocateStringElement( 
+                        foundIndex );
+                    }
+                }
+            }
+        
 
 
         // they are going to d-town

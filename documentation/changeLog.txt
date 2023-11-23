@@ -36,7 +36,10 @@ Server Fixes:
   until more mothers become available) instead of cycling through mothers
   forever and annoying people.  Fixes #983
 
-
+--After using /DIE to cycle through mothers, and ending up in Donkeytown, your
+  SIDS list is cleared.  So your stay in Donkeytown is only temporary, and
+  after you die in Donkeytown, you can use /DIE to cycle back through mothers
+  again.  Fixes #985
  
 
 
