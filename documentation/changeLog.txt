@@ -45,6 +45,11 @@ Server Fixes:
   go to Donkeytown.  Their SIDS list is preserved, and they cycle through and
   become Eve.  This permits classic solo play on low-pop servers.  Fixes #990
 
+--Fixed so that we force a girl baby if a family has no girl children currently
+  (in addition to the case where they have < 4 fertile/potential-fertile
+  females).  Fixes #991
+
+
 
 
 Version 399     2023-October-28

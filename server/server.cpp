@@ -10074,11 +10074,21 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 // females
                 // If so, force a girl baby.
                 // Do this regardless of whether Eve window is in effect, etc.
+
+                // Also, if the family has 0 girl children, force a girl
+                // too.  This covers the case where all the fertile women
+                // are right at the tail end of their fertility.
+                // We actually want to measure the "fertile future"
+                // here.
+                // (Players have been /DIE cycling to force a girl baby
+                //  in situations that the server fails to compensate for).
+                
                 int min = SettingsManager::getIntSetting( 
                     "minPotentialFertileFemalesPerFamily", 3 );
                 int famMothers = countFertileMothers( parent->lineageEveID );
                 int famGirls = countGirls( parent->lineageEveID );
-                if( famMothers + famGirls < min ) {
+                if( famMothers + famGirls < min ||
+                    famGirls == 0 ) {
                     forceGirl = true;
                     }
                 }
