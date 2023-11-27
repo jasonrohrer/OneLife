@@ -41,6 +41,9 @@ Server Fixes:
   after you die in Donkeytown, you can use /DIE to cycle back through mothers
   again.  Fixes #985
  
+--On low-pop (< 8 players), /DIE-cycling players that run out of moms no longer
+  go to Donkeytown.  Their SIDS list is preserved, and they cycle through and
+  become Eve.  This permits classic solo play on low-pop servers.  Fixes #990
 
 
 

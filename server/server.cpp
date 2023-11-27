@@ -9137,6 +9137,14 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     int numBirthLocationsSidsBlocked = 0;
     
 
+    // on low-pop servers, don't cycle a player through to D-town if they
+    // SIDS repeatedly.
+    // Let them eventually run out of moms and become a new Eve
+    int dieCycleDonkeytownThreshold = 
+        SettingsManager::getIntSetting( "dieCycleDonkeytownThreshold", 8 );
+    
+
+
     int numOfAge = 0;
 
     int maxLivingChildrenPerMother = 
@@ -9454,7 +9462,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         }
     else if( parentChoices.size() == 0 &&
              ( numBirthLocationsCurseBlocked > 0 ||
-               numBirthLocationsSidsBlocked > 0 ) ) {
+               ( numBirthLocationsSidsBlocked > 0 &&
+                 numPlayers >= dieCycleDonkeytownThreshold ) ) ) {
 
         // they are blocked from being born EVERYWHERE by curses
         // OR by their own SIDS choices
@@ -9635,7 +9644,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     if( parentChoices.size() == 0 && 
         ( numBirthLocationsCurseBlocked > 0 || 
-          numBirthLocationsSidsBlocked > 0 ) ) {
+          ( numBirthLocationsSidsBlocked > 0
+            && numPlayers >= dieCycleDonkeytownThreshold ) ) ) {
         AppLog::infoF( "No available mothers in d-town, "
                        "sending a new Eve to donkeytown" );
         }
