@@ -49,6 +49,10 @@ Server Fixes:
   (in addition to the case where they have < 4 fertile/potential-fertile
   females).  Fixes #991
 
+--Polylingual race now has no homeland, and can give birth in any homeland
+  band, though they must remain inside the bands (and still can't give birth in
+  the outlands to the far north or south).
+
 
 
 

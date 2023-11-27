@@ -307,6 +307,9 @@ static SimpleVector<int> specialBiomeBandYCenter;
 
 static int minActivePlayersForBirthlands;
 
+static int polylingualNoHomeland;
+
+
 
 
 // the biome index to use in place of special biomes outside of the north-most
@@ -4023,6 +4026,9 @@ char initMap() {
 
     minActivePlayersForBirthlands = 
         SettingsManager::getIntSetting( "minActivePlayersForBirthlands", 15 );
+    
+    polylingualNoHomeland = 
+        SettingsManager::getIntSetting( "polylingualNoHomeland", 1 );
 
     
 
@@ -10074,6 +10080,20 @@ int isBirthland( int inX, int inY, int inLineageEveID, int inDisplayID ) {
         
         int personRace = getObject( inDisplayID )->race;
 
+        char personPolylingual = ( personRace == getPolylingualRace( true ) );
+
+        
+        if( polylingualNoHomeland && personPolylingual ) {
+            // polylingual race can give birth anywhere
+            // no homeland band.
+            
+            // However, they must be in SOME band, and not
+            // be able to walk infinitely far to the North or South
+            // (The outOfBand check above handles this).
+            return true;
+            }
+
+
         int specialistRace = getSpecialistRace( biomeNumber );
         
         if( specialistRace != -1 ) {
@@ -10087,7 +10107,7 @@ int isBirthland( int inX, int inY, int inLineageEveID, int inDisplayID ) {
         else {
             // in-band, but no specialist race defined
             // "language expert" band?
-            if( personRace == getPolylingualRace( true ) ) {
+            if( personPolylingual ) {
                 return 1;
                 }
             else {
