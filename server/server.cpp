@@ -24304,7 +24304,8 @@ int main() {
                                         bonus = 0;
                                         }
                                     
-                                    logEating( targetObj->id,
+                                    logEating( nextPlayer->id,
+                                               targetObj->id,
                                                targetObj->foodValue + bonus,
                                                computeAge( nextPlayer ),
                                                m.x, m.y );
@@ -25315,7 +25316,8 @@ int main() {
                                         bonus = 0;
                                         }
 
-                                    logEating( obj->id,
+                                    logEating( targetPlayer->id, 
+                                               obj->id,
                                                obj->foodValue + bonus,
                                                targetPlayerAge,
                                                m.x, m.y );

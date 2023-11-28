@@ -10,5 +10,6 @@ void freeFoodLog();
 void stepFoodLog();
 
 
-void logEating( int inFoodID, int inFoodValue, double inEaterAge,
+void logEating( int inPlayerID, 
+                int inFoodID, int inFoodValue, double inEaterAge,
                 int inMapX, int inMapY );

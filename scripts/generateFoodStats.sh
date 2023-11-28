@@ -20,7 +20,15 @@ do
 	  mkdir ~/checkout/OneLife/server/foodLog_$server
   fi
 
+  if [ ! -d ~/checkout/OneLife/server/foodLogDetail_$server ]
+  then
+	  echo "Making local directory foodLogDetail_$server"
+	  mkdir ~/checkout/OneLife/server/foodLogDetail_$server
+  fi
+
   rsync -avz -e ssh --progress $user@$server:checkout/OneLife/server/foodLog/*.txt ~/checkout/OneLife/server/foodLog_$server
+
+  rsync -avz -e ssh --progress $user@$server:checkout/OneLife/server/foodLogDetail/*.txt ~/checkout/OneLife/server/foodLogDetail_$server
 
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 

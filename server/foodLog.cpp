@@ -14,6 +14,7 @@
 
 
 static FILE *logFile;
+static FILE *logDetailFile;
 
 static int currentYear;
 static int currentDay;
@@ -21,7 +22,7 @@ static int currentHour;
 
 
 
-static FILE *openCurrentLogFile() {
+static FILE *openCurrentLogFile( const char *inDirName ) {
     time_t t = time( NULL );
     struct tm *timeStruct = localtime( &t );
     
@@ -29,14 +30,14 @@ static FILE *openCurrentLogFile() {
     
     strftime( fileName, 99, "%Y_%m%B_%d_%A.txt", timeStruct );
 
-    File logDir( NULL, "foodLog" );
+    File logDir( NULL, inDirName );
     
     if( ! logDir.exists() ) {
         Directory::makeDirectory( &logDir );
         }
 
     if( ! logDir.isDirectory() ) {
-        AppLog::error( "Non-directory foodLog is in the way" );
+        AppLog::errorF( "Non-directory %s is in the way", inDirName );
         return NULL;
         }
 
@@ -58,6 +59,18 @@ static FILE *openCurrentLogFile() {
     delete [] newFileName;
     
     return file;
+    }
+
+
+
+
+static FILE *openCurrentLogFile() {
+    return openCurrentLogFile( "foodLog" );
+    }
+
+
+static FILE *openCurrentDetailLogFile() {
+    return openCurrentLogFile( "foodLogDetail" );
     }
 
 
@@ -99,6 +112,8 @@ void initFoodLog() {
     
 
     logFile = openCurrentLogFile();
+    logDetailFile = openCurrentDetailLogFile();
+    
     
     maxObjectID = getMaxObjectID();
     
@@ -160,12 +175,18 @@ static void stepLog( char inForceOutput ) {
 
     if( timeStruct->tm_year != currentYear ||
         timeStruct->tm_yday != currentDay ) {
+        
+        // open new files each day change
 
         if( logFile != NULL ) {
             fclose( logFile );
             }
+        if( logDetailFile != NULL ) {
+            fclose( logDetailFile );
+            }
         
         logFile = openCurrentLogFile();
+        logDetailFile = openCurrentDetailLogFile();
         }    
     }
 
@@ -179,6 +200,11 @@ void freeFoodLog() {
         
         fclose( logFile );
         }
+    
+    if( logDetailFile != NULL ) {
+        fclose( logDetailFile );
+        }
+    
     delete [] eatFoodCounts;
     delete [] eatFoodValueCounts;
     delete [] eaterAgeSums;
@@ -191,12 +217,14 @@ void stepFoodLog() {
     if( logFile != NULL ) {
         stepLog( false );
         }
+    // logDetailFile doesn't need stepping
     }
 
 
 
 
-void logEating( int inFoodID, int inFoodValue, double inEaterAge,
+void logEating( int inPlayerID, 
+                int inFoodID, int inFoodValue, double inEaterAge,
                 int inMapX, int inMapY ) {
     
     if( logFile != NULL ) {
@@ -220,4 +248,10 @@ void logEating( int inFoodID, int inFoodValue, double inEaterAge,
     if( idToLog > maxSeenObjectID ) {
         maxSeenObjectID = idToLog;
         }
+
+    if( logDetailFile != NULL ) {
+        fprintf( logDetailFile, "%.2f %d %d\n", 
+                 Time::getCurrentTime(), inPlayerID, idToLog );
+        }
+
     }

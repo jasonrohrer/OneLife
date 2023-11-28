@@ -53,6 +53,9 @@ Server Fixes:
   band, though they must remain inside the bands (and still can't give birth in
   the outlands to the far north or south).
 
+--New foodLogDetail, which gives time, player id, and object id for each food
+  eaten on the server.
+
 
 
 
