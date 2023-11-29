@@ -61,6 +61,7 @@ spellCheck.cpp \
 SoundUsage.cpp \
 objectMetadata.cpp \
 emotion.cpp \
+exporter.cpp \
 
 
 

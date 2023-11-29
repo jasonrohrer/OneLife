@@ -1,0 +1,4 @@
+
+
+
+void exportObject( int inObjectID );

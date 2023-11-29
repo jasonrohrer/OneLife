@@ -1,0 +1,73 @@
+
+
+Objects are exported one-by-one into separate files.
+
+Export files are named like:
+
+30_wild_gooseberry_bush.obj
+
+
+
+
+File contents is a combination of text interleaved with raw binary data.
+
+
+
+Each unique sprite in the object is included first in the file.
+
+Each sprite has a header  formatted as follows:
+
+sprite id tag multiplicativeBlend centerAnchorXOffset centerAnchorYOffset tgaFileSize#
+
+
+The # sign is followed by raw TGA file data of length tgaFileSize
+
+Note that sprite tags cannot contain spaces.
+
+Example:
+
+sprite 143 BerryBush 0 3 19 65554#
+
+
+Each additional unique sprite in the object is concatonated, with no space or
+other separation between them.
+
+
+Next, the object itself is included with the following header:
+
+object textFileSize#
+
+Example:
+
+object 1900#
+
+
+The # sign is followed by raw TXT file data for the object.  Note that newlines
+are represented by LF and not CRLF.  This may differ from how these files
+are checked out by git on Windows (though it matches the way the files are
+stored in the repository).
+
+
+The object raw text is followed by concatonated animations.  Each animation
+has a header in the following format:
+
+animation slot_number textFileSize#
+
+slot_number is one of 0, 1, 2, 4, or 5 (never 3)
+OR 7x0, 7x1, etc for extra animations.
+
+Examples:
+
+animation 5 20243#
+
+animation 7x2 19695#
+
+
+
+The # sign is followed by raw TXT file data for the animation.
+Note that newlines are represented by LF and not CRLF.  This may differ from
+how these files are checked out by git on Windows (though it matches the way
+the files are stored in the repository).
+
+
+After the final animation slot's text data, the file ends.
