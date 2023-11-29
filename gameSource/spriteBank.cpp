@@ -1738,8 +1738,6 @@ void recomputeSpriteHash( SpriteRecord *inRecord,
                                         inTGAData,
                                         inRecord->tag,
                                         inRecord->multiplicativeBlend,
-                                        inRecord->w,
-                                        inRecord->h,
                                         inRecord->centerAnchorXOffset,
                                         inRecord->centerAnchorYOffset );    
     
@@ -1753,12 +1751,11 @@ unsigned int computeSpriteHash(
     unsigned char *inTGAData,
     char *inTag,
     char inMultiplicativeBlend,
-    int inW, int inH,
     int inCenterAnchorXOffset, int inCenterAnchorYOffset ) {
     
-    char *stringPortion = autoSprintf( "%s %d %d %d %d %d",
+    char *stringPortion = autoSprintf( "%s %d %d %d",
                                        inTag, inMultiplicativeBlend,
-                                       inW, inH, inCenterAnchorXOffset,
+                                       inCenterAnchorXOffset,
                                        inCenterAnchorYOffset );
     int numStringBytes = strlen( stringPortion );
     

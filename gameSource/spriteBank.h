@@ -199,7 +199,6 @@ unsigned int computeSpriteHash(
     unsigned char *inTGAData,
     char *inTag,
     char inMultiplicativeBlend,
-    int inW, int inH,
     int inCenterAnchorXOffset, int inCenterAnchorYOffset );
 
 
