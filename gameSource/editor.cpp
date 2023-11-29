@@ -1110,8 +1110,10 @@ void drawFrame( char inUpdate ) {
 
                         char rebuilding;
                         
+                        // editor pre-computes sprite hashes
+                        // to help with export/import
                         int numSprites = 
-                            initSpriteBankStart( &rebuilding );
+                            initSpriteBankStart( &rebuilding, true );
                         
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase( 

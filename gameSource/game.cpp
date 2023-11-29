@@ -665,8 +665,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
     char rebuilding;
     
+    // game doesn't need to compute sprite hashes
     int numSprites = 
-        initSpriteBankStart( &rebuilding );
+        initSpriteBankStart( &rebuilding, false );
                         
     if( rebuilding ) {
         loadingPage->setCurrentPhase( translate( "spritesRebuild" ) );

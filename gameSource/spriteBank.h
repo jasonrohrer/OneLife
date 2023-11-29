@@ -10,6 +10,8 @@
 
 typedef struct SpriteRecord {
         int id;
+        
+        unsigned int hash;
 
         // NULL if image not loaded
         SpriteHandle sprite;
@@ -66,7 +68,8 @@ void enableSpriteSearch( char inEnable );
 
 
 // returns number of sprite metadata files that need to be loaded
-int initSpriteBankStart( char *outRebuildingCache );
+int initSpriteBankStart( char *outRebuildingCache,
+                         char inComputeSpriteHashes = false);
 
 
 // returns progress... ready for Finish when progress == 1.0
@@ -175,6 +178,29 @@ void countLoadedSprites( int *outLoaded, int *outTotal );
 // returns true if implementation is fully-functional sprite bank
 // or false if implementation is a dummy implementation (server-side)
 char realSpriteBank();
+
+
+
+// updates hash in inRecord based on TGA data read from id.tga file
+void recomputeSpriteHash( SpriteRecord *inRecord );
+
+
+void recomputeSpriteHash( SpriteRecord *inRecord,
+                          int inNumTGABytes,
+                          unsigned char *inTGAData );
+
+
+
+// computes a hash based on data for a sprite
+// inTGAData and inTag destroyed by caller
+// Result hash destroyed by caller
+unsigned int computeSpriteHash(
+    int inNumTGABytes,
+    unsigned char *inTGAData,
+    char *inTag,
+    char inMultiplicativeBlend,
+    int inW, int inH,
+    int inCenterAnchorXOffset, int inCenterAnchorYOffset );
 
 
 
