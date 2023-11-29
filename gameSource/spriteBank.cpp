@@ -1698,34 +1698,48 @@ char realSpriteBank() {
 
 
 
-// updates hash in inRecord
-// inRGBABytes destroyed by caller
-void recomputeSpriteHash( SpriteRecord *inRecord ) {
-    
+
+// returned array destroyed by caller
+static unsigned char *getSpriteTGAFileData( int inID,
+                                            int *outNumDataBytes ) {
     File spritesDir( NULL, "sprites" );
             
 
-    char *fileNameTGA = autoSprintf( "%d.tga", inRecord->id );
+    char *fileNameTGA = autoSprintf( "%d.tga", inID );
         
 
     File *spriteFile = spritesDir.getChildFile( fileNameTGA );
     
     delete [] fileNameTGA;
     
-    int numTGABytes = 0;
     unsigned char *tgaBytes = NULL;
     
     if( spriteFile->exists() ) {
-        tgaBytes = spriteFile->readFileContents( &numTGABytes );
+        tgaBytes = spriteFile->readFileContents( outNumDataBytes );
         }
     
     delete spriteFile;
 
+    return tgaBytes;
+    }
+
+
+
+// updates hash in inRecord
+// inRGBABytes destroyed by caller
+void recomputeSpriteHash( SpriteRecord *inRecord ) {
     
-    recomputeSpriteHash( inRecord, numTGABytes, tgaBytes );
+    int numTGABytes;
     
+    unsigned char *tgaBytes = getSpriteTGAFileData( inRecord->id, 
+                                                    &numTGABytes );
     
-    delete [] tgaBytes;
+    if( tgaBytes != NULL ) {
+
+        recomputeSpriteHash( inRecord, numTGABytes, tgaBytes );
+        
+        delete [] tgaBytes;
+        }
     }
 
 
@@ -1781,5 +1795,76 @@ unsigned int computeSpriteHash(
     delete [] totalBytes;
     
     return hash;
+    }
+
+
+
+int doesSpriteRecordExist(
+    int inNumTGABytes,
+    unsigned char *inTGAData,
+    char *inTag,
+    char inMultiplicativeBlend,
+    int inCenterAnchorXOffset, int inCenterAnchorYOffset ) {
+    
+    unsigned int targetHash = computeSpriteHash( inNumTGABytes,
+                                                 inTGAData,
+                                                 inTag,
+                                                 inMultiplicativeBlend,
+                                                 inCenterAnchorXOffset,
+                                                 inCenterAnchorYOffset );
+    
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            SpriteRecord *r = idMap[i];
+            
+            if( r->hash != 0 && r->hash == targetHash ) {
+                
+                // a hit
+                
+                // make sure they are really equal
+                if( strcmp( inTag, r->tag ) != 0
+                    ||
+                    inMultiplicativeBlend != r->multiplicativeBlend
+                    ||
+                    inCenterAnchorXOffset != r->centerAnchorXOffset
+                    ||
+                    inCenterAnchorYOffset != r->centerAnchorYOffset ) {
+                    
+                    continue;
+                    }
+                
+                // metadata matches
+                
+                // check if file data matches
+                
+                int numTGABytes;
+    
+                unsigned char *tgaBytes = getSpriteTGAFileData( r->id, 
+                                                                &numTGABytes );
+    
+                char match = false;
+                
+                if( tgaBytes != NULL ) {
+                    
+                    if( numTGABytes == inNumTGABytes ) {
+                        
+                        if( memcmp( tgaBytes, inTGAData, numTGABytes ) == 0 ) {
+                            match = true;
+                            }
+                        }
+
+                    delete [] tgaBytes;
+                    }
+                
+                if( match ) {
+                    return r->id;
+                    }
+                }
+            
+            }
+        }
+    
+    // no match
+    return -1;
     }
 

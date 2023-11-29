@@ -202,5 +202,15 @@ unsigned int computeSpriteHash(
     int inCenterAnchorXOffset, int inCenterAnchorYOffset );
 
 
+// returns ID of sprite if one exists matching these settings
+// returns -1 if not
+int doesSpriteRecordExist(
+    int inNumTGABytes,
+    unsigned char *inTGAData,
+    char *inTag,
+    char inMultiplicativeBlend,
+    int inCenterAnchorXOffset, int inCenterAnchorYOffset );
+
+
 
 #endif
