@@ -53,12 +53,13 @@ void writeAnimRecordToFile( FILE *inFILE, AnimationRecord *inRecord ) {
     
     char *animTextData = animFile->readFileContents();
     
+    delete animFile;
+    
     if( animTextData == NULL ) {
         printf( "Failed to read animation file %s\n", animFileName );
         
         delete [] animFileName;
         delete [] animTypeTag;
-        delete animFile;
         return;
         }
     
