@@ -9,6 +9,9 @@ Version ???
 --Fixed so that BELL and HELL arrow labels are in English.txt translation file
   instead of hard-coded.
 
+--Fixed soundBank to roll back nextSoundNumber value whenever last sound in
+  bank is deleted, to avoid sound id inflation.
+
 
 
 Server Fixes:

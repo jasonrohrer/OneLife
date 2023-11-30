@@ -1265,6 +1265,41 @@ void deleteSoundFromBank( int inID ) {
     
     
     freeSoundRecord( inID );
+
+
+    // avoid inflation of nextSoundNumber by rolling it back
+    // whenever final sound in bank is deleted
+    if( soundsDir.exists() && soundsDir.isDirectory() ) {
+        
+        File *nextNumberFile = 
+            soundsDir.getChildFile( "nextSoundNumber.txt" );
+        
+        int nextSoundNumber = nextNumberFile->readFileIntContents( 1 );
+        
+        
+        if( nextSoundNumber == inID + 1 ) {
+        
+            // our last sound was deleted
+            
+            // walk backward in idMap and find last non-NULL record
+            
+            int lastRecord = 0;
+            
+            for( int i = mapSize - 1; i >= 0; i-- ) {
+                if( idMap[i] != NULL ) {
+                    lastRecord = i;
+                    break;
+                    }
+                }
+            
+            nextSoundNumber = lastRecord + 1;
+            
+            nextNumberFile->writeToFile( nextSoundNumber );
+            
+            }
+        
+        delete nextNumberFile;
+        }
     }
 
 
