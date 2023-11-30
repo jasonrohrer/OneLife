@@ -11,6 +11,8 @@
 typedef struct SoundRecord {
         int id;
 
+        unsigned int hash;
+
         // NULL if sound not loaded
         SoundSpriteHandle sound;
         SoundSpriteHandle reverbSound;
@@ -28,7 +30,8 @@ typedef struct SoundRecord {
 
 
 // returns number of sounds that need to be loaded (or reverbs regenerated)
-int initSoundBankStart( char *outRebuildingCache );
+int initSoundBankStart( char *outRebuildingCache,
+                        char inComputeSoundHashes = false );
 
 
 // returns progress... ready for Finish when progress == 1.0
@@ -139,6 +142,35 @@ void checkIfSoundStillNeeded( int inID );
 
 
 void printOrphanedSoundReport();
+
+
+
+// updates hash in inRecord based on AIFF or OGG data read from
+// file in sounds directory
+void recomputeSoundHash( SoundRecord *inRecord );
+
+
+
+void recomputeSoundHash( SoundRecord *inRecord,
+                         int inNumSoundFileBytes,
+                         unsigned char *inSoundFileData );
+
+
+
+// computes a hash based on data for a sound
+// inSoundFileData destroyed by caller
+unsigned int computeSoundHash(
+    int inNumSoundFileBytes,
+    unsigned char *inSoundFileData );
+
+
+
+// returns ID of sound if one exists matching these settings
+// returns -1 if not
+int doesSoundRecordExist(
+    int inNumSoundFileBytes,
+    unsigned char *inSoundFileData );
+
 
 
 #endif

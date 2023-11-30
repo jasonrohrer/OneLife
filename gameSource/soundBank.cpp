@@ -20,6 +20,8 @@
 
 #include "minorGems/system/Time.h"
 
+#include "minorGems/util/crc32.h"
+
 #include "binFolderCache.h"
 
 
@@ -50,6 +52,7 @@ static SimpleVector<int> loadedSounds;
 
 static char *loadingFailureFileName = NULL;
 
+static char doComputeSoundHashes = false;
 
 
 static int sampleRate = 44100;
@@ -367,8 +370,11 @@ SimpleVector<SoundRecord*> records;
 
 
 
-int initSoundBankStart( char *outRebuildingCache ) {
+int initSoundBankStart( char *outRebuildingCache,
+                        char inComputeSoundHashes ) {
     
+    doComputeSoundHashes = inComputeSoundHashes;
+
     //printSteps = inPrintSteps;
     
     
@@ -531,6 +537,7 @@ float initSoundBankStep() {
             r->liveUseageCount = 0;
             
             r->id = 0;
+            r->hash = 0;
             
             sscanf( fileName, "%d.", &( r->id ) );
             
@@ -569,6 +576,9 @@ float initSoundBankStep() {
                     
                     r->sound = setSoundSprite( samples, numSamples );
                     
+                    if( doComputeSoundHashes ) {
+                        recomputeSoundHash( r, soundDataLength, soundData );
+                        }
                     
                     records.push_back( r );
                     added = true;
@@ -1502,6 +1512,11 @@ int stopRecordingSound() {
     delete [] samples;
     
     idMap[newID] = r;
+
+    
+    if( doComputeSoundHashes ) {
+        recomputeSoundHash( r );
+        }
     
 
     loadedSounds.push_back( r->id );
@@ -1591,6 +1606,142 @@ void printOrphanedSoundReport() {
             }
         }
     printf( "%d sounds found orphaned\n", num );
+    }
+
+
+
+
+// returned array destroyed by caller
+static unsigned char *getSoundFileData( int inID,
+                                        int *outNumDataBytes ) {
+    File spritesDir( NULL, "sounds" );
+            
+
+    char *fileNameAIFF = autoSprintf( "%d.aiff", inID );
+    char *fileNameOGG = autoSprintf( "%d.ogg", inID );
+        
+
+    File *soundFile = spritesDir.getChildFile( fileNameAIFF );
+    
+    delete [] fileNameAIFF;
+    
+    
+    if( ! soundFile->exists() ) {
+        delete soundFile;
+    
+        soundFile = spritesDir.getChildFile( fileNameOGG );
+        }
+    
+    delete [] fileNameOGG;
+    
+
+    unsigned char *soundBytes = NULL;
+    
+    if( soundFile->exists() ) {
+        soundBytes = soundFile->readFileContents( outNumDataBytes );
+        }
+    
+    delete soundFile;
+
+    return soundBytes;
+    }
+
+
+
+void recomputeSoundHash( SoundRecord *inRecord ) {
+    
+    int numSoundBytes;
+    
+    unsigned char *soundBytes = getSoundFileData( inRecord->id, 
+                                                  &numSoundBytes );
+    
+    if( soundBytes != NULL ) {
+
+        recomputeSoundHash( inRecord, numSoundBytes, soundBytes );
+        
+        delete [] soundBytes;
+        }
+    }
+
+
+
+void recomputeSoundHash( SoundRecord *inRecord,
+                         int inNumSoundBytes,
+                         unsigned char *inSoundData ) {
+    
+    inRecord->hash = computeSoundHash( inNumSoundBytes,
+                                       inSoundData);    
+    
+    }
+
+
+
+
+unsigned int computeSoundHash(
+    int inNumSoundBytes,
+    unsigned char *inSoundData ) {
+    
+    // CRC is fine for this purpose
+    // If there is no CRC hit, we KNOW that the same sound doesn't
+    // already exist.  However, if there is a CRC hit, we can
+    // check the actual data directly to make sure it's a match.
+
+    unsigned int hash = crc32( inSoundData, inNumSoundBytes );
+    
+    return hash;
+    }
+
+
+
+int doesSoundRecordExist(
+    int inNumSoundBytes,
+    unsigned char *inSoundData ) {
+    
+    unsigned int targetHash = computeSoundHash( inNumSoundBytes,
+                                                inSoundData );
+    
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            SoundRecord *r = idMap[i];
+            
+            if( r->hash != 0 && r->hash == targetHash ) {
+                
+                // a hit
+                
+                // make sure they are really equal
+                
+                // check if file data matches
+                
+                int numSoundBytes;
+    
+                unsigned char *soundBytes = getSoundFileData( r->id, 
+                                                              &numSoundBytes );
+    
+                char match = false;
+                
+                if( soundBytes != NULL ) {
+                    
+                    if( numSoundBytes == inNumSoundBytes ) {
+                        
+                        if( memcmp( soundBytes, inSoundData, 
+                                    numSoundBytes ) == 0 ) {
+                            match = true;
+                            }
+                        }
+
+                    delete [] soundBytes;
+                    }
+                
+                if( match ) {
+                    return r->id;
+                    }
+                }
+            
+            }
+        }
+    
+    // no match
+    return -1;
     }
 
 

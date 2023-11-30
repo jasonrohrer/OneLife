@@ -1725,8 +1725,6 @@ static unsigned char *getSpriteTGAFileData( int inID,
 
 
 
-// updates hash in inRecord
-// inRGBABytes destroyed by caller
 void recomputeSpriteHash( SpriteRecord *inRecord ) {
     
     int numTGABytes;

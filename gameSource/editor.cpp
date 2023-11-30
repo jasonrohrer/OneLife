@@ -81,6 +81,8 @@ int accountHmacVersionNumber = 0;
 
 #include "binFolderCache.h"
 
+#include "exporter.h"
+
 
 #include "minorGems/io/file/File.h"
 #include "minorGems/system/Time.h"
@@ -1068,7 +1070,10 @@ void drawFrame( char inUpdate ) {
 
                         char rebuilding;
 
-                        int numSounds = initSoundBankStart( &rebuilding );
+                        // editor pre-computes sound hashes
+                        // to help with export/import
+                        int numSounds = initSoundBankStart( &rebuilding,
+                                                            true );
 
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase( 
@@ -1343,6 +1348,10 @@ void drawFrame( char inUpdate ) {
                     //printOrphanedSoundReport();
                     initEmotion();
                     
+                    // try exporting person
+                    exportObject( 19 );
+                    
+
                     currentGamePage = importPage;
                     loadingComplete();
                     currentGamePage->base_makeActive( true );

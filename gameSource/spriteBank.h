@@ -69,7 +69,7 @@ void enableSpriteSearch( char inEnable );
 
 // returns number of sprite metadata files that need to be loaded
 int initSpriteBankStart( char *outRebuildingCache,
-                         char inComputeSpriteHashes = false);
+                         char inComputeSpriteHashes = false );
 
 
 // returns progress... ready for Finish when progress == 1.0
@@ -185,6 +185,7 @@ char realSpriteBank();
 void recomputeSpriteHash( SpriteRecord *inRecord );
 
 
+
 void recomputeSpriteHash( SpriteRecord *inRecord,
                           int inNumTGABytes,
                           unsigned char *inTGAData );
@@ -193,13 +194,13 @@ void recomputeSpriteHash( SpriteRecord *inRecord,
 
 // computes a hash based on data for a sprite
 // inTGAData and inTag destroyed by caller
-// Result hash destroyed by caller
 unsigned int computeSpriteHash(
     int inNumTGABytes,
     unsigned char *inTGAData,
     char *inTag,
     char inMultiplicativeBlend,
     int inCenterAnchorXOffset, int inCenterAnchorYOffset );
+
 
 
 // returns ID of sprite if one exists matching these settings
