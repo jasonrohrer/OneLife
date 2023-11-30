@@ -1645,6 +1645,17 @@ void printOrphanedSoundReport() {
 
 
 
+char doesSoundExist( int inID ) {    
+    if( inID < mapSize ) {
+        if( idMap[inID] != NULL ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
 
 // returned array destroyed by caller
 static unsigned char *getSoundFileData( int inID,

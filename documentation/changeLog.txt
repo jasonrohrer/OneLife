@@ -12,6 +12,11 @@ Version ???
 --Fixed soundBank to roll back nextSoundNumber value whenever last sound in
   bank is deleted, to avoid sound id inflation.
 
+--Fixed SoundWidget to uncount live use of old sound before saving new sound
+  when recording over a sound.  This further reduces sound id inflation.  Now,
+  if you record a bunch of sounds, with multiple overwriting takes for each
+  one, and then delete them all, the nextSoundNumber won't increase at all.
+
 
 
 Server Fixes:

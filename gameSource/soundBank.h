@@ -144,6 +144,10 @@ void checkIfSoundStillNeeded( int inID );
 void printOrphanedSoundReport();
 
 
+char doesSoundExist( int inID );
+
+
+
 
 // updates hash in inRecord based on AIFF or OGG data read from
 // file in sounds directory

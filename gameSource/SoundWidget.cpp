@@ -212,8 +212,27 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
         mStopButton.setVisible( false );
         
 
-        SoundUsage oldUsage = copyUsage( mSoundUsage );
+        int soundIDReplaced = -1;
         
+        if( mCurSoundIndex == mSoundUsage.numSubSounds ) {
+            // recording a new sound at the end of the list
+            // not recording over anything
+            }
+        else {
+            // replacing one of our existing sub-sounds
+            
+            // uncount it now, so it can be deleted if it's no longer
+            // needed
+            
+            soundIDReplaced = mSoundUsage.ids[ mCurSoundIndex ];
+            unCountLiveUse( soundIDReplaced );
+            
+            // mark with -1 for now in our sound list
+            // we will fix this later if recording a new sound fails
+            mSoundUsage.ids[ mCurSoundIndex ] = -1;
+            }        
+
+
         int id = stopRecordingSound();
         
         if( id != -1 ) {
@@ -224,12 +243,46 @@ void SoundWidget::actionPerformed( GUIComponent *inTarget ) {
             else {
                 mSoundUsage.ids[ mCurSoundIndex ] = id;
                 }
+            
+            countLiveUse( id );
             }
-        
-        countLiveUse( mSoundUsage );
+        else {
+            // Recording failed
 
-        unCountLiveUse( oldUsage );
-        clearSoundUsage( &oldUsage );
+            if( mCurSoundIndex == mSoundUsage.numSubSounds ) {
+                // we were trying to add a new sound at the end of the
+                // list, and we simply didn't
+                // No clean-up necessary
+                }
+            else {
+                // we were trying to replace a sound
+                // we've already uncounted it and put a -1 in our list
+
+                // first, does the sound we were replacing still exist?
+                if( doesSoundExist( soundIDReplaced ) ) {
+                    // simply restore it
+                    mSoundUsage.ids[ mCurSoundIndex ] = soundIDReplaced;
+                    countLiveUse( soundIDReplaced );
+                    }
+                else {
+                    // sound we were trying to replace was actually deleted
+                    
+                    // remove it from our sound list
+                    
+                    int oldNumSounds = mSoundUsage.numSubSounds;
+                    
+                    removeSound( &mSoundUsage, mCurSoundIndex );
+        
+                    if( mCurSoundIndex == oldNumSounds - 1 &&
+                        mCurSoundIndex > 0 ) {
+                        mCurSoundIndex--;
+                        }
+                    
+                    nextPrevVisible();
+                    }
+                }
+            }
+
 
         // don't make record visible here
         // wait until next step so that it won't receive this click
