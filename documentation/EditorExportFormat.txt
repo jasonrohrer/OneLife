@@ -1,67 +1,125 @@
 
 
-Objects are exported one-by-one into separate files.
+A collection of objects are exported as single bundle file, with common sprites
+included only once.
 
-Export files are named like:
+Export bundle files are saved into the exports folder
 
-30_wild_gooseberry_bush.obj
+Export bundle file are named like:
+
+exportName.oxp
+exportName.oxz
+
+.oxz files are .oxp files with zlib-compatible compression applied.  Compressed
+files are exported by default, unless settings/compressExports.ini is set to 0.
+
+Disabling compression can be useful if you need to debug/study the contents
+of the exported bundle file.
+
+.oxp files are also created as intermediary files as part of the export process,
+even if a compressed .oxz file is the end goal.
 
 
+
+
+This file describes the .oxp file format.
 
 
 File contents is a combination of text interleaved with raw binary data.
 
 
 
-Each unique sprite in the object is included first in the file.
 
-Each sprite has a header  formatted as follows:
+Sprite block:
+
+Each unique sprite used by the object collection is included first in the file.
+
+Each sprite has a header formatted as follows:
 
 sprite id tag multiplicativeBlend centerAnchorXOffset centerAnchorYOffset tgaFileSize#
-
-
-The # sign is followed by raw TGA file data of length tgaFileSize
-
-Note that sprite tags cannot contain spaces.
 
 Example:
 
 sprite 143 BerryBush 0 3 19 65554#
 
 
-Each additional unique sprite in the object is concatonated, with no space or
-other separation between them.
+The # sign is followed by raw TGA file data of length tgaFileSize
+
+Note that sprite tags cannot contain spaces (this is enforced by the Editor
+already, and by the format of .txt files in the sprites folder).
+
+Each additional unique sprite in the object collection is concatonated, with no
+space or other separation between them.
 
 
-Next, the object itself is included with the following header:
 
-object textFileSize#
+
+
+Sounds block:
+
+Each unique sound used by the object collection (for both the objects themselves
+and the object's animations) is included next in the file.
+
+Each sound has a header formatted as follows:
+
+sound id format soundFileSize#
+
+Where format is either AIFF or OGG
+
+Examples:
+
+sound 621 AIFF 79164#
+sound 1940 OGG 493399
+
+The # sign is followed by raw AIFF or OGG file data of length soundFileSize
+
+Each additional unique sound used by the object collection is concatonated,
+with no space or other separation between them.
+
+
+
+
+
+
+Objects block:
+
+Next, the objects themselves are included, each with the following header
+format:
+
+object id textFileSize#
 
 Example:
 
-object 1900#
+object 30 1900#
 
 
 The # sign is followed by raw TXT file data for the object.  Note that newlines
-are represented by LF and not CRLF.  This may differ from how these files
+are represented by LF and *NOT* CRLF.  This may differ from how these files
 are checked out by git on Windows (though it matches the way the files are
-stored in the repository).
+stored in the git repository).
+
+Each additional object in the object collection is concatonated, with no
+space or other separation between them.
 
 
-The object raw text is followed by concatonated animations.  Each animation
+
+
+
+Animations block:
+
+The objects are followed by concatonated animations.  Each animation
 has a header in the following format:
 
-animation slot_number textFileSize#
+animation object_id slot_number textFileSize#
 
 slot_number is one of 0, 1, 2, 4, or 5 (never 3)
 OR 7x0, 7x1, etc for extra animations.
 
 Examples:
 
-animation 5 20243#
+animation 19 5 20243#
 
-animation 7x2 19695#
-
+animation 19 7x2 19695#
 
 
 The # sign is followed by raw TXT file data for the animation.
@@ -69,5 +127,4 @@ Note that newlines are represented by LF and not CRLF.  This may differ from
 how these files are checked out by git on Windows (though it matches the way
 the files are stored in the repository).
 
-
-After the final animation slot's text data, the file ends.
+After the final animation's text data, the file ends.
