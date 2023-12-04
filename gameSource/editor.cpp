@@ -1348,9 +1348,12 @@ void drawFrame( char inUpdate ) {
                     //printOrphanedSoundReport();
                     initEmotion();
                     
-                    // try exporting person
-                    exportObject( 19 );
+                    // try exporting some stuff
+                    addExportObject( 2 );
+                    addExportObject( 1 );
                     
+                    finalizeExportBundle( "testExportB" );
+
 
                     currentGamePage = importPage;
                     loadingComplete();

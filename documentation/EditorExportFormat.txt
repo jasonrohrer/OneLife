@@ -7,8 +7,20 @@ Export bundle files are saved into the exports folder
 
 Export bundle file are named like:
 
-exportName.oxp
-exportName.oxz
+exportName_2_e791c7.oxp
+exportName_2_e791c7.oxz
+
+The "2" is the count of objects in the export, and the hash is a signature based
+on the list of object IDs.  Exports containing exactly the same object IDs will
+have the same signatures.  Collisions in this 6-character hash space are still
+possible, which means you can't rely on this hash to guarantee which objects
+will be added or replaced if the bundle is from an untrusted source.  But for
+trusted sources, the hash serves as a useful sanity check.
+
+For example, if you're expecting to receive a bundle that will replace three
+specific objects, export a bundle yourself with those same three objects.  The
+hash of the incoming bundle should match the hash of your own exported test
+bundle.
 
 .oxz files are .oxp files with zlib-compatible compression applied.  Compressed
 files are exported by default, unless settings/compressExports.ini is set to 0.
