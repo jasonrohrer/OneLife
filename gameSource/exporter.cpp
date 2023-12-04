@@ -3,6 +3,8 @@
 
 #include "minorGems/io/file/File.h"
 
+#include "minorGems/crypto/hashes/sha1.h"
+
 #include "objectBank.h"
 #include "spriteBank.h"
 #include "animationBank.h"
@@ -109,10 +111,30 @@ void writeAnimRecordToFile( FILE *inFILE, AnimationRecord *inRecord ) {
 
 
 
+static int intCompare( const void *inA, const void * inB ) {
+    int *a = (int*)inA;
+    int *b = (int*)inB;
+    
+    if( *a < *b ) {
+        return -1;
+        }
+    if( *a > *b ) {
+        return 1;
+        }
+    return 0;
+    }
+
+
 
 
 void finalizeExportBundle( const char *inExportName ) {
     
+    if( currentBundleObjectIDs.size() == 0 ) {
+        printf( "Export failed:  current bundle object list is empty.\n" );
+        
+        return;
+        }
+
 
     File exportDir( NULL, "exports" );
     
@@ -125,11 +147,56 @@ void finalizeExportBundle( const char *inExportName ) {
         
         return;
         }
+    
+
+
+    // first, sort the objectIDs to include
+    int *idArray = currentBundleObjectIDs.getElementArray();
+    int numObjects = currentBundleObjectIDs.size();
+    
+    qsort( idArray, numObjects, sizeof( int ), intCompare );
+
+    currentBundleObjectIDs.deleteAll();
+    
+    currentBundleObjectIDs.push_back( idArray, numObjects );
+    
+    delete [] idArray;
+    
+
+    // now make checksum of sorted list
+    SimpleVector<char> idTextList;
+    
+    for( int i=0; i<currentBundleObjectIDs.size(); i++ ) {
+        
+        char *s = autoSprintf( "%d ", 
+                               currentBundleObjectIDs.getElementDirect( i ) );
+        
+        idTextList.appendElementString( s );
+        
+        delete [] s;
+        }
+
+    char *idText = idTextList.getElementString();
+    
+    char *sha1Hash = computeSHA1Digest( idText );
+    
+    delete [] idText;
+
+    // truncate to 6 characters
+    sha1Hash[6] ='\0';
+
+    char *lowerHash = stringToLowerCase( sha1Hash );
+    
+    delete [] sha1Hash;
+
 
     
-    char *fileName = autoSprintf( "%s_%d.oxp", inExportName, 
-                                  currentBundleObjectIDs.size() );
+    char *fileName = autoSprintf( "%s_%d_%s.oxp", inExportName, 
+                                  currentBundleObjectIDs.size(),
+                                  lowerHash );
     
+    delete [] lowerHash;
+
     File *outFile = exportDir.getChildFile( fileName );
     
     delete [] fileName;
