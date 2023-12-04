@@ -101,22 +101,25 @@ float initGroundSpritesStep() {
             fileName = autoSprintf( "ground_%d.tga", b );
             }
         
-
-        File *groundFile = groundDir.getChildFile( fileName );
-        
-
-        char *fullFileName = groundFile->getFullFileName();
-        
         RawRGBAImage *rawImage = NULL;
         
-        if( groundFile->exists() ) {
-            
-            rawImage = readTGAFileRawBase( fullFileName );
+        char *fullFileName = NULL;
 
+
+        if( groundDir.exists() && groundDir.isDirectory() ) {
+            
+            File *groundFile = groundDir.getChildFile( fileName );
+
+            if( groundFile->exists() ) {
+                fullFileName = groundFile->getFullFileName();
+                
+                rawImage = readTGAFileRawBase( fullFileName );
+                }
+        
+            delete groundFile;
             }
         
-        delete groundFile;
-
+        
         if( rawImage != NULL ) {
             
             int w = rawImage->mWidth;
@@ -420,7 +423,9 @@ float initGroundSpritesStep() {
             delete rawImage;
             }
         
-        delete [] fullFileName;
+        if( fullFileName != NULL ) {
+            delete [] fullFileName;
+            }
             
         delete [] fileName;
         
