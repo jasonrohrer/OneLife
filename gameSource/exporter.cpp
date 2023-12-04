@@ -9,6 +9,33 @@
 
 
 
+static SimpleVector<int> currentBundleObjectIDs;
+
+
+
+void addExportObject( int inObjectID ) {
+    if( currentBundleObjectIDs.getElementIndex( inObjectID ) == -1 ) {
+        // not already present
+        currentBundleObjectIDs.push_back( inObjectID );
+        }
+    }
+
+
+
+void removeExportObject( int inObjectID ) {
+    currentBundleObjectIDs.deleteElementEqualTo( inObjectID );
+    }
+
+
+
+void clearExportBundle() {
+    currentBundleObjectIDs.deleteAll();
+    }
+
+
+
+
+
 
 void writeAnimRecordToFile( FILE *inFILE, AnimationRecord *inRecord ) {
     File animationFolder( NULL, "animations" );
@@ -71,7 +98,8 @@ void writeAnimRecordToFile( FILE *inFILE, AnimationRecord *inRecord ) {
     
     delete [] animTextData;
     
-    fprintf( inFILE, "anim %s %d#%s",
+    fprintf( inFILE, "anim %d %s %d#%s",
+             inRecord->objectID,
              animTypeTag,
              strlen( cleanedAnimTextData ), cleanedAnimTextData );
     
@@ -82,7 +110,9 @@ void writeAnimRecordToFile( FILE *inFILE, AnimationRecord *inRecord ) {
 
 
 
-void exportObject( int inObjectID ) {
+
+void finalizeExportBundle( const char *inExportName ) {
+    
 
     File exportDir( NULL, "exports" );
     
@@ -95,28 +125,11 @@ void exportObject( int inObjectID ) {
         
         return;
         }
-    
-    ObjectRecord *o = getObject( inObjectID );
-    
-    char *objectName = stringDuplicate( o->description );
-    
-    stripDescriptionComment( objectName );
-    
-    // also strip off any $10 style variable placeholders
-    // (usually these are part of comment, but for some objects, they occur
-    // in the object name itself)
 
-    char *dollarPos = strstr( objectName, "$" );
     
-    if( dollarPos != NULL ) {
-        dollarPos[0] = '\0';
-        }
-
-    char *fileName = autoSprintf( "%d_%s.obj", inObjectID, objectName );
+    char *fileName = autoSprintf( "%s_%d.oxp", inExportName, 
+                                  currentBundleObjectIDs.size() );
     
-    delete [] objectName;
-    
-
     File *outFile = exportDir.getChildFile( fileName );
     
     delete [] fileName;
@@ -141,66 +154,90 @@ void exportObject( int inObjectID ) {
     delete [] outFileAccessPath;
 
     
+
+
+
+
     // first thing in file is full export of all sprites
     // but first, get list of unique sprite IDs
     // don't repeat data if same sprite occurs multiple times in object
     
     SimpleVector<int> uniqueSpriteIDs;
-    
-    for( int s=0; s< o->numSprites; s++ ) {
-        int id = o->sprites[ s ];
-        
-        if( uniqueSpriteIDs.getElementIndex( id ) == -1 ) {
-            // not already seen on our list of unique IDs
-            
-            uniqueSpriteIDs.push_back( id );
-            }
-        }
-    
 
-
-    
     // do the same to accumulate list of unique sounds
     SimpleVector<int> uniqueSoundIDs;
+
     
+    // when working on assembling uniqueSoundIDs, gather SoundUsages
     SimpleVector<SoundUsage *> soundUsages;
+
     
-    soundUsages.push_back( &( o->creationSound ) );
-    soundUsages.push_back( &( o->usingSound ) );
-    soundUsages.push_back( &( o->eatingSound ) );
-    soundUsages.push_back( &( o->decaySound ) );
 
     // also scan animations for sounds
     // we'll use this list of animations later too
     SimpleVector<AnimationRecord *> animations;
 
-    for( int a=ground; a<endAnimType; a++ ) {
-        AnimationRecord *r = getAnimation( inObjectID, (AnimType)a );
+    
+    for( int i=0; i < currentBundleObjectIDs.size(); i++ ) {
+        int objectID = currentBundleObjectIDs.getElementDirect( i );
         
-        if( r != NULL ) {
-            animations.push_back( r );
+        ObjectRecord *o = getObject( objectID );
+
+        if( o == NULL ) {
+            // skip any missing objects
+            // they might have been deleted out from underneath us
+            continue;
             }
+        
+        for( int s=0; s< o->numSprites; s++ ) {
+            int id = o->sprites[ s ];
+            
+            if( uniqueSpriteIDs.getElementIndex( id ) == -1 ) {
+                // not already seen on our list of unique IDs
+                
+                uniqueSpriteIDs.push_back( id );
+                }
+            }
+        
+    
+        soundUsages.push_back( &( o->creationSound ) );
+        soundUsages.push_back( &( o->usingSound ) );
+        soundUsages.push_back( &( o->eatingSound ) );
+        soundUsages.push_back( &( o->decaySound ) );
+        
+        SimpleVector<AnimationRecord*> thisObjectAnimations;
+        
+        for( int a=ground; a<endAnimType; a++ ) {
+            AnimationRecord *r = getAnimation( objectID, (AnimType)a );
+            
+            if( r != NULL ) {
+                thisObjectAnimations.push_back( r );
+                }
+            }
+        
+        int numExtra = getNumExtraAnim( objectID );
+        
+        for( int e=0; e<numExtra; e++ ) {
+            setExtraIndex( e );
+            
+            AnimationRecord *r = getAnimation( objectID, extra );
+            
+            if( r != NULL ) {
+                thisObjectAnimations.push_back( r );
+                }
+            }
+    
+        for( int a=0; a < thisObjectAnimations.size(); a++ ) {
+            AnimationRecord *r = thisObjectAnimations.getElementDirect( a );
+        
+            for( int s=0; s < r->numSounds; s++ ) {
+                soundUsages.push_back( &( r->soundAnim[s].sound ) );
+                }
+            }
+
+        animations.push_back_other( & thisObjectAnimations );
         }
     
-    int numExtra = getNumExtraAnim( inObjectID );
-
-    for( int e=0; e<numExtra; e++ ) {
-        setExtraIndex( e );
-        
-        AnimationRecord *r = getAnimation( inObjectID, extra );
-
-        if( r != NULL ) {
-            animations.push_back( r );
-            }
-        }
-    
-    for( int i=0; i<animations.size(); i++ ) {
-        AnimationRecord *r = animations.getElementDirect( i );
-        
-        for( int s=0; s < r->numSounds; s++ ) {
-            soundUsages.push_back( &( r->soundAnim[s].sound ) );
-            }
-        }
     
 
     // now that we've gathered all SoundUsages, scan them for unique sound IDs
@@ -388,60 +425,70 @@ void exportObject( int inObjectID ) {
 
     
 
-    // next output the object itself
-    char *objectFileName = autoSprintf( "%d.txt", inObjectID );
+    // next output the objects
+    for( int i=0; i < currentBundleObjectIDs.size(); i++ ) {
+        int objectID = currentBundleObjectIDs.getElementDirect( i );
+
+        char *objectFileName = autoSprintf( "%d.txt", objectID );
             
-    File *objectFile = objectFolder.getChildFile( objectFileName );
-          
-    delete [] objectFileName;
+        File *objectFile = objectFolder.getChildFile( objectFileName );
+        
+        delete [] objectFileName;
     
   
-    if( ! objectFile->exists() ) {
-        printf( "Export failed, objects/%d.txt does not exist\n",
-                inObjectID );
+        if( ! objectFile->exists() ) {
+            printf( "Export non-fatal error, "
+                    "objects/%d.txt does not exist\n", objectID );
+
+            // skip this object that has no file
+            delete objectFile;
+        
+            continue;
+            }
+    
+        
+        char *objectTextData = objectFile->readFileContents();
+    
         delete objectFile;
+    
+
+        if( objectTextData == NULL ) {
+            printf( "Export non-fatal error, "
+                    "failed to read from objects/%d.txt\n", objectID );
         
-        fclose( outFILE );
-        return;
+            fclose( outFILE );
+            continue;
+            }
+    
+        
+        // normalize line endings
+        
+        char found;
+        char *cleanedObjectTextData = 
+            replaceAll( objectTextData, "\r\n", "\n", &found );
+        
+        delete [] objectTextData;
+        
+        fprintf( outFILE, "object %d %d#%s",
+                 objectID,
+                 strlen( cleanedObjectTextData ), cleanedObjectTextData );
+        
+        delete [] cleanedObjectTextData;    
         }
     
-    char *objectTextData = objectFile->readFileContents();
-    
-    delete objectFile;
-    
-
-    if( objectTextData == NULL ) {
-        printf( "Export failed, failed to read from objects/%d.txt\n",
-                inObjectID );
-        
-        fclose( outFILE );
-        return;
-        }
-    
-    
-    // normalize line endings
-
-    char found;
-    char *cleanedObjectTextData = 
-        replaceAll( objectTextData, "\r\n", "\n", &found );
-    
-    delete [] objectTextData;
-    
-    fprintf( outFILE, "object %d#%s",
-             strlen( cleanedObjectTextData ), cleanedObjectTextData );
-    
-    delete [] cleanedObjectTextData;
-    
-
     
 
     // last, write animations to file
-    // we assenbled list of animations earlier, when working on sounds
+    // we assembled list of animations earlier, when working on sounds
     for( int a=0; a<animations.size(); a++ ) {
         writeAnimRecordToFile( outFILE, animations.getElementDirect( a ) );
         }
     
     
     fclose( outFILE );
+
+
+    // start new bundle
+    clearExportBundle();
     }
 
