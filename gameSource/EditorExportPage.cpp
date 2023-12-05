@@ -296,9 +296,12 @@ void EditorExportPage::draw( doublePair inViewCenter,
         
         legendPos.x = -350;
         legendPos.y += 50;
-        
-        drawKeyLegend( &mKeyLegend, legendPos );
 
+        
+        if( ! TextField::isAnyFocused() ) {
+            drawKeyLegend( &mKeyLegend, legendPos );
+            }
+        
         drawObjectList( getCurrentExportList(), mSelectionIndex );
     
         if( mCurrentHash != NULL ) {
@@ -359,6 +362,13 @@ void EditorExportPage::pointerDrag( float inX, float inY ) {
 
 
 void EditorExportPage::pointerUp( float inX, float inY ) {
+    
+    if( inX > -250 && inX < 50 &&
+        inY > -225 && inY < 225 ) {
+        // click on list, make keyboard active on list again
+        
+        TextField::unfocusAll();
+        }
     }
 
 
@@ -400,7 +410,9 @@ void EditorExportPage::keyDown( unsigned char inASCII ) {
 
 
 void EditorExportPage::specialKeyDown( int inKeyCode ) {
-
+    if( TextField::isAnyFocused() ) {
+        return;
+        }
 
     int offset = 1;
     
