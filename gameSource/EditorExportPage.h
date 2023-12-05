@@ -55,6 +55,12 @@ class EditorExportPage : public GamePage, public ActionListener {
 
         TextButton mObjectEditorButton;
         
+        TextButton mExportButton;
+        TextButton mClearButton;
+        
+        TextField mExportTagField;
+        
+
         int mSelectionIndex;
 
         KeyLegend mKeyLegend;

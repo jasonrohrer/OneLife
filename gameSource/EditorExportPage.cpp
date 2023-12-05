@@ -43,6 +43,16 @@ static char unpickable( int inID ) {
 EditorExportPage::EditorExportPage()
         : mObjectPicker( &objectPickable, +410, 90 ),
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
+          mExportButton( mainFont, 210, -260, "Export" ),
+          mClearButton( mainFont, -450, -260, "Clear" ),
+          mExportTagField( mainFont, 
+                           0,  -260, 6,
+                           false,
+                           "Tag", 
+                           "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                           "abcdefghijklmnopqrstuvwxyz"
+                           "0123456789_", 
+                           NULL ),
           mSearchNeedsRedo( false ) {
     
     mObjectPicker.addFilter( &unpickable );
@@ -51,16 +61,32 @@ EditorExportPage::EditorExportPage()
     addComponent( &mObjectPicker );
     addComponent( &mObjectEditorButton );
     
+    addComponent( &mExportButton );
+    addComponent( &mClearButton );
+    
+    addComponent( &mExportTagField );
+    
+    mExportTagField.setFireOnAnyTextChange( true );
+
 
     mObjectPicker.addActionListener( this );
     
     mObjectEditorButton.addActionListener( this );
     
+    mExportButton.addActionListener( this );
+    mClearButton.addActionListener( this );
+
+    mExportTagField.addActionListener( this );
+    
+
     mSelectionIndex = 0;
 
     addKeyClassDescription( &mKeyLegend, "Up/Down", "Change selection" );
     addKeyClassDescription( &mKeyLegend, "Ctr/Shft", "Bigger jumps" );
     addKeyClassDescription( &mKeyLegend, "Bkspce", "Remv item" );
+    
+    
+    updateVisible();
     }
 
 
@@ -84,14 +110,48 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mObjectEditorButton ) {
         setSignal( "objectEditor" );
-        }    
+        }
+    else if( inTarget == &mExportButton ) {
+        char *tagText = mExportTagField.getText();
+        
+        finalizeExportBundle( tagText );
+        
+        delete [] tagText;
+        
+        mObjectPicker.redoSearch( false );
+        
+        updateVisible();
+        }
+    else if( inTarget == &mClearButton ) {
+        clearExportBundle();
+        
+        mObjectPicker.redoSearch( false );
+        
+        updateVisible();
+        }
+    else if( inTarget == &mExportTagField ) {
+        updateVisible();
+        }
     }
 
 
 void EditorExportPage::updateVisible() {
-    if( getCurrentExportList()->size() > 0 ) {
-        
+    char listNotEmpty = ( getCurrentExportList()->size() > 0 );
+    
+    mExportTagField.setVisible( listNotEmpty );
+    mClearButton.setVisible( listNotEmpty );
+    
+    char tagNotEmpty = false;
+    
+    char *tagText = mExportTagField.getText();
+    
+    if( strlen( tagText ) != 0 ) {
+        tagNotEmpty = true;
         }
+    
+    delete [] tagText;
+
+    mExportButton.setVisible( tagNotEmpty && listNotEmpty );
     }
 
 
@@ -285,6 +345,8 @@ void EditorExportPage::keyDown( unsigned char inASCII ) {
                 }
             
             mObjectPicker.redoSearch( false );
+            
+            updateVisible();
             }
         }    
     }
