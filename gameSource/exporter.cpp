@@ -5,6 +5,8 @@
 
 #include "minorGems/crypto/hashes/sha1.h"
 
+#include "minorGems/formats/encodingUtils.h"
+
 #include "objectBank.h"
 #include "spriteBank.h"
 #include "animationBank.h"
@@ -127,12 +129,12 @@ static int intCompare( const void *inA, const void * inB ) {
 
 
 
-void finalizeExportBundle( const char *inExportName ) {
+char finalizeExportBundle( const char *inExportName ) {
     
     if( currentBundleObjectIDs.size() == 0 ) {
         printf( "Export failed:  current bundle object list is empty.\n" );
         
-        return;
+        return false;
         }
 
 
@@ -145,7 +147,7 @@ void finalizeExportBundle( const char *inExportName ) {
     if( ! exportDir.exists() || ! exportDir.isDirectory() ) {
         printf( "Export failed:  'exports' directory doesn't exist.\n" );
         
-        return;
+        return false;
         }
     
 
@@ -191,15 +193,14 @@ void finalizeExportBundle( const char *inExportName ) {
 
 
     
-    char *fileName = autoSprintf( "%s_%d_%s.oxp", inExportName, 
+    char *oxpFileName = autoSprintf( "%s_%d_%s.oxp", inExportName, 
                                   currentBundleObjectIDs.size(),
                                   lowerHash );
     
     delete [] lowerHash;
 
-    File *outFile = exportDir.getChildFile( fileName );
+    File *outFile = exportDir.getChildFile( oxpFileName );
     
-    delete [] fileName;
     
     char *outFileAccessPath = outFile->getFullFileName();
 
@@ -207,19 +208,18 @@ void finalizeExportBundle( const char *inExportName ) {
 
     FILE *outFILE = fopen( outFileAccessPath, "wb" );
 
+    delete [] outFileAccessPath;
+
 
     if( outFILE == NULL ) {
     
-        printf( "Export failed:  failed to open file for writing:  %s\n",
-                outFileAccessPath );
-        
-        delete [] outFileAccessPath;
-    
-        return;
-        }
-    
-    delete [] outFileAccessPath;
+        printf( "Export failed:  failed to open file for writing:  exports/%s\n",
+                oxpFileName );
 
+        delete [] oxpFileName;
+    
+        return false;
+        }
     
 
 
@@ -337,7 +337,9 @@ void finalizeExportBundle( const char *inExportName ) {
         
         fclose( outFILE );
         
-        return;
+        delete [] oxpFileName;
+
+        return false;
         }
 
 
@@ -347,8 +349,10 @@ void finalizeExportBundle( const char *inExportName ) {
         printf( "Export failed:  'sounds' directory does not exist\n" );
         
         fclose( outFILE );
+
+        delete [] oxpFileName;
         
-        return;
+        return false;
         }
 
 
@@ -359,7 +363,9 @@ void finalizeExportBundle( const char *inExportName ) {
         
         fclose( outFILE );
         
-        return;
+        delete [] oxpFileName;
+
+        return false;
         }
 
 
@@ -370,7 +376,9 @@ void finalizeExportBundle( const char *inExportName ) {
         
         fclose( outFILE );
         
-        return;
+        delete [] oxpFileName;
+        
+        return false;
         }
 
 
@@ -522,8 +530,7 @@ void finalizeExportBundle( const char *inExportName ) {
         if( objectTextData == NULL ) {
             printf( "Export non-fatal error, "
                     "failed to read from objects/%d.txt\n", objectID );
-        
-            fclose( outFILE );
+            
             continue;
             }
     
@@ -554,8 +561,87 @@ void finalizeExportBundle( const char *inExportName ) {
     
     fclose( outFILE );
 
+    
+    File *inFile = exportDir.getChildFile( oxpFileName );
+    
 
-    // start new bundle
+
+    int inLength;
+    unsigned char *inData = inFile->readFileContents( &inLength );
+
+    delete inFile;
+    
+    if( inData == NULL ) {
+        printf( "Export failed:  could not re-open %s for reading\n",
+                oxpFileName );
+    
+        delete [] oxpFileName;
+        
+        return false;
+        }
+
+    
+
+
+    int outLength;
+    unsigned char *oxzData = zipCompress( inData, inLength, &outLength );
+    
+    delete [] inData;
+    
+
+    if( oxzData == NULL ) {
+        printf( "Export failed:  zipCompress failed\n" );
+    
+        delete [] oxpFileName;
+        
+        return false;
+        }
+
+    
+    // turn .oxp into .oxz
+    int lastCharIndex = strlen( oxpFileName ) - 1;
+    
+    if( oxpFileName[ lastCharIndex ] == 'p' ) {
+        oxpFileName[ lastCharIndex ] = 'z';
+        }
+    else {
+        printf( "Export failed:  base file %s does not end with .oxp\n",
+                oxpFileName );
+        
+        delete [] oxzData;
+        delete [] oxpFileName;
+        
+        return false;
+        }
+
+    
+    // this is the .oxz file
+    outFile = exportDir.getChildFile( oxpFileName );
+    
+    
+    char success = outFile->writeToFile( oxzData, outLength );
+    
+
+    delete [] oxzData;
+    delete outFile;
+    
+    
+    if( ! success ) {
+        printf( "Export failed:  could not write to %s\n",
+                oxpFileName );
+    
+        delete [] oxpFileName;
+        
+        return false;
+        }    
+
+
+    delete [] oxpFileName;
+
+    
+    // start new bundle only on full success
     clearExportBundle();
+
+    return true;
     }
 

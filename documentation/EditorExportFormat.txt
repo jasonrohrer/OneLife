@@ -31,10 +31,19 @@ of the exported bundle file.
 .oxp files are also created as intermediary files as part of the export process,
 even if a compressed .oxz file is the end goal.
 
+.oxz files contain raw zlib output data with no extra headers.  They can be
+decompressed with zlib directly, or on the command line with zlib-flate like
+this:
+
+cat testExportC_2_c6c723.oxz | zlib-flate -uncompress
+
+zlib-flate is part of the qpdf package on Ubunutu.
 
 
 
-This file describes the .oxp file format.
+
+
+This file describes the structure of the .oxp file format.
 
 
 File contents is a combination of text interleaved with raw binary data.
