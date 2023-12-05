@@ -58,6 +58,11 @@ class EditorExportPage : public GamePage, public ActionListener {
         int mSelectionIndex;
 
         KeyLegend mKeyLegend;
+
+        char mSearchNeedsRedo;
+        
+
+        void updateVisible();
     };
 
 

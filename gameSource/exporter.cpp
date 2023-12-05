@@ -18,9 +18,16 @@ static SimpleVector<int> currentBundleObjectIDs;
 
 
 
-void addExportObject( int inObjectID ) {
+char doesExportContain( int inObjectID ) {
     if( currentBundleObjectIDs.getElementIndex( inObjectID ) == -1 ) {
-        // not already present
+        return false;
+        }
+    return true;
+    }
+
+
+void addExportObject( int inObjectID ) {
+    if( ! doesExportContain( inObjectID ) ) {
         currentBundleObjectIDs.push_back( inObjectID );
         }
     }
@@ -113,6 +120,44 @@ void writeAnimRecordToFile( FILE *inFILE, AnimationRecord *inRecord ) {
     }
 
 
+SimpleVector<int> *getCurrentExportList() {
+    return &currentBundleObjectIDs;
+    }
+
+
+
+
+char *getCurentBundleHash() {
+    // now make checksum of sorted list
+    SimpleVector<char> idTextList;
+    
+    for( int i=0; i<currentBundleObjectIDs.size(); i++ ) {
+        
+        char *s = autoSprintf( "%d ", 
+                               currentBundleObjectIDs.getElementDirect( i ) );
+        
+        idTextList.appendElementString( s );
+        
+        delete [] s;
+        }
+
+    char *idText = idTextList.getElementString();
+    
+    char *sha1Hash = computeSHA1Digest( idText );
+    
+    delete [] idText;
+
+    // truncate to 6 characters
+    sha1Hash[6] ='\0';
+
+    char *lowerHash = stringToLowerCase( sha1Hash );
+    
+    delete [] sha1Hash;
+    
+    return lowerHash;
+    }
+
+
 
 static int intCompare( const void *inA, const void * inB ) {
     int *a = (int*)inA;
@@ -126,7 +171,6 @@ static int intCompare( const void *inA, const void * inB ) {
         }
     return 0;
     }
-
 
 
 
@@ -166,39 +210,15 @@ char finalizeExportBundle( const char *inExportName ) {
     delete [] idArray;
     
 
-    // now make checksum of sorted list
-    SimpleVector<char> idTextList;
     
-    for( int i=0; i<currentBundleObjectIDs.size(); i++ ) {
-        
-        char *s = autoSprintf( "%d ", 
-                               currentBundleObjectIDs.getElementDirect( i ) );
-        
-        idTextList.appendElementString( s );
-        
-        delete [] s;
-        }
-
-    char *idText = idTextList.getElementString();
-    
-    char *sha1Hash = computeSHA1Digest( idText );
-    
-    delete [] idText;
-
-    // truncate to 6 characters
-    sha1Hash[6] ='\0';
-
-    char *lowerHash = stringToLowerCase( sha1Hash );
-    
-    delete [] sha1Hash;
-
+    char *hash = getCurentBundleHash();
 
     
     char *oxpFileName = autoSprintf( "%s_%d_%s.oxp", inExportName, 
                                   currentBundleObjectIDs.size(),
-                                  lowerHash );
+                                  hash );
     
-    delete [] lowerHash;
+    delete [] hash;
 
     File *outFile = exportDir.getChildFile( oxpFileName );
     

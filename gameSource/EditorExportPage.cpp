@@ -10,6 +10,8 @@
 
 #include "message.h"
 
+#include "exporter.h"
+
 
 
 
@@ -18,6 +20,7 @@
 
 extern Font *mainFont;
 extern Font *smallFont;
+extern Font *smallFontFixed;
 
 
 
@@ -29,6 +32,9 @@ static ObjectPickable objectPickable;
 
 
 static char unpickable( int inID ) {
+    if( doesExportContain( inID ) ) {
+        return true;
+        }
     return false;
     }
 
@@ -36,7 +42,8 @@ static char unpickable( int inID ) {
 
 EditorExportPage::EditorExportPage()
         : mObjectPicker( &objectPickable, +410, 90 ),
-          mObjectEditorButton( mainFont, 0, 260, "Objects" ) {
+          mObjectEditorButton( mainFont, 0, 260, "Objects" ),
+          mSearchNeedsRedo( false ) {
     
     mObjectPicker.addFilter( &unpickable );
     
@@ -66,6 +73,14 @@ EditorExportPage::~EditorExportPage() {
 void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
     
     if( inTarget == &mObjectPicker ) {
+        int obj = mObjectPicker.getSelectedObject();
+            
+        if( obj != -1 ) {
+            addExportObject( obj );
+
+            mSearchNeedsRedo = true;
+            }
+        updateVisible();
         }
     else if( inTarget == &mObjectEditorButton ) {
         setSignal( "objectEditor" );
@@ -73,11 +88,15 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
     }
 
 
+void EditorExportPage::updateVisible() {
+    if( getCurrentExportList()->size() > 0 ) {
+        
+        }
+    }
 
-static void drawObjectList( char inCategories,
-                            char inPattern,
-                            SimpleVector<int> *inList,
-                            SimpleVector<float> *inWeights = NULL,
+
+
+static void drawObjectList( SimpleVector<int> *inList,
                             int inSelectionIndex = -1 ) {
 
     int num = inList->size();
@@ -134,19 +153,6 @@ static void drawObjectList( char inCategories,
         setDrawFade( fade );
         drawRect( pos, 150, spacing / 2  );
 
-        doublePair weightTextPos = pos;
-        
-        if( inWeights != NULL ) {
-            doublePair probBoxPos = pos;
-            
-            double probBoxWidth = 70;
-            probBoxPos.x += 150 + probBoxWidth / 2 + 2;
-            
-            drawRect( probBoxPos, probBoxWidth/2, spacing / 2  );
-            
-            weightTextPos = probBoxPos;
-            weightTextPos.x -= probBoxWidth / 2 - 10;
-            }
 
             
         FloatColor tempColor = boxColor;
@@ -170,16 +176,17 @@ static void drawObjectList( char inCategories,
         smallFont->drawString( getObject( objID )->description, 
                                textPos, alignLeft );
         
-        if( inWeights != NULL ) {
-            float prob = inWeights->getElementDirect( i );
-            char *probString = autoSprintf( "%.3f", prob );
-            
-            smallFont->drawString( probString, 
-                                   weightTextPos, alignLeft );
-            delete [] probString;
-            }
 
-
+        doublePair idPos = textPos;
+        
+        idPos.x -= 17;
+        
+        char *idString = autoSprintf( "%d", objID );
+        
+        smallFontFixed->drawString( idString, idPos, alignRight );
+        
+        delete [] idString;
+        
         
         pos.y -= spacing;
         }
@@ -190,19 +197,29 @@ static void drawObjectList( char inCategories,
 
      
 void EditorExportPage::draw( doublePair inViewCenter, 
-                               double inViewSize ) {
-    
-    doublePair legendPos = mObjectEditorButton.getPosition();
-    
-    legendPos.x = -350;
-    legendPos.y += 50;
-    
-    drawKeyLegend( &mKeyLegend, legendPos );
+                             double inViewSize ) {
+
+    if( getCurrentExportList()->size() > 0 ) {        
+        doublePair legendPos = mObjectEditorButton.getPosition();
+        
+        legendPos.x = -350;
+        legendPos.y += 50;
+        
+        drawKeyLegend( &mKeyLegend, legendPos );
+
+        drawObjectList( getCurrentExportList(), mSelectionIndex );
+        }
     }
 
 
 
+
 void EditorExportPage::step() {
+    if( mSearchNeedsRedo ) {
+        mObjectPicker.redoSearch( false );
+        
+        mSearchNeedsRedo = false;
+        }
     }
 
 
@@ -248,7 +265,27 @@ void EditorExportPage::keyDown( unsigned char inASCII ) {
     if( inASCII == 8 ) {
         // backspace
         
-        // FIXME:  delete object from export
+        SimpleVector<int> *currentList = getCurrentExportList();
+        
+        if( currentList->size() > 0 ) {
+            // delete object from export
+            
+            char lastElement = false;
+            
+            if( mSelectionIndex == currentList->size() - 1 ) {
+                lastElement = true;
+                }
+
+            int id = currentList->getElementDirect( mSelectionIndex );
+            
+            removeExportObject( id );
+            
+            if( mSelectionIndex > 0 && lastElement ) {
+                mSelectionIndex--;
+                }
+            
+            mObjectPicker.redoSearch( false );
+            }
         }    
     }
 
@@ -275,9 +312,7 @@ void EditorExportPage::specialKeyDown( int inKeyCode ) {
             
             mSelectionIndex += offset;
             
-            int max = 0;
-            
-            // FIXME:  get max from list of current export size
+            int max = getCurrentExportList()->size() - 1;
             
             if( mSelectionIndex > max ) {
                 mSelectionIndex = max;

@@ -8,9 +8,24 @@ void addExportObject( int inObjectID );
 void removeExportObject( int inObjectID );
 
 
+char doesExportContain( int inObjectID );
+
+
 // clears all previously-added objects from the current export bundle
 // without saving it.
 void clearExportBundle();
+
+
+
+// returned vector is maintained internally
+// NOT destroyed by caller
+SimpleVector<int> *getCurrentExportList();
+
+
+// gets the hash value for the current working bundle list
+// destroyed by caller
+char *getCurrentBundleHash();
+
 
 
 
