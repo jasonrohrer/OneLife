@@ -57,9 +57,9 @@ class EditorExportPage : public GamePage, public ActionListener {
         
         TextButton mExportButton;
         TextButton mClearButton;
+        TextButton mCopyHashButton;
         
         TextField mExportTagField;
-        
 
         int mSelectionIndex;
 
@@ -67,7 +67,9 @@ class EditorExportPage : public GamePage, public ActionListener {
 
         char mSearchNeedsRedo;
         
-
+        char *mCurrentHash;
+        
+        
         void updateVisible();
     };
 

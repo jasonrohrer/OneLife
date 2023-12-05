@@ -45,6 +45,7 @@ EditorExportPage::EditorExportPage()
           mObjectEditorButton( mainFont, 0, 260, "Objects" ),
           mExportButton( mainFont, 210, -260, "Export" ),
           mClearButton( mainFont, -450, -260, "Clear" ),
+          mCopyHashButton( smallFont, 400, -290, "Copy Hash" ),
           mExportTagField( mainFont, 
                            0,  -260, 6,
                            false,
@@ -53,7 +54,8 @@ EditorExportPage::EditorExportPage()
                            "abcdefghijklmnopqrstuvwxyz"
                            "0123456789_", 
                            NULL ),
-          mSearchNeedsRedo( false ) {
+          mSearchNeedsRedo( false ),
+          mCurrentHash( NULL ) {
     
     mObjectPicker.addFilter( &unpickable );
     
@@ -63,10 +65,12 @@ EditorExportPage::EditorExportPage()
     
     addComponent( &mExportButton );
     addComponent( &mClearButton );
+    addComponent( &mCopyHashButton );
     
     addComponent( &mExportTagField );
     
     mExportTagField.setFireOnAnyTextChange( true );
+    mExportTagField.usePasteShortcut( true );
 
 
     mObjectPicker.addActionListener( this );
@@ -75,6 +79,7 @@ EditorExportPage::EditorExportPage()
     
     mExportButton.addActionListener( this );
     mClearButton.addActionListener( this );
+    mCopyHashButton.addActionListener( this );
 
     mExportTagField.addActionListener( this );
     
@@ -92,6 +97,9 @@ EditorExportPage::EditorExportPage()
 
 
 EditorExportPage::~EditorExportPage() {
+    if( mCurrentHash != NULL ) {
+        delete [] mCurrentHash;
+        }
     }
 
 
@@ -132,7 +140,13 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mExportTagField ) {
         updateVisible();
         }
+    else if( inTarget == &mCopyHashButton ) {
+        if( mCurrentHash != NULL ) {
+            setClipboardText( mCurrentHash );
+            }
+        }
     }
+
 
 
 void EditorExportPage::updateVisible() {
@@ -152,6 +166,24 @@ void EditorExportPage::updateVisible() {
     delete [] tagText;
 
     mExportButton.setVisible( tagNotEmpty && listNotEmpty );
+
+    if( mCurrentHash != NULL ) {
+        delete [] mCurrentHash;
+        mCurrentHash = NULL;
+        }
+    
+    mCopyHashButton.setVisible( false );
+    
+    if( listNotEmpty ) {
+        mCurrentHash = getCurrentBundleHash();
+    
+        if( mCurrentHash != NULL ) {
+            
+            if( isClipboardSupported() ) {
+                mCopyHashButton.setVisible( true );
+                }
+            }
+        }
     }
 
 
@@ -268,6 +300,20 @@ void EditorExportPage::draw( doublePair inViewCenter,
         drawKeyLegend( &mKeyLegend, legendPos );
 
         drawObjectList( getCurrentExportList(), mSelectionIndex );
+    
+        if( mCurrentHash != NULL ) {
+            doublePair hashPos = mExportButton.getPosition();
+        
+            hashPos.x += 100;
+        
+            char *hashString = autoSprintf( "Hash: %s", mCurrentHash );
+        
+            setDrawColor( 1, 1, 1, 1 );
+
+            smallFontFixed->drawString( hashString, hashPos, alignLeft );
+        
+            delete [] hashString;
+            }
         }
     }
 

@@ -127,7 +127,7 @@ SimpleVector<int> *getCurrentExportList() {
 
 
 
-char *getCurentBundleHash() {
+char *getCurrentBundleHash() {
     // now make checksum of sorted list
     SimpleVector<char> idTextList;
     
@@ -211,7 +211,7 @@ char finalizeExportBundle( const char *inExportName ) {
     
 
     
-    char *hash = getCurentBundleHash();
+    char *hash = getCurrentBundleHash();
 
     
     char *oxpFileName = autoSprintf( "%s_%d_%s.oxp", inExportName, 
