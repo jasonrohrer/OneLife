@@ -62,6 +62,7 @@ int accountHmacVersionNumber = 0;
 #include "EditorAnimationPage.h"
 #include "EditorCategoryPage.h"
 #include "EditorScenePage.h"
+#include "EditorExportPage.h"
 
 #include "LoadingPage.h"
 
@@ -101,6 +102,7 @@ EditorTransitionPage *transPage;
 EditorAnimationPage *animPage;
 EditorCategoryPage *categoryPage;
 EditorScenePage *scenePage;
+EditorExportPage *exportPage;
 
 LoadingPage *loadingPage;
 
@@ -506,6 +508,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     animPage = new EditorAnimationPage;
     categoryPage = new EditorCategoryPage;
     scenePage = new EditorScenePage;
+    exportPage = new EditorExportPage;
+    
     loadingPage = new LoadingPage;
     
     loadingPage->setCurrentPhase( "OVERLAYS" );
@@ -560,6 +564,8 @@ void freeFrameDrawer() {
     delete animPage;
     delete categoryPage;
     delete scenePage;
+    delete exportPage;
+    
     delete loadingPage;
 
 
@@ -1348,13 +1354,6 @@ void drawFrame( char inUpdate ) {
                     //printOrphanedSoundReport();
                     initEmotion();
                     
-                    // try exporting some stuff
-                    addExportObject( 2 );
-                    addExportObject( 1 );
-                    
-                    finalizeExportBundle( "testExportB" );
-
-
                     currentGamePage = importPage;
                     loadingComplete();
                     currentGamePage->base_makeActive( true );
@@ -1390,6 +1389,10 @@ void drawFrame( char inUpdate ) {
                 animPage->clearClothing();
                 currentGamePage->base_makeActive( true );
                 }
+            else if( objectPage->checkSignal( "exportEditor" ) ) {
+                currentGamePage = exportPage;
+                currentGamePage->base_makeActive( true );
+                }
             }
         else if( currentGamePage == transPage ) {
             if( transPage->checkSignal( "objectEditor" ) ) {
@@ -1420,6 +1423,12 @@ void drawFrame( char inUpdate ) {
         else if( currentGamePage == scenePage ) {
             if( scenePage->checkSignal( "animEditor" ) ) {
                 currentGamePage = animPage;
+                currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == exportPage ) {
+            if( exportPage->checkSignal( "objectEditor" ) ) {
+                currentGamePage = objectPage;
                 currentGamePage->base_makeActive( true );
                 }
             }

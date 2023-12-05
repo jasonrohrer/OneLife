@@ -126,6 +126,7 @@ EditorObjectPage::EditorObjectPage()
           mImportEditorButton( mainFont, -210, 260, "Sprites" ),
           mTransEditorButton( mainFont, 210, 260, "Trans" ),
           mAnimEditorButton( mainFont, 330, 260, "Anim" ),
+          mExportEditorButton( mainFont, 470, 260, "Export" ),
           mMoreSlotsButton( smallFont, -280, -110, "More" ),
           mLessSlotsButton( smallFont, -280, -166, "Less" ),
           mAgingLayerCheckbox( 290, -22, 2 ),
@@ -287,6 +288,7 @@ EditorObjectPage::EditorObjectPage()
     addComponent( &mImportEditorButton );
     addComponent( &mTransEditorButton );
     addComponent( &mAnimEditorButton );
+    addComponent( &mExportEditorButton );
 
 
     addComponent( &mMoreSlotsButton );
@@ -442,6 +444,7 @@ EditorObjectPage::EditorObjectPage()
     mImportEditorButton.addActionListener( this );
     mTransEditorButton.addActionListener( this );
     mAnimEditorButton.addActionListener( this );
+    mExportEditorButton.addActionListener( this );
 
     mClearObjectButton.addActionListener( this );
 
@@ -1953,6 +1956,9 @@ void EditorObjectPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mAnimEditorButton ) {
         setSignal( "animEditor" );
+        }
+    else if( inTarget == &mExportEditorButton ) {
+        setSignal( "exportEditor" );
         }
     else if( inTarget == &mMoreSlotsButton ) {
         

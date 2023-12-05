@@ -62,6 +62,7 @@ SoundUsage.cpp \
 objectMetadata.cpp \
 emotion.cpp \
 exporter.cpp \
+EditorExportPage.cpp \
 
 
 
