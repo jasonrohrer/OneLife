@@ -1,5 +1,6 @@
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/stringUtils.h"
+#include "minorGems/util/SettingsManager.h"
 
 #include "minorGems/io/file/File.h"
 
@@ -561,6 +562,19 @@ char finalizeExportBundle( const char *inExportName ) {
     
     fclose( outFILE );
 
+
+    if( SettingsManager::getIntSetting( "compressExports", 1 ) != 1 ) {
+        // compression of exports disabled
+        // stop here
+        delete [] oxpFileName;
+        
+        // start new bundle only on full success
+        clearExportBundle();
+        
+        return true;
+        }
+    
+
     
     File *inFile = exportDir.getChildFile( oxpFileName );
     
@@ -568,8 +582,6 @@ char finalizeExportBundle( const char *inExportName ) {
 
     int inLength;
     unsigned char *inData = inFile->readFileContents( &inLength );
-
-    delete inFile;
     
     if( inData == NULL ) {
         printf( "Export failed:  could not re-open %s for reading\n",
@@ -577,6 +589,8 @@ char finalizeExportBundle( const char *inExportName ) {
     
         delete [] oxpFileName;
         
+        delete inFile;
+
         return false;
         }
 
@@ -594,6 +608,8 @@ char finalizeExportBundle( const char *inExportName ) {
     
         delete [] oxpFileName;
         
+        delete inFile;
+
         return false;
         }
 
@@ -611,6 +627,8 @@ char finalizeExportBundle( const char *inExportName ) {
         delete [] oxzData;
         delete [] oxpFileName;
         
+        delete inFile;
+
         return false;
         }
 
@@ -632,12 +650,22 @@ char finalizeExportBundle( const char *inExportName ) {
     
         delete [] oxpFileName;
         
+        delete inFile;
+
         return false;
         }    
 
 
     delete [] oxpFileName;
 
+    
+    
+    // don't keep base .oxp file around after export
+    inFile->remove();
+    
+    delete inFile;
+    
+    
     
     // start new bundle only on full success
     clearExportBundle();
