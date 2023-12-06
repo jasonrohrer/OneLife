@@ -59,6 +59,10 @@ class EditorExportPage : public GamePage, public ActionListener {
         TextButton mClearButton;
         TextButton mCopyHashButton;
         
+        TextButton mCopyIDListButton;
+        TextButton mPasteIDListButton;
+        
+
         TextField mExportTagField;
 
         int mSelectionIndex;

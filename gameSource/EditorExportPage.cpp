@@ -46,6 +46,8 @@ EditorExportPage::EditorExportPage()
           mExportButton( mainFont, 210, -260, "Export" ),
           mClearButton( mainFont, -450, -260, "Clear" ),
           mCopyHashButton( smallFont, 400, -290, "Copy Hash" ),
+          mCopyIDListButton( smallFont, -300, -230, "Copy ID List" ),
+          mPasteIDListButton( smallFont, -300, -290, "Paste ID List" ),
           mExportTagField( mainFont, 
                            0,  -260, 6,
                            false,
@@ -66,6 +68,8 @@ EditorExportPage::EditorExportPage()
     addComponent( &mExportButton );
     addComponent( &mClearButton );
     addComponent( &mCopyHashButton );
+    addComponent( &mCopyIDListButton );
+    addComponent( &mPasteIDListButton );
     
     addComponent( &mExportTagField );
     
@@ -80,6 +84,8 @@ EditorExportPage::EditorExportPage()
     mExportButton.addActionListener( this );
     mClearButton.addActionListener( this );
     mCopyHashButton.addActionListener( this );
+    mCopyIDListButton.addActionListener( this );
+    mPasteIDListButton.addActionListener( this );
 
     mExportTagField.addActionListener( this );
     
@@ -145,6 +151,53 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
             setClipboardText( mCurrentHash );
             }
         }
+    else if( inTarget == &mCopyIDListButton ) {
+        SimpleVector<char> listTextWorking;
+        
+        SimpleVector<int> *currentList = getCurrentExportList();
+        
+        for( int i=0; i< currentList->size(); i++ ) {
+            
+            if( i > 0 ) {
+                listTextWorking.push_back( '\n' );
+                }
+            
+            char *idString = autoSprintf( "%d", 
+                                          currentList->getElementDirect( i ) );
+            
+            listTextWorking.appendElementString( idString );
+            delete [] idString;
+            }
+        char *listText = listTextWorking.getElementString();
+        
+        setClipboardText( listText );
+        
+        delete [] listText;
+        }
+    else if( inTarget == &mPasteIDListButton ) {
+        char *listText = getClipboardText();
+        
+        if( listText != NULL ) {
+            char success;
+            char *nextIntToScan = listText;
+            
+            int scannedInt = scanIntAndSkip( &nextIntToScan, &success );
+            
+            while( success ) {
+                ObjectRecord *o = getObject( scannedInt, true );
+                
+                if( o != NULL ) {
+                    addExportObject( scannedInt );
+                    }
+
+                scannedInt = scanIntAndSkip( &nextIntToScan, &success );
+                }
+            
+            delete [] listText;
+            
+            updateVisible();
+            }
+        }
     }
 
 
@@ -173,7 +226,9 @@ void EditorExportPage::updateVisible() {
         }
     
     mCopyHashButton.setVisible( false );
-    
+    mCopyIDListButton.setVisible( false );
+    mPasteIDListButton.setVisible( false );
+
     if( listNotEmpty ) {
         mCurrentHash = getCurrentBundleHash();
     
@@ -183,6 +238,14 @@ void EditorExportPage::updateVisible() {
                 mCopyHashButton.setVisible( true );
                 }
             }
+        
+        if( isClipboardSupported() ) {
+            mCopyIDListButton.setVisible( true );
+            }
+        }
+    
+    if( isClipboardSupported() ) {
+        mPasteIDListButton.setVisible( true );
         }
     }
 
