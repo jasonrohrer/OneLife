@@ -116,7 +116,17 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
         int obj = mObjectPicker.getSelectedObject();
             
         if( obj != -1 ) {
+            int oldListLen = getCurrentExportList()->size();
+            
             addExportObject( obj );
+
+            int newListLen = getCurrentExportList()->size();
+            
+            if( newListLen > oldListLen ) {
+                // new object added!
+                // jump to it
+                mSelectionIndex = newListLen - 1;
+                }
 
             mSearchNeedsRedo = true;
             }
@@ -178,6 +188,8 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
         char *listText = getClipboardText();
         
         if( listText != NULL ) {
+            int oldListLen = getCurrentExportList()->size();
+            
             char success;
             char *nextIntToScan = listText;
             
@@ -194,6 +206,16 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             
             delete [] listText;
+            
+            mObjectPicker.redoSearch( false );
+            
+            int newListLen = getCurrentExportList()->size();
+            
+            if( newListLen > oldListLen ) {
+                // objects added by paste always end up at the end of the
+                // list
+                mSelectionIndex = newListLen - 1;
+                }
             
             updateVisible();
             }
@@ -264,7 +286,7 @@ static void drawObjectList( SimpleVector<int> *inList,
 
     doublePair pos;
     
-    pos.x = -100;
+    pos.x = -50;
     pos.y = 150;
         
     double spacing = 30;
@@ -353,8 +375,40 @@ static void drawObjectList( SimpleVector<int> *inList,
      
 void EditorExportPage::draw( doublePair inViewCenter, 
                              double inViewSize ) {
+    
+    SimpleVector<int> *currentList = getCurrentExportList();
+    
+    if( currentList->size() > 0 ) {
+        
+        
+        // draw object under other stuff
+        
+        int selectedID = currentList->getElementDirect( mSelectionIndex );
+        
+        doublePair objDisplayPos = mClearButton.getPosition();
+        
+        objDisplayPos.y += 300;
+        
+        setDrawColor( 0.75, 0.75, 0.75, 1 );
+        
+        drawRect( objDisplayPos, 150, 200 );
 
-    if( getCurrentExportList()->size() > 0 ) {        
+        objDisplayPos.y -= 200;
+        objDisplayPos.y += 64;
+
+        ObjectRecord *o = getObject( selectedID );
+        
+        drawObject( o, 2,
+                    objDisplayPos, 
+                    0, false, false, 20,
+                    // 1 for front arm, -1 for back arm, 0 for no hiding
+                    0,
+                    false,
+                    false,
+                    getEmptyClothingSet() );
+
+        
+
         doublePair legendPos = mObjectEditorButton.getPosition();
         
         legendPos.x = -350;
@@ -426,7 +480,7 @@ void EditorExportPage::pointerDrag( float inX, float inY ) {
 
 void EditorExportPage::pointerUp( float inX, float inY ) {
     
-    if( inX > -250 && inX < 50 &&
+    if( inX > -200 && inX < 100 &&
         inY > -225 && inY < 225 ) {
         // click on list, make keyboard active on list again
         
