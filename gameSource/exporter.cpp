@@ -18,6 +18,36 @@ static SimpleVector<int> currentBundleObjectIDs;
 
 
 
+static int intCompare( const void *inA, const void * inB ) {
+    int *a = (int*)inA;
+    int *b = (int*)inB;
+    
+    if( *a < *b ) {
+        return -1;
+        }
+    if( *a > *b ) {
+        return 1;
+        }
+    return 0;
+    }
+
+
+
+static void sortBundleList() {
+    int *idArray = currentBundleObjectIDs.getElementArray();
+    int numObjects = currentBundleObjectIDs.size();
+    
+    qsort( idArray, numObjects, sizeof( int ), intCompare );
+
+    currentBundleObjectIDs.deleteAll();
+    
+    currentBundleObjectIDs.push_back( idArray, numObjects );
+    
+    delete [] idArray;
+    }
+
+
+
 char doesExportContain( int inObjectID ) {
     if( currentBundleObjectIDs.getElementIndex( inObjectID ) == -1 ) {
         return false;
@@ -29,6 +59,7 @@ char doesExportContain( int inObjectID ) {
 void addExportObject( int inObjectID ) {
     if( ! doesExportContain( inObjectID ) ) {
         currentBundleObjectIDs.push_back( inObjectID );
+        sortBundleList();
         }
     }
 
@@ -36,6 +67,7 @@ void addExportObject( int inObjectID ) {
 
 void removeExportObject( int inObjectID ) {
     currentBundleObjectIDs.deleteElementEqualTo( inObjectID );
+    // sorting maintained on removal
     }
 
 
@@ -127,8 +159,13 @@ SimpleVector<int> *getCurrentExportList() {
 
 
 
+
+
+// hash the same regardless of order in which objects are added
+// since list is maintained in sorted order always.
+
 char *getCurrentBundleHash() {
-    // now make checksum of sorted list
+    // make checksum of sorted list
     SimpleVector<char> idTextList;
     
     for( int i=0; i<currentBundleObjectIDs.size(); i++ ) {
@@ -159,18 +196,6 @@ char *getCurrentBundleHash() {
 
 
 
-static int intCompare( const void *inA, const void * inB ) {
-    int *a = (int*)inA;
-    int *b = (int*)inB;
-    
-    if( *a < *b ) {
-        return -1;
-        }
-    if( *a > *b ) {
-        return 1;
-        }
-    return 0;
-    }
 
 
 
@@ -194,21 +219,9 @@ char finalizeExportBundle( const char *inExportName ) {
         
         return false;
         }
-    
 
-
-    // first, sort the objectIDs to include
-    int *idArray = currentBundleObjectIDs.getElementArray();
-    int numObjects = currentBundleObjectIDs.size();
     
-    qsort( idArray, numObjects, sizeof( int ), intCompare );
-
-    currentBundleObjectIDs.deleteAll();
-    
-    currentBundleObjectIDs.push_back( idArray, numObjects );
-    
-    delete [] idArray;
-    
+    sortBundleList();
 
     
     char *hash = getCurrentBundleHash();
