@@ -74,7 +74,15 @@ class EditorExportPage : public GamePage, public ActionListener {
         char *mCurrentHash;
         
         
+        char *mCurrentErrorMessage;
+        
+
         void updateVisible();
+
+        void setErrorMessage( const char *inMessage );
+        
+        void clearErrorMessage();
+        
     };
 
 

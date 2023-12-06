@@ -57,7 +57,8 @@ EditorExportPage::EditorExportPage()
                            "0123456789_", 
                            NULL ),
           mSearchNeedsRedo( false ),
-          mCurrentHash( NULL ) {
+          mCurrentHash( NULL ),
+          mCurrentErrorMessage( NULL ){
     
     mObjectPicker.addFilter( &unpickable );
     
@@ -106,6 +107,8 @@ EditorExportPage::~EditorExportPage() {
     if( mCurrentHash != NULL ) {
         delete [] mCurrentHash;
         }
+    
+    clearErrorMessage();
     }
 
 
@@ -129,10 +132,12 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
                 }
 
             mSearchNeedsRedo = true;
+            clearErrorMessage();
             }
         updateVisible();
         }
     else if( inTarget == &mObjectEditorButton ) {
+        clearErrorMessage();
         setSignal( "objectEditor" );
         }
     else if( inTarget == &mExportButton ) {
@@ -142,12 +147,16 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
         
         delete [] tagText;
         
+        clearErrorMessage();
+        
         mObjectPicker.redoSearch( false );
         
         updateVisible();
         }
     else if( inTarget == &mClearButton ) {
         clearExportBundle();
+        
+        clearErrorMessage();
         
         mObjectPicker.redoSearch( false );
         
@@ -160,6 +169,7 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
         if( mCurrentHash != NULL ) {
             setClipboardText( mCurrentHash );
             }
+        clearErrorMessage();
         }
     else if( inTarget == &mCopyIDListButton ) {
         SimpleVector<char> listTextWorking;
@@ -183,9 +193,17 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
         setClipboardText( listText );
         
         delete [] listText;
+        
+        clearErrorMessage();
         }
     else if( inTarget == &mPasteIDListButton ) {
+        clearErrorMessage();
+        
         char *listText = getClipboardText();
+
+        char someNotFound = false;
+        char oneScanSuccess = false;
+        
         
         if( listText != NULL ) {
             int oldListLen = getCurrentExportList()->size();
@@ -196,28 +214,50 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
             int scannedInt = scanIntAndSkip( &nextIntToScan, &success );
             
             while( success ) {
+                oneScanSuccess = true;
+                
                 ObjectRecord *o = getObject( scannedInt, true );
                 
                 if( o != NULL ) {
                     addExportObject( scannedInt );
                     }
-
+                else {
+                    someNotFound = true;
+                    }
+                
                 scannedInt = scanIntAndSkip( &nextIntToScan, &success );
                 }
             
             delete [] listText;
             
-            mObjectPicker.redoSearch( false );
+            
             
             int newListLen = getCurrentExportList()->size();
             
             if( newListLen > oldListLen ) {
+                
                 // objects added by paste always end up at the end of the
                 // list
                 mSelectionIndex = newListLen - 1;
+                
+                mObjectPicker.redoSearch( false );
+                
+                updateVisible();
                 }
             
-            updateVisible();
+
+            if( someNotFound ) {
+                setErrorMessage( "Some pasted object IDs not found." );
+                }
+            else if( ! oneScanSuccess ) {
+                setErrorMessage( "No object IDs found in clipboard text." );
+                }
+            else if( newListLen == oldListLen ) {
+                setErrorMessage( "Pasted text added no additional object IDs." );
+                }
+            }
+        else {
+            setErrorMessage( "Failed to get clipboard text." );
             }
         }
     }
@@ -435,6 +475,11 @@ void EditorExportPage::draw( doublePair inViewCenter,
             delete [] hashString;
             }
         }
+
+    if( mCurrentErrorMessage != NULL ) {
+        doublePair messagePos = { 0, -330 };
+        drawMessage( mCurrentErrorMessage, messagePos, true );
+        }
     }
 
 
@@ -572,3 +617,20 @@ void EditorExportPage::specialKeyDown( int inKeyCode ) {
         }
             
     }
+
+
+
+void EditorExportPage::clearErrorMessage() {
+    if( mCurrentErrorMessage != NULL ) {
+        delete [] mCurrentErrorMessage;
+        }
+    mCurrentErrorMessage = NULL;
+    }
+
+
+
+void EditorExportPage::setErrorMessage( const char *inMessage ) {
+    clearErrorMessage();
+    mCurrentErrorMessage = stringDuplicate( inMessage );
+    }
+
