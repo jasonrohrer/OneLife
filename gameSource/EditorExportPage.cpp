@@ -143,12 +143,16 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mExportButton ) {
         char *tagText = mExportTagField.getText();
         
-        finalizeExportBundle( tagText );
+        char succuess = finalizeExportBundle( tagText );
         
         delete [] tagText;
         
         clearErrorMessage();
         
+        if( ! succuess ) {
+            setErrorMessage( "Export failed." );
+            }
+
         mObjectPicker.redoSearch( false );
         
         updateVisible();

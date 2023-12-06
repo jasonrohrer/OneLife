@@ -35,4 +35,6 @@ char *getCurrentBundleHash();
 //
 // clears objects from export bundle (next call to addExportObject will add
 // an object to an empty bundle)
-void finalizeExportBundle( const char *inExportName );
+// 
+// Returns true on success, false on failure
+char finalizeExportBundle( const char *inExportName );
