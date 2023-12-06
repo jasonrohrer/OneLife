@@ -1,6 +1,7 @@
 #include "keyLegend.h"
 
 #include "minorGems/game/Font.h"
+#include "minorGems/game/drawUtils.h"
 
 
 #include "minorGems/util/stringUtils.h"
@@ -38,7 +39,8 @@ void drawKeyLegend( KeyLegend *inLegend, doublePair inPos,
     setDrawColor( 1, 1, 1, 1 );
     
     int numKeys = inLegend->keys.size();
-    
+
+    double spacing = 16;    
 
     for( int i=0; i<numKeys; i++ ) {
         
@@ -56,11 +58,32 @@ void drawKeyLegend( KeyLegend *inLegend, doublePair inPos,
             string = autoSprintf( "%c = %s", key, description );
             }
 
+        double width = smallFont->measureString( string );
+        
+        // darker transparent background box under each line
+        setDrawColor( 0, 0, 0, 0.6 );
+        
+        int margin = 4;
+
+        if( inAlign == alignCenter ) {
+            drawRect( inPos, width/2 + margin, spacing / 2 );
+            }
+        else if( inAlign == alignLeft ) {
+            drawRect( inPos.x - margin, inPos.y + spacing/2, 
+                      inPos.x + width + margin, inPos.y - spacing/2 );
+            }
+        else if( inAlign == alignRight ) {
+            drawRect( inPos.x - width - margin, inPos.y + spacing/2,
+                      inPos.x + margin, inPos.y - spacing/2 );
+            }
+        
+            
+        setDrawColor( 1, 1, 1, 1 );
         smallFont->drawString( string, inPos, inAlign );
 
         delete [] string;
 
-        inPos.y -= 16;
+        inPos.y -= spacing;
         }
     }
 

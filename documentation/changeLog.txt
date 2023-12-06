@@ -9,6 +9,10 @@ Version ???
 --Fixed so that BELL and HELL arrow labels are in English.txt translation file
   instead of hard-coded.
 
+
+
+Editor Fixes:
+
 --Fixed soundBank to roll back nextSoundNumber value whenever last sound in
   bank is deleted, to avoid sound id inflation.
 
@@ -16,6 +20,10 @@ Version ???
   when recording over a sound.  This further reduces sound id inflation.  Now,
   if you record a bunch of sounds, with multiple overwriting takes for each
   one, and then delete them all, the nextSoundNumber won't increase at all.
+
+--Key legends now have dark backgrounds behind them so they are more legible
+  when large objects underhang them.
+
 
 
 
