@@ -128,7 +128,8 @@ doublePair lastScreenViewCenter = {0, 0 };
 
 
 // world with of one view
-double viewWidth = 1024;
+double viewWidth = 1280;
+double viewHeight = 720;
 
 // fraction of viewWidth visible vertically (aspect ratio)
 double viewHeightFraction;
@@ -174,8 +175,8 @@ char doesOverrideGameImageSize() {
 
 
 void getGameImageSize( int *outWidth, int *outHeight ) {
-    *outWidth = 1024;
-    *outHeight = 600;
+    *outWidth = viewWidth;
+    *outHeight = viewHeight;
     }
 
 
