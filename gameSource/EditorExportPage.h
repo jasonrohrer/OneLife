@@ -83,6 +83,11 @@ class EditorExportPage : public GamePage, public ActionListener {
         
         void clearErrorMessage();
         
+
+        // updates mSelectionIndex based on the last new object 
+        // in getCurrentExportList() that is not in inOldList
+        void updateSelection( SimpleVector<int> *inOldList );
+        
     };
 
 

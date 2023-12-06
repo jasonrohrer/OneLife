@@ -113,23 +113,40 @@ EditorExportPage::~EditorExportPage() {
 
 
 
+void EditorExportPage::updateSelection( SimpleVector<int> *inOldList ) {
+    int newIndex = -1;
+    
+    SimpleVector<int> *newList = getCurrentExportList();
+    
+    for( int i=0; i< newList->size(); i++ ) {
+        if( inOldList->getElementIndex( newList->getElementDirect( i ) ) 
+            == -1 ) {
+            
+            // new id not found in old list
+            newIndex = i;
+            }
+        }
+    
+    if( newIndex != -1 ) {
+        mSelectionIndex = newIndex;
+        }
+    }
+
+
+
 void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
     
     if( inTarget == &mObjectPicker ) {
         int obj = mObjectPicker.getSelectedObject();
             
         if( obj != -1 ) {
-            int oldListLen = getCurrentExportList()->size();
+            
+            SimpleVector<int> oldList;
+            oldList.push_back_other( getCurrentExportList() );
             
             addExportObject( obj );
-
-            int newListLen = getCurrentExportList()->size();
             
-            if( newListLen > oldListLen ) {
-                // new object added!
-                // jump to it
-                mSelectionIndex = newListLen - 1;
-                }
+            updateSelection( &oldList );
 
             mSearchNeedsRedo = true;
             clearErrorMessage();
@@ -210,7 +227,8 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
         
         
         if( listText != NULL ) {
-            int oldListLen = getCurrentExportList()->size();
+            SimpleVector<int> oldList;
+            oldList.push_back_other( getCurrentExportList() );
             
             char success;
             char *nextIntToScan = listText;
@@ -236,18 +254,14 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
             
             
             
-            int newListLen = getCurrentExportList()->size();
+            int oldSelection = mSelectionIndex;
             
-            if( newListLen > oldListLen ) {
+            updateSelection( &oldList );
+            
+            
+            mObjectPicker.redoSearch( false );
                 
-                // objects added by paste always end up at the end of the
-                // list
-                mSelectionIndex = newListLen - 1;
-                
-                mObjectPicker.redoSearch( false );
-                
-                updateVisible();
-                }
+            updateVisible();
             
 
             if( someNotFound ) {
@@ -256,7 +270,7 @@ void EditorExportPage::actionPerformed( GUIComponent *inTarget ) {
             else if( ! oneScanSuccess ) {
                 setErrorMessage( "No object IDs found in clipboard text." );
                 }
-            else if( newListLen == oldListLen ) {
+            else if( mSelectionIndex == oldSelection ) {
                 setErrorMessage( "Pasted text added no additional object IDs." );
                 }
             }
