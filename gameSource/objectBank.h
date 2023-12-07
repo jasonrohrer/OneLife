@@ -1055,4 +1055,24 @@ int getNextVarSerialNumberChild( ObjectRecord *inO );
 
 
 
+
+
+// scans an ObjectRecord from a string
+// has no side-effects on objectBank internal state
+//
+// Returned ObjectRecord must be freed by caller.
+ObjectRecord *scanObjectRecordFromString( const char *inString );
+
+
+
+// frees an ObjectRecord with no side-effects on objectBank internal state
+// must NOT be used on ObjectRecords managed by objectBank
+// (use deleteObjectFromBank to delete bank records)
+// 
+// This function is used to free ObjectRecords returned by 
+// scanObjectRecordFromString.
+void freeObjectRecord( ObjectRecord *inObject );
+
+
+
 #endif

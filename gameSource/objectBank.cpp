@@ -1039,7 +1039,7 @@ int getMaxSpeechPipeIndex() {
 // List of setups not called:
 //
 // setupObjectSpeechPipe
-static ObjectRecord *scanObjectRecordFromString( const char *inString ) {
+ObjectRecord *scanObjectRecordFromString( const char *inString ) {
     int numLines;
                         
     char **lines = split( inString, "\n", &numLines );
@@ -3056,7 +3056,79 @@ void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
 
 
 
-static void freeObjectRecord( int inID ) {
+void freeObjectRecord( ObjectRecord *inObject ) {
+    delete [] inObject->description;
+    
+    delete [] inObject->biomes;
+            
+    delete [] inObject->slotPos;
+    delete [] inObject->slotVert;
+    delete [] inObject->slotParent;
+    delete [] inObject->sprites;
+    delete [] inObject->spritePos;
+    delete [] inObject->spriteRot;
+    delete [] inObject->spriteHFlip;
+    delete [] inObject->spriteColor;
+
+    delete [] inObject->spriteAgeStart;
+    delete [] inObject->spriteAgeEnd;
+    delete [] inObject->spriteParent;
+
+    delete [] inObject->spriteInvisibleWhenHolding;
+    delete [] inObject->spriteInvisibleWhenWorn;
+    delete [] inObject->spriteBehindSlots;
+    delete [] inObject->spriteInvisibleWhenContained;
+
+    delete [] inObject->spriteIsHead;
+    delete [] inObject->spriteIsBody;
+    delete [] inObject->spriteIsBackFoot;
+    delete [] inObject->spriteIsFrontFoot;
+
+    delete [] inObject->spriteIsEyes;
+    delete [] inObject->spriteIsMouth;
+
+    delete [] inObject->spriteUseVanish;
+    delete [] inObject->spriteUseAppear;
+            
+    if( inObject->useDummyIDs != NULL ) {
+        delete [] inObject->useDummyIDs;
+        }
+
+    if( inObject->variableDummyIDs != NULL ) {
+        delete [] inObject->variableDummyIDs;
+        }
+            
+    if( inObject->spriteBehindPlayer != NULL ) {
+        delete [] inObject->spriteBehindPlayer;
+        }
+
+    if( inObject->spriteAdditiveBlend != NULL ) {
+        delete [] inObject->spriteAdditiveBlend;
+        }
+
+    if( inObject->spriteNoFlipXPos != NULL ) {
+        delete [] inObject->spriteNoFlipXPos;
+        }
+            
+
+    delete [] inObject->spriteSkipDrawing;
+            
+    clearSoundUsage( &( inObject->creationSound ) );
+    clearSoundUsage( &( inObject->usingSound ) );
+    clearSoundUsage( &( inObject->eatingSound ) );
+    clearSoundUsage( &( inObject->decaySound ) );
+            
+    if( inObject->permittedBiomeMap != NULL ) {
+        delete [] inObject->permittedBiomeMap;
+        }
+
+    delete inObject;
+    }
+
+
+
+
+static void freeObjectBankRecord( int inID ) {
     if( inID < mapSize ) {
         if( idMap[inID] != NULL ) {
             
@@ -3067,73 +3139,9 @@ static void freeObjectRecord( int inID ) {
             delete [] lower;
             
             int race = idMap[inID]->race;
-
-            delete [] idMap[inID]->description;
             
-            delete [] idMap[inID]->biomes;
-            
-            delete [] idMap[inID]->slotPos;
-            delete [] idMap[inID]->slotVert;
-            delete [] idMap[inID]->slotParent;
-            delete [] idMap[inID]->sprites;
-            delete [] idMap[inID]->spritePos;
-            delete [] idMap[inID]->spriteRot;
-            delete [] idMap[inID]->spriteHFlip;
-            delete [] idMap[inID]->spriteColor;
+            freeObjectRecord( idMap[inID] );
 
-            delete [] idMap[inID]->spriteAgeStart;
-            delete [] idMap[inID]->spriteAgeEnd;
-            delete [] idMap[inID]->spriteParent;
-
-            delete [] idMap[inID]->spriteInvisibleWhenHolding;
-            delete [] idMap[inID]->spriteInvisibleWhenWorn;
-            delete [] idMap[inID]->spriteBehindSlots;
-            delete [] idMap[inID]->spriteInvisibleWhenContained;
-
-            delete [] idMap[inID]->spriteIsHead;
-            delete [] idMap[inID]->spriteIsBody;
-            delete [] idMap[inID]->spriteIsBackFoot;
-            delete [] idMap[inID]->spriteIsFrontFoot;
-
-            delete [] idMap[inID]->spriteIsEyes;
-            delete [] idMap[inID]->spriteIsMouth;
-
-            delete [] idMap[inID]->spriteUseVanish;
-            delete [] idMap[inID]->spriteUseAppear;
-            
-            if( idMap[inID]->useDummyIDs != NULL ) {
-                delete [] idMap[inID]->useDummyIDs;
-                }
-
-            if( idMap[inID]->variableDummyIDs != NULL ) {
-                delete [] idMap[inID]->variableDummyIDs;
-                }
-            
-            if( idMap[inID]->spriteBehindPlayer != NULL ) {
-                delete [] idMap[inID]->spriteBehindPlayer;
-                }
-
-            if( idMap[inID]->spriteAdditiveBlend != NULL ) {
-                delete [] idMap[inID]->spriteAdditiveBlend;
-                }
-
-            if( idMap[inID]->spriteNoFlipXPos != NULL ) {
-                delete [] idMap[inID]->spriteNoFlipXPos;
-                }
-            
-
-            delete [] idMap[inID]->spriteSkipDrawing;
-            
-            clearSoundUsage( &( idMap[inID]->creationSound ) );
-            clearSoundUsage( &( idMap[inID]->usingSound ) );
-            clearSoundUsage( &( idMap[inID]->eatingSound ) );
-            clearSoundUsage( &( idMap[inID]->decaySound ) );
-            
-            if( idMap[inID]->permittedBiomeMap != NULL ) {
-                delete [] idMap[inID]->permittedBiomeMap;
-                }
-
-            delete idMap[inID];
             idMap[inID] = NULL;
 
             personObjectIDs.deleteElementEqualTo( inID );
@@ -3161,74 +3169,7 @@ static void freeObjectRecord( int inID ) {
 void freeObjectBank() {
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {
-            
-            delete [] idMap[i]->slotPos;
-            delete [] idMap[i]->slotVert;
-            delete [] idMap[i]->slotParent;
-            delete [] idMap[i]->description;
-            delete [] idMap[i]->biomes;
-            
-            delete [] idMap[i]->sprites;
-            delete [] idMap[i]->spritePos;
-            delete [] idMap[i]->spriteRot;
-            delete [] idMap[i]->spriteHFlip;
-            delete [] idMap[i]->spriteColor;
-
-            delete [] idMap[i]->spriteAgeStart;
-            delete [] idMap[i]->spriteAgeEnd;
-            delete [] idMap[i]->spriteParent;
-
-            delete [] idMap[i]->spriteInvisibleWhenHolding;
-            delete [] idMap[i]->spriteInvisibleWhenWorn;
-            delete [] idMap[i]->spriteBehindSlots;
-            delete [] idMap[i]->spriteInvisibleWhenContained;
-
-            delete [] idMap[i]->spriteIsHead;
-            delete [] idMap[i]->spriteIsBody;
-            delete [] idMap[i]->spriteIsBackFoot;
-            delete [] idMap[i]->spriteIsFrontFoot;
-
-            delete [] idMap[i]->spriteIsEyes;
-            delete [] idMap[i]->spriteIsMouth;
-
-
-            delete [] idMap[i]->spriteUseVanish;
-            delete [] idMap[i]->spriteUseAppear;
-            
-            if( idMap[i]->useDummyIDs != NULL ) {
-                delete [] idMap[i]->useDummyIDs;
-                }
-
-            if( idMap[i]->variableDummyIDs != NULL ) {
-                delete [] idMap[i]->variableDummyIDs;
-                }
-            
-            if( idMap[i]->spriteBehindPlayer != NULL ) {
-                delete [] idMap[i]->spriteBehindPlayer;
-                }
-
-            if( idMap[i]->spriteAdditiveBlend != NULL ) {
-                delete [] idMap[i]->spriteAdditiveBlend;
-                }
-            
-            if( idMap[i]->spriteNoFlipXPos != NULL ) {
-                delete [] idMap[i]->spriteNoFlipXPos;
-                }
-            
-
-            delete [] idMap[i]->spriteSkipDrawing;
-
-            //printf( "\n\nClearing sound usage for id %d\n", i );            
-            clearSoundUsage( &( idMap[i]->creationSound ) );
-            clearSoundUsage( &( idMap[i]->usingSound ) );
-            clearSoundUsage( &( idMap[i]->eatingSound ) );
-            clearSoundUsage( &( idMap[i]->decaySound ) );
-
-            if( idMap[i]->permittedBiomeMap != NULL ) {
-                delete [] idMap[i]->permittedBiomeMap;
-                }
-
-            delete idMap[i];
+            freeObjectRecord( idMap[i] );
             }
         }
 
@@ -4355,7 +4296,7 @@ int addObject( const char *inDescription,
     
     
     
-    freeObjectRecord( newID );
+    freeObjectBankRecord( newID );
     
     idMap[newID] = r;
     
@@ -5046,7 +4987,7 @@ void deleteObjectFromBank( int inID ) {
         delete objectFile;
         }
 
-    freeObjectRecord( inID );
+    freeObjectBankRecord( inID );
     }
 
 
