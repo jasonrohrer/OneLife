@@ -669,8 +669,16 @@ char finalizeExportBundle( const char *inExportName ) {
     // this is the .oxz file
     outFile = exportDir.getChildFile( oxpFileName );
     
+    // total number of blocks in the zipped bundle
+    int totalBlockCount =
+        uniqueSpriteIDs.size() + uniqueSoundIDs.size() +
+        currentBundleObjectIDs.size() + animations.size();
 
-    char *header = autoSprintf( "%d #", inLength );
+    printf( "Export has %d sprites, %d sounds, %d objects, and %d animations\n",
+            uniqueSpriteIDs.size(), uniqueSoundIDs.size(),
+            currentBundleObjectIDs.size(), animations.size() );
+
+    char *header = autoSprintf( "%d %d #", totalBlockCount, inLength );
     
     int headerLength = strlen( header );
     
