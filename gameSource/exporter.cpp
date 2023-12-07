@@ -630,13 +630,13 @@ char finalizeExportBundle( const char *inExportName ) {
     
 
 
-    int outLength;
-    unsigned char *oxzData = zipCompress( inData, inLength, &outLength );
+    int zipLength;
+    unsigned char *zipData = zipCompress( inData, inLength, &zipLength );
     
     delete [] inData;
     
 
-    if( oxzData == NULL ) {
+    if( zipData == NULL ) {
         printf( "Export failed:  zipCompress failed\n" );
     
         delete [] oxpFileName;
@@ -657,7 +657,7 @@ char finalizeExportBundle( const char *inExportName ) {
         printf( "Export failed:  base file %s does not end with .oxp\n",
                 oxpFileName );
         
-        delete [] oxzData;
+        delete [] zipData;
         delete [] oxpFileName;
         
         delete inFile;
@@ -669,11 +669,28 @@ char finalizeExportBundle( const char *inExportName ) {
     // this is the .oxz file
     outFile = exportDir.getChildFile( oxpFileName );
     
+
+    char *header = autoSprintf( "%d #", inLength );
     
-    char success = outFile->writeToFile( oxzData, outLength );
+    int headerLength = strlen( header );
+    
+    int headerPlusDataLength = headerLength + zipLength;
+    
+    unsigned char *headerPlusData = 
+        new unsigned char[ headerPlusDataLength ];
+    
+    memcpy( headerPlusData, header, headerLength );
+    
+    delete [] header;
+
+    memcpy( &( headerPlusData[headerLength] ), zipData, zipLength );
+    
+    delete [] zipData;
     
 
-    delete [] oxzData;
+    char success = outFile->writeToFile( headerPlusData, headerPlusDataLength );
+
+    delete [] headerPlusData;
     delete outFile;
     
     
