@@ -75,6 +75,7 @@ fitnessScore.cpp \
 GeneticHistoryPage.cpp \
 ServicesPage.cpp \
 photoCache.cpp \
+exporter.cpp \
 importer.cpp \
 
 

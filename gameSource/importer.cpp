@@ -117,8 +117,7 @@ int initModLoaderStart() {
 
 
 static float getModLoadProgress() {
-    return currentModFileProgress * perModFileProgressFraction +
-        currentModFileIndex * perModFileProgressFraction;
+    return (float)totalNumBlocksScannedSoFar / (float)totalNumBlocksToScan;
     }
 
     
@@ -129,9 +128,6 @@ float initModLoaderStep() {
     if( currentModFileIndex >= modFileList.size() ) {
         return 1.0f;
         }
-
-    float scanProgressFraction = 0.25;
-    float blockProcessingFraction = 1.0 - scanProgressFraction;
 
     if( ! currentModScanned ) {
         // scan it
@@ -267,15 +263,159 @@ float initModLoaderStep() {
         
         // now have raw data
 
-        // FIXME
 
         // scan each block and save it
         
-        // compute hashes of object IDs
-        // make sure it matches hash in file name
-        
+        // gather object ids as we go along
+        SimpleVector<int> scannedObjectIDs;
 
+        int dataPos = 0;
+        
+        int blockCount = 0;
+        
+        while( dataPos < dataSize ) {
+            SimpleVector<char> scannedHeader;
+            
+            int headerStartPos = dataPos;
+
+            while( data[ dataPos ] != '#' &&
+                   dataPos < dataSize ) {
+                
+                scannedHeader.push_back( (char)( data[ dataPos ] ) );
+                
+                dataPos++;
+                }
+            
+            if( data[dataPos] != '#' ) {
+                printf( "Failed to find end of header when "
+                        "scanning mod block %d\n", blockCount );
+                
+                break;
+                }
+            
+            // terminate string
+            data[dataPos] = '\0';
+            
+            char *header = stringDuplicate( (char*)( & data[headerStartPos] ) );
+            
+            if( strstr( header, "object " ) == header ) {
+                // header is an object header
+                
+                int id = -1;
+                sscanf( header, "object %d", &id );
+                
+                if( id != -1 ) {
+                    scannedObjectIDs.push_back( id );
+                    }
+                }    
+            
+            int spacePos = dataPos;
+            
+            // walk backward to find space before end of header
+            while( data[spacePos] != ' ' &&
+                   spacePos >= 0 ) {
+                
+                spacePos--;
+                }
+            
+            if( data[spacePos] != ' ' ) {
+                printf( "Failed to find space near end of header when "
+                        "scanning mod block %d\n", blockCount );
+                
+                delete [] header;
+                break;
+                }
+            
+            int blockDataLength = -1;
+            
+            sscanf( (char*)( & data[spacePos] ), "%d", &blockDataLength );
+            
+            if( blockDataLength == -1 ) {
+                printf( "Failed to find block data length in header when "
+                        "scanning mod block %d\n", blockCount );
+                
+                delete [] header;
+                break;
+                }
+            
+
+            // skip # in data (which has been replaced with \0 )
+            dataPos++;
+            
+            if( dataSize - dataPos < blockDataLength ) {
+                printf( "Block %d in mod file specifies data length of %d "
+                        "when there's only %d bytes left in data\n",
+                        blockCount, blockDataLength, dataSize - dataPos );
+                
+                delete [] header;
+                break;
+                }
+            
+            unsigned char *blockData = new unsigned char[ blockDataLength ];
+            
+            memcpy( blockData, data, blockDataLength );
+            
+
+            scannedBlockHeaders.push_back( header );
+            scannedDataBlockLengths.push_back( blockDataLength );
+            scannedDataBlocks.push_back( blockData );
+
+            // skip the data, now that we've scanned it.
+            dataPos += blockDataLength;
+            
+            blockCount++;
+            }
+        
         delete [] data;
+        
+        printf( "Scanned %d blocks from mod file\n", 
+                scannedBlockHeaders.size() );
+        
+        
+        // compute hashes of object IDs
+
+        char *correctHash = getObjectIDListHash( & scannedObjectIDs );
+        
+        fileName = currentFile->getFileName();
+
+        char *extensionPos = strstr( fileName, ".oxz" );
+        
+        if( extensionPos != NULL ) {
+            // terminate at .
+            extensionPos[0] = '\0';
+            }
+
+        if( // extension not found
+            extensionPos == NULL ||
+            // OR stuff before extension too short for 6-letter hash
+            ( extensionPos - fileName ) < 6 ||
+            // OR six letters before extension do not match correct hash
+            strcmp( correctHash, & extensionPos[ -6 ] ) != 0 ) {
+
+            printf( "Hash check for mod file failed (correct hash=%s): %s\n",
+                    correctHash, & extensionPos[ -6 ] );
+            
+            delete [] correctHash;
+            delete [] fileName;
+
+            currentModFileIndex ++;
+
+            int lastElement = scannedBlockHeaders.size() - 1;
+            
+            scannedBlockHeaders.deallocateStringElement( lastElement );
+            scannedDataBlockLengths.deleteElement( lastElement );
+            delete [] scannedDataBlocks.getElementDirect( lastElement );
+            
+            return getModLoadProgress();
+            }
+
+        // hash check okay
+        printf( "Hash for mod computed as %s, matches file name hash in %s\n",
+                correctHash, fileName );
+        delete [] correctHash;
+        delete [] fileName;
+
+        currentModScanned = true;
         }
     else {
         // walk through blocks and process them
@@ -284,7 +424,8 @@ float initModLoaderStep() {
 
 
         currentScannedBlock++;
-
+        totalNumBlocksScannedSoFar ++;
+        
         if( currentScannedBlock >= scannedBlockHeaders.size() ) {
             // done processing scanned blocks from current mod
             
@@ -308,18 +449,13 @@ float initModLoaderStep() {
             }
         else {
             // done with another block from current mod
-            
-            currentModFileProgress = blockProcessingFraction *
-                (float) currentScannedBlock / scannedBlockHeaders.size()
-                + scanProgressFraction;
             }
         }
     
     
 
     
-return getModLoadProgress();
-
+    return getModLoadProgress();
     }
 
 

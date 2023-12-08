@@ -25,6 +25,7 @@ objects "OBJECTS"
 transitions "TRANSITIONS"
 animations "ANIMATIONS"
 categories "CATEGORIES"
+mods "MODS"
 
 groundTextures "GROUND TEXTURES"
 
