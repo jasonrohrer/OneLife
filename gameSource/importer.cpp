@@ -66,8 +66,6 @@ int initModLoaderStart() {
     currentModScanned = false;
 
 
-    // FIXME:
-    
     // peek at header of each file here
     // to get total number of blocks to load
 
