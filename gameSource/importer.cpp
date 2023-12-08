@@ -51,6 +51,7 @@ int initModLoaderStart() {
         for( int i=0; i<numMods; i++ ) {
             modFileList.push_back( mods[i] );
             }
+        delete [] mods;
         }
     
     currentModFileIndex = 0;
