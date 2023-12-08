@@ -4,6 +4,8 @@
 
 #include "minorGems/formats/encodingUtils.h"
 
+#include "exporter.h"
+
 
 
 static SimpleVector<File*> modFileList;
@@ -26,7 +28,12 @@ static SimpleVector<unsigned char*> scannedDataBlocks;
 
 static int currentScannedBlock;
 
-    
+
+
+static int totalNumBlocksToScan;
+
+static int totalNumBlocksScannedSoFar;
+
 
 
 
@@ -60,10 +67,51 @@ int initModLoaderStart() {
 
     // FIXME:
     
-    // actually, just peek at header of each file here
+    // peek at header of each file here
     // to get total number of blocks to load
 
-    return 0;
+    totalNumBlocksToScan = 0;
+
+    for( int i=0; i<modFileList.size(); i++ ) {
+        File *file = modFileList.getElementDirect( i );
+        
+        char *name = file->getFullFileName();
+        
+        FILE *f = fopen( name, "rb" );
+        
+        if( f == NULL ) {
+            printf( "Failed to open mod file for reading: %s\n", name );
+            delete [] name;
+            delete file;
+            modFileList.deleteElement( i );
+            i--;
+            continue;
+            }
+        
+        int blocks = 0;
+        int numRead = fscanf( f, "%d", &blocks );
+        
+        if( numRead != 1 ) {
+            printf( "Failed to read header block count from mod file: %s\n",
+                    name );
+            delete [] name;
+            delete file;
+            modFileList.deleteElement( i );
+            i--;
+            continue;
+            }
+        
+        delete [] name;
+
+        totalNumBlocksToScan += blocks;
+        }
+    
+    totalNumBlocksScannedSoFar = 0;
+    
+    printf( "Mod loader sees %d total blocks to scan from mod folder\n",
+            totalNumBlocksToScan );
+
+    return totalNumBlocksToScan;
     }
 
 
@@ -123,16 +171,17 @@ float initModLoaderStep() {
             
             char scanSuccess = false;
             
-            int plainDataLength =
-                scanIntAndSkip( (char **)( &data ), &scanSuccess );
+            unsigned char *dataWorking = data;
+            // skip numBlocks at beginning of header
+            scanIntAndSkip( (char **)( &dataWorking ), &scanSuccess );
             
             if( ! scanSuccess ) {
-                // failed to scan header size value
+                // failed to scan header num blocks value
                 delete [] data;
 
                 char *fileName = currentFile->getFileName();
 
-                printf( "Failed to scan zip header from mod file %s\n",
+                printf( "Failed to scan block count header from mod file %s\n",
                         fileName );
                 
                 delete [] fileName;
@@ -141,9 +190,43 @@ float initModLoaderStep() {
                 
                 return getModLoadProgress();
                 }
+            
+            
+            // this will skip the trailing # in the header too
+            int plainDataLength =
+                scanIntAndSkip( (char **)( &dataWorking ), &scanSuccess );
+            
+            // make sure # exists too, one char back from where we
+            // ended our scanIntAndSkip
+            if( ! scanSuccess || dataWorking[-1]  != '#' ) {
+
+                // failed to scan header size value or trailing #
+                delete [] data;
+
+                char *fileName = currentFile->getFileName();
+
+                printf( 
+                    "Failed to scan decompressed size header "
+                    "from mod file %s\n",
+                    fileName );
+                
+                delete [] fileName;
+
+                currentModFileIndex ++;
+                
+                return getModLoadProgress();
+                }
+            
+            // how far have we scanned ahead in data when skipping headers?
+            int headerScanSize = (int)( dataWorking - data );
+            
 
             unsigned char *plainData =
-                zipDecompress( data, dataSize, plainDataLength );
+                zipDecompress( dataWorking,
+                               // how much zipped data is left
+                               // after headers scanned
+                               dataSize - headerScanSize, 
+                               plainDataLength );
             
             delete [] data;
             
@@ -187,6 +270,9 @@ float initModLoaderStep() {
         // FIXME
 
         // scan each block and save it
+        
+        // compute hashes of object IDs
+        // make sure it matches hash in file name
         
 
         delete [] data;

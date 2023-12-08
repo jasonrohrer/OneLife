@@ -35,7 +35,7 @@ even if a compressed .oxz file is the end goal.
 .oxz files contain a size header followed by raw zlib compression output.
 The header is in the following format:
 
-total_block_count decompressed_size_in_bytes #
+total_block_count decompressed_size_in_bytes#
 
 total_block_count is the total number of blocks in the export, which is the sum
 of sprites + sounds + objects + animations
@@ -44,7 +44,7 @@ The # sign is followed immediately by the compressed data.
 
 Example:
 
-15 23493 #
+15 23493#
 
 
 

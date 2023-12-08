@@ -27,6 +27,13 @@ SimpleVector<int> *getCurrentExportList();
 char *getCurrentBundleHash();
 
 
+// gets the hash value for a list of object IDs.
+// inIDList must be pre-sorted
+// inIDList destroyed by caller
+//
+// return value destroyed by caller
+char *getObjectIDListHash( SimpleVector<int> *inIDList );
+
 
 
 

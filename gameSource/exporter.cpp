@@ -160,18 +160,14 @@ SimpleVector<int> *getCurrentExportList() {
 
 
 
-
-// hash the same regardless of order in which objects are added
-// since list is maintained in sorted order always.
-
-char *getCurrentBundleHash() {
+char *getObjectIDListHash( SimpleVector<int> *inIDList ) {
     // make checksum of sorted list
     SimpleVector<char> idTextList;
     
-    for( int i=0; i<currentBundleObjectIDs.size(); i++ ) {
+    for( int i=0; i<inIDList->size(); i++ ) {
         
         char *s = autoSprintf( "%d ", 
-                               currentBundleObjectIDs.getElementDirect( i ) );
+                               inIDList->getElementDirect( i ) );
         
         idTextList.appendElementString( s );
         
@@ -192,6 +188,16 @@ char *getCurrentBundleHash() {
     delete [] sha1Hash;
     
     return lowerHash;
+    }
+
+    
+
+
+
+// hash the same regardless of order in which objects are added
+// since list is maintained in sorted order always.
+char *getCurrentBundleHash() {
+    return getObjectIDListHash( getCurrentExportList() );
     }
 
 
@@ -678,7 +684,7 @@ char finalizeExportBundle( const char *inExportName ) {
             uniqueSpriteIDs.size(), uniqueSoundIDs.size(),
             currentBundleObjectIDs.size(), animations.size() );
 
-    char *header = autoSprintf( "%d %d #", totalBlockCount, inLength );
+    char *header = autoSprintf( "%d %d#", totalBlockCount, inLength );
     
     int headerLength = strlen( header );
     
