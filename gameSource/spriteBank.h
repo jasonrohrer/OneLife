@@ -12,7 +12,15 @@ typedef struct SpriteRecord {
         int id;
         
         unsigned int hash;
-
+        
+        // full SHA1 hash
+        // not computed for every sprite in bank, since we can always
+        // check the file data
+        // but for live-only sprites (like for mods) we compute
+        // this, since we don't have file data to check
+        char *sha1Hash;
+        
+        
         // NULL if image not loaded
         SpriteHandle sprite;
         
@@ -142,6 +150,16 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
 
 
 
+// adds sprite to live bank from raw TGA data
+// does NOT save into sprites folder on disk
+int addSprite( const char *inTag,
+               unsigned char *inTGAData, int inTGADataLength, 
+               char inMultiplicativeBlending,
+               int inCenterAnchorXOffset,
+               int inCenterAnchorYOffset );
+
+
+
 // bakes multiple sprite layers into a single sprite and saves it in the bank
 // returns the new ID
 // does NOT work for multiplicative blending sprites
@@ -178,28 +196,6 @@ void countLoadedSprites( int *outLoaded, int *outTotal );
 // returns true if implementation is fully-functional sprite bank
 // or false if implementation is a dummy implementation (server-side)
 char realSpriteBank();
-
-
-
-// updates hash in inRecord based on TGA data read from id.tga file
-void recomputeSpriteHash( SpriteRecord *inRecord );
-
-
-
-void recomputeSpriteHash( SpriteRecord *inRecord,
-                          int inNumTGABytes,
-                          unsigned char *inTGAData );
-
-
-
-// computes a hash based on data for a sprite
-// inTGAData and inTag destroyed by caller
-unsigned int computeSpriteHash(
-    int inNumTGABytes,
-    unsigned char *inTGAData,
-    char *inTag,
-    char inMultiplicativeBlend,
-    int inCenterAnchorXOffset, int inCenterAnchorYOffset );
 
 
 

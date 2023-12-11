@@ -666,9 +666,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
     char rebuilding;
     
-    // game doesn't need to compute sprite hashes
+    // game needs to compute hashes for mod loading
     int numSprites = 
-        initSpriteBankStart( &rebuilding, false );
+        initSpriteBankStart( &rebuilding, true );
                         
     if( rebuilding ) {
         loadingPage->setCurrentPhase( translate( "spritesRebuild" ) );
@@ -1435,7 +1435,9 @@ void drawFrame( char inUpdate ) {
       
                         char rebuilding;
 
-                        int numSounds = initSoundBankStart( &rebuilding );
+                        // compute hashes for mod loading
+                        int numSounds = initSoundBankStart( &rebuilding,
+                                                            true );
 
                         if( rebuilding ) {
                             loadingPage->setCurrentPhase( 

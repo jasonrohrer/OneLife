@@ -16,6 +16,8 @@
 
 #include "minorGems/util/crc32.h"
 
+#include "minorGems/crypto/hashes/sha1.h"
+
 
 #include "folderCache.h"
 #include "binFolderCache.h"
@@ -27,6 +29,12 @@ static int mapSize;
 // sparse, so some entries are NULL
 static SpriteRecord **idMap;
 static char *spriteDrawnMap = NULL;
+
+// max used ID in our current idMap
+// note that this tracks max id seen in idMap in current run
+// (doesn't get decremented if sprites are deleted during the run)
+static int maxLiveSpriteID = -1;
+
 
 
 static StringTree tree;
@@ -296,6 +304,188 @@ SimpleVector<LoadedSpritePlaceholder> loadedPlaceholders;
 
 
 
+
+static void setupRemappable( SpriteRecord *inR ) {
+    inR->remappable = true;
+    inR->remapTarget = true;
+    
+    if( inR->tag == NULL ) {
+        return;
+        }
+    
+    
+    if( strstr( inR->tag, "_" ) != NULL ) {
+        inR->remapTarget = false;
+        inR->remappable = false;
+        }
+    else if( strncmp( inR->tag, "Category", 8 ) == 0 ) {
+        inR->remapTarget = false;
+        }
+    else if( strncmp( inR->tag, "BodyWhite", 9 ) == 0 ) {
+        inR->remapTarget = false;
+        }
+    else if( strncmp( inR->tag, "HeadWhite", 9 ) == 0 ) {
+        inR->remapTarget = false;
+        }
+    }
+
+
+
+// returned array destroyed by caller
+static unsigned char *getSpriteTGAFileData( int inID,
+                                            int *outNumDataBytes ) {
+    File spritesDir( NULL, "sprites" );
+            
+
+    char *fileNameTGA = autoSprintf( "%d.tga", inID );
+        
+
+    File *spriteFile = spritesDir.getChildFile( fileNameTGA );
+    
+    delete [] fileNameTGA;
+    
+    unsigned char *tgaBytes = NULL;
+    
+    if( spriteFile->exists() ) {
+        tgaBytes = spriteFile->readFileContents( outNumDataBytes );
+        }
+    
+    delete spriteFile;
+
+    return tgaBytes;
+    }
+
+
+
+static unsigned char *getSpriteBytesToHash(
+    int inNumTGABytes,
+    unsigned char *inTGAData,
+    char *inTag,
+    char inMultiplicativeBlend,
+    int inCenterAnchorXOffset, int inCenterAnchorYOffset,
+    int *outNumBytes ) {
+    
+    char *stringPortion = autoSprintf( "%s %d %d %d",
+                                       inTag, inMultiplicativeBlend,
+                                       inCenterAnchorXOffset,
+                                       inCenterAnchorYOffset );
+    int numStringBytes = strlen( stringPortion );
+    
+    int numTotalBytes = inNumTGABytes + numStringBytes;
+    
+    unsigned char *totalBytes = new unsigned char[ numTotalBytes ];
+    
+    memcpy( totalBytes, stringPortion, numStringBytes );
+    
+
+    if( inTGAData != NULL ) {
+        memcpy( &( totalBytes[numStringBytes] ), inTGAData, inNumTGABytes );
+        }
+    
+    
+    delete [] stringPortion;
+    
+    *outNumBytes = numTotalBytes;
+
+    return totalBytes;
+    }
+
+
+
+
+// if outSHA1 not NULL, it is filled with a newly-allocated SHA1 hash string
+// (destroyed by caller)
+static unsigned int computeSpriteHash(
+    int inNumTGABytes,
+    unsigned char *inTGAData,
+    char *inTag,
+    char inMultiplicativeBlend,
+    int inCenterAnchorXOffset, int inCenterAnchorYOffset,
+    char **outSHA1 ) {
+    
+    int numTotalBytes;
+    
+    unsigned char *totalBytes = getSpriteBytesToHash( inNumTGABytes,
+                                                      inTGAData,
+                                                      inTag,
+                                                      inMultiplicativeBlend,
+                                                      inCenterAnchorXOffset,
+                                                      inCenterAnchorYOffset,
+                                                      &numTotalBytes );
+    // CRC is fine for this purpose
+    // If there is no CRC hit, we KNOW that the same sprite doesn't
+    // already exist.  However, if there is a CRC hit, we can
+    // check the actual data directly to make sure it's a match.
+
+    unsigned int hash = crc32( totalBytes, numTotalBytes );
+    
+    if( outSHA1 != NULL ) {
+        *outSHA1 = computeSHA1Digest( totalBytes, numTotalBytes );
+        }
+
+    delete [] totalBytes;
+    
+    return hash;
+    }
+
+
+
+
+static void recomputeSpriteHash( SpriteRecord *inRecord,
+                                 int inNumTGABytes,
+                                 unsigned char *inTGAData,
+                                 char inAlsoSHA1 = false ) {
+    
+    char *sha1Hash = NULL;
+    
+    // this pointer being non-NULL triggers optional SHA1 calcluation
+    char **sha1Pointer = NULL;
+    
+    if( inAlsoSHA1 ) {
+        sha1Pointer = &sha1Hash;
+        }
+    
+
+    inRecord->hash = computeSpriteHash( inNumTGABytes,
+                                        inTGAData,
+                                        inRecord->tag,
+                                        inRecord->multiplicativeBlend,
+                                        inRecord->centerAnchorXOffset,
+                                        inRecord->centerAnchorYOffset,
+                                        sha1Pointer );    
+    
+    if( inRecord->sha1Hash != NULL ) {
+        delete [] inRecord->sha1Hash;
+        }
+
+    inRecord->sha1Hash = sha1Hash;
+    }
+
+
+
+// updates hash in inRecord based on TGA data read from id.tga file
+static void recomputeSpriteHash( SpriteRecord *inRecord ) {
+    
+    int numTGABytes;
+    
+    unsigned char *tgaBytes = getSpriteTGAFileData( inRecord->id, 
+                                                    &numTGABytes );
+    
+    if( tgaBytes != NULL ) {
+
+        // don't compute SHA1 when we have the file to refer to later
+        recomputeSpriteHash( inRecord, numTGABytes, tgaBytes,
+                             false );
+        
+        delete [] tgaBytes;
+        }
+    }
+
+
+
+
+
+
 float initSpriteBankStep() {
     
     if( currentFile == cache.numFiles &&
@@ -343,6 +533,8 @@ float initSpriteBankStep() {
             char *contents = getFileContents( cache, i );
             
             r->hash = 0;
+            r->sha1Hash = NULL;
+            
             r->tag = NULL;
 
             r->centerXOffset = 0;
@@ -360,22 +552,9 @@ float initSpriteBankStep() {
                         
                     r->tag = 
                         stringDuplicate( tokens->getElementDirect( 0 ) );
-                
-                    if( strstr( r->tag, "_" ) != NULL ) {
-                        r->remapTarget = false;
-                        r->remappable = false;
-                        }
-                    else if( strncmp( r->tag, "Category", 8 ) == 0 ) {
-                        r->remapTarget = false;
-                        }
-                    else if( strncmp( r->tag, "BodyWhite", 9 ) == 0 ) {
-                        r->remapTarget = false;
-                        }
-                    else if( strncmp( r->tag, "HeadWhite", 9 ) == 0 ) {
-                        r->remapTarget = false;
-                        }
-                
-                
+                    
+                    setupRemappable( r );
+                    
         
                     int mult;
                     sscanf( tokens->getElementDirect( 1 ),
@@ -453,6 +632,9 @@ float initSpriteBankStep() {
                     tree.insert( lower, r );
                     
                     delete [] lower;
+                    }
+                if( r->id > maxLiveSpriteID ) {
+                    maxLiveSpriteID = r->id;
                     }
                 }
             printf( "Loaded %d tagged sprites from sprites folder\n", 
@@ -618,6 +800,9 @@ static void freeSpriteRecord( int inID ) {
                 delete [] idMap[inID]->hitMap;    
                 }
             
+            if( idMap[inID]->sha1Hash != NULL ) {
+                delete [] idMap[inID]->sha1Hash;    
+                }
             
             delete idMap[inID];
             idMap[inID] = NULL;
@@ -645,9 +830,13 @@ void freeSpriteBank() {
                 }
             
             delete [] idMap[i]->tag;
-
-             if( idMap[i]->hitMap != NULL ) {
+            
+            if( idMap[i]->hitMap != NULL ) {
                 delete [] idMap[i]->hitMap;    
+                }
+            
+            if( idMap[i]->sha1Hash != NULL ) {
+                delete [] idMap[i]->sha1Hash;    
                 }
 
             delete idMap[i];
@@ -1019,6 +1208,88 @@ static void clearCacheFiles() {
 
 
 
+int addSprite( const char *inTag,
+               unsigned char *inTGAData, int inTGADataLength, 
+               char inMultiplicativeBlending,
+               int inCenterAnchorXOffset,
+               int inCenterAnchorYOffset ) {
+
+    int newID = maxLiveSpriteID + 1;
+
+    if( newID >= mapSize ) {
+        // expand map
+        
+        int newMapSize = newID + 1;
+        
+
+        
+        SpriteRecord **newMap = new SpriteRecord*[newMapSize];
+        
+        for( int i=0; i<newMapSize; i++ ) {
+            newMap[i] = NULL;
+            }
+
+        memcpy( newMap, idMap, sizeof(SpriteRecord*) * mapSize );
+
+        delete [] idMap;
+        idMap = newMap;
+        mapSize = newMapSize;
+        
+        delete [] spriteDrawnMap;
+        spriteDrawnMap = new char[ mapSize ];
+        }
+
+    SpriteRecord *r = new SpriteRecord;
+    
+    r->id = newID;
+    r->sprite = NULL;
+    r->tag = stringDuplicate( inTag );
+    r->hash = 0;
+    r->sha1Hash = NULL;
+    r->maxD = 0;
+    r->multiplicativeBlend = inMultiplicativeBlending;
+    r->centerAnchorXOffset = inCenterAnchorXOffset;
+    r->centerAnchorYOffset = inCenterAnchorYOffset;
+    r->hitMap = NULL;
+
+    freeSpriteRecord( newID );
+    
+    idMap[newID] = r;
+
+    if( r->id > maxLiveSpriteID ) {
+        maxLiveSpriteID = r->id;
+        }
+
+    loadSpriteFromRawTGAData( newID, inTGAData, inTGADataLength );
+
+    if( r->sprite == NULL ) {
+        // failed to load
+        
+        freeSpriteRecord( newID );
+      
+        return -1;
+        }
+
+    if( doComputeSpriteHashes ) {
+        // compute SHA1 hash for this too, since we don't have a file
+        // on disk to check later
+        recomputeSpriteHash( r, inTGADataLength, inTGAData,
+                             true );
+        }
+
+    setupRemappable( r );
+    
+    r->loading = false;
+    r->numStepsUnused = 0;
+
+    loadedSprites.push_back( newID );
+    
+    return newID;
+    }
+
+
+
+
 int addSprite( const char *inTag, SpriteHandle inSprite,
                Image *inSourceImage,
                char inMultiplicativeBlending,
@@ -1151,6 +1422,7 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     r->sprite = inSprite;
     r->tag = stringDuplicate( inTag );
     r->hash = 0;
+    r->sha1Hash = NULL;
     r->maxD = maxD;
     r->multiplicativeBlend = inMultiplicativeBlending;
     
@@ -1236,6 +1508,10 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     freeSpriteRecord( newID );
     
     idMap[newID] = r;
+
+    if( r->id > maxLiveSpriteID ) {
+        maxLiveSpriteID = r->id;
+        }
 
     if( makeNewSpritesSearchable ) {
         
@@ -1699,101 +1975,14 @@ char realSpriteBank() {
 
 
 
-// returned array destroyed by caller
-static unsigned char *getSpriteTGAFileData( int inID,
-                                            int *outNumDataBytes ) {
-    File spritesDir( NULL, "sprites" );
-            
-
-    char *fileNameTGA = autoSprintf( "%d.tga", inID );
-        
-
-    File *spriteFile = spritesDir.getChildFile( fileNameTGA );
-    
-    delete [] fileNameTGA;
-    
-    unsigned char *tgaBytes = NULL;
-    
-    if( spriteFile->exists() ) {
-        tgaBytes = spriteFile->readFileContents( outNumDataBytes );
-        }
-    
-    delete spriteFile;
-
-    return tgaBytes;
-    }
-
-
-
-void recomputeSpriteHash( SpriteRecord *inRecord ) {
-    
-    int numTGABytes;
-    
-    unsigned char *tgaBytes = getSpriteTGAFileData( inRecord->id, 
-                                                    &numTGABytes );
-    
-    if( tgaBytes != NULL ) {
-
-        recomputeSpriteHash( inRecord, numTGABytes, tgaBytes );
-        
-        delete [] tgaBytes;
-        }
-    }
-
-
-
-void recomputeSpriteHash( SpriteRecord *inRecord,
-                          int inNumTGABytes,
-                          unsigned char *inTGAData ) {
-    
-    inRecord->hash = computeSpriteHash( inNumTGABytes,
-                                        inTGAData,
-                                        inRecord->tag,
-                                        inRecord->multiplicativeBlend,
-                                        inRecord->centerAnchorXOffset,
-                                        inRecord->centerAnchorYOffset );    
-    
-    }
 
 
 
 
-unsigned int computeSpriteHash(
-    int inNumTGABytes,
-    unsigned char *inTGAData,
-    char *inTag,
-    char inMultiplicativeBlend,
-    int inCenterAnchorXOffset, int inCenterAnchorYOffset ) {
-    
-    char *stringPortion = autoSprintf( "%s %d %d %d",
-                                       inTag, inMultiplicativeBlend,
-                                       inCenterAnchorXOffset,
-                                       inCenterAnchorYOffset );
-    int numStringBytes = strlen( stringPortion );
-    
-    int numTotalBytes = inNumTGABytes + numStringBytes;
-    
-    unsigned char *totalBytes = new unsigned char[ numTotalBytes ];
-    
-    memcpy( totalBytes, stringPortion, numStringBytes );
-    
 
-    if( inTGAData != NULL ) {
-        memcpy( &( totalBytes[numStringBytes] ), inTGAData, inNumTGABytes );
-        }
-    
-    // CRC is fine for this purpose
-    // If there is no CRC hit, we KNOW that the same sprite doesn't
-    // already exist.  However, if there is a CRC hit, we can
-    // check the actual data directly to make sure it's a match.
 
-    unsigned int hash = crc32( totalBytes, numTotalBytes );
-    
-    delete [] stringPortion;
-    delete [] totalBytes;
-    
-    return hash;
-    }
+
+
 
 
 
@@ -1804,12 +1993,17 @@ int doesSpriteRecordExist(
     char inMultiplicativeBlend,
     int inCenterAnchorXOffset, int inCenterAnchorYOffset ) {
     
+    char *sha1Hash = NULL;
+    char **sha1Pointer = &sha1Hash;
+    
+    
     unsigned int targetHash = computeSpriteHash( inNumTGABytes,
                                                  inTGAData,
                                                  inTag,
                                                  inMultiplicativeBlend,
                                                  inCenterAnchorXOffset,
-                                                 inCenterAnchorYOffset );
+                                                 inCenterAnchorYOffset,
+                                                 sha1Pointer );
     
     for( int i=0; i<mapSize; i++ ) {
         if( idMap[i] != NULL ) {
@@ -1833,6 +2027,19 @@ int doesSpriteRecordExist(
                 
                 // metadata matches
                 
+                // does SHA1 exist for match?
+                if( r->sha1Hash != NULL ) {
+                    if( strcmp( r->sha1Hash, sha1Hash ) == 0 ) {
+                        
+                        // match!
+                        delete [] sha1Hash;
+                        return r->id;
+                        }
+                    }
+
+                
+                // no SHA1 exists for matching record
+                
                 // check if file data matches
                 
                 int numTGABytes;
@@ -1855,6 +2062,7 @@ int doesSpriteRecordExist(
                     }
                 
                 if( match ) {
+                    delete [] sha1Hash;
                     return r->id;
                     }
                 }
@@ -1863,6 +2071,7 @@ int doesSpriteRecordExist(
         }
     
     // no match
+    delete [] sha1Hash;                
     return -1;
     }
 

@@ -458,8 +458,8 @@ char finalizeExportBundle( const char *inExportName ) {
 
             // header format:
             // sprite id multBlend centAncXOff centAncYOff tgaSize#
-            fprintf( outFILE, "sprite %d %d %d %d %d#",
-                     id, r->multiplicativeBlend, 
+            fprintf( outFILE, "sprite %d %s %d %d %d %d#",
+                     id, r->tag, r->multiplicativeBlend, 
                      r->centerAnchorXOffset,
                      r->centerAnchorYOffset,
                      tgaFileSize );

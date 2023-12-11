@@ -6,6 +6,8 @@
 
 #include "exporter.h"
 
+#include "spriteBank.h"
+
 
 
 static SimpleVector<File*> modFileList;
@@ -27,6 +29,34 @@ static SimpleVector<int> scannedDataBlockLengths;
 static SimpleVector<unsigned char*> scannedDataBlocks;
 
 static int currentScannedBlock;
+
+
+typedef struct IDMapEntry {
+        int loadedID;
+        int bankID;
+    } IDMapEntry;
+
+
+// maps IDs in mod file to live IDs in our banks
+// (in some cases, we may add resources to our banks, in other cases
+//  we may find resources with the same hashes)
+static SimpleVector<IDMapEntry> spriteIDMap;
+static SimpleVector<IDMapEntry> soundIDMap;
+
+
+// returns NULL if not found
+static IDMapEntry* idMapLookup( SimpleVector<IDMapEntry> *inMap,
+                                int inLoadedID ) {
+    for( int i=0; i< inMap->size(); i++ ) {
+        IDMapEntry *e = inMap->getElement( i );
+        
+        if( e->loadedID == inLoadedID ) {
+            return e;
+            }
+        }
+    return NULL;    
+    }
+
 
 
 
@@ -352,7 +382,7 @@ float initModLoaderStep() {
             
             unsigned char *blockData = new unsigned char[ blockDataLength ];
             
-            memcpy( blockData, data, blockDataLength );
+            memcpy( blockData, & data[ dataPos ], blockDataLength );
             
 
             scannedBlockHeaders.push_back( header );
@@ -420,7 +450,75 @@ float initModLoaderStep() {
         // walk through blocks and process them
 
         // FIXME
+        
+        char *currentHeader = 
+            scannedBlockHeaders.getElementDirect( currentScannedBlock );
+        
+        int currentDataLength = 
+            scannedDataBlockLengths.getElementDirect( currentScannedBlock );
+        
+        unsigned char *currentDataBlock =
+            scannedDataBlocks.getElementDirect( currentScannedBlock );
+        
+        if( strstr( currentHeader, "sprite" ) == currentHeader ) {
+            
+            char blockType[100];
+            int id = -1;
+            char tag[100];
+            tag[0] = '\0';
+            int multiplicativeBlend = 0;
+            int centerAnchorXOffset = 0;
+            int centerAnchorYOffset = 0;
+            
+            sscanf( currentHeader, "%99s %d %99s %d %d %d",
+                    blockType, &id, tag, &multiplicativeBlend, 
+                    &centerAnchorXOffset,
+                    &centerAnchorYOffset );
+            
+            if( id > -1 ) {
+                // header at least contained an ID
+                
+                if( id == 74 ) {
+                    printf( "Break\n" );                
+                    }
+                
 
+                int bankID = 
+                    doesSpriteRecordExist(
+                        currentDataLength,
+                        currentDataBlock,
+                        tag,
+                        multiplicativeBlend,
+                        centerAnchorXOffset, centerAnchorYOffset );
+                
+                if( bankID == -1 ) {
+                    // no sprite found, need to add a new one to bank
+                    bankID = 
+                        addSprite( tag, currentDataBlock, currentDataLength,
+                                   multiplicativeBlend,
+                                   centerAnchorXOffset,
+                                   centerAnchorYOffset );
+
+                    if( bankID == -1 ) {
+                        printf( "Loading sprite TGA data from data block "
+                                "with %d bytes from mod failed\n",
+                                currentDataLength );
+                        }
+                    }
+                
+                if( bankID != -1 &&
+                    idMapLookup( &spriteIDMap, id ) == NULL ) {
+                    IDMapEntry e = { id, bankID };
+                    spriteIDMap.push_back( e );
+                    }
+                }
+            }
+        else if( strstr( currentHeader, "sound" ) == currentHeader ) {
+            }
+        else if( strstr( currentHeader, "object" ) == currentHeader ) {
+            }
+        else if( strstr( currentHeader, "animation" ) == currentHeader ) {
+            }
 
         currentScannedBlock++;
         totalNumBlocksScannedSoFar ++;
