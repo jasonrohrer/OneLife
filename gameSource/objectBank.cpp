@@ -7162,5 +7162,272 @@ int getNextVarSerialNumberChild( ObjectRecord *inO ) {
 
 
 
+static void copySpriteInts( int numSprites, 
+                            int **inOutTarget, int *inSource ) {
+    delete [] ( *inOutTarget );
+    
+    *inOutTarget = NULL;
+    
+    if( inSource == NULL ) {
+        return;
+        }
+
+    *inOutTarget = new int[ numSprites ];
+
+    memcpy( *inOutTarget, inSource, sizeof(int) * numSprites );
+    }
+
+
+
+static void copySpriteDoubles( int numSprites, 
+                               double **inOutTarget, double *inSource ) {
+    delete [] ( *inOutTarget );
+
+    *inOutTarget = NULL;
+    
+    if( inSource == NULL ) {
+        return;
+        }
+    
+    *inOutTarget = new double[ numSprites ];
+
+    memcpy( *inOutTarget, inSource, sizeof(double) * numSprites );
+    }
+
+
+
+static void copySpriteDoublePairs( int numSprites, 
+                                   doublePair **inOutTarget, 
+                                   doublePair *inSource ) {
+    delete [] ( *inOutTarget );
+    
+    *inOutTarget = NULL;
+    
+    if( inSource == NULL ) {
+        return;
+        }
+
+    *inOutTarget = new doublePair[ numSprites ];
+
+    memcpy( *inOutTarget, inSource, sizeof(doublePair) * numSprites );
+    }
+
+
+
+static void copySpriteFloatRGBs( int numSprites, 
+                                 FloatRGB **inOutTarget, FloatRGB *inSource ) {
+    delete [] ( *inOutTarget );
+
+    *inOutTarget = NULL;
+    
+    if( inSource == NULL ) {
+        return;
+        }
+
+    *inOutTarget = new FloatRGB[ numSprites ];
+
+    memcpy( *inOutTarget, inSource, sizeof(FloatRGB) * numSprites );
+    }
+
+
+
+static void copySpriteChars( int numSprites, 
+                             char **inOutTarget, char *inSource ) {
+    delete [] ( *inOutTarget );
+
+    *inOutTarget = NULL;
+    
+    if( inSource == NULL ) {
+        return;
+        }
+
+    *inOutTarget = new char[ numSprites ];
+
+    memcpy( *inOutTarget, inSource, sizeof(char) * numSprites );
+    }
+
+
+
 void copyObjectAppearance( int inTargetID, ObjectRecord *inSourceObject ) {
+    ObjectRecord *s = inSourceObject;
+    
+    ObjectRecord *t = getObject( inTargetID, true );
+    
+    if( t == NULL ) {
+        return;
+        }
+    
+    int numSprites = s->numSprites; 
+
+    t->numSprites = numSprites;
+
+    t->anySpritesBehindPlayer = s->anySpritesBehindPlayer;
+    
+    copySpriteChars( numSprites,
+                     & t->spriteBehindPlayer,
+                     s->spriteBehindPlayer );
+
+    copySpriteChars( numSprites,
+                     & t->spriteAdditiveBlend,
+                     s->spriteAdditiveBlend );
+
+    t->wallLayer = s->wallLayer;
+    
+    t->frontWall = s->frontWall;
+    
+    t->heldOffset = s->heldOffset;
+    
+    t->clothingOffset = s->clothingOffset;
+    
+    clearSoundUsage( & t->creationSound );
+    clearSoundUsage( & t->usingSound );
+    clearSoundUsage( & t->eatingSound );
+    clearSoundUsage( & t->decaySound );
+    
+    t->creationSound = copyUsage( s->creationSound );
+    t->usingSound = copyUsage( s->usingSound );
+    t->eatingSound = copyUsage( s->eatingSound );
+    t->decaySound = copyUsage( s->decaySound );
+    
+    // num slots can't be changed by a mod, but
+    // copy slot attributes from mod
+    for( int i=0; i< t->numSlots; i++ ) {
+        if( s->numSlots > i ) {
+            t->slotPos[i] = s->slotPos[i];
+            t->slotVert[i] = s->slotVert[i];
+            
+            if( s->slotParent[i] < numSprites ) {
+                t->slotParent[i] = s->slotParent[i];
+                }
+            else {
+                t->slotParent[i] = -1;
+                }
+            }
+        else {
+            // mod specifies fewer slots
+            // leave target positions and verts alone
+            // but we don't know what sprite parent our slot should follow now
+            t->slotParent[i] = -1;
+            }
+        }
+    
+
+    copySpriteInts( numSprites,
+                    & t->sprites,
+                    s->sprites );
+
+    copySpriteDoublePairs( numSprites,
+                           & t->spritePos,
+                           s->spritePos );
+    
+    copySpriteDoubles( numSprites,
+                       & t->spriteRot,
+                       s->spriteRot );
+
+    copySpriteChars( numSprites,
+                     & t->spriteHFlip,
+                     s->spriteHFlip );
+
+    copySpriteFloatRGBs( numSprites,
+                         & t->spriteColor,
+                         s->spriteColor );
+
+    copySpriteDoubles( numSprites,
+                       & t->spriteAgeStart,
+                       s->spriteAgeStart );
+
+    copySpriteDoubles( numSprites,
+                       & t->spriteAgeEnd,
+                       s->spriteAgeEnd );
+    
+    copySpriteInts( numSprites,
+                    & t->spriteParent,
+                    s->spriteParent );
+
+    copySpriteChars( numSprites,
+                     & t->spriteInvisibleWhenHolding,
+                     s->spriteInvisibleWhenHolding );    
+
+    copySpriteInts( numSprites,
+                     & t->spriteInvisibleWhenWorn,
+                     s->spriteInvisibleWhenWorn );
+
+    copySpriteChars( numSprites,
+                     & t->spriteBehindSlots,
+                     s->spriteBehindSlots );
+    
+    copySpriteChars( numSprites,
+                     & t->spriteInvisibleWhenContained,
+                     s->spriteInvisibleWhenContained );
+    
+    copySpriteChars( numSprites,
+                     & t->spriteIsHead,
+                     s->spriteIsHead );
+
+    copySpriteChars( numSprites,
+                     & t->spriteIsBody,
+                     s->spriteIsBody );
+
+    copySpriteChars( numSprites,
+                     & t->spriteIsBackFoot,
+                     s->spriteIsBackFoot );
+
+    copySpriteChars( numSprites,
+                     & t->spriteIsFrontFoot,
+                     s->spriteIsFrontFoot );
+    
+    copySpriteChars( numSprites,
+                     & t->spriteIsEyes,
+                     s->spriteIsEyes );
+
+    copySpriteChars( numSprites,
+                     & t->spriteIsMouth,
+                     s->spriteIsMouth );
+    
+    t->mainEyesOffset = s->mainEyesOffset;
+    
+    
+    copySpriteChars( numSprites,
+                     & t->spriteUseVanish,
+                     s->spriteUseVanish );
+    
+    copySpriteChars( numSprites,
+                     & t->spriteUseAppear,
+                     s->spriteUseAppear );
+    
+    
+    t->noCover = s->noCover;
+
+    t->slotsInvis = s->slotsInvis;
+
+    copySpriteDoubles( numSprites,
+                       & t->spriteNoFlipXPos,
+                       s->spriteNoFlipXPos );
+
+    t->hasBadgePos = s->hasBadgePos;
+    
+    t->badgePos = s->badgePos;
+    
+    t->hideHead = s->hideHead;
+    
+    t->hideBody = s->hideBody;
+
+    t->hideRider = s->hideRider;
+    
+    t->containOffsetX = s->containOffsetX;
+    
+    t->containOffsetY = s->containOffsetY;
+    
+    t->containOffsetBottomX = s->containOffsetBottomX;
+    
+    t->containOffsetBottomY = s->containOffsetBottomY;
+    
+    
+    // FIXME
+
+    // NEXT:
+    // handle all use dummies
+
+    // need to figure out how to populate spriteSkipDrawing for use dummies
+    // given that number of sprites may have changed}
     }
