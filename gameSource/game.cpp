@@ -7,7 +7,7 @@ int binVersionNumber = versionNumber;
 // Please use this tag to describe your client honestly and uniquely
 // client_official is reserved for the unmodded client
 // do not include whitespace in your tag
-const char *clientTag = "client_official";
+const char *clientTag = "client_skps2010";
 
 
 
@@ -289,7 +289,7 @@ const char *getLinuxAppName() {
 
 
 const char *getFontTGAFileName() {
-    return "font_32_64.tga";
+    return "font_32_32.tga";
     }
 
 
@@ -1847,7 +1847,7 @@ void drawFrame( char inUpdate ) {
 
                 startConnecting();
                 }
-            else if( autoUpdatePage->checkSignal( "relaunchFailed" ) ) {
+            else if( existingAccountPage->checkSignal( "relaunchFailed" ) ) {
                 currentGamePage = finalMessagePage;
                         
                 finalMessagePage->setMessageKey( "manualRestartMessage" );

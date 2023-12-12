@@ -81,7 +81,7 @@ TextField::TextField( Font *inDisplayFont,
     unsigned char widestChar = 0;
     double width = 0;
 
-    for( int c=32; c<256; c++ ) {
+    for( int c=32; c<128; c++ ) {
         unsigned char pc = processCharacter( c );
 
         if( pc != 0 ) {

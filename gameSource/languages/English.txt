@@ -55,6 +55,8 @@ clearAccount "CLEAR ACCOUNT"
 settingsButton "SETTINGS"
 postReviewButton "POST REVIEW"
 updateReviewButton "UPDATE REVIEW"
+translateButton "文／Ａ"
+translateTip "RUN TRANSLATOR AND RESTART GAME"
 
 reviewText "REVIEW TEXT"
 reviewName "DISPLAY NAME"

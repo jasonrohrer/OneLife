@@ -20134,6 +20134,10 @@ void LivingLifePage::step() {
                                             starPos[0] = '\0';
                                             }
                                         }
+                                    // translate English here
+                                    // existing->currentSpeech here is the player's talking
+                                    // replace keywords in existing->currentSpeech. For example: *HOME SICK*
+                                    // All words can be found in server.cpp with "PS\n"
                                     }
                                 }
                             

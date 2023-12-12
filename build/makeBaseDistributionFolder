@@ -33,6 +33,7 @@ mkdir $baseFolder/ground
 
 
 cp ../gameSource/graphics/*.tga $baseFolder/graphics
+cp ../gameSource/graphics/font.ttf $baseFolder/graphics
 cp ../gameSource/otherSounds/*.aiff $baseFolder/otherSounds
 cp ../gameSource/settings/*.ini $baseFolder/settings
 cp ../gameSource/languages/*.txt $baseFolder/languages

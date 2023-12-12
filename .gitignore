@@ -28,3 +28,5 @@ server/lifeLog/
 server/categories
 server/objects
 server/transitions
+
+build/mac/*
