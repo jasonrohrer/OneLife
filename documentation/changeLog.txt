@@ -24,6 +24,11 @@ Editor Fixes:
 --Key legends now have dark backgrounds behind them so they are more legible
   when large objects underhang them.
 
+--Gigantic speed up (over 10x) of Editor load time when running with
+  LeakTracer.  Allocating a 400x90 scene to init the SceneEditor was too slow,
+  given all the deep copying of SimpleVectors for each cell.  Scene Editor now
+  detects LeakTracer and allocates a smaller scene.
+
 
 
 

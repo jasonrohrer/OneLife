@@ -270,6 +270,34 @@ EditorScenePage::EditorScenePage()
     
     mCells = NULL;
     
+    // check if running in LeakTracer
+    // if so, resizing a full-sized grid is REALLY slow becasue
+    // of all the cell-by-cell deep copying of SimpleVectors
+
+    unsigned long leakTracerMagic = 0xAABBCCDDLu;
+    
+    // make a test allocation and look for the magic sequence at the end
+    unsigned long *test = new unsigned long[1];
+    
+    if( test[1] == leakTracerMagic ) {
+        printf( "Scen Editor detects that it's running inside LeakTracer.\n" );
+        
+        // this should make things 25x faster, bringing our 15-second
+        // load time under LeakTracer down under 1 second
+        mSceneH /= 5;
+        mSceneW /= 5;
+        
+        printf( "Defaulting to smaller-sized scene grid of %dx%d to speed "
+                "things up.\n", mSceneW, mSceneH );
+        }
+    else {
+        printf( "Scen Editor is not running inside LeakTracer.\n" );
+        printf( "Using full-sized scene grid of %dx%d\n", mSceneW, mSceneH );
+        }
+    
+    delete [] test;
+
+
     resizeGrid( mSceneH, mSceneW );
     
 
