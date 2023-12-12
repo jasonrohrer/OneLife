@@ -1251,6 +1251,12 @@ int addSprite( const char *inTag,
     r->centerAnchorXOffset = inCenterAnchorXOffset;
     r->centerAnchorYOffset = inCenterAnchorYOffset;
     r->hitMap = NULL;
+    
+    r->noFlip = false;
+                    
+    if( strstr( r->tag, "NoFlip" ) != NULL ) {
+        r->noFlip = true;
+        }
 
     freeSpriteRecord( newID );
     
