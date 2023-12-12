@@ -7,6 +7,7 @@
 #include "exporter.h"
 
 #include "spriteBank.h"
+#include "soundBank.h"
 
 
 
@@ -476,12 +477,7 @@ float initModLoaderStep() {
                     &centerAnchorYOffset );
             
             if( id > -1 ) {
-                // header at least contained an ID
-                
-                if( id == 74 ) {
-                    printf( "Break\n" );                
-                    }
-                
+                // header at least contained an ID                
 
                 int bankID = 
                     doesSpriteRecordExist(
@@ -514,6 +510,47 @@ float initModLoaderStep() {
                 }
             }
         else if( strstr( currentHeader, "sound" ) == currentHeader ) {
+                        
+            char blockType[100];
+            int id = -1;
+            char soundType[100];
+            
+            sscanf( currentHeader, "%99s %d %99s",
+                    blockType, &id, soundType );
+            
+            if( id > -1 ) {
+                // header at least contained an ID
+
+                int bankID = 
+                    doesSoundRecordExist(
+                        currentDataLength,
+                        currentDataBlock );
+                
+                if( bankID == -1 ) {
+                    // no sound found, need to add a new one to bank
+                    bankID = addSoundToLiveBank( currentDataLength,
+                                                 currentDataBlock,
+                                                 soundType );
+                    
+                    if( bankID == -1 ) {
+                        printf( "Loading sound data from data block "
+                                "with %d bytes, type %s, from mod failed\n",
+                                currentDataLength, soundType );
+                        }
+                    }
+                else {
+                    printf( "Mod sound id %d exists in bank as ID %d\n",
+                            id, bankID );
+                    }
+                
+                if( bankID != -1 &&
+                    idMapLookup( &soundIDMap, id ) == NULL ) {
+                    IDMapEntry e = { id, bankID };
+                    soundIDMap.push_back( e );
+                    printf( "Mapping mod sound id %d to bank id %d\n",
+                            id, bankID );
+                    }
+                }
             }
         else if( strstr( currentHeader, "object" ) == currentHeader ) {
             }

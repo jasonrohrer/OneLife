@@ -1578,6 +1578,10 @@ void drawFrame( char inUpdate ) {
                     
                     if( progress == 1.0 ) {
                         initModLoaderFinish();
+                        
+                        // mods load sounds which may need reverbs applied
+                        doneApplyingReverb();
+                        
                         printf( "Finished loading mods in %f sec\n",
                                 Time::getCurrentTime() - 
                                 loadingPhaseStartTime );

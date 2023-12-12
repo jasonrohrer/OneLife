@@ -2035,6 +2035,10 @@ int doesSpriteRecordExist(
                         delete [] sha1Hash;
                         return r->id;
                         }
+                    else {
+                        // sha1 mismatch
+                        continue;
+                        }
                     }
 
                 
