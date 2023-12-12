@@ -1061,6 +1061,7 @@ int getNextVarSerialNumberChild( ObjectRecord *inO );
 // has no side-effects on objectBank internal state
 //
 // Returned ObjectRecord must be freed by caller.
+// Can return NULL if parsing fails.
 ObjectRecord *scanObjectRecordFromString( const char *inString );
 
 
@@ -1072,6 +1073,14 @@ ObjectRecord *scanObjectRecordFromString( const char *inString );
 // This function is used to free ObjectRecords returned by 
 // scanObjectRecordFromString.
 void freeObjectRecord( ObjectRecord *inObject );
+
+
+
+// copies appearance/sound-affecting aspects of inSourceObject
+// into bank object specified by inTargetID
+//
+// Same changes are applied to any use- or variable-dummies of inTargetID
+void copyObjectAppearance( int inTargetID, ObjectRecord *inSourceObject );
 
 
 

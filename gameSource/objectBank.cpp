@@ -7160,3 +7160,7 @@ int getNextVarSerialNumberChild( ObjectRecord *inO ) {
     return parent->variableDummyIDs[ nextDummyIndex ];
     }
 
+
+
+void copyObjectAppearance( int inTargetID, ObjectRecord *inSourceObject ) {
+    }

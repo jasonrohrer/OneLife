@@ -8,6 +8,8 @@
 
 #include "spriteBank.h"
 #include "soundBank.h"
+#include "objectBank.h"
+#include "animationBank.h"
 
 
 
@@ -58,6 +60,29 @@ static IDMapEntry* idMapLookup( SimpleVector<IDMapEntry> *inMap,
     return NULL;    
     }
 
+
+
+static int applyMap( SimpleVector<IDMapEntry> *inMap,
+                     int inLoadedID ) {
+    IDMapEntry *e = idMapLookup( inMap, inLoadedID );
+    
+    if( e != NULL ) {
+        return e->bankID;
+        }
+    
+    // else no map found
+    
+    // return an infalid ID
+    return -1;
+    }
+
+
+
+static void remapSounds( SoundUsage *inUsage ) {
+    for( int i=0; i< inUsage->numSubSounds; i++ ) {
+        inUsage->ids[i] = applyMap( &soundIDMap, inUsage->ids[i] );
+        }
+    }
 
 
 
@@ -553,6 +578,59 @@ float initModLoaderStep() {
                 }
             }
         else if( strstr( currentHeader, "object" ) == currentHeader ) {
+            char blockType[100];
+            int id = -1;
+            
+            sscanf( currentHeader, "%99s %d", blockType, &id );
+            
+            if( id > -1 ) {
+                // header at least contained an ID
+                
+                // don't accept default object here
+                ObjectRecord *existingRecord = getObject( id, true );
+                
+                if( existingRecord != NULL ) {
+                    
+                    // copy data block into a string for parsing
+                    char *objectString = new char[ currentDataLength + 1 ];
+                    memcpy( objectString, currentDataBlock, currentDataLength );
+                    objectString[ currentDataLength ] = '\0';
+                    
+
+                    ObjectRecord *modRecord =
+                        scanObjectRecordFromString( objectString );
+                    
+                    delete [] objectString;
+                    
+                    if( modRecord != NULL ) {
+                        
+                        // remap sprites in our mod object
+                        for( int i=0; i< modRecord->numSprites; i++ ) {
+                            modRecord->sprites[i] = 
+                                applyMap( &spriteIDMap,
+                                          modRecord->sprites[i] );
+                            }
+                        // same for sounds
+                        remapSounds( & modRecord->creationSound );
+                        remapSounds( & modRecord->usingSound );
+                        remapSounds( & modRecord->eatingSound );
+                        remapSounds( & modRecord->decaySound );
+                        
+                        // apply all visual/sound changes from our
+                        // mod record into the object bank object
+                        copyObjectAppearance( id, modRecord );
+                        
+                        freeObjectRecord( modRecord );
+                        }
+                    else {
+                        printf( "Parsing object from mod failed\n" );
+                        }
+                    }
+                else {
+                    printf( "Mod object id %d not found in object bank, "
+                            "skipping\n", id );
+                    }
+                }
             }
         else if( strstr( currentHeader, "animation" ) == currentHeader ) {
             }
