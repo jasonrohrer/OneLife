@@ -1289,6 +1289,10 @@ int addSprite( const char *inTag,
     r->numStepsUnused = 0;
 
     loadedSprites.push_back( newID );
+
+    if( newID > maxID ) {
+        maxID = newID;
+        }
     
     return newID;
     }
@@ -1537,6 +1541,11 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
         recomputeSpriteHash( r );
         }
     
+    
+    if( newID > maxID ) {
+        maxID = newID;
+        }
+
     return newID;
     }
 
