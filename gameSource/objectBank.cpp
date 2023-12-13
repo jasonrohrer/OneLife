@@ -7394,6 +7394,14 @@ void copyObjectAppearance( int inTargetID, ObjectRecord *inSourceObject ) {
     copySpriteChars( numSprites,
                      & t->spriteUseAppear,
                      s->spriteUseAppear );
+
+    // copy this over, which should all be false,
+    // but copy it over to get its size correct
+    // in some cases, parent object of use dummies might have some sprites
+    // hidden, which we will capture here
+    copySpriteChars( numSprites,
+                     & t->spriteSkipDrawing,
+                     s->spriteSkipDrawing );
     
     
     t->noCover = s->noCover;
@@ -7423,11 +7431,44 @@ void copyObjectAppearance( int inTargetID, ObjectRecord *inSourceObject ) {
     t->containOffsetBottomY = s->containOffsetBottomY;
     
     
-    // FIXME
 
-    // NEXT:
-    // handle all use dummies
+    // Clone appearance changes into all use dummies
 
-    // need to figure out how to populate spriteSkipDrawing for use dummies
-    // given that number of sprites may have changed}
+    if( t->numUses > 1 ) {
+        int numDummyObj = t->numUses - 1;
+        
+        
+        for( int s=0; s<t->numSprites; s++ ) {
+            if( t->spriteUseAppear[s] ) {
+                // hide all appearing sprites in parent object
+                t->spriteSkipDrawing[s] = true;
+                }
+            }
+                    
+        for( int d=1; d<=numDummyObj; d++ ) {
+            int dummyID = t->useDummyIDs[ d - 1 ];
+            
+            // copy changes that we made to target object into each dummy
+            copyObjectAppearance( dummyID, t );
+            
+            
+            ObjectRecord *dummyO = getObject( dummyID );
+                        
+            if( t->creationSoundInitialOnly && d != 1 ) {
+                // when we copied t appearance/sounds into dummy
+                // we might have added creation sounds to some dummies
+                // that shouldn't have one
+                clearSoundUsage( &( dummyO->creationSound ) );
+                }
+            
+                        
+            setupSpriteUseVis( t, d, dummyO->spriteSkipDrawing );
+            }
+        }
+    
+
+    // now variable dummies
+    for( int d=1; d <= t->numVariableDummyIDs; d++ ) {   
+        copyObjectAppearance( t->variableDummyIDs[ d - 1 ], t );
+        }
     }
