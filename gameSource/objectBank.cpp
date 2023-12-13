@@ -2198,17 +2198,28 @@ void initObjectBankFinish() {
     int numRecords = records.size();
     for( int i=0; i<numRecords; i++ ) {
         ObjectRecord *r = records.getElementDirect(i);
-        
-        idMap[ r->id ] = r;
 
-        if( makeNewObjectsSearchable ) {    
-            char *lowercase = stringToLowerCase( r->description );
-
-            tree.insert( lowercase, r );
+        if( idMap[ r->id ] != NULL ) {
+            // our map already contains a record for this id
+            // maybe user messed up, manually editing object files
+            // and screwed up their IDs, leaving duplicate ids in different
+            // .txt files in the objects folder
             
-            delete [] lowercase;
+            // keep only the first one scanned for this id
+            
+            freeObjectRecord( r );
             }
-        
+        else {
+            idMap[ r->id ] = r;
+
+            if( makeNewObjectsSearchable ) {    
+                char *lowercase = stringToLowerCase( r->description );
+                
+                tree.insert( lowercase, r );
+                
+                delete [] lowercase;
+                }
+            }
         }
     
                         

@@ -14,6 +14,12 @@ Version ???
   at least one natural object, at least one food object, etc.).  Now both
   client and server are stable regardless of state of content set.
 
+--Fixed memory leak when objects folder contains object .txt files with
+  duplicate IDs.  Previously they were overwritten in the id map without
+  freeing the previous object.  Now, only the first object scanned is kept,
+  and any additional ones are freed correctly.
+
+
 
 
 Editor Fixes:
