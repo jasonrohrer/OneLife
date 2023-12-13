@@ -268,7 +268,12 @@ void setDrawColor( FloatRGB inColor ) {
 
 
 static char shouldFileBeCached( char *inFileName ) {
-    if( strstr( inFileName, ".txt" ) != NULL &&
+    char *txtPos = strstr( inFileName, ".txt" );
+
+    if( txtPos != NULL &&
+        // file name ends with .txt
+        txtPos[4] == '\0' &&
+        // not a groundHeat or nextObjectNumber file
         strstr( inFileName, "groundHeat_" ) == NULL &&
         strcmp( inFileName, "nextObjectNumber.txt" ) != 0 ) {
         return true;
