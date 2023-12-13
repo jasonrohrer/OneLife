@@ -280,7 +280,7 @@ char isBiomeAllowed( int inDisplayID, int inX, int inY, char inIgnoreFloor ) {
     
     ObjectRecord *o = getObject( inDisplayID );
     
-    if( o->race == 0 ) {
+    if( o == NULL || o->race == 0 ) {
         return true;
         }
 
@@ -336,7 +336,7 @@ int getBiomeSickness( int inDisplayID, int inX, int inY ) {
     
     ObjectRecord *o = getObject( inDisplayID );
     
-    if( o->race == 0 ) {
+    if( o == NULL || o->race == 0 ) {
         return -1;
         }
 
@@ -377,7 +377,7 @@ char isPolylingual( int inDisplayID ) {
     
     ObjectRecord *o = getObject( inDisplayID );
     
-    if( o->race == 0 ) {
+    if( o == NULL || o->race == 0 ) {
         return false;
         }
     
@@ -412,7 +412,7 @@ char *getBadBiomeMessage( int inDisplayID ) {
     
     ObjectRecord *o = getObject( inDisplayID );
     
-    if( o->race == 0 ) {
+    if( o == NULL || o->race == 0 ) {
         return stringDuplicate( "BB\n#" );
         }
 

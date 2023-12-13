@@ -1387,6 +1387,10 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
         return edgeObjectID;
         }
     
+    if( numBiomes == 0 ) {
+        return 0;
+        }
+
     int cachedID = mapCacheLookup( inX, inY, outGridPlacement );
     
     if( cachedID != -1 ) {
@@ -10078,7 +10082,13 @@ int isBirthland( int inX, int inY, int inLineageEveID, int inDisplayID ) {
         
         int biomeNumber = biomes[ pickedBiome ];
         
-        int personRace = getObject( inDisplayID )->race;
+        int personRace = 0;
+        
+        ObjectRecord *personO = getObject( inDisplayID );
+        
+        if( personO != NULL ) {
+            personRace = personO->race;
+            }
 
         char personPolylingual = ( personRace == getPolylingualRace( true ) );
 

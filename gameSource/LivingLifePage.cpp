@@ -14480,7 +14480,7 @@ void LivingLifePage::step() {
             int numRead = 
                 sscanf( message, "CR\n%d %d", &foodID, &bonus );
             
-            if( numRead == 2 ) {
+            if( numRead == 2 && foodID != -1 ) {
                 setNewCraving( foodID, bonus );
                 }
             }
@@ -18652,7 +18652,8 @@ void LivingLifePage::step() {
                         
                         ObjectRecord *obj = getObject( o.displayID );
                         
-                        if( obj->creationSound.numSubSounds > 0 ) {
+                        if( obj != NULL &&
+                            obj->creationSound.numSubSounds > 0 ) {
                                 
                             playSound( obj->creationSound,
                                        getVectorFromCamera( 
@@ -22508,23 +22509,31 @@ void LivingLifePage::step() {
                 if( ! o->allSpritesLoaded ) {
                     // check if they're loaded yet
                     
-                    int numLoaded = 0;
 
                     ObjectRecord *displayObj = getObject( o->displayID );
-                    for( int s=0; s<displayObj->numSprites; s++ ) {
+                    if( displayObj != NULL ) {
+                        int numLoaded = 0;
                         
-                        if( markSpriteLive( displayObj->sprites[s] ) ) {
-                            numLoaded ++;
+                        for( int s=0; s<displayObj->numSprites; s++ ) {
+                        
+                            if( markSpriteLive( displayObj->sprites[s] ) ) {
+                                numLoaded ++;
+                                }
+                            else if( getSpriteRecord( displayObj->sprites[s] )
+                                     == NULL ) {
+                                // object references sprite that doesn't exist
+                                // count as loaded
+                                numLoaded ++;
+                                }
                             }
-                        else if( getSpriteRecord( displayObj->sprites[s] )
-                                 == NULL ) {
-                            // object references sprite that doesn't exist
-                            // count as loaded
-                            numLoaded ++;
+                        
+                        if( numLoaded == displayObj->numSprites ) {
+                            o->allSpritesLoaded = true;
                             }
                         }
-                    
-                    if( numLoaded == displayObj->numSprites ) {
+                    else {
+                        // no display object
+                        // count as loaded
                         o->allSpritesLoaded = true;
                         }
                     }

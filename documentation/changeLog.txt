@@ -9,6 +9,11 @@ Version ???
 --Fixed so that BELL and HELL arrow labels are in English.txt translation file
   instead of hard-coded.
 
+--Fixed loads of places in both client and server that would cause a crash if
+  content data set wasn't sufficiently fleshed out (at least one person object,
+  at least one natural object, at least one food object, etc.).  Now both
+  client and server are stable regardless of state of content set.
+
 
 
 Editor Fixes:

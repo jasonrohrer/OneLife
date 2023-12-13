@@ -90,6 +90,10 @@ static void markSoundUsageLiveInternal( SoundUsage inUsage ) {
 // adds an object to the base set of live objects
 // objects one transition step away will be auto-added as well  
 void addBaseObjectToLiveObjectSet( int inID ) {
+    if( inID == -1 ) {
+        return;
+        }
+    
     if( ! liveObjectIDMap[ inID ] ) {
         
         liveObjectIDMap[ inID ] = true;

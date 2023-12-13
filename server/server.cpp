@@ -1230,7 +1230,23 @@ double computeAge( LiveObject *inPlayer );
 char getFemale( LiveObject *inPlayer ) {
     ObjectRecord *r = getObject( inPlayer->displayID );
     
+    if( r == NULL ) {
+        return false;
+        }
+    
     return ! r->male;
+    }
+
+
+
+int getRace( LiveObject *inPlayer ) {
+    ObjectRecord *r = getObject( inPlayer->displayID );
+    
+    if( r == NULL ) {
+        return 0;
+        }
+    
+    return r->race;
     }
 
 
@@ -4199,7 +4215,14 @@ double computeMoveSpeed( LiveObject *inPlayer ) {
 
 
     // apply character's speed mult
-    speed *= getObject( inPlayer->displayID )->speedMult;
+    int speedMult = 1;
+    ObjectRecord *playerDisplayObject = getObject( inPlayer->displayID );
+    
+    if( playerDisplayObject != NULL ) {
+        speedMult = playerDisplayObject->speedMult;
+        }
+    
+    speed *= speedMult;
     
 
     char riding = false;
@@ -7993,7 +8016,7 @@ static int isPlayerCountable( LiveObject *p, int inLineageEveID = -1,
         return false;
         }
     if( inRace != -1 &&
-        getObject( p->displayID )->race != inRace ) {
+        getRace( p ) != inRace ) {
         return false;
         }
     return true;
@@ -9552,7 +9575,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         for( int i=0; i<parentChoices.size(); i++ ) {
             LiveObject *player = parentChoices.getElementDirect( i );
             
-            int race = getObject( player->displayID )->race;
+            int race = getRace( player );
             
             if( parentRaces.getElementIndex( race ) == -1 ) {
                 parentRaces.push_back( race );
@@ -9577,9 +9600,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             }
 
         for( int i=0; i<parentChoices.size(); i++ ) {
-            int r = 
-                getObject( 
-                    parentChoices.getElementDirect( i )->displayID )->race;
+            int r = getRace( parentChoices.getElementDirect( i ) );
             
             if( r != weakRace ) {
                 parentChoices.deleteElement( i );
@@ -9668,7 +9689,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         
         if( specialBiomesActive() ) {
 
-            int numRaces;
+            int numRaces = 0;
             int *races = getRaces( &numRaces );
         
             for( int i=0; i<numRaces; i++ ) {
@@ -9819,9 +9840,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 LiveObject *player = players.getElement( i );
             
                 if( isPlayerCountable( player ) && isFertileAge( player ) ) {
-                    ObjectRecord *d = getObject( player->displayID );
+                    int thisRace = getRace( player );
                     
-                    if( d->race == races[r] ) {
+                    if( thisRace == races[r] ) {
                         counts[r] ++;
                         }
                     }
@@ -9862,17 +9883,22 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             // just pick a race at random
             // since they have been shuffled above, picking the first
             // race will be a random one
-            int randomRace = races[0];
+            int randomRace = 0;
+            
+            if( numRaces > 0 ) {
+                randomRace = races[0];
+                }
             
             // then pick a random female of that race
             femaleID = getRandomPersonObjectOfRace( randomRace );
             
             int tryCount = 0;
-            while( getObject( femaleID )->male && tryCount < 10 ) {
+            while( femaleID != -1 &&
+                   getObject( femaleID )->male && tryCount < 10 ) {
                 femaleID = getRandomPersonObjectOfRace( randomRace );
                 tryCount++;
                 }
-            if( getObject( femaleID )->male ) {
+            if( femaleID != -1 && getObject( femaleID )->male ) {
                 femaleID = -1;
                 }
             }
@@ -10132,16 +10158,16 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             // set cool-down time before this worman can have another baby
             parent->birthCoolDown = pickBirthCooldownSeconds() + curTime;
 
-            ObjectRecord *parentObject = getObject( parent->displayID );
-
+            int parentRace = getRace( parent );
+            
             // pick race of child
-            int numRaces;
+            int numRaces = 0;
             int *races = getRaces( &numRaces );
         
             int parentRaceIndex = -1;
             
             for( int i=0; i<numRaces; i++ ) {
-                if( parentObject->race == races[i] ) {
+                if( parentRace == races[i] ) {
                     parentRaceIndex = i;
                     break;
                     }
@@ -10150,11 +10176,11 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
             if( parentRaceIndex != -1 ) {
                 
-                int childRace = parentObject->race;
+                int childRace = parentRace;
                 
                 char forceDifferentRace = false;
 
-                if( getRaceSize( parentObject->race ) < 3 ) {
+                if( getRaceSize( parentRace ) < 3 ) {
                     // no room in race for diverse family members
                     
                     // pick a different race for child to ensure village 
@@ -10196,9 +10222,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                     childRace = races[ childRaceIndex ];
                     }
                 
-                if( childRace == parentObject->race ) {
+                if( childRace == parentRace ) {
                     newObject.displayID = getRandomFamilyMember( 
-                        parentObject->race, parent->displayID, familySpan,
+                        parentRace, parent->displayID, familySpan,
                         forceGirl );
                     }
                 else {
@@ -10384,8 +10410,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             SettingsManager::getIntSetting( "specialBiomeBandMode", 0 ) ) {
             
             // shift Eve y position into center of her biome band
-            startY = getSpecialBiomeBandYCenterForRace( 
-                getObject( newObject.displayID )->race );
+            startY = getSpecialBiomeBandYCenterForRace(
+                getRace( &newObject ) );
             }
         
 
@@ -10454,9 +10480,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     
     if( SettingsManager::getIntSetting( "maleOverrideEnabled", 0 ) &&
-        getObject( newObject.displayID )->male ) {
+        ! getFemale( &newObject ) ) {
         
-        int targetRace = getObject( newObject.displayID )->race;
+        int targetRace = getRace( &newObject );
         
         char *cont = SettingsManager::getSettingContents( "maleOverride" );
     
@@ -11122,7 +11148,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
               newObject.parentID,
               parentEmail,
               ! getFemale( &newObject ),
-              getObject( newObject.displayID )->race, 
+              getRace( &newObject ), 
               newObject.xd,
               newObject.yd,
               players.size(),
@@ -16445,7 +16471,7 @@ static void findExpertForPlayer( LiveObject *inPlayer,
     
 
     char polylingual = false;
-    if( getObject( inPlayer->displayID )->race  == race ) {
+    if( getRace( inPlayer ) == race ) {
         // they ARE this expert themselves
         
         // point them toward polylingual race instead
@@ -16486,7 +16512,7 @@ static void findExpertForPlayer( LiveObject *inPlayer,
                 }
             
 
-            if( getObject( p->displayID )->race == race ) {
+            if( getRace( p ) == race ) {
                 GridPos pos = getPlayerPos( p );            
                 double d = distance( pos, playerPos );
                 
