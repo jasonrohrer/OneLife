@@ -1484,18 +1484,20 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         updateSlidersFromAnim();
         }
     else if( inTarget == &mCopySoundAnimButton ) {
-        SoundAnimationRecord oldR = mSoundAnimCopyBuffer;
-        
-        
-        mSoundAnimCopyBuffer = 
-            copyRecord( mCurrentAnim[ mCurrentType ]->
-                        soundAnim[ mCurrentSound ] );
-        
-        freeRecord( &oldR );
-
-        if( mSoundAnimCopyBuffer.sound.numSubSounds > 0 ) {
-            mPasteSoundAnimButton.setVisible( true );
-            }        
+        if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds ) {
+            SoundAnimationRecord oldR = mSoundAnimCopyBuffer;
+            
+            
+            mSoundAnimCopyBuffer = 
+                copyRecord( mCurrentAnim[ mCurrentType ]->
+                            soundAnim[ mCurrentSound ] );
+            
+            freeRecord( &oldR );
+            
+            if( mSoundAnimCopyBuffer.sound.numSubSounds > 0 ) {
+                mPasteSoundAnimButton.setVisible( true );
+                }
+            }
         }
     else if( inTarget == &mPlayAgeButton ) {
         if( !mPlayingAge ) {
@@ -1588,20 +1590,23 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                 }
             else {
                 // add new
+                int oldNumSounds = mCurrentAnim[ mCurrentType ]->numSounds;
+                SoundAnimationRecord *oldSounds = 
+                    mCurrentAnim[ mCurrentType ]-> soundAnim;
+
                 mCurrentAnim[ mCurrentType ]->numSounds++;
-                SoundAnimationRecord *old = mCurrentAnim[ mCurrentType ]->
-                    soundAnim;
                 
                 mCurrentAnim[ mCurrentType ]->soundAnim = 
                     new SoundAnimationRecord[ 
                         mCurrentAnim[ mCurrentType ]->numSounds ];
                 
-                memcpy( mCurrentAnim[ mCurrentType ]->soundAnim,
-                        old,
-                        sizeof( SoundAnimationRecord ) *
-                        mCurrentAnim[ mCurrentType ]->numSounds - 1 );
+                if( oldNumSounds > 0 ) {
+                    memcpy( mCurrentAnim[ mCurrentType ]->soundAnim,
+                            oldSounds,
+                            sizeof( SoundAnimationRecord ) * oldNumSounds );
+                    }
                 
-                delete [] old;
+                delete [] oldSounds;
 
                 mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ] =
                     copyRecord( mSoundAnimCopyBuffer );
@@ -1612,9 +1617,9 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             // make sure there's no age range set in pasted sound anim
             // it may have been copied from a person object
             for( int i=0; i<mCurrentAnim[ mCurrentType ]->numSounds; i++ ) {
-                mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].
+                mCurrentAnim[ mCurrentType ]->soundAnim[ i ].
                     ageStart = -1;
-                mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].
+                mCurrentAnim[ mCurrentType ]->soundAnim[ i ].
                     ageEnd = -1;
                 }
             }
@@ -2369,19 +2374,22 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
             }
         else if( u.numSubSounds > 0 ) {
             // expand it to make room
-            mCurrentAnim[ mCurrentType ]->numSounds++;
-            SoundAnimationRecord *old = mCurrentAnim[ mCurrentType ]->soundAnim;
+            int oldNumSounds = mCurrentAnim[ mCurrentType ]->numSounds;
+            SoundAnimationRecord *oldSounds
+                = mCurrentAnim[ mCurrentType ]->soundAnim;
             
+            mCurrentAnim[ mCurrentType ]->numSounds++;
             mCurrentAnim[ mCurrentType ]->soundAnim = 
                 new SoundAnimationRecord[ 
                     mCurrentAnim[ mCurrentType ]->numSounds ];
             
-            memcpy( mCurrentAnim[ mCurrentType ]->soundAnim,
-                    old,
-                    sizeof( SoundAnimationRecord ) *
-                    mCurrentAnim[ mCurrentType ]->numSounds - 1 );
+            if( oldNumSounds > 0 ) {
+                memcpy( mCurrentAnim[ mCurrentType ]->soundAnim,
+                        oldSounds,
+                        sizeof( SoundAnimationRecord ) * oldNumSounds );
+                }
             
-            delete [] old;
+            delete [] oldSounds;
 
             mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].sound = 
                 copyUsage( u );
@@ -2407,31 +2415,47 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         if( value < 0 ) {
             value = 0;
             }
-        mCurrentAnim[ mCurrentType ]->
-            soundAnim[ mCurrentSound ].ageStart = value;
+        
+        if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds ) {
+            mCurrentAnim[ mCurrentType ]->
+                soundAnim[ mCurrentSound ].ageStart = value;
+            }
         }
     else if( inTarget == &mSoundAgeOutField ) {
         float value = mSoundAgeOutField.getFloat();
         if( value < 0 ) {
             value = 0;
             }
-        mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].ageEnd = value;
+        if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds ) {
+            mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].ageEnd = 
+                value;
+            }
         }
     else if( inTarget == &mSoundAgePunchInButton ) {
         double in = mPersonAgeSlider.getValue();
-        mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].ageStart = in;
+        
+        if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds ) {
+            mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].ageStart =
+                in;
+            }
         
         mSoundAgeInField.setFloat( in, 2 );
         }
     else if( inTarget == &mSoundAgePunchOutButton ) {
         double out = mPersonAgeSlider.getValue();
-        mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].ageEnd = out;
+
+        if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds ) {
+            mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].ageEnd =
+                out;
+            }
         
         mSoundAgeOutField.setFloat( out, 2 );
         }
     else if( inTarget == &mSoundFootstepButton ) {
-        mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].footstep
-            = mSoundFootstepButton.getToggled();
+        if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds ) {
+            mCurrentAnim[ mCurrentType ]->soundAnim[ mCurrentSound ].footstep
+                = mSoundFootstepButton.getToggled();
+            }
         }
     else if( inTarget == &mNextSoundButton ) {
         mCurrentSound ++;
@@ -2443,14 +2467,18 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
         soundIndexChanged();
         }
     else if( inTarget == &mSoundRepeatPerSecSlider ) {
-        mCurrentAnim[ mCurrentType ]->
+        if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds ) {
+            mCurrentAnim[ mCurrentType ]->
                 soundAnim[ mCurrentSound ].repeatPerSec = 
-            mSoundRepeatPerSecSlider.getValue();
+                mSoundRepeatPerSecSlider.getValue();
+            }
         }
     else if( inTarget == &mSoundRepeatPhaseSlider ) {
-        mCurrentAnim[ mCurrentType ]->
+        if( mCurrentSound < mCurrentAnim[ mCurrentType ]->numSounds ) {
+            mCurrentAnim[ mCurrentType ]->
                 soundAnim[ mCurrentSound ].repeatPhase = 
-            mSoundRepeatPhaseSlider.getValue();
+                mSoundRepeatPhaseSlider.getValue();
+            }
         }
     else if( inTarget == &mReverseRotationCheckbox ) {
         updateAnimFromSliders();

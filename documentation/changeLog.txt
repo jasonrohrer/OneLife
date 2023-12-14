@@ -40,6 +40,8 @@ Editor Fixes:
   given all the deep copying of SimpleVectors for each cell.  Scene Editor now
   detects LeakTracer and allocates a smaller scene.
 
+--Fixed a bunch of bad memory accesses in EditorAnimationPage when current
+  animation has fewer sounds than mCurrentSound.
 
 
 
