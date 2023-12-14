@@ -175,6 +175,267 @@ int initAnimationBankStart( char *outRebuildingCache ) {
 
 
 
+AnimationRecord *scanAnimationRecordFromString( const char *inString ) {
+    AnimationRecord *r = NULL;
+
+    int numLines;
+    
+    char **lines = split( inString, "\n", &numLines );
+    
+    if( numLines > 4 ) {
+        r = new AnimationRecord;
+        
+        int next = 0;
+        
+        r->objectID = 0;
+        sscanf( lines[next], "id=%d", 
+                &( r->objectID ) );
+        
+        if( r->objectID > maxID ) {
+            maxID = r->objectID;
+            }
+                            
+        next++;
+
+                            
+        int typeRead = 0;
+        int extraIndexRead = -1;
+        int randomStartPhaseRead = 0;
+                
+        if( strchr( lines[next], ':' ) != NULL ) {
+
+            sscanf( lines[next], "type=%d:%d,randStartPhase=%d", 
+                    &( typeRead ), &extraIndexRead, 
+                    &randomStartPhaseRead );
+            }
+        else {
+            sscanf( lines[next], "type=%d,randStartPhase=%d", 
+                    &( typeRead ), &randomStartPhaseRead );
+            }
+                
+        r->type = (AnimType)typeRead;
+        r->extraIndex = extraIndexRead;
+        r->randomStartPhase = randomStartPhaseRead;
+        next++;
+
+                
+        // optional force zero start
+        r->forceZeroStart = false;
+        if( strstr( lines[next], "forceZeroStart=" ) != NULL ) {
+            int forceZeroStartRead = 0;
+            sscanf( lines[next], "forceZeroStart=%d", 
+                    &forceZeroStartRead );
+            r->forceZeroStart = forceZeroStartRead;
+            next++;
+            }
+                
+                
+        // optional sounds
+        r->numSounds = 0;
+        if( strstr( lines[next], "numSounds=" ) != NULL ) {
+            r->numSounds = 0;
+            sscanf( lines[next], "numSounds=%d", 
+                    &( r->numSounds ) );
+            next++;
+            }
+        r->soundAnim = new SoundAnimationRecord[ r->numSounds ];
+
+        if( r->numSounds > 0 ) {
+                    
+            for( int j=0; j< r->numSounds && next < numLines; j++ ) {
+                                        
+                r->soundAnim[j].sound = blankSoundUsage;
+                r->soundAnim[j].repeatPerSec = 0;
+                r->soundAnim[j].repeatPhase = 0;
+                r->soundAnim[j].ageStart = -1;
+                r->soundAnim[j].ageEnd = -1;
+                        
+                        
+
+                        
+                char *start = &( lines[next][11] );
+
+                char *end = strstr( start, " " );
+                        
+                if( end != NULL ) {
+                    // terminate at end of first token
+                    // this should be a SoundUsage string
+                    end[0] = '\0';
+                            
+                    r->soundAnim[j].sound = scanSoundUsage( start );
+                            
+
+                    // restore and scan remaining parameters
+                    end[0] = ' ';
+                            
+                            
+                    int footstepValue = 0;
+                    sscanf( &( end[1] ), 
+                            "%lf %lf %lf %lf %d",
+                            &( r->soundAnim[j].repeatPerSec ),
+                            &( r->soundAnim[j].repeatPhase ),
+                            &( r->soundAnim[j].ageStart ),
+                            &( r->soundAnim[j].ageEnd ),
+                            &footstepValue );
+                            
+                    r->soundAnim[j].footstep = footstepValue;
+                    }
+                        
+                next++;
+                }
+            }
+
+
+        r->numSprites = 0;
+        sscanf( lines[next], "numSprites=%d", 
+                &( r->numSprites ) );
+        next++;
+
+        r->numSlots = 0;
+        sscanf( lines[next], "numSlots=%d", 
+                &( r->numSlots ) );
+        next++;
+                            
+        r->spriteAnim = 
+            new SpriteAnimationRecord[ r->numSprites ];
+                            
+        r->slotAnim = 
+            new SpriteAnimationRecord[ r->numSlots ];
+                            
+        for( int j=0; j< r->numSprites && next < numLines;
+             j++ ) {
+                    
+                    
+            r->spriteAnim[j].fadeOscPerSec = 0;
+            r->spriteAnim[j].fadeHardness = 0;
+                    
+            r->spriteAnim[j].fadeMin = 0;
+            r->spriteAnim[j].fadeMax = 1;
+
+            r->spriteAnim[j].fadePhase = 0;
+
+            r->spriteAnim[j].offset.x = 0;
+            r->spriteAnim[j].offset.y = 0;
+
+            r->spriteAnim[j].startPauseSec = 0;
+
+
+            if( strstr( lines[next], "offset" ) != NULL ) {
+                sscanf( lines[next], 
+                        "offset=(%lf,%lf)",
+                        &( r->spriteAnim[j].offset.x ),
+                        &( r->spriteAnim[j].offset.y ) );
+                next++;
+                if( next >= numLines ) {
+                    break;
+                    }
+                }
+                    
+            if( strstr( lines[next], "startPause" ) != NULL ) {
+                sscanf( lines[next], 
+                        "startPause=%lf",
+                        &( r->spriteAnim[j].startPauseSec ) );
+                next++;
+                if( next >= numLines ) {
+                    break;
+                    }
+                }
+                    
+
+            sscanf( lines[next], 
+                    "animParam="
+                    "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
+                    "%lf %lf %lf %lf %lf "
+                    "%lf %lf %lf %lf %lf",
+                    &( r->spriteAnim[j].xOscPerSec ),
+                    &( r->spriteAnim[j].xAmp ),
+                    &( r->spriteAnim[j].xPhase ),
+                                        
+                    &( r->spriteAnim[j].yOscPerSec ),
+                    &( r->spriteAnim[j].yAmp ),
+                    &( r->spriteAnim[j].yPhase ),
+                                        
+                    &( r->spriteAnim[j].rotationCenterOffset.x ),
+                    &( r->spriteAnim[j].rotationCenterOffset.y ),
+
+                    &( r->spriteAnim[j].rotPerSec ),
+                    &( r->spriteAnim[j].rotPhase ),
+                                        
+                    &( r->spriteAnim[j].rockOscPerSec ),
+                    &( r->spriteAnim[j].rockAmp ),
+                    &( r->spriteAnim[j].rockPhase ),
+
+                    &( r->spriteAnim[j].durationSec ),
+                    &( r->spriteAnim[j].pauseSec ),
+                            
+                    &( r->spriteAnim[j].fadeOscPerSec ),
+                    &( r->spriteAnim[j].fadeHardness ),
+                    &( r->spriteAnim[j].fadeMin ),
+                    &( r->spriteAnim[j].fadeMax ),
+                    &( r->spriteAnim[j].fadePhase ) );
+
+            next++;
+            }
+
+        for( int j=0; j< r->numSlots && next < numLines;
+             j++ ) {
+                    
+            r->slotAnim[j].offset.x = 0;
+            r->slotAnim[j].offset.y = 0;
+                    
+            r->slotAnim[j].startPauseSec = 0;
+                    
+
+            if( strstr( lines[next], "offset" ) != NULL ) {
+                sscanf( lines[next], 
+                        "offset=(%lf,%lf)",
+                        &( r->slotAnim[j].offset.x ),
+                        &( r->slotAnim[j].offset.y ) );
+                next++;
+                    
+                if( next >= numLines ) {
+                    break;
+                    }
+                }
+                    
+            if( strstr( lines[next], "startPause" ) != NULL ) {
+                sscanf( lines[next], 
+                        "startPause=%lf",
+                        &( r->slotAnim[j].startPauseSec ) );
+                next++;
+                if( next >= numLines ) {
+                    break;
+                    }
+                }
+
+                    
+            sscanf( lines[next], 
+                    "animParam="
+                    "%lf %lf %lf %lf %lf %lf %lf %lf",
+                    &( r->slotAnim[j].xOscPerSec ),
+                    &( r->slotAnim[j].xAmp ),
+                    &( r->slotAnim[j].xPhase ),
+                                        
+                    &( r->slotAnim[j].yOscPerSec ),
+                    &( r->slotAnim[j].yAmp ),
+                    &( r->slotAnim[j].yPhase ) ,
+
+                    &( r->slotAnim[j].durationSec ),
+                    &( r->slotAnim[j].pauseSec ) );
+            next++;
+            }
+        }
+
+    for( int j=0; j<numLines; j++ ) {
+        delete [] lines[j];
+                }
+    delete [] lines;
+    
+    return r;
+    }
+
+
+
 float initAnimationBankStep() {
         
     if( currentFile == cache.numFiles ) {
@@ -192,262 +453,11 @@ float initAnimationBankStep() {
 
         char *animText = getFileContents( cache, i );
         if( animText != NULL ) {
-            AnimationRecord *r = new AnimationRecord;
-                        
-            int numLines;
-                        
-            char **lines = split( animText, "\n", &numLines );
-                        
+            AnimationRecord *r = scanAnimationRecordFromString( animText );
+            
             delete [] animText;
-
-            if( numLines > 4 ) {
-                int next = 0;
-                            
-                r->objectID = 0;
-                sscanf( lines[next], "id=%d", 
-                        &( r->objectID ) );
-                            
-                if( r->objectID > maxID ) {
-                    maxID = r->objectID;
-                    }
-                            
-                next++;
-
-                            
-                int typeRead = 0;
-                int extraIndexRead = -1;
-                int randomStartPhaseRead = 0;
-                
-                if( strchr( lines[next], ':' ) != NULL ) {
-
-                    sscanf( lines[next], "type=%d:%d,randStartPhase=%d", 
-                            &( typeRead ), &extraIndexRead, 
-                            &randomStartPhaseRead );
-                    }
-                else {
-                    sscanf( lines[next], "type=%d,randStartPhase=%d", 
-                            &( typeRead ), &randomStartPhaseRead );
-                    }
-                
-                r->type = (AnimType)typeRead;
-                r->extraIndex = extraIndexRead;
-                r->randomStartPhase = randomStartPhaseRead;
-                next++;
-
-                
-                // optional force zero start
-                r->forceZeroStart = false;
-                if( strstr( lines[next], "forceZeroStart=" ) != NULL ) {
-                    int forceZeroStartRead = 0;
-                    sscanf( lines[next], "forceZeroStart=%d", 
-                            &forceZeroStartRead );
-                    r->forceZeroStart = forceZeroStartRead;
-                    next++;
-                    }
-                
-                
-                // optional sounds
-                r->numSounds = 0;
-                if( strstr( lines[next], "numSounds=" ) != NULL ) {
-                    r->numSounds = 0;
-                    sscanf( lines[next], "numSounds=%d", 
-                            &( r->numSounds ) );
-                    next++;
-                    }
-                r->soundAnim = new SoundAnimationRecord[ r->numSounds ];
-
-                if( r->numSounds > 0 ) {
-                    
-                    for( int j=0; j< r->numSounds && next < numLines; j++ ) {
-                                        
-                        r->soundAnim[j].sound = blankSoundUsage;
-                        r->soundAnim[j].repeatPerSec = 0;
-                        r->soundAnim[j].repeatPhase = 0;
-                        r->soundAnim[j].ageStart = -1;
-                        r->soundAnim[j].ageEnd = -1;
-                        
-                        
-
-                        
-                        char *start = &( lines[next][11] );
-
-                        char *end = strstr( start, " " );
-                        
-                        if( end != NULL ) {
-                            // terminate at end of first token
-                            // this should be a SoundUsage string
-                            end[0] = '\0';
-                            
-                            r->soundAnim[j].sound = scanSoundUsage( start );
-                            
-
-                            // restore and scan remaining parameters
-                            end[0] = ' ';
-                            
-                            
-                            int footstepValue = 0;
-                            sscanf( &( end[1] ), 
-                                    "%lf %lf %lf %lf %d",
-                                    &( r->soundAnim[j].repeatPerSec ),
-                                    &( r->soundAnim[j].repeatPhase ),
-                                    &( r->soundAnim[j].ageStart ),
-                                    &( r->soundAnim[j].ageEnd ),
-                                    &footstepValue );
-                            
-                            r->soundAnim[j].footstep = footstepValue;
-                            }
-                        
-                        next++;
-                        }
-                    }
-
-
-                r->numSprites = 0;
-                sscanf( lines[next], "numSprites=%d", 
-                        &( r->numSprites ) );
-                next++;
-
-                r->numSlots = 0;
-                sscanf( lines[next], "numSlots=%d", 
-                        &( r->numSlots ) );
-                next++;
-                            
-                r->spriteAnim = 
-                    new SpriteAnimationRecord[ r->numSprites ];
-                            
-                r->slotAnim = 
-                    new SpriteAnimationRecord[ r->numSlots ];
-                            
-                for( int j=0; j< r->numSprites && next < numLines;
-                     j++ ) {
-                    
-                    
-                    r->spriteAnim[j].fadeOscPerSec = 0;
-                    r->spriteAnim[j].fadeHardness = 0;
-                    
-                    r->spriteAnim[j].fadeMin = 0;
-                    r->spriteAnim[j].fadeMax = 1;
-
-                    r->spriteAnim[j].fadePhase = 0;
-
-                    r->spriteAnim[j].offset.x = 0;
-                    r->spriteAnim[j].offset.y = 0;
-
-                    r->spriteAnim[j].startPauseSec = 0;
-
-
-                    if( strstr( lines[next], "offset" ) != NULL ) {
-                        sscanf( lines[next], 
-                                "offset=(%lf,%lf)",
-                                &( r->spriteAnim[j].offset.x ),
-                                &( r->spriteAnim[j].offset.y ) );
-                        next++;
-                        if( next >= numLines ) {
-                            break;
-                            }
-                        }
-                    
-                    if( strstr( lines[next], "startPause" ) != NULL ) {
-                        sscanf( lines[next], 
-                                "startPause=%lf",
-                                &( r->spriteAnim[j].startPauseSec ) );
-                        next++;
-                        if( next >= numLines ) {
-                            break;
-                            }
-                        }
-                    
-
-                    sscanf( lines[next], 
-                            "animParam="
-                            "%lf %lf %lf %lf %lf %lf (%lf,%lf) %lf %lf "
-                            "%lf %lf %lf %lf %lf "
-                            "%lf %lf %lf %lf %lf",
-                            &( r->spriteAnim[j].xOscPerSec ),
-                            &( r->spriteAnim[j].xAmp ),
-                            &( r->spriteAnim[j].xPhase ),
-                                        
-                            &( r->spriteAnim[j].yOscPerSec ),
-                            &( r->spriteAnim[j].yAmp ),
-                            &( r->spriteAnim[j].yPhase ),
-                                        
-                            &( r->spriteAnim[j].rotationCenterOffset.x ),
-                            &( r->spriteAnim[j].rotationCenterOffset.y ),
-
-                            &( r->spriteAnim[j].rotPerSec ),
-                            &( r->spriteAnim[j].rotPhase ),
-                                        
-                            &( r->spriteAnim[j].rockOscPerSec ),
-                            &( r->spriteAnim[j].rockAmp ),
-                            &( r->spriteAnim[j].rockPhase ),
-
-                            &( r->spriteAnim[j].durationSec ),
-                            &( r->spriteAnim[j].pauseSec ),
-                            
-                            &( r->spriteAnim[j].fadeOscPerSec ),
-                            &( r->spriteAnim[j].fadeHardness ),
-                            &( r->spriteAnim[j].fadeMin ),
-                            &( r->spriteAnim[j].fadeMax ),
-                            &( r->spriteAnim[j].fadePhase ) );
-
-                    next++;
-                    }
-
-                for( int j=0; j< r->numSlots && next < numLines;
-                     j++ ) {
-                    
-                    r->slotAnim[j].offset.x = 0;
-                    r->slotAnim[j].offset.y = 0;
-                    
-                    r->slotAnim[j].startPauseSec = 0;
-                    
-
-                    if( strstr( lines[next], "offset" ) != NULL ) {
-                        sscanf( lines[next], 
-                                "offset=(%lf,%lf)",
-                                &( r->slotAnim[j].offset.x ),
-                                &( r->slotAnim[j].offset.y ) );
-                        next++;
-                    
-                        if( next >= numLines ) {
-                            break;
-                            }
-                        }
-                    
-                    if( strstr( lines[next], "startPause" ) != NULL ) {
-                        sscanf( lines[next], 
-                                "startPause=%lf",
-                                &( r->slotAnim[j].startPauseSec ) );
-                        next++;
-                        if( next >= numLines ) {
-                            break;
-                            }
-                        }
-
-                    
-                    sscanf( lines[next], 
-                            "animParam="
-                            "%lf %lf %lf %lf %lf %lf %lf %lf",
-                            &( r->slotAnim[j].xOscPerSec ),
-                            &( r->slotAnim[j].xAmp ),
-                            &( r->slotAnim[j].xPhase ),
-                                        
-                            &( r->slotAnim[j].yOscPerSec ),
-                            &( r->slotAnim[j].yAmp ),
-                            &( r->slotAnim[j].yPhase ) ,
-
-                            &( r->slotAnim[j].durationSec ),
-                            &( r->slotAnim[j].pauseSec ) );
-                    next++;
-                    }
-                            
-
-                records.push_back( r );
-                }
-            for( int j=0; j<numLines; j++ ) {
-                delete [] lines[j];
-                }
-            delete [] lines;
+            
+            records.push_back( r );
             }
         }
     delete [] txtFileName;
