@@ -645,6 +645,17 @@ int getNumExtraAnim( int inID ) {
 
 
 
+AnimationRecord **getAllExtraAnimations( int inID ) {
+    if( inID < mapSize ) {
+        return idExtraMap[inID].getElementArray();
+        }
+
+    return NULL;
+    }
+
+
+
+
 
 AnimationRecord *getAnimation( int inID, AnimType inType ) {
     if( inID == -1 ) {

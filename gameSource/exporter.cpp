@@ -324,15 +324,19 @@ char finalizeExportBundle( const char *inExportName ) {
         
         int numExtra = getNumExtraAnim( objectID );
         
-        for( int e=0; e<numExtra; e++ ) {
-            setExtraIndex( e );
+        if( numExtra > 0 ) {
+            AnimationRecord **extras = getAllExtraAnimations( objectID );    
+
+            for( int e=0; e<numExtra; e++ ) {
+                AnimationRecord *r = extras[e];
             
-            AnimationRecord *r = getAnimation( objectID, extra );
-            
-            if( r != NULL ) {
-                thisObjectAnimations.push_back( r );
+                if( r != NULL ) {
+                    thisObjectAnimations.push_back( r );
+                    }
                 }
+            delete [] extras;
             }
+        
     
         for( int a=0; a < thisObjectAnimations.size(); a++ ) {
             AnimationRecord *r = thisObjectAnimations.getElementDirect( a );

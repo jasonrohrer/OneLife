@@ -43,6 +43,18 @@ Editor Fixes:
 --Fixed a bunch of bad memory accesses in EditorAnimationPage when current
   animation has fewer sounds than mCurrentSound.
 
+--Fixed potentially incorrect assumption with extra animation slot indexing
+  (where we were assuming that the list of extra animations for an object is
+   in-order and doesn't skip any extra slots.  This might actually be enforced
+   by the editor, but it's not enforced by the animation bank (you can insert
+   extra animations with any extra slot ids and in any order, not just
+   sequentially increasing from zero).  In various spots in the code, we were
+   walking through every extra animation for an object, assuming we could index
+   them using extra slot ids 0...n where we determined that there were n+1
+   extra animations defined for the object.
+
+
+
 
 
 Server Fixes:

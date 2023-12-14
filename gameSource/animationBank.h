@@ -210,6 +210,11 @@ void setExtraIndexB( int inIndex );
 
 int getNumExtraAnim( int inID );
 
+// returned array destroyed by caller
+// animation records NOT destroyed by caller
+// can return NULL
+AnimationRecord **getAllExtraAnimations( int inID );
+
 
 // return value not destroyed by caller
 // should not be modifed by caller
