@@ -637,6 +637,18 @@ float initModLoaderStep() {
                         freeObjectRecord( modRecord );
                         
                         scannedModObjectActuallyInserted.push_back( id );
+                        
+                        // also track useDummy and variableOummies
+                        ObjectRecord *o = getObject( id );
+                        
+                        for( int i=0; i< o->numUses - 1; i++ ) {
+                            scannedModObjectActuallyInserted.push_back(
+                                o->useDummyIDs[ i ] );
+                            }
+                        for( int i=0; i< o->numVariableDummyIDs; i++ ) {
+                            scannedModObjectActuallyInserted.push_back(
+                                o->variableDummyIDs[ i ] );
+                            }
                         }
                     else {
                         printf( "Parsing object from mod failed\n" );
@@ -728,6 +740,38 @@ float initModLoaderStep() {
                                 scannedModAnimationsActuallyInserted.push_back(
                                     insertedRecord );
                                 }
+                            
+                            
+                            // also re-insert animations for all use/var dummies
+                            ObjectRecord *o = getObject( id );
+                        
+                            for( int i=0; i< o->numUses - 1; i++ ) {
+                                modRecord->objectID = o->useDummyIDs[ i ];
+                                
+                                addAnimation( modRecord, true );
+                                insertedRecord =
+                                    getAnimation( modRecord->objectID, 
+                                                  modRecord->type );
+
+                                if( insertedRecord != NULL ) {
+                                    scannedModAnimationsActuallyInserted.
+                                        push_back( insertedRecord );
+                                    }
+                                }
+                            for( int i=0; i< o->numVariableDummyIDs; i++ ) {
+                                modRecord->objectID = o->variableDummyIDs[ i ];
+                                
+                                addAnimation( modRecord, true );
+                                insertedRecord =
+                                    getAnimation( modRecord->objectID, 
+                                                  modRecord->type );
+
+                                if( insertedRecord != NULL ) {
+                                    scannedModAnimationsActuallyInserted.
+                                        push_back( insertedRecord );
+                                    }
+                                }
+
                             
                             freeRecord( modRecord );
                             }
