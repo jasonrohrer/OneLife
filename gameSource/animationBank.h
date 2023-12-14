@@ -224,7 +224,9 @@ AnimationRecord *getAnimation( int inID, AnimType inType );
 void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile = false );
 
 
-void clearAnimation( int inObjectID, AnimType inType );
+// if inNoWriteToFile is true, doesn't delete animation from disk
+void clearAnimation( int inObjectID, AnimType inType, 
+                     char inNoWriteToFile = false );
 
 
 // do we need a smooth fade when transitionion from current animation

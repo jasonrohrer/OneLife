@@ -705,7 +705,7 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
     
 
     clearAnimation( inRecord->objectID,
-                    inRecord->type );
+                    inRecord->type, inNoWriteToFile );
     
     int newID = inRecord->objectID;
     
@@ -929,23 +929,34 @@ void addAnimation( AnimationRecord *inRecord, char inNoWriteToFile ) {
         
             delete animationFile;
             }
+
+
+
+        // check if sounds still used (prevent orphan sounds)
+        // don't do this if we're NOT writing to file
+        // since mods replace sounds temporarily, they can orphan base sounds
+        // and we don't want to delete those from our sounds folder
+        for( int i=0; i<oldSoundIDs.size(); i++ ) {
+            checkIfSoundStillNeeded( oldSoundIDs.getElementDirect( i ) );
+            }
         }
     
-    
-    // check if sounds still used (prevent orphan sounds)
-    for( int i=0; i<oldSoundIDs.size(); i++ ) {
-        checkIfSoundStillNeeded( oldSoundIDs.getElementDirect( i ) );
-        }
     }
 
 
 
 
-void clearAnimation( int inObjectID, AnimType inType ) {
+void clearAnimation( int inObjectID, AnimType inType, char inNoWriteToFile ) {
     AnimationRecord *r = getAnimation( inObjectID, inType );
-    
+
     if( r != NULL ) {
-        
+        SimpleVector<int> oldSoundIDs;
+
+        for( int i=0; i<r->numSounds; i++ ) {
+            for( int j=0; j< r->soundAnim[i].sound.numSubSounds; j++ ) {
+                oldSoundIDs.push_back( r->soundAnim[i].sound.ids[j] );
+                }
+            }
 
         if( inType < endAnimType ) {    
             idMap[inObjectID][inType] = NULL;
@@ -971,20 +982,32 @@ void clearAnimation( int inObjectID, AnimType inType ) {
         
         delete r;
         
-        File animationsDir( NULL, "animations" );
+        
+        if( ! inNoWriteToFile ) {            
+
+            File animationsDir( NULL, "animations" );
             
+            
+            File *cacheFile = animationsDir.getChildFile( "cache.fcz" );
+            
+            cacheFile->remove();
+            
+            delete cacheFile;
+            
+            
+            File *animationFile = getFile( inObjectID, inType );
+            animationFile->remove();
+            
+            delete animationFile;
 
-        File *cacheFile = animationsDir.getChildFile( "cache.fcz" );
-        
-        cacheFile->remove();
-        
-        delete cacheFile;
-        
-
-        File *animationFile = getFile( inObjectID, inType );
-        animationFile->remove();
-        
-        delete animationFile;
+            // check if sounds still used (prevent orphan sounds)
+            // don't do this if we're NOT writing to file
+            // since mods replace sounds temporarily, they can orphan base 
+            // sounds and we don't want to delete those from our sounds folder
+            for( int i=0; i<oldSoundIDs.size(); i++ ) {
+                checkIfSoundStillNeeded( oldSoundIDs.getElementDirect( i ) );
+                }
+            }
         }
     }
 
