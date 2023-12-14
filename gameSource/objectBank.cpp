@@ -7295,6 +7295,16 @@ void copyObjectAppearance( int inTargetID, ObjectRecord *inSourceObject ) {
     if( t == NULL ) {
         return;
         }
+
+    t->vertContainRotationOffset = s->vertContainRotationOffset;
+
+    t->noFlip = s->noFlip;
+    
+    if( ! t->rideable ) {
+        // don't override handheld positioning if base object rideable
+        t->heldInHand = s->heldInHand;
+        }
+    
     
     int numSprites = s->numSprites; 
 
