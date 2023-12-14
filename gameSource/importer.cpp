@@ -16,22 +16,19 @@
 static SimpleVector<File*> modFileList;
 
 static int currentModFileIndex;
-static float currentModFileProgress;
-
-static float perModFileProgressFraction;
 
 
 static char currentModScanned;
 
 
 // for current mod that we're working on loading
-static SimpleVector<char *> scannedBlockHeaders;
+static SimpleVector<char *> scannedModBlockHeaders;
         
-static SimpleVector<int> scannedDataBlockLengths;
+static SimpleVector<int> scannedModDataBlockLengths;
         
-static SimpleVector<unsigned char*> scannedDataBlocks;
+static SimpleVector<unsigned char*> scannedModDataBlocks;
 
-static int currentScannedBlock;
+static int currentScannedModBlock;
 
 
 typedef struct IDMapEntry {
@@ -86,9 +83,9 @@ static void remapSounds( SoundUsage *inUsage ) {
 
 
 
-static int totalNumBlocksToScan;
+static int totalNumModBlocksToScan;
 
-static int totalNumBlocksScannedSoFar;
+static int totalNumModBlocksScannedSoFar;
 
 
 
@@ -111,13 +108,6 @@ int initModLoaderStart() {
         }
     
     currentModFileIndex = 0;
-    currentModFileProgress = 0;
-
-    perModFileProgressFraction = 1.0;
-    
-    if( modFileList.size() > 0 ) {
-        perModFileProgressFraction /= modFileList.size();
-        }
     
     currentModScanned = false;
 
@@ -125,7 +115,7 @@ int initModLoaderStart() {
     // peek at header of each file here
     // to get total number of blocks to load
 
-    totalNumBlocksToScan = 0;
+    totalNumModBlocksToScan = 0;
 
     for( int i=0; i<modFileList.size(); i++ ) {
         File *file = modFileList.getElementDirect( i );
@@ -158,21 +148,22 @@ int initModLoaderStart() {
         
         delete [] name;
 
-        totalNumBlocksToScan += blocks;
+        totalNumModBlocksToScan += blocks;
         }
     
-    totalNumBlocksScannedSoFar = 0;
+    totalNumModBlocksScannedSoFar = 0;
     
     printf( "Mod loader sees %d total blocks to scan from mod folder\n",
-            totalNumBlocksToScan );
+            totalNumModBlocksToScan );
 
-    return totalNumBlocksToScan;
+    return totalNumModBlocksToScan;
     }
 
 
 
 static float getModLoadProgress() {
-    return (float)totalNumBlocksScannedSoFar / (float)totalNumBlocksToScan;
+    return (float)totalNumModBlocksScannedSoFar / 
+        (float)totalNumModBlocksToScan;
     }
 
     
@@ -187,7 +178,7 @@ float initModLoaderStep() {
     if( ! currentModScanned ) {
         // scan it
 
-        currentScannedBlock = 0;
+        currentScannedModBlock = 0;
         
         File *currentFile = modFileList.getElementDirect( currentModFileIndex );
         
@@ -411,9 +402,9 @@ float initModLoaderStep() {
             memcpy( blockData, & data[ dataPos ], blockDataLength );
             
 
-            scannedBlockHeaders.push_back( header );
-            scannedDataBlockLengths.push_back( blockDataLength );
-            scannedDataBlocks.push_back( blockData );
+            scannedModBlockHeaders.push_back( header );
+            scannedModDataBlockLengths.push_back( blockDataLength );
+            scannedModDataBlocks.push_back( blockData );
 
             // skip the data, now that we've scanned it.
             dataPos += blockDataLength;
@@ -424,7 +415,7 @@ float initModLoaderStep() {
         delete [] data;
         
         printf( "Scanned %d blocks from mod file\n", 
-                scannedBlockHeaders.size() );
+                scannedModBlockHeaders.size() );
         
         
         // compute hashes of object IDs
@@ -455,11 +446,11 @@ float initModLoaderStep() {
 
             currentModFileIndex ++;
 
-            int lastElement = scannedBlockHeaders.size() - 1;
+            int lastElement = scannedModBlockHeaders.size() - 1;
             
-            scannedBlockHeaders.deallocateStringElement( lastElement );
-            scannedDataBlockLengths.deleteElement( lastElement );
-            delete [] scannedDataBlocks.getElementDirect( lastElement );
+            scannedModBlockHeaders.deallocateStringElement( lastElement );
+            scannedModDataBlockLengths.deleteElement( lastElement );
+            delete [] scannedModDataBlocks.getElementDirect( lastElement );
             
             return getModLoadProgress();
             }
@@ -478,13 +469,14 @@ float initModLoaderStep() {
         // FIXME
         
         char *currentHeader = 
-            scannedBlockHeaders.getElementDirect( currentScannedBlock );
+            scannedModBlockHeaders.getElementDirect( currentScannedModBlock );
         
         int currentDataLength = 
-            scannedDataBlockLengths.getElementDirect( currentScannedBlock );
+            scannedModDataBlockLengths.getElementDirect( 
+                currentScannedModBlock );
         
         unsigned char *currentDataBlock =
-            scannedDataBlocks.getElementDirect( currentScannedBlock );
+            scannedModDataBlocks.getElementDirect( currentScannedModBlock );
         
         if( strstr( currentHeader, "sprite " ) == currentHeader ) {
             
@@ -717,24 +709,22 @@ float initModLoaderStep() {
                 }
             }
 
-        currentScannedBlock++;
-        totalNumBlocksScannedSoFar ++;
+        currentScannedModBlock++;
+        totalNumModBlocksScannedSoFar ++;
         
-        if( currentScannedBlock >= scannedBlockHeaders.size() ) {
+        if( currentScannedModBlock >= scannedModBlockHeaders.size() ) {
             // done processing scanned blocks from current mod
             
-            currentModFileProgress = 1.0;
-
             // free scanned data
 
-            scannedBlockHeaders.deallocateStringElements();
+            scannedModBlockHeaders.deallocateStringElements();
             
-            scannedDataBlockLengths.deleteAll();
+            scannedModDataBlockLengths.deleteAll();
             
-            for( int i=0; i<scannedDataBlocks.size(); i++ ) {
-                delete [] scannedDataBlocks.getElementDirect( i );
+            for( int i=0; i<scannedModDataBlocks.size(); i++ ) {
+                delete [] scannedModDataBlocks.getElementDirect( i );
                 }
-            scannedDataBlocks.deleteAll();
+            scannedModDataBlocks.deleteAll();
             
             // prepare for scanning next mod, if there is one
             currentModFileIndex++;
@@ -776,13 +766,13 @@ void freeImporter() {
     modFileList.deleteAll();
 
     
-    scannedBlockHeaders.deallocateStringElements();
+    scannedModBlockHeaders.deallocateStringElements();
             
-    scannedDataBlockLengths.deleteAll();
+    scannedModDataBlockLengths.deleteAll();
     
-    for( int i=0; i<scannedDataBlocks.size(); i++ ) {
-        delete [] scannedDataBlocks.getElementDirect( i );
+    for( int i=0; i<scannedModDataBlocks.size(); i++ ) {
+        delete [] scannedModDataBlocks.getElementDirect( i );
         }
-    scannedDataBlocks.deleteAll();        
+    scannedModDataBlocks.deleteAll();        
     }
 
