@@ -486,7 +486,7 @@ float initModLoaderStep() {
         unsigned char *currentDataBlock =
             scannedDataBlocks.getElementDirect( currentScannedBlock );
         
-        if( strstr( currentHeader, "sprite" ) == currentHeader ) {
+        if( strstr( currentHeader, "sprite " ) == currentHeader ) {
             
             char blockType[100];
             int id = -1;
@@ -534,7 +534,7 @@ float initModLoaderStep() {
                     }
                 }
             }
-        else if( strstr( currentHeader, "sound" ) == currentHeader ) {
+        else if( strstr( currentHeader, "sound " ) == currentHeader ) {
                         
             char blockType[100];
             int id = -1;
@@ -577,7 +577,7 @@ float initModLoaderStep() {
                     }
                 }
             }
-        else if( strstr( currentHeader, "object" ) == currentHeader ) {
+        else if( strstr( currentHeader, "object " ) == currentHeader ) {
             char blockType[100];
             int id = -1;
             
@@ -632,7 +632,89 @@ float initModLoaderStep() {
                     }
                 }
             }
-        else if( strstr( currentHeader, "animation" ) == currentHeader ) {
+        else if( strstr( currentHeader, "anim " ) == currentHeader ) {
+            char blockType[100];
+            int id = -1;
+            char animSlot[100];
+            
+            sscanf( currentHeader, "%99s %d %99s", blockType, &id, animSlot );
+            
+            if( id > -1 ) {
+                // header at least contained an ID
+                
+                int slotNumber = -1;
+                
+                char isExtra = false;
+                int extraSlotNumber = -1;
+                if( strstr( animSlot, "7x" ) == animSlot ) {
+                    
+                    sscanf( &( animSlot[2] ), "%d", &extraSlotNumber );
+                
+                    if( extraSlotNumber != -1 ) {
+                        isExtra = true;
+                        slotNumber = 7;
+                        }
+                    }
+
+                if( ! isExtra ) {
+                    sscanf( animSlot, "%d", &slotNumber );
+                    }
+                
+                if( ( slotNumber >= 0 && slotNumber <= 2 )
+                    ||
+                    ( slotNumber >= 4 && slotNumber <= 5 )
+                    ||
+                    ( slotNumber == 7 && isExtra ) ) {
+                    
+                    // correct slot number present
+                    
+                    ObjectRecord *existingRecord = getObject( id, true );
+                
+                    if( existingRecord != NULL ) {
+                        // an object exists mathing this id
+                        
+                        // replace its animation
+                        
+                        // copy data block into a string for parsing
+                        char *animationString = 
+                            new char[ currentDataLength + 1 ];
+                        memcpy( animationString, 
+                                currentDataBlock, currentDataLength );
+                        animationString[ currentDataLength ] = '\0';
+                    
+
+                        AnimationRecord *modRecord =
+                            scanAnimationRecordFromString( animationString );
+                        
+                        delete [] animationString;
+                        
+                        if( modRecord != NULL ) {
+                            
+                            // FIXME
+
+                            // remap sounds
+                            
+                            for( int i=0; i< modRecord->numSounds; i++ ) {
+
+                                remapSounds( 
+                                    &( modRecord->soundAnim[i].sound ) );
+                                }
+                            
+                            // set extra slot if needed
+                            if( isExtra ) {
+                                setExtraIndex( extraSlotNumber );
+                                }
+
+                            // add to bank (will replace existing anim, if any)
+                            // don't write to file
+                            addAnimation( modRecord, true );
+                            
+
+                            freeRecord( modRecord );
+                            }
+                        }
+                    }
+                }
             }
 
         currentScannedBlock++;

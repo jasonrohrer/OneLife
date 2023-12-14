@@ -139,16 +139,16 @@ Animations block:
 The objects are followed by concatonated animations.  Each animation
 has a header in the following format:
 
-animation object_id slot_number textFileSize#
+anim object_id slot_number textFileSize#
 
 slot_number is one of 0, 1, 2, 4, or 5 (never 3)
 OR 7x0, 7x1, etc for extra animations.
 
 Examples:
 
-animation 19 5 20243#
+anim 19 5 20243#
 
-animation 19 7x2 19695#
+anim 19 7x2 19695#
 
 
 The # sign is followed by raw TXT file data for the animation.
