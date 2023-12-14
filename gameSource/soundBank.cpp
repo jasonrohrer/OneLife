@@ -1372,18 +1372,21 @@ void deleteSoundFromBank( int inID ) {
 
         
         File reverbFolder( NULL, "reverbCache" );
-        
-        char *cacheFileName = autoSprintf( "%d.aiff", inID );
-    
-        File *cacheFile = reverbFolder.getChildFile( cacheFileName );
-    
-        delete [] cacheFileName;
-        
-        if( cacheFile->exists() ) {
-            cacheFile->remove();
-            }
 
-        delete cacheFile;
+        if( reverbFolder.exists() && reverbFolder.isDirectory() ) {
+            
+            char *cacheFileName = autoSprintf( "%d.aiff", inID );
+            
+            File *cacheFile = reverbFolder.getChildFile( cacheFileName );
+            
+            delete [] cacheFileName;
+            
+            if( cacheFile->exists() ) {
+                cacheFile->remove();
+                }
+            
+            delete cacheFile;
+            }
         }
     
     
