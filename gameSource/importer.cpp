@@ -30,6 +30,14 @@ static SimpleVector<unsigned char*> scannedModDataBlocks;
 
 static int currentScannedModBlock;
 
+// these are the object that were actually inserted into our objectBank
+SimpleVector<int> scannedModObjectActuallyInserted;
+
+// these are maintained by animationBank
+SimpleVector<AnimationRecord *> scannedModAnimationsActuallyInserted;
+
+
+
 
 typedef struct IDMapEntry {
         int loadedID;
@@ -79,6 +87,22 @@ static void remapSounds( SoundUsage *inUsage ) {
     for( int i=0; i< inUsage->numSubSounds; i++ ) {
         inUsage->ids[i] = applyMap( &soundIDMap, inUsage->ids[i] );
         }
+    }
+
+
+
+static void freeScannedData() {    
+    scannedModBlockHeaders.deallocateStringElements();
+    
+    scannedModDataBlockLengths.deleteAll();
+    
+    for( int i=0; i<scannedModDataBlocks.size(); i++ ) {
+        delete [] scannedModDataBlocks.getElementDirect( i );
+        }
+    scannedModDataBlocks.deleteAll();
+    
+    scannedModObjectActuallyInserted.deleteAll();
+    scannedModAnimationsActuallyInserted.deleteAll();
     }
 
 
@@ -444,13 +468,11 @@ float initModLoaderStep() {
             delete [] correctHash;
             delete [] fileName;
 
-            currentModFileIndex ++;
-
-            int lastElement = scannedModBlockHeaders.size() - 1;
+            // dump this data
+            freeScannedData();
             
-            scannedModBlockHeaders.deallocateStringElement( lastElement );
-            scannedModDataBlockLengths.deleteElement( lastElement );
-            delete [] scannedModDataBlocks.getElementDirect( lastElement );
+            // move on to the next mod file
+            currentModFileIndex ++;
             
             return getModLoadProgress();
             }
@@ -613,6 +635,8 @@ float initModLoaderStep() {
                         copyObjectAppearance( id, modRecord );
                         
                         freeObjectRecord( modRecord );
+                        
+                        scannedModObjectActuallyInserted.push_back( id );
                         }
                     else {
                         printf( "Parsing object from mod failed\n" );
@@ -681,11 +705,7 @@ float initModLoaderStep() {
                         delete [] animationString;
                         
                         if( modRecord != NULL ) {
-                            
-                            // FIXME
-
-                            // remap sounds
-                            
+                            // remap sounds                            
                             for( int i=0; i< modRecord->numSounds; i++ ) {
 
                                 remapSounds( 
@@ -701,7 +721,14 @@ float initModLoaderStep() {
                             // don't write to file
                             addAnimation( modRecord, true );
                             
+                            AnimationRecord *insertedRecord =
+                                getAnimation( id, modRecord->type );
 
+                            if( insertedRecord != NULL ) {
+                                scannedModAnimationsActuallyInserted.push_back(
+                                    insertedRecord );
+                                }
+                            
                             freeRecord( modRecord );
                             }
                         }
@@ -715,21 +742,56 @@ float initModLoaderStep() {
         if( currentScannedModBlock >= scannedModBlockHeaders.size() ) {
             // done processing scanned blocks from current mod
             
-            // free scanned data
 
-            scannedModBlockHeaders.deallocateStringElements();
-            
-            scannedModDataBlockLengths.deleteAll();
-            
-            for( int i=0; i<scannedModDataBlocks.size(); i++ ) {
-                delete [] scannedModDataBlocks.getElementDirect( i );
+            // now clear any animations for mod objects
+            // where an animation was NOT loaded for that slot
+            for( int i=0; i< scannedModObjectActuallyInserted.size(); i++ ) {
+                
+                int id = scannedModObjectActuallyInserted.getElementDirect( i );
+                
+                for( int t=ground; t<endAnimType; t++ ) {
+                    
+                    AnimationRecord *a = getAnimation( id, (AnimType)t );
+                    
+                    if( a != NULL &&
+                        scannedModAnimationsActuallyInserted.getElementIndex(
+                            a  ) == -1 ) {
+                        // base animation exists, but we didn't add one
+                        // to replace it.  Mod has "no animation" for this slot
+                        // which means object is intentionally not animated
+                        // in mod
+                        clearAnimation( id, (AnimType)t, true );
+                        }
+                    }
+                // next check extras
+                int numBankExtras = getNumExtraAnim( id );
+                
+                if( numBankExtras > 0 ) {
+                    AnimationRecord **bankExtras = getAllExtraAnimations( id );
+                    
+                    for( int e=0; e<numBankExtras; e++ ) {
+                        AnimationRecord *a = bankExtras[e];
+                        
+                        if( a != NULL &&
+                            scannedModAnimationsActuallyInserted.
+                            getElementIndex( a ) == -1 ) {
+                            
+                            setExtraIndex( a->extraIndex );
+                            
+                            clearAnimation( id, extra, true );
+                            }
+                        }
+                    delete [] bankExtras;
+                    }
                 }
-            scannedModDataBlocks.deleteAll();
             
+
             // prepare for scanning next mod, if there is one
             currentModFileIndex++;
             
             currentModScanned = false;
+            
+            freeScannedData();
             }
         else {
             // done with another block from current mod
@@ -766,13 +828,6 @@ void freeImporter() {
     modFileList.deleteAll();
 
     
-    scannedModBlockHeaders.deallocateStringElements();
-            
-    scannedModDataBlockLengths.deleteAll();
-    
-    for( int i=0; i<scannedModDataBlocks.size(); i++ ) {
-        delete [] scannedModDataBlocks.getElementDirect( i );
-        }
-    scannedModDataBlocks.deleteAll();        
+    freeScannedData();
     }
 
