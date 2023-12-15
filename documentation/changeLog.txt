@@ -19,6 +19,8 @@ Version ???
   freeing the previous object.  Now, only the first object scanned is kept,
   and any additional ones are freed correctly.
 
+--Windows build scripts now include building editor.
+
 
 
 

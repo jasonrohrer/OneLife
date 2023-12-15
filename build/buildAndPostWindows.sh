@@ -46,6 +46,7 @@ fi
 
 
 make
+./makeEditor.sh
 
 cd ../build
 
