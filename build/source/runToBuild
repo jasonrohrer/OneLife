@@ -29,6 +29,11 @@ echo "Building OneLife..."
 make || exit 1
 
 
+echo "Building EditOneLife..."
+
+./makeEditor.sh || exit 1
+
+
 
 cd ../..
 
@@ -46,6 +51,7 @@ mkdir -p groundTileCache
 
 echo "Copying items from build into directories"
 cp OneLife/gameSource/OneLife ./OneLifeApp
+cp OneLife/gameSource/EditOneLife .
 cp OneLife/documentation/Readme.txt .
 cp OneLife/no_copyright.txt .
 cp OneLife/gameSource/graphics/* ./graphics
