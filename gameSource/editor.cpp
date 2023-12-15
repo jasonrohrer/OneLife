@@ -71,6 +71,8 @@ int accountHmacVersionNumber = 0;
 #include "overlayBank.h"
 #include "soundBank.h"
 
+#include "importer.h"
+
 #include "SoundWidget.h"
 
 #include "groundSprites.h"
@@ -1252,6 +1254,40 @@ void drawFrame( char inUpdate ) {
                         
                         loadingPhaseStartTime = Time::getCurrentTime();
 
+                        int numBlocks = initModLoaderStart();
+                        loadingPage->setCurrentPhase( "MODS" );
+                        loadingPage->setCurrentProgress( 0 );
+                        
+
+                        loadingStepBatchSize = numBlocks / 20;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 5: {
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initModLoaderStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
+                    
+                    if( progress == 1.0 ) {
+                        initModLoaderFinish();
+                        
+                        // mods load sounds which may need reverbs applied
+                        doneApplyingReverb();
+                        
+                        printf( "Finished loading mods in %f sec\n",
+                                Time::getCurrentTime() - 
+                                loadingPhaseStartTime );
+                        
+                        loadingPhaseStartTime = Time::getCurrentTime();
+
                         char rebuilding;
                         
                         int numCats = 
@@ -1277,7 +1313,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 5: {
+                case 6: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initCategoryBankStep();
@@ -1321,7 +1357,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 6: {
+                case 7: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initTransBankStep();
@@ -1344,7 +1380,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 7: {
+                case 8: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initGroundSpritesStep();

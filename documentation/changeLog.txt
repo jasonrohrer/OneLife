@@ -62,6 +62,13 @@ Editor Fixes:
 --Editor now supports exporting resource bundles into exports folder.  These
   can be loaded by game client as mods from the mods folder.
 
+--Editor supports loading mods from mods folder.  Note that just like with
+  game client, these are loaded into RAM only, and do not change any disk
+  content.  However, if you Save an object inside the Editor, the disk content
+  will get changed, which may save moded content over the baseline content.
+  This allows people to load mods created by others, add to them and work on
+  them, and then re-export an object bundle as a new mod.
+
 
 
 
