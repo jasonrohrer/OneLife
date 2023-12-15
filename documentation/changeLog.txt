@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version ???
+Version 403   2023-December-15
 
 --Fixed so that BELL and HELL arrow labels are in English.txt translation file
   instead of hard-coded.
@@ -19,7 +19,11 @@ Version ???
   freeing the previous object.  Now, only the first object scanned is kept,
   and any additional ones are freed correctly.
 
+--Game now supports loading mods from mods folder.
+
 --Windows build scripts now include building editor.
+
+--Public release of EditOneLife binary on Windows and Steam.
 
 
 
@@ -54,6 +58,9 @@ Editor Fixes:
    walking through every extra animation for an object, assuming we could index
    them using extra slot ids 0...n where we determined that there were n+1
    extra animations defined for the object.
+
+--Editor now supports exporting resource bundles into exports folder.  These
+  can be loaded by game client as mods from the mods folder.
 
 
 
