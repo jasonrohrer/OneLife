@@ -39,6 +39,8 @@ cp -r OneLifeApp graphics otherSounds languages language.txt no_copyright.txt Re
 
 cd ../$buildDir
 
+mkdir mods
+
 ../$sourceWorkingDir/OneLife/gameSource/regenerateCaches
 
 # don't ever include bin_cache in bundles, because they are large

@@ -30,6 +30,8 @@ mkdir $baseFolder/music
 mkdir $baseFolder/sounds
 mkdir $baseFolder/ground
 
+mkdir $baseFolder/mods
+
 
 
 cp ../gameSource/graphics/*.tga $baseFolder/graphics
