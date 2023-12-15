@@ -7483,7 +7483,7 @@ void copyObjectAppearance( int inTargetID, ObjectRecord *inSourceObject ) {
 
     // Clone appearance changes into all use dummies
 
-    if( t->numUses > 1 ) {
+    if( t->numUses > 1 && t->useDummyIDs != NULL ) {
         int numDummyObj = t->numUses - 1;
         
         
@@ -7517,7 +7517,13 @@ void copyObjectAppearance( int inTargetID, ObjectRecord *inSourceObject ) {
     
 
     // now variable dummies
-    for( int d=1; d <= t->numVariableDummyIDs; d++ ) {   
-        copyObjectAppearance( t->variableDummyIDs[ d - 1 ], t );
+    if( t->variableDummyIDs != NULL ) {
+        for( int d=1; d <= t->numVariableDummyIDs; d++ ) {   
+            copyObjectAppearance( t->variableDummyIDs[ d - 1 ], t );
+            }
         }
+    
+    // if either of these are NULL, we may be in the Editor where dummies
+    // aren't generated (game client generates them at runtime)
+
     }

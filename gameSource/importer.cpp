@@ -641,13 +641,17 @@ float initModLoaderStep() {
                         // also track useDummy and variableOummies
                         ObjectRecord *o = getObject( id );
                         
-                        for( int i=0; i< o->numUses - 1; i++ ) {
-                            scannedModObjectActuallyInserted.push_back(
-                                o->useDummyIDs[ i ] );
+                        if( o->useDummyIDs != NULL ) {
+                            for( int i=0; i< o->numUses - 1; i++ ) {
+                                scannedModObjectActuallyInserted.push_back(
+                                    o->useDummyIDs[ i ] );
+                                }
                             }
-                        for( int i=0; i< o->numVariableDummyIDs; i++ ) {
-                            scannedModObjectActuallyInserted.push_back(
-                                o->variableDummyIDs[ i ] );
+                        if( o->variableDummyIDs != NULL ) {
+                            for( int i=0; i< o->numVariableDummyIDs; i++ ) {
+                                scannedModObjectActuallyInserted.push_back(
+                                    o->variableDummyIDs[ i ] );
+                                }
                             }
                         }
                     else {
@@ -744,34 +748,44 @@ float initModLoaderStep() {
                             
                             // also re-insert animations for all use/var dummies
                             ObjectRecord *o = getObject( id );
-                        
-                            for( int i=0; i< o->numUses - 1; i++ ) {
-                                modRecord->objectID = o->useDummyIDs[ i ];
+                            
+                            if( o->useDummyIDs != NULL ) {
                                 
-                                addAnimation( modRecord, true );
-                                insertedRecord =
-                                    getAnimation( modRecord->objectID, 
-                                                  modRecord->type );
-
-                                if( insertedRecord != NULL ) {
-                                    scannedModAnimationsActuallyInserted.
-                                        push_back( insertedRecord );
+                                for( int i=0; i< o->numUses - 1; i++ ) {
+                                    modRecord->objectID = o->useDummyIDs[ i ];
+                                    
+                                    addAnimation( modRecord, true );
+                                    insertedRecord =
+                                        getAnimation( modRecord->objectID, 
+                                                      modRecord->type );
+                                    
+                                    if( insertedRecord != NULL ) {
+                                        scannedModAnimationsActuallyInserted.
+                                            push_back( insertedRecord );
+                                        }
                                     }
                                 }
-                            for( int i=0; i< o->numVariableDummyIDs; i++ ) {
-                                modRecord->objectID = o->variableDummyIDs[ i ];
+                            
+                            if( o->variableDummyIDs != NULL ) {
                                 
-                                addAnimation( modRecord, true );
-                                insertedRecord =
-                                    getAnimation( modRecord->objectID, 
-                                                  modRecord->type );
-
-                                if( insertedRecord != NULL ) {
-                                    scannedModAnimationsActuallyInserted.
-                                        push_back( insertedRecord );
+                                for( int i=0; i< o->numVariableDummyIDs; i++ ) {
+                                    modRecord->objectID = 
+                                        o->variableDummyIDs[ i ];
+                                    
+                                    addAnimation( modRecord, true );
+                                    insertedRecord =
+                                        getAnimation( modRecord->objectID, 
+                                                      modRecord->type );
+                                    
+                                    if( insertedRecord != NULL ) {
+                                        scannedModAnimationsActuallyInserted.
+                                            push_back( insertedRecord );
+                                        }
                                     }
                                 }
-
+                            // if these dummy lists are NULL, we may
+                            // be in the Editor which doesn't generate
+                            // dummies at startup.
                             
                             freeRecord( modRecord );
                             }
