@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 403   2023-December-15
+Version 404   2023-December-15
 
 --Fixed so that BELL and HELL arrow labels are in English.txt translation file
   instead of hard-coded.
