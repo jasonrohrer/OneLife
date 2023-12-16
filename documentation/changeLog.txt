@@ -3,6 +3,11 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version ???
+
+--Fixed fprintf type warning found with old Mac compiler.
+
+
 
 Version 404   2023-December-15
 

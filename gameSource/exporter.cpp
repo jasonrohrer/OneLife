@@ -145,7 +145,7 @@ void writeAnimRecordToFile( FILE *inFILE, AnimationRecord *inRecord ) {
     fprintf( inFILE, "anim %d %s %d#%s",
              inRecord->objectID,
              animTypeTag,
-             strlen( cleanedAnimTextData ), cleanedAnimTextData );
+             (int)strlen( cleanedAnimTextData ), cleanedAnimTextData );
     
     delete [] animTypeTag;
     delete [] cleanedAnimTextData;
@@ -589,7 +589,7 @@ char finalizeExportBundle( const char *inExportName ) {
         
         fprintf( outFILE, "object %d %d#%s",
                  objectID,
-                 strlen( cleanedObjectTextData ), cleanedObjectTextData );
+                 (int)strlen( cleanedObjectTextData ), cleanedObjectTextData );
         
         delete [] cleanedObjectTextData;    
         }
