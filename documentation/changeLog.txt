@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 406   2023-December-23
+
+--steamGateClient now handles uploading mods to Steam Workshop and
+  downloading/installing subscribed mods.
+
+
+
+
 Version 405   2023-December-15
 
 --Fixed fprintf type warning found with old Mac compiler.
