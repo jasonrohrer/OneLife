@@ -54,7 +54,7 @@ EditorExportPage::EditorExportPage()
                            "Tag", 
                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                            "abcdefghijklmnopqrstuvwxyz"
-                           "0123456789_", 
+                           "0123456789", 
                            NULL ),
           mSearchNeedsRedo( false ),
           mCurrentHash( NULL ),

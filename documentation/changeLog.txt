@@ -9,6 +9,8 @@ Version 406   2023-December-23
 --steamGateClient now handles uploading mods to Steam Workshop and
   downloading/installing subscribed mods.
 
+--Whoops... EditorExportPage was allowing _ in export tag names.
+
 
 
 
