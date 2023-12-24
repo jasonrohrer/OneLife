@@ -26,7 +26,7 @@ read userIn
 cd ../../minorGems
 
 cd game/diffBundle
-./diffBundleCompile
+./diffBundleCompileWindows
 
 
 
