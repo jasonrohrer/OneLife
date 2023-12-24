@@ -2704,7 +2704,7 @@ void intHandler( int inUnused ) {
     }
 
 
-#ifdef WIN_32
+#ifdef WIN32
 #include <windows.h>
 BOOL WINAPI ctrlHandler( DWORD dwCtrlType ) {
     if( CTRL_C_EVENT == dwCtrlType ) {
@@ -18157,7 +18157,7 @@ int main() {
     printf( "Curse word list has %d words\n", curseWords.size() );
     
 
-#ifdef WIN_32
+#ifdef WIN32
     printf( "\n\nPress CTRL-C to shut down server gracefully\n\n" );
 
     SetConsoleCtrlHandler( ctrlHandler, TRUE );
