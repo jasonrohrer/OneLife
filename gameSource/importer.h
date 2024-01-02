@@ -10,11 +10,21 @@ void initModLoaderFinish();
 
 
 
+int initImportAddStart();
+
+float initImportAddStep();
+
+void initImportAddFinish();
+
+
+
 int initImportReplaceStart();
 
 float initImportReplaceStep();
 
 void initImportReplaceFinish();
+
+
 
 
 

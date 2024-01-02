@@ -13,28 +13,28 @@
 
 
 
-static SimpleVector<File*> modFileList;
+static SimpleVector<File*> loadFileList;
 
-static int currentModFileIndex;
-
-
-static char currentModScanned;
+static int currentLoadFileIndex;
 
 
-// for current mod that we're working on loading
-static SimpleVector<char *> scannedModBlockHeaders;
+static char currentLoadScanned;
+
+
+// for current mod/import that we're working on loading
+static SimpleVector<char *> scannedLoadBlockHeaders;
         
-static SimpleVector<int> scannedModDataBlockLengths;
+static SimpleVector<int> scannedLoadDataBlockLengths;
         
-static SimpleVector<unsigned char*> scannedModDataBlocks;
+static SimpleVector<unsigned char*> scannedLoadDataBlocks;
 
-static int currentScannedModBlock;
+static int currentScannedLoadBlock;
 
 // these are the object that were actually inserted into our objectBank
-SimpleVector<int> scannedModObjectActuallyInserted;
+SimpleVector<int> scannedLoadObjectActuallyInserted;
 
 // these are maintained by animationBank
-SimpleVector<AnimationRecord *> scannedModAnimationsActuallyInserted;
+SimpleVector<AnimationRecord *> scannedLoadAnimationsActuallyInserted;
 
 
 
@@ -45,7 +45,7 @@ typedef struct IDMapEntry {
     } IDMapEntry;
 
 
-// maps IDs in mod file to live IDs in our banks
+// maps IDs in mod/import file to live IDs in our banks
 // (in some cases, we may add resources to our banks, in other cases
 //  we may find resources with the same hashes)
 static SimpleVector<IDMapEntry> spriteIDMap;
@@ -92,24 +92,24 @@ static void remapSounds( SoundUsage *inUsage ) {
 
 
 static void freeScannedData() {    
-    scannedModBlockHeaders.deallocateStringElements();
+    scannedLoadBlockHeaders.deallocateStringElements();
     
-    scannedModDataBlockLengths.deleteAll();
+    scannedLoadDataBlockLengths.deleteAll();
     
-    for( int i=0; i<scannedModDataBlocks.size(); i++ ) {
-        delete [] scannedModDataBlocks.getElementDirect( i );
+    for( int i=0; i<scannedLoadDataBlocks.size(); i++ ) {
+        delete [] scannedLoadDataBlocks.getElementDirect( i );
         }
-    scannedModDataBlocks.deleteAll();
+    scannedLoadDataBlocks.deleteAll();
     
-    scannedModObjectActuallyInserted.deleteAll();
-    scannedModAnimationsActuallyInserted.deleteAll();
+    scannedLoadObjectActuallyInserted.deleteAll();
+    scannedLoadAnimationsActuallyInserted.deleteAll();
     }
 
 
 
-static int totalNumModBlocksToScan;
+static int totalNumLoadBlocksToScan;
 
-static int totalNumModBlocksScannedSoFar;
+static int totalNumLoadBlocksScannedSoFar;
 
 
 
@@ -119,44 +119,44 @@ static int totalNumModBlocksScannedSoFar;
 
 static int initLoaderStartInternal( const char *inDirName ) {
 
-    File modDir( NULL, inDirName );
+    File loadDir( NULL, inDirName );
     
-    if( ! modDir.exists() ) {
-        modDir.makeDirectory();
+    if( ! loadDir.exists() ) {
+        loadDir.makeDirectory();
         }
     
-    if( modDir.exists() && modDir.isDirectory() ) {
-        int numMods;
-        File **mods = modDir.getChildFiles( &numMods );
+    if( loadDir.exists() && loadDir.isDirectory() ) {
+        int numLoads;
+        File **loads = loadDir.getChildFiles( &numLoads );
         
-        for( int i=0; i<numMods; i++ ) {
-            modFileList.push_back( mods[i] );
+        for( int i=0; i<numLoads; i++ ) {
+            loadFileList.push_back( loads[i] );
             }
-        delete [] mods;
+        delete [] loads;
         }
     
-    currentModFileIndex = 0;
+    currentLoadFileIndex = 0;
     
-    currentModScanned = false;
+    currentLoadScanned = false;
 
 
     // peek at header of each file here
     // to get total number of blocks to load
 
-    totalNumModBlocksToScan = 0;
+    totalNumLoadBlocksToScan = 0;
 
-    for( int i=0; i<modFileList.size(); i++ ) {
-        File *file = modFileList.getElementDirect( i );
+    for( int i=0; i<loadFileList.size(); i++ ) {
+        File *file = loadFileList.getElementDirect( i );
         
         char *name = file->getFullFileName();
         
         FILE *f = fopen( name, "rb" );
         
         if( f == NULL ) {
-            printf( "Failed to open mod file for reading: %s\n", name );
+            printf( "Failed to open mod/import file for reading: %s\n", name );
             delete [] name;
             delete file;
-            modFileList.deleteElement( i );
+            loadFileList.deleteElement( i );
             i--;
             continue;
             }
@@ -165,26 +165,27 @@ static int initLoaderStartInternal( const char *inDirName ) {
         int numRead = fscanf( f, "%d", &blocks );
         
         if( numRead != 1 ) {
-            printf( "Failed to read header block count from mod file: %s\n",
+            printf( "Failed to read header block count "
+                    "from mod/import file: %s\n",
                     name );
             delete [] name;
             delete file;
-            modFileList.deleteElement( i );
+            loadFileList.deleteElement( i );
             i--;
             continue;
             }
         
         delete [] name;
 
-        totalNumModBlocksToScan += blocks;
+        totalNumLoadBlocksToScan += blocks;
         }
     
-    totalNumModBlocksScannedSoFar = 0;
+    totalNumLoadBlocksScannedSoFar = 0;
     
-    printf( "Mod loader sees %d total blocks to scan from mod folder\n",
-            totalNumModBlocksToScan );
+    printf( "Loader sees %d total blocks to scan from folder '%s'\n",
+            totalNumLoadBlocksToScan, inDirName );
 
-    return totalNumModBlocksToScan;
+    return totalNumLoadBlocksToScan;
     }
 
 
@@ -195,48 +196,58 @@ int initModLoaderStart() {
     }
 
 
+int initImportAddStart() {
+    return initLoaderStartInternal( "import_add" );
+    }
+
+
+int initImportReplaceStart() {
+    return initLoaderStartInternal( "import_replace" );
+    }
 
 
 
-static float getModLoadProgress() {
-    return (float)totalNumModBlocksScannedSoFar / 
-        (float)totalNumModBlocksToScan;
+
+static float getLoadProgress() {
+    return (float)totalNumLoadBlocksScannedSoFar / 
+        (float)totalNumLoadBlocksToScan;
     }
 
     
 
 
-// inReplaceObjects only observed if inSaveIntoObjectsDir is true
-// if inSaveIntoObjectsDir is false, objects are always replaced
-static float initLoaderStepInternal( char inSaveIntoObjectsDir = false, 
+// inReplaceObjects only observed if inSaveIntoDataDirs is true
+// if inSaveIntoDataDirs is false, objects are always replaced
+static float initLoaderStepInternal( char inSaveIntoDataDirs = false, 
                                      char inReplaceObjects = false ) {
     
-    if( currentModFileIndex >= modFileList.size() ) {
+    if( currentLoadFileIndex >= loadFileList.size() ) {
         return 1.0f;
         }
 
-    if( ! currentModScanned ) {
+    if( ! currentLoadScanned ) {
         // scan it
 
-        currentScannedModBlock = 0;
+        currentScannedLoadBlock = 0;
         
-        File *currentFile = modFileList.getElementDirect( currentModFileIndex );
+        File *currentFile =
+            loadFileList.getElementDirect( currentLoadFileIndex );
         
 
         int dataSize;
         unsigned char *data = currentFile->readFileContents( &dataSize );
         
         if( data == NULL ) {
-            currentModFileIndex ++;
+            currentLoadFileIndex ++;
             
             char *fileName = currentFile->getFileName();
             
-            printf( "Failed to read from mod file %s\n", fileName );
+            printf( "Failed to read from mod/import file %s\n", fileName );
             
             delete [] fileName;
 
             
-            return getModLoadProgress();
+            return getLoadProgress();
             }
 
         char isZip = false;
@@ -263,14 +274,15 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
 
                 char *fileName = currentFile->getFileName();
 
-                printf( "Failed to scan block count header from mod file %s\n",
+                printf( "Failed to scan block count header "
+                        "from mod/import file %s\n",
                         fileName );
                 
                 delete [] fileName;
 
-                currentModFileIndex ++;
+                currentLoadFileIndex ++;
                 
-                return getModLoadProgress();
+                return getLoadProgress();
                 }
             
             
@@ -289,14 +301,14 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
 
                 printf( 
                     "Failed to scan decompressed size header "
-                    "from mod file %s\n",
+                    "from mod/import file %s\n",
                     fileName );
                 
                 delete [] fileName;
 
-                currentModFileIndex ++;
+                currentLoadFileIndex ++;
                 
-                return getModLoadProgress();
+                return getLoadProgress();
                 }
             
             // how far have we scanned ahead in data when skipping headers?
@@ -316,13 +328,13 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
                 
                 char *fileName = currentFile->getFileName();
 
-                printf( "Failed to unzip from mod file %s\n", fileName );
+                printf( "Failed to unzip from mod/import file %s\n", fileName );
                 
                 delete [] fileName;
 
-                currentModFileIndex ++;
+                currentLoadFileIndex ++;
                 
-                return getModLoadProgress();
+                return getLoadProgress();
                 }
             
 
@@ -337,13 +349,14 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
             
             char *fileName = currentFile->getFileName();
             
-            printf( "Found unloadable file in mods folder: %s\n", fileName );
+            printf( "Found unloadable file in mods/import folder: %s\n",
+                    fileName );
             
             delete [] fileName;
             
-            currentModFileIndex ++;
+            currentLoadFileIndex ++;
             
-            return getModLoadProgress();
+            return getLoadProgress();
             }
         
         
@@ -374,7 +387,7 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
             
             if( data[dataPos] != '#' ) {
                 printf( "Failed to find end of header when "
-                        "scanning mod block %d\n", blockCount );
+                        "scanning mod/import block %d\n", blockCount );
                 
                 break;
                 }
@@ -406,7 +419,7 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
             
             if( data[spacePos] != ' ' ) {
                 printf( "Failed to find space near end of header when "
-                        "scanning mod block %d\n", blockCount );
+                        "scanning mod/import block %d\n", blockCount );
                 
                 delete [] header;
                 break;
@@ -418,7 +431,7 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
             
             if( blockDataLength == -1 ) {
                 printf( "Failed to find block data length in header when "
-                        "scanning mod block %d\n", blockCount );
+                        "scanning mod/import block %d\n", blockCount );
                 
                 delete [] header;
                 break;
@@ -429,7 +442,8 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
             dataPos++;
             
             if( dataSize - dataPos < blockDataLength ) {
-                printf( "Block %d in mod file specifies data length of %d "
+                printf( "Block %d in mod/import file specifies data "
+                        "length of %d "
                         "when there's only %d bytes left in data\n",
                         blockCount, blockDataLength, dataSize - dataPos );
                 
@@ -442,9 +456,9 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
             memcpy( blockData, & data[ dataPos ], blockDataLength );
             
 
-            scannedModBlockHeaders.push_back( header );
-            scannedModDataBlockLengths.push_back( blockDataLength );
-            scannedModDataBlocks.push_back( blockData );
+            scannedLoadBlockHeaders.push_back( header );
+            scannedLoadDataBlockLengths.push_back( blockDataLength );
+            scannedLoadDataBlocks.push_back( blockData );
 
             // skip the data, now that we've scanned it.
             dataPos += blockDataLength;
@@ -454,8 +468,8 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
         
         delete [] data;
         
-        printf( "Scanned %d blocks from mod file\n", 
-                scannedModBlockHeaders.size() );
+        printf( "Scanned %d blocks from mod/import file\n", 
+                scannedLoadBlockHeaders.size() );
         
         
         // compute hashes of object IDs
@@ -478,7 +492,8 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
             // OR six letters before extension do not match correct hash
             strcmp( correctHash, & extensionPos[ -6 ] ) != 0 ) {
 
-            printf( "Hash check for mod file failed (correct hash=%s): %s\n",
+            printf( "Hash check for mod/import file "
+                    "failed (correct hash=%s): %s\n",
                     correctHash, & extensionPos[ -6 ] );
             
             delete [] correctHash;
@@ -487,19 +502,20 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
             // dump this data
             freeScannedData();
             
-            // move on to the next mod file
-            currentModFileIndex ++;
+            // move on to the next mod/import file
+            currentLoadFileIndex ++;
             
-            return getModLoadProgress();
+            return getLoadProgress();
             }
 
         // hash check okay
-        printf( "Hash for mod computed as %s, matches file name hash in %s\n",
+        printf( "Hash for mod/import computed as %s, "
+                "matches file name hash in %s\n",
                 correctHash, fileName );
         delete [] correctHash;
         delete [] fileName;
 
-        currentModScanned = true;
+        currentLoadScanned = true;
         }
     else {
         // walk through blocks and process them
@@ -507,14 +523,14 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
         // FIXME
         
         char *currentHeader = 
-            scannedModBlockHeaders.getElementDirect( currentScannedModBlock );
+            scannedLoadBlockHeaders.getElementDirect( currentScannedLoadBlock );
         
         int currentDataLength = 
-            scannedModDataBlockLengths.getElementDirect( 
-                currentScannedModBlock );
+            scannedLoadDataBlockLengths.getElementDirect( 
+                currentScannedLoadBlock );
         
         unsigned char *currentDataBlock =
-            scannedModDataBlocks.getElementDirect( currentScannedModBlock );
+            scannedLoadDataBlocks.getElementDirect( currentScannedLoadBlock );
         
         if( strstr( currentHeader, "sprite " ) == currentHeader ) {
             
@@ -552,7 +568,7 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
 
                     if( bankID == -1 ) {
                         printf( "Loading sprite TGA data from data block "
-                                "with %d bytes from mod failed\n",
+                                "with %d bytes from mod/import failed\n",
                                 currentDataLength );
                         }
                     }
@@ -589,12 +605,13 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
                     
                     if( bankID == -1 ) {
                         printf( "Loading sound data from data block "
-                                "with %d bytes, type %s, from mod failed\n",
+                                "with %d bytes, type %s, "
+                                "from mod/import failed\n",
                                 currentDataLength, soundType );
                         }
                     }
                 else {
-                    printf( "Mod sound id %d exists in bank as ID %d\n",
+                    printf( "Mod/import sound id %d exists in bank as ID %d\n",
                             id, bankID );
                     }
                 
@@ -602,7 +619,7 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
                     idMapLookup( &soundIDMap, id ) == NULL ) {
                     IDMapEntry e = { id, bankID };
                     soundIDMap.push_back( e );
-                    printf( "Mapping mod sound id %d to bank id %d\n",
+                    printf( "Mapping mod/import sound id %d to bank id %d\n",
                             id, bankID );
                     }
                 }
@@ -652,26 +669,26 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
                         
                         freeObjectRecord( modRecord );
                         
-                        scannedModObjectActuallyInserted.push_back( id );
+                        scannedLoadObjectActuallyInserted.push_back( id );
                         
                         // also track useDummy and variableOummies
                         ObjectRecord *o = getObject( id );
                         
                         if( o->useDummyIDs != NULL ) {
                             for( int i=0; i< o->numUses - 1; i++ ) {
-                                scannedModObjectActuallyInserted.push_back(
+                                scannedLoadObjectActuallyInserted.push_back(
                                     o->useDummyIDs[ i ] );
                                 }
                             }
                         if( o->variableDummyIDs != NULL ) {
                             for( int i=0; i< o->numVariableDummyIDs; i++ ) {
-                                scannedModObjectActuallyInserted.push_back(
+                                scannedLoadObjectActuallyInserted.push_back(
                                     o->variableDummyIDs[ i ] );
                                 }
                             }
                         }
                     else {
-                        printf( "Parsing object from mod failed\n" );
+                        printf( "Parsing object from mod/import failed\n" );
                         }
                     }
                 else {
@@ -757,7 +774,7 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
                                 getAnimation( id, modRecord->type );
 
                             if( insertedRecord != NULL ) {
-                                scannedModAnimationsActuallyInserted.push_back(
+                                scannedLoadAnimationsActuallyInserted.push_back(
                                     insertedRecord );
                                 }
                             
@@ -776,7 +793,7 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
                                                       modRecord->type );
                                     
                                     if( insertedRecord != NULL ) {
-                                        scannedModAnimationsActuallyInserted.
+                                        scannedLoadAnimationsActuallyInserted.
                                             push_back( insertedRecord );
                                         }
                                     }
@@ -794,7 +811,7 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
                                                       modRecord->type );
                                     
                                     if( insertedRecord != NULL ) {
-                                        scannedModAnimationsActuallyInserted.
+                                        scannedLoadAnimationsActuallyInserted.
                                             push_back( insertedRecord );
                                         }
                                     }
@@ -810,25 +827,26 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
                 }
             }
 
-        currentScannedModBlock++;
-        totalNumModBlocksScannedSoFar ++;
+        currentScannedLoadBlock++;
+        totalNumLoadBlocksScannedSoFar ++;
         
-        if( currentScannedModBlock >= scannedModBlockHeaders.size() ) {
+        if( currentScannedLoadBlock >= scannedLoadBlockHeaders.size() ) {
             // done processing scanned blocks from current mod
             
 
             // now clear any animations for mod objects
             // where an animation was NOT loaded for that slot
-            for( int i=0; i< scannedModObjectActuallyInserted.size(); i++ ) {
+            for( int i=0; i< scannedLoadObjectActuallyInserted.size(); i++ ) {
                 
-                int id = scannedModObjectActuallyInserted.getElementDirect( i );
+                int id = 
+                    scannedLoadObjectActuallyInserted.getElementDirect( i );
                 
                 for( int t=ground; t<endAnimType; t++ ) {
                     
                     AnimationRecord *a = getAnimation( id, (AnimType)t );
                     
                     if( a != NULL &&
-                        scannedModAnimationsActuallyInserted.getElementIndex(
+                        scannedLoadAnimationsActuallyInserted.getElementIndex(
                             a  ) == -1 ) {
                         // base animation exists, but we didn't add one
                         // to replace it.  Mod has "no animation" for this slot
@@ -847,7 +865,7 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
                         AnimationRecord *a = bankExtras[e];
                         
                         if( a != NULL &&
-                            scannedModAnimationsActuallyInserted.
+                            scannedLoadAnimationsActuallyInserted.
                             getElementIndex( a ) == -1 ) {
                             
                             setExtraIndex( a->extraIndex );
@@ -860,22 +878,22 @@ static float initLoaderStepInternal( char inSaveIntoObjectsDir = false,
                 }
             
 
-            // prepare for scanning next mod, if there is one
-            currentModFileIndex++;
+            // prepare for scanning next mod/import, if there is one
+            currentLoadFileIndex++;
             
-            currentModScanned = false;
+            currentLoadScanned = false;
             
             freeScannedData();
             }
         else {
-            // done with another block from current mod
+            // done with another block from current mod/import
             }
         }
     
     
 
     
-    return getModLoadProgress();
+    return getLoadProgress();
     }
 
 
@@ -887,13 +905,25 @@ float initModLoaderStep() {
 
 
 
+float initImportAddStep() {
+    return initLoaderStepInternal( true, false );
+    }
+
+
+
+float initImportReplaceStep() {
+    return initLoaderStepInternal( true, true );
+    }
+
+
+
 
 void initLoaderFinishInternal() {
-    for( int i=0; i< modFileList.size(); i++ ) {
-        delete modFileList.getElementDirect( i );
+    for( int i=0; i< loadFileList.size(); i++ ) {
+        delete loadFileList.getElementDirect( i );
         }
     
-    modFileList.deleteAll();
+    loadFileList.deleteAll();
 
     spriteIDMap.deleteAll();
     soundIDMap.deleteAll();
@@ -905,17 +935,24 @@ void initModLoaderFinish() {
     initLoaderFinishInternal();
     }
 
+void initImportAddFinish() {
+    initLoaderFinishInternal();
+    }
+
+void initImportReplaceFinish() {
+    initLoaderFinishInternal();
+    }
 
 
 
 void freeImporter() {
     // clean up, in case we got interrupted during loading
 
-    for( int i=0; i< modFileList.size(); i++ ) {
-        delete modFileList.getElementDirect( i );
+    for( int i=0; i< loadFileList.size(); i++ ) {
+        delete loadFileList.getElementDirect( i );
         }
     
-    modFileList.deleteAll();
+    loadFileList.deleteAll();
 
     spriteIDMap.deleteAll();
     soundIDMap.deleteAll();
