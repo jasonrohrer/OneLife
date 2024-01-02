@@ -54,6 +54,13 @@ static SimpleVector<IDMapEntry> spriteIDMap;
 static SimpleVector<IDMapEntry> soundIDMap;
 
 
+// this map only used for ADD mode when importing
+// we remap each object to a new ID (not replacing existing IDs)
+// so we need to remap our animations which load later
+static SimpleVector<IDMapEntry> objectIDMap;
+
+
+
 // returns NULL if not found
 static IDMapEntry* idMapLookup( SimpleVector<IDMapEntry> *inMap,
                                 int inLoadedID ) {
@@ -79,7 +86,7 @@ static int applyMap( SimpleVector<IDMapEntry> *inMap,
     
     // else no map found
     
-    // return an infalid ID
+    // return an invalid ID
     return -1;
     }
 
@@ -89,6 +96,16 @@ static void remapSounds( SoundUsage *inUsage ) {
     for( int i=0; i< inUsage->numSubSounds; i++ ) {
         inUsage->ids[i] = applyMap( &soundIDMap, inUsage->ids[i] );
         }
+    }
+
+
+
+static char *remapSounds( char *inUsageString ) {
+    SoundUsage u = scanSoundUsage( inUsageString );
+
+    remapSounds( &u );    
+    
+    return stringDuplicate( printSoundUsage( u ) );
     }
 
 
@@ -207,6 +224,26 @@ int initImportReplaceStart() {
     return initLoaderStartInternal( "import_replace" );
     }
 
+
+
+// inText destroyed by this call
+// returns newly allocated string, destroyed by caller
+static char *replaceIDLine( char *inText, int inOldID, int inNewID ) {
+
+    char *lineToReplace = autoSprintf( "id=%d", inOldID );
+    char *newLine = autoSprintf( "id=%d", inNewID );
+    
+    char found = false;
+                            
+    char *replacedString =
+        replaceOnce( inText, lineToReplace,
+                     newLine,
+                     &found );
+    
+    delete [] inText;
+                    
+    return replacedString;
+    }
 
 
 
@@ -666,67 +703,200 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
             if( id > -1 ) {
                 // header at least contained an ID
                 
-                // don't accept default object here
-                ObjectRecord *existingRecord = getObject( id, true );
-                
-                if( existingRecord != NULL ) {
-                    
+                if( inSaveIntoDataDirs ) {
                     // copy data block into a string for parsing
                     char *objectString = new char[ currentDataLength + 1 ];
-                    memcpy( objectString, currentDataBlock, currentDataLength );
+                    memcpy( objectString, 
+                            currentDataBlock, currentDataLength );
                     objectString[ currentDataLength ] = '\0';
                     
-
-                    ObjectRecord *modRecord =
-                        scanObjectRecordFromString( objectString );
+                    int numLines = 0;
+                    
+                    char **objectLines = split( objectString, "\n", &numLines );
                     
                     delete [] objectString;
+
+                    for( int i=0; i<numLines; i++ ) {
+                        
+                        char *line = objectLines[i];
+                        
+                        if( strstr( line, "sounds=" ) == line ) {
+                            // sounds line in object text
+
+                            int numSoundParts = 0;
+                            // skip sounds= header in line
+                            char **soundParts = split( &( line[7] ), ",", 
+                                                       &numSoundParts );
+                            
+                            for( int j=0; j<numSoundParts; j++ ) {
+                                char *newPart = remapSounds( soundParts[j] );
+                                
+                                delete [] soundParts[j];
+                                
+                                soundParts[j] = newPart;
+                                }
+                            
+                            char *newSoundsString = 
+                                join( soundParts, numSoundParts, "," );
+                            
+                            for( int j=0; j<numSoundParts; j++ ) {
+                                delete [] soundParts[j];
+                                }
+                            delete [] soundParts;
+                            
+
+                            delete [] objectLines[i];
+
+                            objectLines[i] = autoSprintf( "sounds=%s",
+                                                          newSoundsString );
+                            }
+                        else  if( strstr( line, "spriteID=" ) == line ) {
+                            // sprite line in object text
+                            
+                            int scannedID = -1;
+                            sscanf( line, "spriteID=%d", &scannedID );
+                            
+                            if( scannedID != -1 ) {
+                                
+                                int mappedID = applyMap( &spriteIDMap,
+                                                         scannedID );
+                                
+                                delete [] objectLines[i];
+                                objectLines[i] = autoSprintf( "spriteID=%d",
+                                                              mappedID );
+                                }
+                            }
+                        }
                     
-                    if( modRecord != NULL ) {
+                    char *newObjectString = 
+                        join( objectLines, numLines, "\n" );
+                    
+                    for( int i=0; i<numLines; i++ ) {
+                        delete [] objectLines[i];
+                        }
+                    delete objectLines;
+                    
+                    File objectsDir( NULL, "objects" );
+                
+                    if( objectsDir.exists() && objectsDir.isDirectory() ) {
+                        File *nextObjNumFile = 
+                            objectsDir.getChildFile( "nextObjectNumber.txt" );
                         
-                        // remap sprites in our mod object
-                        for( int i=0; i< modRecord->numSprites; i++ ) {
-                            modRecord->sprites[i] = 
-                                applyMap( &spriteIDMap,
-                                          modRecord->sprites[i] );
+                        int nextObjectNumber =
+                            nextObjNumFile->readFileIntContents( -1 );
+                        
+                        if( nextObjectNumber < 1 ) {
+                            nextObjectNumber = 1;
                             }
-                        // same for sounds
-                        remapSounds( & modRecord->creationSound );
-                        remapSounds( & modRecord->usingSound );
-                        remapSounds( & modRecord->eatingSound );
-                        remapSounds( & modRecord->decaySound );
+
+                        int idToWrite = id;
+                
+                        if( ! inReplaceObjects ) {
+                            idToWrite = nextObjectNumber;
+                            }
                         
-                        // apply all visual/sound changes from our
-                        // mod record into the object bank object
-                        copyObjectAppearance( id, modRecord );
+                        if( idToWrite >= nextObjectNumber ) {
+                            nextObjectNumber = idToWrite + 1;
+                            
+                            nextObjNumFile->writeToFile( nextObjectNumber );
+                            }
                         
-                        freeObjectRecord( modRecord );
+                        delete nextObjNumFile;
                         
-                        scannedLoadObjectActuallyInserted.push_back( id );
+
+                        char *fileName = autoSprintf( "%d.txt", idToWrite );
                         
-                        // also track useDummy and variableOummies
-                        ObjectRecord *o = getObject( id );
+                        File *objFile = objectsDir.getChildFile( fileName );
                         
-                        if( o->useDummyIDs != NULL ) {
-                            for( int i=0; i< o->numUses - 1; i++ ) {
-                                scannedLoadObjectActuallyInserted.push_back(
-                                    o->useDummyIDs[ i ] );
+                        delete [] fileName;
+                        
+                        if( id != idToWrite ) {
+                            // replace ID line in object file data
+                            newObjectString = 
+                                replaceIDLine( newObjectString, id, idToWrite );
+                            }
+
+
+                        objFile->writeToFile( newObjectString );
+                        
+                        delete objFile;
+
+                        
+                        if( idMapLookup( &objectIDMap, id ) == NULL ) {
+                            IDMapEntry e = { id, idToWrite };
+                            objectIDMap.push_back( e );
+                            }
+                        }
+                    
+                    delete [] newObjectString;
+                    }
+                else {
+                    // only replace in live bank
+                    // don't save to disk
+
+                    // don't accept default object here
+                    ObjectRecord *existingRecord = getObject( id, true );
+                
+                    if( existingRecord != NULL ) {
+                    
+                        // copy data block into a string for parsing
+                        char *objectString = new char[ currentDataLength + 1 ];
+                        memcpy( objectString, 
+                                currentDataBlock, currentDataLength );
+                        objectString[ currentDataLength ] = '\0';
+                        
+                        
+                        ObjectRecord *modRecord =
+                            scanObjectRecordFromString( objectString );
+                    
+                        delete [] objectString;
+                    
+                        if( modRecord != NULL ) {
+                        
+                            // remap sprites in our mod object
+                            for( int i=0; i< modRecord->numSprites; i++ ) {
+                                modRecord->sprites[i] = 
+                                    applyMap( &spriteIDMap,
+                                              modRecord->sprites[i] );
+                                }
+                            // same for sounds
+                            remapSounds( & modRecord->creationSound );
+                            remapSounds( & modRecord->usingSound );
+                            remapSounds( & modRecord->eatingSound );
+                            remapSounds( & modRecord->decaySound );
+                        
+                            // apply all visual/sound changes from our
+                            // mod record into the object bank object
+                            copyObjectAppearance( id, modRecord );
+                        
+                            freeObjectRecord( modRecord );
+                        
+                            scannedLoadObjectActuallyInserted.push_back( id );
+                        
+                            // also track useDummy and variableOummies
+                            ObjectRecord *o = getObject( id );
+                        
+                            if( o->useDummyIDs != NULL ) {
+                                for( int i=0; i< o->numUses - 1; i++ ) {
+                                    scannedLoadObjectActuallyInserted.push_back(
+                                        o->useDummyIDs[ i ] );
+                                    }
+                                }
+                            if( o->variableDummyIDs != NULL ) {
+                                for( int i=0; i< o->numVariableDummyIDs; i++ ) {
+                                    scannedLoadObjectActuallyInserted.push_back(
+                                        o->variableDummyIDs[ i ] );
+                                    }
                                 }
                             }
-                        if( o->variableDummyIDs != NULL ) {
-                            for( int i=0; i< o->numVariableDummyIDs; i++ ) {
-                                scannedLoadObjectActuallyInserted.push_back(
-                                    o->variableDummyIDs[ i ] );
-                                }
+                        else {
+                            printf( "Parsing object from mod/import failed\n" );
                             }
                         }
                     else {
-                        printf( "Parsing object from mod/import failed\n" );
+                        printf( "Mod object id %d not found in object bank, "
+                                "skipping\n", id );
                         }
-                    }
-                else {
-                    printf( "Mod object id %d not found in object bank, "
-                            "skipping\n", id );
                     }
                 }
             }
@@ -766,94 +936,194 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                     
                     // correct slot number present
                     
-                    ObjectRecord *existingRecord = getObject( id, true );
+
+                    if( inSaveIntoDataDirs ) {
+                        
+                        int idToWrite =  applyMap( &objectIDMap, id );
+                        
+                        if( idToWrite != -1 ) {
+                            // our animation's object is part of this 
+                            // loaded import
+                            
+                            char *animationString = 
+                                new char[ currentDataLength + 1 ];
+                            memcpy( animationString, 
+                                    currentDataBlock, currentDataLength );
+                            animationString[ currentDataLength ] = '\0';
+
+                            if( id != idToWrite ) {
+                                animationString = 
+                                    replaceIDLine( animationString, 
+                                                   id, idToWrite );
+                                }
+                            
+                            int numLines = 0;
+                            
+                            char **animLines = split( animationString, "\n", 
+                                                      &numLines );
+                            
+                            delete [] animationString;
+
+                            for( int i=0; i<numLines; i++ ) {
+                                
+                                char *line = animLines[i];
+                        
+                                if( strstr( line, "soundParam=" ) == line ) {
+
+                                    char *spacePos = strstr( line, " " );
+
+                                    const char *stuffAfterSpace = "";
+
+                                    if( spacePos != NULL ) {
+                                        // terminate at space
+                                        spacePos[0] = '\0';
+                                        
+                                        stuffAfterSpace = &( spacePos[1] );
+                                        }
+
+                                    
+                                    
+                                    
+
+                                    // skip soundParam= header
+                                    char *newSoundString =
+                                        remapSounds( &( line[11] ) );
+                                    
+                                    animLines[i] = 
+                                        autoSprintf( "soundParam=%s %s",
+                                                     newSoundString,
+                                                     stuffAfterSpace );
+                                    
+                                    delete [] line;
+                                    }
+                                }
+
+                            char *newAnimString = 
+                                join( animLines, numLines, "\n" );
+                                                
+                            for( int i=0; i<numLines; i++ ) {
+                                delete [] animLines[i];
+                                }
+                            delete animLines;
+                            
+                            File animDir( NULL, "animations" );
                 
-                    if( existingRecord != NULL ) {
-                        // an object exists mathing this id
+
+                            char *fileName = autoSprintf( "%d_%s.txt", 
+                                                          idToWrite,
+                                                          animSlot );
                         
-                        // replace its animation
+                            File *animFile = animDir.getChildFile( fileName );
                         
-                        // copy data block into a string for parsing
-                        char *animationString = 
-                            new char[ currentDataLength + 1 ];
-                        memcpy( animationString, 
-                                currentDataBlock, currentDataLength );
-                        animationString[ currentDataLength ] = '\0';
+                            delete [] fileName;
+                         
+
+                            animFile->writeToFile( newAnimString );
+                        
+                            delete animFile;
+                    
+                            delete [] newAnimString;
+                            }
+                        }
+                    else {
+                        // only replace in live bank
+                        // don't save to disk
+
+                        ObjectRecord *existingRecord = getObject( id, true );
+                
+                        if( existingRecord != NULL ) {
+                            // an object exists mathing this id
+                        
+                            // replace its animation
+                        
+                            // copy data block into a string for parsing
+                            char *animationString = 
+                                new char[ currentDataLength + 1 ];
+                            memcpy( animationString, 
+                                    currentDataBlock, currentDataLength );
+                            animationString[ currentDataLength ] = '\0';
                     
 
-                        AnimationRecord *modRecord =
-                            scanAnimationRecordFromString( animationString );
+                            AnimationRecord *modRecord =
+                                scanAnimationRecordFromString( 
+                                    animationString );
                         
-                        delete [] animationString;
+                            delete [] animationString;
                         
-                        if( modRecord != NULL ) {
-                            // remap sounds                            
-                            for( int i=0; i< modRecord->numSounds; i++ ) {
+                            if( modRecord != NULL ) {
+                                // remap sounds                            
+                                for( int i=0; i< modRecord->numSounds; i++ ) {
 
-                                remapSounds( 
-                                    &( modRecord->soundAnim[i].sound ) );
-                                }
+                                    remapSounds( 
+                                        &( modRecord->soundAnim[i].sound ) );
+                                    }
                             
-                            // set extra slot if needed
-                            if( isExtra ) {
-                                setExtraIndex( extraSlotNumber );
-                                }
+                                // set extra slot if needed
+                                if( isExtra ) {
+                                    setExtraIndex( extraSlotNumber );
+                                    }
 
-                            // add to bank (will replace existing anim, if any)
-                            // don't write to file
-                            addAnimation( modRecord, true );
+                                // add to bank (will replace existing anim,
+                                // if any) don't write to file
+                                addAnimation( modRecord, true );
                             
-                            AnimationRecord *insertedRecord =
-                                getAnimation( id, modRecord->type );
+                                AnimationRecord *insertedRecord =
+                                    getAnimation( id, modRecord->type );
 
-                            if( insertedRecord != NULL ) {
-                                scannedLoadAnimationsActuallyInserted.push_back(
-                                    insertedRecord );
-                                }
+                                if( insertedRecord != NULL ) {
+                                    scannedLoadAnimationsActuallyInserted.
+                                        push_back(
+                                            insertedRecord );
+                                    }
                             
                             
-                            // also re-insert animations for all use/var dummies
-                            ObjectRecord *o = getObject( id );
+                                // also re-insert animations for
+                                // all use/var dummies
+                                ObjectRecord *o = getObject( id );
                             
-                            if( o->useDummyIDs != NULL ) {
+                                if( o->useDummyIDs != NULL ) {
                                 
-                                for( int i=0; i< o->numUses - 1; i++ ) {
-                                    modRecord->objectID = o->useDummyIDs[ i ];
+                                    for( int i=0; i< o->numUses - 1; i++ ) {
+                                        modRecord->objectID =
+                                            o->useDummyIDs[ i ];
                                     
-                                    addAnimation( modRecord, true );
-                                    insertedRecord =
-                                        getAnimation( modRecord->objectID, 
-                                                      modRecord->type );
+                                        addAnimation( modRecord, true );
+                                        insertedRecord =
+                                            getAnimation( modRecord->objectID, 
+                                                          modRecord->type );
                                     
-                                    if( insertedRecord != NULL ) {
-                                        scannedLoadAnimationsActuallyInserted.
-                                            push_back( insertedRecord );
+                                        if( insertedRecord != NULL ) {
+                                          scannedLoadAnimationsActuallyInserted.
+                                                push_back( insertedRecord );
+                                            }
                                         }
                                     }
-                                }
                             
-                            if( o->variableDummyIDs != NULL ) {
+                                if( o->variableDummyIDs != NULL ) {
                                 
-                                for( int i=0; i< o->numVariableDummyIDs; i++ ) {
-                                    modRecord->objectID = 
-                                        o->variableDummyIDs[ i ];
+                                    for( int i=0; 
+                                         i< o->numVariableDummyIDs; i++ ) {
+                                       
+                                        modRecord->objectID = 
+                                            o->variableDummyIDs[ i ];
                                     
-                                    addAnimation( modRecord, true );
-                                    insertedRecord =
-                                        getAnimation( modRecord->objectID, 
-                                                      modRecord->type );
+                                        addAnimation( modRecord, true );
+                                        insertedRecord =
+                                            getAnimation( modRecord->objectID, 
+                                                          modRecord->type );
                                     
-                                    if( insertedRecord != NULL ) {
-                                        scannedLoadAnimationsActuallyInserted.
-                                            push_back( insertedRecord );
+                                        if( insertedRecord != NULL ) {
+                                         scannedLoadAnimationsActuallyInserted.
+                                                push_back( insertedRecord );
+                                            }
                                         }
                                     }
-                                }
-                            // if these dummy lists are NULL, we may
-                            // be in the Editor which doesn't generate
-                            // dummies at startup.
+                                // if these dummy lists are NULL, we may
+                                // be in the Editor which doesn't generate
+                                // dummies at startup.
                             
-                            freeRecord( modRecord );
+                                freeRecord( modRecord );
+                                }
                             }
                         }
                     }
@@ -960,6 +1230,8 @@ void initLoaderFinishInternal() {
 
     spriteIDMap.deleteAll();
     soundIDMap.deleteAll();
+
+    objectIDMap.deleteAll();
     }
 
 
@@ -969,10 +1241,14 @@ void initModLoaderFinish() {
     }
 
 void initImportAddFinish() {
+    // FIXME:
+    // move all files from 'import_add' into 'imported'
     initLoaderFinishInternal();
     }
 
 void initImportReplaceFinish() {
+    // FIXME:
+    // move all files from 'import_replace' into 'imported'
     initLoaderFinishInternal();
     }
 
