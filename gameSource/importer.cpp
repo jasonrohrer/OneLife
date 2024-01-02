@@ -114,8 +114,12 @@ static int totalNumModBlocksScannedSoFar;
 
 
 
-int initModLoaderStart() {
-    File modDir( NULL, "mods" );
+
+
+
+static int initLoaderStartInternal( const char *inDirName ) {
+
+    File modDir( NULL, inDirName );
     
     if( ! modDir.exists() ) {
         modDir.makeDirectory();
@@ -185,6 +189,15 @@ int initModLoaderStart() {
 
 
 
+
+int initModLoaderStart() {
+    return initLoaderStartInternal( "mods" );
+    }
+
+
+
+
+
 static float getModLoadProgress() {
     return (float)totalNumModBlocksScannedSoFar / 
         (float)totalNumModBlocksToScan;
@@ -192,8 +205,11 @@ static float getModLoadProgress() {
 
     
 
-// returns progress... ready for Finish when progress == 1.0
-float initModLoaderStep() {
+
+// inReplaceObjects only observed if inSaveIntoObjectsDir is true
+// if inSaveIntoObjectsDir is false, objects are always replaced
+static float initLoaderStepInternal( char inSaveIntoObjectsDir = false, 
+                                     char inReplaceObjects = false ) {
     
     if( currentModFileIndex >= modFileList.size() ) {
         return 1.0f;
@@ -865,12 +881,28 @@ float initModLoaderStep() {
 
 
 
-void initModLoaderFinish() {
+float initModLoaderStep() {
+    return initLoaderStepInternal( false, false );
+    }
+
+
+
+
+void initLoaderFinishInternal() {
     for( int i=0; i< modFileList.size(); i++ ) {
         delete modFileList.getElementDirect( i );
         }
     
     modFileList.deleteAll();
+
+    spriteIDMap.deleteAll();
+    soundIDMap.deleteAll();
+    }
+
+
+
+void initModLoaderFinish() {
+    initLoaderFinishInternal();
     }
 
 
@@ -884,6 +916,9 @@ void freeImporter() {
         }
     
     modFileList.deleteAll();
+
+    spriteIDMap.deleteAll();
+    soundIDMap.deleteAll();
 
     
     freeScannedData();

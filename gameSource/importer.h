@@ -9,4 +9,17 @@ float initModLoaderStep();
 void initModLoaderFinish();
 
 
+
+int initImportReplaceStart();
+
+float initImportReplaceStep();
+
+void initImportReplaceFinish();
+
+
+
+
+
+
+
 void freeImporter();
