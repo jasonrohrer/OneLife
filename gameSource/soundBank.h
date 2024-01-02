@@ -165,13 +165,15 @@ int doesSoundRecordExist(
 
 
 
-// adds sound to bank without saving to disk
+// adds sound to bank from raw sound file data
 // inType can also be OGG
 // inSoundFileData destroyed by caller
+// set inSaveToDisk to true to save into sounds folder on disk
 // returns new sound ID, or -1 if parsing sound from inSoundFileData fails
-int addSoundToLiveBank( int inNumSoundFileBytes,
-                        unsigned char *inSoundFileData,
-                        const char *inType = "AIFF" );
+int addSoundToBank( int inNumSoundFileBytes,
+                    unsigned char *inSoundFileData,
+                    const char *inType = "AIFF",
+                    char inSaveToDisk = false );
 
 
 // frees memory associated with reverb filter

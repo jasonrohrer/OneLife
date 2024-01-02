@@ -1862,9 +1862,10 @@ int doesSoundRecordExist(
 
 
 
-int addSoundToLiveBank( int inNumSoundFileBytes,
-                        unsigned char *inSoundFileData,
-                        const char *inType ) {
+int addSoundToBank( int inNumSoundFileBytes,
+                    unsigned char *inSoundFileData,
+                    const char *inType,
+                    char inSaveToDisk ) {
 
     int numSamples;
     int16_t *samples = NULL;
@@ -1965,6 +1966,47 @@ int addSoundToLiveBank( int inNumSoundFileBytes,
 
     r->loading = false;
     r->numStepsUnused = 0;
+
+
+    if( inSaveToDisk ) {
+        // add it to file structure
+        File soundsDir( NULL, "sounds" );
+            
+        if( !soundsDir.exists() ) {
+            soundsDir.makeDirectory();
+            }
+        
+        if( soundsDir.exists() && soundsDir.isDirectory() ) {           
+            
+            const char *printFormat = "%d.aiff";
+        
+            if( strcmp( inType, "OGG" ) == 0 ) {
+                printFormat = "%d.ogg";
+                }
+            
+            char *fileName = autoSprintf( printFormat, newID );
+            
+            File *soundFile = soundsDir.getChildFile( fileName );
+            
+            soundFile->writeToFile( inSoundFileData, inNumSoundFileBytes );
+            
+
+            delete soundFile;
+
+            delete [] fileName;          
+
+        
+            File *nextNumberFile = 
+                soundsDir.getChildFile( "nextSoundNumber.txt" );
+            
+            nextNumberFile->writeToFile( newID + 1 );
+            
+            delete nextNumberFile;
+            
+            clearCacheFiles();
+            }
+        }
+    
 
     return newID;
     }

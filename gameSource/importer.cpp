@@ -3,6 +3,8 @@
 #include "minorGems/io/file/File.h"
 
 #include "minorGems/formats/encodingUtils.h"
+#include "minorGems/graphics/RGBAImage.h"
+
 
 #include "exporter.h"
 
@@ -519,8 +521,6 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
         }
     else {
         // walk through blocks and process them
-
-        // FIXME
         
         char *currentHeader = 
             scannedLoadBlockHeaders.getElementDirect( currentScannedLoadBlock );
@@ -560,12 +560,43 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                 
                 if( bankID == -1 ) {
                     // no sprite found, need to add a new one to bank
-                    bankID = 
-                        addSprite( tag, currentDataBlock, currentDataLength,
-                                   multiplicativeBlend,
-                                   centerAnchorXOffset,
-                                   centerAnchorYOffset );
 
+                    if( inSaveIntoDataDirs ) {                        
+                        RawRGBAImage *rawImage = 
+                            readTGAFileRawFromBuffer( 
+                                currentDataBlock, 
+                                currentDataLength );
+                        
+                        if( rawImage != NULL ) {
+                            SpriteHandle sprite =
+                                fillSprite( rawImage );
+                            
+                            Image *im = RGBAImage::getImageFromBytes( 
+                                rawImage->mRGBABytes,
+                                rawImage->mWidth, rawImage->mHeight,
+                                rawImage->mNumChannels );
+                            
+                            delete rawImage;
+
+                            bankID = addSprite( tag, 
+                                                sprite, 
+                                                im,
+                                                multiplicativeBlend,
+                                                centerAnchorXOffset,
+                                                centerAnchorYOffset );
+                            delete im;
+                            }
+                        }
+                    else {    
+                        // add a new sprite into RAM only
+                        // don't save to disk
+                        bankID = 
+                            addSprite( tag, currentDataBlock, currentDataLength,
+                                       multiplicativeBlend,
+                                       centerAnchorXOffset,
+                                       centerAnchorYOffset );
+                        }
+                    
                     if( bankID == -1 ) {
                         printf( "Loading sprite TGA data from data block "
                                 "with %d bytes from mod/import failed\n",
@@ -599,9 +630,11 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                 
                 if( bankID == -1 ) {
                     // no sound found, need to add a new one to bank
-                    bankID = addSoundToLiveBank( currentDataLength,
-                                                 currentDataBlock,
-                                                 soundType );
+                    
+                    bankID = addSoundToBank( currentDataLength,
+                                             currentDataBlock,
+                                             soundType,
+                                             inSaveIntoDataDirs );
                     
                     if( bankID == -1 ) {
                         printf( "Loading sound data from data block "
