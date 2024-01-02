@@ -32,6 +32,8 @@ mkdir $baseFolder/ground
 
 mkdir $baseFolder/mods
 mkdir $baseFolder/steamModUploads
+mkdir $baseFolder/import_add
+mkdir $baseFolder/import_replace
 
 
 
