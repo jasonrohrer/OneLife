@@ -1221,7 +1221,52 @@ float initImportReplaceStep() {
 
 
 
-void initLoaderFinishInternal() {
+static void importCleanup( const char *inDirName ) {
+
+    File loadDir( NULL, inDirName );    
+    
+    if( ! loadDir.exists() || 
+        ! loadDir.isDirectory() ) {
+        return;
+        }
+    
+    File destDir( NULL, "imported" );    
+    
+    if( ! destDir.exists() ) {
+        destDir.makeDirectory();
+        }
+    
+    if( ! destDir.exists() ||
+        ! destDir.isDirectory() ) {
+        return;
+        }
+    
+    int numFiles = 0;
+    File **files = loadDir.getChildFiles( &numFiles );
+    
+    for( int i=0; i<numFiles; i++ ) {
+        
+        char *name = files[i]->getFileName();
+        
+        File *destFile = destDir.getChildFile( name );
+
+        delete [] name;
+
+        files[i]->copy( destFile );
+        
+        delete destFile;
+
+        files[i]->remove();
+
+        delete files[i];
+        }
+    delete [] files;
+    }
+
+
+
+
+static void initLoaderFinishInternal() {
     for( int i=0; i< loadFileList.size(); i++ ) {
         delete loadFileList.getElementDirect( i );
         }
@@ -1240,15 +1285,19 @@ void initModLoaderFinish() {
     initLoaderFinishInternal();
     }
 
+
+
 void initImportAddFinish() {
-    // FIXME:
     // move all files from 'import_add' into 'imported'
+    importCleanup( "import_add" );    
     initLoaderFinishInternal();
     }
 
+
+
 void initImportReplaceFinish() {
-    // FIXME:
     // move all files from 'import_replace' into 'imported'
+    importCleanup( "import_replace" );
     initLoaderFinishInternal();
     }
 
