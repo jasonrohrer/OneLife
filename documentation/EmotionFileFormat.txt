@@ -1,0 +1,141 @@
+Emotions in the game are implemented with index numbers, starting from 0.
+
+When the server handles emotions, it deals only with these index numbers.
+
+
+The server has several settings files that deal with emotions.
+
+allowedEmotRange.ini
+forbiddenEmots.ini
+ghostEmotionIndex.ini
+homeEmotionIndex.ini
+homesickEmotionIndex.ini
+killEmotionIndex.ini
+refuseFoodEmotionIndex.ini
+satisfiedEmotionIndex.ini
+specialBiomeSicknesses.ini
+starvingEmotionIndex.ini
+victimEmotionIndex.ini
+victimTerrifiedEmotionIndex.ini
+
+
+allowedEmotRange.ini
+
+Defines the maximum allowable emotion index that can be requested by the player.
+
+
+forbiddenEmots.ini
+
+A list of emotion indices that are forbidding for request by the player.
+
+
+specialBiomeSicknesses.ini
+
+The third number on each line is the emotion index of the relief emotion.
+
+
+
+
+
+The details of how emotions are triggered and presented are defined
+client-side with two files:
+
+emotionWords.ini
+emotionObjects.ini
+
+Each line in these files corresponds to an emotion index, starting with index
+0 for the first line in each file.
+
+
+
+emotionWords.ini
+
+This file contains the slash-words for player-triggered emotions and star-words
+which are mostly just to document the server-triggered emotions.
+
+The slash-words are defined client-side, telling the client what commands
+it should look for to trigger a given emotion index server-side.
+
+The star-words are also used in the Scene Editor to mock-up and test 
+server-triggered emotions.  Slash-words can also be used in the Scene Editor
+for mock-ups.
+
+The server has a setting that defines forbidden emotion indices, so there's
+no chance of a player force-triggering a star-word emotion.
+
+Note that players can change the emotion trigger words client-side, but the
+server enforces rules about which emotion indices are valid to receive
+server-side and send for display to other players who are nearby.
+
+
+
+emotionObjects.ini
+
+Each line in this file defines objects and extra animations associated with
+each emotion index.
+
+The numbers on each line are as follows.
+
+eyeEmot mouthEmot otherEmot faceEmot bodyEmot headEmot extraAnimIndex
+
+
+
+
+eyeEmot
+
+ID of object to draw on top of eye sprite.  Does not replace eyes.
+
+Example:  Angry Brows
+
+
+
+mouthEmot
+
+ID of object to draw in place of mouth.  Drawn on top of head sprite.
+
+Example:  SickMouth
+
+
+
+otherEmot
+
+ID of object to draw on top of head sprite.
+
+Examples:  SickFace, Blush
+
+
+
+faceEmot
+
+ID of object to draw on top eye sprite (meant to cover whole face, under hair).
+
+Example:  Jaundice Head
+
+
+
+bodyEmot
+
+ID of object to draw on top of all body sprites, behind top of arm that is drawn
+in front of the body (meant to cover whole body, under clothing).
+
+Exmaple:  Jaundice Body
+
+
+
+headEmot
+
+ID of object to draw on top of everything, including hat.
+
+Example:  Love Heart
+
+
+
+extraAnimIndex
+
+Index of extra body animation slot, for gestures.  These are saved in the
+animations folder as files with 7xN for the slot ID, where N in the extra slot.
+
+
+
+Note that if any of the numbers on an emotionObjects line are not present, 
+the default is used, which is 0 for an object ID or -1 for the extraAnimIndex.
