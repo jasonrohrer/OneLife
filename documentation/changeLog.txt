@@ -4,6 +4,14 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 407   ????
+
+--Editor pickers now accept raw ID numbers in search boxes, pulling up
+  object/sprite that matches that ID.
+
+
+
+
 Version 406   2023-December-23
 
 --steamGateClient now handles uploading mods to Steam Workshop and

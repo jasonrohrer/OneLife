@@ -68,7 +68,16 @@ class OverlayPickable : public Pickable {
             return r->id;
             }
         
-
+        
+        
+        virtual void *getObjectFromID( int inID ) {
+            OverlayRecord *o = getOverlay( inID );
+            
+            return (void*) o;
+            }        
+        
+        
+        
         virtual char canDelete( int inID ) {
             return true;
             }

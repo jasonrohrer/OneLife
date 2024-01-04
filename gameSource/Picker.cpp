@@ -83,6 +83,25 @@ Picker::~Picker() {
 
 
 
+static int getIDFromSearch( const char *inSearch ) {
+            
+    int len = strlen( inSearch );
+    
+    for( int i=0; i<len; i++ ) {
+        if( ! isdigit( inSearch[i] ) ) {
+            return -1;
+            }
+        }
+    
+    int readInt = -1;
+    
+    sscanf( inSearch, "%d", &readInt );
+    
+    return readInt;
+    }
+
+
+
 void Picker::redoSearch( char inClearPageSkip ) {
     if( inClearPageSkip ) {
         mSkip = 0;
@@ -228,11 +247,38 @@ void Picker::redoSearch( char inClearPageSkip ) {
         }
 
     if( !multiTermDone ) {
+
+        char idSearchMatch = false;
         
-        mResults = mPickable->search( search, 
-                                      mSkip, 
-                                      PER_PAGE, 
-                                      &mNumResults, &numRemain );
+        int searchID = getIDFromSearch( search );
+            
+        if( searchID != -1 ) {
+            // directly searched for an id
+                
+            // see if there's a match
+            void *o = mPickable->getObjectFromID( searchID );
+                
+            if( o != NULL ) {
+                mResults = new void*[1];
+                    
+                mResults[0] = o;
+
+                mNumResults = 1;
+                numRemain = 0;
+                
+                idSearchMatch = true;
+                }
+            }
+        
+        
+        if( ! idSearchMatch ) {
+            // regular single-word search
+            
+            mResults = mPickable->search( search, 
+                                          mSkip, 
+                                          PER_PAGE, 
+                                          &mNumResults, &numRemain );
+            }
         }
     
     

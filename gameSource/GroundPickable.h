@@ -88,8 +88,29 @@ class GroundPickable : public Pickable {
             GroundSpriteSet *r = (GroundSpriteSet*)inObject;
             
             return r->biome;
+            }         
+        
+        
+        
+        virtual void *getObjectFromID( int inID ) {
+            SimpleVector<int> allBiomes;
+            
+            getAllBiomes( &allBiomes );
+            
+            for( int i=0; i<allBiomes.size(); i++ ) {
+                
+                int b = allBiomes.getElementDirect( i );
+                
+                if( groundSprites[ b ] != NULL ) {
+                    if( groundSprites[b]->biome == inID ) {
+                        return groundSprites[b];
+                        }
+                    }
+                }
+            return NULL;
             }
         
+
 
         virtual char canDelete( int inID ) {
             return false;

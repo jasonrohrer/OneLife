@@ -97,6 +97,14 @@ class ObjectPickable : public Pickable {
             return r->id;
             }
         
+        
+        
+        virtual void *getObjectFromID( int inID ) {
+            ObjectRecord *o = getObject( inID, true );
+            
+            return (void*) o;
+            }
+        
 
 
         virtual char canDelete( int inID ) {

@@ -67,7 +67,16 @@ class SpritePickable : public Pickable {
             
             return r->id;
             }
+                
         
+        
+        virtual void *getObjectFromID( int inID ) {
+            SpriteRecord *o = getSpriteRecord( inID );
+            
+            return (void*) o;
+            }
+
+
 
         virtual char canDelete( int inID ) {
             return ! isSpriteUsed( inID );
