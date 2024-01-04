@@ -1171,6 +1171,67 @@ void drawFrame( char inUpdate ) {
                         
                         loadingPhaseStartTime = Time::getCurrentTime();
 
+                        int numBlocks = initImportAddStart();
+                        loadingPage->setCurrentPhase( "IMPORT ADD" );
+                        loadingPage->setCurrentProgress( 0 );
+                        
+
+                        loadingStepBatchSize = numBlocks / 20;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 3: {
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initImportAddStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
+                    
+                    if( progress == 1.0 ) {
+                        initImportAddFinish();                        
+                        
+                        printf( "Finished import add in %f sec\n",
+                                Time::getCurrentTime() - 
+                                loadingPhaseStartTime );
+                        
+                        loadingPhaseStartTime = Time::getCurrentTime();
+
+                        int numBlocks = initImportReplaceStart();
+                        loadingPage->setCurrentPhase( "IMPORT REPLACE" );
+                        loadingPage->setCurrentProgress( 0 );
+                        
+
+                        loadingStepBatchSize = numBlocks / 20;
+                        
+                        if( loadingStepBatchSize < 1 ) {
+                            loadingStepBatchSize = 1;
+                            }
+
+                        loadingPhase ++;
+                        }
+                    break;
+                    }
+                case 4: {
+                    float progress;
+                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
+                        progress = initImportReplaceStep();
+                        loadingPage->setCurrentProgress( progress );
+                        }
+                    
+                    if( progress == 1.0 ) {
+                        initImportReplaceFinish();                        
+                        
+                        printf( "Finished import replace in %f sec\n",
+                                Time::getCurrentTime() - 
+                                loadingPhaseStartTime );
+                        
+                        loadingPhaseStartTime = Time::getCurrentTime();
 
                         char rebuilding;
                         
@@ -1197,7 +1258,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 3: {
+                case 5: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initAnimationBankStep();
@@ -1239,7 +1300,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 4: {
+                case 6: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initObjectBankStep();
@@ -1269,7 +1330,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 5: {
+                case 7: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initModLoaderStep();
@@ -1313,7 +1374,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 6: {
+                case 8: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initCategoryBankStep();
@@ -1357,7 +1418,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 7: {
+                case 9: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initTransBankStep();
@@ -1380,7 +1441,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 8: {
+                case 10: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initGroundSpritesStep();
