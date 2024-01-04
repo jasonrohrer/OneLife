@@ -105,7 +105,11 @@ static char *remapSounds( char *inUsageString ) {
 
     remapSounds( &u );    
     
-    return stringDuplicate( printSoundUsage( u ) );
+    char *usageString = stringDuplicate( printSoundUsage( u ) );
+
+    clearSoundUsage( &u );
+
+    return usageString;
     }
 
 
@@ -240,6 +244,10 @@ static char *replaceIDLine( char *inText, int inOldID, int inNewID ) {
                      newLine,
                      &found );
     
+    delete [] lineToReplace;
+    
+    delete [] newLine;
+
     delete [] inText;
                     
     return replacedString;
@@ -749,6 +757,7 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
 
                             objectLines[i] = autoSprintf( "sounds=%s",
                                                           newSoundsString );
+                            delete [] newSoundsString;
                             }
                         else  if( strstr( line, "spriteID=" ) == line ) {
                             // sprite line in object text
@@ -774,7 +783,7 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                     for( int i=0; i<numLines; i++ ) {
                         delete [] objectLines[i];
                         }
-                    delete objectLines;
+                    delete [] objectLines;
                     
                     File objectsDir( NULL, "objects" );
                 
@@ -1003,6 +1012,8 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                                                      newSoundString,
                                                      stuffAfterSpace );
                                     
+                                    delete [] newSoundString;
+                                    
                                     delete [] line;
                                     }
                                 }
@@ -1013,7 +1024,7 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                             for( int i=0; i<numLines; i++ ) {
                                 delete [] animLines[i];
                                 }
-                            delete animLines;
+                            delete [] animLines;
                             
                             File animDir( NULL, "animations" );
                 
