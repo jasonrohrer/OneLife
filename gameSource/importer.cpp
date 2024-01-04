@@ -822,6 +822,15 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                         delete objFile;
 
                         
+                        // clear cache
+                        File *cacheFile =
+                            objectsDir.getChildFile( "cache.fcz" );
+                        
+                        cacheFile->remove();
+                        
+                        delete cacheFile;
+
+                        
                         if( idMapLookup( &objectIDMap, id ) == NULL ) {
                             IDMapEntry e = { id, idToWrite };
                             objectIDMap.push_back( e );
@@ -1023,6 +1032,14 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                             delete animFile;
                     
                             delete [] newAnimString;
+
+                            // clear cache
+                            File *cacheFile = 
+                                animDir.getChildFile( "cache.fcz" );
+                            
+                            cacheFile->remove();
+                            
+                            delete cacheFile;
                             }
                         }
                     else {
