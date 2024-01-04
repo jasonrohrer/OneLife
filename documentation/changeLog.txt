@@ -6,6 +6,10 @@ http://onehouronelife.com/updateLog.php
 
 Version 407   ????
 
+--Editor now supports import_add and import_replace folders, for loading
+  exported OXZ files permanently into the local content data on disk.
+  Collaborators can now share content that they are working on with each other.
+
 --Editor pickers now accept raw ID numbers in search boxes, pulling up
   object/sprite that matches that ID.
 
