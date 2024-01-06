@@ -36,6 +36,7 @@ map.cpp \
 ../gameSource/GridPos.cpp \
 ../commonSource/fractalNoise.cpp \
 ../commonSource/sayLimit.cpp \
+../gameSource/settingsToggle.cpp \
 kissdb.cpp \
 lineardb3.cpp \
 lifeLog.cpp \

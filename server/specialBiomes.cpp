@@ -3,6 +3,7 @@
 #include "minorGems/util/stringUtils.h"
 
 #include "../gameSource/objectBank.h"
+#include "../gameSource/settingsToggle.h"
 
 #include "specialBiomes.h"
 #include "map.h"
@@ -111,6 +112,8 @@ char updateSpecialBiomes( int inNumPlayers ) {
             }
         }
     
+    useContentSettings();
+
     SimpleVector<char *> *parts = 
         SettingsManager::getSetting( "raceSpecialBiomes" );
 
@@ -143,6 +146,8 @@ char updateSpecialBiomes( int inNumPlayers ) {
     
     parts = 
         SettingsManager::getSetting( "specialBiomeSicknesses" );
+
+    useMainSettings();
 
     if( parts->size() % 3 == 0 ) {
         

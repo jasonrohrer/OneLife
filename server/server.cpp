@@ -37,6 +37,7 @@
 #include "../gameSource/animationBank.h"
 #include "../gameSource/categoryBank.h"
 #include "../commonSource/sayLimit.h"
+#include "../gameSource/settingsToggle.h"
 
 #include "lifeLog.h"
 #include "foodLog.h"
@@ -17753,11 +17754,14 @@ static void setRefuseFoodEmote( LiveObject *hitPlayer ) {
         return;
         }
     
+    useContentSettings();
     int newEmotIndex =
         SettingsManager::
         getIntSetting( 
             "refuseFoodEmotionIndex",
             -1 );
+    useMainSettings();
+    
     if( newEmotIndex != -1 ) {
         newEmotPlayerIDs.push_back( 
             hitPlayer->id );
@@ -17900,7 +17904,8 @@ void removeOwnership( int inX, int inY ) {
 
 
 int main() {
-
+    useMainSettings();
+    
     if( checkReadOnly() ) {
         printf( "File system read-only.  Server exiting.\n" );
         return 1;
@@ -18111,7 +18116,7 @@ int main() {
                                              "CURSE MY BABY" );
 
 
-
+    useContentSettings();
     
     killEmotionIndex =
         SettingsManager::getIntSetting( "killEmotionIndex", 2 );
@@ -18132,6 +18137,8 @@ int main() {
 
     ghostEmotionIndex =
         SettingsManager::getIntSetting( "ghostEmotionIndex", 2 );
+    
+    useMainSettings();
 
 
     FILE *f = fopen( "curseWordList.txt", "r" );
@@ -20513,10 +20520,13 @@ int main() {
                         if( nextPlayer->heldByOther ) {
                             adult = getLiveObject( holdingAdultID );
                             }
-
+                        
+                        useContentSettings();
+                        
                         int babyBonesID = 
                             SettingsManager::getIntSetting( 
                                 "babyBones", -1 );
+                        useMainSettings();
                         
                         if( adult != NULL ) {
                             
@@ -20631,10 +20641,14 @@ int main() {
                             }
                         else {
                             
+                            useContentSettings();
+                            
                             int babyBonesGroundID = 
                                 SettingsManager::getIntSetting( 
                                     "babyBonesGround", -1 );
                             
+                            useMainSettings();
+
                             if( babyBonesGroundID != -1 ) {
                                 nextPlayer->customGraveID = babyBonesGroundID;
                                 }
@@ -22026,11 +22040,15 @@ int main() {
                                         const char *speechWord = NULL;
                                         
                                         if( homeEnd == -1 ) {
+                                            
+                                            useContentSettings();
                                             newEmotIndex =
                                                 SettingsManager::
                                                 getIntSetting( 
                                                     "homesickEmotionIndex", 
                                                     -1 );
+                                            useMainSettings();
+                                            
                                             speechWord = "HOMESICK";
                                             // don't enforce the every-homesick
                                             // then homesick outside
@@ -22044,11 +22062,14 @@ int main() {
                                             homeEnd == 1 ||
                                             ( ! nextPlayer->everHomesick &&
                                               homeEnd == 0 ) ) {
+                                            
+                                            useContentSettings();
                                             newEmotIndex =
                                                 SettingsManager::
                                                 getIntSetting( 
                                                     "homeEmotionIndex", 
                                                     -1 );
+                                            useMainSettings();
                                             
                                             if( homeEnd == 0 ) {
                                                 // a nomad with no homeland
@@ -26234,6 +26255,8 @@ int main() {
                         // ignore new EMOT requres from player if emot
                         // frozen
                         
+                        useContentSettings();
+                        
                         if( m.i <= SettingsManager::getIntSetting( 
                                 "allowedEmotRange", 6 ) ) {
                             
@@ -26300,6 +26323,8 @@ int main() {
                                 }
                             delete forbidden;
                             }
+                        
+                        useMainSettings();
                         } 
                     }
                 
@@ -28972,9 +28997,11 @@ int main() {
                 
                 // next send info about valley lines
 
+                useContentSettings();
                 int valleySpacing = 
                     SettingsManager::getIntSetting( "valleySpacing", 40 );
-                                  
+                useMainSettings();
+                
                 char *valleyMessage = 
                     autoSprintf( "VS\n"
                                  "%d %d\n#",
