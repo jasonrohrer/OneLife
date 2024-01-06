@@ -29,6 +29,7 @@ mkdir $baseFolder/animations
 mkdir $baseFolder/music
 mkdir $baseFolder/sounds
 mkdir $baseFolder/ground
+mkdir $baseFolder/contentSettings
 
 mkdir $baseFolder/mods
 mkdir $baseFolder/steamModUploads
@@ -59,6 +60,7 @@ cp ../../OneLifeData7/animations/* $baseFolder/animations
 cp ../../OneLifeData7/music/* $baseFolder/music
 cp ../../OneLifeData7/sounds/* $baseFolder/sounds
 cp ../../OneLifeData7/ground/* $baseFolder/ground
+cp ../../OneLifeData7/contentSettings/* $baseFolder/contentSettings
 
 
 

@@ -83,7 +83,7 @@ cp ../steam/windows/steam_api.dll steamLatest/
 cp ../steam/windows/steamGateClient.exe steamLatest/
 
 cd steamLatest
-rm -r animations categories ground groundTileCache music objects reverbCache sounds sprites transitions dataVersionNumber.txt
+rm -r animations categories ground groundTileCache music objects reverbCache sounds sprites transitions contentSettings dataVersionNumber.txt
 
 # Steam users cannot access files to report wild bugs easily
 echo -n 0 > settings/reportWildBugToUser.ini
