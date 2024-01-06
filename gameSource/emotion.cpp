@@ -1,5 +1,6 @@
 #include "emotion.h"
 #include "liveObjectSet.h"
+#include "settingsToggle.h"
 
 #include "minorGems/util/SettingsManager.h"
 #include "minorGems/util/SimpleVector.h"
@@ -10,7 +11,11 @@ SimpleVector<Emotion> emotions;
 
 
 void initEmotion() {
+    useContentSettings();
+    
     char *cont = SettingsManager::getSettingContents( "emotionWords", "" );
+    
+    useMainSettings();
     
     if( strcmp( cont, "" ) == 0 ) {
         delete [] cont;
@@ -35,8 +40,12 @@ void initEmotion() {
 
     // now read emotion objects
 
+    useContentSettings();
+    
     cont = SettingsManager::getSettingContents( "emotionObjects", "" );
     
+    useMainSettings();
+
     if( strcmp( cont, "" ) == 0 ) {
         delete [] cont;
         return;    

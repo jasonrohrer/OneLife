@@ -1,4 +1,5 @@
 #include "ageControl.h"
+#include "settingsToggle.h"
 
 #include <math.h>
 
@@ -16,6 +17,9 @@ static double oldHeadForwardFactor = 2;
 
 
 void initAgeControl() {
+
+    useContentSettings();
+    
     babyHeadDownFactor = 
         SettingsManager::getFloatSetting( "babyHeadDownFactor", 0.6 );
     
@@ -28,6 +32,7 @@ void initAgeControl() {
     oldHeadForwardFactor = 
         SettingsManager::getFloatSetting( "oldHeadForwardFactor", 2 );
     
+    useMainSettings();
     }
 
 

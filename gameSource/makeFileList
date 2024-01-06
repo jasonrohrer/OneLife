@@ -77,6 +77,7 @@ ServicesPage.cpp \
 photoCache.cpp \
 exporter.cpp \
 importer.cpp \
+settingsToggle.cpp \
 
 
 
