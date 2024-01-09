@@ -67,6 +67,44 @@ class Pickable {
         // not destroyed by caller
         virtual const char *getText( void *inObject ) = 0;
         
+
+
+        
+        // for field=value search, default implementations (where
+        // such search isn't supported) are defined here.
+        
+        
+        // for implementing field=value search, like mapp=0.2
+        // inFieldName will be all lower case
+        virtual char isValidField( const char *inFieldName ) {
+            return false;
+            }
+        
+        
+
+        // searches for objects with field matching value
+        // inLessEqualGreater is -1, 0, or 1 if we want to find
+        // objects that have fields that are less than, equal to, or greater
+        // than inFieldValue, respectively.
+        virtual void **search( const char *inFieldName,
+                               float inFieldValue,
+                               int inLessEqualGreater,
+                               int inNumToSkip, 
+                               int inNumToGet, 
+                               int *outNumResults, int *outNumRemaining ) {
+            // note that in default implementation, we should
+            // never be called, because isValidField will always
+            // return false
+            void **returnArray = new void *[0];
+            
+            *outNumResults = 0;
+            *outNumRemaining = 0;
+            
+            return returnArray;
+            };
+
+        
+
     protected:
         
         // sub classes return their static stacks

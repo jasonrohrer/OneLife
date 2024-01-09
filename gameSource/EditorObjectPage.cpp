@@ -87,30 +87,30 @@ EditorObjectPage::EditorObjectPage()
           mContainSizeField( smallFont, 
                              250,  -120, 4,
                              false,
-                             "Contain Size", "0123456789.", NULL ),
+                             "ContainSize", "0123456789.", NULL ),
           mSlotSizeField( smallFont, 
                           -280,  -230, 4,
                           false,
-                          "Slot Size", "0123456789.", NULL ),
+                          "SlotSize", "0123456789.", NULL ),
           mSlotTimeStretchField( smallFont, 
                                  -155,  -110, 4,
                                  false,
-                                 "Tm Strch", "0123456789.", NULL ),
+                                 "TmStrch", "0123456789.", NULL ),
           mSlotsLockedCheckbox( -260, -200, 2 ),
           mNoFlipCheckbox( 460, -260, 2 ),
           mSideAccessCheckbox( 460, -240, 2 ),
           mDeadlyDistanceField( smallFont, 
                                 150,  -220, 4,
                                 false,
-                                "Deadly Distance", "0123456789", NULL ),
+                                "DeadlyDistance", "0123456789", NULL ),
           mUseDistanceField( smallFont, 
                              150,  -190, 4,
                              false,
-                             "Use Dist", "0123456789", NULL ),
+                             "UseDist", "0123456789", NULL ),
           mMinPickupAgeField( smallFont, 
                               300,  -220, 4,
                               false,
-                              "Pickup Age", "0123456789.", NULL ),
+                              "PickupAge", "0123456789.", NULL ),
           mRaceField( smallFont, 
                       150, -120, 2,
                       true,
@@ -173,7 +173,7 @@ EditorObjectPage::EditorObjectPage()
           mNumUsesField( smallFont, 
                          258,  110, 2,
                          false,
-                         "# Use", "0123456789", NULL ),
+                         "#Use", "0123456789", NULL ),
           mUseChanceField( smallFont, 
                            300,  110, 4,
                            false,
@@ -4143,12 +4143,12 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     if( mNoFlipCheckbox.isVisible() ) {
         pos = mNoFlipCheckbox.getPosition();
         pos.x -= checkboxSep;
-        smallFont->drawString( "No Flip", pos, alignRight );
+        smallFont->drawString( "NoFlip", pos, alignRight );
         }
     if( mSideAccessCheckbox.isVisible() ) {
         pos = mSideAccessCheckbox.getPosition();
         pos.x -= checkboxSep;
-        smallFont->drawString( "Side Access", pos, alignRight );
+        smallFont->drawString( "SideAccess", pos, alignRight );
         }
 
     
@@ -4222,7 +4222,7 @@ void EditorObjectPage::draw( doublePair inViewCenter,
     if( mFloorHuggingCheckbox.isVisible() ) {
         pos = mFloorHuggingCheckbox.getPosition();
         pos.x -= checkboxSep;
-        smallFont->drawString( "Hug Floor", pos, alignRight );
+        smallFont->drawString( "HugFloor", pos, alignRight );
         }
     
 

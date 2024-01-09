@@ -48,3 +48,51 @@ hits or misses.
 
 Last Use on the ACTOR side indicates that NEW TARGET is what the victim
 ends up holding if the murder connects (example:  wound blood).
+
+
+
+==Editor Pickers==
+
+Normally, the search box in a picker matches strings in an item's description.
+Multiple terms can be separated by spaces, in which case only items matching
+all the terms are shown.
+
+Typing "." in the search box (a single period) shows a stack of recently-picked
+items.
+
+Searches for which you actually pick something, by clicking on it, are
+added to the search history, accessible with the UP and DOWN arrow keys.
+
+When clicking the Next and Prev buttons to page through results, holding CTRL
+pages by 25 at a time.  Holding SHIFT pages by 125 at a time, and holding both
+CTRL and SHIFT together pages by 625 at a time.
+
+You can also find an item by its numerical ID by typing the ID in the search
+box.
+
+For the Object pickers, many of the fields and checkboxes can be used as a
+search term to match Objects with those particular values.
+
+Only one field or checkbox can be named (no space are allowed), and you can
+search for Objects with fields that are less than, greater than, or equal
+to the value you supply.
+
+For example, searching for:
+
+ food>10
+
+will find all Objects with a food value greater than 10.  Searching for:
+
+ food=8
+
+will find all Objects with a food value equal to 8.  Searching for:
+
+ MapP>0
+
+will find all naturally-occurring objects
+
+For checkboxes, 1 means checked, and 0 means not checked.  So for example:
+
+ person=1
+
+will find all person objects.

@@ -102,6 +102,79 @@ static int getIDFromSearch( const char *inSearch ) {
 
 
 
+
+// field name returned, or NULL on failure, destroyed by caller
+static char *parseFieldSearch( const char *inSearch,
+                               float *outFieldValue,
+                               int *outLessEqualGreater ) {
+    
+    char *searchWorking = stringToLowerCase( inSearch );
+    
+    char *splitLoc = NULL;
+    
+    splitLoc = strstr( searchWorking, "<" );
+    
+    if( splitLoc != NULL ) {
+        *outLessEqualGreater = -1;
+        }
+    
+    if( splitLoc == NULL ) {
+        splitLoc = strstr( searchWorking, "=" );
+    
+        if( splitLoc != NULL ) {
+            *outLessEqualGreater = 0;
+            }
+        }
+    
+    if( splitLoc == NULL ) {
+        splitLoc = strstr( searchWorking, ">" );
+    
+        if( splitLoc != NULL ) {
+            *outLessEqualGreater = 1;
+            }
+        }
+    
+    
+    if( splitLoc == NULL ) {
+        delete [] searchWorking;
+        return NULL;
+        }
+    
+    splitLoc[0] = '\0';
+    
+    
+
+    char *valueLoc = &( splitLoc[1] );
+
+    if( valueLoc[0] >= 'a' &&
+        valueLoc[0] <= 'z' ) {
+        // alphabet character
+
+        // convert it to number in [1, 2, 3, ... ]
+        
+        *outFieldValue = valueLoc[0] - 'a' + 1;
+        }
+    else {
+        // value is a number?
+        int numRead = sscanf( valueLoc, "%f", outFieldValue );
+        
+        if( numRead != 1 ) {
+            delete [] searchWorking;
+            return NULL;
+            }
+        }
+
+    char *fieldName = stringDuplicate( searchWorking );
+    
+    delete [] searchWorking;
+    
+    
+    return fieldName;
+    }
+
+
+
+
 void Picker::redoSearch( char inClearPageSkip ) {
     if( inClearPageSkip ) {
         mSkip = 0;
@@ -270,8 +343,58 @@ void Picker::redoSearch( char inClearPageSkip ) {
                 }
             }
         
+
+        char fieldSearch = false;
         
+
         if( ! idSearchMatch ) {
+            // look for term=value
+            //    or    term>value
+            //    or    term<value
+            //
+            // With no spaces.
+            
+            // Note that we're dodging the >global tag, which
+            // is already used for implementing radio communications,
+            // but there's a space before that
+            
+            if( strstr( search, " " ) == NULL
+                &&
+                ( strstr( search, "=" ) != NULL
+                  ||
+                  strstr( search, ">" ) != NULL
+                  ||
+                  strstr( search, "<" ) != NULL ) ) {
+                
+
+                float fieldValue;
+                int lessEqualGreater;
+                
+                char *fieldName = parseFieldSearch( search,
+                                                    &fieldValue,
+                                                    &lessEqualGreater );
+                
+                if( fieldName != NULL ) {
+                    if( mPickable->isValidField( fieldName ) ) {
+                        
+                        mResults = mPickable->search( fieldName,
+                                                      fieldValue,
+                                                      lessEqualGreater,
+                                                      mSkip, 
+                                                      PER_PAGE, 
+                                                      &mNumResults, 
+                                                      &numRemain );
+                        fieldSearch = true;
+                        }
+                    delete [] fieldName;
+                    }
+                }
+            }
+        
+            
+
+        
+        if( ! idSearchMatch && ! fieldSearch ) {
             // regular single-word search
             
             mResults = mPickable->search( search, 

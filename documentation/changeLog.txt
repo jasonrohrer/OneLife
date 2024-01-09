@@ -17,6 +17,10 @@ Version 407   ????
   on CTRL+SHIFT.  You can now page through all official OHOL items in 7 clicks,
   where it used to be 35 clicks.  Part of #998
 
+--Editor Object pickers now allow you to search for field<=>value, like MapP>0
+  or person=1 or food>16.  Most of the fields and checkboxes from the Object
+  editor are supported by name.  Part of #998
+
 
 
 Version 406   2023-December-23
