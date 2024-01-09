@@ -13,6 +13,9 @@ Version 407   ????
 --Editor pickers now accept raw ID numbers in search boxes, pulling up
   object/sprite that matches that ID.
 
+--Editor pickers NEXT/PREV buttons now jump 25 on CTRL, 125 on SHIFT, and 625
+  on CTRL+SHIFT.  You can now page through all official OHOL items in 7 clicks,
+  where it used to be 35 clicks.  Part of #998
 
 
 

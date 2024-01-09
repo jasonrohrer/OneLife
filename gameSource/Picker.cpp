@@ -365,7 +365,7 @@ void Picker::actionPerformed( GUIComponent *inTarget ) {
         skipAmount *= 5;
         }
     if( isShiftKeyDown() ) {
-        skipAmount *= 5;
+        skipAmount *= 25;
         }
     
     if( inTarget == &mNextButton ) {
