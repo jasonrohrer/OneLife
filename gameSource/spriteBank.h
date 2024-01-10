@@ -110,6 +110,10 @@ char *getSpriteBankLoadFailure();
 SpriteRecord *getSpriteRecord( int inID );
 
 
+SpriteRecord **getAllSprites( int *outNumResults );
+
+
+
 char getUsesMultiplicativeBlending( int inID );
 
 char getNoFlip( int inID );

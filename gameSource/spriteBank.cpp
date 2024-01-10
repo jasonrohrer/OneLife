@@ -950,6 +950,23 @@ SpriteRecord *getSpriteRecord( int inID ) {
 
 
 
+SpriteRecord **getAllSprites( int *outNumResults ) {
+    SimpleVector<SpriteRecord *> records;
+    
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            
+            records.push_back( idMap[i] );
+            }
+        }
+    
+    *outNumResults = records.size();
+    
+    return records.getElementArray();
+    }
+
+
+
 char *getSpriteTag( int inID ) {
     SpriteRecord *r = getSpriteRecord( inID );
     

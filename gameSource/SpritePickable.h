@@ -97,6 +97,50 @@ class SpritePickable : public Pickable {
             
             return r->tag;
             }
+        
+
+
+        virtual float getItemFieldValue( void *inItem,
+                                         const char *inFieldName,
+                                         char *outFound ) {
+            *outFound = true;
+            
+            // filled with garbage undefined values, but that's okay
+            SpriteRecord defaultS;
+            
+            SpriteRecord *inS = (SpriteRecord*)inItem;
+
+            if( inS == NULL ) {
+                inS = &defaultS;
+                }
+
+            if( strcmp( inFieldName, "solid" ) == 0 ) {
+                return ! inS->multiplicativeBlend;
+                }
+            if( strcmp( inFieldName, "w" ) == 0 ) {
+                return inS->w;
+                }
+            if( strcmp( inFieldName, "h" ) == 0 ) {
+                return inS->h;
+                }
+            if( strcmp( inFieldName, "visiblew" ) == 0 ) {
+                return inS->visibleW;
+                }
+            if( strcmp( inFieldName, "visibleh" ) == 0 ) {
+                return inS->visibleH;
+                }
+            
+            *outFound = false;
+            return 0;
+            }
+
+        
+
+        virtual void **getAllItemsForFieldSearch( int *outNumItems ) {
+            SpriteRecord **returnArray = getAllSprites( outNumItems );
+            
+            return (void**)returnArray;
+            }
 
         
     protected:

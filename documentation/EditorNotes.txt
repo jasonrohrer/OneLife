@@ -96,3 +96,23 @@ For checkboxes, 1 means checked, and 0 means not checked.  So for example:
  person=1
 
 will find all person objects.
+
+
+
+Sprite pickers are also field=value searchable, but Sprites have a more
+limited number of fields:
+
+solid
+w
+h
+visibleW
+visibleH
+
+To find all non-solid (transparent) sprites, search for:
+
+solid=0
+
+
+To find all very sprites, search for:
+
+visibleW>400
