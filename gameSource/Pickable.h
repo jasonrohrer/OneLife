@@ -70,9 +70,15 @@ class Pickable {
 
 
         
-        // for field=value search, default implementations (where
+        // for implementing field=value search, like mapp=0.2
+        
+        // default implementations (where
         // such search isn't supported) are defined here.
         
+        
+        
+        // For field search to work, a subclass MUST implement this:
+        //
         // inItem can be NULL
         // in that case, function can return an undefined value
         // But passing in NULL for inItem can still be used to check whether
@@ -85,19 +91,10 @@ class Pickable {
             return 0;
             }
         
-
-
-        // for implementing field=value search, like mapp=0.2
-        // inFieldName will be all lower case
-        virtual char isValidField( const char *inFieldName ) {
-            char found = false;
-            
-            getItemFieldValue( NULL, inFieldName, &found );
-            
-            return found;
-            }
         
-
+        
+        // For field search to work, a subclass MUST implement this:
+        //
         // return array destroyed by caller
         // 
         // default implementation, for Pickable implementations that
@@ -109,7 +106,24 @@ class Pickable {
             return returnArray;
             }
         
+
+
+
         
+        // these two implementation functions are meant to work for
+        // field=value search on all item types
+        
+
+        // inFieldName will be all lower case
+        virtual char isValidField( const char *inFieldName ) {
+            char found = false;
+            
+            getItemFieldValue( NULL, inFieldName, &found );
+            
+            return found;
+            }
+
+
 
         // searches for objects with field matching value
         // inLessEqualGreater is -1, 0, or 1 if we want to find
