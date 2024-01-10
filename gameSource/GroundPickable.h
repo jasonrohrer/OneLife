@@ -92,7 +92,7 @@ class GroundPickable : public Pickable {
         
         
         
-        virtual void *getObjectFromID( int inID ) {
+        virtual void *getItemFromID( int inID ) {
             SimpleVector<int> allBiomes;
             
             getAllBiomes( &allBiomes );

@@ -32,7 +32,7 @@ class Pickable {
 
         // returns pointer to pickable object that matches inID
         // or NULL if no match
-        virtual void *getObjectFromID( int inID ) = 0;
+        virtual void *getItemFromID( int inID ) = 0;
         
 
         virtual char canDelete( int inID ) = 0;

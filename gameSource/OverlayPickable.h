@@ -70,7 +70,7 @@ class OverlayPickable : public Pickable {
         
         
         
-        virtual void *getObjectFromID( int inID ) {
+        virtual void *getItemFromID( int inID ) {
             OverlayRecord *o = getOverlay( inID );
             
             return (void*) o;

@@ -70,7 +70,7 @@ class SpritePickable : public Pickable {
                 
         
         
-        virtual void *getObjectFromID( int inID ) {
+        virtual void *getItemFromID( int inID ) {
             SpriteRecord *o = getSpriteRecord( inID );
             
             return (void*) o;
