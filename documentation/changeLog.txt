@@ -33,6 +33,20 @@ Version 407   ????
 
 
 
+Server Fixes:
+
+--Added new minActivePlayersForNearPop setting (defaults to 15) so that
+  nearPop-limited actions, like endtower base, can only happen on servers with
+  at least 15 players, preventing players from preparing an apocalypse on an
+  empty server, only to trigger it (which was already limited to a min of 15
+  players) during a population boom.  Fixes #1017
+
+
+
+
+
+
+
 Version 406   2023-December-23
 
 --steamGateClient now handles uploading mods to Steam Workshop and

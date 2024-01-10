@@ -16391,14 +16391,36 @@ char isNearPopBlocked( LiveObject *inPlayer,
             }
         }
 
+
+    if( totalCount == 0 ) {
+        // can't compute fraction, no eligible players (all in tutorial or
+        // d-town?)
+        
+        // block action
+        return true;
+        }
+    
     
     float fractionNear = (float)countNear / (float)totalCount;
     
     if( fractionNear < o->nearPopFraction ) {
+        // fraction near to low, block action
         return true;
         }
     
-    // else enough of the population are close, not blocked
+    // else enough of the population are close...
+
+    // ...but are there enough people total?
+
+    if( totalCount <
+        SettingsManager::getIntSetting( "minActivePlayersForNearPop", 15 ) ) {
+        
+        return true;
+        }
+    
+    
+    // enough people total, and a big enough fraction of them are near enough
+    // action not blocked
     return false;
     }
 
