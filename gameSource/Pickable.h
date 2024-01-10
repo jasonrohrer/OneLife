@@ -25,10 +25,10 @@ class Pickable {
         
         
 
-        virtual void draw( void *inObject, doublePair inPos ) = 0;
+        virtual void draw( void *inItem, doublePair inPos ) = 0;
 
 
-        virtual int getID( void *inObject ) = 0;
+        virtual int getID( void *inItem ) = 0;
 
         // returns pointer to pickable object that matches inID
         // or NULL if no match
@@ -42,7 +42,7 @@ class Pickable {
             }
         
 
-        virtual FloatColor getTextColor( void *inObject ) {
+        virtual FloatColor getTextColor( void *inItem ) {
             FloatColor c = { 0, 0, 0, 1 };
             return c;
             }
@@ -65,7 +65,7 @@ class Pickable {
         
         
         // not destroyed by caller
-        virtual const char *getText( void *inObject ) = 0;
+        virtual const char *getText( void *inItem ) = 0;
         
 
 

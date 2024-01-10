@@ -45,8 +45,8 @@ class OverlayPickable : public Pickable {
         
 
 
-        virtual void draw( void *inObject, doublePair inPos ) {
-            OverlayRecord *r = (OverlayRecord*)inObject;
+        virtual void draw( void *inItem, doublePair inPos ) {
+            OverlayRecord *r = (OverlayRecord*)inItem;
             
             int maxD = r->image->getHeight();
             int w = r->image->getWidth();
@@ -62,8 +62,8 @@ class OverlayPickable : public Pickable {
 
 
 
-        virtual int getID( void *inObject ) {
-            OverlayRecord *r = (OverlayRecord*)inObject;
+        virtual int getID( void *inItem ) {
+            OverlayRecord *r = (OverlayRecord*)inItem;
             
             return r->id;
             }
@@ -90,8 +90,8 @@ class OverlayPickable : public Pickable {
         
         
 
-        virtual const char *getText( void *inObject ) {
-            OverlayRecord *r = (OverlayRecord*)inObject;
+        virtual const char *getText( void *inItem ) {
+            OverlayRecord *r = (OverlayRecord*)inItem;
             
             return r->tag;
             }

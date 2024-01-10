@@ -180,8 +180,8 @@ class ObjectPickable : public Pickable {
         
 
 
-        virtual void draw( void *inObject, doublePair inPos ) {
-            ObjectRecord *r = (ObjectRecord*)inObject;
+        virtual void draw( void *inItem, doublePair inPos ) {
+            ObjectRecord *r = (ObjectRecord*)inItem;
 
             
             int maxD = getMaxDiameter( r );
@@ -205,8 +205,8 @@ class ObjectPickable : public Pickable {
 
 
 
-        virtual int getID( void *inObject ) {
-            ObjectRecord *r = (ObjectRecord*)inObject;
+        virtual int getID( void *inItem ) {
+            ObjectRecord *r = (ObjectRecord*)inItem;
             
             return r->id;
             }
@@ -229,10 +229,10 @@ class ObjectPickable : public Pickable {
             }
 
 
-        virtual FloatColor getTextColor( void *inObject ) {
+        virtual FloatColor getTextColor( void *inItem ) {
             FloatColor c = { 0, 0, 0, 1 };
 
-            ObjectRecord *r = (ObjectRecord*)inObject;
+            ObjectRecord *r = (ObjectRecord*)inItem;
             
             if( r->mapChance > 0 ) {
                 c.g = 0.5;
@@ -265,8 +265,8 @@ class ObjectPickable : public Pickable {
 
 
 
-        virtual const char *getText( void *inObject ) {
-            ObjectRecord *r = (ObjectRecord*)inObject;
+        virtual const char *getText( void *inItem ) {
+            ObjectRecord *r = (ObjectRecord*)inItem;
             
             return r->description;
             }

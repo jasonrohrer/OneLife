@@ -21,6 +21,11 @@ Version 407   ????
   or person=1 or food>16.  Most of the fields and checkboxes from the Object
   editor are supported by name.  Part of #998
 
+--Refactored Pickable.h code to use inItem instead of inObject to avoid
+  confusion (because Objects are only one type of pickable).
+
+
+
 
 
 Version 406   2023-December-23

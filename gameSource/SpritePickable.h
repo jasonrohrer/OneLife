@@ -44,8 +44,8 @@ class SpritePickable : public Pickable {
         
 
 
-        virtual void draw( void *inObject, doublePair inPos ) {
-            SpriteRecord *r = (SpriteRecord*)inObject;
+        virtual void draw( void *inItem, doublePair inPos ) {
+            SpriteRecord *r = (SpriteRecord*)inItem;
 
             // don't access r->sprite directly here
             // getSprite needed to invoke dynamic sprite loading
@@ -62,8 +62,8 @@ class SpritePickable : public Pickable {
 
 
 
-        virtual int getID( void *inObject ) {
-            SpriteRecord *r = (SpriteRecord*)inObject;
+        virtual int getID( void *inItem ) {
+            SpriteRecord *r = (SpriteRecord*)inItem;
             
             return r->id;
             }
@@ -92,8 +92,8 @@ class SpritePickable : public Pickable {
         
         
 
-        virtual const char *getText( void *inObject ) {
-            SpriteRecord *r = (SpriteRecord*)inObject;
+        virtual const char *getText( void *inItem ) {
+            SpriteRecord *r = (SpriteRecord*)inItem;
             
             return r->tag;
             }
