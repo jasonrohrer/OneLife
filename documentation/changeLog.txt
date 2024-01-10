@@ -24,7 +24,7 @@ Version 407   ????
 --Refactored Pickable.h code to use inItem instead of inObject to avoid
   confusion (because Objects are only one type of pickable).
 
---Editor Sprite pickers now allow filed<=>value search, like solid=0 or
+--Editor Sprite pickers now allow field<=>value search, like solid=0 or
   visibleW>200.  Part of #998
 
 
