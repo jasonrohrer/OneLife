@@ -329,7 +329,7 @@ void Picker::redoSearch( char inClearPageSkip ) {
             // directly searched for an id
                 
             // see if there's a match
-            void *o = mPickable->getObjectFromID( searchID );
+            void *o = mPickable->getItemFromID( searchID );
                 
             if( o != NULL ) {
                 mResults = new void*[1];
