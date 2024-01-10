@@ -73,11 +73,40 @@ class Pickable {
         // for field=value search, default implementations (where
         // such search isn't supported) are defined here.
         
+        // inItem can be NULL
+        // in that case, function can return an undefined value
+        // But passing in NULL for inItem can still be used to check whether
+        // a field name is a valid one (outFound should still be set)
+        virtual float getItemFieldValue( void *inItem,
+                                         const char *inFieldName,
+                                         char *outFound ) {
+            // no fields are valid by default
+            *outFound = false;
+            return 0;
+            }
         
+
+
         // for implementing field=value search, like mapp=0.2
         // inFieldName will be all lower case
         virtual char isValidField( const char *inFieldName ) {
-            return false;
+            char found = false;
+            
+            getItemFieldValue( NULL, inFieldName, &found );
+            
+            return found;
+            }
+        
+
+        // return array destroyed by caller
+        // 
+        // default implementation, for Pickable implementations that
+        // have no field search, returns an empty array
+        virtual void **getAllItemsForFieldSearch( int *outNumItems ) {
+            void **returnArray = new void*[0];
+            *outNumItems = 0;
+            
+            return returnArray;
             }
         
         
@@ -92,16 +121,62 @@ class Pickable {
                                int inNumToSkip, 
                                int inNumToGet, 
                                int *outNumResults, int *outNumRemaining ) {
-            // note that in default implementation, we should
-            // never be called, because isValidField will always
-            // return false
-            void **returnArray = new void *[0];
             
-            *outNumResults = 0;
-            *outNumRemaining = 0;
+            int numItems;
+            void **allItems =
+                getAllItemsForFieldSearch( &numItems );
+            
+            SimpleVector<void*> matches;
+            
+            int matchIndex = 0;
+            
+            int remaining = 0;
+
+            for( int i=numItems - 1; i>=0; i-- ) {
+            
+                char found;
+                float thisValue = 
+                    getItemFieldValue( allItems[i], inFieldName, &found );
+                
+                if( ! found ) {
+                    continue;
+                    }
+
+                if( ( inLessEqualGreater == -1 &&
+                      thisValue < inFieldValue )
+                    ||
+                    // close enough for equals
+                    ( inLessEqualGreater == 0 &&
+                      fabs( thisValue - inFieldValue ) < 0.0001 )
+                    ||
+                    ( inLessEqualGreater == 1 &&
+                      thisValue > inFieldValue ) ) {
+                    
+                    if( matchIndex >= inNumToSkip ) {
+                        if( matches.size() < inNumToGet ) {
+                            matches.push_back( allItems[i] );
+                            }
+                        else {
+                            remaining++;
+                            }
+                        }
+
+                    matchIndex ++;
+                    }
+                }
+            
+            delete [] allItems;
+
+            int numResults = matches.size();
+
+
+            void **returnArray = matches.getElementArray();
+            
+            *outNumResults = numResults;
+            *outNumRemaining = remaining;
             
             return returnArray;
-            };
+            }
 
         
 

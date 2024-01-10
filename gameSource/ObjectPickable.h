@@ -36,115 +36,7 @@ static char deletePossible = false;
 
 
 
-static float getObjectFieldValue( ObjectRecord *inO,
-                                  const char *inFieldName ) {
-    if( strcmp( inFieldName, "mapp" ) == 0 ) {
-        return inO->mapChance;
-        }
-    if( strcmp( inFieldName, "heat" ) == 0 ) {
-        return inO->heatValue;
-        }
-    if( strcmp( inFieldName, "r" ) == 0 ) {
-        return inO->rValue;
-        }
-    if( strcmp( inFieldName, "food" ) == 0 ) {
-        return inO->foodValue;
-        }
-    if( strcmp( inFieldName, "speed" ) == 0 ) {
-        return inO->speedMult;
-        }
-    if( strcmp( inFieldName, "slots" ) == 0 ) {
-        return inO->numSlots;
-        }
-    if( strcmp( inFieldName, "slotsize" ) == 0 ) {
-        return inO->slotSize;
-        }
-    if( strcmp( inFieldName, "locked" ) == 0 ) {
-        return inO->slotsLocked;
-        }
-    if( strcmp( inFieldName, "tmstrch" ) == 0 ) {
-        return inO->slotTimeStretch;
-        }
-    if( strcmp( inFieldName, "usedist" ) == 0 ) {
-        return inO->useDistance;
-        }
-    if( strcmp( inFieldName, "deadlydist" ) == 0 ) {
-        return inO->deadlyDistance;
-        }
-    if( strcmp( inFieldName, "pickupage" ) == 0 ) {
-        return inO->minPickupAge;
-        }
-    if( strcmp( inFieldName, "bottom" ) == 0 ) {
-        return inO->clothing == 'b';
-        }
-    if( strcmp( inFieldName, "backpack" ) == 0 ) {
-        return inO->clothing == 'p';
-        }
-    if( strcmp( inFieldName, "shoe" ) == 0 ) {
-        return inO->clothing == 's';
-        }
-    if( strcmp( inFieldName, "tunic" ) == 0 ) {
-        return inO->clothing == 't';
-        }
-    if( strcmp( inFieldName, "hat" ) == 0 ) {
-        return inO->clothing == 'h';
-        }
-    if( strcmp( inFieldName, "#use" ) == 0 ) {
-        return inO->numUses;
-        }
-    if( strcmp( inFieldName, "handheld" ) == 0 ) {
-        return inO->heldInHand;
-        }
-    if( strcmp( inFieldName, "rideable" ) == 0 ) {
-        return inO->rideable;
-        }
-    if( strcmp( inFieldName, "blocking" ) == 0 ) {
-        return inO->blocksWalking;
-        }
-    if( strcmp( inFieldName, "home" ) == 0 ) {
-        return inO->homeMarker;
-        }
-    if( strcmp( inFieldName, "containable" ) == 0 ) {
-        return inO->containable;
-        }
-    if( strcmp( inFieldName, "containsize" ) == 0 ) {
-        return inO->containSize;
-        }
-    if( strcmp( inFieldName, "permanent" ) == 0 ) {
-        return inO->permanent;
-        }
-    if( strcmp( inFieldName, "person" ) == 0 ) {
-        return inO->person;
-        }
-    if( strcmp( inFieldName, "race" ) == 0 ) {
-        return inO->race;
-        }
-    if( strcmp( inFieldName, "floor" ) == 0 ) {
-        return inO->floor;
-        }
-    if( strcmp( inFieldName, "death" ) == 0 ) {
-        return inO->deathMarker;
-        }
-    if( strcmp( inFieldName, "sideaccess" ) == 0 ) {
-        return inO->sideAccess;
-        }
-    if( strcmp( inFieldName, "noflip" ) == 0 ) {
-        return inO->noFlip;
-        }
-    if( strcmp( inFieldName, "nospawn" ) == 0 ) {
-        return inO->personNoSpawn;
-        }
-    if( strcmp( inFieldName, "male" ) == 0 ) {
-        return inO->male;
-        }
-    if( strcmp( inFieldName, "behind" ) == 0 ) {
-        return inO->drawBehindPlayer;
-        }
-    if( strcmp( inFieldName, "hugFloor" ) == 0 ) {
-        return inO->floorHugging;
-        }
-    return 0;
-    }
+
 
 
 
@@ -272,184 +164,140 @@ class ObjectPickable : public Pickable {
             }
         
 
+        
 
-
-        // for implementing field=value search, like mapp=0.2
-        // inFieldName will be all lower case
-        virtual char isValidField( const char *inFieldName ) {
+        virtual float getItemFieldValue( void *inItem,
+                                         const char *inFieldName,
+                                         char *outFound ) {
+            *outFound = true;
             
+            // filled with garbage undefined values, but that's okay
+            ObjectRecord defaultO;
+            
+            ObjectRecord *inO = (ObjectRecord*)inItem;
+
+            if( inO == NULL ) {
+                inO = &defaultO;
+                }
+
             if( strcmp( inFieldName, "mapp" ) == 0 ) {
-                return true;
+                return inO->mapChance;
                 }
             if( strcmp( inFieldName, "heat" ) == 0 ) {
-                return true;
+                return inO->heatValue;
                 }
             if( strcmp( inFieldName, "r" ) == 0 ) {
-                return true;
+                return inO->rValue;
                 }
             if( strcmp( inFieldName, "food" ) == 0 ) {
-                return true;
+                return inO->foodValue;
                 }
             if( strcmp( inFieldName, "speed" ) == 0 ) {
-                return true;
+                return inO->speedMult;
                 }
             if( strcmp( inFieldName, "slots" ) == 0 ) {
-                return true;
+                return inO->numSlots;
                 }
             if( strcmp( inFieldName, "slotsize" ) == 0 ) {
-                return true;
+                return inO->slotSize;
                 }
             if( strcmp( inFieldName, "locked" ) == 0 ) {
-                return true;
+                return inO->slotsLocked;
                 }
             if( strcmp( inFieldName, "tmstrch" ) == 0 ) {
-                return true;
+                return inO->slotTimeStretch;
                 }
             if( strcmp( inFieldName, "usedist" ) == 0 ) {
-                return true;
+                return inO->useDistance;
                 }
             if( strcmp( inFieldName, "deadlydist" ) == 0 ) {
-                return true;
+                return inO->deadlyDistance;
                 }
             if( strcmp( inFieldName, "pickupage" ) == 0 ) {
-                return true;
+                return inO->minPickupAge;
                 }
             if( strcmp( inFieldName, "bottom" ) == 0 ) {
-                return true;
+                return inO->clothing == 'b';
                 }
             if( strcmp( inFieldName, "backpack" ) == 0 ) {
-                return true;
+                return inO->clothing == 'p';
                 }
             if( strcmp( inFieldName, "shoe" ) == 0 ) {
-                return true;
+                return inO->clothing == 's';
                 }
             if( strcmp( inFieldName, "tunic" ) == 0 ) {
-                return true;
+                return inO->clothing == 't';
                 }
             if( strcmp( inFieldName, "hat" ) == 0 ) {
-                return true;
+                return inO->clothing == 'h';
                 }
             if( strcmp( inFieldName, "#use" ) == 0 ) {
-                return true;
+                return inO->numUses;
                 }
             if( strcmp( inFieldName, "handheld" ) == 0 ) {
-                return true;
+                return inO->heldInHand;
                 }
             if( strcmp( inFieldName, "rideable" ) == 0 ) {
-                return true;
+                return inO->rideable;
                 }
             if( strcmp( inFieldName, "blocking" ) == 0 ) {
-                return true;
+                return inO->blocksWalking;
                 }
             if( strcmp( inFieldName, "home" ) == 0 ) {
-                return true;
+                return inO->homeMarker;
                 }
             if( strcmp( inFieldName, "containable" ) == 0 ) {
-                return true;
+                return inO->containable;
                 }
             if( strcmp( inFieldName, "containsize" ) == 0 ) {
-                return true;
+                return inO->containSize;
                 }
             if( strcmp( inFieldName, "permanent" ) == 0 ) {
-                return true;
+                return inO->permanent;
                 }
             if( strcmp( inFieldName, "person" ) == 0 ) {
-                return true;
+                return inO->person;
                 }
             if( strcmp( inFieldName, "race" ) == 0 ) {
-                return true;
+                return inO->race;
                 }
             if( strcmp( inFieldName, "floor" ) == 0 ) {
-                return true;
+                return inO->floor;
                 }
             if( strcmp( inFieldName, "death" ) == 0 ) {
-                return true;
+                return inO->deathMarker;
                 }
             if( strcmp( inFieldName, "sideaccess" ) == 0 ) {
-                return true;
+                return inO->sideAccess;
                 }
             if( strcmp( inFieldName, "noflip" ) == 0 ) {
-                return true;
+                return inO->noFlip;
                 }
             if( strcmp( inFieldName, "nospawn" ) == 0 ) {
-                return true;
+                return inO->personNoSpawn;
                 }
             if( strcmp( inFieldName, "male" ) == 0 ) {
-                return true;
+                return inO->male;
                 }
             if( strcmp( inFieldName, "behind" ) == 0 ) {
-                return true;
+                return inO->drawBehindPlayer;
                 }
             if( strcmp( inFieldName, "hugFloor" ) == 0 ) {
-                return true;
+                return inO->floorHugging;
                 }
 
-            return false;
+            *outFound = false;
+            return 0;
             }
+
         
-        
 
-        // searches for objects with field matching value
-        // inLessEqualGreater is -1, 0, or 1 if we want to find
-        // objects that have fields that are less than, equal to, or greater
-        // than inFieldValue, respectively.
-        virtual void **search( const char *inFieldName,
-                               float inFieldValue,
-                               int inLessEqualGreater,
-                               int inNumToSkip, 
-                               int inNumToGet, 
-                               int *outNumResults, int *outNumRemaining ) {
+        virtual void **getAllItemsForFieldSearch( int *outNumItems ) {
+            ObjectRecord **returnArray = getAllObjects( outNumItems );
             
-            int numObjects;
-            ObjectRecord **allObjects =
-                getAllObjects( &numObjects );
-            
-            SimpleVector<ObjectRecord*> matches;
-            
-            int matchIndex = 0;
-            
-            int remaining = 0;
+            return (void**)returnArray;
+            }
 
-            for( int i=numObjects - 1; i>=0; i-- ) {
-            
-                float thisValue = 
-                    getObjectFieldValue( allObjects[i], inFieldName );
-
-                if( ( inLessEqualGreater == -1 &&
-                      thisValue < inFieldValue )
-                    ||
-                    // close enough for equals
-                    ( inLessEqualGreater == 0 &&
-                      fabs( thisValue - inFieldValue ) < 0.0001 )
-                    ||
-                    ( inLessEqualGreater == 1 &&
-                      thisValue > inFieldValue ) ) {
-                    
-                    if( matchIndex >= inNumToSkip ) {
-                        if( matches.size() < inNumToGet ) {
-                            matches.push_back( allObjects[i] );
-                            }
-                        else {
-                            remaining++;
-                            }
-                        }
-
-                    matchIndex ++;
-                    }
-                }
-            
-            delete [] allObjects;
-
-            int numResults = matches.size();
-
-
-            void **returnArray = (void**)matches.getElementArray();
-            
-            *outNumResults = numResults;
-            *outNumRemaining = remaining;
-            
-            return returnArray;
-            };
 
 
     protected:
