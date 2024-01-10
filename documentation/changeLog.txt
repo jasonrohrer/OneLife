@@ -27,6 +27,9 @@ Version 407   ????
 --Editor Sprite pickers now allow field<=>value search, like solid=0 or
   visibleW>200.  Part of #998
 
+--Tutorial text now explains forgiving instead of expiring curses.  Thanks
+  Spoonwood.  Fixes #1003
+
 
 
 
