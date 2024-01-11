@@ -311,6 +311,15 @@ if( $handle ) {
             // add another server for next time
             $curNumServers ++;
 
+            // print more logging info
+            $message = "Server populations:";
+            $i=0;
+            while( $i < $totalNumServer ) {
+                $message = $message . "\n$i pop = " . $currentPopPerServer[$i];
+                $i++;
+                }
+            logMessage( $message );
+            
             file_put_contents( $curNumServersFile, $curNumServers );
             // don't adjust $activeMaxCap this time
             }
@@ -332,6 +341,15 @@ if( $handle ) {
             // remove a server for next time
             $curNumServers --;
 
+            // print more logging info
+            $message = "Server populations:";
+            $i=0;
+            while( $i < $totalNumServer ) {
+                $message = $message . "\n$i pop = " . $currentPopPerServer[$i];
+                $i++;
+                }
+            logMessage( $message );
+            
             file_put_contents( $curNumServersFile, $curNumServers );
             // don't adjust $activeMaxCap this time
             }
