@@ -44,6 +44,11 @@ Server Fixes:
 --Added logging of server populations at moment where we decide to start
   spreading or stop spreading.  Part of #1018
 
+--Reflector now re-reads current and max pop from a server's file after trying
+  to connect again to an offline server and succeeding.  This doesn't seem like
+  it will actually fix the problem described in #1018, but it's the correct
+  thing to do anyway.
+
 
 
 

@@ -255,6 +255,11 @@ if( $handle ) {
 
                     if( $onlineNow ) {
                         $offline = 0;
+
+                        // re-read values from files, since tryServer
+                        // will update them
+                        $max = file_get_contents_safe( $maxFile );
+                        $current = file_get_contents_safe( $currentFile );
                         }
                     }
                 
