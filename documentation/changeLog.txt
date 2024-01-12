@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 407   2024-January-12
+Version 408   2024-January-12
 
 --Editor now supports import_add and import_replace folders, for loading
   exported OXZ files permanently into the local content data on disk.
