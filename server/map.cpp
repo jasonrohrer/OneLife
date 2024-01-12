@@ -3973,9 +3973,12 @@ char initMap() {
     delete biomeWeightList;
 
 
+    useContentSettings();
     SimpleVector<int> *specialBiomeList =
         SettingsManager::getIntSettingMulti( "specialBiomes" );
-    
+    useMainSettings();
+
+
     numSpecialBiomes = specialBiomeList->size();
     specialBiomes = specialBiomeList->getElementArray();
     
