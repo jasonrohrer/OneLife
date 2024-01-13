@@ -27,6 +27,7 @@ mv $SOURCEDIR/OneLifeData7/sounds $SOURCEDIR/
 mv $SOURCEDIR/OneLifeData7/sprites $SOURCEDIR/
 mv $SOURCEDIR/OneLifeData7/ground $SOURCEDIR/ground
 mv $SOURCEDIR/OneLifeData7/transitions $SOURCEDIR/
+mv $SOURCEDIR/OneLifeData7/contentSettings $SOURCEDIR/
 mv $SOURCEDIR/OneLifeData7/dataVersionNumber.txt $SOURCEDIR/
 
 rm -r $SOURCEDIR/OneLifeData7  
