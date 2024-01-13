@@ -462,8 +462,24 @@ char finalizeExportBundle( const char *inExportName ) {
 
             // header format:
             // sprite id multBlend centAncXOff centAncYOff tgaSize#
+
+            // escape any # in sprite tag
+            char *tag = r->tag;
+            
+            char *tagToDestroy = NULL;
+            
+            
+            if( strstr( tag, "#" ) != NULL ) {
+                char found;
+                
+                tagToDestroy = replaceAll( tag, "#", "_HASH_", &found );
+                
+                tag = tagToDestroy;
+                }
+            
+
             fprintf( outFILE, "sprite %d %s %d %d %d %d#",
-                     id, r->tag, r->multiplicativeBlend, 
+                     id, tag, r->multiplicativeBlend, 
                      r->centerAnchorXOffset,
                      r->centerAnchorYOffset,
                      tgaFileSize );
@@ -471,6 +487,10 @@ char finalizeExportBundle( const char *inExportName ) {
             fwrite( tgaData, 1, tgaFileSize, outFILE );
 
             delete [] tgaData;
+
+            if( tagToDestroy != NULL ) {
+                delete [] tagToDestroy;
+                }
             }
         }
 

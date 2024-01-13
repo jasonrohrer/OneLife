@@ -39,6 +39,10 @@ Version 408   2024-January-12
   SettingsManager temporarily to the contentSettings folder when loading these
   settings.  
 
+--Fixed to escape # signs in sprite tags when exporting sprites, and de-escape
+  them on import.  The # sign is the termination character of a data block in
+  the OXZ file format.  Fixes #1020
+
 
 
 Server Fixes:

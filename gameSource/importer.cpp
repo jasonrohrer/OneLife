@@ -595,6 +595,20 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
             if( id > -1 ) {
                 // header at least contained an ID                
 
+                if( strstr( tag, "_HASH_" ) ) {
+                    // restore hashes in tag from escape sequences
+                    
+                    char found;
+                    char *tagWithHash = 
+                        replaceAll( tag, "_HASH_", "#", &found );
+                    
+                    memcpy( tag, tagWithHash, strlen( tagWithHash ) + 1 );
+                    
+                    delete [] tagWithHash;
+                    }
+                
+                
+
                 int bankID = 
                     doesSpriteRecordExist(
                         currentDataLength,
