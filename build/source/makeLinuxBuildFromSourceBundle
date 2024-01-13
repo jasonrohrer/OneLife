@@ -34,7 +34,7 @@ mkdir $buildDir
 
 
 cd $sourceWorkingDir
-cp -r animations music objects sounds sprites categories transitions ground dataVersionNumber.txt ../$buildDir
+cp -r animations music objects sounds sprites categories transitions ground contentSettings dataVersionNumber.txt ../$buildDir
 cp -r OneLifeApp EditOneLife graphics otherSounds languages language.txt no_copyright.txt Readme.txt settings reverbImpulseResponse.aiff wordList.txt reverbCache groundTileCache us_english_60.txt ../$buildDir
 
 cd ../$buildDir
