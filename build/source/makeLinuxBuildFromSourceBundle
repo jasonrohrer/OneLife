@@ -41,6 +41,10 @@ cd ../$buildDir
 
 mkdir mods
 
+mkdir import_add
+mkdir import_replace
+
+
 ../$sourceWorkingDir/OneLife/gameSource/regenerateCaches
 
 # don't ever include bin_cache in bundles, because they are large
