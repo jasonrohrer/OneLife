@@ -20,6 +20,9 @@ const char *clientTag = "client_official";
 int accountHmacVersionNumber = 0;
 
 
+char isAHAP = false;
+
+
 
 #include <stdio.h>
 #include <unistd.h>
@@ -457,6 +460,21 @@ void freeDrawString() {
 void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                       const char *inCustomRecordedGameData,
                       char inPlayingBack ) {
+
+
+    isAHAP = false;
+    
+    File isAHAPFile( NULL, "isAHAP.txt" );
+    
+    if( isAHAPFile.exists() ) {
+        
+        int val = isAHAPFile.readFileIntContents( 0 );
+        
+        if( val == 1 ) {
+            isAHAP = true;
+            }
+        }
+    
     
     useMainSettings();
 
@@ -1926,7 +1944,9 @@ void drawFrame( char inUpdate ) {
                                     "autoUpdateURL" );
 
                             char updateStarted = 
-                                startUpdate( autoUpdateURL, versionNumber );
+                                startUpdate( autoUpdateURL, versionNumber,
+                                             // skip universal bundles for AHAP
+                                             isAHAP );
                         
                             delete [] autoUpdateURL;
                             

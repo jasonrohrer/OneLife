@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 410   ???
+
+--Support for AHAP differentiation with a text file in the game folder.  AHAP
+  clients skip universal _all.dbz content diff bundles.
+
+
+
 Version 409   2024-January-13
 
 --Editor now supports import_add and import_replace folders, for loading
