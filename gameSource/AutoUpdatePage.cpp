@@ -7,7 +7,13 @@
 
 #include "message.h"
 
-        
+
+
+AutoUpdatePage::AutoUpdatePage()
+        : mUseAHAPMessaging( false ) {
+    }
+
+
 
 void AutoUpdatePage::draw( doublePair inViewCenter, 
                            double inViewSize ) {
@@ -16,10 +22,20 @@ void AutoUpdatePage::draw( doublePair inViewCenter,
 
     const char *messageKey;
     if( progress < 1 ) {
-        messageKey = "downloadingUpdate";
+        if( mUseAHAPMessaging ) {
+            messageKey = "downloadingUpdateAHAP";
+            }
+        else {
+            messageKey = "downloadingUpdate";
+            }
         }
     else {
-        messageKey = "applyingUpdate";
+        if( mUseAHAPMessaging ) {
+            messageKey = "applyingUpdateAHAP";
+            }
+        else {
+            messageKey = "applyingUpdate";
+            }
         }
 
     doublePair labelPos = { 0, 100 };
@@ -79,6 +95,12 @@ void AutoUpdatePage::step() {
             }
         }
     
+    }
+
+
+
+void AutoUpdatePage::setUseAHAPMessaging( char inAHAP ) {
+    mUseAHAPMessaging = inAHAP;
     }
 
         

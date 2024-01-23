@@ -149,8 +149,13 @@ FinalMessagePage *finalMessagePage;
 
 ServerActionPage *getServerAddressPage;
 
+ServerActionPage *getAHAPVersionPage;
+
+static char loadingStarted = false;
+
 LoadingPage *loadingPage;
 AutoUpdatePage *autoUpdatePage;
+AutoUpdatePage *autoAHAPUpdatePage;
 LivingLifePage *livingLifePage;
 ExistingAccountPage *existingAccountPage;
 ExtendedMessagePage *extendedMessagePage;
@@ -359,8 +364,15 @@ static void updateDataVersionNumber() {
         
             delete [] contents;
 
-            if( dataVersionNumber > versionNumber ) {
-                versionNumber = dataVersionNumber;
+            if( ! isAHAP ) {
+                // dataVersionNumber and versionNumber are incremented in an
+                // interleaved way for main client.
+
+                // but for AHAP client, two version numbers are separate
+                
+                if( dataVersionNumber > versionNumber ) {
+                    versionNumber = dataVersionNumber;
+                    }
                 }
             }
         }
@@ -624,7 +636,13 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
     webRetrySeconds = webRetrySecondsSetting;
 
-    reflectorURL = SettingsManager::getStringSetting( "reflectorURL" );
+
+    if( isAHAP ) {
+        reflectorURL = SettingsManager::getStringSetting( "ahapReflectorURL" );
+        }
+    else {
+        reflectorURL = SettingsManager::getStringSetting( "reflectorURL" );
+        }
 
     if( reflectorURL == NULL ) {
         reflectorURL = 
@@ -647,11 +665,27 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     getServerAddressPage = new ServerActionPage( reflectorURL,
                                                  "reflect", 
                                                  4, resultNamesA, false );
-    
-    
+
+
+    char *ahapVersionURL = 
+        SettingsManager::getStringSetting( 
+            "ahapVersionURL",
+            "http://localhost/jcr13/oneLifeReflector/server.php" );
+
+    const char *resultNamesB[2] = { "requiredVersionNumber",
+                                    "autoUpdateURL" };
+
+    getAHAPVersionPage = new ServerActionPage( ahapVersionURL, "none", 
+                                               2, resultNamesB, false );
+
     finalMessagePage = new FinalMessagePage;
     loadingPage = new LoadingPage;
+    
     autoUpdatePage = new AutoUpdatePage;
+    autoAHAPUpdatePage = new AutoUpdatePage;
+
+    autoAHAPUpdatePage->setUseAHAPMessaging( true );
+
     livingLifePage = NULL;
     existingAccountPage = new ExistingAccountPage;
     extendedMessagePage = new ExtendedMessagePage;
@@ -710,8 +744,15 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     enableObjectSearch( true );
 
 
-    currentGamePage = loadingPage;
-
+    if( isAHAP ) {
+        // see if AHAP data update needed before loading
+        currentGamePage = getAHAPVersionPage;
+        }
+    else {
+        loadingStarted = true;
+        currentGamePage = loadingPage;
+        }
+    
     //testPage = new TestPage;
     //currentGamePage = testPage;
 
@@ -752,9 +793,13 @@ void freeFrameDrawer() {
 
     delete getServerAddressPage;
     
+    delete getAHAPVersionPage;
+
     delete finalMessagePage;
     delete loadingPage;
     delete autoUpdatePage;
+    delete autoAHAPUpdatePage;
+    
     if( livingLifePage != NULL ) {
         delete livingLifePage;
         livingLifePage = NULL;
@@ -1172,7 +1217,7 @@ void deleteCharFromUserTypedMessage() {
 
 
 
-static void startConnecting() {
+static void startConnectingNoAHAPCheck() {
     userReconnect = false;
     
     if( SettingsManager::getIntSetting( "useCustomServer", 0 ) ) {
@@ -1220,6 +1265,19 @@ static void startConnecting() {
         currentGamePage->base_makeActive( true );
         }
 
+    }
+
+
+
+static void startConnecting() {
+    if( ! isAHAP ) {
+        startConnectingNoAHAPCheck();
+        }
+    else {
+        // check AHAP content version first
+        currentGamePage = getAHAPVersionPage;
+        currentGamePage->base_makeActive( true );
+        }
     }
 
 
@@ -1439,7 +1497,96 @@ void drawFrame( char inUpdate ) {
         currentGamePage->base_step();
 
 
-        if( currentGamePage == loadingPage ) {
+        if( currentGamePage == getAHAPVersionPage ) {
+            if( getAHAPVersionPage->isResponseReady() ) {
+                
+                int numParts = getAHAPVersionPage->getNumResponseParts();
+                
+                if( numParts > 1 ) {
+
+                    int requiredVersionNumber =
+                        getAHAPVersionPage->
+                        getResponseInt( "requiredVersionNumber" );
+                    
+                    if( dataVersionNumber < requiredVersionNumber ) {
+                        
+                        // start ahap-specific auto-update
+
+                        char *autoUpdateURL = 
+                            getAHAPVersionPage->getResponse( "autoUpdateURL" );
+                        
+                        char updateStarted = 
+                            startUpdate( autoUpdateURL, dataVersionNumber,
+                                         // do NOT skip universal bundles
+                                         // since this is the only thing
+                                         // we are downloading from
+                                         // AHAP-specific update server
+                                         false );
+                        
+                        delete [] autoUpdateURL;
+                            
+                        if( ! updateStarted ) {
+                            currentGamePage = finalMessagePage;
+                                
+                            finalMessagePage->setMessageKey( 
+                                "upgradeMessage" );
+                                
+                            currentGamePage->base_makeActive( true );
+                            }
+                        else {
+                            currentGamePage = autoAHAPUpdatePage;
+                            currentGamePage->base_makeActive( true );
+                            }
+                        }
+                    else {
+                        if( ! loadingStarted ) {
+                            loadingStarted = true;
+                            currentGamePage = loadingPage;
+                            currentGamePage->base_makeActive( true );
+                            }
+                        else {
+                            // already loaded?
+                            // we must be checking required AHAP version
+                            // one last time before logging in.
+
+                            // passed test, so actually connect now
+                            startConnectingNoAHAPCheck();
+                            }
+                        }
+                    }
+                else {
+                    AppLog::error( 
+                        "Failed to fetch ahapVersion.txt from server." );
+                    currentGamePage = loadingPage;
+                    currentGamePage->base_makeActive( true );
+                    }
+                }
+            }
+        else  if( currentGamePage == autoAHAPUpdatePage ) {
+            if( autoAHAPUpdatePage->checkSignal( "failed" ) ) {
+                currentGamePage = finalMessagePage;
+                        
+                finalMessagePage->setMessageKey( "upgradeMessage" );
+                        
+                currentGamePage->base_makeActive( true );
+                }
+            else if( autoAHAPUpdatePage->checkSignal( "writeError" ) ) {
+                currentGamePage = finalMessagePage;
+                
+                finalMessagePage->setMessageKey( 
+                    "updateWritePermissionMessage" );
+                        
+                currentGamePage->base_makeActive( true );
+                }
+            else if( autoAHAPUpdatePage->checkSignal( "relaunchFailed" ) ) {
+                currentGamePage = finalMessagePage;
+                        
+                finalMessagePage->setMessageKey( "manualRestartMessage" );
+                                
+                currentGamePage->base_makeActive( true );
+                }
+            }
+        else if( currentGamePage == loadingPage ) {
             
             switch( loadingPhase ) {
                 case 0: {

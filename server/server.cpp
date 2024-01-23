@@ -17983,10 +17983,18 @@ int main() {
     int dataVer = readIntFromFile( "dataVersionNumber.txt", 1 );
     int codVer = readIntFromFile( "serverCodeVersionNumber.txt", 1 );
     
-    versionNumber = dataVer;
-    if( codVer > versionNumber ) {
-        versionNumber = codVer;
+    int isAHAP = readIntFromFile( "isAHAP.txt", 0 );
+    
+    if( isAHAP ) {
+        versionNumber = codeVer;
         }
+    else {
+        versionNumber = dataVer;
+        if( codVer > versionNumber ) {
+            versionNumber = codVer;
+            }
+        }
+    
     
     printf( "\n" );
     AppLog::infoF( "Server using version number %d", versionNumber );

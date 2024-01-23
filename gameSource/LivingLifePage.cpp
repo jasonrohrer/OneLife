@@ -68,6 +68,9 @@ static ObjectPickable objectPickable;
 extern int versionNumber;
 extern int dataVersionNumber;
 
+extern char isAHAP;
+
+
 extern const char *clientTag;
 
 
@@ -14542,37 +14545,64 @@ void LivingLifePage::step() {
                     "%d\n", &currentPlayers, &maxPlayers, challengeString, 
                     &mRequiredVersion );
             
-
-            if( mRequiredVersion > versionNumber ||
-                ( mRequiredVersion < versionNumber &&
-                  mRequiredVersion < dataVersionNumber ) ) {
+            
+            if( ! isAHAP ) {
+                // standard client
                 
-                // if server is using a newer version than us, we must upgrade
-                // our client
+                if( mRequiredVersion > versionNumber ||
+                    ( mRequiredVersion < versionNumber &&
+                      mRequiredVersion < dataVersionNumber ) ) {
                 
-                // if server is using an older version, check that
-                // their version is not behind our data version at least
+                    // if server is using a newer version than us,
+                    // we must upgrade our client
+                
+                    // if server is using an older version, check that
+                    // their version is not behind our data version at least
+                    
+                    closeSocket( mServerSocket );
+                    mServerSocket = -1;
 
-                closeSocket( mServerSocket );
-                mServerSocket = -1;
+                    setWaiting( false );
 
-                setWaiting( false );
-
-                if( ! usingCustomServer && 
-                    mRequiredVersion < dataVersionNumber ) {
-                    // we have a newer data version than the server
-                    // the servers must be in the process of updating, and
-                    // we connected at just the wrong time
-                    // Don't display a confusing version mismatch message here.
-                    setSignal( "serverUpdate" );
+                    if( ! usingCustomServer && 
+                        mRequiredVersion < dataVersionNumber ) {
+                        // we have a newer data version than the server
+                        // the servers must be in the process of updating, and
+                        // we connected at just the wrong time
+                        // Don't display a confusing version mismatch message
+                        //  here.
+                        setSignal( "serverUpdate" );
+                        }
+                    else {
+                        setSignal( "versionMismatch" );
+                        }
+                    
+                    delete [] message;
+                    return;
                     }
-                else {
-                    setSignal( "versionMismatch" );
-                    }
-
-                delete [] message;
-                return;
                 }
+            else {
+                // AHAP client, dataVersionNumber is checked separately
+                // and not enforced by server's requiredVersionNumber
+
+                if( mRequiredVersion > versionNumber ||
+                    mRequiredVersion < versionNumber ) {
+                
+                    // if server is using a newer version than us,
+                    // we must upgrade our client
+
+                    closeSocket( mServerSocket );
+                    mServerSocket = -1;
+
+                    setWaiting( false );
+
+                    setSignal( "versionMismatch" );
+                    
+                    delete [] message;
+                    return;
+                    }
+                }
+            
 
             char *pureKey = getPureAccountKey();
             

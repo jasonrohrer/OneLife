@@ -9,6 +9,14 @@ Version 410   ???
 --Support for AHAP differentiation with a text file in the game folder.  AHAP
   clients skip universal _all.dbz content diff bundles.
 
+--AHAP clients now check online ahapVersion.txt and download content update
+  diff bundles from a separate AHAP update server.  They also use a separate
+  AHAP reflector when connecting.  Client and server, if isAHAP.txt is set to
+  1, track binary version number separate from data version number.
+  AutoUpdatePage messaging is different for AHAP clients when downloading diff
+  bundles.
+
+
 
 
 Version 409   2024-January-13
