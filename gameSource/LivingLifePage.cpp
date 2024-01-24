@@ -57,6 +57,7 @@
 
 #define OHOL_NON_EDITOR 1
 #include "ObjectPickable.h"
+#include "minitech.h"
 
 static ObjectPickable objectPickable;
 
@@ -94,8 +95,14 @@ static float pencilErasedFontExtraFade = 0.75;
 
 extern doublePair lastScreenViewCenter;
 
+//minitech
+doublePair LivingLifePage::minitechGetLastScreenViewCenter() { return lastScreenViewCenter; }
+
 static char shouldMoveCamera = true;
 
+//minitech
+bool ShowUseOnObjectHoverSettingToggle = false;
+static bool isShowUseOnObjectHoverKeybindEnabled = false;
 
 extern double visibleViewWidth;
 extern double viewHeight;
@@ -1248,6 +1255,56 @@ static char *getDisplayObjectDescription( int inID ) {
     return upper;
     }
 
+
+static char *getFullUpperCasedObjectDescription( int inID ) {
+    ObjectRecord *o = getObject( inID );
+    if( o == NULL ) {
+        return NULL;
+        }
+	return stringToUpperCase( o->description );
+}
+
+std::string LivingLifePage::minitechGetFullObjectDescription( int objID ) {
+    char *desc = getFullUpperCasedObjectDescription(objID);
+    if (desc == NULL) {
+        return "";
+        }
+    std::string s = desc;
+    return s;
+}
+
+std::string LivingLifePage::minitechGetDisplayObjectDescription( int objId ) { 
+    ObjectRecord *o = getObject( objId );
+    if( o == NULL ) {
+		return "";
+        }
+	char *descriptionChars = getDisplayObjectDescription(objId);
+	std::string description(descriptionChars);
+	delete [] descriptionChars;
+	return description;
+}
+
+static bool isAllDigits( std::string &str ) {
+	return std::all_of(str.begin(), str.end(), ::isdigit);
+}
+
+// Checks for a potential container change caused by containment transitions
+// We could check all the changed contained objects and all the IN and OUT transitions
+// But it suffices for now to just check for
+// a change in the container and that both containers having the useOnContained tag
+static bool potentialContainerChangebyContTrans( int oldId, int newId ) { 
+    if( oldId == newId ) return false;
+    int maxObjectID = getMaxObjectID();
+    if( oldId <= 0 || newId <= 0 || oldId > maxObjectID || newId > maxObjectID ) return false;
+    ObjectRecord *oldObj = getObject( oldId );
+    ObjectRecord *newObj = getObject( newId );
+    if( oldObj == NULL || newObj == NULL ) return false;
+    if( oldObj->description == NULL || newObj->description == NULL ) return false;
+    if( strstr( oldObj->description, "+useOnContained" ) != NULL &&
+        strstr( newObj->description, "+useOnContained" ) != NULL )
+        return true;
+    return false;
+}
 
 
 typedef enum messageType {
@@ -3088,6 +3145,9 @@ LivingLifePage::LivingLifePage()
     if( ! tutorialDone ) {
         mTutorialNumber = 1;
         }
+        
+        minitech::setLivingLifePage(this, &gameObjects, mMapD, pathFindingD, mMapContainedStacks, mMapSubContainedStacks);
+        
     }
 
 
@@ -9665,6 +9725,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+		if ( ! minitech::minitechEnabled ) //minitech
         if( ! equal( mHintPosOffset[i], mHintHideOffset[i] ) 
             &&
             mHintMessage[i] != NULL ) {
@@ -11109,6 +11170,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
 
+    // minitech
+    float worldMouseX, worldMouseY;
+    getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
+    screenToWorld( lastScreenMouseX, lastScreenMouseY, &worldMouseX, &worldMouseY );
+    minitech::livingLifeDraw(worldMouseX, worldMouseY);
+    
     
     if( vogMode ) {
         // draw again, so we can see picker
@@ -14208,6 +14275,7 @@ void LivingLifePage::step() {
         sendToServerSocket( (char*)"KA 0 0#" );
         }
     
+	minitech::livingLifeStep();
 
     if( showFPS ) {
         timeMeasures[1] += game_getCurrentTime() - updateStartTime;
@@ -17524,6 +17592,7 @@ void LivingLifePage::step() {
                             if( isHintFilterStringInvalid() ) {
                                 mNextHintIndex = 
                                     mHintBookmarks[ mNextHintObjectID ];
+                                    if (minitech::changeHintObjOnTouch) minitech::changeCurrentHintObjId(mNextHintObjectID);
                                 }
                             }
                         
@@ -19073,6 +19142,8 @@ void LivingLifePage::step() {
                     gameObjects.getElement( recentInsertedGameObjectIndex );
                 
                 ourID = ourObject->id;
+				
+				minitech::initOnBirth();
 
                 if( ourID != lastPlayerID ) {
                     // different ID than last time, delete old home markers
@@ -23973,6 +24044,9 @@ static void freeSavedPath() {
 
 
 void LivingLifePage::pointerDown( float inX, float inY ) {
+    
+    if (minitech::livingLifePageMouseDown( inX, inY )) return;
+    
     lastMouseX = inX;
     lastMouseY = inY;
 
@@ -24477,6 +24551,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 mNextHintObjectID = destID;
                 if( isHintFilterStringInvalid() ) {
                     mNextHintIndex = mHintBookmarks[ destID ];
+                    if (minitech::changeHintObjOnTouch) minitech::changeCurrentHintObjId(destID);                    
                     }
                 }
             else if( tr->newActor > 0 && 
@@ -24485,6 +24560,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 mNextHintObjectID = tr->newActor;
                 if( isHintFilterStringInvalid() ) {
                     mNextHintIndex = mHintBookmarks[ tr->newTarget ];
+                    if (minitech::changeHintObjOnTouch) minitech::changeCurrentHintObjId(tr->newActor);
                     }
                 }
             else if( tr->newTarget > 0 ) {
@@ -24492,6 +24568,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 mNextHintObjectID = tr->newTarget;
                 if( isHintFilterStringInvalid() ) {
                     mNextHintIndex = mHintBookmarks[ tr->newTarget ];
+                    if (minitech::changeHintObjOnTouch) minitech::changeCurrentHintObjId(tr->newTarget);
                     }
                 }
             }
@@ -24503,6 +24580,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 mNextHintObjectID = destID;
                 if( isHintFilterStringInvalid() ) {
                     mNextHintIndex = mHintBookmarks[ destID ];
+                    if (minitech::changeHintObjOnTouch) minitech::changeCurrentHintObjId(destID);
                     }
                 }
             }
@@ -26407,7 +26485,10 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                     // not blank
                                     mHintFilterString = 
                                         stringDuplicate( trimmedFilterString );
-                                    }
+                                    minitech::inputHintStrToSearch( mHintFilterString );
+								} else {
+									minitech::inputHintStrToSearch( "" );
+								}
                             
                                 delete [] trimmedFilterString;
                             

@@ -8,12 +8,13 @@ PROFILE_FLAG = ${PROFILE_OFF_FLAG}
 LINK_AGAINST_LIBJPEG = no
 LINK_AGAINST_LIBPNG = no
 
-APP_NAME = OneLife
+APP_NAME = OneLifeMinitech
 ROOT_PATH = ../..
 
 
 
 LAYER_SOURCE = \
+minitech.cpp \
 game.cpp \
 spriteBank.cpp \
 objectBank.cpp \
