@@ -1,0 +1,10 @@
+When exporting TGA files directly from GIMP or other tools, make sure that
+RLE-compression (run-length encoding) is DISABLED.
+
+RLE-compressed TGA files are not loadable by the game code.
+
+
+If you're having trouble with this, you can always export as PNG and
+then convert with ImageMagick like so:
+
+convert ground_6.png -auto-orient -type truecolormatte ground_6.tga
