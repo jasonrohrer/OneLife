@@ -16,6 +16,8 @@ Version 410   ???
   AutoUpdatePage messaging is different for AHAP clients when downloading diff
   bundles.
 
+--Importer, when adding new objects (instead of replacing old), prints out
+  object ID remapping.
 
 
 

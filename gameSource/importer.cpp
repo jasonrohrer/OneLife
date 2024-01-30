@@ -563,6 +563,11 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
         delete [] fileName;
 
         currentLoadScanned = true;
+
+        if( ! inReplaceObjects ) {
+            // show ID remapping
+            printf( "Object ID remapping:\n" );
+            }
         }
     else {
         // walk through blocks and process them
@@ -816,6 +821,9 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                 
                         if( ! inReplaceObjects ) {
                             idToWrite = nextObjectNumber;
+
+                            // report each remapping
+                            printf( "%d => %d\n", id, idToWrite );
                             }
                         
                         if( idToWrite >= nextObjectNumber ) {
