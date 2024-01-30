@@ -1950,6 +1950,43 @@ void deleteSpriteFromBank( int inID ) {
     
     
     freeSpriteRecord( inID );
+
+
+    
+    // avoid inflation of nextSpriteNumber by rolling it back
+    // whenever final sprite in bank is deleted
+    if( spritesDir.exists() && spritesDir.isDirectory() ) {
+        
+        File *nextNumberFile = 
+            spritesDir.getChildFile( "nextSpriteNumber.txt" );
+        
+        int nextSpriteNumber = nextNumberFile->readFileIntContents( 1 );
+        
+        
+        if( nextSpriteNumber == inID + 1 ) {
+        
+            // our last sprite was deleted
+            
+            // walk backward in idMap and find last non-NULL record
+            
+            int lastRecord = 0;
+            
+            for( int i = mapSize - 1; i >= 0; i-- ) {
+                if( idMap[i] != NULL ) {
+                    lastRecord = i;
+                    break;
+                    }
+                }
+            
+            nextSpriteNumber = lastRecord + 1;
+            
+            nextNumberFile->writeToFile( nextSpriteNumber );
+            
+            }
+        
+        delete nextNumberFile;
+        }
+
     }
 
 

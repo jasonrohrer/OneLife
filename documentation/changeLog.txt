@@ -19,6 +19,10 @@ Version 410   ???
 --Importer, when adding new objects (instead of replacing old), prints out
   object ID remapping.
 
+--Fixed objectBank and spriteBank to roll back nextObject/SpriteNumber value
+  whenever last object/sprite in bank is deleted, to avoid id inflation.
+  soundBank was already doing this.
+
 
 
 Version 409   2024-January-13
