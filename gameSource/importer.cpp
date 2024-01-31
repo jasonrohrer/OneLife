@@ -632,16 +632,20 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                                 currentDataLength );
                         
                         if( rawImage != NULL ) {
-                            SpriteHandle sprite =
-                                fillSprite( rawImage );
                             
                             Image *im = RGBAImage::getImageFromBytes( 
                                 rawImage->mRGBABytes,
                                 rawImage->mWidth, rawImage->mHeight,
                                 rawImage->mNumChannels );
                             
-                            delete rawImage;
+                            // since fillSprite can have side-effects on pixel
+                            // data, do this second, so that origial
+                            // untouched pixel data is written out to file.
+                            SpriteHandle sprite =
+                                fillSprite( rawImage );
 
+                            delete rawImage;
+                            
                             bankID = addSprite( tag, 
                                                 sprite, 
                                                 im,

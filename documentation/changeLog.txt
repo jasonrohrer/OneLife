@@ -23,6 +23,11 @@ Version 410   ???
   whenever last object/sprite in bank is deleted, to avoid id inflation.
   soundBank was already doing this.
 
+--Whoops... major bug when importing new sprites.  fillSprite can actually
+  modify sprite data (to expand edges of sprites for seamless tiling), so we
+  can't do that before saving the sprite data to disk.
+
+
 
 
 Version 409   2024-January-13
