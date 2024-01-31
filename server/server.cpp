@@ -17981,7 +17981,7 @@ int main() {
 
 
     int dataVer = readIntFromFile( "dataVersionNumber.txt", 1 );
-    int codVer = readIntFromFile( "serverCodeVersionNumber.txt", 1 );
+    int codeVer = readIntFromFile( "serverCodeVersionNumber.txt", 1 );
     
     int isAHAP = readIntFromFile( "isAHAP.txt", 0 );
     
@@ -17990,8 +17990,8 @@ int main() {
         }
     else {
         versionNumber = dataVer;
-        if( codVer > versionNumber ) {
-            versionNumber = codVer;
+        if( codeVer > versionNumber ) {
+            versionNumber = codeVer;
             }
         }
     
